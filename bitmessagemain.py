@@ -892,7 +892,7 @@ class receiveDataThread(QThread):
                     payload += eString
 
                     nonce = 0
-                    trialValue = 99999999999999999
+                    trialValue = 99999999999999999999
                     target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte) #The 108 added to the payload length is 8 for the size of the nonce + 50 as an extra penalty simply for having this seperate message exist.
                     print '(For pubkey message) Doing proof of work...'
                     while trialValue > target:
@@ -1767,7 +1767,7 @@ class singleWorker(QThread):
             print 'eString', repr(eString)
 
             nonce = 0
-            trialValue = 99999999999999999
+            trialValue = 99999999999999999999
             target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
             print '(For broadcast message) Doing proof of work...'
             while trialValue > target:
@@ -1882,19 +1882,19 @@ class singleWorker(QThread):
             outfile.close()
 
             nonce = 0
-            trialValue = 99999999999999999
+            trialValue = 99999999999999999999
             embeddedTime = pack('>I',(int(time.time())))
             encodedStreamNumber = encodeVarint(toStreamNumber)
             #We are now dropping the unencrypted data in payload since it has already been encrypted and replacing it with the encrypted payload that we will send out.
             payload = embeddedTime + encodedStreamNumber + encrypted
             target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
-            print '(For msg message) Doing proof of work...'
-            print 'target', target
+            print '(For msg message) Doing proof of work. Target:', target
+            powStartTime = time.time()
             while trialValue > target:
                 nonce += 1
                 trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + payload).digest()).digest()[4:12])
             print '(For msg message) Found proof of work', trialValue, 'Nonce:', nonce
-
+            print 'POW took', int(time.time()-powStartTime), 'seconds.', nonce/(time.time()-powStartTime), 'nonce trials per second.'
             payload = pack('>Q',nonce) + payload
 
             inventoryHash = calculateInventoryHash(payload)
@@ -1931,7 +1931,7 @@ class singleWorker(QThread):
         payload += encodeVarint(streamNumber)
         payload += ripe
         nonce = 0
-        trialValue = 99999999999999999
+        trialValue = 99999999999999999999
         #print 'trial value', trialValue
         statusbar = 'Doing the computations necessary to request the recipient''s public key. (Doing the proof-of-work.)'
         self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
@@ -1962,7 +1962,7 @@ class singleWorker(QThread):
 
     def generateFullAckMessage(self,ackdata,toStreamNumber):
         nonce = 0
-        trialValue = 99999999999999999
+        trialValue = 99999999999999999999
         embeddedTime = pack('>I',(int(time.time())))
         encodedStreamNumber = encodeVarint(toStreamNumber)
         payload = embeddedTime + encodedStreamNumber + ackdata
