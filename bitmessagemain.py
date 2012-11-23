@@ -123,8 +123,6 @@ class singleListener(QThread):
 
         while True:
         #for i in range(0,1): #uncomment this line and comment the line above this to accept only one connection.
-
-
             rd = receiveDataThread()
             a,(HOST,PORT) = sock.accept()
             while HOST in connectedHostsList:
@@ -135,7 +133,6 @@ class singleListener(QThread):
             rd.setup(a,HOST,PORT,-1,self.incomingConnectionList)
             print self, 'connected to', HOST,'during INCOMING request.'
             rd.start()
-
 
             sd = sendDataThread()
             sd.setup(a,HOST,PORT,-1)
@@ -181,13 +178,13 @@ class receiveDataThread(QThread):
                 break
             except Exception, err:
                 printLock.acquire()
-                print 'Error receiving data. Closing receiveData thread.'
+                print 'sock.recv error. Closing receiveData thread.'
                 printLock.release()
                 break
             #print 'Received', repr(self.data)
             if self.data == "":
                 printLock.acquire()
-                print 'Socket timeout.'
+                print 'Connection closed.'
                 printLock.release()
                 break
             else:
@@ -240,7 +237,9 @@ class receiveDataThread(QThread):
                             knownNodes[self.streamNumber][self.HOST] = (self.PORT,int(time.time()))
                         remoteCommand = self.data[4:16]
                         if verbose >= 2:
+                            printLock.acquire()
                             print 'remoteCommand ', remoteCommand, 'from', self.HOST
+                            printLock.release()
                         if remoteCommand == 'version\x00\x00\x00\x00\x00':
                             self.recversion()
                         elif remoteCommand == 'verack\x00\x00\x00\x00\x00\x00':
@@ -286,37 +285,23 @@ class receiveDataThread(QThread):
                                     self.sendgetdata(objectHash)
                                     del self.objectsThatWeHaveYetToGet[objectHash] #It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
                                     break
-                            print 'within processData, length of objectsThatWeHaveYetToGet is now', len(self.objectsThatWeHaveYetToGet)
-                        self.processData()
-
-
-                        #if self.versionSent == 0:
-                        #    self.sendversion()
-                        '''if (self.versionRec == 1) and (self.getaddrthreadalreadycreated == 0):
-                            while (threading.activeCount() > maxGlobalThreads):#If there too many open threads, just wait. This includes full and half-open.
-                                time.sleep(0.1)
                             printLock.acquire()
-                            print 'Starting a new getaddrSender thread'
+                            print 'within processData, length of objectsThatWeHaveYetToGet is now', len(self.objectsThatWeHaveYetToGet)
                             printLock.release()
-                            bar = getaddrSender((self.sock,self.addr))
-                            bar.daemon = True
-                            self.getaddrthreadalreadycreated = 1 #we're about to start it
-                            while True: #My goal is to try bar.start() until it succeedes
-                                while (threading.activeCount() > maxGlobalThreads):#If there too many open threads, just wait. This includes full and half-open.
-                                    time.sleep(0.1)
-                                try:
-                                    bar.start()
-                                except:
-                                    maxGlobalThreads = maxGlobalThreads - 20
-                                    sys.stderr.write('Problem! Your OS did not allow the starting of another thread. Reducing the number of threads to %s and trying again.\n' % maxGlobalThreads)
-                                    continue #..the while loop again right now
-                                break    '''
+                        self.processData()
                     else:
-                        print 'Checksum incorrect. Clearing messages and waiting for new data.'
-                        self.data = ''
+                        print 'Checksum incorrect. Clearing this message.'
+                        self.data = self.data[self.payloadLength+24:]
+
+    def isProofOfWorkSufficient(self):
+        POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(self.data[24:32]+ hashlib.sha512(self.data[32:24+self.payloadLength]).digest()).digest()).digest()[0:8])
+        print 'POW:', POW
+        #Notice that I have divided the averageProofOfWorkNonceTrialsPerByte by two. This makes the POW requirement easier. This gives us wiggle-room: if we decide that we want to make the POW easier, the change won't obsolete old clients because they already expect a lower POW. If we decide that the current work done by clients feels approperate then we can remove this division by 2 and make the requirement match what is actually done by a sending node. If we want to raise the POW requirement then old nodes will HAVE to upgrade no matter what.
+        return POW < 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * (averageProofOfWorkNonceTrialsPerByte/2))
+
     def sendpong(self):
         print 'Sending pong'
-        self.sock.sendall('\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x82\x6D\xf0\x68')
+        self.sock.sendall('\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
 
     def recverack(self):
         print 'verack received'
@@ -334,11 +319,13 @@ class receiveDataThread(QThread):
         connectionsCount[self.streamNumber] += 1
         self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"),self.streamNumber,connectionsCount[self.streamNumber])
         connectionsCountLock.release()
-        self.sendaddr()
         remoteNodeIncomingPort, remoteNodeSeenTime = knownNodes[self.streamNumber][self.HOST]
-        print 'within connectionFullyEstablished, self.HOST and remoteNodeIncomingPort:', self.HOST, remoteNodeIncomingPort
+        printLock.acquire()
+        print 'Connection fully established with', self.HOST, remoteNodeIncomingPort
         print 'broadcasting addr from within connectionFullyEstablished function.'
-        self.broadcastaddr([(int(time.time()), self.streamNumber, 1, self.HOST, remoteNodeIncomingPort)])
+        printLock.release()
+        self.broadcastaddr([(int(time.time()), self.streamNumber, 1, self.HOST, remoteNodeIncomingPort)]) #This lets all of our peers know about this new node.
+        self.sendaddr() #This is one addr message to this one peer.
         if connectionsCount[self.streamNumber] > 150:
             print 'We are connected to too many people. Closing connection.'
             self.sock.close()
@@ -374,27 +361,31 @@ class receiveDataThread(QThread):
                 payload += hash
                 numberOfObjectsInInvMessage += 1
                 if numberOfObjectsInInvMessage >= 50000: #We can only send a max of 50000 items per inv message but we may have more objects to advertise. They must be split up into multiple inv messages.
-                    sendinvMessageToJustThisOnePeer(numberOfObjectsInInvMessage,payload,)
+                    sendinvMessageToJustThisOnePeer(numberOfObjectsInInvMessage,payload)
                     payload = ''
                     numberOfObjectsInInvMessage = 0
             if numberOfObjectsInInvMessage > 0:
-                self.sendinvMessageToJustThisOnePeer(numberOfObjectsInInvMessage,payload,)
+                self.sendinvMessageToJustThisOnePeer(numberOfObjectsInInvMessage,payload)
                 
-    #Notice that there is also a broadcastinv function for broadcasting invs to everyone in our stream.
-    def sendinvMessageToJustThisOnePeer(self,numberOfObjects,payload,destination):
+    #Self explanatory. Notice that there is also a broadcastinv function for broadcasting invs to everyone in our stream.
+    def sendinvMessageToJustThisOnePeer(self,numberOfObjects,payload):
         payload = encodeVarint(numberOfObjects) + payload
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         headerData = headerData + pack('>L',len(payload))
         headerData = headerData + hashlib.sha512(payload).digest()[:4]
+        print 'Sending inv message to just this one peer'
         self.sock.send(headerData + payload)
 
     #We have received a broadcast message
     def recbroadcast(self):
         #First we must check to make sure the proof of work is sufficient.
-        POW, = unpack('>Q',hashlib.sha512(self.data[24:24+self.payloadLength]).digest()[4:12])
-        if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
-            print 'The proof of work in this broadcast message is insufficient. Ignoring message.'
+        #POW, = unpack('>Q',hashlib.sha512(self.data[24:24+self.payloadLength]).digest()[4:12])
+        #if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
+        #    print 'The proof of work in this broadcast message is insufficient. Ignoring message.'
+        #    return
+        if not self.isProofOfWorkSufficient():
+            print 'Proof of work in broadcast message insufficient.'
             return
         embeddedTime, = unpack('>I',self.data[32:36])
         if embeddedTime > (int(time.time())+10800): #prevent funny business
@@ -510,13 +501,16 @@ class receiveDataThread(QThread):
     #We have received a msg message.
     def recmsg(self):
         #First we must check to make sure the proof of work is sufficient.
-        POW, = unpack('>Q',hashlib.sha512(self.data[24:24+self.payloadLength]).digest()[4:12])
-        print 'POW:', POW
-        initialDecryptionSuccessful = False
-        if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
+        #POW, = unpack('>Q',hashlib.sha512(self.data[24:24+self.payloadLength]).digest()[4:12])
+        #print 'POW:', POW
+        
+        #if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
+        #    print 'Proof of work in msg message insufficient.'
+        #    return
+        if not self.isProofOfWorkSufficient():
             print 'Proof of work in msg message insufficient.'
             return
-
+        initialDecryptionSuccessful = False
         readPosition = 32
         embeddedTime, = unpack('>I',self.data[readPosition:readPosition+4])
         if embeddedTime > int(time.time())+10800:
@@ -547,7 +541,7 @@ class receiveDataThread(QThread):
         #Let's check whether this is a message acknowledgement bound for us.
         if self.data[readPosition:24+self.payloadLength] in ackdataForWhichImWatching:
             printLock.acquire()
-            print 'This msg is an acknowledgement bound for me.'
+            print 'This msg IS an acknowledgement bound for me.'
             printLock.release()
             del ackdataForWhichImWatching[self.data[readPosition:24+self.payloadLength]]
             t = ('ackreceived',self.data[readPosition:24+self.payloadLength])
@@ -561,8 +555,8 @@ class receiveDataThread(QThread):
             return
         else:
             printLock.acquire()
-            print 'This was NOT an acknowledgement bound for me. Msg potential ack data:', repr(self.data[readPosition:24+self.payloadLength])
-            print 'ackdataForWhichImWatching', ackdataForWhichImWatching
+            print 'This was NOT an acknowledgement bound for me.' #Msg potential ack data:', repr(self.data[readPosition:24+self.payloadLength])
+            #print 'ackdataForWhichImWatching', ackdataForWhichImWatching
             printLock.release()
 
         #This is not an acknowledgement bound for me. See if it is a message bound for me by trying to decrypt it with my private keys.
@@ -723,37 +717,52 @@ class receiveDataThread(QThread):
                                 sqlLock.release()
                                 self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
                         #Now let's send the acknowledgement
-                        POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(ackData[24:]).digest()).digest()[4:12])
-                        if POW <= 2**64 / ((len(ackData[24:])+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
-                            print 'The POW is strong enough that this ackdataPayload will be accepted by the Bitmessage network.'
+                        #POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(ackData[24:]).digest()).digest()[4:12])
+                        #if POW <= 2**64 / ((len(ackData[24:])+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
+                            #print 'The POW is strong enough that this ackdataPayload will be accepted by the Bitmessage network.'
                             #Currently PyBitmessage only supports sending a message with the acknowledgement in the form of a msg message. But future versions, and other clients, could send any object and this software will relay them. This can be used to relay identifying information, like your public key, through another Bitmessage host in case you believe that your Internet connection is being individually watched. You may pick a random address, hope its owner is online, and send a message with encoding type 0 so that they ignore the message but send your acknowledgement data over the network. If you send and receive many messages, it would also be clever to take someone else's acknowledgement data and use it for your own. Assuming that your message is delivered successfully, both will be acknowledged simultaneously (though if it is not delivered successfully, you will be in a pickle.)
                             #print 'self.data before:', repr(self.data)
+                        #We'll need to make sure that our client will properly process the ackData; if the packet is malformed, we could clear out self.data and an attacker could use that behavior to determine that we were capable of decoding this message.
+                        ackDataValidThusFar = True
+                        if len(ackData) < 24:
+                            print 'The length of Ackdata is unreasonably short. Not sending ackData.'
+                            ackDataValidThusFar = False
+                        if ackData[0:4] != '\xe9\xbe\xb4\xd9':
+                            print 'Ackdata magic bytes were wrong. Not sending ackData.'
+                            ackDataValidThusFar = False
+                        if ackDataValidThusFar:
+                            ackDataPayloadLength, = unpack('>L',ackData[16:20])
+                            if len(ackData)-24 != ackDataPayloadLength:
+                                print 'ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.'
+                                ackDataValidThusFar = False
+                        if ackDataValidThusFar:
+                            print 'ackData is valid. Will process it.'
                             self.data = self.data[:self.payloadLength+24] + ackData + self.data[self.payloadLength+24:]
                             #print 'self.data after:', repr(self.data)
-                            '''if ackData[4:16] == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00':
-                                inventoryHash = calculateInventoryHash(ackData[24:])
-                                #objectType = 'msg'
-                                #inventory[inventoryHash] = (objectType, self.streamNumber, ackData[24:], embeddedTime) #We should probably be storing the embeddedTime of the ackData, not the embeddedTime of the original incoming msg message, but this is probably close enough.
-                                #print 'sending the inv for the msg which is actually an acknowledgement (within sendmsg function)'
-                                #self.broadcastinv(inventoryHash)
-                                self.data[:payloadLength+24] + ackData + self.data[payloadLength+24:]
-                            elif ackData[4:16] == 'getpubkey\x00\x00\x00':
-                                #objectType = 'getpubkey'
-                                #inventory[inventoryHash] = (objectType, self.streamNumber, ackData[24:], embeddedTime) #We should probably be storing the embeddedTime of the ackData, not the embeddedTime of the original incoming msg message, but this is probably close enough.
-                                #print 'sending the inv for the getpubkey which is actually an acknowledgement (within sendmsg function)'
-                                self.data[:payloadLength+24] + ackData + self.data[payloadLength+24:]
-                            elif ackData[4:16] == 'pubkey\x00\x00\x00\x00\x00\x00':
-                                #objectType = 'pubkey'
-                                #inventory[inventoryHash] = (objectType, self.streamNumber, ackData[24:], embeddedTime) #We should probably be storing the embeddedTime of the ackData, not the embeddedTime of the original incoming msg message, but this is probably close enough.
-                                #print 'sending the inv for a pubkey which is actually an acknowledgement (within sendmsg function)'
-                                self.data[:payloadLength+24] + ackData + self.data[payloadLength+24:]
-                            elif ackData[4:16] == 'broadcast\x00\x00\x00':
-                                #objectType = 'broadcast'
-                                #inventory[inventoryHash] = (objectType, self.streamNumber, ackData[24:], embeddedTime) #We should probably be storing the embeddedTime of the ackData, not the embeddedTime of the original incoming msg message, but this is probably close enough.
-                                #print 'sending the inv for a broadcast which is actually an acknowledgement (within sendmsg function)'
-                                self.data[:payloadLength+24] + ackData + self.data[payloadLength+24:]'''
-                        else:
-                            print 'ACK POW not strong enough to be accepted by the Bitmessage network.'
+                        '''if ackData[4:16] == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00':
+                            inventoryHash = calculateInventoryHash(ackData[24:])
+                            #objectType = 'msg'
+                            #inventory[inventoryHash] = (objectType, self.streamNumber, ackData[24:], embeddedTime) #We should probably be storing the embeddedTime of the ackData, not the embeddedTime of the original incoming msg message, but this is probably close enough.
+                            #print 'sending the inv for the msg which is actually an acknowledgement (within sendmsg function)'
+                            #self.broadcastinv(inventoryHash)
+                            self.data[:payloadLength+24] + ackData + self.data[payloadLength+24:]
+                        elif ackData[4:16] == 'getpubkey\x00\x00\x00':
+                            #objectType = 'getpubkey'
+                            #inventory[inventoryHash] = (objectType, self.streamNumber, ackData[24:], embeddedTime) #We should probably be storing the embeddedTime of the ackData, not the embeddedTime of the original incoming msg message, but this is probably close enough.
+                            #print 'sending the inv for the getpubkey which is actually an acknowledgement (within sendmsg function)'
+                            self.data[:payloadLength+24] + ackData + self.data[payloadLength+24:]
+                        elif ackData[4:16] == 'pubkey\x00\x00\x00\x00\x00\x00':
+                            #objectType = 'pubkey'
+                            #inventory[inventoryHash] = (objectType, self.streamNumber, ackData[24:], embeddedTime) #We should probably be storing the embeddedTime of the ackData, not the embeddedTime of the original incoming msg message, but this is probably close enough.
+                            #print 'sending the inv for a pubkey which is actually an acknowledgement (within sendmsg function)'
+                            self.data[:payloadLength+24] + ackData + self.data[payloadLength+24:]
+                        elif ackData[4:16] == 'broadcast\x00\x00\x00':
+                            #objectType = 'broadcast'
+                            #inventory[inventoryHash] = (objectType, self.streamNumber, ackData[24:], embeddedTime) #We should probably be storing the embeddedTime of the ackData, not the embeddedTime of the original incoming msg message, but this is probably close enough.
+                            #print 'sending the inv for a broadcast which is actually an acknowledgement (within sendmsg function)'
+                            self.data[:payloadLength+24] + ackData + self.data[payloadLength+24:]'''
+                        #else:
+                            #print 'ACK POW not strong enough to be accepted by the Bitmessage network.'
 
                 else:
                     print 'This program cannot decode messages from addresses with versions higher than 1. Ignoring.'
@@ -776,16 +785,22 @@ class receiveDataThread(QThread):
         if inventoryHash in inventory:
             print 'We have already received this pubkey. Ignoring it.'
             return
+        elif isInSqlInventory(inventoryHash):
+            print 'We have already received this pubkey (it is stored on disk in the SQL inventory). Ignoring it.'
+            return
 
         #We must check to make sure the proof of work is sufficient.
-        POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(self.data[24:24+self.payloadLength]).digest()).digest()[4:12])
-        print 'POW:', POW
-        if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
-            printLock.acquire()
-            print 'The Proof of Work in the pubkey message is insufficient. Ignoring it.'
-            print 'pubkey payload length:', len(self.data[24:self.payloadLength+24])
-            print repr(self.data[24:self.payloadLength+24])
-            printLock.release()
+        #POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(self.data[24:24+self.payloadLength]).digest()).digest()[4:12])
+        #print 'POW:', POW
+        #if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
+        #    printLock.acquire()
+        #    print 'The Proof of Work in the pubkey message is insufficient. Ignoring it.'
+        #    print 'pubkey payload length:', len(self.data[24:self.payloadLength+24])
+        #    print repr(self.data[24:self.payloadLength+24])
+        #    printLock.release()
+        #    return
+        if not self.isProofOfWorkSufficient():
+            print 'Proof of work in pubkey message insufficient.'
             return
 
         objectType = 'pubkey'
@@ -844,10 +859,13 @@ class receiveDataThread(QThread):
             objectType = 'pubkeyrequest'
             inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], int(time.time()))
             #First we must check to make sure the proof of work is sufficient.
-            POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(self.data[24:24+self.payloadLength]).digest()).digest()[4:12])
-            print 'POW:', POW
-            if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
-                print 'POW value in getpubkey message is insufficient. Ignoring it.'
+            #POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(self.data[24:24+self.payloadLength]).digest()).digest()[4:12])
+            #print 'POW:', POW
+            #if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
+            #    print 'POW value in getpubkey message is insufficient. Ignoring it.'
+            #    return
+            if not self.isProofOfWorkSufficient():
+                print 'Proof of work in getpubkey message insufficient.'
                 return
             #Now let us make sure that the getpubkey request isn't too old or with a fake (future) time.
             embeddedTime, = unpack('>I',self.data[32:36])
@@ -889,11 +907,13 @@ class receiveDataThread(QThread):
 
                     nonce = 0
                     trialValue = 99999999999999999999
-                    target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte) #The 108 added to the payload length is 8 for the size of the nonce + 50 as an extra penalty simply for having this seperate message exist.
+                    target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
                     print '(For pubkey message) Doing proof of work...'
+                    initialHash = hashlib.sha512(payload).digest()
                     while trialValue > target:
                         nonce += 1
-                        trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + payload).digest()).digest()[4:12])
+                        trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+                        #trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + payload).digest()).digest()[4:12])
                     print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
 
                     payload = pack('>Q',nonce) + payload
@@ -1340,7 +1360,8 @@ class receiveDataThread(QThread):
     #Sends a verack message
     def sendverack(self):
         print 'Sending verack'
-        self.sock.sendall('\xE9\xBE\xB4\xD9\x76\x65\x72\x61\x63\x6B\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x82\x6D\xf0\x68')
+        self.sock.sendall('\xE9\xBE\xB4\xD9\x76\x65\x72\x61\x63\x6B\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
+                                                                                                             #cf  83  e1  35
         self.verackSent = True
         if self.verackReceived == True:
             self.connectionFullyEstablished()
@@ -1406,14 +1427,14 @@ class sendDataThread(QThread):
         while True:
             deststream,command,data = self.mailbox.get()
             printLock.acquire()
-            print 'within a sendDataThread, destream:', deststream,', Command:', command, self
+            print 'sendDataThread, destream:', deststream, ', Command:', command, ', ID:',id(self), ', HOST:', self.HOST
             printLock.release()
 
             if deststream == self.streamNumber or deststream == 0:
                 if command == 'shutdown':
                     if data == self.HOST or data == 'all':
                         printLock.acquire()
-                        print 'sendDataThread thread (associated with', self.HOST,')', self, 'shutting down now.'
+                        print 'sendDataThread thread (associated with', self.HOST,') ID:',id(self), 'shutting down now.'
                         self.sock.close()
                         sendDataQueues.remove(self.mailbox)
                         print 'len of sendDataQueues', len(sendDataQueues)
@@ -1423,7 +1444,7 @@ class sendDataThread(QThread):
                     hostInMessage, specifiedStreamNumber = data
                     if hostInMessage == self.HOST:
                         printLock.acquire()
-                        print 'setting the stream number in the sendData thread to', specifiedStreamNumber, self
+                        print 'setting the stream number in the sendData thread (ID:',id(self), ') to', specifiedStreamNumber
                         printLock.release()
                         self.streamNumber = specifiedStreamNumber
                 elif command == 'send':
@@ -1444,7 +1465,7 @@ class sendDataThread(QThread):
                         #Send out a pong message to keep the connection alive.
                         print 'Sending pong to', self.HOST, 'to keep connection alive.'
                         try:
-                            self.sock.sendall('\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x82\x6D\xf0\x68')
+                            self.sock.sendall('\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'self.sock.send pong failed'
@@ -1753,9 +1774,10 @@ class singleWorker(QThread):
             trialValue = 99999999999999999999
             target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
             print '(For broadcast message) Doing proof of work...'
+            initialHash = hashlib.sha512(payload).digest()
             while trialValue > target:
                 nonce += 1
-                trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + payload).digest()).digest()[4:12])
+                trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
             print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
 
             payload = pack('>Q',nonce) + payload
@@ -1873,9 +1895,10 @@ class singleWorker(QThread):
             target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
             print '(For msg message) Doing proof of work. Target:', target
             powStartTime = time.time()
+            initialHash = hashlib.sha512(payload).digest()
             while trialValue > target:
                 nonce += 1
-                trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + payload).digest()).digest()[4:12])
+                trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
             print '(For msg message) Found proof of work', trialValue, 'Nonce:', nonce
             print 'POW took', int(time.time()-powStartTime), 'seconds.', nonce/(time.time()-powStartTime), 'nonce trials per second.'
             payload = pack('>Q',nonce) + payload
@@ -1921,9 +1944,10 @@ class singleWorker(QThread):
         self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Doing work necessary to request public key.')
         print 'Doing proof-of-work necessary to send getpubkey message.'
         target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
+        initialHash = hashlib.sha512(payload).digest()
         while trialValue > target:
             nonce += 1
-            trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + payload).digest()).digest()[4:12])
+            trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
         print 'Found proof of work', trialValue, 'Nonce:', nonce
 
         payload = pack('>Q',nonce) + payload
@@ -1950,11 +1974,18 @@ class singleWorker(QThread):
         encodedStreamNumber = encodeVarint(toStreamNumber)
         payload = embeddedTime + encodedStreamNumber + ackdata
         target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
+        printLock.acquire()
         print '(For ack message) Doing proof of work...'
+        printLock.release()
+        powStartTime = time.time()
+        initialHash = hashlib.sha512(payload).digest()
         while trialValue > target:
             nonce += 1
-            trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + payload).digest()).digest()[4:12])
+            trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+        printLock.acquire()
         print '(For ack message) Found proof of work', trialValue, 'Nonce:', nonce
+        print 'POW took', int(time.time()-powStartTime), 'seconds.', nonce/(time.time()-powStartTime), 'nonce trials per second.'
+        printLock.release()
         payload = pack('>Q',nonce) + payload
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         headerData = headerData + 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -2508,7 +2539,7 @@ class MyForm(QtGui.QMainWindow):
 
     def updateNetworkStatusTab(self,streamNumber,connectionCount):
         global statusIconColor
-        print 'updating network status tab'
+        #print 'updating network status tab'
         totalNumberOfConnectionsFromAllStreams = 0 #One would think we could use len(sendDataQueues) for this, but sendData threads don't remove themselves from sendDataQueues fast enough for len(sendDataQueues) to be accurate here.
         for currentRow in range(self.ui.tableWidgetConnectionCount.rowCount()):
             rowStreamNumber = int(self.ui.tableWidgetConnectionCount.item(currentRow,0).text())
@@ -2523,7 +2554,7 @@ class MyForm(QtGui.QMainWindow):
 
     def setStatusIcon(self,color):
         global statusIconColor
-        print 'setting status icon color'
+        #print 'setting status icon color'
         if color == 'red':
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/redicon.png"))
             statusIconColor = 'red'
@@ -2653,7 +2684,6 @@ class MyForm(QtGui.QMainWindow):
                             random.seed()
                             ackdata += pack('>Q',random.randrange(1, 18446744073709551615))
                         ackdataForWhichImWatching[ackdata] = 0
-                        print 'ackdataForWhichImWatching within pushButtonSend', repr(ackdataForWhichImWatching)
                         sqlLock.acquire()
                         t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'findingpubkey',1,1,'sent')
                         sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
@@ -3391,9 +3421,9 @@ eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack('>Q',random.randrange
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender thread won't connect to the same remote node twice.
 neededPubkeys = {}
 
-#These constants are not at the top because if changed they will cause particularly unexpected behavior
-averageProofOfWorkNonceTrialsPerByte = 2 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
-payloadLengthExtraBytes = 1 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
+#These constants are not at the top because if changed they will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
+averageProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
+payloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
 if __name__ == "__main__":
     major, minor, revision = sqlite3.sqlite_version_info
@@ -3472,3 +3502,7 @@ if __name__ == "__main__":
             myapp.setWindowFlags(Qt.ToolTip)
     
     sys.exit(app.exec_())
+
+# So far, the Bitmessage protocol, this client, the Wiki, and the forums
+# are all a one-man operation. Bitcoin tips are quite appreciated!
+# 1H5XaDA6fYENLbknwZyjiYXYPQaFjjLX2u
