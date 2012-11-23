@@ -67,7 +67,7 @@ if __name__ == "__main__":
         appdata = path.expanduser(path.join("~", "." + APPNAME + "/"))
 
 
-    #print 'New list of all known nodes:', createDefaultKnownNodes(appdata)
+    print 'New list of all known nodes:', createDefaultKnownNodes(appdata)
     readDefaultKnownNodes(appdata)
 
 
