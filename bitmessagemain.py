@@ -233,7 +233,7 @@ class receiveDataThread(QThread):
             else:
                 self.payloadLength, = unpack('>L',self.data[16:20])
                 if len(self.data) >= self.payloadLength: #check if the whole message has arrived yet. If it has,...
-                    if self.data[20:24] == hashlib.sha512(hashlib.sha512(self.data[24:self.payloadLength+24]).digest()).digest()[0:4]:#test the checksum in the message. If it is correct...
+                    if self.data[20:24] == hashlib.sha512(self.data[24:self.payloadLength+24]).digest()[0:4]:#test the checksum in the message. If it is correct...
                         #print 'message checksum is correct'
                         #The time we've last seen this node is obviously right now since we just received valid data from it. So update the knownNodes list so that other peers can be made aware of its existance.
                         if self.initiatedConnection: #The remote port is only something we should share with others if it is the remote node's incoming port (rather than some random operating-system-assigned outgoing port).
@@ -386,13 +386,13 @@ class receiveDataThread(QThread):
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         headerData = headerData + pack('>L',len(payload))
-        headerData = headerData + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[:4]
+        headerData = headerData + hashlib.sha512(payload).digest()[:4]
         self.sock.send(headerData + payload)
 
     #We have received a broadcast message
     def recbroadcast(self):
         #First we must check to make sure the proof of work is sufficient.
-        POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(self.data[24:24+self.payloadLength]).digest()).digest()[4:12])
+        POW, = unpack('>Q',hashlib.sha512(self.data[24:24+self.payloadLength]).digest()[4:12])
         if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
             print 'The proof of work in this broadcast message is insufficient. Ignoring message.'
             return
@@ -510,11 +510,7 @@ class receiveDataThread(QThread):
     #We have received a msg message.
     def recmsg(self):
         #First we must check to make sure the proof of work is sufficient.
-        '''sha = hashlib.new('sha512')
-        sha.update(self.data[24:24+self.payloadLength])
-        sha2 = hashlib.new('sha512')
-        sha2.update(sha.digest())'''
-        POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(self.data[24:24+self.payloadLength]).digest()).digest()[4:12])
+        POW, = unpack('>Q',hashlib.sha512(self.data[24:24+self.payloadLength]).digest()[4:12])
         print 'POW:', POW
         initialDecryptionSuccessful = False
         if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
@@ -981,11 +977,7 @@ class receiveDataThread(QThread):
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         headerData = headerData + 'getdata\x00\x00\x00\x00\x00'
         headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-        '''sha = hashlib.new('sha512')
-        sha.update(payload)
-        sha2 = hashlib.new('sha512')
-        sha2.update(sha.digest())'''
-        headerData = headerData + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[:4]
+        headerData = headerData + hashlib.sha512(payload).digest()[:4]
         self.sock.send(headerData + payload)
 
     #We have received a getdata request from our peer
@@ -1025,35 +1017,35 @@ class receiveDataThread(QThread):
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData = headerData + 'pubkey\x00\x00\x00\x00\x00\x00'
             headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-            headerData = headerData + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[:4]
+            headerData = headerData + hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
         elif objectType == 'pubkeyrequest':
             print 'sending pubkeyrequest'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData = headerData + 'getpubkey\x00\x00\x00'
             headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-            headerData = headerData + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[:4]
+            headerData = headerData + hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
         elif objectType == 'msg':
             print 'sending msg'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData = headerData + 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
             headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-            headerData = headerData + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[:4]
+            headerData = headerData + hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
         elif objectType == 'broadcast':
             print 'sending broadcast'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData = headerData + 'broadcast\x00\x00\x00'
             headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-            headerData = headerData + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[:4]
+            headerData = headerData + hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
         elif objectType == 'getpubkey':
             print 'sending getpubkey'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData = headerData + 'getpubkey\x00\x00\x00' #version command
             headerData = headerData + pack('>L',len(payload)) #payload length
-            headerData = headerData + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[0:4]
+            headerData = headerData + hashlib.sha512(payload).digest()[0:4]
             self.sock.send(headerData + payload)
         else:
             sys.stderr.write('Error: sendData has been asked to send a strange objectType: %s\n' % str(objectType))
@@ -1066,11 +1058,7 @@ class receiveDataThread(QThread):
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         headerData = headerData + pack('>L',len(payload)) 
-        '''sha = hashlib.new('sha512')
-        sha.update(payload)
-        sha2 = hashlib.new('sha512')
-        sha2.update(sha.digest())'''
-        headerData = headerData + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[:4]
+        headerData = headerData + hashlib.sha512(payload).digest()[:4]
         #self.sock.send(headerData + payload)
         broadcastToSendDataQueues((self.streamNumber, 'send', headerData + payload))
         print 'broadcasting inv with hash:', repr(hash)
@@ -1168,7 +1156,7 @@ class receiveDataThread(QThread):
         payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
         datatosend = '\xE9\xBE\xB4\xD9addr\x00\x00\x00\x00\x00\x00\x00\x00'
         datatosend = datatosend + pack('>L',len(payload)) #payload length
-        datatosend = datatosend + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[0:4]
+        datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
         datatosend = datatosend + payload
 
         if verbose >= 2:
@@ -1236,12 +1224,7 @@ class receiveDataThread(QThread):
         payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
         datatosend = '\xE9\xBE\xB4\xD9addr\x00\x00\x00\x00\x00\x00\x00\x00'
         datatosend = datatosend + pack('>L',len(payload)) #payload length
-        '''sha = hashlib.new('sha512')
-        sha.update(payload)
-        sha2 = hashlib.new('sha512')
-        sha2.update(sha.digest())'''
-
-        datatosend = datatosend + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[0:4]
+        datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
         datatosend = datatosend + payload
 
         if verbose >= 2:
@@ -1314,7 +1297,7 @@ class receiveDataThread(QThread):
             payload += pack('>H',self.remoteNodeIncomingPort)#remote port
             datatosend = '\xE9\xBE\xB4\xD9addr\x00\x00\x00\x00\x00\x00\x00\x00'
             datatosend += pack('>L',len(payload)) #payload length
-            datatosend += hashlib.sha512(hashlib.sha512(payload).digest()).digest()[0:4]
+            datatosend += hashlib.sha512(payload).digest()[0:4]
             datatosend += payload
             broadcastToSendDataQueues((self.streamNumber, 'send', datatosend))'''
 
@@ -1345,7 +1328,7 @@ class receiveDataThread(QThread):
         datatosend = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         datatosend = datatosend + 'version\x00\x00\x00\x00\x00' #version command
         datatosend = datatosend + pack('>L',len(payload)) #payload length
-        datatosend = datatosend + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[0:4]
+        datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
         datatosend = datatosend + payload
 
         printLock.acquire()
@@ -1408,7 +1391,7 @@ class sendDataThread(QThread):
         datatosend = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         datatosend = datatosend + 'version\x00\x00\x00\x00\x00' #version command
         datatosend = datatosend + pack('>L',len(payload)) #payload length
-        datatosend = datatosend + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[0:4]
+        datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
         datatosend = datatosend + payload
 
         printLock.acquire()
@@ -1785,7 +1768,7 @@ class singleWorker(QThread):
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
             headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-            headerData = headerData + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[:4]
+            headerData = headerData + hashlib.sha512(payload).digest()[:4]
             broadcastToSendDataQueues((streamNumber, 'send', headerData + payload))
 
             self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent at '+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
@@ -1906,7 +1889,7 @@ class singleWorker(QThread):
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
             headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-            headerData = headerData + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[:4]
+            headerData = headerData + hashlib.sha512(payload).digest()[:4]
             broadcastToSendDataQueues((toStreamNumber, 'send', headerData + payload))
 
             #Update the status of the message in the 'sent' table to have a 'sent' status
@@ -1953,7 +1936,7 @@ class singleWorker(QThread):
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         headerData = headerData + pack('>L',len(payload))
-        headerData = headerData + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[:4]
+        headerData = headerData + hashlib.sha512(payload).digest()[:4]
         broadcastToSendDataQueues((streamNumber, 'send', headerData + payload))
 
         self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Broacasting the public key request. The recipient''s software must be on. This program will auto-retry if they are offline.')
@@ -1976,7 +1959,7 @@ class singleWorker(QThread):
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         headerData = headerData + 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         headerData = headerData + pack('>L',len(payload))
-        headerData = headerData + hashlib.sha512(hashlib.sha512(payload).digest()).digest()[:4]
+        headerData = headerData + hashlib.sha512(payload).digest()[:4]
         return headerData + payload
 
 class addressGenerator(QThread):
