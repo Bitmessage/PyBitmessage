@@ -18,7 +18,7 @@ try:
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
 except Exception, err:
-    print 'Bitmessage requires PyQt. You can download it from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\' (without quotes).'
+    print 'PyBitmessage requires PyQt. You can download it from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\' (without quotes).'
     print 'Error message:', err
     sys.exit()
 import ConfigParser
@@ -2183,7 +2183,7 @@ class MyForm(QtGui.QMainWindow):
             pass
 
         self.trayIcon = QtGui.QSystemTrayIcon(self)
-        self.trayIcon.setIcon( QtGui.QIcon(':/newPrefix/images/inbox.png') )
+        self.trayIcon.setIcon( QtGui.QIcon(':/newPrefix/images/can-icon-16px.png') )
         traySignal = "activated(QSystemTrayIcon::ActivationReason)"
         QtCore.QObject.connect(self.trayIcon, QtCore.SIGNAL(traySignal), self.__icon_activated)
         menu = QtGui.QMenu()
@@ -2910,7 +2910,6 @@ class MyForm(QtGui.QMainWindow):
 
 
     def click_pushButtonAddAddressBook(self):
-        print 'click_pushButtonAddAddressBook'
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
 
         if self.NewSubscriptionDialogInstance.exec_():
