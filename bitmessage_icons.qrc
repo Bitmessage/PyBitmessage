@@ -1,5 +1,7 @@
 <RCC>
   <qresource prefix="newPrefix">
+    <file>images/can-icon-24px.png</file>
+    <file>images/can-icon-16px.png</file>
     <file>images/greenicon.png</file>
     <file>images/redicon.png</file>
     <file>images/yellowicon.png</file>

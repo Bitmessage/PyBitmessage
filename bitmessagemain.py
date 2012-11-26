@@ -18,7 +18,7 @@ try:
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
 except Exception, err:
-    print 'Bitmessage requires PyQt. You can download it from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\' (without quotes).'
+    print 'PyBitmessage requires PyQt. You can download it from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\' (without quotes).'
     print 'Error message:', err
     sys.exit()
 import ConfigParser
@@ -647,7 +647,7 @@ class receiveDataThread(QThread):
                         sqlReturnQueue.get()
                         sqlLock.release()
 
-                        blockMessage = False #Set to True if the user shouldn't see the message according to black or white lists.
+                        blockMessage = False #Gets set to True if the user shouldn't see the message according to black or white lists.
                         fromAddress = encodeAddress(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest())
                         if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
                             t = (fromAddress,) 
@@ -790,15 +790,6 @@ class receiveDataThread(QThread):
             return
 
         #We must check to make sure the proof of work is sufficient.
-        #POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(self.data[24:24+self.payloadLength]).digest()).digest()[4:12])
-        #print 'POW:', POW
-        #if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
-        #    printLock.acquire()
-        #    print 'The Proof of Work in the pubkey message is insufficient. Ignoring it.'
-        #    print 'pubkey payload length:', len(self.data[24:self.payloadLength+24])
-        #    print repr(self.data[24:self.payloadLength+24])
-        #    printLock.release()
-        #    return
         if not self.isProofOfWorkSufficient():
             print 'Proof of work in pubkey message insufficient.'
             return
@@ -1022,7 +1013,6 @@ class receiveDataThread(QThread):
                     if queryreturn <> []:
                         for row in queryreturn:
                             objectType, payload = row
-                        print 'Sending data out of inventory that came from sql.' #todo: remove line
                         self.sendData(objectType,payload)
                     else:
                         print 'Someone asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. That shouldn\'t have happened.'
@@ -1256,9 +1246,9 @@ class receiveDataThread(QThread):
     #We have received a version message
     def recversion(self):
         if self.payloadLength < 83:
-            self.data = ''
+            #This version message is unreasonably short. Forget it.
             return
-        else:
+        elif not self.verackSent: #There is a potential exploit if we don't check to make sure that we have not already received and accepted a version message: An attacker could connect directly to us, send a msg message with the ackdata set to an invalid version message which would cause us to close the connection to the attacker thus proving that we were able to decode the message. Checking the connectionIsOrWasFullyEstablished variable would also suffice.
             self.remoteProtocolVersion, = unpack('>L',self.data[24:28])
             #print 'remoteProtocolVersion', self.remoteProtocolVersion
             self.myExternalIP = socket.inet_ntoa(self.data[64:68])
@@ -1308,18 +1298,6 @@ class receiveDataThread(QThread):
             self.sendverack()
             if self.initiatedConnection == False:
                 self.sendversion()
-            '''#Now that we have a friendly connection with this peer, we should advertise it to our other peers
-            payload = '\x01'
-            payload +=  pack('>I',int(time.time()))
-            payload += pack('>I',self.streamNumber)
-            payload += pack('>q',1) #service bit flags offered by this node
-            payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + socket.inet_aton(self.HOST)
-            payload += pack('>H',self.remoteNodeIncomingPort)#remote port
-            datatosend = '\xE9\xBE\xB4\xD9addr\x00\x00\x00\x00\x00\x00\x00\x00'
-            datatosend += pack('>L',len(payload)) #payload length
-            datatosend += hashlib.sha512(payload).digest()[0:4]
-            datatosend += payload
-            broadcastToSendDataQueues((self.streamNumber, 'send', datatosend))'''
 
     #Sends a version message
     def sendversion(self):
@@ -1449,9 +1427,9 @@ class sendDataThread(QThread):
                         self.streamNumber = specifiedStreamNumber
                 elif command == 'send':
                     try:
-                        #To prevent some network analysis, 'leak' the data out to our peer after waiting a sort random amount of time.
+                        #To prevent some network analysis, 'leak' the data out to our peer after waiting a random amount of time.
                         random.seed()
-                        #time.sleep(random.randrange(0, 5)) todo: uncomment this line.
+                        time.sleep(random.randrange(0, 5)) 
                         self.sock.sendall(data)
                         self.lastTimeISentData = int(time.time())
                     except:
@@ -1845,7 +1823,7 @@ class singleWorker(QThread):
             payload += messageToTransmit
 
             #Later, if anyone impliments clients that don't send the ack_data, then we should probably check here to make sure that the receiver will make use of this ack_data and not attach it if not.
-            fullAckPayload = self.generateFullAckMessage(ackdata,fromStreamNumber)
+            fullAckPayload = self.generateFullAckMessage(ackdata,toStreamNumber)
             payload += encodeVarint(len(fullAckPayload))
             payload += fullAckPayload
             sendersPrivKey = rsa.PrivateKey(config.getint(fromaddress, 'n'),config.getint(fromaddress, 'e'),config.getint(fromaddress, 'd'),config.getint(fromaddress, 'p'),config.getint(fromaddress, 'q'))
@@ -2183,7 +2161,7 @@ class MyForm(QtGui.QMainWindow):
             pass
 
         self.trayIcon = QtGui.QSystemTrayIcon(self)
-        self.trayIcon.setIcon( QtGui.QIcon(':/newPrefix/images/inbox.png') )
+        self.trayIcon.setIcon( QtGui.QIcon(':/newPrefix/images/can-icon-16px.png') )
         traySignal = "activated(QSystemTrayIcon::ActivationReason)"
         QtCore.QObject.connect(self.trayIcon, QtCore.SIGNAL(traySignal), self.__icon_activated)
         menu = QtGui.QMenu()
@@ -2910,7 +2888,6 @@ class MyForm(QtGui.QMainWindow):
 
 
     def click_pushButtonAddAddressBook(self):
-        print 'click_pushButtonAddAddressBook'
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
 
         if self.NewSubscriptionDialogInstance.exec_():
