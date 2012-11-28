@@ -492,7 +492,7 @@ class receiveDataThread(QThread):
         if messageEncodingType <> 0:
             sqlLock.acquire()
             t = (inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
-            sqlSubmitQueue.put('''INSERT INTO inbox VALUES (,?,?,?,?,?,?)''')
+            sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
             sqlLock.release()
@@ -707,7 +707,7 @@ class receiveDataThread(QThread):
                             else:
                                 body = 'Unknown encoding type.\n\n' + repr(message)
                                 subject = ''
-
+                            print 'within recmsg, inventoryHash is', inventoryHash
                             if messageEncodingType <> 0:
                                 sqlLock.acquire()
                                 t = (inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
@@ -2881,7 +2881,7 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
         self.ui.tableWidgetInbox.setItem(0,2,newItem)
         newItem =  QtGui.QTableWidgetItem(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
-        newItem.setData(Qt.UserRole,inventoryHash)
+        newItem.setData(Qt.UserRole,QByteArray(inventoryHash))
         self.ui.tableWidgetInbox.setItem(0,3,newItem)
 
         self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
