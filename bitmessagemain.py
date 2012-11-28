@@ -496,7 +496,7 @@ class receiveDataThread(QThread):
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
             sqlLock.release()
-            self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHasy,toAddress,fromAddress,subject,body)
+            self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
 
     #We have received a msg message.
     def recmsg(self):
