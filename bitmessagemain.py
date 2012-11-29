@@ -5,7 +5,7 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.1.0'
+softwareVersion = '0.1.1'
 verbose = 2
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -2188,11 +2188,11 @@ class MyForm(QtGui.QMainWindow):
         #Popup menu for the Inbox tab
         self.ui.inboxContextMenuToolbar = QtGui.QToolBar()
           # Actions
-        self.actionReply = self.ui.inboxContextMenuToolbar.addAction("Reply", self.on_action_Reply)
-        self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction("Add sender to your Address Book", self.on_action_addSenderToAddressBook)
+        self.actionReply = self.ui.inboxContextMenuToolbar.addAction("Reply", self.on_action_InboxReply)
+        self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction("Add sender to your Address Book", self.on_action_InboxAddSenderToAddressBook)
         self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction("Move to Trash", self.on_action_InboxTrash)
-        #self.actionDisable = self.ui.inboxContextMenuToolbar.addAction("Disable", self.on_action_disable)
-        #self.actionClipboard = self.ui.inboxContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_clipboard)
+        #self.actionDisable = self.ui.inboxContextMenuToolbar.addAction("Disable", self.on_action_YourIdentitiesDisable)
+        #self.actionClipboard = self.ui.inboxContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_YourIdentitiesClipboard)
         self.ui.tableWidgetInbox.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuInbox)
         self.popMenuInbox = QtGui.QMenu( self )
@@ -2205,10 +2205,10 @@ class MyForm(QtGui.QMainWindow):
         #Popup menu for the Your Identities tab
         self.ui.addressContextMenuToolbar = QtGui.QToolBar()
           # Actions
-        self.actionNew = self.ui.addressContextMenuToolbar.addAction("New", self.on_action_new)
-        self.actionEnable = self.ui.addressContextMenuToolbar.addAction("Enable", self.on_action_enable)
-        self.actionDisable = self.ui.addressContextMenuToolbar.addAction("Disable", self.on_action_disable)
-        self.actionClipboard = self.ui.addressContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_clipboard)
+        self.actionNew = self.ui.addressContextMenuToolbar.addAction("New", self.on_action_YourIdentitiesNew)
+        self.actionEnable = self.ui.addressContextMenuToolbar.addAction("Enable", self.on_action_YourIdentitiesEnable)
+        self.actionDisable = self.ui.addressContextMenuToolbar.addAction("Disable", self.on_action_YourIdentitiesDisable)
+        self.actionClipboard = self.ui.addressContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_YourIdentitiesClipboard)
         self.ui.tableWidgetYourIdentities.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuYourIdentities)
         self.popMenu = QtGui.QMenu( self )
@@ -2311,19 +2311,23 @@ class MyForm(QtGui.QMainWindow):
 
             self.ui.tableWidgetInbox.insertRow(0)
             newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
+            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             newItem.setData(Qt.UserRole,str(toAddress))
             self.ui.tableWidgetInbox.setItem(0,0,newItem)
             if fromLabel == '':
                 newItem =  QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
             else:
                 newItem =  QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
+            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             newItem.setData(Qt.UserRole,str(fromAddress))
             self.ui.tableWidgetInbox.setItem(0,1,newItem)
             newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8'))
             newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
+            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetInbox.setItem(0,2,newItem)
             newItem =  QtGui.QTableWidgetItem(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(received))))
             newItem.setData(Qt.UserRole,QByteArray(msgid))
+            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetInbox.setItem(0,3,newItem)
             #self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
 
@@ -2356,15 +2360,18 @@ class MyForm(QtGui.QMainWindow):
             else:
                 newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
             newItem.setData(Qt.UserRole,str(toAddress))
+            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,0,newItem)
             if fromLabel == '':
                 newItem =  QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
             else:
                 newItem =  QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
             newItem.setData(Qt.UserRole,str(fromAddress))
+            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,1,newItem)
             newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8'))
             newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
+            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,2,newItem)
             if status == 'findingpubkey':
                 newItem =  QtGui.QTableWidgetItem('Waiting on their public key. Will request it again soon.')
@@ -2381,6 +2388,7 @@ class MyForm(QtGui.QMainWindow):
             else:
                 newItem =  QtGui.QTableWidgetItem('Unknown status.  ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
             newItem.setData(Qt.UserRole,ackdata)
+            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,3,newItem)
        
         #Initialize the address book
@@ -3135,7 +3143,7 @@ class MyForm(QtGui.QMainWindow):
         raise SystemExit
         
 
-    def on_action_Reply(self):
+    def on_action_InboxReply(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,0).data(Qt.UserRole).toPyObject())
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,1).data(Qt.UserRole).toPyObject())
@@ -3145,9 +3153,15 @@ class MyForm(QtGui.QMainWindow):
         self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
         self.ui.labelFrom.setText(toAddressAtCurrentInboxRow)
         self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
+        self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n'+self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject())
+        if str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text())[0:3] == 'Re:':
+            self.ui.lineEditSubject.setText(str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text()))
+        else:
+            self.ui.lineEditSubject.setText('Re: '+str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text()))
+        self.ui.radioButtonSpecific.setChecked(True)
         self.ui.tabWidget.setCurrentIndex(1)
 
-    def on_action_addSenderToAddressBook(self):
+    def on_action_InboxAddSenderToAddressBook(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         #self.ui.tableWidgetInbox.item(currentRow,1).data(Qt.UserRole).toPyObject()
         addressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,1).data(Qt.UserRole).toPyObject())
@@ -3250,9 +3264,9 @@ class MyForm(QtGui.QMainWindow):
 
 
     #Group of functions for the Your Identities dialog box
-    def on_action_new(self):
+    def on_action_YourIdentitiesNew(self):
         self.click_NewAddressDialog()
-    def on_action_enable(self):
+    def on_action_YourIdentitiesEnable(self):
         currentRow = self.ui.tableWidgetYourIdentities.currentRow()
         addressAtCurrentRow = self.ui.tableWidgetYourIdentities.item(currentRow,1).text()
         config.set(str(addressAtCurrentRow),'enabled','true')
@@ -3262,7 +3276,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(0,0,0))
         self.ui.tableWidgetYourIdentities.item(currentRow,2).setTextColor(QtGui.QColor(0,0,0))
         self.reloadMyAddressHashes()
-    def on_action_disable(self):
+    def on_action_YourIdentitiesDisable(self):
         currentRow = self.ui.tableWidgetYourIdentities.currentRow()
         addressAtCurrentRow = self.ui.tableWidgetYourIdentities.item(currentRow,1).text()
         config.set(str(addressAtCurrentRow),'enabled','false')
@@ -3272,7 +3286,7 @@ class MyForm(QtGui.QMainWindow):
         with open(appdata + 'keys.dat', 'wb') as configfile:
             config.write(configfile)
         self.reloadMyAddressHashes()
-    def on_action_clipboard(self):
+    def on_action_YourIdentitiesClipboard(self):
         currentRow = self.ui.tableWidgetYourIdentities.currentRow()
         addressAtCurrentRow = self.ui.tableWidgetYourIdentities.item(currentRow,1).text()
         clipboard = QtGui.QApplication.clipboard()
@@ -3406,9 +3420,9 @@ averageProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be pe
 payloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
 if __name__ == "__main__":
-    sqlite_version = sqlite3.sqlite_version_info
+    #sqlite_version = sqlite3.sqlite_version_info
     # Check the Major version, the first element in the array
-    if sqlite_version[0] < 3:
+    if sqlite3.sqlite_version_info[0] < 3:
         print 'This program requires sqlite version 3 or higher because 2 and lower cannot store NULL values. I see version:', sqlite3.sqlite_version_info
         sys.exit()
 
