@@ -2445,6 +2445,9 @@ class MyForm(QtGui.QMainWindow):
 #Below this point, it would be good if all of the necessary global data structures were initialized.
 
         self.rerenderComboBoxSendFrom()
+        if(self.ui.comboBoxSendFrom.count() > 0):
+            self.redrawLabelFrom(self.ui.comboBoxSendFrom.currentIndex())
+
         
         self.listOfOutgoingSynSenderThreads = [] #if we don't maintain this list, the threads will get garbage-collected.
 
