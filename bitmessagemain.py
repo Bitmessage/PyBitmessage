@@ -3415,12 +3415,12 @@ if __name__ == "__main__":
     APPNAME = "PyBitmessage"
     from os import path, environ
     if sys.platform == 'darwin':
-        from AppKit import NSSearchPathForDirectoriesInDomains
-        # http://developer.apple.com/DOCUMENTATION/Cocoa/Reference/Foundation/Miscellaneous/Foundation_Functions/Reference/reference.html#//apple_ref/c/func/NSSearchPathForDirectoriesInDomains
-        # NSApplicationSupportDirectory = 14
-        # NSUserDomainMask = 1
-        # True for expanding the tilde into a fully qualified path
-        appdata = path.join(NSSearchPathForDirectoriesInDomains(14, 1, True)[0], APPNAME) + '/'
+        if "HOME" in environ:
+            appdata = path.join(os.environ["HOME"], "Library/Application support/", APPNAME) + '/'
+        else:
+            print 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
+            sys.exit()
+
     elif 'win' in sys.platform:
         appdata = path.join(environ['APPDATA'], APPNAME) + '\\'
     else:
