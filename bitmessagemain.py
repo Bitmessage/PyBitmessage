@@ -3406,8 +3406,9 @@ averageProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be pe
 payloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
 if __name__ == "__main__":
-    major, minor, revision = sqlite3.sqlite_version_info
-    if major < 3:
+    sqlite_version = sqlite3.sqlite_version_info
+    # Check the Major version, the first element in the array
+    if sqlite_version[0] < 3:
         print 'This program requires sqlite version 3 or higher because 2 and lower cannot store NULL values. I see version:', sqlite3.sqlite_version_info
         sys.exit()
 
