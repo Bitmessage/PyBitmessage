@@ -5,7 +5,7 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.1.1'
+softwareVersion = '0.1.2'
 verbose = 2
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -44,9 +44,10 @@ import random
 import sqlite3
 import threading #used for the locks, not for the threads
 import cStringIO
-from email.parser import Parser
+#from email.parser import Parser
 from time import strftime, localtime
 import os
+import string
 
 #For each stream to which we connect, one outgoingSynSender thread will exist and will create 8 connections with peers.
 class outgoingSynSender(QThread):
@@ -476,9 +477,14 @@ class receiveDataThread(QThread):
         print 'fromAddress:', fromAddress
 
         if messageEncodingType == 2:
-            headers = Parser().parsestr(message)
-            subject = headers['subject']
-            body = headers['body']
+            bodyPositionIndex = string.find(message,'\nBody:')
+            print 'bodyPositionIndex', bodyPositionIndex
+            if bodyPositionIndex > 1:
+                subject = message[8:bodyPositionIndex]
+                body = message[bodyPositionIndex+6:]
+            else:
+                subject = ''
+                body = message
         elif messageEncodingType == 1:
             body = message
             subject = ''
@@ -696,9 +702,13 @@ class receiveDataThread(QThread):
                                             toLabel = addressInKeysFile
 
                             if messageEncodingType == 2:
-                                headers = Parser().parsestr(message)
-                                subject = headers['subject']
-                                body = headers['body']
+                                bodyPositionIndex = string.find(message,'\nBody:')
+                                if bodyPositionIndex > 1:
+                                    subject = message[8:bodyPositionIndex]
+                                    body = message[bodyPositionIndex+6:]
+                                else:
+                                    subject = ''
+                                    body = message
                             elif messageEncodingType == 1:
                                 body = message
                                 subject = ''
@@ -2453,9 +2463,8 @@ class MyForm(QtGui.QMainWindow):
 #Below this point, it would be good if all of the necessary global data structures were initialized.
 
         self.rerenderComboBoxSendFrom()
-        if(self.ui.comboBoxSendFrom.count() > 0):
-            self.redrawLabelFrom(self.ui.comboBoxSendFrom.currentIndex())
 
+        
         
         self.listOfOutgoingSynSenderThreads = [] #if we don't maintain this list, the threads will get garbage-collected.
 
@@ -2804,6 +2813,12 @@ class MyForm(QtGui.QMainWindow):
                 isEnabled = config.getboolean(addressInKeysFile, 'enabled') #I realize that this is poor programming practice but I don't care. It's easier for others to read.
                 if isEnabled:
                     self.ui.comboBoxSendFrom.insertItem(0,unicode(config.get(addressInKeysFile, 'label'),'utf-8'),addressInKeysFile)
+        self.ui.comboBoxSendFrom.insertItem(0,'','')
+        if(self.ui.comboBoxSendFrom.count() == 2):
+            self.ui.comboBoxSendFrom.setCurrentIndex(1)
+            self.redrawLabelFrom(self.ui.comboBoxSendFrom.currentIndex())
+        else:
+            self.ui.comboBoxSendFrom.setCurrentIndex(0)
 
     def connectToStream(self,streamNumber):
         connectionsCount[streamNumber] = 0
@@ -3152,7 +3167,8 @@ class MyForm(QtGui.QMainWindow):
             return
         self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
         self.ui.labelFrom.setText(toAddressAtCurrentInboxRow)
-        self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
+        self.ui.comboBoxSendFrom.setCurrentIndex(0)
+        #self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n'+self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject())
         if str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text())[0:3] == 'Re:':
             self.ui.lineEditSubject.setText(str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text()))
