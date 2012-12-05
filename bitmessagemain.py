@@ -2649,7 +2649,6 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetSent.item(i,0).setText(unicode(toLabel,'utf-8'))
      
     def click_pushButtonSend(self):
-        print 'User clicked \'Send\''
         self.statusBar().showMessage('')
         toAddresses = str(self.ui.lineEditTo.text())
         fromAddress = str(self.ui.labelFrom.text())
@@ -2676,7 +2675,8 @@ class MyForm(QtGui.QMainWindow):
                         self.statusBar().showMessage('Error: You must specify a From address. If you don''t have one, go to the ''Your Identities'' tab.')
                     else:
                         self.statusBar().showMessage('')
-
+                        if connectionsCount[streamNumber] == 0:
+                            self.statusBar().showMessage('Warning: You are currently not connected to any nodes. Bitmessage will do the work necessary to send the message but it won\' send until you connect.')
                         ackdata = ''
                         for i in range(4): #This will make 32 bytes of random data.
                             random.seed()
@@ -3170,10 +3170,10 @@ class MyForm(QtGui.QMainWindow):
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
         #self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n'+self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject())
-        if str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text())[0:3] == 'Re:':
+        if self.ui.tableWidgetInbox.item(currentInboxRow,2).text()[0:3] == 'Re:':
             self.ui.lineEditSubject.setText(str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text()))
         else:
-            self.ui.lineEditSubject.setText('Re: '+str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text()))
+            self.ui.lineEditSubject.setText('Re: '+self.ui.tableWidgetInbox.item(currentInboxRow,2).text())
         self.ui.radioButtonSpecific.setChecked(True)
         self.ui.tabWidget.setCurrentIndex(1)
 
