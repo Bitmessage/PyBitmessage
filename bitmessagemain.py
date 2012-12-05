@@ -213,90 +213,89 @@ class receiveDataThread(QThread):
        
     def processData(self):
         global verbose
-        if verbose >= 2:
-            printLock.acquire()
-            print 'self.data is currently ', repr(self.data)
-            printLock.release()
+        #if verbose >= 2:
+            #printLock.acquire()
+            #print 'self.data is currently ', repr(self.data)
+            #printLock.release()
         if self.data == "":
             pass
         elif self.data[0:4] != '\xe9\xbe\xb4\xd9':
             self.data = ""
             if verbose >= 2:
-                #printLock.acquire()
+                printLock.acquire()
                 sys.stderr.write('The magic bytes were not correct. This may indicate a problem with the program code, or a transmission error occurred.\n')
-                #printLock.release()
-        else: #if there is no reason to discard the data we have so far,
-            if len(self.data) < 20: #if so little of the data has arrived that we can't even unpack the payload length
-                pass
-            else:
-                self.payloadLength, = unpack('>L',self.data[16:20])
-                if len(self.data) >= self.payloadLength: #check if the whole message has arrived yet. If it has,...
-                    if self.data[20:24] == hashlib.sha512(self.data[24:self.payloadLength+24]).digest()[0:4]:#test the checksum in the message. If it is correct...
-                        #print 'message checksum is correct'
-                        #The time we've last seen this node is obviously right now since we just received valid data from it. So update the knownNodes list so that other peers can be made aware of its existance.
-                        if self.initiatedConnection: #The remote port is only something we should share with others if it is the remote node's incoming port (rather than some random operating-system-assigned outgoing port).
-                            knownNodes[self.streamNumber][self.HOST] = (self.PORT,int(time.time()))
-                        remoteCommand = self.data[4:16]
-                        if verbose >= 2:
-                            printLock.acquire()
-                            print 'remoteCommand ', remoteCommand, 'from', self.HOST
-                            printLock.release()
-                        if remoteCommand == 'version\x00\x00\x00\x00\x00':
-                            self.recversion()
-                        elif remoteCommand == 'verack\x00\x00\x00\x00\x00\x00':
-                            self.recverack()
-                        elif remoteCommand == 'addr\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            self.recaddr()
-                        elif remoteCommand == 'getpubkey\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            self.recgetpubkey()
-                        elif remoteCommand == 'pubkey\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            self.recpubkey()
-                        elif remoteCommand == 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            self.recinv()
-                        elif remoteCommand == 'getdata\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            self.recgetdata()
-                        elif remoteCommand == 'getbiginv\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            self.sendBigInv()
-                        elif remoteCommand == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            self.recmsg()
-                        elif remoteCommand == 'broadcast\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            self.recbroadcast()
-                        elif remoteCommand == 'getaddr\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            self.sendaddr()
-                        elif remoteCommand == 'ping\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            self.sendpong()
-                        elif remoteCommand == 'pong\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            pass
-                        elif remoteCommand == 'alert\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            pass
+                printLock.release()
+        elif len(self.data) < 20: #if so little of the data has arrived that we can't even unpack the payload length
+            pass
+        else:
+            self.payloadLength, = unpack('>L',self.data[16:20])
+            if len(self.data) >= self.payloadLength: #check if the whole message has arrived yet. If it has,...
+                if self.data[20:24] == hashlib.sha512(self.data[24:self.payloadLength+24]).digest()[0:4]:#test the checksum in the message. If it is correct...
+                    #print 'message checksum is correct'
+                    #The time we've last seen this node is obviously right now since we just received valid data from it. So update the knownNodes list so that other peers can be made aware of its existance.
+                    if self.initiatedConnection: #The remote port is only something we should share with others if it is the remote node's incoming port (rather than some random operating-system-assigned outgoing port).
+                        knownNodes[self.streamNumber][self.HOST] = (self.PORT,int(time.time()))
+                    remoteCommand = self.data[4:16]
+                    if verbose >= 2:
+                        printLock.acquire()
+                        print 'remoteCommand ', remoteCommand, 'from', self.HOST
+                        printLock.release()
+                    if remoteCommand == 'version\x00\x00\x00\x00\x00':
+                        self.recversion()
+                    elif remoteCommand == 'verack\x00\x00\x00\x00\x00\x00':
+                        self.recverack()
+                    elif remoteCommand == 'addr\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                        self.recaddr()
+                    elif remoteCommand == 'getpubkey\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                        self.recgetpubkey()
+                    elif remoteCommand == 'pubkey\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                        self.recpubkey()
+                    elif remoteCommand == 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                        self.recinv()
+                    elif remoteCommand == 'getdata\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                        self.recgetdata()
+                    elif remoteCommand == 'getbiginv\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                        self.sendBigInv()
+                    elif remoteCommand == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                        self.recmsg()
+                    elif remoteCommand == 'broadcast\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                        self.recbroadcast()
+                    elif remoteCommand == 'getaddr\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                        self.sendaddr()
+                    elif remoteCommand == 'ping\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                        self.sendpong()
+                    elif remoteCommand == 'pong\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                        pass
+                    elif remoteCommand == 'alert\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                        pass
 
-                        self.data = self.data[self.payloadLength+24:]#take this message out and then process the next message
-                        if self.data == '':
-                            while len(self.objectsThatWeHaveYetToGet) > 0:
-                                random.seed()
-                                objectHash, = random.sample(self.objectsThatWeHaveYetToGet,  1)
-                                if objectHash in inventory:
-                                    print 'Inventory (in memory) already has object that we received in an inv message.'
-                                    del self.objectsThatWeHaveYetToGet[objectHash]
-                                elif isInSqlInventory(objectHash):
-                                    print 'Inventory (SQL on disk) already has object that we received in an inv message.'
-                                    del self.objectsThatWeHaveYetToGet[objectHash]
-                                else:
-                                    print 'processData function making request for object:', repr(objectHash)
-                                    self.sendgetdata(objectHash)
-                                    del self.objectsThatWeHaveYetToGet[objectHash] #It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
-                                    break
-                            printLock.acquire()
-                            print 'within processData, length of objectsThatWeHaveYetToGet is now', len(self.objectsThatWeHaveYetToGet)
-                            printLock.release()
-                        self.processData()
-                    else:
-                        print 'Checksum incorrect. Clearing this message.'
-                        self.data = self.data[self.payloadLength+24:]
+                    self.data = self.data[self.payloadLength+24:]#take this message out and then process the next message
+                    if self.data == '':
+                        while len(self.objectsThatWeHaveYetToGet) > 0:
+                            random.seed()
+                            objectHash, = random.sample(self.objectsThatWeHaveYetToGet,  1)
+                            if objectHash in inventory:
+                                print 'Inventory (in memory) already has object that we received in an inv message.'
+                                del self.objectsThatWeHaveYetToGet[objectHash]
+                            elif isInSqlInventory(objectHash):
+                                print 'Inventory (SQL on disk) already has object that we received in an inv message.'
+                                del self.objectsThatWeHaveYetToGet[objectHash]
+                            else:
+                                print 'processData function making request for object:', repr(objectHash)
+                                self.sendgetdata(objectHash)
+                                del self.objectsThatWeHaveYetToGet[objectHash] #It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
+                                break
+                        printLock.acquire()
+                        print 'within processData, length of objectsThatWeHaveYetToGet is now', len(self.objectsThatWeHaveYetToGet)
+                        printLock.release()
+                    self.processData()
+                else:
+                    print 'Checksum incorrect. Clearing this message.'
+                    self.data = self.data[self.payloadLength+24:]
 
     def isProofOfWorkSufficient(self):
         POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(self.data[24:32]+ hashlib.sha512(self.data[32:24+self.payloadLength]).digest()).digest()).digest()[0:8])
-        print 'POW:', POW
+        #print 'POW:', POW
         #Notice that I have divided the averageProofOfWorkNonceTrialsPerByte by two. This makes the POW requirement easier. This gives us wiggle-room: if we decide that we want to make the POW easier, the change won't obsolete old clients because they already expect a lower POW. If we decide that the current work done by clients feels approperate then we can remove this division by 2 and make the requirement match what is actually done by a sending node. If we want to raise the POW requirement then old nodes will HAVE to upgrade no matter what.
         return POW < 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * (averageProofOfWorkNonceTrialsPerByte/2))
 
@@ -1079,9 +1078,11 @@ class receiveDataThread(QThread):
         headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         headerData = headerData + pack('>L',len(payload)) 
         headerData = headerData + hashlib.sha512(payload).digest()[:4]
-        #self.sock.send(headerData + payload)
-        broadcastToSendDataQueues((self.streamNumber, 'send', headerData + payload))
+        printLock.acquire()
         print 'broadcasting inv with hash:', repr(hash)
+        printLock.release()
+        broadcastToSendDataQueues((self.streamNumber, 'send', headerData + payload))
+
 
     #We have received an addr message.
     def recaddr(self):
@@ -1139,10 +1140,10 @@ class receiveDataThread(QThread):
                 break #giving up on unpacking any more. We should still be connected however.
             #print 'Within recaddr(): IP', recaddrIP, ', Port', recaddrPort, ', i', i
             hostFromAddrMessage = socket.inet_ntoa(self.data[52+lengthOfNumberOfAddresses+(34*i):56+lengthOfNumberOfAddresses+(34*i)])
-            print 'hostFromAddrMessage', hostFromAddrMessage
+            #print 'hostFromAddrMessage', hostFromAddrMessage
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>I',self.data[24+lengthOfNumberOfAddresses+(34*i):28+lengthOfNumberOfAddresses+(34*i)]) #This is the 'time' value in the received addr message.
             if hostFromAddrMessage not in knownNodes[recaddrStream]:
-                if len(knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time())-10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800): #If we have more than 20000 nodes in our list already then just forget about it. Also, make sure that the time that someone else received a message from this node is within three hours from now.
+                if len(knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time())-10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800): #If we have more than 20000 nodes in our list already then just forget about adding more. Also, make sure that the time that someone else received a message from this node is within three hours from now.
                     knownNodes[recaddrStream][hostFromAddrMessage] = (recaddrPort, timeSomeoneElseReceivedMessageFromThisNode)
                     print 'added new node', hostFromAddrMessage, 'to knownNodes.'
                     needToWriteKnownNodesToDisk = True
@@ -1153,13 +1154,13 @@ class receiveDataThread(QThread):
                 if (timeLastReceivedMessageFromThisNode < timeSomeoneElseReceivedMessageFromThisNode) and (timeSomeoneElseReceivedMessageFromThisNode < int(time.time())):
                     knownNodes[recaddrStream][hostFromAddrMessage] = (PORT, timeSomeoneElseReceivedMessageFromThisNode)
                     if PORT != recaddrPort:
-                        sys.stderr.write('Strange occurance: The port specified in an addr message (%s) does not match the port (%s) that this program (or some other peer) used to connect to it (%s). Perhaps they changed their port or are using a strange NAT configuration.\n' % (str(recaddrPort), str(PORT), str(hostFromAddrMessage)))
+                        print 'Strange occurance: The port specified in an addr message', str(recaddrPort),'does not match the port',str(PORT),'that this program (or some other peer) used to connect to it',str(hostFromAddrMessage),'. Perhaps they changed their port or are using a strange NAT configuration.'
         if needToWriteKnownNodesToDisk: #Runs if any nodes were new to us. Also, share those nodes with our peers.
             output = open(appdata + 'knownnodes.dat', 'wb')
             pickle.dump(knownNodes, output)
             output.close()
             self.broadcastaddr(listOfAddressDetailsToBroadcastToPeers)
-        print 'knownNodes currently:', knownNodes
+        print 'knownNodes currently has', len(knownNodes[recaddrStream]), 'nodes for this stream.'
 
     #Function runs when we want to broadcast an addr message to all of our peers. Runs when we learn of nodes that we didn't previously know about and want to share them with our peers.
     def broadcastaddr(self,listOfAddressDetailsToBroadcastToPeers):
@@ -1414,9 +1415,9 @@ class sendDataThread(QThread):
         message = ''
         while True:
             deststream,command,data = self.mailbox.get()
-            printLock.acquire()
-            print 'sendDataThread, destream:', deststream, ', Command:', command, ', ID:',id(self), ', HOST:', self.HOST
-            printLock.release()
+            #printLock.acquire()
+            #print 'sendDataThread, destream:', deststream, ', Command:', command, ', ID:',id(self), ', HOST:', self.HOST
+            #printLock.release()
 
             if deststream == self.streamNumber or deststream == 0:
                 if command == 'shutdown':
@@ -1428,6 +1429,7 @@ class sendDataThread(QThread):
                         print 'len of sendDataQueues', len(sendDataQueues)
                         printLock.release()
                         break
+                #When you receive an incoming connection, a sendDataThread is created even though you don't yet know what stream number the remote peer is interested in. They will tell you in a version message and if you too are interested in that stream then you will continue on with the connection and will set the streamNumber of this send data thread here:
                 elif command == 'setStreamNumber':
                     hostInMessage, specifiedStreamNumber = data
                     if hostInMessage == self.HOST:
@@ -1451,7 +1453,9 @@ class sendDataThread(QThread):
                 elif command == 'pong':
                     if self.lastTimeISentData < (int(time.time()) - 298):
                         #Send out a pong message to keep the connection alive.
+                        printLock.acquire()
                         print 'Sending pong to', self.HOST, 'to keep connection alive.'
+                        printLock.release()
                         try:
                             self.sock.sendall('\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
                             self.lastTimeISentData = int(time.time())
@@ -1461,6 +1465,11 @@ class sendDataThread(QThread):
                             sendDataQueues.remove(self.mailbox)
                             print 'sendDataThread thread', self, 'ending now'
                             break
+            else:
+                printLock.acquire()
+                print 'sendDataThread ID:',id(self),'ignoring command', command,'because it is not in stream',deststream
+                printLock.release()
+
 
 #Wen you want to command a sendDataThread to do something, like shutdown or send some data, this function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are responsible for putting their queue into (and out of) the sendDataQueues list.
 def broadcastToSendDataQueues(data):
@@ -2448,8 +2457,8 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL("itemChanged(QTableWidgetItem *)"), self.tableWidgetYourIdentitiesItemChanged)
         QtCore.QObject.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL("itemChanged(QTableWidgetItem *)"), self.tableWidgetAddressBookItemChanged)
         QtCore.QObject.connect(self.ui.tableWidgetSubscriptions, QtCore.SIGNAL("itemChanged(QTableWidgetItem *)"), self.tableWidgetSubscriptionsItemChanged)
-        QtCore.QObject.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL("itemClicked(QTableWidgetItem *)"), self.tableWidgetInboxItemClicked)
-        QtCore.QObject.connect(self.ui.tableWidgetSent, QtCore.SIGNAL("itemClicked(QTableWidgetItem *)"), self.tableWidgetSentItemClicked)
+        QtCore.QObject.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL("itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
+        QtCore.QObject.connect(self.ui.tableWidgetSent, QtCore.SIGNAL("itemSelectionChanged ()"), self.tableWidgetSentItemClicked)
 
         #Put the colored icon on the status bar
         #self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
@@ -2649,7 +2658,6 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetSent.item(i,0).setText(unicode(toLabel,'utf-8'))
      
     def click_pushButtonSend(self):
-        print 'User clicked \'Send\''
         self.statusBar().showMessage('')
         toAddresses = str(self.ui.lineEditTo.text())
         fromAddress = str(self.ui.labelFrom.text())
@@ -2676,7 +2684,8 @@ class MyForm(QtGui.QMainWindow):
                         self.statusBar().showMessage('Error: You must specify a From address. If you don''t have one, go to the ''Your Identities'' tab.')
                     else:
                         self.statusBar().showMessage('')
-
+                        if connectionsCount[streamNumber] == 0:
+                            self.statusBar().showMessage('Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.')
                         ackdata = ''
                         for i in range(4): #This will make 32 bytes of random data.
                             random.seed()
@@ -3170,10 +3179,10 @@ class MyForm(QtGui.QMainWindow):
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
         #self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n'+self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject())
-        if str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text())[0:3] == 'Re:':
+        if self.ui.tableWidgetInbox.item(currentInboxRow,2).text()[0:3] == 'Re:':
             self.ui.lineEditSubject.setText(str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text()))
         else:
-            self.ui.lineEditSubject.setText('Re: '+str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text()))
+            self.ui.lineEditSubject.setText('Re: '+self.ui.tableWidgetInbox.item(currentInboxRow,2).text())
         self.ui.radioButtonSpecific.setChecked(True)
         self.ui.tabWidget.setCurrentIndex(1)
 
