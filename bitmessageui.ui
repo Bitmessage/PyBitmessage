@@ -880,7 +880,7 @@ p, li { white-space: pre-wrap; }
          <rect>
           <x>350</x>
           <y>130</y>
-          <width>281</width>
+          <width>361</width>
           <height>16</height>
          </rect>
         </property>
@@ -906,7 +906,7 @@ p, li { white-space: pre-wrap; }
          <rect>
           <x>350</x>
           <y>150</y>
-          <width>171</width>
+          <width>351</width>
           <height>16</height>
          </rect>
         </property>
