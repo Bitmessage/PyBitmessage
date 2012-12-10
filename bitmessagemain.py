@@ -79,7 +79,9 @@ class outgoingSynSender(QThread):
                         resetTime = int(time.time())
                 self.alreadyAttemptedConnectionsList.append(HOST)
                 PORT, timeNodeLastSeen = knownNodes[self.streamNumber][HOST]
+                printLock.acquire()
                 print 'Trying an outgoing connection to', HOST, ':', PORT
+                printLock.release()
                 sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
                 try:
                     sock.connect((HOST, PORT))
@@ -87,7 +89,9 @@ class outgoingSynSender(QThread):
                     self.emit(SIGNAL("passObjectThrough(PyQt_PyObject)"),rd)
                     rd.setup(sock,HOST,PORT,self.streamNumber,self.selfInitiatedConnectionList)
                     rd.start()
+                    printLock.acquire()
                     print self, 'connected to', HOST, 'during outgoing attempt.'
+                    printLock.release()
                     
                     sd = sendDataThread()
                     sd.setup(sock,HOST,PORT,self.streamNumber)
@@ -380,10 +384,6 @@ class receiveDataThread(QThread):
     #We have received a broadcast message
     def recbroadcast(self):
         #First we must check to make sure the proof of work is sufficient.
-        #POW, = unpack('>Q',hashlib.sha512(self.data[24:24+self.payloadLength]).digest()[4:12])
-        #if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
-        #    print 'The proof of work in this broadcast message is insufficient. Ignoring message.'
-        #    return
         if not self.isProofOfWorkSufficient():
             print 'Proof of work in broadcast message insufficient.'
             return
@@ -506,12 +506,6 @@ class receiveDataThread(QThread):
     #We have received a msg message.
     def recmsg(self):
         #First we must check to make sure the proof of work is sufficient.
-        #POW, = unpack('>Q',hashlib.sha512(self.data[24:24+self.payloadLength]).digest()[4:12])
-        #print 'POW:', POW
-        
-        #if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
-        #    print 'Proof of work in msg message insufficient.'
-        #    return
         if not self.isProofOfWorkSufficient():
             print 'Proof of work in msg message insufficient.'
             return
@@ -628,7 +622,9 @@ class receiveDataThread(QThread):
                     readPosition += ackLength
                     payloadSigniture = data[readPosition:readPosition+sendersNLength] #We're using the length of the sender's n because it should match the signiture size.
                     sendersPubkey = rsa.PublicKey(convertStringToInt(sendersN),convertStringToInt(sendersE))
-                    print 'senders Pubkey', sendersPubkey
+                    print 'sender\'s Pubkey', sendersPubkey
+                    
+                    #Check the cryptographic signiture
                     verifyPassed = False
                     try:
                         rsa.verify(data[:-len(payloadSigniture)],payloadSigniture, sendersPubkey)
@@ -643,9 +639,9 @@ class receiveDataThread(QThread):
                         ripe = hashlib.new('ripemd160')
                         ripe.update(sha.digest())
 
-                        #We have reached the end of the public key. Let's store it in case we want to reply to this person.
+                        #Let's store the public key in case we want to reply to this person.
                         #We don't have the correct nonce in order to send out a pubkey message so we'll just fill it with 1's. We won't be able to send this pubkey to others (without doing the proof of work ourselves, which this program is programmed to not do.)
-                        t = (ripe.digest(),False,'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+data[20+messageVersionLength:endOfThePublicKeyPosition],int(time.time())+2419200) #after one month we may remove this pub key from our database.
+                        t = (ripe.digest(),False,'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+data[20+messageVersionLength:endOfThePublicKeyPosition],int(time.time())+2419200) #after one month we may remove this pub key from our database. (2419200 = a month)
                         sqlLock.acquire()
                         sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
                         sqlSubmitQueue.put(t)
@@ -654,7 +650,7 @@ class receiveDataThread(QThread):
 
                         blockMessage = False #Gets set to True if the user shouldn't see the message according to black or white lists.
                         fromAddress = encodeAddress(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest())
-                        if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
+                        if config.get('bitmessagesettings', 'blackwhitelist') == 'black': #If we are using a blacklist
                             t = (fromAddress,) 
                             sqlLock.acquire()
                             sqlSubmitQueue.put('''SELECT label, enabled FROM blacklist where address=?''')
@@ -686,10 +682,10 @@ class receiveDataThread(QThread):
                             print 'fromAddress:', fromAddress
                             print 'First 150 characters of message:', repr(message[:150])
 
-                            #Now I would like to find the destination address (my address). Right now all I have is the ripe hash. I realize that I
-                            #could have a data structure devoted to this task, or maintain an indexed table in the sql database, but I would prefer to
-                            #minimize the number of data structures this program uses, and searching linearly through a short list for each message
-                            #received doesn't take very long anyway.
+                            #Look up the destination address (my address) based on the destination ripe hash.
+                            #I realize that I could have a data structure devoted to this task, or maintain an indexed table
+                            #in the sql database, but I would prefer to minimize the number of data structures this program
+                            #uses. Searching linearly through the user's short list of addresses doesn't take very long anyway.
                             configSections = config.sections()
                             for addressInKeysFile in configSections:
                                 if addressInKeysFile <> 'bitmessagesettings':
@@ -1091,7 +1087,7 @@ class receiveDataThread(QThread):
         numberOfAddressesIncluded, lengthOfNumberOfAddresses = decodeVarint(self.data[24:29])
 
         if verbose >= 1:
-            print 'addr message contains', numberOfAddressesIncluded, 'addresses.'
+            print 'addr message contains', numberOfAddressesIncluded, 'IP addresses.'
             #print 'lengthOfNumberOfAddresses', lengthOfNumberOfAddresses
 
         if numberOfAddressesIncluded > 1000:
@@ -2344,8 +2340,9 @@ class MyForm(QtGui.QMainWindow):
             newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetInbox.setItem(0,2,newItem)
-            newItem =  QtGui.QTableWidgetItem(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(received))))
+            newItem =  myTableWidgetItem(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(received))))
             newItem.setData(Qt.UserRole,QByteArray(msgid))
+            newItem.setData(33,int(received))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetInbox.setItem(0,3,newItem)
             #self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
@@ -2393,20 +2390,21 @@ class MyForm(QtGui.QMainWindow):
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,2,newItem)
             if status == 'findingpubkey':
-                newItem =  QtGui.QTableWidgetItem('Waiting on their public key. Will request it again soon.')
+                newItem =  myTableWidgetItem('Waiting on their public key. Will request it again soon.')
             elif status == 'sentmessage':
-                newItem =  QtGui.QTableWidgetItem('Message sent. Waiting on acknowledgement. Sent at ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(lastactiontime)))
+                newItem =  myTableWidgetItem('Message sent. Waiting on acknowledgement. Sent at ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(lastactiontime)))
             elif status == 'doingpow':
-                newItem =  QtGui.QTableWidgetItem('Need to do work to send message. Work is queued.')
+                newItem =  myTableWidgetItem('Need to do work to send message. Work is queued.')
             elif status == 'ackreceived':
-                newItem =  QtGui.QTableWidgetItem('Acknowledgement of the message received ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
+                newItem =  myTableWidgetItem('Acknowledgement of the message received ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
             elif status == 'broadcastpending':
-                newItem =  QtGui.QTableWidgetItem('Doing the work necessary to send broadcast...')
+                newItem =  myTableWidgetItem('Doing the work necessary to send broadcast...')
             elif status == 'broadcastsent':
-                newItem =  QtGui.QTableWidgetItem('Broadcast on ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
+                newItem =  myTableWidgetItem('Broadcast on ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
             else:
-                newItem =  QtGui.QTableWidgetItem('Unknown status.  ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
+                newItem =  myTableWidgetItem('Unknown status.  ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
             newItem.setData(Qt.UserRole,ackdata)
+            newItem.setData(33,int(lastactiontime))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,3,newItem)
        
@@ -2473,8 +2471,6 @@ class MyForm(QtGui.QMainWindow):
 
         self.rerenderComboBoxSendFrom()
 
-        
-        
         self.listOfOutgoingSynSenderThreads = [] #if we don't maintain this list, the threads will get garbage-collected.
 
         self.connectToStream(1)
@@ -2566,9 +2562,13 @@ class MyForm(QtGui.QMainWindow):
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/redicon.png"))
             statusIconColor = 'red'
         if color == 'yellow':
+            if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
+                self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
             statusIconColor = 'yellow'
         if color == 'green':
+            if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
+                self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/greenicon.png"))
             statusIconColor = 'green'
 
@@ -2735,8 +2735,9 @@ class MyForm(QtGui.QMainWindow):
                         newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
                         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
                         self.ui.tableWidgetSent.setItem(0,2,newItem)
-                        newItem =  QtGui.QTableWidgetItem('Just pressed ''send'' '+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+                        newItem =  myTableWidgetItem('Just pressed ''send'' '+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
                         newItem.setData(Qt.UserRole,ackdata)
+                        newItem.setData(33,int(time.time()))
                         self.ui.tableWidgetSent.setItem(0,3,newItem)
 
                         self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())
@@ -2915,8 +2916,9 @@ class MyForm(QtGui.QMainWindow):
         newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
         self.ui.tableWidgetInbox.setItem(0,2,newItem)
-        newItem =  QtGui.QTableWidgetItem(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+        newItem =  myTableWidgetItem(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
         newItem.setData(Qt.UserRole,QByteArray(inventoryHash))
+        newItem.setData(33,int(time.time()))
         self.ui.tableWidgetInbox.setItem(0,3,newItem)
 
         self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
@@ -3331,18 +3333,16 @@ class MyForm(QtGui.QMainWindow):
 
     def tableWidgetYourIdentitiesItemChanged(self):
         currentRow = self.ui.tableWidgetYourIdentities.currentRow()
-        try:
+        if currentRow >= 0:
             addressAtCurrentRow = self.ui.tableWidgetYourIdentities.item(currentRow,1).text()
             config.set(str(addressAtCurrentRow),'label',str(self.ui.tableWidgetYourIdentities.item(currentRow,0).text().toUtf8()))
             with open(appdata + 'keys.dat', 'wb') as configfile:
                 config.write(configfile)
-        except Exception, err:
-            print 'Program Exception in tableWidgetYourIdentitiesItemChanged:', err
-        self.rerenderComboBoxSendFrom()
-        #self.rerenderInboxFromLabels()
-        self.rerenderInboxToLabels()
-        self.rerenderSentFromLabels()
-        #self.rerenderSentToLabels()
+            self.rerenderComboBoxSendFrom()
+            #self.rerenderInboxFromLabels()
+            self.rerenderInboxToLabels()
+            self.rerenderSentFromLabels()
+            #self.rerenderSentToLabels()
 
     def tableWidgetAddressBookItemChanged(self):
         currentRow = self.ui.tableWidgetAddressBook.currentRow()
@@ -3420,6 +3420,10 @@ class MyForm(QtGui.QMainWindow):
             status,addressVersionNumber,streamNumber,hash = decodeAddress(address)
             broadcastSendersForWhichImWatching[hash] = 0
 
+#In order for the time columns on the Inbox and Sent tabs to be sorted correctly (rather than alphabetically), we need to overload the < operator and use this class instead of QTableWidgetItem.
+class myTableWidgetItem(QTableWidgetItem):
+    def __lt__(self,other):
+        return int(self.data(33).toPyObject()) < int(other.data(33).toPyObject())
 
 
 sendDataQueues = [] #each sendData thread puts its queue in this list.
