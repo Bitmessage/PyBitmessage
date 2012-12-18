@@ -5,7 +5,7 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.1.2'
+softwareVersion = '0.1.4'
 verbose = 2
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -147,7 +147,8 @@ class outgoingSynSender(QThread):
                     #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"SOCKS4 error: "+str(err))
                 except socket.error, err:
                     if config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
-                        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Problem: Bitmessage can not connect to the SOCKS server. "+str(err))
+                        print 'Bitmessage MIGHT be having trouble connecting to the SOCKS server. '+str(err)
+                        #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Problem: Bitmessage can not connect to the SOCKS server. "+str(err))
                     else:
                         print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
                         PORT, timeLastSeen = knownNodes[self.streamNumber][HOST]
@@ -155,7 +156,7 @@ class outgoingSynSender(QThread):
                             del knownNodes[self.streamNumber][HOST]
                             print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
                 except Exception, err:
-                    print 'An acception has occurred in the outgoingSynSender thread that was not caught by other exception types:', err
+                    print 'An exception has occurred in the outgoingSynSender thread that was not caught by other exception types:', err
             time.sleep(1)
 
 #Only one singleListener thread will ever exist. It creates the receiveDataThread and sendDataThread for each incoming connection. Note that it cannot set the stream number because it is not known yet- the other node will have to tell us its stream number in a version message. If we don't care about their stream, we will close the connection (within the recversion function of the recieveData thread)
@@ -339,10 +340,10 @@ class receiveDataThread(QThread):
                             random.seed()
                             objectHash, = random.sample(self.objectsThatWeHaveYetToGet,  1)
                             if objectHash in inventory:
-                                print 'Inventory (in memory) already has object that we received in an inv message.'
+                                print 'Inventory (in memory) already has object the hash of which we received in an inv message.'
                                 del self.objectsThatWeHaveYetToGet[objectHash]
                             elif isInSqlInventory(objectHash):
-                                print 'Inventory (SQL on disk) already has object that we received in an inv message.'
+                                print 'Inventory (SQL on disk) already has object the hash of which we received in an inv message.'
                                 del self.objectsThatWeHaveYetToGet[objectHash]
                             else:
                                 print 'processData function making request for object:', repr(objectHash)
@@ -457,17 +458,20 @@ class receiveDataThread(QThread):
         if self.payloadLength < 66:
             print 'The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.'
             return
-
+        inventoryLock.acquire()
         inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
         if inventoryHash in inventory:
             print 'We have already received this broadcast object. Ignoring.'
+            inventoryLock.release()
             return
         elif isInSqlInventory(inventoryHash):
             print 'We have already received this broadcast object (it is stored on disk in the SQL inventory). Ignoring it.'
+            inventoryLock.release()
             return
         #It is valid so far. Let's let our peers know about it.
         objectType = 'broadcast'
         inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], embeddedTime)
+        inventoryLock.release()
         self.broadcastinv(inventoryHash)
         self.emit(SIGNAL("incrementNumberOfBroadcastsProcessed()"))
         
@@ -580,20 +584,25 @@ class receiveDataThread(QThread):
             return
         readPosition += 4
         inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
-        if inventoryHash in inventory:
-            print 'We have already received this msg message. Ignoring.'
-            return
-        elif isInSqlInventory(inventoryHash):
-            print 'We have already received this msg message (it is stored on disk in the SQL inventory). Ignoring it.'
-            return
+
         streamNumberAsClaimedByMsg, streamNumberAsClaimedByMsgLength = decodeVarint(self.data[readPosition:readPosition+9])
         if streamNumberAsClaimedByMsg != self.streamNumber:
             print 'The stream number encoded in this msg (' + streamNumberAsClaimedByMsg + ') message does not match the stream number on which it was received. Ignoring it.'
             return
         readPosition += streamNumberAsClaimedByMsgLength
+        inventoryLock.acquire()
+        if inventoryHash in inventory:
+            print 'We have already received this msg message. Ignoring.'
+            inventoryLock.release()
+            return
+        elif isInSqlInventory(inventoryHash):
+            print 'We have already received this msg message (it is stored on disk in the SQL inventory). Ignoring it.'
+            inventoryLock.release()
+            return
         #This msg message is valid. Let's let our peers know about it.
         objectType = 'msg'
         inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], embeddedTime)
+        inventoryLock.release()
         self.broadcastinv(inventoryHash)
         self.emit(SIGNAL("incrementNumberOfMessagesProcessed()"))
 
@@ -846,21 +855,25 @@ class receiveDataThread(QThread):
 
     #We have received a pubkey
     def recpubkey(self):
-        inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])     
-        if inventoryHash in inventory:
-            print 'We have already received this pubkey. Ignoring it.'
-            return
-        elif isInSqlInventory(inventoryHash):
-            print 'We have already received this pubkey (it is stored on disk in the SQL inventory). Ignoring it.'
-            return
-
         #We must check to make sure the proof of work is sufficient.
         if not self.isProofOfWorkSufficient():
             print 'Proof of work in pubkey message insufficient.'
             return
 
+        inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
+        inventoryLock.acquire()
+        if inventoryHash in inventory:
+            print 'We have already received this pubkey. Ignoring it.'
+            inventoryLock.release()
+            return
+        elif isInSqlInventory(inventoryHash):
+            print 'We have already received this pubkey (it is stored on disk in the SQL inventory). Ignoring it.'
+            inventoryLock.release()
+            return
+
         objectType = 'pubkey'
         inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], int(time.time()))
+        inventoryLock.release()
         self.broadcastinv(inventoryHash)
         self.emit(SIGNAL("incrementNumberOfPubkeysProcessed()"))
 
@@ -906,127 +919,128 @@ class receiveDataThread(QThread):
 
     #We have received a getpubkey message
     def recgetpubkey(self):
+        if not self.isProofOfWorkSufficient():
+            print 'Proof of work in getpubkey message insufficient.'
+            return
+        inventoryLock.acquire()
         inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
         if inventoryHash in inventory:
             print 'We have already received this getpubkey request. Ignoring it.'
+            inventoryLock.release()
+            return
         elif isInSqlInventory(inventoryHash):
             print 'We have already received this getpubkey request (it is stored on disk in the SQL inventory). Ignoring it.'
-        else:
-            objectType = 'pubkeyrequest'
-            inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], int(time.time()))
-            #First we must check to make sure the proof of work is sufficient.
-            #POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(self.data[24:24+self.payloadLength]).digest()).digest()[4:12])
-            #print 'POW:', POW
-            #if POW > 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
-            #    print 'POW value in getpubkey message is insufficient. Ignoring it.'
-            #    return
-            if not self.isProofOfWorkSufficient():
-                print 'Proof of work in getpubkey message insufficient.'
-                return
-            #Now let us make sure that the getpubkey request isn't too old or with a fake (future) time.
-            embeddedTime, = unpack('>I',self.data[32:36])
-            if embeddedTime > int(time.time())+10800:
-                print 'The time in this getpubkey message is too new. Ignoring it. Time:', embeddedTime
-                return
-            if embeddedTime < int(time.time())-maximumAgeOfAnObjectThatIAmWillingToAccept:
-                print 'The time in this getpubkey message is too old. Ignoring it. Time:', embeddedTime
-                return
-            addressVersionNumber, addressVersionLength = decodeVarint(self.data[36:42])
-            if addressVersionNumber > 1:
-                print 'The addressVersionNumber of the pubkey is too high. Can\'t understand. Ignoring it.'
-                return
-            streamNumber, streamNumberLength = decodeVarint(self.data[36+addressVersionLength:42+addressVersionLength])
-            if streamNumber <> self.streamNumber:
-                print 'The streamNumber', streamNumber, 'doesn\'t match our stream number:', self.streamNumber
-                return
-            if self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength] in myAddressHashes:
-                print 'Found getpubkey requested hash in my list of hashes.'
-                #check to see whether we have already calculated the nonce and transmitted this key before
-                sqlLock.acquire()#released at the bottom of this payload generation section
-                t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],) #this prevents SQL injection
-                sqlSubmitQueue.put('SELECT * FROM pubkeys WHERE hash=?')
+            inventoryLock.release()
+            return
+
+        objectType = 'pubkeyrequest'
+        inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], int(time.time()))
+        inventoryLock.release()
+
+        #Now let us make sure that the getpubkey request isn't too old or with a fake (future) time.
+        embeddedTime, = unpack('>I',self.data[32:36])
+        if embeddedTime > int(time.time())+10800:
+            print 'The time in this getpubkey message is too new. Ignoring it. Time:', embeddedTime
+            return
+        if embeddedTime < int(time.time())-maximumAgeOfAnObjectThatIAmWillingToAccept:
+            print 'The time in this getpubkey message is too old. Ignoring it. Time:', embeddedTime
+            return
+        addressVersionNumber, addressVersionLength = decodeVarint(self.data[36:42])
+        if addressVersionNumber > 1:
+            print 'The addressVersionNumber of the pubkey is too high. Can\'t understand. Ignoring it.'
+            return
+        streamNumber, streamNumberLength = decodeVarint(self.data[36+addressVersionLength:42+addressVersionLength])
+        if streamNumber <> self.streamNumber:
+            print 'The streamNumber', streamNumber, 'doesn\'t match our stream number:', self.streamNumber
+            return
+        if self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength] in myAddressHashes:
+            print 'Found getpubkey requested hash in my list of hashes.'
+            #check to see whether we have already calculated the nonce and transmitted this key before
+            sqlLock.acquire()#released at the bottom of this payload generation section
+            t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],) #this prevents SQL injection
+            sqlSubmitQueue.put('SELECT * FROM pubkeys WHERE hash=?')
+            sqlSubmitQueue.put(t)
+            queryreturn = sqlReturnQueue.get()
+            #print 'queryreturn', queryreturn
+
+            if queryreturn == []:
+                print 'pubkey request is for me but the pubkey is not in our database of pubkeys. Making it.'
+                payload = '\x00\x00\x00\x01' #bitfield of features supported by me (see the wiki).
+                payload += self.data[36:36+addressVersionLength+streamNumberLength]
+                #print int(config.get(encodeAddress(addressVersionNumber,streamNumber,self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength]), 'n'))
+                nString = convertIntToString(int(config.get(encodeAddress(addressVersionNumber,streamNumber,self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength]), 'n')))
+                eString = convertIntToString(config.getint(encodeAddress(addressVersionNumber,streamNumber,self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength]), 'e'))
+                payload += encodeVarint(len(nString))
+                payload += nString
+                payload += encodeVarint(len(eString))
+                payload += eString
+
+                nonce = 0
+                trialValue = 99999999999999999999
+                target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
+                print '(For pubkey message) Doing proof of work...'
+                initialHash = hashlib.sha512(payload).digest()
+                while trialValue > target:
+                    nonce += 1
+                    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+                    #trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + payload).digest()).digest()[4:12])
+                print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
+
+                payload = pack('>Q',nonce) + payload
+                t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],True,payload,int(time.time())+1209600) #after two weeks (1,209,600 seconds), we may remove our own pub key from our database. It will be regenerated and put back in the database if it is requested.
+                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
-                #print 'queryreturn', queryreturn
 
-                if queryreturn == []:
-                    print 'pubkey request is for me but the pubkey is not in our database of pubkeys. Making it.'
-                    payload = '\x00\x00\x00\x01' #bitfield of features supported by me (see the wiki).
-                    payload += self.data[36:36+addressVersionLength+streamNumberLength]
-                    #print int(config.get(encodeAddress(addressVersionNumber,streamNumber,self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength]), 'n'))
-                    nString = convertIntToString(int(config.get(encodeAddress(addressVersionNumber,streamNumber,self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength]), 'n')))
-                    eString = convertIntToString(config.getint(encodeAddress(addressVersionNumber,streamNumber,self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength]), 'e'))
-                    payload += encodeVarint(len(nString))
-                    payload += nString
-                    payload += encodeVarint(len(eString))
-                    payload += eString
+            #Now that we have the key either from getting it earlier or making it and storing it ourselves...
+            t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],) #this prevents SQL injection
+            sqlSubmitQueue.put('SELECT * FROM pubkeys WHERE hash=?')
+            sqlSubmitQueue.put(t)
+            queryreturn = sqlReturnQueue.get()
 
-                    nonce = 0
-                    trialValue = 99999999999999999999
-                    target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
-                    print '(For pubkey message) Doing proof of work...'
-                    initialHash = hashlib.sha512(payload).digest()
-                    while trialValue > target:
-                        nonce += 1
-                        trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
-                        #trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + payload).digest()).digest()[4:12])
-                    print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
-
-                    payload = pack('>Q',nonce) + payload
-                    t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],True,payload,int(time.time())+1209600) #after two weeks (1,209,600 seconds), we may remove our own pub key from our database. It will be regenerated and put back in the database if it is requested.
-                    sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
+            for row in queryreturn:
+                hash, havecorrectnonce, payload, timeLastRequested = row
+                if timeLastRequested < int(time.time())+604800: #if the last time anyone asked about this hash was this week, extend the time.
+                    t = (int(time.time())+604800,hash)
+                    sqlSubmitQueue.put('''UPDATE pubkeys set time=? WHERE hash=?''')
                     sqlSubmitQueue.put(t)
                     queryreturn = sqlReturnQueue.get()
 
-                #Now that we have the key either from getting it earlier or making it and storing it ourselves...
-                t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],) #this prevents SQL injection
-                sqlSubmitQueue.put('SELECT * FROM pubkeys WHERE hash=?')
-                sqlSubmitQueue.put(t)
-                queryreturn = sqlReturnQueue.get()
+            sqlLock.release()
 
+            inventoryHash = calculateInventoryHash(payload)
+            objectType = 'pubkey'
+            inventory[inventoryHash] = (objectType, self.streamNumber, payload, int(time.time()))
+            self.broadcastinv(inventoryHash)
+
+        else:
+            print 'Hash in getpubkey is not mine.'
+            #..but lets see if we have it stored from when it came in from someone else.
+            t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],) #this prevents SQL injection
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''SELECT hash, time FROM pubkeys WHERE hash=? AND havecorrectnonce='True' ''')
+            sqlSubmitQueue.put(t)
+            queryreturn = sqlReturnQueue.get()
+            sqlLock.release()
+            print 'queryreturn', queryreturn
+            if queryreturn <> []:
+                print 'we have the public key. sending it.'
+                #We have it. Let's send it.
                 for row in queryreturn:
-                    hash, havecorrectnonce, payload, timeLastRequested = row
+                    hash, timeLastRequested = row
                     if timeLastRequested < int(time.time())+604800: #if the last time anyone asked about this hash was this week, extend the time.
                         t = (int(time.time())+604800,hash)
                         sqlSubmitQueue.put('''UPDATE pubkeys set time=? WHERE hash=?''')
                         sqlSubmitQueue.put(t)
                         queryreturn = sqlReturnQueue.get()
-
-                sqlLock.release()
-
-                inventoryHash = calculateInventoryHash(payload)
+                inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
                 objectType = 'pubkey'
-                inventory[inventoryHash] = (objectType, self.streamNumber, payload, int(time.time()))
+                inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], int(time.time()))
                 self.broadcastinv(inventoryHash)
-
             else:
-                print 'Hash in getpubkey is not mine.'
-                #..but lets see if we have it stored from when it came in from someone else.
-                t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],) #this prevents SQL injection
-                sqlLock.acquire()
-                sqlSubmitQueue.put('''SELECT hash, time FROM pubkeys WHERE hash=? AND havecorrectnonce='True' ''')
-                sqlSubmitQueue.put(t)
-                queryreturn = sqlReturnQueue.get()
-                sqlLock.release()
-                print 'queryreturn', queryreturn
-                if queryreturn <> []:
-                    print 'we have the public key. sending it.'
-                    #We have it. Let's send it.
-                    for row in queryreturn:
-                        hash, timeLastRequested = row
-                        if timeLastRequested < int(time.time())+604800: #if the last time anyone asked about this hash was this week, extend the time.
-                            t = (int(time.time())+604800,hash)
-                            sqlSubmitQueue.put('''UPDATE pubkeys set time=? WHERE hash=?''')
-                            sqlSubmitQueue.put(t)
-                            queryreturn = sqlReturnQueue.get()
-                    inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
-                    objectType = 'pubkey'
-                    inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], int(time.time()))
-                    self.broadcastinv(inventoryHash)
-                else:
-                    #We don't have it. We'll need to forward the getpubkey request to our peers.
-                    print 'We don\' have the public key. Forwarding getpubkey message to peers.'
-                    broadcastToSendDataQueues((self.streamNumber,'send',self.data[:self.payloadLength+24]))
+                #We don't have it. We'll need to forward the getpubkey request to our peers.
+                print 'We don\' have the public key. Forwarding getpubkey message to peers.'
+                broadcastToSendDataQueues((self.streamNumber,'send',self.data[:self.payloadLength+24]))
 
     #We have received an inv message
     def recinv(self):
@@ -1249,7 +1263,7 @@ class receiveDataThread(QThread):
         addrsInMyStream = {}
         addrsInChildStreamLeft = {}
         addrsInChildStreamRight = {}
-        print 'knownNodes', knownNodes
+        #print 'knownNodes', knownNodes
 
         #We are going to share a maximum number of 1000 addrs with our peer. 500 from this stream, 250 from the left child stream, and 250 from the right child stream.
 
@@ -2091,57 +2105,6 @@ class addressGenerator(QThread):
         self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
 
 
-'''class streamThread(QThread):
-    def __init__(self, parent = None):
-        QThread.__init__(self, parent)
-        self.mailbox = Queue.Queue()
-        streamQueues.append(self.mailbox)
-        self.sendDataQueues = []
-
-    def __del__(self):
-        self.wait()
-
-
-    def broadcastTosendDataQueues(self,data):
-        for q in self.sendDataQueues:
-            q.put(data)
-
-    def setup(self,streamNumber):
-        self.streamNumber = streamNumber
-
-
-
-    def run(self):
-        #self.listOfSendDataThreads = []
-        for i in range(1,2):
-            x = sendDataThread()
-            #self.listOfSendDataThreads.append(x)
-            x.setup(i,self.sendDataQueues)
-            #x.daemon = False
-            x.start()
-            #print 'length of listOfSendDataThreads', len(self.listOfSendDataThreads)
-
-
-        while True:
-            print self.streamNumber
-            data = self.mailbox.get()
-            if data == 'shutdown':
-                self.broadcastTosendDataQueues('shutdown')
-                print 'Stream thread', self, 'shutting down now'
-                print 'len of streamQueues', len(streamQueues)
-                while len(self.sendDataQueues) > 0 :
-                    pass
-                streamQueues.remove(self.mailbox)
-                return
-            print self, 'received a message:', data
-            returnedthing = str(self)+"dololly"
-            self.emit(SIGNAL("updatebox(PyQt_PyObject)"),returnedthing)'''
-
-            #time.sleep(1)
-        #while True:
-        #    print 'test'
-        #    time.sleep(1)
-
 class iconGlossaryDialog(QtGui.QDialog):
     def __init__(self,parent):
         QtGui.QWidget.__init__(self, parent)
@@ -2149,6 +2112,7 @@ class iconGlossaryDialog(QtGui.QDialog):
         self.ui.setupUi(self) 
         self.parent = parent
         self.ui.labelPortNumber.setText('You are using TCP port ' + str(config.getint('bitmessagesettings', 'port')) + '. (This can be changed in the settings).')
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
 class helpDialog(QtGui.QDialog):
     def __init__(self,parent):
@@ -3573,6 +3537,7 @@ broadcastSendersForWhichImWatching = {}
 statusIconColor = 'red'
 connectionsCount = {} #Used for the 'network status' tab.
 connectionsCountLock = threading.Lock()
+inventoryLock = threading.Lock() #Guarantees that two receiveDataThreads don't receive and process the same message concurrently (probably sent by a malicious individual)
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack('>Q',random.randrange(1, 18446744073709551615))
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender thread won't connect to the same remote node twice.
 neededPubkeys = {}
