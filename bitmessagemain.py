@@ -2471,8 +2471,6 @@ class MyForm(QtGui.QMainWindow):
 
         self.rerenderComboBoxSendFrom()
 
-        
-        
         self.listOfOutgoingSynSenderThreads = [] #if we don't maintain this list, the threads will get garbage-collected.
 
         self.connectToStream(1)
@@ -2564,9 +2562,13 @@ class MyForm(QtGui.QMainWindow):
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/redicon.png"))
             statusIconColor = 'red'
         if color == 'yellow':
+            if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
+                self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
             statusIconColor = 'yellow'
         if color == 'green':
+            if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
+                self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/greenicon.png"))
             statusIconColor = 'green'
 
