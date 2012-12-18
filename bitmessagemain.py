@@ -44,10 +44,10 @@ import random
 import sqlite3
 import threading #used for the locks, not for the threads
 import cStringIO
-#from email.parser import Parser
 from time import strftime, localtime
 import os
 import string
+import socks
 
 #For each stream to which we connect, one outgoingSynSender thread will exist and will create 8 connections with peers.
 class outgoingSynSender(QThread):
@@ -79,10 +79,42 @@ class outgoingSynSender(QThread):
                         resetTime = int(time.time())
                 self.alreadyAttemptedConnectionsList.append(HOST)
                 PORT, timeNodeLastSeen = knownNodes[self.streamNumber][HOST]
-                printLock.acquire()
-                print 'Trying an outgoing connection to', HOST, ':', PORT
-                printLock.release()
-                sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
+                sock.settimeout(6)
+                if config.get('bitmessagesettings', 'socksproxytype') == 'none':
+                    printLock.acquire()
+                    print 'Trying an outgoing connection to', HOST, ':', PORT
+                    printLock.release()
+                    #sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+                elif config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS4a':
+                    printLock.acquire()
+                    print '(Using SOCKS4a) Trying an outgoing connection to', HOST, ':', PORT
+                    printLock.release()
+                    proxytype = socks.PROXY_TYPE_SOCKS4
+                    sockshostname = config.get('bitmessagesettings', 'sockshostname')
+                    socksport = config.getint('bitmessagesettings', 'socksport')
+                    rdns = True #Do domain name lookups through the proxy; though this setting doesn't really matter since we won't be doing any domain name lookups anyway.
+                    if config.getboolean('bitmessagesettings', 'socksauthentication'):
+                        socksusername = config.get('bitmessagesettings', 'socksusername')
+                        sockspassword = config.get('bitmessagesettings', 'sockspassword')
+                        sock.setproxy(proxytype, sockshostname, socksport, rdns, socksusername, sockspassword)
+                    else:
+                        sock.setproxy(proxytype, sockshostname, socksport, rdns)
+                elif config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
+                    printLock.acquire()
+                    print '(Using SOCKS5) Trying an outgoing connection to', HOST, ':', PORT
+                    printLock.release()
+                    proxytype = socks.PROXY_TYPE_SOCKS5
+                    sockshostname = config.get('bitmessagesettings', 'sockshostname')
+                    socksport = config.getint('bitmessagesettings', 'socksport')
+                    rdns = True #Do domain name lookups through the proxy; though this setting doesn't really matter since we won't be doing any domain name lookups anyway.
+                    if config.getboolean('bitmessagesettings', 'socksauthentication'):
+                        socksusername = config.get('bitmessagesettings', 'socksusername')
+                        sockspassword = config.get('bitmessagesettings', 'sockspassword')
+                        sock.setproxy(proxytype, sockshostname, socksport, rdns, socksusername, sockspassword)
+                    else:
+                        sock.setproxy(proxytype, sockshostname, socksport, rdns)
+
                 try:
                     sock.connect((HOST, PORT))
                     rd = receiveDataThread()
@@ -98,13 +130,38 @@ class outgoingSynSender(QThread):
                     sd.start()
                     sd.sendVersionMessage()
 
-                except Exception, err:
+                except socks.GeneralProxyError, err:
                     print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
                     PORT, timeLastSeen = knownNodes[self.streamNumber][HOST]
-                    if (int(time.time())-timeLastSeen) > 172800: # for nodes older than 48 hours old, delete from the knownNodes data-structure.
-                        if len(knownNodes[self.streamNumber]) > 1000: #as long as we have more than 1000 hosts in our list
+                    if (int(time.time())-timeLastSeen) > 172800 and len(knownNodes[self.streamNumber]) > 1000: # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
+                        del knownNodes[self.streamNumber][HOST]
+                        print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
+                except socks.Socks5AuthError, err:
+                    self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"SOCKS5 Authentication problem: "+str(err))
+                except socks.Socks5Error, err:
+                    pass
+                    print 'SOCKS5 error. (It is possible that the server wants authentication).)' ,str(err)
+                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"SOCKS5 error. Server might require authentication. "+str(err))
+                except socks.Socks4Error, err:
+                    print 'Socks4Error:', err
+                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"SOCKS4 error: "+str(err))
+                except socket.error, err:
+                    if config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
+                        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Problem: Bitmessage can not connect to the SOCKS server. "+str(err))
+                    else:
+                        print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
+                        PORT, timeLastSeen = knownNodes[self.streamNumber][HOST]
+                        if (int(time.time())-timeLastSeen) > 172800 and len(knownNodes[self.streamNumber]) > 1000: # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
                             del knownNodes[self.streamNumber][HOST]
                             print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
+
+
+                """except Exception, err:
+                    print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
+                    PORT, timeLastSeen = knownNodes[self.streamNumber][HOST]
+                    if (int(time.time())-timeLastSeen) > 172800 and len(knownNodes[self.streamNumber]) > 1000: # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
+                        del knownNodes[self.streamNumber][HOST]
+                        print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'  """
             time.sleep(1)
 
 #Only one singleListener thread will ever exist. It creates the receiveDataThread and sendDataThread for each incoming connection. Note that it cannot set the stream number because it is not known yet- the other node will have to tell us its stream number in a version message. If we don't care about their stream, we will close the connection (within the recversion function of the recieveData thread)
@@ -114,6 +171,9 @@ class singleListener(QThread):
         
 
     def run(self):
+        #We don't want to accept incoming connections if the user is using a SOCKS proxy. If they eventually select proxy 'none' then this will start listening for connections.
+        while config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
+            time.sleep(300)
 
         print 'bitmessage listener running'
         HOST = '' # Symbolic name meaning all available interfaces
@@ -123,17 +183,19 @@ class singleListener(QThread):
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         sock.bind((HOST, PORT))
         sock.listen(2)
-        self.incomingConnectionList = []
+        self.incomingConnectionList = [] #This list isn't used for anything. The reason it exists is because receiveData threads expect that a list be passed to them. They expect this because the outgoingSynSender thread DOES use a similar list to keep track of the number of outgoing connections it has created.
 
 
         while True:
-        #for i in range(0,1): #uncomment this line and comment the line above this to accept only one connection.
-            rd = receiveDataThread()
+            #We don't want to accept incoming connections if the user is using a SOCKS proxy. If they eventually select proxy 'none' then this will start listening for connections.
+            while config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
+                time.sleep(10)
             a,(HOST,PORT) = sock.accept()
             while HOST in connectedHostsList:
                 print 'incoming connection is from a host in connectedHostsList (we are already connected to it). Ignoring it.'
                 a.close()
                 a,(HOST,PORT) = sock.accept()
+            rd = receiveDataThread()
             self.emit(SIGNAL("passObjectThrough(PyQt_PyObject)"),rd)
             rd.setup(a,HOST,PORT,-1,self.incomingConnectionList)
             print self, 'connected to', HOST,'during INCOMING request.'
@@ -213,7 +275,11 @@ class receiveDataThread(QThread):
             connectionsCount[self.streamNumber] -= 1
             self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"),self.streamNumber,connectionsCount[self.streamNumber])
             connectionsCountLock.release()
-        del connectedHostsList[self.HOST]
+        try:
+            del connectedHostsList[self.HOST]
+        except Exception, err:
+            #I think that the only way an exception could occur here is if we connect to ourselves because it would try to delete the same IP from connectedHostsList twice.
+            print 'Could not delete', self.HOST, 'from connectedHostsList.', err
        
     def processData(self):
         global verbose
@@ -831,7 +897,7 @@ class receiveDataThread(QThread):
 
         print 'within recpubkey, addressVersion', addressVersion
         print 'streamNumber', streamNumber
-        print 'ripe', ripe
+        print 'ripe', repr(ripe)
         print 'n=', convertStringToInt(nString)
         print 'e=', convertStringToInt(eString)
 
@@ -1137,6 +1203,8 @@ class receiveDataThread(QThread):
             #print 'Within recaddr(): IP', recaddrIP, ', Port', recaddrPort, ', i', i
             hostFromAddrMessage = socket.inet_ntoa(self.data[52+lengthOfNumberOfAddresses+(34*i):56+lengthOfNumberOfAddresses+(34*i)])
             #print 'hostFromAddrMessage', hostFromAddrMessage
+            if hostFromAddrMessage == '127.0.0.1':
+                continue
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>I',self.data[24+lengthOfNumberOfAddresses+(34*i):28+lengthOfNumberOfAddresses+(34*i)]) #This is the 'time' value in the received addr message.
             if hostFromAddrMessage not in knownNodes[recaddrStream]:
                 if len(knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time())-10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800): #If we have more than 20000 nodes in our list already then just forget about adding more. Also, make sure that the time that someone else received a message from this node is within three hours from now.
@@ -1550,7 +1618,8 @@ class sqlThread(QThread):
             self.cur.execute('''DELETE FROM pubkeys WHERE hash='1234' ''')
             self.conn.commit()
             if transmitdata == '':
-                sys.stderr.write('Problem: The version of SQLite you have cannot store Null values. Please download and install the latest revision of your version of Python (for example, the latest Python 2.7 revision) and try again. Exiting.\n')
+                sys.stderr.write('Problem: The version of SQLite you have cannot store Null values. Please download and install the latest revision of your version of Python (for example, the latest Python 2.7 revision) and try again.\n')
+                sys.stderr.write('PyBitmessage will now exist very abruptly. You may now see threading errors related to this abrupt exit but the problem you need to solve is related to SQLite.\n\n')
                 sys.exit()
         except Exception, err:
             print err
@@ -2015,6 +2084,7 @@ class addressGenerator(QThread):
         config.add_section(address)
         config.set(address,'label',self.label)
         config.set(address,'enabled','true')
+        config.set(address,'decoy','false')
         config.set(address,'n',str(privkey['n']))
         config.set(address,'e',str(privkey['e']))
         config.set(address,'d',str(privkey['d']))
@@ -2110,14 +2180,56 @@ class settingsDialog(QtGui.QDialog):
         self.parent = parent
         self.ui.checkBoxStartOnLogon.setChecked(config.getboolean('bitmessagesettings', 'startonlogon'))
         self.ui.checkBoxMinimizeToTray.setChecked(config.getboolean('bitmessagesettings', 'minimizetotray'))
-        self.ui.lineEditTCPPort.setText(str(config.get('bitmessagesettings', 'port')))
         self.ui.checkBoxShowTrayNotifications.setChecked(config.getboolean('bitmessagesettings', 'showtraynotifications'))
         self.ui.checkBoxStartInTray.setChecked(config.getboolean('bitmessagesettings', 'startintray'))
         if 'darwin' in sys.platform:
             self.ui.checkBoxStartOnLogon.setDisabled(True)
-            self.ui.labelSettingsNote.setText('Some options have been disabled because they haven\'t yet been implimented for your operating system.')
+            self.ui.checkBoxMinimizeToTray.setDisabled(True)
+            self.ui.checkBoxShowTrayNotifications.setDisabled(True)
+            self.ui.checkBoxStartInTray.setDisabled(True)
+            self.ui.labelSettingsNote.setText('Options have been disabled because they either arn\'t applicable or because they haven\'t yet been implimented for your operating system.')
         elif 'linux' in sys.platform:
-            pass
+            self.ui.checkBoxStartOnLogon.setDisabled(True)
+            self.ui.labelSettingsNote.setText('Options have been disabled because they either arn\'t applicable or because they haven\'t yet been implimented for your operating system.')
+        #On the Network settings tab:
+        self.ui.lineEditTCPPort.setText(str(config.get('bitmessagesettings', 'port')))
+        self.ui.checkBoxAuthentication.setChecked(config.getboolean('bitmessagesettings', 'socksauthentication'))
+        if str(config.get('bitmessagesettings', 'socksproxytype')) == 'none':
+            self.ui.comboBoxProxyType.setCurrentIndex(0)
+            self.ui.lineEditSocksHostname.setEnabled(False)
+            self.ui.lineEditSocksPort.setEnabled(False)
+            self.ui.lineEditSocksUsername.setEnabled(False)
+            self.ui.lineEditSocksPassword.setEnabled(False)
+            self.ui.checkBoxAuthentication.setEnabled(False)
+        elif str(config.get('bitmessagesettings', 'socksproxytype')) == 'SOCKS4a':
+            self.ui.comboBoxProxyType.setCurrentIndex(1)
+            self.ui.lineEditTCPPort.setEnabled(False)
+        elif str(config.get('bitmessagesettings', 'socksproxytype')) == 'SOCKS5':
+            self.ui.comboBoxProxyType.setCurrentIndex(2)
+            self.ui.lineEditTCPPort.setEnabled(False)
+        
+        self.ui.lineEditSocksHostname.setText(str(config.get('bitmessagesettings', 'sockshostname')))
+        self.ui.lineEditSocksPort.setText(str(config.get('bitmessagesettings', 'socksport')))
+        self.ui.lineEditSocksUsername.setText(str(config.get('bitmessagesettings', 'socksusername')))
+        self.ui.lineEditSocksPassword.setText(str(config.get('bitmessagesettings', 'sockspassword')))
+        QtCore.QObject.connect(self.ui.comboBoxProxyType, QtCore.SIGNAL("currentIndexChanged(int)"), self.comboBoxProxyTypeChanged)
+
+    def comboBoxProxyTypeChanged(self,comboBoxIndex):
+        if comboBoxIndex == 0:
+            self.ui.lineEditSocksHostname.setEnabled(False)
+            self.ui.lineEditSocksPort.setEnabled(False)
+            self.ui.lineEditSocksUsername.setEnabled(False)
+            self.ui.lineEditSocksPassword.setEnabled(False)
+            self.ui.checkBoxAuthentication.setEnabled(False)
+            self.ui.lineEditTCPPort.setEnabled(True)
+        elif comboBoxIndex == 1 or comboBoxIndex == 2:
+            self.ui.lineEditSocksHostname.setEnabled(True)
+            self.ui.lineEditSocksPort.setEnabled(True)
+            self.ui.checkBoxAuthentication.setEnabled(True)
+            if self.ui.checkBoxAuthentication.isChecked():
+                self.ui.lineEditSocksUsername.setEnabled(True)
+                self.ui.lineEditSocksPassword.setEnabled(True)
+            self.ui.lineEditTCPPort.setEnabled(False)
 
 class NewSubscriptionDialog(QtGui.QDialog):
     def __init__(self,parent):
@@ -2161,7 +2273,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui = Ui_MainWindow() #Jonathan changed this line
         self.ui.setupUi(self) #Jonathan left this line alone
 
-        if 'win' in sys.platform:
+        if 'win32' in sys.platform or 'win64' in sys.platform:
             #Auto-startup for Windows
             RUN_PATH = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
             self.settings = QSettings(RUN_PATH, QSettings.NativeFormat)
@@ -2182,6 +2294,9 @@ class MyForm(QtGui.QMainWindow):
         menu = QtGui.QMenu()
         self.exitAction = menu.addAction("Exit", self.close)
         self.trayIcon.setContextMenu(menu)
+        #I'm currently under the impression that Mac users have different expectations for the tray icon. They don't necessairly expect it to open the main window when clicked and they still expect a program showing a tray icon to also be in the dock.
+        if 'darwin' in sys.platform:
+            self.trayIcon.show()
 
         #FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL("triggered()"), self.close)
@@ -2492,12 +2607,14 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
 
     def click_actionManageKeys(self):
-        reply = QtGui.QMessageBox.question(self, 'Open keys.dat?','You may manage your keys by editing the keys.dat file stored in\n' + appdata + '\nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)', QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-
-        if reply == QtGui.QMessageBox.Yes:
-            self.openKeysFile()
-        else:
-            pass
+        if 'darwin' in sys.platform or 'linux' in sys.platform:
+            reply = QtGui.QMessageBox.information(self, 'keys.dat?','You may manage your keys by editing the keys.dat file stored in\n' + appdata + '\nIt is important that you back up this file.', QMessageBox.Ok)
+        elif sys.platform == 'win32' or sys.platform == 'win64':
+            reply = QtGui.QMessageBox.question(self, 'Open keys.dat?','You may manage your keys by editing the keys.dat file stored in\n' + appdata + '\nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)', QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+            if reply == QtGui.QMessageBox.Yes:
+                self.openKeysFile()
+            else:
+                pass
 
     def openKeysFile(self):
         if 'linux' in sys.platform:
@@ -2506,13 +2623,13 @@ class MyForm(QtGui.QMainWindow):
             os.startfile(appdata + '\\keys.dat')
 
     def changeEvent(self, event):
-        if config.getboolean('bitmessagesettings', 'minimizetotray'):
+        if config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
             if event.type() == QtCore.QEvent.WindowStateChange:
                 if self.windowState() & QtCore.Qt.WindowMinimized:
                     self.hide()
                     self.trayIcon.show()
                     #self.hidden = True
-                    if 'win' in sys.platform:
+                    if 'win32' in sys.platform or 'win64' in sys.platform:
                         self.setWindowFlags(Qt.ToolTip)
                 elif event.oldState() & QtCore.Qt.WindowMinimized:
                     #The window state has just been changed to Normal/Maximised/FullScreen
@@ -2521,13 +2638,23 @@ class MyForm(QtGui.QMainWindow):
 
     def __icon_activated(self, reason):
         if reason == QtGui.QSystemTrayIcon.Trigger:
-            self.trayIcon.hide()
-            self.setWindowFlags(Qt.Window)
-            self.show()
-            if 'win' in sys.platform:
+            if 'linux' in sys.platform:
+                self.trayIcon.hide()
+                self.setWindowFlags(Qt.Window)
+                self.show()
+            elif 'win32' in sys.platform or 'win64' in sys.platform:
+                self.trayIcon.hide()
+                self.setWindowFlags(Qt.Window)
+                self.show()
                 self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
                 self.activateWindow()
-
+            elif 'darwin' in sys.platform:
+                #self.trayIcon.hide() #this line causes a segmentation fault
+                #self.setWindowFlags(Qt.Window)
+                #self.show()
+                self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+                self.activateWindow()
+            
     def incrementNumberOfMessagesProcessed(self):
         self.numberOfMessagesProcessed += 1
         self.ui.labelMessageCount.setText('Processed ' + str(self.numberOfMessagesProcessed) + ' person-to-person messages.')
@@ -2845,6 +2972,7 @@ class MyForm(QtGui.QMainWindow):
         a = outgoingSynSender()
         self.listOfOutgoingSynSenderThreads.append(a)
         QtCore.QObject.connect(a, QtCore.SIGNAL("passObjectThrough(PyQt_PyObject)"), self.connectObjectToSignals)
+        QtCore.QObject.connect(a, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
         a.setup(streamNumber)
         a.start()
 
@@ -2956,7 +3084,6 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage('The address you entered was invalid. Ignoring it.')
 
     def click_pushButtonAddSubscription(self):
-        print 'click_pushButtonAddSubscription'
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
 
         if self.NewSubscriptionDialogInstance.exec_():
@@ -3021,6 +3148,7 @@ class MyForm(QtGui.QMainWindow):
         self.aboutDialogInstance.exec_()
 
     def click_actionSettings(self):
+        global statusIconColor
         self.settingsDialogInstance = settingsDialog(self)
         if self.settingsDialogInstance.exec_():
             config.set('bitmessagesettings', 'startonlogon', str(self.settingsDialogInstance.ui.checkBoxStartOnLogon.isChecked()))
@@ -3030,10 +3158,22 @@ class MyForm(QtGui.QMainWindow):
             if int(config.get('bitmessagesettings','port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 QMessageBox.about(self, "Restart", "You must restart Bitmessage for the port number change to take effect.")
                 config.set('bitmessagesettings', 'port', str(self.settingsDialogInstance.ui.lineEditTCPPort.text()))
+            if config.get('bitmessagesettings', 'socksproxytype') == 'none' and str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText())[0:5] == 'SOCKS':
+                if statusIconColor != 'red':
+                    QMessageBox.about(self, "Restart", "Bitmessage will use your proxy from now on now but you may want to manually restart Bitmessage now to close existing connections.")
+            if config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText()) == 'none':
+                self.statusBar().showMessage('')
+            config.set('bitmessagesettings', 'socksproxytype', str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText()))
+            config.set('bitmessagesettings', 'socksauthentication', str(self.settingsDialogInstance.ui.checkBoxAuthentication.isChecked()))
+            config.set('bitmessagesettings', 'sockshostname', str(self.settingsDialogInstance.ui.lineEditSocksHostname.text()))
+            config.set('bitmessagesettings', 'socksport', str(self.settingsDialogInstance.ui.lineEditSocksPort.text()))
+            config.set('bitmessagesettings', 'socksusername', str(self.settingsDialogInstance.ui.lineEditSocksUsername.text()))
+            config.set('bitmessagesettings', 'sockspassword', str(self.settingsDialogInstance.ui.lineEditSocksPassword.text()))
+            
             with open(appdata + 'keys.dat', 'wb') as configfile:
                 config.write(configfile)
 
-            if 'win' in sys.platform:
+            if 'win32' in sys.platform or 'win64' in sys.platform:
             #Auto-startup for Windows
                 RUN_PATH = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
                 self.settings = QSettings(RUN_PATH, QSettings.NativeFormat)
@@ -3347,14 +3487,14 @@ class MyForm(QtGui.QMainWindow):
     def tableWidgetAddressBookItemChanged(self):
         currentRow = self.ui.tableWidgetAddressBook.currentRow()
         sqlLock.acquire()
-        try:
+        if currentRow >= 0:
             addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,1).text()
             t = (str(self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()),str(addressAtCurrentRow))
             sqlSubmitQueue.put('''UPDATE addressbook set label=? WHERE address=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
-        except Exception, err:
-            print 'Program Exception in tableWidgetAddressBookItemChanged:', err
+        #except Exception, err:
+        #    print 'Program Exception in tableWidgetAddressBookItemChanged:', err
         sqlLock.release()
         self.rerenderInboxFromLabels()
         self.rerenderSentToLabels()
@@ -3362,18 +3502,17 @@ class MyForm(QtGui.QMainWindow):
     def tableWidgetSubscriptionsItemChanged(self):
         currentRow = self.ui.tableWidgetSubscriptions.currentRow()
         sqlLock.acquire()
-        try:
+        if currentRow >= 0:
             addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(currentRow,1).text()
             t = (str(self.ui.tableWidgetSubscriptions.item(currentRow,0).text().toUtf8()),str(addressAtCurrentRow))
             sqlSubmitQueue.put('''UPDATE subscriptions set label=? WHERE address=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
-        except Exception, err:
-            print 'Program Exception in tableWidgetSubscriptionsItemChanged:', err
+        #except Exception, err:
+        #    print 'Program Exception in tableWidgetSubscriptionsItemChanged:', err
         sqlLock.release()
         self.rerenderInboxFromLabels()
-        self.rerenderSentToLabels()
-        
+        self.rerenderSentToLabels()   
 
     def writeNewAddressToTable(self,label,address,streamNumber):
         self.ui.tableWidgetYourIdentities.insertRow(0)
@@ -3464,7 +3603,7 @@ if __name__ == "__main__":
             print 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
             sys.exit()
 
-    elif 'win' in sys.platform:
+    elif 'win32' in sys.platform or 'win64' in sys.platform:
         appdata = path.join(environ['APPDATA'], APPNAME) + '\\'
     else:
         appdata = path.expanduser(path.join("~", "." + APPNAME + "/"))
@@ -3478,7 +3617,7 @@ if __name__ == "__main__":
         config.get('bitmessagesettings', 'settingsversion')
         print 'Loading config files from', appdata
     except:
-        #This appears to be the first time running the program; there is no config file (or it cannot be accessed). Create config and known-nodes file.
+        #This appears to be the first time running the program; there is no config file (or it cannot be accessed). Create config file.
         config.add_section('bitmessagesettings')
         config.set('bitmessagesettings','settingsversion','1')
         config.set('bitmessagesettings','bitstrength','2048')
@@ -3496,6 +3635,20 @@ if __name__ == "__main__":
             config.write(configfile)
         print 'Storing config files in', appdata
 
+    if config.getint('bitmessagesettings','settingsversion') == 1:
+        config.set('bitmessagesettings','settingsversion','2')
+        config.set('bitmessagesettings','socksproxytype','none')
+        config.set('bitmessagesettings','sockshostname','localhost')
+        config.set('bitmessagesettings','socksport','9050')
+        config.set('bitmessagesettings','socksauthentication','false')
+        config.set('bitmessagesettings','socksusername','')
+        config.set('bitmessagesettings','sockspassword','')
+        config.set('bitmessagesettings','keysencrypted','false')
+        config.set('bitmessagesettings','messagesencrypted','false')
+        with open(appdata + 'keys.dat', 'wb') as configfile:
+            config.write(configfile)
+
+
     try:
         pickleFile = open(appdata + 'knownnodes.dat', 'rb')
         knownNodes = pickle.load(pickleFile)
@@ -3506,7 +3659,7 @@ if __name__ == "__main__":
         knownNodes = pickle.load(pickleFile)
         pickleFile.close()
 
-    if config.getint('bitmessagesettings', 'settingsversion') > 1:
+    if config.getint('bitmessagesettings', 'settingsversion') > 2:
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
         raise SystemExit
 
@@ -3522,7 +3675,7 @@ if __name__ == "__main__":
         #self.hidden = True
         #self.setWindowState(self.windowState() & QtCore.Qt.WindowMinimized)
         #self.hide()
-        if 'win' in sys.platform:
+        if 'win32' in sys.platform or 'win64' in sys.platform:
             myapp.setWindowFlags(Qt.ToolTip)
     
     sys.exit(app.exec_())
