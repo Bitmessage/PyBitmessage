@@ -154,14 +154,8 @@ class outgoingSynSender(QThread):
                         if (int(time.time())-timeLastSeen) > 172800 and len(knownNodes[self.streamNumber]) > 1000: # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
                             del knownNodes[self.streamNumber][HOST]
                             print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
-
-
-                """except Exception, err:
-                    print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
-                    PORT, timeLastSeen = knownNodes[self.streamNumber][HOST]
-                    if (int(time.time())-timeLastSeen) > 172800 and len(knownNodes[self.streamNumber]) > 1000: # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
-                        del knownNodes[self.streamNumber][HOST]
-                        print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'  """
+                except Exception, err:
+                    print 'An acception has occurred in the outgoingSynSender thread that was not caught by other exception types:', err
             time.sleep(1)
 
 #Only one singleListener thread will ever exist. It creates the receiveDataThread and sendDataThread for each incoming connection. Note that it cannot set the stream number because it is not known yet- the other node will have to tell us its stream number in a version message. If we don't care about their stream, we will close the connection (within the recversion function of the recieveData thread)
