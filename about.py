@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'about.ui'
 #
-# Created: Mon Nov 19 13:33:47 2012
+# Created: Mon Dec 17 16:00:04 2012
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -39,11 +39,11 @@ class Ui_aboutDialog(object):
         self.label_2.setAlignment(QtCore.Qt.AlignCenter)
         self.label_2.setObjectName(_fromUtf8("label_2"))
         self.label_3 = QtGui.QLabel(aboutDialog)
-        self.label_3.setGeometry(QtCore.QRect(30, 210, 321, 51))
+        self.label_3.setGeometry(QtCore.QRect(20, 210, 331, 61))
         self.label_3.setWordWrap(True)
         self.label_3.setObjectName(_fromUtf8("label_3"))
         self.label_4 = QtGui.QLabel(aboutDialog)
-        self.label_4.setGeometry(QtCore.QRect(30, 260, 321, 101))
+        self.label_4.setGeometry(QtCore.QRect(20, 280, 331, 81))
         self.label_4.setWordWrap(True)
         self.label_4.setObjectName(_fromUtf8("label_4"))
         self.label_5 = QtGui.QLabel(aboutDialog)
