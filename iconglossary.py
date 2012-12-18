@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'iconglossary.ui'
 #
-# Created: Mon Nov 05 16:56:02 2012
+# Created: Tue Dec 18 14:31:18 2012
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
