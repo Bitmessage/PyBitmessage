@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Sun Nov 25 19:29:28 2012
-#      by: PyQt4 UI code generator 4.9.5
+# Created: Tue Dec 18 14:32:02 2012
+#      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -362,13 +362,13 @@ class Ui_MainWindow(object):
         self.labelStartupTime.setGeometry(QtCore.QRect(320, 110, 331, 20))
         self.labelStartupTime.setObjectName(_fromUtf8("labelStartupTime"))
         self.labelMessageCount = QtGui.QLabel(self.networkstatus)
-        self.labelMessageCount.setGeometry(QtCore.QRect(350, 130, 281, 16))
+        self.labelMessageCount.setGeometry(QtCore.QRect(350, 130, 361, 16))
         self.labelMessageCount.setObjectName(_fromUtf8("labelMessageCount"))
         self.labelPubkeyCount = QtGui.QLabel(self.networkstatus)
         self.labelPubkeyCount.setGeometry(QtCore.QRect(350, 170, 331, 16))
         self.labelPubkeyCount.setObjectName(_fromUtf8("labelPubkeyCount"))
         self.labelBroadcastCount = QtGui.QLabel(self.networkstatus)
-        self.labelBroadcastCount.setGeometry(QtCore.QRect(350, 150, 171, 16))
+        self.labelBroadcastCount.setGeometry(QtCore.QRect(350, 150, 351, 16))
         self.labelBroadcastCount.setObjectName(_fromUtf8("labelBroadcastCount"))
         icon9 = QtGui.QIcon()
         icon9.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/networkstatus.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
