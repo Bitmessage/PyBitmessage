@@ -545,7 +545,6 @@ class receiveDataThread(QThread):
 
         if messageEncodingType == 2:
             bodyPositionIndex = string.find(message,'\nBody:')
-            print 'bodyPositionIndex', bodyPositionIndex
             if bodyPositionIndex > 1:
                 subject = message[8:bodyPositionIndex]
                 body = message[bodyPositionIndex+6:]
@@ -2755,7 +2754,7 @@ class MyForm(QtGui.QMainWindow):
         message = str(self.ui.textEditMessage.document().toPlainText().toUtf8())
         if self.ui.radioButtonSpecific.isChecked(): #To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip() for s in toAddresses.replace(',', ';').split(';')]
-            toAddressesList = list(set(toAddressesList)) #remove duplicate addresses
+            toAddressesList = list(set(toAddressesList)) #remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice.
             for toAddress in toAddressesList:
                 if toAddress <> '':
                     status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
@@ -2773,6 +2772,7 @@ class MyForm(QtGui.QMainWindow):
                         print 'Status bar!', 'Error: you must specify a From address.'
                         self.statusBar().showMessage('Error: You must specify a From address. If you don''t have one, go to the ''Your Identities'' tab.')
                     else:
+                        toAddress = addBMIfNotPresent(toAddress)
                         self.statusBar().showMessage('')
                         if connectionsCount[streamNumber] == 0:
                             self.statusBar().showMessage('Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.')
@@ -3022,7 +3022,7 @@ class MyForm(QtGui.QMainWindow):
             if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() == 'Address is valid.':
                 #First we must check to see if the address is already in the address book. The user cannot add it again or else it will cause problems when updating and deleting the entry.
                 sqlLock.acquire()
-                t = (str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()),)
+                t = (addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())),)
                 sqlSubmitQueue.put('''select * from addressbook where address=?''')
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
@@ -3031,10 +3031,10 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetAddressBook.insertRow(0)
                     newItem =  QtGui.QTableWidgetItem(unicode(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
                     self.ui.tableWidgetAddressBook.setItem(0,0,newItem)
-                    newItem =  QtGui.QTableWidgetItem(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())
+                    newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
                     newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                     self.ui.tableWidgetAddressBook.setItem(0,1,newItem)
-                    t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
+                    t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())))
                     sqlLock.acquire()
                     sqlSubmitQueue.put('''INSERT INTO addressbook VALUES (?,?)''')
                     sqlSubmitQueue.put(t)
@@ -3053,7 +3053,7 @@ class MyForm(QtGui.QMainWindow):
             if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() == 'Address is valid.':
                 #First we must check to see if the address is already in the address book. The user cannot add it again or else it will cause problems when updating and deleting the entry.
                 sqlLock.acquire()
-                t = (str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()),)
+                t = (addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())),)
                 sqlSubmitQueue.put('''select * from subscriptions where address=?''')
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
@@ -3062,10 +3062,10 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetSubscriptions.insertRow(0)
                     newItem =  QtGui.QTableWidgetItem(unicode(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
                     self.ui.tableWidgetSubscriptions.setItem(0,0,newItem)
-                    newItem =  QtGui.QTableWidgetItem(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())
+                    newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
                     newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                     self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
-                    t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()),True)
+                    t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())),True)
                     sqlLock.acquire()
                     sqlSubmitQueue.put('''INSERT INTO subscriptions VALUES (?,?,?)''')
                     sqlSubmitQueue.put(t)
@@ -3180,7 +3180,7 @@ class MyForm(QtGui.QMainWindow):
             if self.NewBlacklistDialogInstance.ui.labelSubscriptionAddressCheck.text() == 'Address is valid.':
                 #First we must check to see if the address is already in the address book. The user cannot add it again or else it will cause problems when updating and deleting the entry.
                 sqlLock.acquire()
-                t = (str(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text()),)
+                t = (addBMIfNotPresent(str(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text())),)
                 if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
                     sqlSubmitQueue.put('''select * from blacklist where address=?''')
                 else:
@@ -3192,10 +3192,10 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetBlacklist.insertRow(0)
                     newItem =  QtGui.QTableWidgetItem(unicode(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
                     self.ui.tableWidgetBlacklist.setItem(0,0,newItem)
-                    newItem =  QtGui.QTableWidgetItem(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text())
+                    newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text()))
                     newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                     self.ui.tableWidgetBlacklist.setItem(0,1,newItem)
-                    t = (str(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),str(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text()),True)
+                    t = (str(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text())),True)
                     sqlLock.acquire()
                     if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
                         sqlSubmitQueue.put('''INSERT INTO blacklist VALUES (?,?,?)''')
