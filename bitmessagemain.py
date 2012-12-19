@@ -226,6 +226,7 @@ class receiveDataThread(QThread):
             self.initiatedConnection = False
         else:
             self.initiatedConnection = True
+        self.ackDataThatWeHaveYetToSend = [] #When we receive a message bound for us, we store the acknowledgement that we need to send (the ackdata) here until we are done processing all other data received from this peer.
 
 
     def run(self):
@@ -288,7 +289,7 @@ class receiveDataThread(QThread):
             self.data = ""
             if verbose >= 2:
                 printLock.acquire()
-                sys.stderr.write('The magic bytes were not correct. This may indicate a problem with the program code, or a transmission error occurred.\n')
+                sys.stderr.write('The magic bytes were not correct.\n')
                 printLock.release()
         elif len(self.data) < 20: #if so little of the data has arrived that we can't even unpack the payload length
             pass
@@ -350,9 +351,12 @@ class receiveDataThread(QThread):
                                 self.sendgetdata(objectHash)
                                 del self.objectsThatWeHaveYetToGet[objectHash] #It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
                                 break
-                        printLock.acquire()
-                        print 'within processData, length of objectsThatWeHaveYetToGet is now', len(self.objectsThatWeHaveYetToGet)
-                        printLock.release()
+                        if len(self.objectsThatWeHaveYetToGet) > 0:
+                            printLock.acquire()
+                            print 'within processData, number of objectsThatWeHaveYetToGet is now', len(self.objectsThatWeHaveYetToGet)
+                            printLock.release()
+                        if len(self.ackDataThatWeHaveYetToSend) > 0:
+                            self.data = self.ackDataThatWeHaveYetToSend.pop()
                     self.processData()
                 else:
                     print 'Checksum incorrect. Clearing this message.'
@@ -781,7 +785,7 @@ class receiveDataThread(QThread):
                             else:
                                 body = 'Unknown encoding type.\n\n' + repr(message)
                                 subject = ''
-                            print 'within recmsg, inventoryHash is', inventoryHash
+                            print 'within recmsg, inventoryHash is', repr(inventoryHash)
                             if messageEncodingType <> 0:
                                 sqlLock.acquire()
                                 t = (inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
@@ -799,7 +803,7 @@ class receiveDataThread(QThread):
                         #We'll need to make sure that our client will properly process the ackData; if the packet is malformed, we could clear out self.data and an attacker could use that behavior to determine that we were capable of decoding this message.
                         ackDataValidThusFar = True
                         if len(ackData) < 24:
-                            print 'The length of Ackdata is unreasonably short. Not sending ackData.'
+                            print 'The length of ackData is unreasonably short. Not sending ackData.'
                             ackDataValidThusFar = False
                         if ackData[0:4] != '\xe9\xbe\xb4\xd9':
                             print 'Ackdata magic bytes were wrong. Not sending ackData.'
@@ -811,7 +815,8 @@ class receiveDataThread(QThread):
                                 ackDataValidThusFar = False
                         if ackDataValidThusFar:
                             print 'ackData is valid. Will process it.'
-                            self.data = self.data[:self.payloadLength+24] + ackData + self.data[self.payloadLength+24:]
+                            #self.data = self.data[:self.payloadLength+24] + ackData + self.data[self.payloadLength+24:]
+                            self.ackDataThatWeHaveYetToSend.append(ackData) #When we have processed all data
                             #print 'self.data after:', repr(self.data)
                         '''if ackData[4:16] == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00':
                             inventoryHash = calculateInventoryHash(ackData[24:])
