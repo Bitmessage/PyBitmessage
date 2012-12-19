@@ -226,6 +226,7 @@ class receiveDataThread(QThread):
             self.initiatedConnection = False
         else:
             self.initiatedConnection = True
+        self.ackDataThatWeHaveYetToSend = [] #When we receive a message bound for us, we store the acknowledgement that we need to send (the ackdata) here until we are done processing all other data received from this peer.
 
 
     def run(self):
@@ -288,7 +289,7 @@ class receiveDataThread(QThread):
             self.data = ""
             if verbose >= 2:
                 printLock.acquire()
-                sys.stderr.write('The magic bytes were not correct. This may indicate a problem with the program code, or a transmission error occurred.\n')
+                sys.stderr.write('The magic bytes were not correct.\n')
                 printLock.release()
         elif len(self.data) < 20: #if so little of the data has arrived that we can't even unpack the payload length
             pass
@@ -340,19 +341,22 @@ class receiveDataThread(QThread):
                             random.seed()
                             objectHash, = random.sample(self.objectsThatWeHaveYetToGet,  1)
                             if objectHash in inventory:
-                                print 'Inventory (in memory) already has object the hash of which we received in an inv message.'
+                                print 'Inventory (in memory) already has object listed in inv message.'
                                 del self.objectsThatWeHaveYetToGet[objectHash]
                             elif isInSqlInventory(objectHash):
-                                print 'Inventory (SQL on disk) already has object the hash of which we received in an inv message.'
+                                print 'Inventory (SQL on disk) already has object listed in inv message.'
                                 del self.objectsThatWeHaveYetToGet[objectHash]
                             else:
                                 print 'processData function making request for object:', repr(objectHash)
                                 self.sendgetdata(objectHash)
                                 del self.objectsThatWeHaveYetToGet[objectHash] #It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
                                 break
-                        printLock.acquire()
-                        print 'within processData, length of objectsThatWeHaveYetToGet is now', len(self.objectsThatWeHaveYetToGet)
-                        printLock.release()
+                        if len(self.objectsThatWeHaveYetToGet) > 0:
+                            printLock.acquire()
+                            print 'within processData, number of objectsThatWeHaveYetToGet is now', len(self.objectsThatWeHaveYetToGet)
+                            printLock.release()
+                        if len(self.ackDataThatWeHaveYetToSend) > 0:
+                            self.data = self.ackDataThatWeHaveYetToSend.pop()
                     self.processData()
                 else:
                     print 'Checksum incorrect. Clearing this message.'
@@ -541,7 +545,6 @@ class receiveDataThread(QThread):
 
         if messageEncodingType == 2:
             bodyPositionIndex = string.find(message,'\nBody:')
-            print 'bodyPositionIndex', bodyPositionIndex
             if bodyPositionIndex > 1:
                 subject = message[8:bodyPositionIndex]
                 body = message[bodyPositionIndex+6:]
@@ -781,7 +784,7 @@ class receiveDataThread(QThread):
                             else:
                                 body = 'Unknown encoding type.\n\n' + repr(message)
                                 subject = ''
-                            print 'within recmsg, inventoryHash is', inventoryHash
+                            print 'within recmsg, inventoryHash is', repr(inventoryHash)
                             if messageEncodingType <> 0:
                                 sqlLock.acquire()
                                 t = (inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
@@ -799,7 +802,7 @@ class receiveDataThread(QThread):
                         #We'll need to make sure that our client will properly process the ackData; if the packet is malformed, we could clear out self.data and an attacker could use that behavior to determine that we were capable of decoding this message.
                         ackDataValidThusFar = True
                         if len(ackData) < 24:
-                            print 'The length of Ackdata is unreasonably short. Not sending ackData.'
+                            print 'The length of ackData is unreasonably short. Not sending ackData.'
                             ackDataValidThusFar = False
                         if ackData[0:4] != '\xe9\xbe\xb4\xd9':
                             print 'Ackdata magic bytes were wrong. Not sending ackData.'
@@ -811,7 +814,8 @@ class receiveDataThread(QThread):
                                 ackDataValidThusFar = False
                         if ackDataValidThusFar:
                             print 'ackData is valid. Will process it.'
-                            self.data = self.data[:self.payloadLength+24] + ackData + self.data[self.payloadLength+24:]
+                            #self.data = self.data[:self.payloadLength+24] + ackData + self.data[self.payloadLength+24:]
+                            self.ackDataThatWeHaveYetToSend.append(ackData) #When we have processed all data
                             #print 'self.data after:', repr(self.data)
                         '''if ackData[4:16] == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00':
                             inventoryHash = calculateInventoryHash(ackData[24:])
@@ -2750,7 +2754,7 @@ class MyForm(QtGui.QMainWindow):
         message = str(self.ui.textEditMessage.document().toPlainText().toUtf8())
         if self.ui.radioButtonSpecific.isChecked(): #To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip() for s in toAddresses.replace(',', ';').split(';')]
-            toAddressesList = list(set(toAddressesList)) #remove duplicate addresses
+            toAddressesList = list(set(toAddressesList)) #remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice.
             for toAddress in toAddressesList:
                 if toAddress <> '':
                     status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
@@ -2768,6 +2772,7 @@ class MyForm(QtGui.QMainWindow):
                         print 'Status bar!', 'Error: you must specify a From address.'
                         self.statusBar().showMessage('Error: You must specify a From address. If you don''t have one, go to the ''Your Identities'' tab.')
                     else:
+                        toAddress = addBMIfNotPresent(toAddress)
                         self.statusBar().showMessage('')
                         if connectionsCount[streamNumber] == 0:
                             self.statusBar().showMessage('Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.')
@@ -3017,7 +3022,7 @@ class MyForm(QtGui.QMainWindow):
             if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() == 'Address is valid.':
                 #First we must check to see if the address is already in the address book. The user cannot add it again or else it will cause problems when updating and deleting the entry.
                 sqlLock.acquire()
-                t = (str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()),)
+                t = (addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())),)
                 sqlSubmitQueue.put('''select * from addressbook where address=?''')
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
@@ -3026,10 +3031,10 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetAddressBook.insertRow(0)
                     newItem =  QtGui.QTableWidgetItem(unicode(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
                     self.ui.tableWidgetAddressBook.setItem(0,0,newItem)
-                    newItem =  QtGui.QTableWidgetItem(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())
+                    newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
                     newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                     self.ui.tableWidgetAddressBook.setItem(0,1,newItem)
-                    t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
+                    t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())))
                     sqlLock.acquire()
                     sqlSubmitQueue.put('''INSERT INTO addressbook VALUES (?,?)''')
                     sqlSubmitQueue.put(t)
@@ -3048,7 +3053,7 @@ class MyForm(QtGui.QMainWindow):
             if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() == 'Address is valid.':
                 #First we must check to see if the address is already in the address book. The user cannot add it again or else it will cause problems when updating and deleting the entry.
                 sqlLock.acquire()
-                t = (str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()),)
+                t = (addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())),)
                 sqlSubmitQueue.put('''select * from subscriptions where address=?''')
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
@@ -3057,10 +3062,10 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetSubscriptions.insertRow(0)
                     newItem =  QtGui.QTableWidgetItem(unicode(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
                     self.ui.tableWidgetSubscriptions.setItem(0,0,newItem)
-                    newItem =  QtGui.QTableWidgetItem(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())
+                    newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
                     newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                     self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
-                    t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()),True)
+                    t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())),True)
                     sqlLock.acquire()
                     sqlSubmitQueue.put('''INSERT INTO subscriptions VALUES (?,?,?)''')
                     sqlSubmitQueue.put(t)
@@ -3175,7 +3180,7 @@ class MyForm(QtGui.QMainWindow):
             if self.NewBlacklistDialogInstance.ui.labelSubscriptionAddressCheck.text() == 'Address is valid.':
                 #First we must check to see if the address is already in the address book. The user cannot add it again or else it will cause problems when updating and deleting the entry.
                 sqlLock.acquire()
-                t = (str(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text()),)
+                t = (addBMIfNotPresent(str(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text())),)
                 if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
                     sqlSubmitQueue.put('''select * from blacklist where address=?''')
                 else:
@@ -3187,10 +3192,10 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetBlacklist.insertRow(0)
                     newItem =  QtGui.QTableWidgetItem(unicode(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
                     self.ui.tableWidgetBlacklist.setItem(0,0,newItem)
-                    newItem =  QtGui.QTableWidgetItem(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text())
+                    newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text()))
                     newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                     self.ui.tableWidgetBlacklist.setItem(0,1,newItem)
-                    t = (str(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),str(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text()),True)
+                    t = (str(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text())),True)
                     sqlLock.acquire()
                     if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
                         sqlSubmitQueue.put('''INSERT INTO blacklist VALUES (?,?,?)''')
