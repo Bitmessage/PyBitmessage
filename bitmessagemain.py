@@ -80,7 +80,7 @@ class outgoingSynSender(QThread):
                 self.alreadyAttemptedConnectionsList.append(HOST)
                 PORT, timeNodeLastSeen = knownNodes[self.streamNumber][HOST]
                 sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
-                sock.settimeout(6)
+                sock.settimeout(20)
                 if config.get('bitmessagesettings', 'socksproxytype') == 'none':
                     printLock.acquire()
                     print 'Trying an outgoing connection to', HOST, ':', PORT
