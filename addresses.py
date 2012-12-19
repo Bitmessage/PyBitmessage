@@ -117,12 +117,18 @@ def encodeAddress(version,stream,ripe):
 def decodeAddress(address):
     #returns (status, address version number, stream number, data (almost certainly a ripe hash))
 
-    #check for the BM- at the front of the address. If it isn't there, this address might be for a different version of Bitmessage
+    """#check for the BM- at the front of the address. If it isn't there, this address might be for a different version of Bitmessage
     if address[:3] != 'BM-':
         status = 'missingbm'
         return status,0,0,0
     #take off the BM-
-    integer = decodeBase58(address[3:])
+    integer = decodeBase58(address[3:])"""
+
+    #changed Bitmessage to accept addresses that lack the "BM-" prefix.
+    if address[:3] == 'BM-':
+        integer = decodeBase58(address[3:])
+    else:
+        integer = decodeBase58(address)
     if integer == 0:
         status = 'invalidcharacters'
         return status,0,0,0
@@ -166,6 +172,11 @@ def decodeAddress(address):
     status = 'success'
     return status,addressVersionNumber,streamNumber,data[-24:-4]
 
+def addBMIfNotPresent(address):
+    if address[:3] != 'BM-':
+        return 'BM-'+address
+    else:
+        return address
 
 def addressStream(address):
     #returns the stream number of an address or False if there is a problem with the address.
