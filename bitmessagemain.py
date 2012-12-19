@@ -340,10 +340,10 @@ class receiveDataThread(QThread):
                             random.seed()
                             objectHash, = random.sample(self.objectsThatWeHaveYetToGet,  1)
                             if objectHash in inventory:
-                                print 'Inventory (in memory) already has object the hash of which we received in an inv message.'
+                                print 'Inventory (in memory) already has object listed in inv message.'
                                 del self.objectsThatWeHaveYetToGet[objectHash]
                             elif isInSqlInventory(objectHash):
-                                print 'Inventory (SQL on disk) already has object the hash of which we received in an inv message.'
+                                print 'Inventory (SQL on disk) already has object listed in inv message.'
                                 del self.objectsThatWeHaveYetToGet[objectHash]
                             else:
                                 print 'processData function making request for object:', repr(objectHash)
