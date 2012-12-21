@@ -815,7 +815,7 @@ class receiveDataThread(QThread):
                         if ackDataValidThusFar:
                             print 'ackData is valid. Will process it.'
                             #self.data = self.data[:self.payloadLength+24] + ackData + self.data[self.payloadLength+24:]
-                            self.ackDataThatWeHaveYetToSend.append(ackData) #When we have processed all data
+                            self.ackDataThatWeHaveYetToSend.append(ackData) #When we have processed all data, the processData function will pop the ackData out and process it as if it is a message received from our peer.
                             #print 'self.data after:', repr(self.data)
                         '''if ackData[4:16] == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00':
                             inventoryHash = calculateInventoryHash(ackData[24:])
@@ -2125,6 +2125,7 @@ class helpDialog(QtGui.QDialog):
         self.ui.setupUi(self)
         self.parent = parent
         self.ui.labelHelpURI.setOpenExternalLinks(True)
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
 class aboutDialog(QtGui.QDialog):
     def __init__(self,parent):
@@ -2226,6 +2227,7 @@ class NewAddressDialog(QtGui.QDialog):
             #print self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text()
             self.ui.comboBoxExisting.addItem(self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text())
             row += 1
+        #QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
         
 
 
