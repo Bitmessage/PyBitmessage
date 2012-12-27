@@ -244,7 +244,7 @@ class receiveDataThread(QThread):
                 break
             except Exception, err:
                 printLock.acquire()
-                print 'sock.recv error. Closing receiveData thread.'
+                print 'sock.recv error. Closing receiveData thread.', err
                 printLock.release()
                 break
             #print 'Received', repr(self.data)
