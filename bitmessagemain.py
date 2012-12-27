@@ -186,14 +186,17 @@ class singleListener(QThread):
             while config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
                 time.sleep(10)
             a,(HOST,PORT) = sock.accept()
-            while HOST in connectedHostsList:
+            #Users are finding that if they run more than one node in the same network (thus with the same public IP), they can not connect with the second node. This is because this section of code won't accept the connection from the same IP. This problem will go away when the Bitmessage network grows behond being tiny but in the mean time, I'll comment out this code section.
+            """while HOST in connectedHostsList:
                 print 'incoming connection is from a host in connectedHostsList (we are already connected to it). Ignoring it.'
                 a.close()
-                a,(HOST,PORT) = sock.accept()
+                a,(HOST,PORT) = sock.accept()"""
             rd = receiveDataThread()
             self.emit(SIGNAL("passObjectThrough(PyQt_PyObject)"),rd)
             rd.setup(a,HOST,PORT,-1,self.incomingConnectionList)
+            printLock.acquire()
             print self, 'connected to', HOST,'during INCOMING request.'
+            printLock.release()
             rd.start()
 
             sd = sendDataThread()
@@ -274,7 +277,6 @@ class receiveDataThread(QThread):
         try:
             del connectedHostsList[self.HOST]
         except Exception, err:
-            #I think that the only way an exception could occur here is if we connect to ourselves because it would try to delete the same IP from connectedHostsList twice.
             print 'Could not delete', self.HOST, 'from connectedHostsList.', err
        
     def processData(self):
@@ -534,6 +536,8 @@ class receiveDataThread(QThread):
         sendersPubkey = rsa.PublicKey(convertStringToInt(nString),convertStringToInt(eString))
         #print 'senders Pubkey', sendersPubkey
         try:
+            #You may notice that this signature doesn't cover any information that identifies the RECEIVER of the message. This makes it vulnerable to a malicious receiver Bob forwarding the message from Alice to Charlie, making it look like Alice sent the message to Charlie. This will be fixed in the next version.
+                #See http://world.std.com/~dtd/sign_encrypt/sign_encrypt7.html
             rsa.verify(self.data[readPositionAtBeginningOfMessageEncodingType:readPositionAtBeginningOfMessageEncodingType+messageEncodingTypeLength+messageLengthLength+messageLength],signature,sendersPubkey)
             print 'verify passed'
         except Exception, err:
