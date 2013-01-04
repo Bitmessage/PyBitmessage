@@ -891,7 +891,7 @@ class receiveDataThread(QThread):
         readPosition += 4 #for the bitfield of behaviors and features
         addressVersion, varintLength = decodeVarint(self.data[readPosition:readPosition+10])
         if addressVersion >= 2:
-            'This version of Bitmessgae cannot handle version', addressVersion,'addresses.'
+            print 'This version of Bitmessgae cannot handle version', addressVersion,'addresses.'
             return
         readPosition += varintLength
         streamNumber, varintLength = decodeVarint(self.data[readPosition:readPosition+10])
