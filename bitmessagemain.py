@@ -5,7 +5,7 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.1.4'
+softwareVersion = '0.1.5'
 verbose = 2
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -411,7 +411,7 @@ class receiveDataThread(QThread):
             self.receivedgetbiginv = True
             sqlLock.acquire()
             #Select all hashes which are younger than two days old and in this stream.
-            t = (int(time.time())-172800,self.streamNumber) 
+            t = (int(time.time())-maximumAgeOfObjectsThatIAdvertiseToOthers,self.streamNumber)
             sqlSubmitQueue.put('''SELECT hash FROM inventory WHERE receivedtime>? and streamnumber=?''')
             sqlSubmitQueue.put(t)
             queryreturn = sqlReturnQueue.get()
@@ -424,7 +424,7 @@ class receiveDataThread(QThread):
             #print 'bigInvList:', bigInvList
             for hash, storedValue in inventory.items():
                 objectType, streamNumber, payload, receivedTime = storedValue
-                if streamNumber == self.streamNumber and receivedTime > int(time.time())-172800:
+                if streamNumber == self.streamNumber and receivedTime > int(time.time())-maximumAgeOfObjectsThatIAdvertiseToOthers:
                     bigInvList[hash] = 0
             numberOfObjectsInInvMessage = 0
             payload = ''
@@ -819,7 +819,7 @@ class receiveDataThread(QThread):
                         if ackDataValidThusFar:
                             print 'ackData is valid. Will process it.'
                             #self.data = self.data[:self.payloadLength+24] + ackData + self.data[self.payloadLength+24:]
-                            self.ackDataThatWeHaveYetToSend.append(ackData) #When we have processed all data
+                            self.ackDataThatWeHaveYetToSend.append(ackData) #When we have processed all data, the processData function will pop the ackData out and process it as if it is a message received from our peer.
                             #print 'self.data after:', repr(self.data)
                         '''if ackData[4:16] == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00':
                             inventoryHash = calculateInventoryHash(ackData[24:])
@@ -890,6 +890,9 @@ class receiveDataThread(QThread):
         bitfieldBehaviors = self.data[readPosition:readPosition+4]
         readPosition += 4 #for the bitfield of behaviors and features
         addressVersion, varintLength = decodeVarint(self.data[readPosition:readPosition+10])
+        if addressVersion >= 2:
+            'This version of Bitmessgae cannot handle version', addressVersion,'addresses.'
+            return
         readPosition += varintLength
         streamNumber, varintLength = decodeVarint(self.data[readPosition:readPosition+10])
         readPosition += varintLength
@@ -930,6 +933,13 @@ class receiveDataThread(QThread):
         if not self.isProofOfWorkSufficient():
             print 'Proof of work in getpubkey message insufficient.'
             return
+        embeddedTime, = unpack('>I',self.data[32:36])
+        if embeddedTime > int(time.time())+10800:
+            print 'The time in this getpubkey message is too new. Ignoring it. Time:', embeddedTime
+            return
+        if embeddedTime < int(time.time())-maximumAgeOfAnObjectThatIAmWillingToAccept:
+            print 'The time in this getpubkey message is too old. Ignoring it. Time:', embeddedTime
+            return
         inventoryLock.acquire()
         inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
         if inventoryHash in inventory:
@@ -942,24 +952,22 @@ class receiveDataThread(QThread):
             return
 
         objectType = 'pubkeyrequest'
-        inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], int(time.time()))
+        inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], embeddedTime)
         inventoryLock.release()
 
         #Now let us make sure that the getpubkey request isn't too old or with a fake (future) time.
-        embeddedTime, = unpack('>I',self.data[32:36])
-        if embeddedTime > int(time.time())+10800:
-            print 'The time in this getpubkey message is too new. Ignoring it. Time:', embeddedTime
-            return
-        if embeddedTime < int(time.time())-maximumAgeOfAnObjectThatIAmWillingToAccept:
-            print 'The time in this getpubkey message is too old. Ignoring it. Time:', embeddedTime
-            return
+
         addressVersionNumber, addressVersionLength = decodeVarint(self.data[36:42])
-        if addressVersionNumber > 1:
-            print 'The addressVersionNumber of the pubkey is too high. Can\'t understand. Ignoring it.'
-            return
         streamNumber, streamNumberLength = decodeVarint(self.data[36+addressVersionLength:42+addressVersionLength])
         if streamNumber <> self.streamNumber:
             print 'The streamNumber', streamNumber, 'doesn\'t match our stream number:', self.streamNumber
+            return
+
+        #This getpubkey request is valid so far. Forward to peers.
+        broadcastToSendDataQueues((self.streamNumber,'send',self.data[:self.payloadLength+24]))
+
+        if addressVersionNumber > 1:
+            print 'The addressVersionNumber of the pubkey is too high. Can\'t understand. Ignoring it.'
             return
         if self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength] in myAddressHashes:
             print 'Found getpubkey requested hash in my list of hashes.'
@@ -1000,12 +1008,15 @@ class receiveDataThread(QThread):
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
 
-            #Now that we have the key either from getting it earlier or making it and storing it ourselves...
+            #Now that we have the full pubkey message ready either from making it just now or making it earlier, we can send it out.
             t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],) #this prevents SQL injection
-            sqlSubmitQueue.put('SELECT * FROM pubkeys WHERE hash=?')
+            sqlSubmitQueue.put('''SELECT * FROM pubkeys WHERE hash=? AND havecorrectnonce=1''')
             sqlSubmitQueue.put(t)
             queryreturn = sqlReturnQueue.get()
-
+            if queryreturn == []:
+                sys.stderr.write('Error: pubkey which we just put in our pubkey database suddenly is not there. Is the database malfunctioning?')
+                sqlLock.release()
+                return
             for row in queryreturn:
                 hash, havecorrectnonce, payload, timeLastRequested = row
                 if timeLastRequested < int(time.time())+604800: #if the last time anyone asked about this hash was this week, extend the time.
@@ -1022,11 +1033,11 @@ class receiveDataThread(QThread):
             self.broadcastinv(inventoryHash)
 
         else:
-            print 'Hash in getpubkey is not mine.'
+            print 'Hash in getpubkey request is not for any of my keys.'
             #..but lets see if we have it stored from when it came in from someone else.
             t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],) #this prevents SQL injection
             sqlLock.acquire()
-            sqlSubmitQueue.put('''SELECT hash, time FROM pubkeys WHERE hash=? AND havecorrectnonce='True' ''')
+            sqlSubmitQueue.put('''SELECT hash, transmitdata, time FROM pubkeys WHERE hash=? AND havecorrectnonce=1''')
             sqlSubmitQueue.put(t)
             queryreturn = sqlReturnQueue.get()
             sqlLock.release()
@@ -1035,20 +1046,17 @@ class receiveDataThread(QThread):
                 print 'we have the public key. sending it.'
                 #We have it. Let's send it.
                 for row in queryreturn:
-                    hash, timeLastRequested = row
+                    hash, transmitdata, timeLastRequested = row
                     if timeLastRequested < int(time.time())+604800: #if the last time anyone asked about this hash was this week, extend the time.
                         t = (int(time.time())+604800,hash)
-                        sqlSubmitQueue.put('''UPDATE pubkeys set time=? WHERE hash=?''')
+                        sqlSubmitQueue.put('''UPDATE pubkeys set time=? WHERE hash=? ''')
                         sqlSubmitQueue.put(t)
                         queryreturn = sqlReturnQueue.get()
-                inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
+                inventoryHash = calculateInventoryHash(transmitdata)
                 objectType = 'pubkey'
-                inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], int(time.time()))
+                inventory[inventoryHash] = (objectType, self.streamNumber, transmitdata, int(time.time()))
                 self.broadcastinv(inventoryHash)
-            else:
-                #We don't have it. We'll need to forward the getpubkey request to our peers.
-                print 'We don\' have the public key. Forwarding getpubkey message to peers.'
-                broadcastToSendDataQueues((self.streamNumber,'send',self.data[:self.payloadLength+24]))
+
 
     #We have received an inv message
     def recinv(self):
@@ -1611,7 +1619,7 @@ class sqlThread(QThread):
             self.cur.execute( '''CREATE TABLE whitelist (label text, address text, enabled bool)''' )
             self.cur.execute( '''CREATE TABLE pubkeys (hash blob, havecorrectnonce bool, transmitdata blob, time blob, UNIQUE(hash, havecorrectnonce, transmitdata) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''CREATE TABLE knownnodes (timelastseen int, stream int, services blob, host blob, port blob, UNIQUE(host) ON CONFLICT REPLACE)''' ) #This table isn't used in the program yet but I have a feeling that we'll need it.
+            self.cur.execute( '''CREATE TABLE knownnodes (timelastseen int, stream int, services blob, host blob, port blob, UNIQUE(host, stream, port) ON CONFLICT REPLACE)''' ) #This table isn't used in the program yet but I have a feeling that we'll need it.
 
             self.conn.commit()
             print 'Created messages database file'
@@ -1895,6 +1903,7 @@ class singleWorker(QThread):
         sqlLock.release()
         for row in queryreturn:
             toaddress, fromaddress, subject, message, ackdata = row
+            ackdataForWhichImWatching[ackdata] = 0
             status,addressVersionNumber,toStreamNumber,hash = decodeAddress(toaddress)
             #if hash == toRipe:
             self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send the message.')
@@ -2129,6 +2138,7 @@ class helpDialog(QtGui.QDialog):
         self.ui.setupUi(self)
         self.parent = parent
         self.ui.labelHelpURI.setOpenExternalLinks(True)
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
 class aboutDialog(QtGui.QDialog):
     def __init__(self,parent):
@@ -2230,6 +2240,7 @@ class NewAddressDialog(QtGui.QDialog):
             #print self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text()
             self.ui.comboBoxExisting.addItem(self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text())
             row += 1
+        #QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
         
 
 
@@ -2784,7 +2795,6 @@ class MyForm(QtGui.QMainWindow):
                         for i in range(4): #This will make 32 bytes of random data.
                             random.seed()
                             ackdata += pack('>Q',random.randrange(1, 18446744073709551615))
-                        ackdataForWhichImWatching[ackdata] = 0
                         sqlLock.acquire()
                         t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'findingpubkey',1,1,'sent')
                         sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
