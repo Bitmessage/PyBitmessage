@@ -1046,7 +1046,7 @@ class receiveDataThread(QThread):
                 print 'we have the public key. sending it.'
                 #We have it. Let's send it.
                 for row in queryreturn:
-                    hash, timeLastRequested = row
+                    hash, transmitdata, timeLastRequested = row
                     if timeLastRequested < int(time.time())+604800: #if the last time anyone asked about this hash was this week, extend the time.
                         t = (int(time.time())+604800,hash)
                         sqlSubmitQueue.put('''UPDATE pubkeys set time=? WHERE hash=? ''')
