@@ -162,7 +162,7 @@ def decodeAddress(address):
     #print 'addressVersionNumber', addressVersionNumber
     #print 'bytesUsedByVersionNumber', bytesUsedByVersionNumber
 
-    if addressVersionNumber < 1:
+    if addressVersionNumber != 1:
         print 'cannot decode version address version numbers this high'
         status = 'versiontoohigh'
         return status,0,0,0
@@ -252,7 +252,7 @@ if __name__ == "__main__":
     #print 'lengh of a at beginning = ', len(a)
     print 'This is the data to be encoded in the address: ', a.encode('hex')
 
-    returnedAddress = encodeAddress(5,8,ripe.digest())
+    returnedAddress = encodeAddress(1,8,ripe.digest())
     status,addressVersionNumber,streamNumber,data = decodeAddress(returnedAddress)
     print returnedAddress
     print 'Status:', status
