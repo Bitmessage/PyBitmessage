@@ -248,7 +248,7 @@ if __name__ == "__main__":
     #print len(ripe.digest())
 
     #prepend the version number and stream number
-    a = '\x05' + '\x08' + ripe.digest()
+    a = '\x01' + '\x08' + ripe.digest()
     #print 'lengh of a at beginning = ', len(a)
     print 'This is the data to be encoded in the address: ', a.encode('hex')
 
