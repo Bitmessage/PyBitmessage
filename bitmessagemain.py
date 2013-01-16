@@ -3641,6 +3641,19 @@ if __name__ == "__main__":
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
         raise SystemExit
 
+    #DNS bootstrap method. Note that this lookup doesn't use the proxy server if configured; adding that feature will require more careful testing to verify that it is working.
+    try:
+        for item in socket.getaddrinfo('bootstrap8080.bitmessage.org',80):
+            print 'Adding', item[4][0],'to knownNodes based on DNS boostrap method'
+            knownNodes[1][item[4][0]] = (8080,int(time.time()))
+    except:
+        print 'bootstrap8080.bitmessage.org DNS bootstraping failed.'
+    try:
+        for item in socket.getaddrinfo('bootstrap8444.bitmessage.org',80):
+            print 'Adding', item[4][0],'to knownNodes based on DNS boostrap method'
+            knownNodes[1][item[4][0]] = (8444,int(time.time()))
+    except:
+        print 'bootstrap8444.bitmessage.org DNS bootstrapping failed.'
     
     app = QtGui.QApplication(sys.argv)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
