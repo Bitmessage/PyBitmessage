@@ -48,6 +48,11 @@ from time import strftime, localtime
 import os
 import string
 import socks
+import pyelliptic
+from pyelliptic import highlevelcrypto
+from pyelliptic.openssl import OpenSSL
+import ctypes
+from pyelliptic import arithmetic
 
 #For each stream to which we connect, one outgoingSynSender thread will exist and will create 8 connections with peers.
 class outgoingSynSender(QThread):
@@ -64,7 +69,7 @@ class outgoingSynSender(QThread):
         time.sleep(1)
         resetTime = int(time.time()) #used below to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
         while True:
-            #time.sleep(999999)#I'm using this to prevent connections for testing.
+            time.sleep(999999)#I'm using this to prevent connections for testing.
             if len(self.selfInitiatedConnectionList) < 8: #maximum number of outgoing connections = 8
                 random.seed()
                 HOST, = random.sample(knownNodes[self.streamNumber],  1)
@@ -2084,43 +2089,151 @@ class addressGenerator(QThread):
     def __init__(self, parent = None):
         QThread.__init__(self, parent)
 
-    def setup(self,streamNumber,label):
+    def setup(self,addressVersionNumber,streamNumber,label="(no label)",numberOfAddressesToMake=1,deterministicPassphrase="",eighteenByteRipe=False):
+        self.addressVersionNumber = addressVersionNumber
         self.streamNumber = streamNumber
         self.label = label
+        self.numberOfAddressesToMake = numberOfAddressesToMake
+        self.deterministicPassphrase = deterministicPassphrase
+        self.eighteenByteRipe = eighteenByteRipe
 
     def run(self):
-        statusbar = 'Generating new ' + str(config.getint('bitmessagesettings', 'bitstrength')) + ' bit RSA key. This takes a minute on average. If you want to generate multiple addresses now, you can; they will queue.'
-        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
-        (pubkey, privkey) = rsa.newkeys(config.getint('bitmessagesettings', 'bitstrength'))
-        print privkey['n']
-        print privkey['e']
-        print privkey['d']
-        print privkey['p']
-        print privkey['q']
+        if self.addressVersionNumber == 2:
 
-        sha = hashlib.new('sha512')
-        #sha.update(str(pubkey.n)+str(pubkey.e))
-        sha.update(convertIntToString(pubkey.n)+convertIntToString(pubkey.e))
-        ripe = hashlib.new('ripemd160')
-        ripe.update(sha.digest())
-        address = encodeAddress(1,self.streamNumber,ripe.digest())
+            if self.deterministicPassphrase == "":
+                statusbar = 'Generating one new address'
+                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
+                #This next section is a little bit strange. We're going to generate keys over and over until we
+                #find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
+                #we won't store the \x00 or \x00\x00 bytes thus making the address shorter. 
+                while True:
+                    potentialPrivSigningKey = OpenSSL.rand(32)
+                    potentialPrivEncryptionKey = OpenSSL.rand(32)
+                    potentialPubSigningKey = self.pointMult(potentialPrivSigningKey)
+                    potentialPubEncryptionKey = self.pointMult(potentialPrivEncryptionKey)
+                    #print 'potentialPubSigningKey', potentialPubSigningKey.encode('hex')
+                    #print 'potentialPubEncryptionKey', potentialPubEncryptionKey.encode('hex')
 
-        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
-        config.add_section(address)
-        config.set(address,'label',self.label)
-        config.set(address,'enabled','true')
-        config.set(address,'decoy','false')
-        config.set(address,'n',str(privkey['n']))
-        config.set(address,'e',str(privkey['e']))
-        config.set(address,'d',str(privkey['d']))
-        config.set(address,'p',str(privkey['p']))
-        config.set(address,'q',str(privkey['q']))
-        with open(appdata + 'keys.dat', 'wb') as configfile:
-            config.write(configfile)
+                    ripe = hashlib.new('ripemd160')
+                    sha = hashlib.new('sha512')
+                    sha.update(potentialPubSigningKey+potentialPubEncryptionKey)
+                    ripe.update(sha.digest())
+                    #print 'potential ripe.digest', ripe.digest().encode('hex')
+                    if self.eighteenByteRipe:
+                        if ripe.digest()[:2] == '\x00\x00':
+                            break
+                    else:
+                        if ripe.digest()[:1] == '\x00':
+                            break
+                print 'ripe.digest', ripe.digest().encode('hex')
+                if ripe.digest()[:2] == '\x00\x00':
+                    address = encodeAddress(2,self.streamNumber,ripe.digest()[2:])
+                    print 'address has 18 byte ripe:', address
+                elif ripe.digest()[:1] == '\x00':
+                    address = encodeAddress(2,self.streamNumber,ripe.digest()[1:])
+                    print 'address has 19 byte ripe:', address
+                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
+                status,addressVersionNumber,streamNumber,hash = decodeAddress(address)
+                print status,addressVersionNumber,streamNumber,hash.encode('hex')
 
-        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
-        self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
+                #An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
+                #https://en.bitcoin.it/wiki/Wallet_import_format
+                privSigningKey = '\x80'+potentialPrivSigningKey
+                checksum = hashlib.sha256(hashlib.sha256(privSigningKey).digest()).digest()[0:4]
+                privSigningKeyWIF = arithmetic.changebase(privSigningKey + checksum,256,58)
+                print 'privSigningKeyWIF',privSigningKeyWIF
 
+                privEncryptionKey = '\x80'+potentialPrivEncryptionKey
+                checksum = hashlib.sha256(hashlib.sha256(privEncryptionKey).digest()).digest()[0:4]
+                privEncryptionKeyWIF = arithmetic.changebase(privEncryptionKey + checksum,256,58)
+                print 'privEncryptionKeyWIF',privEncryptionKeyWIF
+
+                config.add_section(address)
+                print 'self.label', self.label
+                config.set(address,'label',self.label)
+                config.set(address,'enabled','true')
+                config.set(address,'decoy','false')
+                config.set(address,'privSigningKey',privSigningKeyWIF)
+                config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
+                with open(appdata + 'keys.dat', 'wb') as configfile:
+                    config.write(configfile)
+
+                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
+                self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
+
+
+            else: #There is something in the deterministicPassphrase variable thus we are going to do this deterministically.
+                statusbar = 'Generating '+numberOfAddressesToMake + ' new addresses.'
+                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
+
+        elif self.addressVersionNumber == 1:
+            statusbar = 'Generating new ' + str(config.getint('bitmessagesettings', 'bitstrength')) + ' bit RSA key. This takes a minute on average. If you want to generate multiple addresses now, you can; they will queue.'
+            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
+            (pubkey, privkey) = rsa.newkeys(config.getint('bitmessagesettings', 'bitstrength'))
+            print privkey['n']
+            print privkey['e']
+            print privkey['d']
+            print privkey['p']
+            print privkey['q']
+
+            sha = hashlib.new('sha512')
+            #sha.update(str(pubkey.n)+str(pubkey.e))
+            sha.update(convertIntToString(pubkey.n)+convertIntToString(pubkey.e))
+            ripe = hashlib.new('ripemd160')
+            ripe.update(sha.digest())
+            address = encodeAddress(1,self.streamNumber,ripe.digest())
+
+            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
+            config.add_section(address)
+            config.set(address,'label',self.label)
+            config.set(address,'enabled','true')
+            config.set(address,'decoy','false')
+            config.set(address,'n',str(privkey['n']))
+            config.set(address,'e',str(privkey['e']))
+            config.set(address,'d',str(privkey['d']))
+            config.set(address,'p',str(privkey['p']))
+            config.set(address,'q',str(privkey['q']))
+            with open(appdata + 'keys.dat', 'wb') as configfile:
+                config.write(configfile)
+
+            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
+            self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
+    
+    def pointMult(self,secret):
+        #passphrase += 'a'
+        #secret = hashlib.sha256(passphrase.encode('utf8')).digest()
+        #if secret starts with too many FF's, continue
+        ctx = OpenSSL.BN_CTX_new()
+        #secret = OpenSSL.rand(32)
+        k = OpenSSL.EC_KEY_new_by_curve_name(OpenSSL.get_curve('secp256k1'))
+        priv_key = OpenSSL.BN_bin2bn(secret, 32, 0)
+        group = OpenSSL.EC_KEY_get0_group(k)
+        pub_key = OpenSSL.EC_POINT_new(group)
+
+        OpenSSL.EC_POINT_mul(group, pub_key, priv_key, None, None, ctx)
+        OpenSSL.EC_KEY_set_private_key(k, priv_key)
+        OpenSSL.EC_KEY_set_public_key(k, pub_key)
+        #print 'priv_key',priv_key
+        #print 'pub_key',pub_key
+
+        size = OpenSSL.i2o_ECPublicKey(k, 0)
+        mb = ctypes.create_string_buffer(size)
+        OpenSSL.i2o_ECPublicKey(k, ctypes.byref(ctypes.pointer(mb)))
+        #print 'mb.raw', mb.raw.encode('hex'), 'length:', len(mb.raw)
+        #print 'mb.raw', mb.raw, 'length:', len(mb.raw)
+
+
+
+
+        #ripe = hashlib.new('ripemd160')
+        #sha = hashlib.new('sha512')
+        #sha.update(mb.raw)
+        #ripe.update(sha.digest())
+        OpenSSL.EC_POINT_free(pub_key)
+        OpenSSL.BN_CTX_free(ctx)
+        OpenSSL.BN_free(priv_key)
+        OpenSSL.EC_KEY_free(k)
+        return mb.raw
 
 class iconGlossaryDialog(QtGui.QDialog):
     def __init__(self,parent):
@@ -2231,8 +2344,8 @@ class NewSubscriptionDialog(QtGui.QDialog):
 class NewAddressDialog(QtGui.QDialog):
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_NewAddressDialog() #Jonathan changed this line
-        self.ui.setupUi(self) #Jonathan left this line alone
+        self.ui = Ui_NewAddressDialog() 
+        self.ui.setupUi(self) 
         self.parent = parent
         row = 1
         while self.parent.ui.tableWidgetYourIdentities.item(row-1,1):
@@ -2240,8 +2353,8 @@ class NewAddressDialog(QtGui.QDialog):
             #print self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text()
             self.ui.comboBoxExisting.addItem(self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text())
             row += 1
-        #QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
-        
+        self.ui.groupBoxDeterministic.setHidden(True)
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
 
 class MyForm(QtGui.QMainWindow):
@@ -2541,7 +2654,7 @@ class MyForm(QtGui.QMainWindow):
         queryreturn = sqlReturnQueue.get()
         for row in queryreturn:
             ackdata,  = row
-            print 'Watching for ackdata', repr(ackdata)
+            print 'Watching for ackdata', ackdata.encode('hex')
             ackdataForWhichImWatching[ackdata] = 0
 
         QtCore.QObject.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL("itemChanged(QTableWidgetItem *)"), self.tableWidgetYourIdentitiesItemChanged)
@@ -3225,31 +3338,36 @@ class MyForm(QtGui.QMainWindow):
 
 
     def click_NewAddressDialog(self):
-        print 'click_buttondialog'
         self.dialog = NewAddressDialog(self)
-
         # For Modal dialogs
         if self.dialog.exec_():
-            self.dialog.ui.buttonBox.enabled = False
-            if self.dialog.ui.radioButtonMostAvailable.isChecked():
-                #self.generateAndStoreAnAddress(1)
-                streamNumberForAddress = 1
+            #self.dialog.ui.buttonBox.enabled = False
+            if self.dialog.ui.radioButtonRandomAddress.isChecked():
+                if self.dialog.ui.radioButtonMostAvailable.isChecked():
+                    streamNumberForAddress = 1
+                else:
+                    #User selected 'Use the same stream as an existing address.'
+                    streamNumberForAddress = addressStream(self.dialog.ui.comboBoxExisting.currentText())
 
-
+                self.addressGenerator = addressGenerator()
+                self.addressGenerator.setup(2,streamNumberForAddress,str(self.dialog.ui.newaddresslabel.text().toUtf8()),1,"",self.dialog.ui.checkBoxEighteenByteRipe.isChecked())
+                QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
+                QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+                self.addressGenerator.start()
             else:
-                #User selected 'Use the same stream as an existing address.'
-                streamNumberForAddress = addressStream(self.dialog.ui.comboBoxExisting.currentText())
-
-            self.addressGenerator = addressGenerator()
-            self.addressGenerator.setup(streamNumberForAddress,str(self.dialog.ui.newaddresslabel.text().toUtf8()))
-
-            QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
-            QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-
-
-            self.addressGenerator.start()
+                if self.dialog.ui.lineEditPassphrase.text() != self.dialog.ui.lineEditPassphraseAgain.text():
+                    QMessageBox.about(self, "Passphrase mismatch", "The passphrase you entered twice doesn\'t match. Try again.")
+                elif self.dialog.ui.lineEditPassphrase.text() == "":
+                    QMessageBox.about(self, "Choose a passphrase", "You really do need a passphrase.")
+                else:
+                    streamNumberForAddress = 1 #this will eventually have to be replaced by logic to determine the most available stream number.
+                    self.addressGenerator = addressGenerator()
+                    self.addressGenerator.setup(2,streamNumberForAddress,"unused address",self.dialog.ui.spinBoxNumberOfAddressesToMake.value(),self.dialog.ui.lineEditPassphrase.text().toUtf8(),self.dialog.ui.checkBoxEighteenByteRipe.isChecked())
+                    QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
+                    QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+                    self.addressGenerator.start()
         else:
-            print 'rejected'
+            print 'new address dialog box rejected'
 
     def closeEvent(self, event):
         broadcastToSendDataQueues((0, 'shutdown', 'all'))
