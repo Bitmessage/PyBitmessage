@@ -100,7 +100,6 @@ def encodeAddress(version,stream,ripe):
             ripe = ripe[2:]
         elif ripe[:1] == '\x00':
             ripe = ripe[1:]
-    print 'within encodeAddress, length of ripe is:', len(ripe)
     a = encodeVarint(version) + encodeVarint(stream) + ripe
     sha = hashlib.new('sha512')
     sha.update(a)
@@ -184,13 +183,10 @@ def decodeAddress(address):
         return status,addressVersionNumber,streamNumber,data[-24:-4]
     elif addressVersionNumber == 2:
         if len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 19:
-            print 'within decode address, lenth I think is 19'
             return status,addressVersionNumber,streamNumber,'\x00'+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
         elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 20:
-            print 'within decode address, lenth I think is 20'
             return status,addressVersionNumber,streamNumber,data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
         elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 18:
-            print 'within decode address, lenth I think is 18'
             return status,addressVersionNumber,streamNumber,'\x00\x00'+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
 
 def addBMIfNotPresent(address):
