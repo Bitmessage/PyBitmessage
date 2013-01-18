@@ -6,9 +6,11 @@ __version__ = '1.3'
 
 __all__ = [
     'OpenSSL',
-    'ecc',
-    'cipher',
-    'hash',
+    'ECC',
+    'Cipher',
+    'hmac_sha256',
+    'hmac_sha512',
+    'pbkdf2'
 ]
 
 from .openssl import OpenSSL

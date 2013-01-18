@@ -72,7 +72,7 @@ def base10_multiply(a,n):
 
 def hex_to_point(h): return (decode(h[2:34],16),decode(h[34:],16))
 
-def point_to_hex(p): return '04'+encode(p[0],16,32)+encode(p[1],16,32)
+def point_to_hex(p): return '04'+encode(p[0],16,64)+encode(p[1],16,64)
 
 def multiply(privkey,pubkey):
   return point_to_hex(base10_multiply(hex_to_point(pubkey),decode(privkey,16)))
