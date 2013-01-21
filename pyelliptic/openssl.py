@@ -424,6 +424,6 @@ except:
                         from ctypes.util import find_library
                         OpenSSL = _OpenSSL(find_library('ssl'))
                     except Exception, err:
-                        raise Exception("Couldn't load the OpenSSL library. You must install it. Error message:"+error)
+                        raise Exception("Couldn't load the OpenSSL library. You must install it. Error message:"+err)
                 else:
                     raise Exception("Couldn't load the OpenSSL library. You must install it.")
