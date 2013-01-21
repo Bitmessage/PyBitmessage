@@ -157,7 +157,6 @@ def decodeAddress(address):
     #print 'sha after second hashing: ', sha.hexdigest()
 
     if checksum != sha.digest()[0:4]:
-        print 'checksum failed'
         status = 'checksumfailed'
         return status,0,0,0
     #else:

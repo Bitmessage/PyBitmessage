@@ -676,7 +676,6 @@ class receiveDataThread(QThread):
             sendersStreamNumber, sendersStreamNumberLength = decodeVarint(data[readPosition:readPosition+10])
             readPosition += sendersStreamNumberLength
             behaviorBitfield = data[readPosition:readPosition+4]
-            print 'behaviorBitfield',behaviorBitfield.encode('hex')
             readPosition += 4
             pubSigningKey = '\x04' + data[readPosition:readPosition+64]
             readPosition += 64
@@ -694,9 +693,7 @@ class receiveDataThread(QThread):
             readPosition += 20
             messageEncodingType, messageEncodingTypeLength = decodeVarint(data[readPosition:readPosition+10])
             readPosition += messageEncodingTypeLength
-            print 'Message Encoding Type:', messageEncodingType
             messageLength, messageLengthLength = decodeVarint(data[readPosition:readPosition+10])
-            print 'message length:', messageLength
             readPosition += messageLengthLength
             message = data[readPosition:readPosition+messageLength]
             #print 'First 150 characters of message:', repr(message[:150])
@@ -2338,7 +2335,6 @@ class singleWorker(QThread):
 
                 payload += pubSigningKey[1:]
                 payload += pubEncryptionKey[1:]
-                print 'attaching pubSigningKey, length:', len(pubSigningKey), 'should be 64.'
 
                 payload += toHash
                 payload += '\x02' #Type 2 is simple UTF-8 message encoding.
@@ -2638,6 +2634,7 @@ class addressGenerator(QThread):
                     startTime = time.time()
                     numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
                     while True:
+                        numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
                         potentialPrivSigningKey = hashlib.sha512(self.deterministicPassphrase + encodeVarint(signingKeyNonce)).digest()[:32]
                         potentialPrivEncryptionKey = hashlib.sha512(self.deterministicPassphrase + encodeVarint(encryptionKeyNonce)).digest()[:32]
                         potentialPubSigningKey = self.pointMult(potentialPrivSigningKey)
@@ -2798,6 +2795,8 @@ class settingsDialog(QtGui.QDialog):
             self.ui.labelSettingsNote.setText('Options have been disabled because they either arn\'t applicable or because they haven\'t yet been implimented for your operating system.')
         elif 'linux' in sys.platform:
             self.ui.checkBoxStartOnLogon.setDisabled(True)
+            self.ui.checkBoxMinimizeToTray.setDisabled(True)
+            self.ui.checkBoxStartInTray.setDisabled(True)
             self.ui.labelSettingsNote.setText('Options have been disabled because they either arn\'t applicable or because they haven\'t yet been implimented for your operating system.')
         #On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(config.get('bitmessagesettings', 'port')))
@@ -4246,7 +4245,10 @@ if __name__ == "__main__":
         config.set('bitmessagesettings','timeformat','%%a, %%d %%b %%Y  %%I:%%M %%p')
         config.set('bitmessagesettings','blackwhitelist','black')
         config.set('bitmessagesettings','startonlogon','false')
-        config.set('bitmessagesettings','minimizetotray','true')
+        if 'linux' in sys.platform:
+            config.set('bitmessagesettings','minimizetotray','false')#This isn't implimented yet and when True on Ubuntu causes Bitmessage to disappear while running when minimized.
+        else:
+            config.set('bitmessagesettings','minimizetotray','true')
         config.set('bitmessagesettings','showtraynotifications','true')
         config.set('bitmessagesettings','startintray','false')
 
