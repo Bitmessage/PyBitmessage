@@ -1,5 +1,5 @@
 import pyelliptic
-import arithmetic as a
+from pyelliptic import arithmetic as a
 def makeCryptor(privkey):
   privkey_bin = '\x02\xca\x00 '+a.changebase(privkey,16,256,minlen=32)
   pubkey = a.changebase(a.privtopub(privkey),16,256,minlen=65)[1:]

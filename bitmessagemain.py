@@ -11,7 +11,7 @@ maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hour
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
 maximumAgeOfObjectsThatIAdvertiseToOthers = 216000 #Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800 #Equals three hours
-storeConfigFilesInSameDirectoryAsProgram = True
+storeConfigFilesInSameDirectoryAsProgram = False
 userVeryEasyProofOfWorkForTesting = True #If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
 
 import sys
@@ -49,8 +49,8 @@ from time import strftime, localtime
 import os
 import string
 import socks
-import pyelliptic
-from pyelliptic import highlevelcrypto
+#import pyelliptic
+import highlevelcrypto
 from pyelliptic.openssl import OpenSSL
 import ctypes
 from pyelliptic import arithmetic
@@ -1947,7 +1947,7 @@ def decodeWalletImportFormat(WIFstring):
 
 def reloadMyAddressHashes():
     printLock.acquire()
-    print 'reloading my address hashes'
+    print 'reloading keys from keys.dat file'
     printLock.release()
     myRSAAddressHashes.clear()
     #myPrivateKeys.clear()
@@ -2570,7 +2570,10 @@ class addressGenerator(QThread):
                 #This next section is a little bit strange. We're going to generate keys over and over until we
                 #find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
                 #we won't store the \x00 or \x00\x00 bytes thus making the address shorter. 
+                startTime = time.time()
+                numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
                 while True:
+                    numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
                     potentialPrivSigningKey = OpenSSL.rand(32)
                     potentialPrivEncryptionKey = OpenSSL.rand(32)
                     potentialPubSigningKey = self.pointMult(potentialPrivSigningKey)
@@ -2590,6 +2593,7 @@ class addressGenerator(QThread):
                         if ripe.digest()[:1] == '\x00':
                             break
                 print 'ripe.digest', ripe.digest().encode('hex')
+                print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'keys per second.'
                 if ripe.digest()[:2] == '\x00\x00':
                     address = encodeAddress(2,self.streamNumber,ripe.digest()[2:])
                 elif ripe.digest()[:1] == '\x00':
@@ -2631,7 +2635,8 @@ class addressGenerator(QThread):
                     #This next section is a little bit strange. We're going to generate keys over and over until we
                     #find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
                     #we won't store the \x00 or \x00\x00 bytes thus making the address shorter.
-
+                    startTime = time.time()
+                    numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
                     while True:
                         potentialPrivSigningKey = hashlib.sha512(self.deterministicPassphrase + encodeVarint(signingKeyNonce)).digest()[:32]
                         potentialPrivEncryptionKey = hashlib.sha512(self.deterministicPassphrase + encodeVarint(encryptionKeyNonce)).digest()[:32]
@@ -2654,6 +2659,7 @@ class addressGenerator(QThread):
                                 break
 
                     print 'ripe.digest', ripe.digest().encode('hex')
+                    print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'keys per second.'
                     if ripe.digest()[:2] == '\x00\x00':
                         address = encodeAddress(2,self.streamNumber,ripe.digest()[2:])
                     elif ripe.digest()[:1] == '\x00':
@@ -2722,18 +2728,15 @@ class addressGenerator(QThread):
             self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
             reloadMyAddressHashes()
 
+    #Does an EC point multiplication which basically turns a private key into a public key
     def pointMult(self,secret):
-        #passphrase += 'a'
-        #secret = hashlib.sha256(passphrase.encode('utf8')).digest()
-        #if secret starts with too many FF's, continue
-        ctx = OpenSSL.BN_CTX_new()
-        #secret = OpenSSL.rand(32)
+        #ctx = OpenSSL.BN_CTX_new() #This value proved to cause Seg Faults on Linux. It turns out that it really didn't speed up EC_POINT_mul anyway. 
         k = OpenSSL.EC_KEY_new_by_curve_name(OpenSSL.get_curve('secp256k1'))
         priv_key = OpenSSL.BN_bin2bn(secret, 32, 0)
         group = OpenSSL.EC_KEY_get0_group(k)
         pub_key = OpenSSL.EC_POINT_new(group)
 
-        OpenSSL.EC_POINT_mul(group, pub_key, priv_key, None, None, ctx)
+        OpenSSL.EC_POINT_mul(group, pub_key, priv_key, None, None, None)
         OpenSSL.EC_KEY_set_private_key(k, priv_key)
         OpenSSL.EC_KEY_set_public_key(k, pub_key)
         #print 'priv_key',priv_key
@@ -2745,15 +2748,8 @@ class addressGenerator(QThread):
         #print 'mb.raw', mb.raw.encode('hex'), 'length:', len(mb.raw)
         #print 'mb.raw', mb.raw, 'length:', len(mb.raw)
 
-
-
-
-        #ripe = hashlib.new('ripemd160')
-        #sha = hashlib.new('sha512')
-        #sha.update(mb.raw)
-        #ripe.update(sha.digest())
         OpenSSL.EC_POINT_free(pub_key)
-        OpenSSL.BN_CTX_free(ctx)
+        #OpenSSL.BN_CTX_free(ctx)
         OpenSSL.BN_free(priv_key)
         OpenSSL.EC_KEY_free(k)
         return mb.raw
@@ -4158,10 +4154,10 @@ class MyForm(QtGui.QMainWindow):
         self.rerenderComboBoxSendFrom()
 
     def updateStatusBar(self,data):
+        printLock.acquire()
         print 'Status bar:', data
+        printLock.release()
         self.statusBar().showMessage(data)
-
-
 
     def reloadBroadcastSendersForWhichImWatching(self):
         broadcastSendersForWhichImWatching.clear()
