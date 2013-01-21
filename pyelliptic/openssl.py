@@ -181,13 +181,13 @@ class _OpenSSL:
         self.EVP_aes_256_cbc.restype = ctypes.c_void_p
         self.EVP_aes_256_cbc.argtypes = []
 
-        self.EVP_aes_128_ctr = self._lib.EVP_aes_128_ctr
-        self.EVP_aes_128_ctr.restype = ctypes.c_void_p
-        self.EVP_aes_128_ctr.argtypes = []
+        #self.EVP_aes_128_ctr = self._lib.EVP_aes_128_ctr
+        #self.EVP_aes_128_ctr.restype = ctypes.c_void_p
+        #self.EVP_aes_128_ctr.argtypes = []
 
-        self.EVP_aes_256_ctr = self._lib.EVP_aes_256_ctr
-        self.EVP_aes_256_ctr.restype = ctypes.c_void_p
-        self.EVP_aes_256_ctr.argtypes = []
+        #self.EVP_aes_256_ctr = self._lib.EVP_aes_256_ctr
+        #self.EVP_aes_256_ctr.restype = ctypes.c_void_p
+        #self.EVP_aes_256_ctr.argtypes = []
 
         self.EVP_aes_128_ofb = self._lib.EVP_aes_128_ofb
         self.EVP_aes_128_ofb.restype = ctypes.c_void_p
@@ -419,4 +419,11 @@ except:
                 lib_path = path.join(sys._MEIPASS, "libeay32.dll")
                 OpenSSL = _OpenSSL(lib_path)
             except:
-                raise Exception("Couldn't load the OpenSSL library. You must install it.")
+                if 'linux' in sys.platform:
+                    try:
+                        from ctypes.util import find_library
+                        OpenSSL = _OpenSSL(find_library('ssl'))
+                    except:
+                        raise Exception("Couldn't load the OpenSSL library. You must install it.")
+                else:
+                    raise Exception("Couldn't load the OpenSSL library. You must install it.")
