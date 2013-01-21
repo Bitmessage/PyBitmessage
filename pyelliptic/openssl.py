@@ -307,8 +307,8 @@ class _OpenSSL:
             'aes-256-cfb': CipherName('aes-256-cfb', self.EVP_aes_256_cfb128, 16),
             'aes-128-ofb': CipherName('aes-128-ofb', self._lib.EVP_aes_128_ofb, 16),
             'aes-256-ofb': CipherName('aes-256-ofb', self._lib.EVP_aes_256_ofb, 16),
-            'aes-128-ctr': CipherName('aes-128-ctr', self._lib.EVP_aes_128_ctr, 16),
-            'aes-256-ctr': CipherName('aes-256-ctr', self._lib.EVP_aes_256_ctr, 16),
+            #'aes-128-ctr': CipherName('aes-128-ctr', self._lib.EVP_aes_128_ctr, 16),
+            #'aes-256-ctr': CipherName('aes-256-ctr', self._lib.EVP_aes_256_ctr, 16),
             'bf-cfb': CipherName('bf-cfb', self.EVP_bf_cfb64, 8),
             'bf-cbc': CipherName('bf-cbc', self.EVP_bf_cbc, 8),
             'rc4': CipherName('rc4', self.EVP_rc4, 128), # 128 is the initialisation size not block size
@@ -423,7 +423,7 @@ except:
                     try:
                         from ctypes.util import find_library
                         OpenSSL = _OpenSSL(find_library('ssl'))
-                    except:
-                        raise Exception("Couldn't load the OpenSSL library. You must install it.")
+                    except Exception, err:
+                        raise Exception("Couldn't load the OpenSSL library. You must install it. Error message:"+error)
                 else:
                     raise Exception("Couldn't load the OpenSSL library. You must install it.")
