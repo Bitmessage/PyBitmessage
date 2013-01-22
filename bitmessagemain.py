@@ -137,7 +137,9 @@ class outgoingSynSender(QThread):
                     sd.sendVersionMessage()
 
                 except socks.GeneralProxyError, err:
+                    printLock.acquire()
                     print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
+                    printLock.release()
                     PORT, timeLastSeen = knownNodes[self.streamNumber][HOST]
                     if (int(time.time())-timeLastSeen) > 172800 and len(knownNodes[self.streamNumber]) > 1000: # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
                         del knownNodes[self.streamNumber][HOST]
@@ -156,7 +158,9 @@ class outgoingSynSender(QThread):
                         print 'Bitmessage MIGHT be having trouble connecting to the SOCKS server. '+str(err)
                         #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Problem: Bitmessage can not connect to the SOCKS server. "+str(err))
                     else:
+                        printLock.acquire()
                         print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
+                        printLock.release()
                         PORT, timeLastSeen = knownNodes[self.streamNumber][HOST]
                         if (int(time.time())-timeLastSeen) > 172800 and len(knownNodes[self.streamNumber]) > 1000: # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
                             del knownNodes[self.streamNumber][HOST]
@@ -188,11 +192,11 @@ class singleListener(QThread):
 
 
         while True:
-            #We don't want to accept incoming connections if the user is using a SOCKS proxy. If they eventually select proxy 'none' then this will start listening for connections.
+            #We don't want to accept incoming connections if the user is using a SOCKS proxy. If the user eventually select proxy 'none' then this will start listening for connections.
             while config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
                 time.sleep(10)
             a,(HOST,PORT) = sock.accept()
-            #Users are finding that if they run more than one node in the same network (thus with the same public IP), they can not connect with the second node. This is because this section of code won't accept the connection from the same IP. This problem will go away when the Bitmessage network grows behond being tiny but in the mean time, I'll comment out this code section.
+            #Users are finding that if they run more than one node in the same network (thus with the same public IP), they can not connect with the second node. This is because this section of code won't accept the connection from the same IP. This problem will go away when the Bitmessage network grows beyond being tiny but in the mean time I'll comment out this code section.
             """while HOST in connectedHostsList:
                 print 'incoming connection is from a host in connectedHostsList (we are already connected to it). Ignoring it.'
                 a.close()
@@ -226,10 +230,10 @@ class receiveDataThread(QThread):
         self.streamNumber = streamNumber
         self.selfInitiatedConnectionList = selfInitiatedConnectionList
         self.selfInitiatedConnectionList.append(self)
-        self.payloadLength = 0
-        self.receivedgetbiginv = False
+        self.payloadLength = 0 #This is the protocol payload length thus it doesn't include the 24 byte message header
+        self.receivedgetbiginv = False #Gets set to true once we receive a getbiginv message from our peer. An abusive peer might request it too much so we use this variable to check whether they have already asked for a big inv message.
         self.objectsThatWeHaveYetToGet = {}
-        connectedHostsList[self.HOST] = 0
+        connectedHostsList[self.HOST] = 0 #The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that the outgoingSynSender thread doesn't try to connect to it.
         self.connectionIsOrWasFullyEstablished = False #set to true after the remote node and I accept each other's version messages. This is needed to allow the user interface to accurately reflect the current number of connections.
         if self.streamNumber == -1: #This was an incoming connection. Send out a version message if we accept the other node's version message.
             self.initiatedConnection = False
@@ -245,7 +249,7 @@ class receiveDataThread(QThread):
                 self.data = self.data + self.sock.recv(65536)
             except socket.timeout:
                 printLock.acquire()
-                print 'Timeout occurred waiting for data. Closing thread.'
+                print 'Timeout occurred waiting for data. Closing receiveData thread.'
                 printLock.release()
                 break
             except Exception, err:
@@ -256,7 +260,7 @@ class receiveDataThread(QThread):
             #print 'Received', repr(self.data)
             if self.data == "":
                 printLock.acquire()
-                print 'Connection closed.'
+                print 'Connection closed. Closing receiveData thread.'
                 printLock.release()
                 break
             else:
@@ -271,14 +275,19 @@ class receiveDataThread(QThread):
         
         try:
             self.selfInitiatedConnectionList.remove(self)
-            print 'removed self from ConnectionList'
+            printLock.acquire()
+            print 'removed self (a receiveDataThread) from ConnectionList'
+            printLock.release()
         except:
             pass
-        broadcastToSendDataQueues((self.streamNumber, 'shutdown', self.HOST))
+        broadcastToSendDataQueues((0, 'shutdown', self.HOST))
         if self.connectionIsOrWasFullyEstablished: #We don't want to decrement the number of connections and show the result if we never incremented it in the first place (which we only do if the connection is fully established- meaning that both nodes accepted each other's version packets.)
             connectionsCountLock.acquire()
             connectionsCount[self.streamNumber] -= 1
             self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"),self.streamNumber,connectionsCount[self.streamNumber])
+            printLock.acquire()
+            print 'Updating network status tab with current connections count:', connectionsCount[self.streamNumber]
+            printLock.release()
             connectionsCountLock.release()
         try:
             del connectedHostsList[self.HOST]
@@ -349,13 +358,17 @@ class receiveDataThread(QThread):
                             random.seed()
                             objectHash, = random.sample(self.objectsThatWeHaveYetToGet,  1)
                             if objectHash in inventory:
+                                printLock.acquire()
                                 print 'Inventory (in memory) already has object listed in inv message.'
+                                printLock.release()
                                 del self.objectsThatWeHaveYetToGet[objectHash]
                             elif isInSqlInventory(objectHash):
+                                printLock.acquire()
                                 print 'Inventory (SQL on disk) already has object listed in inv message.'
+                                printLock.release()
                                 del self.objectsThatWeHaveYetToGet[objectHash]
                             else:
-                                print 'processData function making request for object:', objectHash.encode('hex')
+                                #print 'processData function making request for object:', objectHash.encode('hex')
                                 self.sendgetdata(objectHash)
                                 del self.objectsThatWeHaveYetToGet[objectHash] #It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
                                 break
@@ -402,9 +415,11 @@ class receiveDataThread(QThread):
         print 'broadcasting addr from within connectionFullyEstablished function.'
         printLock.release()
         self.broadcastaddr([(int(time.time()), self.streamNumber, 1, self.HOST, remoteNodeIncomingPort)]) #This lets all of our peers know about this new node.
-        self.sendaddr() #This is one addr message to this one peer.
+        self.sendaddr() #This is one large addr message to this one peer.
         if connectionsCount[self.streamNumber] > 150:
+            printLock.acquire()
             print 'We are connected to too many people. Closing connection.'
+            printLock.release()
             self.sock.close()
             return
         self.sendBigInv()
@@ -427,18 +442,19 @@ class receiveDataThread(QThread):
             for row in queryreturn:
                 hash, = row
                 bigInvList[hash] = 0
-            #print 'bigInvList:', bigInvList
+            #We also have messages in our inventory in memory (which is a python dictionary). Let's fetch those too.
             for hash, storedValue in inventory.items():
                 objectType, streamNumber, payload, receivedTime = storedValue
                 if streamNumber == self.streamNumber and receivedTime > int(time.time())-maximumAgeOfObjectsThatIAdvertiseToOthers:
                     bigInvList[hash] = 0
             numberOfObjectsInInvMessage = 0
             payload = ''
+            #Now let us start appending all of these hashes together. They will be sent out in a big inv message to our new peer.
             for hash, storedValue in bigInvList.items():
                 payload += hash
                 numberOfObjectsInInvMessage += 1
                 if numberOfObjectsInInvMessage >= 50000: #We can only send a max of 50000 items per inv message but we may have more objects to advertise. They must be split up into multiple inv messages.
-                    sendinvMessageToJustThisOnePeer(numberOfObjectsInInvMessage,payload)
+                    self.sendinvMessageToJustThisOnePeer(numberOfObjectsInInvMessage,payload)
                     payload = ''
                     numberOfObjectsInInvMessage = 0
             if numberOfObjectsInInvMessage > 0:
@@ -451,7 +467,7 @@ class receiveDataThread(QThread):
         headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         headerData = headerData + pack('>L',len(payload))
         headerData = headerData + hashlib.sha512(payload).digest()[:4]
-        print 'Sending inv message to just this one peer'
+        print 'Sending huge inv message to just this one peer'
         self.sock.send(headerData + payload)
 
     #We have received a broadcast message
@@ -595,8 +611,6 @@ class receiveDataThread(QThread):
             print 'The time in the msg message is too old. Ignoring it. Time:', embeddedTime
             return
         readPosition += 4
-        
-
         streamNumberAsClaimedByMsg, streamNumberAsClaimedByMsgLength = decodeVarint(self.data[readPosition:readPosition+9])
         if streamNumberAsClaimedByMsg != self.streamNumber:
             print 'The stream number encoded in this msg (' + streamNumberAsClaimedByMsg + ') message does not match the stream number on which it was received. Ignoring it.'
@@ -632,7 +646,7 @@ class receiveDataThread(QThread):
             sqlReturnQueue.get()
             sqlLock.release()
             self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),self.data[readPosition:24+self.payloadLength],'Acknowledgement of the message received just now.')
-            flushInventory() #so that we won't accidentially receive this message twice if the user restarts Bitmessage soon.
+            flushInventory() #so that we won't accidentially receive this message twice if the user restarts Bitmessage both soon and un-cleanly.
             return
         else:
             printLock.acquire()
@@ -806,18 +820,12 @@ class receiveDataThread(QThread):
                     sqlReturnQueue.get()
                     sqlLock.release()
                     self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
-            #Now let's send the acknowledgement
-            #POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(ackData[24:]).digest()).digest()[4:12])
-            #if POW <= 2**64 / ((len(ackData[24:])+payloadLengthExtraBytes) * averageProofOfWorkNonceTrialsPerByte):
-                #print 'The POW is strong enough that this ackdataPayload will be accepted by the Bitmessage network.'
-                #Currently PyBitmessage only supports sending a message with the acknowledgement in the form of a msg message. But future versions, and other clients, could send any object and this software will relay them. This can be used to relay identifying information, like your public key, through another Bitmessage host in case you believe that your Internet connection is being individually watched. You may pick a random address, hope its owner is online, and send a message with encoding type 0 so that they ignore the message but send your acknowledgement data over the network. If you send and receive many messages, it would also be clever to take someone else's acknowledgement data and use it for your own. Assuming that your message is delivered successfully, both will be acknowledged simultaneously (though if it is not delivered successfully, you will be in a pickle.)
-                #print 'self.data before:', repr(self.data)
-            #We'll need to make sure that our client will properly process the ackData; if the packet is malformed, we could clear out self.data and an attacker could use that behavior to determine that we were capable of decoding this message.
+            #Now let's send the acknowledgement. We'll need to make sure that our client will properly process the ackData; if the packet is malformed, we could clear out self.data and an attacker could use that behavior to determine that we were capable of decoding this message.
             ackDataValidThusFar = True
             if len(ackData) < 24:
                 print 'The length of ackData is unreasonably short. Not sending ackData.'
                 ackDataValidThusFar = False
-            if ackData[0:4] != '\xe9\xbe\xb4\xd9':
+            elif ackData[0:4] != '\xe9\xbe\xb4\xd9':
                 print 'Ackdata magic bytes were wrong. Not sending ackData.'
                 ackDataValidThusFar = False
             if ackDataValidThusFar:
@@ -1234,7 +1242,7 @@ class receiveDataThread(QThread):
             #print 'queryreturn', queryreturn
             if queryreturn == []:
                 print 'pubkey request is for me but the pubkey is not in our database of pubkeys. Making it.'
-                payload = pack('>I',(int(time.time()))) #todo: fuzz this time
+                payload = pack('>I',(int(time.time())+random.randrange(-300, 300))) #the current time plus or minus five minutes
                 payload += encodeVarint(2) #Address version number
                 payload += encodeVarint(streamNumber)
                 payload += '\x00\x00\x00\x01' #bitfield of features supported by me (see the wiki).
@@ -1326,7 +1334,6 @@ class receiveDataThread(QThread):
                 while trialValue > target:
                     nonce += 1
                     trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
-                    #trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + payload).digest()).digest()[4:12])
                 print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
 
                 payload = pack('>Q',nonce) + payload
@@ -1360,6 +1367,9 @@ class receiveDataThread(QThread):
             self.broadcastinv(inventoryHash)
 
         else:
+
+            #This section hasn't been tested yet. Criteria for success: Alice sends Bob a message. Three days later, Charlie who is completely new to Bitmessage runs the client for the first time then sends a message to Bob and accomplishes this without Bob having to redo the POW for a pubkey message.
+
             print 'Hash in getpubkey request is not for any of my keys.'
             #..but lets see if we have it stored from when it came in from someone else.
             t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],) #this prevents SQL injection
@@ -1370,7 +1380,7 @@ class receiveDataThread(QThread):
             sqlLock.release()
             print 'queryreturn', queryreturn
             if queryreturn <> []:
-                print 'we have the public key. sending it.'
+                print '...but we have the public key from when it came in from someone else. sending it.'
                 #We have it. Let's send it.
                 for row in queryreturn:
                     hash, transmitdata, timeLastRequested = row
@@ -1405,7 +1415,7 @@ class receiveDataThread(QThread):
 
     #Send a getdata message to our peer to request the object with the given hash
     def sendgetdata(self,hash):
-        print 'sending getdata with hash', repr(hash)
+        print 'sending getdata to retrieve object with hash:', hash.encode('hex')
         payload = '\x01' + hash
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         headerData = headerData + 'getdata\x00\x00\x00\x00\x00'
@@ -1420,7 +1430,9 @@ class receiveDataThread(QThread):
         try:
             for i in range(value):
                 hash = self.data[24+lengthOfVarint+(i*32):56+lengthOfVarint+(i*32)]
-                print 'getdata request for item:', hash.encode('hex'), 'length', len(hash)
+                printLock.acquire()
+                print 'received getdata request for item:', hash.encode('hex')
+                printLock.release()
                 #print 'inventory is', inventory
                 if hash in inventory:
                     objectType, streamNumber, payload, receivedTime = inventory[hash]
@@ -1484,8 +1496,6 @@ class receiveDataThread(QThread):
 
     #Send an inv message with just one hash to all of our peers
     def broadcastinv(self,hash):
-        print 'sending inv'
-        #payload = '\x01' + pack('>H',objectType) + hash
         payload = '\x01' + hash
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -1597,7 +1607,7 @@ class receiveDataThread(QThread):
 
         if verbose >= 2:
             printLock.acquire()
-            print 'Broadcasting addr with # of entries:', numberOfAddressesInAddrMessage
+            print 'Broadcasting addr with', numberOfAddressesInAddrMessage, 'entries.'
             printLock.release()
         broadcastToSendDataQueues((self.streamNumber, 'send', datatosend))
 
@@ -1665,7 +1675,7 @@ class receiveDataThread(QThread):
 
         if verbose >= 2:
             printLock.acquire()
-            print 'Sending addr with # of entries:', numberOfAddressesInAddrMessage
+            print 'Sending addr with', numberOfAddressesInAddrMessage, 'entries.'
             printLock.release()
         self.sock.send(datatosend)
 
@@ -1689,7 +1699,9 @@ class receiveDataThread(QThread):
             numberOfStreamsInVersionMessage, lengthOfNumberOfStreamsInVersionMessage = decodeVarint(self.data[readPosition:])
             readPosition += lengthOfNumberOfStreamsInVersionMessage
             self.streamNumber, lengthOfRemoteStreamNumber = decodeVarint(self.data[readPosition:])
+            printLock.acquire()
             print 'Remote node stream number:', self.streamNumber
+            printLock.release()
             #If this was an incoming connection, then the sendData thread doesn't know the stream. We have to set it.
             if not self.initiatedConnection:
                 broadcastToSendDataQueues((0,'setStreamNumber',(self.HOST,self.streamNumber)))
@@ -1785,7 +1797,7 @@ class sendDataThread(QThread):
         self.streamNumber = streamNumber
         self.lastTimeISentData = int(time.time()) #If this value increases beyond five minutes ago, we'll send a pong message to keep the connection alive.
         printLock.acquire()
-        print 'The streamNumber of this sendDataThread at setup() is', self.streamNumber, self
+        print 'The streamNumber of this sendDataThread (ID:', id(self),') at setup() is', self.streamNumber
         printLock.release()
 
     def sendVersionMessage(self):
