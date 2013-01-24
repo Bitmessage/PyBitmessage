@@ -1262,27 +1262,6 @@ class receiveDataThread(QThread):
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
-<<<<<<< HEAD
-                return
-            for row in queryreturn:
-                hash, havecorrectnonce, payload, timeLastRequested = row
-                if timeLastRequested < int(time.time())+604800: #if the last time anyone asked about this hash was this week, extend the time.
-                    t = (int(time.time())+604800,hash)
-                    sqlSubmitQueue.put('''UPDATE pubkeys set time=? WHERE hash=?''')
-                    sqlSubmitQueue.put(t)
-                    queryreturn = sqlReturnQueue.get()
-
-            sqlLock.release()
-
-            inventoryHash = calculateInventoryHash(payload)
-            objectType = 'pubkey'
-            inventory[inventoryHash] = (objectType, self.streamNumber, payload, int(time.time()))
-            self.broadcastinv(inventoryHash)
-
-        else: #The requested hash is not for any of my keys but we might have received it previously from someone else and could send it now.
-=======
->>>>>>> 3df7a16540e37e937f4505523a20d5518d94f6f4
-
                 inventoryHash = calculateInventoryHash(payload)
                 objectType = 'pubkey'
                 inventory[inventoryHash] = (objectType, self.streamNumber, payload, int(time.time()))
