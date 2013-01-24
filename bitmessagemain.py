@@ -3382,10 +3382,10 @@ class MyForm(QtGui.QMainWindow):
                     else:
                         toAddress = addBMIfNotPresent(toAddress)
                         if addressVersionNumber > 2 or addressVersionNumber == 0:
-                            QMessageBox.about(self, "Address version number", "Concerning the address "+toAddress+", Bitmessage cannot understand address version numbers of "+addressVersionNumber+". Perhaps upgrade Bitmessage to the latest version.")
+                            QMessageBox.about(self, "Address version number", "Concerning the address "+toAddress+", Bitmessage cannot understand address version numbers of "+str(addressVersionNumber)+". Perhaps upgrade Bitmessage to the latest version.")
                             continue
                         if streamNumber > 1 or streamNumber == 0:
-                            QMessageBox.about(self, "Stream number", "Concerning the address "+toAddress+", Bitmessage cannot handle stream numbers of "+addressVersionNumber+". Perhaps upgrade Bitmessage to the latest version.")
+                            QMessageBox.about(self, "Stream number", "Concerning the address "+toAddress+", Bitmessage cannot handle stream numbers of "+str(addressVersionNumber)+". Perhaps upgrade Bitmessage to the latest version.")
                             continue
                         self.statusBar().showMessage('')
                         try:
