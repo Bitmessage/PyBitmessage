@@ -806,8 +806,7 @@ class receiveDataThread(QThread):
                 return
 
             printLock.acquire()
-            print 'As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person:', calculateBitcoinAddressFromPubkey(pubSigningKey)
-            print 'And here is the testnet address:',calculateTestnetAddressFromPubkey(pubSigningKey),'. Be aware that the other person must take their private signing key from Bitmessage and import it into Bitcoin for it to be of any use. Do not use this unless you know what you are doing. Using testnet is recommended as no warranty is offered.'
+            print 'As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person:', calculateBitcoinAddressFromPubkey(pubSigningKey), '  ..and here is the testnet address:',calculateTestnetAddressFromPubkey(pubSigningKey),'. The other person must take their private signing key from Bitmessage and import it into Bitcoin (or a service like Blockchain.info) for it to be of any use. Do not use this unless you know what you are doing.'
             printLock.release()
             #calculate the fromRipe.
             sha = hashlib.new('sha512')
