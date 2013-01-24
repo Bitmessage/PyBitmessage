@@ -510,90 +510,163 @@ class receiveDataThread(QThread):
             return
         readPosition += broadcastVersionLength
         sendersAddressVersion, sendersAddressVersionLength = decodeVarint(self.data[readPosition:readPosition+9])
-        if sendersAddressVersion <> 1:
-            #Cannot decode senderAddressVersion higher than 1. Assuming the sender isn\' being silly, you should upgrade Bitmessage because this message shall be ignored.
+        if sendersAddressVersion == 0 or sendersAddressVersion >=3:
+            #Cannot decode senderAddressVersion higher than 2. Assuming the sender isn\' being silly, you should upgrade Bitmessage because this message shall be ignored.
             return
         readPosition += sendersAddressVersionLength
-        sendersStream, sendersStreamLength = decodeVarint(self.data[readPosition:readPosition+9])
-        if sendersStream <= 0:
-            return
-        readPosition += sendersStreamLength
-        sendersHash = self.data[readPosition:readPosition+20]
-        if sendersHash not in broadcastSendersForWhichImWatching:
-            return
-        #At this point, this message claims to be from sendersHash and we are interested in it. We still have to hash the public key to make sure it is truly the key that matches the hash, and also check the signiture.
-        readPosition += 20
-        nLength, nLengthLength = decodeVarint(self.data[readPosition:readPosition+9])
-        if nLength < 1:
-            return
-        readPosition += nLengthLength
-        nString = self.data[readPosition:readPosition+nLength]
-        readPosition += nLength
-        eLength, eLengthLength = decodeVarint(self.data[readPosition:readPosition+9])
-        if eLength < 1:
-            return
-        readPosition += eLengthLength
-        eString = self.data[readPosition:readPosition+eLength]
-        #We are now ready to hash the public key and verify that its hash matches the hash claimed in the message
-        readPosition += eLength
-        sha = hashlib.new('sha512')
-        sha.update(nString+eString)
-        ripe = hashlib.new('ripemd160')
-        ripe.update(sha.digest())
-        if ripe.digest() != sendersHash:
-            #The sender of this message lied.
-            return
-
-        readPositionAtBeginningOfMessageEncodingType = readPosition
-        messageEncodingType, messageEncodingTypeLength = decodeVarint(self.data[readPosition:readPosition+9])
-        if messageEncodingType == 0:
-            return
-        readPosition += messageEncodingTypeLength
-        messageLength, messageLengthLength = decodeVarint(self.data[readPosition:readPosition+9])
-        readPosition += messageLengthLength
-        message = self.data[readPosition:readPosition+messageLength]
-        readPosition += messageLength
-        signature = self.data[readPosition:readPosition+nLength]
-        sendersPubkey = rsa.PublicKey(convertStringToInt(nString),convertStringToInt(eString))
-        #print 'senders Pubkey', sendersPubkey
-        try:
-            #You may notice that this signature doesn't cover any information that identifies the RECEIVER of the message. This makes it vulnerable to a malicious receiver Bob forwarding the message from Alice to Charlie, making it look like Alice sent the message to Charlie. This will be fixed in the next version.
-                #See http://world.std.com/~dtd/sign_encrypt/sign_encrypt7.html
-            rsa.verify(self.data[readPositionAtBeginningOfMessageEncodingType:readPositionAtBeginningOfMessageEncodingType+messageEncodingTypeLength+messageLengthLength+messageLength],signature,sendersPubkey)
-            print 'verify passed'
-        except Exception, err:
-            print 'verify failed', err
-            return
-        #verify passed
-        fromAddress = encodeAddress(sendersAddressVersion,sendersStream,ripe.digest())
-        print 'fromAddress:', fromAddress
-
-        if messageEncodingType == 2:
-            bodyPositionIndex = string.find(message,'\nBody:')
-            if bodyPositionIndex > 1:
-                subject = message[8:bodyPositionIndex]
-                body = message[bodyPositionIndex+6:]
-            else:
-                subject = ''
+        if sendersAddressVersion == 2:
+            sendersStream, sendersStreamLength = decodeVarint(self.data[readPosition:readPosition+9])
+            if sendersStream <= 0 or sendersStream <> self.streamNumber:
+                return
+            readPosition += sendersStreamLength
+            behaviorBitfield = self.data[readPosition:readPosition+4]
+            readPosition += 4
+            sendersPubSigningKey = '\x04' + self.data[readPosition:readPosition+64]
+            readPosition += 64
+            sendersPubEncryptionKey = '\x04' + self.data[readPosition:readPosition+64]
+            readPosition += 64
+            sendersHash = self.data[readPosition:readPosition+20]
+            if sendersHash not in broadcastSendersForWhichImWatching:
+                return
+            #At this point, this message claims to be from sendersHash and we are interested in it. We still have to hash the public key to make sure it is truly the key that matches the hash, and also check the signiture.
+            readPosition += 20
+            
+            sha = hashlib.new('sha512')
+            sha.update(sendersPubSigningKey+sendersPubEncryptionKey)
+            ripe = hashlib.new('ripemd160')
+            ripe.update(sha.digest())
+            if ripe.digest() != sendersHash:
+                #The sender of this message lied.
+                return            
+            messageEncodingType, messageEncodingTypeLength = decodeVarint(self.data[readPosition:readPosition+9])
+            if messageEncodingType == 0:
+                return
+            readPosition += messageEncodingTypeLength
+            messageLength, messageLengthLength = decodeVarint(self.data[readPosition:readPosition+9])
+            readPosition += messageLengthLength
+            message = self.data[readPosition:readPosition+messageLength]
+            readPosition += messageLength
+            readPositionAtBottomOfMessage = readPosition
+            signatureLength, signatureLengthLength = decodeVarint(self.data[readPosition:readPosition+9])
+            readPosition += signatureLengthLength
+            signature = self.data[readPosition:readPosition+signatureLength]
+            try:
+                highlevelcrypto.verify(self.data[36:readPositionAtBottomOfMessage],signature,sendersPubSigningKey.encode('hex'))
+                print 'ECDSA verify passed'
+            except Exception, err:
+                print 'ECDSA verify failed', err
+                return
+            #verify passed
+            fromAddress = encodeAddress(sendersAddressVersion,sendersStream,ripe.digest())
+            print 'fromAddress:', fromAddress
+            if messageEncodingType == 2:
+                bodyPositionIndex = string.find(message,'\nBody:')
+                if bodyPositionIndex > 1:
+                    subject = message[8:bodyPositionIndex]
+                    body = message[bodyPositionIndex+6:]
+                else:
+                    subject = ''
+                    body = message
+            elif messageEncodingType == 1:
                 body = message
-        elif messageEncodingType == 1:
-            body = message
-            subject = ''
-        elif messageEncodingType == 0:
-            print 'messageEncodingType == 0. Doing nothing with the message.'
-        else:
-            body = 'Unknown encoding type.\n\n' + repr(message)
-            subject = ''
+                subject = ''
+            elif messageEncodingType == 0:
+                print 'messageEncodingType == 0. Doing nothing with the message.'
+            else:
+                body = 'Unknown encoding type.\n\n' + repr(message)
+                subject = ''
 
-        toAddress = '[Broadcast subscribers]'
-        if messageEncodingType <> 0:
-            sqlLock.acquire()
-            t = (inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
-            sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
-            sqlSubmitQueue.put(t)
-            sqlReturnQueue.get()
-            sqlLock.release()
-            self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
+            toAddress = '[Broadcast subscribers]'
+            if messageEncodingType <> 0:
+                sqlLock.acquire()
+                t = (inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
+                sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
+                sqlSubmitQueue.put(t)
+                sqlReturnQueue.get()
+                sqlLock.release()
+                self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
+
+
+            ###########################################
+        elif sendersAddressVersion == 1:
+            sendersStream, sendersStreamLength = decodeVarint(self.data[readPosition:readPosition+9])
+            if sendersStream <= 0:
+                return
+            readPosition += sendersStreamLength
+            sendersHash = self.data[readPosition:readPosition+20]
+            if sendersHash not in broadcastSendersForWhichImWatching:
+                return
+            #At this point, this message claims to be from sendersHash and we are interested in it. We still have to hash the public key to make sure it is truly the key that matches the hash, and also check the signiture.
+            readPosition += 20
+            nLength, nLengthLength = decodeVarint(self.data[readPosition:readPosition+9])
+            if nLength < 1:
+                return
+            readPosition += nLengthLength
+            nString = self.data[readPosition:readPosition+nLength]
+            readPosition += nLength
+            eLength, eLengthLength = decodeVarint(self.data[readPosition:readPosition+9])
+            if eLength < 1:
+                return
+            readPosition += eLengthLength
+            eString = self.data[readPosition:readPosition+eLength]
+            #We are now ready to hash the public key and verify that its hash matches the hash claimed in the message
+            readPosition += eLength
+            sha = hashlib.new('sha512')
+            sha.update(nString+eString)
+            ripe = hashlib.new('ripemd160')
+            ripe.update(sha.digest())
+            if ripe.digest() != sendersHash:
+                #The sender of this message lied.
+                return
+
+            readPositionAtBeginningOfMessageEncodingType = readPosition
+            messageEncodingType, messageEncodingTypeLength = decodeVarint(self.data[readPosition:readPosition+9])
+            if messageEncodingType == 0:
+                return
+            readPosition += messageEncodingTypeLength
+            messageLength, messageLengthLength = decodeVarint(self.data[readPosition:readPosition+9])
+            readPosition += messageLengthLength
+            message = self.data[readPosition:readPosition+messageLength]
+            readPosition += messageLength
+            signature = self.data[readPosition:readPosition+nLength]
+            sendersPubkey = rsa.PublicKey(convertStringToInt(nString),convertStringToInt(eString))
+            #print 'senders Pubkey', sendersPubkey
+            try:
+                rsa.verify(self.data[readPositionAtBeginningOfMessageEncodingType:readPositionAtBeginningOfMessageEncodingType+messageEncodingTypeLength+messageLengthLength+messageLength],signature,sendersPubkey)
+                print 'verify passed'
+            except Exception, err:
+                print 'verify failed', err
+                return
+            #verify passed
+            fromAddress = encodeAddress(sendersAddressVersion,sendersStream,ripe.digest())
+            print 'fromAddress:', fromAddress
+
+            if messageEncodingType == 2:
+                bodyPositionIndex = string.find(message,'\nBody:')
+                if bodyPositionIndex > 1:
+                    subject = message[8:bodyPositionIndex]
+                    body = message[bodyPositionIndex+6:]
+                else:
+                    subject = ''
+                    body = message
+            elif messageEncodingType == 1:
+                body = message
+                subject = ''
+            elif messageEncodingType == 0:
+                print 'messageEncodingType == 0. Doing nothing with the message.'
+            else:
+                body = 'Unknown encoding type.\n\n' + repr(message)
+                subject = ''
+
+            toAddress = '[Broadcast subscribers]'
+            if messageEncodingType <> 0:
+                sqlLock.acquire()
+                t = (inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
+                sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
+                sqlSubmitQueue.put(t)
+                sqlReturnQueue.get()
+                sqlLock.release()
+                self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
 
     #We have received a msg message.
     def recmsg(self):
@@ -1746,7 +1819,7 @@ class sendDataThread(QThread):
                     try:
                         #To prevent some network analysis, 'leak' the data out to our peer after waiting a random amount of time.
                         random.seed()
-                        time.sleep(random.randrange(0, 5)) 
+                        time.sleep(random.randrange(0, 10)) 
                         self.sock.sendall(data)
                         self.lastTimeISentData = int(time.time())
                     except:
@@ -2174,72 +2247,137 @@ class singleWorker(QThread):
             #print 'within sendMsg, row is:', row
             #msgid, toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status = row
             fromaddress, subject, body, ackdata = row
-            messageToTransmit = '\x02'
-            messageToTransmit += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding.
-            messageToTransmit += 'Subject:' + subject + '\n' + 'Body:' + body
-
-            #We need the all the integers for our private key in order to sign our message, and we need our public key to send with the message.
-            n = config.getint(fromaddress, 'n')
-            e = config.getint(fromaddress, 'e')
-            d = config.getint(fromaddress, 'd')
-            p = config.getint(fromaddress, 'p')
-            q = config.getint(fromaddress, 'q')
-            nString = convertIntToString(n)
-            eString = convertIntToString(e)
-            myPubkey = rsa.PublicKey(n,e)
-            myPrivatekey = rsa.PrivateKey(n,e,d,p,q)
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(fromaddress)
-            
-            #The payload of the broadcast message starts with a POW, but that will be added later.
-            payload = pack('>I',(int(time.time())))
-            payload += encodeVarint(1) #broadcast version
-            payload += encodeVarint(addressVersionNumber)
-            payload += encodeVarint(streamNumber)
-            payload += ripe
-            payload += encodeVarint(len(nString))
-            payload += nString
-            payload += encodeVarint(len(eString))
-            payload += eString
-            payload += messageToTransmit
-            signature = rsa.sign(messageToTransmit,myPrivatekey,'SHA-512')
-            #print 'signature', signature.encode('hex')
-            payload += signature
+            if addressVersionNumber == 2:
+                #We need to convert our private keys to public keys in order to include them.
+                privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
+                privEncryptionKeyBase58 = config.get(fromaddress, 'privencryptionkey')
 
-            #print 'nString', repr(nString)
-            #print 'eString', repr(eString)
+                privSigningKeyHex = decodeWalletImportFormat(privSigningKeyBase58).encode('hex')
+                privEncryptionKeyHex = decodeWalletImportFormat(privEncryptionKeyBase58).encode('hex')
 
-            nonce = 0
-            trialValue = 99999999999999999999
-            target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
-            print '(For broadcast message) Doing proof of work...'
-            initialHash = hashlib.sha512(payload).digest()
-            while trialValue > target:
-                nonce += 1
-                trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
-            print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
+                pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode('hex') #At this time these pubkeys are 65 bytes long because they include the encoding byte which we won't be sending in the broadcast message.
+                pubEncryptionKey = highlevelcrypto.privToPub(privEncryptionKeyHex).decode('hex')    
+                
+                payload = pack('>I',(int(time.time())))
+                payload += encodeVarint(1) #broadcast version
+                payload += encodeVarint(addressVersionNumber)
+                payload += encodeVarint(streamNumber)
+                payload += '\x00\x00\x00\x01' #behavior bitfield
+                payload += pubSigningKey[1:]
+                payload += pubEncryptionKey[1:]  
+                payload += ripe
+                payload += '\x02' #message encoding type
+                payload += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding.
+                payload += 'Subject:' + subject + '\n' + 'Body:' + body
+                
+                signature = highlevelcrypto.sign(payload,privSigningKeyHex)
+                payload += encodeVarint(len(signature))
+                payload += signature
+                
+                nonce = 0
+                trialValue = 99999999999999999999
+                target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
+                print '(For broadcast message) Doing proof of work...'
+                initialHash = hashlib.sha512(payload).digest()
+                while trialValue > target:
+                    nonce += 1
+                    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+                print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
 
-            payload = pack('>Q',nonce) + payload
+                payload = pack('>Q',nonce) + payload
 
-            inventoryHash = calculateInventoryHash(payload)
-            objectType = 'broadcast'
-            inventory[inventoryHash] = (objectType, streamNumber, payload, int(time.time()))
-            print 'sending inv (within sendBroadcast function)'
-            payload = '\x01' + inventoryHash
-            headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-            headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-            headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-            headerData = headerData + hashlib.sha512(payload).digest()[:4]
-            broadcastToSendDataQueues((streamNumber, 'send', headerData + payload))
+                inventoryHash = calculateInventoryHash(payload)
+                objectType = 'broadcast'
+                inventory[inventoryHash] = (objectType, streamNumber, payload, int(time.time()))
+                print 'sending inv (within sendBroadcast function)'
+                payload = '\x01' + inventoryHash
+                headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
+                headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+                headerData = headerData + hashlib.sha512(payload).digest()[:4]
+                broadcastToSendDataQueues((streamNumber, 'send', headerData + payload))
 
-            self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent at '+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent at '+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
 
-            #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
-            sqlLock.acquire()
-            t = ('broadcastsent',int(time.time()),fromaddress, subject, body,'broadcastpending')
-            sqlSubmitQueue.put('UPDATE sent SET status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
-            sqlSubmitQueue.put(t)
-            queryreturn = sqlReturnQueue.get()
-            sqlLock.release()
+                #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
+                sqlLock.acquire()
+                t = ('broadcastsent',int(time.time()),fromaddress, subject, body,'broadcastpending')
+                sqlSubmitQueue.put('UPDATE sent SET status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
+                sqlSubmitQueue.put(t)
+                queryreturn = sqlReturnQueue.get()
+                sqlLock.release()
+        
+            elif addressVersionNumber == 1: #This whole section can be taken out soon because we aren't supporting v1 addresses for much longer.
+                messageToTransmit = '\x02' #message encoding type
+                messageToTransmit += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding.
+                messageToTransmit += 'Subject:' + subject + '\n' + 'Body:' + body
+
+                #We need the all the integers for our private key in order to sign our message, and we need our public key to send with the message.
+                n = config.getint(fromaddress, 'n')
+                e = config.getint(fromaddress, 'e')
+                d = config.getint(fromaddress, 'd')
+                p = config.getint(fromaddress, 'p')
+                q = config.getint(fromaddress, 'q')
+                nString = convertIntToString(n)
+                eString = convertIntToString(e)
+                #myPubkey = rsa.PublicKey(n,e)
+                myPrivatekey = rsa.PrivateKey(n,e,d,p,q)
+
+                #The payload of the broadcast message starts with a POW, but that will be added later.
+                payload = pack('>I',(int(time.time())))
+                payload += encodeVarint(1) #broadcast version
+                payload += encodeVarint(addressVersionNumber)
+                payload += encodeVarint(streamNumber)
+                payload += ripe
+                payload += encodeVarint(len(nString))
+                payload += nString
+                payload += encodeVarint(len(eString))
+                payload += eString
+                payload += messageToTransmit
+                signature = rsa.sign(messageToTransmit,myPrivatekey,'SHA-512')
+                #print 'signature', signature.encode('hex')
+                payload += signature
+
+                #print 'nString', repr(nString)
+                #print 'eString', repr(eString)
+
+                nonce = 0
+                trialValue = 99999999999999999999
+                target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
+                print '(For broadcast message) Doing proof of work...'
+                initialHash = hashlib.sha512(payload).digest()
+                while trialValue > target:
+                    nonce += 1
+                    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+                print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
+
+                payload = pack('>Q',nonce) + payload
+
+                inventoryHash = calculateInventoryHash(payload)
+                objectType = 'broadcast'
+                inventory[inventoryHash] = (objectType, streamNumber, payload, int(time.time()))
+                print 'sending inv (within sendBroadcast function)'
+                payload = '\x01' + inventoryHash
+                headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
+                headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+                headerData = headerData + hashlib.sha512(payload).digest()[:4]
+                broadcastToSendDataQueues((streamNumber, 'send', headerData + payload))
+
+                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent at '+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+
+                #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
+                sqlLock.acquire()
+                t = ('broadcastsent',int(time.time()),fromaddress, subject, body,'broadcastpending')
+                sqlSubmitQueue.put('UPDATE sent SET status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
+                sqlSubmitQueue.put(t)
+                queryreturn = sqlReturnQueue.get()
+                sqlLock.release()
+            else:
+                printLock.acquire()
+                print 'In the singleWorker thread, the sendBroadcast function doesn\'t understand the address version'
+                printLock.release()
 
     def sendMsg(self,toRipe):
         sqlLock.acquire()
@@ -3385,7 +3523,7 @@ class MyForm(QtGui.QMainWindow):
                             QMessageBox.about(self, "Address version number", "Concerning the address "+toAddress+", Bitmessage cannot understand address version numbers of "+str(addressVersionNumber)+". Perhaps upgrade Bitmessage to the latest version.")
                             continue
                         if streamNumber > 1 or streamNumber == 0:
-                            QMessageBox.about(self, "Stream number", "Concerning the address "+toAddress+", Bitmessage cannot handle stream numbers of "+str(addressVersionNumber)+". Perhaps upgrade Bitmessage to the latest version.")
+                            QMessageBox.about(self, "Stream number", "Concerning the address "+toAddress+", Bitmessage cannot handle stream numbers of "+str(streamNumber)+". Perhaps upgrade Bitmessage to the latest version.")
                             continue
                         self.statusBar().showMessage('')
                         try:
@@ -3454,11 +3592,8 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage('Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab.')
             else:
                 self.statusBar().showMessage('')
-                ackdata = ''
                 #We don't actually need the ackdata for acknowledgement since this is a broadcast message, but we can use it to update the user interface when the POW is done generating.
-                for i in range(4): #This will make 32 bytes of random data.
-                    random.seed()
-                    ackdata += pack('>Q',random.randrange(1, 18446744073709551615))
+                ackdata = OpenSSL.rand(32)
                 toAddress = '[Broadcast subscribers]'
                 ripe = ''
                 sqlLock.acquire()
@@ -3502,7 +3637,6 @@ class MyForm(QtGui.QMainWindow):
 
                 self.ui.labelFrom.setText('')
                 self.ui.tabWidget.setCurrentIndex(2)
-
 
 
     def click_pushButtonLoadFromAddressBook(self):
@@ -3893,11 +4027,16 @@ class MyForm(QtGui.QMainWindow):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,0).data(Qt.UserRole).toPyObject())
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,1).data(Qt.UserRole).toPyObject())
-        if not config.get(toAddressAtCurrentInboxRow,'enabled'):
-            self.statusBar().showMessage('Error: The address from which you are trying to send is disabled. Enable it from the \'Your Identities\' tab first.')
-            return
+
+        
+        if toAddressAtCurrentInboxRow == '[Broadcast subscribers]':
+            self.ui.labelFrom.setText('')
+        else:
+            if not config.get(toAddressAtCurrentInboxRow,'enabled'):
+                self.statusBar().showMessage('Error: The address from which you are trying to send is disabled. Enable it from the \'Your Identities\' tab first.')
+                return
+            self.ui.labelFrom.setText(toAddressAtCurrentInboxRow)
         self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
-        self.ui.labelFrom.setText(toAddressAtCurrentInboxRow)
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
         #self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n'+self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject())
