@@ -26,6 +26,7 @@ import ConfigParser
 from bitmessageui import *
 from newaddressdialog import *
 from newsubscriptiondialog import *
+from regenerateaddresses import *
 from settings import *
 from about import *
 from help import *
@@ -2398,7 +2399,7 @@ class singleWorker(QThread):
             fromStatus,fromAddressVersionNumber,fromStreamNumber,fromHash = decodeAddress(fromaddress)
             self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send the message.')
             printLock.acquire()
-            print 'Found the necessary message that needs to be sent with this pubkey.'
+            print 'Found a message in our database that needs to be sent with this pubkey.'
             print 'First 150 characters of message:', message[:150]
             printLock.release()
 
@@ -2673,8 +2674,8 @@ class addressGenerator(QThread):
                     else:
                         if ripe.digest()[:1] == '\x00':
                             break
-                print 'ripe.digest', ripe.digest().encode('hex')
-                print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'keys per second.'
+                print 'Generated address with ripe digest:', ripe.digest().encode('hex')
+                print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'addresses per second before finding one with the correct ripe-prefix.'
                 if ripe.digest()[:2] == '\x00\x00':
                     address = encodeAddress(2,self.streamNumber,ripe.digest()[2:])
                 elif ripe.digest()[:1] == '\x00':
@@ -2686,12 +2687,12 @@ class addressGenerator(QThread):
                 privSigningKey = '\x80'+potentialPrivSigningKey
                 checksum = hashlib.sha256(hashlib.sha256(privSigningKey).digest()).digest()[0:4]
                 privSigningKeyWIF = arithmetic.changebase(privSigningKey + checksum,256,58)
-                print 'privSigningKeyWIF',privSigningKeyWIF
+                #print 'privSigningKeyWIF',privSigningKeyWIF
 
                 privEncryptionKey = '\x80'+potentialPrivEncryptionKey
                 checksum = hashlib.sha256(hashlib.sha256(privEncryptionKey).digest()).digest()[0:4]
                 privEncryptionKeyWIF = arithmetic.changebase(privEncryptionKey + checksum,256,58)
-                print 'privEncryptionKeyWIF',privEncryptionKeyWIF
+                #print 'privEncryptionKeyWIF',privEncryptionKeyWIF
 
                 config.add_section(address)
                 print 'self.label', self.label
@@ -2753,7 +2754,6 @@ class addressGenerator(QThread):
                     privSigningKey = '\x80'+potentialPrivSigningKey
                     checksum = hashlib.sha256(hashlib.sha256(privSigningKey).digest()).digest()[0:4]
                     privSigningKeyWIF = arithmetic.changebase(privSigningKey + checksum,256,58)
-                    print 'privSigningKeyWIF',privSigningKeyWIF
 
                     privEncryptionKey = '\x80'+potentialPrivEncryptionKey
                     checksum = hashlib.sha256(hashlib.sha256(privEncryptionKey).digest()).digest()[0:4]
@@ -2861,6 +2861,14 @@ class aboutDialog(QtGui.QDialog):
         self.ui.setupUi(self)
         self.parent = parent
         self.ui.labelVersion.setText('version ' + softwareVersion)
+
+class regenerateAddressesDialog(QtGui.QDialog):
+    def __init__(self,parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_regenerateAddressesDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
 class settingsDialog(QtGui.QDialog):
     def __init__(self,parent):
@@ -3007,6 +3015,8 @@ class MyForm(QtGui.QMainWindow):
 
         #FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL("triggered()"), self.close)
+        QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL("triggered()"), self.click_actionManageKeys)
+        QtCore.QObject.connect(self.ui.actionRegenerateDeterministicAddresses, QtCore.SIGNAL("triggered()"), self.click_actionRegenerateDeterministicAddresses)
         QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL("triggered()"), self.click_actionManageKeys)
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL("clicked()"), self.click_NewAddressDialog)
         QtCore.QObject.connect(self.ui.comboBoxSendFrom, QtCore.SIGNAL("activated(int)"),self.redrawLabelFrom)
@@ -3322,6 +3332,21 @@ class MyForm(QtGui.QMainWindow):
                 self.openKeysFile()
             else:
                 pass
+        
+    def click_actionRegenerateDeterministicAddresses(self):
+        self.regenerateAddressesDialogInstance = regenerateAddressesDialog(self)
+        if self.regenerateAddressesDialogInstance.exec_():
+            if self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text() == "":
+                QMessageBox.about(self, "bad passphrase", "You must type your passphrase. If you don\'t have one then this is not the form for you.")
+            else:
+                streamNumberForAddress = int(self.regenerateAddressesDialogInstance.ui.lineEditStreamNumber.text())
+                addressVersionNumber = int(self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
+                self.addressGenerator = addressGenerator()
+                self.addressGenerator.setup(addressVersionNumber,streamNumberForAddress,"unused address",self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(),self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(),self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked())
+                QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
+                QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+                self.addressGenerator.start()
+                self.ui.tabWidget.setCurrentIndex(3)
 
     def openKeysFile(self):
         if 'linux' in sys.platform:

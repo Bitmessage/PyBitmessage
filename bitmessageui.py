@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Tue Dec 18 14:32:02 2012
+# Created: Thu Jan 24 15:29:31 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -403,7 +403,10 @@ class Ui_MainWindow(object):
         self.actionAbout.setObjectName(_fromUtf8("actionAbout"))
         self.actionSettings = QtGui.QAction(MainWindow)
         self.actionSettings.setObjectName(_fromUtf8("actionSettings"))
+        self.actionRegenerateDeterministicAddresses = QtGui.QAction(MainWindow)
+        self.actionRegenerateDeterministicAddresses.setObjectName(_fromUtf8("actionRegenerateDeterministicAddresses"))
         self.menuFile.addAction(self.actionManageKeys)
+        self.menuFile.addAction(self.actionRegenerateDeterministicAddresses)
         self.menuFile.addAction(self.actionExit)
         self.menuSettings.addAction(self.actionSettings)
         self.menuHelp.addAction(self.actionHelp)
@@ -506,5 +509,6 @@ class Ui_MainWindow(object):
         self.actionHelp.setText(QtGui.QApplication.translate("MainWindow", "Help", None, QtGui.QApplication.UnicodeUTF8))
         self.actionAbout.setText(QtGui.QApplication.translate("MainWindow", "About", None, QtGui.QApplication.UnicodeUTF8))
         self.actionSettings.setText(QtGui.QApplication.translate("MainWindow", "Settings", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionRegenerateDeterministicAddresses.setText(QtGui.QApplication.translate("MainWindow", "Regenerate deterministic addresses", None, QtGui.QApplication.UnicodeUTF8))
 
 import bitmessage_icons_rc
