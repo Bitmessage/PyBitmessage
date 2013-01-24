@@ -302,6 +302,19 @@ The 'Random Number' option is selected by default but deterministic addresses ha
    </item>
   </layout>
  </widget>
+ <tabstops>
+  <tabstop>radioButtonRandomAddress</tabstop>
+  <tabstop>radioButtonDeterministicAddress</tabstop>
+  <tabstop>newaddresslabel</tabstop>
+  <tabstop>radioButtonMostAvailable</tabstop>
+  <tabstop>radioButtonExisting</tabstop>
+  <tabstop>comboBoxExisting</tabstop>
+  <tabstop>lineEditPassphrase</tabstop>
+  <tabstop>lineEditPassphraseAgain</tabstop>
+  <tabstop>spinBoxNumberOfAddressesToMake</tabstop>
+  <tabstop>checkBoxEighteenByteRipe</tabstop>
+  <tabstop>buttonBox</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
