@@ -3377,16 +3377,16 @@ class MyForm(QtGui.QMainWindow):
                             self.statusBar().showMessage('Error: The address '+ toAddress+ ' contains invalid characters. Please check it.')
                         if status == 'versiontoohigh':
                             self.statusBar().showMessage('Error: The address version in '+ toAddress+ ' is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.')
+                    elif fromAddress == '':
+                        self.statusBar().showMessage('Error: You must specify a From address. If you don''t have one, go to the ''Your Identities'' tab.')
+                    else:
+                        toAddress = addBMIfNotPresent(toAddress)
                         if addressVersionNumber > 2 or addressVersionNumber == 0:
                             QMessageBox.about(self, "Address version number", "Concerning the address "+toAddress+", Bitmessage cannot understand address version numbers of "+addressVersionNumber+". Perhaps upgrade Bitmessage to the latest version.")
                             continue
                         if streamNumber > 1 or streamNumber == 0:
                             QMessageBox.about(self, "Stream number", "Concerning the address "+toAddress+", Bitmessage cannot handle stream numbers of "+addressVersionNumber+". Perhaps upgrade Bitmessage to the latest version.")
                             continue
-                    elif fromAddress == '':
-                        self.statusBar().showMessage('Error: You must specify a From address. If you don''t have one, go to the ''Your Identities'' tab.')
-                    else:
-                        toAddress = addBMIfNotPresent(toAddress)
                         self.statusBar().showMessage('')
                         try:
                             if connectionsCount[streamNumber] == 0:
