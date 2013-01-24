@@ -12,7 +12,7 @@ lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. Th
 maximumAgeOfObjectsThatIAdvertiseToOthers = 216000 #Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800 #Equals three hours
 storeConfigFilesInSameDirectoryAsProgram = False
-userVeryEasyProofOfWorkForTesting = True #If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
+userVeryEasyProofOfWorkForTesting = False #If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
 
 import sys
 try:
@@ -1366,7 +1366,7 @@ class receiveDataThread(QThread):
             inventory[inventoryHash] = (objectType, self.streamNumber, payload, int(time.time()))
             self.broadcastinv(inventoryHash)
 
-        else:
+        else: #The requested hash is not for any of my keys but we might have received it previously from someone else and could send it now.
 
             #This section hasn't been tested yet. Criteria for success: Alice sends Bob a message. Three days later, Charlie who is completely new to Bitmessage runs the client for the first time then sends a message to Bob and accomplishes this without Bob having to redo the POW for a pubkey message.
 
