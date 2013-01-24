@@ -933,6 +933,7 @@ p, li { white-space: pre-wrap; }
      <string>File</string>
     </property>
     <addaction name="actionManageKeys"/>
+    <addaction name="actionRegenerateDeterministicAddresses"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
@@ -994,6 +995,11 @@ p, li { white-space: pre-wrap; }
   <action name="actionSettings">
    <property name="text">
     <string>Settings</string>
+   </property>
+  </action>
+  <action name="actionRegenerateDeterministicAddresses">
+   <property name="text">
+    <string>Regenerate deterministic addresses</string>
    </property>
   </action>
  </widget>
