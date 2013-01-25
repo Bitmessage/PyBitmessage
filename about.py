@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'about.ui'
 #
-# Created: Tue Dec 18 14:32:14 2012
-#      by: PyQt4 UI code generator 4.9.4
+# Created: Mon Jan 21 22:32:55 2013
+#      by: PyQt4 UI code generator 4.9.5
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -17,9 +17,9 @@ except AttributeError:
 class Ui_aboutDialog(object):
     def setupUi(self, aboutDialog):
         aboutDialog.setObjectName(_fromUtf8("aboutDialog"))
-        aboutDialog.resize(360, 402)
+        aboutDialog.resize(360, 315)
         self.buttonBox = QtGui.QDialogButtonBox(aboutDialog)
-        self.buttonBox.setGeometry(QtCore.QRect(20, 360, 311, 32))
+        self.buttonBox.setGeometry(QtCore.QRect(20, 280, 311, 32))
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
@@ -42,10 +42,6 @@ class Ui_aboutDialog(object):
         self.label_3.setGeometry(QtCore.QRect(20, 210, 331, 61))
         self.label_3.setWordWrap(True)
         self.label_3.setObjectName(_fromUtf8("label_3"))
-        self.label_4 = QtGui.QLabel(aboutDialog)
-        self.label_4.setGeometry(QtCore.QRect(20, 280, 331, 81))
-        self.label_4.setWordWrap(True)
-        self.label_4.setObjectName(_fromUtf8("label_4"))
         self.label_5 = QtGui.QLabel(aboutDialog)
         self.label_5.setGeometry(QtCore.QRect(10, 180, 341, 20))
         self.label_5.setAlignment(QtCore.Qt.AlignCenter)
@@ -61,7 +57,6 @@ class Ui_aboutDialog(object):
         self.label.setText(QtGui.QApplication.translate("aboutDialog", "PyBitmessage", None, QtGui.QApplication.UnicodeUTF8))
         self.labelVersion.setText(QtGui.QApplication.translate("aboutDialog", "version ?", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("aboutDialog", "Copyright © 2012 Jonathan Warren", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_3.setText(QtGui.QApplication.translate("aboutDialog", "Distributed under the MIT/X11 software license, see the accompanying file license.txt or http://www.opensource.org/licenses/mit-license.php", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_4.setText(QtGui.QApplication.translate("aboutDialog", "This product includes Python-RSA (http://stuvel.eu/rsa) originally written by Sybren A. Stüvel <sybren@stuvel.eu>. It is licensed under the Apache 2.0 license: http://www.apache.org/licenses/LICENSE-2.0", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_3.setText(QtGui.QApplication.translate("aboutDialog", "<html><head/><body><p>Distributed under the MIT/X11 software license, see the accompanying file license.txt or <a href=\"http://www.opensource.org/licenses/mit-license.php\"><span style=\" text-decoration: underline; color:#0000ff;\">http://www.opensource.org/licenses/mit-license.php</span></a></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.label_5.setText(QtGui.QApplication.translate("aboutDialog", "This is Beta software.", None, QtGui.QApplication.UnicodeUTF8))
 
