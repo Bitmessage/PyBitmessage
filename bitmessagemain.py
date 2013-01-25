@@ -2232,7 +2232,7 @@ class singleWorker(QThread):
         headerData = headerData + pack('>L',len(payload))
         headerData = headerData + hashlib.sha512(payload).digest()[:4]
         printLock.acquire()
-        print 'broadcasting inv with hash:', hash.encode('hex')
+        print 'broadcasting inv with hash:', inventoryHash.encode('hex')
         printLock.release()
         broadcastToSendDataQueues((streamNumber, 'send', headerData + payload))
 
