@@ -1162,7 +1162,6 @@ class receiveDataThread(QThread):
             printLock.release()
             return
         if addressVersion == 2:
-            print 'within recpubkey, the self.payloadLength is', self.payloadLength,'. It should be 146.'
             if self.payloadLength < 146: #sanity check. This is the minimum possible length.
                 print 'payloadLength less than 146. Sanity check failed.'
                 return
@@ -1819,9 +1818,10 @@ class sendDataThread(QThread):
                         self.streamNumber = specifiedStreamNumber
                 elif command == 'send':
                     try:
-                        #To prevent some network analysis, 'leak' the data out to our peer after waiting a random amount of time.
-                        random.seed()
-                        time.sleep(random.randrange(0, 10)) 
+                        #To prevent some network analysis, 'leak' the data out to our peer after waiting a random amount of time unless we have a long list of messages in our queue to send.
+                        if self.mailbox.qsize() < 20: 
+                            random.seed()
+                            time.sleep(random.randrange(0, 10))
                         self.sock.sendall(data)
                         self.lastTimeISentData = int(time.time())
                     except:
