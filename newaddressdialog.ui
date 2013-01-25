@@ -6,152 +6,321 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>383</width>
-    <height>258</height>
+    <width>723</width>
+    <height>704</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Create new Address</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox">
-   <property name="geometry">
-    <rect>
-     <x>160</x>
-     <y>220</y>
-     <width>201</width>
-     <height>32</height>
-    </rect>
+  <layout class="QFormLayout" name="formLayout">
+   <property name="fieldGrowthPolicy">
+    <enum>QFormLayout::AllNonFixedFieldsGrow</enum>
    </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>0</y>
-     <width>361</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Here you may generate as many addresses as you like. Indeed, creating and abandoning addresses is encouraged.</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
-   </property>
-   <property name="wordWrap">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>50</y>
-     <width>301</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Label (not shown to anyone except you)</string>
-   </property>
-  </widget>
-  <widget class="QLineEdit" name="newaddresslabel">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>70</y>
-     <width>351</width>
-     <height>20</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QRadioButton" name="radioButtonMostAvailable">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>110</y>
-     <width>401</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Use the most available stream</string>
-   </property>
-   <property name="checked">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QRadioButton" name="radioButtonExisting">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>150</y>
-     <width>351</width>
-     <height>18</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Use the same stream as an existing address</string>
-   </property>
-   <property name="checked">
-    <bool>false</bool>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_3">
-   <property name="geometry">
-    <rect>
-     <x>35</x>
-     <y>127</y>
-     <width>351</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string> (best if this is the first of many addresses you will create)</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_4">
-   <property name="geometry">
-    <rect>
-     <x>37</x>
-     <y>167</y>
-     <width>351</width>
-     <height>21</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>(saves you some bandwidth and processing power)</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-   </property>
-  </widget>
-  <widget class="QComboBox" name="comboBoxExisting">
-   <property name="enabled">
-    <bool>false</bool>
-   </property>
-   <property name="geometry">
-    <rect>
-     <x>40</x>
-     <y>190</y>
-     <width>331</width>
-     <height>22</height>
-    </rect>
-   </property>
-   <property name="editable">
-    <bool>true</bool>
-   </property>
-  </widget>
+   <item row="0" column="0" colspan="2">
+    <widget class="QLabel" name="label">
+     <property name="text">
+      <string>Here you may generate as many addresses as you like. Indeed, creating and abandoning addresses is encouraged. You may generate addresses by using either random numbers or by using a passphrase. If you use a passphrase, the address is called a &quot;deterministic&quot; address.
+The 'Random Number' option is selected by default but deterministic addresses have several pros and cons:</string>
+     </property>
+     <property name="alignment">
+      <set>Qt::AlignBottom|Qt::AlignLeading|Qt::AlignLeft</set>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0" colspan="2">
+    <widget class="QLabel" name="label_5">
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Pros:&lt;br/&gt;&lt;/span&gt;You can recreate your addresses on any computer from memory. &lt;br/&gt;You need-not worry about backing up your keys.dat file as long as you can remember your passphrase. &lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Cons:&lt;br/&gt;&lt;/span&gt;You must remember (or write down) your passphrase if you expect to be able to recreate your keys if they are lost. &lt;br/&gt;You must remember the address version number and the stream number along with your passphrase. &lt;br/&gt;If you choose a weak passphrase and someone on the Internet can brute-force it, they can read your messages and send messages as you.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="4" column="0" colspan="2">
+    <widget class="Line" name="line">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>100</width>
+       <height>2</height>
+      </size>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+    </widget>
+   </item>
+   <item row="5" column="0" colspan="2">
+    <widget class="QRadioButton" name="radioButtonRandomAddress">
+     <property name="text">
+      <string>Use a random number generator to make an address</string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+     <attribute name="buttonGroup">
+      <string notr="true">buttonGroup</string>
+     </attribute>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QRadioButton" name="radioButtonDeterministicAddress">
+     <property name="text">
+      <string>Use a passpharase to make addresses</string>
+     </property>
+     <attribute name="buttonGroup">
+      <string notr="true">buttonGroup</string>
+     </attribute>
+    </widget>
+   </item>
+   <item row="9" column="0" colspan="2">
+    <widget class="QCheckBox" name="checkBoxEighteenByteRipe">
+     <property name="text">
+      <string>Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter</string>
+     </property>
+    </widget>
+   </item>
+   <item row="8" column="0">
+    <widget class="QGroupBox" name="groupBoxDeterministic">
+     <property name="title">
+      <string>Make deterministic addresses</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout">
+      <item row="6" column="0">
+       <widget class="QLabel" name="label_9">
+        <property name="text">
+         <string>Address version number: 2</string>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="0" colspan="3">
+       <widget class="QLabel" name="label_8">
+        <property name="text">
+         <string>In addition to your passphrase, you must remember these numbers:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="3">
+       <widget class="QSpinBox" name="spinBoxNumberOfAddressesToMake">
+        <property name="minimum">
+         <number>1</number>
+        </property>
+        <property name="value">
+         <number>8</number>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Passphrase</string>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0" colspan="3">
+       <widget class="QLabel" name="label_11">
+        <property name="text">
+         <string>Number of addresses to make based on your passphrase:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="1">
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>73</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="6" column="2">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>Stream number: 1</string>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="3">
+       <spacer name="horizontalSpacer_2">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>42</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_7">
+        <property name="text">
+         <string>Retype passphrase</string>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="0" colspan="4">
+       <widget class="QLineEdit" name="lineEditPassphraseAgain">
+        <property name="echoMode">
+         <enum>QLineEdit::Password</enum>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="4">
+       <widget class="QLineEdit" name="lineEditPassphrase">
+        <property name="inputMethodHints">
+         <set>Qt::ImhHiddenText|Qt::ImhNoAutoUppercase|Qt::ImhNoPredictiveText</set>
+        </property>
+        <property name="echoMode">
+         <enum>QLineEdit::Password</enum>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item row="7" column="0">
+    <widget class="QGroupBox" name="groupBox">
+     <property name="title">
+      <string>Randomly generate address</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="0" colspan="2">
+       <widget class="QLabel" name="label_2">
+        <property name="text">
+         <string>Label (not shown to anyone except you)</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0" colspan="2">
+       <widget class="QLineEdit" name="newaddresslabel"/>
+      </item>
+      <item row="2" column="0" colspan="2">
+       <widget class="QRadioButton" name="radioButtonMostAvailable">
+        <property name="text">
+         <string>Use the most available stream</string>
+        </property>
+        <property name="checked">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="3" column="1">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string> (best if this is the first of many addresses you will create)</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+        </property>
+       </widget>
+      </item>
+      <item row="4" column="0" colspan="2">
+       <widget class="QRadioButton" name="radioButtonExisting">
+        <property name="text">
+         <string>Use the same stream as an existing address</string>
+        </property>
+        <property name="checked">
+         <bool>false</bool>
+        </property>
+       </widget>
+      </item>
+      <item row="5" column="1">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>(saves you some bandwidth and processing power)</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+        </property>
+       </widget>
+      </item>
+      <item row="6" column="0">
+       <spacer name="horizontalSpacer_3">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>13</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+      <item row="6" column="1">
+       <widget class="QComboBox" name="comboBoxExisting">
+        <property name="enabled">
+         <bool>false</bool>
+        </property>
+        <property name="editable">
+         <bool>true</bool>
+        </property>
+       </widget>
+      </item>
+     </layout>
+     <zorder>comboBoxExisting</zorder>
+     <zorder>label_3</zorder>
+     <zorder>radioButtonExisting</zorder>
+     <zorder>newaddresslabel</zorder>
+     <zorder>label_4</zorder>
+     <zorder>radioButtonMostAvailable</zorder>
+     <zorder>label_2</zorder>
+     <zorder>horizontalSpacer_3</zorder>
+    </widget>
+   </item>
+   <item row="10" column="0" colspan="2">
+    <widget class="QDialogButtonBox" name="buttonBox">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="minimumSize">
+      <size>
+       <width>160</width>
+       <height>0</height>
+      </size>
+     </property>
+     <property name="orientation">
+      <enum>Qt::Horizontal</enum>
+     </property>
+     <property name="standardButtons">
+      <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+  </layout>
  </widget>
+ <tabstops>
+  <tabstop>radioButtonRandomAddress</tabstop>
+  <tabstop>radioButtonDeterministicAddress</tabstop>
+  <tabstop>newaddresslabel</tabstop>
+  <tabstop>radioButtonMostAvailable</tabstop>
+  <tabstop>radioButtonExisting</tabstop>
+  <tabstop>comboBoxExisting</tabstop>
+  <tabstop>lineEditPassphrase</tabstop>
+  <tabstop>lineEditPassphraseAgain</tabstop>
+  <tabstop>spinBoxNumberOfAddressesToMake</tabstop>
+  <tabstop>checkBoxEighteenByteRipe</tabstop>
+  <tabstop>buttonBox</tabstop>
+ </tabstops>
  <resources/>
  <connections>
   <connection>
@@ -161,8 +330,8 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>360</x>
-     <y>234</y>
+     <x>580</x>
+     <y>644</y>
     </hint>
     <hint type="destinationlabel">
      <x>157</x>
@@ -177,8 +346,8 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>360</x>
-     <y>240</y>
+     <x>580</x>
+     <y>650</y>
     </hint>
     <hint type="destinationlabel">
      <x>286</x>
@@ -193,14 +362,49 @@
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>30</x>
-     <y>158</y>
+     <x>60</x>
+     <y>349</y>
     </hint>
     <hint type="destinationlabel">
-     <x>99</x>
-     <y>199</y>
+     <x>148</x>
+     <y>394</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonDeterministicAddress</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>groupBoxDeterministic</receiver>
+   <slot>setShown(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>92</x>
+     <y>213</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>277</x>
+     <y>601</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonRandomAddress</sender>
+   <signal>toggled(bool)</signal>
+   <receiver>groupBox</receiver>
+   <slot>setShown(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>72</x>
+     <y>189</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>68</x>
+     <y>268</y>
     </hint>
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="buttonGroup"/>
+ </buttongroups>
 </ui>
