@@ -68,6 +68,9 @@ The 'Random Number' option is selected by default but deterministic addresses ha
      <property name="checked">
       <bool>true</bool>
      </property>
+     <attribute name="buttonGroup">
+      <string notr="true">buttonGroup</string>
+     </attribute>
     </widget>
    </item>
    <item row="6" column="0">
@@ -75,6 +78,9 @@ The 'Random Number' option is selected by default but deterministic addresses ha
      <property name="text">
       <string>Use a passpharase to make addresses</string>
      </property>
+     <attribute name="buttonGroup">
+      <string notr="true">buttonGroup</string>
+     </attribute>
     </widget>
    </item>
    <item row="9" column="0" colspan="2">
@@ -398,4 +404,7 @@ The 'Random Number' option is selected by default but deterministic addresses ha
    </hints>
   </connection>
  </connections>
+ <buttongroups>
+  <buttongroup name="buttonGroup"/>
+ </buttongroups>
 </ui>
