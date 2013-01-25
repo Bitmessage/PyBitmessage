@@ -95,6 +95,11 @@ def calculateInventoryHash(data):
     return sha2.digest()[0:32]
 
 def encodeAddress(version,stream,ripe):
+    if version >= 2:
+        if ripe[:2] == '\x00\x00':
+            ripe = ripe[2:]
+        elif ripe[:1] == '\x00':
+            ripe = ripe[1:]
     a = encodeVarint(version) + encodeVarint(stream) + ripe
     sha = hashlib.new('sha512')
     sha.update(a)
@@ -152,7 +157,6 @@ def decodeAddress(address):
     #print 'sha after second hashing: ', sha.hexdigest()
 
     if checksum != sha.digest()[0:4]:
-        print 'checksum failed'
         status = 'checksumfailed'
         return status,0,0,0
     #else:
@@ -162,15 +166,27 @@ def decodeAddress(address):
     #print 'addressVersionNumber', addressVersionNumber
     #print 'bytesUsedByVersionNumber', bytesUsedByVersionNumber
 
-    if addressVersionNumber != 1:
-        print 'cannot decode version address version numbers this high'
+    if addressVersionNumber > 2:
+        print 'cannot decode address version numbers this high'
+        status = 'versiontoohigh'
+        return status,0,0,0
+    elif addressVersionNumber == 0:
+        print 'cannot decode address version numbers of zero.'
         status = 'versiontoohigh'
         return status,0,0,0
 
-    streamNumber, bytesUsedByStreamNumber = decodeVarint(data[bytesUsedByVersionNumber:10+bytesUsedByVersionNumber])
+    streamNumber, bytesUsedByStreamNumber = decodeVarint(data[bytesUsedByVersionNumber:])
     #print streamNumber
     status = 'success'
-    return status,addressVersionNumber,streamNumber,data[-24:-4]
+    if addressVersionNumber == 1:
+        return status,addressVersionNumber,streamNumber,data[-24:-4]
+    elif addressVersionNumber == 2:
+        if len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 19:
+            return status,addressVersionNumber,streamNumber,'\x00'+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
+        elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 20:
+            return status,addressVersionNumber,streamNumber,data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
+        elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 18:
+            return status,addressVersionNumber,streamNumber,'\x00\x00'+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
 
 def addBMIfNotPresent(address):
     if address[:3] != 'BM-':
@@ -274,3 +290,4 @@ if __name__ == "__main__":
     print 'addressVersionNumber', addressVersionNumber
     print 'streamNumber', streamNumber
     print 'length of data(the ripe hash):', len(data)
+
