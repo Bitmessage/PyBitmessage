@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'newaddressdialog.ui'
 #
-# Created: Fri Jan 18 13:48:49 2013
+# Created: Fri Jan 25 13:05:18 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -44,9 +44,13 @@ class Ui_NewAddressDialog(object):
         self.radioButtonRandomAddress = QtGui.QRadioButton(NewAddressDialog)
         self.radioButtonRandomAddress.setChecked(True)
         self.radioButtonRandomAddress.setObjectName(_fromUtf8("radioButtonRandomAddress"))
+        self.buttonGroup = QtGui.QButtonGroup(NewAddressDialog)
+        self.buttonGroup.setObjectName(_fromUtf8("buttonGroup"))
+        self.buttonGroup.addButton(self.radioButtonRandomAddress)
         self.formLayout.setWidget(5, QtGui.QFormLayout.SpanningRole, self.radioButtonRandomAddress)
         self.radioButtonDeterministicAddress = QtGui.QRadioButton(NewAddressDialog)
         self.radioButtonDeterministicAddress.setObjectName(_fromUtf8("radioButtonDeterministicAddress"))
+        self.buttonGroup.addButton(self.radioButtonDeterministicAddress)
         self.formLayout.setWidget(6, QtGui.QFormLayout.LabelRole, self.radioButtonDeterministicAddress)
         self.checkBoxEighteenByteRipe = QtGui.QCheckBox(NewAddressDialog)
         self.checkBoxEighteenByteRipe.setObjectName(_fromUtf8("checkBoxEighteenByteRipe"))
@@ -145,6 +149,16 @@ class Ui_NewAddressDialog(object):
         QtCore.QObject.connect(self.radioButtonDeterministicAddress, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.groupBoxDeterministic.setShown)
         QtCore.QObject.connect(self.radioButtonRandomAddress, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.groupBox.setShown)
         QtCore.QMetaObject.connectSlotsByName(NewAddressDialog)
+        NewAddressDialog.setTabOrder(self.radioButtonRandomAddress, self.radioButtonDeterministicAddress)
+        NewAddressDialog.setTabOrder(self.radioButtonDeterministicAddress, self.newaddresslabel)
+        NewAddressDialog.setTabOrder(self.newaddresslabel, self.radioButtonMostAvailable)
+        NewAddressDialog.setTabOrder(self.radioButtonMostAvailable, self.radioButtonExisting)
+        NewAddressDialog.setTabOrder(self.radioButtonExisting, self.comboBoxExisting)
+        NewAddressDialog.setTabOrder(self.comboBoxExisting, self.lineEditPassphrase)
+        NewAddressDialog.setTabOrder(self.lineEditPassphrase, self.lineEditPassphraseAgain)
+        NewAddressDialog.setTabOrder(self.lineEditPassphraseAgain, self.spinBoxNumberOfAddressesToMake)
+        NewAddressDialog.setTabOrder(self.spinBoxNumberOfAddressesToMake, self.checkBoxEighteenByteRipe)
+        NewAddressDialog.setTabOrder(self.checkBoxEighteenByteRipe, self.buttonBox)
 
     def retranslateUi(self, NewAddressDialog):
         NewAddressDialog.setWindowTitle(QtGui.QApplication.translate("NewAddressDialog", "Create new Address", None, QtGui.QApplication.UnicodeUTF8))
