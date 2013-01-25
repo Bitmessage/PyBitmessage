@@ -1726,7 +1726,9 @@ class receiveDataThread(QThread):
 
     #Sends a verack message
     def sendverack(self):
+        printLock.acquire()
         print 'Sending verack'
+        printLock.release()
         self.sock.sendall('\xE9\xBE\xB4\xD9\x76\x65\x72\x61\x63\x6B\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
                                                                                                              #cf  83  e1  35
         self.verackSent = True
@@ -2441,7 +2443,13 @@ class singleWorker(QThread):
                 payload += encodeVarint(fromAddressVersionNumber)
                 payload += encodeVarint(fromStreamNumber)
 
-                sendersN = convertIntToString(config.getint(fromaddress, 'n'))
+                try:
+                    sendersN = convertIntToString(config.getint(fromaddress, 'n'))
+                except:
+                    printLock.acquire()
+                    print 'Error: Could not find', fromaddress, 'in our keys.dat file. You must have deleted it. Aborting the send.'
+                    printLock.release()
+                    return
                 payload += encodeVarint(len(sendersN))
                 payload += sendersN
 
