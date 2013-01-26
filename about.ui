@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>360</width>
-    <height>315</height>
+    <height>320</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -86,11 +86,15 @@
      <x>20</x>
      <y>210</y>
      <width>331</width>
-     <height>61</height>
+     <height>81</height>
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Distributed under the MIT/X11 software license, see the accompanying file license.txt or &lt;a href=&quot;http://www.opensource.org/licenses/mit-license.php&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;http://www.opensource.org/licenses/mit-license.php&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;
+&lt;p&gt;
+Icons by &lt;a href=&quot;http://www.famfamfam.com/lab/icons/silk/&quot;&gt;FamFamFam&lt;/a&gt;.
+&lt;/p&gt;
+&lt;p&gt;Distributed under the MIT/X11 software license, see the accompanying file license.txt or &lt;a href=&quot;http://www.opensource.org/licenses/mit-license.php&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;http://www.opensource.org/licenses/mit-license.php&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="wordWrap">
     <bool>true</bool>
