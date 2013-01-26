@@ -4071,7 +4071,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
         #self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
-        self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n'+self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject())
+        self.ui.textEditMessage.setText('\n\n----- Original message recieved '+self.ui.tableWidgetInbox.item(currentInboxRow,3).text()+' --\n'+self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject())
         if self.ui.tableWidgetInbox.item(currentInboxRow,2).text()[0:3] == 'Re:':
             self.ui.lineEditSubject.setText(str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text()))
         else:
