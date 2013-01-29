@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Thu Jan 24 15:29:31 2013
+# Created: Tue Jan 29 16:16:19 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -416,7 +416,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(3)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.lineEditTo.setEnabled)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
@@ -465,7 +465,7 @@ class Ui_MainWindow(object):
         item = self.tableWidgetYourIdentities.horizontalHeaderItem(2)
         item.setText(QtGui.QApplication.translate("MainWindow", "Stream", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.youridentities), QtGui.QApplication.translate("MainWindow", "Your Identities", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_5.setText(QtGui.QApplication.translate("MainWindow", "Here you can subscibe to \'broadcast messages\' that are sent by other users. Messages will appear in your Inbox. Addresses here override those on the Blacklist tab.", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_5.setText(QtGui.QApplication.translate("MainWindow", "Here you can subscribe to \'broadcast messages\' that are sent by other users. Messages will appear in your Inbox. Addresses here override those on the Blacklist tab.", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButtonAddSubscription.setText(QtGui.QApplication.translate("MainWindow", "Add", None, QtGui.QApplication.UnicodeUTF8))
         self.tableWidgetSubscriptions.setSortingEnabled(True)
         item = self.tableWidgetSubscriptions.horizontalHeaderItem(0)
