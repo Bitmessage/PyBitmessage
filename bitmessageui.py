@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Tue Jan 29 16:16:19 2013
+# Created: Tue Jan 29 16:21:41 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -416,7 +416,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(3)
+        self.tabWidget.setCurrentIndex(0)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.lineEditTo.setEnabled)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
 
