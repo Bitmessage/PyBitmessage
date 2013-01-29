@@ -57,7 +57,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>3</number>
       </property>
       <widget class="QWidget" name="inbox">
        <attribute name="icon">
@@ -490,7 +490,7 @@ p, li { white-space: pre-wrap; }
         <item row="0" column="0" colspan="2">
          <widget class="QLabel" name="label_5">
           <property name="text">
-           <string>Here you can subscibe to 'broadcast messages' that are sent by other users. Messages will appear in your Inbox. Addresses here override those on the Blacklist tab.</string>
+           <string>Here you can subscribe to 'broadcast messages' that are sent by other users. Messages will appear in your Inbox. Addresses here override those on the Blacklist tab.</string>
           </property>
           <property name="wordWrap">
            <bool>true</bool>
