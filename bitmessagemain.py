@@ -1136,8 +1136,7 @@ class receiveDataThread(QThread):
 
         readPosition = 24 #for the message header
         readPosition += 8 #for the nonce
-        #bitfieldBehaviors = self.data[readPosition:readPosition+4] The bitfieldBehaviors used to be here
-        embeddedTime = self.data[readPosition:readPosition+4]
+        embeddedTime = self.data[readPosition:readPosition+4]#We currently are not checking the embeddedTime for any sort of validity in pubkey messages.
         readPosition += 4 #for the time
         addressVersion, varintLength = decodeVarint(self.data[readPosition:readPosition+10])
         readPosition += varintLength
@@ -1189,7 +1188,7 @@ class receiveDataThread(QThread):
             print 'publicEncryptionKey in hex:', publicEncryptionKey.encode('hex')
             printLock.release()
 
-            t = (ripe,True,self.data[24:24+self.payloadLength],int(time.time())+604800) #after one week we may remove this pub key from our database.
+            t = (ripe,True,self.data[24:24+self.payloadLength],embeddedTime+604800) #after one week we may remove this pub key from our database.
             sqlLock.acquire()
             sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
             sqlSubmitQueue.put(t)
@@ -2080,7 +2079,7 @@ class singleCleaner(QThread):
                 sqlReturnQueue.get()
 
                 t = ()
-                sqlSubmitQueue.put('''select toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber FROM sent WHERE (status='findingpubkey' OR status='sentmessage') ''')
+                sqlSubmitQueue.put('''select toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber FROM sent WHERE ((status='findingpubkey' OR status='sentmessage') AND folder='sent') ''') #If the message's folder='trash' then we'll ignore it.
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
                 for row in queryreturn:
@@ -2089,7 +2088,7 @@ class singleCleaner(QThread):
                         if int(time.time()) - lastactiontime > (maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
                             print 'It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.'
                             try:
-                                del neededPubkeys[toripe]
+                                del neededPubkeys[toripe] #We need to take this entry out of the neededPubkeys structure because the workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
                             except:
                                 pass
                             workerQueue.put(('sendmessage',toaddress))
@@ -2116,7 +2115,7 @@ class singleWorker(QThread):
 
     def run(self):
         sqlLock.acquire()
-        sqlSubmitQueue.put('SELECT toripe FROM sent WHERE status=?')
+        sqlSubmitQueue.put('''SELECT toripe FROM sent WHERE (status=? AND folder='sent')''')
         sqlSubmitQueue.put(('findingpubkey',))
         queryreturn = sqlReturnQueue.get()
         sqlLock.release()
@@ -2196,10 +2195,6 @@ class singleWorker(QThread):
         privEncryptionKeyHex = decodeWalletImportFormat(privEncryptionKeyBase58).encode('hex')
         pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode('hex')
         pubEncryptionKey = highlevelcrypto.privToPub(privEncryptionKeyHex).decode('hex')
-
-        #print 'within recgetpubkey'
-        #print 'pubSigningKey in hex:', pubSigningKey.encode('hex')
-        #print 'pubEncryptionKey in hex:', pubEncryptionKey.encode('hex')
 
         payload += pubSigningKey[1:]
         payload += pubEncryptionKey[1:]
@@ -3104,6 +3099,14 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuSubscriptions.addSeparator()
         self.popMenuSubscriptions.addAction( self.actionsubscriptionsClipboard )
 
+        #Popup menu for the Sent page
+        self.ui.sentContextMenuToolbar = QtGui.QToolBar()
+          # Actions
+        self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction("Move to Trash", self.on_action_SentTrash)
+        self.ui.tableWidgetSent.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
+        self.connect(self.ui.tableWidgetSent, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuSent)
+        self.popMenuSent = QtGui.QMenu( self )
+        self.popMenuSent.addAction( self.actionTrashSentMessage )
 
         #Initialize the user's list of addresses on the 'Your Identities' tab.
         configSections = config.sections()
@@ -3187,7 +3190,7 @@ class MyForm(QtGui.QMainWindow):
             #self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
 
         #Load Sent items from database
-        sqlSubmitQueue.put('SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime FROM sent ORDER BY lastactiontime')
+        sqlSubmitQueue.put('''SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime FROM sent where folder = 'sent' ORDER BY lastactiontime''')
         sqlSubmitQueue.put('')
         queryreturn = sqlReturnQueue.get()
         for row in queryreturn:
@@ -3242,7 +3245,7 @@ class MyForm(QtGui.QMainWindow):
                 newItem =  myTableWidgetItem('Broadcast on ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
             else:
                 newItem =  myTableWidgetItem('Unknown status.  ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
-            newItem.setData(Qt.UserRole,ackdata)
+            newItem.setData(Qt.UserRole,QByteArray(ackdata))
             newItem.setData(33,int(lastactiontime))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,3,newItem)
@@ -3609,7 +3612,7 @@ class MyForm(QtGui.QMainWindow):
                         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
                         self.ui.tableWidgetSent.setItem(0,2,newItem)
                         newItem =  myTableWidgetItem('Just pressed ''send'' '+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
-                        newItem.setData(Qt.UserRole,ackdata)
+                        newItem.setData(Qt.UserRole,QByteArray(ackdata))
                         newItem.setData(33,int(time.time()))
                         self.ui.tableWidgetSent.setItem(0,3,newItem)
 
@@ -4109,6 +4112,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.statusBar().showMessage('Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want.')
 
+    #Send item on the Inbox tab to trash
     def on_action_InboxTrash(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
         inventoryHashToTrash = str(self.ui.tableWidgetInbox.item(currentRow,3).data(Qt.UserRole).toPyObject())
@@ -4120,6 +4124,19 @@ class MyForm(QtGui.QMainWindow):
         sqlReturnQueue.get()
         sqlLock.release()
         self.ui.tableWidgetInbox.removeRow(currentRow)
+        self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+
+    #Send item on the Sent tab to trash
+    def on_action_SentTrash(self):
+        currentRow = self.ui.tableWidgetSent.currentRow()
+        ackdataToTrash = str(self.ui.tableWidgetSent.item(currentRow,3).data(Qt.UserRole).toPyObject())
+        t = (ackdataToTrash,)
+        sqlLock.acquire()
+        sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE ackdata=?''')
+        sqlSubmitQueue.put(t)
+        sqlReturnQueue.get()
+        sqlLock.release()
+        self.ui.tableWidgetSent.removeRow(currentRow)
         self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
 
     #Group of functions for the Address Book dialog box
@@ -4213,6 +4230,8 @@ class MyForm(QtGui.QMainWindow):
         self.popMenu.exec_( self.ui.tableWidgetYourIdentities.mapToGlobal(point) )
     def on_context_menuInbox(self, point):
         self.popMenuInbox.exec_( self.ui.tableWidgetInbox.mapToGlobal(point) )
+    def on_context_menuSent(self, point):
+        self.popMenuSent.exec_( self.ui.tableWidgetSent.mapToGlobal(point) )
 
     def tableWidgetInboxItemClicked(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()

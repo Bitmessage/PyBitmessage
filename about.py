@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'about.ui'
 #
-# Created: Mon Jan 21 22:32:55 2013
-#      by: PyQt4 UI code generator 4.9.5
+# Created: Thu Jan 31 13:35:03 2013
+#      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -39,7 +39,7 @@ class Ui_aboutDialog(object):
         self.label_2.setAlignment(QtCore.Qt.AlignCenter)
         self.label_2.setObjectName(_fromUtf8("label_2"))
         self.label_3 = QtGui.QLabel(aboutDialog)
-        self.label_3.setGeometry(QtCore.QRect(20, 210, 331, 61))
+        self.label_3.setGeometry(QtCore.QRect(20, 200, 331, 71))
         self.label_3.setWordWrap(True)
         self.label_3.setObjectName(_fromUtf8("label_3"))
         self.label_5 = QtGui.QLabel(aboutDialog)
@@ -56,7 +56,7 @@ class Ui_aboutDialog(object):
         aboutDialog.setWindowTitle(QtGui.QApplication.translate("aboutDialog", "About", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("aboutDialog", "PyBitmessage", None, QtGui.QApplication.UnicodeUTF8))
         self.labelVersion.setText(QtGui.QApplication.translate("aboutDialog", "version ?", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_2.setText(QtGui.QApplication.translate("aboutDialog", "Copyright © 2012 Jonathan Warren", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_3.setText(QtGui.QApplication.translate("aboutDialog", "<html><head/><body><p>Distributed under the MIT/X11 software license, see the accompanying file license.txt or <a href=\"http://www.opensource.org/licenses/mit-license.php\"><span style=\" text-decoration: underline; color:#0000ff;\">http://www.opensource.org/licenses/mit-license.php</span></a></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_2.setText(QtGui.QApplication.translate("aboutDialog", "Copyright © 2013 Jonathan Warren", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_3.setText(QtGui.QApplication.translate("aboutDialog", "<html><head/><body><p>Distributed under the MIT/X11 software license; see <a href=\"http://www.opensource.org/licenses/mit-license.php\"><span style=\" text-decoration: underline; color:#0000ff;\">http://www.opensource.org/licenses/mit-license.php</span></a></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.label_5.setText(QtGui.QApplication.translate("aboutDialog", "This is Beta software.", None, QtGui.QApplication.UnicodeUTF8))
 

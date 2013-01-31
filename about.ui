@@ -74,7 +74,7 @@
     </rect>
    </property>
    <property name="text">
-    <string>Copyright © 2012 Jonathan Warren</string>
+    <string>Copyright © 2013 Jonathan Warren</string>
    </property>
    <property name="alignment">
     <set>Qt::AlignCenter</set>
@@ -84,13 +84,13 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>210</y>
+     <y>200</y>
      <width>331</width>
-     <height>61</height>
+     <height>71</height>
     </rect>
    </property>
    <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Distributed under the MIT/X11 software license, see the accompanying file license.txt or &lt;a href=&quot;http://www.opensource.org/licenses/mit-license.php&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;http://www.opensource.org/licenses/mit-license.php&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Distributed under the MIT/X11 software license; see &lt;a href=&quot;http://www.opensource.org/licenses/mit-license.php&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;http://www.opensource.org/licenses/mit-license.php&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
    </property>
    <property name="wordWrap">
     <bool>true</bool>
