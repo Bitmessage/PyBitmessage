@@ -1445,7 +1445,7 @@ class receiveDataThread(QThread):
             headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
             headerData = headerData + hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
-        elif objectType == 'getpubkey':
+        elif objectType == 'getpubkey' or objectType == 'pubkeyrequest':
             print 'sending getpubkey'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData = headerData + 'getpubkey\x00\x00\x00' #version command
