@@ -309,7 +309,7 @@ class receiveDataThread(QThread):
             self.data = ""
             if verbose >= 2:
                 printLock.acquire()
-                sys.stderr.write('The magic bytes were not correct.\n')
+                sys.stderr.write('The magic bytes were not correct. First 40 bytes of data: %s\n' % repr(self.data[0:40]))
                 printLock.release()
         elif len(self.data) < 20: #if so little of the data has arrived that we can't even unpack the payload length
             pass
