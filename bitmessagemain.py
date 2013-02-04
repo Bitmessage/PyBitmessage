@@ -235,7 +235,7 @@ class receiveDataThread(QThread):
         self.selfInitiatedConnectionList.append(self)
         self.payloadLength = 0 #This is the protocol payload length thus it doesn't include the 24 byte message header
         self.receivedgetbiginv = False #Gets set to true once we receive a getbiginv message from our peer. An abusive peer might request it too much so we use this variable to check whether they have already asked for a big inv message.
-        self.objectsThatWeHaveYetToGet = {}
+        self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave = {}
         connectedHostsList[self.HOST] = 0 #The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that the outgoingSynSender thread doesn't try to connect to it.
         self.connectionIsOrWasFullyEstablished = False #set to true after the remote node and I accept each other's version messages. This is needed to allow the user interface to accurately reflect the current number of connections.
         if self.streamNumber == -1: #This was an incoming connection. Send out a version message if we accept the other node's version message.
@@ -357,27 +357,27 @@ class receiveDataThread(QThread):
 
                     self.data = self.data[self.payloadLength+24:]#take this message out and then process the next message
                     if self.data == '':
-                        while len(self.objectsThatWeHaveYetToGet) > 0:
+                        while len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) > 0:
                             random.seed()
-                            objectHash, = random.sample(self.objectsThatWeHaveYetToGet,  1)
+                            objectHash, = random.sample(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave,  1)
                             if objectHash in inventory:
                                 printLock.acquire()
                                 print 'Inventory (in memory) already has object listed in inv message.'
                                 printLock.release()
-                                del self.objectsThatWeHaveYetToGet[objectHash]
+                                del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[objectHash]
                             elif isInSqlInventory(objectHash):
                                 printLock.acquire()
                                 print 'Inventory (SQL on disk) already has object listed in inv message.'
                                 printLock.release()
-                                del self.objectsThatWeHaveYetToGet[objectHash]
+                                del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[objectHash]
                             else:
                                 #print 'processData function making request for object:', objectHash.encode('hex')
                                 self.sendgetdata(objectHash)
-                                del self.objectsThatWeHaveYetToGet[objectHash] #It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
+                                del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[objectHash] #It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
                                 break
-                        if len(self.objectsThatWeHaveYetToGet) > 0:
+                        if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) > 0:
                             printLock.acquire()
-                            print 'within processData, number of objectsThatWeHaveYetToGet is now', len(self.objectsThatWeHaveYetToGet)
+                            print 'within processData, number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
                             printLock.release()
                         if len(self.ackDataThatWeHaveYetToSend) > 0:
                             self.data = self.ackDataThatWeHaveYetToSend.pop()
@@ -476,9 +476,9 @@ class receiveDataThread(QThread):
     def sendinvMessageToJustThisOnePeer(self,numberOfObjects,payload):
         payload = encodeVarint(numberOfObjects) + payload
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-        headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-        headerData = headerData + pack('>L',len(payload))
-        headerData = headerData + hashlib.sha512(payload).digest()[:4]
+        headerData += 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        headerData += pack('>L',len(payload))
+        headerData += hashlib.sha512(payload).digest()[:4]
         print 'Sending huge inv message with', numberOfObjects, 'objects to just this one peer'
         self.sock.send(headerData + payload)
 
@@ -500,7 +500,6 @@ class receiveDataThread(QThread):
             return
         inventoryLock.acquire()
         inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
-        self.objectsOfWhichThisRemoteNodeIsAlreadyAware[inventoryHash] = 0
         if inventoryHash in inventory:
             print 'We have already received this broadcast object. Ignoring.'
             inventoryLock.release()
@@ -699,11 +698,10 @@ class receiveDataThread(QThread):
         readPosition += 4
         streamNumberAsClaimedByMsg, streamNumberAsClaimedByMsgLength = decodeVarint(self.data[readPosition:readPosition+9])
         if streamNumberAsClaimedByMsg != self.streamNumber:
-            print 'The stream number encoded in this msg (' + streamNumberAsClaimedByMsg + ') message does not match the stream number on which it was received. Ignoring it.'
+            print 'The stream number encoded in this msg (' + str(streamNumberAsClaimedByMsg) + ') message does not match the stream number on which it was received. Ignoring it.'
             return
         readPosition += streamNumberAsClaimedByMsgLength
         inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
-        self.objectsOfWhichThisRemoteNodeIsAlreadyAware[inventoryHash] = 0
         inventoryLock.acquire()
         if inventoryHash in inventory:
             print 'We have already received this msg message. Ignoring.'
@@ -925,9 +923,9 @@ class receiveDataThread(QThread):
             if ackDataValidThusFar:
                 print 'ackData is valid. Will process it.'
                 self.ackDataThatWeHaveYetToSend.append(ackData) #When we have processed all data, the processData function will pop the ackData out and process it as if it is a message received from our peer.
-        
+            return
 
-        #This section is for my RSA keys (version 1 addresses). If we don't have any version 1 addresses, then it won't matter.
+        #This section is for my RSA keys (version 1 addresses). If we don't have any version 1 addresses it will never run. This code will soon be removed.
         initialDecryptionSuccessful = False
         infile = cStringIO.StringIO(self.data[readPosition:self.payloadLength+24])
         outfile = cStringIO.StringIO()
@@ -1134,18 +1132,6 @@ class receiveDataThread(QThread):
             print 'Proof of work in pubkey message insufficient.'
             return
 
-        inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
-        self.objectsOfWhichThisRemoteNodeIsAlreadyAware[inventoryHash] = 0
-        inventoryLock.acquire()
-        if inventoryHash in inventory:
-            print 'We have already received this pubkey. Ignoring it.'
-            inventoryLock.release()
-            return
-        elif isInSqlInventory(inventoryHash):
-            print 'We have already received this pubkey (it is stored on disk in the SQL inventory). Ignoring it.'
-            inventoryLock.release()
-            return
-
         readPosition = 24 #for the message header
         readPosition += 8 #for the nonce
         embeddedTime, = unpack('>I',self.data[readPosition:readPosition+4])#We currently are not checking the embeddedTime for any sort of validity in pubkey messages.
@@ -1158,6 +1144,16 @@ class receiveDataThread(QThread):
             print 'stream number embedded in this pubkey doesn\'t match our stream number. Ignoring.'
             return
 
+        inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
+        inventoryLock.acquire()
+        if inventoryHash in inventory:
+            print 'We have already received this pubkey. Ignoring it.'
+            inventoryLock.release()
+            return
+        elif isInSqlInventory(inventoryHash):
+            print 'We have already received this pubkey (it is stored on disk in the SQL inventory). Ignoring it.'
+            inventoryLock.release()
+            return
         objectType = 'pubkey'
         inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], int(time.time()))
         inventoryLock.release()
@@ -1209,6 +1205,7 @@ class receiveDataThread(QThread):
             printLock.release()
             workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
 
+        #This code which deals with old RSA addresses will soon be removed.
         elif addressVersion == 1:
             nLength, varintLength = decodeVarint(self.data[readPosition:readPosition+10])
             readPosition += varintLength
@@ -1303,6 +1300,9 @@ class receiveDataThread(QThread):
                     queryreturn = sqlReturnQueue.get()
                     sqlLock.release()
 
+            printLock.acquire()
+            print 'We have the requested pubkey stored in our database of pubkeys. Sending it.'
+            printLock.release()
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'pubkey'
             inventory[inventoryHash] = (objectType, self.streamNumber, payload, int(time.time()))
@@ -1314,7 +1314,7 @@ class receiveDataThread(QThread):
                 myAddress = encodeAddress(addressVersionNumber,streamNumber,self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength])
                 workerQueue.put(('doPOWForMyV2Pubkey',myAddress))
 
-
+            #This code which deals with old RSA addresses will soon be removed.
             elif self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength] in myRSAAddressHashes:
                 print 'Found getpubkey requested hash in my list of RSA hashes.'
                 payload = '\x00\x00\x00\x01' #bitfield of features supported by me (see the wiki).
@@ -1369,19 +1369,18 @@ class receiveDataThread(QThread):
         else:
             print 'inv message lists', numberOfItemsInInv, 'objects.'
             for i in range(numberOfItemsInInv): #upon finishing dealing with an incoming message, the receiveDataThread will request a random object from the peer. This way if we get multiple inv messages from multiple peers which list mostly the same objects, we will make getdata requests for different random objects from the various peers.
-                #print 'Adding object to self.objectsThatWeHaveYetToGet.'
                 self.objectsOfWhichThisRemoteNodeIsAlreadyAware[self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]] = 0
-                self.objectsThatWeHaveYetToGet[self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]] = 0
-            print 'length of objectsThatWeHaveYetToGet', len(self.objectsThatWeHaveYetToGet)
+                self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]] = 0
+
 
     #Send a getdata message to our peer to request the object with the given hash
     def sendgetdata(self,hash):
         print 'sending getdata to retrieve object with hash:', hash.encode('hex')
         payload = '\x01' + hash
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-        headerData = headerData + 'getdata\x00\x00\x00\x00\x00'
-        headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-        headerData = headerData + hashlib.sha512(payload).digest()[:4]
+        headerData += 'getdata\x00\x00\x00\x00\x00'
+        headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+        headerData += hashlib.sha512(payload).digest()[:4]
         self.sock.send(headerData + payload)
 
     #We have received a getdata request from our peer
@@ -1389,7 +1388,7 @@ class receiveDataThread(QThread):
         value, lengthOfVarint = decodeVarint(self.data[24:34])
         #print 'Number of items in getdata request:', value
         try:
-            for i in range(value):
+            for i in xrange(value):
                 hash = self.data[24+lengthOfVarint+(i*32):56+lengthOfVarint+(i*32)]
                 printLock.acquire()
                 print 'received getdata request for item:', hash.encode('hex')
@@ -1420,37 +1419,37 @@ class receiveDataThread(QThread):
         if objectType == 'pubkey':
             print 'sending pubkey'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-            headerData = headerData + 'pubkey\x00\x00\x00\x00\x00\x00'
-            headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-            headerData = headerData + hashlib.sha512(payload).digest()[:4]
+            headerData += 'pubkey\x00\x00\x00\x00\x00\x00'
+            headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+            headerData += hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
         elif objectType == 'getpubkey':
             print 'sending getpubkey'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-            headerData = headerData + 'getpubkey\x00\x00\x00'
-            headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-            headerData = headerData + hashlib.sha512(payload).digest()[:4]
+            headerData += 'getpubkey\x00\x00\x00'
+            headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+            headerData += hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
         elif objectType == 'msg':
             print 'sending msg'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-            headerData = headerData + 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-            headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-            headerData = headerData + hashlib.sha512(payload).digest()[:4]
+            headerData += 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+            headerData += hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
         elif objectType == 'broadcast':
             print 'sending broadcast'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-            headerData = headerData + 'broadcast\x00\x00\x00'
-            headerData = headerData + pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
-            headerData = headerData + hashlib.sha512(payload).digest()[:4]
+            headerData += 'broadcast\x00\x00\x00'
+            headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+            headerData += hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
         elif objectType == 'getpubkey' or objectType == 'pubkeyrequest':
             print 'sending getpubkey'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-            headerData = headerData + 'getpubkey\x00\x00\x00' #version command
-            headerData = headerData + pack('>L',len(payload)) #payload length
-            headerData = headerData + hashlib.sha512(payload).digest()[0:4]
+            headerData += 'getpubkey\x00\x00\x00' #version command
+            headerData += pack('>L',len(payload)) #payload length
+            headerData += hashlib.sha512(payload).digest()[0:4]
             self.sock.send(headerData + payload)
         else:
             sys.stderr.write('Error: sendData has been asked to send a strange objectType: %s\n' % str(objectType))
@@ -1841,9 +1840,9 @@ class sendDataThread(QThread):
                     if data not in self.objectsOfWhichThisRemoteNodeIsAlreadyAware:
                         payload = '\x01' + data
                         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-                        headerData = headerData + 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                        headerData = headerData + pack('>L',len(payload))
-                        headerData = headerData + hashlib.sha512(payload).digest()[:4]
+                        headerData += 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                        headerData += pack('>L',len(payload))
+                        headerData += hashlib.sha512(payload).digest()[:4]
                         #To prevent some network analysis, 'leak' the data out to our peer after waiting a random amount of time
                         random.seed()
                         time.sleep(random.randrange(0, 10))
@@ -2582,7 +2581,9 @@ class singleWorker(QThread):
         payload += encodeVarint(addressVersionNumber)
         payload += encodeVarint(streamNumber)
         payload += ripe
+        printLock.acquire()
         print 'making request for pubkey with ripe:', ripe.encode('hex')
+        printLock.release()
         nonce = 0
         trialValue = 99999999999999999999
         #print 'trial value', trialValue
@@ -2595,7 +2596,9 @@ class singleWorker(QThread):
         while trialValue > target:
             nonce += 1
             trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+        printLock.acquire()
         print 'Found proof of work', trialValue, 'Nonce:', nonce
+        printLock.release()
 
         payload = pack('>Q',nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
@@ -2629,9 +2632,9 @@ class singleWorker(QThread):
         printLock.release()
         payload = pack('>Q',nonce) + payload
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-        headerData = headerData + 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-        headerData = headerData + pack('>L',len(payload))
-        headerData = headerData + hashlib.sha512(payload).digest()[:4]
+        headerData += 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        headerData += pack('>L',len(payload))
+        headerData += hashlib.sha512(payload).digest()[:4]
         return headerData + payload
 
 class addressGenerator(QThread):
@@ -2778,7 +2781,8 @@ class addressGenerator(QThread):
                         print address,'already exists. Not adding it again.'
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
                 reloadMyAddressHashes()
-
+        
+        #This code which deals with old RSA addresses will soon be removed.
         elif self.addressVersionNumber == 1:
             statusbar = 'Generating new ' + str(config.getint('bitmessagesettings', 'bitstrength')) + ' bit RSA key. This takes a minute on average. If you want to generate multiple addresses now, you can; they will queue.'
             self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
@@ -2813,7 +2817,7 @@ class addressGenerator(QThread):
             self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
             reloadMyAddressHashes()
 
-    #Does an EC point multiplication which basically turns a private key into a public key
+    #Does an EC point multiplication; turns a private key into a public key.
     def pointMult(self,secret):
         #ctx = OpenSSL.BN_CTX_new() #This value proved to cause Seg Faults on Linux. It turns out that it really didn't speed up EC_POINT_mul anyway. 
         k = OpenSSL.EC_KEY_new_by_curve_name(OpenSSL.get_curve('secp256k1'))
@@ -2962,6 +2966,7 @@ class NewAddressDialog(QtGui.QDialog):
         self.ui.setupUi(self) 
         self.parent = parent
         row = 1
+        #Let's fill out the 'existing address' combo box with addresses from the 'Your Identities' tab.
         while self.parent.ui.tableWidgetYourIdentities.item(row-1,1):
             self.ui.radioButtonExisting.click()
             #print self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text()
@@ -3041,8 +3046,6 @@ class MyForm(QtGui.QMainWindow):
         self.actionReply = self.ui.inboxContextMenuToolbar.addAction("Reply", self.on_action_InboxReply)
         self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction("Add sender to your Address Book", self.on_action_InboxAddSenderToAddressBook)
         self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction("Move to Trash", self.on_action_InboxTrash)
-        #self.actionDisable = self.ui.inboxContextMenuToolbar.addAction("Disable", self.on_action_YourIdentitiesDisable)
-        #self.actionClipboard = self.ui.inboxContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_YourIdentitiesClipboard)
         self.ui.tableWidgetInbox.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuInbox)
         self.popMenuInbox = QtGui.QMenu( self )
@@ -3445,12 +3448,9 @@ class MyForm(QtGui.QMainWindow):
     def updateSentItemStatusByHash(self,toRipe,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
             toAddress = str(self.ui.tableWidgetSent.item(i,0).data(Qt.UserRole).toPyObject())
-#            messageState = str(self.ui.tableWidgetSent.item(i,3).data(Qt.UserRole).toPyObject())
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
             if ripe == toRipe:
                 self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
-                #if textToDisplay == 'Sent':
-                #    self.ui.tableWidgetSent.item(i,3).setData(Qt.UserRole,'sent')
 
     def updateSentItemStatusByAckdata(self,ackdata,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -3459,8 +3459,6 @@ class MyForm(QtGui.QMainWindow):
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
             if ackdata == tableAckdata:
                 self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
-                #if textToDisplay == 'Sent':
-                #    self.ui.tableWidgetSent.item(i,3).setData(Qt.UserRole,'sent')
 
     def rerenderInboxFromLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
@@ -3621,6 +3619,7 @@ class MyForm(QtGui.QMainWindow):
 
                         self.ui.labelFrom.setText('')
                         self.ui.tabWidget.setCurrentIndex(2)
+                        self.ui.tableWidgetSent.setCurrentCell(0,0)
                 else:
                     self.statusBar().showMessage('Your \'To\' field is empty.')
         else: #User selected 'Broadcast'
@@ -3673,6 +3672,7 @@ class MyForm(QtGui.QMainWindow):
 
                 self.ui.labelFrom.setText('')
                 self.ui.tabWidget.setCurrentIndex(2)
+                self.ui.tableWidgetSent.setCurrentCell(0,0)
 
 
     def click_pushButtonLoadFromAddressBook(self):
@@ -3795,11 +3795,10 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetInbox.setItem(0,3,newItem)
 
         self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
-
+        self.ui.tableWidgetInbox.setCurrentCell(0,0)
 
     def click_pushButtonAddAddressBook(self):
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
-
         if self.NewSubscriptionDialogInstance.exec_():
             if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() == 'Address is valid.':
                 #First we must check to see if the address is already in the address book. The user cannot add it again or else it will cause problems when updating and deleting the entry.
@@ -3955,9 +3954,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tabWidget.setTabText(6,'Whitelist')
 
     def click_pushButtonAddBlacklist(self):
-        print 'click_pushButtonAddBlacklist'
         self.NewBlacklistDialogInstance = NewSubscriptionDialog(self)
-
         if self.NewBlacklistDialogInstance.exec_():
             if self.NewBlacklistDialogInstance.ui.labelSubscriptionAddressCheck.text() == 'Address is valid.':
                 #First we must check to see if the address is already in the address book. The user cannot add it again or else it will cause problems when updating and deleting the entry.
@@ -4025,12 +4022,6 @@ class MyForm(QtGui.QMainWindow):
             print 'new address dialog box rejected'
 
     def closeEvent(self, event):
-        broadcastToSendDataQueues((0, 'shutdown', 'all'))
-        
-        print 'Closing. Flushing inventory in memory out to disk...'
-        self.statusBar().showMessage('Flushing inventory in memory out to disk.')
-        flushInventory()
-      
         '''quit_msg = "Are you sure you want to exit Bitmessage?"
         reply = QtGui.QMessageBox.question(self, 'Message',
                          quit_msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
@@ -4039,6 +4030,12 @@ class MyForm(QtGui.QMainWindow):
             event.accept()
         else:
             event.ignore()'''
+
+        broadcastToSendDataQueues((0, 'shutdown', 'all'))
+
+        print 'Closing. Flushing inventory in memory out to disk...'
+        self.statusBar().showMessage('Flushing inventory in memory out to disk.')
+        flushInventory()
 
         #This one last useless query will guarantee that the previous query committed before we close the program.
         sqlLock.acquire()
@@ -4349,7 +4346,6 @@ if useVeryEasyProofOfWorkForTesting:
     payloadLengthExtraBytes = payloadLengthExtraBytes / 10
 
 if __name__ == "__main__":
-    #sqlite_version = sqlite3.sqlite_version_info
     # Check the Major version, the first element in the array
     if sqlite3.sqlite_version_info[0] < 3:
         print 'This program requires sqlite version 3 or higher because 2 and lower cannot store NULL values. I see version:', sqlite3.sqlite_version_info
@@ -4430,19 +4426,22 @@ if __name__ == "__main__":
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
         raise SystemExit
 
-    #DNS bootstrap method. Note that this lookup doesn't use the proxy server if configured; adding that feature will require more careful testing to verify that it is working.
-    try:
-        for item in socket.getaddrinfo('bootstrap8080.bitmessage.org',80):
-            print 'Adding', item[4][0],'to knownNodes based on DNS boostrap method'
-            knownNodes[1][item[4][0]] = (8080,int(time.time()))
-    except:
-        print 'bootstrap8080.bitmessage.org DNS bootstraping failed.'
-    try:
-        for item in socket.getaddrinfo('bootstrap8444.bitmessage.org',80):
-            print 'Adding', item[4][0],'to knownNodes based on DNS boostrap method'
-            knownNodes[1][item[4][0]] = (8444,int(time.time()))
-    except:
-        print 'bootstrap8444.bitmessage.org DNS bootstrapping failed.'
+    #DNS bootstrap. This could be programmed to use the SOCKS proxy to do the DNS lookup some day but for now we will just rely on the entries in defaultKnownNodes.py. Hopefully either they are up to date or the user has run Bitmessage recently without SOCKS turned on and received good bootstrap nodes using that method.
+    if config.get('bitmessagesettings', 'socksproxytype') == 'none':
+        try:
+            for item in socket.getaddrinfo('bootstrap8080.bitmessage.org',80):
+                print 'Adding', item[4][0],'to knownNodes based on DNS boostrap method'
+                knownNodes[1][item[4][0]] = (8080,int(time.time()))
+        except:
+            print 'bootstrap8080.bitmessage.org DNS bootstraping failed.'
+        try:
+            for item in socket.getaddrinfo('bootstrap8444.bitmessage.org',80):
+                print 'Adding', item[4][0],'to knownNodes based on DNS boostrap method'
+                knownNodes[1][item[4][0]] = (8444,int(time.time()))
+        except:
+            print 'bootstrap8444.bitmessage.org DNS bootstrapping failed.'
+    else:
+        print 'DNS bootstrap skipped because SOCKS is used.'
 
     app = QtGui.QApplication(sys.argv)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
