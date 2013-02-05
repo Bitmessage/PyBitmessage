@@ -309,7 +309,7 @@ class receiveDataThread(QThread):
             self.data = ""
             if verbose >= 2:
                 printLock.acquire()
-                sys.stderr.write('The magic bytes were not correct.\n')
+                sys.stderr.write('The magic bytes were not correct. First 40 bytes of data: %s\n' % repr(self.data[0:40]))
                 printLock.release()
         elif len(self.data) < 20: #if so little of the data has arrived that we can't even unpack the payload length
             pass
@@ -484,6 +484,7 @@ class receiveDataThread(QThread):
 
     #We have received a broadcast message
     def recbroadcast(self):
+        messageProcessingStartTime = time.time()
         #First we must check to make sure the proof of work is sufficient.
         if not self.isProofOfWorkSufficient():
             print 'Proof of work in broadcast message insufficient.'
@@ -539,6 +540,19 @@ class receiveDataThread(QThread):
             readPosition += 64
             sendersHash = self.data[readPosition:readPosition+20]
             if sendersHash not in broadcastSendersForWhichImWatching:
+                #Display timing data                
+                printLock.acquire()
+                print 'Time spent deciding that we are not interested in this broadcast:', time.time()- messageProcessingStartTime
+                printLock.release()
+                sleepTime = 0.1- (time.time()- messageProcessingStartTime)
+                if sleepTime > 0:
+                    printLock.acquire()
+                    print 'Timing attack mitigation: Sleeping for', sleepTime ,'seconds.'
+                    printLock.release()
+                    time.sleep(sleepTime)
+                printLock.acquire()
+                print 'Total broadcast processing time:', time.time()- messageProcessingStartTime, 'seconds.'
+                printLock.release()
                 return
             #At this point, this message claims to be from sendersHash and we are interested in it. We still have to hash the public key to make sure it is truly the key that matches the hash, and also check the signiture.
             readPosition += 20
@@ -598,8 +612,20 @@ class receiveDataThread(QThread):
                 sqlLock.release()
                 self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
 
+            #Display timing data
+            printLock.acquire()
+            print 'Time spent processing this interesting broadcast:', time.time()- messageProcessingStartTime
+            printLock.release()
+            sleepTime = 0.1- (time.time()- messageProcessingStartTime)
+            if sleepTime > 0:
+                printLock.acquire()
+                print 'Timing attack mitigation: Sleeping for', sleepTime ,'seconds.'
+                printLock.release()
+                time.sleep(sleepTime)
+            printLock.acquire()
+            print 'Total broadcast processing time:', time.time()- messageProcessingStartTime, 'seconds.'
+            printLock.release()
 
-            ###########################################
         elif sendersAddressVersion == 1:
             sendersStream, sendersStreamLength = decodeVarint(self.data[readPosition:readPosition+9])
             if sendersStream <= 0:
@@ -683,6 +709,7 @@ class receiveDataThread(QThread):
     #We have received a msg message.
     def recmsg(self):
         #First we must check to make sure the proof of work is sufficient.
+        messageProcessingStartTime = time.time()
         if not self.isProofOfWorkSufficient():
             print 'Proof of work in msg message insufficient.'
             return
@@ -731,7 +758,6 @@ class receiveDataThread(QThread):
             sqlReturnQueue.get()
             sqlLock.release()
             self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),self.data[readPosition:24+self.payloadLength],'Acknowledgement of the message received just now.')
-            flushInventory() #so that we won't accidentially receive this message twice if the user restarts Bitmessage both soon and un-cleanly.
             return
         else:
             printLock.acquire()
@@ -740,7 +766,6 @@ class receiveDataThread(QThread):
             printLock.release()
 
         #This is not an acknowledgement bound for me. See if it is a message bound for me by trying to decrypt it with my private keys.
-
         for key, cryptorObject in myECAddressHashes.items():
             try:
                 data = cryptorObject.decrypt(self.data[readPosition:self.payloadLength+24])
@@ -751,10 +776,13 @@ class receiveDataThread(QThread):
             except Exception, err:
                 pass
                 #print 'cryptorObject.decrypt Exception:', err
-
-        if initialDecryptionSuccessful:
+        if not initialDecryptionSuccessful:
+            #This is not a message bound for me.
+            printLock.acquire()
+            print 'Length of time program spent failing to decrypt this message:', time.time()- messageProcessingStartTime, 'seconds.'
+            printLock.release()
+        else:
             #This is a message bound for me.
-            flushInventory() #so that we won't accidentially receive this message twice if the user restarts Bitmessage violently.
             readPosition = 0
             messageVersion, messageVersionLength = decodeVarint(data[readPosition:readPosition+10])
             readPosition += messageVersionLength
@@ -808,14 +836,12 @@ class receiveDataThread(QThread):
             signatureLength, signatureLengthLength = decodeVarint(data[readPosition:readPosition+10])
             readPosition += signatureLengthLength
             signature = data[readPosition:readPosition+signatureLength]
-
             try:
                 highlevelcrypto.verify(data[:positionOfBottomOfAckData],signature,pubSigningKey.encode('hex'))
                 print 'ECDSA verify passed'
             except Exception, err:
                 print 'ECDSA verify failed', err
                 return
-
             printLock.acquire()
             print 'As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person:', calculateBitcoinAddressFromPubkey(pubSigningKey), '  ..and here is the testnet address:',calculateTestnetAddressFromPubkey(pubSigningKey),'. The other person must take their private signing key from Bitmessage and import it into Bitcoin (or a service like Blockchain.info) for it to be of any use. Do not use this unless you know what you are doing.'
             printLock.release()
@@ -824,7 +850,6 @@ class receiveDataThread(QThread):
             sha.update(pubSigningKey+pubEncryptionKey)
             ripe = hashlib.new('ripemd160')
             ripe.update(sha.digest())
-
             #Let's store the public key in case we want to reply to this person.
             #We don't have the correct nonce or time (which would let us send out a pubkey message) so we'll just fill it with 1's. We won't be able to send this pubkey to others (without doing the proof of work ourselves, which this program is programmed to not do.)
             t = (ripe.digest(),False,'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+'\xFF\xFF\xFF\xFF'+data[messageVersionLength:endOfThePublicKeyPosition],int(time.time())+2419200) #after one month we may remove this pub key from our database. (2419200 = a month)
@@ -833,7 +858,6 @@ class receiveDataThread(QThread):
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
             sqlLock.release()
-
             blockMessage = False #Gets set to True if the user shouldn't see the message according to black or white lists.
             fromAddress = encodeAddress(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest())
             if config.get('bitmessagesettings', 'blackwhitelist') == 'black': #If we are using a blacklist
@@ -863,7 +887,6 @@ class receiveDataThread(QThread):
                     if not enabled:
                         print 'Message ignored because address in whitelist but not enabled.'
                         blockMessage = True
-
             if not blockMessage:
                 print 'fromAddress:', fromAddress
                 print 'First 150 characters of message:', repr(message[:150])
@@ -907,6 +930,7 @@ class receiveDataThread(QThread):
                     sqlReturnQueue.get()
                     sqlLock.release()
                     self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
+            print 'Time: messageProcessingStartTime +', time.time() - messageProcessingStartTime
             #Now let's consider sending the acknowledgement. We'll need to make sure that our client will properly process the ackData; if the packet is malformed, we could clear out self.data and an attacker could use that behavior to determine that we were capable of decoding this message.
             ackDataValidThusFar = True
             if len(ackData) < 24:
@@ -923,6 +947,27 @@ class receiveDataThread(QThread):
             if ackDataValidThusFar:
                 print 'ackData is valid. Will process it.'
                 self.ackDataThatWeHaveYetToSend.append(ackData) #When we have processed all data, the processData function will pop the ackData out and process it as if it is a message received from our peer.
+            #Display timing data
+            timeRequiredToAttemptToDecryptMessage = time.time()- messageProcessingStartTime
+            successfullyDecryptMessageTimings.append(timeRequiredToAttemptToDecryptMessage)
+            sum = 0
+            for item in successfullyDecryptMessageTimings:
+                sum += item
+            printLock.acquire()
+            print 'Time to decrypt this message successfully:', timeRequiredToAttemptToDecryptMessage
+            print 'Average time for all message decryption successes since startup:', sum / len(successfullyDecryptMessageTimings)
+            printLock.release()
+
+        sleepTime = 0.6- (time.time()- messageProcessingStartTime)
+        if sleepTime > 0:
+            printLock.acquire()
+            print 'Timing attack mitigation: Sleeping for', sleepTime ,'seconds.'
+            printLock.release()
+            time.sleep(sleepTime)
+        printLock.acquire()
+        print 'Total message processing time:', time.time()- messageProcessingStartTime, 'seconds.'
+        printLock.release()
+        if initialDecryptionSuccessful:
             return
 
         #This section is for my RSA keys (version 1 addresses). If we don't have any version 1 addresses it will never run. This code will soon be removed.
@@ -948,7 +993,6 @@ class receiveDataThread(QThread):
                 #decryption failed for this key. The message is for someone else (or for a different key of mine).
         if initialDecryptionSuccessful and outfile.getvalue()[:20] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00': #this run of 0s allows the true message receiver to identify his message
             #This is clearly a message bound for me.
-            flushInventory() #so that we won't accidentially receive this message twice if the user restarts Bitmessage soon.
             outfile.seek(0)
             data = outfile.getvalue()
             readPosition = 20 #To start reading past the 20 zero bytes
@@ -1118,7 +1162,7 @@ class receiveDataThread(QThread):
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
         else:
             printLock.acquire()
-            print 'Decryption unsuccessful.'
+            print 'RSA decryption unsuccessful.'
             printLock.release()
         infile.close()
         outfile.close()
@@ -3251,6 +3295,7 @@ class MyForm(QtGui.QMainWindow):
                 newItem =  myTableWidgetItem('Unknown status.  ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
             newItem.setData(Qt.UserRole,QByteArray(ackdata))
             newItem.setData(33,int(lastactiontime))
+            print 'setting lastactiontime:', lastactiontime
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,3,newItem)
        
@@ -3664,8 +3709,9 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
                 self.ui.tableWidgetSent.setItem(0,2,newItem)
                 #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
-                newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...')
-                newItem.setData(Qt.UserRole,ackdata)
+                newItem =  myTableWidgetItem('Doing work necessary to send broadcast...')
+                newItem.setData(Qt.UserRole,QByteArray(ackdata))
+                newItem.setData(33,int(time.time()))
                 self.ui.tableWidgetSent.setItem(0,3,newItem)
 
                 self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())
@@ -4336,6 +4382,7 @@ inventoryLock = threading.Lock() #Guarantees that two receiveDataThreads don't r
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack('>Q',random.randrange(1, 18446744073709551615))
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender thread won't connect to the same remote node twice.
 neededPubkeys = {}
+successfullyDecryptMessageTimings = [] #A list of the amounts of time it took to successfully decrypt msg messages
 
 #These constants are not at the top because if changed they will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 averageProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
