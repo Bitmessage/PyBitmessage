@@ -5,7 +5,7 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.2.1'
+softwareVersion = '0.2.2'
 verbose = 2
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -321,39 +321,39 @@ class receiveDataThread(QThread):
                     #The time we've last seen this node is obviously right now since we just received valid data from it. So update the knownNodes list so that other peers can be made aware of its existance.
                     if self.initiatedConnection: #The remote port is only something we should share with others if it is the remote node's incoming port (rather than some random operating-system-assigned outgoing port).
                         knownNodes[self.streamNumber][self.HOST] = (self.PORT,int(time.time()))
-                    remoteCommand = self.data[4:16]
-                    if verbose >= 2:
+                    if self.payloadLength <= 180000000: #If the size of the message is greater than 180MB, ignore it. (I get memory errors when processing messages much larger than this though it is concievable that this value will have to be lowered if some systems are less tolarant of large messages.)
+                        remoteCommand = self.data[4:16]
                         printLock.acquire()
                         print 'remoteCommand ', remoteCommand, 'from', self.HOST
                         printLock.release()
-                    if remoteCommand == 'version\x00\x00\x00\x00\x00':
-                        self.recversion()
-                    elif remoteCommand == 'verack\x00\x00\x00\x00\x00\x00':
-                        self.recverack()
-                    elif remoteCommand == 'addr\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                        self.recaddr()
-                    elif remoteCommand == 'getpubkey\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                        self.recgetpubkey()
-                    elif remoteCommand == 'pubkey\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                        self.recpubkey()
-                    elif remoteCommand == 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                        self.recinv()
-                    elif remoteCommand == 'getdata\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                        self.recgetdata()
-                    elif remoteCommand == 'getbiginv\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                        self.sendBigInv()
-                    elif remoteCommand == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                        self.recmsg()
-                    elif remoteCommand == 'broadcast\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                        self.recbroadcast()
-                    elif remoteCommand == 'getaddr\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                        self.sendaddr()
-                    elif remoteCommand == 'ping\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                        self.sendpong()
-                    elif remoteCommand == 'pong\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                        pass
-                    elif remoteCommand == 'alert\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                        pass
+                        if remoteCommand == 'version\x00\x00\x00\x00\x00':
+                            self.recversion()
+                        elif remoteCommand == 'verack\x00\x00\x00\x00\x00\x00':
+                            self.recverack()
+                        elif remoteCommand == 'addr\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                            self.recaddr()
+                        elif remoteCommand == 'getpubkey\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                            self.recgetpubkey()
+                        elif remoteCommand == 'pubkey\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                            self.recpubkey()
+                        elif remoteCommand == 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                            self.recinv()
+                        elif remoteCommand == 'getdata\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                            self.recgetdata()
+                        elif remoteCommand == 'getbiginv\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                            self.sendBigInv()
+                        elif remoteCommand == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                            self.recmsg()
+                        elif remoteCommand == 'broadcast\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                            self.recbroadcast()
+                        elif remoteCommand == 'getaddr\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                            self.sendaddr()
+                        elif remoteCommand == 'ping\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                            self.sendpong()
+                        elif remoteCommand == 'pong\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                            pass
+                        elif remoteCommand == 'alert\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+                            pass
 
                     self.data = self.data[self.payloadLength+24:]#take this message out and then process the next message
                     if self.data == '':
@@ -484,7 +484,7 @@ class receiveDataThread(QThread):
 
     #We have received a broadcast message
     def recbroadcast(self):
-        messageProcessingStartTime = time.time()
+        self.messageProcessingStartTime = time.time()
         #First we must check to make sure the proof of work is sufficient.
         if not self.isProofOfWorkSufficient():
             print 'Proof of work in broadcast message insufficient.'
@@ -500,22 +500,48 @@ class receiveDataThread(QThread):
             print 'The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.'
             return
         inventoryLock.acquire()
-        inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
-        if inventoryHash in inventory:
+        self.inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
+        if self.inventoryHash in inventory:
             print 'We have already received this broadcast object. Ignoring.'
             inventoryLock.release()
             return
-        elif isInSqlInventory(inventoryHash):
+        elif isInSqlInventory(self.inventoryHash):
             print 'We have already received this broadcast object (it is stored on disk in the SQL inventory). Ignoring it.'
             inventoryLock.release()
             return
         #It is valid so far. Let's let our peers know about it.
         objectType = 'broadcast'
-        inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], embeddedTime)
+        inventory[self.inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], embeddedTime)
         inventoryLock.release()
-        self.broadcastinv(inventoryHash)
+        self.broadcastinv(self.inventoryHash)
         self.emit(SIGNAL("incrementNumberOfBroadcastsProcessed()"))
         
+
+        self.processbroadcast()#When this function returns, we will have either successfully processed this broadcast because we are interested in it, ignored it because we aren't interested in it, or found problem with the broadcast that warranted ignoring it.
+
+        # Let us now set lengthOfTimeWeShouldUseToProcessThisMessage. If we haven't used the specified amount of time, we shall sleep. These values are mostly the same values used for msg messages although broadcast messages are processed faster. 
+        if self.payloadLength > 100000000: #Size is greater than 100 megabytes
+            lengthOfTimeWeShouldUseToProcessThisMessage = 100 #seconds.
+        elif self.payloadLength > 10000000: #Between 100 and 10 megabytes
+            lengthOfTimeWeShouldUseToProcessThisMessage = 20 #seconds.
+        elif self.payloadLength > 1000000: #Between 10 and 1 megabyte
+            lengthOfTimeWeShouldUseToProcessThisMessage = 3 #seconds. 
+        else: #Less than 1 megabyte
+            lengthOfTimeWeShouldUseToProcessThisMessage = .1 #seconds.
+
+
+        sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - (time.time()- self.messageProcessingStartTime)
+        if sleepTime > 0:
+            printLock.acquire()
+            print 'Timing attack mitigation: Sleeping for', sleepTime ,'seconds.'
+            printLock.release()
+            time.sleep(sleepTime)
+        printLock.acquire()
+        print 'Total message processing time:', time.time()- self.messageProcessingStartTime, 'seconds.'
+        printLock.release()
+
+    #A broadcast message has a valid time and POW and requires processing. The recbroadcast function calls this one.
+    def processbroadcast(self):
         readPosition = 36
         broadcastVersion, broadcastVersionLength = decodeVarint(self.data[readPosition:readPosition+9])
         if broadcastVersion <> 1:
@@ -540,30 +566,21 @@ class receiveDataThread(QThread):
             readPosition += 64
             sendersHash = self.data[readPosition:readPosition+20]
             if sendersHash not in broadcastSendersForWhichImWatching:
-                #Display timing data                
+                #Display timing data
                 printLock.acquire()
-                print 'Time spent deciding that we are not interested in this broadcast:', time.time()- messageProcessingStartTime
-                printLock.release()
-                sleepTime = 0.1- (time.time()- messageProcessingStartTime)
-                if sleepTime > 0:
-                    printLock.acquire()
-                    print 'Timing attack mitigation: Sleeping for', sleepTime ,'seconds.'
-                    printLock.release()
-                    time.sleep(sleepTime)
-                printLock.acquire()
-                print 'Total broadcast processing time:', time.time()- messageProcessingStartTime, 'seconds.'
+                print 'Time spent deciding that we are not interested in this broadcast:', time.time()- self.messageProcessingStartTime
                 printLock.release()
                 return
             #At this point, this message claims to be from sendersHash and we are interested in it. We still have to hash the public key to make sure it is truly the key that matches the hash, and also check the signiture.
             readPosition += 20
-            
+
             sha = hashlib.new('sha512')
             sha.update(sendersPubSigningKey+sendersPubEncryptionKey)
             ripe = hashlib.new('ripemd160')
             ripe.update(sha.digest())
             if ripe.digest() != sendersHash:
                 #The sender of this message lied.
-                return            
+                return
             messageEncodingType, messageEncodingTypeLength = decodeVarint(self.data[readPosition:readPosition+9])
             if messageEncodingType == 0:
                 return
@@ -605,25 +622,16 @@ class receiveDataThread(QThread):
             toAddress = '[Broadcast subscribers]'
             if messageEncodingType <> 0:
                 sqlLock.acquire()
-                t = (inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
+                t = (self.inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
                 sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
                 sqlLock.release()
-                self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
+                self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
 
             #Display timing data
             printLock.acquire()
-            print 'Time spent processing this interesting broadcast:', time.time()- messageProcessingStartTime
-            printLock.release()
-            sleepTime = 0.1- (time.time()- messageProcessingStartTime)
-            if sleepTime > 0:
-                printLock.acquire()
-                print 'Timing attack mitigation: Sleeping for', sleepTime ,'seconds.'
-                printLock.release()
-                time.sleep(sleepTime)
-            printLock.acquire()
-            print 'Total broadcast processing time:', time.time()- messageProcessingStartTime, 'seconds.'
+            print 'Time spent processing this interesting broadcast:', time.time()- self.messageProcessingStartTime
             printLock.release()
 
         elif sendersAddressVersion == 1:
@@ -699,21 +707,22 @@ class receiveDataThread(QThread):
             toAddress = '[Broadcast subscribers]'
             if messageEncodingType <> 0:
                 sqlLock.acquire()
-                t = (inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
+                t = (self.inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
                 sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
                 sqlLock.release()
-                self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
+                self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+
 
     #We have received a msg message.
     def recmsg(self):
+        self.messageProcessingStartTime = time.time()
         #First we must check to make sure the proof of work is sufficient.
-        messageProcessingStartTime = time.time()
         if not self.isProofOfWorkSufficient():
             print 'Proof of work in msg message insufficient.'
             return
-        initialDecryptionSuccessful = False
+        
         readPosition = 32
         embeddedTime, = unpack('>I',self.data[readPosition:readPosition+4])
         if embeddedTime > int(time.time())+10800:
@@ -728,247 +737,46 @@ class receiveDataThread(QThread):
             print 'The stream number encoded in this msg (' + str(streamNumberAsClaimedByMsg) + ') message does not match the stream number on which it was received. Ignoring it.'
             return
         readPosition += streamNumberAsClaimedByMsgLength
-        inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
+        self.inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
         inventoryLock.acquire()
-        if inventoryHash in inventory:
+        if self.inventoryHash in inventory:
             print 'We have already received this msg message. Ignoring.'
             inventoryLock.release()
             return
-        elif isInSqlInventory(inventoryHash):
+        elif isInSqlInventory(self.inventoryHash):
             print 'We have already received this msg message (it is stored on disk in the SQL inventory). Ignoring it.'
             inventoryLock.release()
             return
         #This msg message is valid. Let's let our peers know about it.
         objectType = 'msg'
-        inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], embeddedTime)
+        inventory[self.inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], embeddedTime)
         inventoryLock.release()
-        self.broadcastinv(inventoryHash)
+        self.broadcastinv(self.inventoryHash)
         self.emit(SIGNAL("incrementNumberOfMessagesProcessed()"))
 
-        #Let's check whether this is a message acknowledgement bound for us.
-        if self.data[readPosition:24+self.payloadLength] in ackdataForWhichImWatching:
-            printLock.acquire()
-            print 'This msg IS an acknowledgement bound for me.'
-            printLock.release()
-            del ackdataForWhichImWatching[self.data[readPosition:24+self.payloadLength]]
-            t = ('ackreceived',self.data[readPosition:24+self.payloadLength])
-            sqlLock.acquire()
-            sqlSubmitQueue.put('UPDATE sent SET status=? WHERE ackdata=?')
-            sqlSubmitQueue.put(t)
-            sqlReturnQueue.get()
-            sqlLock.release()
-            self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),self.data[readPosition:24+self.payloadLength],'Acknowledgement of the message received just now.')
-            return
-        else:
-            printLock.acquire()
-            print 'This was NOT an acknowledgement bound for me.' #Msg potential ack data:', repr(self.data[readPosition:24+self.payloadLength])
-            #print 'ackdataForWhichImWatching', ackdataForWhichImWatching
-            printLock.release()
+        self.processmsg(readPosition) #When this function returns, we will have either successfully processed the message bound for us, ignored it because it isn't bound for us, or found problem with the message that warranted ignoring it.
 
-        #This is not an acknowledgement bound for me. See if it is a message bound for me by trying to decrypt it with my private keys.
-        for key, cryptorObject in myECAddressHashes.items():
-            try:
-                data = cryptorObject.decrypt(self.data[readPosition:self.payloadLength+24])
-                toRipe = key #This is the RIPE hash of my pubkeys. We need this below to compare to the destination_ripe included in the encrypted data.
-                initialDecryptionSuccessful = True
-                print 'EC decryption successful using key associated with ripe hash:', key.encode('hex')
-                break
-            except Exception, err:
-                pass
-                #print 'cryptorObject.decrypt Exception:', err
-        if not initialDecryptionSuccessful:
-            #This is not a message bound for me.
-            printLock.acquire()
-            print 'Length of time program spent failing to decrypt this message:', time.time()- messageProcessingStartTime, 'seconds.'
-            printLock.release()
-        else:
-            #This is a message bound for me.
-            readPosition = 0
-            messageVersion, messageVersionLength = decodeVarint(data[readPosition:readPosition+10])
-            readPosition += messageVersionLength
-            if messageVersion != 1:
-                print 'Cannot understand message versions other than one. Ignoring message.'
-                return
-            sendersAddressVersionNumber, sendersAddressVersionNumberLength = decodeVarint(data[readPosition:readPosition+10])
-            readPosition += sendersAddressVersionNumberLength
-            if sendersAddressVersionNumber == 0:
-                print 'Cannot understand sendersAddressVersionNumber = 0. Ignoring message.'
-                return
-            if sendersAddressVersionNumber >= 3:
-                print 'Sender\'s address version number', sendersAddressVersionNumber, ' not yet supported. Ignoring message.'
-                return
-            if len(data) < 170:
-                print 'Length of the unencrypted data is unreasonably short. Sanity check failed. Ignoring message.'
-                return
-            sendersStreamNumber, sendersStreamNumberLength = decodeVarint(data[readPosition:readPosition+10])
-            if sendersStreamNumber == 0:
-                print 'sender\'s stream number is 0. Ignoring message.'
-                return
-            readPosition += sendersStreamNumberLength
-            behaviorBitfield = data[readPosition:readPosition+4]
-            readPosition += 4
-            pubSigningKey = '\x04' + data[readPosition:readPosition+64]
-            readPosition += 64
-            pubEncryptionKey = '\x04' + data[readPosition:readPosition+64]
-            readPosition += 64
-            endOfThePublicKeyPosition = readPosition #needed for when we store the pubkey in our database of pubkeys for later use.
-            if toRipe != data[readPosition:readPosition+20]:
-                printLock.acquire()
-                print 'The original sender of this message did not send it to you. Someone is attempting a Surreptitious Forwarding Attack.'
-                print 'See: http://tools.ietf.org/html/draft-ietf-smime-sender-auth-00'
-                print 'your toRipe:', toRipe.encode('hex')
-                print 'embedded destination toRipe:', data[readPosition:readPosition+20].encode('hex')
-                printLock.release()
-                return
-            readPosition += 20
-            messageEncodingType, messageEncodingTypeLength = decodeVarint(data[readPosition:readPosition+10])
-            readPosition += messageEncodingTypeLength
-            messageLength, messageLengthLength = decodeVarint(data[readPosition:readPosition+10])
-            readPosition += messageLengthLength
-            message = data[readPosition:readPosition+messageLength]
-            #print 'First 150 characters of message:', repr(message[:150])
-            readPosition += messageLength
-            ackLength, ackLengthLength = decodeVarint(data[readPosition:readPosition+10])
-            readPosition += ackLengthLength
-            ackData = data[readPosition:readPosition+ackLength]
-            readPosition += ackLength
-            positionOfBottomOfAckData = readPosition #needed to mark the end of what is covered by the signature
-            signatureLength, signatureLengthLength = decodeVarint(data[readPosition:readPosition+10])
-            readPosition += signatureLengthLength
-            signature = data[readPosition:readPosition+signatureLength]
-            try:
-                highlevelcrypto.verify(data[:positionOfBottomOfAckData],signature,pubSigningKey.encode('hex'))
-                print 'ECDSA verify passed'
-            except Exception, err:
-                print 'ECDSA verify failed', err
-                return
-            printLock.acquire()
-            print 'As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person:', calculateBitcoinAddressFromPubkey(pubSigningKey), '  ..and here is the testnet address:',calculateTestnetAddressFromPubkey(pubSigningKey),'. The other person must take their private signing key from Bitmessage and import it into Bitcoin (or a service like Blockchain.info) for it to be of any use. Do not use this unless you know what you are doing.'
-            printLock.release()
-            #calculate the fromRipe.
-            sha = hashlib.new('sha512')
-            sha.update(pubSigningKey+pubEncryptionKey)
-            ripe = hashlib.new('ripemd160')
-            ripe.update(sha.digest())
-            #Let's store the public key in case we want to reply to this person.
-            #We don't have the correct nonce or time (which would let us send out a pubkey message) so we'll just fill it with 1's. We won't be able to send this pubkey to others (without doing the proof of work ourselves, which this program is programmed to not do.)
-            t = (ripe.digest(),False,'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+'\xFF\xFF\xFF\xFF'+data[messageVersionLength:endOfThePublicKeyPosition],int(time.time())+2419200) #after one month we may remove this pub key from our database. (2419200 = a month)
-            sqlLock.acquire()
-            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
-            sqlSubmitQueue.put(t)
-            sqlReturnQueue.get()
-            sqlLock.release()
-            blockMessage = False #Gets set to True if the user shouldn't see the message according to black or white lists.
-            fromAddress = encodeAddress(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest())
-            if config.get('bitmessagesettings', 'blackwhitelist') == 'black': #If we are using a blacklist
-                t = (fromAddress,)
-                sqlLock.acquire()
-                sqlSubmitQueue.put('''SELECT label, enabled FROM blacklist where address=?''')
-                sqlSubmitQueue.put(t)
-                queryreturn = sqlReturnQueue.get()
-                sqlLock.release()
-                for row in queryreturn:
-                    label, enabled = row
-                    if enabled:
-                        print 'Message ignored because address is in blacklist.'
-                        blockMessage = True
-            else: #We're using a whitelist
-                t = (fromAddress,)
-                sqlLock.acquire()
-                sqlSubmitQueue.put('''SELECT label, enabled FROM whitelist where address=?''')
-                sqlSubmitQueue.put(t)
-                queryreturn = sqlReturnQueue.get()
-                sqlLock.release()
-                if queryreturn == []:
-                    print 'Message ignored because address not in whitelist.'
-                    blockMessage = True
-                for row in queryreturn: #It could be in the whitelist but disabled. Let's check.
-                    label, enabled = row
-                    if not enabled:
-                        print 'Message ignored because address in whitelist but not enabled.'
-                        blockMessage = True
-            if not blockMessage:
-                print 'fromAddress:', fromAddress
-                print 'First 150 characters of message:', repr(message[:150])
+        # Let us now set lengthOfTimeWeShouldUseToProcessThisMessage. If we haven't used the specified amount of time, we shall sleep. These values are based on test timings and you may change them at-will.
+        if self.payloadLength > 100000000: #Size is greater than 100 megabytes
+            lengthOfTimeWeShouldUseToProcessThisMessage = 100 #seconds. Actual length of time it took my computer to decrypt and verify the signature of a 100 MB message: 3.7 seconds.
+        elif self.payloadLength > 10000000: #Between 100 and 10 megabytes
+            lengthOfTimeWeShouldUseToProcessThisMessage = 20 #seconds. Actual length of time it took my computer to decrypt and verify the signature of a 10 MB message: 0.53 seconds. Actual length of time it takes in practice when processing a real message: 1.44 seconds.
+        elif self.payloadLength > 1000000: #Between 10 and 1 megabyte
+            lengthOfTimeWeShouldUseToProcessThisMessage = 3 #seconds. Actual length of time it took my computer to decrypt and verify the signature of a 1 MB message: 0.18 seconds. Actual length of time it takes in practice when processing a real message: 0.30 seconds.
+        else: #Less than 1 megabyte
+            lengthOfTimeWeShouldUseToProcessThisMessage = .6 #seconds. Actual length of time it took my computer to decrypt and verify the signature of a 100 KB message: 0.15 seconds. Actual length of time it takes in practice when processing a real message: 0.25 seconds.
 
-                #Look up the destination address (my address) based on the destination ripe hash.
-                #I realize that I could have a data structure devoted to this task, or maintain an indexed table
-                #in the sql database, but I would prefer to minimize the number of data structures this program
-                #uses. Searching linearly through the user's short list of addresses doesn't take very long anyway.
-                configSections = config.sections()
-                for addressInKeysFile in configSections:
-                    if addressInKeysFile <> 'bitmessagesettings':
-                        status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
-                        if hash == key:
-                            toAddress = addressInKeysFile
-                            toLabel = config.get(addressInKeysFile, 'label')
-                            if toLabel == '':
-                                toLabel = addressInKeysFile
 
-                if messageEncodingType == 2:
-                    bodyPositionIndex = string.find(message,'\nBody:')
-                    if bodyPositionIndex > 1:
-                        subject = message[8:bodyPositionIndex]
-                        body = message[bodyPositionIndex+6:]
-                    else:
-                        subject = ''
-                        body = message
-                elif messageEncodingType == 1:
-                    body = message
-                    subject = ''
-                elif messageEncodingType == 0:
-                    print 'messageEncodingType == 0. Doing nothing with the message. They probably just sent it so that we would store their public key or send their ack data for them.'
-                else:
-                    body = 'Unknown encoding type.\n\n' + repr(message)
-                    subject = ''
-                print 'within recmsg, inventoryHash is', inventoryHash.encode('hex')
-                if messageEncodingType <> 0:
-                    sqlLock.acquire()
-                    t = (inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
-                    sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
-                    sqlSubmitQueue.put(t)
-                    sqlReturnQueue.get()
-                    sqlLock.release()
-                    self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
-            print 'Time: messageProcessingStartTime +', time.time() - messageProcessingStartTime
-            #Now let's consider sending the acknowledgement. We'll need to make sure that our client will properly process the ackData; if the packet is malformed, we could clear out self.data and an attacker could use that behavior to determine that we were capable of decoding this message.
-            ackDataValidThusFar = True
-            if len(ackData) < 24:
-                print 'The length of ackData is unreasonably short. Not sending ackData.'
-                ackDataValidThusFar = False
-            elif ackData[0:4] != '\xe9\xbe\xb4\xd9':
-                print 'Ackdata magic bytes were wrong. Not sending ackData.'
-                ackDataValidThusFar = False
-            if ackDataValidThusFar:
-                ackDataPayloadLength, = unpack('>L',ackData[16:20])
-                if len(ackData)-24 != ackDataPayloadLength:
-                    print 'ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.'
-                    ackDataValidThusFar = False
-            if ackDataValidThusFar:
-                print 'ackData is valid. Will process it.'
-                self.ackDataThatWeHaveYetToSend.append(ackData) #When we have processed all data, the processData function will pop the ackData out and process it as if it is a message received from our peer.
-            #Display timing data
-            timeRequiredToAttemptToDecryptMessage = time.time()- messageProcessingStartTime
-            successfullyDecryptMessageTimings.append(timeRequiredToAttemptToDecryptMessage)
-            sum = 0
-            for item in successfullyDecryptMessageTimings:
-                sum += item
-            printLock.acquire()
-            print 'Time to decrypt this message successfully:', timeRequiredToAttemptToDecryptMessage
-            print 'Average time for all message decryption successes since startup:', sum / len(successfullyDecryptMessageTimings)
-            printLock.release()
-
-        sleepTime = 0.6- (time.time()- messageProcessingStartTime)
+        sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - (time.time()- self.messageProcessingStartTime)
         if sleepTime > 0:
             printLock.acquire()
             print 'Timing attack mitigation: Sleeping for', sleepTime ,'seconds.'
             printLock.release()
             time.sleep(sleepTime)
         printLock.acquire()
-        print 'Total message processing time:', time.time()- messageProcessingStartTime, 'seconds.'
+        print 'Total message processing time:', time.time()- self.messageProcessingStartTime, 'seconds.'
         printLock.release()
-        if initialDecryptionSuccessful:
-            return
+
 
         #This section is for my RSA keys (version 1 addresses). If we don't have any version 1 addresses it will never run. This code will soon be removed.
         initialDecryptionSuccessful = False
@@ -1127,15 +935,15 @@ class receiveDataThread(QThread):
                                 else:
                                     body = 'Unknown encoding type.\n\n' + repr(message)
                                     subject = ''
-                                print 'within recmsg, inventoryHash is', repr(inventoryHash)
+                                print 'within recmsg, self.inventoryHash is', repr(self.inventoryHash)
                                 if messageEncodingType <> 0:
                                     sqlLock.acquire()
-                                    t = (inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
+                                    t = (self.inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
                                     sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
                                     sqlSubmitQueue.put(t)
                                     sqlReturnQueue.get()
                                     sqlLock.release()
-                                    self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
+                                    self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
                             #Now let us worry about the acknowledgement data
                             #We'll need to make sure that our client will properly process the ackData; if the packet is malformed, it might cause us to clear out self.data and an attacker could use that behavior to determine that we decoded this message.
                             ackDataValidThusFar = True
@@ -1166,6 +974,221 @@ class receiveDataThread(QThread):
             printLock.release()
         infile.close()
         outfile.close()
+
+    #A msg message has a valid time and POW and requires processing. The recmsg function calls this one.
+    def processmsg(self,readPosition):
+        initialDecryptionSuccessful = False
+        #Let's check whether this is a message acknowledgement bound for us.
+        if self.data[readPosition:24+self.payloadLength] in ackdataForWhichImWatching:
+            printLock.acquire()
+            print 'This msg IS an acknowledgement bound for me.'
+            printLock.release()
+            del ackdataForWhichImWatching[self.data[readPosition:24+self.payloadLength]]
+            t = ('ackreceived',self.data[readPosition:24+self.payloadLength])
+            sqlLock.acquire()
+            sqlSubmitQueue.put('UPDATE sent SET status=? WHERE ackdata=?')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+            sqlLock.release()
+            self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),self.data[readPosition:24+self.payloadLength],'Acknowledgement of the message received just now.')
+            return
+        else:
+            printLock.acquire()
+            print 'This was NOT an acknowledgement bound for me.' #Msg potential ack data:', repr(self.data[readPosition:24+self.payloadLength])
+            #print 'ackdataForWhichImWatching', ackdataForWhichImWatching
+            printLock.release()
+
+        #This is not an acknowledgement bound for me. See if it is a message bound for me by trying to decrypt it with my private keys.
+        for key, cryptorObject in myECAddressHashes.items():
+            try:
+                data = cryptorObject.decrypt(self.data[readPosition:self.payloadLength+24])
+                toRipe = key #This is the RIPE hash of my pubkeys. We need this below to compare to the destination_ripe included in the encrypted data.
+                initialDecryptionSuccessful = True
+                print 'EC decryption successful using key associated with ripe hash:', key.encode('hex')
+                break
+            except Exception, err:
+                pass
+                #print 'cryptorObject.decrypt Exception:', err
+        if not initialDecryptionSuccessful:
+            #This is not a message bound for me.
+            printLock.acquire()
+            print 'Length of time program spent failing to decrypt this message:', time.time()- self.messageProcessingStartTime, 'seconds.'
+            printLock.release()
+        else:
+            #This is a message bound for me.
+            readPosition = 0
+            messageVersion, messageVersionLength = decodeVarint(data[readPosition:readPosition+10])
+            readPosition += messageVersionLength
+            if messageVersion != 1:
+                print 'Cannot understand message versions other than one. Ignoring message.'
+                return
+            sendersAddressVersionNumber, sendersAddressVersionNumberLength = decodeVarint(data[readPosition:readPosition+10])
+            readPosition += sendersAddressVersionNumberLength
+            if sendersAddressVersionNumber == 0:
+                print 'Cannot understand sendersAddressVersionNumber = 0. Ignoring message.'
+                return
+            if sendersAddressVersionNumber >= 3:
+                print 'Sender\'s address version number', sendersAddressVersionNumber, ' not yet supported. Ignoring message.'
+                return
+            if len(data) < 170:
+                print 'Length of the unencrypted data is unreasonably short. Sanity check failed. Ignoring message.'
+                return
+            sendersStreamNumber, sendersStreamNumberLength = decodeVarint(data[readPosition:readPosition+10])
+            if sendersStreamNumber == 0:
+                print 'sender\'s stream number is 0. Ignoring message.'
+                return
+            readPosition += sendersStreamNumberLength
+            behaviorBitfield = data[readPosition:readPosition+4]
+            readPosition += 4
+            pubSigningKey = '\x04' + data[readPosition:readPosition+64]
+            readPosition += 64
+            pubEncryptionKey = '\x04' + data[readPosition:readPosition+64]
+            readPosition += 64
+            endOfThePublicKeyPosition = readPosition #needed for when we store the pubkey in our database of pubkeys for later use.
+            if toRipe != data[readPosition:readPosition+20]:
+                printLock.acquire()
+                print 'The original sender of this message did not send it to you. Someone is attempting a Surreptitious Forwarding Attack.'
+                print 'See: http://tools.ietf.org/html/draft-ietf-smime-sender-auth-00'
+                print 'your toRipe:', toRipe.encode('hex')
+                print 'embedded destination toRipe:', data[readPosition:readPosition+20].encode('hex')
+                printLock.release()
+                return
+            readPosition += 20
+            messageEncodingType, messageEncodingTypeLength = decodeVarint(data[readPosition:readPosition+10])
+            readPosition += messageEncodingTypeLength
+            messageLength, messageLengthLength = decodeVarint(data[readPosition:readPosition+10])
+            readPosition += messageLengthLength
+            message = data[readPosition:readPosition+messageLength]
+            #print 'First 150 characters of message:', repr(message[:150])
+            readPosition += messageLength
+            ackLength, ackLengthLength = decodeVarint(data[readPosition:readPosition+10])
+            readPosition += ackLengthLength
+            ackData = data[readPosition:readPosition+ackLength]
+            readPosition += ackLength
+            positionOfBottomOfAckData = readPosition #needed to mark the end of what is covered by the signature
+            signatureLength, signatureLengthLength = decodeVarint(data[readPosition:readPosition+10])
+            readPosition += signatureLengthLength
+            signature = data[readPosition:readPosition+signatureLength]
+            try:
+                highlevelcrypto.verify(data[:positionOfBottomOfAckData],signature,pubSigningKey.encode('hex'))
+                print 'ECDSA verify passed'
+            except Exception, err:
+                print 'ECDSA verify failed', err
+                return
+            printLock.acquire()
+            print 'As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person:', calculateBitcoinAddressFromPubkey(pubSigningKey), '  ..and here is the testnet address:',calculateTestnetAddressFromPubkey(pubSigningKey),'. The other person must take their private signing key from Bitmessage and import it into Bitcoin (or a service like Blockchain.info) for it to be of any use. Do not use this unless you know what you are doing.'
+            printLock.release()
+            #calculate the fromRipe.
+            sha = hashlib.new('sha512')
+            sha.update(pubSigningKey+pubEncryptionKey)
+            ripe = hashlib.new('ripemd160')
+            ripe.update(sha.digest())
+            #Let's store the public key in case we want to reply to this person.
+            #We don't have the correct nonce or time (which would let us send out a pubkey message) so we'll just fill it with 1's. We won't be able to send this pubkey to others (without doing the proof of work ourselves, which this program is programmed to not do.)
+            t = (ripe.digest(),False,'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+'\xFF\xFF\xFF\xFF'+data[messageVersionLength:endOfThePublicKeyPosition],int(time.time())+2419200) #after one month we may remove this pub key from our database. (2419200 = a month)
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+            sqlLock.release()
+            blockMessage = False #Gets set to True if the user shouldn't see the message according to black or white lists.
+            fromAddress = encodeAddress(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest())
+            if config.get('bitmessagesettings', 'blackwhitelist') == 'black': #If we are using a blacklist
+                t = (fromAddress,)
+                sqlLock.acquire()
+                sqlSubmitQueue.put('''SELECT label, enabled FROM blacklist where address=?''')
+                sqlSubmitQueue.put(t)
+                queryreturn = sqlReturnQueue.get()
+                sqlLock.release()
+                for row in queryreturn:
+                    label, enabled = row
+                    if enabled:
+                        print 'Message ignored because address is in blacklist.'
+                        blockMessage = True
+            else: #We're using a whitelist
+                t = (fromAddress,)
+                sqlLock.acquire()
+                sqlSubmitQueue.put('''SELECT label, enabled FROM whitelist where address=?''')
+                sqlSubmitQueue.put(t)
+                queryreturn = sqlReturnQueue.get()
+                sqlLock.release()
+                if queryreturn == []:
+                    print 'Message ignored because address not in whitelist.'
+                    blockMessage = True
+                for row in queryreturn: #It could be in the whitelist but disabled. Let's check.
+                    label, enabled = row
+                    if not enabled:
+                        print 'Message ignored because address in whitelist but not enabled.'
+                        blockMessage = True
+            if not blockMessage:
+                print 'fromAddress:', fromAddress
+                print 'First 150 characters of message:', repr(message[:150])
+
+                #Look up the destination address (my address) based on the destination ripe hash.
+                #I realize that I could have a data structure devoted to this task, or maintain an indexed table
+                #in the sql database, but I would prefer to minimize the number of data structures this program
+                #uses. Searching linearly through the user's short list of addresses doesn't take very long anyway.
+                configSections = config.sections()
+                for addressInKeysFile in configSections:
+                    if addressInKeysFile <> 'bitmessagesettings':
+                        status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
+                        if hash == key:
+                            toAddress = addressInKeysFile
+                            toLabel = config.get(addressInKeysFile, 'label')
+                            if toLabel == '':
+                                toLabel = addressInKeysFile
+
+                if messageEncodingType == 2:
+                    bodyPositionIndex = string.find(message,'\nBody:')
+                    if bodyPositionIndex > 1:
+                        subject = message[8:bodyPositionIndex]
+                        body = message[bodyPositionIndex+6:]
+                    else:
+                        subject = ''
+                        body = message
+                elif messageEncodingType == 1:
+                    body = message
+                    subject = ''
+                elif messageEncodingType == 0:
+                    print 'messageEncodingType == 0. Doing nothing with the message. They probably just sent it so that we would store their public key or send their ack data for them.'
+                else:
+                    body = 'Unknown encoding type.\n\n' + repr(message)
+                    subject = ''
+                print 'within processmsg, self.inventoryHash is', self.inventoryHash.encode('hex')
+                if messageEncodingType <> 0:
+                    sqlLock.acquire()
+                    t = (self.inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
+                    sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
+                    sqlSubmitQueue.put(t)
+                    sqlReturnQueue.get()
+                    sqlLock.release()
+                    self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+            #Now let's consider sending the acknowledgement. We'll need to make sure that our client will properly process the ackData; if the packet is malformed, we could clear out self.data and an attacker could use that behavior to determine that we were capable of decoding this message.
+            ackDataValidThusFar = True
+            if len(ackData) < 24:
+                print 'The length of ackData is unreasonably short. Not sending ackData.'
+                ackDataValidThusFar = False
+            elif ackData[0:4] != '\xe9\xbe\xb4\xd9':
+                print 'Ackdata magic bytes were wrong. Not sending ackData.'
+                ackDataValidThusFar = False
+            if ackDataValidThusFar:
+                ackDataPayloadLength, = unpack('>L',ackData[16:20])
+                if len(ackData)-24 != ackDataPayloadLength:
+                    print 'ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.'
+                    ackDataValidThusFar = False
+            if ackDataValidThusFar:
+                print 'ackData is valid. Will process it.'
+                self.ackDataThatWeHaveYetToSend.append(ackData) #When we have processed all data, the processData function will pop the ackData out and process it as if it is a message received from our peer.
+            #Display timing data
+            timeRequiredToAttemptToDecryptMessage = time.time()- self.messageProcessingStartTime
+            successfullyDecryptMessageTimings.append(timeRequiredToAttemptToDecryptMessage)
+            sum = 0
+            for item in successfullyDecryptMessageTimings:
+                sum += item
+            printLock.acquire()
+            print 'Time to decrypt this message successfully:', timeRequiredToAttemptToDecryptMessage
+            print 'Average time for all message decryption successes since startup:', sum / len(successfullyDecryptMessageTimings)
+            printLock.release()
 
     #We have received a pubkey
     def recpubkey(self):
@@ -3295,7 +3318,6 @@ class MyForm(QtGui.QMainWindow):
                 newItem =  myTableWidgetItem('Unknown status.  ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
             newItem.setData(Qt.UserRole,QByteArray(ackdata))
             newItem.setData(33,int(lastactiontime))
-            print 'setting lastactiontime:', lastactiontime
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,3,newItem)
        
@@ -4079,7 +4101,9 @@ class MyForm(QtGui.QMainWindow):
 
         broadcastToSendDataQueues((0, 'shutdown', 'all'))
 
+        printLock.acquire()
         print 'Closing. Flushing inventory in memory out to disk...'
+        printLock.release()
         self.statusBar().showMessage('Flushing inventory in memory out to disk.')
         flushInventory()
 
@@ -4096,7 +4120,9 @@ class MyForm(QtGui.QMainWindow):
         output.close()
 
         self.trayIcon.hide()
+        printLock.acquire()
         print 'Done.'
+        printLock.release()
         self.statusBar().showMessage('All done. Closing user interface...')
         event.accept()
         raise SystemExit
@@ -4389,8 +4415,8 @@ averageProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be pe
 payloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
 if useVeryEasyProofOfWorkForTesting:
-    averageProofOfWorkNonceTrialsPerByte = averageProofOfWorkNonceTrialsPerByte / 10
-    payloadLengthExtraBytes = payloadLengthExtraBytes / 10
+    averageProofOfWorkNonceTrialsPerByte = averageProofOfWorkNonceTrialsPerByte / 16
+    payloadLengthExtraBytes = payloadLengthExtraBytes / 7000
 
 if __name__ == "__main__":
     # Check the Major version, the first element in the array
