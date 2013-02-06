@@ -970,7 +970,7 @@ class receiveDataThread(QThread):
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
         else:
             printLock.acquire()
-            print 'RSA decryption unsuccessful.'
+            print 'Could not decrypt with any RSA keys if you have any.'
             printLock.release()
         infile.close()
         outfile.close()
