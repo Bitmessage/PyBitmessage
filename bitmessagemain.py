@@ -1316,8 +1316,15 @@ class receiveDataThread(QThread):
         if embeddedTime < int(time.time())-maximumAgeOfAnObjectThatIAmWillingToAccept:
             print 'The time in this getpubkey message is too old. Ignoring it. Time:', embeddedTime
             return
-        inventoryLock.acquire()
+
+        addressVersionNumber, addressVersionLength = decodeVarint(self.data[36:42])
+        streamNumber, streamNumberLength = decodeVarint(self.data[36+addressVersionLength:42+addressVersionLength])
+        if streamNumber <> self.streamNumber:
+            print 'The streamNumber', streamNumber, 'doesn\'t match our stream number:', self.streamNumber
+            return
+
         inventoryHash = calculateInventoryHash(self.data[24:self.payloadLength+24])
+        inventoryLock.acquire()
         if inventoryHash in inventory:
             print 'We have already received this getpubkey request. Ignoring it.'
             inventoryLock.release()
@@ -1326,22 +1333,13 @@ class receiveDataThread(QThread):
             print 'We have already received this getpubkey request (it is stored on disk in the SQL inventory). Ignoring it.'
             inventoryLock.release()
             return
-
         self.objectsOfWhichThisRemoteNodeIsAlreadyAware[inventoryHash] = 0
         objectType = 'getpubkey'
         inventory[inventoryHash] = (objectType, self.streamNumber, self.data[24:self.payloadLength+24], embeddedTime)
         inventoryLock.release()
-
-        #Now let us make sure that the getpubkey request isn't too old or with a fake (future) time.
-
-        addressVersionNumber, addressVersionLength = decodeVarint(self.data[36:42])
-        streamNumber, streamNumberLength = decodeVarint(self.data[36+addressVersionLength:42+addressVersionLength])
-        if streamNumber <> self.streamNumber:
-            print 'The streamNumber', streamNumber, 'doesn\'t match our stream number:', self.streamNumber
-            return
-
         #This getpubkey request is valid so far. Forward to peers.
         self.broadcastinv(inventoryHash)
+
         if addressVersionNumber == 0:
             print 'The addressVersionNumber of the pubkey request is zero. That doesn\'t make any sense. Ignoring it.'
             return
@@ -1865,7 +1863,6 @@ class sendDataThread(QThread):
         
 
     def run(self):
-        message = ''
         while True:
             deststream,command,data = self.mailbox.get()
             #printLock.acquire()
@@ -2127,7 +2124,7 @@ It cleans these data structures in memory:
 
 It cleans these tables on the disk:
     inventory (clears data more than 2 days and 12 hours old)
-    pubkeys (clears data older than the date specified in the table. This is because we won't want to hold pubkeys that show up randomly as long as those that we have actually have used.)
+    pubkeys (clears data older than the date specified in the table)
 
 It resends messages when there has been no response:
     resends getpubkey messages in two days (then 4 days, then 8 days, etc...)
@@ -2481,7 +2478,7 @@ class singleWorker(QThread):
                 payload = '\x01' #Message version.
                 payload += encodeVarint(fromAddressVersionNumber)
                 payload += encodeVarint(fromStreamNumber)
-                payload += '\x00\x00\x00\x01'
+                payload += '\x00\x00\x00\x01' #Bitfield of features and behaviors that can be expected from me. (See https://bitmessage.org/wiki/Protocol_specification#Pubkey_bitfield_features  )
 
                 #We need to convert our private keys to public keys in order to include them.
                 privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
@@ -2493,22 +2490,22 @@ class singleWorker(QThread):
                 pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode('hex')
                 pubEncryptionKey = highlevelcrypto.privToPub(privEncryptionKeyHex).decode('hex')
 
-                payload += pubSigningKey[1:]
+                payload += pubSigningKey[1:] #The \x04 on the beginning of the public keys are not sent. This way there is only one acceptable way to encode and send a public key.
                 payload += pubEncryptionKey[1:]
 
-                payload += toHash
-                payload += '\x02' #Type 2 is simple UTF-8 message encoding.
+                payload += toHash #This hash will be checked by the receiver of the message to verify that toHash belongs to them. This prevents a Surreptitious Forwarding Attack.
+                payload += '\x02' #Type 2 is simple UTF-8 message encoding as specified on the Protocol Specification on the Bitmessage Wiki.
                 messageToTransmit = 'Subject:' + subject + '\n' + 'Body:' + message
                 payload += encodeVarint(len(messageToTransmit))
                 payload += messageToTransmit
-                fullAckPayload = self.generateFullAckMessage(ackdata,toStreamNumber)
+                fullAckPayload = self.generateFullAckMessage(ackdata,toStreamNumber)#The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
                 payload += encodeVarint(len(fullAckPayload))
                 payload += fullAckPayload
                 signature = highlevelcrypto.sign(payload,privSigningKeyHex)
                 payload += encodeVarint(len(signature))
                 payload += signature
 
-            elif fromAddressVersionNumber == 1:
+            elif fromAddressVersionNumber == 1: #This code is for old version 1 (RSA) addresses. It will soon be removed.
                 payload = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' #this run of nulls allows the true message receiver to identify his message
                 payload += '\x01' #Message version.
                 payload += '\x00\x00\x00\x01'
@@ -2555,6 +2552,7 @@ class singleWorker(QThread):
                 for row in queryreturn:
                     hash, havecorrectnonce, pubkeyPayload, timeLastRequested = row
 
+                #The pubkey is stored the way we originally received it which means that we need to read beyond things like the nonce and time to get to the public keys.
                 readPosition = 8 #to bypass the nonce
                 readPosition += 4 #to bypass the embedded time
                 readPosition += 1 #to bypass the address version whose length is definitely 1
@@ -2727,15 +2725,14 @@ class addressGenerator(QThread):
                 #we won't store the \x00 or \x00\x00 bytes thus making the address shorter. 
                 startTime = time.time()
                 numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
+                potentialPrivSigningKey = OpenSSL.rand(32)
+                potentialPubSigningKey = self.pointMult(potentialPrivSigningKey)
                 while True:
                     numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
-                    potentialPrivSigningKey = OpenSSL.rand(32)
                     potentialPrivEncryptionKey = OpenSSL.rand(32)
-                    potentialPubSigningKey = self.pointMult(potentialPrivSigningKey)
                     potentialPubEncryptionKey = self.pointMult(potentialPrivEncryptionKey)
                     #print 'potentialPubSigningKey', potentialPubSigningKey.encode('hex')
                     #print 'potentialPubEncryptionKey', potentialPubEncryptionKey.encode('hex')
-
                     ripe = hashlib.new('ripemd160')
                     sha = hashlib.new('sha512')
                     sha.update(potentialPubSigningKey+potentialPubEncryptionKey)
