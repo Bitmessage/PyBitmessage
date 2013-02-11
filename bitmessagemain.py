@@ -2158,7 +2158,7 @@ class sqlThread(QThread):
             self.cur.execute( '''CREATE TABLE pubkeys (hash blob, havecorrectnonce bool, transmitdata blob, time blob, usedpersonally text, UNIQUE(hash, havecorrectnonce, transmitdata) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''CREATE TABLE knownnodes (timelastseen int, stream int, services blob, host blob, port blob, UNIQUE(host, stream, port) ON CONFLICT REPLACE)''' ) #This table isn't used in the program yet but I have a feeling that we'll need it.
-
+            self.cur.execute( '''INSERT INTO subscriptions VALUES('Bitmessage new release/announcements','BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx',1)''')
             self.conn.commit()
             print 'Created messages database file'
         except Exception, err:
