@@ -41,6 +41,15 @@ def readSent():
     for row in output:
         print row
 
+def readSubscriptions():
+    print 'Printing everything in subscriptions table:'
+    item = '''select * from subscriptions'''
+    parameters = ''
+    cur.execute(item, parameters)
+    output = cur.fetchall()
+    for row in output:
+        print row
+
 def readPubkeys():
     print 'Printing everything in pubkeys table:'
     item = '''select hash, havecorrectnonce, transmitdata, time, usedpersonally from pubkeys'''
@@ -71,6 +80,7 @@ def takeSentMessagesOutOfTrash():
 #takeSentMessagesOutOfTrash()
 #readInbox()
 #readSent()
-readPubkeys()
+#readPubkeys()
+readSubscriptions()
 
 
