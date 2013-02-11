@@ -1256,7 +1256,7 @@ class receiveDataThread(QThread):
     def processpubkey(self):
         readPosition = 24 #for the message header
         readPosition += 8 #for the nonce
-        #embeddedTime, = unpack('>I',self.data[readPosition:readPosition+4]) #We don't need the time in this processpubkey function. It was checked earlier in the recpubkey function.
+        embeddedTime, = unpack('>I',self.data[readPosition:readPosition+4]) 
         readPosition += 4 #for the time
         addressVersion, varintLength = decodeVarint(self.data[readPosition:readPosition+10])
         readPosition += varintLength
