@@ -5,10 +5,11 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.2.2'
+softwareVersion = '0.2.3'
 verbose = 2
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
+lengthOfTimeToHoldOnToAllPubkeys = 2419200 #Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
 maximumAgeOfObjectsThatIAdvertiseToOthers = 216000 #Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800 #Equals three hours
 storeConfigFilesInSameDirectoryAsProgram = False
@@ -863,9 +864,9 @@ class receiveDataThread(QThread):
 
                             #Let's store the public key in case we want to reply to this person.
                             #We don't have the correct nonce in order to send out a pubkey message so we'll just fill it with 1's. We won't be able to send this pubkey to others (without doing the proof of work ourselves, which this program is programmed to not do.)
-                            t = (ripe.digest(),False,'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+data[20+messageVersionLength:endOfThePublicKeyPosition],int(time.time())+2419200) #after one month we may remove this pub key from our database. (2419200 = a month)
+                            t = (ripe.digest(),False,'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+data[20+messageVersionLength:endOfThePublicKeyPosition],int(time.time()),'yes')
                             sqlLock.acquire()
-                            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
+                            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
                             sqlSubmitQueue.put(t)
                             sqlReturnQueue.get()
                             sqlLock.release()
@@ -1085,9 +1086,9 @@ class receiveDataThread(QThread):
             ripe.update(sha.digest())
             #Let's store the public key in case we want to reply to this person.
             #We don't have the correct nonce or time (which would let us send out a pubkey message) so we'll just fill it with 1's. We won't be able to send this pubkey to others (without doing the proof of work ourselves, which this program is programmed to not do.)
-            t = (ripe.digest(),False,'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+'\xFF\xFF\xFF\xFF'+data[messageVersionLength:endOfThePublicKeyPosition],int(time.time())+2419200) #after one month we may remove this pub key from our database. (2419200 = a month)
+            t = (ripe.digest(),False,'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+'\xFF\xFF\xFF\xFF'+data[messageVersionLength:endOfThePublicKeyPosition],int(time.time()),'yes')
             sqlLock.acquire()
-            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
+            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
             sqlLock.release()
@@ -1192,6 +1193,7 @@ class receiveDataThread(QThread):
 
     #We have received a pubkey
     def recpubkey(self):
+        self.pubkeyProcessingStartTime = time.time()
         if self.payloadLength < 32: #sanity check
             return
         #We must check to make sure the proof of work is sufficient.
@@ -1199,9 +1201,20 @@ class receiveDataThread(QThread):
             print 'Proof of work in pubkey message insufficient.'
             return
 
+
         readPosition = 24 #for the message header
         readPosition += 8 #for the nonce
-        embeddedTime, = unpack('>I',self.data[readPosition:readPosition+4])#We currently are not checking the embeddedTime for any sort of validity in pubkey messages.
+        embeddedTime, = unpack('>I',self.data[readPosition:readPosition+4])
+        if embeddedTime < int(time.time())-lengthOfTimeToHoldOnToAllPubkeys-86400: #If the pubkey is more than a month old then reject it. (the 86400 is included to give an extra day of wiggle-room. If the wiggle-room is actually of any use, everyone on the network will delete this pubkey from their database the next time the cleanerThread cleans anyway- except for the node that actually wants the pubkey.)
+            printLock.acquire()
+            print 'The embedded time in this pubkey message is too old. Ignoring.'
+            printLock.release()
+            return
+        if embeddedTime > int(time.time()) + 10800:
+            printLock.acquire()
+            print 'The embedded time in this pubkey message more than several hours in the future. This is irrational. Ignoring message.'
+            printLock.release()
+            return
         readPosition += 4 #for the time
         addressVersion, varintLength = decodeVarint(self.data[readPosition:readPosition+10])
         readPosition += varintLength
@@ -1227,8 +1240,30 @@ class receiveDataThread(QThread):
         self.broadcastinv(inventoryHash)
         self.emit(SIGNAL("incrementNumberOfPubkeysProcessed()"))
 
+        self.processpubkey()
+
+        lengthOfTimeWeShouldUseToProcessThisMessage = .2
+        sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - (time.time()- self.pubkeyProcessingStartTime)
+        if sleepTime > 0:
+            #printLock.acquire()
+            #print 'Timing attack mitigation: Sleeping for', sleepTime ,'seconds.'
+            #printLock.release()
+            time.sleep(sleepTime)
+        #printLock.acquire()
+        #print 'Total pubkey processing time:', time.time()- self.pubkeyProcessingStartTime, 'seconds.'
+        #printLock.release()
+
+    def processpubkey(self):
+        readPosition = 24 #for the message header
+        readPosition += 8 #for the nonce
+        #embeddedTime, = unpack('>I',self.data[readPosition:readPosition+4]) #We don't need the time in this processpubkey function. It was checked earlier in the recpubkey function.
+        readPosition += 4 #for the time
+        addressVersion, varintLength = decodeVarint(self.data[readPosition:readPosition+10])
+        readPosition += varintLength
+        streamNumber, varintLength = decodeVarint(self.data[readPosition:readPosition+10])
+        readPosition += varintLength
         if addressVersion == 0:
-            print 'Within recpubkey, addressVersion of zero doesn\'t make sense.'
+            print '(Within processpubkey) addressVersion of 0 doesn\'t make sense.'
             return
         if addressVersion >= 3:
             printLock.acquire()
@@ -1261,16 +1296,36 @@ class receiveDataThread(QThread):
             print 'publicEncryptionKey in hex:', publicEncryptionKey.encode('hex')
             printLock.release()
 
-            t = (ripe,True,self.data[24:24+self.payloadLength],embeddedTime+604800) #after one week we may remove this pub key from our database.
+            t = (ripe,)
             sqlLock.acquire()
-            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
+            sqlSubmitQueue.put('''SELECT usedpersonally FROM pubkeys WHERE hash=? AND usedpersonally='yes' ''')
             sqlSubmitQueue.put(t)
-            sqlReturnQueue.get()
+            queryreturn = sqlReturnQueue.get()
             sqlLock.release()
-            printLock.acquire()
-            print 'added foreign pubkey into our database'
-            printLock.release()
-            workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
+            if queryreturn != []: #if this pubkey is already in our database and if we have used it personally:
+                print 'We HAVE used this pubkey personally. Updating time.'
+                t = (ripe,True,self.data[24:24+self.payloadLength],embeddedTime,'yes')
+                sqlLock.acquire()
+                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+                sqlSubmitQueue.put(t)
+                sqlReturnQueue.get()
+                sqlLock.release()
+                printLock.acquire()
+                print 'added foreign pubkey into our database'
+                printLock.release()
+                workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
+            else:
+                print 'We have NOT used this pubkey personally. Inserting in database.'
+                t = (ripe,True,self.data[24:24+self.payloadLength],embeddedTime,'no')
+                sqlLock.acquire()
+                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+                sqlSubmitQueue.put(t)
+                sqlReturnQueue.get()
+                sqlLock.release()
+                printLock.acquire()
+                print 'added foreign pubkey into our database'
+                printLock.release()
+                workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
 
         #This code which deals with old RSA addresses will soon be removed.
         elif addressVersion == 1:
@@ -1295,14 +1350,36 @@ class receiveDataThread(QThread):
             print 'n=', convertStringToInt(nString)
             print 'e=', convertStringToInt(eString)
 
-            t = (ripe,True,self.data[24:24+self.payloadLength],int(time.time())+604800) #after one week we may remove this pub key from our database.
+            t = (ripe,)
             sqlLock.acquire()
-            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
+            sqlSubmitQueue.put('''SELECT usedpersonally FROM pubkeys WHERE hash=? AND usedpersonally='yes' ''')
             sqlSubmitQueue.put(t)
-            sqlReturnQueue.get()
+            queryreturn = sqlReturnQueue.get()
             sqlLock.release()
-            print 'added foreign pubkey into our database'
-            workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
+            if queryreturn != []: #if this pubkey is already in our database and if we have used it personally:
+                print 'We HAVE used this pubkey personally. Updating time.'
+                t = (ripe,True,self.data[24:24+self.payloadLength],int(time.time()),'yes')
+                sqlLock.acquire()
+                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+                sqlSubmitQueue.put(t)
+                sqlReturnQueue.get()
+                sqlLock.release()
+                printLock.acquire()
+                print 'added foreign pubkey into our database'
+                printLock.release()
+                workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
+            else:
+                print 'We have NOT used this pubkey personally. Inserting in database.'
+                t = (ripe,True,self.data[24:24+self.payloadLength],int(time.time()),'no')
+                sqlLock.acquire()
+                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+                sqlSubmitQueue.put(t)
+                sqlReturnQueue.get()
+                sqlLock.release()
+                printLock.acquire()
+                print 'added foreign pubkey into our database'
+                printLock.release()
+                workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
 
     #We have received a getpubkey message
     def recgetpubkey(self):
@@ -1349,38 +1426,31 @@ class receiveDataThread(QThread):
         print 'the hash requested in this getpubkey request is:', self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength].encode('hex')
 
         sqlLock.acquire()
-        t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],) #this prevents SQL injection
-        sqlSubmitQueue.put('''SELECT hash, transmitdata, time FROM pubkeys WHERE hash=? AND havecorrectnonce=1''')
+        t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],int(time.time())-lengthOfTimeToHoldOnToAllPubkeys) #this prevents SQL injection
+        sqlSubmitQueue.put('''SELECT hash, transmitdata, time FROM pubkeys WHERE hash=? AND havecorrectnonce=1 AND time>?''')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
         sqlLock.release()
         if queryreturn != []:
             for row in queryreturn:
-                hash, payload, timeLastRequested = row
-                if timeLastRequested < int(time.time())+604800: #if the last time anyone asked about this hash was this week, extend the time.
-                    sqlLock.acquire()
-                    t = (int(time.time())+604800,hash)
-                    sqlSubmitQueue.put('''UPDATE pubkeys set time=? WHERE hash=?''')
-                    sqlSubmitQueue.put(t)
-                    queryreturn = sqlReturnQueue.get()
-                    sqlLock.release()
-
+                hash, payload, timeEncodedInPubkey = row
             printLock.acquire()
             print 'We have the requested pubkey stored in our database of pubkeys. Sending it.'
             printLock.release()
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'pubkey'
-            inventory[inventoryHash] = (objectType, self.streamNumber, payload, int(time.time()))
+            inventory[inventoryHash] = (objectType, self.streamNumber, payload, timeEncodedInPubkey)
             self.broadcastinv(inventoryHash)  
-        else: #the pubkey is not in our database of pubkeys. Let's check if the requested key is ours (which would mean we should do the POW, put it in the pubkey table, and broadcast out the pubkey.
-
+        else: #the pubkey is not in our database of pubkeys. Let's check if the requested key is ours (which would mean we should do the POW, put it in the pubkey table, and broadcast out the pubkey.)
             if self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength] in myECAddressHashes: #if this address hash is one of mine
+                printLock.acquire()
                 print 'Found getpubkey-requested-hash in my list of EC hashes. Telling Worker thread to do the POW for a pubkey message and send it out.'
+                printLock.release()
                 myAddress = encodeAddress(addressVersionNumber,streamNumber,self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength])
                 workerQueue.put(('doPOWForMyV2Pubkey',myAddress))
 
             #This code which deals with old RSA addresses will soon be removed.
-            elif self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength] in myRSAAddressHashes:
+                """elif self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength] in myRSAAddressHashes:
                 print 'Found getpubkey requested hash in my list of RSA hashes.'
                 payload = '\x00\x00\x00\x01' #bitfield of features supported by me (see the wiki).
                 payload += self.data[36:36+addressVersionLength+streamNumberLength]
@@ -1405,6 +1475,7 @@ class receiveDataThread(QThread):
                 payload = pack('>Q',nonce) + payload
                 t = (self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength],True,payload,int(time.time())+1209600) #after two weeks (1,209,600 seconds), we may remove our own pub key from our database. It will be regenerated and put back in the database if it is requested.
                 sqlLock.acquire()
+                #** pubkeys insert query not yet fixed! **
                 sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
@@ -1412,7 +1483,7 @@ class receiveDataThread(QThread):
                 inventoryHash = calculateInventoryHash(payload)
                 objectType = 'pubkey'
                 inventory[inventoryHash] = (objectType, self.streamNumber, payload, int(time.time()))
-                self.broadcastinv(inventoryHash)
+                self.broadcastinv(inventoryHash) """
             else:
                 printLock.acquire()
                 print 'This getpubkey request is not for any of my keys.'
@@ -1426,7 +1497,9 @@ class receiveDataThread(QThread):
             for i in range(numberOfItemsInInv):
                 self.objectsOfWhichThisRemoteNodeIsAlreadyAware[self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]] = 0
                 if self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)] in inventory:
+                    printLock.acquire()
                     print 'Inventory (in memory) has inventory item already.'
+                    printLock.release()
                 elif isInSqlInventory(self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]):
                     print 'Inventory (SQL on disk) has inventory item already.'
                 else:
@@ -2076,7 +2149,13 @@ class sqlThread(QThread):
             self.cur.execute( '''CREATE TABLE addressbook (label text, address text)''' )
             self.cur.execute( '''CREATE TABLE blacklist (label text, address text, enabled bool)''' )
             self.cur.execute( '''CREATE TABLE whitelist (label text, address text, enabled bool)''' )
-            self.cur.execute( '''CREATE TABLE pubkeys (hash blob, havecorrectnonce bool, transmitdata blob, time blob, UNIQUE(hash, havecorrectnonce, transmitdata) ON CONFLICT REPLACE)''' )
+            #Explanation of what is in the pubkeys table: 
+            #   The hash is the RIPEMD160 hash that is encoded in the Bitmessage address. 
+            #   If you or someone else did the POW for this pubkey, then havecorrectnonce will be true. If you received the pubkey in a msg message then havecorrectnonce will be false. You won't have the correct nonce and won't be able to send the message to peers if they request the pubkey.
+            #   transmitdata is literally the data that was included in the Bitmessage pubkey message when it arrived, except for the 24 byte protocol header- ie, it starts with the POW nonce.
+            #   time is the time that the pubkey was broadcast on the network same as with every other type of Bitmessage object.
+            #   usedpersonally is set to "yes" if we have used the key personally. This keeps us from deleting it because we may want to reply to a message in the future. This field is not a bool because we may need more flexability in the future and it doesn't take up much more space anyway.
+            self.cur.execute( '''CREATE TABLE pubkeys (hash blob, havecorrectnonce bool, transmitdata blob, time blob, usedpersonally text, UNIQUE(hash, havecorrectnonce, transmitdata) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''CREATE TABLE knownnodes (timelastseen int, stream int, services blob, host blob, port blob, UNIQUE(host, stream, port) ON CONFLICT REPLACE)''' ) #This table isn't used in the program yet but I have a feeling that we'll need it.
 
@@ -2088,11 +2167,21 @@ class sqlThread(QThread):
             else:
                 sys.stderr.write('ERROR trying to create database file (message.dat). Error message: %s\n' % str(err))
                 sys.exit()
-        
+
+        if config.getint('bitmessagesettings','settingsversion') == 2:
+            item = '''ALTER TABLE pubkeys ADD usedpersonally text DEFAULT 'no' '''
+            parameters = ''
+            self.cur.execute(item, parameters)
+            self.conn.commit()
+
+            config.set('bitmessagesettings','settingsversion','3')
+            with open(appdata + 'keys.dat', 'wb') as configfile:
+                config.write(configfile)
+
         try:
             testpayload = '\x00\x00'
-            t = ('1234','True',testpayload,'12345678')
-            self.cur.execute( '''INSERT INTO pubkeys VALUES(?,?,?,?)''',t)
+            t = ('1234','True',testpayload,'12345678','no')
+            self.cur.execute( '''INSERT INTO pubkeys VALUES(?,?,?,?,?)''',t)
             self.conn.commit()
             self.cur.execute('''SELECT transmitdata FROM pubkeys WHERE hash='1234' ''')
             queryreturn = self.cur.fetchall()
@@ -2124,7 +2213,7 @@ It cleans these data structures in memory:
 
 It cleans these tables on the disk:
     inventory (clears data more than 2 days and 12 hours old)
-    pubkeys (clears data older than the date specified in the table)
+    pubkeys (clears pubkeys older than two weeks old which we have not used personally)
 
 It resends messages when there has been no response:
     resends getpubkey messages in two days (then 4 days, then 8 days, etc...)
@@ -2162,9 +2251,9 @@ class singleCleaner(QThread):
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
 
-                #pubkeys (clears data older than the date specified in the table. This is because we won't want to hold pubkeys that show up randomly as long as those that we have actually have used (unless someone can come up with a decent attack based on this behavior.))
-                t = (int(time.time()),)
-                sqlSubmitQueue.put('''DELETE FROM pubkeys WHERE time<?''')
+                #pubkeys 
+                t = (int(time.time())-lengthOfTimeToHoldOnToAllPubkeys,)
+                sqlSubmitQueue.put('''DELETE FROM pubkeys WHERE time<? AND usedpersonally='no' ''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
 
@@ -2273,7 +2362,8 @@ class singleWorker(QThread):
 
     def doPOWForMyV2Pubkey(self,myAddress): #This function also broadcasts out the pubkey message once it is done with the POW
         status,addressVersionNumber,streamNumber,hash = decodeAddress(myAddress)
-        payload = pack('>I',(int(time.time())+random.randrange(-300, 300))) #the current time plus or minus five minutes
+        embeddedTime = int(time.time())+random.randrange(-300, 300) #the current time plus or minus five minutes
+        payload = pack('>I',(embeddedTime))
         payload += encodeVarint(2) #Address version number
         payload += encodeVarint(streamNumber)
         payload += '\x00\x00\x00\x01' #bitfield of features supported by me (see the wiki).
@@ -2302,16 +2392,16 @@ class singleWorker(QThread):
         print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
 
         payload = pack('>Q',nonce) + payload
-        t = (hash,True,payload,int(time.time())+1209600) #after two weeks (1,209,600 seconds), we may remove our own pub key from our database. It will be regenerated and put back in the database if it is requested.
+        t = (hash,True,payload,embeddedTime,'no')
         sqlLock.acquire()
-        sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
+        sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
         sqlLock.release()
 
         inventoryHash = calculateInventoryHash(payload)
         objectType = 'pubkey'
-        inventory[inventoryHash] = (objectType, streamNumber, payload, int(time.time()))
+        inventory[inventoryHash] = (objectType, streamNumber, payload, embeddedTime)
 
         printLock.acquire()
         print 'broadcasting inv with hash:', inventoryHash.encode('hex')
@@ -2341,7 +2431,7 @@ class singleWorker(QThread):
                 pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode('hex') #At this time these pubkeys are 65 bytes long because they include the encoding byte which we won't be sending in the broadcast message.
                 pubEncryptionKey = highlevelcrypto.privToPub(privEncryptionKeyHex).decode('hex')    
                 
-                payload = pack('>I',(int(time.time())))
+                payload = pack('>I',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes
                 payload += encodeVarint(1) #broadcast version
                 payload += encodeVarint(addressVersionNumber)
                 payload += encodeVarint(streamNumber)
@@ -2473,7 +2563,7 @@ class singleWorker(QThread):
             print 'Found a message in our database that needs to be sent with this pubkey.'
             print 'First 150 characters of message:', message[:150]
             printLock.release()
-
+            embeddedTime = pack('>I',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes. We will use this time both for our message and for the ackdata packed within our message.
             if fromAddressVersionNumber == 2:
                 payload = '\x01' #Message version.
                 payload += encodeVarint(fromAddressVersionNumber)
@@ -2498,7 +2588,7 @@ class singleWorker(QThread):
                 messageToTransmit = 'Subject:' + subject + '\n' + 'Body:' + message
                 payload += encodeVarint(len(messageToTransmit))
                 payload += messageToTransmit
-                fullAckPayload = self.generateFullAckMessage(ackdata,toStreamNumber)#The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
+                fullAckPayload = self.generateFullAckMessage(ackdata,toStreamNumber,embeddedTime)#The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
                 payload += encodeVarint(len(fullAckPayload))
                 payload += fullAckPayload
                 signature = highlevelcrypto.sign(payload,privSigningKeyHex)
@@ -2533,7 +2623,7 @@ class singleWorker(QThread):
                 payload += messageToTransmit
 
                 #Later, if anyone impliments clients that don't send the ack_data, then we should probably check here to make sure that the receiver will make use of this ack_data and not attach it if not.
-                fullAckPayload = self.generateFullAckMessage(ackdata,toStreamNumber)
+                fullAckPayload = self.generateFullAckMessage(ackdata,toStreamNumber,embeddedTime)
                 payload += encodeVarint(len(fullAckPayload))
                 payload += fullAckPayload
                 sendersPrivKey = rsa.PrivateKey(config.getint(fromaddress, 'n'),config.getint(fromaddress, 'e'),config.getint(fromaddress, 'd'),config.getint(fromaddress, 'p'),config.getint(fromaddress, 'q'))
@@ -2544,13 +2634,13 @@ class singleWorker(QThread):
 
             if toAddressVersionNumber == 2:
                 sqlLock.acquire()
-                sqlSubmitQueue.put('SELECT * FROM pubkeys WHERE hash=?')
+                sqlSubmitQueue.put('SELECT transmitdata FROM pubkeys WHERE hash=?')
                 sqlSubmitQueue.put((toRipe,))
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
 
                 for row in queryreturn:
-                    hash, havecorrectnonce, pubkeyPayload, timeLastRequested = row
+                    pubkeyPayload, = row
 
                 #The pubkey is stored the way we originally received it which means that we need to read beyond things like the nonce and time to get to the public keys.
                 readPosition = 8 #to bypass the nonce
@@ -2568,13 +2658,13 @@ class singleWorker(QThread):
 
             elif toAddressVersionNumber == 1:
                 sqlLock.acquire()
-                sqlSubmitQueue.put('SELECT * FROM pubkeys WHERE hash=?')
+                sqlSubmitQueue.put('SELECT transmitdata FROM pubkeys WHERE hash=?')
                 sqlSubmitQueue.put((toRipe,))
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
 
                 for row in queryreturn:
-                    hash, havecorrectnonce, pubkeyPayload, timeLastRequested = row
+                    pubkeyPayload, = row
 
                 readPosition = 8 #to bypass the nonce
                 behaviorBitfield = pubkeyPayload[8:12]
@@ -2603,7 +2693,7 @@ class singleWorker(QThread):
 
             nonce = 0
             trialValue = 99999999999999999999
-            embeddedTime = pack('>I',(int(time.time())))
+            
             encodedStreamNumber = encodeVarint(toStreamNumber)
             #We are now dropping the unencrypted data in payload since it has already been encrypted and replacing it with the encrypted payload that we will send out.
             payload = embeddedTime + encodedStreamNumber + encrypted
@@ -2632,9 +2722,9 @@ class singleWorker(QThread):
             sqlSubmitQueue.put(t)
             queryreturn = sqlReturnQueue.get()
 
-            #Update the time in the pubkey sql database so that we'll hold the foreign pubkey for quite a while longer
-            t = (int(time.time())+31449600,toRipe) #Hold the pubkey for an entire year from today
-            sqlSubmitQueue.put('UPDATE pubkeys SET time=? WHERE hash=?')
+            
+            t = (toRipe,)
+            sqlSubmitQueue.put('''UPDATE pubkeys SET usedpersonally='yes' WHERE hash=?''')
             sqlSubmitQueue.put(t)
             queryreturn = sqlReturnQueue.get()
 
@@ -2676,10 +2766,9 @@ class singleWorker(QThread):
         self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Broacasting the public key request. The recipient''s software must be on. This program will auto-retry if they are offline.')
         self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Sending public key request. Waiting for reply. Requested at ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
 
-    def generateFullAckMessage(self,ackdata,toStreamNumber):
+    def generateFullAckMessage(self,ackdata,toStreamNumber,embeddedTime):
         nonce = 0
         trialValue = 99999999999999999999
-        embeddedTime = pack('>I',(int(time.time())))
         encodedStreamNumber = encodeVarint(toStreamNumber)
         payload = embeddedTime + encodedStreamNumber + ackdata
         target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
@@ -4469,7 +4558,7 @@ if __name__ == "__main__":
         print 'Storing config files in', appdata
 
     if config.getint('bitmessagesettings','settingsversion') == 1:
-        config.set('bitmessagesettings','settingsversion','2')
+        config.set('bitmessagesettings','settingsversion','3') #If the settings version is equal to 2 then the sqlThread will modify the pubkeys table and change the settings version to 3.
         config.set('bitmessagesettings','socksproxytype','none')
         config.set('bitmessagesettings','sockshostname','localhost')
         config.set('bitmessagesettings','socksport','9050')
@@ -4481,7 +4570,6 @@ if __name__ == "__main__":
         with open(appdata + 'keys.dat', 'wb') as configfile:
             config.write(configfile)
 
-
     try:
         pickleFile = open(appdata + 'knownnodes.dat', 'rb')
         knownNodes = pickle.load(pickleFile)
@@ -4492,7 +4580,7 @@ if __name__ == "__main__":
         knownNodes = pickle.load(pickleFile)
         pickleFile.close()
 
-    if config.getint('bitmessagesettings', 'settingsversion') > 2:
+    if config.getint('bitmessagesettings', 'settingsversion') > 3:
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
         raise SystemExit
 
