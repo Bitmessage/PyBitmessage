@@ -1439,7 +1439,7 @@ class receiveDataThread(QThread):
             printLock.release()
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'pubkey'
-            inventory[inventoryHash] = (objectType, self.streamNumber, payload, timeEncodedInPubkey)
+            inventory[inventoryHash] = (objectType, self.streamNumber, payload, timeEncodedInPubkey)#If the time embedded in this pubkey is more than 3 days old then this object isn't going to last very long in the inventory- the cleanerThread is going to come along and move it from the inventory in memory to the SQL inventory and then delete it from the SQL inventory. It should still find its way back to the original requestor if he is online however.
             self.broadcastinv(inventoryHash)  
         else: #the pubkey is not in our database of pubkeys. Let's check if the requested key is ours (which would mean we should do the POW, put it in the pubkey table, and broadcast out the pubkey.)
             if self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength] in myECAddressHashes: #if this address hash is one of mine
