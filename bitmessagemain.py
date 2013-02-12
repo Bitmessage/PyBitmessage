@@ -304,16 +304,14 @@ class receiveDataThread(QThread):
             #printLock.acquire()
             #print 'self.data is currently ', repr(self.data)
             #printLock.release()
-        if self.data == "":
+        if len(self.data) < 20: #if so little of the data has arrived that we can't even unpack the payload length
             pass
         elif self.data[0:4] != '\xe9\xbe\xb4\xd9':
-            self.data = ""
             if verbose >= 2:
                 printLock.acquire()
                 sys.stderr.write('The magic bytes were not correct. First 40 bytes of data: %s\n' % repr(self.data[0:40]))
                 printLock.release()
-        elif len(self.data) < 20: #if so little of the data has arrived that we can't even unpack the payload length
-            pass
+            self.data = ""
         else:
             self.payloadLength, = unpack('>L',self.data[16:20])
             if len(self.data) >= self.payloadLength: #check if the whole message has arrived yet. If it has,...
@@ -497,7 +495,7 @@ class receiveDataThread(QThread):
         if embeddedTime < (int(time.time())-maximumAgeOfAnObjectThatIAmWillingToAccept):
             print 'The embedded time in this broadcast message is too old. Ignoring message.'
             return
-        if self.payloadLength < 66:
+        if self.payloadLength < 66: #todo: When version 1 addresses are completely abandoned, this should be changed to 180
             print 'The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.'
             return
         inventoryLock.acquire()
@@ -1194,13 +1192,12 @@ class receiveDataThread(QThread):
     #We have received a pubkey
     def recpubkey(self):
         self.pubkeyProcessingStartTime = time.time()
-        if self.payloadLength < 32: #sanity check
+        if self.payloadLength < 146: #sanity check
             return
         #We must check to make sure the proof of work is sufficient.
         if not self.isProofOfWorkSufficient():
             print 'Proof of work in pubkey message insufficient.'
             return
-
 
         readPosition = 24 #for the message header
         readPosition += 8 #for the nonce
@@ -1495,20 +1492,22 @@ class receiveDataThread(QThread):
         numberOfItemsInInv, lengthOfVarint = decodeVarint(self.data[24:34])
         if numberOfItemsInInv == 1: #we'll just request this data from the person who advertised the object.
             for i in range(numberOfItemsInInv):
-                self.objectsOfWhichThisRemoteNodeIsAlreadyAware[self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]] = 0
-                if self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)] in inventory:
-                    printLock.acquire()
-                    print 'Inventory (in memory) has inventory item already.'
-                    printLock.release()
-                elif isInSqlInventory(self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]):
-                    print 'Inventory (SQL on disk) has inventory item already.'
-                else:
-                    self.sendgetdata(self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)])
+                if len(self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]) == 32: #The length of an inventory hash should be 32. If it isn't 32 then the remote node is either badly programmed or behaving nefariously.
+                    self.objectsOfWhichThisRemoteNodeIsAlreadyAware[self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]] = 0
+                    if self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)] in inventory:
+                        printLock.acquire()
+                        print 'Inventory (in memory) has inventory item already.'
+                        printLock.release()
+                    elif isInSqlInventory(self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]):
+                        print 'Inventory (SQL on disk) has inventory item already.'
+                    else:
+                        self.sendgetdata(self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)])
         else:
             print 'inv message lists', numberOfItemsInInv, 'objects.'
             for i in range(numberOfItemsInInv): #upon finishing dealing with an incoming message, the receiveDataThread will request a random object from the peer. This way if we get multiple inv messages from multiple peers which list mostly the same objects, we will make getdata requests for different random objects from the various peers.
-                self.objectsOfWhichThisRemoteNodeIsAlreadyAware[self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]] = 0
-                self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]] = 0
+                if len(self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]) == 32: #The length of an inventory hash should be 32. If it isn't 32 then the remote node is either badly programmed or behaving nefariously.
+                    self.objectsOfWhichThisRemoteNodeIsAlreadyAware[self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]] = 0
+                    self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[self.data[24+lengthOfVarint+(32*i):56+lengthOfVarint+(32*i)]] = 0
 
 
     #Send a getdata message to our peer to request the object with the given hash
@@ -1819,8 +1818,6 @@ class receiveDataThread(QThread):
             pickle.dump(knownNodes, output)
             output.close()
 
-
-
             #I've commented out this code because it should be up to the newer node to decide whether their protocol version is incompatiable with the remote node's version.
             '''if self.remoteProtocolVersion > 1:
                 print 'The remote node''s protocol version is too new for this program to understand. Disconnecting. It is:', self.remoteProtocolVersion
@@ -1839,7 +1836,7 @@ class receiveDataThread(QThread):
         payload += pack('>q',1) #bitflags of the services I offer.
         payload += pack('>q',int(time.time()))
 
-        payload += pack('>q',1) #boolservices of remote connection. How can I even know this for sure? This is probably ignored by the remote host.
+        payload += pack('>q',1) #boolservices offered by the remote node. This data is ignored by the remote host because how could We know what Their services are without them telling us?
         payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + socket.inet_aton(self.HOST)
         payload += pack('>H',self.PORT)#remote IPv6 and port
 
@@ -2155,10 +2152,10 @@ class sqlThread(QThread):
             #   transmitdata is literally the data that was included in the Bitmessage pubkey message when it arrived, except for the 24 byte protocol header- ie, it starts with the POW nonce.
             #   time is the time that the pubkey was broadcast on the network same as with every other type of Bitmessage object.
             #   usedpersonally is set to "yes" if we have used the key personally. This keeps us from deleting it because we may want to reply to a message in the future. This field is not a bool because we may need more flexability in the future and it doesn't take up much more space anyway.
-            self.cur.execute( '''CREATE TABLE pubkeys (hash blob, havecorrectnonce bool, transmitdata blob, time blob, usedpersonally text, UNIQUE(hash, havecorrectnonce, transmitdata) ON CONFLICT REPLACE)''' )
+            self.cur.execute( '''CREATE TABLE pubkeys (hash blob, havecorrectnonce bool, transmitdata blob, time blob, usedpersonally text, UNIQUE(hash, havecorrectnonce) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''CREATE TABLE knownnodes (timelastseen int, stream int, services blob, host blob, port blob, UNIQUE(host, stream, port) ON CONFLICT REPLACE)''' ) #This table isn't used in the program yet but I have a feeling that we'll need it.
-            self.cur.execute( '''INSERT INTO subscriptions VALUES('Bitmessage new release/announcements','BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx',1)''')
+            self.cur.execute( '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx',1)''')
             self.conn.commit()
             print 'Created messages database file'
         except Exception, err:
@@ -2168,6 +2165,7 @@ class sqlThread(QThread):
                 sys.stderr.write('ERROR trying to create database file (message.dat). Error message: %s\n' % str(err))
                 sys.exit()
 
+        #People running earlier versions of PyBitmessage do not have the usedpersonally field in their pubkeys table. Let's add it.
         if config.getint('bitmessagesettings','settingsversion') == 2:
             item = '''ALTER TABLE pubkeys ADD usedpersonally text DEFAULT 'no' '''
             parameters = ''
@@ -2213,12 +2211,11 @@ It cleans these data structures in memory:
 
 It cleans these tables on the disk:
     inventory (clears data more than 2 days and 12 hours old)
-    pubkeys (clears pubkeys older than two weeks old which we have not used personally)
+    pubkeys (clears pubkeys older than 4 weeks old which we have not used personally)
 
 It resends messages when there has been no response:
     resends getpubkey messages in two days (then 4 days, then 8 days, etc...)
     resends msg messages in two days (then 4 days, then 8 days, etc...)
-
 
 '''
 class singleCleaner(QThread):
@@ -2342,7 +2339,7 @@ class singleWorker(QThread):
                         self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),toRipe,'Public key was requested earlier. Receiver must be offline. Will retry.')
                 else:
                     print 'We already have the necessary public key.'
-                    self.sendMsg(toRipe)
+                    self.sendMsg(toRipe) #by calling this function, we are asserting that we already have the pubkey for toRipe
             elif command == 'sendbroadcast':
                 print 'Within WorkerThread, processing sendbroadcast command.'
                 fromAddress,subject,message = data
@@ -2368,8 +2365,14 @@ class singleWorker(QThread):
         payload += encodeVarint(streamNumber)
         payload += '\x00\x00\x00\x01' #bitfield of features supported by me (see the wiki).
 
-        privSigningKeyBase58 = config.get(myAddress, 'privsigningkey')
-        privEncryptionKeyBase58 = config.get(myAddress, 'privencryptionkey')
+        try:
+            privSigningKeyBase58 = config.get(myAddress, 'privsigningkey')
+            privEncryptionKeyBase58 = config.get(myAddress, 'privencryptionkey')
+        except Exception, err:
+            printLock.acquire()
+            sys.stderr.write('Error within doPOWForMyV2Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
+            printLock.release()
+            return
 
         privSigningKeyHex = decodeWalletImportFormat(privSigningKeyBase58).encode('hex')
         privEncryptionKeyHex = decodeWalletImportFormat(privEncryptionKeyBase58).encode('hex')
@@ -2379,7 +2382,7 @@ class singleWorker(QThread):
         payload += pubSigningKey[1:]
         payload += pubEncryptionKey[1:]
 
-        #Time to do the POW for this pubkey message
+        #Do the POW for this pubkey message
         nonce = 0
         trialValue = 99999999999999999999
         target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
@@ -2388,7 +2391,6 @@ class singleWorker(QThread):
         while trialValue > target:
             nonce += 1
             trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
-            #trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + payload).digest()).digest()[4:12])
         print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
 
         payload = pack('>Q',nonce) + payload
@@ -2416,8 +2418,6 @@ class singleWorker(QThread):
         queryreturn = sqlReturnQueue.get()
         sqlLock.release()
         for row in queryreturn:
-            #print 'within sendMsg, row is:', row
-            #msgid, toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status = row
             fromaddress, subject, body, ackdata = row
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(fromaddress)
             if addressVersionNumber == 2:
@@ -2722,7 +2722,6 @@ class singleWorker(QThread):
             sqlSubmitQueue.put(t)
             queryreturn = sqlReturnQueue.get()
 
-            
             t = (toRipe,)
             sqlSubmitQueue.put('''UPDATE pubkeys SET usedpersonally='yes' WHERE hash=?''')
             sqlSubmitQueue.put(t)
@@ -2854,7 +2853,6 @@ class addressGenerator(QThread):
                 #print 'privEncryptionKeyWIF',privEncryptionKeyWIF
 
                 config.add_section(address)
-                print 'self.label', self.label
                 config.set(address,'label',self.label)
                 config.set(address,'enabled','true')
                 config.set(address,'decoy','false')
@@ -2874,8 +2872,8 @@ class addressGenerator(QThread):
                 encryptionKeyNonce = 1
                 for i in range(self.numberOfAddressesToMake):
                     #This next section is a little bit strange. We're going to generate keys over and over until we
-                    #find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
-                    #we won't store the \x00 or \x00\x00 bytes thus making the address shorter.
+                    #find one that has a RIPEMD hash that starts with either \x00 or \x00\x00. Then when we pack them
+                    #into a Bitmessage address, we won't store the \x00 or \x00\x00 bytes thus making the address shorter.
                     startTime = time.time()
                     numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
                     while True:
@@ -3703,7 +3701,7 @@ class MyForm(QtGui.QMainWindow):
                         if status == 'versiontoohigh':
                             self.statusBar().showMessage('Error: The address version in '+ toAddress+ ' is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.')
                     elif fromAddress == '':
-                        self.statusBar().showMessage('Error: You must specify a From address. If you don''t have one, go to the ''Your Identities'' tab.')
+                        self.statusBar().showMessage('Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab.')
                     else:
                         toAddress = addBMIfNotPresent(toAddress)
                         if addressVersionNumber > 2 or addressVersionNumber == 0:
