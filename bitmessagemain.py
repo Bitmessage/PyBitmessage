@@ -5,7 +5,7 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.2.3'
+softwareVersion = '0.2.4'
 verbose = 2
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -2862,7 +2862,7 @@ class addressGenerator(QThread):
                 with open(appdata + 'keys.dat', 'wb') as configfile:
                     config.write(configfile)
 
-                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address. Doing work necessary to broadcast it.')
+                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address. Doing work necessary to broadcast it...')
                 self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
                 reloadMyAddressHashes()
                 workerQueue.put(('doPOWForMyV2Pubkey',address))
