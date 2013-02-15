@@ -5,7 +5,7 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.2.3'
+softwareVersion = '0.2.4'
 verbose = 2
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -2409,6 +2409,7 @@ class singleWorker(QThread):
         print 'broadcasting inv with hash:', inventoryHash.encode('hex')
         printLock.release()
         broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
+        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
 
     def sendBroadcast(self):
         sqlLock.acquire()
@@ -2861,9 +2862,10 @@ class addressGenerator(QThread):
                 with open(appdata + 'keys.dat', 'wb') as configfile:
                     config.write(configfile)
 
-                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
+                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address. Doing work necessary to broadcast it...')
                 self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
                 reloadMyAddressHashes()
+                workerQueue.put(('doPOWForMyV2Pubkey',address))
 
             else: #There is something in the deterministicPassphrase variable thus we are going to do this deterministically.
                 statusbar = 'Generating '+str(self.numberOfAddressesToMake) + ' new addresses.'
@@ -3482,11 +3484,10 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.singleCleanerThread, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
 
         self.workerThread = singleWorker()
-        
-        #self.workerThread.setup(workerQueue)
         self.workerThread.start()
         QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
         QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
+        QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
 
     def click_actionManageKeys(self):
         if 'darwin' in sys.platform or 'linux' in sys.platform:
