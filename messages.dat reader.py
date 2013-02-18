@@ -60,6 +60,17 @@ def readPubkeys():
         hash, havecorrectnonce, transmitdata, time, usedpersonally = row
         print 'Hash:', hash.encode('hex'), '\tHave correct nonce:', havecorrectnonce, '\tTime first broadcast:', strftime('%a, %d %b %Y  %I:%M %p',localtime(time)), '\tUsed by me personally:', usedpersonally, '\tFull pubkey message:', transmitdata.encode('hex')
 
+def readInventory():
+    print 'Printing everything in inventory table:'
+    item = '''select hash, objecttype, streamnumber, payload, receivedtime from inventory'''
+    parameters = ''
+    cur.execute(item, parameters)
+    output = cur.fetchall()
+    for row in output:
+        hash, objecttype, streamnumber, payload, receivedtime = row
+        print 'Hash:', hash.encode('hex'), objecttype, streamnumber, '\t', payload.encode('hex'), '\t', strftime('%a, %d %b %Y  %I:%M %p',localtime(receivedtime))
+
+
 def takeInboxMessagesOutOfTrash():
     item = '''update inbox set folder='inbox' where folder='trash' '''
     parameters = ''
@@ -80,7 +91,8 @@ def takeSentMessagesOutOfTrash():
 #takeSentMessagesOutOfTrash()
 #readInbox()
 #readSent()
-readPubkeys()
+#readPubkeys()
 #readSubscriptions()
+readInventory()
 
 

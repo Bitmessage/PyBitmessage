@@ -314,7 +314,7 @@ class receiveDataThread(QThread):
             self.data = ""
         else:
             self.payloadLength, = unpack('>L',self.data[16:20])
-            if len(self.data) >= self.payloadLength: #check if the whole message has arrived yet. If it has,...
+            if len(self.data) >= self.payloadLength+24: #check if the whole message has arrived yet. If it has,...
                 if self.data[20:24] == hashlib.sha512(self.data[24:self.payloadLength+24]).digest()[0:4]:#test the checksum in the message. If it is correct...
                     #print 'message checksum is correct'
                     #The time we've last seen this node is obviously right now since we just received valid data from it. So update the knownNodes list so that other peers can be made aware of its existance.
@@ -2071,6 +2071,7 @@ def reloadMyAddressHashes():
     print 'reloading keys from keys.dat file'
     printLock.release()
     myRSAAddressHashes.clear()
+    myECAddressHashes.clear()
     #myPrivateKeys.clear()
     configSections = config.sections()
     for addressInKeysFile in configSections:
@@ -2283,6 +2284,8 @@ class singleCleaner(QThread):
                             #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Message sent again because the acknowledgement was never received. ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
                             workerQueue.put(('sendmessage',toaddress))
                 sqlLock.release()
+            #Clear the status bar in case a message has been sitting there for a while.
+            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
 
 #This thread, of which there is only one, does the heavy lifting: calculating POWs.
 class singleWorker(QThread):
@@ -2742,7 +2745,7 @@ class singleWorker(QThread):
         nonce = 0
         trialValue = 99999999999999999999
         #print 'trial value', trialValue
-        statusbar = 'Doing the computations necessary to request the recipient''s public key. (Doing the proof-of-work.)'
+        statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
         self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
         self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Doing work necessary to request public key.')
         print 'Doing proof-of-work necessary to send getpubkey message.'
@@ -2763,7 +2766,7 @@ class singleWorker(QThread):
         #payload = '\x01' + pack('>H',objectType) + hash
         broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
-        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Broacasting the public key request. The recipient''s software must be on. This program will auto-retry if they are offline.')
+        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Broacasting the public key request. This program will auto-retry if they are offline.')
         self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Sending public key request. Waiting for reply. Requested at ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
 
     def generateFullAckMessage(self,ackdata,toStreamNumber,embeddedTime):
@@ -3482,6 +3485,7 @@ class MyForm(QtGui.QMainWindow):
         self.singleCleanerThread = singleCleaner()
         self.singleCleanerThread.start()
         QtCore.QObject.connect(self.singleCleanerThread, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
+        QtCore.QObject.connect(self.singleCleanerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
 
         self.workerThread = singleWorker()
         self.workerThread.start()
@@ -4545,7 +4549,7 @@ if __name__ == "__main__":
         #This appears to be the first time running the program; there is no config file (or it cannot be accessed). Create config file.
         config.add_section('bitmessagesettings')
         config.set('bitmessagesettings','settingsversion','1')
-        config.set('bitmessagesettings','bitstrength','2048')
+        #config.set('bitmessagesettings','bitstrength','2048')
         config.set('bitmessagesettings','port','8444')
         config.set('bitmessagesettings','timeformat','%%a, %%d %%b %%Y  %%I:%%M %%p')
         config.set('bitmessagesettings','blackwhitelist','black')
