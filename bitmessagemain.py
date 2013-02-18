@@ -1,3 +1,4 @@
+#!/usr/bin/env python2.7
 # Copyright (c) 2012 Jonathan Warren
 # Copyright (c) 2012 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying
@@ -133,7 +134,7 @@ class outgoingSynSender(QThread):
                     printLock.acquire()
                     print self, 'connected to', HOST, 'during outgoing attempt.'
                     printLock.release()
-                    
+
                     sd = sendDataThread()
                     sd.setup(sock,HOST,PORT,self.streamNumber,objectsOfWhichThisRemoteNodeIsAlreadyAware)
                     sd.start()
@@ -176,7 +177,7 @@ class outgoingSynSender(QThread):
 class singleListener(QThread):
     def __init__(self, parent = None):
         QThread.__init__(self, parent)
-        
+
 
     def run(self):
         #We don't want to accept incoming connections if the user is using a SOCKS proxy. If they eventually select proxy 'none' then this will start listening for connections.
@@ -269,14 +270,14 @@ class receiveDataThread(QThread):
                 break
             else:
                 self.processData()
-                
-                
+
+
 
         try:
             self.sock.close()
         except Exception, err:
             print 'Within receiveDataThread run(), self.sock.close() failed.', err
-        
+
         try:
             self.selfInitiatedConnectionList.remove(self)
             printLock.acquire()
@@ -297,7 +298,7 @@ class receiveDataThread(QThread):
             del connectedHostsList[self.HOST]
         except Exception, err:
             print 'Could not delete', self.HOST, 'from connectedHostsList.', err
-       
+
     def processData(self):
         global verbose
         #if verbose >= 2:
@@ -438,7 +439,7 @@ class receiveDataThread(QThread):
             sqlSubmitQueue.put('''SELECT hash FROM inventory WHERE receivedtime>? and streamnumber=?''')
             sqlSubmitQueue.put(t)
             queryreturn = sqlReturnQueue.get()
-            sqlLock.release()      
+            sqlLock.release()
             bigInvList = {}
             for row in queryreturn:
                 hash, = row
@@ -470,7 +471,7 @@ class receiveDataThread(QThread):
                     numberOfObjectsInInvMessage = 0
             if numberOfObjectsInInvMessage > 0:
                 self.sendinvMessageToJustThisOnePeer(numberOfObjectsInInvMessage,payload)
-                
+
     #Self explanatory. Notice that there is also a broadcastinv function for broadcasting invs to everyone in our stream.
     def sendinvMessageToJustThisOnePeer(self,numberOfObjects,payload):
         payload = encodeVarint(numberOfObjects) + payload
@@ -514,17 +515,17 @@ class receiveDataThread(QThread):
         inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
         self.emit(SIGNAL("incrementNumberOfBroadcastsProcessed()"))
-        
+
 
         self.processbroadcast()#When this function returns, we will have either successfully processed this broadcast because we are interested in it, ignored it because we aren't interested in it, or found problem with the broadcast that warranted ignoring it.
 
-        # Let us now set lengthOfTimeWeShouldUseToProcessThisMessage. If we haven't used the specified amount of time, we shall sleep. These values are mostly the same values used for msg messages although broadcast messages are processed faster. 
+        # Let us now set lengthOfTimeWeShouldUseToProcessThisMessage. If we haven't used the specified amount of time, we shall sleep. These values are mostly the same values used for msg messages although broadcast messages are processed faster.
         if self.payloadLength > 100000000: #Size is greater than 100 megabytes
             lengthOfTimeWeShouldUseToProcessThisMessage = 100 #seconds.
         elif self.payloadLength > 10000000: #Between 100 and 10 megabytes
             lengthOfTimeWeShouldUseToProcessThisMessage = 20 #seconds.
         elif self.payloadLength > 1000000: #Between 10 and 1 megabyte
-            lengthOfTimeWeShouldUseToProcessThisMessage = 3 #seconds. 
+            lengthOfTimeWeShouldUseToProcessThisMessage = 3 #seconds.
         else: #Less than 1 megabyte
             lengthOfTimeWeShouldUseToProcessThisMessage = .1 #seconds.
 
@@ -721,7 +722,7 @@ class receiveDataThread(QThread):
         if not self.isProofOfWorkSufficient():
             print 'Proof of work in msg message insufficient.'
             return
-        
+
         readPosition = 32
         embeddedTime, = unpack('>I',self.data[readPosition:readPosition+4])
         if embeddedTime > int(time.time())+10800:
@@ -1253,7 +1254,7 @@ class receiveDataThread(QThread):
     def processpubkey(self):
         readPosition = 24 #for the message header
         readPosition += 8 #for the nonce
-        embeddedTime, = unpack('>I',self.data[readPosition:readPosition+4]) 
+        embeddedTime, = unpack('>I',self.data[readPosition:readPosition+4])
         readPosition += 4 #for the time
         addressVersion, varintLength = decodeVarint(self.data[readPosition:readPosition+10])
         readPosition += varintLength
@@ -1437,7 +1438,7 @@ class receiveDataThread(QThread):
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'pubkey'
             inventory[inventoryHash] = (objectType, self.streamNumber, payload, timeEncodedInPubkey)#If the time embedded in this pubkey is more than 3 days old then this object isn't going to last very long in the inventory- the cleanerThread is going to come along and move it from the inventory in memory to the SQL inventory and then delete it from the SQL inventory. It should still find its way back to the original requestor if he is online however.
-            self.broadcastinv(inventoryHash)  
+            self.broadcastinv(inventoryHash)
         else: #the pubkey is not in our database of pubkeys. Let's check if the requested key is ours (which would mean we should do the POW, put it in the pubkey table, and broadcast out the pubkey.)
             if self.data[36+addressVersionLength+streamNumberLength:56+addressVersionLength+streamNumberLength] in myECAddressHashes: #if this address hash is one of mine
                 printLock.acquire()
@@ -1547,7 +1548,7 @@ class receiveDataThread(QThread):
                         self.sendData(objectType,payload)
                     else:
                         print 'Someone asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. That shouldn\'t have happened.'
-  
+
         except:
             pass   #someone is probably trying to cause a program error by, for example, making a request for 10 items but only including the hashes for 5.
 
@@ -1930,7 +1931,7 @@ class sendDataThread(QThread):
         printLock.release()
         self.sock.send(datatosend)
         self.versionSent = 1
-        
+
 
     def run(self):
         while True:
@@ -2147,8 +2148,8 @@ class sqlThread(QThread):
             self.cur.execute( '''CREATE TABLE addressbook (label text, address text)''' )
             self.cur.execute( '''CREATE TABLE blacklist (label text, address text, enabled bool)''' )
             self.cur.execute( '''CREATE TABLE whitelist (label text, address text, enabled bool)''' )
-            #Explanation of what is in the pubkeys table: 
-            #   The hash is the RIPEMD160 hash that is encoded in the Bitmessage address. 
+            #Explanation of what is in the pubkeys table:
+            #   The hash is the RIPEMD160 hash that is encoded in the Bitmessage address.
             #   If you or someone else did the POW for this pubkey, then havecorrectnonce will be true. If you received the pubkey in a msg message then havecorrectnonce will be false. You won't have the correct nonce and won't be able to send the message to peers if they request the pubkey.
             #   transmitdata is literally the data that was included in the Bitmessage pubkey message when it arrived, except for the 24 byte protocol header- ie, it starts with the POW nonce.
             #   time is the time that the pubkey was broadcast on the network same as with every other type of Bitmessage object.
@@ -2204,7 +2205,7 @@ class sqlThread(QThread):
             sqlReturnQueue.put(self.cur.fetchall())
             sqlSubmitQueue.task_done()
             self.conn.commit()
-       
+
 
 '''The singleCleaner class is a timer-driven thread that cleans data structures to free memory, resends messages when a remote node doesn't respond, and sends pong messages to keep connections alive if the network isn't busy.
 It cleans these data structures in memory:
@@ -2249,7 +2250,7 @@ class singleCleaner(QThread):
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
 
-                #pubkeys 
+                #pubkeys
                 t = (int(time.time())-lengthOfTimeToHoldOnToAllPubkeys,)
                 sqlSubmitQueue.put('''DELETE FROM pubkeys WHERE time<? AND usedpersonally='no' ''')
                 sqlSubmitQueue.put(t)
@@ -2433,24 +2434,24 @@ class singleWorker(QThread):
                 privEncryptionKeyHex = decodeWalletImportFormat(privEncryptionKeyBase58).encode('hex')
 
                 pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode('hex') #At this time these pubkeys are 65 bytes long because they include the encoding byte which we won't be sending in the broadcast message.
-                pubEncryptionKey = highlevelcrypto.privToPub(privEncryptionKeyHex).decode('hex')    
-                
+                pubEncryptionKey = highlevelcrypto.privToPub(privEncryptionKeyHex).decode('hex')
+
                 payload = pack('>I',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes
                 payload += encodeVarint(1) #broadcast version
                 payload += encodeVarint(addressVersionNumber)
                 payload += encodeVarint(streamNumber)
                 payload += '\x00\x00\x00\x01' #behavior bitfield
                 payload += pubSigningKey[1:]
-                payload += pubEncryptionKey[1:]  
+                payload += pubEncryptionKey[1:]
                 payload += ripe
                 payload += '\x02' #message encoding type
                 payload += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding.
                 payload += 'Subject:' + subject + '\n' + 'Body:' + body
-                
+
                 signature = highlevelcrypto.sign(payload,privSigningKeyHex)
                 payload += encodeVarint(len(signature))
                 payload += signature
-                
+
                 nonce = 0
                 trialValue = 99999999999999999999
                 target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
@@ -2478,7 +2479,7 @@ class singleWorker(QThread):
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
-        
+
             elif addressVersionNumber == 1: #This whole section can be taken out soon because we aren't supporting v1 addresses for much longer.
                 messageToTransmit = '\x02' #message encoding type
                 messageToTransmit += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding.
@@ -2547,7 +2548,7 @@ class singleWorker(QThread):
 
     def sendMsg(self,toRipe):
         sqlLock.acquire()
-        t = ('doingpow','findingpubkey',toRipe)       
+        t = ('doingpow','findingpubkey',toRipe)
         sqlSubmitQueue.put('UPDATE sent SET status=? WHERE status=? AND toripe=?')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
@@ -2603,7 +2604,7 @@ class singleWorker(QThread):
                 payload = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' #this run of nulls allows the true message receiver to identify his message
                 payload += '\x01' #Message version.
                 payload += '\x00\x00\x00\x01'
-                
+
                 payload += encodeVarint(fromAddressVersionNumber)
                 payload += encodeVarint(fromStreamNumber)
 
@@ -2697,7 +2698,7 @@ class singleWorker(QThread):
 
             nonce = 0
             trialValue = 99999999999999999999
-            
+
             encodedStreamNumber = encodeVarint(toStreamNumber)
             #We are now dropping the unencrypted data in payload since it has already been encrypted and replacing it with the encrypted payload that we will send out.
             payload = embeddedTime + encodedStreamNumber + encrypted
@@ -2814,7 +2815,7 @@ class addressGenerator(QThread):
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
                 #This next section is a little bit strange. We're going to generate keys over and over until we
                 #find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
-                #we won't store the \x00 or \x00\x00 bytes thus making the address shorter. 
+                #we won't store the \x00 or \x00\x00 bytes thus making the address shorter.
                 startTime = time.time()
                 numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
                 potentialPrivSigningKey = OpenSSL.rand(32)
@@ -2937,7 +2938,7 @@ class addressGenerator(QThread):
                         print address,'already exists. Not adding it again.'
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
                 reloadMyAddressHashes()
-        
+
         #This code which deals with old RSA addresses will soon be removed.
         elif self.addressVersionNumber == 1:
             statusbar = 'Generating new ' + str(config.getint('bitmessagesettings', 'bitstrength')) + ' bit RSA key. This takes a minute on average. If you want to generate multiple addresses now, you can; they will queue.'
@@ -2975,7 +2976,7 @@ class addressGenerator(QThread):
 
     #Does an EC point multiplication; turns a private key into a public key.
     def pointMult(self,secret):
-        #ctx = OpenSSL.BN_CTX_new() #This value proved to cause Seg Faults on Linux. It turns out that it really didn't speed up EC_POINT_mul anyway. 
+        #ctx = OpenSSL.BN_CTX_new() #This value proved to cause Seg Faults on Linux. It turns out that it really didn't speed up EC_POINT_mul anyway.
         k = OpenSSL.EC_KEY_new_by_curve_name(OpenSSL.get_curve('secp256k1'))
         priv_key = OpenSSL.BN_bin2bn(secret, 32, 0)
         group = OpenSSL.EC_KEY_get0_group(k)
@@ -3003,7 +3004,7 @@ class iconGlossaryDialog(QtGui.QDialog):
     def __init__(self,parent):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_iconGlossaryDialog()
-        self.ui.setupUi(self) 
+        self.ui.setupUi(self)
         self.parent = parent
         self.ui.labelPortNumber.setText('You are using TCP port ' + str(config.getint('bitmessagesettings', 'port')) + '. (This can be changed in the settings).')
         QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
@@ -3070,7 +3071,7 @@ class settingsDialog(QtGui.QDialog):
         elif str(config.get('bitmessagesettings', 'socksproxytype')) == 'SOCKS5':
             self.ui.comboBoxProxyType.setCurrentIndex(2)
             self.ui.lineEditTCPPort.setEnabled(False)
-        
+
         self.ui.lineEditSocksHostname.setText(str(config.get('bitmessagesettings', 'sockshostname')))
         self.ui.lineEditSocksPort.setText(str(config.get('bitmessagesettings', 'socksport')))
         self.ui.lineEditSocksUsername.setText(str(config.get('bitmessagesettings', 'socksusername')))
@@ -3118,8 +3119,8 @@ class NewSubscriptionDialog(QtGui.QDialog):
 class NewAddressDialog(QtGui.QDialog):
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_NewAddressDialog() 
-        self.ui.setupUi(self) 
+        self.ui = Ui_NewAddressDialog()
+        self.ui.setupUi(self)
         self.parent = parent
         row = 1
         #Let's fill out the 'existing address' combo box with addresses from the 'Your Identities' tab.
@@ -3290,7 +3291,7 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.tableWidgetYourIdentities.setItem(0, 2, newItem)
                 if isEnabled:
                     status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
-        
+
         self.sqlLookup = sqlThread()
         self.sqlLookup.start()
 
@@ -3409,7 +3410,7 @@ class MyForm(QtGui.QMainWindow):
             newItem.setData(33,int(lastactiontime))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,3,newItem)
-       
+
         #Initialize the address book
         sqlSubmitQueue.put('SELECT * FROM addressbook')
         sqlSubmitQueue.put('')
@@ -3480,7 +3481,7 @@ class MyForm(QtGui.QMainWindow):
         self.singleListenerThread = singleListener()
         self.singleListenerThread.start()
         QtCore.QObject.connect(self.singleListenerThread, QtCore.SIGNAL("passObjectThrough(PyQt_PyObject)"), self.connectObjectToSignals)
-        
+
 
         self.singleCleanerThread = singleCleaner()
         self.singleCleanerThread.start()
@@ -3502,7 +3503,7 @@ class MyForm(QtGui.QMainWindow):
                 self.openKeysFile()
             else:
                 pass
-        
+
     def click_actionRegenerateDeterministicAddresses(self):
         self.regenerateAddressesDialogInstance = regenerateAddressesDialog(self)
         if self.regenerateAddressesDialogInstance.exec_():
@@ -3556,7 +3557,7 @@ class MyForm(QtGui.QMainWindow):
                 #self.show()
                 self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
                 self.activateWindow()
-            
+
     def incrementNumberOfMessagesProcessed(self):
         self.numberOfMessagesProcessed += 1
         self.ui.labelMessageCount.setText('Processed ' + str(self.numberOfMessagesProcessed) + ' person-to-person messages.')
@@ -3564,7 +3565,7 @@ class MyForm(QtGui.QMainWindow):
     def incrementNumberOfBroadcastsProcessed(self):
         self.numberOfBroadcastsProcessed += 1
         self.ui.labelBroadcastCount.setText('Processed ' + str(self.numberOfBroadcastsProcessed) + ' broadcast messages.')
-      
+
     def incrementNumberOfPubkeysProcessed(self):
         self.numberOfPubkeysProcessed += 1
         self.ui.labelPubkeyCount.setText('Processed ' + str(self.numberOfPubkeysProcessed) + ' public keys.')
@@ -3655,7 +3656,7 @@ class MyForm(QtGui.QMainWindow):
             if toLabel == '':
                 toLabel = toAddress
             self.ui.tableWidgetInbox.item(i,0).setText(unicode(toLabel,'utf-8'))
-            
+
     def rerenderSentFromLabels(self):
         for i in range(self.ui.tableWidgetSent.rowCount()):
             fromAddress = str(self.ui.tableWidgetSent.item(i,1).data(Qt.UserRole).toPyObject())
@@ -3711,7 +3712,7 @@ class MyForm(QtGui.QMainWindow):
                         toAddress = addBMIfNotPresent(toAddress)
                         try:
                             config.get(toAddress, 'enabled')
-                            #The toAddress is one owned by me. We cannot send messages to ourselves without significant changes to the codebase. 
+                            #The toAddress is one owned by me. We cannot send messages to ourselves without significant changes to the codebase.
                             QMessageBox.about(self, "Sending to your address", "Error: One of the addresses to which you are sending a message, "+toAddress+", is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.")
                             continue
                         except:
@@ -3846,10 +3847,10 @@ class MyForm(QtGui.QMainWindow):
             self.statusBar().showMessage('')
             time.sleep(0.1)
             self.statusBar().showMessage('Right click an entry in your address book and select \'Send message to this address\'.')
-        
+
     def redrawLabelFrom(self,index):
         self.ui.labelFrom.setText(self.ui.comboBoxSendFrom.itemData(index).toPyObject())
-        
+
     def rerenderComboBoxSendFrom(self):
         self.ui.comboBoxSendFrom.clear()
         self.ui.labelFrom.setText('')
@@ -4040,13 +4041,13 @@ class MyForm(QtGui.QMainWindow):
             newItem =  QtGui.QTableWidgetItem(address)
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetBlacklist.setItem(0,1,newItem)
-    
+
     def click_pushButtonStatusIcon(self):
         print 'click_pushButtonStatusIcon'
         self.iconGlossaryInstance = iconGlossaryDialog(self)
         if self.iconGlossaryInstance.exec_():
             pass
-    
+
     def click_actionHelp(self):
         self.helpDialogInstance = helpDialog(self)
         self.helpDialogInstance.exec_()
@@ -4077,7 +4078,7 @@ class MyForm(QtGui.QMainWindow):
             config.set('bitmessagesettings', 'socksport', str(self.settingsDialogInstance.ui.lineEditSocksPort.text()))
             config.set('bitmessagesettings', 'socksusername', str(self.settingsDialogInstance.ui.lineEditSocksUsername.text()))
             config.set('bitmessagesettings', 'sockspassword', str(self.settingsDialogInstance.ui.lineEditSocksPassword.text()))
-            
+
             with open(appdata + 'keys.dat', 'wb') as configfile:
                 config.write(configfile)
 
@@ -4222,14 +4223,14 @@ class MyForm(QtGui.QMainWindow):
         self.statusBar().showMessage('All done. Closing user interface...')
         event.accept()
         raise SystemExit
-        
+
 
     def on_action_InboxReply(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,0).data(Qt.UserRole).toPyObject())
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,1).data(Qt.UserRole).toPyObject())
 
-        
+
         if toAddressAtCurrentInboxRow == '[Broadcast subscribers]':
             self.ui.labelFrom.setText('')
         else:
@@ -4448,7 +4449,7 @@ class MyForm(QtGui.QMainWindow):
         #    print 'Program Exception in tableWidgetSubscriptionsItemChanged:', err
         sqlLock.release()
         self.rerenderInboxFromLabels()
-        self.rerenderSentToLabels()   
+        self.rerenderSentToLabels()
 
     def writeNewAddressToTable(self,label,address,streamNumber):
         self.ui.tableWidgetYourIdentities.insertRow(0)
@@ -4624,7 +4625,7 @@ if __name__ == "__main__":
         #self.hide()
         if 'win32' in sys.platform or 'win64' in sys.platform:
             myapp.setWindowFlags(Qt.ToolTip)
-    
+
     sys.exit(app.exec_())
 
 # So far, the Bitmessage protocol, this client, the Wiki, and the forums
