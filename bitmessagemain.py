@@ -3232,19 +3232,18 @@ class MyForm(QtGui.QMainWindow):
         #Popup menu for the Address Book page
         self.ui.addressBookContextMenuToolbar = QtGui.QToolBar()
           # Actions
-        self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction("New", self.on_action_AddressBookNew)
-        self.actionAddressBookDelete = self.ui.addressBookContextMenuToolbar.addAction("Delete", self.on_action_AddressBookDelete)
-        self.actionAddressBookClipboard = self.ui.addressBookContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_AddressBookClipboard)
         self.actionAddressBookSend = self.ui.addressBookContextMenuToolbar.addAction("Send message to this address", self.on_action_AddressBookSend)
+        self.actionAddressBookClipboard = self.ui.addressBookContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_AddressBookClipboard)
+        self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction("Add New Address", self.on_action_AddressBookNew)
+        self.actionAddressBookDelete = self.ui.addressBookContextMenuToolbar.addAction("Delete", self.on_action_AddressBookDelete)
         self.ui.tableWidgetAddressBook.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuAddressBook)
         self.popMenuAddressBook = QtGui.QMenu( self )
-        self.popMenuAddressBook.addAction( self.actionAddressBookNew )
-        self.popMenuAddressBook.addAction( self.actionAddressBookDelete )
-        self.popMenuAddressBook.addSeparator()
         self.popMenuAddressBook.addAction( self.actionAddressBookSend )
         self.popMenuAddressBook.addAction( self.actionAddressBookClipboard )
-
+        self.popMenuAddressBook.addSeparator()
+        self.popMenuAddressBook.addAction( self.actionAddressBookNew )
+        self.popMenuAddressBook.addAction( self.actionAddressBookDelete )
 
         #Popup menu for the Subscriptions page
         self.ui.subscriptionsContextMenuToolbar = QtGui.QToolBar()
