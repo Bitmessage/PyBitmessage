@@ -3239,12 +3239,11 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetAddressBook.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuAddressBook)
         self.popMenuAddressBook = QtGui.QMenu( self )
-        self.popMenuAddressBook.addAction( self.actionAddressBookNew )
-        self.popMenuAddressBook.addAction( self.actionAddressBookDelete )
-        self.popMenuAddressBook.addSeparator()
         self.popMenuAddressBook.addAction( self.actionAddressBookSend )
         self.popMenuAddressBook.addAction( self.actionAddressBookClipboard )
-
+        self.popMenuAddressBook.addSeparator()
+        self.popMenuAddressBook.addAction( self.actionAddressBookNew )
+        self.popMenuAddressBook.addAction( self.actionAddressBookDelete )
 
         #Popup menu for the Subscriptions page
         self.ui.subscriptionsContextMenuToolbar = QtGui.QToolBar()
