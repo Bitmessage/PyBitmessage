@@ -1796,16 +1796,16 @@ class receiveDataThread(QThread):
             printLock.acquire()
             print 'Remote node useragent:', useragent, '  stream number:', self.streamNumber
             printLock.release()
-            #If this was an incoming connection, then the sendData thread doesn't know the stream. We have to set it.
-            if not self.initiatedConnection:
-                broadcastToSendDataQueues((0,'setStreamNumber',(self.HOST,self.streamNumber)))
             if self.streamNumber != 1:
                 self.sock.close()
                 printLock.acquire()
-                print 'Closed connection to', self.HOST, 'because they are interested in stream', self.steamNumber,'.'
+                print 'Closed connection to', self.HOST, 'because they are interested in stream', self.streamNumber,'.'
                 printLock.release()
                 self.data = ''
                 return
+            #If this was an incoming connection, then the sendData thread doesn't know the stream. We have to set it.
+            if not self.initiatedConnection:
+                broadcastToSendDataQueues((0,'setStreamNumber',(self.HOST,self.streamNumber)))
             if self.data[96:104] == eightBytesOfRandomDataUsedToDetectConnectionsToSelf:
                 self.sock.close()
                 printLock.acquire()
