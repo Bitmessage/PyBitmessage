@@ -29,6 +29,7 @@ from bitmessageui import *
 from newaddressdialog import *
 from newsubscriptiondialog import *
 from regenerateaddresses import *
+from specialaddressbehavior import *
 from settings import *
 from about import *
 from help import *
@@ -73,7 +74,7 @@ class outgoingSynSender(QThread):
         time.sleep(1)
         resetTime = int(time.time()) #used below to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
         while True:
-            #time.sleep(999999)#I'm using this to prevent connections for testing.
+            #time.sleep(999999)#I sometimes use this to prevent connections for testing.
             if len(self.selfInitiatedConnectionList) < 8: #maximum number of outgoing connections = 8
                 random.seed()
                 HOST, = random.sample(knownNodes[self.streamNumber],  1)
@@ -627,7 +628,7 @@ class receiveDataThread(QThread):
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
                 sqlLock.release()
-                self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+                self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
 
             #Display timing data
             printLock.acquire()
@@ -712,7 +713,7 @@ class receiveDataThread(QThread):
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
                 sqlLock.release()
-                self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+                self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
 
 
     #We have received a msg message.
@@ -943,7 +944,7 @@ class receiveDataThread(QThread):
                                     sqlSubmitQueue.put(t)
                                     sqlReturnQueue.get()
                                     sqlLock.release()
-                                    self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+                                    self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
                             #Now let us worry about the acknowledgement data
                             #We'll need to make sure that our client will properly process the ackData; if the packet is malformed, it might cause us to clear out self.data and an attacker could use that behavior to determine that we decoded this message.
                             ackDataValidThusFar = True
@@ -1103,7 +1104,9 @@ class receiveDataThread(QThread):
                 for row in queryreturn:
                     label, enabled = row
                     if enabled:
+                        printLock.acquire()
                         print 'Message ignored because address is in blacklist.'
+                        printLock.release()
                         blockMessage = True
             else: #We're using a whitelist
                 t = (fromAddress,)
@@ -1154,7 +1157,6 @@ class receiveDataThread(QThread):
                 else:
                     body = 'Unknown encoding type.\n\n' + repr(message)
                     subject = ''
-                print 'within processmsg, self.inventoryHash is', self.inventoryHash.encode('hex')
                 if messageEncodingType <> 0:
                     sqlLock.acquire()
                     t = (self.inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
@@ -1162,7 +1164,36 @@ class receiveDataThread(QThread):
                     sqlSubmitQueue.put(t)
                     sqlReturnQueue.get()
                     sqlLock.release()
-                    self.emit(SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+                    self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+
+                #Let us now check and see whether our receiving address is behaving as a mailing list
+                try:
+                    isMailingList = config.getboolean(toAddress, 'mailinglist')
+                except:
+                    isMailingList = False
+                if isMailingList:
+                    try:
+                        mailingListName = config.get(toAddress, 'mailinglistname')
+                    except:
+                        mailingListName = ''
+                    #Let us send out this message as a broadcast
+                    subject = self.addMailingListNameToSubject(subject,mailingListName)
+                    #Let us now send this message out as a broadcast
+                    message = 'Message ostensibly from ' + fromAddress + ':\n\n' + body
+                    fromAddress = toAddress #The fromAddress for the broadcast is the toAddress (my address) for the msg message we are currently processing.
+                    ackdata = OpenSSL.rand(32) #We don't actually need the ackdata for acknowledgement since this is a broadcast message but we can use it to update the user interface when the POW is done generating.
+                    toAddress = '[Broadcast subscribers]'
+                    ripe = ''
+                    sqlLock.acquire()
+                    t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastpending',1,1,'sent')
+                    sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
+                    sqlSubmitQueue.put(t)
+                    sqlReturnQueue.get()
+                    sqlLock.release()
+
+                    workerQueue.put(('sendbroadcast',(fromAddress,subject,message)))
+                    self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,'[Broadcast subscribers]',fromAddress,subject,message,ackdata)
+                    
             #Now let's consider sending the acknowledgement. We'll need to make sure that our client will properly process the ackData; if the packet is malformed, we could clear out self.data and an attacker could use that behavior to determine that we were capable of decoding this message.
             ackDataValidThusFar = True
             if len(ackData) < 24:
@@ -1190,6 +1221,15 @@ class receiveDataThread(QThread):
             print 'Average time for all message decryption successes since startup:', sum / len(successfullyDecryptMessageTimings)
             printLock.release()
 
+    def addMailingListNameToSubject(self,subject,mailingListName):
+        subject = subject.strip()
+        if subject[:3] == 'Re:' or subject[:3] == 'RE:':
+            subject = subject[3:].strip()
+        if '['+mailingListName+']' in subject:
+            return subject
+        else:
+            return '['+mailingListName+'] ' + subject
+
     #We have received a pubkey
     def recpubkey(self):
         self.pubkeyProcessingStartTime = time.time()
@@ -1205,7 +1245,7 @@ class receiveDataThread(QThread):
         embeddedTime, = unpack('>I',self.data[readPosition:readPosition+4])
         if embeddedTime < int(time.time())-lengthOfTimeToHoldOnToAllPubkeys-86400: #If the pubkey is more than a month old then reject it. (the 86400 is included to give an extra day of wiggle-room. If the wiggle-room is actually of any use, everyone on the network will delete this pubkey from their database the next time the cleanerThread cleans anyway- except for the node that actually wants the pubkey.)
             printLock.acquire()
-            print 'The embedded time in this pubkey message is too old. Ignoring.'
+            print 'The embedded time in this pubkey message is too old. Ignoring. Embedded time is:', embeddedTime
             printLock.release()
             return
         if embeddedTime > int(time.time()) + 10800:
@@ -2229,6 +2269,8 @@ class singleCleaner(QThread):
 
         while True:
             time.sleep(300)
+            #Clear the status bar in case a message has been sitting there for a while.
+            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
             sqlLock.acquire()
             for hash, storedValue in inventory.items():
                 objectType, streamNumber, payload, receivedTime = storedValue
@@ -2270,6 +2312,7 @@ class singleCleaner(QThread):
                             except:
                                 pass
                             workerQueue.put(('sendmessage',toaddress))
+                            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing work necessary to again attempt to request a public key...")
                             t = (int(time.time()),pubkeyretrynumber+1,toripe)
                             sqlSubmitQueue.put('''UPDATE sent SET lastactiontime=?, pubkeyretrynumber=? WHERE toripe=?''')
                             sqlSubmitQueue.put(t)
@@ -2284,9 +2327,9 @@ class singleCleaner(QThread):
                             sqlReturnQueue.get()
                             #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Message sent again because the acknowledgement was never received. ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
                             workerQueue.put(('sendmessage',toaddress))
+                            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing work necessary to again attempt to deliver a message...")
                 sqlLock.release()
-            #Clear the status bar in case a message has been sitting there for a while.
-            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
+            
 
 #This thread, of which there is only one, does the heavy lifting: calculating POWs.
 class singleWorker(QThread):
@@ -3095,11 +3138,34 @@ class settingsDialog(QtGui.QDialog):
                 self.ui.lineEditSocksPassword.setEnabled(True)
             self.ui.lineEditTCPPort.setEnabled(False)
 
+class SpecialAddressBehaviorDialog(QtGui.QDialog):
+    def __init__(self,parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_SpecialAddressBehaviorDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        currentRow = parent.ui.tableWidgetYourIdentities.currentRow()
+        addressAtCurrentRow = str(parent.ui.tableWidgetYourIdentities.item(currentRow,1).text())
+        try:
+            isMailingList = config.getboolean(addressAtCurrentRow, 'mailinglist')
+        except:
+            isMailingList = False
+        if isMailingList:
+            self.ui.radioButtonBehaviorMailingList.click()
+        else:
+            self.ui.radioButtonBehaveNormalAddress.click()
+        try:
+            mailingListName = config.get(addressAtCurrentRow, 'mailinglistname')
+        except:
+            mailingListName = ''
+        self.ui.lineEditMailingListName.setText(unicode(mailingListName,'utf-8'))
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
+
 class NewSubscriptionDialog(QtGui.QDialog):
     def __init__(self,parent):
         QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_NewSubscriptionDialog() #Jonathan changed this line
-        self.ui.setupUi(self) #Jonathan left this line alone
+        self.ui = Ui_NewSubscriptionDialog()
+        self.ui.setupUi(self)
         self.parent = parent
         QtCore.QObject.connect(self.ui.lineEditSubscriptionAddress, QtCore.SIGNAL("textChanged(QString)"), self.subscriptionAddressChanged)
 
@@ -3219,6 +3285,7 @@ class MyForm(QtGui.QMainWindow):
         self.actionEnable = self.ui.addressContextMenuToolbar.addAction("Enable", self.on_action_YourIdentitiesEnable)
         self.actionDisable = self.ui.addressContextMenuToolbar.addAction("Disable", self.on_action_YourIdentitiesDisable)
         self.actionClipboard = self.ui.addressContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_YourIdentitiesClipboard)
+        self.actionSpecialAddressBehavior = self.ui.addressContextMenuToolbar.addAction("Special address behavior...", self.on_action_SpecialAddressBehaviorDialog)
         self.ui.tableWidgetYourIdentities.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuYourIdentities)
         self.popMenu = QtGui.QMenu( self )
@@ -3228,6 +3295,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenu.addSeparator()
         self.popMenu.addAction( self.actionEnable )
         self.popMenu.addAction( self.actionDisable )
+        self.popMenu.addAction( self.actionSpecialAddressBehavior )
 
         #Popup menu for the Address Book page
         self.ui.addressBookContextMenuToolbar = QtGui.QToolBar()
@@ -3263,10 +3331,32 @@ class MyForm(QtGui.QMainWindow):
         self.ui.sentContextMenuToolbar = QtGui.QToolBar()
           # Actions
         self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction("Move to Trash", self.on_action_SentTrash)
+        self.actionSentClipboard = self.ui.sentContextMenuToolbar.addAction("Copy destination address to clipboard", self.on_action_SentClipboard)
         self.ui.tableWidgetSent.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetSent, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuSent)
         self.popMenuSent = QtGui.QMenu( self )
+        self.popMenuSent.addAction( self.actionSentClipboard )
         self.popMenuSent.addAction( self.actionTrashSentMessage )
+
+
+        #Popup menu for the Blacklist page
+        self.ui.blacklistContextMenuToolbar = QtGui.QToolBar()
+          # Actions
+        self.actionBlacklistNew = self.ui.blacklistContextMenuToolbar.addAction("Add new entry", self.on_action_BlacklistNew)
+        self.actionBlacklistDelete = self.ui.blacklistContextMenuToolbar.addAction("Delete", self.on_action_BlacklistDelete)
+        self.actionBlacklistClipboard = self.ui.blacklistContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_BlacklistClipboard)
+        self.actionBlacklistEnable = self.ui.blacklistContextMenuToolbar.addAction("Enable", self.on_action_BlacklistEnable)
+        self.actionBlacklistDisable = self.ui.blacklistContextMenuToolbar.addAction("Disable", self.on_action_BlacklistDisable)
+        self.ui.tableWidgetBlacklist.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
+        self.connect(self.ui.tableWidgetBlacklist, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuBlacklist)
+        self.popMenuBlacklist = QtGui.QMenu( self )
+        #self.popMenuBlacklist.addAction( self.actionBlacklistNew )
+        self.popMenuBlacklist.addAction( self.actionBlacklistDelete )
+        self.popMenuBlacklist.addSeparator()
+        self.popMenuBlacklist.addAction( self.actionBlacklistClipboard )
+        self.popMenuBlacklist.addSeparator()
+        self.popMenuBlacklist.addAction( self.actionBlacklistEnable )
+        self.popMenuBlacklist.addAction( self.actionBlacklistDisable )
 
         #Initialize the user's list of addresses on the 'Your Identities' tab.
         configSections = config.sections()
@@ -3695,7 +3785,7 @@ class MyForm(QtGui.QMainWindow):
                     status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
                     if status <> 'success':
                         printLock.acquire()
-                        print 'Status bar:', 'Error: Could not decode', toAddress, ':', status
+                        print 'Error: Could not decode', toAddress, ':', status
                         printLock.release()
                         if status == 'missingbm':
                             self.statusBar().showMessage('Error: Bitmessage addresses start with BM-   Please check ' + toAddress)
@@ -3780,7 +3870,11 @@ class MyForm(QtGui.QMainWindow):
 
                         self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())
 
+                        self.ui.comboBoxSendFrom.setCurrentIndex(0)
                         self.ui.labelFrom.setText('')
+                        self.ui.lineEditTo.setText('')
+                        self.ui.lineEditSubject.setText('')
+                        self.ui.textEditMessage.setText('')
                         self.ui.tabWidget.setCurrentIndex(2)
                         self.ui.tableWidgetSent.setCurrentCell(0,0)
                 else:
@@ -3834,7 +3928,11 @@ class MyForm(QtGui.QMainWindow):
 
                 self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())
 
+                self.ui.comboBoxSendFrom.setCurrentIndex(0)
                 self.ui.labelFrom.setText('')
+                self.ui.lineEditTo.setText('')
+                self.ui.lineEditSubject.setText('')
+                self.ui.textEditMessage.setText('')
                 self.ui.tabWidget.setCurrentIndex(2)
                 self.ui.tableWidgetSent.setCurrentCell(0,0)
 
@@ -3887,7 +3985,8 @@ class MyForm(QtGui.QMainWindow):
 
     def connectObjectToSignals(self,object):
         QtCore.QObject.connect(object, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("displayNewMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewMessage)
+        QtCore.QObject.connect(object, QtCore.SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewInboxMessage)
+        QtCore.QObject.connect(object, QtCore.SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
         QtCore.QObject.connect(object, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
         QtCore.QObject.connect(object, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
         QtCore.QObject.connect(object, QtCore.SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"), self.updateNetworkStatusTab)
@@ -3896,8 +3995,37 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(object, QtCore.SIGNAL("incrementNumberOfBroadcastsProcessed()"), self.incrementNumberOfBroadcastsProcessed)
         QtCore.QObject.connect(object, QtCore.SIGNAL("setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
 
-    def displayNewMessage(self,inventoryHash,toAddress,fromAddress,subject,message):
-        '''print 'test signals displayNewMessage'
+    #This function is called by the processmsg function when that function receives a message to an address that is acting as a pseudo-mailing-list. The message will be broadcast out. This function puts the message on the 'Sent' tab.
+    def displayNewSentMessage(self,toAddress,toLabel,fromAddress,subject,message,ackdata):
+        try:
+            fromLabel = config.get(fromAddress, 'label')
+        except:
+            fromLabel = ''
+        if fromLabel == '':
+            fromLabel = fromAddress
+
+        self.ui.tableWidgetSent.insertRow(0)
+        newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
+        newItem.setData(Qt.UserRole,str(toAddress))
+        self.ui.tableWidgetSent.setItem(0,0,newItem)
+        if fromLabel == '':
+            newItem =  QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
+        else:
+            newItem =  QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
+        newItem.setData(Qt.UserRole,str(fromAddress))
+        self.ui.tableWidgetSent.setItem(0,1,newItem)
+        newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
+        newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
+        self.ui.tableWidgetSent.setItem(0,2,newItem)
+        #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+        newItem =  myTableWidgetItem('Doing work necessary to send broadcast...')
+        newItem.setData(Qt.UserRole,QByteArray(ackdata))
+        newItem.setData(33,int(time.time()))
+        self.ui.tableWidgetSent.setItem(0,3,newItem)
+        self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())
+
+    def displayNewInboxMessage(self,inventoryHash,toAddress,fromAddress,subject,message):
+        '''print 'test signals displayNewInboxMessage'
         print 'toAddress', toAddress
         print 'fromAddress', fromAddress
         print 'message', message'''
@@ -4027,18 +4155,22 @@ class MyForm(QtGui.QMainWindow):
         #Initialize the Blacklist or Whitelist table
         listType = config.get('bitmessagesettings', 'blackwhitelist')
         if listType == 'black':
-            sqlSubmitQueue.put('''SELECT label, address FROM blacklist''')
+            sqlSubmitQueue.put('''SELECT label, address, enabled FROM blacklist''')
         else:
-            sqlSubmitQueue.put('''SELECT label, address FROM whitelist''')
+            sqlSubmitQueue.put('''SELECT label, address, enabled FROM whitelist''')
         sqlSubmitQueue.put('')
         queryreturn = sqlReturnQueue.get()
         for row in queryreturn:
-            label, address = row
+            label, address, enabled = row
             self.ui.tableWidgetBlacklist.insertRow(0)
             newItem =  QtGui.QTableWidgetItem(unicode(label,'utf-8'))
+            if not enabled:
+                newItem.setTextColor(QtGui.QColor(128,128,128))
             self.ui.tableWidgetBlacklist.setItem(0,0,newItem)
             newItem =  QtGui.QTableWidgetItem(address)
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
+            if not enabled:
+                newItem.setTextColor(QtGui.QColor(128,128,128))
             self.ui.tableWidgetBlacklist.setItem(0,1,newItem)
 
     def click_pushButtonStatusIcon(self):
@@ -4152,6 +4284,20 @@ class MyForm(QtGui.QMainWindow):
             else:
                 self.statusBar().showMessage('The address you entered was invalid. Ignoring it.')
 
+    def on_action_SpecialAddressBehaviorDialog(self):
+        self.dialog = SpecialAddressBehaviorDialog(self)
+        # For Modal dialogs
+        if self.dialog.exec_():
+            currentRow = self.ui.tableWidgetYourIdentities.currentRow()
+            addressAtCurrentRow = str(self.ui.tableWidgetYourIdentities.item(currentRow,1).text())
+            if self.dialog.ui.radioButtonBehaveNormalAddress.isChecked():
+                config.set(str(addressAtCurrentRow),'mailinglist','false')
+            else:
+                config.set(str(addressAtCurrentRow),'mailinglist','true')
+                config.set(str(addressAtCurrentRow),'mailinglistname',str(self.dialog.ui.lineEditMailingListName.text().toUtf8()))
+            with open(appdata + 'keys.dat', 'wb') as configfile:
+                config.write(configfile)
+
 
     def click_NewAddressDialog(self):
         self.dialog = NewAddressDialog(self)
@@ -4242,7 +4388,7 @@ class MyForm(QtGui.QMainWindow):
         #self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n'+self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject())
         if self.ui.tableWidgetInbox.item(currentInboxRow,2).text()[0:3] == 'Re:':
-            self.ui.lineEditSubject.setText(str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text()))
+            self.ui.lineEditSubject.setText(self.ui.tableWidgetInbox.item(currentInboxRow,2).text())
         else:
             self.ui.lineEditSubject.setText('Re: '+self.ui.tableWidgetInbox.item(currentInboxRow,2).text())
         self.ui.radioButtonSpecific.setChecked(True)
@@ -4304,6 +4450,11 @@ class MyForm(QtGui.QMainWindow):
         sqlLock.release()
         self.ui.tableWidgetSent.removeRow(currentRow)
         self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+    def on_action_SentClipboard(self):
+        currentRow = self.ui.tableWidgetSent.currentRow()
+        addressAtCurrentRow = str(self.ui.tableWidgetSent.item(currentRow,0).data(Qt.UserRole).toPyObject())
+        clipboard = QtGui.QApplication.clipboard()
+        clipboard.setText(str(addressAtCurrentRow))
 
     #Group of functions for the Address Book dialog box
     def on_action_AddressBookNew(self):
@@ -4363,6 +4514,65 @@ class MyForm(QtGui.QMainWindow):
     def on_context_menuSubscriptions(self, point):
         self.popMenuSubscriptions.exec_( self.ui.tableWidgetSubscriptions.mapToGlobal(point) )
 
+    #Group of functions for the Blacklist dialog box
+    def on_action_BlacklistNew(self):
+        self.click_pushButtonAddBlacklist()
+    def on_action_BlacklistDelete(self):
+        print 'clicked Delete'
+        currentRow = self.ui.tableWidgetBlacklist.currentRow()
+        labelAtCurrentRow = self.ui.tableWidgetBlacklist.item(currentRow,0).text().toUtf8()
+        addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(currentRow,1).text()
+        t = (str(labelAtCurrentRow),str(addressAtCurrentRow))
+        sqlLock.acquire()
+        if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
+            sqlSubmitQueue.put('''DELETE FROM blacklist WHERE label=? AND address=?''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+        else:
+            sqlSubmitQueue.put('''DELETE FROM whitelist WHERE label=? AND address=?''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+        sqlLock.release()
+        self.ui.tableWidgetBlacklist.removeRow(currentRow)
+    def on_action_BlacklistClipboard(self):
+        currentRow = self.ui.tableWidgetBlacklist.currentRow()
+        addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(currentRow,1).text()
+        clipboard = QtGui.QApplication.clipboard()
+        clipboard.setText(str(addressAtCurrentRow))
+    def on_context_menuBlacklist(self, point):
+        self.popMenuBlacklist.exec_( self.ui.tableWidgetBlacklist.mapToGlobal(point) )
+    def on_action_BlacklistEnable(self):
+        currentRow = self.ui.tableWidgetBlacklist.currentRow()
+        addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(currentRow,1).text()
+        self.ui.tableWidgetBlacklist.item(currentRow,0).setTextColor(QtGui.QColor(0,0,0))
+        self.ui.tableWidgetBlacklist.item(currentRow,1).setTextColor(QtGui.QColor(0,0,0))
+        t = (str(addressAtCurrentRow),)
+        sqlLock.acquire()
+        if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
+            sqlSubmitQueue.put('''UPDATE blacklist SET enabled=1 WHERE address=?''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+        else:
+            sqlSubmitQueue.put('''UPDATE whitelist SET enabled=1 WHERE address=?''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+        sqlLock.release()
+    def on_action_BlacklistDisable(self):
+        currentRow = self.ui.tableWidgetBlacklist.currentRow()
+        addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(currentRow,1).text()
+        self.ui.tableWidgetBlacklist.item(currentRow,0).setTextColor(QtGui.QColor(128,128,128))
+        self.ui.tableWidgetBlacklist.item(currentRow,1).setTextColor(QtGui.QColor(128,128,128))
+        t = (str(addressAtCurrentRow),)
+        sqlLock.acquire()
+        if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
+            sqlSubmitQueue.put('''UPDATE blacklist SET enabled=0 WHERE address=?''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+        else:
+            sqlSubmitQueue.put('''UPDATE whitelist SET enabled=0 WHERE address=?''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+        sqlLock.release()
 
     #Group of functions for the Your Identities dialog box
     def on_action_YourIdentitiesNew(self):
@@ -4462,9 +4672,10 @@ class MyForm(QtGui.QMainWindow):
         self.rerenderComboBoxSendFrom()
 
     def updateStatusBar(self,data):
-        printLock.acquire()
-        print 'Status bar:', data
-        printLock.release()
+        if data != "":
+            printLock.acquire()
+            print 'Status bar:', data
+            printLock.release()
         self.statusBar().showMessage(data)
 
     def reloadBroadcastSendersForWhichImWatching(self):
