@@ -6,14 +6,14 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.2.5'
+softwareVersion = '0.2.6'
 verbose = 2
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
 lengthOfTimeToHoldOnToAllPubkeys = 2419200 #Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
 maximumAgeOfObjectsThatIAdvertiseToOthers = 216000 #Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800 #Equals three hours
-storeConfigFilesInSameDirectoryAsProgram = False
+storeConfigFilesInSameDirectoryAsProgramByDefault = False #The user may de-select Portable Mode in the settings if they want the config files to stay in the application data folder.
 useVeryEasyProofOfWorkForTesting = False #If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
 
 import sys
@@ -51,6 +51,7 @@ import threading #used for the locks, not for the threads
 import cStringIO
 from time import strftime, localtime
 import os
+import shutil #used for moving the messages.dat file
 import string
 import socks
 #import pyelliptic
@@ -2171,6 +2172,21 @@ def calculateTestnetAddressFromPubkey(pubkey):
     base58encoded = arithmetic.changebase(binaryBitcoinAddress,256,58)
     return "1"*numberOfZeroBytesOnBinaryBitcoinAddress + base58encoded
 
+def lookupAppdataFolder():
+    APPNAME = "PyBitmessage"
+    from os import path, environ
+    if sys.platform == 'darwin':
+        if "HOME" in environ:
+            appdata = path.join(os.environ["HOME"], "Library/Application support/", APPNAME) + '/'
+        else:
+            print 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
+            sys.exit()
+
+    elif 'win32' in sys.platform or 'win64' in sys.platform:
+        appdata = path.join(environ['APPDATA'], APPNAME) + '\\'
+    else:
+        appdata = path.expanduser(path.join("~", "." + APPNAME + "/"))
+    return appdata
 
 #This thread exists because SQLITE3 is so un-threadsafe that we must submit queries to it and it puts results back in a different queue. They won't let us just use locks.
 class sqlThread(QThread):
@@ -3087,6 +3103,8 @@ class settingsDialog(QtGui.QDialog):
         self.ui.checkBoxMinimizeToTray.setChecked(config.getboolean('bitmessagesettings', 'minimizetotray'))
         self.ui.checkBoxShowTrayNotifications.setChecked(config.getboolean('bitmessagesettings', 'showtraynotifications'))
         self.ui.checkBoxStartInTray.setChecked(config.getboolean('bitmessagesettings', 'startintray'))
+        if appdata == '':
+            self.ui.checkBoxPortableMode.setChecked(True)
         if 'darwin' in sys.platform:
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
@@ -3585,13 +3603,17 @@ class MyForm(QtGui.QMainWindow):
 
     def click_actionManageKeys(self):
         if 'darwin' in sys.platform or 'linux' in sys.platform:
-            reply = QtGui.QMessageBox.information(self, 'keys.dat?','You may manage your keys by editing the keys.dat file stored in\n' + appdata + '\nIt is important that you back up this file.', QMessageBox.Ok)
+            if appdata == '':
+                reply = QtGui.QMessageBox.information(self, 'keys.dat?','You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file.', QMessageBox.Ok)
+            else:
+                QtGui.QMessageBox.information(self, 'keys.dat?','You may manage your keys by editing the keys.dat file stored in\n' + appdata + '\nIt is important that you back up this file.', QMessageBox.Ok)
         elif sys.platform == 'win32' or sys.platform == 'win64':
-            reply = QtGui.QMessageBox.question(self, 'Open keys.dat?','You may manage your keys by editing the keys.dat file stored in\n' + appdata + '\nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)', QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+            if appdata == '':
+                reply = QtGui.QMessageBox.question(self, 'Open keys.dat?','You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)', QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+            else:
+                reply = QtGui.QMessageBox.question(self, 'Open keys.dat?','You may manage your keys by editing the keys.dat file stored in\n' + appdata + '\nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)', QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
                 self.openKeysFile()
-            else:
-                pass
 
     def click_actionRegenerateDeterministicAddresses(self):
         self.regenerateAddressesDialogInstance = regenerateAddressesDialog(self)
@@ -3610,9 +3632,9 @@ class MyForm(QtGui.QMainWindow):
 
     def openKeysFile(self):
         if 'linux' in sys.platform:
-            subprocess.call(["xdg-open", file])
+            subprocess.call(["xdg-open", appdata + 'keys.dat'])
         else:
-            os.startfile(appdata + '\\keys.dat')
+            os.startfile(appdata + 'keys.dat')
 
     def changeEvent(self, event):
         if config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
@@ -4189,6 +4211,7 @@ class MyForm(QtGui.QMainWindow):
 
     def click_actionSettings(self):
         global statusIconColor
+        global appdata
         self.settingsDialogInstance = settingsDialog(self)
         if self.settingsDialogInstance.exec_():
             config.set('bitmessagesettings', 'startonlogon', str(self.settingsDialogInstance.ui.checkBoxStartOnLogon.isChecked()))
@@ -4227,6 +4250,37 @@ class MyForm(QtGui.QMainWindow):
             elif 'linux' in sys.platform:
                 #startup for linux
                 pass
+
+            if appdata != '' and self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked(): #If we are NOT using portable mode now but the user selected that we should...
+                config.set('bitmessagesettings','movemessagstoprog','true') #Tells bitmessage to move the messages.dat file to the program directory the next time the program starts.
+                #Write the keys.dat file to disk in the new location
+                with open('keys.dat', 'wb') as configfile:
+                    config.write(configfile)
+                #Write the knownnodes.dat file to disk in the new location
+                output = open('knownnodes.dat', 'wb')
+                pickle.dump(knownNodes, output)
+                output.close()
+                os.remove(appdata + 'keys.dat')
+                os.remove(appdata + 'knownnodes.dat')
+                appdata = ''
+                QMessageBox.about(self, "Restart", "Bitmessage has moved most of your config files to the program directory but you must restart Bitmessage to move the last file (the file which holds messages).")
+
+            if appdata == '' and not self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked(): #If we ARE using portable mode now but the user selected that we shouldn't...
+                appdata = lookupAppdataFolder()
+                if not os.path.exists(appdata):
+                    os.makedirs(appdata)         
+                config.set('bitmessagesettings','movemessagstoappdata','true') #Tells bitmessage to move the messages.dat file to the appdata directory the next time the program starts.
+                #Write the keys.dat file to disk in the new location
+                with open(appdata + 'keys.dat', 'wb') as configfile:
+                    config.write(configfile)
+                #Write the knownnodes.dat file to disk in the new location
+                output = open(appdata + 'knownnodes.dat', 'wb')
+                pickle.dump(knownNodes, output)
+                output.close()
+                os.remove('keys.dat')
+                os.remove('knownnodes.dat')
+                QMessageBox.about(self, "Restart", "Bitmessage has moved most of your config files to the application data directory but you must restart Bitmessage to move the last file (the file which holds messages).")
+
 
     def click_radioButtonBlacklist(self):
         if config.get('bitmessagesettings', 'blackwhitelist') == 'white':
@@ -4731,52 +4785,50 @@ if __name__ == "__main__":
         print 'This program requires sqlite version 3 or higher because 2 and lower cannot store NULL values. I see version:', sqlite3.sqlite_version_info
         sys.exit()
 
-    if not storeConfigFilesInSameDirectoryAsProgram:
-        APPNAME = "PyBitmessage"
-        from os import path, environ
-        if sys.platform == 'darwin':
-            if "HOME" in environ:
-                appdata = path.join(os.environ["HOME"], "Library/Application support/", APPNAME) + '/'
-            else:
-                print 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
-                sys.exit()
-
-        elif 'win32' in sys.platform or 'win64' in sys.platform:
-            appdata = path.join(environ['APPDATA'], APPNAME) + '\\'
-        else:
-            appdata = path.expanduser(path.join("~", "." + APPNAME + "/"))
-
-        if not os.path.exists(appdata):
-            os.makedirs(appdata)
-    else:
-        appdata = ""
-
+    #First try to load the config file (the keys.dat file) from the program directory
     config = ConfigParser.SafeConfigParser()
-    config.read(appdata + 'keys.dat')
+    config.read('keys.dat')
     try:
         config.get('bitmessagesettings', 'settingsversion')
-        print 'Loading config files from', appdata
+        #settingsFileExistsInProgramDirectory = True
+        print 'Loading config files from same directory as program'
+        appdata = ''
     except:
-        #This appears to be the first time running the program; there is no config file (or it cannot be accessed). Create config file.
-        config.add_section('bitmessagesettings')
-        config.set('bitmessagesettings','settingsversion','1')
-        #config.set('bitmessagesettings','bitstrength','2048')
-        config.set('bitmessagesettings','port','8444')
-        config.set('bitmessagesettings','timeformat','%%a, %%d %%b %%Y  %%I:%%M %%p')
-        config.set('bitmessagesettings','blackwhitelist','black')
-        config.set('bitmessagesettings','startonlogon','false')
-        if 'linux' in sys.platform:
-            config.set('bitmessagesettings','minimizetotray','false')#This isn't implimented yet and when True on Ubuntu causes Bitmessage to disappear while running when minimized.
-        else:
-            config.set('bitmessagesettings','minimizetotray','true')
-        config.set('bitmessagesettings','showtraynotifications','true')
-        config.set('bitmessagesettings','startintray','false')
+        #Could not load the keys.dat file in the program directory. Perhaps it is in the appdata directory.
+        appdata = lookupAppdataFolder()
+        #if not os.path.exists(appdata):
+        #    os.makedirs(appdata)
 
+        config = ConfigParser.SafeConfigParser()
+        config.read(appdata + 'keys.dat')
+        try:
+            config.get('bitmessagesettings', 'settingsversion')
+            print 'Loading existing config files from', appdata
+        except:
+            #This appears to be the first time running the program; there is no config file (or it cannot be accessed). Create config file.
+            config.add_section('bitmessagesettings')
+            config.set('bitmessagesettings','settingsversion','1')
+            config.set('bitmessagesettings','port','8444')
+            config.set('bitmessagesettings','timeformat','%%a, %%d %%b %%Y  %%I:%%M %%p')
+            config.set('bitmessagesettings','blackwhitelist','black')
+            config.set('bitmessagesettings','startonlogon','false')
+            if 'linux' in sys.platform:
+                config.set('bitmessagesettings','minimizetotray','false')#This isn't implimented yet and when True on Ubuntu causes Bitmessage to disappear while running when minimized.
+            else:
+                config.set('bitmessagesettings','minimizetotray','true')
+            config.set('bitmessagesettings','showtraynotifications','true')
+            config.set('bitmessagesettings','startintray','false')
 
-
-        with open(appdata + 'keys.dat', 'wb') as configfile:
-            config.write(configfile)
-        print 'Storing config files in', appdata
+            if storeConfigFilesInSameDirectoryAsProgramByDefault:
+                #Just use the same directory as the program and forget about the appdata folder
+                appdata = ''
+                print 'Creating new config files in same directory as program.'
+            else:
+                print 'Creating new config files in', appdata
+                if not os.path.exists(appdata):
+                    os.makedirs(appdata)
+            with open(appdata + 'keys.dat', 'wb') as configfile:
+                config.write(configfile)
 
     if config.getint('bitmessagesettings','settingsversion') == 1:
         config.set('bitmessagesettings','settingsversion','3') #If the settings version is equal to 2 then the sqlThread will modify the pubkeys table and change the settings version to 3.
@@ -4790,6 +4842,29 @@ if __name__ == "__main__":
         config.set('bitmessagesettings','messagesencrypted','false')
         with open(appdata + 'keys.dat', 'wb') as configfile:
             config.write(configfile)
+
+    #Let us now see if we should move the messages.dat file. There is an option in the settings to switch 'Portable Mode' on or off. Most of the files are moved instantly, but the messages.dat file cannot be moved while it is open. Now that it is not open we can move it now!
+    try:
+        config.getboolean('bitmessagesettings', 'movemessagstoprog')
+        #If we have reached this point then we must move the messages.dat file from the appdata folder to the program folder
+        print 'Moving messages.dat from its old location in the application data folder to its new home along side the program.'
+        shutil.move(lookupAppdataFolder()+'messages.dat','messages.dat')
+        config.remove_option('bitmessagesettings', 'movemessagstoprog')
+        with open(appdata + 'keys.dat', 'wb') as configfile:
+            config.write(configfile)
+    except:
+        pass
+    try:
+        config.getboolean('bitmessagesettings', 'movemessagstoappdata')
+        #If we have reached this point then we must move the messages.dat file from the appdata folder to the program folder
+        print 'Moving messages.dat from its old location next to the program to its new home in the application data folder.'
+        shutil.move('messages.dat',lookupAppdataFolder()+'messages.dat')
+        config.remove_option('bitmessagesettings', 'movemessagstoappdata')
+        with open(appdata + 'keys.dat', 'wb') as configfile:
+            config.write(configfile)
+    except:
+        pass
+
 
     try:
         pickleFile = open(appdata + 'knownnodes.dat', 'rb')
