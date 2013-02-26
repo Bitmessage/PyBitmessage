@@ -481,7 +481,9 @@ class receiveDataThread(QThread):
         headerData += 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         headerData += pack('>L',len(payload))
         headerData += hashlib.sha512(payload).digest()[:4]
+        printLock.acquire()
         print 'Sending huge inv message with', numberOfObjects, 'objects to just this one peer'
+        printLock.release()
         self.sock.send(headerData + payload)
 
     #We have received a broadcast message
@@ -1560,7 +1562,13 @@ class receiveDataThread(QThread):
         headerData += 'getdata\x00\x00\x00\x00\x00'
         headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
         headerData += hashlib.sha512(payload).digest()[:4]
-        self.sock.send(headerData + payload)
+        try:
+            self.sock.send(headerData + payload)
+        except Exception, err:
+            if not 'Bad file descriptor' in err:
+                printLock.acquire()
+                sys.stderr.write('sock.send error: %s\n' % err)
+                printLock.release()
 
     #We have received a getdata request from our peer
     def recgetdata(self):
@@ -1648,7 +1656,9 @@ class receiveDataThread(QThread):
         numberOfAddressesIncluded, lengthOfNumberOfAddresses = decodeVarint(self.data[24:29])
 
         if verbose >= 1:
+            printLock.acquire()
             print 'addr message contains', numberOfAddressesIncluded, 'IP addresses.'
+            printLock.release()
             #print 'lengthOfNumberOfAddresses', lengthOfNumberOfAddresses
 
         if numberOfAddressesIncluded > 1000:
@@ -1719,7 +1729,9 @@ class receiveDataThread(QThread):
             pickle.dump(knownNodes, output)
             output.close()
             self.broadcastaddr(listOfAddressDetailsToBroadcastToPeers)
+        printLock.acquire()
         print 'knownNodes currently has', len(knownNodes[recaddrStream]), 'nodes for this stream.'
+        printLock.release()
 
     #Function runs when we want to broadcast an addr message to all of our peers. Runs when we learn of nodes that we didn't previously know about and want to share them with our peers.
     def broadcastaddr(self,listOfAddressDetailsToBroadcastToPeers):
