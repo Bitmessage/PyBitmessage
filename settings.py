@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Tue Dec 18 14:31:06 2012
-#      by: PyQt4 UI code generator 4.9.4
+# Created: Wed Feb 27 00:00:12 2013
+#      by: PyQt4 UI code generator 4.9.5
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -30,29 +30,35 @@ class Ui_settingsDialog(object):
         self.tabUserInterface = QtGui.QWidget()
         self.tabUserInterface.setEnabled(True)
         self.tabUserInterface.setObjectName(_fromUtf8("tabUserInterface"))
-        self.formLayout = QtGui.QFormLayout(self.tabUserInterface)
-        self.formLayout.setFieldGrowthPolicy(QtGui.QFormLayout.AllNonFixedFieldsGrow)
-        self.formLayout.setObjectName(_fromUtf8("formLayout"))
+        self.gridLayout_5 = QtGui.QGridLayout(self.tabUserInterface)
+        self.gridLayout_5.setObjectName(_fromUtf8("gridLayout_5"))
         self.checkBoxStartOnLogon = QtGui.QCheckBox(self.tabUserInterface)
         self.checkBoxStartOnLogon.setObjectName(_fromUtf8("checkBoxStartOnLogon"))
-        self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.checkBoxStartOnLogon)
+        self.gridLayout_5.addWidget(self.checkBoxStartOnLogon, 0, 0, 1, 1)
         self.checkBoxStartInTray = QtGui.QCheckBox(self.tabUserInterface)
         self.checkBoxStartInTray.setObjectName(_fromUtf8("checkBoxStartInTray"))
-        self.formLayout.setWidget(1, QtGui.QFormLayout.LabelRole, self.checkBoxStartInTray)
+        self.gridLayout_5.addWidget(self.checkBoxStartInTray, 1, 0, 1, 1)
         self.checkBoxMinimizeToTray = QtGui.QCheckBox(self.tabUserInterface)
         self.checkBoxMinimizeToTray.setChecked(True)
         self.checkBoxMinimizeToTray.setObjectName(_fromUtf8("checkBoxMinimizeToTray"))
-        self.formLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.checkBoxMinimizeToTray)
+        self.gridLayout_5.addWidget(self.checkBoxMinimizeToTray, 2, 0, 1, 1)
         self.checkBoxShowTrayNotifications = QtGui.QCheckBox(self.tabUserInterface)
         self.checkBoxShowTrayNotifications.setObjectName(_fromUtf8("checkBoxShowTrayNotifications"))
-        self.formLayout.setWidget(3, QtGui.QFormLayout.SpanningRole, self.checkBoxShowTrayNotifications)
-        spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        self.formLayout.setItem(4, QtGui.QFormLayout.LabelRole, spacerItem)
+        self.gridLayout_5.addWidget(self.checkBoxShowTrayNotifications, 3, 0, 1, 1)
+        self.checkBoxPortableMode = QtGui.QCheckBox(self.tabUserInterface)
+        self.checkBoxPortableMode.setObjectName(_fromUtf8("checkBoxPortableMode"))
+        self.gridLayout_5.addWidget(self.checkBoxPortableMode, 4, 0, 1, 1)
+        self.label_7 = QtGui.QLabel(self.tabUserInterface)
+        self.label_7.setWordWrap(True)
+        self.label_7.setObjectName(_fromUtf8("label_7"))
+        self.gridLayout_5.addWidget(self.label_7, 5, 0, 1, 1)
         self.labelSettingsNote = QtGui.QLabel(self.tabUserInterface)
         self.labelSettingsNote.setText(_fromUtf8(""))
         self.labelSettingsNote.setWordWrap(True)
         self.labelSettingsNote.setObjectName(_fromUtf8("labelSettingsNote"))
-        self.formLayout.setWidget(5, QtGui.QFormLayout.SpanningRole, self.labelSettingsNote)
+        self.gridLayout_5.addWidget(self.labelSettingsNote, 6, 0, 1, 1)
+        spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.gridLayout_5.addItem(spacerItem, 7, 0, 1, 1)
         self.tabWidgetSettings.addTab(self.tabUserInterface, _fromUtf8(""))
         self.tabNetworkSettings = QtGui.QWidget()
         self.tabNetworkSettings.setObjectName(_fromUtf8("tabNetworkSettings"))
@@ -145,6 +151,8 @@ class Ui_settingsDialog(object):
         self.checkBoxStartInTray.setText(QtGui.QApplication.translate("settingsDialog", "Start Bitmessage in the tray (don\'t show main window)", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBoxMinimizeToTray.setText(QtGui.QApplication.translate("settingsDialog", "Minimize to tray", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBoxShowTrayNotifications.setText(QtGui.QApplication.translate("settingsDialog", "Show notification when message received and minimzed to tray", None, QtGui.QApplication.UnicodeUTF8))
+        self.checkBoxPortableMode.setText(QtGui.QApplication.translate("settingsDialog", "Run in Portable Mode", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_7.setText(QtGui.QApplication.translate("settingsDialog", "In Portable Mode, messages and config files are stored in the same directory as the program rather than the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabUserInterface), QtGui.QApplication.translate("settingsDialog", "User Interface", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBox.setTitle(QtGui.QApplication.translate("settingsDialog", "Listening port", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("settingsDialog", "Listen for connections on port:", None, QtGui.QApplication.UnicodeUTF8))
