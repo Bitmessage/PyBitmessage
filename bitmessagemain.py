@@ -3402,6 +3402,11 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                 if not isEnabled:
                     newItem.setTextColor(QtGui.QColor(128,128,128))
+                try:
+                    if config.getboolean(addressInKeysFile,'mailinglist'):
+                        newItem.setTextColor(QtGui.QColor(137,04,177))#magenta
+                except:
+                    pass #The 'mailinglist'
                 self.ui.tableWidgetYourIdentities.setItem(0, 1, newItem)
                 newItem = QtGui.QTableWidgetItem(str(addressStream(addressInKeysFile)))
                 newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
@@ -3450,6 +3455,11 @@ class MyForm(QtGui.QMainWindow):
             newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             newItem.setData(Qt.UserRole,str(toAddress))
+            try:
+                if config.getboolean(toAddress,'mailinglist'):
+                    newItem.setTextColor(QtGui.QColor(137,04,177))
+            except:
+                pass #the 'mailinglist' setting was not found for this address.
             self.ui.tableWidgetInbox.setItem(0,0,newItem)
             if fromLabel == '':
                 newItem =  QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
@@ -3457,6 +3467,7 @@ class MyForm(QtGui.QMainWindow):
                 newItem =  QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             newItem.setData(Qt.UserRole,str(fromAddress))
+
             self.ui.tableWidgetInbox.setItem(0,1,newItem)
             newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8'))
             newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
@@ -3779,6 +3790,14 @@ class MyForm(QtGui.QMainWindow):
             if toLabel == '':
                 toLabel = toAddress
             self.ui.tableWidgetInbox.item(i,0).setText(unicode(toLabel,'utf-8'))
+            #Set the color according to whether it is the address of a mailing list or not.
+            try:
+                if config.getboolean(toAddress,'mailinglist'):
+                    self.ui.tableWidgetInbox.item(i,0).setTextColor(QtGui.QColor(137,04,177))
+                else:
+                    self.ui.tableWidgetInbox.item(i,0).setTextColor(QtGui.QColor(0,0,0))
+            except:
+                self.ui.tableWidgetInbox.item(i,0).setTextColor(QtGui.QColor(0,0,0))
 
     def rerenderSentFromLabels(self):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -4099,6 +4118,11 @@ class MyForm(QtGui.QMainWindow):
         #msgid, toaddress, fromaddress, subject, received, message = row
         newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
         newItem.setData(Qt.UserRole,str(toAddress))
+        try:
+            if config.getboolean(str(toAddress),'mailinglist'):
+                newItem.setTextColor(QtGui.QColor(137,04,177))
+        except:
+            pass #the 'mailinglist' setting was not found for this address.
         self.ui.tableWidgetInbox.insertRow(0)
         self.ui.tableWidgetInbox.setItem(0,0,newItem)
 
@@ -4358,11 +4382,18 @@ class MyForm(QtGui.QMainWindow):
             addressAtCurrentRow = str(self.ui.tableWidgetYourIdentities.item(currentRow,1).text())
             if self.dialog.ui.radioButtonBehaveNormalAddress.isChecked():
                 config.set(str(addressAtCurrentRow),'mailinglist','false')
+                #Set the color to either black or grey
+                if config.getboolean(addressAtCurrentRow,'enabled'):
+                    self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(0,0,0))
+                else:
+                    self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(128,128,128))
             else:
                 config.set(str(addressAtCurrentRow),'mailinglist','true')
                 config.set(str(addressAtCurrentRow),'mailinglistname',str(self.dialog.ui.lineEditMailingListName.text().toUtf8()))
+                self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(137,04,177))
             with open(appdata + 'keys.dat', 'wb') as configfile:
                 config.write(configfile)
+            self.rerenderInboxToLabels()
 
 
     def click_NewAddressDialog(self):
@@ -4645,21 +4676,32 @@ class MyForm(QtGui.QMainWindow):
         self.click_NewAddressDialog()
     def on_action_YourIdentitiesEnable(self):
         currentRow = self.ui.tableWidgetYourIdentities.currentRow()
-        addressAtCurrentRow = self.ui.tableWidgetYourIdentities.item(currentRow,1).text()
-        config.set(str(addressAtCurrentRow),'enabled','true')
+        addressAtCurrentRow = str(self.ui.tableWidgetYourIdentities.item(currentRow,1).text())
+        config.set(addressAtCurrentRow,'enabled','true')
         with open(appdata + 'keys.dat', 'wb') as configfile:
             config.write(configfile)
         self.ui.tableWidgetYourIdentities.item(currentRow,0).setTextColor(QtGui.QColor(0,0,0))
         self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(0,0,0))
         self.ui.tableWidgetYourIdentities.item(currentRow,2).setTextColor(QtGui.QColor(0,0,0))
+        try:
+            if config.getboolean(addressAtCurrentRow,'mailinglist'):
+                self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(137,04,177))
+        except:
+            pass
         reloadMyAddressHashes()
     def on_action_YourIdentitiesDisable(self):
         currentRow = self.ui.tableWidgetYourIdentities.currentRow()
-        addressAtCurrentRow = self.ui.tableWidgetYourIdentities.item(currentRow,1).text()
+        addressAtCurrentRow = str(self.ui.tableWidgetYourIdentities.item(currentRow,1).text())
         config.set(str(addressAtCurrentRow),'enabled','false')
         self.ui.tableWidgetYourIdentities.item(currentRow,0).setTextColor(QtGui.QColor(128,128,128))
         self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(128,128,128))
         self.ui.tableWidgetYourIdentities.item(currentRow,2).setTextColor(QtGui.QColor(128,128,128))
+        try:
+            if config.getboolean(addressAtCurrentRow,'mailinglist'):
+                self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(137,04,177))
+        except:
+            pass
+
         with open(appdata + 'keys.dat', 'wb') as configfile:
             config.write(configfile)
         reloadMyAddressHashes()
