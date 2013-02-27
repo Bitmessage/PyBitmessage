@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Tue Feb 26 13:33:44 2013
-#      by: PyQt4 UI code generator 4.9.4
+# Created: Wed Feb 27 00:00:12 2013
+#      by: PyQt4 UI code generator 4.9.5
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -30,35 +30,35 @@ class Ui_settingsDialog(object):
         self.tabUserInterface = QtGui.QWidget()
         self.tabUserInterface.setEnabled(True)
         self.tabUserInterface.setObjectName(_fromUtf8("tabUserInterface"))
-        self.formLayout = QtGui.QFormLayout(self.tabUserInterface)
-        self.formLayout.setObjectName(_fromUtf8("formLayout"))
+        self.gridLayout_5 = QtGui.QGridLayout(self.tabUserInterface)
+        self.gridLayout_5.setObjectName(_fromUtf8("gridLayout_5"))
         self.checkBoxStartOnLogon = QtGui.QCheckBox(self.tabUserInterface)
         self.checkBoxStartOnLogon.setObjectName(_fromUtf8("checkBoxStartOnLogon"))
-        self.formLayout.setWidget(0, QtGui.QFormLayout.SpanningRole, self.checkBoxStartOnLogon)
+        self.gridLayout_5.addWidget(self.checkBoxStartOnLogon, 0, 0, 1, 1)
         self.checkBoxStartInTray = QtGui.QCheckBox(self.tabUserInterface)
         self.checkBoxStartInTray.setObjectName(_fromUtf8("checkBoxStartInTray"))
-        self.formLayout.setWidget(1, QtGui.QFormLayout.SpanningRole, self.checkBoxStartInTray)
+        self.gridLayout_5.addWidget(self.checkBoxStartInTray, 1, 0, 1, 1)
         self.checkBoxMinimizeToTray = QtGui.QCheckBox(self.tabUserInterface)
         self.checkBoxMinimizeToTray.setChecked(True)
         self.checkBoxMinimizeToTray.setObjectName(_fromUtf8("checkBoxMinimizeToTray"))
-        self.formLayout.setWidget(2, QtGui.QFormLayout.SpanningRole, self.checkBoxMinimizeToTray)
+        self.gridLayout_5.addWidget(self.checkBoxMinimizeToTray, 2, 0, 1, 1)
         self.checkBoxShowTrayNotifications = QtGui.QCheckBox(self.tabUserInterface)
         self.checkBoxShowTrayNotifications.setObjectName(_fromUtf8("checkBoxShowTrayNotifications"))
-        self.formLayout.setWidget(3, QtGui.QFormLayout.SpanningRole, self.checkBoxShowTrayNotifications)
+        self.gridLayout_5.addWidget(self.checkBoxShowTrayNotifications, 3, 0, 1, 1)
         self.checkBoxPortableMode = QtGui.QCheckBox(self.tabUserInterface)
         self.checkBoxPortableMode.setObjectName(_fromUtf8("checkBoxPortableMode"))
-        self.formLayout.setWidget(4, QtGui.QFormLayout.SpanningRole, self.checkBoxPortableMode)
+        self.gridLayout_5.addWidget(self.checkBoxPortableMode, 4, 0, 1, 1)
+        self.label_7 = QtGui.QLabel(self.tabUserInterface)
+        self.label_7.setWordWrap(True)
+        self.label_7.setObjectName(_fromUtf8("label_7"))
+        self.gridLayout_5.addWidget(self.label_7, 5, 0, 1, 1)
         self.labelSettingsNote = QtGui.QLabel(self.tabUserInterface)
         self.labelSettingsNote.setText(_fromUtf8(""))
         self.labelSettingsNote.setWordWrap(True)
         self.labelSettingsNote.setObjectName(_fromUtf8("labelSettingsNote"))
-        self.formLayout.setWidget(5, QtGui.QFormLayout.LabelRole, self.labelSettingsNote)
-        self.label_7 = QtGui.QLabel(self.tabUserInterface)
-        self.label_7.setWordWrap(True)
-        self.label_7.setObjectName(_fromUtf8("label_7"))
-        self.formLayout.setWidget(5, QtGui.QFormLayout.FieldRole, self.label_7)
+        self.gridLayout_5.addWidget(self.labelSettingsNote, 6, 0, 1, 1)
         spacerItem = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        self.formLayout.setItem(6, QtGui.QFormLayout.SpanningRole, spacerItem)
+        self.gridLayout_5.addItem(spacerItem, 7, 0, 1, 1)
         self.tabWidgetSettings.addTab(self.tabUserInterface, _fromUtf8(""))
         self.tabNetworkSettings = QtGui.QWidget()
         self.tabNetworkSettings.setObjectName(_fromUtf8("tabNetworkSettings"))
