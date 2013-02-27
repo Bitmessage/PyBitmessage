@@ -3150,6 +3150,7 @@ class settingsDialog(QtGui.QDialog):
         self.ui.lineEditSocksUsername.setText(str(config.get('bitmessagesettings', 'socksusername')))
         self.ui.lineEditSocksPassword.setText(str(config.get('bitmessagesettings', 'sockspassword')))
         QtCore.QObject.connect(self.ui.comboBoxProxyType, QtCore.SIGNAL("currentIndexChanged(int)"), self.comboBoxProxyTypeChanged)
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
     def comboBoxProxyTypeChanged(self,comboBoxIndex):
         if comboBoxIndex == 0:
