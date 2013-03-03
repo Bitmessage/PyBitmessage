@@ -4604,6 +4604,7 @@ class MyForm(QtGui.QMainWindow):
         sqlLock.release()
         self.ui.tableWidgetSubscriptions.removeRow(currentRow)
         self.rerenderInboxFromLabels()
+        self.reloadBroadcastSendersForWhichImWatching()
     def on_action_SubscriptionsClipboard(self):
         currentRow = self.ui.tableWidgetSubscriptions.currentRow()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(currentRow,1).text()
