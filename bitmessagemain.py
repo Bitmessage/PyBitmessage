@@ -40,8 +40,8 @@ from defaultKnownNodes import *
 import time
 import socket
 import threading
-import rsa
-from rsa.bigfile import *
+#import rsa
+#from rsa.bigfile import *
 import hashlib
 from struct import *
 import pickle
@@ -54,7 +54,6 @@ import os
 import shutil #used for moving the messages.dat file
 import string
 import socks
-#import pyelliptic
 import highlevelcrypto
 from pyelliptic.openssl import OpenSSL
 import ctypes
@@ -553,7 +552,7 @@ class receiveDataThread(QThread):
             return
         readPosition += broadcastVersionLength
         sendersAddressVersion, sendersAddressVersionLength = decodeVarint(self.data[readPosition:readPosition+9])
-        if sendersAddressVersion == 0 or sendersAddressVersion >=3:
+        if sendersAddressVersion <= 1 or sendersAddressVersion >=3:
             #Cannot decode senderAddressVersion higher than 2. Assuming the sender isn\' being silly, you should upgrade Bitmessage because this message shall be ignored.
             return
         readPosition += sendersAddressVersionLength
@@ -638,7 +637,7 @@ class receiveDataThread(QThread):
             print 'Time spent processing this interesting broadcast:', time.time()- self.messageProcessingStartTime
             printLock.release()
 
-        elif sendersAddressVersion == 1:
+        """elif sendersAddressVersion == 1:
             sendersStream, sendersStreamLength = decodeVarint(self.data[readPosition:readPosition+9])
             if sendersStream <= 0:
                 return
@@ -716,7 +715,7 @@ class receiveDataThread(QThread):
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
                 sqlLock.release()
-                self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+                self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)"""
 
 
     #We have received a msg message.
@@ -783,7 +782,7 @@ class receiveDataThread(QThread):
 
 
         #This section is for my RSA keys (version 1 addresses). If we don't have any version 1 addresses it will never run. This code will soon be removed.
-        initialDecryptionSuccessful = False
+        """initialDecryptionSuccessful = False
         infile = cStringIO.StringIO(self.data[readPosition:self.payloadLength+24])
         outfile = cStringIO.StringIO()
         #print 'len(myRSAAddressHashes.items()):', len(myRSAAddressHashes.items())
@@ -977,7 +976,7 @@ class receiveDataThread(QThread):
             print 'Could not decrypt with any RSA keys if you have any.'
             printLock.release()
         infile.close()
-        outfile.close()
+        outfile.close()"""
 
     #A msg message has a valid time and POW and requires processing. The recmsg function calls this one.
     def processmsg(self,readPosition):
@@ -1095,6 +1094,7 @@ class receiveDataThread(QThread):
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
             sqlLock.release()
+            workerQueue.put(('newpubkey',(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
             blockMessage = False #Gets set to True if the user shouldn't see the message according to black or white lists.
             fromAddress = encodeAddress(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest())
             if config.get('bitmessagesettings', 'blackwhitelist') == 'black': #If we are using a blacklist
@@ -1306,7 +1306,7 @@ class receiveDataThread(QThread):
         if addressVersion == 0:
             print '(Within processpubkey) addressVersion of 0 doesn\'t make sense.'
             return
-        if addressVersion >= 3:
+        if addressVersion >= 3 or addressVersion == 1:
             printLock.acquire()
             print 'This version of Bitmessage cannot handle version', addressVersion,'addresses.'
             printLock.release()
@@ -1352,7 +1352,6 @@ class receiveDataThread(QThread):
                 sqlReturnQueue.get()
                 sqlLock.release()
                 printLock.acquire()
-                print 'added foreign pubkey into our database'
                 printLock.release()
                 workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
             else:
@@ -1364,12 +1363,11 @@ class receiveDataThread(QThread):
                 sqlReturnQueue.get()
                 sqlLock.release()
                 printLock.acquire()
-                print 'added foreign pubkey into our database'
                 printLock.release()
                 workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
 
         #This code which deals with old RSA addresses will soon be removed.
-        elif addressVersion == 1:
+        """elif addressVersion == 1:
             nLength, varintLength = decodeVarint(self.data[readPosition:readPosition+10])
             readPosition += varintLength
             nString = self.data[readPosition:readPosition+nLength]
@@ -1420,7 +1418,7 @@ class receiveDataThread(QThread):
                 printLock.acquire()
                 print 'added foreign pubkey into our database'
                 printLock.release()
-                workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
+                workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))"""
 
     #We have received a getpubkey message
     def recgetpubkey(self):
@@ -1460,6 +1458,9 @@ class receiveDataThread(QThread):
 
         if addressVersionNumber == 0:
             print 'The addressVersionNumber of the pubkey request is zero. That doesn\'t make any sense. Ignoring it.'
+            return
+        elif addressVersionNumber == 1:
+            print 'The addressVersionNumber of the pubkey request is 1 which isn\'t supported anymore. Ignoring it.'
             return
         elif addressVersionNumber > 2:
             print 'The addressVersionNumber of the pubkey request is too high. Can\'t understand. Ignoring it.'
@@ -3011,7 +3012,7 @@ class addressGenerator(QThread):
                 reloadMyAddressHashes()
 
         #This code which deals with old RSA addresses will soon be removed.
-        elif self.addressVersionNumber == 1:
+        """elif self.addressVersionNumber == 1:
             statusbar = 'Generating new ' + str(config.getint('bitmessagesettings', 'bitstrength')) + ' bit RSA key. This takes a minute on average. If you want to generate multiple addresses now, you can; they will queue.'
             self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
             (pubkey, privkey) = rsa.newkeys(config.getint('bitmessagesettings', 'bitstrength'))
@@ -3043,7 +3044,7 @@ class addressGenerator(QThread):
 
             self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
             self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
-            reloadMyAddressHashes()
+            reloadMyAddressHashes()"""
 
     #Does an EC point multiplication; turns a private key into a public key.
     def pointMult(self,secret):
