@@ -1,6 +1,6 @@
-import rsa
 import hashlib
 from struct import *
+from pyelliptic import arithmetic
 
 #There is another copy of this function in Bitmessagemain.py
 def convertIntToString(n):
@@ -245,50 +245,37 @@ def addressStream(address):
 
 
 if __name__ == "__main__":
-    #Let's make a new Bitmessage address:
-    (pubkey, privkey) = rsa.newkeys(256)
-    print privkey['n']
-    print privkey['e']
-    print privkey['d']
-    print privkey['p']
-    print privkey['q']
+    print 'Let us make an address from scratch. Suppose we generate two random 32 byte values and call the first one the signing key and the second one the encryption key:'
+    privateSigningKey = '93d0b61371a54b53df143b954035d612f8efa8a3ed1cf842c2186bfd8f876665'
+    privateEncryptionKey = '4b0b73a54e19b059dc274ab69df095fe699f43b17397bca26fdf40f4d7400a3a'
+    print 'privateSigningKey =', privateSigningKey
+    print 'privateEncryptionKey =', privateEncryptionKey
+    print 'Now let us convert them to public keys by doing an elliptic curve point multiplication.'
+    publicSigningKey = arithmetic.privtopub(privateSigningKey)
+    publicEncryptionKey = arithmetic.privtopub(privateEncryptionKey)
+    print 'publicSigningKey =', publicSigningKey
+    print 'publicEncryptionKey =', publicEncryptionKey
+
+    print 'Notice that they both begin with the \\x04 which specifies the encoding type. This prefix is not send over the wire. You must strip if off before you send your public key across the wire, and you must add it back when you receive a public key.'
+
+    publicSigningKeyBinary = arithmetic.changebase(publicSigningKey,16,256,minlen=64)
+    publicEncryptionKeyBinary = arithmetic.changebase(publicEncryptionKey,16,256,minlen=64)
 
     ripe = hashlib.new('ripemd160')
     sha = hashlib.new('sha512')
-    sha.update(convertIntToString(pubkey.n)+convertIntToString(pubkey.e))
+    sha.update(publicSigningKeyBinary+publicEncryptionKeyBinary)
 
     ripe.update(sha.digest())
-    #print 'sha digest:', sha.digest()
-    #print 'ripe digest:', ripe.digest()
-    #print len(sha.digest())
-    #print len(ripe.digest())
-
-    #prepend the version number and stream number
-    a = '\x01' + '\x08' + ripe.digest()
-    #print 'lengh of a at beginning = ', len(a)
-    print 'This is the data to be encoded in the address: ', a.encode('hex')
-
-    returnedAddress = encodeAddress(1,8,ripe.digest())
+    addressVersionNumber = 2
+    streamNumber = 1
+    print 'Ripe digest that we will encode in the address:', ripe.digest().encode('hex')
+    returnedAddress = encodeAddress(addressVersionNumber,streamNumber,ripe.digest())
+    print 'Encoded address:', returnedAddress
     status,addressVersionNumber,streamNumber,data = decodeAddress(returnedAddress)
-    print returnedAddress
+    print '\nAfter decoding address:'
     print 'Status:', status
     print 'addressVersionNumber', addressVersionNumber
     print 'streamNumber', streamNumber
     print 'length of data(the ripe hash):', len(data)
     print 'ripe data:', data.encode('hex')
-
-    print '\n\nNow let us try making an address with given 2048-bit n and e values.'
-    testn = 16691381808213609635656612695328489234826227577985206736118595570304213887605602327717776979169783795560145663031146864154748634207927153095849203939039346778471192284119479329875655789428795925773927040539038073349089996911318012189546542694411685389074592231210678771416758973061752125295462189928432307067746658691146428088703129795340914596189054255127032271420140641112277113597275245807890920656563056790943850440012709593297328230145129809419550219898595770524436575484115680960823105256137731976622290028349172297572826751147335728017861413787053794003722218722212196385625462088929496952843002425059308041193
-    teste = 65537
-    ripe = hashlib.new('ripemd160')
-    sha = hashlib.new('sha512')
-    sha.update(convertIntToString(testn)+convertIntToString(teste))
-    ripe.update(sha.digest())
-    encodedAddress = encodeAddress(1,1,ripe.digest())
-    print encodedAddress
-    status,addressVersionNumber,streamNumber,data = decodeAddress(encodedAddress)
-    print 'Status:', status
-    print 'addressVersionNumber', addressVersionNumber
-    print 'streamNumber', streamNumber
-    print 'length of data(the ripe hash):', len(data)
 
