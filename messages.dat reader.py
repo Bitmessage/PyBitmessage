@@ -92,7 +92,7 @@ def takeSentMessagesOutOfTrash():
 #readInbox()
 #readSent()
 #readPubkeys()
-#readSubscriptions()
-readInventory()
+readSubscriptions()
+#readInventory()
 
 
