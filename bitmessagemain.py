@@ -2552,7 +2552,7 @@ class singleWorker(QThread):
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
 
-            elif addressVersionNumber == 1: #This whole section can be taken out soon because we aren't supporting v1 addresses for much longer.
+                """elif addressVersionNumber == 1: #This whole section can be taken out soon because we aren't supporting v1 addresses for much longer.
                 messageToTransmit = '\x02' #message encoding type
                 messageToTransmit += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding.
                 messageToTransmit += 'Subject:' + subject + '\n' + 'Body:' + body
@@ -2612,7 +2612,7 @@ class singleWorker(QThread):
                 sqlSubmitQueue.put('UPDATE sent SET status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
-                sqlLock.release()
+                sqlLock.release()"""
             else:
                 printLock.acquire()
                 print 'In the singleWorker thread, the sendBroadcast function doesn\'t understand the address version'
@@ -2672,7 +2672,7 @@ class singleWorker(QThread):
                 payload += encodeVarint(len(signature))
                 payload += signature
 
-            elif fromAddressVersionNumber == 1: #This code is for old version 1 (RSA) addresses. It will soon be removed.
+            """elif fromAddressVersionNumber == 1: #This code is for old version 1 (RSA) addresses. It will soon be removed.
                 payload = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' #this run of nulls allows the true message receiver to identify his message
                 payload += '\x01' #Message version.
                 payload += '\x00\x00\x00\x01'
@@ -2705,7 +2705,7 @@ class singleWorker(QThread):
                 payload += fullAckPayload
                 sendersPrivKey = rsa.PrivateKey(config.getint(fromaddress, 'n'),config.getint(fromaddress, 'e'),config.getint(fromaddress, 'd'),config.getint(fromaddress, 'p'),config.getint(fromaddress, 'q'))
 
-                payload += rsa.sign(payload,sendersPrivKey,'SHA-512')
+                payload += rsa.sign(payload,sendersPrivKey,'SHA-512')"""
 
             #We have assembled the data that will be encrypted. Now let us fetch the recipient's public key out of our database and do the encryption.
 
@@ -2733,7 +2733,7 @@ class singleWorker(QThread):
                 readPosition += 64
                 encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
 
-            elif toAddressVersionNumber == 1:
+            """elif toAddressVersionNumber == 1:
                 sqlLock.acquire()
                 sqlSubmitQueue.put('SELECT transmitdata FROM pubkeys WHERE hash=?')
                 sqlSubmitQueue.put((toRipe,))
@@ -2766,7 +2766,7 @@ class singleWorker(QThread):
 
                 encrypted = outfile.getvalue()
                 infile.close()
-                outfile.close()
+                outfile.close()"""
 
             nonce = 0
             trialValue = 99999999999999999999
