@@ -1798,7 +1798,7 @@ class receiveDataThread(QThread):
 
         numberOfAddressesInAddrMessage = 0
         payload = ''
-        print 'addrsInMyStream.items()', addrsInMyStream.items()
+        #print 'addrsInMyStream.items()', addrsInMyStream.items()
         for HOST, value in addrsInMyStream.items():
             PORT, timeLastReceivedMessageFromThisNode = value
             if timeLastReceivedMessageFromThisNode > (int(time.time())- maximumAgeOfNodesThatIAdvertiseToOthers): #If it is younger than 3 hours old..
@@ -4546,6 +4546,7 @@ class MyForm(QtGui.QMainWindow):
         sqlSubmitQueue.put(t)
         sqlReturnQueue.get()
         sqlLock.release()
+        self.ui.textEditInboxMessage.setText("")
         self.ui.tableWidgetInbox.removeRow(currentRow)
         self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
 
@@ -4734,8 +4735,9 @@ class MyForm(QtGui.QMainWindow):
 
     def tableWidgetInboxItemClicked(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
-        self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())
-
+        if currentRow >= 0:
+            self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())
+        
     def tableWidgetSentItemClicked(self):
             currentRow = self.ui.tableWidgetSent.currentRow()
             self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(currentRow,2).data(Qt.UserRole).toPyObject())
