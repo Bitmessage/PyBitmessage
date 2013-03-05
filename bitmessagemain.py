@@ -1662,7 +1662,7 @@ class receiveDataThread(QThread):
             printLock.release()
             #print 'lengthOfNumberOfAddresses', lengthOfNumberOfAddresses
 
-        if numberOfAddressesIncluded > 1000:
+        if numberOfAddressesIncluded > 1000 or numberOfAddressesIncluded == 0:
             return
         needToWriteKnownNodesToDisk = False
         for i in range(0,numberOfAddressesIncluded):
