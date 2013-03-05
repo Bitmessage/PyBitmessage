@@ -551,6 +551,7 @@ class receiveDataThread(QThread):
             #Cannot decode incoming broadcast versions higher than 1. Assuming the sender isn\' being silly, you should upgrade Bitmessage because this message shall be ignored.
             return
         readPosition += broadcastVersionLength
+        beginningOfPubkeyPosition = readPosition #used when we add the pubkey to our pubkey table
         sendersAddressVersion, sendersAddressVersionLength = decodeVarint(self.data[readPosition:readPosition+9])
         if sendersAddressVersion <= 1 or sendersAddressVersion >=3:
             #Cannot decode senderAddressVersion higher than 2. Assuming the sender isn\' being silly, you should upgrade Bitmessage because this message shall be ignored.
@@ -567,6 +568,7 @@ class receiveDataThread(QThread):
             readPosition += 64
             sendersPubEncryptionKey = '\x04' + self.data[readPosition:readPosition+64]
             readPosition += 64
+            endOfPubkeyPosition = readPosition
             sendersHash = self.data[readPosition:readPosition+20]
             if sendersHash not in broadcastSendersForWhichImWatching:
                 #Display timing data
@@ -603,6 +605,17 @@ class receiveDataThread(QThread):
                 print 'ECDSA verify failed', err
                 return
             #verify passed
+
+            #Let's store the public key in case we want to reply to this person.
+            #We don't have the correct nonce or time (which would let us send out a pubkey message) so we'll just fill it with 1's. We won't be able to send this pubkey to others (without doing the proof of work ourselves, which this program is programmed to not do.)
+            t = (ripe.digest(),False,'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+'\xFF\xFF\xFF\xFF'+self.data[beginningOfPubkeyPosition:endOfPubkeyPosition],int(time.time()),'yes')
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+            sqlLock.release()
+            workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
+            
             fromAddress = encodeAddress(sendersAddressVersion,sendersStream,ripe.digest())
             print 'fromAddress:', fromAddress
             if messageEncodingType == 2:
@@ -1356,7 +1369,7 @@ class receiveDataThread(QThread):
                 workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
             else:
                 print 'We have NOT used this pubkey personally. Inserting in database.'
-                t = (ripe,True,self.data[24:24+self.payloadLength],embeddedTime,'no')
+                t = (ripe,True,self.data[24:24+self.payloadLength],embeddedTime,'no')  #This will also update the embeddedTime.
                 sqlLock.acquire()
                 sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
                 sqlSubmitQueue.put(t)
@@ -1662,7 +1675,7 @@ class receiveDataThread(QThread):
             printLock.release()
             #print 'lengthOfNumberOfAddresses', lengthOfNumberOfAddresses
 
-        if numberOfAddressesIncluded > 1000:
+        if numberOfAddressesIncluded > 1000 or numberOfAddressesIncluded == 0:
             return
         needToWriteKnownNodesToDisk = False
         for i in range(0,numberOfAddressesIncluded):
@@ -2552,7 +2565,7 @@ class singleWorker(QThread):
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
 
-            elif addressVersionNumber == 1: #This whole section can be taken out soon because we aren't supporting v1 addresses for much longer.
+                """elif addressVersionNumber == 1: #This whole section can be taken out soon because we aren't supporting v1 addresses for much longer.
                 messageToTransmit = '\x02' #message encoding type
                 messageToTransmit += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding.
                 messageToTransmit += 'Subject:' + subject + '\n' + 'Body:' + body
@@ -2612,7 +2625,7 @@ class singleWorker(QThread):
                 sqlSubmitQueue.put('UPDATE sent SET status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
-                sqlLock.release()
+                sqlLock.release()"""
             else:
                 printLock.acquire()
                 print 'In the singleWorker thread, the sendBroadcast function doesn\'t understand the address version'
@@ -2672,7 +2685,7 @@ class singleWorker(QThread):
                 payload += encodeVarint(len(signature))
                 payload += signature
 
-            elif fromAddressVersionNumber == 1: #This code is for old version 1 (RSA) addresses. It will soon be removed.
+            """elif fromAddressVersionNumber == 1: #This code is for old version 1 (RSA) addresses. It will soon be removed.
                 payload = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' #this run of nulls allows the true message receiver to identify his message
                 payload += '\x01' #Message version.
                 payload += '\x00\x00\x00\x01'
@@ -2705,7 +2718,7 @@ class singleWorker(QThread):
                 payload += fullAckPayload
                 sendersPrivKey = rsa.PrivateKey(config.getint(fromaddress, 'n'),config.getint(fromaddress, 'e'),config.getint(fromaddress, 'd'),config.getint(fromaddress, 'p'),config.getint(fromaddress, 'q'))
 
-                payload += rsa.sign(payload,sendersPrivKey,'SHA-512')
+                payload += rsa.sign(payload,sendersPrivKey,'SHA-512')"""
 
             #We have assembled the data that will be encrypted. Now let us fetch the recipient's public key out of our database and do the encryption.
 
@@ -2733,7 +2746,7 @@ class singleWorker(QThread):
                 readPosition += 64
                 encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
 
-            elif toAddressVersionNumber == 1:
+            """elif toAddressVersionNumber == 1:
                 sqlLock.acquire()
                 sqlSubmitQueue.put('SELECT transmitdata FROM pubkeys WHERE hash=?')
                 sqlSubmitQueue.put((toRipe,))
@@ -2766,7 +2779,7 @@ class singleWorker(QThread):
 
                 encrypted = outfile.getvalue()
                 infile.close()
-                outfile.close()
+                outfile.close()"""
 
             nonce = 0
             trialValue = 99999999999999999999
@@ -2836,7 +2849,6 @@ class singleWorker(QThread):
         objectType = 'getpubkey'
         inventory[inventoryHash] = (objectType, streamNumber, payload, int(time.time()))
         print 'sending inv (for the getpubkey message)'
-        #payload = '\x01' + pack('>H',objectType) + hash
         broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
         self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Broacasting the public key request. This program will auto-retry if they are offline.')
