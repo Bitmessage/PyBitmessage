@@ -4560,6 +4560,7 @@ class MyForm(QtGui.QMainWindow):
         sqlSubmitQueue.put(t)
         sqlReturnQueue.get()
         sqlLock.release()
+        self.ui.textEditSentMessage.setText("")
         self.ui.tableWidgetSent.removeRow(currentRow)
         self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
     def on_action_SentClipboard(self):
@@ -4739,7 +4740,8 @@ class MyForm(QtGui.QMainWindow):
             self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())
         
     def tableWidgetSentItemClicked(self):
-            currentRow = self.ui.tableWidgetSent.currentRow()
+        currentRow = self.ui.tableWidgetSent.currentRow()
+        if currentRow >= 0:
             self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(currentRow,2).data(Qt.UserRole).toPyObject())
 
     def tableWidgetYourIdentitiesItemChanged(self):
