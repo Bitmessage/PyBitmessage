@@ -3292,7 +3292,6 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL("triggered()"), self.close)
         QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL("triggered()"), self.click_actionManageKeys)
         QtCore.QObject.connect(self.ui.actionRegenerateDeterministicAddresses, QtCore.SIGNAL("triggered()"), self.click_actionRegenerateDeterministicAddresses)
-        QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL("triggered()"), self.click_actionManageKeys)
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL("clicked()"), self.click_NewAddressDialog)
         QtCore.QObject.connect(self.ui.comboBoxSendFrom, QtCore.SIGNAL("activated(int)"),self.redrawLabelFrom)
         QtCore.QObject.connect(self.ui.pushButtonAddAddressBook, QtCore.SIGNAL("clicked()"), self.click_pushButtonAddAddressBook)

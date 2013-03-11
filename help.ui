@@ -19,6 +19,9 @@
      <property name="text">
       <string>&lt;a href=&quot;http://Bitmessage.org/wiki/PyBitmessage_Help&quot;&gt;http://Bitmessage.org/wiki/PyBitmessage_Help&lt;/a&gt;</string>
      </property>
+     <property name="openExternalLinks">
+      <bool>true</bool>
+     </property>
     </widget>
    </item>
    <item row="0" column="0" colspan="2">
