@@ -95,6 +95,9 @@
    <property name="wordWrap">
     <bool>true</bool>
    </property>
+   <property name="openExternalLinks">
+    <bool>true</bool>
+   </property>
   </widget>
   <widget class="QLabel" name="label_5">
    <property name="geometry">
