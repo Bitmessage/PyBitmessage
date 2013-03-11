@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'help.ui'
 #
-# Created: Wed Dec 19 15:53:53 2012
+# Created: Mon Mar 11 11:20:54 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -21,6 +21,7 @@ class Ui_helpDialog(object):
         self.formLayout = QtGui.QFormLayout(helpDialog)
         self.formLayout.setObjectName(_fromUtf8("formLayout"))
         self.labelHelpURI = QtGui.QLabel(helpDialog)
+        self.labelHelpURI.setOpenExternalLinks(True)
         self.labelHelpURI.setObjectName(_fromUtf8("labelHelpURI"))
         self.formLayout.setWidget(1, QtGui.QFormLayout.LabelRole, self.labelHelpURI)
         self.label = QtGui.QLabel(helpDialog)
