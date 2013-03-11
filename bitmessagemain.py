@@ -2311,9 +2311,8 @@ class singleCleaner(QThread):
 
         while True:
             time.sleep(300)
-            #Clear the status bar in case a message has been sitting there for a while.
-            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
             sqlLock.acquire()
+            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing housekeeping (Flushing inventory in memory to disk...)")
             for hash, storedValue in inventory.items():
                 objectType, streamNumber, payload, receivedTime = storedValue
                 if int(time.time())- 3600 > receivedTime:
@@ -2322,6 +2321,7 @@ class singleCleaner(QThread):
                     sqlSubmitQueue.put(t)
                     sqlReturnQueue.get()
                     del inventory[hash]
+            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
             sqlLock.release()
             broadcastToSendDataQueues((0, 'pong', 'no data')) #commands the sendData threads to send out a pong message if they haven't sent anything else in the last five minutes. The socket timeout-time is 10 minutes.
             if timeWeLastClearedInventoryAndPubkeysTables < int(time.time()) - 7380:
@@ -3292,7 +3292,6 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL("triggered()"), self.close)
         QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL("triggered()"), self.click_actionManageKeys)
         QtCore.QObject.connect(self.ui.actionRegenerateDeterministicAddresses, QtCore.SIGNAL("triggered()"), self.click_actionRegenerateDeterministicAddresses)
-        QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL("triggered()"), self.click_actionManageKeys)
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL("clicked()"), self.click_NewAddressDialog)
         QtCore.QObject.connect(self.ui.comboBoxSendFrom, QtCore.SIGNAL("activated(int)"),self.redrawLabelFrom)
         QtCore.QObject.connect(self.ui.pushButtonAddAddressBook, QtCore.SIGNAL("clicked()"), self.click_pushButtonAddAddressBook)
