@@ -1677,6 +1677,10 @@ class receiveDataThread(QThread):
 
         if numberOfAddressesIncluded > 1000 or numberOfAddressesIncluded == 0:
             return
+        if self.payloadLength < lengthOfNumberOfAddresses + (34 * numberOfAddressesIncluded):
+            print 'addr message does not contain enough data. Ignoring.'
+            return
+
         needToWriteKnownNodesToDisk = False
         for i in range(0,numberOfAddressesIncluded):
             try:
@@ -1701,7 +1705,8 @@ class receiveDataThread(QThread):
                     sys.stderr.write('ERROR TRYING TO UNPACK recaddr (recaddrStream). Message: %s\n' % str(err))
                     printLock.release()
                 break #giving up on unpacking any more. We should still be connected however.
-
+            if recaddrStream == 0:
+                continue
             try:
                 recaddrServices, = unpack('>Q',self.data[32+lengthOfNumberOfAddresses+(34*i):40+lengthOfNumberOfAddresses+(34*i)])
             except Exception, err:
@@ -1725,10 +1730,12 @@ class receiveDataThread(QThread):
             if hostFromAddrMessage == '127.0.0.1':
                 continue
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>I',self.data[24+lengthOfNumberOfAddresses+(34*i):28+lengthOfNumberOfAddresses+(34*i)]) #This is the 'time' value in the received addr message.
+            if recaddrStream not in knownNodes:
+                knownNodes[recaddrStream] = {}
             if hostFromAddrMessage not in knownNodes[recaddrStream]:
                 if len(knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time())-10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800): #If we have more than 20000 nodes in our list already then just forget about adding more. Also, make sure that the time that someone else received a message from this node is within three hours from now.
                     knownNodes[recaddrStream][hostFromAddrMessage] = (recaddrPort, timeSomeoneElseReceivedMessageFromThisNode)
-                    print 'added new node', hostFromAddrMessage, 'to knownNodes.'
+                    print 'added new node', hostFromAddrMessage, 'to knownNodes in stream', recaddrStream
                     needToWriteKnownNodesToDisk = True
                     hostDetails = (timeSomeoneElseReceivedMessageFromThisNode, recaddrStream, recaddrServices, hostFromAddrMessage, recaddrPort)
                     listOfAddressDetailsToBroadcastToPeers.append(hostDetails)
@@ -1744,7 +1751,7 @@ class receiveDataThread(QThread):
             output.close()
             self.broadcastaddr(listOfAddressDetailsToBroadcastToPeers)
         printLock.acquire()
-        print 'knownNodes currently has', len(knownNodes[recaddrStream]), 'nodes for this stream.'
+        print 'knownNodes currently has', len(knownNodes[self.streamNumber]), 'nodes for this stream.'
         printLock.release()
 
     #Function runs when we want to broadcast an addr message to all of our peers. Runs when we learn of nodes that we didn't previously know about and want to share them with our peers.
