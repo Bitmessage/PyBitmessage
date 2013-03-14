@@ -1708,6 +1708,8 @@ class receiveDataThread(QThread):
                 break #giving up on unpacking any more. We should still be connected however.
             if recaddrStream == 0:
                 continue
+            if recaddrStream != self.streamNumber and recaddrStream != (self.streamNumber * 2) and recaddrStream != ((self.streamNumber * 2) + 1): #if the embedded stream number is not in my stream or either of my child streams then ignore it. Someone might be trying funny business.
+                continue
             try:
                 recaddrServices, = unpack('>Q',self.data[32+lengthOfNumberOfAddresses+(34*i):40+lengthOfNumberOfAddresses+(34*i)])
             except Exception, err:
@@ -1731,7 +1733,7 @@ class receiveDataThread(QThread):
             if hostFromAddrMessage == '127.0.0.1':
                 continue
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>I',self.data[24+lengthOfNumberOfAddresses+(34*i):28+lengthOfNumberOfAddresses+(34*i)]) #This is the 'time' value in the received addr message.
-            if recaddrStream not in knownNodes:
+            if recaddrStream not in knownNodes: #knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
                 knownNodes[recaddrStream] = {}
             if hostFromAddrMessage not in knownNodes[recaddrStream]:
                 if len(knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time())-10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800): #If we have more than 20000 nodes in our list already then just forget about adding more. Also, make sure that the time that someone else received a message from this node is within three hours from now.
@@ -2306,8 +2308,8 @@ It cleans these tables on the disk:
     pubkeys (clears pubkeys older than 4 weeks old which we have not used personally)
 
 It resends messages when there has been no response:
-    resends getpubkey messages in two days (then 4 days, then 8 days, etc...)
-    resends msg messages in two days (then 4 days, then 8 days, etc...)
+    resends getpubkey messages in 4 days (then 8 days, then 16 days, etc...)
+    resends msg messages in 4 days (then 8 days, then 16 days, etc...)
 
 '''
 class singleCleaner(QThread):
@@ -4773,8 +4775,6 @@ class MyForm(QtGui.QMainWindow):
             sqlSubmitQueue.put('''UPDATE addressbook set label=? WHERE address=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
-        #except Exception, err:
-        #    print 'Program Exception in tableWidgetAddressBookItemChanged:', err
         sqlLock.release()
         self.rerenderInboxFromLabels()
         self.rerenderSentToLabels()
@@ -4788,8 +4788,6 @@ class MyForm(QtGui.QMainWindow):
             sqlSubmitQueue.put('''UPDATE subscriptions set label=? WHERE address=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
-        #except Exception, err:
-        #    print 'Program Exception in tableWidgetSubscriptionsItemChanged:', err
         sqlLock.release()
         self.rerenderInboxFromLabels()
         self.rerenderSentToLabels()
