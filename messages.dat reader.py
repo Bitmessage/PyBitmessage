@@ -39,7 +39,8 @@ def readSent():
     cur.execute(item, parameters)
     output = cur.fetchall()
     for row in output:
-        print row
+        msgid, toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber, folder = row
+        print msgid.encode('hex'), toaddress, 'toripe:', toripe.encode('hex'), 'fromaddress:', fromaddress, 'SUBJECT:', repr(subject), 'MESSAGE:', repr(message), 'ACKDATA:', ackdata.encode('hex'), lastactiontime, status, pubkeyretrynumber, msgretrynumber, folder
 
 def readSubscriptions():
     print 'Printing everything in subscriptions table:'
@@ -90,9 +91,9 @@ def takeSentMessagesOutOfTrash():
 #takeInboxMessagesOutOfTrash()
 #takeSentMessagesOutOfTrash()
 #readInbox()
-#readSent()
+readSent()
 #readPubkeys()
-readSubscriptions()
+#readSubscriptions()
 #readInventory()
 
 
