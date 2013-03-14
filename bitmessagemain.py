@@ -312,6 +312,7 @@ class receiveDataThread(QThread):
             if verbose >= 2:
                 printLock.acquire()
                 sys.stderr.write('The magic bytes were not correct. First 40 bytes of data: %s\n' % repr(self.data[0:40]))
+                print 'self.data:', self.data.encode('hex')
                 printLock.release()
             self.data = ""
         else:
