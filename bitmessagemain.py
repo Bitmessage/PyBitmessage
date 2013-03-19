@@ -3323,7 +3323,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif method == 'add':
             (a,b) = params
             return a+b
-        elif method == 'statusbar':
+        elif method == 'statusBar':
             message, = params
             apiSignalQueue.put(('updateStatusBar',message))
         elif method == 'listAddresses':
