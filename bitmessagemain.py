@@ -3373,19 +3373,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             elif len(params) == 5:
                 passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe = params
             if len(passphrase) == 0:
-                return 'API Error: the specified passphrase is blank.'
+                return 'API Error 0001: the specified passphrase is blank.'
             if addressVersionNumber == 0: #0 means "just use the proper addressVersionNumber"
                 addressVersionNumber == 2
             if addressVersionNumber != 2:
-                return 'API Error: the address version number currently must be 2 (or 0 which means auto-select). Others aren\'t supported.'
+                return 'API Error 0002: the address version number currently must be 2 (or 0 which means auto-select). Others aren\'t supported.'
             if streamNumber == 0: #0 means "just use the most available stream"
                 streamNumber = 1
             if streamNumber != 1:
-                return 'API Error: the stream number must be 1 (or 0 which means auto-select). Others aren\'t supported.'
+                return 'API Error 0003: the stream number must be 1 (or 0 which means auto-select). Others aren\'t supported.'
             if numberOfAddresses == 0:
-                return 'API Error: Why would you ask me to generate 0 addresses for you?'
+                return 'API Error 0004: Why would you ask me to generate 0 addresses for you?'
             if numberOfAddresses > 9999:
-                return 'API Error: You have (accidentially?) specified too many addresses to make. Maximum 9999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
+                return 'API Error 0005: You have (accidentially?) specified too many addresses to make. Maximum 9999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
             apiAddressGeneratorReturnQueue.queue.clear()
             print 'about to send numberOfAddresses', numberOfAddresses
             apiSignalQueue.put(('createDeterministicAddresses',(passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe)))
@@ -3412,6 +3412,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'trashMessage':
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
             msgid = params[0].decode('hex')
             t = (msgid,)
             sqlLock.acquire()
@@ -3422,53 +3424,55 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             apiSignalQueue.put(('updateStatusBar','Per API: Trashed message (assuming message existed). UI not updated.'))
             return 'Trashed message (assuming message existed). UI not updated. To double check, run getAllInboxMessages to see that the message disappeared, or restart Bitmessage and look in the normal Bitmessage GUI.'
         elif method == 'sendMessage':
-            if len(params) == 4:
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
+            elif len(params) == 4:
                 toAddress, fromAddress, subject, message = params
                 encodingType = 2
-            if len(params) == 5:
+            elif len(params) == 5:
                 toAddress, fromAddress, subject, message, encodingType = params
             if encodingType != 2:
-                return 'API Error: The encoding type must be 2 because that is the only one this program currently supports.'
+                return 'API Error 0006: The encoding type must be 2 because that is the only one this program currently supports.'
             subject = subject.decode('base64')
             message = message.decode('base64')
             status,addressVersionNumber,streamNumber,toRipe = decodeAddress(toAddress)
             if status <> 'success':
                 printLock.acquire()
-                print 'API Error: Could not decode address:', toAddress, ':', status
+                print 'API Error 0007: Could not decode address:', toAddress, ':', status
                 printLock.release()
                 if status == 'checksumfailed':
-                    return 'API Error: Checksum failed for address: ' + toAddress
+                    return 'API Error 0008: Checksum failed for address: ' + toAddress
                 if status == 'invalidcharacters':
-                    return 'API Error: Invalid characters in address: '+ toAddress
+                    return 'API Error 0009: Invalid characters in address: '+ toAddress
                 if status == 'versiontoohigh':
-                    return 'API Error: Address version number too high (or zero) in address: ' + toAddress
+                    return 'API Error 0010: Address version number too high (or zero) in address: ' + toAddress
             if addressVersionNumber != 2:
-                return 'API Error: the address version number currently must be 2. Others aren\'t supported. Check the toAddress.'
+                return 'API Error 0011: the address version number currently must be 2. Others aren\'t supported. Check the toAddress.'
             if streamNumber != 1:
-                return 'API Error: the stream number must be 1. Others aren\'t supported. Check the toAddress.'
+                return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the toAddress.'
             status,addressVersionNumber,streamNumber,fromRipe = decodeAddress(fromAddress)
             if status <> 'success':
                 printLock.acquire()
-                print 'API Error: Could not decode address:', fromAddress, ':', status
+                print 'API Error 0007: Could not decode address:', fromAddress, ':', status
                 printLock.release()
                 if status == 'checksumfailed':
-                    return 'API Error: Checksum failed for address: ' + fromAddress
+                    return 'API Error 0008: Checksum failed for address: ' + fromAddress
                 if status == 'invalidcharacters':
-                    return 'API Error: Invalid characters in address: '+ fromAddress
+                    return 'API Error 0009: Invalid characters in address: '+ fromAddress
                 if status == 'versiontoohigh':
-                    return 'API Error: Address version number too high (or zero) in address: ' + fromAddress
+                    return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
             if addressVersionNumber != 2:
-                return 'API Error: the address version number currently must be 2. Others aren\'t supported. Check the fromAddress.'
+                return 'API Error 0011: the address version number currently must be 2. Others aren\'t supported. Check the fromAddress.'
             if streamNumber != 1:
-                return 'API Error: the stream number must be 1. Others aren\'t supported. Check the fromAddress.'
+                return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the fromAddress.'
             toAddress = addBMIfNotPresent(toAddress)
             fromAddress = addBMIfNotPresent(fromAddress)
             try:
                 fromAddressEnabled = config.getboolean(fromAddress,'enabled')
             except:
-                return 'API Error: could not find your fromAddress in the keys.dat file.'
+                return 'API Error 0013: could not find your fromAddress in the keys.dat file.'
             if not fromAddressEnabled:
-                return 'API Error: your fromAddress is disabled. Cannot send.'
+                return 'API Error 0014: your fromAddress is disabled. Cannot send.'
 
             ackdata = OpenSSL.rand(32)
             sqlLock.acquire()
@@ -3495,36 +3499,38 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return ackdata.encode('hex')
         
         elif method == 'sendBroadcast':
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
             if len(params) == 3:
                 fromAddress, subject, message = params
                 encodingType = 2
-            if len(params) == 4:
+            elif len(params) == 4:
                 fromAddress, subject, message, encodingType = params
             if encodingType != 2:
-                return 'API Error: The encoding type must be 2 because that is the only one this program currently supports.'
+                return 'API Error 0006: The encoding type must be 2 because that is the only one this program currently supports.'
             subject = subject.decode('base64')
             message = message.decode('base64')
 
             status,addressVersionNumber,streamNumber,fromRipe = decodeAddress(fromAddress)
             if status <> 'success':
                 printLock.acquire()
-                print 'API Error: Could not decode address:', fromAddress, ':', status
+                print 'API Error 0007: Could not decode address:', fromAddress, ':', status
                 printLock.release()
                 if status == 'checksumfailed':
-                    return 'API Error: Checksum failed for address: ' + fromAddress
+                    return 'API Error 0008: Checksum failed for address: ' + fromAddress
                 if status == 'invalidcharacters':
-                    return 'API Error: Invalid characters in address: '+ fromAddress
+                    return 'API Error 0009: Invalid characters in address: '+ fromAddress
                 if status == 'versiontoohigh':
-                    return 'API Error: Address version number too high (or zero) in address: ' + fromAddress
+                    return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
             if addressVersionNumber != 2:
-                return 'API Error: the address version number currently must be 2. Others aren\'t supported. Check the fromAddress.'
+                return 'API Error 0011: the address version number currently must be 2. Others aren\'t supported. Check the fromAddress.'
             if streamNumber != 1:
-                return 'API Error: the stream number must be 1. Others aren\'t supported. Check the fromAddress.'
+                return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the fromAddress.'
             fromAddress = addBMIfNotPresent(fromAddress)
             try:
                 fromAddressEnabled = config.getboolean(fromAddress,'enabled')
             except:
-                return 'API Error: could not find your fromAddress in the keys.dat file.'
+                return 'API Error 0013: could not find your fromAddress in the keys.dat file.'
             ackdata = OpenSSL.rand(32)
             toAddress = '[Broadcast subscribers]'
             ripe = ''
@@ -3543,7 +3549,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
             return ackdata.encode('hex')         
 
-            ###########################
         else:
             return 'Invalid Method: %s'%method
 
