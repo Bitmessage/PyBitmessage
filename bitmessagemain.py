@@ -3346,6 +3346,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 eighteenByteRipe = False
             elif len(params) == 2:
                 label, eighteenByteRipe = params
+            label = label.decode('base64')
             apiAddressGeneratorReturnQueue.queue.clear()
             apiSignalQueue.put(('createRandomAddress',(label, eighteenByteRipe))) #params should be a twopul which equals (eighteenByteRipe, label)
             return apiAddressGeneratorReturnQueue.get()
@@ -3374,6 +3375,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe = params
             if len(passphrase) == 0:
                 return 'API Error 0001: the specified passphrase is blank.'
+            passphrase = passphrase.decode('base64')
             if addressVersionNumber == 0: #0 means "just use the proper addressVersionNumber"
                 addressVersionNumber == 2
             if addressVersionNumber != 2:
