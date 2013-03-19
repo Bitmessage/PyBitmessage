@@ -13,7 +13,7 @@ print api.helloWorld(inputstr1, inputstr2)
 print api.add(2,3)
 
 print 'Let\'s set the status bar message.'
-print api.statusbar("new status bar message")
+print api.statusBar("new status bar message")
 
 print 'Let\'s list our addresses:'
 print api.listAddresses()
