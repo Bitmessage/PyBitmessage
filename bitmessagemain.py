@@ -6,7 +6,7 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.2.6'
+softwareVersion = '0.2.7'
 verbose = 2
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -58,6 +58,12 @@ import highlevelcrypto
 from pyelliptic.openssl import OpenSSL
 import ctypes
 from pyelliptic import arithmetic
+#The next 5 are used for the API
+import uuid
+import Cookie
+from SimpleXMLRPCServer import *
+import json
+from subprocess import call #used when the API must execute an outside program
 
 #For each stream to which we connect, one outgoingSynSender thread will exist and will create 8 connections with peers.
 class outgoingSynSender(QThread):
@@ -646,6 +652,15 @@ class receiveDataThread(QThread):
                 sqlLock.release()
                 self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
 
+                #If we are behaving as an API then we might need to run an outside command to let some program know that a new message has arrived.
+                if safeConfigGetBoolean('bitmessagesettings','apienabled'):
+                    try:
+                        apiNotifyPath = config.get('bitmessagesettings','apinotifypath')
+                    except:
+                        apiNotifyPath = ''
+                    if apiNotifyPath != '':
+                        call([apiNotifyPath, "newBroadcast"])
+
             #Display timing data
             printLock.acquire()
             print 'Time spent processing this interesting broadcast:', time.time()- self.messageProcessingStartTime
@@ -1183,12 +1198,17 @@ class receiveDataThread(QThread):
                     sqlLock.release()
                     self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
 
+                #If we are behaving as an API then we might need to run an outside command to let some program know that a new message has arrived.
+                if safeConfigGetBoolean('bitmessagesettings','apienabled'):
+                    try:
+                        apiNotifyPath = config.get('bitmessagesettings','apinotifypath')
+                    except:
+                        apiNotifyPath = ''
+                    if apiNotifyPath != '':
+                        call([apiNotifyPath, "newMessage"])
+
                 #Let us now check and see whether our receiving address is behaving as a mailing list
-                try:
-                    isMailingList = config.getboolean(toAddress, 'mailinglist')
-                except:
-                    isMailingList = False
-                if isMailingList:
+                if safeConfigGetBoolean(toAddress,'mailinglist'):
                     try:
                         mailingListName = config.get(toAddress, 'mailinglistname')
                     except:
@@ -1208,9 +1228,9 @@ class receiveDataThread(QThread):
                     sqlReturnQueue.get()
                     sqlLock.release()
 
-                    workerQueue.put(('sendbroadcast',(fromAddress,subject,message)))
                     self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,'[Broadcast subscribers]',fromAddress,subject,message,ackdata)
-                    
+                    workerQueue.put(('sendbroadcast',(fromAddress,subject,message)))
+
             #Now let's consider sending the acknowledgement. We'll need to make sure that our client will properly process the ackData; if the packet is malformed, we could clear out self.data and an attacker could use that behavior to determine that we were capable of decoding this message.
             ackDataValidThusFar = True
             if len(ackData) < 24:
@@ -1730,7 +1750,8 @@ class receiveDataThread(QThread):
             #print 'Within recaddr(): IP', recaddrIP, ', Port', recaddrPort, ', i', i
             hostFromAddrMessage = socket.inet_ntoa(self.data[52+lengthOfNumberOfAddresses+(34*i):56+lengthOfNumberOfAddresses+(34*i)])
             #print 'hostFromAddrMessage', hostFromAddrMessage
-            if hostFromAddrMessage == '127.0.0.1':
+            if self.data[52+lengthOfNumberOfAddresses+(34*i)] == '\x7F':
+                print 'Ignoring IP address in loopback range:', hostFromAddrMessage
                 continue
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>I',self.data[24+lengthOfNumberOfAddresses+(34*i):28+lengthOfNumberOfAddresses+(34*i)]) #This is the 'time' value in the received addr message.
             if recaddrStream not in knownNodes: #knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
@@ -2208,6 +2229,15 @@ def calculateTestnetAddressFromPubkey(pubkey):
     base58encoded = arithmetic.changebase(binaryBitcoinAddress,256,58)
     return "1"*numberOfZeroBytesOnBinaryBitcoinAddress + base58encoded
 
+def safeConfigGetBoolean(section,field):
+        try:
+            if config.getboolean(section,field):
+                return True
+            else:
+                return False
+        except:
+            return False
+
 def lookupAppdataFolder():
     APPNAME = "PyBitmessage"
     from os import path, environ
@@ -2453,6 +2483,10 @@ class singleWorker(QThread):
                     self.sendMsg(toRipe)
                 else:
                     print 'We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:', toRipe.encode('hex')
+            else:
+                printLock.acquire()
+                sys.stderr.write('Probable programming error: The command sent to the workerThread is weird. It is: %s\n' % command)
+                printLock.release()
 
             workerQueue.task_done()
 
@@ -2522,8 +2556,12 @@ class singleWorker(QThread):
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(fromaddress)
             if addressVersionNumber == 2:
                 #We need to convert our private keys to public keys in order to include them.
-                privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
-                privEncryptionKeyBase58 = config.get(fromaddress, 'privencryptionkey')
+                try:
+                    privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
+                    privEncryptionKeyBase58 = config.get(fromaddress, 'privencryptionkey')
+                except:
+                    self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
+                    continue
 
                 privSigningKeyHex = decodeWalletImportFormat(privSigningKeyBase58).encode('hex')
                 privEncryptionKeyHex = decodeWalletImportFormat(privEncryptionKeyBase58).encode('hex')
@@ -2551,6 +2589,7 @@ class singleWorker(QThread):
                 trialValue = 99999999999999999999
                 target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
+                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
                 initialHash = hashlib.sha512(payload).digest()
                 while trialValue > target:
                     nonce += 1
@@ -2671,8 +2710,12 @@ class singleWorker(QThread):
                 payload += '\x00\x00\x00\x01' #Bitfield of features and behaviors that can be expected from me. (See https://bitmessage.org/wiki/Protocol_specification#Pubkey_bitfield_features  )
 
                 #We need to convert our private keys to public keys in order to include them.
-                privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
-                privEncryptionKeyBase58 = config.get(fromaddress, 'privencryptionkey')
+                try:
+                    privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
+                    privEncryptionKeyBase58 = config.get(fromaddress, 'privencryptionkey')
+                except:
+                    self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
+                    continue
 
                 privSigningKeyHex = decodeWalletImportFormat(privSigningKeyBase58).encode('hex')
                 privEncryptionKeyHex = decodeWalletImportFormat(privEncryptionKeyBase58).encode('hex')
@@ -2805,7 +2848,10 @@ class singleWorker(QThread):
                 nonce += 1
                 trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
             print '(For msg message) Found proof of work', trialValue, 'Nonce:', nonce
-            print 'POW took', int(time.time()-powStartTime), 'seconds.', nonce/(time.time()-powStartTime), 'nonce trials per second.'
+            try:
+                print 'POW took', int(time.time()-powStartTime), 'seconds.', nonce/(time.time()-powStartTime), 'nonce trials per second.'
+            except:
+                pass
             payload = pack('>Q',nonce) + payload
 
             inventoryHash = calculateInventoryHash(payload)
@@ -2880,7 +2926,10 @@ class singleWorker(QThread):
             trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
         printLock.acquire()
         print '(For ack message) Found proof of work', trialValue, 'Nonce:', nonce
-        print 'POW took', int(time.time()-powStartTime), 'seconds.', nonce/(time.time()-powStartTime), 'nonce trials per second.'
+        try:
+            print 'POW took', int(time.time()-powStartTime), 'seconds.', nonce/(time.time()-powStartTime), 'nonce trials per second.'
+        except:
+            pass
         printLock.release()
         payload = pack('>Q',nonce) + payload
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
@@ -2959,6 +3008,9 @@ class addressGenerator(QThread):
                 config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
                 with open(appdata + 'keys.dat', 'wb') as configfile:
                     config.write(configfile)
+                
+                #It may be the case that this address is being generated as a result of a call to the API. Let us put the result in the necessary queue. 
+                apiAddressGeneratorReturnQueue.put(address)
 
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address. Doing work necessary to broadcast it...')
                 self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
@@ -2970,6 +3022,8 @@ class addressGenerator(QThread):
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
                 signingKeyNonce = 0
                 encryptionKeyNonce = 1
+                listOfNewAddressesToSendOutThroughTheAPI = [] #We fill out this list no matter what although we only need it if we end up passing the info to the API.
+
                 for i in range(self.numberOfAddressesToMake):
                     #This next section is a little bit strange. We're going to generate keys over and over until we
                     #find one that has a RIPEMD hash that starts with either \x00 or \x00\x00. Then when we pack them
@@ -3028,8 +3082,11 @@ class addressGenerator(QThread):
                             config.write(configfile)
 
                         self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
+                        listOfNewAddressesToSendOutThroughTheAPI.append(address)
                     except:
                         print address,'already exists. Not adding it again.'
+                #It may be the case that this address is being generated as a result of a call to the API. Let us put the result in the necessary queue. 
+                apiAddressGeneratorReturnQueue.put(listOfNewAddressesToSendOutThroughTheAPI)
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
                 reloadMyAddressHashes()
 
@@ -3093,6 +3150,446 @@ class addressGenerator(QThread):
         OpenSSL.BN_free(priv_key)
         OpenSSL.EC_KEY_free(k)
         return mb.raw
+
+#This is one of several classes that constitute the API
+#This class was written by Vaibhav Bhatia
+#http://code.activestate.com/recipes/501148-xmlrpc-serverclient-which-does-cookie-handling-and/
+class APIUserManagement:
+    def __init__(self):
+        #self.d = shelve.open('machines.shv')
+        self.d = {}
+
+        # register a list of valid machine names/email id's
+        validconfig = {config.get('bitmessagesettings', 'apiusername'):config.get('bitmessagesettings', 'apipassword')}
+        for k,v in validconfig.items():
+            self.generateUuid(k,v)
+
+    def generateUuid(self, email_id, machine_name):
+        """ return a uuid which uniquely identifies machinename and email id """
+        uuidstr = None
+
+        if machine_name not in self.d:
+            myNamespace = uuid.uuid3(uuid.NAMESPACE_URL, machine_name)
+            uuidstr = str(uuid.uuid3(myNamespace, email_id))
+
+            self.d[machine_name] = (machine_name, uuidstr, email_id)
+            self.d[uuidstr] = (machine_name, uuidstr ,email_id)
+        else:
+            (machine_name, uuidstr, email_id) = self.d[machine_name]
+
+        return uuidstr
+
+    def checkMe(self, id):
+        if id in self.d:
+            return self.d[id]
+        return (None,None,None)
+
+    #def __del__(self):
+    #    self.d.close()
+
+#This is used only for the API
+def APIAuthenticate(id):
+    sk = APIUserManagement()
+    return sk.checkMe(id)
+
+#This is one of several classes that constitute the API
+#This class was written by Vaibhav Bhatia
+#http://code.activestate.com/recipes/501148-xmlrpc-serverclient-which-does-cookie-handling-and/
+class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
+    def setCookie(self, key=None ,value=None):
+        if key :
+            c1 = Cookie.SimpleCookie()
+            c1[key] = value
+            cinfo = self.getDefaultCinfo()
+            for attr,val in cinfo.items():
+                c1[key][attr] = val
+
+            if c1 not in self.cookies:
+                self.cookies.append(c1)
+
+    def getDefaultCinfo(self):
+        cinfo = {}
+
+        cinfo['expires'] = 30*24*60*60
+        cinfo['path'] = '/RPC2/'
+        cinfo['comment'] = 'comment!'
+        cinfo['domain'] = '.localhost.local'
+        cinfo['max-age'] = 30*24*60*60
+        cinfo['secure'] = ''
+        cinfo['version']= 1
+
+        return cinfo
+
+    def do_POST(self):
+        #Handles the HTTP POST request.
+        #Attempts to interpret all HTTP POST requests as XML-RPC calls,
+        #which are forwarded to the server's _dispatch method for handling.
+
+        #Note: this method is the same as in SimpleXMLRPCRequestHandler,
+        #just hacked to handle cookies
+
+        # Check that the path is legal
+        if not self.is_rpc_path_valid():
+            self.report_404()
+            return
+
+        try:
+            # Get arguments by reading body of request.
+            # We read this in chunks to avoid straining
+            # socket.read(); around the 10 or 15Mb mark, some platforms
+            # begin to have problems (bug #792570).
+            max_chunk_size = 10*1024*1024
+            size_remaining = int(self.headers["content-length"])
+            L = []
+            while size_remaining:
+                chunk_size = min(size_remaining, max_chunk_size)
+                L.append(self.rfile.read(chunk_size))
+                size_remaining -= len(L[-1])
+            data = ''.join(L)
+
+            # In previous versions of SimpleXMLRPCServer, _dispatch
+            # could be overridden in this class, instead of in
+            # SimpleXMLRPCDispatcher. To maintain backwards compatibility,
+            # check to see if a subclass implements _dispatch and dispatch
+            # using that method if present.
+            response = self.server._marshaled_dispatch(
+                    data, getattr(self, '_dispatch', None)
+                )
+        except: # This should only happen if the module is buggy
+            # internal error, report as HTTP server error
+            self.send_response(500)
+            self.end_headers()
+        else:
+            # got a valid XML RPC response
+            self.send_response(200)
+            self.send_header("Content-type", "text/xml")
+            self.send_header("Content-length", str(len(response)))
+
+            # HACK :start -> sends cookies here
+            if self.cookies:
+                for cookie in self.cookies:
+                    self.send_header('Set-Cookie',cookie.output(header=''))
+            # HACK :end
+
+            self.end_headers()
+            self.wfile.write(response)
+
+            # shut down the connection
+            self.wfile.flush()
+            self.connection.shutdown(1)
+
+
+    def APIAuthenticateClient(self):
+        validuser = False
+
+        if self.headers.has_key('Authorization'):
+            # handle Basic authentication
+            (enctype, encstr) =  self.headers.get('Authorization').split()
+            (emailid, machine_name) = encstr.decode('base64').split(':')
+            (auth_machine, auth_uuidstr, auth_email) = APIAuthenticate(machine_name)
+
+            if emailid == auth_email:
+                print "Authenticated"
+                # set authentication cookies on client machines
+                validuser = True
+                if auth_uuidstr:
+                    self.setCookie('UUID',auth_uuidstr)
+
+        elif self.headers.has_key('UUID'):
+            # handle cookie based authentication
+            id =  self.headers.get('UUID')
+            (auth_machine, auth_uuidstr, auth_email) = APIAuthenticate(id)
+
+            if auth_uuidstr :
+                print "Authenticated"
+                validuser = True
+        else:
+            print 'Authentication failed'
+            time.sleep(2)
+
+        return validuser
+
+    def _dispatch(self, method, params):
+        self.cookies = []
+
+        validuser = self.APIAuthenticateClient()
+        if not validuser:
+            time.sleep(2)
+            return "RPC Username or password incorrect."
+        # handle request
+        if method == 'helloWorld':
+            (a,b) = params
+            return a+'-'+b
+        elif method == 'add':
+            (a,b) = params
+            return a+b
+        elif method == 'statusBar':
+            message, = params
+            apiSignalQueue.put(('updateStatusBar',message))
+        elif method == 'listAddresses':
+            data = '{"addresses":['
+            configSections = config.sections()
+            for addressInKeysFile in configSections:
+                if addressInKeysFile <> 'bitmessagesettings':
+                    status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
+                    data
+                    if len(data) > 20:
+                        data += ','
+                    data += json.dumps({'label':config.get(addressInKeysFile,'label'),'address':addressInKeysFile,'stream':streamNumber,'enabled':config.getboolean(addressInKeysFile,'enabled')},indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+        elif method == 'createRandomAddress':
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
+            elif len(params) == 1:
+                label, = params
+                eighteenByteRipe = False
+            elif len(params) == 2:
+                label, eighteenByteRipe = params
+            label = label.decode('base64')
+            apiAddressGeneratorReturnQueue.queue.clear()
+            apiSignalQueue.put(('createRandomAddress',(label, eighteenByteRipe))) #params should be a twopul which equals (eighteenByteRipe, label)
+            return apiAddressGeneratorReturnQueue.get()
+        elif method == 'createDeterministicAddresses':
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
+            elif len(params) == 1:
+                passphrase, = params
+                numberOfAddresses = 1
+                addressVersionNumber = 0
+                streamNumber = 0
+                eighteenByteRipe = False
+            elif len(params) == 2:
+                passphrase, numberOfAddresses = params
+                addressVersionNumber = 0
+                streamNumber = 0
+                eighteenByteRipe = False
+            elif len(params) == 3:
+                passphrase, numberOfAddresses, addressVersionNumber = params
+                streamNumber = 0
+                eighteenByteRipe = False
+            elif len(params) == 4:
+                passphrase, numberOfAddresses, addressVersionNumber, streamNumber = params
+                eighteenByteRipe = False
+            elif len(params) == 5:
+                passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe = params
+            if len(passphrase) == 0:
+                return 'API Error 0001: the specified passphrase is blank.'
+            passphrase = passphrase.decode('base64')
+            if addressVersionNumber == 0: #0 means "just use the proper addressVersionNumber"
+                addressVersionNumber == 2
+            if addressVersionNumber != 2:
+                return 'API Error 0002: the address version number currently must be 2 (or 0 which means auto-select). Others aren\'t supported.'
+            if streamNumber == 0: #0 means "just use the most available stream"
+                streamNumber = 1
+            if streamNumber != 1:
+                return 'API Error 0003: the stream number must be 1 (or 0 which means auto-select). Others aren\'t supported.'
+            if numberOfAddresses == 0:
+                return 'API Error 0004: Why would you ask me to generate 0 addresses for you?'
+            if numberOfAddresses > 9999:
+                return 'API Error 0005: You have (accidentially?) specified too many addresses to make. Maximum 9999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
+            apiAddressGeneratorReturnQueue.queue.clear()
+            print 'about to send numberOfAddresses', numberOfAddresses
+            apiSignalQueue.put(('createDeterministicAddresses',(passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe)))
+            data = '{"addresses":['
+            queueReturn = apiAddressGeneratorReturnQueue.get()
+            for item in queueReturn:
+                if len(data) > 20:
+                    data += ','
+                data += "\""+item+ "\""
+            data += ']}'
+            return data
+        elif method == 'getAllInboxMessages':
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message FROM inbox where folder='inbox' ORDER BY received''')
+            sqlSubmitQueue.put('')
+            queryreturn = sqlReturnQueue.get()
+            sqlLock.release()
+            data = '{"inboxMessages":['
+            for row in queryreturn:
+                msgid, toAddress, fromAddress, subject, received, message, = row
+                if len(data) > 25:
+                    data += ','
+                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':2,'receivedTime':received},indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+        elif method == 'trashMessage':
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
+            msgid = params[0].decode('hex')
+            t = (msgid,)
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''UPDATE inbox SET folder='trash' WHERE msgid=?''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+            sqlLock.release()
+            apiSignalQueue.put(('updateStatusBar','Per API: Trashed message (assuming message existed). UI not updated.'))
+            return 'Trashed message (assuming message existed). UI not updated. To double check, run getAllInboxMessages to see that the message disappeared, or restart Bitmessage and look in the normal Bitmessage GUI.'
+        elif method == 'sendMessage':
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
+            elif len(params) == 4:
+                toAddress, fromAddress, subject, message = params
+                encodingType = 2
+            elif len(params) == 5:
+                toAddress, fromAddress, subject, message, encodingType = params
+            if encodingType != 2:
+                return 'API Error 0006: The encoding type must be 2 because that is the only one this program currently supports.'
+            subject = subject.decode('base64')
+            message = message.decode('base64')
+            status,addressVersionNumber,streamNumber,toRipe = decodeAddress(toAddress)
+            if status <> 'success':
+                printLock.acquire()
+                print 'API Error 0007: Could not decode address:', toAddress, ':', status
+                printLock.release()
+                if status == 'checksumfailed':
+                    return 'API Error 0008: Checksum failed for address: ' + toAddress
+                if status == 'invalidcharacters':
+                    return 'API Error 0009: Invalid characters in address: '+ toAddress
+                if status == 'versiontoohigh':
+                    return 'API Error 0010: Address version number too high (or zero) in address: ' + toAddress
+            if addressVersionNumber != 2:
+                return 'API Error 0011: the address version number currently must be 2. Others aren\'t supported. Check the toAddress.'
+            if streamNumber != 1:
+                return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the toAddress.'
+            status,addressVersionNumber,streamNumber,fromRipe = decodeAddress(fromAddress)
+            if status <> 'success':
+                printLock.acquire()
+                print 'API Error 0007: Could not decode address:', fromAddress, ':', status
+                printLock.release()
+                if status == 'checksumfailed':
+                    return 'API Error 0008: Checksum failed for address: ' + fromAddress
+                if status == 'invalidcharacters':
+                    return 'API Error 0009: Invalid characters in address: '+ fromAddress
+                if status == 'versiontoohigh':
+                    return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
+            if addressVersionNumber != 2:
+                return 'API Error 0011: the address version number currently must be 2. Others aren\'t supported. Check the fromAddress.'
+            if streamNumber != 1:
+                return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the fromAddress.'
+            toAddress = addBMIfNotPresent(toAddress)
+            fromAddress = addBMIfNotPresent(fromAddress)
+            try:
+                fromAddressEnabled = config.getboolean(fromAddress,'enabled')
+            except:
+                return 'API Error 0013: could not find your fromAddress in the keys.dat file.'
+            if not fromAddressEnabled:
+                return 'API Error 0014: your fromAddress is disabled. Cannot send.'
+
+            ackdata = OpenSSL.rand(32)
+            sqlLock.acquire()
+            t = ('',toAddress,toRipe,fromAddress,subject,message,ackdata,int(time.time()),'findingpubkey',1,1,'sent')
+            sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+            sqlLock.release()
+            
+            toLabel = ''
+            t = (toAddress,)
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''select label from addressbook where address=?''')
+            sqlSubmitQueue.put(t)
+            queryreturn = sqlReturnQueue.get()
+            sqlLock.release()
+            if queryreturn <> []:
+                for row in queryreturn:
+                    toLabel, = row
+            apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
+
+            workerQueue.put(('sendmessage',toAddress))
+            
+            return ackdata.encode('hex')
+        
+        elif method == 'sendBroadcast':
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
+            if len(params) == 3:
+                fromAddress, subject, message = params
+                encodingType = 2
+            elif len(params) == 4:
+                fromAddress, subject, message, encodingType = params
+            if encodingType != 2:
+                return 'API Error 0006: The encoding type must be 2 because that is the only one this program currently supports.'
+            subject = subject.decode('base64')
+            message = message.decode('base64')
+
+            status,addressVersionNumber,streamNumber,fromRipe = decodeAddress(fromAddress)
+            if status <> 'success':
+                printLock.acquire()
+                print 'API Error 0007: Could not decode address:', fromAddress, ':', status
+                printLock.release()
+                if status == 'checksumfailed':
+                    return 'API Error 0008: Checksum failed for address: ' + fromAddress
+                if status == 'invalidcharacters':
+                    return 'API Error 0009: Invalid characters in address: '+ fromAddress
+                if status == 'versiontoohigh':
+                    return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
+            if addressVersionNumber != 2:
+                return 'API Error 0011: the address version number currently must be 2. Others aren\'t supported. Check the fromAddress.'
+            if streamNumber != 1:
+                return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the fromAddress.'
+            fromAddress = addBMIfNotPresent(fromAddress)
+            try:
+                fromAddressEnabled = config.getboolean(fromAddress,'enabled')
+            except:
+                return 'API Error 0013: could not find your fromAddress in the keys.dat file.'
+            ackdata = OpenSSL.rand(32)
+            toAddress = '[Broadcast subscribers]'
+            ripe = ''
+
+            sqlLock.acquire()
+            t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastpending',1,1,'sent')
+            sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+            sqlLock.release()
+
+            toLabel = '[Broadcast subscribers]'
+            apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
+
+            workerQueue.put(('sendbroadcast',(fromAddress,subject,message)))
+
+            return ackdata.encode('hex')         
+
+        else:
+            return 'Invalid Method: %s'%method
+
+#This thread, of which there is only one, runs the API.
+class singleAPI(QThread):
+    def __init__(self, parent = None):
+        QThread.__init__(self, parent)
+
+    def run(self):
+        se = SimpleXMLRPCServer((config.get('bitmessagesettings', 'apiinterface'),config.getint('bitmessagesettings', 'apiport')), MySimpleXMLRPCRequestHandler, True, True)
+        se.register_introspection_functions()
+        se.serve_forever()
+
+#The MySimpleXMLRPCRequestHandler class cannot emit signals (or at least I don't know how) because it is not a QT thread. It therefore puts data in a queue which this thread monitors and emits the signals on its behalf.
+class singleAPISignalHandler(QThread):
+    def __init__(self, parent = None):
+        QThread.__init__(self, parent)
+
+    def run(self):
+        while True:
+            command, data = apiSignalQueue.get()
+            if command == 'updateStatusBar':
+                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),data)
+            elif command == 'createRandomAddress':
+                label, eighteenByteRipe = data
+                streamNumberForAddress = 1
+                self.addressGenerator = addressGenerator()
+                self.addressGenerator.setup(2,streamNumberForAddress,label,1,"",eighteenByteRipe)
+                self.emit(SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"),self.addressGenerator)
+                self.addressGenerator.start()
+            elif command == 'createDeterministicAddresses':
+                passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe = data
+                self.addressGenerator = addressGenerator()
+                self.addressGenerator.setup(addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe)
+                self.emit(SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"),self.addressGenerator)
+                self.addressGenerator.start()
+            elif command == 'displayNewSentMessage':
+                toAddress,toLabel,fromAddress,subject,message,ackdata = data
+                self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,toLabel,fromAddress,subject,message,ackdata)
 
 class iconGlossaryDialog(QtGui.QDialog):
     def __init__(self,parent):
@@ -3200,11 +3697,7 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
         self.parent = parent
         currentRow = parent.ui.tableWidgetYourIdentities.currentRow()
         addressAtCurrentRow = str(parent.ui.tableWidgetYourIdentities.item(currentRow,1).text())
-        try:
-            isMailingList = config.getboolean(addressAtCurrentRow, 'mailinglist')
-        except:
-            isMailingList = False
-        if isMailingList:
+        if safeConfigGetBoolean(addressAtCurrentRow,'mailinglist'):
             self.ui.radioButtonBehaviorMailingList.click()
         else:
             self.ui.radioButtonBehaveNormalAddress.click()
@@ -3425,11 +3918,8 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                 if not isEnabled:
                     newItem.setTextColor(QtGui.QColor(128,128,128))
-                try:
-                    if config.getboolean(addressInKeysFile,'mailinglist'):
-                        newItem.setTextColor(QtGui.QColor(137,04,177))#magenta
-                except:
-                    pass #The 'mailinglist'
+                if safeConfigGetBoolean(addressInKeysFile,'mailinglist'):
+                    newItem.setTextColor(QtGui.QColor(137,04,177))#magenta
                 self.ui.tableWidgetYourIdentities.setItem(0, 1, newItem)
                 newItem = QtGui.QTableWidgetItem(str(addressStream(addressInKeysFile)))
                 newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
@@ -3478,11 +3968,8 @@ class MyForm(QtGui.QMainWindow):
             newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             newItem.setData(Qt.UserRole,str(toAddress))
-            try:
-                if config.getboolean(toAddress,'mailinglist'):
-                    newItem.setTextColor(QtGui.QColor(137,04,177))
-            except:
-                pass #the 'mailinglist' setting was not found for this address.
+            if safeConfigGetBoolean(toAddress,'mailinglist'):
+                newItem.setTextColor(QtGui.QColor(137,04,177))
             self.ui.tableWidgetInbox.setItem(0,0,newItem)
             if fromLabel == '':
                 newItem =  QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
@@ -3646,6 +4133,25 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
         QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
         QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+
+        self.singleAPIThread = singleAPI()
+        self.singleAPIThread.start()
+
+        if safeConfigGetBoolean('bitmessagesettings','apienabled'):
+            try:
+                apiNotifyPath = config.get('bitmessagesettings','apinotifypath')
+            except:
+                apiNotifyPath = ''
+            if apiNotifyPath != '':
+                printLock.acquire()
+                print 'Trying to call', apiNotifyPath
+                printLock.release()
+                call([apiNotifyPath, "startingUp"])
+            self.singleAPISignalHandlerThread = singleAPISignalHandler()
+            self.singleAPISignalHandlerThread.start()
+            QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+            QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"), self.connectObjectToAddressGeneratorSignals)
+            QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
 
     def click_actionManageKeys(self):
         if 'darwin' in sys.platform or 'linux' in sys.platform:
@@ -3814,12 +4320,9 @@ class MyForm(QtGui.QMainWindow):
                 toLabel = toAddress
             self.ui.tableWidgetInbox.item(i,0).setText(unicode(toLabel,'utf-8'))
             #Set the color according to whether it is the address of a mailing list or not.
-            try:
-                if config.getboolean(toAddress,'mailinglist'):
-                    self.ui.tableWidgetInbox.item(i,0).setTextColor(QtGui.QColor(137,04,177))
-                else:
-                    self.ui.tableWidgetInbox.item(i,0).setTextColor(QtGui.QColor(0,0,0))
-            except:
+            if safeConfigGetBoolean(toAddress,'mailinglist'):
+                self.ui.tableWidgetInbox.item(i,0).setTextColor(QtGui.QColor(137,04,177))
+            else:
                 self.ui.tableWidgetInbox.item(i,0).setTextColor(QtGui.QColor(0,0,0))
 
     def rerenderSentFromLabels(self):
@@ -3901,14 +4404,16 @@ class MyForm(QtGui.QMainWindow):
                         sqlSubmitQueue.put(t)
                         sqlReturnQueue.get()
                         sqlLock.release()
-                        workerQueue.put(('sendmessage',toAddress))
 
-                        try:
+
+                        
+
+                        """try:
                             fromLabel = config.get(fromAddress, 'label')
                         except:
                             fromLabel = ''
                         if fromLabel == '':
-                            fromLabel = fromAddress
+                            fromLabel = fromAddress"""
 
                         toLabel = ''
 
@@ -3921,8 +4426,11 @@ class MyForm(QtGui.QMainWindow):
                         if queryreturn <> []:
                             for row in queryreturn:
                                 toLabel, = row
+                        
+                        self.displayNewSentMessage(toAddress,toLabel,fromAddress, subject, message, ackdata)
+                        workerQueue.put(('sendmessage',toAddress))
 
-                        self.ui.tableWidgetSent.insertRow(0)
+                        """self.ui.tableWidgetSent.insertRow(0)
                         if toLabel == '':
                             newItem =  QtGui.QTableWidgetItem(unicode(toAddress,'utf-8'))
                         else:
@@ -3944,7 +4452,7 @@ class MyForm(QtGui.QMainWindow):
                         newItem.setData(33,int(time.time()))
                         self.ui.tableWidgetSent.setItem(0,3,newItem)
 
-                        self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())
+                        self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())"""
 
                         self.ui.comboBoxSendFrom.setCurrentIndex(0)
                         self.ui.labelFrom.setText('')
@@ -3997,7 +4505,7 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
                 self.ui.tableWidgetSent.setItem(0,2,newItem)
                 #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
-                newItem =  myTableWidgetItem('Doing work necessary to send broadcast...')
+                newItem =  myTableWidgetItem('Work is queued.')
                 newItem.setData(Qt.UserRole,QByteArray(ackdata))
                 newItem.setData(33,int(time.time()))
                 self.ui.tableWidgetSent.setItem(0,3,newItem)
@@ -4071,6 +4579,11 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(object, QtCore.SIGNAL("incrementNumberOfBroadcastsProcessed()"), self.incrementNumberOfBroadcastsProcessed)
         QtCore.QObject.connect(object, QtCore.SIGNAL("setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
 
+    #This function exists because of the API. The API thread starts an address generator thread and must somehow connect the address generator's signals to the QApplication thread. This function is used to connect the slots and signals.
+    def connectObjectToAddressGeneratorSignals(self,object):
+        QtCore.QObject.connect(object, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
+        QtCore.QObject.connect(object, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+
     #This function is called by the processmsg function when that function receives a message to an address that is acting as a pseudo-mailing-list. The message will be broadcast out. This function puts the message on the 'Sent' tab.
     def displayNewSentMessage(self,toAddress,toLabel,fromAddress,subject,message,ackdata):
         try:
@@ -4081,7 +4594,10 @@ class MyForm(QtGui.QMainWindow):
             fromLabel = fromAddress
 
         self.ui.tableWidgetSent.insertRow(0)
-        newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
+        if toLabel == '':
+            newItem =  QtGui.QTableWidgetItem(unicode(toAddress,'utf-8'))
+        else:
+            newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
         newItem.setData(Qt.UserRole,str(toAddress))
         self.ui.tableWidgetSent.setItem(0,0,newItem)
         if fromLabel == '':
@@ -4094,7 +4610,7 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
         self.ui.tableWidgetSent.setItem(0,2,newItem)
         #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
-        newItem =  myTableWidgetItem('Doing work necessary to send broadcast...')
+        newItem =  myTableWidgetItem('Work is queued. '+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
         newItem.setData(Qt.UserRole,QByteArray(ackdata))
         newItem.setData(33,int(time.time()))
         self.ui.tableWidgetSent.setItem(0,3,newItem)
@@ -4141,11 +4657,8 @@ class MyForm(QtGui.QMainWindow):
         #msgid, toaddress, fromaddress, subject, received, message = row
         newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
         newItem.setData(Qt.UserRole,str(toAddress))
-        try:
-            if config.getboolean(str(toAddress),'mailinglist'):
-                newItem.setTextColor(QtGui.QColor(137,04,177))
-        except:
-            pass #the 'mailinglist' setting was not found for this address.
+        if safeConfigGetBoolean(str(toAddress),'mailinglist'):
+            newItem.setTextColor(QtGui.QColor(137,04,177))
         self.ui.tableWidgetInbox.insertRow(0)
         self.ui.tableWidgetInbox.setItem(0,0,newItem)
 
@@ -4709,11 +5222,8 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetYourIdentities.item(currentRow,0).setTextColor(QtGui.QColor(0,0,0))
         self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(0,0,0))
         self.ui.tableWidgetYourIdentities.item(currentRow,2).setTextColor(QtGui.QColor(0,0,0))
-        try:
-            if config.getboolean(addressAtCurrentRow,'mailinglist'):
-                self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(137,04,177))
-        except:
-            pass
+        if safeConfigGetBoolean(addressAtCurrentRow,'mailinglist'):
+            self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(137,04,177))
         reloadMyAddressHashes()
     def on_action_YourIdentitiesDisable(self):
         currentRow = self.ui.tableWidgetYourIdentities.currentRow()
@@ -4722,12 +5232,8 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetYourIdentities.item(currentRow,0).setTextColor(QtGui.QColor(128,128,128))
         self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(128,128,128))
         self.ui.tableWidgetYourIdentities.item(currentRow,2).setTextColor(QtGui.QColor(128,128,128))
-        try:
-            if config.getboolean(addressAtCurrentRow,'mailinglist'):
-                self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(137,04,177))
-        except:
-            pass
-
+        if safeConfigGetBoolean(addressAtCurrentRow,'mailinglist'):
+            self.ui.tableWidgetYourIdentities.item(currentRow,1).setTextColor(QtGui.QColor(137,04,177))
         with open(appdata + 'keys.dat', 'wb') as configfile:
             config.write(configfile)
         reloadMyAddressHashes()
@@ -4848,6 +5354,8 @@ eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack('>Q',random.randrange
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender thread won't connect to the same remote node twice.
 neededPubkeys = {}
 successfullyDecryptMessageTimings = [] #A list of the amounts of time it took to successfully decrypt msg messages
+apiSignalQueue = Queue.Queue() #The singleAPI thread uses this queue to pass messages to a QT thread which can emit signals to do things like display a message in the UI.
+apiAddressGeneratorReturnQueue = Queue.Queue() #The address generator thread uses this queue to get information back to the API thread.
 
 #These constants are not at the top because if changed they will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 averageProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
