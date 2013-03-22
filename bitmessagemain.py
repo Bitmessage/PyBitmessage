@@ -4134,9 +4134,6 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
         QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
 
-        self.singleAPIThread = singleAPI()
-        self.singleAPIThread.start()
-
         if safeConfigGetBoolean('bitmessagesettings','apienabled'):
             try:
                 apiNotifyPath = config.get('bitmessagesettings','apinotifypath')
@@ -4147,6 +4144,8 @@ class MyForm(QtGui.QMainWindow):
                 print 'Trying to call', apiNotifyPath
                 printLock.release()
                 call([apiNotifyPath, "startingUp"])
+            self.singleAPIThread = singleAPI()
+            self.singleAPIThread.start()
             self.singleAPISignalHandlerThread = singleAPISignalHandler()
             self.singleAPISignalHandlerThread.start()
             QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
