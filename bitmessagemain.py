@@ -48,7 +48,6 @@ import pickle
 import random
 import sqlite3
 import threading #used for the locks, not for the threads
-#import cStringIO
 from time import strftime, localtime
 import os
 import shutil #used for moving the messages.dat file
@@ -78,7 +77,7 @@ class outgoingSynSender(QThread):
         time.sleep(1)
         resetTime = int(time.time()) #used below to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
         while True:
-            time.sleep(999999)#I sometimes use this to prevent connections for testing.
+            #time.sleep(999999)#I sometimes use this to prevent connections for testing.
             if len(self.selfInitiatedConnectionList) < 8: #maximum number of outgoing connections = 8
                 random.seed()
                 HOST, = random.sample(knownNodes[self.streamNumber],  1)
