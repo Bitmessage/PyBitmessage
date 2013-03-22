@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Wed Feb 27 00:00:12 2013
-#      by: PyQt4 UI code generator 4.9.5
+# Created: Fri Mar 22 15:43:34 2013
+#      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -117,6 +117,8 @@ class Ui_settingsDialog(object):
         self.gridLayout_2.addWidget(self.label_6, 2, 4, 1, 1)
         self.lineEditSocksPassword = QtGui.QLineEdit(self.groupBox_2)
         self.lineEditSocksPassword.setEnabled(False)
+        self.lineEditSocksPassword.setInputMethodHints(QtCore.Qt.ImhHiddenText|QtCore.Qt.ImhNoAutoUppercase|QtCore.Qt.ImhNoPredictiveText)
+        self.lineEditSocksPassword.setEchoMode(QtGui.QLineEdit.Password)
         self.lineEditSocksPassword.setObjectName(_fromUtf8("lineEditSocksPassword"))
         self.gridLayout_2.addWidget(self.lineEditSocksPassword, 2, 5, 1, 1)
         self.gridLayout_4.addWidget(self.groupBox_2, 1, 0, 1, 1)
