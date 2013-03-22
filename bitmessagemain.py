@@ -48,7 +48,6 @@ import pickle
 import random
 import sqlite3
 import threading #used for the locks, not for the threads
-import cStringIO
 from time import strftime, localtime
 import os
 import shutil #used for moving the messages.dat file
@@ -58,9 +57,7 @@ import highlevelcrypto
 from pyelliptic.openssl import OpenSSL
 import ctypes
 from pyelliptic import arithmetic
-#The next 5 are used for the API
-import uuid
-import Cookie
+#The next 3 are used for the API
 from SimpleXMLRPCServer import *
 import json
 from subprocess import call #used when the API must execute an outside program
@@ -3152,74 +3149,9 @@ class addressGenerator(QThread):
         return mb.raw
 
 #This is one of several classes that constitute the API
-#This class was written by Vaibhav Bhatia
-#http://code.activestate.com/recipes/501148-xmlrpc-serverclient-which-does-cookie-handling-and/
-class APIUserManagement:
-    def __init__(self):
-        #self.d = shelve.open('machines.shv')
-        self.d = {}
-
-        # register a list of valid machine names/email id's
-        validconfig = {config.get('bitmessagesettings', 'apiusername'):config.get('bitmessagesettings', 'apipassword')}
-        for k,v in validconfig.items():
-            self.generateUuid(k,v)
-
-    def generateUuid(self, email_id, machine_name):
-        """ return a uuid which uniquely identifies machinename and email id """
-        uuidstr = None
-
-        if machine_name not in self.d:
-            myNamespace = uuid.uuid3(uuid.NAMESPACE_URL, machine_name)
-            uuidstr = str(uuid.uuid3(myNamespace, email_id))
-
-            self.d[machine_name] = (machine_name, uuidstr, email_id)
-            self.d[uuidstr] = (machine_name, uuidstr ,email_id)
-        else:
-            (machine_name, uuidstr, email_id) = self.d[machine_name]
-
-        return uuidstr
-
-    def checkMe(self, id):
-        if id in self.d:
-            return self.d[id]
-        return (None,None,None)
-
-    #def __del__(self):
-    #    self.d.close()
-
-#This is used only for the API
-def APIAuthenticate(id):
-    sk = APIUserManagement()
-    return sk.checkMe(id)
-
-#This is one of several classes that constitute the API
-#This class was written by Vaibhav Bhatia
+#This class was written by Vaibhav Bhatia. Modified by Jonathan Warren (Atheros).
 #http://code.activestate.com/recipes/501148-xmlrpc-serverclient-which-does-cookie-handling-and/
 class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
-    def setCookie(self, key=None ,value=None):
-        if key :
-            c1 = Cookie.SimpleCookie()
-            c1[key] = value
-            cinfo = self.getDefaultCinfo()
-            for attr,val in cinfo.items():
-                c1[key][attr] = val
-
-            if c1 not in self.cookies:
-                self.cookies.append(c1)
-
-    def getDefaultCinfo(self):
-        cinfo = {}
-
-        cinfo['expires'] = 30*24*60*60
-        cinfo['path'] = '/RPC2/'
-        cinfo['comment'] = 'comment!'
-        cinfo['domain'] = '.localhost.local'
-        cinfo['max-age'] = 30*24*60*60
-        cinfo['secure'] = ''
-        cinfo['version']= 1
-
-        return cinfo
-
     def do_POST(self):
         #Handles the HTTP POST request.
         #Attempts to interpret all HTTP POST requests as XML-RPC calls,
@@ -3280,34 +3212,20 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
 
     def APIAuthenticateClient(self):
-        validuser = False
-
         if self.headers.has_key('Authorization'):
             # handle Basic authentication
             (enctype, encstr) =  self.headers.get('Authorization').split()
-            (emailid, machine_name) = encstr.decode('base64').split(':')
-            (auth_machine, auth_uuidstr, auth_email) = APIAuthenticate(machine_name)
-
-            if emailid == auth_email:
-                print "Authenticated"
-                # set authentication cookies on client machines
-                validuser = True
-                if auth_uuidstr:
-                    self.setCookie('UUID',auth_uuidstr)
-
-        elif self.headers.has_key('UUID'):
-            # handle cookie based authentication
-            id =  self.headers.get('UUID')
-            (auth_machine, auth_uuidstr, auth_email) = APIAuthenticate(id)
-
-            if auth_uuidstr :
-                print "Authenticated"
-                validuser = True
+            (emailid, password) = encstr.decode('base64').split(':')
+            if emailid == config.get('bitmessagesettings', 'apiusername') and password == config.get('bitmessagesettings', 'apipassword'):
+                return True
+            else:
+                return False
         else:
-            print 'Authentication failed'
+            print 'Authentication failed because header lacks Authentication field'
             time.sleep(2)
+            return False
 
-        return validuser
+        return False
 
     def _dispatch(self, method, params):
         self.cookies = []
@@ -3315,7 +3233,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         validuser = self.APIAuthenticateClient()
         if not validuser:
             time.sleep(2)
-            return "RPC Username or password incorrect."
+            return "RPC Username or password incorrect or HTTP header lacks authentication at all."
         # handle request
         if method == 'helloWorld':
             (a,b) = params
