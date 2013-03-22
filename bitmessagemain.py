@@ -48,7 +48,7 @@ import pickle
 import random
 import sqlite3
 import threading #used for the locks, not for the threads
-import cStringIO
+#import cStringIO
 from time import strftime, localtime
 import os
 import shutil #used for moving the messages.dat file
