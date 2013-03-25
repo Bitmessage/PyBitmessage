@@ -419,7 +419,7 @@ except:
                 lib_path = path.join(sys._MEIPASS, "libeay32.dll")
                 OpenSSL = _OpenSSL(lib_path)
             except:
-                if 'linux' in sys.platform:
+                if 'linux' in sys.platform or 'darwin' in sys.platform:
                     try:
                         from ctypes.util import find_library
                         OpenSSL = _OpenSSL(find_library('ssl'))
