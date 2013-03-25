@@ -329,7 +329,7 @@ class receiveDataThread(QThread):
                     if self.payloadLength <= 180000000: #If the size of the message is greater than 180MB, ignore it. (I get memory errors when processing messages much larger than this though it is concievable that this value will have to be lowered if some systems are less tolarant of large messages.)
                         remoteCommand = self.data[4:16]
                         printLock.acquire()
-                        print 'remoteCommand ', remoteCommand, 'from', self.HOST
+                        print 'remoteCommand', repr(remoteCommand.replace('\x00','')), ' from', self.HOST
                         printLock.release()
                         if remoteCommand == 'version\x00\x00\x00\x00\x00':
                             self.recversion()
@@ -1750,6 +1750,12 @@ class receiveDataThread(QThread):
             if self.data[52+lengthOfNumberOfAddresses+(34*i)] == '\x7F':
                 print 'Ignoring IP address in loopback range:', hostFromAddrMessage
                 continue
+            if self.data[52+lengthOfNumberOfAddresses+(34*i)] == '\x0A':
+                print 'Ignoring IP address in private range:', hostFromAddrMessage
+                continue
+            if self.data[52+lengthOfNumberOfAddresses+(34*i):52+lengthOfNumberOfAddresses+(34*i)+2] == '\xC0A8':
+                print 'Ignoring IP address in private range:', hostFromAddrMessage
+                continue
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>I',self.data[24+lengthOfNumberOfAddresses+(34*i):28+lengthOfNumberOfAddresses+(34*i)]) #This is the 'time' value in the received addr message.
             if recaddrStream not in knownNodes: #knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
                 knownNodes[recaddrStream] = {}
@@ -1807,21 +1813,26 @@ class receiveDataThread(QThread):
         #print 'knownNodes', knownNodes
 
         #We are going to share a maximum number of 1000 addrs with our peer. 500 from this stream, 250 from the left child stream, and 250 from the right child stream.
-
         if len(knownNodes[self.streamNumber]) > 0:
             for i in range(500):
                 random.seed()
                 HOST, = random.sample(knownNodes[self.streamNumber],  1)
+                if self.isHostInPrivateIPRange(HOST):
+                    continue
                 addrsInMyStream[HOST] = knownNodes[self.streamNumber][HOST]
         if len(knownNodes[self.streamNumber*2]) > 0:
             for i in range(250):
                 random.seed()
                 HOST, = random.sample(knownNodes[self.streamNumber*2],  1)
+                if self.isHostInPrivateIPRange(HOST):
+                    continue
                 addrsInChildStreamLeft[HOST] = knownNodes[self.streamNumber*2][HOST]
         if len(knownNodes[(self.streamNumber*2)+1]) > 0:
             for i in range(250):
                 random.seed()
                 HOST, = random.sample(knownNodes[(self.streamNumber*2)+1],  1)
+                if self.isHostInPrivateIPRange(HOST):
+                    continue
                 addrsInChildStreamRight[HOST] = knownNodes[(self.streamNumber*2)+1][HOST]
 
         numberOfAddressesInAddrMessage = 0
@@ -1970,6 +1981,17 @@ class receiveDataThread(QThread):
         self.verackSent = True
         if self.verackReceived == True:
             self.connectionFullyEstablished()
+
+    def isHostInPrivateIPRange(self,host):
+        if host[:3] == '10.':
+            return True
+        if host[:4] == '172.':
+            if host[6] == '.':
+                if int(host[4:6]) >= 16 and int(host[4:6]) <= 31:
+                    return True
+        if host[:8] == '192.168.':
+            return True
+        return False
 
 #Every connection to a peer has a sendDataThread (and also a receiveDataThread).
 class sendDataThread(QThread):
