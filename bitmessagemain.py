@@ -136,7 +136,7 @@ class outgoingSynSender(QThread):
                     rd.setup(sock,HOST,PORT,self.streamNumber,self.selfInitiatedConnectionList,objectsOfWhichThisRemoteNodeIsAlreadyAware)
                     rd.start()
                     printLock.acquire()
-                    print self, 'connected to', HOST, 'during outgoing attempt.'
+                    print self, 'connected to', HOST, 'during an outgoing attempt.'
                     printLock.release()
 
                     sd = sendDataThread()
