@@ -136,7 +136,7 @@ class outgoingSynSender(QThread):
                     rd.setup(sock,HOST,PORT,self.streamNumber,self.selfInitiatedConnectionList,objectsOfWhichThisRemoteNodeIsAlreadyAware)
                     rd.start()
                     printLock.acquire()
-                    print self, 'connected to', HOST, 'during outgoing attempt.'
+                    print self, 'connected to', HOST, 'during an outgoing attempt.'
                     printLock.release()
 
                     sd = sendDataThread()
@@ -2445,7 +2445,18 @@ class singleWorker(QThread):
         sqlLock.release()
         for row in queryreturn:
             toripe, = row
-            neededPubkeys[toripe] = 0
+            #It is possible for the status of a message in our sent folder (which is also our 'outbox' folder) to have a status of 'findingpubkey' even if we have the pubkey.  This can
+            #happen if the worker thread is working on the POW for an earlier message and does not get to the message in question before the user closes Bitmessage. In this case, the
+            #status will still be 'findingpubkey' but Bitmessage will never have checked to see whether it actually already has the pubkey. We should therefore check here.
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''SELECT hash FROM pubkeys WHERE hash=? ''')
+            sqlSubmitQueue.put((toripe,))
+            queryreturn = sqlReturnQueue.get()
+            sqlLock.release()
+            if queryreturn != '': #If we have the pubkey then send the message otherwise put the hash in the neededPubkeys data structure so that we will pay attention to it if it comes over the wire.
+                self.sendMsg(toripe)
+            else:
+                neededPubkeys[toripe] = 0
 
         self.sendBroadcast() #just in case there are any proof of work tasks for Broadcasts that have yet to be sent.
 
