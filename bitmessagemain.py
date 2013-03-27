@@ -3886,7 +3886,7 @@ class MyForm(QtGui.QMainWindow):
         reloadMyAddressHashes()
         self.reloadBroadcastSendersForWhichImWatching()
 
-
+        self.ui.tableWidgetSent.keyPressEvent = self.tableWidgetSentKeyPressEvent
         #Load inbox from messages database file
         sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message FROM inbox where folder='inbox' ORDER BY received''')
         sqlSubmitQueue.put('')
@@ -3941,6 +3941,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.setItem(0,3,newItem)
             #self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
 
+        self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
         #Load Sent items from database
         sqlSubmitQueue.put('''SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime FROM sent where folder = 'sent' ORDER BY lastactiontime''')
         sqlSubmitQueue.put('')
@@ -4102,6 +4103,16 @@ class MyForm(QtGui.QMainWindow):
             QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
             QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"), self.connectObjectToAddressGeneratorSignals)
             QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
+
+    def tableWidgetInboxKeyPressEvent(self,event):
+        if event.key() == QtCore.Qt.Key_Delete:
+            self.on_action_InboxTrash()
+        return QtGui.QTableWidget.keyPressEvent(self.ui.tableWidgetInbox, event)
+
+    def tableWidgetSentKeyPressEvent(self,event):
+        if event.key() == QtCore.Qt.Key_Delete:
+            self.on_action_SentTrash()
+        return QtGui.QTableWidget.keyPressEvent(self.ui.tableWidgetSent, event)
 
     def click_actionManageKeys(self):
         if 'darwin' in sys.platform or 'linux' in sys.platform:
