@@ -569,7 +569,7 @@ p, li { white-space: pre-wrap; }
          <normaloff>:/newPrefix/images/addressbook.png</normaloff>:/newPrefix/images/addressbook.png</iconset>
        </attribute>
        <attribute name="title">
-        <string>Address book</string>
+        <string>Address Book</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_5">
         <item row="0" column="0" colspan="2">
