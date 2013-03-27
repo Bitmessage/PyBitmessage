@@ -3886,7 +3886,7 @@ class MyForm(QtGui.QMainWindow):
         reloadMyAddressHashes()
         self.reloadBroadcastSendersForWhichImWatching()
 
-
+        self.ui.tableWidgetSent.keyPressEvent = self.tableWidgetSentKeyPressEvent
         #Load inbox from messages database file
         sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message FROM inbox where folder='inbox' ORDER BY received''')
         sqlSubmitQueue.put('')
@@ -3941,6 +3941,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.setItem(0,3,newItem)
             #self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
 
+        self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
         #Load Sent items from database
         sqlSubmitQueue.put('''SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime FROM sent where folder = 'sent' ORDER BY lastactiontime''')
         sqlSubmitQueue.put('')
@@ -4102,6 +4103,16 @@ class MyForm(QtGui.QMainWindow):
             QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
             QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"), self.connectObjectToAddressGeneratorSignals)
             QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
+
+    def tableWidgetInboxKeyPressEvent(self,event):
+        if event.key() == QtCore.Qt.Key_Delete:
+            self.on_action_InboxTrash()
+        return QtGui.QTableWidget.keyPressEvent(self.ui.tableWidgetInbox, event)
+
+    def tableWidgetSentKeyPressEvent(self,event):
+        if event.key() == QtCore.Qt.Key_Delete:
+            self.on_action_SentTrash()
+        return QtGui.QTableWidget.keyPressEvent(self.ui.tableWidgetSent, event)
 
     def click_actionManageKeys(self):
         if 'darwin' in sys.platform or 'linux' in sys.platform:
@@ -5010,31 +5021,33 @@ class MyForm(QtGui.QMainWindow):
     #Send item on the Inbox tab to trash
     def on_action_InboxTrash(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
-        inventoryHashToTrash = str(self.ui.tableWidgetInbox.item(currentRow,3).data(Qt.UserRole).toPyObject())
-        t = (inventoryHashToTrash,)
-        sqlLock.acquire()
-        #sqlSubmitQueue.put('''delete from inbox where msgid=?''')
-        sqlSubmitQueue.put('''UPDATE inbox SET folder='trash' WHERE msgid=?''')
-        sqlSubmitQueue.put(t)
-        sqlReturnQueue.get()
-        sqlLock.release()
-        self.ui.textEditInboxMessage.setText("")
-        self.ui.tableWidgetInbox.removeRow(currentRow)
-        self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+        if currentRow >= 0:
+            inventoryHashToTrash = str(self.ui.tableWidgetInbox.item(currentRow,3).data(Qt.UserRole).toPyObject())
+            t = (inventoryHashToTrash,)
+            sqlLock.acquire()
+            #sqlSubmitQueue.put('''delete from inbox where msgid=?''')
+            sqlSubmitQueue.put('''UPDATE inbox SET folder='trash' WHERE msgid=?''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+            sqlLock.release()
+            self.ui.textEditInboxMessage.setText("")
+            self.ui.tableWidgetInbox.removeRow(currentRow)
+            self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
 
     #Send item on the Sent tab to trash
     def on_action_SentTrash(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
-        ackdataToTrash = str(self.ui.tableWidgetSent.item(currentRow,3).data(Qt.UserRole).toPyObject())
-        t = (ackdataToTrash,)
-        sqlLock.acquire()
-        sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE ackdata=?''')
-        sqlSubmitQueue.put(t)
-        sqlReturnQueue.get()
-        sqlLock.release()
-        self.ui.textEditSentMessage.setText("")
-        self.ui.tableWidgetSent.removeRow(currentRow)
-        self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+        if currentRow >= 0:
+            ackdataToTrash = str(self.ui.tableWidgetSent.item(currentRow,3).data(Qt.UserRole).toPyObject())
+            t = (ackdataToTrash,)
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE ackdata=?''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+            sqlLock.release()
+            self.ui.textEditSentMessage.setText("")
+            self.ui.tableWidgetSent.removeRow(currentRow)
+            self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
     def on_action_SentClipboard(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         addressAtCurrentRow = str(self.ui.tableWidgetSent.item(currentRow,0).data(Qt.UserRole).toPyObject())
