@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Tue Jan 29 16:21:41 2013
+# Created: Wed Mar 27 17:23:59 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -480,7 +480,7 @@ class Ui_MainWindow(object):
         item.setText(QtGui.QApplication.translate("MainWindow", "Name or Label", None, QtGui.QApplication.UnicodeUTF8))
         item = self.tableWidgetAddressBook.horizontalHeaderItem(1)
         item.setText(QtGui.QApplication.translate("MainWindow", "Address", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.addressbook), QtGui.QApplication.translate("MainWindow", "Address book", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.addressbook), QtGui.QApplication.translate("MainWindow", "Address Book", None, QtGui.QApplication.UnicodeUTF8))
         self.radioButtonBlacklist.setText(QtGui.QApplication.translate("MainWindow", "Use a Blacklist (Allow all incoming messages except those on the Blacklist)", None, QtGui.QApplication.UnicodeUTF8))
         self.radioButtonWhitelist.setText(QtGui.QApplication.translate("MainWindow", "Use a Whitelist (Block all incoming messages except those on the Whitelist)", None, QtGui.QApplication.UnicodeUTF8))
         self.pushButtonAddBlacklist.setText(QtGui.QApplication.translate("MainWindow", "Add", None, QtGui.QApplication.UnicodeUTF8))
