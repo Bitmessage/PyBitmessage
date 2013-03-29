@@ -2098,7 +2098,7 @@ class singleWorker(QThread):
             sqlSubmitQueue.put((toripe,))
             queryreturn = sqlReturnQueue.get()
             sqlLock.release()
-            if queryreturn != '':
+            if queryreturn != []:
                 #We have the needed pubkey
                 self.sendMsg(toripe)
             else:
