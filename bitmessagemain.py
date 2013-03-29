@@ -2008,7 +2008,7 @@ class singleCleaner(QThread):
             self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing housekeeping (Flushing inventory in memory to disk...)")
             for hash, storedValue in inventory.items():
                 objectType, streamNumber, payload, receivedTime = storedValue
-                if int(time.time())- 3600 > receivedTime:
+                if int(time.time())- 600 > receivedTime:
                     t = (hash,objectType,streamNumber,payload,receivedTime)
                     sqlSubmitQueue.put('''INSERT INTO inventory VALUES (?,?,?,?,?)''')
                     sqlSubmitQueue.put(t)
