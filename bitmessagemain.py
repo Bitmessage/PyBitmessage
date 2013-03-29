@@ -2092,7 +2092,19 @@ class singleWorker(QThread):
         sqlLock.release()
         for row in queryreturn:
             toripe, = row
-            self.sendMsg(toripe)
+            #There is a remote possibility that we may, for some reason, no longer have the required pubkey. Let us make sure we still have it or else the sendMsg function will appear to freeze.
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''SELECT hash FROM pubkeys WHERE hash=? ''')
+            sqlSubmitQueue.put((toripe,))
+            queryreturn = sqlReturnQueue.get()
+            sqlLock.release()
+            if queryreturn != '':
+                #We have the needed pubkey
+                self.sendMsg(toripe)
+            else:
+                printLock.acquire()
+                sys.stderr.write('For some reason, the status of a message in our outbox is \'doingpow\' even though we lack the pubkey. Here is the RIPE hash of the needed pubkey: %s\n' % toripe.encode('hex'))
+                printLock.release()
 
         while True:
             command, data = workerQueue.get()
@@ -2676,7 +2688,7 @@ class addressGenerator(QThread):
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address. Doing work necessary to broadcast it...')
                 self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
                 reloadMyAddressHashes()
-                workerQueue.put(('doPOWForMyV2Pubkey',address))
+                workerQueue.put(('doPOWForMyV2Pubkey',ripe.digest()))
 
             else: #There is something in the deterministicPassphrase variable thus we are going to do this deterministically.
                 statusbar = 'Generating '+str(self.numberOfAddressesToMake) + ' new addresses.'
