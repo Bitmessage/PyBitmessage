@@ -620,7 +620,9 @@ class receiveDataThread(QThread):
             workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
             
             fromAddress = encodeAddress(sendersAddressVersion,sendersStream,ripe.digest())
+            printLock.acquire()
             print 'fromAddress:', fromAddress
+            printLock.release()
             if messageEncodingType == 2:
                 bodyPositionIndex = string.find(message,'\nBody:')
                 if bodyPositionIndex > 1:
@@ -1896,6 +1898,15 @@ def lookupAppdataFolder():
         appdata = path.expanduser(path.join("~", "." + APPNAME + "/"))
     return appdata
 
+def isAddressInMyAddressBook(address):
+    t = (address,)
+    sqlLock.acquire()
+    sqlSubmitQueue.put('''select address from addressbook where address=?''')
+    sqlSubmitQueue.put(t)
+    queryreturn = sqlReturnQueue.get()
+    sqlLock.release()
+    return queryreturn != []
+
 #This thread exists because SQLITE3 is so un-threadsafe that we must submit queries to it and it puts results back in a different queue. They won't let us just use locks.
 class sqlThread(QThread):
     def __init__(self, parent = None):
@@ -2092,7 +2103,7 @@ class singleWorker(QThread):
         sqlLock.release()
         for row in queryreturn:
             toripe, = row
-            #There is a remote possibility that we may, for some reason, no longer have the required pubkey. Let us make sure we still have it or else the sendMsg function will appear to freeze.
+            #Evidentially there is a remote possibility that we may, for some reason, no longer have the recipient's pubkey. Let us make sure we still have it or else the sendMsg function will appear to freeze.
             sqlLock.acquire()
             sqlSubmitQueue.put('''SELECT hash FROM pubkeys WHERE hash=? ''')
             sqlSubmitQueue.put((toripe,))
@@ -2147,7 +2158,9 @@ class singleWorker(QThread):
                     del neededPubkeys[toRipe]
                     self.sendMsg(toRipe)
                 else:
+                    printLock.acquire()
                     print 'We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:', toRipe.encode('hex')
+                    printLock.release()
             else:
                 printLock.acquire()
                 sys.stderr.write('Probable programming error: The command sent to the workerThread is weird. It is: %s\n' % command)
@@ -3582,7 +3595,7 @@ class MyForm(QtGui.QMainWindow):
             newItem.setData(33,int(received))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetInbox.setItem(0,3,newItem)
-            #self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
+            #self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
 
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
         #Load Sent items from database
@@ -4056,7 +4069,7 @@ class MyForm(QtGui.QMainWindow):
                         newItem.setData(33,int(time.time()))
                         self.ui.tableWidgetSent.setItem(0,3,newItem)
 
-                        self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())"""
+                        self.ui.textEditSentMessage.setPlainText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())"""
 
                         self.ui.comboBoxSendFrom.setCurrentIndex(0)
                         self.ui.labelFrom.setText('')
@@ -4114,7 +4127,7 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setData(33,int(time.time()))
                 self.ui.tableWidgetSent.setItem(0,3,newItem)
 
-                self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())
+                self.ui.textEditSentMessage.setPlainText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())
 
                 self.ui.comboBoxSendFrom.setCurrentIndex(0)
                 self.ui.labelFrom.setText('')
@@ -4218,7 +4231,7 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(Qt.UserRole,QByteArray(ackdata))
         newItem.setData(33,int(time.time()))
         self.ui.tableWidgetSent.setItem(0,3,newItem)
-        self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())
+        self.ui.textEditSentMessage.setPlainText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())
 
     def displayNewInboxMessage(self,inventoryHash,toAddress,fromAddress,subject,message):
         '''print 'test signals displayNewInboxMessage'
@@ -4284,8 +4297,14 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(33,int(time.time()))
         self.ui.tableWidgetInbox.setItem(0,3,newItem)
 
-        self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
         self.ui.tableWidgetInbox.setCurrentCell(0,0)
+
+        #If we have received this message from either a broadcast address or from someone in our address book, display as HTML
+        if decodeAddress(fromAddress)[3] in broadcastSendersForWhichImWatching or isAddressInMyAddressBook(fromAddress):
+            self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
+        else:
+            self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
+        
 
     def click_pushButtonAddAddressBook(self):
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
@@ -4688,7 +4707,7 @@ class MyForm(QtGui.QMainWindow):
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
             sqlLock.release()
-            self.ui.textEditSentMessage.setText("")
+            self.ui.textEditSentMessage.setPlainText("")
             self.ui.tableWidgetSent.removeRow(currentRow)
             self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
     def on_action_SentClipboard(self):
@@ -4858,12 +4877,18 @@ class MyForm(QtGui.QMainWindow):
     def tableWidgetInboxItemClicked(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
         if currentRow >= 0:
-            self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())
+            fromAddress = str(self.ui.tableWidgetInbox.item(currentRow,1).data(Qt.UserRole).toPyObject())
+            #If we have received this message from either a broadcast address or from someone in our address book, display as HTML
+            if decodeAddress(fromAddress)[3] in broadcastSendersForWhichImWatching or isAddressInMyAddressBook(fromAddress):
+                self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())
+            else:
+                self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())
+
         
     def tableWidgetSentItemClicked(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         if currentRow >= 0:
-            self.ui.textEditSentMessage.setText(self.ui.tableWidgetSent.item(currentRow,2).data(Qt.UserRole).toPyObject())
+            self.ui.textEditSentMessage.setPlainText(self.ui.tableWidgetSent.item(currentRow,2).data(Qt.UserRole).toPyObject())
 
     def tableWidgetYourIdentitiesItemChanged(self):
         currentRow = self.ui.tableWidgetYourIdentities.currentRow()
