@@ -7,7 +7,7 @@
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
 softwareVersion = '0.2.7'
-verbose = 1
+verbose = 2
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
 lengthOfTimeToHoldOnToAllPubkeys = 2419200 #Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
@@ -375,7 +375,6 @@ class receiveDataThread(QThread):
                                     printLock.release()
                                 del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[objectHash]
                             else:
-                                #print 'processData function making request for object:', objectHash.encode('hex')
                                 self.sendgetdata(objectHash)
                                 del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[objectHash] #It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
                                 break
