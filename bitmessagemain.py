@@ -379,16 +379,16 @@ class receiveDataThread(QThread):
                                 del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[objectHash] #It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
                                 if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) == 0:
                                     printLock.acquire()
-                                    print 'within processData, number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
+                                    print '(concerning', self.HOST + ')', 'number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
                                     printLock.release()
                                 break
                             if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) == 0:
                                 printLock.acquire()
-                                print 'within processData, number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
+                                print '(concerning', self.HOST + ')', 'number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
                                 printLock.release()
                         if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) > 0:
                             printLock.acquire()
-                            print 'within processData, number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
+                            print '(concerning', self.HOST + ')', 'number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
                             printLock.release()
                         if len(self.ackDataThatWeHaveYetToSend) > 0:
                             self.data = self.ackDataThatWeHaveYetToSend.pop()
@@ -1217,6 +1217,7 @@ class receiveDataThread(QThread):
             print 'inv message doesn\'t contain enough data. Ignoring.'
             return
         if numberOfItemsInInv == 1: #we'll just request this data from the person who advertised the object.
+            self.objectsOfWhichThisRemoteNodeIsAlreadyAware[data[lengthOfVarint:32+lengthOfVarint]] = 0
             if data[lengthOfVarint:32+lengthOfVarint] in inventory:
                 printLock.acquire()
                 print 'Inventory (in memory) has inventory item already.'
