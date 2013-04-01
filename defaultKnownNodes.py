@@ -50,7 +50,7 @@ def readDefaultKnownNodes(appdata):
     for stream, storedValue in knownNodes.items():
         for host,value in storedValue.items():
             port, storedtime = storedValue[host]
-            print host, '\t', port, '\t', strftime('%a, %d %b %Y  %I:%M %p',localtime(storedtime))
+            print host, '\t', port, '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(storedtime)))
 
 if __name__ == "__main__":
 
