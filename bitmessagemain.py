@@ -1245,10 +1245,10 @@ class receiveDataThread(QThread):
         try:
             self.sock.send(headerData + payload)
         except Exception, err:
-            if not 'Bad file descriptor' in err:
-                printLock.acquire()
-                sys.stderr.write('sock.send error: %s\n' % err)
-                printLock.release()
+            #if not 'Bad file descriptor' in err:
+            printLock.acquire()
+            sys.stderr.write('sock.send error: %s\n' % err)
+            printLock.release()
 
     #We have received a getdata request from our peer
     def recgetdata(self, data):
