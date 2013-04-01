@@ -401,7 +401,7 @@ class receiveDataThread(QThread):
         POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(data[:8]+ hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
         #print 'POW:', POW
         #Notice that I have divided the averageProofOfWorkNonceTrialsPerByte by two. This makes the POW requirement easier. This gives us wiggle-room: if we decide that we want to make the POW easier, the change won't obsolete old clients because they already expect a lower POW. If we decide that the current work done by clients feels approperate then we can remove this division by 2 and make the requirement match what is actually done by a sending node. If we want to raise the POW requirement then old nodes will HAVE to upgrade no matter what.
-        return POW < 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * (averageProofOfWorkNonceTrialsPerByte/2))
+        return POW <= 2**64 / ((len(data)+payloadLengthExtraBytes) * (averageProofOfWorkNonceTrialsPerByte/2))
 
     def sendpong(self):
         print 'Sending pong'
@@ -4217,6 +4217,7 @@ class MyForm(QtGui.QMainWindow):
         if fromLabel == '':
             fromLabel = fromAddress
 
+        self.ui.tableWidgetSent.setSortingEnabled(False)
         self.ui.tableWidgetSent.insertRow(0)
         if toLabel == '':
             newItem =  QtGui.QTableWidgetItem(unicode(toAddress,'utf-8'))
@@ -4239,6 +4240,7 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(33,int(time.time()))
         self.ui.tableWidgetSent.setItem(0,3,newItem)
         self.ui.textEditSentMessage.setPlainText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())
+        self.ui.tableWidgetSent.setSortingEnabled(True)
 
     def displayNewInboxMessage(self,inventoryHash,toAddress,fromAddress,subject,message):
         '''print 'test signals displayNewInboxMessage'
@@ -4278,7 +4280,7 @@ class MyForm(QtGui.QMainWindow):
         if toLabel == '':
             toLabel = toAddress
 
-        #msgid, toaddress, fromaddress, subject, received, message = row
+        self.ui.tableWidgetInbox.setSortingEnabled(False)
         newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
         newItem.setData(Qt.UserRole,str(toAddress))
         if safeConfigGetBoolean(str(toAddress),'mailinglist'):
@@ -4303,15 +4305,14 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(Qt.UserRole,QByteArray(inventoryHash))
         newItem.setData(33,int(time.time()))
         self.ui.tableWidgetInbox.setItem(0,3,newItem)
-
         self.ui.tableWidgetInbox.setCurrentCell(0,0)
-
+        
         #If we have received this message from either a broadcast address or from someone in our address book, display as HTML
         if decodeAddress(fromAddress)[3] in broadcastSendersForWhichImWatching or isAddressInMyAddressBook(fromAddress):
             self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
         else:
             self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
-        
+        self.ui.tableWidgetInbox.setSortingEnabled(True)
 
     def click_pushButtonAddAddressBook(self):
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
@@ -4325,12 +4326,14 @@ class MyForm(QtGui.QMainWindow):
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
                 if queryreturn == []:
+                    self.ui.tableWidgetAddressBook.setSortingEnabled(False)
                     self.ui.tableWidgetAddressBook.insertRow(0)
                     newItem =  QtGui.QTableWidgetItem(unicode(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
                     self.ui.tableWidgetAddressBook.setItem(0,0,newItem)
                     newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
                     newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                     self.ui.tableWidgetAddressBook.setItem(0,1,newItem)
+                    self.ui.tableWidgetAddressBook.setSortingEnabled(True)
                     t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())))
                     sqlLock.acquire()
                     sqlSubmitQueue.put('''INSERT INTO addressbook VALUES (?,?)''')
@@ -4356,12 +4359,14 @@ class MyForm(QtGui.QMainWindow):
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
                 if queryreturn == []:
+                    self.ui.tableWidgetSubscriptions.setSortingEnabled(False)
                     self.ui.tableWidgetSubscriptions.insertRow(0)
                     newItem =  QtGui.QTableWidgetItem(unicode(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
                     self.ui.tableWidgetSubscriptions.setItem(0,0,newItem)
                     newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
                     newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                     self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
+                    self.ui.tableWidgetSubscriptions.setSortingEnabled(True)
                     t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())),True)
                     sqlLock.acquire()
                     sqlSubmitQueue.put('''INSERT INTO subscriptions VALUES (?,?,?)''')
@@ -4520,12 +4525,14 @@ class MyForm(QtGui.QMainWindow):
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
                 if queryreturn == []:
+                    self.ui.tableWidgetBlacklist.setSortingEnabled(False)
                     self.ui.tableWidgetBlacklist.insertRow(0)
                     newItem =  QtGui.QTableWidgetItem(unicode(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
                     self.ui.tableWidgetBlacklist.setItem(0,0,newItem)
                     newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text()))
                     newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                     self.ui.tableWidgetBlacklist.setItem(0,1,newItem)
+                    self.ui.tableWidgetBlacklist.setSortingEnabled(True)
                     t = (str(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text())),True)
                     sqlLock.acquire()
                     if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
@@ -4937,6 +4944,7 @@ class MyForm(QtGui.QMainWindow):
         self.rerenderSentToLabels()
 
     def writeNewAddressToTable(self,label,address,streamNumber):
+        self.ui.tableWidgetYourIdentities.setSortingEnabled(False)
         self.ui.tableWidgetYourIdentities.insertRow(0)
         self.ui.tableWidgetYourIdentities.setItem(0, 0, QtGui.QTableWidgetItem(unicode(label,'utf-8')))
         newItem = QtGui.QTableWidgetItem(address)
@@ -4945,6 +4953,7 @@ class MyForm(QtGui.QMainWindow):
         newItem = QtGui.QTableWidgetItem(streamNumber)
         newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
         self.ui.tableWidgetYourIdentities.setItem(0, 2, newItem)
+        self.ui.tableWidgetYourIdentities.setSortingEnabled(True)
         self.rerenderComboBoxSendFrom()
 
     def updateStatusBar(self,data):
