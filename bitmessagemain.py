@@ -3596,7 +3596,7 @@ class MyForm(QtGui.QMainWindow):
             newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetInbox.setItem(0,2,newItem)
-            newItem =  myTableWidgetItem(unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(received)))),'utf-8')
+            newItem =  myTableWidgetItem(unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(received))),'utf-8'))
             newItem.setData(Qt.UserRole,QByteArray(msgid))
             newItem.setData(33,int(received))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
