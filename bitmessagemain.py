@@ -1252,34 +1252,32 @@ class receiveDataThread(QThread):
 
     #We have received a getdata request from our peer
     def recgetdata(self, data):
-        value, lengthOfVarint = decodeVarint(data[:10])
-        #print 'Number of items in getdata request:', value
-        try:
-            for i in xrange(value):
-                hash = data[lengthOfVarint+(i*32):32+lengthOfVarint+(i*32)]
-                printLock.acquire()
-                print 'received getdata request for item:', hash.encode('hex')
-                printLock.release()
-                #print 'inventory is', inventory
-                if hash in inventory:
-                    objectType, streamNumber, payload, receivedTime = inventory[hash]
+        numberOfRequestedInventoryItems, lengthOfVarint = decodeVarint(data[:10])
+        if len(data) < lengthOfVarint + (32 * numberOfRequestedInventoryItems):
+            print 'getdata message does not contain enough data. Ignoring.'
+            return
+        for i in xrange(numberOfRequestedInventoryItems):
+            hash = data[lengthOfVarint+(i*32):32+lengthOfVarint+(i*32)]
+            printLock.acquire()
+            print 'received getdata request for item:', hash.encode('hex')
+            printLock.release()
+            #print 'inventory is', inventory
+            if hash in inventory:
+                objectType, streamNumber, payload, receivedTime = inventory[hash]
+                self.sendData(objectType,payload)
+            else:
+                t = (hash,)
+                sqlLock.acquire()
+                sqlSubmitQueue.put('''select objecttype, payload from inventory where hash=?''')
+                sqlSubmitQueue.put(t)
+                queryreturn = sqlReturnQueue.get()
+                sqlLock.release()
+                if queryreturn <> []:
+                    for row in queryreturn:
+                        objectType, payload = row
                     self.sendData(objectType,payload)
                 else:
-                    t = (hash,)
-                    sqlLock.acquire()
-                    sqlSubmitQueue.put('''select objecttype, payload from inventory where hash=?''')
-                    sqlSubmitQueue.put(t)
-                    queryreturn = sqlReturnQueue.get()
-                    sqlLock.release()
-                    if queryreturn <> []:
-                        for row in queryreturn:
-                            objectType, payload = row
-                        self.sendData(objectType,payload)
-                    else:
-                        print 'Someone asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. That shouldn\'t have happened.'
-
-        except:
-            pass   #someone is probably trying to cause a program error by, for example, making a request for 10 items but only including the hashes for 5.
+                    print 'Someone asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. That shouldn\'t have happened.'
 
     #Our peer has requested (in a getdata message) that we send an object.
     def sendData(self,objectType,payload):
@@ -1343,7 +1341,7 @@ class receiveDataThread(QThread):
 
         if numberOfAddressesIncluded > 1000 or numberOfAddressesIncluded == 0:
             return
-        if self.payloadLength < lengthOfNumberOfAddresses + (34 * numberOfAddressesIncluded):
+        if len(data) < lengthOfNumberOfAddresses + (34 * numberOfAddressesIncluded):
             print 'addr message does not contain enough data. Ignoring.'
             return
 
@@ -2298,7 +2296,7 @@ class singleWorker(QThread):
                 print 'sending inv (within sendBroadcast function)'
                 broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
-                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent at '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
+                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent on '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
 
                 #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
                 sqlLock.acquire()
@@ -3903,7 +3901,8 @@ class MyForm(QtGui.QMainWindow):
             tableAckdata = self.ui.tableWidgetSent.item(i,3).data(Qt.UserRole).toPyObject()
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
             if ackdata == tableAckdata:
-                self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
+                #self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
+                self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
 
     def rerenderInboxFromLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
