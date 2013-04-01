@@ -2058,7 +2058,6 @@ class singleCleaner(QThread):
                             sqlSubmitQueue.put('''UPDATE sent SET lastactiontime=?, pubkeyretrynumber=? WHERE toripe=?''')
                             sqlSubmitQueue.put(t)
                             sqlReturnQueue.get()
-                            #self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),toripe,'Public key requested again. ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
                     else:# status == sentmessage
                         if int(time.time()) - lastactiontime > (maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
                             print 'It has been a long time and we haven\'t heard an acknowledgement to our msg. Sending again.'
@@ -2066,7 +2065,6 @@ class singleCleaner(QThread):
                             sqlSubmitQueue.put('''UPDATE sent SET lastactiontime=?, msgretrynumber=?, status=? WHERE ackdata=?''')
                             sqlSubmitQueue.put(t)
                             sqlReturnQueue.get()
-                            #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Message sent again because the acknowledgement was never received. ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
                             workerQueue.put(('sendmessage',toaddress))
                             self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing work necessary to again attempt to deliver a message...")
                 sqlLock.release()
@@ -2296,7 +2294,7 @@ class singleWorker(QThread):
                 print 'sending inv (within sendBroadcast function)'
                 broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
-                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent on '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
+                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent on '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
 
                 #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
                 sqlLock.acquire()
@@ -2358,7 +2356,7 @@ class singleWorker(QThread):
                 print 'sending inv (within sendBroadcast function)'
                 broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
-                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent at '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
+                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent at '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
 
                 #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
                 sqlLock.acquire()
@@ -2549,7 +2547,7 @@ class singleWorker(QThread):
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'msg'
             inventory[inventoryHash] = (objectType, toStreamNumber, payload, int(time.time()))
-            self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Message sent. Waiting on acknowledgement. Sent on ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
+            self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Message sent. Waiting on acknowledgement. Sent on ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
             print 'sending inv (within sendmsg function)'
             broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
@@ -2600,7 +2598,7 @@ class singleWorker(QThread):
         broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
         self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Broacasting the public key request. This program will auto-retry if they are offline.')
-        self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Sending public key request. Waiting for reply. Requested at ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
+        self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Sending public key request. Waiting for reply. Requested at ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
 
     def generateFullAckMessage(self,ackdata,toStreamNumber,embeddedTime):
         nonce = 0
@@ -3649,17 +3647,17 @@ class MyForm(QtGui.QMainWindow):
             if status == 'findingpubkey':
                 newItem =  myTableWidgetItem('Waiting on their public key. Will request it again soon.')
             elif status == 'sentmessage':
-                newItem =  myTableWidgetItem('Message sent. Waiting on acknowledgement. Sent at ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(lastactiontime))))
+                newItem =  myTableWidgetItem('Message sent. Waiting on acknowledgement. Sent at ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(lastactiontime)),'utf-8'))
             elif status == 'doingpow':
                 newItem =  myTableWidgetItem('Need to do work to send message. Work is queued.')
             elif status == 'ackreceived':
-                newItem =  myTableWidgetItem('Acknowledgement of the message received ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime)))))
+                newItem =  myTableWidgetItem('Acknowledgement of the message received ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             elif status == 'broadcastpending':
                 newItem =  myTableWidgetItem('Doing the work necessary to send broadcast...')
             elif status == 'broadcastsent':
-                newItem =  myTableWidgetItem('Broadcast on ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime)))))
+                newItem =  myTableWidgetItem('Broadcast on ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             else:
-                newItem =  myTableWidgetItem('Unknown status.  ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime)))))
+                newItem =  myTableWidgetItem('Unknown status.  ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             newItem.setData(Qt.UserRole,QByteArray(ackdata))
             newItem.setData(33,int(lastactiontime))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
@@ -3719,7 +3717,7 @@ class MyForm(QtGui.QMainWindow):
         #self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
         self.statusbar = self.statusBar()
         self.statusbar.insertPermanentWidget(0,self.ui.pushButtonStatusIcon)
-        self.ui.labelStartupTime.setText('Since startup on ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
+        self.ui.labelStartupTime.setText('Since startup on ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
         self.numberOfMessagesProcessed = 0
         self.numberOfBroadcastsProcessed = 0
         self.numberOfPubkeysProcessed = 0
@@ -4071,7 +4069,7 @@ class MyForm(QtGui.QMainWindow):
                         newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
                         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
                         self.ui.tableWidgetSent.setItem(0,2,newItem)
-                        newItem =  myTableWidgetItem('Just pressed ''send'' ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
+                        newItem =  myTableWidgetItem('Just pressed ''send'' ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
                         newItem.setData(Qt.UserRole,QByteArray(ackdata))
                         newItem.setData(33,int(time.time()))
                         self.ui.tableWidgetSent.setItem(0,3,newItem)
@@ -4128,7 +4126,7 @@ class MyForm(QtGui.QMainWindow):
                 newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
                 newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
                 self.ui.tableWidgetSent.setItem(0,2,newItem)
-                #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+ unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
+                #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+ unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
                 newItem =  myTableWidgetItem('Work is queued.')
                 newItem.setData(Qt.UserRole,QByteArray(ackdata))
                 newItem.setData(33,int(time.time()))
@@ -4234,8 +4232,8 @@ class MyForm(QtGui.QMainWindow):
         newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
         self.ui.tableWidgetSent.setItem(0,2,newItem)
-        #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+ unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
-        newItem =  myTableWidgetItem('Work is queued. '+ unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
+        #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+ unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+        newItem =  myTableWidgetItem('Work is queued. '+ unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
         newItem.setData(Qt.UserRole,QByteArray(ackdata))
         newItem.setData(33,int(time.time()))
         self.ui.tableWidgetSent.setItem(0,3,newItem)
@@ -4301,7 +4299,7 @@ class MyForm(QtGui.QMainWindow):
         newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
         self.ui.tableWidgetInbox.setItem(0,2,newItem)
-        newItem =  myTableWidgetItem(unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time())))))
+        newItem =  myTableWidgetItem(unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
         newItem.setData(Qt.UserRole,QByteArray(inventoryHash))
         newItem.setData(33,int(time.time()))
         self.ui.tableWidgetInbox.setItem(0,3,newItem)
