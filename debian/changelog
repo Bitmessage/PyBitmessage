@@ -1,0 +1,9 @@
+pybitmessage (0.2.7-1) unstable; urgency=low
+
+  * Added debian packaging
+  * Script to generate debian packages
+  * SVG icon for Gnome shell, etc
+  * Source moved int src directory for debian standards compatibility
+  * Trailing carriage return on COPYING LICENSE and README.md
+
+ -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Tue, 1 Apr 2013 17:12:14 +0100
