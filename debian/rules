@@ -40,8 +40,8 @@ install: build clean
 
 	install -m 644 $(CURDIR)/src/images/*.png $(DEST_SHARE)/applications/$(APP)/images
 	install -m 644 $(CURDIR)/src/images/*.ico $(DEST_SHARE)/applications/$(APP)/images
-	install -m 644 $(CURDIR)/src/pyelliptic/* $(DEST_SHARE)/applications/$(APP)/pyelliptic
-	install -m 644 $(CURDIR)/src/socks/* $(DEST_SHARE)/applications/$(APP)/socks
+	install -m 644 $(CURDIR)/src/pyelliptic/*.py $(DEST_SHARE)/applications/$(APP)/pyelliptic
+	install -m 644 $(CURDIR)/src/socks/*.py $(DEST_SHARE)/applications/$(APP)/socks
 	install -m 755 $(CURDIR)/debian/pybm $(DEST_MAIN)
 
 	install -m 644 $(CURDIR)/desktop/$(APP).desktop $(DEST_SHARE)/applications/$(APP)/$(APP).desktop
