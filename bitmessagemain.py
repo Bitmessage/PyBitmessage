@@ -2182,7 +2182,7 @@ class singleWorker(QThread):
                     myAddress = addressInKeysFile
                     break
 
-        embeddedTime = int(time.time())+random.randrange(-300, 300) #the current time plus or minus five minutes
+        embeddedTime = int(time.time()+random.randrange(-300, 300)) #the current time plus or minus five minutes
         payload = pack('>I',(embeddedTime))
         payload += encodeVarint(addressVersionNumber) #Address version number
         payload += encodeVarint(streamNumber)
@@ -2471,7 +2471,11 @@ class singleWorker(QThread):
                 sqlSubmitQueue.put((toRipe,))
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
-
+                if queryreturn == []:
+                    printLock.acquire()
+                    sys.stderr.write('(within sendMsg) The needed pubkey was not found. This should never happen. Aborting send.\n')
+                    printLock.release()
+                    return
                 for row in queryreturn:
                     pubkeyPayload, = row
 
@@ -2567,7 +2571,7 @@ class singleWorker(QThread):
 
 
     def requestPubKey(self,addressVersionNumber,streamNumber,ripe):
-        payload = pack('>I',int(time.time()))
+        payload = pack('>I',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes.
         payload += encodeVarint(addressVersionNumber)
         payload += encodeVarint(streamNumber)
         payload += ripe
@@ -3896,7 +3900,8 @@ class MyForm(QtGui.QMainWindow):
             toAddress = str(self.ui.tableWidgetSent.item(i,0).data(Qt.UserRole).toPyObject())
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
             if ripe == toRipe:
-                self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
+                #self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
+                self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
 
     def updateSentItemStatusByAckdata(self,ackdata,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
