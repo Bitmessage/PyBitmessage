@@ -3426,7 +3426,7 @@ class MyForm(QtGui.QMainWindow):
         self.actionReply = self.ui.inboxContextMenuToolbar.addAction("Reply", self.on_action_InboxReply)
         self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction("Add sender to your Address Book", self.on_action_InboxAddSenderToAddressBook)
         self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction("Move to Trash", self.on_action_InboxTrash)
-        self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction("View as Richtext", self.on_action_InboxMsgForceHtml)
+        self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction("View as Richtext", self.on_action_InboxMessageForceHtml)
         self.ui.tableWidgetInbox.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuInbox)
         self.popMenuInbox = QtGui.QMenu( self )
@@ -4642,7 +4642,7 @@ class MyForm(QtGui.QMainWindow):
         event.accept()
         raise SystemExit
 
-    def on_action_InboxMsgForceHtml(self):
+    def on_action_InboxMessageForceHtml(self):
         # Updated to work with all characters. Previously, non-english characters caused errors.
         try:
             lines = str(self.ui.textEditInboxMessage.toPlainText()).split('\n')
