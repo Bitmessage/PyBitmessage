@@ -980,7 +980,7 @@ class receiveDataThread(QThread):
         if ackData[0:4] != '\xe9\xbe\xb4\xd9':
             print 'Ackdata magic bytes were wrong. Not sending ackData.'
             return False
-        ackDataPayloadLength, = unpack('>L',ackData[16:24])
+        ackDataPayloadLength, = unpack('>L',ackData[16:20])
         if len(ackData)-24 != ackDataPayloadLength:
             print 'ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.'
             return False
@@ -4626,7 +4626,7 @@ class MyForm(QtGui.QMainWindow):
         printLock.acquire()
         print 'Closing. Flushing inventory in memory out to disk...'
         printLock.release()
-        self.statusBar().showMessage('Flushing inventory in memory out to disk.')
+        self.statusBar().showMessage('Flushing inventory in memory out to disk. This may take several minutes...')
         flushInventory()
 
         #This one last useless query will guarantee that the previous query committed before we close the program.
@@ -4671,7 +4671,6 @@ class MyForm(QtGui.QMainWindow):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,0).data(Qt.UserRole).toPyObject())
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,1).data(Qt.UserRole).toPyObject())
-
 
         if toAddressAtCurrentInboxRow == '[Broadcast subscribers]':
             self.ui.labelFrom.setText('')
