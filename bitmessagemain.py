@@ -3901,7 +3901,7 @@ class MyForm(QtGui.QMainWindow):
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
             if ripe == toRipe:
                 #self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
-                self.ui.tableWidgetSent.item(i,3).setText(textToDisplay,'utf-8')
+                self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
 
     def updateSentItemStatusByAckdata(self,ackdata,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
