@@ -3426,9 +3426,12 @@ class MyForm(QtGui.QMainWindow):
         self.actionReply = self.ui.inboxContextMenuToolbar.addAction("Reply", self.on_action_InboxReply)
         self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction("Add sender to your Address Book", self.on_action_InboxAddSenderToAddressBook)
         self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction("Move to Trash", self.on_action_InboxTrash)
+        self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction("View as Richtext", self.on_action_InboxMsgForceHtml)
         self.ui.tableWidgetInbox.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuInbox)
         self.popMenuInbox = QtGui.QMenu( self )
+        self.popMenuInbox.addAction( self.actionForceHtml )
+        self.popMenuInbox.addSeparator()
         self.popMenuInbox.addAction( self.actionReply )
         self.popMenuInbox.addAction( self.actionAddSenderToAddressBook )
         self.popMenuInbox.addSeparator()
@@ -4637,6 +4640,23 @@ class MyForm(QtGui.QMainWindow):
         event.accept()
         raise SystemExit
 
+    def on_action_InboxMsgForceHtml(self):
+        # Updated to work with all characters. Previously, non-english characters caused errors.
+        try:
+            lines = str(self.ui.textEditInboxMessage.toPlainText()).split('\n')
+        except UnicodeEncodeError:
+            currentInboxRow = self.ui.tableWidgetInbox.currentRow()
+            self.ui.textEditInboxMessage.setHtml(self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject())
+            return
+        from_prefix = 'Message ostensibly from '
+        for i in xrange(len(lines)):
+            if lines[i].find(from_prefix) != -1:
+                lines[i] = '<p style="font-size: 12px; color: grey;">%s<span style="font-size: 16px; color: black;">%s</span></p>' % (from_prefix,lines[i][24:-1])
+            elif lines[i] == '------------------------------------------------------':
+                lines[i] = '<hr>'
+        content = '\n'.join(lines)
+        content = content.replace('\n\n', '<br><br>')
+        self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
 
     def on_action_InboxReply(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
