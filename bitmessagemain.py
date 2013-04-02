@@ -2471,7 +2471,11 @@ class singleWorker(QThread):
                 sqlSubmitQueue.put((toRipe,))
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
-
+                if queryreturn == []:
+                    printLock.acquire()
+                    sys.stderr.write('(within sendMsg) The needed pubkey was not found. This should never happen. Aborting send.\n')
+                    printLock.release()
+                    return
                 for row in queryreturn:
                     pubkeyPayload, = row
 
@@ -3896,7 +3900,8 @@ class MyForm(QtGui.QMainWindow):
             toAddress = str(self.ui.tableWidgetSent.item(i,0).data(Qt.UserRole).toPyObject())
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
             if ripe == toRipe:
-                self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
+                #self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
+                self.ui.tableWidgetSent.item(i,3).setText(textToDisplay,'utf-8')
 
     def updateSentItemStatusByAckdata(self,ackdata,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
