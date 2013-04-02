@@ -2182,7 +2182,7 @@ class singleWorker(QThread):
                     myAddress = addressInKeysFile
                     break
 
-        embeddedTime = int(time.time())+random.randrange(-300, 300) #the current time plus or minus five minutes
+        embeddedTime = int(time.time()+random.randrange(-300, 300)) #the current time plus or minus five minutes
         payload = pack('>I',(embeddedTime))
         payload += encodeVarint(addressVersionNumber) #Address version number
         payload += encodeVarint(streamNumber)
@@ -2567,7 +2567,7 @@ class singleWorker(QThread):
 
 
     def requestPubKey(self,addressVersionNumber,streamNumber,ripe):
-        payload = pack('>I',int(time.time()))
+        payload = pack('>I',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes.
         payload += encodeVarint(addressVersionNumber)
         payload += encodeVarint(streamNumber)
         payload += ripe
