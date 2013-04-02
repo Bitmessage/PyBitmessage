@@ -4641,7 +4641,13 @@ class MyForm(QtGui.QMainWindow):
         raise SystemExit
 
     def on_action_InboxMsgForceHtml(self):
-        lines = str(self.ui.textEditInboxMessage.toPlainText()).split('\n')
+        # Updated to work with all characters. Previously, non-english characters caused errors.
+        try:
+            lines = str(self.ui.textEditInboxMessage.toPlainText()).split('\n')
+        except UnicodeEncodeError:
+            currentInboxRow = self.ui.tableWidgetInbox.currentRow()
+            self.ui.textEditInboxMessage.setHtml(self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject())
+            return
         from_prefix = 'Message ostensibly from '
         for i in xrange(len(lines)):
             if lines[i].find(from_prefix) != -1:
@@ -4649,6 +4655,7 @@ class MyForm(QtGui.QMainWindow):
             elif lines[i] == '------------------------------------------------------':
                 lines[i] = '<hr>'
         content = '\n'.join(lines)
+        content = content.replace('\n\n', '<br><br>')
         self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
 
     def on_action_InboxReply(self):
