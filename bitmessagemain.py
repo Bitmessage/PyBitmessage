@@ -959,20 +959,7 @@ class receiveDataThread(QThread):
                     self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,'[Broadcast subscribers]',fromAddress,subject,message,ackdata)
                     workerQueue.put(('sendbroadcast',(fromAddress,subject,message)))
 
-            #Now let's consider sending the acknowledgement. We'll need to make sure that our client will properly process the ackData; if the packet is malformed, we could clear out self.data and an attacker could use that behavior to determine that we were capable of decoding this message.
-            ackDataValidThusFar = True
-            if len(ackData) < 24:
-                print 'The length of ackData is unreasonably short. Not sending ackData.'
-                ackDataValidThusFar = False
-            elif ackData[0:4] != '\xe9\xbe\xb4\xd9':
-                print 'Ackdata magic bytes were wrong. Not sending ackData.'
-                ackDataValidThusFar = False
-            if ackDataValidThusFar:
-                ackDataPayloadLength, = unpack('>L',ackData[16:20])
-                if len(ackData)-24 != ackDataPayloadLength:
-                    print 'ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.'
-                    ackDataValidThusFar = False
-            if ackDataValidThusFar:
+            if self.isAckDataValid(ackData):
                 print 'ackData is valid. Will process it.'
                 self.ackDataThatWeHaveYetToSend.append(ackData) #When we have processed all data, the processData function will pop the ackData out and process it as if it is a message received from our peer.
             #Display timing data
@@ -985,6 +972,21 @@ class receiveDataThread(QThread):
             print 'Time to decrypt this message successfully:', timeRequiredToAttemptToDecryptMessage
             print 'Average time for all message decryption successes since startup:', sum / len(successfullyDecryptMessageTimings)
             printLock.release()
+
+    def isAckDataValid(self,ackData):
+        if len(ackData) < 24:
+            print 'The length of ackData is unreasonably short. Not sending ackData.'
+            return False
+        if ackData[0:4] != '\xe9\xbe\xb4\xd9':
+            print 'Ackdata magic bytes were wrong. Not sending ackData.'
+            return False
+        ackDataPayloadLength, = unpack('>L',ackData[16:20])
+        if len(ackData)-24 != ackDataPayloadLength:
+            print 'ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.'
+            return False
+        if ackData[4:16] != 'getpubkey\x00\x00\x00' and ackData[4:16] != 'pubkey\x00\x00\x00\x00\x00\x00' and ackData[4:16] != 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and ackData[4:16] != 'broadcast\x00\x00\x00' :
+            return False
+        return True
 
     def addMailingListNameToSubject(self,subject,mailingListName):
         subject = subject.strip()
@@ -1159,7 +1161,7 @@ class receiveDataThread(QThread):
             print 'We have already received this getpubkey request (it is stored on disk in the SQL inventory). Ignoring it.'
             inventoryLock.release()
             return
-        self.objectsOfWhichThisRemoteNodeIsAlreadyAware[inventoryHash] = 0
+
         objectType = 'getpubkey'
         inventory[inventoryHash] = (objectType, self.streamNumber, data, embeddedTime)
         inventoryLock.release()
@@ -2091,7 +2093,7 @@ class singleWorker(QThread):
             sqlSubmitQueue.put((toripe,))
             queryreturn = sqlReturnQueue.get()
             sqlLock.release()
-            if queryreturn != '': #If we have the pubkey then send the message otherwise put the hash in the neededPubkeys data structure so that we will pay attention to it if it comes over the wire.
+            if queryreturn != []: #If we have the pubkey then send the message otherwise put the hash in the neededPubkeys data structure so that we will pay attention to it if it comes over the wire.
                 self.sendMsg(toripe)
             else:
                 neededPubkeys[toripe] = 0
@@ -4624,7 +4626,7 @@ class MyForm(QtGui.QMainWindow):
         printLock.acquire()
         print 'Closing. Flushing inventory in memory out to disk...'
         printLock.release()
-        self.statusBar().showMessage('Flushing inventory in memory out to disk.')
+        self.statusBar().showMessage('Flushing inventory in memory out to disk. This may take several minutes...')
         flushInventory()
 
         #This one last useless query will guarantee that the previous query committed before we close the program.
@@ -4669,7 +4671,6 @@ class MyForm(QtGui.QMainWindow):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,0).data(Qt.UserRole).toPyObject())
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,1).data(Qt.UserRole).toPyObject())
-
 
         if toAddressAtCurrentInboxRow == '[Broadcast subscribers]':
             self.ui.labelFrom.setText('')
