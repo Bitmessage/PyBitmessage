@@ -509,7 +509,7 @@ class receiveDataThread(QThread):
         if embeddedTime < (int(time.time())-maximumAgeOfAnObjectThatIAmWillingToAccept):
             print 'The embedded time in this broadcast message is too old. Ignoring message.'
             return
-        if self.payloadLength < 66: #todo: When version 1 addresses are completely abandoned, this should be changed to 180
+        if len(data) < 180:
             print 'The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.'
             return
         inventoryLock.acquire()
@@ -533,11 +533,11 @@ class receiveDataThread(QThread):
         self.processbroadcast(data)#When this function returns, we will have either successfully processed this broadcast because we are interested in it, ignored it because we aren't interested in it, or found problem with the broadcast that warranted ignoring it.
 
         # Let us now set lengthOfTimeWeShouldUseToProcessThisMessage. If we haven't used the specified amount of time, we shall sleep. These values are mostly the same values used for msg messages although broadcast messages are processed faster.
-        if self.payloadLength > 100000000: #Size is greater than 100 megabytes
+        if len(data) > 100000000: #Size is greater than 100 megabytes
             lengthOfTimeWeShouldUseToProcessThisMessage = 100 #seconds.
-        elif self.payloadLength > 10000000: #Between 100 and 10 megabytes
+        elif len(data) > 10000000: #Between 100 and 10 megabytes
             lengthOfTimeWeShouldUseToProcessThisMessage = 20 #seconds.
-        elif self.payloadLength > 1000000: #Between 10 and 1 megabyte
+        elif len(data) > 1000000: #Between 10 and 1 megabyte
             lengthOfTimeWeShouldUseToProcessThisMessage = 3 #seconds.
         else: #Less than 1 megabyte
             lengthOfTimeWeShouldUseToProcessThisMessage = .1 #seconds.
@@ -714,11 +714,11 @@ class receiveDataThread(QThread):
         self.processmsg(readPosition,data) #When this function returns, we will have either successfully processed the message bound for us, ignored it because it isn't bound for us, or found problem with the message that warranted ignoring it.
 
         # Let us now set lengthOfTimeWeShouldUseToProcessThisMessage. If we haven't used the specified amount of time, we shall sleep. These values are based on test timings and you may change them at-will.
-        if self.payloadLength > 100000000: #Size is greater than 100 megabytes
+        if len(data) > 100000000: #Size is greater than 100 megabytes
             lengthOfTimeWeShouldUseToProcessThisMessage = 100 #seconds. Actual length of time it took my computer to decrypt and verify the signature of a 100 MB message: 3.7 seconds.
-        elif self.payloadLength > 10000000: #Between 100 and 10 megabytes
+        elif len(data) > 10000000: #Between 100 and 10 megabytes
             lengthOfTimeWeShouldUseToProcessThisMessage = 20 #seconds. Actual length of time it took my computer to decrypt and verify the signature of a 10 MB message: 0.53 seconds. Actual length of time it takes in practice when processing a real message: 1.44 seconds.
-        elif self.payloadLength > 1000000: #Between 10 and 1 megabyte
+        elif len(data) > 1000000: #Between 10 and 1 megabyte
             lengthOfTimeWeShouldUseToProcessThisMessage = 3 #seconds. Actual length of time it took my computer to decrypt and verify the signature of a 1 MB message: 0.18 seconds. Actual length of time it takes in practice when processing a real message: 0.30 seconds.
         else: #Less than 1 megabyte
             lengthOfTimeWeShouldUseToProcessThisMessage = .6 #seconds. Actual length of time it took my computer to decrypt and verify the signature of a 100 KB message: 0.15 seconds. Actual length of time it takes in practice when processing a real message: 0.25 seconds.
@@ -1072,8 +1072,8 @@ class receiveDataThread(QThread):
             printLock.release()
             return
         if addressVersion == 2:
-            if self.payloadLength < 146: #sanity check. This is the minimum possible length.
-                print 'payloadLength less than 146. Sanity check failed.'
+            if len(data) < 146: #sanity check. This is the minimum possible length.
+                print '(within processpubkey) payloadLength less than 146. Sanity check failed.'
                 return
             bitfieldBehaviors = data[readPosition:readPosition+4]
             readPosition += 4
@@ -1521,7 +1521,7 @@ class receiveDataThread(QThread):
 
     #We have received a version message
     def recversion(self,data):
-        if self.payloadLength < 83:
+        if len(data) < 83:
             #This version message is unreasonably short. Forget it.
             return
         elif not self.verackSent: 
