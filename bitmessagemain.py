@@ -3603,6 +3603,7 @@ class MyForm(QtGui.QMainWindow):
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetInbox.setItem(0,3,newItem)
             #self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
+        self.ui.tableWidgetInbox.sortItems(3,Qt.DescendingOrder)
 
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
         #Load Sent items from database
@@ -3665,6 +3666,7 @@ class MyForm(QtGui.QMainWindow):
             newItem.setData(33,int(lastactiontime))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,3,newItem)
+        self.ui.tableWidgetSent.sortItems(3,Qt.DescendingOrder)
 
         #Initialize the address book
         sqlSubmitQueue.put('SELECT * FROM addressbook')
@@ -4651,7 +4653,7 @@ class MyForm(QtGui.QMainWindow):
         from_prefix = 'Message ostensibly from '
         for i in xrange(len(lines)):
             if lines[i].find(from_prefix) != -1:
-                lines[i] = '<p style="font-size: 12px; color: grey;">%s<span style="font-size: 16px; color: black;">%s</span></p>' % (from_prefix,lines[i][24:-1])
+                lines[i] = '<p style="font-size: 12px; color: grey;">%s<span style="font-size: 12px; color: black;">%s</span></p>' % (from_prefix,lines[i][24:-1])
             elif lines[i] == '------------------------------------------------------':
                 lines[i] = '<hr>'
         content = '\n'.join(lines)
