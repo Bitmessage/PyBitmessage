@@ -2,7 +2,7 @@ Source: pybitmessage
 Section: contrib/comm
 Priority: extra
 Maintainer: Jonathan Warren <jonathan@bitmessage.org>
-Build-Depends: debhelper (>= 8.0.0), python, openssl, python-qt4, libqt4-dev, python-qt4-dev
+Build-Depends: debhelper (>= 8.0.0), python, openssl, python-qt4, libqt4-dev, python-qt4-dev, sqlite3, libsqlite3-dev
 Standards-Version: 3.9.2
 Homepage: https://bitmessage.org/
 Vcs-Browser: https://github.com/Bitmessage/PyBitmessage
@@ -10,7 +10,7 @@ Vcs-Git: https://github.com/Bitmessage/PyBitmessage.git
 
 Package: pybitmessage
 Architecture: all
-Depends: ${misc:Depends}, python, openssl, python-qt4, libqt4-dev, python-qt4-dev
+Depends: ${misc:Depends}, python, openssl, python-qt4, libqt4-dev, python-qt4-dev, sqlite3, libsqlite3-dev
 Description: Send encrypted messages to another person or to many subscribers
  Bitmessage is a P2P communications protocol used to send encrypted messages
  to another person or to many subscribers. It is decentralized and trustless,
