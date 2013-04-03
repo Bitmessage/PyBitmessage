@@ -1287,36 +1287,29 @@ class receiveDataThread(QThread):
             print 'sending pubkey'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData += 'pubkey\x00\x00\x00\x00\x00\x00'
-            headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+            headerData += pack('>L',len(payload)) #payload length.
             headerData += hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
-        elif objectType == 'getpubkey':
+        elif objectType == 'getpubkey' or objectType == 'pubkeyrequest':
             print 'sending getpubkey'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData += 'getpubkey\x00\x00\x00'
-            headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+            headerData += pack('>L',len(payload)) #payload length.
             headerData += hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
         elif objectType == 'msg':
             print 'sending msg'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData += 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-            headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+            headerData += pack('>L',len(payload)) #payload length.
             headerData += hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
         elif objectType == 'broadcast':
             print 'sending broadcast'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData += 'broadcast\x00\x00\x00'
-            headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+            headerData += pack('>L',len(payload)) #payload length.
             headerData += hashlib.sha512(payload).digest()[:4]
-            self.sock.send(headerData + payload)
-        elif objectType == 'getpubkey' or objectType == 'pubkeyrequest':
-            print 'sending getpubkey'
-            headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-            headerData += 'getpubkey\x00\x00\x00' #version command
-            headerData += pack('>L',len(payload)) #payload length
-            headerData += hashlib.sha512(payload).digest()[0:4]
             self.sock.send(headerData + payload)
         else:
             sys.stderr.write('Error: sendData has been asked to send a strange objectType: %s\n' % str(objectType))
