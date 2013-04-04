@@ -46,7 +46,7 @@ import pickle
 import random
 import sqlite3
 import threading #used for the locks, not for the threads
-from time import strftime, localtime
+from time import strftime, localtime, gmtime
 import os
 import shutil #used for moving the messages.dat file
 import string
@@ -944,8 +944,8 @@ class receiveDataThread(QThread):
                     #Let us send out this message as a broadcast
                     subject = self.addMailingListNameToSubject(subject,mailingListName)
                     #Let us now send this message out as a broadcast
-                    message = 'Message ostensibly from ' + fromAddress + ':\n\n' + body
-                    fromAddress = toAddress #The fromAddress for the broadcast is the toAddress (my address) for the msg message we are currently processing.
+                    message = strftime("%a, %Y-%m-%d %H:%M:%S UTC",gmtime()) + '   Message ostensibly from ' + fromAddress + ':\n\n' + body
+                    fromAddress = toAddress #The fromAddress for the broadcast that we are about to send is the toAddress (my address) for the msg message we are currently processing.
                     ackdata = OpenSSL.rand(32) #We don't actually need the ackdata for acknowledgement since this is a broadcast message but we can use it to update the user interface when the POW is done generating.
                     toAddress = '[Broadcast subscribers]'
                     ripe = ''
@@ -4643,20 +4643,16 @@ class MyForm(QtGui.QMainWindow):
         raise SystemExit
 
     def on_action_InboxMessageForceHtml(self):
-        # Updated to work with all characters. Previously, non-english characters caused errors.
-        try:
-            lines = str(self.ui.textEditInboxMessage.toPlainText()).split('\n')
-        except UnicodeEncodeError:
-            currentInboxRow = self.ui.tableWidgetInbox.currentRow()
-            self.ui.textEditInboxMessage.setHtml(self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject())
-            return
-        from_prefix = 'Message ostensibly from '
+        currentInboxRow = self.ui.tableWidgetInbox.currentRow()
+        lines = self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject().split('\n')
         for i in xrange(len(lines)):
-            if lines[i].find(from_prefix) != -1:
-                lines[i] = '<p style="font-size: 12px; color: grey;">%s<span style="font-size: 12px; color: black;">%s</span></p>' % (from_prefix,lines[i][24:-1])
+            if lines[i].contains('Message ostensibly from '):
+                lines[i] = '<p style="font-size: 12px; color: grey;">%s</span></p>' % (lines[i])
             elif lines[i] == '------------------------------------------------------':
                 lines[i] = '<hr>'
-        content = '\n'.join(lines)
+        content = ''
+        for i in xrange(len(lines)):
+            content += lines[i] + '<br>'
         content = content.replace('\n\n', '<br><br>')
         self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
 
