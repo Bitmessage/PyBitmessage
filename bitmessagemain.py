@@ -148,7 +148,9 @@ class outgoingSynSender(QThread):
                     printLock.release()
                     PORT, timeLastSeen = knownNodes[self.streamNumber][HOST]
                     if (int(time.time())-timeLastSeen) > 172800 and len(knownNodes[self.streamNumber]) > 1000: # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
+                        knownNodesLock.acquire()
                         del knownNodes[self.streamNumber][HOST]
+                        knownNodesLock.release()
                         print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
                 except socks.Socks5AuthError, err:
                     self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"SOCKS5 Authentication problem: "+str(err))
@@ -169,7 +171,9 @@ class outgoingSynSender(QThread):
                         printLock.release()
                         PORT, timeLastSeen = knownNodes[self.streamNumber][HOST]
                         if (int(time.time())-timeLastSeen) > 172800 and len(knownNodes[self.streamNumber]) > 1000: # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
+                            knownNodesLock.acquire()
                             del knownNodes[self.streamNumber][HOST]
+                            knownNodesLock.release()
                             print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
                 except Exception, err:
                     print 'An exception has occurred in the outgoingSynSender thread that was not caught by other exception types:', err
@@ -323,7 +327,9 @@ class receiveDataThread(QThread):
                     #print 'message checksum is correct'
                     #The time we've last seen this node is obviously right now since we just received valid data from it. So update the knownNodes list so that other peers can be made aware of its existance.
                     if self.initiatedConnection: #The remote port is only something we should share with others if it is the remote node's incoming port (rather than some random operating-system-assigned outgoing port).
+                        knownNodesLock.acquire()
                         knownNodes[self.streamNumber][self.HOST] = (self.PORT,int(time.time()))
+                        knownNodesLock.release()
                     if self.payloadLength <= 180000000: #If the size of the message is greater than 180MB, ignore it. (I get memory errors when processing messages much larger than this though it is concievable that this value will have to be lowered if some systems are less tolarant of large messages.)
                         remoteCommand = self.data[4:16]
                         printLock.acquire()
@@ -1402,10 +1408,14 @@ class receiveDataThread(QThread):
                 continue
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>I',data[lengthOfNumberOfAddresses+(34*i):4+lengthOfNumberOfAddresses+(34*i)]) #This is the 'time' value in the received addr message.
             if recaddrStream not in knownNodes: #knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
+                knownNodesLock.acquire()
                 knownNodes[recaddrStream] = {}
+                knownNodesLock.release()
             if hostFromAddrMessage not in knownNodes[recaddrStream]:
                 if len(knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time())-10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800): #If we have more than 20000 nodes in our list already then just forget about adding more. Also, make sure that the time that someone else received a message from this node is within three hours from now.
+                    knownNodesLock.acquire()
                     knownNodes[recaddrStream][hostFromAddrMessage] = (recaddrPort, timeSomeoneElseReceivedMessageFromThisNode)
+                    knownNodesLock.release()
                     print 'added new node', hostFromAddrMessage, 'to knownNodes in stream', recaddrStream
                     needToWriteKnownNodesToDisk = True
                     hostDetails = (timeSomeoneElseReceivedMessageFromThisNode, recaddrStream, recaddrServices, hostFromAddrMessage, recaddrPort)
@@ -1413,12 +1423,16 @@ class receiveDataThread(QThread):
             else:
                 PORT, timeLastReceivedMessageFromThisNode = knownNodes[recaddrStream][hostFromAddrMessage]#PORT in this case is either the port we used to connect to the remote node, or the port that was specified by someone else in a past addr message.
                 if (timeLastReceivedMessageFromThisNode < timeSomeoneElseReceivedMessageFromThisNode) and (timeSomeoneElseReceivedMessageFromThisNode < int(time.time())):
+                    knownNodesLock.acquire()
                     knownNodes[recaddrStream][hostFromAddrMessage] = (PORT, timeSomeoneElseReceivedMessageFromThisNode)
+                    knownNodesLock.release()
                     if PORT != recaddrPort:
                         print 'Strange occurance: The port specified in an addr message', str(recaddrPort),'does not match the port',str(PORT),'that this program (or some other peer) used to connect to it',str(hostFromAddrMessage),'. Perhaps they changed their port or are using a strange NAT configuration.'
         if needToWriteKnownNodesToDisk: #Runs if any nodes were new to us. Also, share those nodes with our peers.
             output = open(appdata + 'knownnodes.dat', 'wb')
+            knownNodesLock.acquire()
             pickle.dump(knownNodes, output)
+            knownNodesLock.release()
             output.close()
             self.broadcastaddr(listOfAddressDetailsToBroadcastToPeers)
         printLock.acquire()
@@ -1560,9 +1574,11 @@ class receiveDataThread(QThread):
                 printLock.release()
                 return
 
+            knownNodesLock.acquire()
             knownNodes[self.streamNumber][self.HOST] = (self.remoteNodeIncomingPort, int(time.time()))
             output = open(appdata + 'knownnodes.dat', 'wb')
             pickle.dump(knownNodes, output)
+            knownNodesLock.release()
             output.close()
 
             self.sendverack()
@@ -4395,9 +4411,11 @@ class MyForm(QtGui.QMainWindow):
                 with open('keys.dat', 'wb') as configfile:
                     config.write(configfile)
                 #Write the knownnodes.dat file to disk in the new location
+                knownNodesLock.acquire()
                 output = open('knownnodes.dat', 'wb')
                 pickle.dump(knownNodes, output)
                 output.close()
+                knownNodesLock.release()
                 os.remove(appdata + 'keys.dat')
                 os.remove(appdata + 'knownnodes.dat')
                 appdata = ''
@@ -4412,9 +4430,11 @@ class MyForm(QtGui.QMainWindow):
                 with open(appdata + 'keys.dat', 'wb') as configfile:
                     config.write(configfile)
                 #Write the knownnodes.dat file to disk in the new location
+                knownNodesLock.acquire()
                 output = open(appdata + 'knownnodes.dat', 'wb')
                 pickle.dump(knownNodes, output)
                 output.close()
+                knownNodesLock.release()
                 os.remove('keys.dat')
                 os.remove('knownnodes.dat')
                 QMessageBox.about(self, "Restart", "Bitmessage has moved most of your config files to the application data directory but you must restart Bitmessage to move the last file (the file which holds messages).")
@@ -4548,7 +4568,7 @@ class MyForm(QtGui.QMainWindow):
         printLock.acquire()
         print 'Closing. Flushing inventory in memory out to disk...'
         printLock.release()
-        self.statusBar().showMessage('Flushing inventory in memory out to disk. This may take several minutes...')
+        self.statusBar().showMessage('Flushing inventory in memory out to disk. This should normally only take a second...')
         flushInventory()
 
         #This one last useless query will guarantee that the previous query committed before we close the program.
@@ -4559,9 +4579,11 @@ class MyForm(QtGui.QMainWindow):
         sqlLock.release()
 
         self.statusBar().showMessage('Saving the knownNodes list of peers to disk...')
+        knownNodesLock.acquire()
         output = open(appdata + 'knownnodes.dat', 'wb')
         pickle.dump(knownNodes, output)
         output.close()
+        knownNodesLock.release()
 
         self.trayIcon.hide()
         printLock.acquire()
@@ -4945,6 +4967,7 @@ sqlSubmitQueue = Queue.Queue() #SQLITE3 is so thread-unsafe that they won't even
 sqlReturnQueue = Queue.Queue()
 sqlLock = threading.Lock()
 printLock = threading.Lock()
+knownNodesLock = threading.Lock()
 ackdataForWhichImWatching = {}
 broadcastSendersForWhichImWatching = {}
 statusIconColor = 'red'
@@ -5054,6 +5077,7 @@ if __name__ == "__main__":
 
 
     try:
+        #We shouldn't have to use the knownNodesLock because this had better be the only thread accessing knownNodes right now.
         pickleFile = open(appdata + 'knownnodes.dat', 'rb')
         knownNodes = pickle.load(pickleFile)
         pickleFile.close()
