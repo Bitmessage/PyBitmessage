@@ -46,7 +46,7 @@ import pickle
 import random
 import sqlite3
 import threading #used for the locks, not for the threads
-from time import strftime, localtime
+from time import strftime, localtime, gmtime
 import os
 import shutil #used for moving the messages.dat file
 import string
@@ -148,7 +148,9 @@ class outgoingSynSender(QThread):
                     printLock.release()
                     PORT, timeLastSeen = knownNodes[self.streamNumber][HOST]
                     if (int(time.time())-timeLastSeen) > 172800 and len(knownNodes[self.streamNumber]) > 1000: # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
+                        knownNodesLock.acquire()
                         del knownNodes[self.streamNumber][HOST]
+                        knownNodesLock.release()
                         print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
                 except socks.Socks5AuthError, err:
                     self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"SOCKS5 Authentication problem: "+str(err))
@@ -169,7 +171,9 @@ class outgoingSynSender(QThread):
                         printLock.release()
                         PORT, timeLastSeen = knownNodes[self.streamNumber][HOST]
                         if (int(time.time())-timeLastSeen) > 172800 and len(knownNodes[self.streamNumber]) > 1000: # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
+                            knownNodesLock.acquire()
                             del knownNodes[self.streamNumber][HOST]
+                            knownNodesLock.release()
                             print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
                 except Exception, err:
                     print 'An exception has occurred in the outgoingSynSender thread that was not caught by other exception types:', err
@@ -323,7 +327,9 @@ class receiveDataThread(QThread):
                     #print 'message checksum is correct'
                     #The time we've last seen this node is obviously right now since we just received valid data from it. So update the knownNodes list so that other peers can be made aware of its existance.
                     if self.initiatedConnection: #The remote port is only something we should share with others if it is the remote node's incoming port (rather than some random operating-system-assigned outgoing port).
+                        knownNodesLock.acquire()
                         knownNodes[self.streamNumber][self.HOST] = (self.PORT,int(time.time()))
+                        knownNodesLock.release()
                     if self.payloadLength <= 180000000: #If the size of the message is greater than 180MB, ignore it. (I get memory errors when processing messages much larger than this though it is concievable that this value will have to be lowered if some systems are less tolarant of large messages.)
                         remoteCommand = self.data[4:16]
                         printLock.acquire()
@@ -401,7 +407,7 @@ class receiveDataThread(QThread):
         POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(data[:8]+ hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
         #print 'POW:', POW
         #Notice that I have divided the averageProofOfWorkNonceTrialsPerByte by two. This makes the POW requirement easier. This gives us wiggle-room: if we decide that we want to make the POW easier, the change won't obsolete old clients because they already expect a lower POW. If we decide that the current work done by clients feels approperate then we can remove this division by 2 and make the requirement match what is actually done by a sending node. If we want to raise the POW requirement then old nodes will HAVE to upgrade no matter what.
-        return POW < 2**64 / ((self.payloadLength+payloadLengthExtraBytes) * (averageProofOfWorkNonceTrialsPerByte/2))
+        return POW <= 2**64 / ((len(data)+payloadLengthExtraBytes) * (averageProofOfWorkNonceTrialsPerByte/2))
 
     def sendpong(self):
         print 'Sending pong'
@@ -509,7 +515,7 @@ class receiveDataThread(QThread):
         if embeddedTime < (int(time.time())-maximumAgeOfAnObjectThatIAmWillingToAccept):
             print 'The embedded time in this broadcast message is too old. Ignoring message.'
             return
-        if self.payloadLength < 66: #todo: When version 1 addresses are completely abandoned, this should be changed to 180
+        if len(data) < 180:
             print 'The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.'
             return
         inventoryLock.acquire()
@@ -533,11 +539,11 @@ class receiveDataThread(QThread):
         self.processbroadcast(data)#When this function returns, we will have either successfully processed this broadcast because we are interested in it, ignored it because we aren't interested in it, or found problem with the broadcast that warranted ignoring it.
 
         # Let us now set lengthOfTimeWeShouldUseToProcessThisMessage. If we haven't used the specified amount of time, we shall sleep. These values are mostly the same values used for msg messages although broadcast messages are processed faster.
-        if self.payloadLength > 100000000: #Size is greater than 100 megabytes
+        if len(data) > 100000000: #Size is greater than 100 megabytes
             lengthOfTimeWeShouldUseToProcessThisMessage = 100 #seconds.
-        elif self.payloadLength > 10000000: #Between 100 and 10 megabytes
+        elif len(data) > 10000000: #Between 100 and 10 megabytes
             lengthOfTimeWeShouldUseToProcessThisMessage = 20 #seconds.
-        elif self.payloadLength > 1000000: #Between 10 and 1 megabyte
+        elif len(data) > 1000000: #Between 10 and 1 megabyte
             lengthOfTimeWeShouldUseToProcessThisMessage = 3 #seconds.
         else: #Less than 1 megabyte
             lengthOfTimeWeShouldUseToProcessThisMessage = .1 #seconds.
@@ -623,6 +629,7 @@ class receiveDataThread(QThread):
             sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
+            sqlSubmitQueue.put('commit')
             sqlLock.release()
             workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
             
@@ -654,6 +661,7 @@ class receiveDataThread(QThread):
                 sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
+                sqlSubmitQueue.put('commit')
                 sqlLock.release()
                 self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
 
@@ -714,11 +722,11 @@ class receiveDataThread(QThread):
         self.processmsg(readPosition,data) #When this function returns, we will have either successfully processed the message bound for us, ignored it because it isn't bound for us, or found problem with the message that warranted ignoring it.
 
         # Let us now set lengthOfTimeWeShouldUseToProcessThisMessage. If we haven't used the specified amount of time, we shall sleep. These values are based on test timings and you may change them at-will.
-        if self.payloadLength > 100000000: #Size is greater than 100 megabytes
+        if len(data) > 100000000: #Size is greater than 100 megabytes
             lengthOfTimeWeShouldUseToProcessThisMessage = 100 #seconds. Actual length of time it took my computer to decrypt and verify the signature of a 100 MB message: 3.7 seconds.
-        elif self.payloadLength > 10000000: #Between 100 and 10 megabytes
+        elif len(data) > 10000000: #Between 100 and 10 megabytes
             lengthOfTimeWeShouldUseToProcessThisMessage = 20 #seconds. Actual length of time it took my computer to decrypt and verify the signature of a 10 MB message: 0.53 seconds. Actual length of time it takes in practice when processing a real message: 1.44 seconds.
-        elif self.payloadLength > 1000000: #Between 10 and 1 megabyte
+        elif len(data) > 1000000: #Between 10 and 1 megabyte
             lengthOfTimeWeShouldUseToProcessThisMessage = 3 #seconds. Actual length of time it took my computer to decrypt and verify the signature of a 1 MB message: 0.18 seconds. Actual length of time it takes in practice when processing a real message: 0.30 seconds.
         else: #Less than 1 megabyte
             lengthOfTimeWeShouldUseToProcessThisMessage = .6 #seconds. Actual length of time it took my computer to decrypt and verify the signature of a 100 KB message: 0.15 seconds. Actual length of time it takes in practice when processing a real message: 0.25 seconds.
@@ -749,6 +757,7 @@ class receiveDataThread(QThread):
             sqlSubmitQueue.put('UPDATE sent SET status=? WHERE ackdata=?')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
+            sqlSubmitQueue.put('commit')
             sqlLock.release()
             self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),encryptedData[readPosition:],'Acknowledgement of the message received just now.')
             return
@@ -850,6 +859,7 @@ class receiveDataThread(QThread):
             sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
+            sqlSubmitQueue.put('commit')
             sqlLock.release()
             workerQueue.put(('newpubkey',(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
             blockMessage = False #Gets set to True if the user shouldn't see the message according to black or white lists.
@@ -923,6 +933,7 @@ class receiveDataThread(QThread):
                     sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
                     sqlSubmitQueue.put(t)
                     sqlReturnQueue.get()
+                    sqlSubmitQueue.put('commit')
                     sqlLock.release()
                     self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
 
@@ -944,8 +955,8 @@ class receiveDataThread(QThread):
                     #Let us send out this message as a broadcast
                     subject = self.addMailingListNameToSubject(subject,mailingListName)
                     #Let us now send this message out as a broadcast
-                    message = 'Message ostensibly from ' + fromAddress + ':\n\n' + body
-                    fromAddress = toAddress #The fromAddress for the broadcast is the toAddress (my address) for the msg message we are currently processing.
+                    message = strftime("%a, %Y-%m-%d %H:%M:%S UTC",gmtime()) + '   Message ostensibly from ' + fromAddress + ':\n\n' + body
+                    fromAddress = toAddress #The fromAddress for the broadcast that we are about to send is the toAddress (my address) for the msg message we are currently processing.
                     ackdata = OpenSSL.rand(32) #We don't actually need the ackdata for acknowledgement since this is a broadcast message but we can use it to update the user interface when the POW is done generating.
                     toAddress = '[Broadcast subscribers]'
                     ripe = ''
@@ -954,25 +965,13 @@ class receiveDataThread(QThread):
                     sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
                     sqlSubmitQueue.put(t)
                     sqlReturnQueue.get()
+                    sqlSubmitQueue.put('commit')
                     sqlLock.release()
 
                     self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,'[Broadcast subscribers]',fromAddress,subject,message,ackdata)
                     workerQueue.put(('sendbroadcast',(fromAddress,subject,message)))
 
-            #Now let's consider sending the acknowledgement. We'll need to make sure that our client will properly process the ackData; if the packet is malformed, we could clear out self.data and an attacker could use that behavior to determine that we were capable of decoding this message.
-            ackDataValidThusFar = True
-            if len(ackData) < 24:
-                print 'The length of ackData is unreasonably short. Not sending ackData.'
-                ackDataValidThusFar = False
-            elif ackData[0:4] != '\xe9\xbe\xb4\xd9':
-                print 'Ackdata magic bytes were wrong. Not sending ackData.'
-                ackDataValidThusFar = False
-            if ackDataValidThusFar:
-                ackDataPayloadLength, = unpack('>L',ackData[16:20])
-                if len(ackData)-24 != ackDataPayloadLength:
-                    print 'ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.'
-                    ackDataValidThusFar = False
-            if ackDataValidThusFar:
+            if self.isAckDataValid(ackData):
                 print 'ackData is valid. Will process it.'
                 self.ackDataThatWeHaveYetToSend.append(ackData) #When we have processed all data, the processData function will pop the ackData out and process it as if it is a message received from our peer.
             #Display timing data
@@ -985,6 +984,21 @@ class receiveDataThread(QThread):
             print 'Time to decrypt this message successfully:', timeRequiredToAttemptToDecryptMessage
             print 'Average time for all message decryption successes since startup:', sum / len(successfullyDecryptMessageTimings)
             printLock.release()
+
+    def isAckDataValid(self,ackData):
+        if len(ackData) < 24:
+            print 'The length of ackData is unreasonably short. Not sending ackData.'
+            return False
+        if ackData[0:4] != '\xe9\xbe\xb4\xd9':
+            print 'Ackdata magic bytes were wrong. Not sending ackData.'
+            return False
+        ackDataPayloadLength, = unpack('>L',ackData[16:20])
+        if len(ackData)-24 != ackDataPayloadLength:
+            print 'ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.'
+            return False
+        if ackData[4:16] != 'getpubkey\x00\x00\x00' and ackData[4:16] != 'pubkey\x00\x00\x00\x00\x00\x00' and ackData[4:16] != 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and ackData[4:16] != 'broadcast\x00\x00\x00' :
+            return False
+        return True
 
     def addMailingListNameToSubject(self,subject,mailingListName):
         subject = subject.strip()
@@ -1072,8 +1086,8 @@ class receiveDataThread(QThread):
             printLock.release()
             return
         if addressVersion == 2:
-            if self.payloadLength < 146: #sanity check. This is the minimum possible length.
-                print 'payloadLength less than 146. Sanity check failed.'
+            if len(data) < 146: #sanity check. This is the minimum possible length.
+                print '(within processpubkey) payloadLength less than 146. Sanity check failed.'
                 return
             bitfieldBehaviors = data[readPosition:readPosition+4]
             readPosition += 4
@@ -1110,6 +1124,7 @@ class receiveDataThread(QThread):
                 sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
+                sqlSubmitQueue.put('commit')
                 sqlLock.release()
                 printLock.acquire()
                 printLock.release()
@@ -1121,6 +1136,7 @@ class receiveDataThread(QThread):
                 sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
+                sqlSubmitQueue.put('commit')
                 sqlLock.release()
                 printLock.acquire()
                 printLock.release()
@@ -1159,7 +1175,7 @@ class receiveDataThread(QThread):
             print 'We have already received this getpubkey request (it is stored on disk in the SQL inventory). Ignoring it.'
             inventoryLock.release()
             return
-        self.objectsOfWhichThisRemoteNodeIsAlreadyAware[inventoryHash] = 0
+
         objectType = 'getpubkey'
         inventory[inventoryHash] = (objectType, self.streamNumber, data, embeddedTime)
         inventoryLock.release()
@@ -1245,41 +1261,39 @@ class receiveDataThread(QThread):
         try:
             self.sock.send(headerData + payload)
         except Exception, err:
-            if not 'Bad file descriptor' in err:
-                printLock.acquire()
-                sys.stderr.write('sock.send error: %s\n' % err)
-                printLock.release()
+            #if not 'Bad file descriptor' in err:
+            printLock.acquire()
+            sys.stderr.write('sock.send error: %s\n' % err)
+            printLock.release()
 
     #We have received a getdata request from our peer
     def recgetdata(self, data):
-        value, lengthOfVarint = decodeVarint(data[:10])
-        #print 'Number of items in getdata request:', value
-        try:
-            for i in xrange(value):
-                hash = data[lengthOfVarint+(i*32):32+lengthOfVarint+(i*32)]
-                printLock.acquire()
-                print 'received getdata request for item:', hash.encode('hex')
-                printLock.release()
-                #print 'inventory is', inventory
-                if hash in inventory:
-                    objectType, streamNumber, payload, receivedTime = inventory[hash]
+        numberOfRequestedInventoryItems, lengthOfVarint = decodeVarint(data[:10])
+        if len(data) < lengthOfVarint + (32 * numberOfRequestedInventoryItems):
+            print 'getdata message does not contain enough data. Ignoring.'
+            return
+        for i in xrange(numberOfRequestedInventoryItems):
+            hash = data[lengthOfVarint+(i*32):32+lengthOfVarint+(i*32)]
+            printLock.acquire()
+            print 'received getdata request for item:', hash.encode('hex')
+            printLock.release()
+            #print 'inventory is', inventory
+            if hash in inventory:
+                objectType, streamNumber, payload, receivedTime = inventory[hash]
+                self.sendData(objectType,payload)
+            else:
+                t = (hash,)
+                sqlLock.acquire()
+                sqlSubmitQueue.put('''select objecttype, payload from inventory where hash=?''')
+                sqlSubmitQueue.put(t)
+                queryreturn = sqlReturnQueue.get()
+                sqlLock.release()
+                if queryreturn <> []:
+                    for row in queryreturn:
+                        objectType, payload = row
                     self.sendData(objectType,payload)
                 else:
-                    t = (hash,)
-                    sqlLock.acquire()
-                    sqlSubmitQueue.put('''select objecttype, payload from inventory where hash=?''')
-                    sqlSubmitQueue.put(t)
-                    queryreturn = sqlReturnQueue.get()
-                    sqlLock.release()
-                    if queryreturn <> []:
-                        for row in queryreturn:
-                            objectType, payload = row
-                        self.sendData(objectType,payload)
-                    else:
-                        print 'Someone asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. That shouldn\'t have happened.'
-
-        except:
-            pass   #someone is probably trying to cause a program error by, for example, making a request for 10 items but only including the hashes for 5.
+                    print 'Someone asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. That shouldn\'t have happened.'
 
     #Our peer has requested (in a getdata message) that we send an object.
     def sendData(self,objectType,payload):
@@ -1287,36 +1301,29 @@ class receiveDataThread(QThread):
             print 'sending pubkey'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData += 'pubkey\x00\x00\x00\x00\x00\x00'
-            headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+            headerData += pack('>L',len(payload)) #payload length.
             headerData += hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
-        elif objectType == 'getpubkey':
+        elif objectType == 'getpubkey' or objectType == 'pubkeyrequest':
             print 'sending getpubkey'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData += 'getpubkey\x00\x00\x00'
-            headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+            headerData += pack('>L',len(payload)) #payload length.
             headerData += hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
         elif objectType == 'msg':
             print 'sending msg'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData += 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-            headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+            headerData += pack('>L',len(payload)) #payload length.
             headerData += hashlib.sha512(payload).digest()[:4]
             self.sock.send(headerData + payload)
         elif objectType == 'broadcast':
             print 'sending broadcast'
             headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData += 'broadcast\x00\x00\x00'
-            headerData += pack('>L',len(payload)) #payload length. Note that we add an extra 8 for the nonce.
+            headerData += pack('>L',len(payload)) #payload length.
             headerData += hashlib.sha512(payload).digest()[:4]
-            self.sock.send(headerData + payload)
-        elif objectType == 'getpubkey' or objectType == 'pubkeyrequest':
-            print 'sending getpubkey'
-            headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-            headerData += 'getpubkey\x00\x00\x00' #version command
-            headerData += pack('>L',len(payload)) #payload length
-            headerData += hashlib.sha512(payload).digest()[0:4]
             self.sock.send(headerData + payload)
         else:
             sys.stderr.write('Error: sendData has been asked to send a strange objectType: %s\n' % str(objectType))
@@ -1343,7 +1350,7 @@ class receiveDataThread(QThread):
 
         if numberOfAddressesIncluded > 1000 or numberOfAddressesIncluded == 0:
             return
-        if self.payloadLength < lengthOfNumberOfAddresses + (34 * numberOfAddressesIncluded):
+        if len(data) < lengthOfNumberOfAddresses + (34 * numberOfAddressesIncluded):
             print 'addr message does not contain enough data. Ignoring.'
             return
 
@@ -1401,10 +1408,14 @@ class receiveDataThread(QThread):
                 continue
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>I',data[lengthOfNumberOfAddresses+(34*i):4+lengthOfNumberOfAddresses+(34*i)]) #This is the 'time' value in the received addr message.
             if recaddrStream not in knownNodes: #knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
+                knownNodesLock.acquire()
                 knownNodes[recaddrStream] = {}
+                knownNodesLock.release()
             if hostFromAddrMessage not in knownNodes[recaddrStream]:
                 if len(knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time())-10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800): #If we have more than 20000 nodes in our list already then just forget about adding more. Also, make sure that the time that someone else received a message from this node is within three hours from now.
+                    knownNodesLock.acquire()
                     knownNodes[recaddrStream][hostFromAddrMessage] = (recaddrPort, timeSomeoneElseReceivedMessageFromThisNode)
+                    knownNodesLock.release()
                     print 'added new node', hostFromAddrMessage, 'to knownNodes in stream', recaddrStream
                     needToWriteKnownNodesToDisk = True
                     hostDetails = (timeSomeoneElseReceivedMessageFromThisNode, recaddrStream, recaddrServices, hostFromAddrMessage, recaddrPort)
@@ -1412,12 +1423,16 @@ class receiveDataThread(QThread):
             else:
                 PORT, timeLastReceivedMessageFromThisNode = knownNodes[recaddrStream][hostFromAddrMessage]#PORT in this case is either the port we used to connect to the remote node, or the port that was specified by someone else in a past addr message.
                 if (timeLastReceivedMessageFromThisNode < timeSomeoneElseReceivedMessageFromThisNode) and (timeSomeoneElseReceivedMessageFromThisNode < int(time.time())):
+                    knownNodesLock.acquire()
                     knownNodes[recaddrStream][hostFromAddrMessage] = (PORT, timeSomeoneElseReceivedMessageFromThisNode)
+                    knownNodesLock.release()
                     if PORT != recaddrPort:
                         print 'Strange occurance: The port specified in an addr message', str(recaddrPort),'does not match the port',str(PORT),'that this program (or some other peer) used to connect to it',str(hostFromAddrMessage),'. Perhaps they changed their port or are using a strange NAT configuration.'
         if needToWriteKnownNodesToDisk: #Runs if any nodes were new to us. Also, share those nodes with our peers.
             output = open(appdata + 'knownnodes.dat', 'wb')
+            knownNodesLock.acquire()
             pickle.dump(knownNodes, output)
+            knownNodesLock.release()
             output.close()
             self.broadcastaddr(listOfAddressDetailsToBroadcastToPeers)
         printLock.acquire()
@@ -1523,7 +1538,7 @@ class receiveDataThread(QThread):
 
     #We have received a version message
     def recversion(self,data):
-        if self.payloadLength < 83:
+        if len(data) < 83:
             #This version message is unreasonably short. Forget it.
             return
         elif not self.verackSent: 
@@ -1559,9 +1574,11 @@ class receiveDataThread(QThread):
                 printLock.release()
                 return
 
+            knownNodesLock.acquire()
             knownNodes[self.streamNumber][self.HOST] = (self.remoteNodeIncomingPort, int(time.time()))
             output = open(appdata + 'knownnodes.dat', 'wb')
             pickle.dump(knownNodes, output)
+            knownNodesLock.release()
             output.close()
 
             self.sendverack()
@@ -1777,6 +1794,7 @@ def flushInventory():
         sqlSubmitQueue.put(t)
         sqlReturnQueue.get()
         del inventory[hash]
+    sqlSubmitQueue.put('commit')
     sqlLock.release()
 
 def isInSqlInventory(hash):
@@ -1981,13 +1999,16 @@ class sqlThread(QThread):
 
         while True:
             item = sqlSubmitQueue.get()
-            parameters = sqlSubmitQueue.get()
-            #print 'item', item
-            #print 'parameters', parameters
-            self.cur.execute(item, parameters)
-            sqlReturnQueue.put(self.cur.fetchall())
-            sqlSubmitQueue.task_done()
-            self.conn.commit()
+            if item == 'commit':
+                self.conn.commit()
+            else:
+                parameters = sqlSubmitQueue.get()
+                #print 'item', item
+                #print 'parameters', parameters
+                self.cur.execute(item, parameters)
+                sqlReturnQueue.put(self.cur.fetchall())
+                #sqlSubmitQueue.task_done()
+            
 
 
 '''The singleCleaner class is a timer-driven thread that cleans data structures to free memory, resends messages when a remote node doesn't respond, and sends pong messages to keep connections alive if the network isn't busy.
@@ -2016,12 +2037,13 @@ class singleCleaner(QThread):
             self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing housekeeping (Flushing inventory in memory to disk...)")
             for hash, storedValue in inventory.items():
                 objectType, streamNumber, payload, receivedTime = storedValue
-                if int(time.time())- 600 > receivedTime:
+                if int(time.time())- 3600 > receivedTime:
                     t = (hash,objectType,streamNumber,payload,receivedTime)
                     sqlSubmitQueue.put('''INSERT INTO inventory VALUES (?,?,?,?,?)''')
                     sqlSubmitQueue.put(t)
                     sqlReturnQueue.get()
                     del inventory[hash]
+            sqlSubmitQueue.put('commit')
             self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
             sqlLock.release()
             broadcastToSendDataQueues((0, 'pong', 'no data')) #commands the sendData threads to send out a pong message if they haven't sent anything else in the last five minutes. The socket timeout-time is 10 minutes.
@@ -2040,6 +2062,7 @@ class singleCleaner(QThread):
                 sqlSubmitQueue.put('''DELETE FROM pubkeys WHERE time<? AND usedpersonally='no' ''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
+                sqlSubmitQueue.put('commit')
 
                 t = ()
                 sqlSubmitQueue.put('''select toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber FROM sent WHERE ((status='findingpubkey' OR status='sentmessage') AND folder='sent') ''') #If the message's folder='trash' then we'll ignore it.
@@ -2060,7 +2083,6 @@ class singleCleaner(QThread):
                             sqlSubmitQueue.put('''UPDATE sent SET lastactiontime=?, pubkeyretrynumber=? WHERE toripe=?''')
                             sqlSubmitQueue.put(t)
                             sqlReturnQueue.get()
-                            #self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),toripe,'Public key requested again. ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
                     else:# status == sentmessage
                         if int(time.time()) - lastactiontime > (maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
                             print 'It has been a long time and we haven\'t heard an acknowledgement to our msg. Sending again.'
@@ -2068,9 +2090,9 @@ class singleCleaner(QThread):
                             sqlSubmitQueue.put('''UPDATE sent SET lastactiontime=?, msgretrynumber=?, status=? WHERE ackdata=?''')
                             sqlSubmitQueue.put(t)
                             sqlReturnQueue.get()
-                            #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Message sent again because the acknowledgement was never received. ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
                             workerQueue.put(('sendmessage',toaddress))
                             self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing work necessary to again attempt to deliver a message...")
+                sqlSubmitQueue.put('commit')
                 sqlLock.release()
             
 
@@ -2095,7 +2117,7 @@ class singleWorker(QThread):
             sqlSubmitQueue.put((toripe,))
             queryreturn = sqlReturnQueue.get()
             sqlLock.release()
-            if queryreturn != '': #If we have the pubkey then send the message otherwise put the hash in the neededPubkeys data structure so that we will pay attention to it if it comes over the wire.
+            if queryreturn != []: #If we have the pubkey then send the message otherwise put the hash in the neededPubkeys data structure so that we will pay attention to it if it comes over the wire.
                 self.sendMsg(toripe)
             else:
                 neededPubkeys[toripe] = 0
@@ -2186,7 +2208,7 @@ class singleWorker(QThread):
                     myAddress = addressInKeysFile
                     break
 
-        embeddedTime = int(time.time())+random.randrange(-300, 300) #the current time plus or minus five minutes
+        embeddedTime = int(time.time()+random.randrange(-300, 300)) #the current time plus or minus five minutes
         payload = pack('>I',(embeddedTime))
         payload += encodeVarint(addressVersionNumber) #Address version number
         payload += encodeVarint(streamNumber)
@@ -2226,6 +2248,7 @@ class singleWorker(QThread):
         sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
+        sqlSubmitQueue.put('commit')
         sqlLock.release()
 
         inventoryHash = calculateInventoryHash(payload)
@@ -2298,7 +2321,7 @@ class singleWorker(QThread):
                 print 'sending inv (within sendBroadcast function)'
                 broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
-                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent at '+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent on '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
 
                 #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
                 sqlLock.acquire()
@@ -2306,69 +2329,8 @@ class singleWorker(QThread):
                 sqlSubmitQueue.put('UPDATE sent SET status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
+                sqlSubmitQueue.put('commit')
                 sqlLock.release()
-
-                """elif addressVersionNumber == 1: #This whole section can be taken out soon because we aren't supporting v1 addresses for much longer.
-                messageToTransmit = '\x02' #message encoding type
-                messageToTransmit += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding.
-                messageToTransmit += 'Subject:' + subject + '\n' + 'Body:' + body
-
-                #We need the all the integers for our private key in order to sign our message, and we need our public key to send with the message.
-                n = config.getint(fromaddress, 'n')
-                e = config.getint(fromaddress, 'e')
-                d = config.getint(fromaddress, 'd')
-                p = config.getint(fromaddress, 'p')
-                q = config.getint(fromaddress, 'q')
-                nString = convertIntToString(n)
-                eString = convertIntToString(e)
-                #myPubkey = rsa.PublicKey(n,e)
-                myPrivatekey = rsa.PrivateKey(n,e,d,p,q)
-
-                #The payload of the broadcast message starts with a POW, but that will be added later.
-                payload = pack('>I',(int(time.time())))
-                payload += encodeVarint(1) #broadcast version
-                payload += encodeVarint(addressVersionNumber)
-                payload += encodeVarint(streamNumber)
-                payload += ripe
-                payload += encodeVarint(len(nString))
-                payload += nString
-                payload += encodeVarint(len(eString))
-                payload += eString
-                payload += messageToTransmit
-                signature = rsa.sign(messageToTransmit,myPrivatekey,'SHA-512')
-                #print 'signature', signature.encode('hex')
-                payload += signature
-
-                #print 'nString', repr(nString)
-                #print 'eString', repr(eString)
-
-                nonce = 0
-                trialValue = 99999999999999999999
-                target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
-                print '(For broadcast message) Doing proof of work...'
-                initialHash = hashlib.sha512(payload).digest()
-                while trialValue > target:
-                    nonce += 1
-                    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
-                print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
-
-                payload = pack('>Q',nonce) + payload
-
-                inventoryHash = calculateInventoryHash(payload)
-                objectType = 'broadcast'
-                inventory[inventoryHash] = (objectType, streamNumber, payload, int(time.time()))
-                print 'sending inv (within sendBroadcast function)'
-                broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
-
-                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent at '+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
-
-                #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
-                sqlLock.acquire()
-                t = ('broadcastsent',int(time.time()),fromaddress, subject, body,'broadcastpending')
-                sqlSubmitQueue.put('UPDATE sent SET status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
-                sqlSubmitQueue.put(t)
-                queryreturn = sqlReturnQueue.get()
-                sqlLock.release()"""
             else:
                 printLock.acquire()
                 print 'In the singleWorker thread, the sendBroadcast function doesn\'t understand the address version'
@@ -2380,6 +2342,7 @@ class singleWorker(QThread):
         sqlSubmitQueue.put('UPDATE sent SET status=? WHERE status=? AND toripe=?')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
+        sqlSubmitQueue.put('commit')
 
         t = ('doingpow',toRipe)
         sqlSubmitQueue.put('SELECT toaddress, fromaddress, subject, message, ackdata FROM sent WHERE status=? AND toripe=?')
@@ -2475,7 +2438,11 @@ class singleWorker(QThread):
                 sqlSubmitQueue.put((toRipe,))
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
-
+                if queryreturn == []:
+                    printLock.acquire()
+                    sys.stderr.write('(within sendMsg) The needed pubkey was not found. This should never happen. Aborting send.\n')
+                    printLock.release()
+                    return
                 for row in queryreturn:
                     pubkeyPayload, = row
 
@@ -2492,41 +2459,6 @@ class singleWorker(QThread):
                 pubEncryptionKeyBase256 = pubkeyPayload[readPosition:readPosition+64]
                 readPosition += 64
                 encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
-
-            """elif toAddressVersionNumber == 1:
-                sqlLock.acquire()
-                sqlSubmitQueue.put('SELECT transmitdata FROM pubkeys WHERE hash=?')
-                sqlSubmitQueue.put((toRipe,))
-                queryreturn = sqlReturnQueue.get()
-                sqlLock.release()
-
-                for row in queryreturn:
-                    pubkeyPayload, = row
-
-                readPosition = 8 #to bypass the nonce
-                behaviorBitfield = pubkeyPayload[8:12]
-                readPosition += 4 #to bypass the bitfield of behaviors
-                addressVersion, addressVersionLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
-                readPosition += addressVersionLength
-                streamNumber, streamNumberLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
-                readPosition += streamNumberLength
-                nLength, nLengthLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
-                readPosition += nLengthLength
-                n = convertStringToInt(pubkeyPayload[readPosition:readPosition+nLength])
-                readPosition += nLength
-                eLength, eLengthLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
-                readPosition += eLengthLength
-                e = convertStringToInt(pubkeyPayload[readPosition:readPosition+eLength])
-                receiversPubkey = rsa.PublicKey(n,e)
-
-                infile = cStringIO.StringIO(payload)
-                outfile = cStringIO.StringIO()
-                #print 'Encrypting using public key:', receiversPubkey
-                encrypt_bigfile(infile,outfile,receiversPubkey)
-
-                encrypted = outfile.getvalue()
-                infile.close()
-                outfile.close()"""
 
             nonce = 0
             trialValue = 99999999999999999999
@@ -2551,7 +2483,7 @@ class singleWorker(QThread):
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'msg'
             inventory[inventoryHash] = (objectType, toStreamNumber, payload, int(time.time()))
-            self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Message sent. Waiting on acknowledgement. Sent on ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+            self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Message sent. Waiting on acknowledgement. Sent on ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
             print 'sending inv (within sendmsg function)'
             broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
@@ -2566,12 +2498,12 @@ class singleWorker(QThread):
             sqlSubmitQueue.put('''UPDATE pubkeys SET usedpersonally='yes' WHERE hash=?''')
             sqlSubmitQueue.put(t)
             queryreturn = sqlReturnQueue.get()
-
+            sqlSubmitQueue.put('commit')
             sqlLock.release()
 
 
     def requestPubKey(self,addressVersionNumber,streamNumber,ripe):
-        payload = pack('>I',int(time.time()))
+        payload = pack('>I',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes.
         payload += encodeVarint(addressVersionNumber)
         payload += encodeVarint(streamNumber)
         payload += ripe
@@ -2602,7 +2534,7 @@ class singleWorker(QThread):
         broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
         self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Broacasting the public key request. This program will auto-retry if they are offline.')
-        self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Sending public key request. Waiting for reply. Requested at ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+        self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Sending public key request. Waiting for reply. Requested at ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
 
     def generateFullAckMessage(self,ackdata,toStreamNumber,embeddedTime):
         nonce = 0
@@ -3037,6 +2969,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             sqlSubmitQueue.put('''UPDATE inbox SET folder='trash' WHERE msgid=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
+            sqlSubmitQueue.put('commit')
             sqlLock.release()
             apiSignalQueue.put(('updateStatusBar','Per API: Trashed message (assuming message existed). UI not updated.'))
             return 'Trashed message (assuming message existed). UI not updated. To double check, run getAllInboxMessages to see that the message disappeared, or restart Bitmessage and look in the normal Bitmessage GUI.'
@@ -3097,6 +3030,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
+            sqlSubmitQueue.put('commit')
             sqlLock.release()
             
             toLabel = ''
@@ -3157,6 +3091,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
+            sqlSubmitQueue.put('commit')
             sqlLock.release()
 
             toLabel = '[Broadcast subscribers]'
@@ -3430,9 +3365,12 @@ class MyForm(QtGui.QMainWindow):
         self.actionReply = self.ui.inboxContextMenuToolbar.addAction("Reply", self.on_action_InboxReply)
         self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction("Add sender to your Address Book", self.on_action_InboxAddSenderToAddressBook)
         self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction("Move to Trash", self.on_action_InboxTrash)
+        self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction("View as Richtext", self.on_action_InboxMessageForceHtml)
         self.ui.tableWidgetInbox.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuInbox)
         self.popMenuInbox = QtGui.QMenu( self )
+        self.popMenuInbox.addAction( self.actionForceHtml )
+        self.popMenuInbox.addSeparator()
         self.popMenuInbox.addAction( self.actionReply )
         self.popMenuInbox.addAction( self.actionAddSenderToAddressBook )
         self.popMenuInbox.addSeparator()
@@ -3598,12 +3536,13 @@ class MyForm(QtGui.QMainWindow):
             newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetInbox.setItem(0,2,newItem)
-            newItem =  myTableWidgetItem(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(received))))
+            newItem =  myTableWidgetItem(unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(received))),'utf-8'))
             newItem.setData(Qt.UserRole,QByteArray(msgid))
             newItem.setData(33,int(received))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetInbox.setItem(0,3,newItem)
             #self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
+        self.ui.tableWidgetInbox.sortItems(3,Qt.DescendingOrder)
 
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
         #Load Sent items from database
@@ -3651,21 +3590,22 @@ class MyForm(QtGui.QMainWindow):
             if status == 'findingpubkey':
                 newItem =  myTableWidgetItem('Waiting on their public key. Will request it again soon.')
             elif status == 'sentmessage':
-                newItem =  myTableWidgetItem('Message sent. Waiting on acknowledgement. Sent at ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(lastactiontime)))
+                newItem =  myTableWidgetItem('Message sent. Waiting on acknowledgement. Sent at ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(lastactiontime)),'utf-8'))
             elif status == 'doingpow':
                 newItem =  myTableWidgetItem('Need to do work to send message. Work is queued.')
             elif status == 'ackreceived':
-                newItem =  myTableWidgetItem('Acknowledgement of the message received ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
+                newItem =  myTableWidgetItem('Acknowledgement of the message received ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             elif status == 'broadcastpending':
                 newItem =  myTableWidgetItem('Doing the work necessary to send broadcast...')
             elif status == 'broadcastsent':
-                newItem =  myTableWidgetItem('Broadcast on ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
+                newItem =  myTableWidgetItem('Broadcast on ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             else:
-                newItem =  myTableWidgetItem('Unknown status.  ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))))
+                newItem =  myTableWidgetItem('Unknown status.  ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             newItem.setData(Qt.UserRole,QByteArray(ackdata))
             newItem.setData(33,int(lastactiontime))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,3,newItem)
+        self.ui.tableWidgetSent.sortItems(3,Qt.DescendingOrder)
 
         #Initialize the address book
         sqlSubmitQueue.put('SELECT * FROM addressbook')
@@ -3721,7 +3661,7 @@ class MyForm(QtGui.QMainWindow):
         #self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
         self.statusbar = self.statusBar()
         self.statusbar.insertPermanentWidget(0,self.ui.pushButtonStatusIcon)
-        self.ui.labelStartupTime.setText('Since startup on ' + strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+        self.ui.labelStartupTime.setText('Since startup on ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
         self.numberOfMessagesProcessed = 0
         self.numberOfBroadcastsProcessed = 0
         self.numberOfPubkeysProcessed = 0
@@ -3895,7 +3835,8 @@ class MyForm(QtGui.QMainWindow):
             toAddress = str(self.ui.tableWidgetSent.item(i,0).data(Qt.UserRole).toPyObject())
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
             if ripe == toRipe:
-                self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
+                #self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
+                self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
 
     def updateSentItemStatusByAckdata(self,ackdata,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -3903,7 +3844,8 @@ class MyForm(QtGui.QMainWindow):
             tableAckdata = self.ui.tableWidgetSent.item(i,3).data(Qt.UserRole).toPyObject()
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
             if ackdata == tableAckdata:
-                self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
+                #self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
+                self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
 
     def rerenderInboxFromLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
@@ -4028,6 +3970,7 @@ class MyForm(QtGui.QMainWindow):
                         sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
                         sqlSubmitQueue.put(t)
                         sqlReturnQueue.get()
+                        sqlSubmitQueue.put('commit')
                         sqlLock.release()
 
 
@@ -4072,7 +4015,7 @@ class MyForm(QtGui.QMainWindow):
                         newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
                         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
                         self.ui.tableWidgetSent.setItem(0,2,newItem)
-                        newItem =  myTableWidgetItem('Just pressed ''send'' '+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+                        newItem =  myTableWidgetItem('Just pressed ''send'' ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
                         newItem.setData(Qt.UserRole,QByteArray(ackdata))
                         newItem.setData(33,int(time.time()))
                         self.ui.tableWidgetSent.setItem(0,3,newItem)
@@ -4102,6 +4045,7 @@ class MyForm(QtGui.QMainWindow):
                 sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
+                sqlSubmitQueue.put('commit')
                 sqlLock.release()
 
                 workerQueue.put(('sendbroadcast',(fromAddress,subject,message)))
@@ -4129,7 +4073,7 @@ class MyForm(QtGui.QMainWindow):
                 newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
                 newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
                 self.ui.tableWidgetSent.setItem(0,2,newItem)
-                #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+                #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+ unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
                 newItem =  myTableWidgetItem('Work is queued.')
                 newItem.setData(Qt.UserRole,QByteArray(ackdata))
                 newItem.setData(33,int(time.time()))
@@ -4218,6 +4162,7 @@ class MyForm(QtGui.QMainWindow):
         if fromLabel == '':
             fromLabel = fromAddress
 
+        self.ui.tableWidgetSent.setSortingEnabled(False)
         self.ui.tableWidgetSent.insertRow(0)
         if toLabel == '':
             newItem =  QtGui.QTableWidgetItem(unicode(toAddress,'utf-8'))
@@ -4234,12 +4179,13 @@ class MyForm(QtGui.QMainWindow):
         newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
         self.ui.tableWidgetSent.setItem(0,2,newItem)
-        #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
-        newItem =  myTableWidgetItem('Work is queued. '+strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+        #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+ unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+        newItem =  myTableWidgetItem('Work is queued. '+ unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
         newItem.setData(Qt.UserRole,QByteArray(ackdata))
         newItem.setData(33,int(time.time()))
         self.ui.tableWidgetSent.setItem(0,3,newItem)
         self.ui.textEditSentMessage.setPlainText(self.ui.tableWidgetSent.item(0,2).data(Qt.UserRole).toPyObject())
+        self.ui.tableWidgetSent.setSortingEnabled(True)
 
     def displayNewInboxMessage(self,inventoryHash,toAddress,fromAddress,subject,message):
         '''print 'test signals displayNewInboxMessage'
@@ -4279,7 +4225,7 @@ class MyForm(QtGui.QMainWindow):
         if toLabel == '':
             toLabel = toAddress
 
-        #msgid, toaddress, fromaddress, subject, received, message = row
+        self.ui.tableWidgetInbox.setSortingEnabled(False)
         newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
         newItem.setData(Qt.UserRole,str(toAddress))
         if safeConfigGetBoolean(str(toAddress),'mailinglist'):
@@ -4300,19 +4246,18 @@ class MyForm(QtGui.QMainWindow):
         newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
         self.ui.tableWidgetInbox.setItem(0,2,newItem)
-        newItem =  myTableWidgetItem(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))
+        newItem =  myTableWidgetItem(unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
         newItem.setData(Qt.UserRole,QByteArray(inventoryHash))
         newItem.setData(33,int(time.time()))
         self.ui.tableWidgetInbox.setItem(0,3,newItem)
-
         self.ui.tableWidgetInbox.setCurrentCell(0,0)
-
+        
         #If we have received this message from either a broadcast address or from someone in our address book, display as HTML
         if decodeAddress(fromAddress)[3] in broadcastSendersForWhichImWatching or isAddressInMyAddressBook(fromAddress):
             self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
         else:
             self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
-        
+        self.ui.tableWidgetInbox.setSortingEnabled(True)
 
     def click_pushButtonAddAddressBook(self):
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
@@ -4326,17 +4271,20 @@ class MyForm(QtGui.QMainWindow):
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
                 if queryreturn == []:
+                    self.ui.tableWidgetAddressBook.setSortingEnabled(False)
                     self.ui.tableWidgetAddressBook.insertRow(0)
                     newItem =  QtGui.QTableWidgetItem(unicode(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
                     self.ui.tableWidgetAddressBook.setItem(0,0,newItem)
                     newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
                     newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                     self.ui.tableWidgetAddressBook.setItem(0,1,newItem)
+                    self.ui.tableWidgetAddressBook.setSortingEnabled(True)
                     t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())))
                     sqlLock.acquire()
                     sqlSubmitQueue.put('''INSERT INTO addressbook VALUES (?,?)''')
                     sqlSubmitQueue.put(t)
                     queryreturn = sqlReturnQueue.get()
+                    sqlSubmitQueue.put('commit')
                     sqlLock.release()
                     self.rerenderInboxFromLabels()
                 else:
@@ -4357,17 +4305,20 @@ class MyForm(QtGui.QMainWindow):
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
                 if queryreturn == []:
+                    self.ui.tableWidgetSubscriptions.setSortingEnabled(False)
                     self.ui.tableWidgetSubscriptions.insertRow(0)
                     newItem =  QtGui.QTableWidgetItem(unicode(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
                     self.ui.tableWidgetSubscriptions.setItem(0,0,newItem)
                     newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
                     newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                     self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
+                    self.ui.tableWidgetSubscriptions.setSortingEnabled(True)
                     t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())),True)
                     sqlLock.acquire()
                     sqlSubmitQueue.put('''INSERT INTO subscriptions VALUES (?,?,?)''')
                     sqlSubmitQueue.put(t)
                     queryreturn = sqlReturnQueue.get()
+                    sqlSubmitQueue.put('commit')
                     sqlLock.release()
                     self.rerenderInboxFromLabels()
                     self.reloadBroadcastSendersForWhichImWatching()
@@ -4460,9 +4411,11 @@ class MyForm(QtGui.QMainWindow):
                 with open('keys.dat', 'wb') as configfile:
                     config.write(configfile)
                 #Write the knownnodes.dat file to disk in the new location
+                knownNodesLock.acquire()
                 output = open('knownnodes.dat', 'wb')
                 pickle.dump(knownNodes, output)
                 output.close()
+                knownNodesLock.release()
                 os.remove(appdata + 'keys.dat')
                 os.remove(appdata + 'knownnodes.dat')
                 appdata = ''
@@ -4477,9 +4430,11 @@ class MyForm(QtGui.QMainWindow):
                 with open(appdata + 'keys.dat', 'wb') as configfile:
                     config.write(configfile)
                 #Write the knownnodes.dat file to disk in the new location
+                knownNodesLock.acquire()
                 output = open(appdata + 'knownnodes.dat', 'wb')
                 pickle.dump(knownNodes, output)
                 output.close()
+                knownNodesLock.release()
                 os.remove('keys.dat')
                 os.remove('knownnodes.dat')
                 QMessageBox.about(self, "Restart", "Bitmessage has moved most of your config files to the application data directory but you must restart Bitmessage to move the last file (the file which holds messages).")
@@ -4521,12 +4476,14 @@ class MyForm(QtGui.QMainWindow):
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
                 if queryreturn == []:
+                    self.ui.tableWidgetBlacklist.setSortingEnabled(False)
                     self.ui.tableWidgetBlacklist.insertRow(0)
                     newItem =  QtGui.QTableWidgetItem(unicode(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
                     self.ui.tableWidgetBlacklist.setItem(0,0,newItem)
                     newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text()))
                     newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
                     self.ui.tableWidgetBlacklist.setItem(0,1,newItem)
+                    self.ui.tableWidgetBlacklist.setSortingEnabled(True)
                     t = (str(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text())),True)
                     sqlLock.acquire()
                     if config.get('bitmessagesettings', 'blackwhitelist') == 'black':
@@ -4535,6 +4492,7 @@ class MyForm(QtGui.QMainWindow):
                         sqlSubmitQueue.put('''INSERT INTO whitelist VALUES (?,?,?)''')
                     sqlSubmitQueue.put(t)
                     queryreturn = sqlReturnQueue.get()
+                    sqlSubmitQueue.put('commit')
                     sqlLock.release()
                 else:
                     self.statusBar().showMessage('Error: You cannot add the same address to your list twice. Perhaps rename the existing one if you want.')
@@ -4610,7 +4568,7 @@ class MyForm(QtGui.QMainWindow):
         printLock.acquire()
         print 'Closing. Flushing inventory in memory out to disk...'
         printLock.release()
-        self.statusBar().showMessage('Flushing inventory in memory out to disk.')
+        self.statusBar().showMessage('Flushing inventory in memory out to disk. This should normally only take a second...')
         flushInventory()
 
         #This one last useless query will guarantee that the previous query committed before we close the program.
@@ -4621,9 +4579,11 @@ class MyForm(QtGui.QMainWindow):
         sqlLock.release()
 
         self.statusBar().showMessage('Saving the knownNodes list of peers to disk...')
+        knownNodesLock.acquire()
         output = open(appdata + 'knownnodes.dat', 'wb')
         pickle.dump(knownNodes, output)
         output.close()
+        knownNodesLock.release()
 
         self.trayIcon.hide()
         printLock.acquire()
@@ -4633,12 +4593,24 @@ class MyForm(QtGui.QMainWindow):
         event.accept()
         raise SystemExit
 
+    def on_action_InboxMessageForceHtml(self):
+        currentInboxRow = self.ui.tableWidgetInbox.currentRow()
+        lines = self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject().split('\n')
+        for i in xrange(len(lines)):
+            if lines[i].contains('Message ostensibly from '):
+                lines[i] = '<p style="font-size: 12px; color: grey;">%s</span></p>' % (lines[i])
+            elif lines[i] == '------------------------------------------------------':
+                lines[i] = '<hr>'
+        content = ''
+        for i in xrange(len(lines)):
+            content += lines[i] + '<br>'
+        content = content.replace('\n\n', '<br><br>')
+        self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
 
     def on_action_InboxReply(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,0).data(Qt.UserRole).toPyObject())
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,1).data(Qt.UserRole).toPyObject())
-
 
         if toAddressAtCurrentInboxRow == '[Broadcast subscribers]':
             self.ui.labelFrom.setText('')
@@ -4681,6 +4653,7 @@ class MyForm(QtGui.QMainWindow):
             sqlSubmitQueue.put('''INSERT INTO addressbook VALUES (?,?)''')
             sqlSubmitQueue.put(t)
             queryreturn = sqlReturnQueue.get()
+            sqlSubmitQueue.put('commit')
             sqlLock.release()
             self.ui.tabWidget.setCurrentIndex(5)
             self.ui.tableWidgetAddressBook.setCurrentCell(0,0)
@@ -4690,24 +4663,25 @@ class MyForm(QtGui.QMainWindow):
 
     #Send item on the Inbox tab to trash
     def on_action_InboxTrash(self):
-        currentRow = self.ui.tableWidgetInbox.currentRow()
-        if currentRow >= 0:
+        while self.ui.tableWidgetInbox.selectedIndexes() != []:
+            currentRow = self.ui.tableWidgetInbox.selectedIndexes()[0].row()
             inventoryHashToTrash = str(self.ui.tableWidgetInbox.item(currentRow,3).data(Qt.UserRole).toPyObject())
             t = (inventoryHashToTrash,)
             sqlLock.acquire()
-            #sqlSubmitQueue.put('''delete from inbox where msgid=?''')
             sqlSubmitQueue.put('''UPDATE inbox SET folder='trash' WHERE msgid=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
             sqlLock.release()
             self.ui.textEditInboxMessage.setText("")
             self.ui.tableWidgetInbox.removeRow(currentRow)
-            self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+            self.statusBar().showMessage('Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+        sqlSubmitQueue.put('commit')
 
     #Send item on the Sent tab to trash
     def on_action_SentTrash(self):
-        currentRow = self.ui.tableWidgetSent.currentRow()
-        if currentRow >= 0:
+        #currentRow = self.ui.tableWidgetSent.currentRow()
+        while self.ui.tableWidgetSent.selectedIndexes() != []:
+            currentRow = self.ui.tableWidgetSent.selectedIndexes()[0].row()            
             ackdataToTrash = str(self.ui.tableWidgetSent.item(currentRow,3).data(Qt.UserRole).toPyObject())
             t = (ackdataToTrash,)
             sqlLock.acquire()
@@ -4717,7 +4691,8 @@ class MyForm(QtGui.QMainWindow):
             sqlLock.release()
             self.ui.textEditSentMessage.setPlainText("")
             self.ui.tableWidgetSent.removeRow(currentRow)
-            self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+            self.statusBar().showMessage('Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+        sqlSubmitQueue.put('commit')
     def on_action_SentClipboard(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         addressAtCurrentRow = str(self.ui.tableWidgetSent.item(currentRow,0).data(Qt.UserRole).toPyObject())
@@ -4736,6 +4711,7 @@ class MyForm(QtGui.QMainWindow):
         sqlSubmitQueue.put('''DELETE FROM addressbook WHERE label=? AND address=?''')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
+        sqlSubmitQueue.put('commit')
         sqlLock.release()
         self.ui.tableWidgetAddressBook.removeRow(currentRow)
         self.rerenderInboxFromLabels()
@@ -4771,6 +4747,7 @@ class MyForm(QtGui.QMainWindow):
         sqlSubmitQueue.put('''DELETE FROM subscriptions WHERE label=? AND address=?''')
         sqlSubmitQueue.put(t)
         sqlReturnQueue.get()
+        sqlSubmitQueue.put('commit')
         sqlLock.release()
         self.ui.tableWidgetSubscriptions.removeRow(currentRow)
         self.rerenderInboxFromLabels()
@@ -4801,6 +4778,7 @@ class MyForm(QtGui.QMainWindow):
             sqlSubmitQueue.put('''DELETE FROM whitelist WHERE label=? AND address=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
+        sqlSubmitQueue.put('commit')
         sqlLock.release()
         self.ui.tableWidgetBlacklist.removeRow(currentRow)
     def on_action_BlacklistClipboard(self):
@@ -4825,6 +4803,7 @@ class MyForm(QtGui.QMainWindow):
             sqlSubmitQueue.put('''UPDATE whitelist SET enabled=1 WHERE address=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
+        sqlSubmitQueue.put('commit')
         sqlLock.release()
     def on_action_BlacklistDisable(self):
         currentRow = self.ui.tableWidgetBlacklist.currentRow()
@@ -4841,6 +4820,7 @@ class MyForm(QtGui.QMainWindow):
             sqlSubmitQueue.put('''UPDATE whitelist SET enabled=0 WHERE address=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
+        sqlSubmitQueue.put('commit')
         sqlLock.release()
 
     #Group of functions for the Your Identities dialog box
@@ -4920,6 +4900,7 @@ class MyForm(QtGui.QMainWindow):
             sqlSubmitQueue.put('''UPDATE addressbook set label=? WHERE address=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
+            sqlSubmitQueue.put('commit')
         sqlLock.release()
         self.rerenderInboxFromLabels()
         self.rerenderSentToLabels()
@@ -4933,11 +4914,13 @@ class MyForm(QtGui.QMainWindow):
             sqlSubmitQueue.put('''UPDATE subscriptions set label=? WHERE address=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
+            sqlSubmitQueue.put('commit')
         sqlLock.release()
         self.rerenderInboxFromLabels()
         self.rerenderSentToLabels()
 
     def writeNewAddressToTable(self,label,address,streamNumber):
+        self.ui.tableWidgetYourIdentities.setSortingEnabled(False)
         self.ui.tableWidgetYourIdentities.insertRow(0)
         self.ui.tableWidgetYourIdentities.setItem(0, 0, QtGui.QTableWidgetItem(unicode(label,'utf-8')))
         newItem = QtGui.QTableWidgetItem(address)
@@ -4946,6 +4929,7 @@ class MyForm(QtGui.QMainWindow):
         newItem = QtGui.QTableWidgetItem(streamNumber)
         newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
         self.ui.tableWidgetYourIdentities.setItem(0, 2, newItem)
+        self.ui.tableWidgetYourIdentities.setSortingEnabled(True)
         self.rerenderComboBoxSendFrom()
 
     def updateStatusBar(self,data):
@@ -4983,6 +4967,7 @@ sqlSubmitQueue = Queue.Queue() #SQLITE3 is so thread-unsafe that they won't even
 sqlReturnQueue = Queue.Queue()
 sqlLock = threading.Lock()
 printLock = threading.Lock()
+knownNodesLock = threading.Lock()
 ackdataForWhichImWatching = {}
 broadcastSendersForWhichImWatching = {}
 statusIconColor = 'red'
@@ -5092,6 +5077,7 @@ if __name__ == "__main__":
 
 
     try:
+        #We shouldn't have to use the knownNodesLock because this had better be the only thread accessing knownNodes right now.
         pickleFile = open(appdata + 'knownnodes.dat', 'rb')
         knownNodes = pickle.load(pickleFile)
         pickleFile.close()

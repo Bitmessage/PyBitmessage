@@ -9,12 +9,10 @@ from time import strftime, localtime
 def createDefaultKnownNodes(appdata):
     ############## Stream 1 ################
     stream1 = {}
-
-    stream1['80.69.173.220'] = (443,int(time.time()))
-    stream1['109.95.105.15'] = (8443,int(time.time()))
+    
+    stream1['84.48.88.42'] = (8444,int(time.time()))
     stream1['66.65.120.151'] = (8080,int(time.time()))
     stream1['76.180.233.38'] = (8444,int(time.time()))
-    stream1['84.48.88.42'] = (8444,int(time.time()))
     stream1['74.132.73.137'] = (8444,int(time.time()))
     stream1['60.242.109.18'] = (8444,int(time.time()))
 
@@ -50,7 +48,7 @@ def readDefaultKnownNodes(appdata):
     for stream, storedValue in knownNodes.items():
         for host,value in storedValue.items():
             port, storedtime = storedValue[host]
-            print host, '\t', port, '\t', strftime('%a, %d %b %Y  %I:%M %p',localtime(storedtime))
+            print host, '\t', port, '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(storedtime)))
 
 if __name__ == "__main__":
 
