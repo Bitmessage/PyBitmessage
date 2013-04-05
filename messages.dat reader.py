@@ -88,12 +88,12 @@ def takeSentMessagesOutOfTrash():
     conn.commit()
     print 'done'
 
-#takeInboxMessagesOutOfTrash()
+takeInboxMessagesOutOfTrash()
 #takeSentMessagesOutOfTrash()
 #readInbox()
 #readSent()
 #readPubkeys()
 #readSubscriptions()
-readInventory()
+#readInventory()
 
 
