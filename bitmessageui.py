@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Wed Mar 27 17:23:59 2013
+# Created: Fri Apr 05 17:47:21 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -47,7 +47,7 @@ class Ui_MainWindow(object):
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
         self.tableWidgetInbox = QtGui.QTableWidget(self.inbox)
         self.tableWidgetInbox.setAlternatingRowColors(True)
-        self.tableWidgetInbox.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.tableWidgetInbox.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.tableWidgetInbox.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableWidgetInbox.setWordWrap(False)
         self.tableWidgetInbox.setObjectName(_fromUtf8("tableWidgetInbox"))
@@ -144,7 +144,7 @@ class Ui_MainWindow(object):
         self.tableWidgetSent = QtGui.QTableWidget(self.sent)
         self.tableWidgetSent.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
         self.tableWidgetSent.setAlternatingRowColors(True)
-        self.tableWidgetSent.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.tableWidgetSent.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.tableWidgetSent.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableWidgetSent.setWordWrap(False)
         self.tableWidgetSent.setObjectName(_fromUtf8("tableWidgetSent"))
