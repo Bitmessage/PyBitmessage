@@ -4663,36 +4663,36 @@ class MyForm(QtGui.QMainWindow):
 
     #Send item on the Inbox tab to trash
     def on_action_InboxTrash(self):
-        currentRow = self.ui.tableWidgetInbox.currentRow()
-        if currentRow >= 0:
+        while self.ui.tableWidgetInbox.selectedIndexes() != []:
+            currentRow = self.ui.tableWidgetInbox.selectedIndexes()[0].row()
             inventoryHashToTrash = str(self.ui.tableWidgetInbox.item(currentRow,3).data(Qt.UserRole).toPyObject())
             t = (inventoryHashToTrash,)
             sqlLock.acquire()
-            #sqlSubmitQueue.put('''delete from inbox where msgid=?''')
             sqlSubmitQueue.put('''UPDATE inbox SET folder='trash' WHERE msgid=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
-            sqlSubmitQueue.put('commit')
             sqlLock.release()
             self.ui.textEditInboxMessage.setText("")
             self.ui.tableWidgetInbox.removeRow(currentRow)
-            self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+            self.statusBar().showMessage('Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+        sqlSubmitQueue.put('commit')
 
     #Send item on the Sent tab to trash
     def on_action_SentTrash(self):
-        currentRow = self.ui.tableWidgetSent.currentRow()
-        if currentRow >= 0:
+        #currentRow = self.ui.tableWidgetSent.currentRow()
+        while self.ui.tableWidgetSent.selectedIndexes() != []:
+            currentRow = self.ui.tableWidgetSent.selectedIndexes()[0].row()            
             ackdataToTrash = str(self.ui.tableWidgetSent.item(currentRow,3).data(Qt.UserRole).toPyObject())
             t = (ackdataToTrash,)
             sqlLock.acquire()
             sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE ackdata=?''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
-            sqlSubmitQueue.put('commit')
             sqlLock.release()
             self.ui.textEditSentMessage.setPlainText("")
             self.ui.tableWidgetSent.removeRow(currentRow)
-            self.statusBar().showMessage('Moved item to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+            self.statusBar().showMessage('Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+        sqlSubmitQueue.put('commit')
     def on_action_SentClipboard(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         addressAtCurrentRow = str(self.ui.tableWidgetSent.item(currentRow,0).data(Qt.UserRole).toPyObject())
