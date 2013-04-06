@@ -4603,7 +4603,7 @@ class MyForm(QtGui.QMainWindow):
                 lines[i] = '<hr>'
         content = ''
         for i in xrange(len(lines)):
-            content += lines[i] + '<br>'
+            content += lines[i]
         content = content.replace('\n\n', '<br><br>')
         self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
 
