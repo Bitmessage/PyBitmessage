@@ -96,6 +96,8 @@ def calculateInventoryHash(data):
 
 def encodeAddress(version,stream,ripe):
     if version >= 2:
+        if len(ripe) != 20:
+            sys.stderr.write('Programming error in encodeAddress: The length of a given ripe hash was not 20.')
         if ripe[:2] == '\x00\x00':
             ripe = ripe[2:]
         elif ripe[:1] == '\x00':
