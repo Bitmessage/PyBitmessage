@@ -96,6 +96,8 @@ def calculateInventoryHash(data):
 
 def encodeAddress(version,stream,ripe):
     if version >= 2:
+        if len(ripe) != 20:
+            raise Exception("Programming error in encodeAddress: The length of a given ripe hash was not 20.")
         if ripe[:2] == '\x00\x00':
             ripe = ripe[2:]
         elif ripe[:1] == '\x00':
@@ -181,6 +183,12 @@ def decodeAddress(address):
             return status,addressVersionNumber,streamNumber,data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
         elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 18:
             return status,addressVersionNumber,streamNumber,'\x00\x00'+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
+        elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) < 18:
+            return 'ripetooshort',0,0,0
+        elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) > 20:
+            return 'ripetoolong',0,0,0
+        else:
+            return 'otherproblem',0,0,0
 
 def addBMIfNotPresent(address):
     address = str(address).strip()
