@@ -2608,10 +2608,7 @@ class addressGenerator(QThread):
                             break
                 print 'Generated address with ripe digest:', ripe.digest().encode('hex')
                 print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'addresses per second before finding one with the correct ripe-prefix.'
-                if ripe.digest()[:2] == '\x00\x00':
-                    address = encodeAddress(2,self.streamNumber,ripe.digest()[2:])
-                elif ripe.digest()[:1] == '\x00':
-                    address = encodeAddress(2,self.streamNumber,ripe.digest()[1:])
+                address = encodeAddress(2,self.streamNumber,ripe.digest())
                 #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
 
                 #An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
@@ -2680,10 +2677,7 @@ class addressGenerator(QThread):
 
                     print 'ripe.digest', ripe.digest().encode('hex')
                     print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'keys per second.'
-                    if ripe.digest()[:2] == '\x00\x00':
-                        address = encodeAddress(2,self.streamNumber,ripe.digest()[2:])
-                    elif ripe.digest()[:1] == '\x00':
-                        address = encodeAddress(2,self.streamNumber,ripe.digest()[1:])
+                    address = encodeAddress(2,self.streamNumber,ripe.digest())
                     #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
 
                     #An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
@@ -3276,6 +3270,10 @@ class NewSubscriptionDialog(QtGui.QDialog):
             self.ui.labelSubscriptionAddressCheck.setText('The version number of this address is higher than this software can support. Please upgrade Bitmessage.')
         elif status == 'invalidcharacters':
             self.ui.labelSubscriptionAddressCheck.setText('The address contains invalid characters.')
+        elif status == 'ripetooshort':
+            self.ui.labelSubscriptionAddressCheck.setText('Some data encoded in the address is too short.')
+        elif status == 'ripetoolong':
+            self.ui.labelSubscriptionAddressCheck.setText('Some data encoded in the address is too long.')
         elif status == 'success':
             self.ui.labelSubscriptionAddressCheck.setText('Address is valid.')
 
@@ -3935,12 +3933,18 @@ class MyForm(QtGui.QMainWindow):
                         printLock.release()
                         if status == 'missingbm':
                             self.statusBar().showMessage('Error: Bitmessage addresses start with BM-   Please check ' + toAddress)
-                        if status == 'checksumfailed':
+                        elif status == 'checksumfailed':
                             self.statusBar().showMessage('Error: The address ' + toAddress+' is not typed or copied correctly. Please check it.')
-                        if status == 'invalidcharacters':
+                        elif status == 'invalidcharacters':
                             self.statusBar().showMessage('Error: The address '+ toAddress+ ' contains invalid characters. Please check it.')
-                        if status == 'versiontoohigh':
+                        elif status == 'versiontoohigh':
                             self.statusBar().showMessage('Error: The address version in '+ toAddress+ ' is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.')
+                        elif status == 'ripetooshort':
+                            self.statusBar().showMessage('Error: Some data encoded in the address '+ toAddress+ ' is too short. There might be something wrong with the software of your acquaintance.')
+                        elif status == 'ripetoolong':
+                            self.statusBar().showMessage('Error: Some data encoded in the address '+ toAddress+ ' is too long. There might be something wrong with the software of your acquaintance.')
+                        else:
+                            self.statusBar().showMessage('Error: Something is wrong with the address '+ toAddress+ '.')
                     elif fromAddress == '':
                         self.statusBar().showMessage('Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab.')
                     else:
