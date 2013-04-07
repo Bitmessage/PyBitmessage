@@ -181,6 +181,12 @@ def decodeAddress(address):
             return status,addressVersionNumber,streamNumber,data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
         elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 18:
             return status,addressVersionNumber,streamNumber,'\x00\x00'+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
+        elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) < 18:
+            return 'ripetooshort',0,0,0
+        elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) > 20:
+            return 'ripetoolong',0,0,0
+        else:
+            return 'otherproblem',0,0,0
 
 def addBMIfNotPresent(address):
     address = str(address).strip()
