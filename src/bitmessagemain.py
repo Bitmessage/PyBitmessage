@@ -2722,47 +2722,14 @@ class addressGenerator(QThread):
 
                         self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
                         listOfNewAddressesToSendOutThroughTheAPI.append(address)
+                        if self.eighteenByteRipe:
+                            reloadMyAddressHashes()#This is necessary here (rather than just at the end) because otherwise if the human generates a large number of new addresses and uses one before they are done generating, the program will receive a getpubkey message and will ignore it.
                     except:
                         print address,'already exists. Not adding it again.'
                 #It may be the case that this address is being generated as a result of a call to the API. Let us put the result in the necessary queue. 
                 apiAddressGeneratorReturnQueue.put(listOfNewAddressesToSendOutThroughTheAPI)
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
                 reloadMyAddressHashes()
-
-        #This code which deals with old RSA addresses will soon be removed.
-        """elif self.addressVersionNumber == 1:
-            statusbar = 'Generating new ' + str(config.getint('bitmessagesettings', 'bitstrength')) + ' bit RSA key. This takes a minute on average. If you want to generate multiple addresses now, you can; they will queue.'
-            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
-            (pubkey, privkey) = rsa.newkeys(config.getint('bitmessagesettings', 'bitstrength'))
-            print privkey['n']
-            print privkey['e']
-            print privkey['d']
-            print privkey['p']
-            print privkey['q']
-
-            sha = hashlib.new('sha512')
-            #sha.update(str(pubkey.n)+str(pubkey.e))
-            sha.update(convertIntToString(pubkey.n)+convertIntToString(pubkey.e))
-            ripe = hashlib.new('ripemd160')
-            ripe.update(sha.digest())
-            address = encodeAddress(1,self.streamNumber,ripe.digest())
-
-            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
-            config.add_section(address)
-            config.set(address,'label',self.label)
-            config.set(address,'enabled','true')
-            config.set(address,'decoy','false')
-            config.set(address,'n',str(privkey['n']))
-            config.set(address,'e',str(privkey['e']))
-            config.set(address,'d',str(privkey['d']))
-            config.set(address,'p',str(privkey['p']))
-            config.set(address,'q',str(privkey['q']))
-            with open(appdata + 'keys.dat', 'wb') as configfile:
-                config.write(configfile)
-
-            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
-            self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
-            reloadMyAddressHashes()"""
 
     #Does an EC point multiplication; turns a private key into a public key.
     def pointMult(self,secret):
@@ -4136,7 +4103,7 @@ class MyForm(QtGui.QMainWindow):
             time.sleep(0.1)
             self.statusBar().showMessage('')
             time.sleep(0.1)
-            self.statusBar().showMessage('Right click an entry in your address book and select \'Send message to this address\'.')
+            self.statusBar().showMessage('Right click one or more entries in your address book and select \'Send message to this address\'.')
 
     def redrawLabelFrom(self,index):
         self.ui.labelFrom.setText(self.ui.comboBoxSendFrom.itemData(index).toPyObject())
@@ -4721,6 +4688,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.removeRow(currentRow)
             self.statusBar().showMessage('Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
         sqlSubmitQueue.put('commit')
+        self.ui.tableWidgetInbox.selectRow(currentRow)
 
     #Send item on the Sent tab to trash
     def on_action_SentTrash(self):
@@ -4828,6 +4796,7 @@ class MyForm(QtGui.QMainWindow):
         sqlSubmitQueue.put('commit')
         sqlLock.release()
         self.ui.tableWidgetSubscriptions.item(currentRow,0).setTextColor(QtGui.QColor(0,0,0))
+        self.ui.tableWidgetSubscriptions.item(currentRow,1).setTextColor(QtGui.QColor(0,0,0))
         self.reloadBroadcastSendersForWhichImWatching()
     def on_action_SubscriptionsDisable(self):
         currentRow = self.ui.tableWidgetSubscriptions.currentRow()
@@ -4841,6 +4810,7 @@ class MyForm(QtGui.QMainWindow):
         sqlSubmitQueue.put('commit')
         sqlLock.release()
         self.ui.tableWidgetSubscriptions.item(currentRow,0).setTextColor(QtGui.QColor(128,128,128))
+        self.ui.tableWidgetSubscriptions.item(currentRow,1).setTextColor(QtGui.QColor(128,128,128))
         self.reloadBroadcastSendersForWhichImWatching()
     def on_context_menuSubscriptions(self, point):
         self.popMenuSubscriptions.exec_( self.ui.tableWidgetSubscriptions.mapToGlobal(point) )
