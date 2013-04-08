@@ -4688,7 +4688,10 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.removeRow(currentRow)
             self.statusBar().showMessage('Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
         sqlSubmitQueue.put('commit')
-        self.ui.tableWidgetInbox.selectRow(currentRow)
+        if currentRow == 0:
+            self.ui.tableWidgetInbox.selectRow(currentRow)
+        else:
+            self.ui.tableWidgetInbox.selectRow(currentRow-1)
 
     #Send item on the Sent tab to trash
     def on_action_SentTrash(self):
@@ -4705,6 +4708,11 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetSent.removeRow(currentRow)
             self.statusBar().showMessage('Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
         sqlSubmitQueue.put('commit')
+        if currentRow == 0:
+            self.ui.tableWidgetSent.selectRow(currentRow)
+        else:
+            self.ui.tableWidgetSent.selectRow(currentRow-1)
+            
     def on_action_SentClipboard(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         addressAtCurrentRow = str(self.ui.tableWidgetSent.item(currentRow,0).data(Qt.UserRole).toPyObject())
