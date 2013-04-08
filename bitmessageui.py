@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Fri Apr 05 17:47:21 2013
+# Created: Mon Apr 08 11:57:15 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -261,7 +261,7 @@ class Ui_MainWindow(object):
         self.gridLayout_5.addItem(spacerItem6, 1, 1, 1, 1)
         self.tableWidgetAddressBook = QtGui.QTableWidget(self.addressbook)
         self.tableWidgetAddressBook.setAlternatingRowColors(True)
-        self.tableWidgetAddressBook.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.tableWidgetAddressBook.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.tableWidgetAddressBook.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableWidgetAddressBook.setObjectName(_fromUtf8("tableWidgetAddressBook"))
         self.tableWidgetAddressBook.setColumnCount(2)
