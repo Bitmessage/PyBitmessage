@@ -657,8 +657,8 @@ class receiveDataThread(QThread):
             toAddress = '[Broadcast subscribers]'
             if messageEncodingType <> 0:
                 sqlLock.acquire()
-                t = (self.inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
-                sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
+                t = (self.inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox',messageEncodingType,0)
+                sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
                 sqlSubmitQueue.put('commit')
@@ -929,8 +929,8 @@ class receiveDataThread(QThread):
                     subject = ''
                 if messageEncodingType <> 0:
                     sqlLock.acquire()
-                    t = (self.inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox')
-                    sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?)''')
+                    t = (self.inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox',messageEncodingType,0)
+                    sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?)''')
                     sqlSubmitQueue.put(t)
                     sqlReturnQueue.get()
                     sqlSubmitQueue.put('commit')
@@ -961,8 +961,8 @@ class receiveDataThread(QThread):
                     toAddress = '[Broadcast subscribers]'
                     ripe = ''
                     sqlLock.acquire()
-                    t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastpending',1,1,'sent')
-                    sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
+                    t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastpending',1,1,'sent',2)
+                    sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
                     sqlSubmitQueue.put(t)
                     sqlReturnQueue.get()
                     sqlSubmitQueue.put('commit')
@@ -1943,8 +1943,8 @@ class sqlThread(QThread):
         self.conn.text_factory = str
         self.cur = self.conn.cursor()
         try:
-            self.cur.execute( '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text, received text, message text, folder text, UNIQUE(msgid) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text, ackdata blob, lastactiontime integer, status text, pubkeyretrynumber integer, msgretrynumber integer, folder text)''' )
+            self.cur.execute( '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text, received text, message text, folder text, encodingtype int, read bool, UNIQUE(msgid) ON CONFLICT REPLACE)''' )
+            self.cur.execute( '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text, ackdata blob, lastactiontime integer, status text, pubkeyretrynumber integer, msgretrynumber integer, folder text, encodingtype int)''' )
             self.cur.execute( '''CREATE TABLE subscriptions (label text, address text, enabled bool)''' )
             self.cur.execute( '''CREATE TABLE addressbook (label text, address text)''' )
             self.cur.execute( '''CREATE TABLE blacklist (label text, address text, enabled bool)''' )
@@ -1978,6 +1978,25 @@ class sqlThread(QThread):
             config.set('bitmessagesettings','settingsversion','3')
             with open(appdata + 'keys.dat', 'wb') as configfile:
                 config.write(configfile)
+
+        #People running earlier versions of PyBitmessage do not have the encodingtype field in their inbox and sent tables or the read field in the inbox table. Let's add them.
+        if config.getint('bitmessagesettings','settingsversion') == 3:
+            item = '''ALTER TABLE inbox ADD encodingtype int DEFAULT '2' '''
+            parameters = ''
+            self.cur.execute(item, parameters)
+
+            item = '''ALTER TABLE inbox ADD read bool DEFAULT '1' '''
+            parameters = ''
+            self.cur.execute(item, parameters)
+
+            item = '''ALTER TABLE sent ADD encodingtype int DEFAULT '2' '''
+            parameters = ''
+            self.cur.execute(item, parameters)
+            self.conn.commit()
+
+            config.set('bitmessagesettings','settingsversion','4')
+            with open(appdata + 'keys.dat', 'wb') as configfile:
+                config.write(configfile)             
 
         try:
             testpayload = '\x00\x00'
@@ -3020,8 +3039,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
             ackdata = OpenSSL.rand(32)
             sqlLock.acquire()
-            t = ('',toAddress,toRipe,fromAddress,subject,message,ackdata,int(time.time()),'findingpubkey',1,1,'sent')
-            sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
+            t = ('',toAddress,toRipe,fromAddress,subject,message,ackdata,int(time.time()),'findingpubkey',1,1,'sent',2)
+            sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
             sqlSubmitQueue.put('commit')
@@ -3081,8 +3100,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             ripe = ''
 
             sqlLock.acquire()
-            t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastpending',1,1,'sent')
-            sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
+            t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastpending',1,1,'sent',2)
+            sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
             sqlSubmitQueue.put('commit')
@@ -3416,11 +3435,16 @@ class MyForm(QtGui.QMainWindow):
         self.actionsubscriptionsNew = self.ui.subscriptionsContextMenuToolbar.addAction("New", self.on_action_SubscriptionsNew)
         self.actionsubscriptionsDelete = self.ui.subscriptionsContextMenuToolbar.addAction("Delete", self.on_action_SubscriptionsDelete)
         self.actionsubscriptionsClipboard = self.ui.subscriptionsContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_SubscriptionsClipboard)
+        self.actionsubscriptionsEnable = self.ui.subscriptionsContextMenuToolbar.addAction("Enable", self.on_action_SubscriptionsEnable)
+        self.actionsubscriptionsDisable = self.ui.subscriptionsContextMenuToolbar.addAction("Disable", self.on_action_SubscriptionsDisable)
         self.ui.tableWidgetSubscriptions.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetSubscriptions, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuSubscriptions)
         self.popMenuSubscriptions = QtGui.QMenu( self )
         self.popMenuSubscriptions.addAction( self.actionsubscriptionsNew )
         self.popMenuSubscriptions.addAction( self.actionsubscriptionsDelete )
+        self.popMenuSubscriptions.addSeparator()
+        self.popMenuSubscriptions.addAction( self.actionsubscriptionsEnable )
+        self.popMenuSubscriptions.addAction( self.actionsubscriptionsDisable )
         self.popMenuSubscriptions.addSeparator()
         self.popMenuSubscriptions.addAction( self.actionsubscriptionsClipboard )
 
@@ -3487,13 +3511,14 @@ class MyForm(QtGui.QMainWindow):
         self.reloadBroadcastSendersForWhichImWatching()
 
         self.ui.tableWidgetSent.keyPressEvent = self.tableWidgetSentKeyPressEvent
+        font = QFont()
+        font.setBold(True)
         #Load inbox from messages database file
-        sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message FROM inbox where folder='inbox' ORDER BY received''')
+        sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message, read FROM inbox where folder='inbox' ORDER BY received''')
         sqlSubmitQueue.put('')
         queryreturn = sqlReturnQueue.get()
         for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, received, message, = row
-
+            msgid, toAddress, fromAddress, subject, received, message, read = row
 
             try:
                 if toAddress == '[Broadcast subscribers]':
@@ -3518,6 +3543,8 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.insertRow(0)
             newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
+            if not read:
+                newItem.setFont(font)
             newItem.setData(Qt.UserRole,str(toAddress))
             if safeConfigGetBoolean(toAddress,'mailinglist'):
                 newItem.setTextColor(QtGui.QColor(137,04,177))
@@ -3527,19 +3554,24 @@ class MyForm(QtGui.QMainWindow):
             else:
                 newItem =  QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
+            if not read:
+                newItem.setFont(font)
             newItem.setData(Qt.UserRole,str(fromAddress))
 
             self.ui.tableWidgetInbox.setItem(0,1,newItem)
             newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8'))
             newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
+            if not read:
+                newItem.setFont(font)
             self.ui.tableWidgetInbox.setItem(0,2,newItem)
             newItem =  myTableWidgetItem(unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(received))),'utf-8'))
             newItem.setData(Qt.UserRole,QByteArray(msgid))
             newItem.setData(33,int(received))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
+            if not read:
+                newItem.setFont(font)
             self.ui.tableWidgetInbox.setItem(0,3,newItem)
-            #self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
         self.ui.tableWidgetInbox.sortItems(3,Qt.DescendingOrder)
 
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
@@ -3619,16 +3651,20 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetAddressBook.setItem(0,1,newItem)
 
         #Initialize the Subscriptions
-        sqlSubmitQueue.put('SELECT label, address FROM subscriptions')
+        sqlSubmitQueue.put('SELECT label, address, enabled FROM subscriptions')
         sqlSubmitQueue.put('')
         queryreturn = sqlReturnQueue.get()
         for row in queryreturn:
-            label, address = row
+            label, address, enabled = row
             self.ui.tableWidgetSubscriptions.insertRow(0)
             newItem =  QtGui.QTableWidgetItem(unicode(label,'utf-8'))
+            if not enabled:
+                newItem.setTextColor(QtGui.QColor(128,128,128))
             self.ui.tableWidgetSubscriptions.setItem(0,0,newItem)
             newItem =  QtGui.QTableWidgetItem(address)
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
+            if not enabled:
+                newItem.setTextColor(QtGui.QColor(128,128,128))
             self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
 
         #Initialize the Blacklist or Whitelist
@@ -3970,8 +4006,8 @@ class MyForm(QtGui.QMainWindow):
                             self.statusBar().showMessage('Warning: The address uses a stream number currently not supported by this Bitmessage version. Perhaps upgrade.')
                         ackdata = OpenSSL.rand(32)
                         sqlLock.acquire()
-                        t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'findingpubkey',1,1,'sent')
-                        sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
+                        t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'findingpubkey',1,1,'sent',2)
+                        sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
                         sqlSubmitQueue.put(t)
                         sqlReturnQueue.get()
                         sqlSubmitQueue.put('commit')
@@ -4045,8 +4081,8 @@ class MyForm(QtGui.QMainWindow):
                 toAddress = '[Broadcast subscribers]'
                 ripe = ''
                 sqlLock.acquire()
-                t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastpending',1,1,'sent')
-                sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?)''')
+                t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastpending',1,1,'sent',2)
+                sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
                 sqlSubmitQueue.put('commit')
@@ -4229,8 +4265,11 @@ class MyForm(QtGui.QMainWindow):
         if toLabel == '':
             toLabel = toAddress
 
+        font = QFont()
+        font.setBold(True)
         self.ui.tableWidgetInbox.setSortingEnabled(False)
         newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
+        newItem.setFont(font)
         newItem.setData(Qt.UserRole,str(toAddress))
         if safeConfigGetBoolean(str(toAddress),'mailinglist'):
             newItem.setTextColor(QtGui.QColor(137,04,177))
@@ -4246,21 +4285,23 @@ class MyForm(QtGui.QMainWindow):
             if config.getboolean('bitmessagesettings', 'showtraynotifications'):
                 self.trayIcon.showMessage('New Message', 'New message from '+fromLabel, 1, 2000)
         newItem.setData(Qt.UserRole,str(fromAddress))
+        newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,1,newItem)
         newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
+        newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,2,newItem)
         newItem =  myTableWidgetItem(unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
         newItem.setData(Qt.UserRole,QByteArray(inventoryHash))
         newItem.setData(33,int(time.time()))
+        newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,3,newItem)
-        self.ui.tableWidgetInbox.setCurrentCell(0,0)
         
-        #If we have received this message from either a broadcast address or from someone in our address book, display as HTML
+        """#If we have received this message from either a broadcast address or from someone in our address book, display as HTML
         if decodeAddress(fromAddress)[3] in broadcastSendersForWhichImWatching or isAddressInMyAddressBook(fromAddress):
             self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
         else:
-            self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
+            self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())"""
         self.ui.tableWidgetInbox.setSortingEnabled(True)
 
     def click_pushButtonAddAddressBook(self):
@@ -4775,6 +4816,32 @@ class MyForm(QtGui.QMainWindow):
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(currentRow,1).text()
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(str(addressAtCurrentRow))
+    def on_action_SubscriptionsEnable(self):
+        currentRow = self.ui.tableWidgetSubscriptions.currentRow()
+        labelAtCurrentRow = self.ui.tableWidgetSubscriptions.item(currentRow,0).text().toUtf8()
+        addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(currentRow,1).text()
+        t = (str(labelAtCurrentRow),str(addressAtCurrentRow))
+        sqlLock.acquire()
+        sqlSubmitQueue.put('''update subscriptions set enabled=1 WHERE label=? AND address=?''')
+        sqlSubmitQueue.put(t)
+        sqlReturnQueue.get()
+        sqlSubmitQueue.put('commit')
+        sqlLock.release()
+        self.ui.tableWidgetSubscriptions.item(currentRow,0).setTextColor(QtGui.QColor(0,0,0))
+        self.reloadBroadcastSendersForWhichImWatching()
+    def on_action_SubscriptionsDisable(self):
+        currentRow = self.ui.tableWidgetSubscriptions.currentRow()
+        labelAtCurrentRow = self.ui.tableWidgetSubscriptions.item(currentRow,0).text().toUtf8()
+        addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(currentRow,1).text()
+        t = (str(labelAtCurrentRow),str(addressAtCurrentRow))
+        sqlLock.acquire()
+        sqlSubmitQueue.put('''update subscriptions set enabled=0 WHERE label=? AND address=?''')
+        sqlSubmitQueue.put(t)
+        sqlReturnQueue.get()
+        sqlSubmitQueue.put('commit')
+        sqlLock.release()
+        self.ui.tableWidgetSubscriptions.item(currentRow,0).setTextColor(QtGui.QColor(128,128,128))
+        self.reloadBroadcastSendersForWhichImWatching()
     def on_context_menuSubscriptions(self, point):
         self.popMenuSubscriptions.exec_( self.ui.tableWidgetSubscriptions.mapToGlobal(point) )
 
@@ -4889,6 +4956,22 @@ class MyForm(QtGui.QMainWindow):
             else:
                 self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())
 
+            inventoryHash = str(self.ui.tableWidgetInbox.item(currentRow,3).data(Qt.UserRole).toPyObject())
+            t = (inventoryHash,)
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''update inbox set read=1 WHERE msgid=?''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+            sqlSubmitQueue.put('commit')
+            sqlLock.release()
+            
+            font = QFont()
+            font.setBold(False)
+            self.ui.tableWidgetInbox.item(currentRow,0).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow,1).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow,2).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow,3).setFont(font)
+
         
     def tableWidgetSentItemClicked(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
@@ -4959,7 +5042,7 @@ class MyForm(QtGui.QMainWindow):
     def reloadBroadcastSendersForWhichImWatching(self):
         broadcastSendersForWhichImWatching.clear()
         sqlLock.acquire()
-        sqlSubmitQueue.put('SELECT address FROM subscriptions')
+        sqlSubmitQueue.put('SELECT address FROM subscriptions where enabled=1')
         sqlSubmitQueue.put('')
         queryreturn = sqlReturnQueue.get()
         sqlLock.release()
@@ -5034,7 +5117,7 @@ if __name__ == "__main__":
         except:
             #This appears to be the first time running the program; there is no config file (or it cannot be accessed). Create config file.
             config.add_section('bitmessagesettings')
-            config.set('bitmessagesettings','settingsversion','1')
+            config.set('bitmessagesettings','settingsversion','4')
             config.set('bitmessagesettings','port','8444')
             config.set('bitmessagesettings','timeformat','%%a, %%d %%b %%Y  %%I:%%M %%p')
             config.set('bitmessagesettings','blackwhitelist','black')
@@ -5045,6 +5128,14 @@ if __name__ == "__main__":
                 config.set('bitmessagesettings','minimizetotray','true')
             config.set('bitmessagesettings','showtraynotifications','true')
             config.set('bitmessagesettings','startintray','false')
+            config.set('bitmessagesettings','socksproxytype','none')
+            config.set('bitmessagesettings','sockshostname','localhost')
+            config.set('bitmessagesettings','socksport','9050')
+            config.set('bitmessagesettings','socksauthentication','false')
+            config.set('bitmessagesettings','socksusername','')
+            config.set('bitmessagesettings','sockspassword','')
+            config.set('bitmessagesettings','keysencrypted','false')
+            config.set('bitmessagesettings','messagesencrypted','false')
 
             if storeConfigFilesInSameDirectoryAsProgramByDefault:
                 #Just use the same directory as the program and forget about the appdata folder
@@ -5058,7 +5149,7 @@ if __name__ == "__main__":
                 config.write(configfile)
 
     if config.getint('bitmessagesettings','settingsversion') == 1:
-        config.set('bitmessagesettings','settingsversion','3') #If the settings version is equal to 2 then the sqlThread will modify the pubkeys table and change the settings version to 3.
+        config.set('bitmessagesettings','settingsversion','4') #If the settings version is equal to 2 or 3 then the sqlThread will modify the pubkeys table and change the settings version to 4.
         config.set('bitmessagesettings','socksproxytype','none')
         config.set('bitmessagesettings','sockshostname','localhost')
         config.set('bitmessagesettings','socksport','9050')
@@ -5104,7 +5195,7 @@ if __name__ == "__main__":
         knownNodes = pickle.load(pickleFile)
         pickleFile.close()
 
-    if config.getint('bitmessagesettings', 'settingsversion') > 3:
+    if config.getint('bitmessagesettings', 'settingsversion') > 4:
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
         raise SystemExit
 
