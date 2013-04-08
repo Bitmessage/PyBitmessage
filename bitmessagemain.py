@@ -4683,7 +4683,6 @@ class MyForm(QtGui.QMainWindow):
 
     #Send item on the Sent tab to trash
     def on_action_SentTrash(self):
-        #currentRow = self.ui.tableWidgetSent.currentRow()
         while self.ui.tableWidgetSent.selectedIndexes() != []:
             currentRow = self.ui.tableWidgetSent.selectedIndexes()[0].row()            
             ackdataToTrash = str(self.ui.tableWidgetSent.item(currentRow,3).data(Qt.UserRole).toPyObject())
@@ -4707,33 +4706,48 @@ class MyForm(QtGui.QMainWindow):
     def on_action_AddressBookNew(self):
         self.click_pushButtonAddAddressBook()
     def on_action_AddressBookDelete(self):
-        currentRow = self.ui.tableWidgetAddressBook.currentRow()
-        labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
-        addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,1).text()
-        t = (str(labelAtCurrentRow),str(addressAtCurrentRow))
-        sqlLock.acquire()
-        sqlSubmitQueue.put('''DELETE FROM addressbook WHERE label=? AND address=?''')
-        sqlSubmitQueue.put(t)
-        queryreturn = sqlReturnQueue.get()
-        sqlSubmitQueue.put('commit')
-        sqlLock.release()
-        self.ui.tableWidgetAddressBook.removeRow(currentRow)
-        self.rerenderInboxFromLabels()
-        self.rerenderSentToLabels()
-        self.reloadBroadcastSendersForWhichImWatching()
+        while self.ui.tableWidgetInbox.selectedIndexes() != []:
+            currentRow = self.ui.tableWidgetInbox.selectedIndexes()[0].row()
+            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
+            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,1).text()
+            t = (str(labelAtCurrentRow),str(addressAtCurrentRow))
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''DELETE FROM addressbook WHERE label=? AND address=?''')
+            sqlSubmitQueue.put(t)
+            queryreturn = sqlReturnQueue.get()
+            sqlSubmitQueue.put('commit')
+            sqlLock.release()
+            self.ui.tableWidgetAddressBook.removeRow(currentRow)
+            self.rerenderInboxFromLabels()
+            self.rerenderSentToLabels()
     def on_action_AddressBookClipboard(self):
-        currentRow = self.ui.tableWidgetAddressBook.currentRow()
-        addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,1).text()
+        fullStringOfAddresses = ''
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
+            listOfSelectedRows[self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
+        for currentRow in listOfSelectedRows:
+            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,1).text()
+            if fullStringOfAddresses == '':
+                fullStringOfAddresses = addressAtCurrentRow
+            else:
+                fullStringOfAddresses += ', '+ str(addressAtCurrentRow)
         clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(str(addressAtCurrentRow))
+        clipboard.setText(fullStringOfAddresses)
     def on_action_AddressBookSend(self):
-        currentRow = self.ui.tableWidgetAddressBook.currentRow()
-        addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,1).text()
-        if self.ui.lineEditTo.text() == '':
-            self.ui.lineEditTo.setText(str(addressAtCurrentRow))
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
+            listOfSelectedRows[self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
+        for currentRow in listOfSelectedRows:
+            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,1).text()
+            if self.ui.lineEditTo.text() == '':
+                self.ui.lineEditTo.setText(str(addressAtCurrentRow))
+            else:
+                self.ui.lineEditTo.setText(str(self.ui.lineEditTo.text()) + '; '+ str(addressAtCurrentRow))
+        if listOfSelectedRows == {}:
+            self.statusBar().showMessage('No addresses selected.')
         else:
-            self.ui.lineEditTo.setText(str(self.ui.lineEditTo.text()) + '; '+ str(addressAtCurrentRow))
-        self.statusBar().showMessage('You have added the address to the \'To\' field on the \'Send\' tab. You may add more recipients if you want. When you are done, go to the \'Send\' tab.')
+            self.statusBar().showMessage('')
+            self.ui.tabWidget.setCurrentIndex(1)
     def on_context_menuAddressBook(self, point):
         self.popMenuAddressBook.exec_( self.ui.tableWidgetAddressBook.mapToGlobal(point) )
 
@@ -4768,7 +4782,6 @@ class MyForm(QtGui.QMainWindow):
     def on_action_BlacklistNew(self):
         self.click_pushButtonAddBlacklist()
     def on_action_BlacklistDelete(self):
-        print 'clicked Delete'
         currentRow = self.ui.tableWidgetBlacklist.currentRow()
         labelAtCurrentRow = self.ui.tableWidgetBlacklist.item(currentRow,0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(currentRow,1).text()
@@ -4933,7 +4946,7 @@ class MyForm(QtGui.QMainWindow):
         newItem = QtGui.QTableWidgetItem(streamNumber)
         newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
         self.ui.tableWidgetYourIdentities.setItem(0, 2, newItem)
-        self.ui.tableWidgetYourIdentities.setSortingEnabled(True)
+        #self.ui.tableWidgetYourIdentities.setSortingEnabled(True)
         self.rerenderComboBoxSendFrom()
 
     def updateStatusBar(self,data):
