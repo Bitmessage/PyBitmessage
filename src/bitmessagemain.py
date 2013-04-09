@@ -6,7 +6,7 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.2.7'
+softwareVersion = '0.2.8'
 verbose = 1
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -4934,6 +4934,13 @@ class MyForm(QtGui.QMainWindow):
             else:
                 self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())
 
+            font = QFont()
+            font.setBold(False)
+            self.ui.tableWidgetInbox.item(currentRow,0).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow,1).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow,2).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow,3).setFont(font)
+
             inventoryHash = str(self.ui.tableWidgetInbox.item(currentRow,3).data(Qt.UserRole).toPyObject())
             t = (inventoryHash,)
             sqlLock.acquire()
@@ -4942,14 +4949,6 @@ class MyForm(QtGui.QMainWindow):
             sqlReturnQueue.get()
             sqlSubmitQueue.put('commit')
             sqlLock.release()
-            
-            font = QFont()
-            font.setBold(False)
-            self.ui.tableWidgetInbox.item(currentRow,0).setFont(font)
-            self.ui.tableWidgetInbox.item(currentRow,1).setFont(font)
-            self.ui.tableWidgetInbox.item(currentRow,2).setFont(font)
-            self.ui.tableWidgetInbox.item(currentRow,3).setFont(font)
-
         
     def tableWidgetSentItemClicked(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
