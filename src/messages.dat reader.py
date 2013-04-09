@@ -88,9 +88,18 @@ def takeSentMessagesOutOfTrash():
     conn.commit()
     print 'done'
 
-takeInboxMessagesOutOfTrash()
+def markAllInboxMessagesAsUnread():
+    item = '''update inbox set read='0' '''
+    parameters = ''
+    cur.execute(item, parameters)
+    output = cur.fetchall()
+    conn.commit()
+    print 'done'
+
+#takeInboxMessagesOutOfTrash()
 #takeSentMessagesOutOfTrash()
-#readInbox()
+#markAllInboxMessagesAsUnread()
+readInbox()
 #readSent()
 #readPubkeys()
 #readSubscriptions()
