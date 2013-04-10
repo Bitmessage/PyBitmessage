@@ -3507,6 +3507,16 @@ class MyForm(QtGui.QMainWindow):
                 for row in queryreturn:
                     fromLabel, = row
 
+            if fromLabel == '': #If this address wasn't in our address book..
+                t = (fromAddress,)
+                sqlSubmitQueue.put('''select label from subscriptions where address=?''')
+                sqlSubmitQueue.put(t)
+                queryreturn = sqlReturnQueue.get()
+
+                if queryreturn <> []:
+                    for row in queryreturn:
+                        fromLabel, = row
+
             self.ui.tableWidgetInbox.insertRow(0)
             newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
