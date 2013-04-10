@@ -4299,6 +4299,7 @@ class MyForm(QtGui.QMainWindow):
                     sqlSubmitQueue.put('commit')
                     sqlLock.release()
                     self.rerenderInboxFromLabels()
+                    self.rerenderSentToLabels()
                 else:
                     self.statusBar().showMessage('Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want.')
             else:
