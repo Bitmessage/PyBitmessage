@@ -2146,7 +2146,7 @@ class singleWorker(QThread):
         #Now let us see if there are any proofs of work for msg messages that we have yet to complete..
         sqlLock.acquire()
         t = ('doingpow',)
-        sqlSubmitQueue.put('SELECT toripe FROM sent WHERE status=?')
+        sqlSubmitQueue.put('''SELECT toripe FROM sent WHERE status=? and folder='sent' ''')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
         sqlLock.release()
@@ -2283,7 +2283,7 @@ class singleWorker(QThread):
     def sendBroadcast(self):
         sqlLock.acquire()
         t = ('broadcastpending',)
-        sqlSubmitQueue.put('SELECT fromaddress, subject, message, ackdata FROM sent WHERE status=?')
+        sqlSubmitQueue.put('''SELECT fromaddress, subject, message, ackdata FROM sent WHERE status=? and folder='sent' ''')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
         sqlLock.release()
@@ -2358,13 +2358,13 @@ class singleWorker(QThread):
     def sendMsg(self,toRipe):
         sqlLock.acquire()
         t = ('doingpow','findingpubkey',toRipe)
-        sqlSubmitQueue.put('UPDATE sent SET status=? WHERE status=? AND toripe=?')
+        sqlSubmitQueue.put('''UPDATE sent SET status=? WHERE status=? AND toripe=? and folder='sent' ''')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
         sqlSubmitQueue.put('commit')
 
         t = ('doingpow',toRipe)
-        sqlSubmitQueue.put('SELECT toaddress, fromaddress, subject, message, ackdata FROM sent WHERE status=? AND toripe=?')
+        sqlSubmitQueue.put('''SELECT toaddress, fromaddress, subject, message, ackdata FROM sent WHERE status=? AND toripe=? and folder='sent' ''')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
         sqlLock.release()
