@@ -3507,6 +3507,16 @@ class MyForm(QtGui.QMainWindow):
                 for row in queryreturn:
                     fromLabel, = row
 
+            if fromLabel == '': #If this address wasn't in our address book..
+                t = (fromAddress,)
+                sqlSubmitQueue.put('''select label from subscriptions where address=?''')
+                sqlSubmitQueue.put(t)
+                queryreturn = sqlReturnQueue.get()
+
+                if queryreturn <> []:
+                    for row in queryreturn:
+                        fromLabel, = row
+
             self.ui.tableWidgetInbox.insertRow(0)
             newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
@@ -4299,6 +4309,7 @@ class MyForm(QtGui.QMainWindow):
                     sqlSubmitQueue.put('commit')
                     sqlLock.release()
                     self.rerenderInboxFromLabels()
+                    self.rerenderSentToLabels()
                 else:
                     self.statusBar().showMessage('Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want.')
             else:
@@ -4723,8 +4734,8 @@ class MyForm(QtGui.QMainWindow):
     def on_action_AddressBookNew(self):
         self.click_pushButtonAddAddressBook()
     def on_action_AddressBookDelete(self):
-        while self.ui.tableWidgetInbox.selectedIndexes() != []:
-            currentRow = self.ui.tableWidgetInbox.selectedIndexes()[0].row()
+        while self.ui.tableWidgetAddressBook.selectedIndexes() != []:
+            currentRow = self.ui.tableWidgetAddressBook.selectedIndexes()[0].row()
             labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
             addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,1).text()
             t = (str(labelAtCurrentRow),str(addressAtCurrentRow))
