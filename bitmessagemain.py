@@ -4734,8 +4734,8 @@ class MyForm(QtGui.QMainWindow):
     def on_action_AddressBookNew(self):
         self.click_pushButtonAddAddressBook()
     def on_action_AddressBookDelete(self):
-        while self.ui.tableWidgetInbox.selectedIndexes() != []:
-            currentRow = self.ui.tableWidgetInbox.selectedIndexes()[0].row()
+        while self.ui.tableWidgetAddressBook.selectedIndexes() != []:
+            currentRow = self.ui.tableWidgetAddressBook.selectedIndexes()[0].row()
             labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
             addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,1).text()
             t = (str(labelAtCurrentRow),str(addressAtCurrentRow))
