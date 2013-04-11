@@ -10,7 +10,7 @@ APPNAME = "PyBitmessage"
 from os import path, environ
 if sys.platform == 'darwin':
     if "HOME" in environ:
-        appdata = path.join(os.environ["HOME"], "Library/Application support/", APPNAME) + '/'
+        appdata = path.join(environ["HOME"], "Library/Application support/", APPNAME) + '/'
     else:
         print 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
         sys.exit()
