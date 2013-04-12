@@ -3349,7 +3349,7 @@ class MyForm(QtGui.QMainWindow):
         self.actionReply = self.ui.inboxContextMenuToolbar.addAction("Reply", self.on_action_InboxReply)
         self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction("Add sender to your Address Book", self.on_action_InboxAddSenderToAddressBook)
         self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction("Move to Trash", self.on_action_InboxTrash)
-        self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction("View as Richtext", self.on_action_InboxMessageForceHtml)
+        self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction("View HTML code as formatted text", self.on_action_InboxMessageForceHtml)
         self.ui.tableWidgetInbox.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuInbox)
         self.popMenuInbox = QtGui.QMenu( self )
