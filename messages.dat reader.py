@@ -1,6 +1,6 @@
 #This program can be used to print out everything in your Inbox or Sent folders and also take things out of the trash.
 #Scroll down to the bottom to see the functions that you can uncomment. Save then run this file.
-#The functions only read the database file seem to function just fine even if you have Bitmessage running but you should definitly close it before running the functions to take items out of the trash.
+#The functions which only read the database file seem to function just fine even if you have Bitmessage running but you should definitly close it before running the functions that make changes (like taking items out of the trash).
 
 import sqlite3
 from time import strftime, localtime
@@ -39,8 +39,8 @@ def readSent():
     cur.execute(item, parameters)
     output = cur.fetchall()
     for row in output:
-        msgid, toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber, folder = row
-        print msgid.encode('hex'), toaddress, 'toripe:', toripe.encode('hex'), 'fromaddress:', fromaddress, 'SUBJECT:', repr(subject), 'MESSAGE:', repr(message), 'ACKDATA:', ackdata.encode('hex'), lastactiontime, status, pubkeyretrynumber, msgretrynumber, folder
+        msgid, toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber, folder, encodingtype = row
+        print msgid.encode('hex'), toaddress, 'toripe:', toripe.encode('hex'), 'fromaddress:', fromaddress, 'ENCODING TYPE:', encodingtype, 'SUBJECT:', repr(subject), 'MESSAGE:', repr(message), 'ACKDATA:', ackdata.encode('hex'), lastactiontime, status, pubkeyretrynumber, msgretrynumber, folder
 
 def readSubscriptions():
     print 'Printing everything in subscriptions table:'
