@@ -455,8 +455,8 @@ class receiveDataThread(QThread):
             self.receivedgetbiginv = True
             sqlLock.acquire()
             #Select all hashes which are younger than two days old and in this stream.
-            t = (int(time.time())-maximumAgeOfObjectsThatIAdvertiseToOthers,self.streamNumber)
-            sqlSubmitQueue.put('''SELECT hash FROM inventory WHERE receivedtime>? and streamnumber=?''')
+            t = (int(time.time())-maximumAgeOfObjectsThatIAdvertiseToOthers,int(time.time())-lengthOfTimeToHoldOnToAllPubkeys,self.streamNumber)
+            sqlSubmitQueue.put('''SELECT hash FROM inventory WHERE ((receivedtime>? and objecttype<>'pubkey') or (receivedtime>? and objecttype='pubkey')) and streamnumber=?''')
             sqlSubmitQueue.put(t)
             queryreturn = sqlReturnQueue.get()
             sqlLock.release()
@@ -1024,7 +1024,7 @@ class receiveDataThread(QThread):
 
         readPosition = 8 #for the nonce
         embeddedTime, = unpack('>I',data[readPosition:readPosition+4])
-        if embeddedTime < int(time.time())-lengthOfTimeToHoldOnToAllPubkeys-86400: #If the pubkey is more than a month old then reject it. (the 86400 is included to give an extra day of wiggle-room. If the wiggle-room is actually of any use, everyone on the network will delete this pubkey from their database the next time the cleanerThread cleans anyway- except for the node that actually wants the pubkey.)
+        if embeddedTime < int(time.time())-lengthOfTimeToHoldOnToAllPubkeys:
             printLock.acquire()
             print 'The embedded time in this pubkey message is too old. Ignoring. Embedded time is:', embeddedTime
             printLock.release()
@@ -1054,7 +1054,7 @@ class receiveDataThread(QThread):
             inventoryLock.release()
             return
         objectType = 'pubkey'
-        inventory[inventoryHash] = (objectType, self.streamNumber, data, int(time.time()))
+        inventory[inventoryHash] = (objectType, self.streamNumber, data, embeddedTime)
         inventoryLock.release()
         self.broadcastinv(inventoryHash)
         self.emit(SIGNAL("incrementNumberOfPubkeysProcessed()"))
@@ -2074,8 +2074,8 @@ class singleCleaner(QThread):
                 #inventory (moves data from the inventory data structure to the on-disk sql database)
                 sqlLock.acquire()
                 #inventory (clears data more than 2 days and 12 hours old)
-                t = (int(time.time())-lengthOfTimeToLeaveObjectsInInventory,)
-                sqlSubmitQueue.put('''DELETE FROM inventory WHERE receivedtime<?''')
+                t = (int(time.time())-lengthOfTimeToLeaveObjectsInInventory,int(time.time())-lengthOfTimeToHoldOnToAllPubkeys)
+                sqlSubmitQueue.put('''DELETE FROM inventory WHERE (receivedtime<? AND objecttype<>'pubkey') OR (receivedtime<?  AND objecttype='pubkey') ''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
 
@@ -4620,6 +4620,7 @@ class MyForm(QtGui.QMainWindow):
         printLock.release()
         self.statusBar().showMessage('All done. Closing user interface...')
         event.accept()
+        print 'done. (passed event.accept())'
         raise SystemExit
 
     def on_action_InboxMessageForceHtml(self):
