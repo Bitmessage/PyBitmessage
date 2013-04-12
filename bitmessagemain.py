@@ -288,7 +288,7 @@ class receiveDataThread(QThread):
             print 'Within receiveDataThread run(), self.sock.close() failed.', err
 
         #try:
-        del selfInitiatedConnections[streamNumber][self]
+        del selfInitiatedConnections[self.streamNumber][self]
         #self.selfInitiatedConnectionList.remove(self)
         printLock.acquire()
         print 'removed self (a receiveDataThread) from ConnectionList'
