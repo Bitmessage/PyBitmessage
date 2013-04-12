@@ -287,14 +287,13 @@ class receiveDataThread(QThread):
         except Exception, err:
             print 'Within receiveDataThread run(), self.sock.close() failed.', err
 
-        #try:
-        del selfInitiatedConnections[self.streamNumber][self]
-        #self.selfInitiatedConnectionList.remove(self)
-        printLock.acquire()
-        print 'removed self (a receiveDataThread) from ConnectionList'
-        printLock.release()
-        #except:
-        #    pass
+        try:
+            del selfInitiatedConnections[self.streamNumber][self]
+            printLock.acquire()
+            print 'removed self (a receiveDataThread) from ConnectionList'
+            printLock.release()
+        except:
+            pass
         broadcastToSendDataQueues((0, 'shutdown', self.HOST))
         if self.connectionIsOrWasFullyEstablished: #We don't want to decrement the number of connections and show the result if we never incremented it in the first place (which we only do if the connection is fully established- meaning that both nodes accepted each other's version packets.)
             connectionsCountLock.acquire()
