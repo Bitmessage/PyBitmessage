@@ -439,7 +439,7 @@ class receiveDataThread(QThread):
         printLock.release()
         self.broadcastaddr([(int(time.time()), self.streamNumber, 1, self.HOST, remoteNodeIncomingPort)]) #This lets all of our peers know about this new node.
         self.sendaddr() #This is one large addr message to this one peer.
-        if connectionsCount[self.streamNumber] > 150:
+        if not self.initiatedConnection and connectionsCount[self.streamNumber] > 150:
             printLock.acquire()
             print 'We are connected to too many people. Closing connection.'
             printLock.release()
@@ -4592,6 +4592,14 @@ class MyForm(QtGui.QMainWindow):
         else:
             event.ignore()'''
 
+        self.statusBar().showMessage('Bitmessage is stuck waiting for the knownNodesLock.')
+        knownNodesLock.acquire()
+        self.statusBar().showMessage('Saving the knownNodes list of peers to disk...')
+        output = open(appdata + 'knownnodes.dat', 'wb')
+        pickle.dump(knownNodes, output)
+        output.close()
+        knownNodesLock.release()
+
         broadcastToSendDataQueues((0, 'shutdown', 'all'))
 
         printLock.acquire()
@@ -4607,13 +4615,6 @@ class MyForm(QtGui.QMainWindow):
         sqlReturnQueue.get()
         sqlLock.release()
 
-        self.statusBar().showMessage('Saving the knownNodes list of peers to disk...')
-        knownNodesLock.acquire()
-        output = open(appdata + 'knownnodes.dat', 'wb')
-        pickle.dump(knownNodes, output)
-        output.close()
-        knownNodesLock.release()
-
         self.trayIcon.hide()
         printLock.acquire()
         print 'Done.'
@@ -4621,7 +4622,8 @@ class MyForm(QtGui.QMainWindow):
         self.statusBar().showMessage('All done. Closing user interface...')
         event.accept()
         print 'done. (passed event.accept())'
-        raise SystemExit
+        #raise SystemExit
+        os._exit(0)
 
     def on_action_InboxMessageForceHtml(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
