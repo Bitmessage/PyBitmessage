@@ -1,0 +1,52 @@
+pybitmessage (0.2.8-1) unstable; urgency=low
+
+  * Fixed Ubuntu & OS X issue:
+    Bitmessage wouldn't receive any objects from peers after restart.
+
+  * Inventory flush to disk when exiting program now vastly faster.
+
+  * Fixed address generation bug (kept Bitmessage from restarting).
+
+  * Improve deserialization of messages
+    before processing (a 'best practice').
+
+  * Change to help Macs find OpenSSL the way Unix systems find it.
+
+  * Do not share or accept IPs which are in the private IP ranges.
+
+  * Added time-fuzzing
+    to the embedded time in pubkey and getpubkey messages.
+
+  * Added a knownNodes lock
+    to prevent an exception from sometimes occurring when saving
+    the data-structure to disk.
+
+  * Show unread messages in bold
+    and do not display new messages automatically.
+
+  * Support selecting multiple items
+    in the inbox, sent box, and address book.
+
+  * Use delete key to trash Inbox or Sent messages.
+
+  * Display richtext(HTML) messages
+    from senders in address book or subscriptions (although not
+    pseudo-mailing-lists; use new right-click option).
+
+  * Trim spaces
+    from the beginning and end of addresses when adding to
+    address book, subscriptions, and blacklist.
+
+  * Improved the display of the time for foreign language users.
+
+ -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Tue, 9 Apr 2013 17:44:00 +0100
+
+pybitmessage (0.2.7-1) unstable; urgency=low
+
+  * Added debian packaging
+  * Script to generate debian packages
+  * SVG icon for Gnome shell, etc
+  * Source moved int src directory for debian standards compatibility
+  * Trailing carriage return on COPYING LICENSE and README.md
+
+ -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Tue, 1 Apr 2013 17:12:14 +0100
