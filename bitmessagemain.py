@@ -181,7 +181,7 @@ class outgoingSynSender(QThread):
                             knownNodesLock.release()
                             print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
                 except Exception, err:
-                    print 'An exception has occurred in the outgoingSynSender thread that was not caught by other exception types:', err
+                    sys.stderr.write('An exception has occurred in the outgoingSynSender thread that was not caught by other exception types: %s\n' % err)
             time.sleep(0.1)
 
 #Only one singleListener thread will ever exist. It creates the receiveDataThread and sendDataThread for each incoming connection. Note that it cannot set the stream number because it is not known yet- the other node will have to tell us its stream number in a version message. If we don't care about their stream, we will close the connection (within the recversion function of the recieveData thread)
@@ -1475,14 +1475,11 @@ class receiveDataThread(QThread):
             print 'knownNodes currently has', len(knownNodes[self.streamNumber]), 'nodes for this stream.'
             printLock.release()
         elif self.remoteProtocolVersion >= 2: #The difference is that in protocol version 2, network addresses use 64 bit times rather than 32 bit times.
-            print 'self.remoteProtocolVersion =', self.remoteProtocolVersion
             if numberOfAddressesIncluded > 1000 or numberOfAddressesIncluded == 0:
                 return
             if len(data) != lengthOfNumberOfAddresses + (38 * numberOfAddressesIncluded):
                 print 'addr message does not contain the correct amount of data. Ignoring.'
                 return
-            else:
-                print 'len of addr data is correct:', len(data)
 
             needToWriteKnownNodesToDisk = False
             for i in range(0,numberOfAddressesIncluded):
@@ -1728,39 +1725,10 @@ class receiveDataThread(QThread):
 
     #Sends a version message
     def sendversion(self):
-        global softwareVersion
-        payload = ''
-        payload += pack('>L',2) #protocol version.
-        payload += pack('>q',1) #bitflags of the services I offer.
-        payload += pack('>q',int(time.time()))
-
-        payload += pack('>q',1) #boolservices offered by the remote node. This data is ignored by the remote host because how could We know what Their services are without them telling us?
-        payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + socket.inet_aton(self.HOST)
-        payload += pack('>H',self.PORT)#remote IPv6 and port
-
-        payload += pack('>q',1) #bitflags of the services I offer.
-        payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack('>L',2130706433) # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
-        payload += pack('>H',config.getint('bitmessagesettings', 'port'))#my external IPv6 and port
-
-        random.seed()
-        payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
-        userAgent = '/PyBitmessage:' + softwareVersion + '/' #Length of userAgent must be less than 253.
-        payload += pack('>B',len(userAgent)) #user agent string length. If the user agent is more than 252 bytes long, this code isn't going to work.
-        payload += userAgent
-        payload += encodeVarint(1) #The number of streams about which I care. PyBitmessage currently only supports 1.
-        payload += encodeVarint(self.streamNumber)
-
-        datatosend = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-        datatosend = datatosend + 'version\x00\x00\x00\x00\x00' #version command
-        datatosend = datatosend + pack('>L',len(payload)) #payload length
-        datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
-        datatosend = datatosend + payload
-
         printLock.acquire()
         print 'Sending version message'
         printLock.release()
-        self.sock.sendall(datatosend)
-        #self.versionSent = 1
+        self.sock.sendall(assembleVersionMessage(self.HOST,self.PORT,self.streamNumber))
 
     #Sends a verack message
     def sendverack(self):
@@ -1804,35 +1772,7 @@ class sendDataThread(QThread):
         printLock.release()
 
     def sendVersionMessage(self):
-
-        #Note that there is another copy of this version-sending code in the receiveData class which would need to be changed if you make changes here.
-        global softwareVersion
-        payload = ''
-        payload += pack('>L',2) #protocol version.
-        payload += pack('>q',1) #bitflags of the services I offer.
-        payload += pack('>q',int(time.time()))
-
-        payload += pack('>q',1) #boolservices of remote connection. How can I even know this for sure? This is probably ignored by the remote host.
-        payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + socket.inet_aton(self.HOST)
-        payload += pack('>H',self.PORT)#remote IPv6 and port
-
-        payload += pack('>q',1) #bitflags of the services I offer.
-        payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack('>L',2130706433) # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
-        payload += pack('>H',config.getint('bitmessagesettings', 'port'))#my external IPv6 and port
-
-        random.seed()
-        payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
-        userAgent = '/PyBitmessage:' + softwareVersion + '/' #Length of userAgent must be less than 253.
-        payload += pack('>B',len(userAgent)) #user agent string length. If the user agent is more than 252 bytes long, this code isn't going to work.
-        payload += userAgent
-        payload += encodeVarint(1) #The number of streams about which I care. PyBitmessage currently only supports 1 per connection.
-        payload += encodeVarint(self.streamNumber)
-
-        datatosend = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
-        datatosend = datatosend + 'version\x00\x00\x00\x00\x00' #version command
-        datatosend = datatosend + pack('>L',len(payload)) #payload length
-        datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
-        datatosend = datatosend + payload
+        datatosend = assembleVersionMessage(self.HOST,self.PORT,self.streamNumber)#the IP and port of the remote host, and my streamNumber.
 
         printLock.acquire()
         print 'Sending version packet: ', repr(datatosend)
@@ -2085,6 +2025,35 @@ def isAddressInMyAddressBook(address):
     queryreturn = sqlReturnQueue.get()
     sqlLock.release()
     return queryreturn != []
+
+def assembleVersionMessage(remoteHost,remotePort,myStreamNumber):
+    global softwareVersion
+    payload = ''
+    payload += pack('>L',2) #protocol version.
+    payload += pack('>q',1) #bitflags of the services I offer.
+    payload += pack('>q',int(time.time()))
+
+    payload += pack('>q',1) #boolservices of remote connection. How can I even know this for sure? This is probably ignored by the remote host.
+    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + socket.inet_aton(remoteHost)
+    payload += pack('>H',remotePort)#remote IPv6 and port
+
+    payload += pack('>q',1) #bitflags of the services I offer.
+    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack('>L',2130706433) # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
+    payload += pack('>H',config.getint('bitmessagesettings', 'port'))#my external IPv6 and port
+
+    random.seed()
+    payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
+    userAgent = '/PyBitmessage:' + softwareVersion + '/' #Length of userAgent must be less than 253.
+    payload += pack('>B',len(userAgent)) #user agent string length. If the user agent is more than 252 bytes long, this code isn't going to work.
+    payload += userAgent
+    payload += encodeVarint(1) #The number of streams about which I care. PyBitmessage currently only supports 1 per connection.
+    payload += encodeVarint(myStreamNumber)
+
+    datatosend = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
+    datatosend = datatosend + 'version\x00\x00\x00\x00\x00' #version command
+    datatosend = datatosend + pack('>L',len(payload)) #payload length
+    datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
+    return datatosend + payload
 
 #This thread exists because SQLITE3 is so un-threadsafe that we must submit queries to it and it puts results back in a different queue. They won't let us just use locks.
 class sqlThread(QThread):
@@ -5310,8 +5279,6 @@ if __name__ == "__main__":
         pickleFile = open(appdata + 'knownnodes.dat', 'rb')
         knownNodes = pickle.load(pickleFile)
         pickleFile.close()
-
-    print knownNodes
 
     if config.getint('bitmessagesettings', 'settingsversion') > 4:
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
