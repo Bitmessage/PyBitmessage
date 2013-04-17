@@ -1,0 +1,9 @@
+[Desktop Entry]
+Type=Application
+Name=PyBitmessage
+GenericName=PyBitmessage
+Comment=Send encrypted messages to another person or to many subscribers
+Exec=pybm %U
+Icon=pybitmessage
+Terminal=false
+Categories=Network
