@@ -1474,8 +1474,8 @@ class receiveDataThread(QThread):
             printLock.acquire()
             print 'knownNodes currently has', len(knownNodes[self.streamNumber]), 'nodes for this stream.'
             printLock.release()
-        elif self.remoteProtocolVersion == 2:
-            print 'self.remoteProtocolVersion == 2'
+        elif self.remoteProtocolVersion >= 2: #The difference is that in protocol version 2, network addresses use 64 bit times rather than 32 bit times.
+            print 'self.remoteProtocolVersion =', self.remoteProtocolVersion
             if numberOfAddressesIncluded > 1000 or numberOfAddressesIncluded == 0:
                 return
             if len(data) != lengthOfNumberOfAddresses + (38 * numberOfAddressesIncluded):
@@ -1728,7 +1728,7 @@ class receiveDataThread(QThread):
     def sendversion(self):
         global softwareVersion
         payload = ''
-        payload += pack('>L',1) #protocol version.
+        payload += pack('>L',2) #protocol version.
         payload += pack('>q',1) #bitflags of the services I offer.
         payload += pack('>q',int(time.time()))
 
@@ -1806,7 +1806,7 @@ class sendDataThread(QThread):
         #Note that there is another copy of this version-sending code in the receiveData class which would need to be changed if you make changes here.
         global softwareVersion
         payload = ''
-        payload += pack('>L',1) #protocol version.
+        payload += pack('>L',2) #protocol version.
         payload += pack('>q',1) #bitflags of the services I offer.
         payload += pack('>q',int(time.time()))
 
@@ -5308,6 +5308,8 @@ if __name__ == "__main__":
         pickleFile = open(appdata + 'knownnodes.dat', 'rb')
         knownNodes = pickle.load(pickleFile)
         pickleFile.close()
+
+    print knownNodes
 
     if config.getint('bitmessagesettings', 'settingsversion') > 4:
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
