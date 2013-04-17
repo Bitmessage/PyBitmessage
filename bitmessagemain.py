@@ -1481,6 +1481,8 @@ class receiveDataThread(QThread):
             if len(data) != lengthOfNumberOfAddresses + (38 * numberOfAddressesIncluded):
                 print 'addr message does not contain the correct amount of data. Ignoring.'
                 return
+            else:
+                print 'len of addr data is correct:', len(data)
 
             needToWriteKnownNodesToDisk = False
             for i in range(0,numberOfAddressesIncluded):
@@ -1516,7 +1518,7 @@ class receiveDataThread(QThread):
                     break #giving up on unpacking any more. We should still be connected however.
 
                 try:
-                    recaddrPort, = unpack('>H',data[36+lengthOfNumberOfAddresses+(38*i):42+lengthOfNumberOfAddresses+(38*i)])
+                    recaddrPort, = unpack('>H',data[36+lengthOfNumberOfAddresses+(38*i):38+lengthOfNumberOfAddresses+(38*i)])
                 except Exception, err:
                     printLock.acquire()
                     sys.stderr.write('ERROR TRYING TO UNPACK recaddr (recaddrPort). Message: %s\n' % str(err))
