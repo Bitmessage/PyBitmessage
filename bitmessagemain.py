@@ -1383,7 +1383,6 @@ class receiveDataThread(QThread):
             printLock.release()
 
         if self.remoteProtocolVersion == 1:
-            print 'self.remoteProtocolVersion == 1'
             if numberOfAddressesIncluded > 1000 or numberOfAddressesIncluded == 0:
                 return
             if len(data) != lengthOfNumberOfAddresses + (34 * numberOfAddressesIncluded):
@@ -1452,7 +1451,6 @@ class receiveDataThread(QThread):
                         knownNodesLock.acquire()
                         knownNodes[recaddrStream][hostFromAddrMessage] = (recaddrPort, timeSomeoneElseReceivedMessageFromThisNode)
                         knownNodesLock.release()
-                        print 'added new node', hostFromAddrMessage, 'to knownNodes in stream', recaddrStream
                         needToWriteKnownNodesToDisk = True
                         hostDetails = (timeSomeoneElseReceivedMessageFromThisNode, recaddrStream, recaddrServices, hostFromAddrMessage, recaddrPort)
                         listOfAddressDetailsToBroadcastToPeers.append(hostDetails)
