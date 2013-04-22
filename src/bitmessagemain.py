@@ -786,7 +786,7 @@ class receiveDataThread(QThread):
             printLock.release()
 
         #This is not an acknowledgement bound for me. See if it is a message bound for me by trying to decrypt it with my private keys.
-        for key, cryptorObject in myECAddressHashes.items():
+        for key, cryptorObject in myECCryptorObjects.items():
             try:
                 unencryptedData = cryptorObject.decrypt(encryptedData[readPosition:])
                 toRipe = key #This is the RIPE hash of my pubkeys. We need this below to compare to the destination_ripe included in the encrypted data.
@@ -915,19 +915,10 @@ class receiveDataThread(QThread):
                 print 'fromAddress:', fromAddress
                 print 'First 150 characters of message:', repr(message[:150])
 
-                #Look up the destination address (my address) based on the destination ripe hash.
-                #I realize that I could have a data structure devoted to this task, or maintain an indexed table
-                #in the sql database, but I would prefer to minimize the number of data structures this program
-                #uses. Searching linearly through the user's short list of addresses doesn't take very long anyway.
-                configSections = config.sections()
-                for addressInKeysFile in configSections:
-                    if addressInKeysFile <> 'bitmessagesettings':
-                        status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
-                        if hash == key:
-                            toAddress = addressInKeysFile
-                            toLabel = config.get(addressInKeysFile, 'label')
-                            if toLabel == '':
-                                toLabel = addressInKeysFile
+                toAddress = myAddressesByHash[toRipe] #Look up my address based on the RIPE hash.
+                toLabel = config.get(toAddress, 'label')
+                if toLabel == '':
+                    toLabel = addressInKeysFile
 
                 if messageEncodingType == 2:
                     bodyPositionIndex = string.find(message,'\nBody:')
@@ -1233,7 +1224,7 @@ class receiveDataThread(QThread):
             return
         print 'the hash requested in this getpubkey request is:', requestedHash.encode('hex')
 
-        sqlLock.acquire()
+        """sqlLock.acquire()
         t = (requestedHash,int(time.time())-lengthOfTimeToHoldOnToAllPubkeys) #this prevents SQL injection
         sqlSubmitQueue.put('''SELECT hash, transmitdata, time FROM pubkeys WHERE hash=? AND havecorrectnonce=1 AND time>?''')
         sqlSubmitQueue.put(t)
@@ -1248,17 +1239,23 @@ class receiveDataThread(QThread):
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'pubkey'
             inventory[inventoryHash] = (objectType, self.streamNumber, payload, timeEncodedInPubkey)#If the time embedded in this pubkey is more than 3 days old then this object isn't going to last very long in the inventory- the cleanerThread is going to come along and move it from the inventory in memory to the SQL inventory and then delete it from the SQL inventory. It should still find its way back to the original requestor if he is online however.
-            self.broadcastinv(inventoryHash)
-        else: #the pubkey is not in our database of pubkeys. Let's check if the requested key is ours (which would mean we should do the POW, put it in the pubkey table, and broadcast out the pubkey.)
-            if requestedHash in myECAddressHashes: #if this address hash is one of mine
+            self.broadcastinv(inventoryHash)"""
+        #else: #the pubkey is not in our database of pubkeys. Let's check if the requested key is ours (which would mean we should do the POW, put it in the pubkey table, and broadcast out the pubkey.)
+        if requestedHash in myAddressesByHash: #if this address hash is one of mine
+            try:
+                lastPubkeySendTime = int(config.get(myAddressesByHash[requestedHash],'lastpubkeysendtime'))
+            except:
+                lastPubkeySendTime = 0
+            print 'lastPubkeySendTime is',lastPubkeySendTime
+            if lastPubkeySendTime < time.time()-lengthOfTimeToHoldOnToAllPubkeys: #If the last time we sent our pubkey was 28 days ago
                 printLock.acquire()
                 print 'Found getpubkey-requested-hash in my list of EC hashes. Telling Worker thread to do the POW for a pubkey message and send it out.'
                 printLock.release()
                 workerQueue.put(('doPOWForMyV2Pubkey',requestedHash))
-            else:
-                printLock.acquire()
-                print 'This getpubkey request is not for any of my keys.'
-                printLock.release()
+        else:
+            printLock.acquire()
+            print 'This getpubkey request is not for any of my keys.'
+            printLock.release()
 
 
     #We have received an inv message
@@ -1930,8 +1927,8 @@ def reloadMyAddressHashes():
     printLock.acquire()
     print 'reloading keys from keys.dat file'
     printLock.release()
-    myRSAAddressHashes.clear()
-    myECAddressHashes.clear()
+    myECCryptorObjects.clear()
+    myAddressesByHash.clear()
     #myPrivateKeys.clear()
     configSections = config.sections()
     for addressInKeysFile in configSections:
@@ -1942,14 +1939,10 @@ def reloadMyAddressHashes():
                 if addressVersionNumber == 2:
                     privEncryptionKey = decodeWalletImportFormat(config.get(addressInKeysFile, 'privencryptionkey')).encode('hex') #returns a simple 32 bytes of information encoded in 64 Hex characters, or null if there was an error
                     if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
-                        myECAddressHashes[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
-                elif addressVersionNumber == 1:
-                    n = config.getint(addressInKeysFile, 'n')
-                    e = config.getint(addressInKeysFile, 'e')
-                    d = config.getint(addressInKeysFile, 'd')
-                    p = config.getint(addressInKeysFile, 'p')
-                    q = config.getint(addressInKeysFile, 'q')
-                    myRSAAddressHashes[hash] = rsa.PrivateKey(n,e,d,p,q)
+                        myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
+                        myAddressesByHash[hash] = addressInKeysFile
+                else:
+                    sys.stderr.write('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2.\n')
 
 #This function expects that pubkey begin with \x04
 def calculateBitcoinAddressFromPubkey(pubkey):
@@ -1992,10 +1985,7 @@ def calculateTestnetAddressFromPubkey(pubkey):
 
 def safeConfigGetBoolean(section,field):
         try:
-            if config.getboolean(section,field):
-                return True
-            else:
-                return False
+            return config.getboolean(section,field)
         except:
             return False
 
@@ -2339,14 +2329,15 @@ class singleWorker(QThread):
 
     def doPOWForMyV2Pubkey(self,hash): #This function also broadcasts out the pubkey message once it is done with the POW
         #Look up my stream number based on my address hash
-        configSections = config.sections()
+        """configSections = config.sections()
         for addressInKeysFile in configSections:
             if addressInKeysFile <> 'bitmessagesettings':
                 status,addressVersionNumber,streamNumber,hashFromThisParticularAddress = decodeAddress(addressInKeysFile)
                 if hash == hashFromThisParticularAddress:
                     myAddress = addressInKeysFile
-                    break
-
+                    break"""
+        myAddress = myAddressesByHash[hash]
+        status,addressVersionNumber,streamNumber,hash = decodeAddress(myAddress)
         embeddedTime = int(time.time()+random.randrange(-300, 300)) #the current time plus or minus five minutes
         payload = pack('>I',(embeddedTime))
         payload += encodeVarint(addressVersionNumber) #Address version number
@@ -2382,13 +2373,13 @@ class singleWorker(QThread):
         print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
 
         payload = pack('>Q',nonce) + payload
-        t = (hash,True,payload,embeddedTime,'no')
+        """t = (hash,True,payload,embeddedTime,'no')
         sqlLock.acquire()
         sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
         sqlSubmitQueue.put('commit')
-        sqlLock.release()
+        sqlLock.release()"""
 
         inventoryHash = calculateInventoryHash(payload)
         objectType = 'pubkey'
@@ -2399,6 +2390,9 @@ class singleWorker(QThread):
         printLock.release()
         broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
         self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
+        config.set(myAddress,'lastpubkeysendtime',str(int(time.time())))
+        with open(appdata + 'keys.dat', 'wb') as configfile:
+            config.write(configfile)
 
     def sendBroadcast(self):
         sqlLock.acquire()
@@ -5139,8 +5133,8 @@ class myTableWidgetItem(QTableWidgetItem):
 selfInitiatedConnections = {} #This is a list of current connections (the thread pointers at least)
 alreadyAttemptedConnectionsList = {} #This is a list of nodes to which we have already attempted a connection
 sendDataQueues = [] #each sendData thread puts its queue in this list.
-myRSAAddressHashes = {}
-myECAddressHashes = {}
+myECCryptorObjects = {}
+myAddressesByHash = {} #The key in this dictionary is the hash encoded in an address and value is the address itself.
 #myPrivateKeys = {}
 inventory = {} #of objects (like msg payloads and pubkey payloads) Does not include protocol headers (the first 24 bytes of each packet).
 workerQueue = Queue.Queue()

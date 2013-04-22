@@ -96,13 +96,22 @@ def markAllInboxMessagesAsUnread():
     conn.commit()
     print 'done'
 
+def vacuum():
+    item = '''VACUUM'''
+    parameters = ''
+    cur.execute(item, parameters)
+    output = cur.fetchall()
+    conn.commit()
+    print 'done'
+
 #takeInboxMessagesOutOfTrash()
 #takeSentMessagesOutOfTrash()
 #markAllInboxMessagesAsUnread()
-readInbox()
+#readInbox()
 #readSent()
 #readPubkeys()
 #readSubscriptions()
 #readInventory()
+vacuum()  #will defragment and clean empty space from the messages.dat file.
 
 
