@@ -72,7 +72,7 @@ class outgoingSynSender(QThread):
         time.sleep(1)
         global alreadyAttemptedConnectionsListResetTime
         while True:
-            #time.sleep(999999)#I sometimes use this to prevent connections for testing.
+            time.sleep(999999)#I sometimes use this to prevent connections for testing.
             if len(selfInitiatedConnections[self.streamNumber]) < 8: #maximum number of outgoing connections = 8
                 random.seed()
                 HOST, = random.sample(knownNodes[self.streamNumber],  1)
@@ -3438,6 +3438,8 @@ class MyForm(QtGui.QMainWindow):
         #I'm currently under the impression that Mac users have different expectations for the tray icon. They don't necessairly expect it to open the main window when clicked and they still expect a program showing a tray icon to also be in the dock.
         if 'darwin' in sys.platform:
             self.trayIcon.show()
+
+        self.ui.labelSendBroadcastWarning.setVisible(False)
 
         #FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL("triggered()"), self.close)
