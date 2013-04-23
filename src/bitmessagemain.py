@@ -72,7 +72,7 @@ class outgoingSynSender(QThread):
         time.sleep(1)
         global alreadyAttemptedConnectionsListResetTime
         while True:
-            time.sleep(999999)#I sometimes use this to prevent connections for testing.
+            #time.sleep(999999)#I sometimes use this to prevent connections for testing.
             if len(selfInitiatedConnections[self.streamNumber]) < 8: #maximum number of outgoing connections = 8
                 random.seed()
                 HOST, = random.sample(knownNodes[self.streamNumber],  1)
@@ -1142,8 +1142,6 @@ class receiveDataThread(QThread):
                 sqlReturnQueue.get()
                 sqlSubmitQueue.put('commit')
                 sqlLock.release()
-                printLock.acquire()
-                printLock.release()
                 workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
             else:
                 print 'We have NOT used this pubkey personally. Inserting in database.'
@@ -2161,7 +2159,6 @@ class singleCleaner(QThread):
         timeWeLastClearedInventoryAndPubkeysTables = 0
 
         while True:
-            time.sleep(300)
             sqlLock.acquire()
             self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing housekeeping (Flushing inventory in memory to disk...)")
             for hash, storedValue in inventory.items():
@@ -2223,7 +2220,7 @@ class singleCleaner(QThread):
                             self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing work necessary to again attempt to deliver a message...")
                 sqlSubmitQueue.put('commit')
                 sqlLock.release()
-            
+            time.sleep(300)
 
 #This thread, of which there is only one, does the heavy lifting: calculating POWs.
 class singleWorker(QThread):
