@@ -409,8 +409,8 @@ class receiveDataThread(QThread):
     def isProofOfWorkSufficient(self,data):
         POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(data[:8]+ hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
         #print 'POW:', POW
-        #Notice that I have divided the averageProofOfWorkNonceTrialsPerByte by two. This makes the POW requirement easier. This gives us wiggle-room: if we decide that we want to make the POW easier, the change won't obsolete old clients because they already expect a lower POW. If we decide that the current work done by clients feels approperate then we can remove this division by 2 and make the requirement match what is actually done by a sending node. If we want to raise the POW requirement then old nodes will HAVE to upgrade no matter what.
-        return POW <= 2**64 / ((len(data)+payloadLengthExtraBytes) * (averageProofOfWorkNonceTrialsPerByte/2))
+        #Notice that I have divided the networkDefaultAverageProofOfWorkNonceTrialsPerByte by two. This makes the POW requirement easier. This gives us wiggle-room: if we decide that we want to make the POW easier, the change won't obsolete old clients because they already expect a lower POW. If we decide that the current work done by clients feels approperate then we can remove this division by 2 and make the requirement match what is actually done by a sending node. If we want to raise the POW requirement then old nodes will HAVE to upgrade no matter what.
+        return POW <= 2**64 / ((len(data)+networkDefaultPayloadLengthExtraBytes) * (networkDefaultAverageProofOfWorkNonceTrialsPerByte/2))
 
     def sendpong(self):
         print 'Sending pong'
@@ -814,7 +814,7 @@ class receiveDataThread(QThread):
             if sendersAddressVersionNumber == 0:
                 print 'Cannot understand sendersAddressVersionNumber = 0. Ignoring message.'
                 return
-            if sendersAddressVersionNumber >= 3:
+            if sendersAddressVersionNumber >= 4:
                 print 'Sender\'s address version number', sendersAddressVersionNumber, ' not yet supported. Ignoring message.'
                 return
             if len(unencryptedData) < 170:
@@ -831,6 +831,13 @@ class receiveDataThread(QThread):
             readPosition += 64
             pubEncryptionKey = '\x04' + unencryptedData[readPosition:readPosition+64]
             readPosition += 64
+            if sendersAddressVersionNumber >= 3:
+                requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(unencryptedData[readPosition:readPosition+10])
+                readPosition += varintLength
+                print 'sender\'s requiredAverageProofOfWorkNonceTrialsPerByte is', requiredAverageProofOfWorkNonceTrialsPerByte
+                requiredPayloadLengthExtraBytes, varintLength = decodeVarint(unencryptedData[readPosition:readPosition+10])
+                readPosition += varintLength
+                print 'sender\'s requiredPayloadLengthExtraBytes is', requiredPayloadLengthExtraBytes
             endOfThePublicKeyPosition = readPosition #needed for when we store the pubkey in our database of pubkeys for later use.
             if toRipe != unencryptedData[readPosition:readPosition+20]:
                 printLock.acquire()
@@ -1096,7 +1103,7 @@ class receiveDataThread(QThread):
         if addressVersion == 0:
             print '(Within processpubkey) addressVersion of 0 doesn\'t make sense.'
             return
-        if addressVersion >= 3 or addressVersion == 1:
+        if addressVersion >= 4 or addressVersion == 1:
             printLock.acquire()
             print 'This version of Bitmessage cannot handle version', addressVersion,'addresses.'
             printLock.release()
@@ -1116,6 +1123,74 @@ class receiveDataThread(QThread):
                 return
             sha = hashlib.new('sha512')
             sha.update('\x04'+publicSigningKey+'\x04'+publicEncryptionKey)
+            ripeHasher = hashlib.new('ripemd160')
+            ripeHasher.update(sha.digest())
+            ripe = ripeHasher.digest()
+
+            printLock.acquire()
+            print 'within recpubkey, addressVersion:', addressVersion, ', streamNumber:', streamNumber
+            print 'ripe', ripe.encode('hex')
+            print 'publicSigningKey in hex:', publicSigningKey.encode('hex')
+            print 'publicEncryptionKey in hex:', publicEncryptionKey.encode('hex')
+            printLock.release()
+
+            t = (ripe,)
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''SELECT usedpersonally FROM pubkeys WHERE hash=? AND usedpersonally='yes' ''')
+            sqlSubmitQueue.put(t)
+            queryreturn = sqlReturnQueue.get()
+            sqlLock.release()
+            if queryreturn != []: #if this pubkey is already in our database and if we have used it personally:
+                print 'We HAVE used this pubkey personally. Updating time.'
+                t = (ripe,True,data,embeddedTime,'yes')
+                sqlLock.acquire()
+                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+                sqlSubmitQueue.put(t)
+                sqlReturnQueue.get()
+                sqlSubmitQueue.put('commit')
+                sqlLock.release()
+                workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
+            else:
+                print 'We have NOT used this pubkey personally. Inserting in database.'
+                t = (ripe,True,data,embeddedTime,'no')  #This will also update the embeddedTime.
+                sqlLock.acquire()
+                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+                sqlSubmitQueue.put(t)
+                sqlReturnQueue.get()
+                sqlSubmitQueue.put('commit')
+                sqlLock.release()
+                printLock.acquire()
+                printLock.release()
+                workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
+        if addressVersion == 3:
+            if len(data) < 170: #sanity check.
+                print '(within processpubkey) payloadLength less than 170. Sanity check failed.'
+                return
+            bitfieldBehaviors = data[readPosition:readPosition+4]
+            readPosition += 4
+            publicSigningKey = '\x04'+data[readPosition:readPosition+64]
+            #Is it possible for a public key to be invalid such that trying to encrypt or sign with it will cause an error? If it is, we should probably test these keys here.
+            readPosition += 64
+            publicEncryptionKey = '\x04'+data[readPosition:readPosition+64]
+            """if len(publicEncryptionKey) < 64:
+                print 'publicEncryptionKey length less than 64. Sanity check failed.'
+                return"""
+            readPosition += 64
+            specifiedNonceTrialsPerByte, specifiedNonceTrialsPerByteLength = decodeVarint(data[readPosition:readPosition+10])
+            readPosition += specifiedNonceTrialsPerByteLength
+            specifiedPayloadLengthExtraBytes, specifiedPayloadLengthExtraBytesLength = decodeVarint(data[readPosition:readPosition+10])
+            readPosition += specifiedPayloadLengthExtraBytesLength
+            signatureLength, signatureLengthLength = decodeVarint(data[readPosition:readPosition+10])
+            signature = data[readPosition:readPosition+signatureLengthLength]
+            try:
+                highlevelcrypto.verify(data[8:readPosition],signature,publicSigningKey.encode('hex'))
+                print 'ECDSA verify passed (within processpubkey)'
+            except Exception, err:
+                print 'ECDSA verify failed (within processpubkey)', err
+                return
+
+            sha = hashlib.new('sha512')
+            sha.update(publicSigningKey+publicEncryptionKey)
             ripeHasher = hashlib.new('ripemd160')
             ripeHasher.update(sha.digest())
             ripe = ripeHasher.digest()
@@ -1181,7 +1256,7 @@ class receiveDataThread(QThread):
         if embeddedTime < int(time.time())-maximumAgeOfAnObjectThatIAmWillingToAccept:
             print 'The time in this getpubkey message is too old. Ignoring it. Time:', embeddedTime
             return
-        addressVersionNumber, addressVersionLength = decodeVarint(data[readPosition:readPosition+10])
+        requestedAddressVersionNumber, addressVersionLength = decodeVarint(data[readPosition:readPosition+10])
         readPosition += addressVersionLength
         streamNumber, streamNumberLength = decodeVarint(data[readPosition:readPosition+10])
         if streamNumber <> self.streamNumber:
@@ -1206,14 +1281,14 @@ class receiveDataThread(QThread):
         #This getpubkey request is valid so far. Forward to peers.
         self.broadcastinv(inventoryHash)
 
-        if addressVersionNumber == 0:
-            print 'The addressVersionNumber of the pubkey request is zero. That doesn\'t make any sense. Ignoring it.'
+        if requestedAddressVersionNumber == 0:
+            print 'The requestedAddressVersionNumber of the pubkey request is zero. That doesn\'t make any sense. Ignoring it.'
             return
-        elif addressVersionNumber == 1:
-            print 'The addressVersionNumber of the pubkey request is 1 which isn\'t supported anymore. Ignoring it.'
+        elif requestedAddressVersionNumber == 1:
+            print 'The requestedAddressVersionNumber of the pubkey request is 1 which isn\'t supported anymore. Ignoring it.'
             return
-        elif addressVersionNumber > 2:
-            print 'The addressVersionNumber of the pubkey request is too high. Can\'t understand. Ignoring it.'
+        elif requestedAddressVersionNumber > 3:
+            print 'The requestedAddressVersionNumber of the pubkey request is too high. Can\'t understand. Ignoring it.'
             return
 
         requestedHash = data[readPosition:readPosition+20]
@@ -1240,16 +1315,27 @@ class receiveDataThread(QThread):
             self.broadcastinv(inventoryHash)"""
         #else: #the pubkey is not in our database of pubkeys. Let's check if the requested key is ours (which would mean we should do the POW, put it in the pubkey table, and broadcast out the pubkey.)
         if requestedHash in myAddressesByHash: #if this address hash is one of mine
+            if decodeAddress(myAddressesByHash[requestedHash])[1] != requestedAddressVersionNumber:
+                printLock.acquire()
+                sys.stderr.write('(Within the recgetpubkey function) Someone requested one of my pubkeys but the requestedAddressVersionNumber doesn\'t match my actual address version number. That shouldn\'t have happened. Ignoring.\n')
+                printLock.release()
+                return
             try:
                 lastPubkeySendTime = int(config.get(myAddressesByHash[requestedHash],'lastpubkeysendtime'))
             except:
                 lastPubkeySendTime = 0
-            print 'lastPubkeySendTime is',lastPubkeySendTime
             if lastPubkeySendTime < time.time()-lengthOfTimeToHoldOnToAllPubkeys: #If the last time we sent our pubkey was 28 days ago
                 printLock.acquire()
                 print 'Found getpubkey-requested-hash in my list of EC hashes. Telling Worker thread to do the POW for a pubkey message and send it out.'
                 printLock.release()
-                workerQueue.put(('doPOWForMyV2Pubkey',requestedHash))
+                if requestedAddressVersionNumber == 2:
+                    workerQueue.put(('doPOWForMyV2Pubkey',requestedHash))
+                elif requestedAddressVersionNumber == 3:
+                    workerQueue.put(('doPOWForMyV3Pubkey',requestedHash))
+            else:
+                printLock.acquire()
+                print 'Found getpubkey-requested-hash in my list of EC hashes BUT we already sent it recently. Ignoring request. The lastPubkeySendTime is:',lastPubkeySendTime
+                printLock.release()
         else:
             printLock.acquire()
             print 'This getpubkey request is not for any of my keys.'
@@ -1934,13 +2020,13 @@ def reloadMyAddressHashes():
             isEnabled = config.getboolean(addressInKeysFile, 'enabled')
             if isEnabled:
                 status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
-                if addressVersionNumber == 2:
+                if addressVersionNumber == 2 or addressVersionNumber == 3:
                     privEncryptionKey = decodeWalletImportFormat(config.get(addressInKeysFile, 'privencryptionkey')).encode('hex') #returns a simple 32 bytes of information encoded in 64 Hex characters, or null if there was an error
                     if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
                         myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
                         myAddressesByHash[hash] = addressInKeysFile
                 else:
-                    sys.stderr.write('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2.\n')
+                    sys.stderr.write('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2 or 3.\n')
 
 #This function expects that pubkey begin with \x04
 def calculateBitcoinAddressFromPubkey(pubkey):
@@ -2307,6 +2393,8 @@ class singleWorker(QThread):
                 self.sendBroadcast()
             elif command == 'doPOWForMyV2Pubkey':
                 self.doPOWForMyV2Pubkey(data)
+            elif command == 'doPOWForMyV3Pubkey':
+                self.doPOWForMyV3Pubkey(data)
             elif command == 'newpubkey':
                 toAddressVersion,toStreamNumber,toRipe = data
                 if toRipe in neededPubkeys:
@@ -2361,7 +2449,80 @@ class singleWorker(QThread):
         #Do the POW for this pubkey message
         nonce = 0
         trialValue = 99999999999999999999
-        target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
+        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultAverageProofOfWorkNonceTrialsPerByte)
+        print '(For pubkey message) Doing proof of work...'
+        initialHash = hashlib.sha512(payload).digest()
+        while trialValue > target:
+            nonce += 1
+            trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+        print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
+
+        payload = pack('>Q',nonce) + payload
+        """t = (hash,True,payload,embeddedTime,'no')
+        sqlLock.acquire()
+        sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+        sqlSubmitQueue.put(t)
+        queryreturn = sqlReturnQueue.get()
+        sqlSubmitQueue.put('commit')
+        sqlLock.release()"""
+
+        inventoryHash = calculateInventoryHash(payload)
+        objectType = 'pubkey'
+        inventory[inventoryHash] = (objectType, streamNumber, payload, embeddedTime)
+
+        printLock.acquire()
+        print 'broadcasting inv with hash:', inventoryHash.encode('hex')
+        printLock.release()
+        broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
+        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
+        config.set(myAddress,'lastpubkeysendtime',str(int(time.time())))
+        with open(appdata + 'keys.dat', 'wb') as configfile:
+            config.write(configfile)
+
+    def doPOWForMyV3Pubkey(self,hash): #This function also broadcasts out the pubkey message once it is done with the POW
+        #Look up my stream number based on my address hash
+        """configSections = config.sections()
+        for addressInKeysFile in configSections:
+            if addressInKeysFile <> 'bitmessagesettings':
+                status,addressVersionNumber,streamNumber,hashFromThisParticularAddress = decodeAddress(addressInKeysFile)
+                if hash == hashFromThisParticularAddress:
+                    myAddress = addressInKeysFile
+                    break"""
+        myAddress = myAddressesByHash[hash]
+        status,addressVersionNumber,streamNumber,hash = decodeAddress(myAddress)
+        embeddedTime = int(time.time()+random.randrange(-300, 300)) #the current time plus or minus five minutes
+        payload = pack('>I',(embeddedTime))
+        payload += encodeVarint(addressVersionNumber) #Address version number
+        payload += encodeVarint(streamNumber)
+        payload += '\x00\x00\x00\x01' #bitfield of features supported by me (see the wiki).
+
+        try:
+            privSigningKeyBase58 = config.get(myAddress, 'privsigningkey')
+            privEncryptionKeyBase58 = config.get(myAddress, 'privencryptionkey')
+        except Exception, err:
+            printLock.acquire()
+            sys.stderr.write('Error within doPOWForMyV3Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
+            printLock.release()
+            return
+
+        privSigningKeyHex = decodeWalletImportFormat(privSigningKeyBase58).encode('hex')
+        privEncryptionKeyHex = decodeWalletImportFormat(privEncryptionKeyBase58).encode('hex')
+        pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode('hex')
+        pubEncryptionKey = highlevelcrypto.privToPub(privEncryptionKeyHex).decode('hex')
+
+        payload += pubSigningKey[1:]
+        payload += pubEncryptionKey[1:]
+
+        payload += encodeVarint(networkDefaultAverageProofOfWorkNonceTrialsPerByte) #this is where we would multiply networkDefaultAverageProofOfWorkNonceTrialsPerByte by some difficulty set by the user.
+        payload += encodeVarint(networkDefaultPayloadLengthExtraBytes) #this is where we would multiply networkDefaultPayloadLengthExtraBytes by some difficulty set by the user.
+        signature = highlevelcrypto.sign(payload,privSigningKeyHex)
+        payload += encodeVarint(len(signature))
+        payload += signature
+
+        #Do the POW for this pubkey message
+        nonce = 0
+        trialValue = 99999999999999999999
+        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultAverageProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
         while trialValue > target:
@@ -2434,7 +2595,7 @@ class singleWorker(QThread):
 
                 nonce = 0
                 trialValue = 99999999999999999999
-                target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
+                target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultAverageProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
                 self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
                 initialHash = hashlib.sha512(payload).digest()
@@ -2525,44 +2686,47 @@ class singleWorker(QThread):
                 payload += encodeVarint(len(signature))
                 payload += signature
 
-            """elif fromAddressVersionNumber == 1: #This code is for old version 1 (RSA) addresses. It will soon be removed.
-                payload = '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00' #this run of nulls allows the true message receiver to identify his message
-                payload += '\x01' #Message version.
-                payload += '\x00\x00\x00\x01'
-
+            if fromAddressVersionNumber == 3:
+                payload = '\x01' #Message version.
                 payload += encodeVarint(fromAddressVersionNumber)
                 payload += encodeVarint(fromStreamNumber)
+                payload += '\x00\x00\x00\x01' #Bitfield of features and behaviors that can be expected from me. (See https://bitmessage.org/wiki/Protocol_specification#Pubkey_bitfield_features  )
 
+                #We need to convert our private keys to public keys in order to include them.
                 try:
-                    sendersN = convertIntToString(config.getint(fromaddress, 'n'))
+                    privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
+                    privEncryptionKeyBase58 = config.get(fromaddress, 'privencryptionkey')
                 except:
-                    printLock.acquire()
-                    print 'Error: Could not find', fromaddress, 'in our keys.dat file. You must have deleted it. Aborting the send.'
-                    printLock.release()
-                    return
-                payload += encodeVarint(len(sendersN))
-                payload += sendersN
+                    self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
+                    continue
 
-                sendersE = convertIntToString(config.getint(fromaddress, 'e'))
-                payload += encodeVarint(len(sendersE))
-                payload += sendersE
+                privSigningKeyHex = decodeWalletImportFormat(privSigningKeyBase58).encode('hex')
+                privEncryptionKeyHex = decodeWalletImportFormat(privEncryptionKeyBase58).encode('hex')
 
-                payload += '\x02' #Type 2 is simple UTF-8 message encoding.
+                pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode('hex')
+                pubEncryptionKey = highlevelcrypto.privToPub(privEncryptionKeyHex).decode('hex')
+
+                payload += pubSigningKey[1:] #The \x04 on the beginning of the public keys are not sent. This way there is only one acceptable way to encode and send a public key.
+                payload += pubEncryptionKey[1:]
+                payload += encodeVarint(networkDefaultAverageProofOfWorkNonceTrialsPerByte) #this is where we would multiply networkDefaultAverageProofOfWorkNonceTrialsPerByte by some difficulty we demand others meet.
+                payload += encodeVarint(networkDefaultPayloadLengthExtraBytes) #this is where we would multiply networkDefaultPayloadLengthExtraBytes by some difficulty set by some difficulty we demand others meet.
+
+                payload += toHash #This hash will be checked by the receiver of the message to verify that toHash belongs to them. This prevents a Surreptitious Forwarding Attack.
+                payload += '\x02' #Type 2 is simple UTF-8 message encoding as specified on the Protocol Specification on the Bitmessage Wiki.
                 messageToTransmit = 'Subject:' + subject + '\n' + 'Body:' + message
                 payload += encodeVarint(len(messageToTransmit))
                 payload += messageToTransmit
-
-                #Later, if anyone impliments clients that don't send the ack_data, then we should probably check here to make sure that the receiver will make use of this ack_data and not attach it if not.
-                fullAckPayload = self.generateFullAckMessage(ackdata,toStreamNumber,embeddedTime)
+                fullAckPayload = self.generateFullAckMessage(ackdata,toStreamNumber,embeddedTime)#The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
                 payload += encodeVarint(len(fullAckPayload))
                 payload += fullAckPayload
-                sendersPrivKey = rsa.PrivateKey(config.getint(fromaddress, 'n'),config.getint(fromaddress, 'e'),config.getint(fromaddress, 'd'),config.getint(fromaddress, 'p'),config.getint(fromaddress, 'q'))
+                signature = highlevelcrypto.sign(payload,privSigningKeyHex)
+                payload += encodeVarint(len(signature))
+                payload += signature
 
-                payload += rsa.sign(payload,sendersPrivKey,'SHA-512')"""
 
             #We have assembled the data that will be encrypted. Now let us fetch the recipient's public key out of our database and do the encryption.
 
-            if toAddressVersionNumber == 2:
+            if toAddressVersionNumber == 2 or toAddressVersionNumber == 3:
                 sqlLock.acquire()
                 sqlSubmitQueue.put('SELECT transmitdata FROM pubkeys WHERE hash=?')
                 sqlSubmitQueue.put((toRipe,))
@@ -2588,6 +2752,18 @@ class singleWorker(QThread):
                 readPosition += 64
                 pubEncryptionKeyBase256 = pubkeyPayload[readPosition:readPosition+64]
                 readPosition += 64
+                if toAddressVersionNumber == 2:
+                    requiredAverageProofOfWorkNonceTrialsPerByte = networkDefaultAverageProofOfWorkNonceTrialsPerByte
+                    requiredPayloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
+                elif toAddressVersionNumber == 3:
+                    requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
+                    readPosition += varintLength
+                    requiredPayloadLengthExtraBytes, varintLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
+                    readPosition += varintLength
+                    if requiredAverageProofOfWorkNonceTrialsPerByte < networkDefaultAverageProofOfWorkNonceTrialsPerByte: #We still have to meet a minimum POW difficulty regardless of what they say is allowed in order to get our message to propagate through the network.
+                        requiredAverageProofOfWorkNonceTrialsPerByte = networkDefaultAverageProofOfWorkNonceTrialsPerByte
+                    if requiredPayloadLengthExtraBytes < networkDefaultPayloadLengthExtraBytes:
+                        requiredPayloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
                 encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
 
             nonce = 0
@@ -2596,7 +2772,7 @@ class singleWorker(QThread):
             encodedStreamNumber = encodeVarint(toStreamNumber)
             #We are now dropping the unencrypted data in payload since it has already been encrypted and replacing it with the encrypted payload that we will send out.
             payload = embeddedTime + encodedStreamNumber + encrypted
-            target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
+            target = 2**64 / ((len(payload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
             print '(For msg message) Doing proof of work. Target:', target
             powStartTime = time.time()
             initialHash = hashlib.sha512(payload).digest()
@@ -2647,7 +2823,7 @@ class singleWorker(QThread):
         self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
         self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Doing work necessary to request public key.')
         print 'Doing proof-of-work necessary to send getpubkey message.'
-        target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
+        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultAverageProofOfWorkNonceTrialsPerByte)
         initialHash = hashlib.sha512(payload).digest()
         while trialValue > target:
             nonce += 1
@@ -2671,7 +2847,7 @@ class singleWorker(QThread):
         trialValue = 99999999999999999999
         encodedStreamNumber = encodeVarint(toStreamNumber)
         payload = embeddedTime + encodedStreamNumber + ackdata
-        target = 2**64 / ((len(payload)+payloadLengthExtraBytes+8) * averageProofOfWorkNonceTrialsPerByte)
+        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultAverageProofOfWorkNonceTrialsPerByte)
         printLock.acquire()
         print '(For ack message) Doing proof of work...'
         printLock.release()
@@ -2707,7 +2883,7 @@ class addressGenerator(QThread):
         self.eighteenByteRipe = eighteenByteRipe
 
     def run(self):
-        if self.addressVersionNumber == 2:
+        if self.addressVersionNumber == 3:
 
             if self.deterministicPassphrase == "":
                 statusbar = 'Generating one new address'
@@ -2738,7 +2914,7 @@ class addressGenerator(QThread):
                             break
                 print 'Generated address with ripe digest:', ripe.digest().encode('hex')
                 print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'addresses per second before finding one with the correct ripe-prefix.'
-                address = encodeAddress(2,self.streamNumber,ripe.digest())
+                address = encodeAddress(3,self.streamNumber,ripe.digest())
                 #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
 
                 #An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
@@ -2768,7 +2944,7 @@ class addressGenerator(QThread):
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address. Doing work necessary to broadcast it...')
                 self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
                 reloadMyAddressHashes()
-                workerQueue.put(('doPOWForMyV2Pubkey',ripe.digest()))
+                workerQueue.put(('doPOWForMyV3Pubkey',ripe.digest()))
 
             else: #There is something in the deterministicPassphrase variable thus we are going to do this deterministically.
                 statusbar = 'Generating '+str(self.numberOfAddressesToMake) + ' new addresses.'
@@ -2807,7 +2983,7 @@ class addressGenerator(QThread):
 
                     print 'ripe.digest', ripe.digest().encode('hex')
                     print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'keys per second.'
-                    address = encodeAddress(2,self.streamNumber,ripe.digest())
+                    address = encodeAddress(3,self.streamNumber,ripe.digest())
                     #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
 
                     #An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
@@ -3219,7 +3395,7 @@ class singleAPISignalHandler(QThread):
                 label, eighteenByteRipe = data
                 streamNumberForAddress = 1
                 self.addressGenerator = addressGenerator()
-                self.addressGenerator.setup(2,streamNumberForAddress,label,1,"",eighteenByteRipe)
+                self.addressGenerator.setup(3,streamNumberForAddress,label,1,"",eighteenByteRipe)
                 self.emit(SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"),self.addressGenerator)
                 self.addressGenerator.start()
             elif command == 'createDeterministicAddresses':
@@ -4082,7 +4258,7 @@ class MyForm(QtGui.QMainWindow):
                             continue
                         except:
                             pass
-                        if addressVersionNumber > 2 or addressVersionNumber == 0:
+                        if addressVersionNumber > 3 or addressVersionNumber == 0:
                             QMessageBox.about(self, "Address version number", "Concerning the address "+toAddress+", Bitmessage cannot understand address version numbers of "+str(addressVersionNumber)+". Perhaps upgrade Bitmessage to the latest version.")
                             continue
                         if streamNumber > 1 or streamNumber == 0:
@@ -4638,7 +4814,7 @@ class MyForm(QtGui.QMainWindow):
                     streamNumberForAddress = addressStream(self.dialog.ui.comboBoxExisting.currentText())
 
                 self.addressGenerator = addressGenerator()
-                self.addressGenerator.setup(2,streamNumberForAddress,str(self.dialog.ui.newaddresslabel.text().toUtf8()),1,"",self.dialog.ui.checkBoxEighteenByteRipe.isChecked())
+                self.addressGenerator.setup(3,streamNumberForAddress,str(self.dialog.ui.newaddresslabel.text().toUtf8()),1,"",self.dialog.ui.checkBoxEighteenByteRipe.isChecked())
                 QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
                 QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
                 self.addressGenerator.start()
@@ -4650,7 +4826,7 @@ class MyForm(QtGui.QMainWindow):
                 else:
                     streamNumberForAddress = 1 #this will eventually have to be replaced by logic to determine the most available stream number.
                     self.addressGenerator = addressGenerator()
-                    self.addressGenerator.setup(2,streamNumberForAddress,"unused address",self.dialog.ui.spinBoxNumberOfAddressesToMake.value(),self.dialog.ui.lineEditPassphrase.text().toUtf8(),self.dialog.ui.checkBoxEighteenByteRipe.isChecked())
+                    self.addressGenerator.setup(3,streamNumberForAddress,"unused address",self.dialog.ui.spinBoxNumberOfAddressesToMake.value(),self.dialog.ui.lineEditPassphrase.text().toUtf8(),self.dialog.ui.checkBoxEighteenByteRipe.isChecked())
                     QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
                     QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
                     self.addressGenerator.start()
@@ -5158,12 +5334,12 @@ apiAddressGeneratorReturnQueue = Queue.Queue() #The address generator thread use
 alreadyAttemptedConnectionsListResetTime = int(time.time()) #used to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
 
 #These constants are not at the top because if changed they will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
-averageProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
-payloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
+networkDefaultAverageProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
+networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
 if useVeryEasyProofOfWorkForTesting:
-    averageProofOfWorkNonceTrialsPerByte = averageProofOfWorkNonceTrialsPerByte / 16
-    payloadLengthExtraBytes = payloadLengthExtraBytes / 7000
+    networkDefaultAverageProofOfWorkNonceTrialsPerByte = networkDefaultAverageProofOfWorkNonceTrialsPerByte / 16
+    networkDefaultPayloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes / 7000
 
 if __name__ == "__main__":
     # Check the Major version, the first element in the array
