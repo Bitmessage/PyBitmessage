@@ -72,7 +72,7 @@ class outgoingSynSender(QThread):
         time.sleep(1)
         global alreadyAttemptedConnectionsListResetTime
         while True:
-            #time.sleep(999999)#I sometimes use this to prevent connections for testing.
+            time.sleep(999999)#I sometimes use this to prevent connections for testing.
             if len(selfInitiatedConnections[self.streamNumber]) < 8: #maximum number of outgoing connections = 8
                 random.seed()
                 HOST, = random.sample(knownNodes[self.streamNumber],  1)
@@ -260,7 +260,7 @@ class receiveDataThread(QThread):
 
         while True:
             try:
-                self.data += self.sock.recv(65536)
+                self.data += self.sock.recv(4096)
             except socket.timeout:
                 printLock.acquire()
                 print 'Timeout occurred waiting for data. Closing receiveData thread.'
@@ -307,6 +307,9 @@ class receiveDataThread(QThread):
             del connectedHostsList[self.HOST]
         except Exception, err:
             print 'Could not delete', self.HOST, 'from connectedHostsList.', err
+        printLock.acquire()
+        print 'The size of the connectedHostsList is now:', len(connectedHostsList)
+        printLock.release()
 
     def processData(self):
         global verbose
@@ -409,8 +412,8 @@ class receiveDataThread(QThread):
     def isProofOfWorkSufficient(self,data):
         POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(data[:8]+ hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
         #print 'POW:', POW
-        #Notice that I have divided the networkDefaultAverageProofOfWorkNonceTrialsPerByte by two. This makes the POW requirement easier. This gives us wiggle-room: if we decide that we want to make the POW easier, the change won't obsolete old clients because they already expect a lower POW. If we decide that the current work done by clients feels approperate then we can remove this division by 2 and make the requirement match what is actually done by a sending node. If we want to raise the POW requirement then old nodes will HAVE to upgrade no matter what.
-        return POW <= 2**64 / ((len(data)+networkDefaultPayloadLengthExtraBytes) * (networkDefaultAverageProofOfWorkNonceTrialsPerByte/2))
+        #Notice that I have divided the networkDefaultProofOfWorkNonceTrialsPerByte by two. This makes the POW requirement easier. This gives us wiggle-room: if we decide that we want to make the POW easier, the change won't obsolete old clients because they already expect a lower POW. If we decide that the current work done by clients feels approperate then we can remove this division by 2 and make the requirement match what is actually done by a sending node. If we want to raise the POW requirement then old nodes will HAVE to upgrade no matter what.
+        return POW <= 2**64 / ((len(data)+networkDefaultPayloadLengthExtraBytes) * (networkDefaultProofOfWorkNonceTrialsPerByte/2))
 
     def sendpong(self):
         print 'Sending pong'
@@ -635,9 +638,9 @@ class receiveDataThread(QThread):
 
             #Let's store the public key in case we want to reply to this person.
             #We don't have the correct nonce or time (which would let us send out a pubkey message) so we'll just fill it with 1's. We won't be able to send this pubkey to others (without doing the proof of work ourselves, which this program is programmed to not do.)
-            t = (ripe.digest(),False,'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+'\xFF\xFF\xFF\xFF'+data[beginningOfPubkeyPosition:endOfPubkeyPosition],int(time.time()),'yes')
+            t = (ripe.digest(),'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+'\xFF\xFF\xFF\xFF'+data[beginningOfPubkeyPosition:endOfPubkeyPosition],int(time.time()),'yes')
             sqlLock.acquire()
-            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
             sqlSubmitQueue.put('commit')
@@ -815,7 +818,7 @@ class receiveDataThread(QThread):
                 print 'Cannot understand sendersAddressVersionNumber = 0. Ignoring message.'
                 return
             if sendersAddressVersionNumber >= 4:
-                print 'Sender\'s address version number', sendersAddressVersionNumber, ' not yet supported. Ignoring message.'
+                print 'Sender\'s address version number', sendersAddressVersionNumber, 'not yet supported. Ignoring message.'
                 return
             if len(unencryptedData) < 170:
                 print 'Length of the unencrypted data is unreasonably short. Sanity check failed. Ignoring message.'
@@ -879,9 +882,9 @@ class receiveDataThread(QThread):
             ripe.update(sha.digest())
             #Let's store the public key in case we want to reply to this person.
             #We don't have the correct nonce or time (which would let us send out a pubkey message) so we'll just fill it with 1's. We won't be able to send this pubkey to others (without doing the proof of work ourselves, which this program is programmed to not do.)
-            t = (ripe.digest(),False,'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+'\xFF\xFF\xFF\xFF'+unencryptedData[messageVersionLength:endOfThePublicKeyPosition],int(time.time()),'yes')
+            t = (ripe.digest(),'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+'\xFF\xFF\xFF\xFF'+unencryptedData[messageVersionLength:endOfThePublicKeyPosition],int(time.time()),'yes')
             sqlLock.acquire()
-            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
             sqlSubmitQueue.put(t)
             sqlReturnQueue.get()
             sqlSubmitQueue.put('commit')
@@ -1084,13 +1087,13 @@ class receiveDataThread(QThread):
         lengthOfTimeWeShouldUseToProcessThisMessage = .2
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - (time.time()- self.pubkeyProcessingStartTime)
         if sleepTime > 0:
-            #printLock.acquire()
-            #print 'Timing attack mitigation: Sleeping for', sleepTime ,'seconds.'
-            #printLock.release()
+            printLock.acquire()
+            print 'Timing attack mitigation: Sleeping for', sleepTime ,'seconds.'
+            printLock.release()
             time.sleep(sleepTime)
-        #printLock.acquire()
-        #print 'Total pubkey processing time:', time.time()- self.pubkeyProcessingStartTime, 'seconds.'
-        #printLock.release()
+        printLock.acquire()
+        print 'Total pubkey processing time:', time.time()- self.pubkeyProcessingStartTime, 'seconds.'
+        printLock.release()
 
     def processpubkey(self,data):
         readPosition = 8 #for the nonce
@@ -1142,9 +1145,9 @@ class receiveDataThread(QThread):
             sqlLock.release()
             if queryreturn != []: #if this pubkey is already in our database and if we have used it personally:
                 print 'We HAVE used this pubkey personally. Updating time.'
-                t = (ripe,True,data,embeddedTime,'yes')
+                t = (ripe,data,embeddedTime,'yes')
                 sqlLock.acquire()
-                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
                 sqlSubmitQueue.put('commit')
@@ -1152,15 +1155,13 @@ class receiveDataThread(QThread):
                 workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
             else:
                 print 'We have NOT used this pubkey personally. Inserting in database.'
-                t = (ripe,True,data,embeddedTime,'no')  #This will also update the embeddedTime.
+                t = (ripe,data,embeddedTime,'no')  #This will also update the embeddedTime.
                 sqlLock.acquire()
-                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
                 sqlSubmitQueue.put('commit')
                 sqlLock.release()
-                printLock.acquire()
-                printLock.release()
                 workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
         if addressVersion == 3:
             if len(data) < 170: #sanity check.
@@ -1172,9 +1173,6 @@ class receiveDataThread(QThread):
             #Is it possible for a public key to be invalid such that trying to encrypt or sign with it will cause an error? If it is, we should probably test these keys here.
             readPosition += 64
             publicEncryptionKey = '\x04'+data[readPosition:readPosition+64]
-            """if len(publicEncryptionKey) < 64:
-                print 'publicEncryptionKey length less than 64. Sanity check failed.'
-                return"""
             readPosition += 64
             specifiedNonceTrialsPerByte, specifiedNonceTrialsPerByteLength = decodeVarint(data[readPosition:readPosition+10])
             readPosition += specifiedNonceTrialsPerByteLength
@@ -1210,26 +1208,23 @@ class receiveDataThread(QThread):
             sqlLock.release()
             if queryreturn != []: #if this pubkey is already in our database and if we have used it personally:
                 print 'We HAVE used this pubkey personally. Updating time.'
-                t = (ripe,True,data,embeddedTime,'yes')
+                t = (ripe,data,embeddedTime,'yes')
                 sqlLock.acquire()
-                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
                 sqlSubmitQueue.put('commit')
                 sqlLock.release()
-                workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
             else:
                 print 'We have NOT used this pubkey personally. Inserting in database.'
-                t = (ripe,True,data,embeddedTime,'no')  #This will also update the embeddedTime.
+                t = (ripe,data,embeddedTime,'no')  #This will also update the embeddedTime.
                 sqlLock.acquire()
-                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
                 sqlSubmitQueue.put('commit')
                 sqlLock.release()
-                printLock.acquire()
-                printLock.release()
-                workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
+            workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
 
 
     #We have received a getpubkey message
@@ -2145,14 +2140,15 @@ class sqlThread(QThread):
             self.cur.execute( '''CREATE TABLE whitelist (label text, address text, enabled bool)''' )
             #Explanation of what is in the pubkeys table:
             #   The hash is the RIPEMD160 hash that is encoded in the Bitmessage address.
-            #   If you or someone else did the POW for this pubkey, then havecorrectnonce will be true. If you received the pubkey in a msg message then havecorrectnonce will be false. You won't have the correct nonce and won't be able to send the message to peers if they request the pubkey.
             #   transmitdata is literally the data that was included in the Bitmessage pubkey message when it arrived, except for the 24 byte protocol header- ie, it starts with the POW nonce.
             #   time is the time that the pubkey was broadcast on the network same as with every other type of Bitmessage object.
             #   usedpersonally is set to "yes" if we have used the key personally. This keeps us from deleting it because we may want to reply to a message in the future. This field is not a bool because we may need more flexability in the future and it doesn't take up much more space anyway.
-            self.cur.execute( '''CREATE TABLE pubkeys (hash blob, havecorrectnonce bool, transmitdata blob, time blob, usedpersonally text, UNIQUE(hash, havecorrectnonce) ON CONFLICT REPLACE)''' )
+            self.cur.execute( '''CREATE TABLE pubkeys (hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''CREATE TABLE knownnodes (timelastseen int, stream int, services blob, host blob, port blob, UNIQUE(host, stream, port) ON CONFLICT REPLACE)''' ) #This table isn't used in the program yet but I have a feeling that we'll need it.
             self.cur.execute( '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx',1)''')
+            self.cur.execute( '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
+            self.cur.execute( '''INSERT INTO settings VALUES('version','1')''')
             self.conn.commit()
             print 'Created messages database file'
         except Exception, err:
@@ -2190,12 +2186,39 @@ class sqlThread(QThread):
 
             config.set('bitmessagesettings','settingsversion','4')
             with open(appdata + 'keys.dat', 'wb') as configfile:
-                config.write(configfile)             
+                config.write(configfile)
+
+        if config.getint('bitmessagesettings','settingsversion') == 4:
+            config.set('bitmessagesettings','defaultnoncetrialsperbyte',str(networkDefaultProofOfWorkNonceTrialsPerByte))
+            config.set('bitmessagesettings','defaultpayloadlengthextrabytes',str(networkDefaultPayloadLengthExtraBytes))
+            config.set('bitmessagesettings','settingsversion','5')
+            with open(appdata + 'keys.dat', 'wb') as configfile:
+                config.write(configfile)
+
+        #From now on, let us keep a 'version' embedded in the messages.dat file so that when we make changes to the database, the database version we are on can stay embedded in the messages.dat file. Let us check to see if the settings table exists yet.
+        item = '''SELECT name FROM sqlite_master WHERE type='table' AND name='settings';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        if self.cur.fetchall() == []:
+            #The settings table doesn't exist. We need to make it.
+            print 'In messages.dat database, creating new \'settings\' table.'
+            self.cur.execute( '''CREATE TABLE settings (key text, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
+            self.cur.execute( '''INSERT INTO settings VALUES('version','1')''')
+            print 'In messages.dat database, removing an obsolete field from the pubkeys table.'
+            self.cur.execute( '''CREATE TEMPORARY TABLE pubkeys_backup(hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE);''')
+            self.cur.execute( '''INSERT INTO pubkeys_backup SELECT hash, transmitdata, time, usedpersonally FROM pubkeys;''')
+            self.cur.execute( '''DROP TABLE pubkeys''')
+            self.cur.execute( '''CREATE TABLE pubkeys (hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE)''' )
+            self.cur.execute( '''INSERT INTO pubkeys SELECT hash, transmitdata, time, usedpersonally FROM pubkeys_backup;''')
+            self.cur.execute( '''DROP TABLE pubkeys_backup;''')
+            self.conn.commit()
+            print 'Vacuuming message.dat. You might notice that the file size gets much smaller.'
+            self.cur.execute( ''' VACUUM ''')
 
         try:
             testpayload = '\x00\x00'
-            t = ('1234','True',testpayload,'12345678','no')
-            self.cur.execute( '''INSERT INTO pubkeys VALUES(?,?,?,?,?)''',t)
+            t = ('1234',testpayload,'12345678','no')
+            self.cur.execute( '''INSERT INTO pubkeys VALUES(?,?,?,?)''',t)
             self.conn.commit()
             self.cur.execute('''SELECT transmitdata FROM pubkeys WHERE hash='1234' ''')
             queryreturn = self.cur.fetchall()
@@ -2370,7 +2393,7 @@ class singleWorker(QThread):
                 #print repr(message.toUtf8())
                 #print str(message.toUtf8())
                 sqlLock.acquire()
-                sqlSubmitQueue.put('SELECT * FROM pubkeys WHERE hash=?')
+                sqlSubmitQueue.put('SELECT hash FROM pubkeys WHERE hash=?')
                 sqlSubmitQueue.put((toRipe,))
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
@@ -2449,7 +2472,7 @@ class singleWorker(QThread):
         #Do the POW for this pubkey message
         nonce = 0
         trialValue = 99999999999999999999
-        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultAverageProofOfWorkNonceTrialsPerByte)
+        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
         while trialValue > target:
@@ -2458,9 +2481,9 @@ class singleWorker(QThread):
         print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
 
         payload = pack('>Q',nonce) + payload
-        """t = (hash,True,payload,embeddedTime,'no')
+        """t = (hash,payload,embeddedTime,'no')
         sqlLock.acquire()
-        sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+        sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
         sqlSubmitQueue.put('commit')
@@ -2480,14 +2503,6 @@ class singleWorker(QThread):
             config.write(configfile)
 
     def doPOWForMyV3Pubkey(self,hash): #This function also broadcasts out the pubkey message once it is done with the POW
-        #Look up my stream number based on my address hash
-        """configSections = config.sections()
-        for addressInKeysFile in configSections:
-            if addressInKeysFile <> 'bitmessagesettings':
-                status,addressVersionNumber,streamNumber,hashFromThisParticularAddress = decodeAddress(addressInKeysFile)
-                if hash == hashFromThisParticularAddress:
-                    myAddress = addressInKeysFile
-                    break"""
         myAddress = myAddressesByHash[hash]
         status,addressVersionNumber,streamNumber,hash = decodeAddress(myAddress)
         embeddedTime = int(time.time()+random.randrange(-300, 300)) #the current time plus or minus five minutes
@@ -2513,8 +2528,8 @@ class singleWorker(QThread):
         payload += pubSigningKey[1:]
         payload += pubEncryptionKey[1:]
 
-        payload += encodeVarint(networkDefaultAverageProofOfWorkNonceTrialsPerByte) #this is where we would multiply networkDefaultAverageProofOfWorkNonceTrialsPerByte by some difficulty set by the user.
-        payload += encodeVarint(networkDefaultPayloadLengthExtraBytes) #this is where we would multiply networkDefaultPayloadLengthExtraBytes by some difficulty set by the user.
+        payload += encodeVarint(config.getint(myAddress,'noncetrialsperbyte'))
+        payload += encodeVarint(config.getint(myAddress,'payloadlengthextrabytes'))
         signature = highlevelcrypto.sign(payload,privSigningKeyHex)
         payload += encodeVarint(len(signature))
         payload += signature
@@ -2522,7 +2537,7 @@ class singleWorker(QThread):
         #Do the POW for this pubkey message
         nonce = 0
         trialValue = 99999999999999999999
-        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultAverageProofOfWorkNonceTrialsPerByte)
+        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
         while trialValue > target:
@@ -2531,9 +2546,9 @@ class singleWorker(QThread):
         print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
 
         payload = pack('>Q',nonce) + payload
-        """t = (hash,True,payload,embeddedTime,'no')
+        """t = (hash,payload,embeddedTime,'no')
         sqlLock.acquire()
-        sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''')
+        sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
         sqlSubmitQueue.put(t)
         queryreturn = sqlReturnQueue.get()
         sqlSubmitQueue.put('commit')
@@ -2595,7 +2610,7 @@ class singleWorker(QThread):
 
                 nonce = 0
                 trialValue = 99999999999999999999
-                target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultAverageProofOfWorkNonceTrialsPerByte)
+                target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
                 self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
                 initialHash = hashlib.sha512(payload).digest()
@@ -2624,7 +2639,7 @@ class singleWorker(QThread):
                 sqlLock.release()
             else:
                 printLock.acquire()
-                print 'In the singleWorker thread, the sendBroadcast function doesn\'t understand the address version'
+                sys.stderr.write('Error: In the singleWorker thread, the sendBroadcast function doesn\'t understand the address version.\n')
                 printLock.release()
 
     def sendMsg(self,toRipe):
@@ -2708,8 +2723,8 @@ class singleWorker(QThread):
 
                 payload += pubSigningKey[1:] #The \x04 on the beginning of the public keys are not sent. This way there is only one acceptable way to encode and send a public key.
                 payload += pubEncryptionKey[1:]
-                payload += encodeVarint(networkDefaultAverageProofOfWorkNonceTrialsPerByte) #this is where we would multiply networkDefaultAverageProofOfWorkNonceTrialsPerByte by some difficulty we demand others meet.
-                payload += encodeVarint(networkDefaultPayloadLengthExtraBytes) #this is where we would multiply networkDefaultPayloadLengthExtraBytes by some difficulty set by some difficulty we demand others meet.
+		payload += encodeVarint(config.getint(fromaddress,'noncetrialsperbyte'))#todo: check and see whether the addressee is in our address book, subscription list, or whitelist and set lower POW requirement if yes.
+                payload += encodeVarint(config.getint(fromaddress,'payloadlengthextrabytes'))
 
                 payload += toHash #This hash will be checked by the receiver of the message to verify that toHash belongs to them. This prevents a Surreptitious Forwarding Attack.
                 payload += '\x02' #Type 2 is simple UTF-8 message encoding as specified on the Protocol Specification on the Bitmessage Wiki.
@@ -2753,15 +2768,15 @@ class singleWorker(QThread):
                 pubEncryptionKeyBase256 = pubkeyPayload[readPosition:readPosition+64]
                 readPosition += 64
                 if toAddressVersionNumber == 2:
-                    requiredAverageProofOfWorkNonceTrialsPerByte = networkDefaultAverageProofOfWorkNonceTrialsPerByte
+                    requiredAverageProofOfWorkNonceTrialsPerByte = networkDefaultProofOfWorkNonceTrialsPerByte
                     requiredPayloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
                 elif toAddressVersionNumber == 3:
                     requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
                     readPosition += varintLength
                     requiredPayloadLengthExtraBytes, varintLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
                     readPosition += varintLength
-                    if requiredAverageProofOfWorkNonceTrialsPerByte < networkDefaultAverageProofOfWorkNonceTrialsPerByte: #We still have to meet a minimum POW difficulty regardless of what they say is allowed in order to get our message to propagate through the network.
-                        requiredAverageProofOfWorkNonceTrialsPerByte = networkDefaultAverageProofOfWorkNonceTrialsPerByte
+                    if requiredAverageProofOfWorkNonceTrialsPerByte < networkDefaultProofOfWorkNonceTrialsPerByte: #We still have to meet a minimum POW difficulty regardless of what they say is allowed in order to get our message to propagate through the network.
+                        requiredAverageProofOfWorkNonceTrialsPerByte = networkDefaultProofOfWorkNonceTrialsPerByte
                     if requiredPayloadLengthExtraBytes < networkDefaultPayloadLengthExtraBytes:
                         requiredPayloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
                 encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
@@ -2773,7 +2788,13 @@ class singleWorker(QThread):
             #We are now dropping the unencrypted data in payload since it has already been encrypted and replacing it with the encrypted payload that we will send out.
             payload = embeddedTime + encodedStreamNumber + encrypted
             target = 2**64 / ((len(payload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
+            printLock.acquire()
             print '(For msg message) Doing proof of work. Target:', target
+            print 'Using requiredAverageProofOfWorkNonceTrialsPerByte', requiredAverageProofOfWorkNonceTrialsPerByte
+            print 'Using requiredPayloadLengthExtraBytes =', requiredPayloadLengthExtraBytes
+            print 'The required total difficulty is', requiredAverageProofOfWorkNonceTrialsPerByte/networkDefaultProofOfWorkNonceTrialsPerByte
+            print 'The required small message difficulty is', requiredPayloadLengthExtraBytes/networkDefaultPayloadLengthExtraBytes
+            printLock.release()
             powStartTime = time.time()
             initialHash = hashlib.sha512(payload).digest()
             while trialValue > target:
@@ -2823,7 +2844,7 @@ class singleWorker(QThread):
         self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
         self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Doing work necessary to request public key.')
         print 'Doing proof-of-work necessary to send getpubkey message.'
-        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultAverageProofOfWorkNonceTrialsPerByte)
+        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
         initialHash = hashlib.sha512(payload).digest()
         while trialValue > target:
             nonce += 1
@@ -2847,7 +2868,7 @@ class singleWorker(QThread):
         trialValue = 99999999999999999999
         encodedStreamNumber = encodeVarint(toStreamNumber)
         payload = embeddedTime + encodedStreamNumber + ackdata
-        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultAverageProofOfWorkNonceTrialsPerByte)
+        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
         printLock.acquire()
         print '(For ack message) Doing proof of work...'
         printLock.release()
@@ -2933,6 +2954,8 @@ class addressGenerator(QThread):
                 config.set(address,'label',self.label)
                 config.set(address,'enabled','true')
                 config.set(address,'decoy','false')
+                config.set(address,'noncetrialsperbyte',config.get('bitmessagesettings','defaultnoncetrialsperbyte'))
+                config.set(address,'payloadlengthextrabytes',config.get('bitmessagesettings','defaultpayloadlengthextrabytes'))
                 config.set(address,'privSigningKey',privSigningKeyWIF)
                 config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
                 with open(appdata + 'keys.dat', 'wb') as configfile:
@@ -2998,10 +3021,12 @@ class addressGenerator(QThread):
 
                     try:
                         config.add_section(address)
-                        print 'self.label', self.label
+                        print 'label:', self.label
                         config.set(address,'label',self.label)
                         config.set(address,'enabled','true')
                         config.set(address,'decoy','false')
+                        config.set(address,'noncetrialsperbyte',config.get('bitmessagesettings','defaultnoncetrialsperbyte'))
+                        config.set(address,'payloadlengthextrabytes',config.get('bitmessagesettings','defaultpayloadlengthextrabytes'))
                         config.set(address,'privSigningKey',privSigningKeyWIF)
                         config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
                         with open(appdata + 'keys.dat', 'wb') as configfile:
@@ -3487,6 +3512,9 @@ class settingsDialog(QtGui.QDialog):
         self.ui.lineEditSocksUsername.setText(str(config.get('bitmessagesettings', 'socksusername')))
         self.ui.lineEditSocksPassword.setText(str(config.get('bitmessagesettings', 'sockspassword')))
         QtCore.QObject.connect(self.ui.comboBoxProxyType, QtCore.SIGNAL("currentIndexChanged(int)"), self.comboBoxProxyTypeChanged)
+
+        self.ui.lineEditTotalDifficulty.setText(str((float(config.getint('bitmessagesettings', 'defaultnoncetrialsperbyte'))/networkDefaultProofOfWorkNonceTrialsPerByte)))
+        self.ui.lineEditSmallMessageDifficulty.setText(str((float(config.getint('bitmessagesettings', 'defaultpayloadlengthextrabytes'))/networkDefaultPayloadLengthExtraBytes)))
         QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
     def comboBoxProxyTypeChanged(self,comboBoxIndex):
@@ -4666,6 +4694,8 @@ class MyForm(QtGui.QMainWindow):
             config.set('bitmessagesettings', 'socksport', str(self.settingsDialogInstance.ui.lineEditSocksPort.text()))
             config.set('bitmessagesettings', 'socksusername', str(self.settingsDialogInstance.ui.lineEditSocksUsername.text()))
             config.set('bitmessagesettings', 'sockspassword', str(self.settingsDialogInstance.ui.lineEditSocksPassword.text()))
+            config.set('bitmessagesettings', 'defaultnoncetrialsperbyte',str(int(float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text())*networkDefaultProofOfWorkNonceTrialsPerByte)))
+            config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes',str(int(float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text())*networkDefaultPayloadLengthExtraBytes)))
 
             with open(appdata + 'keys.dat', 'wb') as configfile:
                 config.write(configfile)
@@ -5309,8 +5339,7 @@ selfInitiatedConnections = {} #This is a list of current connections (the thread
 alreadyAttemptedConnectionsList = {} #This is a list of nodes to which we have already attempted a connection
 sendDataQueues = [] #each sendData thread puts its queue in this list.
 myECCryptorObjects = {}
-myAddressesByHash = {} #The key in this dictionary is the hash encoded in an address and value is the address itself.
-#myPrivateKeys = {}
+myAddressesByHash = {} #The key in this dictionary is the RIPE hash which is encoded in an address and value is the address itself.
 inventory = {} #of objects (like msg payloads and pubkey payloads) Does not include protocol headers (the first 24 bytes of each packet).
 workerQueue = Queue.Queue()
 sqlSubmitQueue = Queue.Queue() #SQLITE3 is so thread-unsafe that they won't even let you call it from different threads using your own locks. SQL objects can only be called from one thread.
@@ -5334,11 +5363,11 @@ apiAddressGeneratorReturnQueue = Queue.Queue() #The address generator thread use
 alreadyAttemptedConnectionsListResetTime = int(time.time()) #used to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
 
 #These constants are not at the top because if changed they will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
-networkDefaultAverageProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
+networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
 networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
 if useVeryEasyProofOfWorkForTesting:
-    networkDefaultAverageProofOfWorkNonceTrialsPerByte = networkDefaultAverageProofOfWorkNonceTrialsPerByte / 16
+    networkDefaultProofOfWorkNonceTrialsPerByte = networkDefaultProofOfWorkNonceTrialsPerByte / 16
     networkDefaultPayloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes / 7000
 
 if __name__ == "__main__":
@@ -5369,7 +5398,7 @@ if __name__ == "__main__":
         except:
             #This appears to be the first time running the program; there is no config file (or it cannot be accessed). Create config file.
             config.add_section('bitmessagesettings')
-            config.set('bitmessagesettings','settingsversion','4')
+            config.set('bitmessagesettings','settingsversion','5')
             config.set('bitmessagesettings','port','8444')
             config.set('bitmessagesettings','timeformat','%%a, %%d %%b %%Y  %%I:%%M %%p')
             config.set('bitmessagesettings','blackwhitelist','black')
@@ -5447,7 +5476,7 @@ if __name__ == "__main__":
         knownNodes = pickle.load(pickleFile)
         pickleFile.close()
 
-    if config.getint('bitmessagesettings', 'settingsversion') > 4:
+    if config.getint('bitmessagesettings', 'settingsversion') > 5:
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
         raise SystemExit
 
