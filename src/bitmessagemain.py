@@ -758,9 +758,6 @@ class receiveDataThread(QThread):
             if toRipe != ripe.digest():
                 print 'The encryption key used to encrypt this message doesn\'t match the keys inbedded in the message itself. Ignoring message.'
                 return
-            else:
-                print 'The encryption key DOES match the keys in the message.'
-
             messageEncodingType, messageEncodingTypeLength = decodeVarint(decryptedData[readPosition:readPosition+9])
             if messageEncodingType == 0:
                 return
@@ -2407,6 +2404,9 @@ class sqlThread(QThread):
             self.cur.execute( '''DROP TABLE pubkeys_backup;''')
             print 'Deleting all pubkeys from inventory. They will be redownloaded and then saved with the correct times.'
             self.cur.execute( '''delete from inventory where objecttype = 'pubkey';''')
+            #print 'replacing Bitmessage announcements mailing list with a new one.'
+            #self.cur.execute( '''delete from subscriptions where address='BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx' ''')
+            #self.cur.execute( '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx',1)''')
             print 'Commiting.'
             self.conn.commit()
             print 'Vacuuming message.dat. You might notice that the file size gets much smaller.'
@@ -5558,6 +5558,7 @@ class MyForm(QtGui.QMainWindow):
 
     def reloadBroadcastSendersForWhichImWatching(self):
         broadcastSendersForWhichImWatching.clear()
+        MyECSubscriptionCryptorObjects.clear()
         sqlLock.acquire()
         sqlSubmitQueue.put('SELECT address FROM subscriptions where enabled=1')
         sqlSubmitQueue.put('')
