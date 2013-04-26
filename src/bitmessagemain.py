@@ -539,7 +539,7 @@ class receiveDataThread(QThread):
         #Let us check to make sure the stream number is correct (thus preventing an individual from sending broadcasts out on the wrong streams or all streams).
         broadcastVersion, broadcastVersionLength = decodeVarint(data[readPosition:readPosition+10])
         if broadcastVersion >= 2:
-            streamNumber = decodeVarint(data[readPosition+broadcastVersionLength:readPosition+broadcastVersionLength+10])
+            streamNumber, streamNumberLength = decodeVarint(data[readPosition+broadcastVersionLength:readPosition+broadcastVersionLength+10])
             if streamNumber != self.streamNumber:
                 print 'The stream number encoded in this broadcast message (' + str(streamNumber) + ') does not match the stream number on which it was received. Ignoring it.'
                 return
@@ -572,7 +572,7 @@ class receiveDataThread(QThread):
         elif len(data) > 1000000: #Between 10 and 1 megabyte
             lengthOfTimeWeShouldUseToProcessThisMessage = 3 #seconds.
         else: #Less than 1 megabyte
-            lengthOfTimeWeShouldUseToProcessThisMessage = .1 #seconds.
+            lengthOfTimeWeShouldUseToProcessThisMessage = .6 #seconds.
 
 
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - (time.time()- self.messageProcessingStartTime)
@@ -613,7 +613,7 @@ class receiveDataThread(QThread):
                 if sendersHash not in broadcastSendersForWhichImWatching:
                     #Display timing data
                     printLock.acquire()
-                    print 'Time spent deciding that we are not interested in this broadcast:', time.time()- self.messageProcessingStartTime
+                    print 'Time spent deciding that we are not interested in this v1 broadcast:', time.time()- self.messageProcessingStartTime
                     printLock.release()
                     return
                 #At this point, this message claims to be from sendersHash and we are interested in it. We still have to hash the public key to make sure it is truly the key that matches the hash, and also check the signiture.
@@ -718,9 +718,9 @@ class receiveDataThread(QThread):
                     pass
                     #print 'cryptorObject.decrypt Exception:', err
             if not initialDecryptionSuccessful:
-                #This is not a message bound for me.
+                #This is not a broadcast I am interested in.
                 printLock.acquire()
-                print 'Length of time program spent failing to decrypt this broadcast:', time.time()- self.messageProcessingStartTime, 'seconds.'
+                print 'Length of time program spent failing to decrypt this v2 broadcast:', time.time()- self.messageProcessingStartTime, 'seconds.'
                 printLock.release()
             else:
                 #This is a broadcast I have decrypted and thus am interested in.
@@ -2847,7 +2847,6 @@ class singleWorker(QThread):
                 print 'The string that we will hash to make the privEncryptionKey is', (encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).encode('hex')
                 privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()[:32]
                 pubEncryptionKey = pointMult(privEncryptionKey)
-                print 'length of the pub encrypion key is', len(pubEncryptionKey), 'which should be 65.'
                 payload += highlevelcrypto.encrypt(dataToEncrypt,pubEncryptionKey.encode('hex'))
 
                 nonce = 0
@@ -5551,7 +5550,6 @@ class MyForm(QtGui.QMainWindow):
             #Now, for all addresses, even version 2 addresses, we should create Cryptor objects in a dictionary which we will use to attempt to decrypt encrypted broadcast messages.
             print '(Within reloadBroadcastSendersForWhichImWatching) The string that we will hash to make the privEncryptionKey is', (encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).encode('hex')
             privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).digest()[:32]
-            print 'length of privEncryptionKey is', len(privEncryptionKey)
             MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
 
 #In order for the time columns on the Inbox and Sent tabs to be sorted correctly (rather than alphabetically), we need to overload the < operator and use this class instead of QTableWidgetItem.
