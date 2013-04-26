@@ -590,7 +590,7 @@ class receiveDataThread(QThread):
         broadcastVersion, broadcastVersionLength = decodeVarint(data[readPosition:readPosition+9])
         readPosition += broadcastVersionLength
         if broadcastVersion < 1 or broadcastVersion > 2:
-            #Cannot decode incoming broadcast versions higher than 2. Assuming the sender isn\' being silly, you should upgrade Bitmessage because this message shall be ignored.
+            print 'Cannot decode incoming broadcast versions higher than 2. Assuming the sender isn\' being silly, you should upgrade Bitmessage because this message shall be ignored.'
             return
         if broadcastVersion == 1:
             beginningOfPubkeyPosition = readPosition #used when we add the pubkey to our pubkey table
@@ -704,9 +704,8 @@ class receiveDataThread(QThread):
                 printLock.release()
         if broadcastVersion == 2:
             cleartextStreamNumber, cleartextStreamNumberLength = decodeVarint(data[readPosition:readPosition+10])
-            readPosition += streamNumberLength
+            readPosition += cleartextStreamNumberLength
             initialDecryptionSuccessful = False
-
             for key, cryptorObject in MyECSubscriptionCryptorObjects.items():
                 try:
                     decryptedData = cryptorObject.decrypt(data[readPosition:])
@@ -755,6 +754,12 @@ class receiveDataThread(QThread):
                 sha.update(sendersPubSigningKey+sendersPubEncryptionKey)
                 ripe = hashlib.new('ripemd160')
                 ripe.update(sha.digest())
+
+                if toRipe != ripe.digest():
+                    print 'The encryption key used to encrypt this message doesn\'t match the keys inbedded in the message itself. Ignoring message.'
+                    return
+                else:
+                    print 'The encryption key DOES match the keys in the message.'
 
                 messageEncodingType, messageEncodingTypeLength = decodeVarint(decryptedData[readPosition:readPosition+9])
                 if messageEncodingType == 0:
@@ -2265,6 +2270,27 @@ def isAddressInMyAddressBook(address):
     sqlLock.release()
     return queryreturn != []
 
+def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
+    if isAddressInMyAddressBook(address):
+        return True
+
+    sqlLock.acquire()
+    sqlSubmitQueue.put('''SELECT address FROM whitelist where address=? and enabled = '1' ''')
+    sqlSubmitQueue.put((address,))
+    queryreturn = sqlReturnQueue.get()
+    sqlLock.release()
+    if queryreturn <> []:
+        return True
+
+    sqlLock.acquire()
+    sqlSubmitQueue.put('''select address from subscriptions where address=? and enabled = '1' ''')
+    sqlSubmitQueue.put((address,))
+    queryreturn = sqlReturnQueue.get()
+    sqlLock.release()
+    if queryreturn <> []:
+        return True
+    return False
+
 def assembleVersionMessage(remoteHost,remotePort,myStreamNumber):
     global softwareVersion
     payload = ''
@@ -2383,6 +2409,9 @@ class sqlThread(QThread):
             self.cur.execute( '''CREATE TABLE pubkeys (hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''INSERT INTO pubkeys SELECT hash, transmitdata, time, usedpersonally FROM pubkeys_backup;''')
             self.cur.execute( '''DROP TABLE pubkeys_backup;''')
+            print 'Deleting all pubkeys from inventory. They will be redownloaded and then saved with the correct times.'
+            self.cur.execute( '''delete from inventory where objecttype = 'pubkey';''')
+            print 'Commiting.'
             self.conn.commit()
             print 'Vacuuming message.dat. You might notice that the file size gets much smaller.'
             self.cur.execute( ''' VACUUM ''')
@@ -2844,7 +2873,6 @@ class singleWorker(QThread):
                 signature = highlevelcrypto.sign(payload,privSigningKeyHex)
                 dataToEncrypt += encodeVarint(len(signature))
                 dataToEncrypt += signature
-                print 'The string that we will hash to make the privEncryptionKey is', (encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).encode('hex')
                 privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()[:32]
                 pubEncryptionKey = pointMult(privEncryptionKey)
                 payload += highlevelcrypto.encrypt(dataToEncrypt,pubEncryptionKey.encode('hex'))
@@ -2964,8 +2992,13 @@ class singleWorker(QThread):
 
                 payload += pubSigningKey[1:] #The \x04 on the beginning of the public keys are not sent. This way there is only one acceptable way to encode and send a public key.
                 payload += pubEncryptionKey[1:]
-		payload += encodeVarint(config.getint(fromaddress,'noncetrialsperbyte'))#todo: check and see whether the addressee is in our address book, subscription list, or whitelist and set lower POW requirement if yes.
-                payload += encodeVarint(config.getint(fromaddress,'payloadlengthextrabytes'))
+		#If the receiver of our message is in our address book, subscriptions list, or whitelist then we will allow them to do the network-minimum proof of work. Let us check to see if the receiver is in any of those lists.
+                if isAddressInMyAddressBookSubscriptionsListOrWhitelist(toaddress):
+                    payload += encodeVarint(networkDefaultProofOfWorkNonceTrialsPerByte)
+                    payload += encodeVarint(networkDefaultPayloadLengthExtraBytes)                    
+                else:
+                    payload += encodeVarint(config.getint(fromaddress,'noncetrialsperbyte'))
+                    payload += encodeVarint(config.getint(fromaddress,'payloadlengthextrabytes'))
 
                 payload += toHash #This hash will be checked by the receiver of the message to verify that toHash belongs to them. This prevents a Surreptitious Forwarding Attack.
                 payload += '\x02' #Type 2 is simple UTF-8 message encoding as specified on the Protocol Specification on the Bitmessage Wiki.
@@ -3024,17 +3057,11 @@ class singleWorker(QThread):
 
             nonce = 0
             trialValue = 99999999999999999999
-
-            encodedStreamNumber = encodeVarint(toStreamNumber)
             #We are now dropping the unencrypted data in payload since it has already been encrypted and replacing it with the encrypted payload that we will send out.
-            payload = embeddedTime + encodedStreamNumber + encrypted
+            payload = embeddedTime + encodeVarint(toStreamNumber) + encrypted
             target = 2**64 / ((len(payload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
             printLock.acquire()
-            print '(For msg message) Doing proof of work. Target:', target
-            print 'Using requiredAverageProofOfWorkNonceTrialsPerByte', requiredAverageProofOfWorkNonceTrialsPerByte
-            print 'Using requiredPayloadLengthExtraBytes =', requiredPayloadLengthExtraBytes
-            print 'The required total difficulty is', float(requiredAverageProofOfWorkNonceTrialsPerByte)/networkDefaultProofOfWorkNonceTrialsPerByte
-            print 'The required small message difficulty is', float(requiredPayloadLengthExtraBytes)/networkDefaultPayloadLengthExtraBytes
+            print '(For msg message) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte)/networkDefaultProofOfWorkNonceTrialsPerByte,'Required small message difficulty:', float(requiredPayloadLengthExtraBytes)/networkDefaultPayloadLengthExtraBytes
             printLock.release()
             powStartTime = time.time()
             initialHash = hashlib.sha512(payload).digest()
@@ -3107,8 +3134,7 @@ class singleWorker(QThread):
     def generateFullAckMessage(self,ackdata,toStreamNumber,embeddedTime):
         nonce = 0
         trialValue = 99999999999999999999
-        encodedStreamNumber = encodeVarint(toStreamNumber)
-        payload = embeddedTime + encodedStreamNumber + ackdata
+        payload = embeddedTime + encodeVarint(toStreamNumber) + ackdata
         target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
         printLock.acquire()
         print '(For ack message) Doing proof of work...'
@@ -3146,7 +3172,6 @@ class addressGenerator(QThread):
 
     def run(self):
         if self.addressVersionNumber == 3:
-
             if self.deterministicPassphrase == "":
                 statusbar = 'Generating one new address'
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
