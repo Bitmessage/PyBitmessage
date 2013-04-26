@@ -104,16 +104,6 @@ def vacuum():
     conn.commit()
     print 'done'
 
-def temp():
-    item = '''SELECT name FROM sqlite_master WHERE type='table' AND name='sent';'''
-    parameters = ''
-    cur.execute(item, parameters)
-    output = cur.fetchall()
-    if output == []:
-        print 'no table'
-    else:
-        print 'table exists'
-
 #takeInboxMessagesOutOfTrash()
 #takeSentMessagesOutOfTrash()
 #markAllInboxMessagesAsUnread()
@@ -122,7 +112,7 @@ def temp():
 #readPubkeys()
 #readSubscriptions()
 #readInventory()
-#vacuum()  #will defragment and clean empty space from the messages.dat file.
-temp()
+vacuum()  #will defragment and clean empty space from the messages.dat file.
+
 
 
