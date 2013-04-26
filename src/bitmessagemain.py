@@ -721,121 +721,121 @@ class receiveDataThread(QThread):
                 printLock.acquire()
                 print 'Length of time program spent failing to decrypt this v2 broadcast:', time.time()- self.messageProcessingStartTime, 'seconds.'
                 printLock.release()
+                return
+            #At this point this is a broadcast I have decrypted and thus am interested in.
+            signedBroadcastVersion, readPosition = decodeVarint(decryptedData[:10])
+            beginningOfPubkeyPosition = readPosition #used when we add the pubkey to our pubkey table
+            sendersAddressVersion, sendersAddressVersionLength = decodeVarint(decryptedData[readPosition:readPosition+9])
+            if sendersAddressVersion < 2 or sendersAddressVersion > 3:
+                print 'Cannot decode senderAddressVersion other than 2 or 3. Assuming the sender isn\' being silly, you should upgrade Bitmessage because this message shall be ignored.'
+                return
+            readPosition += sendersAddressVersionLength
+            sendersStream, sendersStreamLength = decodeVarint(decryptedData[readPosition:readPosition+9])
+            if sendersStream != cleartextStreamNumber:
+                print 'The stream number outside of the encryption on which the POW was completed doesn\'t match the stream number inside the encryption. Ignoring broadcast.'
+                return
+            readPosition += sendersStreamLength
+            behaviorBitfield = decryptedData[readPosition:readPosition+4]
+            readPosition += 4
+            sendersPubSigningKey = '\x04' + decryptedData[readPosition:readPosition+64]
+            readPosition += 64
+            sendersPubEncryptionKey = '\x04' + decryptedData[readPosition:readPosition+64]
+            readPosition += 64
+            if sendersAddressVersion >= 3:
+                requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(decryptedData[readPosition:readPosition+10])
+                readPosition += varintLength
+                print 'sender\'s requiredAverageProofOfWorkNonceTrialsPerByte is', requiredAverageProofOfWorkNonceTrialsPerByte
+                requiredPayloadLengthExtraBytes, varintLength = decodeVarint(decryptedData[readPosition:readPosition+10])
+                readPosition += varintLength
+                print 'sender\'s requiredPayloadLengthExtraBytes is', requiredPayloadLengthExtraBytes
+            endOfPubkeyPosition = readPosition
+
+            sha = hashlib.new('sha512')
+            sha.update(sendersPubSigningKey+sendersPubEncryptionKey)
+            ripe = hashlib.new('ripemd160')
+            ripe.update(sha.digest())
+
+            if toRipe != ripe.digest():
+                print 'The encryption key used to encrypt this message doesn\'t match the keys inbedded in the message itself. Ignoring message.'
+                return
             else:
-                #This is a broadcast I have decrypted and thus am interested in.
-                signedBroadcastVersion, readPosition = decodeVarint(decryptedData[:10])
-                beginningOfPubkeyPosition = readPosition #used when we add the pubkey to our pubkey table
-                sendersAddressVersion, sendersAddressVersionLength = decodeVarint(decryptedData[readPosition:readPosition+9])
-                if sendersAddressVersion < 2 or sendersAddressVersion > 3:
-                    print 'Cannot decode senderAddressVersion other than 2 or 3. Assuming the sender isn\' being silly, you should upgrade Bitmessage because this message shall be ignored.'
-                    return
-                readPosition += sendersAddressVersionLength
-                sendersStream, sendersStreamLength = decodeVarint(decryptedData[readPosition:readPosition+9])
-                if sendersStream != cleartextStreamNumber:
-                    print 'The stream number outside of the encryption on which the POW was completed doesn\'t match the stream number inside the encryption. Ignoring broadcast.'
-                    return
-                readPosition += sendersStreamLength
-                behaviorBitfield = decryptedData[readPosition:readPosition+4]
-                readPosition += 4
-                sendersPubSigningKey = '\x04' + decryptedData[readPosition:readPosition+64]
-                readPosition += 64
-                sendersPubEncryptionKey = '\x04' + decryptedData[readPosition:readPosition+64]
-                readPosition += 64
-                if sendersAddressVersion >= 3:
-                    requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(decryptedData[readPosition:readPosition+10])
-                    readPosition += varintLength
-                    print 'sender\'s requiredAverageProofOfWorkNonceTrialsPerByte is', requiredAverageProofOfWorkNonceTrialsPerByte
-                    requiredPayloadLengthExtraBytes, varintLength = decodeVarint(decryptedData[readPosition:readPosition+10])
-                    readPosition += varintLength
-                    print 'sender\'s requiredPayloadLengthExtraBytes is', requiredPayloadLengthExtraBytes
-                endOfPubkeyPosition = readPosition
+                print 'The encryption key DOES match the keys in the message.'
 
-                sha = hashlib.new('sha512')
-                sha.update(sendersPubSigningKey+sendersPubEncryptionKey)
-                ripe = hashlib.new('ripemd160')
-                ripe.update(sha.digest())
+            messageEncodingType, messageEncodingTypeLength = decodeVarint(decryptedData[readPosition:readPosition+9])
+            if messageEncodingType == 0:
+                return
+            readPosition += messageEncodingTypeLength
+            messageLength, messageLengthLength = decodeVarint(decryptedData[readPosition:readPosition+9])
+            readPosition += messageLengthLength
+            message = decryptedData[readPosition:readPosition+messageLength]
+            readPosition += messageLength
+            readPositionAtBottomOfMessage = readPosition
+            signatureLength, signatureLengthLength = decodeVarint(decryptedData[readPosition:readPosition+9])
+            readPosition += signatureLengthLength
+            signature = decryptedData[readPosition:readPosition+signatureLength]
+            try:
+                highlevelcrypto.verify(decryptedData[:readPositionAtBottomOfMessage],signature,sendersPubSigningKey.encode('hex'))
+                print 'ECDSA verify passed'
+            except Exception, err:
+                print 'ECDSA verify failed', err
+                return
+            #verify passed
 
-                if toRipe != ripe.digest():
-                    print 'The encryption key used to encrypt this message doesn\'t match the keys inbedded in the message itself. Ignoring message.'
-                    return
+            #Let's store the public key in case we want to reply to this person.
+            t = (ripe.digest(),'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+'\xFF\xFF\xFF\xFF'+decryptedData[beginningOfPubkeyPosition:endOfPubkeyPosition],int(time.time()),'yes')
+            sqlLock.acquire()
+            sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
+            sqlSubmitQueue.put(t)
+            sqlReturnQueue.get()
+            sqlSubmitQueue.put('commit')
+            sqlLock.release()
+            workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
+
+            fromAddress = encodeAddress(sendersAddressVersion,sendersStream,ripe.digest())
+            printLock.acquire()
+            print 'fromAddress:', fromAddress
+            printLock.release()
+            if messageEncodingType == 2:
+                bodyPositionIndex = string.find(message,'\nBody:')
+                if bodyPositionIndex > 1:
+                    subject = message[8:bodyPositionIndex]
+                    body = message[bodyPositionIndex+6:]
                 else:
-                    print 'The encryption key DOES match the keys in the message.'
+                    subject = ''
+                    body = message
+            elif messageEncodingType == 1:
+                body = message
+                subject = ''
+            elif messageEncodingType == 0:
+                print 'messageEncodingType == 0. Doing nothing with the message.'
+            else:
+                body = 'Unknown encoding type.\n\n' + repr(message)
+                subject = ''
 
-                messageEncodingType, messageEncodingTypeLength = decodeVarint(decryptedData[readPosition:readPosition+9])
-                if messageEncodingType == 0:
-                    return
-                readPosition += messageEncodingTypeLength
-                messageLength, messageLengthLength = decodeVarint(decryptedData[readPosition:readPosition+9])
-                readPosition += messageLengthLength
-                message = decryptedData[readPosition:readPosition+messageLength]
-                readPosition += messageLength
-                readPositionAtBottomOfMessage = readPosition
-                signatureLength, signatureLengthLength = decodeVarint(decryptedData[readPosition:readPosition+9])
-                readPosition += signatureLengthLength
-                signature = decryptedData[readPosition:readPosition+signatureLength]
-                try:
-                    highlevelcrypto.verify(decryptedData[:readPositionAtBottomOfMessage],signature,sendersPubSigningKey.encode('hex'))
-                    print 'ECDSA verify passed'
-                except Exception, err:
-                    print 'ECDSA verify failed', err
-                    return
-                #verify passed
-
-                #Let's store the public key in case we want to reply to this person.
-                t = (ripe.digest(),'\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF'+'\xFF\xFF\xFF\xFF'+decryptedData[beginningOfPubkeyPosition:endOfPubkeyPosition],int(time.time()),'yes')
+            toAddress = '[Broadcast subscribers]'
+            if messageEncodingType <> 0:
                 sqlLock.acquire()
-                sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
+                t = (self.inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox',messageEncodingType,0)
+                sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?)''')
                 sqlSubmitQueue.put(t)
                 sqlReturnQueue.get()
                 sqlSubmitQueue.put('commit')
                 sqlLock.release()
-                workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
+                self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
 
-                fromAddress = encodeAddress(sendersAddressVersion,sendersStream,ripe.digest())
-                printLock.acquire()
-                print 'fromAddress:', fromAddress
-                printLock.release()
-                if messageEncodingType == 2:
-                    bodyPositionIndex = string.find(message,'\nBody:')
-                    if bodyPositionIndex > 1:
-                        subject = message[8:bodyPositionIndex]
-                        body = message[bodyPositionIndex+6:]
-                    else:
-                        subject = ''
-                        body = message
-                elif messageEncodingType == 1:
-                    body = message
-                    subject = ''
-                elif messageEncodingType == 0:
-                    print 'messageEncodingType == 0. Doing nothing with the message.'
-                else:
-                    body = 'Unknown encoding type.\n\n' + repr(message)
-                    subject = ''
+                #If we are behaving as an API then we might need to run an outside command to let some program know that a new message has arrived.
+                if safeConfigGetBoolean('bitmessagesettings','apienabled'):
+                    try:
+                        apiNotifyPath = config.get('bitmessagesettings','apinotifypath')
+                    except:
+                        apiNotifyPath = ''
+                    if apiNotifyPath != '':
+                        call([apiNotifyPath, "newBroadcast"])
 
-                toAddress = '[Broadcast subscribers]'
-                if messageEncodingType <> 0:
-                    sqlLock.acquire()
-                    t = (self.inventoryHash,toAddress,fromAddress,subject,int(time.time()),body,'inbox',messageEncodingType,0)
-                    sqlSubmitQueue.put('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?)''')
-                    sqlSubmitQueue.put(t)
-                    sqlReturnQueue.get()
-                    sqlSubmitQueue.put('commit')
-                    sqlLock.release()
-                    self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
-
-                    #If we are behaving as an API then we might need to run an outside command to let some program know that a new message has arrived.
-                    if safeConfigGetBoolean('bitmessagesettings','apienabled'):
-                        try:
-                            apiNotifyPath = config.get('bitmessagesettings','apinotifypath')
-                        except:
-                            apiNotifyPath = ''
-                        if apiNotifyPath != '':
-                            call([apiNotifyPath, "newBroadcast"])
-
-                #Display timing data
-                printLock.acquire()
-                print 'Time spent processing this interesting broadcast:', time.time()- self.messageProcessingStartTime
-                printLock.release()
+            #Display timing data
+            printLock.acquire()
+            print 'Time spent processing this interesting broadcast:', time.time()- self.messageProcessingStartTime
+            printLock.release()
 
 
     #We have received a msg message.
@@ -950,15 +950,7 @@ class receiveDataThread(QThread):
             printLock.release()
         else:
             #This is a message bound for me.
-            
-            #If this message is bound for one of my version 3 addresses (or higher), then we must check to make sure it meets our demanded proof of work requirement.
             toAddress = myAddressesByHash[toRipe] #Look up my address based on the RIPE hash.
-            if decodeAddress(toAddress)[1] >= 3:#If the toAddress version number is 3 or higher:
-                requiredNonceTrialsPerByte = config.getint(toAddress,'noncetrialsperbyte')
-                requiredPayloadLengthExtraBytes = config.getint(toAddress,'payloadlengthextrabytes')
-                if not self.isProofOfWorkSufficient(encryptedData,requiredNonceTrialsPerByte,requiredPayloadLengthExtraBytes):
-                    print 'Proof of work in msg message insufficient only because it does not meet our higher requirement.'
-                    return
             readPosition = 0
             messageVersion, messageVersionLength = decodeVarint(decryptedData[readPosition:readPosition+10])
             readPosition += messageVersionLength
@@ -1042,37 +1034,38 @@ class receiveDataThread(QThread):
             sqlSubmitQueue.put('commit')
             sqlLock.release()
             workerQueue.put(('newpubkey',(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
-            blockMessage = False #Gets set to True if the user shouldn't see the message according to black or white lists.
             fromAddress = encodeAddress(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest())
+            #If this message is bound for one of my version 3 addresses (or higher), then we must check to make sure it meets our demanded proof of work requirement.
+            if decodeAddress(toAddress)[1] >= 3:#If the toAddress version number is 3 or higher:
+                if not isAddressInMyAddressBookSubscriptionsListOrWhitelist(fromAddress): #If I'm not friendly with this person:
+                    requiredNonceTrialsPerByte = config.getint(toAddress,'noncetrialsperbyte')
+                    requiredPayloadLengthExtraBytes = config.getint(toAddress,'payloadlengthextrabytes')
+                    if not self.isProofOfWorkSufficient(encryptedData,requiredNonceTrialsPerByte,requiredPayloadLengthExtraBytes):
+                        print 'Proof of work in msg message insufficient only because it does not meet our higher requirement.'
+                        return
+            blockMessage = False #Gets set to True if the user shouldn't see the message according to black or white lists.
             if config.get('bitmessagesettings', 'blackwhitelist') == 'black': #If we are using a blacklist
                 t = (fromAddress,)
                 sqlLock.acquire()
-                sqlSubmitQueue.put('''SELECT label, enabled FROM blacklist where address=?''')
+                sqlSubmitQueue.put('''SELECT label FROM blacklist where address=? and enabled='1' ''')
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
-                for row in queryreturn:
-                    label, enabled = row
-                    if enabled:
-                        printLock.acquire()
-                        print 'Message ignored because address is in blacklist.'
-                        printLock.release()
-                        blockMessage = True
+                if queryreturn != []:
+                    printLock.acquire()
+                    print 'Message ignored because address is in blacklist.'
+                    printLock.release()
+                    blockMessage = True
             else: #We're using a whitelist
                 t = (fromAddress,)
                 sqlLock.acquire()
-                sqlSubmitQueue.put('''SELECT label, enabled FROM whitelist where address=?''')
+                sqlSubmitQueue.put('''SELECT label FROM whitelist where address=? and enabled='1' ''')
                 sqlSubmitQueue.put(t)
                 queryreturn = sqlReturnQueue.get()
                 sqlLock.release()
                 if queryreturn == []:
                     print 'Message ignored because address not in whitelist.'
                     blockMessage = True
-                for row in queryreturn: #It could be in the whitelist but disabled. Let's check.
-                    label, enabled = row
-                    if not enabled:
-                        print 'Message ignored because address in whitelist but not enabled.'
-                        blockMessage = True
             if not blockMessage:
                 print 'fromAddress:', fromAddress
                 print 'First 150 characters of message:', repr(message[:150])
@@ -1514,7 +1507,9 @@ class receiveDataThread(QThread):
 
     #Send a getdata message to our peer to request the object with the given hash
     def sendgetdata(self,hash):
+        printLock.acquire()
         print 'sending getdata to retrieve object with hash:', hash.encode('hex')
+        printLock.release()
         payload = '\x01' + hash
         headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         headerData += 'getdata\x00\x00\x00\x00\x00'
@@ -1990,6 +1985,7 @@ class sendDataThread(QThread):
         self.HOST = HOST
         self.PORT = PORT
         self.streamNumber = streamNumber
+        self.remoteProtocolVersion = -1 #This must be set using setRemoteProtocolVersion command which is sent through the self.mailbox queue.
         self.lastTimeISentData = int(time.time()) #If this value increases beyond five minutes ago, we'll send a pong message to keep the connection alive.
         self.objectsOfWhichThisRemoteNodeIsAlreadyAware = objectsOfWhichThisRemoteNodeIsAlreadyAware
         printLock.acquire()
@@ -2092,7 +2088,7 @@ class sendDataThread(QThread):
                             break
             else:
                 printLock.acquire()
-                print 'sendDataThread ID:',id(self),'ignoring command', command,'because it is not in stream',deststream
+                print 'sendDataThread ID:',id(self),'ignoring command', command,'because the thread is not in stream',deststream
                 printLock.release()
 
 
@@ -5573,7 +5569,6 @@ class MyForm(QtGui.QMainWindow):
             if addressVersionNumber == 2:
                 broadcastSendersForWhichImWatching[hash] = 0
             #Now, for all addresses, even version 2 addresses, we should create Cryptor objects in a dictionary which we will use to attempt to decrypt encrypted broadcast messages.
-            print '(Within reloadBroadcastSendersForWhichImWatching) The string that we will hash to make the privEncryptionKey is', (encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).encode('hex')
             privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).digest()[:32]
             MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
 
