@@ -283,14 +283,15 @@ class receiveDataThread(QThread):
 
 
         try:
+            self.sock.shutdown(socket.SHUT_RDWR)
             self.sock.close()
         except Exception, err:
-            print 'Within receiveDataThread run(), self.sock.close() failed.', err
+            print 'Within receiveDataThread run(), self.sock.shutdown or .close() failed.', err
 
         try:
             del selfInitiatedConnections[self.streamNumber][self]
             printLock.acquire()
-            print 'removed self (a receiveDataThread) from ConnectionList'
+            print 'removed self (a receiveDataThread) from selfInitiatedConnections'
             printLock.release()
         except:
             pass
@@ -449,6 +450,7 @@ class receiveDataThread(QThread):
             printLock.acquire()
             print 'We are connected to too many people. Closing connection.'
             printLock.release()
+            self.sock.shutdown(socket.SHUT_RDWR)
             self.sock.close()
             return
         self.sendBigInv()
@@ -1682,11 +1684,11 @@ class receiveDataThread(QThread):
                         if PORT != recaddrPort:
                             print 'Strange occurance: The port specified in an addr message', str(recaddrPort),'does not match the port',str(PORT),'that this program (or some other peer) used to connect to it',str(hostFromAddrMessage),'. Perhaps they changed their port or are using a strange NAT configuration.'
             if needToWriteKnownNodesToDisk: #Runs if any nodes were new to us. Also, share those nodes with our peers.
-                output = open(appdata + 'knownnodes.dat', 'wb')
                 knownNodesLock.acquire()
+                output = open(appdata + 'knownnodes.dat', 'wb')
                 pickle.dump(knownNodes, output)
-                knownNodesLock.release()
                 output.close()
+                knownNodesLock.release()
                 self.broadcastaddr(listOfAddressDetailsToBroadcastToPeers) #no longer broadcast
             printLock.acquire()
             print 'knownNodes currently has', len(knownNodes[self.streamNumber]), 'nodes for this stream.'
@@ -1773,11 +1775,11 @@ class receiveDataThread(QThread):
                         if PORT != recaddrPort:
                             print 'Strange occurance: The port specified in an addr message', str(recaddrPort),'does not match the port',str(PORT),'that this program (or some other peer) used to connect to it',str(hostFromAddrMessage),'. Perhaps they changed their port or are using a strange NAT configuration.'
             if needToWriteKnownNodesToDisk: #Runs if any nodes were new to us. Also, share those nodes with our peers.
-                output = open(appdata + 'knownnodes.dat', 'wb')
                 knownNodesLock.acquire()
+                output = open(appdata + 'knownnodes.dat', 'wb')
                 pickle.dump(knownNodes, output)
-                knownNodesLock.release()
                 output.close()
+                knownNodesLock.release()
                 self.broadcastaddr(listOfAddressDetailsToBroadcastToPeers)
             printLock.acquire()
             print 'knownNodes currently has', len(knownNodes[self.streamNumber]), 'nodes for this stream.'
@@ -1913,6 +1915,7 @@ class receiveDataThread(QThread):
             print 'Remote node useragent:', useragent, '  stream number:', self.streamNumber
             printLock.release()
             if self.streamNumber != 1:
+                self.sock.shutdown(socket.SHUT_RDWR)
                 self.sock.close()
                 printLock.acquire()
                 print 'Closed connection to', self.HOST, 'because they are interested in stream', self.streamNumber,'.'
@@ -1922,6 +1925,7 @@ class receiveDataThread(QThread):
             if not self.initiatedConnection:
                 broadcastToSendDataQueues((0,'setStreamNumber',(self.HOST,self.streamNumber)))
             if data[72:80] == eightBytesOfRandomDataUsedToDetectConnectionsToSelf:
+                self.sock.shutdown(socket.SHUT_RDWR)
                 self.sock.close()
                 printLock.acquire()
                 print 'Closing connection to myself: ', self.HOST
@@ -1933,8 +1937,8 @@ class receiveDataThread(QThread):
             knownNodes[self.streamNumber][self.HOST] = (self.remoteNodeIncomingPort, int(time.time()))
             output = open(appdata + 'knownnodes.dat', 'wb')
             pickle.dump(knownNodes, output)
-            knownNodesLock.release()
             output.close()
+            knownNodesLock.release()
 
             self.sendverack()
             if self.initiatedConnection == False:
@@ -2011,6 +2015,7 @@ class sendDataThread(QThread):
                     if data == self.HOST or data == 'all':
                         printLock.acquire()
                         print 'sendDataThread thread (associated with', self.HOST,') ID:',id(self), 'shutting down now.'
+                        self.sock.shutdown(socket.SHUT_RDWR)
                         self.sock.close()
                         sendDataQueues.remove(self.mailbox)
                         print 'len of sendDataQueues', len(sendDataQueues)
@@ -2045,6 +2050,7 @@ class sendDataThread(QThread):
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'self.sock.sendall failed'
+                            self.sock.shutdown(socket.SHUT_RDWR)
                             self.sock.close()
                             sendDataQueues.remove(self.mailbox)
                             print 'sendDataThread thread', self, 'ending now'
@@ -2064,6 +2070,7 @@ class sendDataThread(QThread):
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'self.sock.sendall failed'
+                            self.sock.shutdown(socket.SHUT_RDWR)
                             self.sock.close()
                             sendDataQueues.remove(self.mailbox)
                             print 'sendDataThread thread', self, 'ending now'
@@ -2079,6 +2086,7 @@ class sendDataThread(QThread):
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'self.sock.send pong failed'
+                            self.sock.shutdown(socket.SHUT_RDWR)
                             self.sock.close()
                             sendDataQueues.remove(self.mailbox)
                             print 'sendDataThread thread', self, 'ending now'
@@ -5662,6 +5670,8 @@ if __name__ == "__main__":
             config.set('bitmessagesettings','sockspassword','')
             config.set('bitmessagesettings','keysencrypted','false')
             config.set('bitmessagesettings','messagesencrypted','false')
+            config.set('bitmessagesettings','defaultnoncetrialsperbyte',str(networkDefaultProofOfWorkNonceTrialsPerByte))
+            config.set('bitmessagesettings','defaultpayloadlengthextrabytes',str(networkDefaultPayloadLengthExtraBytes))
 
             if storeConfigFilesInSameDirectoryAsProgramByDefault:
                 #Just use the same directory as the program and forget about the appdata folder
