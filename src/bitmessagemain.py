@@ -259,7 +259,9 @@ class receiveDataThread(QThread):
         self.objectsOfWhichThisRemoteNodeIsAlreadyAware = objectsOfWhichThisRemoteNodeIsAlreadyAware
 
     def run(self):
-
+        printLock.acquire()
+        print 'The size of the connectedHostsList is now', len(connectedHostsList)
+        printLock.release()
         while True:
             try:
                 self.data += self.sock.recv(4096)
@@ -444,6 +446,9 @@ class receiveDataThread(QThread):
         remoteNodeIncomingPort, remoteNodeSeenTime = knownNodes[self.streamNumber][self.HOST]
         printLock.acquire()
         print 'Connection fully established with', self.HOST, remoteNodeIncomingPort
+        print 'ConnectionsCount now:', connectionsCount[self.streamNumber]
+        print 'The size of the connectedHostsList is now', len(connectedHostsList)
+        print 'The length of sendDataQueues is now:', len(sendDataQueues)
         print 'broadcasting addr from within connectionFullyEstablished function.'
         printLock.release()
         self.broadcastaddr([(int(time.time()), self.streamNumber, 1, self.HOST, remoteNodeIncomingPort)]) #This lets all of our peers know about this new node.
@@ -1984,6 +1989,7 @@ class sendDataThread(QThread):
         QThread.__init__(self, parent)
         self.mailbox = Queue.Queue()
         sendDataQueues.append(self.mailbox)
+        print 'The length of sendDataQueues is now:', len(sendDataQueues)
         self.data = ''
 
     def setup(self,sock,HOST,PORT,streamNumber,objectsOfWhichThisRemoteNodeIsAlreadyAware):
