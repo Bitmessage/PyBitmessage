@@ -1989,7 +1989,9 @@ class sendDataThread(QThread):
         QThread.__init__(self, parent)
         self.mailbox = Queue.Queue()
         sendDataQueues.append(self.mailbox)
-        print 'The length of sendDataQueues is now:', len(sendDataQueues)
+        printLock.acquire()
+        print 'The length of sendDataQueues at sendDataThread init is:', len(sendDataQueues)
+        printLock.release()
         self.data = ''
 
     def setup(self,sock,HOST,PORT,streamNumber,objectsOfWhichThisRemoteNodeIsAlreadyAware):
