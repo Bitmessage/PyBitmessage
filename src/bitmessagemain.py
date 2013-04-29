@@ -284,11 +284,11 @@ class receiveDataThread(QThread):
 
 
 
-        try:
+        """try:
             #self.sock.shutdown(socket.SHUT_RDWR)
             self.sock.close()
         except Exception, err:
-            print 'Within receiveDataThread run(), self.sock.shutdown or .close() failed.', err
+            print 'Within receiveDataThread run(), self.sock.shutdown or .close() failed.', err"""
 
         try:
             del selfInitiatedConnections[self.streamNumber][self]
@@ -452,8 +452,9 @@ class receiveDataThread(QThread):
             printLock.acquire()
             print 'We are connected to too many people. Closing connection.'
             printLock.release()
-            self.sock.shutdown(socket.SHUT_RDWR)
-            self.sock.close()
+            #self.sock.shutdown(socket.SHUT_RDWR)
+            #self.sock.close()
+            broadcastToSendDataQueues((0, 'shutdown', self.HOST))
             return
         self.sendBigInv()
 
@@ -1917,8 +1918,9 @@ class receiveDataThread(QThread):
             print 'Remote node useragent:', useragent, '  stream number:', self.streamNumber
             printLock.release()
             if self.streamNumber != 1:
-                self.sock.shutdown(socket.SHUT_RDWR)
-                self.sock.close()
+                #self.sock.shutdown(socket.SHUT_RDWR)
+                #self.sock.close()
+                broadcastToSendDataQueues((0, 'shutdown', self.HOST))
                 printLock.acquire()
                 print 'Closed connection to', self.HOST, 'because they are interested in stream', self.streamNumber,'.'
                 printLock.release()
@@ -1927,8 +1929,9 @@ class receiveDataThread(QThread):
             if not self.initiatedConnection:
                 broadcastToSendDataQueues((0,'setStreamNumber',(self.HOST,self.streamNumber)))
             if data[72:80] == eightBytesOfRandomDataUsedToDetectConnectionsToSelf:
-                self.sock.shutdown(socket.SHUT_RDWR)
-                self.sock.close()
+                #self.sock.shutdown(socket.SHUT_RDWR)
+                #self.sock.close()
+                broadcastToSendDataQueues((0, 'shutdown', self.HOST))
                 printLock.acquire()
                 print 'Closing connection to myself: ', self.HOST
                 printLock.release()
@@ -2020,7 +2023,6 @@ class sendDataThread(QThread):
                         printLock.release()
                         self.sock.shutdown(socket.SHUT_RDWR)
                         self.sock.close()
-                        print 'sendDataThread closed socket.'
                         sendDataQueues.remove(self.mailbox)
                         printLock.acquire()
                         print 'len of sendDataQueues', len(sendDataQueues)
