@@ -92,6 +92,8 @@ class outgoingSynSender(QThread):
                 alreadyAttemptedConnectionsListLock.release()
                 PORT, timeNodeLastSeen = knownNodes[self.streamNumber][HOST]
                 sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
+                #This option apparently avoids the TIME_WAIT state so that we can rebind faster
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
                 sock.settimeout(20)
                 if config.get('bitmessagesettings', 'socksproxytype') == 'none' and verbose >= 2:
                     printLock.acquire()
@@ -283,7 +285,7 @@ class receiveDataThread(QThread):
 
 
         try:
-            self.sock.shutdown(socket.SHUT_RDWR)
+            #self.sock.shutdown(socket.SHUT_RDWR)
             self.sock.close()
         except Exception, err:
             print 'Within receiveDataThread run(), self.sock.shutdown or .close() failed.', err
@@ -2014,10 +2016,13 @@ class sendDataThread(QThread):
                 if command == 'shutdown':
                     if data == self.HOST or data == 'all':
                         printLock.acquire()
-                        print 'sendDataThread thread (associated with', self.HOST,') ID:',id(self), 'shutting down now.'
+                        print 'sendDataThread (associated with', self.HOST,') ID:',id(self), 'shutting down now.'
+                        printLock.release()
                         self.sock.shutdown(socket.SHUT_RDWR)
                         self.sock.close()
+                        print 'sendDataThread closed socket.'
                         sendDataQueues.remove(self.mailbox)
+                        printLock.acquire()
                         print 'len of sendDataQueues', len(sendDataQueues)
                         printLock.release()
                         break
@@ -5124,9 +5129,13 @@ class MyForm(QtGui.QMainWindow):
         knownNodesLock.acquire()
         self.statusBar().showMessage('Saving the knownNodes list of peers to disk...')
         output = open(appdata + 'knownnodes.dat', 'wb')
+        print 'finished opening knownnodes.dat. Now pickle.dump'
         pickle.dump(knownNodes, output)
+        print 'done with pickle.dump. closing output'
         output.close()
         knownNodesLock.release()
+        print 'done closing knownnodes.dat output file.'
+        self.statusBar().showMessage('Done saving the knownNodes list of peers to disk.')
 
         broadcastToSendDataQueues((0, 'shutdown', 'all'))
 
