@@ -5516,7 +5516,10 @@ class MyForm(QtGui.QMainWindow):
             if decodeAddress(fromAddress)[3] in broadcastSendersForWhichImWatching or isAddressInMyAddressBook(fromAddress):
                 self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())
             else:
-                self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())
+                if len(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()) < 30000:
+                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())#Only show the first 30K characters
+                else:
+                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()[:30000]+'\n\nRemainder of the message truncated because it is too long.')#Only show the first 30K characters
 
             font = QFont()
             font.setBold(False)
