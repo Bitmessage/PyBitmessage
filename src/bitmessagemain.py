@@ -15,6 +15,7 @@ maximumAgeOfObjectsThatIAdvertiseToOthers = 216000 #Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800 #Equals three hours
 storeConfigFilesInSameDirectoryAsProgramByDefault = False #The user may de-select Portable Mode in the settings if they want the config files to stay in the application data folder.
 useVeryEasyProofOfWorkForTesting = False #If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
+encryptedBroadcastSwitchoverTime = 1369735200
 
 import sys
 try:
@@ -2360,9 +2361,10 @@ class sqlThread(QThread):
             self.cur.execute( '''CREATE TABLE pubkeys (hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''CREATE TABLE knownnodes (timelastseen int, stream int, services blob, host blob, port blob, UNIQUE(host, stream, port) ON CONFLICT REPLACE)''' ) #This table isn't used in the program yet but I have a feeling that we'll need it.
-            self.cur.execute( '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx',1)''')
+            self.cur.execute( '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute( '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''INSERT INTO settings VALUES('version','1')''')
+            self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''',(int(time.time()),))
             self.conn.commit()
             print 'Created messages database file'
         except Exception, err:
@@ -2418,6 +2420,7 @@ class sqlThread(QThread):
             print 'In messages.dat database, creating new \'settings\' table.'
             self.cur.execute( '''CREATE TABLE settings (key text, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''INSERT INTO settings VALUES('version','1')''')
+            self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''',(int(time.time()),))
             print 'In messages.dat database, removing an obsolete field from the pubkeys table.'
             self.cur.execute( '''CREATE TEMPORARY TABLE pubkeys_backup(hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE);''')
             self.cur.execute( '''INSERT INTO pubkeys_backup SELECT hash, transmitdata, time, usedpersonally FROM pubkeys;''')
@@ -2427,9 +2430,9 @@ class sqlThread(QThread):
             self.cur.execute( '''DROP TABLE pubkeys_backup;''')
             print 'Deleting all pubkeys from inventory. They will be redownloaded and then saved with the correct times.'
             self.cur.execute( '''delete from inventory where objecttype = 'pubkey';''')
-            #print 'replacing Bitmessage announcements mailing list with a new one.'
-            #self.cur.execute( '''delete from subscriptions where address='BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx' ''')
-            #self.cur.execute( '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx',1)''')
+            print 'replacing Bitmessage announcements mailing list with a new one.'
+            self.cur.execute( '''delete from subscriptions where address='BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx' ''')
+            self.cur.execute( '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             print 'Commiting.'
             self.conn.commit()
             print 'Vacuuming message.dat. You might notice that the file size gets much smaller.'
@@ -2452,6 +2455,20 @@ class sqlThread(QThread):
                 sys.exit()
         except Exception, err:
             print err
+
+        #Let us check to see the last time we vaccumed the messages.dat file. If it has been more than a month let's do it now.
+        item = '''SELECT value FROM settings WHERE key='lastvacuumtime';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        queryreturn = self.cur.fetchall()
+        for row in queryreturn:
+            value, = row
+            if int(value) < int(time.time()) - 2592000:
+                print 'It has been a long time since the messages.dat file has been vacuumed. Vacuuming now...'
+                self.cur.execute( ''' VACUUM ''')
+                item = '''update settings set value=? WHERE key='lastvacuumtime';'''
+                parameters = (int(time.time()),)
+                self.cur.execute(item, parameters)
 
         while True:
             item = sqlSubmitQueue.get()
@@ -2797,7 +2814,7 @@ class singleWorker(QThread):
         for row in queryreturn:
             fromaddress, subject, body, ackdata = row
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(fromaddress)
-            if addressVersionNumber == 2:#todo: and time is less than some date in the future:
+            if addressVersionNumber == 2 and int(time.time()) < encryptedBroadcastSwitchoverTime:
                 #We need to convert our private keys to public keys in order to include them.
                 try:
                     privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
@@ -2857,7 +2874,7 @@ class singleWorker(QThread):
                 queryreturn = sqlReturnQueue.get()
                 sqlSubmitQueue.put('commit')
                 sqlLock.release()
-            elif addressVersionNumber == 3:#todo: or (addressVersionNumber == 2 and time is greater than than some date in the future):
+            elif addressVersionNumber == 3 or int(time.time()) > encryptedBroadcastSwitchoverTime:
                 #We need to convert our private keys to public keys in order to include them.
                 try:
                     privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
