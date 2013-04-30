@@ -6,7 +6,7 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.2.8'
+softwareVersion = '0.3.0'
 verbose = 1
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -5514,12 +5514,15 @@ class MyForm(QtGui.QMainWindow):
             fromAddress = str(self.ui.tableWidgetInbox.item(currentRow,1).data(Qt.UserRole).toPyObject())
             #If we have received this message from either a broadcast address or from someone in our address book, display as HTML
             if decodeAddress(fromAddress)[3] in broadcastSendersForWhichImWatching or isAddressInMyAddressBook(fromAddress):
-                self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())
+                if len(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()) < 30000:
+                    self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())#Only show the first 30K characters
+                else:
+                    self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()[:30000]+'\n\nDisplay of the remainder of the message truncated because it is too long.')#Only show the first 30K characters
             else:
                 if len(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()) < 30000:
                     self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())#Only show the first 30K characters
                 else:
-                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()[:30000]+'\n\nRemainder of the message truncated because it is too long.')#Only show the first 30K characters
+                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()[:30000]+'\n\nDisplay of the remainder of the message truncated because it is too long.')#Only show the first 30K characters
 
             font = QFont()
             font.setBold(False)
