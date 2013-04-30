@@ -260,25 +260,25 @@ class receiveDataThread(QThread):
 
     def run(self):
         printLock.acquire()
-        print 'The size of the connectedHostsList is now', len(connectedHostsList)
+        print 'ID of the receiveDataThread is', str(id(self))+'. The size of the connectedHostsList is now', len(connectedHostsList)
         printLock.release()
         while True:
             try:
                 self.data += self.sock.recv(4096)
             except socket.timeout:
                 printLock.acquire()
-                print 'Timeout occurred waiting for data. Closing receiveData thread.'
+                print 'Timeout occurred waiting for data from', self.HOST + '. Closing receiveData thread. (ID:',str(id(self))+ ')'
                 printLock.release()
                 break
             except Exception, err:
                 printLock.acquire()
-                print 'sock.recv error. Closing receiveData thread.', err
+                print 'sock.recv error. Closing receiveData thread (HOST:', self.HOST, 'ID:',str(id(self))+ ').', err
                 printLock.release()
                 break
             #print 'Received', repr(self.data)
             if self.data == "":
                 printLock.acquire()
-                print 'Connection closed. Closing receiveData thread.'
+                print 'Connection to', self.HOST, 'closed. Closing receiveData thread. (ID:',str(id(self))+ ')'
                 printLock.release()
                 break
             else:
@@ -2003,7 +2003,7 @@ class sendDataThread(QThread):
         self.lastTimeISentData = int(time.time()) #If this value increases beyond five minutes ago, we'll send a pong message to keep the connection alive.
         self.objectsOfWhichThisRemoteNodeIsAlreadyAware = objectsOfWhichThisRemoteNodeIsAlreadyAware
         printLock.acquire()
-        print 'The streamNumber of this sendDataThread (ID:', id(self),') at setup() is', self.streamNumber
+        print 'The streamNumber of this sendDataThread (ID:', str(id(self))+') at setup() is', self.streamNumber
         printLock.release()
 
     def sendVersionMessage(self):
@@ -2068,7 +2068,7 @@ class sendDataThread(QThread):
                             self.sock.shutdown(socket.SHUT_RDWR)
                             self.sock.close()
                             sendDataQueues.remove(self.mailbox)
-                            print 'sendDataThread thread', self, 'ending now'
+                            print 'sendDataThread thread (ID:',str(id(self))+') ending now. Was connected to', self.HOST
                             break
                 elif command == 'sendinv':
                     if data not in self.objectsOfWhichThisRemoteNodeIsAlreadyAware:
@@ -2088,7 +2088,7 @@ class sendDataThread(QThread):
                             self.sock.shutdown(socket.SHUT_RDWR)
                             self.sock.close()
                             sendDataQueues.remove(self.mailbox)
-                            print 'sendDataThread thread', self, 'ending now'
+                            print 'sendDataThread thread (ID:',str(id(self))+') ending now. Was connected to', self.HOST
                             break
                 elif command == 'pong':
                     if self.lastTimeISentData < (int(time.time()) - 298):
@@ -2100,11 +2100,11 @@ class sendDataThread(QThread):
                             self.sock.sendall('\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
                             self.lastTimeISentData = int(time.time())
                         except:
-                            print 'self.sock.send pong failed'
+                            print 'send pong failed'
                             self.sock.shutdown(socket.SHUT_RDWR)
                             self.sock.close()
                             sendDataQueues.remove(self.mailbox)
-                            print 'sendDataThread thread', self, 'ending now'
+                            print 'sendDataThread thread', self, 'ending now. Was connected to', self.HOST
                             break
             else:
                 printLock.acquire()
