@@ -18,15 +18,18 @@ useVeryEasyProofOfWorkForTesting = False #If you set this to True while on the n
 encryptedBroadcastSwitchoverTime = 1369735200
 
 import sys
+import ConfigParser
+
 try:
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
 except Exception, err:
-    print 'PyBitmessage requires PyQt. You can download it from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\' (without quotes).'
+    print 'PyBitmessage requires PyQt. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
     print 'Error message:', err
     sys.exit()
-import ConfigParser
+
 from bitmessageui import *
+import ConfigParser
 from newaddressdialog import *
 from newsubscriptiondialog import *
 from regenerateaddresses import *
@@ -56,15 +59,25 @@ import highlevelcrypto
 from pyelliptic.openssl import OpenSSL
 import ctypes
 from pyelliptic import arithmetic
+import signal #Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 #The next 3 are used for the API
 from SimpleXMLRPCServer import *
 import json
 from subprocess import call #used when the API must execute an outside program
 
+class iconGlossaryDialog(QtGui.QDialog):
+    def __init__(self,parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_iconGlossaryDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        self.ui.labelPortNumber.setText('You are using TCP port ' + str(config.getint('bitmessagesettings', 'port')) + '. (This can be changed in the settings).')
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
+
 #For each stream to which we connect, several outgoingSynSender threads will exist and will collectively create 8 connections with peers.
-class outgoingSynSender(QThread):
-    def __init__(self, parent = None):
-        QThread.__init__(self, parent)
+class outgoingSynSender(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
 
     def setup(self,streamNumber):
         self.streamNumber = streamNumber
@@ -73,7 +86,7 @@ class outgoingSynSender(QThread):
         time.sleep(1)
         global alreadyAttemptedConnectionsListResetTime
         while True:
-            #time.sleep(999999)#I sometimes use this to prevent connections for testing.
+            time.sleep(999999)#I sometimes use this to prevent connections for testing.
             if len(selfInitiatedConnections[self.streamNumber]) < 8: #maximum number of outgoing connections = 8
                 random.seed()
                 HOST, = random.sample(knownNodes[self.streamNumber],  1)
@@ -135,7 +148,8 @@ class outgoingSynSender(QThread):
                 try:
                     sock.connect((HOST, PORT))
                     rd = receiveDataThread()
-                    self.emit(SIGNAL("passObjectThrough(PyQt_PyObject)"),rd)
+                    rd.daemon = True # close the main program even if there are threads left
+                    #self.emit(SIGNAL("passObjectThrough(PyQt_PyObject)"),rd)
                     objectsOfWhichThisRemoteNodeIsAlreadyAware = {}
                     rd.setup(sock,HOST,PORT,self.streamNumber,objectsOfWhichThisRemoteNodeIsAlreadyAware)
                     rd.start()
@@ -160,7 +174,8 @@ class outgoingSynSender(QThread):
                         knownNodesLock.release()
                         print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
                 except socks.Socks5AuthError, err:
-                    self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"SOCKS5 Authentication problem: "+str(err))
+                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"SOCKS5 Authentication problem: "+str(err))
+                    UISignalQueue.put(('updateStatusBar',"SOCKS5 Authentication problem: "+str(err)))
                 except socks.Socks5Error, err:
                     pass
                     print 'SOCKS5 error. (It is possible that the server wants authentication).)' ,str(err)
@@ -188,9 +203,9 @@ class outgoingSynSender(QThread):
             time.sleep(0.1)
 
 #Only one singleListener thread will ever exist. It creates the receiveDataThread and sendDataThread for each incoming connection. Note that it cannot set the stream number because it is not known yet- the other node will have to tell us its stream number in a version message. If we don't care about their stream, we will close the connection (within the recversion function of the recieveData thread)
-class singleListener(QThread):
-    def __init__(self, parent = None):
-        QThread.__init__(self, parent)
+class singleListener(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
 
 
     def run(self):
@@ -219,7 +234,8 @@ class singleListener(QThread):
                 a.close()
                 a,(HOST,PORT) = sock.accept()"""
             rd = receiveDataThread()
-            self.emit(SIGNAL("passObjectThrough(PyQt_PyObject)"),rd)
+            rd.daemon = True # close the main program even if there are threads left
+            #self.emit(SIGNAL("passObjectThrough(PyQt_PyObject)"),rd)
             objectsOfWhichThisRemoteNodeIsAlreadyAware = {}
             rd.setup(a,HOST,PORT,-1,objectsOfWhichThisRemoteNodeIsAlreadyAware)
             printLock.acquire()
@@ -233,9 +249,9 @@ class singleListener(QThread):
 
 
 #This thread is created either by the synSenderThread(for outgoing connections) or the singleListenerThread(for incoming connectiosn).
-class receiveDataThread(QThread):
-    def __init__(self, parent = None):
-        QThread.__init__(self, parent)
+class receiveDataThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
         self.data = ''
         self.verackSent = False
         self.verackReceived = False
@@ -304,7 +320,8 @@ class receiveDataThread(QThread):
         if self.connectionIsOrWasFullyEstablished: #We don't want to decrement the number of connections and show the result if we never incremented it in the first place (which we only do if the connection is fully established- meaning that both nodes accepted each other's version packets.)
             connectionsCountLock.acquire()
             connectionsCount[self.streamNumber] -= 1
-            self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"),self.streamNumber,connectionsCount[self.streamNumber])
+            #self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"),self.streamNumber,connectionsCount[self.streamNumber])
+            UISignalQueue.put(('updateNetworkStatusTab',(self.streamNumber,connectionsCount[self.streamNumber])))
             printLock.acquire()
             print 'Updating network status tab with current connections count:', connectionsCount[self.streamNumber]
             printLock.release()
@@ -438,11 +455,13 @@ class receiveDataThread(QThread):
     def connectionFullyEstablished(self):
         self.connectionIsOrWasFullyEstablished = True
         if not self.initiatedConnection:
-            self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"),'green')
+            #self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"),'green')
+            UISignalQueue.put(('setStatusIcon','green'))
         #Update the 'Network Status' tab
         connectionsCountLock.acquire()
         connectionsCount[self.streamNumber] += 1
-        self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"),self.streamNumber,connectionsCount[self.streamNumber])
+        #self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"),self.streamNumber,connectionsCount[self.streamNumber])
+        UISignalQueue.put(('updateNetworkStatusTab',(self.streamNumber,connectionsCount[self.streamNumber])))
         connectionsCountLock.release()
         remoteNodeIncomingPort, remoteNodeSeenTime = knownNodes[self.streamNumber][self.HOST]
         printLock.acquire()
@@ -570,7 +589,8 @@ class receiveDataThread(QThread):
         inventory[self.inventoryHash] = (objectType, self.streamNumber, data, embeddedTime)
         inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
-        self.emit(SIGNAL("incrementNumberOfBroadcastsProcessed()"))
+        #self.emit(SIGNAL("incrementNumberOfBroadcastsProcessed()"))
+        UISignalQueue.put(('incrementNumberOfBroadcastsProcessed','no data'))
 
 
         self.processbroadcast(readPosition,data)#When this function returns, we will have either successfully processed this broadcast because we are interested in it, ignored it because we aren't interested in it, or found problem with the broadcast that warranted ignoring it.
@@ -698,7 +718,8 @@ class receiveDataThread(QThread):
                     sqlReturnQueue.get()
                     sqlSubmitQueue.put('commit')
                     sqlLock.release()
-                    self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+                    #self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+                    UISignalQueue.put(('displayNewInboxMessage',(self.inventoryHash,toAddress,fromAddress,subject,body)))
 
                     #If we are behaving as an API then we might need to run an outside command to let some program know that a new message has arrived.
                     if safeConfigGetBoolean('bitmessagesettings','apienabled'):
@@ -829,7 +850,8 @@ class receiveDataThread(QThread):
                 sqlReturnQueue.get()
                 sqlSubmitQueue.put('commit')
                 sqlLock.release()
-                self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+                #self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+                UISignalQueue.put(('displayNewInboxMessage',(self.inventoryHash,toAddress,fromAddress,subject,body)))
 
                 #If we are behaving as an API then we might need to run an outside command to let some program know that a new message has arrived.
                 if safeConfigGetBoolean('bitmessagesettings','apienabled'):
@@ -890,7 +912,9 @@ class receiveDataThread(QThread):
         inventory[self.inventoryHash] = (objectType, self.streamNumber, data, embeddedTime)
         inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
-        self.emit(SIGNAL("incrementNumberOfMessagesProcessed()"))
+        #self.emit(SIGNAL("incrementNumberOfMessagesProcessed()"))
+        UISignalQueue.put(('incrementNumberOfMessagesProcessed','no data'))
+
 
         self.processmsg(readPosition,data) #When this function returns, we will have either successfully processed the message bound for us, ignored it because it isn't bound for us, or found problem with the message that warranted ignoring it.
 
@@ -932,7 +956,8 @@ class receiveDataThread(QThread):
             sqlReturnQueue.get()
             sqlSubmitQueue.put('commit')
             sqlLock.release()
-            self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),encryptedData[readPosition:],'Acknowledgement of the message received just now.')
+            #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),encryptedData[readPosition:],'Acknowledgement of the message received just now.')
+            UISignalQueue.put(('updateSentItemStatusByAckdata',(encryptedData[readPosition:],'Acknowledgement of the message received just now.')))
             return
         else:
             printLock.acquire()
@@ -1106,7 +1131,8 @@ class receiveDataThread(QThread):
                     sqlReturnQueue.get()
                     sqlSubmitQueue.put('commit')
                     sqlLock.release()
-                    self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+                    #self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
+                    UISignalQueue.put(('displayNewInboxMessage',(self.inventoryHash,toAddress,fromAddress,subject,body)))
 
                 #If we are behaving as an API then we might need to run an outside command to let some program know that a new message has arrived.
                 if safeConfigGetBoolean('bitmessagesettings','apienabled'):
@@ -1139,7 +1165,8 @@ class receiveDataThread(QThread):
                     sqlSubmitQueue.put('commit')
                     sqlLock.release()
 
-                    self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,'[Broadcast subscribers]',fromAddress,subject,message,ackdata)
+                    #self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,'[Broadcast subscribers]',fromAddress,subject,message,ackdata)
+                    UISignalQueue.put(('displayNewSentMessage',(toAddress,'[Broadcast subscribers]',fromAddress,subject,message,ackdata)))
                     workerQueue.put(('sendbroadcast',(fromAddress,subject,message)))
 
             if self.isAckDataValid(ackData):
@@ -1232,7 +1259,8 @@ class receiveDataThread(QThread):
         inventory[inventoryHash] = (objectType, self.streamNumber, data, embeddedTime)
         inventoryLock.release()
         self.broadcastinv(inventoryHash)
-        self.emit(SIGNAL("incrementNumberOfPubkeysProcessed()"))
+        #self.emit(SIGNAL("incrementNumberOfPubkeysProcessed()"))
+        UISignalQueue.put(('incrementNumberOfPubkeysProcessed','no data'))
 
         self.processpubkey(data)
 
@@ -1985,9 +2013,9 @@ class receiveDataThread(QThread):
         return False
 
 #Every connection to a peer has a sendDataThread (and also a receiveDataThread).
-class sendDataThread(QThread):
-    def __init__(self, parent = None):
-        QThread.__init__(self, parent)
+class sendDataThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
         self.mailbox = Queue.Queue()
         sendDataQueues.append(self.mailbox)
         printLock.acquire()
@@ -2236,6 +2264,55 @@ def safeConfigGetBoolean(section,field):
         except:
             return False
 
+def signal_handler(signal, frame):
+    if safeConfigGetBoolean('bitmessagesettings','daemon'):
+        doCleanShutdown()
+        sys.exit(0)
+    else:
+        print 'Unfortunately you cannot use Ctrl+C when running the UI because the UI captures the signal.'
+
+def doCleanShutdown():
+    UISignalQueue.put(('updateStatusBar','Bitmessage is stuck waiting for the knownNodesLock.'))
+    knownNodesLock.acquire()
+    UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
+    output = open(appdata + 'knownnodes.dat', 'wb')
+    print 'finished opening knownnodes.dat. Now pickle.dump'
+    pickle.dump(knownNodes, output)
+    print 'Completed pickle.dump. Closing output...'
+    output.close()
+    knownNodesLock.release()
+    print 'Finished closing knownnodes.dat output file.'
+    UISignalQueue.put(('updateStatusBar','Done saving the knownNodes list of peers to disk.'))
+
+    broadcastToSendDataQueues((0, 'shutdown', 'all'))
+
+    printLock.acquire()
+    print 'Flushing inventory in memory out to disk...'
+    printLock.release()
+    UISignalQueue.put(('updateStatusBar','Flushing inventory in memory out to disk. This should normally only take a second...'))
+    flushInventory()
+    print 'Finished flushing inventory.'
+    sqlSubmitQueue.put('exit')
+
+    if safeConfigGetBoolean('bitmessagesettings','daemon'):
+        printLock.acquire()
+        print 'Done.'
+        printLock.release()
+        os._exit(0)
+
+def connectToStream(streamNumber):
+    #self.listOfOutgoingSynSenderThreads = [] #if we don't maintain this list, the threads will get garbage-collected.
+    connectionsCount[streamNumber] = 0
+    selfInitiatedConnections[streamNumber] = {}
+
+    for i in range(32):
+        a = outgoingSynSender()
+        #self.listOfOutgoingSynSenderThreads.append(a)
+        #QtCore.QObject.connect(a, QtCore.SIGNAL("passObjectThrough(PyQt_PyObject)"), self.connectObjectToSignals)
+        #QtCore.QObject.connect(a, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+        a.setup(streamNumber)
+        a.start()
+
     #Does an EC point multiplication; turns a private key into a public key.
 def pointMult(secret):
     #ctx = OpenSSL.BN_CTX_new() #This value proved to cause Seg Faults on Linux. It turns out that it really didn't speed up EC_POINT_mul anyway.
@@ -2338,9 +2415,9 @@ def assembleVersionMessage(remoteHost,remotePort,myStreamNumber):
     return datatosend + payload
 
 #This thread exists because SQLITE3 is so un-threadsafe that we must submit queries to it and it puts results back in a different queue. They won't let us just use locks.
-class sqlThread(QThread):
-    def __init__(self, parent = None):
-        QThread.__init__(self, parent)
+class sqlThread(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
 
     def run(self):
         self.conn = sqlite3.connect(appdata + 'messages.dat' )
@@ -2474,6 +2551,8 @@ class sqlThread(QThread):
             item = sqlSubmitQueue.get()
             if item == 'commit':
                 self.conn.commit()
+            elif item == 'exit':
+                return
             else:
                 parameters = sqlSubmitQueue.get()
                 #print 'item', item
@@ -2497,16 +2576,17 @@ It resends messages when there has been no response:
     resends msg messages in 4 days (then 8 days, then 16 days, etc...)
 
 '''
-class singleCleaner(QThread):
-    def __init__(self, parent = None):
-        QThread.__init__(self, parent)
+class singleCleaner(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
 
     def run(self):
         timeWeLastClearedInventoryAndPubkeysTables = 0
 
         while True:
             sqlLock.acquire()
-            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing housekeeping (Flushing inventory in memory to disk...)")
+            #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing housekeeping (Flushing inventory in memory to disk...)")
+            UISignalQueue.put(('updateStatusBar','Doing housekeeping (Flushing inventory in memory to disk...)'))
             for hash, storedValue in inventory.items():
                 objectType, streamNumber, payload, receivedTime = storedValue
                 if int(time.time())- 3600 > receivedTime:
@@ -2516,7 +2596,8 @@ class singleCleaner(QThread):
                     sqlReturnQueue.get()
                     del inventory[hash]
             sqlSubmitQueue.put('commit')
-            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
+            #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
+            UISignalQueue.put(('updateStatusBar',''))
             sqlLock.release()
             broadcastToSendDataQueues((0, 'pong', 'no data')) #commands the sendData threads to send out a pong message if they haven't sent anything else in the last five minutes. The socket timeout-time is 10 minutes.
             if timeWeLastClearedInventoryAndPubkeysTables < int(time.time()) - 7380:
@@ -2550,7 +2631,8 @@ class singleCleaner(QThread):
                             except:
                                 pass
                             workerQueue.put(('sendmessage',toaddress))
-                            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing work necessary to again attempt to request a public key...")
+                            #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing work necessary to again attempt to request a public key...")
+                            UISignalQueue.put(('updateStatusBar','Doing work necessary to again attempt to request a public key...'))
                             t = (int(time.time()),pubkeyretrynumber+1,toripe)
                             sqlSubmitQueue.put('''UPDATE sent SET lastactiontime=?, pubkeyretrynumber=? WHERE toripe=?''')
                             sqlSubmitQueue.put(t)
@@ -2563,15 +2645,17 @@ class singleCleaner(QThread):
                             sqlSubmitQueue.put(t)
                             sqlReturnQueue.get()
                             workerQueue.put(('sendmessage',toaddress))
-                            self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing work necessary to again attempt to deliver a message...")
+                            #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing work necessary to again attempt to deliver a message...")
+                            UISignalQueue.put(('updateStatusBar','Doing work necessary to again attempt to deliver a message...'))
                 sqlSubmitQueue.put('commit')
                 sqlLock.release()
             time.sleep(300)
 
 #This thread, of which there is only one, does the heavy lifting: calculating POWs.
-class singleWorker(QThread):
-    def __init__(self, parent = None):
-        QThread.__init__(self, parent)
+class singleWorker(threading.Thread):
+    def __init__(self):
+        #QThread.__init__(self, parent)
+        threading.Thread.__init__(self)
 
     def run(self):
         sqlLock.acquire()
@@ -2643,7 +2727,9 @@ class singleWorker(QThread):
                         self.requestPubKey(toAddressVersionNumber,toStreamNumber,toRipe)
                     else:
                         print 'We have already requested this pubkey (the ripe hash is in neededPubkeys). We will re-request again soon.'
-                        self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),toRipe,'Public key was requested earlier. Receiver must be offline. Will retry.')
+                        #self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),toRipe,'Public key was requested earlier. Receiver must be offline. Will retry.')
+                        UISignalQueue.put(('updateSentItemStatusByHash',(toRipe,'Public key was requested earlier. Receiver must be offline. Will retry.')))
+
                 else:
                     print 'We already have the necessary public key.'
                     self.sendMsg(toRipe) #by calling this function, we are asserting that we already have the pubkey for toRipe
@@ -2734,7 +2820,8 @@ class singleWorker(QThread):
         print 'broadcasting inv with hash:', inventoryHash.encode('hex')
         printLock.release()
         broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
-        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
+        #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
+        UISignalQueue.put(('updateStatusBar',''))
         config.set(myAddress,'lastpubkeysendtime',str(int(time.time())))
         with open(appdata + 'keys.dat', 'wb') as configfile:
             config.write(configfile)
@@ -2799,7 +2886,8 @@ class singleWorker(QThread):
         print 'broadcasting inv with hash:', inventoryHash.encode('hex')
         printLock.release()
         broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
-        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
+        #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
+        UISignalQueue.put(('updateStatusBar',''))
         config.set(myAddress,'lastpubkeysendtime',str(int(time.time())))
         with open(appdata + 'keys.dat', 'wb') as configfile:
             config.write(configfile)
@@ -2820,7 +2908,8 @@ class singleWorker(QThread):
                     privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
                     privEncryptionKeyBase58 = config.get(fromaddress, 'privencryptionkey')
                 except:
-                    self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
+                    #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
+                    UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')))
                     continue
 
                 privSigningKeyHex = decodeWalletImportFormat(privSigningKeyBase58).encode('hex')
@@ -2849,7 +2938,8 @@ class singleWorker(QThread):
                 trialValue = 99999999999999999999
                 target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
-                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
+                #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
+                UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send broadcast...')))
                 initialHash = hashlib.sha512(payload).digest()
                 while trialValue > target:
                     nonce += 1
@@ -2864,7 +2954,8 @@ class singleWorker(QThread):
                 print 'sending inv (within sendBroadcast function)'
                 broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
-                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent on '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+                #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent on '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+                UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Broadcast sent on '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
 
                 #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
                 sqlLock.acquire()
@@ -2880,7 +2971,8 @@ class singleWorker(QThread):
                     privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
                     privEncryptionKeyBase58 = config.get(fromaddress, 'privencryptionkey')
                 except:
-                    self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
+                    #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
+                    UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')))
                     continue
 
                 privSigningKeyHex = decodeWalletImportFormat(privSigningKeyBase58).encode('hex')
@@ -2917,7 +3009,8 @@ class singleWorker(QThread):
                 trialValue = 99999999999999999999
                 target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
-                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
+                #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
+                UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send broadcast...')))
                 initialHash = hashlib.sha512(payload).digest()
                 while trialValue > target:
                     nonce += 1
@@ -2932,7 +3025,8 @@ class singleWorker(QThread):
                 print 'sending inv (within sendBroadcast function)'
                 broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
-                self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent on '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+                #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent on '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+                UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Broadcast sent on '+unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
 
                 #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
                 sqlLock.acquire()
@@ -2965,7 +3059,8 @@ class singleWorker(QThread):
             ackdataForWhichImWatching[ackdata] = 0
             toStatus,toAddressVersionNumber,toStreamNumber,toHash = decodeAddress(toaddress)
             fromStatus,fromAddressVersionNumber,fromStreamNumber,fromHash = decodeAddress(fromaddress)
-            self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send the message.')
+            #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send the message.')
+            UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send the message.')))
             printLock.acquire()
             print 'Found a message in our database that needs to be sent with this pubkey.'
             print 'First 150 characters of message:', message[:150]
@@ -2982,7 +3077,8 @@ class singleWorker(QThread):
                     privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
                     privEncryptionKeyBase58 = config.get(fromaddress, 'privencryptionkey')
                 except:
-                    self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
+                    #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
+                    UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')))
                     continue
 
                 privSigningKeyHex = decodeWalletImportFormat(privSigningKeyBase58).encode('hex')
@@ -3017,7 +3113,8 @@ class singleWorker(QThread):
                     privSigningKeyBase58 = config.get(fromaddress, 'privsigningkey')
                     privEncryptionKeyBase58 = config.get(fromaddress, 'privencryptionkey')
                 except:
-                    self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
+                    #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
+                    UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')))
                     continue
 
                 privSigningKeyHex = decodeWalletImportFormat(privSigningKeyBase58).encode('hex')
@@ -3114,7 +3211,8 @@ class singleWorker(QThread):
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'msg'
             inventory[inventoryHash] = (objectType, toStreamNumber, payload, int(time.time()))
-            self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Message sent. Waiting on acknowledgement. Sent on ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+            #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Message sent. Waiting on acknowledgement. Sent on ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+            UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Message sent. Waiting on acknowledgement. Sent on ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
             print 'sending inv (within sendmsg function)'
             broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
@@ -3145,8 +3243,10 @@ class singleWorker(QThread):
         trialValue = 99999999999999999999
         #print 'trial value', trialValue
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
-        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
-        self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Doing work necessary to request public key.')
+        #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
+        UISignalQueue.put(('updateStatusBar',statusbar))
+        #self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Doing work necessary to request public key.')
+        UISignalQueue.put(('updateSentItemStatusByHash',(ripe,'Doing work necessary to request public key.')))
         print 'Doing proof-of-work necessary to send getpubkey message.'
         target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
         initialHash = hashlib.sha512(payload).digest()
@@ -3164,8 +3264,10 @@ class singleWorker(QThread):
         print 'sending inv (for the getpubkey message)'
         broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
-        self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Broacasting the public key request. This program will auto-retry if they are offline.')
-        self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Sending public key request. Waiting for reply. Requested at ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+        #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Broacasting the public key request. This program will auto-retry if they are offline.')
+        UISignalQueue.put(('updateStatusBar','Broacasting the public key request. This program will auto-retry if they are offline.'))
+        #self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Sending public key request. Waiting for reply. Requested at ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+        UISignalQueue.put(('updateSentItemStatusByHash',(ripe,'Sending public key request. Waiting for reply. Requested at ' + unicode(strftime(config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
 
     def generateFullAckMessage(self,ackdata,toStreamNumber,embeddedTime):
         nonce = 0
@@ -3194,121 +3296,46 @@ class singleWorker(QThread):
         headerData += hashlib.sha512(payload).digest()[:4]
         return headerData + payload
 
-class addressGenerator(QThread):
-    def __init__(self, parent = None):
-        QThread.__init__(self, parent)
-
-    def setup(self,addressVersionNumber,streamNumber,label="(no label)",numberOfAddressesToMake=1,deterministicPassphrase="",eighteenByteRipe=False):
-        self.addressVersionNumber = addressVersionNumber
-        self.streamNumber = streamNumber
-        self.label = label
-        self.numberOfAddressesToMake = numberOfAddressesToMake
-        self.deterministicPassphrase = deterministicPassphrase
-        self.eighteenByteRipe = eighteenByteRipe
+class addressGenerator(threading.Thread):
+    def __init__(self):
+        #QThread.__init__(self, parent)
+        threading.Thread.__init__(self)
 
     def run(self):
-        if self.addressVersionNumber == 3:
-            if self.deterministicPassphrase == "":
-                statusbar = 'Generating one new address'
-                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
-                #This next section is a little bit strange. We're going to generate keys over and over until we
-                #find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
-                #we won't store the \x00 or \x00\x00 bytes thus making the address shorter.
-                startTime = time.time()
-                numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
-                potentialPrivSigningKey = OpenSSL.rand(32)
-                potentialPubSigningKey = pointMult(potentialPrivSigningKey)
-                while True:
-                    numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
-                    potentialPrivEncryptionKey = OpenSSL.rand(32)
-                    potentialPubEncryptionKey = pointMult(potentialPrivEncryptionKey)
-                    #print 'potentialPubSigningKey', potentialPubSigningKey.encode('hex')
-                    #print 'potentialPubEncryptionKey', potentialPubEncryptionKey.encode('hex')
-                    ripe = hashlib.new('ripemd160')
-                    sha = hashlib.new('sha512')
-                    sha.update(potentialPubSigningKey+potentialPubEncryptionKey)
-                    ripe.update(sha.digest())
-                    #print 'potential ripe.digest', ripe.digest().encode('hex')
-                    if self.eighteenByteRipe:
-                        if ripe.digest()[:2] == '\x00\x00':
-                            break
-                    else:
-                        if ripe.digest()[:1] == '\x00':
-                            break
-                print 'Generated address with ripe digest:', ripe.digest().encode('hex')
-                print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'addresses per second before finding one with the correct ripe-prefix.'
-                address = encodeAddress(3,self.streamNumber,ripe.digest())
-                #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
-
-                #An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
-                #https://en.bitcoin.it/wiki/Wallet_import_format
-                privSigningKey = '\x80'+potentialPrivSigningKey
-                checksum = hashlib.sha256(hashlib.sha256(privSigningKey).digest()).digest()[0:4]
-                privSigningKeyWIF = arithmetic.changebase(privSigningKey + checksum,256,58)
-                #print 'privSigningKeyWIF',privSigningKeyWIF
-
-                privEncryptionKey = '\x80'+potentialPrivEncryptionKey
-                checksum = hashlib.sha256(hashlib.sha256(privEncryptionKey).digest()).digest()[0:4]
-                privEncryptionKeyWIF = arithmetic.changebase(privEncryptionKey + checksum,256,58)
-                #print 'privEncryptionKeyWIF',privEncryptionKeyWIF
-
-                config.add_section(address)
-                config.set(address,'label',self.label)
-                config.set(address,'enabled','true')
-                config.set(address,'decoy','false')
-                config.set(address,'noncetrialsperbyte',config.get('bitmessagesettings','defaultnoncetrialsperbyte'))
-                config.set(address,'payloadlengthextrabytes',config.get('bitmessagesettings','defaultpayloadlengthextrabytes'))
-                config.set(address,'privSigningKey',privSigningKeyWIF)
-                config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
-                with open(appdata + 'keys.dat', 'wb') as configfile:
-                    config.write(configfile)
-                
-                #It may be the case that this address is being generated as a result of a call to the API. Let us put the result in the necessary queue. 
-                apiAddressGeneratorReturnQueue.put(address)
-
-                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address. Doing work necessary to broadcast it...')
-                self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
-                reloadMyAddressHashes()
-                workerQueue.put(('doPOWForMyV3Pubkey',ripe.digest()))
-
-            else: #There is something in the deterministicPassphrase variable thus we are going to do this deterministically.
-                statusbar = 'Generating '+str(self.numberOfAddressesToMake) + ' new addresses.'
-                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
-                signingKeyNonce = 0
-                encryptionKeyNonce = 1
-                listOfNewAddressesToSendOutThroughTheAPI = [] #We fill out this list no matter what although we only need it if we end up passing the info to the API.
-
-                for i in range(self.numberOfAddressesToMake):
+        while True:
+            addressVersionNumber,streamNumber,label,numberOfAddressesToMake,deterministicPassphrase,eighteenByteRipe, = addressGeneratorQueue.get()
+            if addressVersionNumber == 3:
+                if deterministicPassphrase == "":
+                    #statusbar = 'Generating one new address'
+                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
+                    UISignalQueue.put(('updateStatusBar','Generating one new address'))
                     #This next section is a little bit strange. We're going to generate keys over and over until we
-                    #find one that has a RIPEMD hash that starts with either \x00 or \x00\x00. Then when we pack them
-                    #into a Bitmessage address, we won't store the \x00 or \x00\x00 bytes thus making the address shorter.
+                    #find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
+                    #we won't store the \x00 or \x00\x00 bytes thus making the address shorter.
                     startTime = time.time()
                     numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
+                    potentialPrivSigningKey = OpenSSL.rand(32)
+                    potentialPubSigningKey = pointMult(potentialPrivSigningKey)
                     while True:
                         numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
-                        potentialPrivSigningKey = hashlib.sha512(self.deterministicPassphrase + encodeVarint(signingKeyNonce)).digest()[:32]
-                        potentialPrivEncryptionKey = hashlib.sha512(self.deterministicPassphrase + encodeVarint(encryptionKeyNonce)).digest()[:32]
-                        potentialPubSigningKey = pointMult(potentialPrivSigningKey)
+                        potentialPrivEncryptionKey = OpenSSL.rand(32)
                         potentialPubEncryptionKey = pointMult(potentialPrivEncryptionKey)
                         #print 'potentialPubSigningKey', potentialPubSigningKey.encode('hex')
                         #print 'potentialPubEncryptionKey', potentialPubEncryptionKey.encode('hex')
-                        signingKeyNonce += 2
-                        encryptionKeyNonce += 2
                         ripe = hashlib.new('ripemd160')
                         sha = hashlib.new('sha512')
                         sha.update(potentialPubSigningKey+potentialPubEncryptionKey)
                         ripe.update(sha.digest())
                         #print 'potential ripe.digest', ripe.digest().encode('hex')
-                        if self.eighteenByteRipe:
+                        if eighteenByteRipe:
                             if ripe.digest()[:2] == '\x00\x00':
                                 break
                         else:
                             if ripe.digest()[:1] == '\x00':
                                 break
-
-                    print 'ripe.digest', ripe.digest().encode('hex')
-                    print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'keys per second.'
-                    address = encodeAddress(3,self.streamNumber,ripe.digest())
+                    print 'Generated address with ripe digest:', ripe.digest().encode('hex')
+                    print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'addresses per second before finding one with the correct ripe-prefix.'
+                    address = encodeAddress(3,streamNumber,ripe.digest())
                     #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
 
                     #An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
@@ -3316,34 +3343,110 @@ class addressGenerator(QThread):
                     privSigningKey = '\x80'+potentialPrivSigningKey
                     checksum = hashlib.sha256(hashlib.sha256(privSigningKey).digest()).digest()[0:4]
                     privSigningKeyWIF = arithmetic.changebase(privSigningKey + checksum,256,58)
+                    #print 'privSigningKeyWIF',privSigningKeyWIF
 
                     privEncryptionKey = '\x80'+potentialPrivEncryptionKey
                     checksum = hashlib.sha256(hashlib.sha256(privEncryptionKey).digest()).digest()[0:4]
                     privEncryptionKeyWIF = arithmetic.changebase(privEncryptionKey + checksum,256,58)
+                    #print 'privEncryptionKeyWIF',privEncryptionKeyWIF
 
-                    try:
-                        config.add_section(address)
-                        print 'label:', self.label
-                        config.set(address,'label',self.label)
-                        config.set(address,'enabled','true')
-                        config.set(address,'decoy','false')
-                        config.set(address,'noncetrialsperbyte',config.get('bitmessagesettings','defaultnoncetrialsperbyte'))
-                        config.set(address,'payloadlengthextrabytes',config.get('bitmessagesettings','defaultpayloadlengthextrabytes'))
-                        config.set(address,'privSigningKey',privSigningKeyWIF)
-                        config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
-                        with open(appdata + 'keys.dat', 'wb') as configfile:
-                            config.write(configfile)
+                    config.add_section(address)
+                    config.set(address,'label',label)
+                    config.set(address,'enabled','true')
+                    config.set(address,'decoy','false')
+                    config.set(address,'noncetrialsperbyte',config.get('bitmessagesettings','defaultnoncetrialsperbyte'))
+                    config.set(address,'payloadlengthextrabytes',config.get('bitmessagesettings','defaultpayloadlengthextrabytes'))
+                    config.set(address,'privSigningKey',privSigningKeyWIF)
+                    config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
+                    with open(appdata + 'keys.dat', 'wb') as configfile:
+                        config.write(configfile)
 
-                        self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
-                        listOfNewAddressesToSendOutThroughTheAPI.append(address)
-                        if self.eighteenByteRipe:
-                            reloadMyAddressHashes()#This is necessary here (rather than just at the end) because otherwise if the human generates a large number of new addresses and uses one before they are done generating, the program will receive a getpubkey message and will ignore it.
-                    except:
-                        print address,'already exists. Not adding it again.'
-                #It may be the case that this address is being generated as a result of a call to the API. Let us put the result in the necessary queue. 
-                apiAddressGeneratorReturnQueue.put(listOfNewAddressesToSendOutThroughTheAPI)
-                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
-                reloadMyAddressHashes()
+                    #It may be the case that this address is being generated as a result of a call to the API. Let us put the result in the necessary queue.
+                    apiAddressGeneratorReturnQueue.put(address)
+
+                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address. Doing work necessary to broadcast it...')
+                    UISignalQueue.put(('updateStatusBar','Done generating address. Doing work necessary to broadcast it...'))
+                    #self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(streamNumber))
+                    UISignalQueue.put(('writeNewAddressToTable',(label,address,streamNumber)))
+                    reloadMyAddressHashes()
+                    workerQueue.put(('doPOWForMyV3Pubkey',ripe.digest()))
+
+                else: #There is something in the deterministicPassphrase variable thus we are going to do this deterministically.
+                    statusbar = 'Generating '+str(numberOfAddressesToMake) + ' new addresses.'
+                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
+                    UISignalQueue.put(('updateStatusBar',statusbar))
+                    signingKeyNonce = 0
+                    encryptionKeyNonce = 1
+                    listOfNewAddressesToSendOutThroughTheAPI = [] #We fill out this list no matter what although we only need it if we end up passing the info to the API.
+
+                    for i in range(numberOfAddressesToMake):
+                        #This next section is a little bit strange. We're going to generate keys over and over until we
+                        #find one that has a RIPEMD hash that starts with either \x00 or \x00\x00. Then when we pack them
+                        #into a Bitmessage address, we won't store the \x00 or \x00\x00 bytes thus making the address shorter.
+                        startTime = time.time()
+                        numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
+                        while True:
+                            numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
+                            potentialPrivSigningKey = hashlib.sha512(deterministicPassphrase + encodeVarint(signingKeyNonce)).digest()[:32]
+                            potentialPrivEncryptionKey = hashlib.sha512(deterministicPassphrase + encodeVarint(encryptionKeyNonce)).digest()[:32]
+                            potentialPubSigningKey = pointMult(potentialPrivSigningKey)
+                            potentialPubEncryptionKey = pointMult(potentialPrivEncryptionKey)
+                            #print 'potentialPubSigningKey', potentialPubSigningKey.encode('hex')
+                            #print 'potentialPubEncryptionKey', potentialPubEncryptionKey.encode('hex')
+                            signingKeyNonce += 2
+                            encryptionKeyNonce += 2
+                            ripe = hashlib.new('ripemd160')
+                            sha = hashlib.new('sha512')
+                            sha.update(potentialPubSigningKey+potentialPubEncryptionKey)
+                            ripe.update(sha.digest())
+                            #print 'potential ripe.digest', ripe.digest().encode('hex')
+                            if eighteenByteRipe:
+                                if ripe.digest()[:2] == '\x00\x00':
+                                    break
+                            else:
+                                if ripe.digest()[:1] == '\x00':
+                                    break
+
+                        print 'ripe.digest', ripe.digest().encode('hex')
+                        print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'keys per second.'
+                        address = encodeAddress(3,streamNumber,ripe.digest())
+                        #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
+
+                        #An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
+                        #https://en.bitcoin.it/wiki/Wallet_import_format
+                        privSigningKey = '\x80'+potentialPrivSigningKey
+                        checksum = hashlib.sha256(hashlib.sha256(privSigningKey).digest()).digest()[0:4]
+                        privSigningKeyWIF = arithmetic.changebase(privSigningKey + checksum,256,58)
+
+                        privEncryptionKey = '\x80'+potentialPrivEncryptionKey
+                        checksum = hashlib.sha256(hashlib.sha256(privEncryptionKey).digest()).digest()[0:4]
+                        privEncryptionKeyWIF = arithmetic.changebase(privEncryptionKey + checksum,256,58)
+
+                        try:
+                            config.add_section(address)
+                            print 'label:', label
+                            config.set(address,'label',label)
+                            config.set(address,'enabled','true')
+                            config.set(address,'decoy','false')
+                            config.set(address,'noncetrialsperbyte',config.get('bitmessagesettings','defaultnoncetrialsperbyte'))
+                            config.set(address,'payloadlengthextrabytes',config.get('bitmessagesettings','defaultpayloadlengthextrabytes'))
+                            config.set(address,'privSigningKey',privSigningKeyWIF)
+                            config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
+                            with open(appdata + 'keys.dat', 'wb') as configfile:
+                                config.write(configfile)
+
+                            #self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
+                            UISignalQueue.put(('writeNewAddressToTable',(label,address,str(streamNumber))))
+                            listOfNewAddressesToSendOutThroughTheAPI.append(address)
+                            if eighteenByteRipe:
+                                reloadMyAddressHashes()#This is necessary here (rather than just at the end) because otherwise if the human generates a large number of new addresses and uses one before they are done generating, the program will receive a getpubkey message and will ignore it.
+                        except:
+                            print address,'already exists. Not adding it again.'
+                    #It may be the case that this address is being generated as a result of a call to the API. Let us put the result in the necessary queue.
+                    apiAddressGeneratorReturnQueue.put(listOfNewAddressesToSendOutThroughTheAPI)
+                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
+                    UISignalQueue.put(('updateStatusBar','Done generating address'))
+                    reloadMyAddressHashes()
 
 
 #This is one of several classes that constitute the API
@@ -3441,7 +3544,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return a+b
         elif method == 'statusBar':
             message, = params
-            apiSignalQueue.put(('updateStatusBar',message))
+            #apiSignalQueue.put(('updateStatusBar',message))
+            UISignalQueue.put(('updateStatusBar',message))
         elif method == 'listAddresses':
             data = '{"addresses":['
             configSections = config.sections()
@@ -3464,7 +3568,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 label, eighteenByteRipe = params
             label = label.decode('base64')
             apiAddressGeneratorReturnQueue.queue.clear()
-            apiSignalQueue.put(('createRandomAddress',(label, eighteenByteRipe))) #params should be a twopul which equals (eighteenByteRipe, label)
+            streamNumberForAddress = 1
+            #apiSignalQueue.put(('createRandomAddress',(label, eighteenByteRipe))) #params should be a twopul which equals (eighteenByteRipe, label)
+            addressGeneratorQueue.put((3,streamNumberForAddress,label,1,"",eighteenByteRipe))
             return apiAddressGeneratorReturnQueue.get()
         elif method == 'createDeterministicAddresses':
             if len(params) == 0:
@@ -3506,7 +3612,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 return 'API Error 0005: You have (accidentially?) specified too many addresses to make. Maximum 9999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
             apiAddressGeneratorReturnQueue.queue.clear()
             print 'about to send numberOfAddresses', numberOfAddresses
-            apiSignalQueue.put(('createDeterministicAddresses',(passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe)))
+            #apiSignalQueue.put(('createDeterministicAddresses',(passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe)))
+            addressGeneratorQueue.put((addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe))
             data = '{"addresses":['
             queueReturn = apiAddressGeneratorReturnQueue.get()
             for item in queueReturn:
@@ -3540,7 +3647,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             sqlReturnQueue.get()
             sqlSubmitQueue.put('commit')
             sqlLock.release()
-            apiSignalQueue.put(('updateStatusBar','Per API: Trashed message (assuming message existed). UI not updated.'))
+            #apiSignalQueue.put(('updateStatusBar','Per API: Trashed message (assuming message existed). UI not updated.'))
+            UISignalQueue.put(('updateStatusBar','Per API: Trashed message (assuming message existed). UI not updated.'))
             return 'Trashed message (assuming message existed). UI not updated. To double check, run getAllInboxMessages to see that the message disappeared, or restart Bitmessage and look in the normal Bitmessage GUI.'
         elif method == 'sendMessage':
             if len(params) == 0:
@@ -3664,8 +3772,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             sqlLock.release()
 
             toLabel = '[Broadcast subscribers]'
-            apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
-
+            #apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
+            #self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,toLabel,fromAddress,subject,message,ackdata)
+            UISignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
             workerQueue.put(('sendbroadcast',(fromAddress,subject,message)))
 
             return ackdata.encode('hex')         
@@ -3674,202 +3783,65 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return 'Invalid Method: %s'%method
 
 #This thread, of which there is only one, runs the API.
-class singleAPI(QThread):
-    def __init__(self, parent = None):
-        QThread.__init__(self, parent)
+class singleAPI(threading.Thread):
+    def __init__(self):
+        threading.Thread.__init__(self)
 
     def run(self):
         se = SimpleXMLRPCServer((config.get('bitmessagesettings', 'apiinterface'),config.getint('bitmessagesettings', 'apiport')), MySimpleXMLRPCRequestHandler, True, True)
         se.register_introspection_functions()
         se.serve_forever()
 
-#The MySimpleXMLRPCRequestHandler class cannot emit signals (or at least I don't know how) because it is not a QT thread. It therefore puts data in a queue which this thread monitors and emits the signals on its behalf.
-class singleAPISignalHandler(QThread):
+
+
+class UISignaler(QThread):
     def __init__(self, parent = None):
         QThread.__init__(self, parent)
 
     def run(self):
         while True:
-            command, data = apiSignalQueue.get()
-            if command == 'updateStatusBar':
-                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),data)
-            elif command == 'createRandomAddress':
-                label, eighteenByteRipe = data
-                streamNumberForAddress = 1
-                self.addressGenerator = addressGenerator()
-                self.addressGenerator.setup(3,streamNumberForAddress,label,1,"",eighteenByteRipe)
-                self.emit(SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"),self.addressGenerator)
-                self.addressGenerator.start()
-            elif command == 'createDeterministicAddresses':
-                passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe = data
-                self.addressGenerator = addressGenerator()
-                self.addressGenerator.setup(addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe)
-                self.emit(SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"),self.addressGenerator)
-                self.addressGenerator.start()
-            elif command == 'displayNewSentMessage':
-                toAddress,toLabel,fromAddress,subject,message,ackdata = data
-                self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,toLabel,fromAddress,subject,message,ackdata)
+            command, data = UISignalQueue.get()
+            if not safeConfigGetBoolean('bitmessagesettings','daemon'):
+                if command == 'writeNewAddressToTable':
+                    label, address, streamNumber = data
+                    self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),label,address,str(streamNumber))
+                elif command == 'updateStatusBar':
+                    self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),data)
+                elif command == 'updateSentItemStatusByHash':
+                    hash, message = data
+                    self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),hash,message)
+                elif command == 'updateSentItemStatusByAckdata':
+                    ackData, message = data
+                    self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackData,message)
+                elif command == 'displayNewInboxMessage':
+                    inventoryHash,toAddress,fromAddress,subject,body = data
+                    self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),inventoryHash,toAddress,fromAddress,subject,body)
+                elif command == 'displayNewSentMessage':
+                    toAddress,fromLabel,fromAddress,subject,message,ackdata = data
+                    self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,fromLabel,fromAddress,subject,message,ackdata)
+                elif command == 'updateNetworkStatusTab':
+                    streamNumber,count = data
+                    self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"),streamNumber,count)
+                elif command == 'incrementNumberOfMessagesProcessed':
+                    self.emit(SIGNAL("incrementNumberOfMessagesProcessed()"))
+                elif command == 'incrementNumberOfPubkeysProcessed':
+                    self.emit(SIGNAL("incrementNumberOfPubkeysProcessed()"))
+                elif command == 'incrementNumberOfBroadcastsProcessed':
+                    self.emit(SIGNAL("incrementNumberOfBroadcastsProcessed()"))
+                elif command == 'setStatusIcon':
+                    self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"),data)
+                else:
+                    sys.stderr.write('Command sent to UISignaler not recognized: %s\n' % command)
 
-class iconGlossaryDialog(QtGui.QDialog):
-    def __init__(self,parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_iconGlossaryDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        self.ui.labelPortNumber.setText('You are using TCP port ' + str(config.getint('bitmessagesettings', 'port')) + '. (This can be changed in the settings).')
-        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
-class helpDialog(QtGui.QDialog):
-    def __init__(self,parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_helpDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        self.ui.labelHelpURI.setOpenExternalLinks(True)
-        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
+#In order for the time columns on the Inbox and Sent tabs to be sorted correctly (rather than alphabetically), we need to overload the < operator and use this class instead of QTableWidgetItem.
+class myTableWidgetItem(QTableWidgetItem):
+    def __lt__(self,other):
+        return int(self.data(33).toPyObject()) < int(other.data(33).toPyObject())
 
-class aboutDialog(QtGui.QDialog):
-    def __init__(self,parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_aboutDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        self.ui.labelVersion.setText('version ' + softwareVersion)
+##cut from here
 
-class regenerateAddressesDialog(QtGui.QDialog):
-    def __init__(self,parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_regenerateAddressesDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
-class settingsDialog(QtGui.QDialog):
-    def __init__(self,parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_settingsDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        self.ui.checkBoxStartOnLogon.setChecked(config.getboolean('bitmessagesettings', 'startonlogon'))
-        self.ui.checkBoxMinimizeToTray.setChecked(config.getboolean('bitmessagesettings', 'minimizetotray'))
-        self.ui.checkBoxShowTrayNotifications.setChecked(config.getboolean('bitmessagesettings', 'showtraynotifications'))
-        self.ui.checkBoxStartInTray.setChecked(config.getboolean('bitmessagesettings', 'startintray'))
-        if appdata == '':
-            self.ui.checkBoxPortableMode.setChecked(True)
-        if 'darwin' in sys.platform:
-            self.ui.checkBoxStartOnLogon.setDisabled(True)
-            self.ui.checkBoxMinimizeToTray.setDisabled(True)
-            self.ui.checkBoxShowTrayNotifications.setDisabled(True)
-            self.ui.checkBoxStartInTray.setDisabled(True)
-            self.ui.labelSettingsNote.setText('Options have been disabled because they either arn\'t applicable or because they haven\'t yet been implimented for your operating system.')
-        elif 'linux' in sys.platform:
-            self.ui.checkBoxStartOnLogon.setDisabled(True)
-            self.ui.checkBoxMinimizeToTray.setDisabled(True)
-            self.ui.checkBoxStartInTray.setDisabled(True)
-            self.ui.labelSettingsNote.setText('Options have been disabled because they either arn\'t applicable or because they haven\'t yet been implimented for your operating system.')
-        #On the Network settings tab:
-        self.ui.lineEditTCPPort.setText(str(config.get('bitmessagesettings', 'port')))
-        self.ui.checkBoxAuthentication.setChecked(config.getboolean('bitmessagesettings', 'socksauthentication'))
-        if str(config.get('bitmessagesettings', 'socksproxytype')) == 'none':
-            self.ui.comboBoxProxyType.setCurrentIndex(0)
-            self.ui.lineEditSocksHostname.setEnabled(False)
-            self.ui.lineEditSocksPort.setEnabled(False)
-            self.ui.lineEditSocksUsername.setEnabled(False)
-            self.ui.lineEditSocksPassword.setEnabled(False)
-            self.ui.checkBoxAuthentication.setEnabled(False)
-        elif str(config.get('bitmessagesettings', 'socksproxytype')) == 'SOCKS4a':
-            self.ui.comboBoxProxyType.setCurrentIndex(1)
-            self.ui.lineEditTCPPort.setEnabled(False)
-        elif str(config.get('bitmessagesettings', 'socksproxytype')) == 'SOCKS5':
-            self.ui.comboBoxProxyType.setCurrentIndex(2)
-            self.ui.lineEditTCPPort.setEnabled(False)
-
-        self.ui.lineEditSocksHostname.setText(str(config.get('bitmessagesettings', 'sockshostname')))
-        self.ui.lineEditSocksPort.setText(str(config.get('bitmessagesettings', 'socksport')))
-        self.ui.lineEditSocksUsername.setText(str(config.get('bitmessagesettings', 'socksusername')))
-        self.ui.lineEditSocksPassword.setText(str(config.get('bitmessagesettings', 'sockspassword')))
-        QtCore.QObject.connect(self.ui.comboBoxProxyType, QtCore.SIGNAL("currentIndexChanged(int)"), self.comboBoxProxyTypeChanged)
-
-        self.ui.lineEditTotalDifficulty.setText(str((float(config.getint('bitmessagesettings', 'defaultnoncetrialsperbyte'))/networkDefaultProofOfWorkNonceTrialsPerByte)))
-        self.ui.lineEditSmallMessageDifficulty.setText(str((float(config.getint('bitmessagesettings', 'defaultpayloadlengthextrabytes'))/networkDefaultPayloadLengthExtraBytes)))
-        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
-
-    def comboBoxProxyTypeChanged(self,comboBoxIndex):
-        if comboBoxIndex == 0:
-            self.ui.lineEditSocksHostname.setEnabled(False)
-            self.ui.lineEditSocksPort.setEnabled(False)
-            self.ui.lineEditSocksUsername.setEnabled(False)
-            self.ui.lineEditSocksPassword.setEnabled(False)
-            self.ui.checkBoxAuthentication.setEnabled(False)
-            self.ui.lineEditTCPPort.setEnabled(True)
-        elif comboBoxIndex == 1 or comboBoxIndex == 2:
-            self.ui.lineEditSocksHostname.setEnabled(True)
-            self.ui.lineEditSocksPort.setEnabled(True)
-            self.ui.checkBoxAuthentication.setEnabled(True)
-            if self.ui.checkBoxAuthentication.isChecked():
-                self.ui.lineEditSocksUsername.setEnabled(True)
-                self.ui.lineEditSocksPassword.setEnabled(True)
-            self.ui.lineEditTCPPort.setEnabled(False)
-
-class SpecialAddressBehaviorDialog(QtGui.QDialog):
-    def __init__(self,parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_SpecialAddressBehaviorDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        currentRow = parent.ui.tableWidgetYourIdentities.currentRow()
-        addressAtCurrentRow = str(parent.ui.tableWidgetYourIdentities.item(currentRow,1).text())
-        if safeConfigGetBoolean(addressAtCurrentRow,'mailinglist'):
-            self.ui.radioButtonBehaviorMailingList.click()
-        else:
-            self.ui.radioButtonBehaveNormalAddress.click()
-        try:
-            mailingListName = config.get(addressAtCurrentRow, 'mailinglistname')
-        except:
-            mailingListName = ''
-        self.ui.lineEditMailingListName.setText(unicode(mailingListName,'utf-8'))
-        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
-
-class NewSubscriptionDialog(QtGui.QDialog):
-    def __init__(self,parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_NewSubscriptionDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        QtCore.QObject.connect(self.ui.lineEditSubscriptionAddress, QtCore.SIGNAL("textChanged(QString)"), self.subscriptionAddressChanged)
-
-    def subscriptionAddressChanged(self,QString):
-        status,a,b,c = decodeAddress(str(QString))
-        if status == 'missingbm':
-            self.ui.labelSubscriptionAddressCheck.setText('The address should start with ''BM-''')
-        elif status == 'checksumfailed':
-            self.ui.labelSubscriptionAddressCheck.setText('The address is not typed or copied correctly (the checksum failed).')
-        elif status == 'versiontoohigh':
-            self.ui.labelSubscriptionAddressCheck.setText('The version number of this address is higher than this software can support. Please upgrade Bitmessage.')
-        elif status == 'invalidcharacters':
-            self.ui.labelSubscriptionAddressCheck.setText('The address contains invalid characters.')
-        elif status == 'ripetooshort':
-            self.ui.labelSubscriptionAddressCheck.setText('Some data encoded in the address is too short.')
-        elif status == 'ripetoolong':
-            self.ui.labelSubscriptionAddressCheck.setText('Some data encoded in the address is too long.')
-        elif status == 'success':
-            self.ui.labelSubscriptionAddressCheck.setText('Address is valid.')
-
-class NewAddressDialog(QtGui.QDialog):
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_NewAddressDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        row = 1
-        #Let's fill out the 'existing address' combo box with addresses from the 'Your Identities' tab.
-        while self.parent.ui.tableWidgetYourIdentities.item(row-1,1):
-            self.ui.radioButtonExisting.click()
-            #print self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text()
-            self.ui.comboBoxExisting.addItem(self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text())
-            row += 1
-        self.ui.groupBoxDeterministic.setHidden(True)
-        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
 
 class MyForm(QtGui.QMainWindow):
@@ -4065,8 +4037,8 @@ class MyForm(QtGui.QMainWindow):
                 if isEnabled:
                     status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
 
-        self.sqlLookup = sqlThread()
-        self.sqlLookup.start()
+        #self.sqlLookup = sqlThread()
+        #self.sqlLookup.start()
 
         reloadMyAddressHashes()
         self.reloadBroadcastSendersForWhichImWatching()
@@ -4275,43 +4247,38 @@ class MyForm(QtGui.QMainWindow):
 
         self.rerenderComboBoxSendFrom()
 
-        
+        self.UISignalThread = UISignaler()
+        self.UISignalThread.start()
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewInboxMessage)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"), self.updateNetworkStatusTab)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("incrementNumberOfMessagesProcessed()"), self.incrementNumberOfMessagesProcessed)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("incrementNumberOfPubkeysProcessed()"), self.incrementNumberOfPubkeysProcessed)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("incrementNumberOfBroadcastsProcessed()"), self.incrementNumberOfBroadcastsProcessed)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
 
-        self.connectToStream(1)
 
-        self.singleListenerThread = singleListener()
-        self.singleListenerThread.start()
-        QtCore.QObject.connect(self.singleListenerThread, QtCore.SIGNAL("passObjectThrough(PyQt_PyObject)"), self.connectObjectToSignals)
+        #self.connectToStream(1)
+
+        #self.singleListenerThread = singleListener()
+        #self.singleListenerThread.start()
+        #QtCore.QObject.connect(self.singleListenerThread, QtCore.SIGNAL("passObjectThrough(PyQt_PyObject)"), self.connectObjectToSignals)
 
 
-        self.singleCleanerThread = singleCleaner()
-        self.singleCleanerThread.start()
-        QtCore.QObject.connect(self.singleCleanerThread, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
-        QtCore.QObject.connect(self.singleCleanerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+        #self.singleCleanerThread = singleCleaner()
+        #self.singleCleanerThread.start()
+        #QtCore.QObject.connect(self.singleCleanerThread, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
+        #QtCore.QObject.connect(self.singleCleanerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
 
-        self.workerThread = singleWorker()
-        self.workerThread.start()
-        QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
-        QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
-        QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-
-        if safeConfigGetBoolean('bitmessagesettings','apienabled'):
-            try:
-                apiNotifyPath = config.get('bitmessagesettings','apinotifypath')
-            except:
-                apiNotifyPath = ''
-            if apiNotifyPath != '':
-                printLock.acquire()
-                print 'Trying to call', apiNotifyPath
-                printLock.release()
-                call([apiNotifyPath, "startingUp"])
-            self.singleAPIThread = singleAPI()
-            self.singleAPIThread.start()
-            self.singleAPISignalHandlerThread = singleAPISignalHandler()
-            self.singleAPISignalHandlerThread.start()
-            QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-            QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"), self.connectObjectToAddressGeneratorSignals)
-            QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
+        #self.workerThread = singleWorker()
+        #self.workerThread.start()
+        #QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
+        #QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
+        #QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
 
     def tableWidgetInboxKeyPressEvent(self,event):
         if event.key() == QtCore.Qt.Key_Delete:
@@ -4345,11 +4312,12 @@ class MyForm(QtGui.QMainWindow):
             else:
                 streamNumberForAddress = int(self.regenerateAddressesDialogInstance.ui.lineEditStreamNumber.text())
                 addressVersionNumber = int(self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
-                self.addressGenerator = addressGenerator()
-                self.addressGenerator.setup(addressVersionNumber,streamNumberForAddress,"unused address",self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(),self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(),self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked())
-                QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
-                QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-                self.addressGenerator.start()
+                #self.addressGenerator = addressGenerator()
+                #self.addressGenerator.setup(addressVersionNumber,streamNumberForAddress,"unused address",self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(),self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(),self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked())
+                #QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
+                #QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+                #self.addressGenerator.start()
+                addressGeneratorQueue.put((addressVersionNumber,streamNumberForAddress,"regenerated deterministic address",self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(),self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(),self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked()))
                 self.ui.tabWidget.setCurrentIndex(3)
 
     def openKeysFile(self):
@@ -4406,12 +4374,24 @@ class MyForm(QtGui.QMainWindow):
     def updateNetworkStatusTab(self,streamNumber,connectionCount):
         global statusIconColor
         #print 'updating network status tab'
-        totalNumberOfConnectionsFromAllStreams = 0 #One would think we could use len(sendDataQueues) for this, but sendData threads don't remove themselves from sendDataQueues fast enough for len(sendDataQueues) to be accurate here.
+        totalNumberOfConnectionsFromAllStreams = 0 #One would think we could use len(sendDataQueues) for this but the number doesn't always match: just because we have a sendDataThread running doesn't mean that the connection has been fully established (with the exchange of version messages).
+        foundTheRowThatNeedsUpdating = False
         for currentRow in range(self.ui.tableWidgetConnectionCount.rowCount()):
             rowStreamNumber = int(self.ui.tableWidgetConnectionCount.item(currentRow,0).text())
             if streamNumber == rowStreamNumber:
+                foundTheRowThatNeedsUpdating = True
                 self.ui.tableWidgetConnectionCount.item(currentRow,1).setText(str(connectionCount))
                 totalNumberOfConnectionsFromAllStreams += connectionCount
+        if foundTheRowThatNeedsUpdating == False:
+            #Add a line to the table for this stream number and update its count with the current connection count.
+            self.ui.tableWidgetConnectionCount.insertRow(0)
+            newItem =  QtGui.QTableWidgetItem(str(streamNumber))
+            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
+            self.ui.tableWidgetConnectionCount.setItem(0,0,newItem)
+            newItem =  QtGui.QTableWidgetItem(str(connectionCount))
+            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
+            self.ui.tableWidgetConnectionCount.setItem(0,1,newItem)
+            totalNumberOfConnectionsFromAllStreams += connectionCount
         self.ui.labelTotalConnections.setText('Total Connections: ' + str(totalNumberOfConnectionsFromAllStreams))
         if totalNumberOfConnectionsFromAllStreams > 0 and statusIconColor == 'red': #FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
             self.setStatusIcon('yellow')
@@ -4594,7 +4574,7 @@ class MyForm(QtGui.QMainWindow):
                         if queryreturn <> []:
                             for row in queryreturn:
                                 toLabel, = row
-                        
+
                         self.displayNewSentMessage(toAddress,toLabel,fromAddress, subject, message, ackdata)
                         workerQueue.put(('sendmessage',toAddress))
 
@@ -4693,27 +4673,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.comboBoxSendFrom.setCurrentIndex(0)
 
-    def connectToStream(self,streamNumber):
-        self.listOfOutgoingSynSenderThreads = [] #if we don't maintain this list, the threads will get garbage-collected.
-        connectionsCount[streamNumber] = 0
-        selfInitiatedConnections[streamNumber] = {}
 
-        #Add a line to the Connection Count table on the Network Status tab with a 'zero' connection count. This will be updated as necessary by another function.
-        self.ui.tableWidgetConnectionCount.insertRow(0)
-        newItem =  QtGui.QTableWidgetItem(str(streamNumber))
-        newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
-        self.ui.tableWidgetConnectionCount.setItem(0,0,newItem)
-        newItem =  QtGui.QTableWidgetItem('0')
-        newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
-        self.ui.tableWidgetConnectionCount.setItem(0,1,newItem)
-
-        for i in range(32):
-            a = outgoingSynSender()
-            self.listOfOutgoingSynSenderThreads.append(a)
-            QtCore.QObject.connect(a, QtCore.SIGNAL("passObjectThrough(PyQt_PyObject)"), self.connectObjectToSignals)
-            QtCore.QObject.connect(a, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-            a.setup(streamNumber)
-            a.start()
 
     def connectObjectToSignals(self,object):
         QtCore.QObject.connect(object, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
@@ -4835,7 +4795,7 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(33,int(time.time()))
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,3,newItem)
-        
+
         """#If we have received this message from either a broadcast address or from someone in our address book, display as HTML
         if decodeAddress(fromAddress)[3] in broadcastSendersForWhichImWatching or isAddressInMyAddressBook(fromAddress):
             self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
@@ -5013,7 +4973,7 @@ class MyForm(QtGui.QMainWindow):
             if appdata == '' and not self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked(): #If we ARE using portable mode now but the user selected that we shouldn't...
                 appdata = lookupAppdataFolder()
                 if not os.path.exists(appdata):
-                    os.makedirs(appdata)         
+                    os.makedirs(appdata)
                 config.set('bitmessagesettings','movemessagstoappdata','true') #Tells bitmessage to move the messages.dat file to the appdata directory the next time the program starts.
                 #Write the keys.dat file to disk in the new location
                 with open(appdata + 'keys.dat', 'wb') as configfile:
@@ -5122,11 +5082,12 @@ class MyForm(QtGui.QMainWindow):
                     #User selected 'Use the same stream as an existing address.'
                     streamNumberForAddress = addressStream(self.dialog.ui.comboBoxExisting.currentText())
 
-                self.addressGenerator = addressGenerator()
-                self.addressGenerator.setup(3,streamNumberForAddress,str(self.dialog.ui.newaddresslabel.text().toUtf8()),1,"",self.dialog.ui.checkBoxEighteenByteRipe.isChecked())
-                QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
-                QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-                self.addressGenerator.start()
+                #self.addressGenerator = addressGenerator()
+                #self.addressGenerator.setup(3,streamNumberForAddress,str(self.dialog.ui.newaddresslabel.text().toUtf8()),1,"",self.dialog.ui.checkBoxEighteenByteRipe.isChecked())
+                #QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
+                #QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+                #self.addressGenerator.start()
+                addressGeneratorQueue.put((3,streamNumberForAddress,str(self.dialog.ui.newaddresslabel.text().toUtf8()),1,"",self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
             else:
                 if self.dialog.ui.lineEditPassphrase.text() != self.dialog.ui.lineEditPassphraseAgain.text():
                     QMessageBox.about(self, "Passphrase mismatch", "The passphrase you entered twice doesn\'t match. Try again.")
@@ -5134,11 +5095,12 @@ class MyForm(QtGui.QMainWindow):
                     QMessageBox.about(self, "Choose a passphrase", "You really do need a passphrase.")
                 else:
                     streamNumberForAddress = 1 #this will eventually have to be replaced by logic to determine the most available stream number.
-                    self.addressGenerator = addressGenerator()
-                    self.addressGenerator.setup(3,streamNumberForAddress,"unused address",self.dialog.ui.spinBoxNumberOfAddressesToMake.value(),self.dialog.ui.lineEditPassphrase.text().toUtf8(),self.dialog.ui.checkBoxEighteenByteRipe.isChecked())
-                    QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
-                    QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-                    self.addressGenerator.start()
+                    #self.addressGenerator = addressGenerator()
+                    #self.addressGenerator.setup(3,streamNumberForAddress,"unused address",self.dialog.ui.spinBoxNumberOfAddressesToMake.value(),self.dialog.ui.lineEditPassphrase.text().toUtf8(),self.dialog.ui.checkBoxEighteenByteRipe.isChecked())
+                    #QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
+                    #QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+                    #self.addressGenerator.start()
+                    addressGeneratorQueue.put((3,streamNumberForAddress,"unused deterministic address",self.dialog.ui.spinBoxNumberOfAddressesToMake.value(),self.dialog.ui.lineEditPassphrase.text().toUtf8(),self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
         else:
             print 'new address dialog box rejected'
 
@@ -5151,42 +5113,11 @@ class MyForm(QtGui.QMainWindow):
             event.accept()
         else:
             event.ignore()'''
-
-        self.statusBar().showMessage('Bitmessage is stuck waiting for the knownNodesLock.')
-        knownNodesLock.acquire()
-        self.statusBar().showMessage('Saving the knownNodes list of peers to disk...')
-        output = open(appdata + 'knownnodes.dat', 'wb')
-        print 'finished opening knownnodes.dat. Now pickle.dump'
-        pickle.dump(knownNodes, output)
-        print 'done with pickle.dump. closing output'
-        output.close()
-        knownNodesLock.release()
-        print 'done closing knownnodes.dat output file.'
-        self.statusBar().showMessage('Done saving the knownNodes list of peers to disk.')
-
-        broadcastToSendDataQueues((0, 'shutdown', 'all'))
-
-        printLock.acquire()
-        print 'Closing. Flushing inventory in memory out to disk...'
-        printLock.release()
-        self.statusBar().showMessage('Flushing inventory in memory out to disk. This should normally only take a second...')
-        flushInventory()
-
-        #This one last useless query will guarantee that the previous query committed before we close the program.
-        sqlLock.acquire()
-        sqlSubmitQueue.put('SELECT address FROM subscriptions')
-        sqlSubmitQueue.put('')
-        sqlReturnQueue.get()
-        sqlLock.release()
-
+        doCleanShutdown()
         self.trayIcon.hide()
-        printLock.acquire()
-        print 'Done.'
-        printLock.release()
         self.statusBar().showMessage('All done. Closing user interface...')
         event.accept()
-        print 'done. (passed event.accept())'
-        #raise SystemExit
+        print 'Done. (passed event.accept())'
         os._exit(0)
 
     def on_action_InboxMessageForceHtml(self):
@@ -5280,7 +5211,7 @@ class MyForm(QtGui.QMainWindow):
     #Send item on the Sent tab to trash
     def on_action_SentTrash(self):
         while self.ui.tableWidgetSent.selectedIndexes() != []:
-            currentRow = self.ui.tableWidgetSent.selectedIndexes()[0].row()            
+            currentRow = self.ui.tableWidgetSent.selectedIndexes()[0].row()
             ackdataToTrash = str(self.ui.tableWidgetSent.item(currentRow,3).data(Qt.UserRole).toPyObject())
             t = (ackdataToTrash,)
             sqlLock.acquire()
@@ -5296,7 +5227,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetSent.selectRow(currentRow)
         else:
             self.ui.tableWidgetSent.selectRow(currentRow-1)
-            
+
     def on_action_SentClipboard(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         addressAtCurrentRow = str(self.ui.tableWidgetSent.item(currentRow,0).data(Qt.UserRole).toPyObject())
@@ -5539,7 +5470,7 @@ class MyForm(QtGui.QMainWindow):
             sqlReturnQueue.get()
             sqlSubmitQueue.put('commit')
             sqlLock.release()
-        
+
     def tableWidgetSentItemClicked(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         if currentRow >= 0:
@@ -5623,10 +5554,190 @@ class MyForm(QtGui.QMainWindow):
             privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).digest()[:32]
             MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
 
-#In order for the time columns on the Inbox and Sent tabs to be sorted correctly (rather than alphabetically), we need to overload the < operator and use this class instead of QTableWidgetItem.
-class myTableWidgetItem(QTableWidgetItem):
-    def __lt__(self,other):
-        return int(self.data(33).toPyObject()) < int(other.data(33).toPyObject())
+
+
+class helpDialog(QtGui.QDialog):
+    def __init__(self,parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_helpDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        self.ui.labelHelpURI.setOpenExternalLinks(True)
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
+
+class aboutDialog(QtGui.QDialog):
+    def __init__(self,parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_aboutDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        self.ui.labelVersion.setText('version ' + softwareVersion)
+
+class regenerateAddressesDialog(QtGui.QDialog):
+    def __init__(self,parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_regenerateAddressesDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
+
+class settingsDialog(QtGui.QDialog):
+    def __init__(self,parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_settingsDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        self.ui.checkBoxStartOnLogon.setChecked(config.getboolean('bitmessagesettings', 'startonlogon'))
+        self.ui.checkBoxMinimizeToTray.setChecked(config.getboolean('bitmessagesettings', 'minimizetotray'))
+        self.ui.checkBoxShowTrayNotifications.setChecked(config.getboolean('bitmessagesettings', 'showtraynotifications'))
+        self.ui.checkBoxStartInTray.setChecked(config.getboolean('bitmessagesettings', 'startintray'))
+        if appdata == '':
+            self.ui.checkBoxPortableMode.setChecked(True)
+        if 'darwin' in sys.platform:
+            self.ui.checkBoxStartOnLogon.setDisabled(True)
+            self.ui.checkBoxMinimizeToTray.setDisabled(True)
+            self.ui.checkBoxShowTrayNotifications.setDisabled(True)
+            self.ui.checkBoxStartInTray.setDisabled(True)
+            self.ui.labelSettingsNote.setText('Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implimented for your operating system.')
+        elif 'linux' in sys.platform:
+            self.ui.checkBoxStartOnLogon.setDisabled(True)
+            self.ui.checkBoxMinimizeToTray.setDisabled(True)
+            self.ui.checkBoxStartInTray.setDisabled(True)
+            self.ui.labelSettingsNote.setText('Options have been disabled because they either arn\'t applicable or because they haven\'t yet been implimented for your operating system.')
+        #On the Network settings tab:
+        self.ui.lineEditTCPPort.setText(str(config.get('bitmessagesettings', 'port')))
+        self.ui.checkBoxAuthentication.setChecked(config.getboolean('bitmessagesettings', 'socksauthentication'))
+        if str(config.get('bitmessagesettings', 'socksproxytype')) == 'none':
+            self.ui.comboBoxProxyType.setCurrentIndex(0)
+            self.ui.lineEditSocksHostname.setEnabled(False)
+            self.ui.lineEditSocksPort.setEnabled(False)
+            self.ui.lineEditSocksUsername.setEnabled(False)
+            self.ui.lineEditSocksPassword.setEnabled(False)
+            self.ui.checkBoxAuthentication.setEnabled(False)
+        elif str(config.get('bitmessagesettings', 'socksproxytype')) == 'SOCKS4a':
+            self.ui.comboBoxProxyType.setCurrentIndex(1)
+            self.ui.lineEditTCPPort.setEnabled(False)
+        elif str(config.get('bitmessagesettings', 'socksproxytype')) == 'SOCKS5':
+            self.ui.comboBoxProxyType.setCurrentIndex(2)
+            self.ui.lineEditTCPPort.setEnabled(False)
+
+        self.ui.lineEditSocksHostname.setText(str(config.get('bitmessagesettings', 'sockshostname')))
+        self.ui.lineEditSocksPort.setText(str(config.get('bitmessagesettings', 'socksport')))
+        self.ui.lineEditSocksUsername.setText(str(config.get('bitmessagesettings', 'socksusername')))
+        self.ui.lineEditSocksPassword.setText(str(config.get('bitmessagesettings', 'sockspassword')))
+        QtCore.QObject.connect(self.ui.comboBoxProxyType, QtCore.SIGNAL("currentIndexChanged(int)"), self.comboBoxProxyTypeChanged)
+
+        self.ui.lineEditTotalDifficulty.setText(str((float(config.getint('bitmessagesettings', 'defaultnoncetrialsperbyte'))/networkDefaultProofOfWorkNonceTrialsPerByte)))
+        self.ui.lineEditSmallMessageDifficulty.setText(str((float(config.getint('bitmessagesettings', 'defaultpayloadlengthextrabytes'))/networkDefaultPayloadLengthExtraBytes)))
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
+
+    def comboBoxProxyTypeChanged(self,comboBoxIndex):
+        if comboBoxIndex == 0:
+            self.ui.lineEditSocksHostname.setEnabled(False)
+            self.ui.lineEditSocksPort.setEnabled(False)
+            self.ui.lineEditSocksUsername.setEnabled(False)
+            self.ui.lineEditSocksPassword.setEnabled(False)
+            self.ui.checkBoxAuthentication.setEnabled(False)
+            self.ui.lineEditTCPPort.setEnabled(True)
+        elif comboBoxIndex == 1 or comboBoxIndex == 2:
+            self.ui.lineEditSocksHostname.setEnabled(True)
+            self.ui.lineEditSocksPort.setEnabled(True)
+            self.ui.checkBoxAuthentication.setEnabled(True)
+            if self.ui.checkBoxAuthentication.isChecked():
+                self.ui.lineEditSocksUsername.setEnabled(True)
+                self.ui.lineEditSocksPassword.setEnabled(True)
+            self.ui.lineEditTCPPort.setEnabled(False)
+
+class SpecialAddressBehaviorDialog(QtGui.QDialog):
+    def __init__(self,parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_SpecialAddressBehaviorDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        currentRow = parent.ui.tableWidgetYourIdentities.currentRow()
+        addressAtCurrentRow = str(parent.ui.tableWidgetYourIdentities.item(currentRow,1).text())
+        if safeConfigGetBoolean(addressAtCurrentRow,'mailinglist'):
+            self.ui.radioButtonBehaviorMailingList.click()
+        else:
+            self.ui.radioButtonBehaveNormalAddress.click()
+        try:
+            mailingListName = config.get(addressAtCurrentRow, 'mailinglistname')
+        except:
+            mailingListName = ''
+        self.ui.lineEditMailingListName.setText(unicode(mailingListName,'utf-8'))
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
+
+class NewSubscriptionDialog(QtGui.QDialog):
+    def __init__(self,parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_NewSubscriptionDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        QtCore.QObject.connect(self.ui.lineEditSubscriptionAddress, QtCore.SIGNAL("textChanged(QString)"), self.subscriptionAddressChanged)
+
+    def subscriptionAddressChanged(self,QString):
+        status,a,b,c = decodeAddress(str(QString))
+        if status == 'missingbm':
+            self.ui.labelSubscriptionAddressCheck.setText('The address should start with ''BM-''')
+        elif status == 'checksumfailed':
+            self.ui.labelSubscriptionAddressCheck.setText('The address is not typed or copied correctly (the checksum failed).')
+        elif status == 'versiontoohigh':
+            self.ui.labelSubscriptionAddressCheck.setText('The version number of this address is higher than this software can support. Please upgrade Bitmessage.')
+        elif status == 'invalidcharacters':
+            self.ui.labelSubscriptionAddressCheck.setText('The address contains invalid characters.')
+        elif status == 'ripetooshort':
+            self.ui.labelSubscriptionAddressCheck.setText('Some data encoded in the address is too short.')
+        elif status == 'ripetoolong':
+            self.ui.labelSubscriptionAddressCheck.setText('Some data encoded in the address is too long.')
+        elif status == 'success':
+            self.ui.labelSubscriptionAddressCheck.setText('Address is valid.')
+
+class NewAddressDialog(QtGui.QDialog):
+    def __init__(self, parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_NewAddressDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        row = 1
+        #Let's fill out the 'existing address' combo box with addresses from the 'Your Identities' tab.
+        while self.parent.ui.tableWidgetYourIdentities.item(row-1,1):
+            self.ui.radioButtonExisting.click()
+            #print self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text()
+            self.ui.comboBoxExisting.addItem(self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text())
+            row += 1
+        self.ui.groupBoxDeterministic.setHidden(True)
+        QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
+
+#The MySimpleXMLRPCRequestHandler class cannot emit signals (or at least I don't know how) because it is not a QT thread. It therefore puts data in a queue which this thread monitors and emits the signals on its behalf.
+"""class singleAPISignalHandler(QThread):
+    def __init__(self, parent = None):
+        QThread.__init__(self, parent)
+
+    def run(self):
+        while True:
+            command, data = apiSignalQueue.get()
+            if command == 'updateStatusBar':
+                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),data)
+            elif command == 'createRandomAddress':
+                label, eighteenByteRipe = data
+                streamNumberForAddress = 1
+                #self.addressGenerator = addressGenerator()
+                #self.addressGenerator.setup(3,streamNumberForAddress,label,1,"",eighteenByteRipe)
+                #self.emit(SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"),self.addressGenerator)
+                #self.addressGenerator.start()
+                addressGeneratorQueue.put((3,streamNumberForAddress,label,1,"",eighteenByteRipe))
+            elif command == 'createDeterministicAddresses':
+                passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe = data
+                #self.addressGenerator = addressGenerator()
+                #self.addressGenerator.setup(addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe)
+                #self.emit(SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"),self.addressGenerator)
+                #self.addressGenerator.start()
+                addressGeneratorQueue.put((addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe))
+            elif command == 'displayNewSentMessage':
+                toAddress,toLabel,fromAddress,subject,message,ackdata = data
+                self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,toLabel,fromAddress,subject,message,ackdata)"""
+
+
 
 
 selfInitiatedConnections = {} #This is a list of current connections (the thread pointers at least)
@@ -5656,6 +5767,8 @@ successfullyDecryptMessageTimings = [] #A list of the amounts of time it took to
 apiSignalQueue = Queue.Queue() #The singleAPI thread uses this queue to pass messages to a QT thread which can emit signals to do things like display a message in the UI.
 apiAddressGeneratorReturnQueue = Queue.Queue() #The address generator thread uses this queue to get information back to the API thread.
 alreadyAttemptedConnectionsListResetTime = int(time.time()) #used to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
+UISignalQueue = Queue.Queue()
+addressGeneratorQueue = Queue.Queue()
 
 #These constants are not at the top because if changed they will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
@@ -5666,6 +5779,8 @@ if useVeryEasyProofOfWorkForTesting:
     networkDefaultPayloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes / 7000
 
 if __name__ == "__main__":
+    signal.signal(signal.SIGINT, signal_handler)
+    #signal.signal(signal.SIGINT, signal.SIG_DFL)
     # Check the Major version, the first element in the array
     if sqlite3.sqlite_version_info[0] < 3:
         print 'This program requires sqlite version 3 or higher because 2 and lower cannot store NULL values. I see version:', sqlite3.sqlite_version_info
@@ -5777,6 +5892,16 @@ if __name__ == "__main__":
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
         raise SystemExit
 
+    if not safeConfigGetBoolean('bitmessagesettings','daemon'):
+        try:
+            #from PyQt4.QtCore import *
+            #from PyQt4.QtGui import *
+            pass
+        except Exception, err:
+            print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
+            print 'Error message:', err
+            sys.exit()
+
     #DNS bootstrap. This could be programmed to use the SOCKS proxy to do the DNS lookup some day but for now we will just rely on the entries in defaultKnownNodes.py. Hopefully either they are up to date or the user has run Bitmessage recently without SOCKS turned on and received good bootstrap nodes using that method.
     if config.get('bitmessagesettings', 'socksproxytype') == 'none':
         try:
@@ -5794,21 +5919,73 @@ if __name__ == "__main__":
     else:
         print 'DNS bootstrap skipped because SOCKS is used.'
 
-    app = QtGui.QApplication(sys.argv)
-    app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
-    myapp = MyForm()
-    myapp.show()
+    #Start the address generation thread
+    addressGeneratorThread = addressGenerator()
+    addressGeneratorThread.daemon = True # close the main program even if there are threads left
+    addressGeneratorThread.start()
 
-    if config.getboolean('bitmessagesettings', 'startintray'):
-        myapp.hide()
-        myapp.trayIcon.show()
-        #self.hidden = True
-        #self.setWindowState(self.windowState() & QtCore.Qt.WindowMinimized)
-        #self.hide()
-        if 'win32' in sys.platform or 'win64' in sys.platform:
-            myapp.setWindowFlags(Qt.ToolTip)
+    #Start the thread that calculates POWs
+    singleWorkerThread = singleWorker()
+    singleWorkerThread.daemon = True # close the main program even if there are threads left
+    singleWorkerThread.start()
 
-    sys.exit(app.exec_())
+    #Start the SQL thread
+    sqlLookup = sqlThread()
+    sqlLookup.daemon = False # DON'T close the main program even if there are threads left. The closeEvent should command this thread to exit gracefully.
+    sqlLookup.start()
+
+    #Start the cleanerThread
+    singleCleanerThread = singleCleaner()
+    singleCleanerThread.daemon = True # close the main program even if there are threads left
+    singleCleanerThread.start()
+    
+    singleListenerThread = singleListener()
+    singleListenerThread.daemon = True # close the main program even if there are threads left
+    singleListenerThread.start()
+
+    if safeConfigGetBoolean('bitmessagesettings','apienabled'):
+        try:
+            apiNotifyPath = config.get('bitmessagesettings','apinotifypath')
+        except:
+            apiNotifyPath = ''
+        if apiNotifyPath != '':
+            printLock.acquire()
+            print 'Trying to call', apiNotifyPath
+            printLock.release()
+            call([apiNotifyPath, "startingUp"])
+        singleAPIThread = singleAPI()
+        singleAPIThread.daemon = True #close the main program even if there are threads left
+        singleAPIThread.start()
+        #self.singleAPISignalHandlerThread = singleAPISignalHandler()
+        #self.singleAPISignalHandlerThread.start()
+        #QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+        #QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"), self.connectObjectToAddressGeneratorSignals)
+        #QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
+
+    connectToStream(1)
+
+    if not safeConfigGetBoolean('bitmessagesettings','daemon'):
+        app = QtGui.QApplication(sys.argv)
+        app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
+        myapp = MyForm()
+        myapp.show()
+
+        if config.getboolean('bitmessagesettings', 'startintray'):
+            myapp.hide()
+            myapp.trayIcon.show()
+            #self.hidden = True
+            #self.setWindowState(self.windowState() & QtCore.Qt.WindowMinimized)
+            #self.hide()
+            if 'win32' in sys.platform or 'win64' in sys.platform:
+                myapp.setWindowFlags(Qt.ToolTip)
+
+        sys.exit(app.exec_())
+    else:
+        print 'Running as a daemon. You can use Ctrl+C to exit.'
+        while True:
+            time.sleep(2)
+            print 'running still..'
+
 
 # So far, the Bitmessage protocol, this client, the Wiki, and the forums
 # are all a one-man operation. Bitcoin tips are quite appreciated!
