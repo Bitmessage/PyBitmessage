@@ -3850,10 +3850,6 @@ if __name__ == "__main__":
     singleCleanerThread = singleCleaner()
     singleCleanerThread.daemon = True # close the main program even if there are threads left
     singleCleanerThread.start()
-    
-    singleListenerThread = singleListener()
-    singleListenerThread.daemon = True # close the main program even if there are threads left
-    singleListenerThread.start()
 
     shared.reloadMyAddressHashes()
     shared.reloadBroadcastSendersForWhichImWatching()
@@ -3887,6 +3883,10 @@ if __name__ == "__main__":
         #QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
 
     connectToStream(1)
+
+    singleListenerThread = singleListener()
+    singleListenerThread.daemon = True # close the main program even if there are threads left
+    singleListenerThread.start()
 
     if not shared.safeConfigGetBoolean('bitmessagesettings','daemon'):
         try:
