@@ -2313,7 +2313,7 @@ class sqlThread(threading.Thread):
 
             shared.config.set('bitmessagesettings','settingsversion','3')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                config.write(configfile)
+                shared.config.write(configfile)
 
         #People running earlier versions of PyBitmessage do not have the encodingtype field in their inbox and sent tables or the read field in the inbox table. Let's add them.
         if shared.config.getint('bitmessagesettings','settingsversion') == 3:
@@ -2332,14 +2332,14 @@ class sqlThread(threading.Thread):
 
             shared.config.set('bitmessagesettings','settingsversion','4')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                config.write(configfile)
+                shared.config.write(configfile)
 
         if shared.config.getint('bitmessagesettings','settingsversion') == 4:
             shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte',str(networkDefaultProofOfWorkNonceTrialsPerByte))
             shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes',str(networkDefaultPayloadLengthExtraBytes))
             shared.config.set('bitmessagesettings','settingsversion','5')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                config.write(configfile)
+                shared.config.write(configfile)
 
         #From now on, let us keep a 'version' embedded in the messages.dat file so that when we make changes to the database, the database version we are on can stay embedded in the messages.dat file. Let us check to see if the settings table exists yet.
         item = '''SELECT name FROM sqlite_master WHERE type='table' AND name='settings';'''
@@ -2617,7 +2617,7 @@ class singleWorker(threading.Thread):
 
     def doPOWForMyV2Pubkey(self,hash): #This function also broadcasts out the pubkey message once it is done with the POW
         #Look up my stream number based on my address hash
-        """configSections = config.sections()
+        """configSections = shared.config.sections()
         for addressInKeysFile in configSections:
             if addressInKeysFile <> 'bitmessagesettings':
                 status,addressVersionNumber,streamNumber,hashFromThisParticularAddress = decodeAddress(addressInKeysFile)
@@ -2681,7 +2681,7 @@ class singleWorker(threading.Thread):
         shared.UISignalQueue.put(('updateStatusBar',''))
         shared.config.set(myAddress,'lastpubkeysendtime',str(int(time.time())))
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            config.write(configfile)
+            shared.config.write(configfile)
 
     def doPOWForMyV3Pubkey(self,hash): #This function also broadcasts out the pubkey message once it is done with the POW
         myAddress = shared.myAddressesByHash[hash]
@@ -2747,7 +2747,7 @@ class singleWorker(threading.Thread):
         shared.UISignalQueue.put(('updateStatusBar',''))
         shared.config.set(myAddress,'lastpubkeysendtime',str(int(time.time())))
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            config.write(configfile)
+            shared.config.write(configfile)
 
     def sendBroadcast(self):
         shared.sqlLock.acquire()
@@ -3160,7 +3160,9 @@ class addressGenerator(threading.Thread):
 
     def run(self):
         while True:
-            addressVersionNumber,streamNumber,label,numberOfAddressesToMake,deterministicPassphrase,eighteenByteRipe, = shared.addressGeneratorQueue.get()
+            addressVersionNumber,streamNumber,label,numberOfAddressesToMake,deterministicPassphrase,eighteenByteRipe = shared.addressGeneratorQueue.get()
+            if addressVersionNumber < 3 or addressVersionNumber > 3:
+                sys.stderr.write('Program error: For some reason the address generator queue has been given a request to create version', addressVersionNumber,' addresses which it cannot do.\n')
             if addressVersionNumber == 3:
                 if deterministicPassphrase == "":
                     #statusbar = 'Generating one new address'
@@ -3207,7 +3209,7 @@ class addressGenerator(threading.Thread):
                     privEncryptionKeyWIF = arithmetic.changebase(privEncryptionKey + checksum,256,58)
                     #print 'privEncryptionKeyWIF',privEncryptionKeyWIF
 
-                    config.add_section(address)
+                    shared.config.add_section(address)
                     shared.config.set(address,'label',label)
                     shared.config.set(address,'enabled','true')
                     shared.config.set(address,'decoy','false')
@@ -3216,7 +3218,7 @@ class addressGenerator(threading.Thread):
                     shared.config.set(address,'privSigningKey',privSigningKeyWIF)
                     shared.config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
                     with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                        config.write(configfile)
+                        shared.config.write(configfile)
 
                     #It may be the case that this address is being generated as a result of a call to the API. Let us put the result in the necessary queue.
                     apiAddressGeneratorReturnQueue.put(address)
@@ -3280,7 +3282,7 @@ class addressGenerator(threading.Thread):
                         privEncryptionKeyWIF = arithmetic.changebase(privEncryptionKey + checksum,256,58)
 
                         try:
-                            config.add_section(address)
+                            shared.config.add_section(address)
                             print 'label:', label
                             shared.config.set(address,'label',label)
                             shared.config.set(address,'enabled','true')
@@ -3290,7 +3292,7 @@ class addressGenerator(threading.Thread):
                             shared.config.set(address,'privSigningKey',privSigningKeyWIF)
                             shared.config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
                             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                                config.write(configfile)
+                                shared.config.write(configfile)
 
                             #self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
                             shared.UISignalQueue.put(('writeNewAddressToTable',(label,address,str(streamNumber))))
@@ -3405,7 +3407,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.UISignalQueue.put(('updateStatusBar',message))
         elif method == 'listAddresses':
             data = '{"addresses":['
-            configSections = config.sections()
+            configSections = shared.config.sections()
             for addressInKeysFile in configSections:
                 if addressInKeysFile <> 'bitmessagesettings':
                     status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
@@ -3456,9 +3458,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 return 'API Error 0001: the specified passphrase is blank.'
             passphrase = passphrase.decode('base64')
             if addressVersionNumber == 0: #0 means "just use the proper addressVersionNumber"
-                addressVersionNumber == 2
-            if addressVersionNumber != 2:
-                return 'API Error 0002: the address version number currently must be 2 (or 0 which means auto-select). Others aren\'t supported.'
+                addressVersionNumber = 3
+            if addressVersionNumber != 3:
+                return 'API Error 0002: the address version number currently must be 3 (or 0 which means auto-select).', addressVersionNumber,' isn\'t supported.'
             if streamNumber == 0: #0 means "just use the most available stream"
                 streamNumber = 1
             if streamNumber != 1:
@@ -3468,7 +3470,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if numberOfAddresses > 9999:
                 return 'API Error 0005: You have (accidentially?) specified too many addresses to make. Maximum 9999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
             apiAddressGeneratorReturnQueue.queue.clear()
-            print 'about to send numberOfAddresses', numberOfAddresses
+            print 'Requesting that the addressGenerator create', numberOfAddresses, 'addresses.'
             #apiSignalQueue.put(('createDeterministicAddresses',(passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe)))
             shared.addressGeneratorQueue.put((addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe))
             data = '{"addresses":['
@@ -3530,8 +3532,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     return 'API Error 0009: Invalid characters in address: '+ toAddress
                 if status == 'versiontoohigh':
                     return 'API Error 0010: Address version number too high (or zero) in address: ' + toAddress
-            if addressVersionNumber != 2:
-                return 'API Error 0011: the address version number currently must be 2. Others aren\'t supported. Check the toAddress.'
+            if addressVersionNumber < 2 or addressVersionNumber > 3:
+                return 'API Error 0011: the address version number currently must be 2 or 3. Others aren\'t supported. Check the toAddress.'
             if streamNumber != 1:
                 return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the toAddress.'
             status,addressVersionNumber,streamNumber,fromRipe = decodeAddress(fromAddress)
@@ -3545,8 +3547,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     return 'API Error 0009: Invalid characters in address: '+ fromAddress
                 if status == 'versiontoohigh':
                     return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
-            if addressVersionNumber != 2:
-                return 'API Error 0011: the address version number currently must be 2. Others aren\'t supported. Check the fromAddress.'
+            if addressVersionNumber < 2 or addressVersionNumber > 3:
+                return 'API Error 0011: the address version number currently must be 2 or 3. Others aren\'t supported. Check the fromAddress.'
             if streamNumber != 1:
                 return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the fromAddress.'
             toAddress = addBMIfNotPresent(toAddress)
@@ -3577,7 +3579,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if queryreturn <> []:
                 for row in queryreturn:
                     toLabel, = row
-            apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
+            #apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
+            shared.UISignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
 
             shared.workerQueue.put(('sendmessage',toAddress))
             
@@ -3726,10 +3729,10 @@ if __name__ == "__main__":
         sys.exit()
 
     #First try to load the config file (the keys.dat file) from the program directory
-    config = ConfigParser.SafeConfigParser()
-    config.read('keys.dat')
+    shared.config = ConfigParser.SafeConfigParser()
+    shared.config.read('keys.dat')
     try:
-        config.get('bitmessagesettings', 'settingsversion')
+        shared.config.get('bitmessagesettings', 'settingsversion')
         #settingsFileExistsInProgramDirectory = True
         print 'Loading config files from same directory as program'
         shared.appdata = ''
@@ -3792,7 +3795,7 @@ if __name__ == "__main__":
         shared.config.set('bitmessagesettings','keysencrypted','false')
         shared.config.set('bitmessagesettings','messagesencrypted','false')
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            config.write(configfile)
+            shared.config.write(configfile)
 
     #Let us now see if we should move the messages.dat file. There is an option in the settings to switch 'Portable Mode' on or off. Most of the files are moved instantly, but the messages.dat file cannot be moved while it is open. Now that it is not open we can move it now!
     try:
@@ -3800,9 +3803,9 @@ if __name__ == "__main__":
         #If we have reached this point then we must move the messages.dat file from the appdata folder to the program folder
         print 'Moving messages.dat from its old location in the application data folder to its new home along side the program.'
         shutil.move(lookupAppdataFolder()+'messages.dat','messages.dat')
-        config.remove_option('bitmessagesettings', 'movemessagstoprog')
+        shared.config.remove_option('bitmessagesettings', 'movemessagstoprog')
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            config.write(configfile)
+            shared.config.write(configfile)
     except:
         pass
     try:
@@ -3810,9 +3813,9 @@ if __name__ == "__main__":
         #If we have reached this point then we must move the messages.dat file from the appdata folder to the program folder
         print 'Moving messages.dat from its old location next to the program to its new home in the application data folder.'
         shutil.move('messages.dat',lookupAppdataFolder()+'messages.dat')
-        config.remove_option('bitmessagesettings', 'movemessagstoappdata')
+        shared.config.remove_option('bitmessagesettings', 'movemessagstoappdata')
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            config.write(configfile)
+            shared.config.write(configfile)
     except:
         pass
 
@@ -3827,7 +3830,6 @@ if __name__ == "__main__":
         pickleFile = open(shared.appdata + 'knownnodes.dat', 'rb')
         shared.knownNodes = pickle.load(pickleFile)
         pickleFile.close()
-    print 'at line 3769, knownNodes is', shared.knownNodes
     if shared.config.getint('bitmessagesettings', 'settingsversion') > 5:
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
         raise SystemExit
@@ -3848,7 +3850,6 @@ if __name__ == "__main__":
             print 'bootstrap8444.bitmessage.org DNS bootstrapping failed.'
     else:
         print 'DNS bootstrap skipped because SOCKS is used.'
-    print 'at line 3790, knownNodes is', shared.knownNodes
     #Start the address generation thread
     addressGeneratorThread = addressGenerator()
     addressGeneratorThread.daemon = True # close the main program even if there are threads left
