@@ -5,6 +5,7 @@ from addresses import *
 import highlevelcrypto
 import Queue
 import pickle
+import os
 
 myECCryptorObjects = {}
 MyECSubscriptionCryptorObjects = {}
