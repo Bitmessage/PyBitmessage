@@ -30,7 +30,7 @@ print 'Uncomment the next two lines to create a new random address.'
 
 print 'Uncomment these next four lines to create new deterministic addresses.'
 #passphrase = 'asdfasdfqwer'.encode('base64')
-#jsonDeterministicAddresses = api.createDeterministicAddresses(passphrase, 2, 2, 1, False)
+#jsonDeterministicAddresses = api.createDeterministicAddresses(passphrase, 2, 3, 1, False)
 #print jsonDeterministicAddresses
 #print json.loads(jsonDeterministicAddresses)
 

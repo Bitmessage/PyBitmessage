@@ -3610,8 +3610,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     return 'API Error 0009: Invalid characters in address: '+ fromAddress
                 if status == 'versiontoohigh':
                     return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
-            if addressVersionNumber != 2:
-                return 'API Error 0011: the address version number currently must be 2. Others aren\'t supported. Check the fromAddress.'
+            if addressVersionNumber < 2 or addressVersionNumber > 3:
+                return 'API Error 0011: the address version number currently must be 2 or 3. Others aren\'t supported. Check the fromAddress.'
             if streamNumber != 1:
                 return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the fromAddress.'
             fromAddress = addBMIfNotPresent(fromAddress)
@@ -3653,14 +3653,6 @@ class singleAPI(threading.Thread):
         se.serve_forever()
 
 
-
-
-
-
-
-
-
-
 #The MySimpleXMLRPCRequestHandler class cannot emit signals (or at least I don't know how) because it is not a QT thread. It therefore puts data in a queue which this thread monitors and emits the signals on its behalf.
 """class singleAPISignalHandler(QThread):
     def __init__(self, parent = None):
@@ -3691,18 +3683,12 @@ class singleAPI(threading.Thread):
                 self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,toLabel,fromAddress,subject,message,ackdata)"""
 
 
-
-
 selfInitiatedConnections = {} #This is a list of current connections (the thread pointers at least)
 alreadyAttemptedConnectionsList = {} #This is a list of nodes to which we have already attempted a connection
-
-
 ackdataForWhichImWatching = {}
-
 connectionsCount = {} #Used for the 'network status' tab.
 connectionsCountLock = threading.Lock()
 alreadyAttemptedConnectionsListLock = threading.Lock()
-
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack('>Q',random.randrange(1, 18446744073709551615))
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
 neededPubkeys = {}
@@ -3710,7 +3696,6 @@ successfullyDecryptMessageTimings = [] #A list of the amounts of time it took to
 #apiSignalQueue = Queue.Queue() #The singleAPI thread uses this queue to pass messages to a QT thread which can emit signals to do things like display a message in the UI.
 apiAddressGeneratorReturnQueue = Queue.Queue() #The address generator thread uses this queue to get information back to the API thread.
 alreadyAttemptedConnectionsListResetTime = int(time.time()) #used to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
-
 
 #These constants are not at the top because if changed they will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
@@ -3919,7 +3904,6 @@ if __name__ == "__main__":
         import bitmessageqt
         bitmessageqt.run()
 
-
         if shared.config.getboolean('bitmessagesettings', 'startintray'):
             myapp.hide()
             myapp.trayIcon.show()
@@ -3928,8 +3912,6 @@ if __name__ == "__main__":
             #self.hide()
             if 'win32' in sys.platform or 'win64' in sys.platform:
                 myapp.setWindowFlags(Qt.ToolTip)
-
-        
     else:
         print 'Running as a daemon. You can use Ctrl+C to exit.'
         while True:
