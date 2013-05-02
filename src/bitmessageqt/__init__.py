@@ -1108,9 +1108,9 @@ class MyForm(QtGui.QMainWindow):
             shared.config.set('bitmessagesettings', 'socksusername', str(self.settingsDialogInstance.ui.lineEditSocksUsername.text()))
             shared.config.set('bitmessagesettings', 'sockspassword', str(self.settingsDialogInstance.ui.lineEditSocksPassword.text()))
             if float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) >= 1:
-                shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte',str(int(float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text())*networkDefaultProofOfWorkNonceTrialsPerByte)))
+                shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte',str(int(float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text())*shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
             if float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) >= 1:
-                shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes',str(int(float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text())*networkDefaultPayloadLengthExtraBytes)))
+                shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes',str(int(float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text())*shared.networkDefaultPayloadLengthExtraBytes)))
 
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
@@ -1764,7 +1764,7 @@ class settingsDialog(QtGui.QDialog):
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
             self.ui.checkBoxStartInTray.setDisabled(True)
-            self.ui.labelSettingsNote.setText('Options have been disabled because they either arn\'t applicable or because they haven\'t yet been implimented for your operating system.')
+            self.ui.labelSettingsNote.setText('Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implimented for your operating system.')
         #On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(shared.config.get('bitmessagesettings', 'port')))
         self.ui.checkBoxAuthentication.setChecked(shared.config.getboolean('bitmessagesettings', 'socksauthentication'))
@@ -1788,8 +1788,8 @@ class settingsDialog(QtGui.QDialog):
         self.ui.lineEditSocksPassword.setText(str(shared.config.get('bitmessagesettings', 'sockspassword')))
         QtCore.QObject.connect(self.ui.comboBoxProxyType, QtCore.SIGNAL("currentIndexChanged(int)"), self.comboBoxProxyTypeChanged)
 
-        self.ui.lineEditTotalDifficulty.setText(str((float(shared.config.getint('bitmessagesettings', 'defaultnoncetrialsperbyte'))/networkDefaultProofOfWorkNonceTrialsPerByte)))
-        self.ui.lineEditSmallMessageDifficulty.setText(str((float(shared.config.getint('bitmessagesettings', 'defaultpayloadlengthextrabytes'))/networkDefaultPayloadLengthExtraBytes)))
+        self.ui.lineEditTotalDifficulty.setText(str((float(shared.config.getint('bitmessagesettings', 'defaultnoncetrialsperbyte'))/shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
+        self.ui.lineEditSmallMessageDifficulty.setText(str((float(shared.config.getint('bitmessagesettings', 'defaultpayloadlengthextrabytes'))/shared.networkDefaultPayloadLengthExtraBytes)))
         QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
     def comboBoxProxyTypeChanged(self,comboBoxIndex):
@@ -1928,4 +1928,12 @@ def run():
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
     myapp.show()
+    if shared.config.getboolean('bitmessagesettings', 'startintray'):
+        myapp.hide()
+        myapp.trayIcon.show()
+        #self.hidden = True
+        #self.setWindowState(self.windowState() & QtCore.Qt.WindowMinimized)
+        #self.hide()
+        if 'win32' in sys.platform or 'win64' in sys.platform:
+            myapp.setWindowFlags(Qt.ToolTip)
     sys.exit(app.exec_())

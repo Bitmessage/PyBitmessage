@@ -410,10 +410,10 @@ class receiveDataThread(threading.Thread):
                     self.data = self.data[self.payloadLength+24:]
 
     def isProofOfWorkSufficient(self,data,nonceTrialsPerByte=0,payloadLengthExtraBytes=0):
-        if nonceTrialsPerByte < networkDefaultProofOfWorkNonceTrialsPerByte:
-            nonceTrialsPerByte = networkDefaultProofOfWorkNonceTrialsPerByte
-        if payloadLengthExtraBytes < networkDefaultPayloadLengthExtraBytes:
-            payloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
+        if nonceTrialsPerByte < shared.networkDefaultProofOfWorkNonceTrialsPerByte:
+            nonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
+        if payloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
+            payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
         POW, = unpack('>Q',hashlib.sha512(hashlib.sha512(data[:8]+ hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
         #print 'POW:', POW
         return POW <= 2**64 / ((len(data)+payloadLengthExtraBytes) * (nonceTrialsPerByte))
@@ -2335,8 +2335,8 @@ class sqlThread(threading.Thread):
                 shared.config.write(configfile)
 
         if shared.config.getint('bitmessagesettings','settingsversion') == 4:
-            shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte',str(networkDefaultProofOfWorkNonceTrialsPerByte))
-            shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes',str(networkDefaultPayloadLengthExtraBytes))
+            shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte',str(shared.networkDefaultProofOfWorkNonceTrialsPerByte))
+            shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes',str(shared.networkDefaultPayloadLengthExtraBytes))
             shared.config.set('bitmessagesettings','settingsversion','5')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
@@ -2652,7 +2652,7 @@ class singleWorker(threading.Thread):
         #Do the POW for this pubkey message
         nonce = 0
         trialValue = 99999999999999999999
-        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
+        target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
         while trialValue > target:
@@ -2718,7 +2718,7 @@ class singleWorker(threading.Thread):
         #Do the POW for this pubkey message
         nonce = 0
         trialValue = 99999999999999999999
-        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
+        target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
         while trialValue > target:
@@ -2793,7 +2793,7 @@ class singleWorker(threading.Thread):
 
                 nonce = 0
                 trialValue = 99999999999999999999
-                target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
+                target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
                 #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send broadcast...')))
@@ -2864,7 +2864,7 @@ class singleWorker(threading.Thread):
 
                 nonce = 0
                 trialValue = 99999999999999999999
-                target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
+                target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
                 #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send broadcast...')))
@@ -2984,8 +2984,8 @@ class singleWorker(threading.Thread):
                 payload += pubEncryptionKey[1:]
 		#If the receiver of our message is in our address book, subscriptions list, or whitelist then we will allow them to do the network-minimum proof of work. Let us check to see if the receiver is in any of those lists.
                 if shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(toaddress):
-                    payload += encodeVarint(networkDefaultProofOfWorkNonceTrialsPerByte)
-                    payload += encodeVarint(networkDefaultPayloadLengthExtraBytes)                    
+                    payload += encodeVarint(shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+                    payload += encodeVarint(shared.networkDefaultPayloadLengthExtraBytes)
                 else:
                     payload += encodeVarint(shared.config.getint(fromaddress,'noncetrialsperbyte'))
                     payload += encodeVarint(shared.config.getint(fromaddress,'payloadlengthextrabytes'))
@@ -3032,17 +3032,17 @@ class singleWorker(threading.Thread):
                 pubEncryptionKeyBase256 = pubkeyPayload[readPosition:readPosition+64]
                 readPosition += 64
                 if toAddressVersionNumber == 2:
-                    requiredAverageProofOfWorkNonceTrialsPerByte = networkDefaultProofOfWorkNonceTrialsPerByte
-                    requiredPayloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
+                    requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
+                    requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
                 elif toAddressVersionNumber == 3:
                     requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
                     readPosition += varintLength
                     requiredPayloadLengthExtraBytes, varintLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
                     readPosition += varintLength
-                    if requiredAverageProofOfWorkNonceTrialsPerByte < networkDefaultProofOfWorkNonceTrialsPerByte: #We still have to meet a minimum POW difficulty regardless of what they say is allowed in order to get our message to propagate through the network.
-                        requiredAverageProofOfWorkNonceTrialsPerByte = networkDefaultProofOfWorkNonceTrialsPerByte
-                    if requiredPayloadLengthExtraBytes < networkDefaultPayloadLengthExtraBytes:
-                        requiredPayloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
+                    if requiredAverageProofOfWorkNonceTrialsPerByte < shared.networkDefaultProofOfWorkNonceTrialsPerByte: #We still have to meet a minimum POW difficulty regardless of what they say is allowed in order to get our message to propagate through the network.
+                        requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
+                    if requiredPayloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
+                        requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
                 encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
 
             nonce = 0
@@ -3051,7 +3051,7 @@ class singleWorker(threading.Thread):
             payload = embeddedTime + encodeVarint(toStreamNumber) + encrypted
             target = 2**64 / ((len(payload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
             shared.printLock.acquire()
-            print '(For msg message) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte)/networkDefaultProofOfWorkNonceTrialsPerByte,'Required small message difficulty:', float(requiredPayloadLengthExtraBytes)/networkDefaultPayloadLengthExtraBytes
+            print '(For msg message) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte)/shared.networkDefaultProofOfWorkNonceTrialsPerByte,'Required small message difficulty:', float(requiredPayloadLengthExtraBytes)/shared.networkDefaultPayloadLengthExtraBytes
             shared.printLock.release()
             powStartTime = time.time()
             initialHash = hashlib.sha512(payload).digest()
@@ -3105,7 +3105,7 @@ class singleWorker(threading.Thread):
         #self.emit(SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"),ripe,'Doing work necessary to request public key.')
         shared.UISignalQueue.put(('updateSentItemStatusByHash',(ripe,'Doing work necessary to request public key.')))
         print 'Doing proof-of-work necessary to send getpubkey message.'
-        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
+        target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         initialHash = hashlib.sha512(payload).digest()
         while trialValue > target:
             nonce += 1
@@ -3130,7 +3130,7 @@ class singleWorker(threading.Thread):
         nonce = 0
         trialValue = 99999999999999999999
         payload = embeddedTime + encodeVarint(toStreamNumber) + ackdata
-        target = 2**64 / ((len(payload)+networkDefaultPayloadLengthExtraBytes+8) * networkDefaultProofOfWorkNonceTrialsPerByte)
+        target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         shared.printLock.acquire()
         print '(For ack message) Doing proof of work...'
         shared.printLock.release()
@@ -3697,13 +3697,9 @@ successfullyDecryptMessageTimings = [] #A list of the amounts of time it took to
 apiAddressGeneratorReturnQueue = Queue.Queue() #The address generator thread uses this queue to get information back to the API thread.
 alreadyAttemptedConnectionsListResetTime = int(time.time()) #used to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
 
-#These constants are not at the top because if changed they will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
-networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
-networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
-
 if useVeryEasyProofOfWorkForTesting:
-    networkDefaultProofOfWorkNonceTrialsPerByte = networkDefaultProofOfWorkNonceTrialsPerByte / 16
-    networkDefaultPayloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes / 7000
+    shared.networkDefaultProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte / 16
+    shared.networkDefaultPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes / 7000
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
@@ -3754,8 +3750,8 @@ if __name__ == "__main__":
             shared.config.set('bitmessagesettings','sockspassword','')
             shared.config.set('bitmessagesettings','keysencrypted','false')
             shared.config.set('bitmessagesettings','messagesencrypted','false')
-            shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte',str(networkDefaultProofOfWorkNonceTrialsPerByte))
-            shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes',str(networkDefaultPayloadLengthExtraBytes))
+            shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte',str(shared.networkDefaultProofOfWorkNonceTrialsPerByte))
+            shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes',str(shared.networkDefaultPayloadLengthExtraBytes))
 
             if storeConfigFilesInSameDirectoryAsProgramByDefault:
                 #Just use the same directory as the program and forget about the appdata folder
@@ -3903,15 +3899,6 @@ if __name__ == "__main__":
 
         import bitmessageqt
         bitmessageqt.run()
-
-        if shared.config.getboolean('bitmessagesettings', 'startintray'):
-            myapp.hide()
-            myapp.trayIcon.show()
-            #self.hidden = True
-            #self.setWindowState(self.windowState() & QtCore.Qt.WindowMinimized)
-            #self.hide()
-            if 'win32' in sys.platform or 'win64' in sys.platform:
-                myapp.setWindowFlags(Qt.ToolTip)
     else:
         print 'Running as a daemon. You can use Ctrl+C to exit.'
         while True:
