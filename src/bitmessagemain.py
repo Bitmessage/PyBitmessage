@@ -6,7 +6,7 @@
 
 #Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams.
 
-softwareVersion = '0.3.0'
+#The software version variable is now held in shared.py
 verbose = 1
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000 #Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 #Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -2237,7 +2237,7 @@ def pointMult(secret):
 
 
 def assembleVersionMessage(remoteHost,remotePort,myStreamNumber):
-    global softwareVersion
+    shared.softwareVersion
     payload = ''
     payload += pack('>L',2) #protocol version.
     payload += pack('>q',1) #bitflags of the services I offer.
@@ -2253,7 +2253,7 @@ def assembleVersionMessage(remoteHost,remotePort,myStreamNumber):
 
     random.seed()
     payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
-    userAgent = '/PyBitmessage:' + softwareVersion + '/' #Length of userAgent must be less than 253.
+    userAgent = '/PyBitmessage:' + shared.softwareVersion + '/' #Length of userAgent must be less than 253.
     payload += pack('>B',len(userAgent)) #user agent string length. If the user agent is more than 252 bytes long, this code isn't going to work.
     payload += userAgent
     payload += encodeVarint(1) #The number of streams about which I care. PyBitmessage currently only supports 1 per connection.
