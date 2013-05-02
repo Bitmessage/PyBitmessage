@@ -2,6 +2,8 @@ import hashlib
 from struct import *
 from pyelliptic import arithmetic
 
+
+
 #There is another copy of this function in Bitmessagemain.py
 def convertIntToString(n):
     a = __builtins__.hex(n)
