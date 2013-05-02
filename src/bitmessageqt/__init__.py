@@ -222,9 +222,11 @@ class MyForm(QtGui.QMainWindow):
         font = QFont()
         font.setBold(True)
         #Load inbox from messages database file
+        shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message, read FROM inbox where folder='inbox' ORDER BY received''')
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, received, message, read = row
 
@@ -240,9 +242,11 @@ class MyForm(QtGui.QMainWindow):
 
             fromLabel = ''
             t = (fromAddress,)
+            shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put('''select label from addressbook where address=?''')
             shared.sqlSubmitQueue.put(t)
             queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
 
             if queryreturn <> []:
                 for row in queryreturn:
@@ -250,9 +254,11 @@ class MyForm(QtGui.QMainWindow):
 
             if fromLabel == '': #If this address wasn't in our address book..
                 t = (fromAddress,)
+                shared.sqlLock.acquire()
                 shared.sqlSubmitQueue.put('''select label from subscriptions where address=?''')
                 shared.sqlSubmitQueue.put(t)
                 queryreturn = shared.sqlReturnQueue.get()
+                shared.sqlLock.release()
 
                 if queryreturn <> []:
                     for row in queryreturn:
@@ -294,9 +300,11 @@ class MyForm(QtGui.QMainWindow):
 
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
         #Load Sent items from database
+        shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime FROM sent where folder = 'sent' ORDER BY lastactiontime''')
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
         for row in queryreturn:
             toAddress, fromAddress, subject, message, status, ackdata, lastactiontime = row
             try:
@@ -308,9 +316,11 @@ class MyForm(QtGui.QMainWindow):
 
             toLabel = ''
             t = (toAddress,)
+            shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put('''select label from addressbook where address=?''')
             shared.sqlSubmitQueue.put(t)
             queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
 
             if queryreturn <> []:
                 for row in queryreturn:
@@ -356,9 +366,11 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSent.sortItems(3,Qt.DescendingOrder)
 
         #Initialize the address book
+        shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('SELECT * FROM addressbook')
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
         for row in queryreturn:
             label, address = row
             self.ui.tableWidgetAddressBook.insertRow(0)
@@ -369,9 +381,11 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetAddressBook.setItem(0,1,newItem)
 
         #Initialize the Subscriptions
+        shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('SELECT label, address, enabled FROM subscriptions')
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
         for row in queryreturn:
             label, address, enabled = row
             self.ui.tableWidgetSubscriptions.insertRow(0)
@@ -656,9 +670,11 @@ class MyForm(QtGui.QMainWindow):
             addressToLookup = str(self.ui.tableWidgetSent.item(i,0).data(Qt.UserRole).toPyObject())
             toLabel = ''
             t = (addressToLookup,)
+            shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put('''select label from addressbook where address=?''')
             shared.sqlSubmitQueue.put(t)
             queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
 
             if queryreturn <> []:
                 for row in queryreturn:
@@ -1035,12 +1051,14 @@ class MyForm(QtGui.QMainWindow):
     def loadBlackWhiteList(self):
         #Initialize the Blacklist or Whitelist table
         listType = shared.config.get('bitmessagesettings', 'blackwhitelist')
+        shared.sqlLock.acquire()
         if listType == 'black':
             shared.sqlSubmitQueue.put('''SELECT label, address, enabled FROM blacklist''')
         else:
             shared.sqlSubmitQueue.put('''SELECT label, address, enabled FROM whitelist''')
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
         for row in queryreturn:
             label, address, enabled = row
             self.ui.tableWidgetBlacklist.insertRow(0)

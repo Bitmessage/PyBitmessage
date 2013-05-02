@@ -115,6 +115,9 @@ def reloadMyAddressHashes():
                     sys.stderr.write('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2 or 3.\n')
 
 def reloadBroadcastSendersForWhichImWatching():
+    printLock.acquire()
+    print 'reloading subscriptions...'
+    printLock.release()
     broadcastSendersForWhichImWatching.clear()
     MyECSubscriptionCryptorObjects.clear()
     sqlLock.acquire()
