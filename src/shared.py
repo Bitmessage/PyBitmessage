@@ -1,5 +1,6 @@
-import threading
+softwareVersion = '0.3.0'
 
+import threading
 import sys
 from addresses import *
 import highlevelcrypto

@@ -1732,7 +1732,7 @@ class aboutDialog(QtGui.QDialog):
         self.ui = Ui_aboutDialog()
         self.ui.setupUi(self)
         self.parent = parent
-        self.ui.labelVersion.setText('version ' + softwareVersion)
+        self.ui.labelVersion.setText('version ' + shared.softwareVersion)
 
 class regenerateAddressesDialog(QtGui.QDialog):
     def __init__(self,parent):
