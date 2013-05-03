@@ -434,7 +434,7 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewInboxMessage)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"), self.updateNetworkStatusTab)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("updateNetworkStatusTab()"), self.updateNetworkStatusTab)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("incrementNumberOfMessagesProcessed()"), self.incrementNumberOfMessagesProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("incrementNumberOfPubkeysProcessed()"), self.incrementNumberOfPubkeysProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("incrementNumberOfBroadcastsProcessed()"), self.incrementNumberOfBroadcastsProcessed)
@@ -550,16 +550,32 @@ class MyForm(QtGui.QMainWindow):
         self.numberOfPubkeysProcessed += 1
         self.ui.labelPubkeyCount.setText('Processed ' + str(self.numberOfPubkeysProcessed) + ' public keys.')
 
-    def updateNetworkStatusTab(self,streamNumber,connectionCount):
+    def updateNetworkStatusTab(self):
         #print 'updating network status tab'
         totalNumberOfConnectionsFromAllStreams = 0 #One would think we could use len(sendDataQueues) for this but the number doesn't always match: just because we have a sendDataThread running doesn't mean that the connection has been fully established (with the exchange of version messages).
-        foundTheRowThatNeedsUpdating = False
-        for currentRow in range(self.ui.tableWidgetConnectionCount.rowCount()):
+        streamNumberTotals = {}
+        for host, streamNumber in shared.connectedHostsList.items():
+            if not streamNumber in streamNumberTotals:
+                streamNumberTotals[streamNumber] = 1
+            else:
+                streamNumberTotals[streamNumber] += 1
+
+        while self.ui.tableWidgetConnectionCount.rowCount() > 0:
+            self.ui.tableWidgetConnectionCount.removeRow(0)
+        for streamNumber, connectionCount in streamNumberTotals.items():
+            self.ui.tableWidgetConnectionCount.insertRow(0)
+            newItem =  QtGui.QTableWidgetItem(str(streamNumber))
+            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
+            self.ui.tableWidgetConnectionCount.setItem(0,0,newItem)
+            newItem =  QtGui.QTableWidgetItem(str(connectionCount))
+            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
+            self.ui.tableWidgetConnectionCount.setItem(0,1,newItem)
+        """for currentRow in range(self.ui.tableWidgetConnectionCount.rowCount()):
             rowStreamNumber = int(self.ui.tableWidgetConnectionCount.item(currentRow,0).text())
             if streamNumber == rowStreamNumber:
                 foundTheRowThatNeedsUpdating = True
                 self.ui.tableWidgetConnectionCount.item(currentRow,1).setText(str(connectionCount))
-                totalNumberOfConnectionsFromAllStreams += connectionCount
+                #totalNumberOfConnectionsFromAllStreams += connectionCount
         if foundTheRowThatNeedsUpdating == False:
             #Add a line to the table for this stream number and update its count with the current connection count.
             self.ui.tableWidgetConnectionCount.insertRow(0)
@@ -569,11 +585,11 @@ class MyForm(QtGui.QMainWindow):
             newItem =  QtGui.QTableWidgetItem(str(connectionCount))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetConnectionCount.setItem(0,1,newItem)
-            totalNumberOfConnectionsFromAllStreams += connectionCount
-        self.ui.labelTotalConnections.setText('Total Connections: ' + str(totalNumberOfConnectionsFromAllStreams))
-        if totalNumberOfConnectionsFromAllStreams > 0 and shared.statusIconColor == 'red': #FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
+            totalNumberOfConnectionsFromAllStreams += connectionCount"""
+        self.ui.labelTotalConnections.setText('Total Connections: ' + str(len(shared.connectedHostsList)))
+        if len(shared.connectedHostsList) > 0 and shared.statusIconColor == 'red': #FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
             self.setStatusIcon('yellow')
-        elif totalNumberOfConnectionsFromAllStreams == 0:
+        elif len(shared.connectedHostsList) == 0:
             self.setStatusIcon('red')
 
     def setStatusIcon(self,color):
@@ -851,13 +867,13 @@ class MyForm(QtGui.QMainWindow):
 
 
 
-    def connectObjectToSignals(self,object):
+    """def connectObjectToSignals(self,object):
         QtCore.QObject.connect(object, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
         QtCore.QObject.connect(object, QtCore.SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewInboxMessage)
         QtCore.QObject.connect(object, QtCore.SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
         QtCore.QObject.connect(object, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
         QtCore.QObject.connect(object, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"), self.updateNetworkStatusTab)
+        QtCore.QObject.connect(object, QtCore.SIGNAL("updateNetworkStatusTab()"), self.updateNetworkStatusTab)
         QtCore.QObject.connect(object, QtCore.SIGNAL("incrementNumberOfMessagesProcessed()"), self.incrementNumberOfMessagesProcessed)
         QtCore.QObject.connect(object, QtCore.SIGNAL("incrementNumberOfPubkeysProcessed()"), self.incrementNumberOfPubkeysProcessed)
         QtCore.QObject.connect(object, QtCore.SIGNAL("incrementNumberOfBroadcastsProcessed()"), self.incrementNumberOfBroadcastsProcessed)
@@ -866,7 +882,7 @@ class MyForm(QtGui.QMainWindow):
     #This function exists because of the API. The API thread starts an address generator thread and must somehow connect the address generator's signals to the QApplication thread. This function is used to connect the slots and signals.
     def connectObjectToAddressGeneratorSignals(self,object):
         QtCore.QObject.connect(object, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+        QtCore.QObject.connect(object, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)"""
 
     #This function is called by the processmsg function when that function receives a message to an address that is acting as a pseudo-mailing-list. The message will be broadcast out. This function puts the message on the 'Sent' tab.
     def displayNewSentMessage(self,toAddress,toLabel,fromAddress,subject,message,ackdata):
@@ -1910,8 +1926,7 @@ class UISignaler(QThread):
                 toAddress,fromLabel,fromAddress,subject,message,ackdata = data
                 self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,fromLabel,fromAddress,subject,message,ackdata)
             elif command == 'updateNetworkStatusTab':
-                streamNumber,count = data
-                self.emit(SIGNAL("updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject)"),streamNumber,count)
+                self.emit(SIGNAL("updateNetworkStatusTab()"))
             elif command == 'incrementNumberOfMessagesProcessed':
                 self.emit(SIGNAL("incrementNumberOfMessagesProcessed()"))
             elif command == 'incrementNumberOfPubkeysProcessed':
