@@ -37,16 +37,16 @@ def lookupAppdataFolder():
     from os import path, environ
     if sys.platform == 'darwin':
         if "HOME" in environ:
-            appdata = path.join(os.environ["HOME"], "Library/Application support/", APPNAME) + '/'
+            dataFolder = path.join(os.environ["HOME"], "Library/Application support/", APPNAME) + '/'
         else:
             print 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
             sys.exit()
 
     elif 'win32' in sys.platform or 'win64' in sys.platform:
-        appdata = path.join(environ['APPDATA'], APPNAME) + '\\'
+        dataFolder = path.join(environ['APPDATA'], APPNAME) + '\\'
     else:
-        appdata = path.expanduser(path.join("~", "." + APPNAME + "/"))
-    return appdata
+        dataFolder = path.expanduser(path.join("~", "." + APPNAME + "/"))
+    return dataFolder
 
 def isAddressInMyAddressBook(address):
     t = (address,)
