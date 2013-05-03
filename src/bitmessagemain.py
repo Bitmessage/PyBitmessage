@@ -3496,20 +3496,20 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             elif len(params) == 5:
                 passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe = params
             if len(passphrase) == 0:
-                return 'API Error 0001: the specified passphrase is blank.'
+                return 'API Error 0001: The specified passphrase is blank.'
             passphrase = passphrase.decode('base64')
             if addressVersionNumber == 0: #0 means "just use the proper addressVersionNumber"
                 addressVersionNumber = 3
             if addressVersionNumber != 3:
-                return 'API Error 0002: the address version number currently must be 3 (or 0 which means auto-select).', addressVersionNumber,' isn\'t supported.'
+                return 'API Error 0002: The address version number currently must be 3 (or 0 which means auto-select).', addressVersionNumber,' isn\'t supported.'
             if streamNumber == 0: #0 means "just use the most available stream"
                 streamNumber = 1
             if streamNumber != 1:
-                return 'API Error 0003: the stream number must be 1 (or 0 which means auto-select). Others aren\'t supported.'
+                return 'API Error 0003: The stream number must be 1 (or 0 which means auto-select). Others aren\'t supported.'
             if numberOfAddresses == 0:
                 return 'API Error 0004: Why would you ask me to generate 0 addresses for you?'
-            if numberOfAddresses > 9999:
-                return 'API Error 0005: You have (accidentially?) specified too many addresses to make. Maximum 9999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
+            if numberOfAddresses > 999:
+                return 'API Error 0005: You have (accidentally?) specified too many addresses to make. Maximum 999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
             apiAddressGeneratorReturnQueue.queue.clear()
             print 'Requesting that the addressGenerator create', numberOfAddresses, 'addresses.'
             #apiSignalQueue.put(('createDeterministicAddresses',(passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe)))
@@ -3574,9 +3574,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 if status == 'versiontoohigh':
                     return 'API Error 0010: Address version number too high (or zero) in address: ' + toAddress
             if addressVersionNumber < 2 or addressVersionNumber > 3:
-                return 'API Error 0011: the address version number currently must be 2 or 3. Others aren\'t supported. Check the toAddress.'
+                return 'API Error 0011: The address version number currently must be 2 or 3. Others aren\'t supported. Check the toAddress.'
             if streamNumber != 1:
-                return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the toAddress.'
+                return 'API Error 0012: The stream number must be 1. Others aren\'t supported. Check the toAddress.'
             status,addressVersionNumber,streamNumber,fromRipe = decodeAddress(fromAddress)
             if status <> 'success':
                 shared.printLock.acquire()
@@ -3589,17 +3589,17 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 if status == 'versiontoohigh':
                     return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
             if addressVersionNumber < 2 or addressVersionNumber > 3:
-                return 'API Error 0011: the address version number currently must be 2 or 3. Others aren\'t supported. Check the fromAddress.'
+                return 'API Error 0011: The address version number currently must be 2 or 3. Others aren\'t supported. Check the fromAddress.'
             if streamNumber != 1:
-                return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the fromAddress.'
+                return 'API Error 0012: The stream number must be 1. Others aren\'t supported. Check the fromAddress.'
             toAddress = addBMIfNotPresent(toAddress)
             fromAddress = addBMIfNotPresent(fromAddress)
             try:
                 fromAddressEnabled = shared.config.getboolean(fromAddress,'enabled')
             except:
-                return 'API Error 0013: could not find your fromAddress in the keys.dat file.'
+                return 'API Error 0013: Could not find your fromAddress in the keys.dat file.'
             if not fromAddressEnabled:
-                return 'API Error 0014: your fromAddress is disabled. Cannot send.'
+                return 'API Error 0014: Your fromAddress is disabled. Cannot send.'
 
             ackdata = OpenSSL.rand(32)
             shared.sqlLock.acquire()
@@ -3679,7 +3679,31 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.workerQueue.put(('sendbroadcast',(fromAddress,subject,message)))
 
             return ackdata.encode('hex')         
-
+        elif method == 'getStatus':
+            if len(params) != 1:
+                return 'API Error 0000: I need one parameter!'
+            ackdata, = params
+            if len(ackdata) != 64:
+                return 'API Error 0015: The length of ackData should be 32 bytes (encoded in hex thus 64 characters).'
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''SELECT status FROM sent where ackdata=?''')
+            shared.sqlSubmitQueue.put((ackdata.decode('hex'),))
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            if queryreturn == []:
+                return 'notFound'
+            for row in queryreturn:
+                status, = row
+                if status == 'findingpubkey':
+                    return 'findingPubkey'
+                if status == 'doingpow':
+                    return 'doingPow'
+                if status == 'sentmessage':
+                    return 'sentMessage'
+                if status == 'ackreceived':
+                    return 'ackReceived'
+                else:
+                    return 'otherStatus: '+status
         else:
             return 'Invalid Method: %s'%method
 
