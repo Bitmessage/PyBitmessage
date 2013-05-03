@@ -26,6 +26,7 @@ inventoryLock = threading.Lock() #Guarantees that two receiveDataThreads don't r
 printLock = threading.Lock()
 appdata = '' #holds the location of the application data storage directory
 statusIconColor = 'red'
+connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
 
 #If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
