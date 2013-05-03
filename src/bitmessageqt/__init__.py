@@ -564,7 +564,10 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetConnectionCount.removeRow(0)
         for streamNumber, connectionCount in streamNumberTotals.items():
             self.ui.tableWidgetConnectionCount.insertRow(0)
-            newItem =  QtGui.QTableWidgetItem(str(streamNumber))
+            if streamNumber == 0:
+                newItem =  QtGui.QTableWidgetItem("?")
+            else:
+                newItem =  QtGui.QTableWidgetItem(str(streamNumber))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetConnectionCount.setItem(0,0,newItem)
             newItem =  QtGui.QTableWidgetItem(str(connectionCount))

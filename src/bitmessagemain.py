@@ -412,7 +412,13 @@ class receiveDataThread(threading.Thread):
 
     def sendpong(self):
         print 'Sending pong'
-        self.sock.sendall('\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
+        try:
+            self.sock.sendall('\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
+        except Exception, err:
+            #if not 'Bad file descriptor' in err:
+            shared.printLock.acquire()
+            sys.stderr.write('sock.sendall error: %s\n' % err)
+            shared.printLock.release()
 
     def recverack(self):
         print 'verack received'
@@ -501,7 +507,13 @@ class receiveDataThread(threading.Thread):
         shared.printLock.acquire()
         print 'Sending huge inv message with', numberOfObjects, 'objects to just this one peer'
         shared.printLock.release()
-        self.sock.sendall(headerData + payload)
+        try:
+            self.sock.sendall(headerData + payload)
+        except Exception, err:
+            #if not 'Bad file descriptor' in err:
+            shared.printLock.acquire()
+            sys.stderr.write('sock.sendall error: %s\n' % err)
+            shared.printLock.release()
 
     #We have received a broadcast message
     def recbroadcast(self,data):
@@ -1519,7 +1531,7 @@ class receiveDataThread(threading.Thread):
         except Exception, err:
             #if not 'Bad file descriptor' in err:
             shared.printLock.acquire()
-            sys.stderr.write('sock.send error: %s\n' % err)
+            sys.stderr.write('sock.sendall error: %s\n' % err)
             shared.printLock.release()
 
     #We have received a getdata request from our peer
@@ -1553,44 +1565,39 @@ class receiveDataThread(threading.Thread):
 
     #Our peer has requested (in a getdata message) that we send an object.
     def sendData(self,objectType,payload):
+        headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
         if objectType == 'pubkey':
             shared.printLock.acquire()
             print 'sending pubkey'
             shared.printLock.release()
-            headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData += 'pubkey\x00\x00\x00\x00\x00\x00'
-            headerData += pack('>L',len(payload)) #payload length.
-            headerData += hashlib.sha512(payload).digest()[:4]
-            self.sock.sendall(headerData + payload)
         elif objectType == 'getpubkey' or objectType == 'pubkeyrequest':
             shared.printLock.acquire()
             print 'sending getpubkey'
             shared.printLock.release()
-            headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData += 'getpubkey\x00\x00\x00'
-            headerData += pack('>L',len(payload)) #payload length.
-            headerData += hashlib.sha512(payload).digest()[:4]
-            self.sock.sendall(headerData + payload)
         elif objectType == 'msg':
             shared.printLock.acquire()
             print 'sending msg'
             shared.printLock.release()
-            headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData += 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-            headerData += pack('>L',len(payload)) #payload length.
-            headerData += hashlib.sha512(payload).digest()[:4]
-            self.sock.sendall(headerData + payload)
         elif objectType == 'broadcast':
             shared.printLock.acquire()
             print 'sending broadcast'
             shared.printLock.release()
-            headerData = '\xe9\xbe\xb4\xd9' #magic bits, slighly different from Bitcoin's magic bits.
             headerData += 'broadcast\x00\x00\x00'
-            headerData += pack('>L',len(payload)) #payload length.
-            headerData += hashlib.sha512(payload).digest()[:4]
-            self.sock.sendall(headerData + payload)
         else:
             sys.stderr.write('Error: sendData has been asked to send a strange objectType: %s\n' % str(objectType))
+            return
+        headerData += pack('>L',len(payload)) #payload length.
+        headerData += hashlib.sha512(payload).digest()[:4]
+        try:
+            self.sock.sendall(headerData + payload)
+        except Exception, err:
+            #if not 'Bad file descriptor' in err:
+            shared.printLock.acquire()
+            sys.stderr.write('sock.sendall error: %s\n' % err)
+            shared.printLock.release()
 
     #Send an inv message with just one hash to all of our peers
     def broadcastinv(self,hash):
@@ -1893,12 +1900,17 @@ class receiveDataThread(threading.Thread):
         datatosend = datatosend + pack('>L',len(payload)) #payload length
         datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
         datatosend = datatosend + payload
-
-        if verbose >= 1:
+        try:
+            self.sock.sendall(datatosend)
+            if verbose >= 1:
+                shared.printLock.acquire()
+                print 'Sending addr with', numberOfAddressesInAddrMessage, 'entries.'
+                shared.printLock.release()
+        except Exception, err:
+            #if not 'Bad file descriptor' in err:
             shared.printLock.acquire()
-            print 'Sending addr with', numberOfAddressesInAddrMessage, 'entries.'
+            sys.stderr.write('sock.sendall error: %s\n' % err)
             shared.printLock.release()
-        self.sock.sendall(datatosend)
 
     #We have received a version message
     def recversion(self,data):
@@ -1960,14 +1972,26 @@ class receiveDataThread(threading.Thread):
         shared.printLock.acquire()
         print 'Sending version message'
         shared.printLock.release()
-        self.sock.sendall(assembleVersionMessage(self.HOST,self.PORT,self.streamNumber))
+        try:
+            self.sock.sendall(assembleVersionMessage(self.HOST,self.PORT,self.streamNumber))
+        except Exception, err:
+            #if not 'Bad file descriptor' in err:
+            shared.printLock.acquire()
+            sys.stderr.write('sock.sendall error: %s\n' % err)
+            shared.printLock.release()
 
     #Sends a verack message
     def sendverack(self):
         shared.printLock.acquire()
         print 'Sending verack'
         shared.printLock.release()
-        self.sock.sendall('\xE9\xBE\xB4\xD9\x76\x65\x72\x61\x63\x6B\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
+        try:
+            self.sock.sendall('\xE9\xBE\xB4\xD9\x76\x65\x72\x61\x63\x6B\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
+        except Exception, err:
+            #if not 'Bad file descriptor' in err:
+            shared.printLock.acquire()
+            sys.stderr.write('sock.sendall error: %s\n' % err)
+            shared.printLock.release()
                                                                                                              #cf  83  e1  35
         self.verackSent = True
         if self.verackReceived == True:
@@ -2013,7 +2037,13 @@ class sendDataThread(threading.Thread):
         shared.printLock.acquire()
         print 'Sending version packet: ', repr(datatosend)
         shared.printLock.release()
-        self.sock.sendall(datatosend)
+        try:
+            self.sock.sendall(datatosend)
+        except Exception, err:
+            #if not 'Bad file descriptor' in err:
+            shared.printLock.acquire()
+            sys.stderr.write('sock.sendall error: %s\n' % err)
+            shared.printLock.release()
         self.versionSent = 1
 
 
