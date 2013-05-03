@@ -21,6 +21,7 @@ from time import strftime, localtime, gmtime
 import time
 import os
 from pyelliptic.openssl import OpenSSL
+import pickle
 
 class MyForm(QtGui.QMainWindow):
     def __init__(self, parent=None):
@@ -1150,8 +1151,10 @@ class MyForm(QtGui.QMainWindow):
                 pass
 
             if shared.appdata != '' and self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked(): #If we are NOT using portable mode now but the user selected that we should...
-                shared.config.set('bitmessagesettings','movemessagstoprog','true') #Tells bitmessage to move the messages.dat file to the program directory the next time the program starts.
                 #Write the keys.dat file to disk in the new location
+                shared.sqlLock.acquire()
+                shared.sqlSubmitQueue.put('movemessagstoprog')
+                shared.sqlLock.release()
                 with open('keys.dat', 'wb') as configfile:
                     shared.config.write(configfile)
                 #Write the knownnodes.dat file to disk in the new location
@@ -1163,13 +1166,14 @@ class MyForm(QtGui.QMainWindow):
                 os.remove(shared.appdata + 'keys.dat')
                 os.remove(shared.appdata + 'knownnodes.dat')
                 shared.appdata = ''
-                QMessageBox.about(self, "Restart", "Bitmessage has moved most of your config files to the program directory but you must restart Bitmessage to move the last file (the file which holds messages).")
 
             if shared.appdata == '' and not self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked(): #If we ARE using portable mode now but the user selected that we shouldn't...
                 shared.appdata = shared.lookupAppdataFolder()
                 if not os.path.exists(shared.appdata):
                     os.makedirs(shared.appdata)
-                shared.config.set('bitmessagesettings','movemessagstoappdata','true') #Tells bitmessage to move the messages.dat file to the appdata directory the next time the program starts.
+                shared.sqlLock.acquire()
+                shared.sqlSubmitQueue.put('movemessagstoappdata')
+                shared.sqlLock.release()
                 #Write the keys.dat file to disk in the new location
                 with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                     shared.config.write(configfile)
@@ -1181,7 +1185,6 @@ class MyForm(QtGui.QMainWindow):
                 shared.knownNodesLock.release()
                 os.remove('keys.dat')
                 os.remove('knownnodes.dat')
-                QMessageBox.about(self, "Restart", "Bitmessage has moved most of your config files to the application data directory but you must restart Bitmessage to move the last file (the file which holds messages).")
 
 
     def click_radioButtonBlacklist(self):

@@ -300,7 +300,7 @@ class receiveDataThread(threading.Thread):
             print 'Could not delete', self.HOST, 'from shared.connectedHostsList.', err
         shared.UISignalQueue.put(('updateNetworkStatusTab','no data'))
         shared.printLock.acquire()
-        print 'The size of the shared.connectedHostsList is now:', len(shared.connectedHostsList)
+        print 'The size of the connectedHostsList is now:', len(shared.connectedHostsList)
         shared.printLock.release()
 
     def processData(self):
@@ -2425,8 +2425,29 @@ class sqlThread(threading.Thread):
             if item == 'commit':
                 self.conn.commit()
             elif item == 'exit':
+                self.conn.close()
                 print 'sqlThread exiting gracefully.'
                 return
+            elif item == 'movemessagstoprog':
+                shared.printLock.acquire()
+                print 'the sqlThread is moving the messages.dat file to the local program directory.'
+                shared.printLock.release()
+                self.conn.commit()
+                self.conn.close()
+                shutil.move(shared.lookupAppdataFolder()+'messages.dat','messages.dat')
+                self.conn = sqlite3.connect('messages.dat' )
+                self.conn.text_factory = str
+                self.cur = self.conn.cursor()
+            elif item == 'movemessagstoappdata':
+                shared.printLock.acquire()
+                print 'the sqlThread is moving the messages.dat file to the Appdata folder.'
+                shared.printLock.release()
+                self.conn.commit()
+                self.conn.close()
+                shutil.move('messages.dat',shared.lookupAppdataFolder()+'messages.dat')
+                self.conn = sqlite3.connect(shared.appdata + 'messages.dat' )
+                self.conn.text_factory = str
+                self.cur = self.conn.cursor()
             else:
                 parameters = shared.sqlSubmitQueue.get()
                 #print 'item', item
@@ -3710,17 +3731,17 @@ alreadyAttemptedConnectionsListLock = threading.Lock()
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack('>Q',random.randrange(1, 18446744073709551615))
 neededPubkeys = {}
 successfullyDecryptMessageTimings = [] #A list of the amounts of time it took to successfully decrypt msg messages
-#apiSignalQueue = Queue.Queue() #The singleAPI thread uses this queue to pass messages to a QT thread which can emit signals to do things like display a message in the UI.
 apiAddressGeneratorReturnQueue = Queue.Queue() #The address generator thread uses this queue to get information back to the API thread.
 alreadyAttemptedConnectionsListResetTime = int(time.time()) #used to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
 
 if useVeryEasyProofOfWorkForTesting:
-    shared.networkDefaultProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte / 16
-    shared.networkDefaultPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes / 7000
+    shared.networkDefaultProofOfWorkNonceTrialsPerByte = int(shared.networkDefaultProofOfWorkNonceTrialsPerByte / 16)
+    shared.networkDefaultPayloadLengthExtraBytes = int(shared.networkDefaultPayloadLengthExtraBytes / 7000)
 
 if __name__ == "__main__":
     signal.signal(signal.SIGINT, signal_handler)
     #signal.signal(signal.SIGINT, signal.SIG_DFL)
+
     # Check the Major version, the first element in the array
     if sqlite3.sqlite_version_info[0] < 3:
         print 'This program requires sqlite version 3 or higher because 2 and lower cannot store NULL values. I see version:', sqlite3.sqlite_version_info
@@ -3731,15 +3752,11 @@ if __name__ == "__main__":
     shared.config.read('keys.dat')
     try:
         shared.config.get('bitmessagesettings', 'settingsversion')
-        #settingsFileExistsInProgramDirectory = True
         print 'Loading config files from same directory as program'
         shared.appdata = ''
     except:
         #Could not load the keys.dat file in the program directory. Perhaps it is in the appdata directory.
         shared.appdata = shared.lookupAppdataFolder()
-        #if not os.path.exists(shared.appdata):
-        #    os.makedirs(shared.appdata)
-
         shared.config = ConfigParser.SafeConfigParser()
         shared.config.read(shared.appdata + 'keys.dat')
         try:
@@ -3794,29 +3811,6 @@ if __name__ == "__main__":
         shared.config.set('bitmessagesettings','messagesencrypted','false')
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
             shared.config.write(configfile)
-
-    #Let us now see if we should move the messages.dat file. There is an option in the settings to switch 'Portable Mode' on or off. Most of the files are moved instantly, but the messages.dat file cannot be moved while it is open. Now that it is not open we can move it now!
-    try:
-        shared.config.getboolean('bitmessagesettings', 'movemessagstoprog')
-        #If we have reached this point then we must move the messages.dat file from the appdata folder to the program folder
-        print 'Moving messages.dat from its old location in the application data folder to its new home along side the program.'
-        shutil.move(lookupAppdataFolder()+'messages.dat','messages.dat')
-        shared.config.remove_option('bitmessagesettings', 'movemessagstoprog')
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
-    except:
-        pass
-    try:
-        shared.config.getboolean('bitmessagesettings', 'movemessagstoappdata')
-        #If we have reached this point then we must move the messages.dat file from the appdata folder to the program folder
-        print 'Moving messages.dat from its old location next to the program to its new home in the application data folder.'
-        shutil.move('messages.dat',lookupAppdataFolder()+'messages.dat')
-        shared.config.remove_option('bitmessagesettings', 'movemessagstoappdata')
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
-    except:
-        pass
-
 
     try:
         #We shouldn't have to use the shared.knownNodesLock because this had better be the only thread accessing knownNodes right now.
