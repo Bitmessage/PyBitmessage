@@ -1,3 +1,58 @@
+pybitmessage (0.3.0-1) unstable; urgency=low
+
+  * Don't use pubkeys table
+    to send pubkeys to peers now that we maintain them
+    in the inventory table for 28 days anyway
+
+  * Display privacy warning when Broadcast is selected on Send tab
+
+  * Merge branch 'master' of github.com:Bitmessage/PyBitmessage
+
+  * Add .dat files to .gitignore
+
+  * First bit of code necessary for version 3 addresses
+
+  * Continued working on v3 addresses
+
+  * Implimented broadcast encryption (testing completed)
+
+  * Use sock.shutdown() before sock.close()
+
+  * Test socket.close change
+
+  * Add a simple printLock
+
+  * Added extra statements for troubleshooting
+
+  * set hard date for encrypted-broadcast switchover
+
+  * Truncate display of long messages to avoid freezing the UI
+
+  * Bump version number to 0.3.0
+
+  * Most daemon code done
+
+  * Continued daemon mode implementation
+
+  * More daemon related changes
+
+  * API-related changes
+
+  * Further deamon-related changes
+
+  * Use different data structure
+    to maintain the number of connections shown on the Network Status tab
+
+  * Better error handling around sock.sendall
+
+  * Support switching to and from portable mode without restarting
+
+  * Added API Function: getStatus
+
+  * Close application if not daemon and PyQt not found
+
+ -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Tue, 6 May 2013 12:06:00 +0100
+
 pybitmessage (0.2.8-1) unstable; urgency=low
 
   * Fixed Ubuntu & OS X issue:
