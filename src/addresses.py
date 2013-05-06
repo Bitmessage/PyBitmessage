@@ -2,6 +2,8 @@ import hashlib
 from struct import *
 from pyelliptic import arithmetic
 
+
+
 #There is another copy of this function in Bitmessagemain.py
 def convertIntToString(n):
     a = __builtins__.hex(n)
@@ -162,7 +164,7 @@ def decodeAddress(address):
     #print 'addressVersionNumber', addressVersionNumber
     #print 'bytesUsedByVersionNumber', bytesUsedByVersionNumber
 
-    if addressVersionNumber > 2:
+    if addressVersionNumber > 3:
         print 'cannot decode address version numbers this high'
         status = 'versiontoohigh'
         return status,0,0,0
@@ -176,7 +178,7 @@ def decodeAddress(address):
     status = 'success'
     if addressVersionNumber == 1:
         return status,addressVersionNumber,streamNumber,data[-24:-4]
-    elif addressVersionNumber == 2:
+    elif addressVersionNumber == 2 or addressVersionNumber == 3:
         if len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 19:
             return status,addressVersionNumber,streamNumber,'\x00'+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
         elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 20:

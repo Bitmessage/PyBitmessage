@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'newaddressdialog.ui'
 #
-# Created: Fri Jan 25 13:05:18 2013
+# Created: Tue Apr 30 12:21:14 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -169,7 +169,7 @@ class Ui_NewAddressDialog(object):
         self.radioButtonDeterministicAddress.setText(QtGui.QApplication.translate("NewAddressDialog", "Use a passpharase to make addresses", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBoxEighteenByteRipe.setText(QtGui.QApplication.translate("NewAddressDialog", "Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter", None, QtGui.QApplication.UnicodeUTF8))
         self.groupBoxDeterministic.setTitle(QtGui.QApplication.translate("NewAddressDialog", "Make deterministic addresses", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_9.setText(QtGui.QApplication.translate("NewAddressDialog", "Address version number: 2", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_9.setText(QtGui.QApplication.translate("NewAddressDialog", "Address version number: 3", None, QtGui.QApplication.UnicodeUTF8))
         self.label_8.setText(QtGui.QApplication.translate("NewAddressDialog", "In addition to your passphrase, you must remember these numbers:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_6.setText(QtGui.QApplication.translate("NewAddressDialog", "Passphrase", None, QtGui.QApplication.UnicodeUTF8))
         self.label_11.setText(QtGui.QApplication.translate("NewAddressDialog", "Number of addresses to make based on your passphrase:", None, QtGui.QApplication.UnicodeUTF8))
