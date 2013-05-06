@@ -34,7 +34,7 @@
    <item row="2" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>Mail received to a pseudo-mailing-list address will be automatically broadcast to subscribers (and thus will be unencrypted and public).</string>
+      <string>Mail received to a pseudo-mailing-list address will be automatically broadcast to subscribers (and thus will be public).</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
