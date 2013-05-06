@@ -2214,7 +2214,7 @@ def calculateTestnetAddressFromPubkey(pubkey):
 def signal_handler(signal, frame):
     if shared.safeConfigGetBoolean('bitmessagesettings','daemon'):
         shared.doCleanShutdown()
-        sys.exit()
+        sys.exit(0)
     else:
         print 'Unfortunately you cannot use Ctrl+C when running the UI because the UI captures the signal.'
 
