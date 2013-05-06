@@ -2322,7 +2322,7 @@ class sqlThread(threading.Thread):
                 shared.printLock.release()
             else:
                 sys.stderr.write('ERROR trying to create database file (message.dat). Error message: %s\n' % str(err))
-                sys.exit()
+                os._exit(0)
 
         #People running earlier versions of PyBitmessage do not have the usedpersonally field in their pubkeys table. Let's add it.
         if shared.config.getint('bitmessagesettings','settingsversion') == 2:
@@ -2402,7 +2402,7 @@ class sqlThread(threading.Thread):
             if transmitdata == '':
                 sys.stderr.write('Problem: The version of SQLite you have cannot store Null values. Please download and install the latest revision of your version of Python (for example, the latest Python 2.7 revision) and try again.\n')
                 sys.stderr.write('PyBitmessage will now exist very abruptly. You may now see threading errors related to this abrupt exit but the problem you need to solve is related to SQLite.\n\n')
-                sys.exit()
+                os._exit(0)
         except Exception, err:
             print err
 
@@ -3769,7 +3769,7 @@ if __name__ == "__main__":
     # Check the Major version, the first element in the array
     if sqlite3.sqlite_version_info[0] < 3:
         print 'This program requires sqlite version 3 or higher because 2 and lower cannot store NULL values. I see version:', sqlite3.sqlite_version_info
-        sys.exit()
+        os._exit(0)
 
     #First try to load the config file (the keys.dat file) from the program directory
     shared.config = ConfigParser.SafeConfigParser()
