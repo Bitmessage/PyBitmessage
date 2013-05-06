@@ -14,6 +14,7 @@ install:
 	mkdir -m 755 -p /usr/share/applications/$(APP)/images
 	mkdir -m 755 -p /usr/share/applications/$(APP)/pyelliptic
 	mkdir -m 755 -p /usr/share/applications/$(APP)/socks
+	mkdir -m 755 -p /usr/share/applications/$(APP)/bitmessageqt
 	mkdir -m 755 -p /usr/share/pixmaps
 	mkdir -m 755 -p /usr/share/icons
 	mkdir -m 755 -p /usr/share/icons/hicolor
@@ -30,6 +31,7 @@ install:
 	install -m 644 src/images/*.ico /usr/share/applications/$(APP)/images
 	install -m 644 src/pyelliptic/*.py /usr/share/applications/$(APP)/pyelliptic
 	install -m 644 src/socks/*.py /usr/share/applications/$(APP)/socks
+	install -m 644 src/bitmessageqt/*.py /usr/share/applications/$(APP)/bitmessageqt
 	install -m 755 debian/pybm /usr/bin
 
 	install -m 644 desktop/$(APP).desktop /usr/share/applications/$(APP)/$(APP).desktop
