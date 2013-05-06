@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Fri Mar 22 15:43:34 2013
+# Created: Tue Apr 30 12:34:58 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -17,7 +17,7 @@ except AttributeError:
 class Ui_settingsDialog(object):
     def setupUi(self, settingsDialog):
         settingsDialog.setObjectName(_fromUtf8("settingsDialog"))
-        settingsDialog.resize(476, 340)
+        settingsDialog.resize(445, 343)
         self.gridLayout = QtGui.QGridLayout(settingsDialog)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.buttonBox = QtGui.QDialogButtonBox(settingsDialog)
@@ -125,6 +125,53 @@ class Ui_settingsDialog(object):
         spacerItem2 = QtGui.QSpacerItem(20, 70, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.gridLayout_4.addItem(spacerItem2, 2, 0, 1, 1)
         self.tabWidgetSettings.addTab(self.tabNetworkSettings, _fromUtf8(""))
+        self.tab = QtGui.QWidget()
+        self.tab.setObjectName(_fromUtf8("tab"))
+        self.gridLayout_6 = QtGui.QGridLayout(self.tab)
+        self.gridLayout_6.setObjectName(_fromUtf8("gridLayout_6"))
+        self.label_8 = QtGui.QLabel(self.tab)
+        self.label_8.setWordWrap(True)
+        self.label_8.setObjectName(_fromUtf8("label_8"))
+        self.gridLayout_6.addWidget(self.label_8, 0, 0, 1, 3)
+        spacerItem3 = QtGui.QSpacerItem(203, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.gridLayout_6.addItem(spacerItem3, 1, 0, 1, 1)
+        self.label_9 = QtGui.QLabel(self.tab)
+        self.label_9.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_9.setObjectName(_fromUtf8("label_9"))
+        self.gridLayout_6.addWidget(self.label_9, 1, 1, 1, 1)
+        self.lineEditTotalDifficulty = QtGui.QLineEdit(self.tab)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEditTotalDifficulty.sizePolicy().hasHeightForWidth())
+        self.lineEditTotalDifficulty.setSizePolicy(sizePolicy)
+        self.lineEditTotalDifficulty.setMaximumSize(QtCore.QSize(70, 16777215))
+        self.lineEditTotalDifficulty.setObjectName(_fromUtf8("lineEditTotalDifficulty"))
+        self.gridLayout_6.addWidget(self.lineEditTotalDifficulty, 1, 2, 1, 1)
+        spacerItem4 = QtGui.QSpacerItem(203, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.gridLayout_6.addItem(spacerItem4, 3, 0, 1, 1)
+        self.label_11 = QtGui.QLabel(self.tab)
+        self.label_11.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_11.setObjectName(_fromUtf8("label_11"))
+        self.gridLayout_6.addWidget(self.label_11, 3, 1, 1, 1)
+        self.lineEditSmallMessageDifficulty = QtGui.QLineEdit(self.tab)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEditSmallMessageDifficulty.sizePolicy().hasHeightForWidth())
+        self.lineEditSmallMessageDifficulty.setSizePolicy(sizePolicy)
+        self.lineEditSmallMessageDifficulty.setMaximumSize(QtCore.QSize(70, 16777215))
+        self.lineEditSmallMessageDifficulty.setObjectName(_fromUtf8("lineEditSmallMessageDifficulty"))
+        self.gridLayout_6.addWidget(self.lineEditSmallMessageDifficulty, 3, 2, 1, 1)
+        self.label_12 = QtGui.QLabel(self.tab)
+        self.label_12.setWordWrap(True)
+        self.label_12.setObjectName(_fromUtf8("label_12"))
+        self.gridLayout_6.addWidget(self.label_12, 4, 0, 1, 3)
+        self.label_10 = QtGui.QLabel(self.tab)
+        self.label_10.setWordWrap(True)
+        self.label_10.setObjectName(_fromUtf8("label_10"))
+        self.gridLayout_6.addWidget(self.label_10, 2, 0, 1, 3)
+        self.tabWidgetSettings.addTab(self.tab, _fromUtf8(""))
         self.gridLayout.addWidget(self.tabWidgetSettings, 0, 0, 1, 1)
 
         self.retranslateUi(settingsDialog)
@@ -169,4 +216,10 @@ class Ui_settingsDialog(object):
         self.label_5.setText(QtGui.QApplication.translate("settingsDialog", "Username:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_6.setText(QtGui.QApplication.translate("settingsDialog", "Pass:", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabNetworkSettings), QtGui.QApplication.translate("settingsDialog", "Network Settings", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_8.setText(QtGui.QApplication.translate("settingsDialog", "When someone sends you a message, their computer must first complete some work. The difficulty of this work, by default, is 1. You may raise this default for new addresses you create by changing the values here. Any new addresses you create will require senders to meet the higher difficulty. There is one exception: if you add a friend or acquaintance to your address book, Bitmessage will automatically notify them when you next send a message that they need only complete the minimum amount of work: difficulty 1. ", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_9.setText(QtGui.QApplication.translate("settingsDialog", "Total difficulty:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_11.setText(QtGui.QApplication.translate("settingsDialog", "Small message difficulty:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_12.setText(QtGui.QApplication.translate("settingsDialog", "The \'Small message difficulty\' mostly only affects the difficulty of sending small messages. Doubling this value makes it almost twice as difficult to send a small message but doesn\'t really affect large messages.", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_10.setText(QtGui.QApplication.translate("settingsDialog", "The \'Total difficulty\' affects the absolute amount of work the sender must complete. Doubling this value doubles the amount of work.", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab), QtGui.QApplication.translate("settingsDialog", "Demanded difficulty", None, QtGui.QApplication.UnicodeUTF8))
 

@@ -3,6 +3,7 @@
 
 import xmlrpclib
 import json
+import time
 
 api = xmlrpclib.ServerProxy("http://bradley:password@localhost:8442/")
 
@@ -30,7 +31,7 @@ print 'Uncomment the next two lines to create a new random address.'
 
 print 'Uncomment these next four lines to create new deterministic addresses.'
 #passphrase = 'asdfasdfqwer'.encode('base64')
-#jsonDeterministicAddresses = api.createDeterministicAddresses(passphrase, 2, 2, 1, False)
+#jsonDeterministicAddresses = api.createDeterministicAddresses(passphrase, 2, 3, 1, False)
 #print jsonDeterministicAddresses
 #print json.loads(jsonDeterministicAddresses)
 
@@ -45,12 +46,16 @@ print 'Uncomment this next line to decode the actual message data in the first m
 print 'Uncomment this next line in the code to delete a message'
 #print api.trashMessage('584e5826947242a82cb883c8b39ac4a14959f14c228c0fbe6399f73e2cba5b59')
 
-"""print 'Now let\'s send a message. The example addresses are invalid. You will have to put your own in.'
-subject = 'subject!'.encode('base64')
-message = 'Hello, this is the message'.encode('base64')
-print api.sendMessage('BM-oqmocYzqK74y3qSRi8c3YqyenyEKiMyLB', 'BM-omzGU4MtzSUCQhMNm5kPR6UNrJ4Q4zeFe', subject,message)"""
+print 'Uncomment these lines to send a message. The example addresses are invalid; you will have to put your own in.'
+#subject = 'subject!'.encode('base64')
+#message = 'Hello, this is the message'.encode('base64')
+#ackData = api.sendMessage('BM-Gtsm7PUabZecs3qTeXbNPmqx3xtHCSXF', 'BM-2DCutnUZG16WiW3mdAm66jJUSCUv88xLgS', subject,message)
+#print 'The ackData is:', ackData
+#while True:
+#    time.sleep(2)
+#    print 'Current status:', api.getStatus(ackData)
 
-"""print 'Now let\'s send a broadcast. The example address is invalid; you will have to put your own in.'
-subject = 'subject within broadcast'.encode('base64')
-message = 'Hello, this is the message within a broadcast.'.encode('base64')
-print api.sendBroadcast('BM-onf6V1RELPgeNN6xw9yhpAiNiRexSRD4e', subject,message)"""
+print 'Uncomment these lines to send a broadcast. The example address is invalid; you will have to put your own in.'
+#subject = 'subject within broadcast'.encode('base64')
+#message = 'Hello, this is the message within a broadcast.'.encode('base64')
+#print api.sendBroadcast('BM-onf6V1RELPgeNN6xw9yhpAiNiRexSRD4e', subject,message)

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'regenerateaddresses.ui'
 #
-# Created: Thu Jan 24 15:52:24 2013
+# Created: Tue Apr 30 12:21:16 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -106,7 +106,7 @@ class Ui_regenerateAddressesDialog(object):
         self.label_6.setText(QtGui.QApplication.translate("regenerateAddressesDialog", "Passphrase", None, QtGui.QApplication.UnicodeUTF8))
         self.label_11.setText(QtGui.QApplication.translate("regenerateAddressesDialog", "Number of addresses to make based on your passphrase:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("regenerateAddressesDialog", "Address version Number:", None, QtGui.QApplication.UnicodeUTF8))
-        self.lineEditAddressVersionNumber.setText(QtGui.QApplication.translate("regenerateAddressesDialog", "2", None, QtGui.QApplication.UnicodeUTF8))
+        self.lineEditAddressVersionNumber.setText(QtGui.QApplication.translate("regenerateAddressesDialog", "3", None, QtGui.QApplication.UnicodeUTF8))
         self.label_3.setText(QtGui.QApplication.translate("regenerateAddressesDialog", "Stream number:", None, QtGui.QApplication.UnicodeUTF8))
         self.lineEditStreamNumber.setText(QtGui.QApplication.translate("regenerateAddressesDialog", "1", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBoxEighteenByteRipe.setText(QtGui.QApplication.translate("regenerateAddressesDialog", "Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter", None, QtGui.QApplication.UnicodeUTF8))

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'specialaddressbehavior.ui'
 #
-# Created: Fri Mar 29 15:02:24 2013
+# Created: Fri Apr 26 17:43:31 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -59,6 +59,6 @@ class Ui_SpecialAddressBehaviorDialog(object):
         SpecialAddressBehaviorDialog.setWindowTitle(QtGui.QApplication.translate("SpecialAddressBehaviorDialog", "Special Address Behavior", None, QtGui.QApplication.UnicodeUTF8))
         self.radioButtonBehaveNormalAddress.setText(QtGui.QApplication.translate("SpecialAddressBehaviorDialog", "Behave as a normal address", None, QtGui.QApplication.UnicodeUTF8))
         self.radioButtonBehaviorMailingList.setText(QtGui.QApplication.translate("SpecialAddressBehaviorDialog", "Behave as a pseudo-mailing-list address", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("SpecialAddressBehaviorDialog", "Mail received to a pseudo-mailing-list address will be automatically broadcast to subscribers (and thus will be unencrypted and public).", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("SpecialAddressBehaviorDialog", "Mail received to a pseudo-mailing-list address will be automatically broadcast to subscribers (and thus will be public).", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("SpecialAddressBehaviorDialog", "Name of the pseudo-mailing-list:", None, QtGui.QApplication.UnicodeUTF8))
 
