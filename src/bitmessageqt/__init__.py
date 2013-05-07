@@ -508,6 +508,11 @@ class MyForm(QtGui.QMainWindow):
         self.actionStatus = QtGui.QAction('Not Connected',m,checkable=False)
         m.addAction(self.actionStatus)
 
+        # separator
+        actionSeparator = QtGui.QAction('',m,checkable=False)
+        actionSeparator.setSeparator(True)
+        m.addAction(actionSeparator)
+
         # show bitmessage
         self.actionShow = QtGui.QAction('Show Bitmessage',m,checkable=True)
         self.actionShow.setChecked(True)
@@ -529,6 +534,12 @@ class MyForm(QtGui.QMainWindow):
         actionAddressBook.triggered.connect(self.appIndicatorAddressBook)
         m.addAction(actionAddressBook)
 
+        # separator
+        actionSeparator = QtGui.QAction('',m,checkable=False)
+        actionSeparator.setSeparator(True)
+        m.addAction(actionSeparator)
+
+        # Quit
         m.addAction("Quit", self.close)
         app.tray.setContextMenu(m)
         app.tray.show()
