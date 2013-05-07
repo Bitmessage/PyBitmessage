@@ -485,20 +485,20 @@ class MyForm(QtGui.QMainWindow):
             self.show()
             self.setWindowState(self.windowState() & QtCore.Qt.WindowMaximized)
 
-    # TODO
+    # Show the program window and select send tab
     def appIndicatorSend(self):
-        print 'Send'
         self.appIndicatorShow()
+        self.ui.tabWidget.setCurrentIndex(1)
 
-    # TODO
+    # Show the program window and select subscriptions tab
     def appIndicatorSubscribe(self):
-        print 'Subscribe'
         self.appIndicatorShow()
+        self.ui.tabWidget.setCurrentIndex(4)
 
-    # TODO
+    # Show the program window and select the address book tab
     def appIndicatorAddressBook(self):
-        print 'Address Book'
         self.appIndicatorShow()
+        self.ui.tabWidget.setCurrentIndex(5)
 
     # create application indicator
     def createAppIndicator(self,app):
