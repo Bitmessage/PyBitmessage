@@ -460,6 +460,79 @@ class MyForm(QtGui.QMainWindow):
         #QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
         #QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
 
+    # an appindicator action which indicates the connection status
+    actionStatus = None
+
+    # an appindicator action which shows of hides the program window
+    actionShow = None
+
+    # show the application window
+    def appIndicatorShow(self):
+        if self.actionShow == None:
+            return
+        self.actionShow.setChecked(True)
+        self.show()
+        self.setWindowState(self.windowState() & QtCore.Qt.WindowMaximized)
+
+    # application indicator show or hide
+    def appIndicatorShowBitmessage(self):
+        if self.actionShow == None:
+            return
+        if not self.actionShow.isChecked():
+            self.hide()
+            self.setWindowState(self.windowState() & QtCore.Qt.WindowMinimized)
+        else:
+            self.show()
+            self.setWindowState(self.windowState() & QtCore.Qt.WindowMaximized)
+
+    # TODO
+    def appIndicatorSend(self):
+        print 'Send'
+        self.appIndicatorShow()
+
+    # TODO
+    def appIndicatorSubscribe(self):
+        print 'Subscribe'
+        self.appIndicatorShow()
+
+    # TODO
+    def appIndicatorAddressBook(self):
+        print 'Address Book'
+        self.appIndicatorShow()
+
+    # create application indicator
+    def createAppIndicator(self,app):
+        app.tray = QSystemTrayIcon(QtGui.QIcon("images/can-icon-24px.png"), app)
+        m = QMenu()
+
+        self.actionStatus = QtGui.QAction('Not Connected',m,checkable=False)
+        m.addAction(self.actionStatus)
+
+        # show bitmessage
+        self.actionShow = QtGui.QAction('Show Bitmessage',m,checkable=True)
+        self.actionShow.setChecked(True)
+        self.actionShow.triggered.connect(self.appIndicatorShowBitmessage)
+        m.addAction(self.actionShow)
+
+        # Send
+        actionSend = QtGui.QAction('Send',m,checkable=False)
+        actionSend.triggered.connect(self.appIndicatorSend)
+        m.addAction(actionSend)
+
+        # Subscribe
+        actionSubscribe = QtGui.QAction('Subscribe',m,checkable=False)
+        actionSubscribe.triggered.connect(self.appIndicatorSubscribe)
+        m.addAction(actionSubscribe)
+
+        # Address book
+        actionAddressBook = QtGui.QAction('Address Book',m,checkable=False)
+        actionAddressBook.triggered.connect(self.appIndicatorAddressBook)
+        m.addAction(actionAddressBook)
+
+        m.addAction("Quit", self.close)
+        app.tray.setContextMenu(m)
+        app.tray.show()
+
     def tableWidgetInboxKeyPressEvent(self,event):
         if event.key() == QtCore.Qt.Key_Delete:
             self.on_action_InboxTrash()
@@ -601,16 +674,22 @@ class MyForm(QtGui.QMainWindow):
         if color == 'red':
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/redicon.png"))
             shared.statusIconColor = 'red'
+            if self.actionStatus != None:
+                self.actionStatus.setText('Not Connected')
         if color == 'yellow':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
             shared.statusIconColor = 'yellow'
+            if self.actionStatus != None:
+                self.actionStatus.setText('Connection Ok')
         if color == 'green':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
+            if self.actionStatus != None:
+                self.actionStatus.setText('Connection Good')
 
     def updateSentItemStatusByHash(self,toRipe,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -1944,6 +2023,8 @@ class UISignaler(QThread):
             else:
                 sys.stderr.write('Command sent to UISignaler not recognized: %s\n' % command)
 
+
+
 def run():
     app = QtGui.QApplication(sys.argv)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
@@ -1957,4 +2038,6 @@ def run():
         #self.hide()
         if 'win32' in sys.platform or 'win64' in sys.platform:
             myapp.setWindowFlags(Qt.ToolTip)
+    myapp.createAppIndicator(app)
+
     sys.exit(app.exec_())
