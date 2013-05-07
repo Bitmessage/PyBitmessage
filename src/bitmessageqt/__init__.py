@@ -1315,7 +1315,9 @@ class MyForm(QtGui.QMainWindow):
         self.trayIcon.hide()
         self.statusBar().showMessage('All done. Closing user interface...')
         event.accept()
+        shared.printLock.acquire()
         print 'Done. (passed event.accept())'
+        shared.printLock.release()
         os._exit(0)
 
     def on_action_InboxMessageForceHtml(self):
