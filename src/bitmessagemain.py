@@ -210,20 +210,20 @@ class singleListener(threading.Thread):
                 print 'incoming connection is from a host in shared.connectedHostsList (we are already connected to it). Ignoring it.'
                 a.close()
                 a,(HOST,PORT) = sock.accept()"""
-            rd = receiveDataThread()
-            rd.daemon = True # close the main program even if there are threads left
-            #self.emit(SIGNAL("passObjectThrough(PyQt_PyObject)"),rd)
             objectsOfWhichThisRemoteNodeIsAlreadyAware = {}
-            rd.setup(a,HOST,PORT,-1,objectsOfWhichThisRemoteNodeIsAlreadyAware)
-            shared.printLock.acquire()
-            print self, 'connected to', HOST,'during INCOMING request.'
-            shared.printLock.release()
-            rd.start()
 
             sd = sendDataThread()
             sd.setup(a,HOST,PORT,-1,objectsOfWhichThisRemoteNodeIsAlreadyAware)
             sd.start()
 
+            rd = receiveDataThread()
+            rd.daemon = True # close the main program even if there are threads left
+            rd.setup(a,HOST,PORT,-1,objectsOfWhichThisRemoteNodeIsAlreadyAware)
+            rd.start()
+
+            shared.printLock.acquire()
+            print self, 'connected to', HOST,'during INCOMING request.'
+            shared.printLock.release()
 
 #This thread is created either by the synSenderThread(for outgoing connections) or the singleListenerThread(for incoming connectiosn).
 class receiveDataThread(threading.Thread):
