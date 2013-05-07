@@ -297,7 +297,9 @@ class receiveDataThread(threading.Thread):
         try:
             del shared.connectedHostsList[self.HOST]
         except Exception, err:
+            shared.printLock.acquire()
             print 'Could not delete', self.HOST, 'from shared.connectedHostsList.', err
+            shared.printLock.release()
         shared.UISignalQueue.put(('updateNetworkStatusTab','no data'))
         shared.printLock.acquire()
         print 'The size of the connectedHostsList is now:', len(shared.connectedHostsList)
@@ -2045,7 +2047,6 @@ class sendDataThread(threading.Thread):
             sys.stderr.write('sock.sendall error: %s\n' % err)
             shared.printLock.release()
         self.versionSent = 1
-
 
     def run(self):
         while True:
