@@ -2223,8 +2223,11 @@ def signal_handler(signal, frame):
 
 def connectToStream(streamNumber):
     selfInitiatedConnections[streamNumber] = {}
-
-    for i in range(32):
+    if sys.platform[0:3] == 'win':
+        maximumNumberOfHalfOpenConnections = 9
+    else:
+        maximumNumberOfHalfOpenConnections = 32
+    for i in range(maximumNumberOfHalfOpenConnections):
         a = outgoingSynSender()
         a.setup(streamNumber)
         a.start()
