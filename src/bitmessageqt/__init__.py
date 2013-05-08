@@ -424,10 +424,6 @@ class MyForm(QtGui.QMainWindow):
         self.numberOfBroadcastsProcessed = 0
         self.numberOfPubkeysProcessed = 0
 
-#Below this point, it would be good if all of the necessary global data structures were initialized.
-
-        self.rerenderComboBoxSendFrom()
-
         self.UISignalThread = UISignaler()
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
@@ -442,23 +438,107 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
         self.UISignalThread.start()
 
-        #self.connectToStream(1)
+#Below this point, it would be good if all of the necessary global data structures were initialized.
 
-        #self.singleListenerThread = singleListener()
-        #self.singleListenerThread.start()
-        #QtCore.QObject.connect(self.singleListenerThread, QtCore.SIGNAL("passObjectThrough(PyQt_PyObject)"), self.connectObjectToSignals)
+        self.rerenderComboBoxSendFrom()
 
+    #Show or hide the application window after clicking an item within the tray icon or, on Windows, the try icon itself.
+    def appIndicatorShowOrHideWindow(self):
+        if not self.actionShow.isChecked():
+            self.hide()
+        else:
+            if sys.platform[0:3] == 'win':
+                self.setWindowFlags(Qt.Window)
+                self.show()
+                self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+                self.activateWindow()
+            else:
+                self.show()
+                self.setWindowState(self.windowState() & QtCore.Qt.WindowMaximized)
+            #Here is what I believe might be required for darwin:
+                #self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+                #self.activateWindow()
 
-        #self.singleCleanerThread = singleCleaner()
-        #self.singleCleanerThread.start()
-        #QtCore.QObject.connect(self.singleCleanerThread, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
-        #QtCore.QObject.connect(self.singleCleanerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+    """# application indicator show or hide
+    def appIndicatorShowBitmessage(self):
+        #if self.actionShow == None:
+        #    return
+        print self.actionShow.isChecked()
+        if not self.actionShow.isChecked():
+            self.hide()
+            #self.setWindowState(self.windowState() & QtCore.Qt.WindowMinimized)
+        else:
+            self.appIndicatorShowOrHideWindow()"""
 
-        #self.workerThread = singleWorker()
-        #self.workerThread.start()
-        #QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
-        #QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
-        #QtCore.QObject.connect(self.workerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
+    # Show the program window and select send tab
+    def appIndicatorSend(self):
+        self.actionShow.setChecked(True)
+        self.appIndicatorShowOrHideWindow()
+        self.ui.tabWidget.setCurrentIndex(1)
+
+    # Show the program window and select subscriptions tab
+    def appIndicatorSubscribe(self):
+        self.actionShow.setChecked(True)
+        self.appIndicatorShowOrHideWindow()
+        self.ui.tabWidget.setCurrentIndex(4)
+
+    # Show the program window and select the address book tab
+    def appIndicatorAddressBook(self):
+        self.actionShow.setChecked(True)
+        self.appIndicatorShowOrHideWindow()
+        self.ui.tabWidget.setCurrentIndex(5)
+
+    # create application indicator
+    def createAppIndicator(self,app):
+        self.tray = QSystemTrayIcon(QtGui.QIcon("images/can-icon-24px.png"), app)
+        if sys.platform[0:3] == 'win':
+            traySignal = "activated(QSystemTrayIcon::ActivationReason)"
+            QtCore.QObject.connect(self.tray, QtCore.SIGNAL(traySignal), self.__icon_activated)
+        m = QMenu()
+
+        self.actionStatus = QtGui.QAction('Not Connected',m,checkable=False)
+        m.addAction(self.actionStatus)
+
+        # separator
+        actionSeparator = QtGui.QAction('',m,checkable=False)
+        actionSeparator.setSeparator(True)
+        m.addAction(actionSeparator)
+
+        # show bitmessage
+        self.actionShow = QtGui.QAction('Show Bitmessage',m,checkable=True)
+        self.actionShow.setChecked(True)
+        self.actionShow.triggered.connect(self.appIndicatorShowOrHideWindow)
+        if not sys.platform[0:3] == 'win':
+            m.addAction(self.actionShow)
+
+        # Send
+        actionSend = QtGui.QAction('Send',m,checkable=False)
+        actionSend.triggered.connect(self.appIndicatorSend)
+        m.addAction(actionSend)
+
+        # Subscribe
+        actionSubscribe = QtGui.QAction('Subscribe',m,checkable=False)
+        actionSubscribe.triggered.connect(self.appIndicatorSubscribe)
+        m.addAction(actionSubscribe)
+
+        # Address book
+        actionAddressBook = QtGui.QAction('Address Book',m,checkable=False)
+        actionAddressBook.triggered.connect(self.appIndicatorAddressBook)
+        m.addAction(actionAddressBook)
+
+        # separator
+        actionSeparator = QtGui.QAction('',m,checkable=False)
+        actionSeparator.setSeparator(True)
+        m.addAction(actionSeparator)
+
+        # Quit
+        m.addAction("Quit", self.close)
+        self.tray.setContextMenu(m)
+        self.tray.show()
+        if shared.config.getboolean('bitmessagesettings', 'startintray'):
+            self.hide()
+            #myapp.trayIcon.show()#This option seems to have been obsoleted by https://github.com/Bitmessage/PyBitmessage/pull/133/files
+            self.actionShow.setChecked(False)
 
     def tableWidgetInboxKeyPressEvent(self,event):
         if event.key() == QtCore.Qt.Key_Delete:
@@ -507,11 +587,15 @@ class MyForm(QtGui.QMainWindow):
             os.startfile(shared.appdata + 'keys.dat')
 
     def changeEvent(self, event):
+        if event.type() == QtCore.QEvent.WindowStateChange:
+            if self.windowState() & QtCore.Qt.WindowMinimized:
+                self.actionShow.setChecked(False)
         if shared.config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
             if event.type() == QtCore.QEvent.WindowStateChange:
                 if self.windowState() & QtCore.Qt.WindowMinimized:
                     self.hide()
-                    self.trayIcon.show()
+
+                    #self.trayIcon.show() #This may have been obsoleted by https://github.com/Bitmessage/PyBitmessage/issues/135
                     #self.hidden = True
                     if 'win32' in sys.platform or 'win64' in sys.platform:
                         self.setWindowFlags(Qt.ToolTip)
@@ -522,7 +606,10 @@ class MyForm(QtGui.QMainWindow):
 
     def __icon_activated(self, reason):
         if reason == QtGui.QSystemTrayIcon.Trigger:
-            if 'linux' in sys.platform:
+            self.actionShow.setChecked(not self.actionShow.isChecked())
+            self.appIndicatorShowOrHideWindow()
+
+            """if 'linux' in sys.platform:
                 self.trayIcon.hide()
                 self.setWindowFlags(Qt.Window)
                 self.show()
@@ -537,7 +624,7 @@ class MyForm(QtGui.QMainWindow):
                 #self.setWindowFlags(Qt.Window)
                 #self.show()
                 self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-                self.activateWindow()
+                self.activateWindow()"""
 
     def incrementNumberOfMessagesProcessed(self):
         self.numberOfMessagesProcessed += 1
@@ -601,16 +688,22 @@ class MyForm(QtGui.QMainWindow):
         if color == 'red':
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/redicon.png"))
             shared.statusIconColor = 'red'
+            #if self.actionStatus != None:
+            self.actionStatus.setText('Not Connected')
         if color == 'yellow':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
             shared.statusIconColor = 'yellow'
+            #if self.actionStatus != None:
+            self.actionStatus.setText('Connected')
         if color == 'green':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
+            #if self.actionStatus != None:
+            self.actionStatus.setText('Connected')
 
     def updateSentItemStatusByHash(self,toRipe,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -1312,10 +1405,13 @@ class MyForm(QtGui.QMainWindow):
         else:
             event.ignore()'''
         shared.doCleanShutdown()
-        self.trayIcon.hide()
+        #self.trayIcon.hide()
+        self.tray.hide()
         self.statusBar().showMessage('All done. Closing user interface...')
         event.accept()
+        shared.printLock.acquire()
         print 'Done. (passed event.accept())'
+        shared.printLock.release()
         os._exit(0)
 
     def on_action_InboxMessageForceHtml(self):
@@ -1944,17 +2040,13 @@ class UISignaler(QThread):
             else:
                 sys.stderr.write('Command sent to UISignaler not recognized: %s\n' % command)
 
+
 def run():
     app = QtGui.QApplication(sys.argv)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
     myapp.show()
-    if shared.config.getboolean('bitmessagesettings', 'startintray'):
-        myapp.hide()
-        myapp.trayIcon.show()
-        #self.hidden = True
-        #self.setWindowState(self.windowState() & QtCore.Qt.WindowMinimized)
-        #self.hide()
-        if 'win32' in sys.platform or 'win64' in sys.platform:
-            myapp.setWindowFlags(Qt.ToolTip)
+    if sys.platform[0:3] == 'win':
+        myapp.setWindowFlags(Qt.ToolTip)
+    myapp.createAppIndicator(app)
     sys.exit(app.exec_())

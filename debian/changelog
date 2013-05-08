@@ -1,3 +1,63 @@
+pybitmessage (0.3.0-1) unstable; urgency=low
+
+  * Added new API function: getStatus
+
+  * Added error-handling around all sock.sendall() functions
+    in the receiveData thread so that if there is a problem
+    sending data, the threads will close gracefully
+
+  * Abandoned and removed the connectionsCount data structure;
+    use the connectedHostsList instead because it has proved to be
+    more accurate than trying to maintain the connectionsCount
+
+  * Added daemon mode. All UI code moved into a module and many
+    shared objects moved into shared.py
+
+  * Truncate display of very long messages to avoid freezing the UI
+
+  * Added encrypted broadcasts for v3 addresses or v2 addresses
+    after 2013-05-28 10:00 UTC
+
+  * No longer self.sock.close() from within receiveDataThreads,
+    let the sendDataThreads do it
+
+  * Swapped out the v2 announcements subscription address for a v3
+    announcements subscription address
+
+  * Vacuum the messages.dat file once a month: will greatly reduce the file size
+
+  * Added a settings table in message.dat
+
+  * Implemented v3 addresses:
+    pubkey messages must now include two var_ints: nonce_trials_per_byte
+    and extra_bytes, and also be signed. When sending a message to a v3
+    address, the sender must use these values in calculating its POW or
+    else the message will not be accepted by the receiver.
+
+  * Display a privacy warning when selecting 'Send Broadcast from this address'
+
+  * Added gitignore file
+
+  * Added code in preparation for a switch from 32-bit time to 64-bit time.
+    Nodes will now advertise themselves as using protocol version 2.
+
+  * Don't necessarily delete entries from the inventory after 2.5 days;
+    leave pubkeys there for 28 days so that we don't process the same ones
+    many times throughout a month. This was causing the 'pubkeys processed'
+    indicator on the 'Network Status' tab to not accurately reflect the
+    number of truly new addresses on the network.
+
+  * Use 32 threads for outgoing connections in order to connect quickly
+
+  * Fix typo when calling os.environ in the sys.platform=='darwin' case
+
+  * Allow the cancelling of a message which is in the process of being
+    sent by trashing it then restarting Bitmessage
+
+  * Bug fix: can't delete address from address book
+
+ -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Tue, 6 May 2013 12:06:00 +0100
+
 pybitmessage (0.2.8-1) unstable; urgency=low
 
   * Fixed Ubuntu & OS X issue:
