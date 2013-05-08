@@ -210,20 +210,20 @@ class singleListener(threading.Thread):
                 print 'incoming connection is from a host in shared.connectedHostsList (we are already connected to it). Ignoring it.'
                 a.close()
                 a,(HOST,PORT) = sock.accept()"""
-            rd = receiveDataThread()
-            rd.daemon = True # close the main program even if there are threads left
-            #self.emit(SIGNAL("passObjectThrough(PyQt_PyObject)"),rd)
             objectsOfWhichThisRemoteNodeIsAlreadyAware = {}
-            rd.setup(a,HOST,PORT,-1,objectsOfWhichThisRemoteNodeIsAlreadyAware)
-            shared.printLock.acquire()
-            print self, 'connected to', HOST,'during INCOMING request.'
-            shared.printLock.release()
-            rd.start()
 
             sd = sendDataThread()
             sd.setup(a,HOST,PORT,-1,objectsOfWhichThisRemoteNodeIsAlreadyAware)
             sd.start()
 
+            rd = receiveDataThread()
+            rd.daemon = True # close the main program even if there are threads left
+            rd.setup(a,HOST,PORT,-1,objectsOfWhichThisRemoteNodeIsAlreadyAware)
+            rd.start()
+
+            shared.printLock.acquire()
+            print self, 'connected to', HOST,'during INCOMING request.'
+            shared.printLock.release()
 
 #This thread is created either by the synSenderThread(for outgoing connections) or the singleListenerThread(for incoming connectiosn).
 class receiveDataThread(threading.Thread):
@@ -297,7 +297,9 @@ class receiveDataThread(threading.Thread):
         try:
             del shared.connectedHostsList[self.HOST]
         except Exception, err:
+            shared.printLock.acquire()
             print 'Could not delete', self.HOST, 'from shared.connectedHostsList.', err
+            shared.printLock.release()
         shared.UISignalQueue.put(('updateNetworkStatusTab','no data'))
         shared.printLock.acquire()
         print 'The size of the connectedHostsList is now:', len(shared.connectedHostsList)
@@ -2046,7 +2048,6 @@ class sendDataThread(threading.Thread):
             shared.printLock.release()
         self.versionSent = 1
 
-
     def run(self):
         while True:
             deststream,command,data = self.mailbox.get()
@@ -3201,13 +3202,27 @@ class addressGenerator(threading.Thread):
 
     def run(self):
         while True:
-            addressVersionNumber,streamNumber,label,numberOfAddressesToMake,deterministicPassphrase,eighteenByteRipe = shared.addressGeneratorQueue.get()
+            queueValue = shared.addressGeneratorQueue.get()
+            nonceTrialsPerByte = 0
+            payloadLengthExtraBytes = 0
+            if len(queueValue) == 6:
+                addressVersionNumber,streamNumber,label,numberOfAddressesToMake,deterministicPassphrase,eighteenByteRipe = queueValue
+            elif len(queueValue) == 8:
+                addressVersionNumber,streamNumber,label,numberOfAddressesToMake,deterministicPassphrase,eighteenByteRipe,nonceTrialsPerByte,payloadLengthExtraBytes = queueValue
+            else:
+                sys.stderr.write('Programming error: A structure with the wrong number of values was passed into the addressGeneratorQueue. Here is the queueValue: %s\n' % queueValue)
             if addressVersionNumber < 3 or addressVersionNumber > 3:
-                sys.stderr.write('Program error: For some reason the address generator queue has been given a request to create version', addressVersionNumber,' addresses which it cannot do.\n')
-            if addressVersionNumber == 3:
+                sys.stderr.write('Program error: For some reason the address generator queue has been given a request to create at least one version %s address which it cannot do.\n' % addressVersionNumber)
+            if nonceTrialsPerByte == 0:
+                nonceTrialsPerByte = shared.config.getint('bitmessagesettings','defaultnoncetrialsperbyte')
+            if nonceTrialsPerByte < shared.networkDefaultProofOfWorkNonceTrialsPerByte:
+                nonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
+            if payloadLengthExtraBytes == 0:
+                payloadLengthExtraBytes = shared.config.getint('bitmessagesettings','defaultpayloadlengthextrabytes')
+            if payloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
+                payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
+            if addressVersionNumber == 3: #currently the only one supported.
                 if deterministicPassphrase == "":
-                    #statusbar = 'Generating one new address'
-                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
                     shared.UISignalQueue.put(('updateStatusBar','Generating one new address'))
                     #This next section is a little bit strange. We're going to generate keys over and over until we
                     #find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
@@ -3236,7 +3251,6 @@ class addressGenerator(threading.Thread):
                     print 'Generated address with ripe digest:', ripe.digest().encode('hex')
                     print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'addresses per second before finding one with the correct ripe-prefix.'
                     address = encodeAddress(3,streamNumber,ripe.digest())
-                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
 
                     #An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
                     #https://en.bitcoin.it/wiki/Wallet_import_format
@@ -3254,8 +3268,8 @@ class addressGenerator(threading.Thread):
                     shared.config.set(address,'label',label)
                     shared.config.set(address,'enabled','true')
                     shared.config.set(address,'decoy','false')
-                    shared.config.set(address,'noncetrialsperbyte',shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte'))
-                    shared.config.set(address,'payloadlengthextrabytes',shared.config.get('bitmessagesettings','defaultpayloadlengthextrabytes'))
+                    shared.config.set(address,'noncetrialsperbyte',str(nonceTrialsPerByte))
+                    shared.config.set(address,'payloadlengthextrabytes',str(payloadLengthExtraBytes))
                     shared.config.set(address,'privSigningKey',privSigningKeyWIF)
                     shared.config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
                     with open(shared.appdata + 'keys.dat', 'wb') as configfile:
@@ -3328,8 +3342,8 @@ class addressGenerator(threading.Thread):
                             shared.config.set(address,'label',label)
                             shared.config.set(address,'enabled','true')
                             shared.config.set(address,'decoy','false')
-                            shared.config.set(address,'noncetrialsperbyte',shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte'))
-                            shared.config.set(address,'payloadlengthextrabytes',shared.config.get('bitmessagesettings','defaultpayloadlengthextrabytes'))
+                            shared.config.set(address,'noncetrialsperbyte',str(nonceTrialsPerByte))
+                            shared.config.set(address,'payloadlengthextrabytes',str(payloadLengthExtraBytes))
                             shared.config.set(address,'privSigningKey',privSigningKeyWIF)
                             shared.config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
                             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
@@ -3444,7 +3458,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return a+b
         elif method == 'statusBar':
             message, = params
-            #apiSignalQueue.put(('updateStatusBar',message))
             shared.UISignalQueue.put(('updateStatusBar',message))
         elif method == 'listAddresses':
             data = '{"addresses":['
@@ -3464,13 +3477,26 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             elif len(params) == 1:
                 label, = params
                 eighteenByteRipe = False
+                nonceTrialsPerByte = shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')
+                payloadLengthExtraBytes = shared.config.get('bitmessagesettings','defaultpayloadlengthextrabytes')
             elif len(params) == 2:
                 label, eighteenByteRipe = params
+                nonceTrialsPerByte = shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')
+                payloadLengthExtraBytes = shared.config.get('bitmessagesettings','defaultpayloadlengthextrabytes')
+            elif len(params) == 3:
+                label, eighteenByteRipe, totalDifficulty = params
+                nonceTrialsPerByte = int(shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                payloadLengthExtraBytes = shared.config.get('bitmessagesettings','defaultpayloadlengthextrabytes')
+            elif len(params) == 4:
+                label, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = params
+                nonceTrialsPerByte = int(shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                payloadLengthExtraBytes = int(shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+            else:
+                return 'API Error 0000: Too many parameters!'
             label = label.decode('base64')
             apiAddressGeneratorReturnQueue.queue.clear()
             streamNumberForAddress = 1
-            #apiSignalQueue.put(('createRandomAddress',(label, eighteenByteRipe))) #params should be a twopul which equals (eighteenByteRipe, label)
-            shared.addressGeneratorQueue.put((3,streamNumberForAddress,label,1,"",eighteenByteRipe))
+            shared.addressGeneratorQueue.put((3,streamNumberForAddress,label,1,"",eighteenByteRipe,nonceTrialsPerByte,payloadLengthExtraBytes))
             return apiAddressGeneratorReturnQueue.get()
         elif method == 'createDeterministicAddresses':
             if len(params) == 0:
@@ -3481,20 +3507,40 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 addressVersionNumber = 0
                 streamNumber = 0
                 eighteenByteRipe = False
+                nonceTrialsPerByte = shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')
+                payloadLengthExtraBytes = shared.config.get('bitmessagesettings','defaultpayloadlengthextrabytes')
             elif len(params) == 2:
                 passphrase, numberOfAddresses = params
                 addressVersionNumber = 0
                 streamNumber = 0
                 eighteenByteRipe = False
+                nonceTrialsPerByte = shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')
+                payloadLengthExtraBytes = shared.config.get('bitmessagesettings','defaultpayloadlengthextrabytes')
             elif len(params) == 3:
                 passphrase, numberOfAddresses, addressVersionNumber = params
                 streamNumber = 0
                 eighteenByteRipe = False
+                nonceTrialsPerByte = shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')
+                payloadLengthExtraBytes = shared.config.get('bitmessagesettings','defaultpayloadlengthextrabytes')
             elif len(params) == 4:
                 passphrase, numberOfAddresses, addressVersionNumber, streamNumber = params
                 eighteenByteRipe = False
+                nonceTrialsPerByte = shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')
+                payloadLengthExtraBytes = shared.config.get('bitmessagesettings','defaultpayloadlengthextrabytes')
             elif len(params) == 5:
                 passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe = params
+                nonceTrialsPerByte = shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')
+                payloadLengthExtraBytes = shared.config.get('bitmessagesettings','defaultpayloadlengthextrabytes')
+            elif len(params) == 6:
+                passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty = params
+                nonceTrialsPerByte = int(shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                payloadLengthExtraBytes = shared.config.get('bitmessagesettings','defaultpayloadlengthextrabytes')
+            elif len(params) == 7:
+                passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = params
+                nonceTrialsPerByte = int(shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                payloadLengthExtraBytes = int(shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+            else:
+                return 'API Error 0000: Too many parameters!'
             if len(passphrase) == 0:
                 return 'API Error 0001: The specified passphrase is blank.'
             passphrase = passphrase.decode('base64')
@@ -3512,8 +3558,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 return 'API Error 0005: You have (accidentally?) specified too many addresses to make. Maximum 999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
             apiAddressGeneratorReturnQueue.queue.clear()
             print 'Requesting that the addressGenerator create', numberOfAddresses, 'addresses.'
-            #apiSignalQueue.put(('createDeterministicAddresses',(passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe)))
-            shared.addressGeneratorQueue.put((addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe))
+            shared.addressGeneratorQueue.put((addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe,nonceTrialsPerByte,payloadLengthExtraBytes))
             data = '{"addresses":['
             queueReturn = apiAddressGeneratorReturnQueue.get()
             for item in queueReturn:
@@ -3547,7 +3592,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            #apiSignalQueue.put(('updateStatusBar','Per API: Trashed message (assuming message existed). UI not updated.'))
             shared.UISignalQueue.put(('updateStatusBar','Per API: Trashed message (assuming message existed). UI not updated.'))
             return 'Trashed message (assuming message existed). UI not updated. To double check, run getAllInboxMessages to see that the message disappeared, or restart Bitmessage and look in the normal Bitmessage GUI.'
         elif method == 'sendMessage':
