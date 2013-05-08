@@ -472,20 +472,23 @@ class MyForm(QtGui.QMainWindow):
 
     # Show the program window and select send tab
     def appIndicatorSend(self):
-        self.actionShow.setChecked(True)
-        self.appIndicatorShowOrHideWindow()
+        if not self.actionShow.isChecked():
+            self.actionShow.setChecked(True)
+            self.appIndicatorShowOrHideWindow()
         self.ui.tabWidget.setCurrentIndex(1)
 
     # Show the program window and select subscriptions tab
     def appIndicatorSubscribe(self):
-        self.actionShow.setChecked(True)
-        self.appIndicatorShowOrHideWindow()
+        if not self.actionShow.isChecked():
+            self.actionShow.setChecked(True)
+            self.appIndicatorShowOrHideWindow()
         self.ui.tabWidget.setCurrentIndex(4)
 
     # Show the program window and select the address book tab
     def appIndicatorAddressBook(self):
-        self.actionShow.setChecked(True)
-        self.appIndicatorShowOrHideWindow()
+        if not self.actionShow.isChecked():
+            self.actionShow.setChecked(True)
+            self.appIndicatorShowOrHideWindow()
         self.ui.tabWidget.setCurrentIndex(5)
 
     # create application indicator
@@ -536,9 +539,11 @@ class MyForm(QtGui.QMainWindow):
         self.tray.setContextMenu(m)
         self.tray.show()
         if shared.config.getboolean('bitmessagesettings', 'startintray'):
-            self.hide()
             #myapp.trayIcon.show()#This option seems to have been obsoleted by https://github.com/Bitmessage/PyBitmessage/pull/133/files
             self.actionShow.setChecked(False)
+            self.appIndicatorShowOrHideWindow()
+            #if sys.platform[0:3] == 'win':
+            #    myapp.setWindowFlags(Qt.ToolTip)
 
     def tableWidgetInboxKeyPressEvent(self,event):
         if event.key() == QtCore.Qt.Key_Delete:
@@ -2045,8 +2050,7 @@ def run():
     app = QtGui.QApplication(sys.argv)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
-    myapp.show()
-    if sys.platform[0:3] == 'win':
-        myapp.setWindowFlags(Qt.ToolTip)
+    if not shared.config.getboolean('bitmessagesettings', 'startintray'):
+        myapp.show()
     myapp.createAppIndicator(app)
     sys.exit(app.exec_())
