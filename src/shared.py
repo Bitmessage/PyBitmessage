@@ -149,7 +149,9 @@ def doCleanShutdown():
     print 'Completed pickle.dump. Closing output...'
     output.close()
     knownNodesLock.release()
+    printLock.acquire()
     print 'Finished closing knownnodes.dat output file.'
+    printLock.release()
     UISignalQueue.put(('updateStatusBar','Done saving the knownNodes list of peers to disk.'))
 
     broadcastToSendDataQueues((0, 'shutdown', 'all'))
@@ -165,8 +167,10 @@ def doCleanShutdown():
     sqlSubmitQueue.put('SELECT address FROM subscriptions')
     sqlSubmitQueue.put('')
     sqlReturnQueue.get()
-    sqlLock.release()   
+    sqlLock.release()
+    printLock.acquire()
     print 'Finished flushing inventory.'
+    printLock.release()
     sqlSubmitQueue.put('exit')
 
     if safeConfigGetBoolean('bitmessagesettings','daemon'):
