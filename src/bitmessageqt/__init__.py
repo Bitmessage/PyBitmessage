@@ -466,6 +466,9 @@ class MyForm(QtGui.QMainWindow):
     # an appindicator action which shows of hides the program window
     actionShow = None
 
+    # pointer to the application
+    app = None
+
     # show the application window
     def appIndicatorShow(self):
         if self.actionShow == None:
@@ -502,7 +505,8 @@ class MyForm(QtGui.QMainWindow):
 
     # create application indicator
     def createAppIndicator(self,app):
-        app.tray = QSystemTrayIcon(QtGui.QIcon("images/can-icon-24px.png"), app)
+        self.app = app
+        self.app.tray = QSystemTrayIcon(QtGui.QIcon("images/can-icon-24px-red.png"), self.app)
         m = QMenu()
 
         self.actionStatus = QtGui.QAction('Not Connected',m,checkable=False)
@@ -541,8 +545,8 @@ class MyForm(QtGui.QMainWindow):
 
         # Quit
         m.addAction("Quit", self.close)
-        app.tray.setContextMenu(m)
-        app.tray.show()
+        self.app.tray.setContextMenu(m)
+        self.app.tray.show()
 
     def tableWidgetInboxKeyPressEvent(self,event):
         if event.key() == QtCore.Qt.Key_Delete:
@@ -687,6 +691,8 @@ class MyForm(QtGui.QMainWindow):
             shared.statusIconColor = 'red'
             if self.actionStatus != None:
                 self.actionStatus.setText('Not Connected')
+                self.app.tray.setIcon(QtGui.QIcon("images/can-icon-24px-red.png"))
+                self.trayIcon.show()
         if color == 'yellow':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
@@ -694,6 +700,7 @@ class MyForm(QtGui.QMainWindow):
             shared.statusIconColor = 'yellow'
             if self.actionStatus != None:
                 self.actionStatus.setText('Connection Ok')
+                self.app.tray.setIcon(QtGui.QIcon("images/can-icon-24px-yellow.png"))
         if color == 'green':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
@@ -701,6 +708,7 @@ class MyForm(QtGui.QMainWindow):
             shared.statusIconColor = 'green'
             if self.actionStatus != None:
                 self.actionStatus.setText('Connection Good')
+                self.app.tray.setIcon(QtGui.QIcon("images/can-icon-24px-green.png"))
 
     def updateSentItemStatusByHash(self,toRipe,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
