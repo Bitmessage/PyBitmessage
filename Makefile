@@ -13,7 +13,6 @@ source:
 install:
 	mkdir -m 755 -p $(DEST_APP)
 	mkdir -m 755 -p $(DEST_SHARE)/applications
-	mkdir -m 755 -p $(DEST_SHARE)/applications/$(APP)
 	mkdir -m 755 -p $(DEST_APP)/images
 	mkdir -m 755 -p $(DEST_APP)/pyelliptic
 	mkdir -m 755 -p $(DEST_APP)/socks
@@ -37,7 +36,7 @@ install:
 	install -m 644 src/bitmessageqt/*.py $(DEST_APP)/bitmessageqt
 	install -m 755 debian/pybm /usr/bin/pybitmessage
 
-	install -m 644 desktop/$(APP).desktop $(DEST_SHARE)/applications/$(APP)/$(APP).desktop
+	install -m 644 desktop/$(APP).desktop $(DEST_SHARE)/applications/$(APP).desktop
 	install -m 644 src/images/can-icon-24px.png $(DEST_SHARE)/icons/hicolor/24x24/apps/$(APP).png
 	install -m 644 desktop/can-icon.svg $(DEST_SHARE)/icons/hicolor/scalable/apps/$(APP).svg
 	install -m 644 desktop/can-icon.svg $(DEST_SHARE)/pixmaps/$(APP).svg
