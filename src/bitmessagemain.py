@@ -48,7 +48,6 @@ from SimpleXMLRPCServer import *
 import json
 from subprocess import call #used when the API must execute an outside program
 
-
 #For each stream to which we connect, several outgoingSynSender threads will exist and will collectively create 8 connections with peers.
 class outgoingSynSender(threading.Thread):
     def __init__(self):

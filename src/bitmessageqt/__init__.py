@@ -5,6 +5,15 @@ except Exception, err:
     print 'PyBitmessage requires PyQt. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
     print 'Error message:', err
     sys.exit()
+
+try:
+    from gi.repository import MessagingMenu
+except ImportError:
+    MessagingMenu = None
+    with_messagingmenu = False
+else:
+    with_messagingmenu = True
+
 from addresses import *
 import shared
 from bitmessageui import *
@@ -24,6 +33,7 @@ from pyelliptic.openssl import OpenSSL
 import pickle
 
 class MyForm(QtGui.QMainWindow):
+
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_MainWindow()
@@ -228,12 +238,13 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
+        str_broadcast_subscribers = '[Broadcast subscribers]'
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, received, message, read = row
 
             try:
-                if toAddress == '[Broadcast subscribers]':
-                    toLabel = '[Broadcast subscribers]'
+                if toAddress == str_broadcast_subscribers:
+                    toLabel = str_broadcast_subscribers
                 else:
                     toLabel = shared.config.get(toAddress, 'label')
             except:
@@ -488,6 +499,11 @@ class MyForm(QtGui.QMainWindow):
             self.show()
             self.setWindowState(self.windowState() & QtCore.Qt.WindowMaximized)
 
+    # Show the program window and select inbox tab
+    def appIndicatorInbox(self):
+        self.appIndicatorShow()
+        self.ui.tabWidget.setCurrentIndex(0)
+
     # Show the program window and select send tab
     def appIndicatorSend(self):
         self.appIndicatorShow()
@@ -547,6 +563,104 @@ class MyForm(QtGui.QMainWindow):
         m.addAction("Quit", self.close)
         self.app.tray.setContextMenu(m)
         self.app.tray.show()
+
+    # Ubuntu Messaging menu object
+    mmapp = None
+
+    # is the operating system Ubuntu?
+    def isUbuntu(self):
+        if "Ubuntu" in str(os.uname()):
+            return True
+        return False
+
+    # returns the number of unread messages and subscriptions
+    def getUnread(self):
+        str_broadcast_subscribers = '[Broadcast subscribers]'
+
+        unreadMessages = 0
+        unreadSubscriptions = 0
+
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, read FROM inbox where folder='inbox' ''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        for row in queryreturn:
+            msgid, toAddress, read = row
+
+            try:
+                if toAddress == str_broadcast_subscribers:
+                    toLabel = str_broadcast_subscribers
+                else:
+                    toLabel = shared.config.get(toAddress, 'label')
+            except:
+                toLabel = ''
+            if toLabel == '':
+                toLabel = toAddress
+
+            if not read:
+                if toLabel == str_broadcast_subscribers:
+                    # increment the unread subscriptions
+                    unreadSubscriptions = unreadSubscriptions + 1
+                else:
+                    # increment the unread messages
+                    unreadMessages = unreadMessages + 1
+        return unreadMessages, unreadSubscriptions
+
+    # show the number of unread messages and subscriptions on the messaging menu
+    def ubuntuMessagingMenuUnread(self, drawAttention):
+        unreadMessages, unreadSubscriptions = self.getUnread()
+        # unread messages
+        if unreadMessages > 0:
+            self.mmapp.append_source("Messages", None, "Messages (" + str(unreadMessages) + ")")
+            if drawAttention:
+                self.mmapp.draw_attention("Messages")
+
+        # unread subscriptions
+        if unreadSubscriptions > 0:
+            self.mmapp.append_source("Subscriptions", None, "Subscriptions (" + str(unreadSubscriptions) + ")")
+            if drawAttention:
+                self.mmapp.draw_attention("Subscriptions")
+    
+    # initialise the Ubuntu messaging menu
+    def ubuntuMessagingMenuInit(self):
+        # if this isn't ubuntu then don't do anything
+        if not self.isUbuntu():
+            return
+
+        # has messageing menu been installed
+        if not with_messagingmenu:
+            print 'WARNING: libmessaging-menu-dev not installed' 
+            return
+
+        # create the menu server
+        if with_messagingmenu:
+            self.mmapp = MessagingMenu.App(desktop_id='pybitmessage.desktop')
+            self.mmapp.register()
+            self.mmapp.connect('activate-source', self.appIndicatorInbox)
+            self.ubuntuMessagingMenuUnread(True)
+
+    # update the Ubuntu messaging menu
+    def ubuntuMessagingMenuUpdate(self, drawAttention):
+        # if this isn't ubuntu then don't do anything
+        if not self.isUbuntu():
+            return
+
+        # has messageing menu been installed
+        if not with_messagingmenu:
+            print 'WARNING: libmessaging-menu-dev not installed' 
+            return
+
+        # Remove previous messages and subscriptions entries, then recreate them
+        # There might be a better way to do it than this
+        if self.mmapp.has_source("Messages"):
+            self.mmapp.remove_source("Messages")
+
+        if self.mmapp.has_source("Subscriptions"):
+            self.mmapp.remove_source("Subscriptions")
+
+        # update the menu entries
+        self.ubuntuMessagingMenuUnread(drawAttention)
 
     def tableWidgetInboxKeyPressEvent(self,event):
         if event.key() == QtCore.Qt.Key_Delete:
@@ -1084,7 +1198,7 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,2,newItem)
-        newItem =  myTableWidgetItem(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+        newItem = myTableWidgetItem(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
         newItem.setData(Qt.UserRole,QByteArray(inventoryHash))
         newItem.setData(33,int(time.time()))
         newItem.setFont(font)
@@ -1096,6 +1210,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())"""
         self.ui.tableWidgetInbox.setSortingEnabled(True)
+        self.ubuntuMessagingMenuUpdate(True)
 
     def click_pushButtonAddAddressBook(self):
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
@@ -1503,6 +1618,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.selectRow(currentRow)
         else:
             self.ui.tableWidgetInbox.selectRow(currentRow-1)
+        self.ubuntuMessagingMenuUpdate(False)
 
     #Send item on the Sent tab to trash
     def on_action_SentTrash(self):
@@ -1766,6 +1882,7 @@ class MyForm(QtGui.QMainWindow):
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
+            self.ubuntuMessagingMenuUpdate(False)
 
     def tableWidgetSentItemClicked(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
@@ -2042,8 +2159,6 @@ class UISignaler(QThread):
             else:
                 sys.stderr.write('Command sent to UISignaler not recognized: %s\n' % command)
 
-
-
 def run():
     app = QtGui.QApplication(sys.argv)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
@@ -2058,5 +2173,6 @@ def run():
         if 'win32' in sys.platform or 'win64' in sys.platform:
             myapp.setWindowFlags(Qt.ToolTip)
     myapp.createAppIndicator(app)
+    myapp.ubuntuMessagingMenuInit()
 
     sys.exit(app.exec_())
