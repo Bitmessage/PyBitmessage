@@ -20,6 +20,7 @@ install: build clean
 	dh_testroot
 	dh_prep
 	dh_installdirs
+
 	mkdir -m 755 -p $(CURDIR)/debian/$(APP)/usr
 	mkdir -m 755 -p $(CURDIR)/debian/$(APP)/usr/bin
 	mkdir -m 755 -p $(DEST_APP)
