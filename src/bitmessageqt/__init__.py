@@ -1569,6 +1569,9 @@ class MyForm(QtGui.QMainWindow):
         else:
             event.ignore()'''
         shared.doCleanShutdown()
+        # unregister the messaging system
+        if self.mmapp is not None:
+            self.mmapp.unregister()
         self.trayIcon.hide()
         self.statusBar().showMessage('All done. Closing user interface...')
         event.accept()
