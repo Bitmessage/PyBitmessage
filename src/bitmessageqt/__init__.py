@@ -501,7 +501,7 @@ class MyForm(QtGui.QMainWindow):
             self.setWindowState(self.windowState() & QtCore.Qt.WindowMaximized)
 
     # Show the program window and select inbox tab
-    def appIndicatorInbox(self):
+    def appIndicatorInbox(self, mm_app, source_id):
         self.appIndicatorShow()
         self.ui.tabWidget.setCurrentIndex(0)
 
