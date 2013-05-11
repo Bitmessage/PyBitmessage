@@ -1,3 +1,4 @@
+
 try:
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
@@ -6,13 +7,13 @@ except Exception, err:
     print 'Error message:', err
     sys.exit()
 
+withMessagingMenu = False
 try:
     from gi.repository import MessagingMenu
+    from gi.repository import Notify
+    withMessagingMenu = True
 except ImportError:
     MessagingMenu = None
-    with_messagingmenu = False
-else:
-    with_messagingmenu = True
 
 from addresses import *
 import shared
@@ -519,8 +520,8 @@ class MyForm(QtGui.QMainWindow):
         self.appIndicatorShow()
         self.ui.tabWidget.setCurrentIndex(5)
 
-    # create application indicator
-    def createAppIndicator(self,app):
+    # initialise application indicator
+    def appIndicatorInit(self,app):
         self.app = app
         self.app.tray = QSystemTrayIcon(QtGui.QIcon("images/can-icon-24px-red.png"), self.app)
         m = QMenu()
@@ -624,31 +625,39 @@ class MyForm(QtGui.QMainWindow):
     
     # initialise the Ubuntu messaging menu
     def ubuntuMessagingMenuInit(self):
+        global withMessagingMenu
+
         # if this isn't ubuntu then don't do anything
         if not self.isUbuntu():
             return
 
         # has messageing menu been installed
-        if not with_messagingmenu:
-            print 'WARNING: libmessaging-menu-dev not installed' 
+        if not withMessagingMenu:
+            print 'WARNING: MessagingMenu is not available.  Is libmessaging-menu-dev installed?' 
             return
 
         # create the menu server
-        if with_messagingmenu:
-            self.mmapp = MessagingMenu.App(desktop_id='pybitmessage.desktop')
-            self.mmapp.register()
-            self.mmapp.connect('activate-source', self.appIndicatorInbox)
-            self.ubuntuMessagingMenuUnread(True)
+        if withMessagingMenu:
+            try:
+                self.mmapp = MessagingMenu.App(desktop_id='pybitmessage.desktop')
+                self.mmapp.register()
+                self.mmapp.connect('activate-source', self.appIndicatorInbox)
+                self.ubuntuMessagingMenuUnread(True)
+            except Exception:
+                withMessagingMenu = False
+                print 'WARNING: messaging menu disabled'
 
     # update the Ubuntu messaging menu
     def ubuntuMessagingMenuUpdate(self, drawAttention):
+        global withMessagingMenu
+
         # if this isn't ubuntu then don't do anything
         if not self.isUbuntu():
             return
 
         # has messageing menu been installed
-        if not with_messagingmenu:
-            print 'WARNING: libmessaging-menu-dev not installed' 
+        if not withMessagingMenu:
+            print 'WARNING: messaging menu disabled or libmessaging-menu-dev not installed' 
             return
 
         # Remove previous messages and subscriptions entries, then recreate them
@@ -661,6 +670,22 @@ class MyForm(QtGui.QMainWindow):
 
         # update the menu entries
         self.ubuntuMessagingMenuUnread(drawAttention)
+
+    # initialise the message notifier
+    def notifierInit(self):
+        global withMessagingMenu
+        if withMessagingMenu:
+            Notify.init('pybitmessage')
+
+    # shows a notification
+    def notifierShow(self, title, subtitle):
+        global withMessagingMenu
+        if withMessagingMenu:
+            n = Notify.Notification.new(title, subtitle,'notification-message-email')
+            n.show()
+            return
+        # Show with tray
+        self.trayIcon.showMessage(title, subtitle, 1, 2000)
 
     def tableWidgetInboxKeyPressEvent(self,event):
         if event.key() == QtCore.Qt.Key_Delete:
@@ -1186,11 +1211,11 @@ class MyForm(QtGui.QMainWindow):
         if fromLabel == '':
             newItem =  QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
-                self.trayIcon.showMessage('New Message', 'New message from '+ fromAddress, 1, 2000)
+                self.notifierShow('New Message', 'From '+ fromAddress)
         else:
             newItem =  QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
-                self.trayIcon.showMessage('New Message', 'New message from '+fromLabel, 1, 2000)
+                self.notifierShow('New Message', 'From ' + fromLabel)
         newItem.setData(Qt.UserRole,str(fromAddress))
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,1,newItem)
@@ -1618,7 +1643,6 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.selectRow(currentRow)
         else:
             self.ui.tableWidgetInbox.selectRow(currentRow-1)
-        self.ubuntuMessagingMenuUpdate(False)
 
     #Send item on the Sent tab to trash
     def on_action_SentTrash(self):
@@ -1882,7 +1906,6 @@ class MyForm(QtGui.QMainWindow):
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            self.ubuntuMessagingMenuUpdate(False)
 
     def tableWidgetSentItemClicked(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
@@ -2172,7 +2195,8 @@ def run():
         #self.hide()
         if 'win32' in sys.platform or 'win64' in sys.platform:
             myapp.setWindowFlags(Qt.ToolTip)
-    myapp.createAppIndicator(app)
+    myapp.appIndicatorInit(app)
     myapp.ubuntuMessagingMenuInit()
+    myapp.notifierInit()
 
     sys.exit(app.exec_())
