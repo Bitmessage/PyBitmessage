@@ -570,8 +570,9 @@ class MyForm(QtGui.QMainWindow):
 
     # is the operating system Ubuntu?
     def isUbuntu(self):
-        if "Ubuntu" in str(os.uname()):
-            return True
+        for entry in os.uname():
+            if "Ubuntu" in entry:
+                return True
         return False
 
     # returns the number of unread messages and subscriptions
