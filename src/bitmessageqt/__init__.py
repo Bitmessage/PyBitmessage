@@ -823,11 +823,21 @@ class MyForm(QtGui.QMainWindow):
         elif len(shared.connectedHostsList) == 0:
             self.setStatusIcon('red')
 
+    # Indicates whether or not there is a connection to the Bitmessage network
+    connected = False
+
     def setStatusIcon(self,color):
+        global withMessagingMenu
         #print 'setting status icon color'
         if color == 'red':
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/redicon.png"))
             shared.statusIconColor = 'red'
+
+            # if the connection is lost then show a notification
+            if self.connected:
+                self.notifierShow('PyBitmessage','Connection lost')
+            self.connected = False
+
             if self.actionStatus != None:
                 self.actionStatus.setText('Not Connected')
                 self.app.tray.setIcon(QtGui.QIcon("images/can-icon-24px-red.png"))
@@ -837,6 +847,12 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
             shared.statusIconColor = 'yellow'
+
+            # if a new connection has been established then show a notification
+            if not self.connected:
+                self.notifierShow('PyBitmessage','Connected')
+            self.connected = True
+
             if self.actionStatus != None:
                 self.actionStatus.setText('Connection Ok')
                 self.app.tray.setIcon(QtGui.QIcon("images/can-icon-24px-yellow.png"))
@@ -845,6 +861,9 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
+
+            self.connected = True
+
             if self.actionStatus != None:
                 self.actionStatus.setText('Connection Good')
                 self.app.tray.setIcon(QtGui.QIcon("images/can-icon-24px-green.png"))
