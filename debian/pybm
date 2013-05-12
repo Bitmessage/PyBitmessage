@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 cd /usr/share/pybitmessage
-python bitmessagemain.py
+exec python bitmessagemain.py
 
