@@ -3813,6 +3813,7 @@ if __name__ == "__main__":
             shared.config.set('bitmessagesettings','messagesencrypted','false')
             shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte',str(shared.networkDefaultProofOfWorkNonceTrialsPerByte))
             shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes',str(shared.networkDefaultPayloadLengthExtraBytes))
+            shared.config.set('bitmessagesettings','minimizeonclose','true')
 
             if storeConfigFilesInSameDirectoryAsProgramByDefault:
                 #Just use the same directory as the program and forget about the appdata folder

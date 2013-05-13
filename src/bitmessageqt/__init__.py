@@ -73,7 +73,7 @@ class MyForm(QtGui.QMainWindow):
         traySignal = "activated(QSystemTrayIcon::ActivationReason)"
         QtCore.QObject.connect(self.trayIcon, QtCore.SIGNAL(traySignal), self.__icon_activated)
         menu = QtGui.QMenu()
-        self.exitAction = menu.addAction("Exit", self.close)
+        self.exitAction = menu.addAction("Exit", self.quit)
         self.trayIcon.setContextMenu(menu)
         #I'm currently under the impression that Mac users have different expectations for the tray icon. They don't necessairly expect it to open the main window when clicked and they still expect a program showing a tray icon to also be in the dock.
         if 'darwin' in sys.platform:
@@ -82,7 +82,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.labelSendBroadcastWarning.setVisible(False)
 
         #FILE MENU and other buttons
-        QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL("triggered()"), self.close)
+        QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL("triggered()"), self.quit)
         QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL("triggered()"), self.click_actionManageKeys)
         QtCore.QObject.connect(self.ui.actionRegenerateDeterministicAddresses, QtCore.SIGNAL("triggered()"), self.click_actionRegenerateDeterministicAddresses)
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL("clicked()"), self.click_NewAddressDialog)
@@ -569,7 +569,7 @@ class MyForm(QtGui.QMainWindow):
         m.addAction(actionSeparator)
 
         # Quit
-        m.addAction("Quit", self.close)
+        m.addAction("Quit", self.quit)
         self.app.tray.setContextMenu(m)
         self.app.tray.show()
 
@@ -1566,24 +1566,41 @@ class MyForm(QtGui.QMainWindow):
         else:
             print 'new address dialog box rejected'
 
-    def closeEvent(self, event):
+
+    # Quit selected from menu or application indicator
+    def quit(self):
         '''quit_msg = "Are you sure you want to exit Bitmessage?"
         reply = QtGui.QMessageBox.question(self, 'Message',
                          quit_msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
 
-        if reply == QtGui.QMessageBox.Yes:
-            event.accept()
-        else:
-            event.ignore()'''
+        if reply is QtGui.QMessageBox.No:
+            return
+        '''
         shared.doCleanShutdown()
         # unregister the messaging system
         if self.mmapp is not None:
             self.mmapp.unregister()
         self.trayIcon.hide()
         self.statusBar().showMessage('All done. Closing user interface...')
-        event.accept()
-        print 'Done. (passed event.accept())'
         os._exit(0)
+
+    # window close event
+    def closeEvent(self, event):
+        self.appIndicatorHide()
+        minimizeonclose = True
+
+        try:
+            minimizeonclose = shared.config.getboolean('bitmessagesettings', 'minimizeonclose')
+        except Exception:
+            print 'Is there a minimizeonclose entry in keys.dat?'
+
+        if minimizeonclose:
+            # minimize the application
+            event.ignore()
+        else:
+            # quit the application
+            event.accept()
+            self.quit()
 
     def on_action_InboxMessageForceHtml(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
