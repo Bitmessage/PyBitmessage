@@ -508,10 +508,30 @@ class MyForm(QtGui.QMainWindow):
             self.show()
             self.setWindowState(self.windowState() & QtCore.Qt.WindowMaximized)
 
+    # returns the index of the oldest unread message
+    def getUnreadMessageIndex(self):
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT msgid, received, read FROM inbox where folder='inbox' ORDER BY received DESC ''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        i = 0
+        index = 0
+        for row in queryreturn:
+            msgid, received, read = row
+            if not read:
+                index = i
+            i = i + 1
+        return index
+
     # Show the program window and select inbox tab
     def appIndicatorInbox(self, mm_app, source_id):
         self.appIndicatorShow()
+        # select inbox
         self.ui.tabWidget.setCurrentIndex(0)
+        # select unread message
+        self.ui.tableWidgetInbox.selectRow(self.getUnreadMessageIndex())
+        self.tableWidgetInboxItemClicked()
 
     # Show the program window and select send tab
     def appIndicatorSend(self):
