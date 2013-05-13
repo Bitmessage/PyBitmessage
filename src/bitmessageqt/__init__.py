@@ -536,7 +536,7 @@ class MyForm(QtGui.QMainWindow):
 
         # show bitmessage
         self.actionShow = QtGui.QAction('Show Bitmessage',m,checkable=True)
-        self.actionShow.setChecked(True)
+        self.actionShow.setChecked(not shared.config.getboolean('bitmessagesettings', 'startintray'))
         self.actionShow.triggered.connect(self.appIndicatorShowBitmessage)
         m.addAction(self.actionShow)
 
@@ -740,7 +740,6 @@ class MyForm(QtGui.QMainWindow):
                 if self.windowState() & QtCore.Qt.WindowMinimized:
                     self.hide()
                     self.trayIcon.show()
-                    #self.hidden = True
                     if 'win32' in sys.platform or 'win64' in sys.platform:
                         self.setWindowFlags(Qt.ToolTip)
                 elif event.oldState() & QtCore.Qt.WindowMinimized:
@@ -2209,15 +2208,15 @@ def run():
     app = QtGui.QApplication(sys.argv)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
-    myapp.show()
+
     if shared.config.getboolean('bitmessagesettings', 'startintray'):
-        myapp.hide()
-        myapp.trayIcon.show()
-        #self.hidden = True
-        #self.setWindowState(self.windowState() & QtCore.Qt.WindowMinimized)
-        #self.hide()
-        if 'win32' in sys.platform or 'win64' in sys.platform:
-            myapp.setWindowFlags(Qt.ToolTip)
+        if not myapp.isUbuntu():
+            myapp.trayIcon.show()
+            if 'win32' in sys.platform or 'win64' in sys.platform:
+                myapp.setWindowFlags(Qt.ToolTip)
+    else:
+        myapp.show()
+
     myapp.appIndicatorInit(app)
     myapp.ubuntuMessagingMenuInit()
     myapp.notifierInit()
