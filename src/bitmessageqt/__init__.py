@@ -73,7 +73,7 @@ class MyForm(QtGui.QMainWindow):
         traySignal = "activated(QSystemTrayIcon::ActivationReason)"
         QtCore.QObject.connect(self.trayIcon, QtCore.SIGNAL(traySignal), self.__icon_activated)
         menu = QtGui.QMenu()
-        self.exitAction = menu.addAction("Exit", self.quit)
+        self.exitAction = menu.addAction("Quit", self.quit)
         self.trayIcon.setContextMenu(menu)
         #I'm currently under the impression that Mac users have different expectations for the tray icon. They don't necessairly expect it to open the main window when clicked and they still expect a program showing a tray icon to also be in the dock.
         if 'darwin' in sys.platform:
