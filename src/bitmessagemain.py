@@ -47,6 +47,7 @@ import signal #Used to capture a Ctrl-C keypress so that Bitmessage can shutdown
 from SimpleXMLRPCServer import *
 import json
 from subprocess import call #used when the API must execute an outside program
+import singleton
 
 #For each stream to which we connect, several outgoingSynSender threads will exist and will collectively create 8 connections with peers.
 class outgoingSynSender(threading.Thread):
@@ -3762,6 +3763,9 @@ if useVeryEasyProofOfWorkForTesting:
     shared.networkDefaultPayloadLengthExtraBytes = int(shared.networkDefaultPayloadLengthExtraBytes / 7000)
 
 if __name__ == "__main__":
+    # is the application already running?  If yes then exit.
+    thisapp = singleton.singleinstance()
+
     signal.signal(signal.SIGINT, signal_handler)
     #signal.signal(signal.SIGINT, signal.SIG_DFL)
 
