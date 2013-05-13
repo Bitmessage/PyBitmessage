@@ -489,6 +489,14 @@ class MyForm(QtGui.QMainWindow):
         self.show()
         self.setWindowState(self.windowState() & QtCore.Qt.WindowMaximized)
 
+    # unchecks the show item on the application indicator
+    def appIndicatorHide(self):
+        if self.actionShow == None:
+            return
+        self.actionShow.setChecked(False)
+        self.hide()
+        self.setWindowState(self.windowState() & QtCore.Qt.WindowMinimized)
+
     # application indicator show or hide
     def appIndicatorShowBitmessage(self):
         if self.actionShow == None:
@@ -738,8 +746,7 @@ class MyForm(QtGui.QMainWindow):
         if shared.config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
             if event.type() == QtCore.QEvent.WindowStateChange:
                 if self.windowState() & QtCore.Qt.WindowMinimized:
-                    self.hide()
-                    self.trayIcon.show()
+                    self.appIndicatorHide()
                     if 'win32' in sys.platform or 'win64' in sys.platform:
                         self.setWindowFlags(Qt.ToolTip)
                 elif event.oldState() & QtCore.Qt.WindowMinimized:
