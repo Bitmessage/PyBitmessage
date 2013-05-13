@@ -1,4 +1,4 @@
-pybitmessage (0.3.0-1) unstable; urgency=low
+pybitmessage (0.3.0-1) raring; urgency=low
 
   * Added new API function: getStatus
 
