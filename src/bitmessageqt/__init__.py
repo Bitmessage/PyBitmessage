@@ -1,3 +1,4 @@
+
 try:
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
@@ -5,6 +6,15 @@ except Exception, err:
     print 'PyBitmessage requires PyQt. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
     print 'Error message:', err
     sys.exit()
+
+withMessagingMenu = False
+try:
+    from gi.repository import MessagingMenu
+    from gi.repository import Notify
+    withMessagingMenu = True
+except ImportError:
+    MessagingMenu = None
+
 from addresses import *
 import shared
 from bitmessageui import *
@@ -22,8 +32,10 @@ import time
 import os
 from pyelliptic.openssl import OpenSSL
 import pickle
+import platform
 
 class MyForm(QtGui.QMainWindow):
+
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_MainWindow()
@@ -62,7 +74,7 @@ class MyForm(QtGui.QMainWindow):
         traySignal = "activated(QSystemTrayIcon::ActivationReason)"
         QtCore.QObject.connect(self.trayIcon, QtCore.SIGNAL(traySignal), self.__icon_activated)
         menu = QtGui.QMenu()
-        self.exitAction = menu.addAction("Exit", self.close)
+        self.exitAction = menu.addAction("Quit", self.quit)
         self.trayIcon.setContextMenu(menu)
         #I'm currently under the impression that Mac users have different expectations for the tray icon. They don't necessairly expect it to open the main window when clicked and they still expect a program showing a tray icon to also be in the dock.
         if 'darwin' in sys.platform:
@@ -71,7 +83,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.labelSendBroadcastWarning.setVisible(False)
 
         #FILE MENU and other buttons
-        QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL("triggered()"), self.close)
+        QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL("triggered()"), self.quit)
         QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL("triggered()"), self.click_actionManageKeys)
         QtCore.QObject.connect(self.ui.actionRegenerateDeterministicAddresses, QtCore.SIGNAL("triggered()"), self.click_actionRegenerateDeterministicAddresses)
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL("clicked()"), self.click_NewAddressDialog)
@@ -228,12 +240,13 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
+        str_broadcast_subscribers = '[Broadcast subscribers]'
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, received, message, read = row
 
             try:
-                if toAddress == '[Broadcast subscribers]':
-                    toLabel = '[Broadcast subscribers]'
+                if toAddress == str_broadcast_subscribers:
+                    toLabel = str_broadcast_subscribers
                 else:
                     toLabel = shared.config.get(toAddress, 'label')
             except:
@@ -459,6 +472,27 @@ class MyForm(QtGui.QMainWindow):
                 #self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
                 #self.activateWindow()
 
+
+    # pointer to the application
+    #app = None
+
+    # show the application window
+    def appIndicatorShow(self):
+        if self.actionShow == None:
+            return
+        if not self.actionShow.isChecked():
+            self.actionShow.setChecked(True)
+            self.appIndicatorShowOrHideWindow()
+
+    # unchecks the show item on the application indicator
+    def appIndicatorHide(self):
+        if self.actionShow == None:
+            return
+        if self.actionShow.isChecked():
+            self.actionShow.setChecked(False)
+            self.appIndicatorShowOrHideWindow()
+
+    # application indicator show or hide
     """# application indicator show or hide
     def appIndicatorShowBitmessage(self):
         #if self.actionShow == None:
@@ -470,33 +504,53 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.appIndicatorShowOrHideWindow()"""
 
+    # returns the index of the oldest unread message
+    def getUnreadMessageIndex(self):
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT msgid, received, read FROM inbox where folder='inbox' ORDER BY received DESC ''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        i = 0
+        index = 0
+        for row in queryreturn:
+            msgid, received, read = row
+            if not read:
+                index = i
+            i = i + 1
+        return index
+
+    # Show the program window and select inbox tab
+    def appIndicatorInbox(self, mm_app, source_id):
+        self.appIndicatorShow()
+        # select inbox
+        self.ui.tabWidget.setCurrentIndex(0)
+        # select unread message
+        self.ui.tableWidgetInbox.selectRow(self.getUnreadMessageIndex())
+        self.tableWidgetInboxItemClicked()
+
     # Show the program window and select send tab
     def appIndicatorSend(self):
-        if not self.actionShow.isChecked():
-            self.actionShow.setChecked(True)
-            self.appIndicatorShowOrHideWindow()
+        self.appIndicatorShow()
         self.ui.tabWidget.setCurrentIndex(1)
 
     # Show the program window and select subscriptions tab
     def appIndicatorSubscribe(self):
-        if not self.actionShow.isChecked():
-            self.actionShow.setChecked(True)
-            self.appIndicatorShowOrHideWindow()
+        self.appIndicatorShow()
         self.ui.tabWidget.setCurrentIndex(4)
 
     # Show the program window and select the address book tab
     def appIndicatorAddressBook(self):
-        if not self.actionShow.isChecked():
-            self.actionShow.setChecked(True)
-            self.appIndicatorShowOrHideWindow()
+        self.appIndicatorShow()
         self.ui.tabWidget.setCurrentIndex(5)
 
     # create application indicator
-    def createAppIndicator(self,app):
-        self.tray = QSystemTrayIcon(QtGui.QIcon("images/can-icon-24px.png"), app)
+    def appIndicatorInit(self,app):
+        self.tray = QSystemTrayIcon(QtGui.QIcon("images/can-icon-24px-red.png"), app)
         if sys.platform[0:3] == 'win':
             traySignal = "activated(QSystemTrayIcon::ActivationReason)"
             QtCore.QObject.connect(self.tray, QtCore.SIGNAL(traySignal), self.__icon_activated)
+
         m = QMenu()
 
         self.actionStatus = QtGui.QAction('Not Connected',m,checkable=False)
@@ -509,10 +563,10 @@ class MyForm(QtGui.QMainWindow):
 
         # show bitmessage
         self.actionShow = QtGui.QAction('Show Bitmessage',m,checkable=True)
-        self.actionShow.setChecked(True)
+        self.actionShow.setChecked(not shared.config.getboolean('bitmessagesettings', 'startintray'))
         self.actionShow.triggered.connect(self.appIndicatorShowOrHideWindow)
         if not sys.platform[0:3] == 'win':
-            m.addAction(self.actionShow)
+            m.addAction(self.actionShow)       
 
         # Send
         actionSend = QtGui.QAction('Send',m,checkable=False)
@@ -535,15 +589,133 @@ class MyForm(QtGui.QMainWindow):
         m.addAction(actionSeparator)
 
         # Quit
-        m.addAction("Quit", self.close)
+        m.addAction("Quit", self.quit)
+
         self.tray.setContextMenu(m)
         self.tray.show()
-        if shared.config.getboolean('bitmessagesettings', 'startintray'):
-            #myapp.trayIcon.show()#This option seems to have been obsoleted by https://github.com/Bitmessage/PyBitmessage/pull/133/files
-            self.actionShow.setChecked(False)
-            self.appIndicatorShowOrHideWindow()
-            #if sys.platform[0:3] == 'win':
-            #    myapp.setWindowFlags(Qt.ToolTip)
+
+    # Ubuntu Messaging menu object
+    mmapp = None
+
+    # is the operating system Ubuntu?
+    def isUbuntu(self):
+        for entry in platform.uname():
+            if "Ubuntu" in entry:
+                return True
+        return False
+
+    # returns the number of unread messages and subscriptions
+    def getUnread(self):
+        str_broadcast_subscribers = '[Broadcast subscribers]'
+
+        unreadMessages = 0
+        unreadSubscriptions = 0
+
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, read FROM inbox where folder='inbox' ''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        for row in queryreturn:
+            msgid, toAddress, read = row
+
+            try:
+                if toAddress == str_broadcast_subscribers:
+                    toLabel = str_broadcast_subscribers
+                else:
+                    toLabel = shared.config.get(toAddress, 'label')
+            except:
+                toLabel = ''
+            if toLabel == '':
+                toLabel = toAddress
+
+            if not read:
+                if toLabel == str_broadcast_subscribers:
+                    # increment the unread subscriptions
+                    unreadSubscriptions = unreadSubscriptions + 1
+                else:
+                    # increment the unread messages
+                    unreadMessages = unreadMessages + 1
+        return unreadMessages, unreadSubscriptions
+
+    # show the number of unread messages and subscriptions on the messaging menu
+    def ubuntuMessagingMenuUnread(self, drawAttention):
+        unreadMessages, unreadSubscriptions = self.getUnread()
+        # unread messages
+        if unreadMessages > 0:
+            self.mmapp.append_source("Messages", None, "Messages (" + str(unreadMessages) + ")")
+            if drawAttention:
+                self.mmapp.draw_attention("Messages")
+
+        # unread subscriptions
+        if unreadSubscriptions > 0:
+            self.mmapp.append_source("Subscriptions", None, "Subscriptions (" + str(unreadSubscriptions) + ")")
+            if drawAttention:
+                self.mmapp.draw_attention("Subscriptions")
+    
+    # initialise the Ubuntu messaging menu
+    def ubuntuMessagingMenuInit(self):
+        global withMessagingMenu
+
+        # if this isn't ubuntu then don't do anything
+        if not self.isUbuntu():
+            return
+
+        # has messageing menu been installed
+        if not withMessagingMenu:
+            print 'WARNING: MessagingMenu is not available.  Is libmessaging-menu-dev installed?' 
+            return
+
+        # create the menu server
+        if withMessagingMenu:
+            try:
+                self.mmapp = MessagingMenu.App(desktop_id='pybitmessage.desktop')
+                self.mmapp.register()
+                self.mmapp.connect('activate-source', self.appIndicatorInbox)
+                self.ubuntuMessagingMenuUnread(True)
+            except Exception:
+                withMessagingMenu = False
+                print 'WARNING: messaging menu disabled'
+
+    # update the Ubuntu messaging menu
+    def ubuntuMessagingMenuUpdate(self, drawAttention):
+        global withMessagingMenu
+
+        # if this isn't ubuntu then don't do anything
+        if not self.isUbuntu():
+            return
+
+        # has messageing menu been installed
+        if not withMessagingMenu:
+            print 'WARNING: messaging menu disabled or libmessaging-menu-dev not installed' 
+            return
+
+        # Remove previous messages and subscriptions entries, then recreate them
+        # There might be a better way to do it than this
+        if self.mmapp.has_source("Messages"):
+            self.mmapp.remove_source("Messages")
+
+        if self.mmapp.has_source("Subscriptions"):
+            self.mmapp.remove_source("Subscriptions")
+
+        # update the menu entries
+        self.ubuntuMessagingMenuUnread(drawAttention)
+
+    # initialise the message notifier
+    def notifierInit(self):
+        global withMessagingMenu
+        if withMessagingMenu:
+            Notify.init('pybitmessage')
+
+    # shows a notification
+    def notifierShow(self, title, subtitle):
+        global withMessagingMenu
+        if withMessagingMenu:
+            n = Notify.Notification.new(title, subtitle,'notification-message-email')
+            n.show()
+            return
+        # Show with tray
+        self.trayIcon.showMessage(title, subtitle, 1, 2000)
 
     def tableWidgetInboxKeyPressEvent(self,event):
         if event.key() == QtCore.Qt.Key_Delete:
@@ -598,10 +770,7 @@ class MyForm(QtGui.QMainWindow):
         if shared.config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
             if event.type() == QtCore.QEvent.WindowStateChange:
                 if self.windowState() & QtCore.Qt.WindowMinimized:
-                    self.hide()
-
-                    #self.trayIcon.show() #This may have been obsoleted by https://github.com/Bitmessage/PyBitmessage/issues/135
-                    #self.hidden = True
+                    self.appIndicatorHide()
                     if 'win32' in sys.platform or 'win64' in sys.platform:
                         self.setWindowFlags(Qt.ToolTip)
                 elif event.oldState() & QtCore.Qt.WindowMinimized:
@@ -688,27 +857,47 @@ class MyForm(QtGui.QMainWindow):
         elif len(shared.connectedHostsList) == 0:
             self.setStatusIcon('red')
 
+    # Indicates whether or not there is a connection to the Bitmessage network
+    connected = False
+
     def setStatusIcon(self,color):
+        global withMessagingMenu
         #print 'setting status icon color'
         if color == 'red':
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/redicon.png"))
             shared.statusIconColor = 'red'
-            #if self.actionStatus != None:
-            self.actionStatus.setText('Not Connected')
+            # if the connection is lost then show a notification
+            if self.connected:
+                self.notifierShow('PyBitmessage','Connection lost')
+            self.connected = False
+
+            if self.actionStatus != None:
+                self.actionStatus.setText('Not Connected')
+                self.tray.setIcon(QtGui.QIcon("images/can-icon-24px-red.png"))
+                self.trayIcon.show()
         if color == 'yellow':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
             shared.statusIconColor = 'yellow'
-            #if self.actionStatus != None:
-            self.actionStatus.setText('Connected')
+            # if a new connection has been established then show a notification
+            if not self.connected:
+                self.notifierShow('PyBitmessage','Connected')
+            self.connected = True
+
+            if self.actionStatus != None:
+                self.actionStatus.setText('Connected')
+                self.tray.setIcon(QtGui.QIcon("images/can-icon-24px-yellow.png"))
         if color == 'green':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
-            #if self.actionStatus != None:
-            self.actionStatus.setText('Connected')
+            self.connected = True
+
+            if self.actionStatus != None:
+                self.actionStatus.setText('Connected')
+                self.tray.setIcon(QtGui.QIcon("images/can-icon-24px-green.png"))
 
     def updateSentItemStatusByHash(self,toRipe,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -1072,11 +1261,11 @@ class MyForm(QtGui.QMainWindow):
         if fromLabel == '':
             newItem =  QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
-                self.trayIcon.showMessage('New Message', 'New message from '+ fromAddress, 1, 2000)
+                self.notifierShow('New Message', 'From '+ fromAddress)
         else:
             newItem =  QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
-                self.trayIcon.showMessage('New Message', 'New message from '+fromLabel, 1, 2000)
+                self.notifierShow('New Message', 'From ' + fromLabel)
         newItem.setData(Qt.UserRole,str(fromAddress))
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,1,newItem)
@@ -1084,7 +1273,7 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,2,newItem)
-        newItem =  myTableWidgetItem(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+        newItem = myTableWidgetItem(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
         newItem.setData(Qt.UserRole,QByteArray(inventoryHash))
         newItem.setData(33,int(time.time()))
         newItem.setFont(font)
@@ -1096,6 +1285,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())"""
         self.ui.tableWidgetInbox.setSortingEnabled(True)
+        self.ubuntuMessagingMenuUpdate(True)
 
     def click_pushButtonAddAddressBook(self):
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
@@ -1400,24 +1590,42 @@ class MyForm(QtGui.QMainWindow):
         else:
             print 'new address dialog box rejected'
 
-    def closeEvent(self, event):
+
+    # Quit selected from menu or application indicator
+    def quit(self):
         '''quit_msg = "Are you sure you want to exit Bitmessage?"
         reply = QtGui.QMessageBox.question(self, 'Message',
                          quit_msg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
 
-        if reply == QtGui.QMessageBox.Yes:
-            event.accept()
-        else:
-            event.ignore()'''
+        if reply is QtGui.QMessageBox.No:
+            return
+        '''
         shared.doCleanShutdown()
-        #self.trayIcon.hide()
         self.tray.hide()
+        # unregister the messaging system
+        if self.mmapp is not None:
+            self.mmapp.unregister()
+        self.trayIcon.hide()
         self.statusBar().showMessage('All done. Closing user interface...')
-        event.accept()
-        shared.printLock.acquire()
-        print 'Done. (passed event.accept())'
-        shared.printLock.release()
         os._exit(0)
+
+    # window close event
+    def closeEvent(self, event):
+        self.appIndicatorHide()
+        minimizeonclose = False
+
+        try:
+            minimizeonclose = shared.config.getboolean('bitmessagesettings', 'minimizeonclose')
+        except Exception:
+            pass
+
+        if minimizeonclose:
+            # minimize the application
+            event.ignore()
+        else:
+            # quit the application
+            event.accept()
+            self.quit()
 
     def on_action_InboxMessageForceHtml(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
@@ -2045,12 +2253,21 @@ class UISignaler(QThread):
             else:
                 sys.stderr.write('Command sent to UISignaler not recognized: %s\n' % command)
 
-
 def run():
     app = QtGui.QApplication(sys.argv)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
-    if not shared.config.getboolean('bitmessagesettings', 'startintray'):
+
+    if shared.config.getboolean('bitmessagesettings', 'startintray'):
+        if not myapp.isUbuntu():
+            myapp.trayIcon.show()
+            if 'win32' in sys.platform or 'win64' in sys.platform:
+                myapp.setWindowFlags(Qt.ToolTip)
+    else:
         myapp.show()
-    myapp.createAppIndicator(app)
+
+    myapp.appIndicatorInit(app)
+    myapp.ubuntuMessagingMenuInit()
+    myapp.notifierInit()
+
     sys.exit(app.exec_())

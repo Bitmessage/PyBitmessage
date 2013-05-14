@@ -6,6 +6,9 @@ src/images/redicon.png
 src/images/subscriptions.png
 src/images/blacklist.png
 src/images/can-icon-24px.png
+src/images/can-icon-24px-red.png
+src/images/can-icon-24px-yellow.png
+src/images/can-icon-24px-green.png
 src/images/identities.png
 src/images/yellowicon.png
 src/images/inbox.png

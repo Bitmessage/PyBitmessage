@@ -979,7 +979,7 @@ p, li { white-space: pre-wrap; }
   </action>
   <action name="actionExit">
    <property name="text">
-    <string>Exit</string>
+    <string>Quit</string>
    </property>
   </action>
   <action name="actionHelp">
