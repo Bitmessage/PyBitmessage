@@ -914,7 +914,7 @@ class MyForm(QtGui.QMainWindow):
             shared.statusIconColor = 'red'
             # if the connection is lost then show a notification
             if self.connected:
-                self.notifierShow('PyBitmessage','Connection lost')
+                self.notifierShow('Bitmessage','Connection lost')
             self.connected = False
 
             if self.actionStatus != None:
@@ -928,7 +928,7 @@ class MyForm(QtGui.QMainWindow):
             shared.statusIconColor = 'yellow'
             # if a new connection has been established then show a notification
             if not self.connected:
-                self.notifierShow('PyBitmessage','Connected')
+                self.notifierShow('Bitmessage','Connected')
             self.connected = True
 
             if self.actionStatus != None:
@@ -939,6 +939,8 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage('')
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
+            if not self.connected:
+                self.notifierShow('Bitmessage','Connected')
             self.connected = True
 
             if self.actionStatus != None:
