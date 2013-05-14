@@ -626,6 +626,11 @@ class MyForm(QtGui.QMainWindow):
         if not withMessagingMenu:
             return
 
+        # if there are no items on the messaging menu then
+        # the subsequent query can be avoided
+        if not (self.mmapp.has_source("Subscriptions") or self.mmapp.has_source("Messages")):
+            return
+
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''SELECT toaddress, read FROM inbox WHERE msgid=?''')
         shared.sqlSubmitQueue.put(inventoryHash)
