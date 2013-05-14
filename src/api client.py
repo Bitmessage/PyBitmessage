@@ -25,12 +25,12 @@ print jsonAddresses
 print 'Now that we have our address data in a nice Python data structure, let\'s look at the first address (index 0) and print its label:'
 print jsonAddresses['addresses'][0]['label']
 
-print 'Uncomment the next two lines to create a new random address.'
+print 'Uncomment the next two lines to create a new random address with slightly a slightly higher difficulty setting than normal.'
 #addressLabel = 'new address label'.encode('base64')
-#print api.createRandomAddress(addressLabel)
+#print api.createRandomAddress(addressLabel,False,1.05,1.1111)
 
 print 'Uncomment these next four lines to create new deterministic addresses.'
-#passphrase = 'asdfasdfqwer'.encode('base64')
+#passphrase = 'asdfasdfqwser'.encode('base64')
 #jsonDeterministicAddresses = api.createDeterministicAddresses(passphrase, 2, 3, 1, False)
 #print jsonDeterministicAddresses
 #print json.loads(jsonDeterministicAddresses)
