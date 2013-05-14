@@ -240,7 +240,6 @@ class receiveDataThread(threading.Thread):
         self.sock.settimeout(600) #We'll send out a pong every 5 minutes to make sure the connection stays alive if there has been no other traffic to send lately.
         self.streamNumber = streamNumber
         self.payloadLength = 0 #This is the protocol payload length thus it doesn't include the 24 byte message header
-        self.receivedgetbiginv = False #Gets set to true once we receive a getbiginv message from our peer. An abusive peer might request it too much so we use this variable to check whether they have already asked for a big inv message.
         self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave = {}
         shared.connectedHostsList[self.HOST] = 0 #The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
         self.connectionIsOrWasFullyEstablished = False #set to true after the remote node and I accept each other's version messages. This is needed to allow the user interface to accurately reflect the current number of connections.
@@ -349,14 +348,10 @@ class receiveDataThread(threading.Thread):
                             self.recinv(self.data[24:self.payloadLength+24])
                         elif remoteCommand == 'getdata\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
                             self.recgetdata(self.data[24:self.payloadLength+24])
-                        elif remoteCommand == 'getbiginv\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            self.sendBigInv()
                         elif remoteCommand == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
                             self.recmsg(self.data[24:self.payloadLength+24])
                         elif remoteCommand == 'broadcast\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
                             self.recbroadcast(self.data[24:self.payloadLength+24])
-                        elif remoteCommand == 'getaddr\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                            self.sendaddr()
                         elif remoteCommand == 'ping\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
                             self.sendpong()
                         elif remoteCommand == 'pong\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
@@ -454,50 +449,45 @@ class receiveDataThread(threading.Thread):
             return
         self.sendBigInv()
 
-    def sendBigInv(self): #I used capitals in for this function name because there is no such Bitmessage command as 'biginv'.
-        if self.receivedgetbiginv:
-            print 'We have already sent a big inv message to this peer. Ignoring request.'
-            return
-        else:
-            self.receivedgetbiginv = True
-            shared.sqlLock.acquire()
-            #Select all hashes which are younger than two days old and in this stream.
-            t = (int(time.time())-maximumAgeOfObjectsThatIAdvertiseToOthers,int(time.time())-lengthOfTimeToHoldOnToAllPubkeys,self.streamNumber)
-            shared.sqlSubmitQueue.put('''SELECT hash FROM inventory WHERE ((receivedtime>? and objecttype<>'pubkey') or (receivedtime>? and objecttype='pubkey')) and streamnumber=?''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
-            bigInvList = {}
-            for row in queryreturn:
-                hash, = row
-                if hash not in self.objectsOfWhichThisRemoteNodeIsAlreadyAware:
+    def sendBigInv(self):
+        shared.sqlLock.acquire()
+        #Select all hashes which are younger than two days old and in this stream.
+        t = (int(time.time())-maximumAgeOfObjectsThatIAdvertiseToOthers,int(time.time())-lengthOfTimeToHoldOnToAllPubkeys,self.streamNumber)
+        shared.sqlSubmitQueue.put('''SELECT hash FROM inventory WHERE ((receivedtime>? and objecttype<>'pubkey') or (receivedtime>? and objecttype='pubkey')) and streamnumber=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        bigInvList = {}
+        for row in queryreturn:
+            hash, = row
+            if hash not in self.objectsOfWhichThisRemoteNodeIsAlreadyAware:
+                bigInvList[hash] = 0
+            else:
+                shared.printLock.acquire()
+                print 'Not including an object hash in a big inv message because the remote node is already aware of it.'#This line is here to check that this feature is working.
+                shared.printLock.release()
+        #We also have messages in our inventory in memory (which is a python dictionary). Let's fetch those too.
+        for hash, storedValue in shared.inventory.items():
+            if hash not in self.objectsOfWhichThisRemoteNodeIsAlreadyAware:
+                objectType, streamNumber, payload, receivedTime = storedValue
+                if streamNumber == self.streamNumber and receivedTime > int(time.time())-maximumAgeOfObjectsThatIAdvertiseToOthers:
                     bigInvList[hash] = 0
-                else:
-                    shared.printLock.acquire()
-                    print 'Not including an object hash in a big inv message because the remote node is already aware of it.'#This line is here to check that this feature is working.
-                    shared.printLock.release()
-            #We also have messages in our inventory in memory (which is a python dictionary). Let's fetch those too.
-            for hash, storedValue in shared.inventory.items():
-                if hash not in self.objectsOfWhichThisRemoteNodeIsAlreadyAware:
-                    objectType, streamNumber, payload, receivedTime = storedValue
-                    if streamNumber == self.streamNumber and receivedTime > int(time.time())-maximumAgeOfObjectsThatIAdvertiseToOthers:
-                        bigInvList[hash] = 0
-                else:
-                    shared.printLock.acquire()
-                    print 'Not including an object hash in a big inv message because the remote node is already aware of it.'#This line is here to check that this feature is working.
-                    shared.printLock.release()
-            numberOfObjectsInInvMessage = 0
-            payload = ''
-            #Now let us start appending all of these hashes together. They will be sent out in a big inv message to our new peer.
-            for hash, storedValue in bigInvList.items():
-                payload += hash
-                numberOfObjectsInInvMessage += 1
-                if numberOfObjectsInInvMessage >= 50000: #We can only send a max of 50000 items per inv message but we may have more objects to advertise. They must be split up into multiple inv messages.
-                    self.sendinvMessageToJustThisOnePeer(numberOfObjectsInInvMessage,payload)
-                    payload = ''
-                    numberOfObjectsInInvMessage = 0
-            if numberOfObjectsInInvMessage > 0:
+            else:
+                shared.printLock.acquire()
+                print 'Not including an object hash in a big inv message because the remote node is already aware of it.'#This line is here to check that this feature is working.
+                shared.printLock.release()
+        numberOfObjectsInInvMessage = 0
+        payload = ''
+        #Now let us start appending all of these hashes together. They will be sent out in a big inv message to our new peer.
+        for hash, storedValue in bigInvList.items():
+            payload += hash
+            numberOfObjectsInInvMessage += 1
+            if numberOfObjectsInInvMessage >= 50000: #We can only send a max of 50000 items per inv message but we may have more objects to advertise. They must be split up into multiple inv messages.
                 self.sendinvMessageToJustThisOnePeer(numberOfObjectsInInvMessage,payload)
+                payload = ''
+                numberOfObjectsInInvMessage = 0
+        if numberOfObjectsInInvMessage > 0:
+            self.sendinvMessageToJustThisOnePeer(numberOfObjectsInInvMessage,payload)
 
     #Self explanatory. Notice that there is also a broadcastinv function for broadcasting invs to everyone in our stream.
     def sendinvMessageToJustThisOnePeer(self,numberOfObjects,payload):
