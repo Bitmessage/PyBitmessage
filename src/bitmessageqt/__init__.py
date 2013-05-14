@@ -760,8 +760,8 @@ class MyForm(QtGui.QMainWindow):
             n = Notify.Notification.new(title, subtitle,'notification-message-email')
             n.show()
             return
-        # Show with tray
-        self.trayIcon.showMessage(title, subtitle, 1, 2000)
+        else:
+            self.tray.showMessage(title, subtitle, 1, 2000)
 
     def tableWidgetInboxKeyPressEvent(self,event):
         if event.key() == QtCore.Qt.Key_Delete:
