@@ -35,6 +35,8 @@ import pickle
 
 class MyForm(QtGui.QMainWindow):
 
+    str_broadcast_subscribers = '[Broadcast subscribers]'
+
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_MainWindow()
@@ -239,13 +241,12 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
-        str_broadcast_subscribers = '[Broadcast subscribers]'
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, received, message, read = row
 
             try:
-                if toAddress == str_broadcast_subscribers:
-                    toLabel = str_broadcast_subscribers
+                if toAddress == self.str_broadcast_subscribers:
+                    toLabel = self.str_broadcast_subscribers
                 else:
                     toLabel = shared.config.get(toAddress, 'label')
             except:
@@ -481,6 +482,12 @@ class MyForm(QtGui.QMainWindow):
     # pointer to the application
     app = None
 
+    # The most recent message
+    newMessageItem = None
+
+    # The most recent broadcast
+    newBroadcastItem = None
+
     # show the application window
     def appIndicatorShow(self):
         if self.actionShow == None:
@@ -508,30 +515,33 @@ class MyForm(QtGui.QMainWindow):
             self.show()
             self.setWindowState(self.windowState() & QtCore.Qt.WindowMaximized)
 
-    # returns the index of the oldest unread message
-    def getUnreadMessageIndex(self):
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('''SELECT msgid, received, read FROM inbox where folder='inbox' ORDER BY received DESC ''')
-        shared.sqlSubmitQueue.put('')
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
-        i = 0
-        index = 0
-        for row in queryreturn:
-            msgid, received, read = row
-            if not read:
-                index = i
-            i = i + 1
-        return index
-
     # Show the program window and select inbox tab
     def appIndicatorInbox(self, mm_app, source_id):
         self.appIndicatorShow()
         # select inbox
         self.ui.tabWidget.setCurrentIndex(0)
-        # select unread message
-        self.ui.tableWidgetInbox.selectRow(self.getUnreadMessageIndex())
-        self.tableWidgetInboxItemClicked()
+        selectedItem = None
+        if source_id == 'Subscriptions':
+            # select unread broadcast
+            if self.newBroadcastItem is not None:
+                selectedItem = self.newBroadcastItem
+                self.newBroadcastItem = None
+        else:
+            # select unread message
+            if self.newMessageItem is not None:
+                selectedItem = self.newMessageItem
+                self.newMessageItem = None
+        # make it the current item
+        if selectedItem is not None:
+            try:
+                self.ui.tableWidgetInbox.setCurrentItem(selectedItem)
+            except Exception:
+                self.ui.tableWidgetInbox.setCurrentCell(0,0)
+            self.tableWidgetInboxItemClicked()
+        else:
+            # just select the first item
+            self.ui.tableWidgetInbox.setCurrentCell(0,0)
+            self.tableWidgetInboxItemClicked()
 
     # Show the program window and select send tab
     def appIndicatorSend(self):
@@ -603,10 +613,35 @@ class MyForm(QtGui.QMainWindow):
                 return True
         return False
 
+    # When an unread inbox row is selected on then clear the messaging menu
+    def ubuntuMessagingMenuClear(self, inventoryHash):
+        global withMessagingMenu
+
+        # if this isn't ubuntu then don't do anything
+        if not self.isUbuntu():
+            return
+
+        # has messageing menu been installed
+        if not withMessagingMenu:
+            return
+
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT toaddress, read FROM inbox WHERE msgid=?''')
+        shared.sqlSubmitQueue.put(inventoryHash)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        for row in queryreturn:
+            toAddress, read = row
+            if not read:
+                if toAddress == self.str_broadcast_subscribers:
+                    if self.mmapp.has_source("Subscriptions"):
+                        self.mmapp.remove_source("Subscriptions")
+                else:
+                    if self.mmapp.has_source("Messages"):
+                        self.mmapp.remove_source("Messages")
+
     # returns the number of unread messages and subscriptions
     def getUnread(self):
-        str_broadcast_subscribers = '[Broadcast subscribers]'
-
         unreadMessages = 0
         unreadSubscriptions = 0
 
@@ -619,8 +654,8 @@ class MyForm(QtGui.QMainWindow):
             msgid, toAddress, read = row
 
             try:
-                if toAddress == str_broadcast_subscribers:
-                    toLabel = str_broadcast_subscribers
+                if toAddress == self.str_broadcast_subscribers:
+                    toLabel = self.str_broadcast_subscribers
                 else:
                     toLabel = shared.config.get(toAddress, 'label')
             except:
@@ -629,7 +664,7 @@ class MyForm(QtGui.QMainWindow):
                 toLabel = toAddress
 
             if not read:
-                if toLabel == str_broadcast_subscribers:
+                if toLabel == self.str_broadcast_subscribers:
                     # increment the unread subscriptions
                     unreadSubscriptions = unreadSubscriptions + 1
                 else:
@@ -677,7 +712,7 @@ class MyForm(QtGui.QMainWindow):
                 print 'WARNING: messaging menu disabled'
 
     # update the Ubuntu messaging menu
-    def ubuntuMessagingMenuUpdate(self, drawAttention):
+    def ubuntuMessagingMenuUpdate(self, drawAttention, newItem, toLabel):
         global withMessagingMenu
 
         # if this isn't ubuntu then don't do anything
@@ -688,6 +723,12 @@ class MyForm(QtGui.QMainWindow):
         if not withMessagingMenu:
             print 'WARNING: messaging menu disabled or libmessaging-menu-dev not installed' 
             return
+
+        # remember this item to that the messaging menu can find it
+        if toLabel == self.str_broadcast_subscribers:
+            self.newBroadcastItem = newItem
+        else:
+            self.newMessageItem = newItem
 
         # Remove previous messages and subscriptions entries, then recreate them
         # There might be a better way to do it than this
@@ -1073,7 +1114,7 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage('')
                 #We don't actually need the ackdata for acknowledgement since this is a broadcast message, but we can use it to update the user interface when the POW is done generating.
                 ackdata = OpenSSL.rand(32)
-                toAddress = '[Broadcast subscribers]'
+                toAddress = self.str_broadcast_subscribers
                 ripe = ''
                 shared.sqlLock.acquire()
                 t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastpending',1,1,'sent',2)
@@ -1092,7 +1133,7 @@ class MyForm(QtGui.QMainWindow):
                 if fromLabel == '':
                     fromLabel = fromAddress
 
-                toLabel = '[Broadcast subscribers]'
+                toLabel = self.str_broadcast_subscribers
 
                 self.ui.tableWidgetSent.insertRow(0)
                 newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
@@ -1234,8 +1275,8 @@ class MyForm(QtGui.QMainWindow):
                     fromLabel, = row
 
         try:
-            if toAddress == '[Broadcast subscribers]':
-                toLabel = '[Broadcast subscribers]'
+            if toAddress == self.str_broadcast_subscribers:
+                toLabel = self.str_broadcast_subscribers
             else:
                 toLabel = shared.config.get(toAddress, 'label')
         except:
@@ -1246,7 +1287,7 @@ class MyForm(QtGui.QMainWindow):
         font = QFont()
         font.setBold(True)
         self.ui.tableWidgetInbox.setSortingEnabled(False)
-        newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
+        newItem = QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
         newItem.setFont(font)
         newItem.setData(Qt.UserRole,str(toAddress))
         if shared.safeConfigGetBoolean(str(toAddress),'mailinglist'):
@@ -1255,17 +1296,17 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetInbox.setItem(0,0,newItem)
 
         if fromLabel == '':
-            newItem =  QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
+            newItem = QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
                 self.notifierShow('New Message', 'From '+ fromAddress)
         else:
-            newItem =  QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
+            newItem = QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
                 self.notifierShow('New Message', 'From ' + fromLabel)
         newItem.setData(Qt.UserRole,str(fromAddress))
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,1,newItem)
-        newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
+        newItem = QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,2,newItem)
@@ -1281,7 +1322,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())"""
         self.ui.tableWidgetInbox.setSortingEnabled(True)
-        self.ubuntuMessagingMenuUpdate(True)
+        self.ubuntuMessagingMenuUpdate(True, newItem, toLabel)
 
     def click_pushButtonAddAddressBook(self):
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
@@ -1641,7 +1682,7 @@ class MyForm(QtGui.QMainWindow):
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,0).data(Qt.UserRole).toPyObject())
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,1).data(Qt.UserRole).toPyObject())
 
-        if toAddressAtCurrentInboxRow == '[Broadcast subscribers]':
+        if toAddressAtCurrentInboxRow == self.str_broadcast_subscribers:
             self.ui.labelFrom.setText('')
         else:
             if not shared.config.get(toAddressAtCurrentInboxRow,'enabled'):
@@ -1966,6 +2007,7 @@ class MyForm(QtGui.QMainWindow):
 
             inventoryHash = str(self.ui.tableWidgetInbox.item(currentRow,3).data(Qt.UserRole).toPyObject())
             t = (inventoryHash,)
+            self.ubuntuMessagingMenuClear(t)
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put('''update inbox set read=1 WHERE msgid=?''')
             shared.sqlSubmitQueue.put(t)
