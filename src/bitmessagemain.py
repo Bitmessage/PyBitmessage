@@ -1072,7 +1072,7 @@ class receiveDataThread(threading.Thread):
 
                 toLabel = shared.config.get(toAddress, 'label')
                 if toLabel == '':
-                    toLabel = addressInKeysFile
+                    toLabel = toAddress
 
                 if messageEncodingType == 2:
                     bodyPositionIndex = string.find(message,'\nBody:')
