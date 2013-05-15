@@ -465,13 +465,11 @@ class MyForm(QtGui.QMainWindow):
                 self.setWindowFlags(Qt.Window)
                 self.show()
                 self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-                self.activateWindow()
             else:
-                self.show()
-                self.setWindowState(self.windowState() & QtCore.Qt.WindowMaximized)
+                self.showMaximized()
             #Here is what I believe might be required for darwin:
                 #self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-                #self.activateWindow()
+            self.activateWindow()
 
 
     # pointer to the application
