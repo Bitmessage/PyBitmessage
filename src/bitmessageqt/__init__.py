@@ -71,7 +71,7 @@ class MyForm(QtGui.QMainWindow):
             #startup for linux
             pass
 
-        self.trayIcon = QtGui.QSystemTrayIcon(self)
+        """self.trayIcon = QtGui.QSystemTrayIcon(self)
         self.trayIcon.setIcon( QtGui.QIcon(':/newPrefix/images/can-icon-16px.png') )
         traySignal = "activated(QSystemTrayIcon::ActivationReason)"
         QtCore.QObject.connect(self.trayIcon, QtCore.SIGNAL(traySignal), self.__icon_activated)
@@ -80,7 +80,7 @@ class MyForm(QtGui.QMainWindow):
         self.trayIcon.setContextMenu(menu)
         #I'm currently under the impression that Mac users have different expectations for the tray icon. They don't necessairly expect it to open the main window when clicked and they still expect a program showing a tray icon to also be in the dock.
         if 'darwin' in sys.platform:
-            self.trayIcon.show()
+            self.trayIcon.show()"""
 
         self.ui.labelSendBroadcastWarning.setVisible(False)
 
@@ -918,7 +918,7 @@ class MyForm(QtGui.QMainWindow):
             if self.actionStatus != None:
                 self.actionStatus.setText('Not Connected')
                 self.tray.setIcon(QtGui.QIcon("images/can-icon-24px-red.png"))
-                self.trayIcon.show()
+                #self.trayIcon.show()
         if color == 'yellow':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
@@ -1256,11 +1256,6 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSent.setSortingEnabled(True)
 
     def displayNewInboxMessage(self,inventoryHash,toAddress,fromAddress,subject,message):
-        '''print 'test signals displayNewInboxMessage'
-        print 'toAddress', toAddress
-        print 'fromAddress', fromAddress
-        print 'message', message'''
-
         fromLabel = ''
         shared.sqlLock.acquire()
         t = (fromAddress,)
@@ -1324,12 +1319,6 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(33,int(time.time()))
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,3,newItem)
-
-        """#If we have received this message from either a broadcast address or from someone in our address book, display as HTML
-        if decodeAddress(fromAddress)[3] in shared.broadcastSendersForWhichImWatching or shared.isAddressInMyAddressBook(fromAddress):
-            self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())
-        else:
-            self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(0,2).data(Qt.UserRole).toPyObject())"""
         self.ui.tableWidgetInbox.setSortingEnabled(True)
         self.ubuntuMessagingMenuUpdate(True, newItem, toLabel)
 
@@ -1651,7 +1640,7 @@ class MyForm(QtGui.QMainWindow):
         # unregister the messaging system
         if self.mmapp is not None:
             self.mmapp.unregister()
-        self.trayIcon.hide()
+        #self.trayIcon.hide()
         self.statusBar().showMessage('All done. Closing user interface...')
         os._exit(0)
 
