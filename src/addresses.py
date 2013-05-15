@@ -276,7 +276,7 @@ if __name__ == "__main__":
     print 'Ripe digest that we will encode in the address:', ripe.digest().encode('hex')
     returnedAddress = encodeAddress(addressVersionNumber,streamNumber,ripe.digest())
     print 'Encoded address:', returnedAddress
-    status,addressVersionNumber,streamNumber,data = decodeAddress(returnedAddress)
+    status,addressVersionNumber,streamNumber,data = decodeAddress("oriDZJ7VAEjphwQmt7fACFqZJVwds26vW")
     print '\nAfter decoding address:'
     print 'Status:', status
     print 'addressVersionNumber', addressVersionNumber
