@@ -230,9 +230,6 @@ class MyForm(QtGui.QMainWindow):
                 if isEnabled:
                     status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
 
-        #self.sqlLookup = sqlThread()
-        #self.sqlLookup.start()
-
         self.ui.tableWidgetSent.keyPressEvent = self.tableWidgetSentKeyPressEvent
         font = QFont()
         font.setBold(True)
