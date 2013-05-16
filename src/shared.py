@@ -167,11 +167,12 @@ def doCleanShutdown():
     sqlSubmitQueue.put('SELECT address FROM subscriptions')
     sqlSubmitQueue.put('')
     sqlReturnQueue.get()
+    sqlSubmitQueue.put('exit')
     sqlLock.release()
     printLock.acquire()
     print 'Finished flushing inventory.'
     printLock.release()
-    sqlSubmitQueue.put('exit')
+    
 
     if safeConfigGetBoolean('bitmessagesettings','daemon'):
         printLock.acquire()
