@@ -2446,7 +2446,15 @@ class sqlThread(threading.Thread):
                 parameters = shared.sqlSubmitQueue.get()
                 #print 'item', item
                 #print 'parameters', parameters
-                self.cur.execute(item, parameters)
+                try:
+                    self.cur.execute(item, parameters)
+                except Exception, err:
+                    shared.printLock.acquire()
+                    sys.stderr.write('\nMajor error occurred when trying to execute a SQL statement within the sqlThread. Please tell Atheros about this error message or post it in the forum! Error occurred while trying to execute statement: "'+str(item) + '"  Here are the parameters; you might want to censor this data with asterisks (***) as it can contain private information: '+str(repr(parameters))+'\nHere is the actual error message thrown by the sqlThread: '+ str(err)+'\n')
+                    sys.stderr.write('This program shall now abruptly exit!\n')
+                    shared.printLock.release()
+                    os._exit(0)
+
                 shared.sqlReturnQueue.put(self.cur.fetchall())
                 #shared.sqlSubmitQueue.task_done()
             
