@@ -2051,8 +2051,11 @@ class sendDataThread(threading.Thread):
                         shared.printLock.acquire()
                         print 'sendDataThread (associated with', self.HOST,') ID:',id(self), 'shutting down now.'
                         shared.printLock.release()
-                        self.sock.shutdown(socket.SHUT_RDWR)
-                        self.sock.close()
+                        try:
+                            self.sock.shutdown(socket.SHUT_RDWR)
+                            self.sock.close()
+                        except:
+                            pass
                         shared.sendDataQueues.remove(self.mailbox)
                         shared.printLock.acquire()
                         print 'len of sendDataQueues', len(shared.sendDataQueues)
@@ -2087,8 +2090,11 @@ class sendDataThread(threading.Thread):
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'self.sock.sendall failed'
-                            self.sock.shutdown(socket.SHUT_RDWR)
-                            self.sock.close()
+                            try:
+                                self.sock.shutdown(socket.SHUT_RDWR)
+                                self.sock.close()
+                            except:
+                                pass
                             shared.sendDataQueues.remove(self.mailbox)
                             print 'sendDataThread thread (ID:',str(id(self))+') ending now. Was connected to', self.HOST
                             break
@@ -2107,8 +2113,11 @@ class sendDataThread(threading.Thread):
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'self.sock.sendall failed'
-                            self.sock.shutdown(socket.SHUT_RDWR)
-                            self.sock.close()
+                            try:
+                                self.sock.shutdown(socket.SHUT_RDWR)
+                                self.sock.close()
+                            except:
+                                pass
                             shared.sendDataQueues.remove(self.mailbox)
                             print 'sendDataThread thread (ID:',str(id(self))+') ending now. Was connected to', self.HOST
                             break
@@ -2123,8 +2132,11 @@ class sendDataThread(threading.Thread):
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'send pong failed'
-                            self.sock.shutdown(socket.SHUT_RDWR)
-                            self.sock.close()
+                            try:
+                                self.sock.shutdown(socket.SHUT_RDWR)
+                                self.sock.close()
+                            except:
+                                pass
                             shared.sendDataQueues.remove(self.mailbox)
                             print 'sendDataThread thread', self, 'ending now. Was connected to', self.HOST
                             break
@@ -2446,7 +2458,15 @@ class sqlThread(threading.Thread):
                 parameters = shared.sqlSubmitQueue.get()
                 #print 'item', item
                 #print 'parameters', parameters
-                self.cur.execute(item, parameters)
+                try:
+                    self.cur.execute(item, parameters)
+                except Exception, err:
+                    shared.printLock.acquire()
+                    sys.stderr.write('\nMajor error occurred when trying to execute a SQL statement within the sqlThread. Please tell Atheros about this error message or post it in the forum! Error occurred while trying to execute statement: "'+str(item) + '"  Here are the parameters; you might want to censor this data with asterisks (***) as it can contain private information: '+str(repr(parameters))+'\nHere is the actual error message thrown by the sqlThread: '+ str(err)+'\n')
+                    sys.stderr.write('This program shall now abruptly exit!\n')
+                    shared.printLock.release()
+                    os._exit(0)
+
                 shared.sqlReturnQueue.put(self.cur.fetchall())
                 #shared.sqlSubmitQueue.task_done()
             

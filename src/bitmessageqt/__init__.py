@@ -230,9 +230,6 @@ class MyForm(QtGui.QMainWindow):
                 if isEnabled:
                     status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
 
-        #self.sqlLookup = sqlThread()
-        #self.sqlLookup.start()
-
         self.ui.tableWidgetSent.keyPressEvent = self.tableWidgetSentKeyPressEvent
         font = QFont()
         font.setBold(True)
@@ -1744,7 +1741,9 @@ class MyForm(QtGui.QMainWindow):
             self.ui.textEditInboxMessage.setText("")
             self.ui.tableWidgetInbox.removeRow(currentRow)
             self.statusBar().showMessage('Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+        shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('commit')
+        shared.sqlLock.release()
         if currentRow == 0:
             self.ui.tableWidgetInbox.selectRow(currentRow)
         else:
@@ -1764,7 +1763,9 @@ class MyForm(QtGui.QMainWindow):
             self.ui.textEditSentMessage.setPlainText("")
             self.ui.tableWidgetSent.removeRow(currentRow)
             self.statusBar().showMessage('Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+        shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('commit')
+        shared.sqlLock.release()
         if currentRow == 0:
             self.ui.tableWidgetSent.selectRow(currentRow)
         else:
