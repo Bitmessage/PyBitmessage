@@ -2051,8 +2051,11 @@ class sendDataThread(threading.Thread):
                         shared.printLock.acquire()
                         print 'sendDataThread (associated with', self.HOST,') ID:',id(self), 'shutting down now.'
                         shared.printLock.release()
-                        self.sock.shutdown(socket.SHUT_RDWR)
-                        self.sock.close()
+                        try:
+                            self.sock.shutdown(socket.SHUT_RDWR)
+                            self.sock.close()
+                        except:
+                            pass
                         shared.sendDataQueues.remove(self.mailbox)
                         shared.printLock.acquire()
                         print 'len of sendDataQueues', len(shared.sendDataQueues)
@@ -2087,8 +2090,11 @@ class sendDataThread(threading.Thread):
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'self.sock.sendall failed'
-                            self.sock.shutdown(socket.SHUT_RDWR)
-                            self.sock.close()
+                            try:
+                                self.sock.shutdown(socket.SHUT_RDWR)
+                                self.sock.close()
+                            except:
+                                pass
                             shared.sendDataQueues.remove(self.mailbox)
                             print 'sendDataThread thread (ID:',str(id(self))+') ending now. Was connected to', self.HOST
                             break
@@ -2107,8 +2113,11 @@ class sendDataThread(threading.Thread):
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'self.sock.sendall failed'
-                            self.sock.shutdown(socket.SHUT_RDWR)
-                            self.sock.close()
+                            try:
+                                self.sock.shutdown(socket.SHUT_RDWR)
+                                self.sock.close()
+                            except:
+                                pass
                             shared.sendDataQueues.remove(self.mailbox)
                             print 'sendDataThread thread (ID:',str(id(self))+') ending now. Was connected to', self.HOST
                             break
@@ -2123,8 +2132,11 @@ class sendDataThread(threading.Thread):
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'send pong failed'
-                            self.sock.shutdown(socket.SHUT_RDWR)
-                            self.sock.close()
+                            try:
+                                self.sock.shutdown(socket.SHUT_RDWR)
+                                self.sock.close()
+                            except:
+                                pass
                             shared.sendDataQueues.remove(self.mailbox)
                             print 'sendDataThread thread', self, 'ending now. Was connected to', self.HOST
                             break
