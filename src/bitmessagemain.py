@@ -147,7 +147,9 @@ class outgoingSynSender(threading.Thread):
                         shared.knownNodesLock.acquire()
                         del shared.knownNodes[self.streamNumber][HOST]
                         shared.knownNodesLock.release()
+                        shared.printLock.acquire()
                         print 'deleting ', HOST, 'from shared.knownNodes because it is more than 48 hours old and we could not connect to it.'
+                        shared.printLock.release()
                 except socks.Socks5AuthError, err:
                     #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"SOCKS5 Authentication problem: "+str(err))
                     shared.UISignalQueue.put(('updateStatusBar',"SOCKS5 Authentication problem: "+str(err)))
@@ -1769,7 +1771,9 @@ class receiveDataThread(threading.Thread):
                         shared.knownNodesLock.acquire()
                         shared.knownNodes[recaddrStream][hostFromAddrMessage] = (recaddrPort, timeSomeoneElseReceivedMessageFromThisNode)
                         shared.knownNodesLock.release()
+                        shared.printLock.acquire()
                         print 'added new node', hostFromAddrMessage, 'to knownNodes in stream', recaddrStream
+                        shared.printLock.release()
                         needToWriteKnownNodesToDisk = True
                         hostDetails = (timeSomeoneElseReceivedMessageFromThisNode, recaddrStream, recaddrServices, hostFromAddrMessage, recaddrPort)
                         listOfAddressDetailsToBroadcastToPeers.append(hostDetails)
@@ -1825,6 +1829,7 @@ class receiveDataThread(threading.Thread):
         #print 'knownNodes', shared.knownNodes
 
         #We are going to share a maximum number of 1000 addrs with our peer. 500 from this stream, 250 from the left child stream, and 250 from the right child stream.
+        shared.knownNodesLock.acquire()
         if len(shared.knownNodes[self.streamNumber]) > 0:
             for i in range(500):
                 random.seed()
@@ -1846,7 +1851,7 @@ class receiveDataThread(threading.Thread):
                 if self.isHostInPrivateIPRange(HOST):
                     continue
                 addrsInChildStreamRight[HOST] = shared.knownNodes[(self.streamNumber*2)+1][HOST]
-
+        shared.knownNodesLock.release()
         numberOfAddressesInAddrMessage = 0
         payload = ''
         #print 'addrsInMyStream.items()', addrsInMyStream.items()
@@ -2731,7 +2736,7 @@ class singleWorker(threading.Thread):
         shared.printLock.acquire()
         print 'broadcasting inv with hash:', inventoryHash.encode('hex')
         shared.printLock.release()
-        shared.broadcastToSendDataQueues((streamNumber, 'sendinv', shared.inventoryHash))
+        shared.broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
         #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
         shared.UISignalQueue.put(('updateStatusBar',''))
         shared.config.set(myAddress,'lastpubkeysendtime',str(int(time.time())))
