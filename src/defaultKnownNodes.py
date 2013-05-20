@@ -10,11 +10,14 @@ def createDefaultKnownNodes(appdata):
     ############## Stream 1 ################
     stream1 = {}
     
-    stream1['98.28.255.178'] = (8444,int(time.time()))
+    stream1['109.91.57.2'] = (8443,int(time.time()))
     stream1['66.65.120.151'] = (8080,int(time.time()))
-    stream1['87.236.30.170'] = (8444,int(time.time()))
-    stream1['163.118.75.118'] = (8444,int(time.time()))
-    stream1['88.130.32.123'] = (8444,int(time.time()))
+    stream1['188.18.69.115'] = (8443,int(time.time()))
+    stream1['204.236.246.212'] = (8444,int(time.time()))
+    stream1['85.177.81.73'] = (8444,int(time.time()))
+    stream1['78.81.56.239'] = (8444,int(time.time()))
+    stream1['204.236.246.212'] = (8444,int(time.time()))
+
 
     ############# Stream 2 #################
     stream2 = {}
