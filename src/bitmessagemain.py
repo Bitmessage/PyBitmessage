@@ -221,7 +221,8 @@ class singleListener(threading.Thread):
                 a.close()
                 a,(HOST,PORT) = sock.accept()
             objectsOfWhichThisRemoteNodeIsAlreadyAware = {}
-
+            a.settimeout(20)
+            
             sd = sendDataThread()
             sd.setup(a,HOST,PORT,-1,objectsOfWhichThisRemoteNodeIsAlreadyAware)
             sd.start()
