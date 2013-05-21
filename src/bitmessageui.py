@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Mon Apr 22 16:34:47 2013
+# Created: Tue May 21 14:09:58 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -428,6 +428,30 @@ class Ui_MainWindow(object):
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("clicked(bool)")), self.labelSendBroadcastWarning.hide)
         QtCore.QObject.connect(self.radioButtonBroadcast, QtCore.SIGNAL(_fromUtf8("clicked()")), self.labelSendBroadcastWarning.show)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
+        MainWindow.setTabOrder(self.tabWidget, self.tableWidgetInbox)
+        MainWindow.setTabOrder(self.tableWidgetInbox, self.textEditInboxMessage)
+        MainWindow.setTabOrder(self.textEditInboxMessage, self.radioButtonSpecific)
+        MainWindow.setTabOrder(self.radioButtonSpecific, self.radioButtonBroadcast)
+        MainWindow.setTabOrder(self.radioButtonBroadcast, self.comboBoxSendFrom)
+        MainWindow.setTabOrder(self.comboBoxSendFrom, self.lineEditTo)
+        MainWindow.setTabOrder(self.lineEditTo, self.pushButtonLoadFromAddressBook)
+        MainWindow.setTabOrder(self.pushButtonLoadFromAddressBook, self.lineEditSubject)
+        MainWindow.setTabOrder(self.lineEditSubject, self.textEditMessage)
+        MainWindow.setTabOrder(self.textEditMessage, self.pushButtonSend)
+        MainWindow.setTabOrder(self.pushButtonSend, self.tableWidgetSent)
+        MainWindow.setTabOrder(self.tableWidgetSent, self.textEditSentMessage)
+        MainWindow.setTabOrder(self.textEditSentMessage, self.pushButtonNewAddress)
+        MainWindow.setTabOrder(self.pushButtonNewAddress, self.tableWidgetYourIdentities)
+        MainWindow.setTabOrder(self.tableWidgetYourIdentities, self.pushButtonAddSubscription)
+        MainWindow.setTabOrder(self.pushButtonAddSubscription, self.tableWidgetSubscriptions)
+        MainWindow.setTabOrder(self.tableWidgetSubscriptions, self.pushButtonAddAddressBook)
+        MainWindow.setTabOrder(self.pushButtonAddAddressBook, self.tableWidgetAddressBook)
+        MainWindow.setTabOrder(self.tableWidgetAddressBook, self.radioButtonBlacklist)
+        MainWindow.setTabOrder(self.radioButtonBlacklist, self.radioButtonWhitelist)
+        MainWindow.setTabOrder(self.radioButtonWhitelist, self.pushButtonAddBlacklist)
+        MainWindow.setTabOrder(self.pushButtonAddBlacklist, self.tableWidgetBlacklist)
+        MainWindow.setTabOrder(self.tableWidgetBlacklist, self.tableWidgetConnectionCount)
+        MainWindow.setTabOrder(self.tableWidgetConnectionCount, self.pushButtonStatusIcon)
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Bitmessage", None, QtGui.QApplication.UnicodeUTF8))

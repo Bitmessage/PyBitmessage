@@ -1003,6 +1003,33 @@ p, li { white-space: pre-wrap; }
    </property>
   </action>
  </widget>
+ <tabstops>
+  <tabstop>tabWidget</tabstop>
+  <tabstop>tableWidgetInbox</tabstop>
+  <tabstop>textEditInboxMessage</tabstop>
+  <tabstop>radioButtonSpecific</tabstop>
+  <tabstop>radioButtonBroadcast</tabstop>
+  <tabstop>comboBoxSendFrom</tabstop>
+  <tabstop>lineEditTo</tabstop>
+  <tabstop>pushButtonLoadFromAddressBook</tabstop>
+  <tabstop>lineEditSubject</tabstop>
+  <tabstop>textEditMessage</tabstop>
+  <tabstop>pushButtonSend</tabstop>
+  <tabstop>tableWidgetSent</tabstop>
+  <tabstop>textEditSentMessage</tabstop>
+  <tabstop>pushButtonNewAddress</tabstop>
+  <tabstop>tableWidgetYourIdentities</tabstop>
+  <tabstop>pushButtonAddSubscription</tabstop>
+  <tabstop>tableWidgetSubscriptions</tabstop>
+  <tabstop>pushButtonAddAddressBook</tabstop>
+  <tabstop>tableWidgetAddressBook</tabstop>
+  <tabstop>radioButtonBlacklist</tabstop>
+  <tabstop>radioButtonWhitelist</tabstop>
+  <tabstop>pushButtonAddBlacklist</tabstop>
+  <tabstop>tableWidgetBlacklist</tabstop>
+  <tabstop>tableWidgetConnectionCount</tabstop>
+  <tabstop>pushButtonStatusIcon</tabstop>
+ </tabstops>
  <resources>
   <include location="bitmessage_icons.qrc"/>
  </resources>
