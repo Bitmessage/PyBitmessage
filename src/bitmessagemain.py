@@ -329,7 +329,7 @@ class receiveDataThread(threading.Thread):
                 if self.data[20:24] == hashlib.sha512(self.data[24:self.payloadLength+24]).digest()[0:4]:#test the checksum in the message. If it is correct...
                     #print 'message checksum is correct'
                     #The time we've last seen this node is obviously right now since we just received valid data from it. So update the knownNodes list so that other peers can be made aware of its existance.
-                    if self.initiatedConnection: #The remote port is only something we should share with others if it is the remote node's incoming port (rather than some random operating-system-assigned outgoing port).
+                    if self.initiatedConnection and self.connectionIsOrWasFullyEstablished: #The remote port is only something we should share with others if it is the remote node's incoming port (rather than some random operating-system-assigned outgoing port).
                         shared.knownNodesLock.acquire()
                         shared.knownNodes[self.streamNumber][self.HOST] = (self.PORT,int(time.time()))
                         shared.knownNodesLock.release()
