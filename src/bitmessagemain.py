@@ -206,12 +206,20 @@ class singleListener(threading.Thread):
             #We don't want to accept incoming connections if the user is using a SOCKS proxy. If the user eventually select proxy 'none' then this will start listening for connections.
             while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
                 time.sleep(10)
+            while len(shared.connectedHostsList) > 220:
+                shared.printLock.acquire()
+                print 'We are connected to too many people. Not accepting further incoming connections for ten seconds.'
+                shared.printLock.release()
+                time.sleep(10)
             a,(HOST,PORT) = sock.accept()
-            #Users are finding that if they run more than one node in the same network (thus with the same public IP), they can not connect with the second node. This is because this section of code won't accept the connection from the same IP. This problem will go away when the Bitmessage network grows beyond being tiny but in the mean time I'll comment out this code section.
-            """while HOST in shared.connectedHostsList:
+
+            #The following code will, unfortunately, block an incoming connection if someone else on the same LAN is already connected because the two computers will share the same external IP. This is here to prevent connection flooding.
+            while HOST in shared.connectedHostsList:
+                shared.printLock.acquire()
                 print 'incoming connection is from a host in shared.connectedHostsList (we are already connected to it). Ignoring it.'
+                shared.printLock.release()
                 a.close()
-                a,(HOST,PORT) = sock.accept()"""
+                a,(HOST,PORT) = sock.accept()
             objectsOfWhichThisRemoteNodeIsAlreadyAware = {}
 
             sd = sendDataThread()
@@ -239,7 +247,6 @@ class receiveDataThread(threading.Thread):
         self.sock = sock
         self.HOST = HOST
         self.PORT = port
-        self.sock.settimeout(600) #We'll send out a pong every 5 minutes to make sure the connection stays alive if there has been no other traffic to send lately.
         self.streamNumber = streamNumber
         self.payloadLength = 0 #This is the protocol payload length thus it doesn't include the 24 byte message header
         self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave = {}
@@ -281,11 +288,6 @@ class receiveDataThread(threading.Thread):
 
 
 
-        """try:
-            #self.sock.shutdown(socket.SHUT_RDWR)
-            self.sock.close()
-        except Exception, err:
-            print 'Within receiveDataThread run(), self.sock.shutdown or .close() failed.', err"""
 
         try:
             del selfInitiatedConnections[self.streamNumber][self]
@@ -431,6 +433,7 @@ class receiveDataThread(threading.Thread):
         if not self.initiatedConnection:
             #self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"),'green')
             shared.UISignalQueue.put(('setStatusIcon','green'))
+        self.sock.settimeout(600) #We'll send out a pong every 5 minutes to make sure the connection stays alive if there has been no other traffic to send lately.
         shared.UISignalQueue.put(('updateNetworkStatusTab','no data'))
         remoteNodeIncomingPort, remoteNodeSeenTime = shared.knownNodes[self.streamNumber][self.HOST]
         shared.printLock.acquire()
@@ -445,8 +448,6 @@ class receiveDataThread(threading.Thread):
             shared.printLock.acquire()
             print 'We are connected to too many people. Closing connection.'
             shared.printLock.release()
-            #self.sock.shutdown(socket.SHUT_RDWR)
-            #self.sock.close()
             shared.broadcastToSendDataQueues((0, 'shutdown', self.HOST))
             return
         self.sendBigInv()
@@ -1932,8 +1933,6 @@ class receiveDataThread(threading.Thread):
             print 'Remote node useragent:', useragent, '  stream number:', self.streamNumber
             shared.printLock.release()
             if self.streamNumber != 1:
-                #self.sock.shutdown(socket.SHUT_RDWR)
-                #self.sock.close()
                 shared.broadcastToSendDataQueues((0, 'shutdown', self.HOST))
                 shared.printLock.acquire()
                 print 'Closed connection to', self.HOST, 'because they are interested in stream', self.streamNumber,'.'
@@ -1944,8 +1943,6 @@ class receiveDataThread(threading.Thread):
             if not self.initiatedConnection:
                 shared.broadcastToSendDataQueues((0,'setStreamNumber',(self.HOST,self.streamNumber)))
             if data[72:80] == eightBytesOfRandomDataUsedToDetectConnectionsToSelf:
-                #self.sock.shutdown(socket.SHUT_RDWR)
-                #self.sock.close()
                 shared.broadcastToSendDataQueues((0, 'shutdown', self.HOST))
                 shared.printLock.acquire()
                 print 'Closing connection to myself: ', self.HOST
