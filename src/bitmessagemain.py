@@ -216,7 +216,7 @@ class singleListener(threading.Thread):
             #The following code will, unfortunately, block an incoming connection if someone else on the same LAN is already connected because the two computers will share the same external IP. This is here to prevent connection flooding.
             while HOST in shared.connectedHostsList:
                 shared.printLock.acquire()
-                print 'incoming connection is from a host in shared.connectedHostsList (we are already connected to it). Ignoring it.'
+                print 'We are already connected to', HOST+'. Ignoring connection.'
                 shared.printLock.release()
                 a.close()
                 a,(HOST,PORT) = sock.accept()
