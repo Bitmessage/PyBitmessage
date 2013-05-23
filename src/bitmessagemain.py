@@ -1667,10 +1667,7 @@ class receiveDataThread(threading.Thread):
                 if data[28+lengthOfNumberOfAddresses+(34*i)] == '\x7F':
                     print 'Ignoring IP address in loopback range:', hostFromAddrMessage
                     continue
-                if data[28+lengthOfNumberOfAddresses+(34*i)] == '\x0A':
-                    print 'Ignoring IP address in private range:', hostFromAddrMessage
-                    continue
-                if data[28+lengthOfNumberOfAddresses+(34*i):30+lengthOfNumberOfAddresses+(34*i)] == '\xC0A8':
+                if isHostInPrivateIPRange(hostFromAddrMessage):
                     print 'Ignoring IP address in private range:', hostFromAddrMessage
                     continue
                 timeSomeoneElseReceivedMessageFromThisNode, = unpack('>I',data[lengthOfNumberOfAddresses+(34*i):4+lengthOfNumberOfAddresses+(34*i)]) #This is the 'time' value in the received addr message.
@@ -1836,21 +1833,21 @@ class receiveDataThread(threading.Thread):
             for i in range(500):
                 random.seed()
                 HOST, = random.sample(shared.knownNodes[self.streamNumber],  1)
-                if self.isHostInPrivateIPRange(HOST):
+                if isHostInPrivateIPRange(HOST):
                     continue
                 addrsInMyStream[HOST] = shared.knownNodes[self.streamNumber][HOST]
         if len(shared.knownNodes[self.streamNumber*2]) > 0:
             for i in range(250):
                 random.seed()
                 HOST, = random.sample(shared.knownNodes[self.streamNumber*2],  1)
-                if self.isHostInPrivateIPRange(HOST):
+                if isHostInPrivateIPRange(HOST):
                     continue
                 addrsInChildStreamLeft[HOST] = shared.knownNodes[self.streamNumber*2][HOST]
         if len(shared.knownNodes[(self.streamNumber*2)+1]) > 0:
             for i in range(250):
                 random.seed()
                 HOST, = random.sample(shared.knownNodes[(self.streamNumber*2)+1],  1)
-                if self.isHostInPrivateIPRange(HOST):
+                if isHostInPrivateIPRange(HOST):
                     continue
                 addrsInChildStreamRight[HOST] = shared.knownNodes[(self.streamNumber*2)+1][HOST]
         shared.knownNodesLock.release()
@@ -1992,16 +1989,7 @@ class receiveDataThread(threading.Thread):
         if self.verackReceived == True:
             self.connectionFullyEstablished()
 
-    def isHostInPrivateIPRange(self,host):
-        if host[:3] == '10.':
-            return True
-        if host[:4] == '172.':
-            if host[6] == '.':
-                if int(host[4:6]) >= 16 and int(host[4:6]) <= 31:
-                    return True
-        if host[:8] == '192.168.':
-            return True
-        return False
+
 
 #Every connection to a peer has a sendDataThread (and also a receiveDataThread).
 class sendDataThread(threading.Thread):
@@ -2293,6 +2281,17 @@ def assembleVersionMessage(remoteHost,remotePort,myStreamNumber):
     datatosend = datatosend + pack('>L',len(payload)) #payload length
     datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
     return datatosend + payload
+
+def isHostInPrivateIPRange(host):
+    if host[:3] == '10.':
+        return True
+    if host[:4] == '172.':
+        if host[6] == '.':
+            if int(host[4:6]) >= 16 and int(host[4:6]) <= 31:
+                return True
+    if host[:8] == '192.168.':
+        return True
+    return False
 
 #This thread exists because SQLITE3 is so un-threadsafe that we must submit queries to it and it puts results back in a different queue. They won't let us just use locks.
 class sqlThread(threading.Thread):
