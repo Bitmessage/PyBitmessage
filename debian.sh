@@ -7,7 +7,7 @@
 #!/bin/bash
 
 APP=pybitmessage
-VERSION=0.3.0
+VERSION=0.3.1
 ARCH_TYPE=all
 
 # Create a source archive
