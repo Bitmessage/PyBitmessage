@@ -25,7 +25,7 @@ print jsonAddresses
 print 'Now that we have our address data in a nice Python data structure, let\'s look at the first address (index 0) and print its label:'
 print jsonAddresses['addresses'][0]['label']
 
-print 'Uncomment the next two lines to create a new random address with slightly a slightly higher difficulty setting than normal.'
+print 'Uncomment the next two lines to create a new random address with a slightly higher difficulty setting than normal.'
 #addressLabel = 'new address label'.encode('base64')
 #print api.createRandomAddress(addressLabel,False,1.05,1.1111)
 
@@ -34,6 +34,15 @@ print 'Uncomment these next four lines to create new deterministic addresses.'
 #jsonDeterministicAddresses = api.createDeterministicAddresses(passphrase, 2, 3, 1, False)
 #print jsonDeterministicAddresses
 #print json.loads(jsonDeterministicAddresses)
+
+#print 'Uncomment this next line to print the first deterministic address that would be generated with the given passphrase. This will Not add it to the Bitmessage interface or the keys.dat file.'
+#print api.getDeterministicAddress('asdfasdfqwser'.encode('base64'),3,1)
+
+#print 'Uncomment this line to subscribe to an address. (You must use your own address, this one is invalid).'
+#print api.addSubscription('2D94G5d8yp237GGqAheoecBYpdehdT3dha','test sub'.encode('base64'))
+
+#print 'Uncomment this line to unsubscribe from an address.'
+#print api.deleteSubscription('2D94G5d8yp237GGqAheoecBYpdehdT3dha')
 
 print 'Let\'s now print all of our inbox messages:'
 print api.getAllInboxMessages()
