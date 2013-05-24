@@ -500,7 +500,7 @@ p, li { white-space: pre-wrap; }
         <item row="1" column="0">
          <widget class="QPushButton" name="pushButtonAddSubscription">
           <property name="text">
-           <string>Add</string>
+           <string>Add new Subscription</string>
           </property>
          </widget>
         </item>
@@ -585,7 +585,7 @@ p, li { white-space: pre-wrap; }
         <item row="1" column="0">
          <widget class="QPushButton" name="pushButtonAddAddressBook">
           <property name="text">
-           <string>Add</string>
+           <string>Add new entry</string>
           </property>
          </widget>
         </item>
@@ -674,7 +674,7 @@ p, li { white-space: pre-wrap; }
         <item row="2" column="0">
          <widget class="QPushButton" name="pushButtonAddBlacklist">
           <property name="text">
-           <string>Add</string>
+           <string>Add new entry</string>
           </property>
          </widget>
         </item>

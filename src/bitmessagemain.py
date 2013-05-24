@@ -18,7 +18,6 @@ useVeryEasyProofOfWorkForTesting = False #If you set this to True while on the n
 encryptedBroadcastSwitchoverTime = 1369735200
 
 import sys
-
 import ConfigParser
 import Queue
 from addresses import *
@@ -3220,10 +3219,10 @@ class addressGenerator(threading.Thread):
             queueValue = shared.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0
             payloadLengthExtraBytes = 0
-            if len(queueValue) == 6:
-                addressVersionNumber,streamNumber,label,numberOfAddressesToMake,deterministicPassphrase,eighteenByteRipe = queueValue
-            elif len(queueValue) == 8:
-                addressVersionNumber,streamNumber,label,numberOfAddressesToMake,deterministicPassphrase,eighteenByteRipe,nonceTrialsPerByte,payloadLengthExtraBytes = queueValue
+            if len(queueValue) == 7:
+                command,addressVersionNumber,streamNumber,label,numberOfAddressesToMake,deterministicPassphrase,eighteenByteRipe = queueValue
+            elif len(queueValue) == 9:
+                command,addressVersionNumber,streamNumber,label,numberOfAddressesToMake,deterministicPassphrase,eighteenByteRipe,nonceTrialsPerByte,payloadLengthExtraBytes = queueValue
             else:
                 sys.stderr.write('Programming error: A structure with the wrong number of values was passed into the addressGeneratorQueue. Here is the queueValue: %s\n' % queueValue)
             if addressVersionNumber < 3 or addressVersionNumber > 3:
@@ -3237,7 +3236,7 @@ class addressGenerator(threading.Thread):
             if payloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
                 payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
             if addressVersionNumber == 3: #currently the only one supported.
-                if deterministicPassphrase == "":
+                if command == 'createRandomAddress':
                     shared.UISignalQueue.put(('updateStatusBar','Generating one new address'))
                     #This next section is a little bit strange. We're going to generate keys over and over until we
                     #find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
@@ -3300,10 +3299,12 @@ class addressGenerator(threading.Thread):
                     shared.reloadMyAddressHashes()
                     shared.workerQueue.put(('doPOWForMyV3Pubkey',ripe.digest()))
 
-                else: #There is something in the deterministicPassphrase variable thus we are going to do this deterministically.
-                    statusbar = 'Generating '+str(numberOfAddressesToMake) + ' new addresses.'
-                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
-                    shared.UISignalQueue.put(('updateStatusBar',statusbar))
+                elif command == 'createDeterministicAddresses' or command == 'getDeterministicAddress':
+                    if len(deterministicPassphrase) == 0:
+                        sys.stderr.write('WARNING: You are creating deterministic address(es) using a blank passphrase. Bitmessage will do it but it is rather stupid.')
+                    if command == 'createDeterministicAddresses':
+                        statusbar = 'Generating '+str(numberOfAddressesToMake) + ' new addresses.'
+                        shared.UISignalQueue.put(('updateStatusBar',statusbar))
                     signingKeyNonce = 0
                     encryptionKeyNonce = 1
                     listOfNewAddressesToSendOutThroughTheAPI = [] #We fill out this list no matter what although we only need it if we end up passing the info to the API.
@@ -3339,44 +3340,49 @@ class addressGenerator(threading.Thread):
                         print 'ripe.digest', ripe.digest().encode('hex')
                         print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix/(time.time()-startTime),'keys per second.'
                         address = encodeAddress(3,streamNumber,ripe.digest())
-                        #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Finished generating address. Writing to keys.dat')
 
-                        #An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
-                        #https://en.bitcoin.it/wiki/Wallet_import_format
-                        privSigningKey = '\x80'+potentialPrivSigningKey
-                        checksum = hashlib.sha256(hashlib.sha256(privSigningKey).digest()).digest()[0:4]
-                        privSigningKeyWIF = arithmetic.changebase(privSigningKey + checksum,256,58)
+                        if command == 'createDeterministicAddresses':
+                            #An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
+                            #https://en.bitcoin.it/wiki/Wallet_import_format
+                            privSigningKey = '\x80'+potentialPrivSigningKey
+                            checksum = hashlib.sha256(hashlib.sha256(privSigningKey).digest()).digest()[0:4]
+                            privSigningKeyWIF = arithmetic.changebase(privSigningKey + checksum,256,58)
 
-                        privEncryptionKey = '\x80'+potentialPrivEncryptionKey
-                        checksum = hashlib.sha256(hashlib.sha256(privEncryptionKey).digest()).digest()[0:4]
-                        privEncryptionKeyWIF = arithmetic.changebase(privEncryptionKey + checksum,256,58)
+                            privEncryptionKey = '\x80'+potentialPrivEncryptionKey
+                            checksum = hashlib.sha256(hashlib.sha256(privEncryptionKey).digest()).digest()[0:4]
+                            privEncryptionKeyWIF = arithmetic.changebase(privEncryptionKey + checksum,256,58)
 
-                        try:
-                            shared.config.add_section(address)
-                            print 'label:', label
-                            shared.config.set(address,'label',label)
-                            shared.config.set(address,'enabled','true')
-                            shared.config.set(address,'decoy','false')
-                            shared.config.set(address,'noncetrialsperbyte',str(nonceTrialsPerByte))
-                            shared.config.set(address,'payloadlengthextrabytes',str(payloadLengthExtraBytes))
-                            shared.config.set(address,'privSigningKey',privSigningKeyWIF)
-                            shared.config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
-                            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                                shared.config.write(configfile)
+                            try:
+                                shared.config.add_section(address)
+                                print 'label:', label
+                                shared.config.set(address,'label',label)
+                                shared.config.set(address,'enabled','true')
+                                shared.config.set(address,'decoy','false')
+                                shared.config.set(address,'noncetrialsperbyte',str(nonceTrialsPerByte))
+                                shared.config.set(address,'payloadlengthextrabytes',str(payloadLengthExtraBytes))
+                                shared.config.set(address,'privSigningKey',privSigningKeyWIF)
+                                shared.config.set(address,'privEncryptionKey',privEncryptionKeyWIF)
+                                with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                                    shared.config.write(configfile)
 
-                            #self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
-                            shared.UISignalQueue.put(('writeNewAddressToTable',(label,address,str(streamNumber))))
-                            listOfNewAddressesToSendOutThroughTheAPI.append(address)
-                            if eighteenByteRipe:
-                                shared.reloadMyAddressHashes()#This is necessary here (rather than just at the end) because otherwise if the human generates a large number of new addresses and uses one before they are done generating, the program will receive a getpubkey message and will ignore it.
-                        except:
-                            print address,'already exists. Not adding it again.'
+                                #self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
+                                shared.UISignalQueue.put(('writeNewAddressToTable',(label,address,str(streamNumber))))
+                                listOfNewAddressesToSendOutThroughTheAPI.append(address)
+                                if eighteenByteRipe:
+                                    shared.reloadMyAddressHashes()#This is necessary here (rather than just at the end) because otherwise if the human generates a large number of new addresses and uses one before they are done generating, the program will receive a getpubkey message and will ignore it.
+                            except:
+                                print address,'already exists. Not adding it again.'
+
+                    #Done generating addresses.
                     #It may be the case that this address is being generated as a result of a call to the API. Let us put the result in the necessary queue.
-                    apiAddressGeneratorReturnQueue.put(listOfNewAddressesToSendOutThroughTheAPI)
-                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address')
-                    shared.UISignalQueue.put(('updateStatusBar','Done generating address'))
-                    shared.reloadMyAddressHashes()
-
+                    if command == 'createDeterministicAddresses':
+                        apiAddressGeneratorReturnQueue.put(listOfNewAddressesToSendOutThroughTheAPI)
+                        shared.UISignalQueue.put(('updateStatusBar','Done generating address'))
+                        shared.reloadMyAddressHashes()
+                    elif command == 'getDeterministicAddress':
+                        apiAddressGeneratorReturnQueue.put(address)
+                else:
+                    raise Exception("Error in the addressGenerator thread. Thread was given a command it could not understand: "+command)
 
 #This is one of several classes that constitute the API
 #This class was written by Vaibhav Bhatia. Modified by Jonathan Warren (Atheros).
@@ -3511,7 +3517,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             label = label.decode('base64')
             apiAddressGeneratorReturnQueue.queue.clear()
             streamNumberForAddress = 1
-            shared.addressGeneratorQueue.put((3,streamNumberForAddress,label,1,"",eighteenByteRipe,nonceTrialsPerByte,payloadLengthExtraBytes))
+            shared.addressGeneratorQueue.put(('createRandomAddress',3,streamNumberForAddress,label,1,"",eighteenByteRipe,nonceTrialsPerByte,payloadLengthExtraBytes))
             return apiAddressGeneratorReturnQueue.get()
         elif method == 'createDeterministicAddresses':
             if len(params) == 0:
@@ -3562,7 +3568,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if addressVersionNumber == 0: #0 means "just use the proper addressVersionNumber"
                 addressVersionNumber = 3
             if addressVersionNumber != 3:
-                return 'API Error 0002: The address version number currently must be 3 (or 0 which means auto-select).', addressVersionNumber,' isn\'t supported.'
+                return 'API Error 0002: The address version number currently must be 3 (or 0 which means auto-select). '+ addressVersionNumber+' isn\'t supported.'
             if streamNumber == 0: #0 means "just use the most available stream"
                 streamNumber = 1
             if streamNumber != 1:
@@ -3573,7 +3579,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 return 'API Error 0005: You have (accidentally?) specified too many addresses to make. Maximum 999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
             apiAddressGeneratorReturnQueue.queue.clear()
             print 'Requesting that the addressGenerator create', numberOfAddresses, 'addresses.'
-            shared.addressGeneratorQueue.put((addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe,nonceTrialsPerByte,payloadLengthExtraBytes))
+            shared.addressGeneratorQueue.put(('createDeterministicAddresses',addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe,nonceTrialsPerByte,payloadLengthExtraBytes))
             data = '{"addresses":['
             queueReturn = apiAddressGeneratorReturnQueue.get()
             for item in queueReturn:
@@ -3582,6 +3588,23 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += "\""+item+ "\""
             data += ']}'
             return data
+        elif method == 'getDeterministicAddress':
+            if len(params) != 3:
+                return 'API Error 0000: I need exactly 3 parameters.'
+            passphrase, addressVersionNumber, streamNumber = params
+            numberOfAddresses = 1
+            eighteenByteRipe = False
+            if len(passphrase) == 0:
+                return 'API Error 0001: The specified passphrase is blank.'
+            passphrase = passphrase.decode('base64')
+            if addressVersionNumber != 3:
+                return 'API Error 0002: The address version number currently must be 3. '+ addressVersionNumber +' isn\'t supported.'
+            if streamNumber != 1:
+                return 'API Error 0003: The stream number must be 1. Others aren\'t supported.'
+            apiAddressGeneratorReturnQueue.queue.clear()
+            print 'Requesting that the addressGenerator create', numberOfAddresses, 'addresses.'
+            shared.addressGeneratorQueue.put(('getDeterministicAddress',addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe))
+            return apiAddressGeneratorReturnQueue.get()
         elif method == 'getAllInboxMessages':
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message FROM inbox where folder='inbox' ORDER BY received''')
@@ -3632,6 +3655,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     return 'API Error 0009: Invalid characters in address: '+ toAddress
                 if status == 'versiontoohigh':
                     return 'API Error 0010: Address version number too high (or zero) in address: ' + toAddress
+                return 'API Error 0007: Could not decode address: ' + toAddress+ ' : '+ status
             if addressVersionNumber < 2 or addressVersionNumber > 3:
                 return 'API Error 0011: The address version number currently must be 2 or 3. Others aren\'t supported. Check the toAddress.'
             if streamNumber != 1:
@@ -3647,6 +3671,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     return 'API Error 0009: Invalid characters in address: '+ fromAddress
                 if status == 'versiontoohigh':
                     return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
+                return 'API Error 0007: Could not decode address: ' + fromAddress+ ' : '+ status
             if addressVersionNumber < 2 or addressVersionNumber > 3:
                 return 'API Error 0011: The address version number currently must be 2 or 3. Others aren\'t supported. Check the fromAddress.'
             if streamNumber != 1:
@@ -3710,6 +3735,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     return 'API Error 0009: Invalid characters in address: '+ fromAddress
                 if status == 'versiontoohigh':
                     return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
+                return 'API Error 0007: Could not decode address: ' + fromAddress+ ' : '+ status
             if addressVersionNumber < 2 or addressVersionNumber > 3:
                 return 'API Error 0011: the address version number currently must be 2 or 3. Others aren\'t supported. Check the fromAddress.'
             if streamNumber != 1:
@@ -3763,6 +3789,75 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     return 'ackReceived'
                 else:
                     return 'otherStatus: '+status
+        elif method == 'addSubscription':
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
+            if len(params) == 1:
+                address, = params
+                label == ''
+            if len(params) == 2:
+                address, label = params
+                label = label.decode('base64')
+                try:
+                   label.decode('utf-8')
+                except UnicodeDecodeError:
+                   return 'API Error 0017: Label is not valid UTF-8 data.'
+            if len(params) >2:
+                return 'API Error 0000: I need either 1 or 2 parameters!'
+            address = addBMIfNotPresent(address)
+            status,addressVersionNumber,streamNumber,toRipe = decodeAddress(address)
+            if status <> 'success':
+                shared.printLock.acquire()
+                print 'API Error 0007: Could not decode address:', address, ':', status
+                shared.printLock.release()
+                if status == 'checksumfailed':
+                    return 'API Error 0008: Checksum failed for address: ' + address
+                if status == 'invalidcharacters':
+                    return 'API Error 0009: Invalid characters in address: '+ address
+                if status == 'versiontoohigh':
+                    return 'API Error 0010: Address version number too high (or zero) in address: ' + address
+                return 'API Error 0007: Could not decode address: ' + address+ ' : '+ status
+            if addressVersionNumber < 2 or addressVersionNumber > 3:
+                return 'API Error 0011: The address version number currently must be 2 or 3. Others aren\'t supported.'
+            if streamNumber != 1:
+                return 'API Error 0012: The stream number must be 1. Others aren\'t supported.'
+            #First we must check to see if the address is already in the subscriptions list.
+            shared.sqlLock.acquire()
+            t = (address,)
+            shared.sqlSubmitQueue.put('''select * from subscriptions where address=?''')
+            shared.sqlSubmitQueue.put(t)
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            if queryreturn != []:
+                return 'API Error 0016: You are already subscribed to that address.'
+            t = (label,address,True)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''INSERT INTO subscriptions VALUES (?,?,?)''')
+            shared.sqlSubmitQueue.put(t)
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+            shared.reloadBroadcastSendersForWhichImWatching()
+            shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
+            shared.UISignalQueue.put(('rerenderSubscriptions',''))
+            return 'Added subscription.'
+
+        elif method == 'deleteSubscription':
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            address, = params
+            address = addBMIfNotPresent(address)
+            t = (address,)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''DELETE FROM subscriptions WHERE address=?''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+            shared.reloadBroadcastSendersForWhichImWatching()
+            shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
+            shared.UISignalQueue.put(('rerenderSubscriptions',''))
+            return 'Deleted subscription if it existed.'
         else:
             return 'Invalid Method: %s'%method
 
@@ -3775,37 +3870,6 @@ class singleAPI(threading.Thread):
         se = SimpleXMLRPCServer((shared.config.get('bitmessagesettings', 'apiinterface'),shared.config.getint('bitmessagesettings', 'apiport')), MySimpleXMLRPCRequestHandler, True, True)
         se.register_introspection_functions()
         se.serve_forever()
-
-
-#The MySimpleXMLRPCRequestHandler class cannot emit signals (or at least I don't know how) because it is not a QT thread. It therefore puts data in a queue which this thread monitors and emits the signals on its behalf.
-"""class singleAPISignalHandler(QThread):
-    def __init__(self, parent = None):
-        QThread.__init__(self, parent)
-
-    def run(self):
-        while True:
-            command, data = apiSignalQueue.get()
-            if command == 'updateStatusBar':
-                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),data)
-            elif command == 'createRandomAddress':
-                label, eighteenByteRipe = data
-                streamNumberForAddress = 1
-                #self.addressGenerator = addressGenerator()
-                #self.addressGenerator.setup(3,streamNumberForAddress,label,1,"",eighteenByteRipe)
-                #self.emit(SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"),self.addressGenerator)
-                #self.addressGenerator.start()
-                shared.addressGeneratorQueue.put((3,streamNumberForAddress,label,1,"",eighteenByteRipe))
-            elif command == 'createDeterministicAddresses':
-                passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe = data
-                #self.addressGenerator = addressGenerator()
-                #self.addressGenerator.setup(addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe)
-                #self.emit(SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"),self.addressGenerator)
-                #self.addressGenerator.start()
-                shared.addressGeneratorQueue.put((addressVersionNumber,streamNumber,'unused API address',numberOfAddresses,passphrase,eighteenByteRipe))
-            elif command == 'displayNewSentMessage':
-                toAddress,toLabel,fromAddress,subject,message,ackdata = data
-                self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,toLabel,fromAddress,subject,message,ackdata)"""
-
 
 selfInitiatedConnections = {} #This is a list of current connections (the thread pointers at least)
 alreadyAttemptedConnectionsList = {} #This is a list of nodes to which we have already attempted a connection
