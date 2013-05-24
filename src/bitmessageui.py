@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Tue May 21 14:09:58 2013
+# Created: Fri May 24 16:22:22 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -500,7 +500,7 @@ class Ui_MainWindow(object):
         item.setText(QtGui.QApplication.translate("MainWindow", "Stream", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.youridentities), QtGui.QApplication.translate("MainWindow", "Your Identities", None, QtGui.QApplication.UnicodeUTF8))
         self.label_5.setText(QtGui.QApplication.translate("MainWindow", "Here you can subscribe to \'broadcast messages\' that are sent by other users. Messages will appear in your Inbox. Addresses here override those on the Blacklist tab.", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButtonAddSubscription.setText(QtGui.QApplication.translate("MainWindow", "Add", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButtonAddSubscription.setText(QtGui.QApplication.translate("MainWindow", "Add new Subscription", None, QtGui.QApplication.UnicodeUTF8))
         self.tableWidgetSubscriptions.setSortingEnabled(True)
         item = self.tableWidgetSubscriptions.horizontalHeaderItem(0)
         item.setText(QtGui.QApplication.translate("MainWindow", "Label", None, QtGui.QApplication.UnicodeUTF8))
@@ -508,7 +508,7 @@ class Ui_MainWindow(object):
         item.setText(QtGui.QApplication.translate("MainWindow", "Address", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.subscriptions), QtGui.QApplication.translate("MainWindow", "Subscriptions", None, QtGui.QApplication.UnicodeUTF8))
         self.label_6.setText(QtGui.QApplication.translate("MainWindow", "The Address book is useful for adding names or labels to other people\'s Bitmessage addresses so that you can recognize them more easily in your inbox. You can add entries here using the \'Add\' button, or from your inbox by right-clicking on a message.", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButtonAddAddressBook.setText(QtGui.QApplication.translate("MainWindow", "Add", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButtonAddAddressBook.setText(QtGui.QApplication.translate("MainWindow", "Add new entry", None, QtGui.QApplication.UnicodeUTF8))
         self.tableWidgetAddressBook.setSortingEnabled(True)
         item = self.tableWidgetAddressBook.horizontalHeaderItem(0)
         item.setText(QtGui.QApplication.translate("MainWindow", "Name or Label", None, QtGui.QApplication.UnicodeUTF8))
@@ -517,7 +517,7 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.addressbook), QtGui.QApplication.translate("MainWindow", "Address Book", None, QtGui.QApplication.UnicodeUTF8))
         self.radioButtonBlacklist.setText(QtGui.QApplication.translate("MainWindow", "Use a Blacklist (Allow all incoming messages except those on the Blacklist)", None, QtGui.QApplication.UnicodeUTF8))
         self.radioButtonWhitelist.setText(QtGui.QApplication.translate("MainWindow", "Use a Whitelist (Block all incoming messages except those on the Whitelist)", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButtonAddBlacklist.setText(QtGui.QApplication.translate("MainWindow", "Add", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButtonAddBlacklist.setText(QtGui.QApplication.translate("MainWindow", "Add new entry", None, QtGui.QApplication.UnicodeUTF8))
         self.tableWidgetBlacklist.setSortingEnabled(True)
         item = self.tableWidgetBlacklist.horizontalHeaderItem(0)
         item.setText(QtGui.QApplication.translate("MainWindow", "Name or Label", None, QtGui.QApplication.UnicodeUTF8))
