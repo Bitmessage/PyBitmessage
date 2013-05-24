@@ -3798,6 +3798,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) == 2:
                 address, label = params
                 label = label.decode('base64')
+                try:
+                   label.decode('utf-8')
+                except UnicodeDecodeError:
+                   return 'API Error 0017: Label is not valid UTF-8 data.'
             if len(params) >2:
                 return 'API Error 0000: I need either 1 or 2 parameters!'
             address = addBMIfNotPresent(address)
