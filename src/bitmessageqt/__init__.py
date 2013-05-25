@@ -446,12 +446,10 @@ class MyForm(QtGui.QMainWindow):
         else:
             if sys.platform[0:3] == 'win':
                 self.setWindowFlags(Qt.Window)
-                self.show()
-                self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-            else:
-                self.showMaximized()
-            #Here is what I believe might be required for darwin:
-                #self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            #else:
+                #self.showMaximized()
+            self.show()
+            self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.activateWindow()
 
 
