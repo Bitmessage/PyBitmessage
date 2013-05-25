@@ -173,7 +173,9 @@ class outgoingSynSender(threading.Thread):
                             shared.knownNodesLock.acquire()
                             del shared.knownNodes[self.streamNumber][HOST]
                             shared.knownNodesLock.release()
+                            shared.printLock.acquire()
                             print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
+                            shared.printLock.release()
                 except Exception, err:
                     sys.stderr.write('An exception has occurred in the outgoingSynSender thread that was not caught by other exception types: %s\n' % err)
             time.sleep(0.1)
@@ -2571,6 +2573,7 @@ class singleWorker(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
+        time.sleep(10)
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''SELECT toripe FROM sent WHERE (status=? AND folder='sent')''')
         shared.sqlSubmitQueue.put(('findingpubkey',))
