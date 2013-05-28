@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Fri May 24 16:22:22 2013
+# Created: Tue May 28 16:22:12 2013
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -412,7 +412,10 @@ class Ui_MainWindow(object):
         self.actionSettings.setObjectName(_fromUtf8("actionSettings"))
         self.actionRegenerateDeterministicAddresses = QtGui.QAction(MainWindow)
         self.actionRegenerateDeterministicAddresses.setObjectName(_fromUtf8("actionRegenerateDeterministicAddresses"))
+        self.actionDeleteAllTrashedMessages = QtGui.QAction(MainWindow)
+        self.actionDeleteAllTrashedMessages.setObjectName(_fromUtf8("actionDeleteAllTrashedMessages"))
         self.menuFile.addAction(self.actionManageKeys)
+        self.menuFile.addAction(self.actionDeleteAllTrashedMessages)
         self.menuFile.addAction(self.actionRegenerateDeterministicAddresses)
         self.menuFile.addAction(self.actionExit)
         self.menuSettings.addAction(self.actionSettings)
@@ -544,5 +547,6 @@ class Ui_MainWindow(object):
         self.actionAbout.setText(QtGui.QApplication.translate("MainWindow", "About", None, QtGui.QApplication.UnicodeUTF8))
         self.actionSettings.setText(QtGui.QApplication.translate("MainWindow", "Settings", None, QtGui.QApplication.UnicodeUTF8))
         self.actionRegenerateDeterministicAddresses.setText(QtGui.QApplication.translate("MainWindow", "Regenerate deterministic addresses", None, QtGui.QApplication.UnicodeUTF8))
+        self.actionDeleteAllTrashedMessages.setText(QtGui.QApplication.translate("MainWindow", "Delete all trashed messages", None, QtGui.QApplication.UnicodeUTF8))
 
 import bitmessage_icons_rc
