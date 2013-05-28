@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Tue Apr 30 12:34:58 2013
-#      by: PyQt4 UI code generator 4.9.4
+# Created: Sat May 25 13:20:18 2013
+#      by: PyQt4 UI code generator 4.9.5
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -199,7 +199,7 @@ class Ui_settingsDialog(object):
         self.checkBoxStartOnLogon.setText(QtGui.QApplication.translate("settingsDialog", "Start Bitmessage on user login", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBoxStartInTray.setText(QtGui.QApplication.translate("settingsDialog", "Start Bitmessage in the tray (don\'t show main window)", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBoxMinimizeToTray.setText(QtGui.QApplication.translate("settingsDialog", "Minimize to tray", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBoxShowTrayNotifications.setText(QtGui.QApplication.translate("settingsDialog", "Show notification when message received and minimzed to tray", None, QtGui.QApplication.UnicodeUTF8))
+        self.checkBoxShowTrayNotifications.setText(QtGui.QApplication.translate("settingsDialog", "Show notification when message received", None, QtGui.QApplication.UnicodeUTF8))
         self.checkBoxPortableMode.setText(QtGui.QApplication.translate("settingsDialog", "Run in Portable Mode", None, QtGui.QApplication.UnicodeUTF8))
         self.label_7.setText(QtGui.QApplication.translate("settingsDialog", "In Portable Mode, messages and config files are stored in the same directory as the program rather than the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabUserInterface), QtGui.QApplication.translate("settingsDialog", "User Interface", None, QtGui.QApplication.UnicodeUTF8))
