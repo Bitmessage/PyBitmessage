@@ -777,9 +777,10 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlSubmitQueue.put('''delete from sent where folder='trash' ''')
         shared.sqlSubmitQueue.put('')
         shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit') #Commit takes no parameters
+        shared.sqlSubmitQueue.put('commit') #Commit takes no parameters and returns nothing
         shared.sqlSubmitQueue.put('vacuum')
         shared.sqlSubmitQueue.put('')
+        shared.sqlReturnQueue.get()
         shared.sqlLock.release()
 
     def click_actionRegenerateDeterministicAddresses(self):
