@@ -447,12 +447,10 @@ class MyForm(QtGui.QMainWindow):
         else:
             if sys.platform[0:3] == 'win':
                 self.setWindowFlags(Qt.Window)
-                self.show()
-                self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-            else:
-                self.showMaximized()
-            #Here is what I believe might be required for darwin:
-                #self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            #else:
+                #self.showMaximized()
+            self.show()
+            self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
             self.activateWindow()
 
 
@@ -916,7 +914,7 @@ class MyForm(QtGui.QMainWindow):
 
             if self.actionStatus != None:
                 self.actionStatus.setText('Not Connected')
-                self.tray.setIcon(QtGui.QIcon("images/can-icon-24px-red.png"))
+                self.tray.setIcon(QtGui.QIcon(":/newPrefix/images/can-icon-24px-red.png"))
                 #self.trayIcon.show()
         if color == 'yellow':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
@@ -930,7 +928,7 @@ class MyForm(QtGui.QMainWindow):
 
             if self.actionStatus != None:
                 self.actionStatus.setText('Connected')
-                self.tray.setIcon(QtGui.QIcon("images/can-icon-24px-yellow.png"))
+                self.tray.setIcon(QtGui.QIcon(":/newPrefix/images/can-icon-24px-yellow.png"))
         if color == 'green':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
@@ -942,7 +940,7 @@ class MyForm(QtGui.QMainWindow):
 
             if self.actionStatus != None:
                 self.actionStatus.setText('Connected')
-                self.tray.setIcon(QtGui.QIcon("images/can-icon-24px-green.png"))
+                self.tray.setIcon(QtGui.QIcon(":/newPrefix/images/can-icon-24px-green.png"))
 
     def updateSentItemStatusByHash(self,toRipe,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):

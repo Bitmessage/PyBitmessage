@@ -64,7 +64,7 @@
        <item row="3" column="0">
         <widget class="QCheckBox" name="checkBoxShowTrayNotifications">
          <property name="text">
-          <string>Show notification when message received and minimzed to tray</string>
+          <string>Show notification when message received</string>
          </property>
         </widget>
        </item>
