@@ -87,6 +87,7 @@ class MyForm(QtGui.QMainWindow):
         #FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL("triggered()"), self.quit)
         QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL("triggered()"), self.click_actionManageKeys)
+        QtCore.QObject.connect(self.ui.actionDeleteAllTrashedMessages, QtCore.SIGNAL("triggered()"), self.click_actionDeleteAllTrashedMessages)
         QtCore.QObject.connect(self.ui.actionRegenerateDeterministicAddresses, QtCore.SIGNAL("triggered()"), self.click_actionRegenerateDeterministicAddresses)
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL("clicked()"), self.click_NewAddressDialog)
         QtCore.QObject.connect(self.ui.comboBoxSendFrom, QtCore.SIGNAL("activated(int)"),self.redrawLabelFrom)
@@ -768,6 +769,21 @@ class MyForm(QtGui.QMainWindow):
             if reply == QtGui.QMessageBox.Yes:
                 self.openKeysFile()
 
+    def click_actionDeleteAllTrashedMessages(self):
+        if QtGui.QMessageBox.question(self, 'Delete trash?',"Are you sure you want to delete all trashed messages?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
+            return
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''delete from inbox where folder='trash' ''')
+        shared.sqlSubmitQueue.put('')
+        shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('''delete from sent where folder='trash' ''')
+        shared.sqlSubmitQueue.put('')
+        shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit') #Commit takes no parameters
+        shared.sqlSubmitQueue.put('vacuum')
+        shared.sqlSubmitQueue.put('')
+        shared.sqlLock.release()
+
     def click_actionRegenerateDeterministicAddresses(self):
         self.regenerateAddressesDialogInstance = regenerateAddressesDialog(self)
         if self.regenerateAddressesDialogInstance.exec_():
@@ -1205,24 +1221,6 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.comboBoxSendFrom.setCurrentIndex(0)
 
-
-
-    """def connectObjectToSignals(self,object):
-        QtCore.QObject.connect(object, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewInboxMessage)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("updateNetworkStatusTab()"), self.updateNetworkStatusTab)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("incrementNumberOfMessagesProcessed()"), self.incrementNumberOfMessagesProcessed)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("incrementNumberOfPubkeysProcessed()"), self.incrementNumberOfPubkeysProcessed)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("incrementNumberOfBroadcastsProcessed()"), self.incrementNumberOfBroadcastsProcessed)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
-
-    #This function exists because of the API. The API thread starts an address generator thread and must somehow connect the address generator's signals to the QApplication thread. This function is used to connect the slots and signals.
-    def connectObjectToAddressGeneratorSignals(self,object):
-        QtCore.QObject.connect(object, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
-        QtCore.QObject.connect(object, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)"""
 
     #This function is called by the processmsg function when that function receives a message to an address that is acting as a pseudo-mailing-list. The message will be broadcast out. This function puts the message on the 'Sent' tab.
     def displayNewSentMessage(self,toAddress,toLabel,fromAddress,subject,message,ackdata):
