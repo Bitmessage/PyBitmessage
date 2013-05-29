@@ -19,9 +19,9 @@ def run(target, initialHash):
     for i in range(pool_size):
       result.append(pool.apply_async(_pool_worker, args = (i, initialHash, target, pool_size)))
     while True:
-      for counter in range(pool_size):
-        if result[counter].ready():
-          result = result[counter].get()
+      for i in range(pool_size):
+        if result[i].ready():
+          result = result[i].get()
           pool.terminate()
           return result[0], result[1]
       time.sleep(1)
