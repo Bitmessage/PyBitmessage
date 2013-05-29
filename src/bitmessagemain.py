@@ -2750,7 +2750,6 @@ class singleWorker(threading.Thread):
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
         print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
-        trialValue, nonce = proofofwork.run(target, initialHash)
         payload = pack('>Q',nonce) + payload
         """t = (hash,payload,embeddedTime,'no')
         shared.sqlLock.acquire()
