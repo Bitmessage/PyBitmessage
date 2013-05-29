@@ -47,6 +47,7 @@ from SimpleXMLRPCServer import *
 import json
 from subprocess import call #used when the API must execute an outside program
 import singleton
+import proofofwork
 
 #For each stream to which we connect, several outgoingSynSender threads will exist and will collectively create 8 connections with peers.
 class outgoingSynSender(threading.Thread):
@@ -2744,16 +2745,12 @@ class singleWorker(threading.Thread):
         payload += pubEncryptionKey[1:]
 
         #Do the POW for this pubkey message
-        nonce = 0
-        trialValue = 99999999999999999999
         target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
-        while trialValue > target:
-            nonce += 1
-            trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+        trialValue, nonce = proofofwork.run(target, initialHash)
         print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
-
+        trialValue, nonce = proofofwork.run(target, initialHash)
         payload = pack('>Q',nonce) + payload
         """t = (hash,payload,embeddedTime,'no')
         shared.sqlLock.acquire()
@@ -2810,14 +2807,10 @@ class singleWorker(threading.Thread):
         payload += signature
 
         #Do the POW for this pubkey message
-        nonce = 0
-        trialValue = 99999999999999999999
         target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
-        while trialValue > target:
-            nonce += 1
-            trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+        trialValue, nonce = proofofwork.run(target, initialHash)
         print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
 
         payload = pack('>Q',nonce) + payload
@@ -2885,16 +2878,12 @@ class singleWorker(threading.Thread):
                 payload += encodeVarint(len(signature))
                 payload += signature
 
-                nonce = 0
-                trialValue = 99999999999999999999
                 target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
                 #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send broadcast...')))
                 initialHash = hashlib.sha512(payload).digest()
-                while trialValue > target:
-                    nonce += 1
-                    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+                trialValue, nonce = proofofwork.run(target, initialHash)
                 print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
 
                 payload = pack('>Q',nonce) + payload
@@ -2956,16 +2945,12 @@ class singleWorker(threading.Thread):
                 pubEncryptionKey = pointMult(privEncryptionKey)
                 payload += highlevelcrypto.encrypt(dataToEncrypt,pubEncryptionKey.encode('hex'))
 
-                nonce = 0
-                trialValue = 99999999999999999999
                 target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
                 #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send broadcast...')))
                 initialHash = hashlib.sha512(payload).digest()
-                while trialValue > target:
-                    nonce += 1
-                    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+                trialValue, nonce = proofofwork.run(target, initialHash)
                 print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
 
                 payload = pack('>Q',nonce) + payload
@@ -3139,8 +3124,6 @@ class singleWorker(threading.Thread):
                         requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
                 encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
 
-            nonce = 0
-            trialValue = 99999999999999999999
             #We are now dropping the unencrypted data in payload since it has already been encrypted and replacing it with the encrypted payload that we will send out.
             payload = embeddedTime + encodeVarint(toStreamNumber) + encrypted
             target = 2**64 / ((len(payload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
@@ -3149,9 +3132,7 @@ class singleWorker(threading.Thread):
             shared.printLock.release()
             powStartTime = time.time()
             initialHash = hashlib.sha512(payload).digest()
-            while trialValue > target:
-                nonce += 1
-                trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+            trialValue, nonce = proofofwork.run(target, initialHash)
             print '(For msg message) Found proof of work', trialValue, 'Nonce:', nonce
             try:
                 print 'POW took', int(time.time()-powStartTime), 'seconds.', nonce/(time.time()-powStartTime), 'nonce trials per second.'
@@ -3190,8 +3171,6 @@ class singleWorker(threading.Thread):
         shared.printLock.acquire()
         print 'making request for pubkey with ripe:', ripe.encode('hex')
         shared.printLock.release()
-        nonce = 0
-        trialValue = 99999999999999999999
         #print 'trial value', trialValue
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
         #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),statusbar)
@@ -3201,9 +3180,7 @@ class singleWorker(threading.Thread):
         print 'Doing proof-of-work necessary to send getpubkey message.'
         target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         initialHash = hashlib.sha512(payload).digest()
-        while trialValue > target:
-            nonce += 1
-            trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+        trialValue, nonce = proofofwork.run(target, initialHash)
         shared.printLock.acquire()
         print 'Found proof of work', trialValue, 'Nonce:', nonce
         shared.printLock.release()
@@ -3221,8 +3198,6 @@ class singleWorker(threading.Thread):
         shared.UISignalQueue.put(('updateSentItemStatusByHash',(ripe,'Sending public key request. Waiting for reply. Requested at ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
 
     def generateFullAckMessage(self,ackdata,toStreamNumber,embeddedTime):
-        nonce = 0
-        trialValue = 99999999999999999999
         payload = embeddedTime + encodeVarint(toStreamNumber) + ackdata
         target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         shared.printLock.acquire()
@@ -3230,9 +3205,7 @@ class singleWorker(threading.Thread):
         shared.printLock.release()
         powStartTime = time.time()
         initialHash = hashlib.sha512(payload).digest()
-        while trialValue > target:
-            nonce += 1
-            trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+        trialValue, nonce = proofofwork.run(target, initialHash)
         shared.printLock.acquire()
         print '(For ack message) Found proof of work', trialValue, 'Nonce:', nonce
         try:
