@@ -358,16 +358,20 @@ class MyForm(QtGui.QMainWindow):
             newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,2,newItem)
-            if status == 'findingpubkey':
-                newItem =  myTableWidgetItem('Waiting on their public key. Will request it again soon.')
-            elif status == 'sentmessage':
+            if status == 'awaitingpubkey':
+                newItem =  myTableWidgetItem('Waiting on their encryption key. Will request it again soon.')
+            elif status == 'doingpowforpubkey':
+                newItem =  myTableWidgetItem('Encryption key request queued.')
+            elif status == 'msgqueued':
+                newItem =  myTableWidgetItem('Queued.')
+            elif status == 'msgsent':
                 newItem =  myTableWidgetItem('Message sent. Waiting on acknowledgement. Sent at ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(lastactiontime)),'utf-8'))
-            elif status == 'doingpow':
+            elif status == 'doingmsgpow':
                 newItem =  myTableWidgetItem('Need to do work to send message. Work is queued.')
             elif status == 'ackreceived':
                 newItem =  myTableWidgetItem('Acknowledgement of the message received ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
-            elif status == 'broadcastpending':
-                newItem =  myTableWidgetItem('Doing the work necessary to send broadcast...')
+            elif status == 'broadcastqueued':
+                newItem =  myTableWidgetItem('Broadcast queued.')
             elif status == 'broadcastsent':
                 newItem =  myTableWidgetItem('Broadcast on ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             else:
@@ -770,6 +774,7 @@ class MyForm(QtGui.QMainWindow):
     def click_actionDeleteAllTrashedMessages(self):
         if QtGui.QMessageBox.question(self, 'Delete trash?',"Are you sure you want to delete all trashed messages?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
             return
+        self.statusBar().showMessage('Deleting messages and freeing empty space...')
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''delete from inbox where folder='trash' ''')
         shared.sqlSubmitQueue.put('')
@@ -781,6 +786,7 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlSubmitQueue.put('vacuum')
         shared.sqlSubmitQueue.put('')
         shared.sqlReturnQueue.get()
+        self.statusBar().showMessage('')
         shared.sqlLock.release()
 
     def click_actionRegenerateDeterministicAddresses(self):
@@ -1104,7 +1110,7 @@ class MyForm(QtGui.QMainWindow):
                             self.statusBar().showMessage('Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.')
                         ackdata = OpenSSL.rand(32)
                         shared.sqlLock.acquire()
-                        t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'findingpubkey',1,1,'sent',2)
+                        t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'msgqueued',1,1,'sent',2)
                         shared.sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
                         shared.sqlSubmitQueue.put(t)
                         shared.sqlReturnQueue.get()
@@ -1151,7 +1157,7 @@ class MyForm(QtGui.QMainWindow):
                 shared.sqlSubmitQueue.put('commit')
                 shared.sqlLock.release()
 
-                shared.workerQueue.put(('sendbroadcast',(fromAddress,subject,message)))
+                shared.workerQueue.put(('sendbroadcast',''))
 
                 try:
                     fromLabel = shared.config.get(fromAddress, 'label')
