@@ -1506,10 +1506,10 @@ class receiveDataThread(threading.Thread):
 
     #We have received an inv message
     def recinv(self,data):
-        totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave = 0
-        for key, value in numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer.items():
-            totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave += value
+        totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave = 0 # ..from all peers, counting duplicates seperately (because they take up memory)
         if len(numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer) > 0:
+            for key, value in numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer.items():
+                totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave += value
             shared.printLock.acquire()
             print 'number of keys(hosts) in numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer:', len(numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer)
             print 'totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave = ', totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave
@@ -2434,6 +2434,13 @@ class sqlThread(threading.Thread):
             print 'Vacuuming message.dat. You might notice that the file size gets much smaller.'
             self.cur.execute( ''' VACUUM ''')
 
+        #After code refactoring, the possible status values for sent messages as changed.
+        self.cur.execute( '''update sent set status='doingmsgpow' where status='doingpow'  ''')
+        self.cur.execute( '''update sent set status='msgsent' where status='sentmessage'  ''')
+        self.cur.execute( '''update sent set status='doingpubkeypow' where status='findingpubkey'  ''')
+        self.cur.execute( '''update sent set status='broadcastqueued' where status='broadcastpending'  ''')
+        self.conn.commit()
+
         try:
             testpayload = '\x00\x00'
             t = ('1234',testpayload,'12345678','no')
@@ -2545,7 +2552,6 @@ class singleCleaner(threading.Thread):
                     shared.sqlReturnQueue.get()
                     del shared.inventory[hash]
             shared.sqlSubmitQueue.put('commit')
-            #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
             shared.UISignalQueue.put(('updateStatusBar',''))
             shared.sqlLock.release()
             shared.broadcastToSendDataQueues((0, 'pong', 'no data')) #commands the sendData threads to send out a pong message if they haven't sent anything else in the last five minutes. The socket timeout-time is 10 minutes.
@@ -2556,7 +2562,7 @@ class singleCleaner(threading.Thread):
                 timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
                 #inventory (moves data from the inventory data structure to the on-disk sql database)
                 shared.sqlLock.acquire()
-                #inventory (clears data more than 2 days and 12 hours old)
+                #inventory (clears pubkeys after 28 days and everything else after 2 days and 12 hours)
                 t = (int(time.time())-lengthOfTimeToLeaveObjectsInInventory,int(time.time())-lengthOfTimeToHoldOnToAllPubkeys)
                 shared.sqlSubmitQueue.put('''DELETE FROM inventory WHERE (receivedtime<? AND objecttype<>'pubkey') OR (receivedtime<?  AND objecttype='pubkey') ''')
                 shared.sqlSubmitQueue.put(t)
