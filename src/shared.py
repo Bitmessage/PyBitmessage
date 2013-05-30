@@ -173,19 +173,18 @@ def doCleanShutdown():
     printLock.acquire()
     print 'Finished flushing inventory.'
     printLock.release()
-    
-    
-    if safeConfigGetBoolean('bitmessagesettings','daemon'):
-        printLock.acquire()
-        print 'Done.'
-        printLock.release()
-        os._exit(0)
-        
+
     #Messy hack to kill child processes immediately. May not work on all platforms.
     try:
       os.killpg(os.getpgid(os.getpid()), signal.SIGTERM)
     except:
       os.kill(os.getpid(), signal.SIGTERM)
+
+    if safeConfigGetBoolean('bitmessagesettings','daemon'):
+        printLock.acquire()
+        print 'Done.'
+        printLock.release()
+        os._exit(0)
 
 #Wen you want to command a sendDataThread to do something, like shutdown or send some data, this function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are responsible for putting their queue into (and out of) the sendDataQueues list.
 def broadcastToSendDataQueues(data):
