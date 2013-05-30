@@ -1460,6 +1460,10 @@ class MyForm(QtGui.QMainWindow):
                 shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte',str(int(float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text())*shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
             if float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) >= 1:
                 shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes',str(int(float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text())*shared.networkDefaultPayloadLengthExtraBytes)))
+            if str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()) == 'All':
+                shared.config.set('bitmessagesettings', 'maxcores', '99999')
+            else:
+                shared.config.set('bitmessagesettings', 'maxcores', str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()))
 
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
@@ -2167,6 +2171,25 @@ class settingsDialog(QtGui.QDialog):
 
         self.ui.lineEditTotalDifficulty.setText(str((float(shared.config.getint('bitmessagesettings', 'defaultnoncetrialsperbyte'))/shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.ui.lineEditSmallMessageDifficulty.setText(str((float(shared.config.getint('bitmessagesettings', 'defaultpayloadlengthextrabytes'))/shared.networkDefaultPayloadLengthExtraBytes)))
+
+        #On the System tab
+        try:
+            maxCores = shared.config.getint('bitmessagesettings', 'maxcores')
+        except:
+            maxCores = 99999
+        if maxCores <= 1:
+            self.ui.comboBoxMaxCores.setCurrentIndex(0)
+        elif maxCores == 2:
+            self.ui.comboBoxMaxCores.setCurrentIndex(1)
+        elif maxCores <= 4:
+            self.ui.comboBoxMaxCores.setCurrentIndex(2)
+        elif maxCores <= 8:
+            self.ui.comboBoxMaxCores.setCurrentIndex(3)
+        elif maxCores <= 16:
+            self.ui.comboBoxMaxCores.setCurrentIndex(4)
+        else:
+            self.ui.comboBoxMaxCores.setCurrentIndex(5)
+
         QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
     def comboBoxProxyTypeChanged(self,comboBoxIndex):
