@@ -29,11 +29,11 @@ def run(target, initialHash):
     for i in range(pool_size):
         result.append(pool.apply_async(_pool_worker, args = (i, initialHash, target, pool_size)))
     while True:
+        if shared.shutdown:
+            pool.terminate()
+            time.sleep(5) #Don't return anything (doing so will cause exceptions because we'll return an unusable response). Sit here and wait for this thread to close.
+            return
         for i in range(pool_size):
-            if shared.shutdown:
-                pool.terminate()
-                time.sleep(5) #Don't return anything (doing so will cause exceptions because we'll return an unusable response). Sit here and wait for this thread to close.
-                return
             if result[i].ready():
                 result = result[i].get()
                 pool.terminate()
