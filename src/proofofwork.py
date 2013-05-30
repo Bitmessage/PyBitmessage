@@ -23,7 +23,7 @@ def _pool_worker(nonce, initialHash, target, pool_size):
     return [trialValue, nonce]
 
 def run(target, initialHash):
-    from multiprocessing import Pool, cpu_count, Value
+    from multiprocessing import Pool, cpu_count
     import time
     try:
       pool_size = cpu_count()
