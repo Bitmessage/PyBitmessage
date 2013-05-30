@@ -7,6 +7,7 @@ import highlevelcrypto
 import Queue
 import pickle
 import os
+import signal
 
 myECCryptorObjects = {}
 MyECSubscriptionCryptorObjects = {}
@@ -172,7 +173,12 @@ def doCleanShutdown():
     printLock.acquire()
     print 'Finished flushing inventory.'
     printLock.release()
-    
+
+    #Messy hack to kill child processes immediately. May not work on all platforms.
+    try:
+      os.killpg(os.getpgid(os.getpid()), signal.SIGTERM)
+    except:
+      os.kill(os.getpid(), signal.SIGTERM)
 
     if safeConfigGetBoolean('bitmessagesettings','daemon'):
         printLock.acquire()
