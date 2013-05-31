@@ -3150,6 +3150,7 @@ class singleWorker(threading.Thread):
                         requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
                     if requiredPayloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
                         requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
+                    #todo: pull yet-to-be-added values out of config: maximumacceptabletotaldifficult and maximumacceptablesmallmessagedifficulty and compare.
                 encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
 
             #We are now dropping the unencrypted data in payload since it has already been encrypted and replacing it with the encrypted payload that we will send out.
