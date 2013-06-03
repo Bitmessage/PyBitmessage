@@ -3,8 +3,21 @@ import time
 from multiprocessing import Pool, cpu_count
 import hashlib
 from struct import unpack, pack
+import sys
+import os
+
+def _set_idle():
+    try:
+        sys.getwindowsversion()
+        import win32api,win32process,win32con
+        pid = win32api.GetCurrentProcessId()
+        handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
+        win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
+    except:
+        os.nice(20)
 
 def _pool_worker(nonce, initialHash, target, pool_size):
+    _set_idle()
     trialValue = 99999999999999999999
     while trialValue > target:
         nonce += pool_size
