@@ -529,7 +529,7 @@ class MyForm(QtGui.QMainWindow):
 
     # create application indicator
     def appIndicatorInit(self,app):
-        self.tray = QSystemTrayIcon(QtGui.QIcon("images/can-icon-24px-red.png"), app)
+        self.tray = QSystemTrayIcon(QtGui.QIcon(":/newPrefix/images/can-icon-24px-red.png"), app)
         if sys.platform[0:3] == 'win':
             traySignal = "activated(QSystemTrayIcon::ActivationReason)"
             QtCore.QObject.connect(self.tray, QtCore.SIGNAL(traySignal), self.__icon_activated)
@@ -1979,7 +1979,7 @@ class MyForm(QtGui.QMainWindow):
                 if len(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()) < 30000:
                     self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())#Only show the first 30K characters
                 else:
-                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()[:30000]+'\n\nDisplay of the remainder of the message truncated because it is too long.')#Only show the first 30K characters
+                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()[:30000]+'\n\nDisplay of the remainder of the message truncated because it is too long.')#Only show the first 30K characters            
 
             font = QFont()
             font.setBold(False)
