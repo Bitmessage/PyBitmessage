@@ -1,5 +1,5 @@
 APP=pybitmessage
-VERSION=0.3.1
+VERSION=0.3.2
 DEST_SHARE=/usr/share
 DEST_APP=$(DEST_SHARE)/$(APP)
 
