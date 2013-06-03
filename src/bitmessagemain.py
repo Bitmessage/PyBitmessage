@@ -2626,13 +2626,24 @@ class singleWorker(threading.Thread):
 
     def run(self):
         shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('''SELECT toripe FROM sent WHERE (status='awaitingpubkey' AND folder='sent')''')
+        shared.sqlSubmitQueue.put('''SELECT toripe FROM sent WHERE ((status='awaitingpubkey' OR status='doingpubkeypow') AND folder='sent')''')
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
         for row in queryreturn:
             toripe, = row
             neededPubkeys[toripe] = 0
+
+        #Initialize the ackdataForWhichImWatching data structure using data from the sql database.
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT ackdata FROM sent where (status='msgsent' OR status='doingmsgpow')''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        for row in queryreturn:
+            ackdata,  = row
+            print 'Watching for ackdata', ackdata.encode('hex')
+            ackdataForWhichImWatching[ackdata] = 0
 
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''SELECT DISTINCT toaddress FROM sent WHERE (status='doingpubkeypow' AND folder='sent')''')
@@ -2643,7 +2654,7 @@ class singleWorker(threading.Thread):
             toaddress, = row
             self.requestPubKey(toaddress)
         
-        time.sleep(10) #give some time for the GUI to start before we start on any existing POW tasks.
+        time.sleep(10) #give some time for the GUI to start before we start on existing POW tasks.
 
         self.sendMsg() #just in case there are any pending tasks for msg messages that have yet to be sent.
         self.sendBroadcast() #just in case there are any tasks for Broadcasts that have yet to be sent.
@@ -2950,7 +2961,7 @@ class singleWorker(threading.Thread):
     def sendMsg(self):
         #Check to see if there are any messages queued to be sent
         shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('''SELECT toaddress FROM sent WHERE (status='msgqueued' AND folder='sent')''')
+        shared.sqlSubmitQueue.put('''SELECT DISTINCT toaddress FROM sent WHERE (status='msgqueued' AND folder='sent')''')
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
@@ -3194,6 +3205,11 @@ class singleWorker(threading.Thread):
 
     def requestPubKey(self,toAddress):
         toStatus,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
+        if toStatus != 'success':
+            shared.printLock.acquire()
+            sys.stderr.write('Very abnormal error occurred in requestPubKey. toAddress is: '+repr(toAddress)+'. Please report this error to Atheros.')
+            shared.printLock.release()
+            return
         neededPubkeys[ripe] = 0
         payload = pack('>I',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes.
         payload += encodeVarint(addressVersionNumber)
@@ -4053,15 +4069,6 @@ if __name__ == "__main__":
 
     shared.reloadMyAddressHashes()
     shared.reloadBroadcastSendersForWhichImWatching()
-
-    #Initialize the ackdataForWhichImWatching data structure using data from the sql database.
-    shared.sqlSubmitQueue.put('''SELECT ackdata FROM sent where (status='msgsent' OR status='doingmsgpow')''')
-    shared.sqlSubmitQueue.put('')
-    queryreturn = shared.sqlReturnQueue.get()
-    for row in queryreturn:
-        ackdata,  = row
-        print 'Watching for ackdata', ackdata.encode('hex')
-        ackdataForWhichImWatching[ackdata] = 0
 
     if shared.safeConfigGetBoolean('bitmessagesettings','apienabled'):
         try:
