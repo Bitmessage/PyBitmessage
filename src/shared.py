@@ -1,4 +1,4 @@
-softwareVersion = '0.3.1'
+softwareVersion = '0.3.2'
 
 import threading
 import sys
