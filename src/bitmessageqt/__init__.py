@@ -71,17 +71,6 @@ class MyForm(QtGui.QMainWindow):
             #startup for linux
             pass
 
-        """self.trayIcon = QtGui.QSystemTrayIcon(self)
-        self.trayIcon.setIcon( QtGui.QIcon(':/newPrefix/images/can-icon-16px.png') )
-        traySignal = "activated(QSystemTrayIcon::ActivationReason)"
-        QtCore.QObject.connect(self.trayIcon, QtCore.SIGNAL(traySignal), self.__icon_activated)
-        menu = QtGui.QMenu()
-        self.exitAction = menu.addAction("Quit", self.quit)
-        self.trayIcon.setContextMenu(menu)
-        #I'm currently under the impression that Mac users have different expectations for the tray icon. They don't necessairly expect it to open the main window when clicked and they still expect a program showing a tray icon to also be in the dock.
-        if 'darwin' in sys.platform:
-            self.trayIcon.show()"""
-
         self.ui.labelSendBroadcastWarning.setVisible(False)
 
         #FILE MENU and other buttons
@@ -831,23 +820,6 @@ class MyForm(QtGui.QMainWindow):
             self.actionShow.setChecked(not self.actionShow.isChecked())
             self.appIndicatorShowOrHideWindow()
 
-            """if 'linux' in sys.platform:
-                self.trayIcon.hide()
-                self.setWindowFlags(Qt.Window)
-                self.show()
-            elif 'win32' in sys.platform or 'win64' in sys.platform:
-                self.trayIcon.hide()
-                self.setWindowFlags(Qt.Window)
-                self.show()
-                self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-                self.activateWindow()
-            elif 'darwin' in sys.platform:
-                #self.trayIcon.hide() #this line causes a segmentation fault
-                #self.setWindowFlags(Qt.Window)
-                #self.show()
-                self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-                self.activateWindow()"""
-
     def incrementNumberOfMessagesProcessed(self):
         self.numberOfMessagesProcessed += 1
         self.ui.labelMessageCount.setText('Processed ' + str(self.numberOfMessagesProcessed) + ' person-to-person messages.')
@@ -922,7 +894,6 @@ class MyForm(QtGui.QMainWindow):
             if self.actionStatus != None:
                 self.actionStatus.setText('Not Connected')
                 self.tray.setIcon(QtGui.QIcon(":/newPrefix/images/can-icon-24px-red.png"))
-                #self.trayIcon.show()
         if color == 'yellow':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
@@ -1650,7 +1621,6 @@ class MyForm(QtGui.QMainWindow):
         # unregister the messaging system
         if self.mmapp is not None:
             self.mmapp.unregister()
-        #self.trayIcon.hide()
         self.statusBar().showMessage('All done. Closing user interface...')
         os._exit(0)
 
@@ -2139,12 +2109,10 @@ class settingsDialog(QtGui.QDialog):
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
             self.ui.checkBoxShowTrayNotifications.setDisabled(True)
-            self.ui.checkBoxStartInTray.setDisabled(True)
             self.ui.labelSettingsNote.setText('Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implimented for your operating system.')
         elif 'linux' in sys.platform:
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
-            self.ui.checkBoxStartInTray.setDisabled(True)
             self.ui.labelSettingsNote.setText('Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implimented for your operating system.')
         #On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(shared.config.get('bitmessagesettings', 'port')))
@@ -2331,12 +2299,7 @@ def run():
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
 
-    if shared.config.getboolean('bitmessagesettings', 'startintray'):
-        if not myapp.isUbuntu():
-            myapp.trayIcon.show()
-            if 'win32' in sys.platform or 'win64' in sys.platform:
-                myapp.setWindowFlags(Qt.ToolTip)
-    else:
+    if not shared.config.getboolean('bitmessagesettings', 'startintray'):
         myapp.show()
 
     myapp.appIndicatorInit(app)
