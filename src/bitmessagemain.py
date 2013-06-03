@@ -3822,7 +3822,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlLock.release()
             if queryreturn == []:
-                return 'notFound'
+                return 'notfound'
             for row in queryreturn:
                 status, = row
                 return status
