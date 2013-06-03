@@ -1,6 +1,6 @@
 APP=pybitmessage
 VERSION=0.3.2
-DEST_SHARE=/usr/share
+DEST_SHARE=$(DESTDIR)/usr/share
 DEST_APP=$(DEST_SHARE)/$(APP)
 
 all:
@@ -8,7 +8,7 @@ all:
 debug:
 
 source:
-	tar -cvzf ../$(APP)_$(VERSION).orig.tar.gz ../$(APP)-$(VERSION) --exclude=.git
+	tar -cvzf ../$(APP)_$(VERSION).orig.tar.gz ../$(APP)-$(VERSION) --exclude-vcs
 
 install:
 	mkdir -m 755 -p $(DEST_APP)
