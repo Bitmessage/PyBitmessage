@@ -7,6 +7,7 @@ import highlevelcrypto
 import Queue
 import pickle
 import os
+import time
 
 myECCryptorObjects = {}
 MyECSubscriptionCryptorObjects = {}
@@ -27,6 +28,7 @@ printLock = threading.Lock()
 appdata = '' #holds the location of the application data storage directory
 statusIconColor = 'red'
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
+shutdown = 0 #Set to 1 by the doCleanShutdown function. Used to tell the proof of work worker threads to exit.
 
 #If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
@@ -141,6 +143,8 @@ def reloadBroadcastSendersForWhichImWatching():
         MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
 
 def doCleanShutdown():
+    global shutdown
+    shutdown = 1 #Used to tell proof of work worker threads to exit.    
     knownNodesLock.acquire()
     UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
     output = open(appdata + 'knownnodes.dat', 'wb')
@@ -172,7 +176,8 @@ def doCleanShutdown():
     printLock.acquire()
     print 'Finished flushing inventory.'
     printLock.release()
-    
+
+    time.sleep(.25) #Wait long enough to guarantee that any running proof of work worker threads will check the shutdown variable and exit. If the main thread closes before they do then they won't stop.
 
     if safeConfigGetBoolean('bitmessagesettings','daemon'):
         printLock.acquire()
