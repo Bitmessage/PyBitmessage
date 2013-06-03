@@ -1,71 +1,71 @@
 pybitmessage (0.3.2-1) raring; urgency=low
 
   * Bugfix: Remove remaining references to the old myapp.trayIcon
-  
-  * Refactored message status-related code. API function getStatus 
-    now returns one of these strings: notfound, msgqueued, 
-	broadcastqueued, broadcastsent, doingpubkeypow, awaitingpubkey, 
-	doingmsgpow, msgsent, or ackreceived
-  
-  * Moved proof of work to low-priority multi-threaded child 
-    processes
-  
-  * Added menu option to delete all trashed messages
-  
-  * Added inv flooding attack mitigation
-  
-  * On Linux, when selecting Show Bitmessage, do not maximize 
-    automatically
-  
-  * Store tray icons in bitmessage_icons_rc.py 
 
- -- Jonathan Warren (4096 bits) <jonathan@bitmessage.org>  Mon, 03 June 2013 12:06:00 +0100
+  * Refactored message status-related code. API function getStatus
+    now returns one of these strings: notfound, msgqueued,
+    broadcastqueued, broadcastsent, doingpubkeypow, awaitingpubkey,
+    doingmsgpow, msgsent, or ackreceived
+
+  * Moved proof of work to low-priority multi-threaded child
+    processes
+
+  * Added menu option to delete all trashed messages
+
+  * Added inv flooding attack mitigation
+
+  * On Linux, when selecting Show Bitmessage, do not maximize
+    automatically
+
+  * Store tray icons in bitmessage_icons_rc.py
+
+ -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Mon, 03 June 2013 20:17:00 +0100
 
 pybitmessage (0.3.1-1) raring; urgency=low
 
-  * Added new API commands: getDeterministicAddress, 
+  * Added new API commands: getDeterministicAddress,
     addSubscription, deleteSubscription
-  
-  * TCP Connection timeout for non-fully-established connections 
+
+  * TCP Connection timeout for non-fully-established connections
     now 20 seconds
-  
-  * Don't update the time we last communicated with a node unless 
-    the connection is fully established. This will allow us to 
-	forget about active but non-Bitmessage nodes which have made 
-	it into our knownNodes file.
-  
-  * Prevent incoming connection flooding from crashing 
-    singleListener thread. Client will now only accept one 
-	connection per remote node IP
-  
-  * Bugfix: Worker thread crashed when doing a POW to send out 
+
+  * Don't update the time we last communicated with a node unless
+    the connection is fully established. This will allow us to
+    forget about active but non-Bitmessage nodes which have made
+    it into our knownNodes file.
+
+  * Prevent incoming connection flooding from crashing
+    singleListener thread. Client will now only accept one
+    connection per remote node IP
+
+  * Bugfix: Worker thread crashed when doing a POW to send out
     a v2 pubkey (bug introduced in 0.3.0)
-  
+
   * Wrap all sock.shutdown functions in error handlers
-  
+
   * Put all 'commit' commands within SQLLocks
-  
+
   * Bugfix: If address book label is blank, Bitmessage wouldn't
     show message (bug introduced in 0.3.0)
-  
+
   * Messaging menu item selects the oldest unread message
-  
+
   * Standardize on 'Quit' rather than 'Exit'
-  
+
   * [OSX] Try to seek homebrew installation of OpenSSL
-  
+
   * Prevent multiple instances of the application from running
-  
+
   * Show 'Connected' or 'Connection Lost' indicators
-  
-  * Use only 9 half-open connections on Windows but 32 for 
+
+  * Use only 9 half-open connections on Windows but 32 for
     everyone else
-  
-  * Added appIndicator (a more functional tray icon) and Ubuntu 
+
+  * Added appIndicator (a more functional tray icon) and Ubuntu
     Messaging Menu integration
-  
-  * Changed Debian install directory and run script name based 
-    on Github issue #135 
+
+  * Changed Debian install directory and run script name based
+    on Github issue #135
 
  -- Jonathan Warren (4096 bits) <jonathan@bitmessage.org>  Sat, 25 May 2013 12:06:00 +0100
 
