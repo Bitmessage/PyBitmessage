@@ -7,15 +7,25 @@
 #!/bin/bash
 
 APP=pybitmessage
+PREV_VERSION=0.3.2
 VERSION=0.3.2
 ARCH_TYPE=all
 
+#update version numbers automatically - so you don't have to
+sed -i 's/VERSION='${PREV_VERSION}'/VERSION='${VERSION}'/g' Makefile
+sed -i 's/'''${PREV_VERSION}'''/'''${VERSION}'''/g' src/shared.py 
+
 # Create a source archive
 make clean
+# change the directory name to pybitmessage-version
+mv ../PyBitmessage ../${APP}-${VERSION}
 make source
 
 # Build the package
-fakeroot dpkg-buildpackage -A
+dpkg-buildpackage -A
+
+# change the directory name back
+mv ../${APP}-${VERSION} ../PyBitmessage
 
 gpg -ba ../${APP}_${VERSION}-1_${ARCH_TYPE}.deb
 gpg -ba ../${APP}_${VERSION}.orig.tar.gz
