@@ -7,12 +7,12 @@ Comment=Send encrypted messages to another person or to many subscribers
 Exec=pybitmessage %U
 Icon=pybitmessage
 Terminal=false
-Categories=Network;Email;Application
-Keywords=Email;E-mail;Newsgroup;Messaging
+Categories=Network;Email;Application;
+Keywords=Email;E-mail;Newsgroup;Messaging;
 X-MessagingMenu-UsesChatSection=true
 X-Ubuntu-Gettext-Domain=pybitmessage
 
-Actions=Send;Subscribe;AddressBook
+Actions=Send;Subscribe;AddressBook;
 
 [Desktop Action Send]
 Name=Send
