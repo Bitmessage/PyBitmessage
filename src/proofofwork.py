@@ -1,10 +1,10 @@
-import shared
-import time
-from multiprocessing import Pool, cpu_count
+#import shared
+#import time
+#from multiprocessing import Pool, cpu_count
 import hashlib
 from struct import unpack, pack
-import sys
-import os
+#import sys
+#import os
 
 def _set_idle():
     try:
@@ -30,7 +30,13 @@ def _pool_worker(nonce, initialHash, target, pool_size):
     return [trialValue, nonce]
 
 def run(target, initialHash):
-    try:
+    nonce = 0
+    trialValue = 99999999999999999999
+    while trialValue > target:
+        nonce += 1
+        trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+    return [trialValue, nonce]
+    """try:
         pool_size = cpu_count()
     except:
         pool_size = 4
@@ -56,5 +62,5 @@ def run(target, initialHash):
                 result = result[i].get()
                 pool.terminate()
                 return result[0], result[1]
-        time.sleep(0.2)
+        time.sleep(0.2)"""
 
