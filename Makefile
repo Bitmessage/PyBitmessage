@@ -34,7 +34,7 @@ install:
 	install -m 644 src/pyelliptic/*.py $(DEST_APP)/pyelliptic
 	install -m 644 src/socks/*.py $(DEST_APP)/socks
 	install -m 644 src/bitmessageqt/*.py $(DEST_APP)/bitmessageqt
-	install -m 755 debian/pybm /usr/bin/pybitmessage
+	install -m 755 debian/pybm $(DESTDIR)/usr/bin/$(APP)
 
 	install -m 644 desktop/$(APP).desktop $(DEST_SHARE)/applications/$(APP).desktop
 	install -m 644 src/images/can-icon-24px.png $(DEST_SHARE)/icons/hicolor/24x24/apps/$(APP).png
