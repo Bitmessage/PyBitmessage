@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Thu May 30 15:50:32 2013
-#      by: PyQt4 UI code generator 4.9.4
+# Created: Mon Jun 03 23:09:01 2013
+#      by: PyQt4 UI code generator 4.9.5
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -172,28 +172,6 @@ class Ui_settingsDialog(object):
         self.label_10.setObjectName(_fromUtf8("label_10"))
         self.gridLayout_6.addWidget(self.label_10, 2, 0, 1, 3)
         self.tabWidgetSettings.addTab(self.tab, _fromUtf8(""))
-        self.tab_2 = QtGui.QWidget()
-        self.tab_2.setObjectName(_fromUtf8("tab_2"))
-        self.formLayout = QtGui.QFormLayout(self.tab_2)
-        self.formLayout.setObjectName(_fromUtf8("formLayout"))
-        self.label_13 = QtGui.QLabel(self.tab_2)
-        self.label_13.setObjectName(_fromUtf8("label_13"))
-        self.formLayout.setWidget(0, QtGui.QFormLayout.LabelRole, self.label_13)
-        self.comboBoxMaxCores = QtGui.QComboBox(self.tab_2)
-        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.comboBoxMaxCores.sizePolicy().hasHeightForWidth())
-        self.comboBoxMaxCores.setSizePolicy(sizePolicy)
-        self.comboBoxMaxCores.setObjectName(_fromUtf8("comboBoxMaxCores"))
-        self.comboBoxMaxCores.addItem(_fromUtf8(""))
-        self.comboBoxMaxCores.addItem(_fromUtf8(""))
-        self.comboBoxMaxCores.addItem(_fromUtf8(""))
-        self.comboBoxMaxCores.addItem(_fromUtf8(""))
-        self.comboBoxMaxCores.addItem(_fromUtf8(""))
-        self.comboBoxMaxCores.addItem(_fromUtf8(""))
-        self.formLayout.setWidget(0, QtGui.QFormLayout.FieldRole, self.comboBoxMaxCores)
-        self.tabWidgetSettings.addTab(self.tab_2, _fromUtf8(""))
         self.gridLayout.addWidget(self.tabWidgetSettings, 0, 0, 1, 1)
 
         self.retranslateUi(settingsDialog)
@@ -244,12 +222,4 @@ class Ui_settingsDialog(object):
         self.label_12.setText(QtGui.QApplication.translate("settingsDialog", "The \'Small message difficulty\' mostly only affects the difficulty of sending small messages. Doubling this value makes it almost twice as difficult to send a small message but doesn\'t really affect large messages.", None, QtGui.QApplication.UnicodeUTF8))
         self.label_10.setText(QtGui.QApplication.translate("settingsDialog", "The \'Total difficulty\' affects the absolute amount of work the sender must complete. Doubling this value doubles the amount of work.", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab), QtGui.QApplication.translate("settingsDialog", "Demanded difficulty", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_13.setText(QtGui.QApplication.translate("settingsDialog", "Maximum number of CPU cores to use when doing work:", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBoxMaxCores.setItemText(0, QtGui.QApplication.translate("settingsDialog", "1", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBoxMaxCores.setItemText(1, QtGui.QApplication.translate("settingsDialog", "2", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBoxMaxCores.setItemText(2, QtGui.QApplication.translate("settingsDialog", "4", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBoxMaxCores.setItemText(3, QtGui.QApplication.translate("settingsDialog", "8", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBoxMaxCores.setItemText(4, QtGui.QApplication.translate("settingsDialog", "16", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBoxMaxCores.setItemText(5, QtGui.QApplication.translate("settingsDialog", "All", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab_2), QtGui.QApplication.translate("settingsDialog", "System", None, QtGui.QApplication.UnicodeUTF8))
 
