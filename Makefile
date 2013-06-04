@@ -11,6 +11,7 @@ source:
 	tar -cvzf ../$(APP)_$(VERSION).orig.tar.gz ../$(APP)-$(VERSION) --exclude-vcs
 
 install:
+	mkdir -m 755 -p $(DESTDIR)/usr/bin
 	mkdir -m 755 -p $(DEST_APP)
 	mkdir -m 755 -p $(DEST_SHARE)/applications
 	mkdir -m 755 -p $(DEST_APP)/images
