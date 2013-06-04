@@ -47,7 +47,6 @@ import json
 from subprocess import call #used when the API must execute an outside program
 import singleton
 import proofofwork
-import multiprocessing.forking
 
 #For each stream to which we connect, several outgoingSynSender threads will exist and will collectively create 8 connections with peers.
 class outgoingSynSender(threading.Thread):
@@ -3939,7 +3938,6 @@ numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer = {}
 if useVeryEasyProofOfWorkForTesting:
     shared.networkDefaultProofOfWorkNonceTrialsPerByte = int(shared.networkDefaultProofOfWorkNonceTrialsPerByte / 16)
     shared.networkDefaultPayloadLengthExtraBytes = int(shared.networkDefaultPayloadLengthExtraBytes / 7000)
-
 
 if __name__ == "__main__":
     # is the application already running?  If yes then exit.
