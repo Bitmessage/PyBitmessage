@@ -14,7 +14,12 @@ def _set_idle():
         handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
         win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
     except:
-        os.nice(20)
+        try:
+            #Linux
+            os.nice(20)
+        except:
+            #Windows 64-bit
+            pass
 
 def _pool_worker(nonce, initialHash, target, pool_size):
     _set_idle()
