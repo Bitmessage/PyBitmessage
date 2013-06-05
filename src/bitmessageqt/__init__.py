@@ -427,6 +427,7 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("rerenderInboxFromLabels()"), self.rerenderInboxFromLabels)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("rerenderSubscriptions()"), self.rerenderSubscriptions)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), self.removeInboxRowByMsgid)
         self.UISignalThread.start()
 
 #Below this point, it would be good if all of the necessary global data structures were initialized.
@@ -936,6 +937,13 @@ class MyForm(QtGui.QMainWindow):
             if ackdata == tableAckdata:
                 #self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
                 self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
+
+    def removeInboxRowByMsgid(self,msgid):#msgid and inventoryHash are the same thing
+        for i in range(self.ui.tableWidgetInbox.rowCount()):
+            if msgid == str(self.ui.tableWidgetInbox.item(i,3).data(Qt.UserRole).toPyObject()):
+                self.statusBar().showMessage('Message trashed')
+                self.ui.tableWidgetInbox.removeRow(i)
+                break
 
     def rerenderInboxFromLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
@@ -2291,6 +2299,8 @@ class UISignaler(QThread):
                 self.emit(SIGNAL("rerenderInboxFromLabels()"))
             elif command == 'rerenderSubscriptions':
                 self.emit(SIGNAL("rerenderSubscriptions()"))
+            elif command == 'removeInboxRowByMsgid':
+                self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"),data)
             else:
                 sys.stderr.write('Command sent to UISignaler not recognized: %s\n' % command)
 
