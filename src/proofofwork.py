@@ -41,7 +41,6 @@ def _doFastPoW(target, initialHash):
     import shared
     import time
     from multiprocessing import Pool, cpu_count
-    import os    
     try:
         pool_size = cpu_count()
     except:
@@ -69,7 +68,7 @@ def _doFastPoW(target, initialHash):
         time.sleep(0.2)
 
 def run(target, initialHash):
-    if linux in sys.platform:
+    if 'linux' in sys.platform:
       return _doFastPoW(target, initialHash)
     else:
       return _doSafePoW(target, initialHash)
