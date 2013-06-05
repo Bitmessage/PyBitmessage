@@ -71,17 +71,6 @@ class MyForm(QtGui.QMainWindow):
             #startup for linux
             pass
 
-        """self.trayIcon = QtGui.QSystemTrayIcon(self)
-        self.trayIcon.setIcon( QtGui.QIcon(':/newPrefix/images/can-icon-16px.png') )
-        traySignal = "activated(QSystemTrayIcon::ActivationReason)"
-        QtCore.QObject.connect(self.trayIcon, QtCore.SIGNAL(traySignal), self.__icon_activated)
-        menu = QtGui.QMenu()
-        self.exitAction = menu.addAction("Quit", self.quit)
-        self.trayIcon.setContextMenu(menu)
-        #I'm currently under the impression that Mac users have different expectations for the tray icon. They don't necessairly expect it to open the main window when clicked and they still expect a program showing a tray icon to also be in the dock.
-        if 'darwin' in sys.platform:
-            self.trayIcon.show()"""
-
         self.ui.labelSendBroadcastWarning.setVisible(False)
 
         #FILE MENU and other buttons
@@ -358,16 +347,20 @@ class MyForm(QtGui.QMainWindow):
             newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,2,newItem)
-            if status == 'findingpubkey':
-                newItem =  myTableWidgetItem('Waiting on their public key. Will request it again soon.')
-            elif status == 'sentmessage':
+            if status == 'awaitingpubkey':
+                newItem =  myTableWidgetItem('Waiting on their encryption key. Will request it again soon.')
+            elif status == 'doingpowforpubkey':
+                newItem =  myTableWidgetItem('Encryption key request queued.')
+            elif status == 'msgqueued':
+                newItem =  myTableWidgetItem('Queued.')
+            elif status == 'msgsent':
                 newItem =  myTableWidgetItem('Message sent. Waiting on acknowledgement. Sent at ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(lastactiontime)),'utf-8'))
-            elif status == 'doingpow':
+            elif status == 'doingmsgpow':
                 newItem =  myTableWidgetItem('Need to do work to send message. Work is queued.')
             elif status == 'ackreceived':
                 newItem =  myTableWidgetItem('Acknowledgement of the message received ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
-            elif status == 'broadcastpending':
-                newItem =  myTableWidgetItem('Doing the work necessary to send broadcast...')
+            elif status == 'broadcastqueued':
+                newItem =  myTableWidgetItem('Broadcast queued.')
             elif status == 'broadcastsent':
                 newItem =  myTableWidgetItem('Broadcast on ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             else:
@@ -536,7 +529,7 @@ class MyForm(QtGui.QMainWindow):
 
     # create application indicator
     def appIndicatorInit(self,app):
-        self.tray = QSystemTrayIcon(QtGui.QIcon("images/can-icon-24px-red.png"), app)
+        self.tray = QSystemTrayIcon(QtGui.QIcon(":/newPrefix/images/can-icon-24px-red.png"), app)
         if sys.platform[0:3] == 'win':
             traySignal = "activated(QSystemTrayIcon::ActivationReason)"
             QtCore.QObject.connect(self.tray, QtCore.SIGNAL(traySignal), self.__icon_activated)
@@ -770,6 +763,7 @@ class MyForm(QtGui.QMainWindow):
     def click_actionDeleteAllTrashedMessages(self):
         if QtGui.QMessageBox.question(self, 'Delete trash?',"Are you sure you want to delete all trashed messages?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
             return
+        self.statusBar().showMessage('Deleting messages and freeing empty space...')
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''delete from inbox where folder='trash' ''')
         shared.sqlSubmitQueue.put('')
@@ -781,6 +775,7 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlSubmitQueue.put('vacuum')
         shared.sqlSubmitQueue.put('')
         shared.sqlReturnQueue.get()
+        self.statusBar().showMessage('')
         shared.sqlLock.release()
 
     def click_actionRegenerateDeterministicAddresses(self):
@@ -824,23 +819,6 @@ class MyForm(QtGui.QMainWindow):
         if reason == QtGui.QSystemTrayIcon.Trigger:
             self.actionShow.setChecked(not self.actionShow.isChecked())
             self.appIndicatorShowOrHideWindow()
-
-            """if 'linux' in sys.platform:
-                self.trayIcon.hide()
-                self.setWindowFlags(Qt.Window)
-                self.show()
-            elif 'win32' in sys.platform or 'win64' in sys.platform:
-                self.trayIcon.hide()
-                self.setWindowFlags(Qt.Window)
-                self.show()
-                self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-                self.activateWindow()
-            elif 'darwin' in sys.platform:
-                #self.trayIcon.hide() #this line causes a segmentation fault
-                #self.setWindowFlags(Qt.Window)
-                #self.show()
-                self.setWindowState(self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
-                self.activateWindow()"""
 
     def incrementNumberOfMessagesProcessed(self):
         self.numberOfMessagesProcessed += 1
@@ -916,7 +894,6 @@ class MyForm(QtGui.QMainWindow):
             if self.actionStatus != None:
                 self.actionStatus.setText('Not Connected')
                 self.tray.setIcon(QtGui.QIcon(":/newPrefix/images/can-icon-24px-red.png"))
-                #self.trayIcon.show()
         if color == 'yellow':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
@@ -1104,7 +1081,7 @@ class MyForm(QtGui.QMainWindow):
                             self.statusBar().showMessage('Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.')
                         ackdata = OpenSSL.rand(32)
                         shared.sqlLock.acquire()
-                        t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'findingpubkey',1,1,'sent',2)
+                        t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'msgqueued',1,1,'sent',2)
                         shared.sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
                         shared.sqlSubmitQueue.put(t)
                         shared.sqlReturnQueue.get()
@@ -1151,7 +1128,7 @@ class MyForm(QtGui.QMainWindow):
                 shared.sqlSubmitQueue.put('commit')
                 shared.sqlLock.release()
 
-                shared.workerQueue.put(('sendbroadcast',(fromAddress,subject,message)))
+                shared.workerQueue.put(('sendbroadcast',''))
 
                 try:
                     fromLabel = shared.config.get(fromAddress, 'label')
@@ -1454,6 +1431,10 @@ class MyForm(QtGui.QMainWindow):
                 shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte',str(int(float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text())*shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
             if float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) >= 1:
                 shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes',str(int(float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text())*shared.networkDefaultPayloadLengthExtraBytes)))
+            #if str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()) == 'All':
+            #    shared.config.set('bitmessagesettings', 'maxcores', '99999')
+            #else:
+            #    shared.config.set('bitmessagesettings', 'maxcores', str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()))
 
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
@@ -1640,7 +1621,6 @@ class MyForm(QtGui.QMainWindow):
         # unregister the messaging system
         if self.mmapp is not None:
             self.mmapp.unregister()
-        #self.trayIcon.hide()
         self.statusBar().showMessage('All done. Closing user interface...')
         os._exit(0)
 
@@ -1999,7 +1979,7 @@ class MyForm(QtGui.QMainWindow):
                 if len(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()) < 30000:
                     self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject())#Only show the first 30K characters
                 else:
-                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()[:30000]+'\n\nDisplay of the remainder of the message truncated because it is too long.')#Only show the first 30K characters
+                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow,2).data(Qt.UserRole).toPyObject()[:30000]+'\n\nDisplay of the remainder of the message truncated because it is too long.')#Only show the first 30K characters            
 
             font = QFont()
             font.setBold(False)
@@ -2129,12 +2109,10 @@ class settingsDialog(QtGui.QDialog):
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
             self.ui.checkBoxShowTrayNotifications.setDisabled(True)
-            self.ui.checkBoxStartInTray.setDisabled(True)
             self.ui.labelSettingsNote.setText('Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implimented for your operating system.')
         elif 'linux' in sys.platform:
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
-            self.ui.checkBoxStartInTray.setDisabled(True)
             self.ui.labelSettingsNote.setText('Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implimented for your operating system.')
         #On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(shared.config.get('bitmessagesettings', 'port')))
@@ -2161,6 +2139,25 @@ class settingsDialog(QtGui.QDialog):
 
         self.ui.lineEditTotalDifficulty.setText(str((float(shared.config.getint('bitmessagesettings', 'defaultnoncetrialsperbyte'))/shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.ui.lineEditSmallMessageDifficulty.setText(str((float(shared.config.getint('bitmessagesettings', 'defaultpayloadlengthextrabytes'))/shared.networkDefaultPayloadLengthExtraBytes)))
+
+        #'System' tab removed for now.
+        """try:
+            maxCores = shared.config.getint('bitmessagesettings', 'maxcores')
+        except:
+            maxCores = 99999
+        if maxCores <= 1:
+            self.ui.comboBoxMaxCores.setCurrentIndex(0)
+        elif maxCores == 2:
+            self.ui.comboBoxMaxCores.setCurrentIndex(1)
+        elif maxCores <= 4:
+            self.ui.comboBoxMaxCores.setCurrentIndex(2)
+        elif maxCores <= 8:
+            self.ui.comboBoxMaxCores.setCurrentIndex(3)
+        elif maxCores <= 16:
+            self.ui.comboBoxMaxCores.setCurrentIndex(4)
+        else:
+            self.ui.comboBoxMaxCores.setCurrentIndex(5)"""
+
         QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
     def comboBoxProxyTypeChanged(self,comboBoxIndex):
@@ -2302,12 +2299,7 @@ def run():
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
 
-    if shared.config.getboolean('bitmessagesettings', 'startintray'):
-        if not myapp.isUbuntu():
-            myapp.trayIcon.show()
-            if 'win32' in sys.platform or 'win64' in sys.platform:
-                myapp.setWindowFlags(Qt.ToolTip)
-    else:
+    if not shared.config.getboolean('bitmessagesettings', 'startintray'):
         myapp.show()
 
     myapp.appIndicatorInit(app)
