@@ -483,20 +483,12 @@ class receiveDataThread(threading.Thread):
             hash, = row
             if hash not in self.objectsOfWhichThisRemoteNodeIsAlreadyAware:
                 bigInvList[hash] = 0
-            else:
-                shared.printLock.acquire()
-                print 'Not including an object hash in a big inv message because the remote node is already aware of it.'#This line is here to check that this feature is working.
-                shared.printLock.release()
         #We also have messages in our inventory in memory (which is a python dictionary). Let's fetch those too.
         for hash, storedValue in shared.inventory.items():
             if hash not in self.objectsOfWhichThisRemoteNodeIsAlreadyAware:
                 objectType, streamNumber, payload, receivedTime = storedValue
                 if streamNumber == self.streamNumber and receivedTime > int(time.time())-maximumAgeOfObjectsThatIAdvertiseToOthers:
                     bigInvList[hash] = 0
-            else:
-                shared.printLock.acquire()
-                print 'Not including an object hash in a big inv message because the remote node is already aware of it.'#This line is here to check that this feature is working.
-                shared.printLock.release()
         numberOfObjectsInInvMessage = 0
         payload = ''
         #Now let us start appending all of these hashes together. They will be sent out in a big inv message to our new peer.
@@ -3692,8 +3684,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            shared.UISignalQueue.put(('updateStatusBar','Per API: Trashed message (assuming message existed). UI not updated.'))
-            return 'Trashed message (assuming message existed). UI not updated. To double check, run getAllInboxMessages to see that the message disappeared, or restart Bitmessage and look in the normal Bitmessage GUI.'
+            shared.UISignalQueue.put(('removeInboxRowByMsgid',msgid))
+            return 'Trashed message (assuming message existed).'
         elif method == 'sendMessage':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
