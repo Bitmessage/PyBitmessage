@@ -64,6 +64,7 @@ def _doFastPoW(target, initialHash):
             if result[i].ready():
                 result = result[i].get()
                 pool.terminate()
+                pool.join() #Wait for the workers to exit...
                 return result[0], result[1]
         time.sleep(0.2)
 
