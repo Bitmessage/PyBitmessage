@@ -8,7 +8,7 @@
 
 APP=pybitmessage
 PREV_VERSION=0.3.2
-VERSION=0.3.3
+VERSION=0.3.3-2
 ARCH_TYPE=all
 
 #update version numbers automatically - so you don't have to
