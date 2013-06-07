@@ -650,7 +650,9 @@ class receiveDataThread(threading.Thread):
                 readPosition += signatureLengthLength
                 signature = data[readPosition:readPosition+signatureLength]
                 try:
-                    highlevelcrypto.verify(data[12:readPositionAtBottomOfMessage],signature,sendersPubSigningKey.encode('hex'))
+                    if not highlevelcrypto.verify(data[12:readPositionAtBottomOfMessage],signature,sendersPubSigningKey.encode('hex')):
+                        print 'ECDSA verify failed'
+                        return
                     print 'ECDSA verify passed'
                 except Exception, err:
                     print 'ECDSA verify failed', err
@@ -783,7 +785,9 @@ class receiveDataThread(threading.Thread):
             readPosition += signatureLengthLength
             signature = decryptedData[readPosition:readPosition+signatureLength]
             try:
-                highlevelcrypto.verify(decryptedData[:readPositionAtBottomOfMessage],signature,sendersPubSigningKey.encode('hex'))
+                if not highlevelcrypto.verify(decryptedData[:readPositionAtBottomOfMessage],signature,sendersPubSigningKey.encode('hex')):
+                    print 'ECDSA verify failed'
+                    return
                 print 'ECDSA verify passed'
             except Exception, err:
                 print 'ECDSA verify failed', err
@@ -1024,7 +1028,9 @@ class receiveDataThread(threading.Thread):
             readPosition += signatureLengthLength
             signature = decryptedData[readPosition:readPosition+signatureLength]
             try:
-                highlevelcrypto.verify(decryptedData[:positionOfBottomOfAckData],signature,pubSigningKey.encode('hex'))
+                if not highlevelcrypto.verify(decryptedData[:positionOfBottomOfAckData],signature,pubSigningKey.encode('hex')):
+                    print 'ECDSA verify failed'
+                    return
                 print 'ECDSA verify passed'
             except Exception, err:
                 print 'ECDSA verify failed', err
@@ -1340,7 +1346,9 @@ class receiveDataThread(threading.Thread):
             signatureLength, signatureLengthLength = decodeVarint(data[readPosition:readPosition+10])
             signature = data[readPosition:readPosition+signatureLengthLength]
             try:
-                highlevelcrypto.verify(data[8:readPosition],signature,publicSigningKey.encode('hex'))
+                if not highlevelcrypto.verify(data[8:readPosition],signature,publicSigningKey.encode('hex')):
+                    print 'ECDSA verify failed (within processpubkey)'
+                    return
                 print 'ECDSA verify passed (within processpubkey)'
             except Exception, err:
                 print 'ECDSA verify failed (within processpubkey)', err
