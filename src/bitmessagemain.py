@@ -1343,10 +1343,12 @@ class receiveDataThread(threading.Thread):
             readPosition += specifiedNonceTrialsPerByteLength
             specifiedPayloadLengthExtraBytes, specifiedPayloadLengthExtraBytesLength = decodeVarint(data[readPosition:readPosition+10])
             readPosition += specifiedPayloadLengthExtraBytesLength
+            endOfSignedDataPosition = readPosition
             signatureLength, signatureLengthLength = decodeVarint(data[readPosition:readPosition+10])
-            signature = data[readPosition:readPosition+signatureLengthLength]
+            readPosition += signatureLengthLength
+            signature = data[readPosition:readPosition+signatureLength]
             try:
-                if not highlevelcrypto.verify(data[8:readPosition],signature,publicSigningKey.encode('hex')):
+                if not highlevelcrypto.verify(data[8:endOfSignedDataPosition],signature,publicSigningKey.encode('hex')):
                     print 'ECDSA verify failed (within processpubkey)'
                     return
                 print 'ECDSA verify passed (within processpubkey)'
@@ -2918,8 +2920,7 @@ class singleWorker(threading.Thread):
                 dataToEncrypt += '\x02' #message encoding type
                 dataToEncrypt += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding.
                 dataToEncrypt += 'Subject:' + subject + '\n' + 'Body:' + body
-
-                signature = highlevelcrypto.sign(payload,privSigningKeyHex)
+                signature = highlevelcrypto.sign(dataToEncrypt,privSigningKeyHex)
                 dataToEncrypt += encodeVarint(len(signature))
                 dataToEncrypt += signature
                 privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()[:32]
