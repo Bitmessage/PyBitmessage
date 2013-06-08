@@ -1129,7 +1129,7 @@ class MyForm(QtGui.QMainWindow):
                 toAddress = self.str_broadcast_subscribers
                 ripe = ''
                 shared.sqlLock.acquire()
-                t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastpending',1,1,'sent',2)
+                t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastqueued',1,1,'sent',2)
                 shared.sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
                 shared.sqlSubmitQueue.put(t)
                 shared.sqlReturnQueue.get()
