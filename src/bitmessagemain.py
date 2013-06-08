@@ -1143,7 +1143,7 @@ class receiveDataThread(threading.Thread):
                     toAddress = '[Broadcast subscribers]'
                     ripe = ''
                     shared.sqlLock.acquire()
-                    t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastpending',1,1,'sent',2)
+                    t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastqueued',1,1,'sent',2)
                     shared.sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
                     shared.sqlSubmitQueue.put(t)
                     shared.sqlReturnQueue.get()
@@ -2821,7 +2821,7 @@ class singleWorker(threading.Thread):
 
     def sendBroadcast(self):
         shared.sqlLock.acquire()
-        t = ('broadcastpending',)
+        t = ('broadcastqueued',)
         shared.sqlSubmitQueue.put('''SELECT fromaddress, subject, message, ackdata FROM sent WHERE status=? and folder='sent' ''')
         shared.sqlSubmitQueue.put(t)
         queryreturn = shared.sqlReturnQueue.get()
@@ -2882,7 +2882,7 @@ class singleWorker(threading.Thread):
 
                 #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
                 shared.sqlLock.acquire()
-                t = ('broadcastsent',int(time.time()),fromaddress, subject, body,'broadcastpending')
+                t = ('broadcastsent',int(time.time()),fromaddress, subject, body,'broadcastqueued')
                 shared.sqlSubmitQueue.put('UPDATE sent SET status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
                 shared.sqlSubmitQueue.put(t)
                 queryreturn = shared.sqlReturnQueue.get()
@@ -2948,7 +2948,7 @@ class singleWorker(threading.Thread):
 
                 #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
                 shared.sqlLock.acquire()
-                t = ('broadcastsent',int(time.time()),fromaddress, subject, body,'broadcastpending')
+                t = ('broadcastsent',int(time.time()),fromaddress, subject, body,'broadcastqueued')
                 shared.sqlSubmitQueue.put('UPDATE sent SET status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
                 shared.sqlSubmitQueue.put(t)
                 queryreturn = shared.sqlReturnQueue.get()
@@ -3813,7 +3813,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             ripe = ''
 
             shared.sqlLock.acquire()
-            t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastpending',1,1,'sent',2)
+            t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'broadcastqueued',1,1,'sent',2)
             shared.sqlSubmitQueue.put('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
             shared.sqlSubmitQueue.put(t)
             shared.sqlReturnQueue.get()
