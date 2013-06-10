@@ -363,8 +363,10 @@ class MyForm(QtGui.QMainWindow):
                 newItem =  myTableWidgetItem('Broadcast queued.')
             elif status == 'broadcastsent':
                 newItem =  myTableWidgetItem('Broadcast on ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
+            elif status == 'toodifficult':
+                newItem =  myTableWidgetItem('Problem: The work demanded by the recipient is more difficult than you are willing to do. ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             else:
-                newItem =  myTableWidgetItem('Unknown status.  ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
+                newItem =  myTableWidgetItem('Unknown status: ' + status + '  ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             newItem.setData(Qt.UserRole,QByteArray(ackdata))
             newItem.setData(33,int(lastactiontime))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
@@ -1668,13 +1670,15 @@ class MyForm(QtGui.QMainWindow):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,0).data(Qt.UserRole).toPyObject())
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,1).data(Qt.UserRole).toPyObject())
-
         if toAddressAtCurrentInboxRow == self.str_broadcast_subscribers:
             self.ui.labelFrom.setText('')
+        elif not shared.config.has_section(toAddressAtCurrentInboxRow):
+            QtGui.QMessageBox.information(self, 'Address is gone','Bitmessage cannot find your address ' + toAddressAtCurrentInboxRow + '. Perhaps you removed it?', QMessageBox.Ok)
+            self.ui.labelFrom.setText('')
+        elif not shared.config.getboolean(toAddressAtCurrentInboxRow,'enabled'):
+            QtGui.QMessageBox.information(self, 'Address disabled','Error: The address from which you are trying to send is disabled. You\'ll have to enable it on the \'Your Identities\' tab before using it.', QMessageBox.Ok)
+            self.ui.labelFrom.setText('')
         else:
-            if not shared.config.get(toAddressAtCurrentInboxRow,'enabled'):
-                self.statusBar().showMessage('Error: The address from which you are trying to send is disabled. Enable it from the \'Your Identities\' tab first.')
-                return
             self.ui.labelFrom.setText(toAddressAtCurrentInboxRow)
         self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
         self.ui.comboBoxSendFrom.setCurrentIndex(0)

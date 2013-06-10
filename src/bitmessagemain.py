@@ -1263,7 +1263,14 @@ class receiveDataThread(threading.Thread):
     def processpubkey(self,data):
         readPosition = 8 #for the nonce
         embeddedTime, = unpack('>I',data[readPosition:readPosition+4])
-        readPosition += 4 #for the time
+
+        #This section is used for the transition from 32 bit time to 64 bit time in the protocol.
+        if embeddedTime == 0:
+            embeddedTime, = unpack('>Q',data[readPosition:readPosition+8])
+            readPosition += 8
+        else:
+            readPosition += 4
+
         addressVersion, varintLength = decodeVarint(data[readPosition:readPosition+10])
         readPosition += varintLength
         streamNumber, varintLength = decodeVarint(data[readPosition:readPosition+10])
@@ -1461,23 +1468,6 @@ class receiveDataThread(threading.Thread):
             return
         print 'the hash requested in this getpubkey request is:', requestedHash.encode('hex')
 
-        """shared.sqlLock.acquire()
-        t = (requestedHash,int(time.time())-lengthOfTimeToHoldOnToAllPubkeys) #this prevents SQL injection
-        shared.sqlSubmitQueue.put('''SELECT hash, transmitdata, time FROM pubkeys WHERE hash=? AND havecorrectnonce=1 AND time>?''')
-        shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
-        if queryreturn != []:
-            for row in queryreturn:
-                hash, payload, timeEncodedInPubkey = row
-            shared.printLock.acquire()
-            print 'We have the requested pubkey stored in our database of pubkeys. Sending it.'
-            shared.printLock.release()
-            inventoryHash = calculateInventoryHash(payload)
-            objectType = 'pubkey'
-            shared.inventory[inventoryHash] = (objectType, self.streamNumber, payload, timeEncodedInPubkey)#If the time embedded in this pubkey is more than 3 days old then this object isn't going to last very long in the inventory- the cleanerThread is going to come along and move it from the inventory in memory to the SQL inventory and then delete it from the SQL inventory. It should still find its way back to the original requestor if he is online however.
-            self.broadcastinv(inventoryHash)"""
-        #else: #the pubkey is not in our database of pubkeys. Let's check if the requested key is ours (which would mean we should do the POW, put it in the pubkey table, and broadcast out the pubkey.)
         if requestedHash in shared.myAddressesByHash: #if this address hash is one of mine
             if decodeAddress(shared.myAddressesByHash[requestedHash])[1] != requestedAddressVersionNumber:
                 shared.printLock.acquire()
@@ -2406,6 +2396,11 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte',str(shared.networkDefaultProofOfWorkNonceTrialsPerByte))
             shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes',str(shared.networkDefaultPayloadLengthExtraBytes))
             shared.config.set('bitmessagesettings','settingsversion','5')
+
+        if shared.config.getint('bitmessagesettings','settingsversion') == 5:
+            shared.config.set('bitmessagesettings','maxacceptablenoncetrialsperbyte','0')
+            shared.config.set('bitmessagesettings','maxacceptablepayloadlengthextrabytes','0')
+            shared.config.set('bitmessagesettings','settingsversion','6')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
 
@@ -3018,8 +3013,8 @@ class singleWorker(threading.Thread):
             shared.sqlSubmitQueue.put((toripe,))
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlLock.release()
-            if queryreturn == []:
-                #We no longer have the needed pubkey
+            if queryreturn == [] and toripe not in neededPubkeys:
+                #We no longer have the needed pubkey and we haven't requested it.
                 shared.printLock.acquire()
                 sys.stderr.write('For some reason, the status of a message in our outbox is \'doingmsgpow\' even though we lack the pubkey. Here is the RIPE hash of the needed pubkey: %s\n' % toripe.encode('hex'))
                 shared.printLock.release()
@@ -3032,14 +3027,14 @@ class singleWorker(threading.Thread):
                 shared.sqlLock.release()
                 shared.UISignalQueue.put(('updateSentItemStatusByHash',(toripe,'Sending a request for the recipient\'s encryption key.')))
                 self.requestPubKey(toaddress)
-                return
+                continue
             ackdataForWhichImWatching[ackdata] = 0
             toStatus,toAddressVersionNumber,toStreamNumber,toHash = decodeAddress(toaddress)
             fromStatus,fromAddressVersionNumber,fromStreamNumber,fromHash = decodeAddress(fromaddress)
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send the message.')))
             shared.printLock.acquire()
             print 'Found a message in our database that needs to be sent with this pubkey.'
-            print 'First 150 characters of message:', message[:150]
+            print 'First 150 characters of message:', repr(message[:150])
             shared.printLock.release()
             embeddedTime = pack('>I',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes. We will use this time both for our message and for the ackdata packed within our message.
             if fromAddressVersionNumber == 2:
@@ -3140,7 +3135,15 @@ class singleWorker(threading.Thread):
 
                 #The pubkey is stored the way we originally received it which means that we need to read beyond things like the nonce and time to get to the public keys.
                 readPosition = 8 #to bypass the nonce
-                readPosition += 4 #to bypass the embedded time
+
+                pubkeyEmbeddedTime, = unpack('>I',pubkeyPayload[readPosition:readPosition+4])
+                #This section is used for the transition from 32 bit time to 64 bit time in the protocol.
+                if pubkeyEmbeddedTime == 0:
+                    pubkeyEmbeddedTime, = unpack('>Q',pubkeyPayload[readPosition:readPosition+8])
+                    readPosition += 8
+                else:
+                    readPosition += 4
+
                 readPosition += 1 #to bypass the address version whose length is definitely 1
                 streamNumber, streamNumberLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
                 readPosition += streamNumberLength
@@ -3162,7 +3165,19 @@ class singleWorker(threading.Thread):
                         requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
                     if requiredPayloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
                         requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
-                    #todo: pull yet-to-be-added values out of config: maximumacceptabletotaldifficult and maximumacceptablesmallmessagedifficulty and compare.
+                    if (requiredAverageProofOfWorkNonceTrialsPerByte > shared.config.getint('bitmessagesettings','maxacceptablenoncetrialsperbyte') and shared.config.getint('bitmessagesettings','maxacceptablenoncetrialsperbyte') != 0) or (requiredPayloadLengthExtraBytes > shared.config.getint('bitmessagesettings','maxacceptablepayloadlengthextrabytes') and shared.config.getint('bitmessagesettings','maxacceptablepayloadlengthextrabytes') != 0):
+                        #The demanded difficulty is more than we are willing to do.
+                        shared.sqlLock.acquire()
+                        t = (ackdata,)
+                        shared.sqlSubmitQueue.put('''UPDATE sent SET status='toodifficult' WHERE ackdata=? AND status='doingmsgpow' ''')
+                        shared.sqlSubmitQueue.put(t)
+                        shared.sqlReturnQueue.get()
+                        shared.sqlSubmitQueue.put('commit')
+                        shared.sqlLock.release()
+                        shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Problem: The work demanded by the recipient (' + str(requiredAverageProofOfWorkNonceTrialsPerByte / shared.networkDefaultProofOfWorkNonceTrialsPerByte) + ' and ' + str(requiredPayloadLengthExtraBytes / shared.networkDefaultPayloadLengthExtraBytes) + ') is more difficult than you are willing to do. ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
+                        continue
+
+
                 encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
 
             #We are now dropping the unencrypted data in payload since it has already been encrypted and replacing it with the encrypted payload that we will send out.
@@ -3189,7 +3204,7 @@ class singleWorker(threading.Thread):
             print 'Broadcasting inv for my msg(within sendmsg function):', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
-            #Update the status of the message in the 'sent' table to have a 'sent' status
+            #Update the status of the message in the 'sent' table to have a 'msgsent' status
             shared.sqlLock.acquire()
             t = ('msgsent',toaddress, fromaddress, subject, message,'doingmsgpow')
             shared.sqlSubmitQueue.put('UPDATE sent SET status=? WHERE toaddress=? AND fromaddress=? AND subject=? AND message=? AND status=?')
@@ -3970,7 +3985,7 @@ if __name__ == "__main__":
         except:
             #This appears to be the first time running the program; there is no config file (or it cannot be accessed). Create config file.
             shared.config.add_section('bitmessagesettings')
-            shared.config.set('bitmessagesettings','settingsversion','5')
+            shared.config.set('bitmessagesettings','settingsversion','6')
             shared.config.set('bitmessagesettings','port','8444')
             shared.config.set('bitmessagesettings','timeformat','%%a, %%d %%b %%Y  %%I:%%M %%p')
             shared.config.set('bitmessagesettings','blackwhitelist','black')
@@ -3992,6 +4007,8 @@ if __name__ == "__main__":
             shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte',str(shared.networkDefaultProofOfWorkNonceTrialsPerByte))
             shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes',str(shared.networkDefaultPayloadLengthExtraBytes))
             shared.config.set('bitmessagesettings','minimizeonclose','false')
+            shared.config.set('bitmessagesettings','maxacceptablenoncetrialsperbyte','0')
+            shared.config.set('bitmessagesettings','maxacceptablepayloadlengthextrabytes','0')
 
             if storeConfigFilesInSameDirectoryAsProgramByDefault:
                 #Just use the same directory as the program and forget about the appdata folder
@@ -4028,7 +4045,7 @@ if __name__ == "__main__":
         pickleFile = open(shared.appdata + 'knownnodes.dat', 'rb')
         shared.knownNodes = pickle.load(pickleFile)
         pickleFile.close()
-    if shared.config.getint('bitmessagesettings', 'settingsversion') > 5:
+    if shared.config.getint('bitmessagesettings', 'settingsversion') > 6:
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
         raise SystemExit
 
