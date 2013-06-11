@@ -203,3 +203,11 @@ def flushInventory():
         del inventory[hash]
     sqlSubmitQueue.put('commit')
     sqlLock.release()
+
+def fixPotentiallyInvalidUTF8Data(text):
+    try:
+        unicode(text,'utf-8')
+        return text
+    except:
+        output = 'Part of the message is corrupt. The message cannot be displayed the normal way.\n\n' + repr(text)
+        return output
