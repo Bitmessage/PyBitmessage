@@ -321,8 +321,7 @@ class receiveDataThread(threading.Thread):
         if self.data[0:4] != '\xe9\xbe\xb4\xd9':
             if verbose >= 1:
                 shared.printLock.acquire()
-                sys.stderr.write('The magic bytes were not correct. First 40 bytes of data: %s\n' % repr(self.data[0:40]))
-                print 'self.data:', self.data.encode('hex')
+                print 'The magic bytes were not correct. First 40 bytes of data: '+ repr(self.data[0:40])
                 shared.printLock.release()
             self.data = ""
             return
@@ -1090,6 +1089,7 @@ class receiveDataThread(threading.Thread):
                     bodyPositionIndex = string.find(message,'\nBody:')
                     if bodyPositionIndex > 1:
                         subject = message[8:bodyPositionIndex]
+                        subject = subject[:500] #Only save and show the first 500 characters of the subject. Any more is probably an attak.
                         body = message[bodyPositionIndex+6:]
                     else:
                         subject = ''
@@ -1184,7 +1184,7 @@ class receiveDataThread(threading.Thread):
         else:
             return '['+mailingListName+'] ' + subject
 
-    def possiblyNewPubkey(self,toRipe):
+    def possibleNewPubkey(self,toRipe):
         if toRipe in neededPubkeys:
             print 'We have been awaiting the arrival of this pubkey.'
             del neededPubkeys[toRipe]
@@ -3014,7 +3014,7 @@ class singleWorker(threading.Thread):
             ackdataForWhichImWatching[ackdata] = 0
             toStatus,toAddressVersionNumber,toStreamNumber,toHash = decodeAddress(toaddress)
             fromStatus,fromAddressVersionNumber,fromStreamNumber,fromHash = decodeAddress(fromaddress)
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send the message.')))
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Looking up the receiver\'s public key')))
             shared.printLock.acquire()
             print 'Found a message in our database that needs to be sent with this pubkey.'
             print 'First 150 characters of message:', repr(message[:150])
@@ -3061,6 +3061,7 @@ class singleWorker(threading.Thread):
             if toAddressVersionNumber == 2:
                 requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
                 requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send message.                                               (There is no required difficulty for version 2 addresses like this.)')))
             elif toAddressVersionNumber == 3:
                 requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
                 readPosition += varintLength
@@ -3070,12 +3071,13 @@ class singleWorker(threading.Thread):
                     requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
                 if requiredPayloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
                     requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send message.                                                    (Receiver\'s required difficulty: '+str(float(requiredAverageProofOfWorkNonceTrialsPerByte)/shared.networkDefaultProofOfWorkNonceTrialsPerByte)+' and '+ str(float(requiredPayloadLengthExtraBytes)/shared.networkDefaultPayloadLengthExtraBytes) + ')')))
                 if status != 'forcepow':
                     if (requiredAverageProofOfWorkNonceTrialsPerByte > shared.config.getint('bitmessagesettings','maxacceptablenoncetrialsperbyte') and shared.config.getint('bitmessagesettings','maxacceptablenoncetrialsperbyte') != 0) or (requiredPayloadLengthExtraBytes > shared.config.getint('bitmessagesettings','maxacceptablepayloadlengthextrabytes') and shared.config.getint('bitmessagesettings','maxacceptablepayloadlengthextrabytes') != 0):
                         #The demanded difficulty is more than we are willing to do.
                         shared.sqlLock.acquire()
                         t = (ackdata,)
-                        shared.sqlSubmitQueue.put('''UPDATE sent SET status='toodifficult' WHERE ackdata=? AND status='doingmsgpow' ''')
+                        shared.sqlSubmitQueue.put('''UPDATE sent SET status='toodifficult' WHERE ackdata=? ''')
                         shared.sqlSubmitQueue.put(t)
                         shared.sqlReturnQueue.get()
                         shared.sqlSubmitQueue.put('commit')
@@ -3173,11 +3175,13 @@ class singleWorker(threading.Thread):
             powStartTime = time.time()
             initialHash = hashlib.sha512(payload).digest()
             trialValue, nonce = proofofwork.run(target, initialHash)
+            shared.printLock.acquire()
             print '(For msg message) Found proof of work', trialValue, 'Nonce:', nonce
             try:
                 print 'POW took', int(time.time()-powStartTime), 'seconds.', nonce/(time.time()-powStartTime), 'nonce trials per second.'
             except:
                 pass
+            shared.printLock.release()
             payload = pack('>Q',nonce) + payload
 
             inventoryHash = calculateInventoryHash(payload)
@@ -3189,8 +3193,8 @@ class singleWorker(threading.Thread):
 
             #Update the status of the message in the 'sent' table to have a 'msgsent' status
             shared.sqlLock.acquire()
-            t = (toaddress, fromaddress, subject, message)
-            shared.sqlSubmitQueue.put('''UPDATE sent SET status='msgsent' WHERE toaddress=? AND fromaddress=? AND subject=? AND message=? AND status='doingmsgpow' or status='forcepow' ''')
+            t = (ackdata,)
+            shared.sqlSubmitQueue.put('''UPDATE sent SET status='msgsent' WHERE ackdata=? AND status='doingmsgpow' or status='forcepow' ''')
             shared.sqlSubmitQueue.put(t)
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
