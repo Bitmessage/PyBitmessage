@@ -60,8 +60,9 @@ class outgoingSynSender(threading.Thread):
         time.sleep(1)
         global alreadyAttemptedConnectionsListResetTime
         while True:
-            #time.sleep(999999)#I sometimes use this to prevent connections for testing.
-            if len(selfInitiatedConnections[self.streamNumber]) < 8: #maximum number of outgoing connections = 8
+            if len(selfInitiatedConnections[self.streamNumber]) >= 8: #maximum number of outgoing connections = 8
+                time.sleep(10)
+            else:
                 random.seed()
                 HOST, = random.sample(shared.knownNodes[self.streamNumber],  1)
                 alreadyAttemptedConnectionsListLock.acquire()
@@ -123,7 +124,6 @@ class outgoingSynSender(threading.Thread):
                     sock.connect((HOST, PORT))
                     rd = receiveDataThread()
                     rd.daemon = True # close the main program even if there are threads left
-                    #self.emit(SIGNAL("passObjectThrough(PyQt_PyObject)"),rd)
                     objectsOfWhichThisRemoteNodeIsAlreadyAware = {}
                     rd.setup(sock,HOST,PORT,self.streamNumber,objectsOfWhichThisRemoteNodeIsAlreadyAware)
                     rd.start()
@@ -150,19 +150,15 @@ class outgoingSynSender(threading.Thread):
                         print 'deleting ', HOST, 'from shared.knownNodes because it is more than 48 hours old and we could not connect to it.'
                         shared.printLock.release()
                 except socks.Socks5AuthError, err:
-                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"SOCKS5 Authentication problem: "+str(err))
                     shared.UISignalQueue.put(('updateStatusBar',"SOCKS5 Authentication problem: "+str(err)))
                 except socks.Socks5Error, err:
                     pass
                     print 'SOCKS5 error. (It is possible that the server wants authentication).)' ,str(err)
-                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"SOCKS5 error. Server might require authentication. "+str(err))
                 except socks.Socks4Error, err:
                     print 'Socks4Error:', err
-                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"SOCKS4 error: "+str(err))
                 except socket.error, err:
                     if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
                         print 'Bitmessage MIGHT be having trouble connecting to the SOCKS server. '+str(err)
-                        #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Problem: Bitmessage can not connect to the SOCKS server. "+str(err))
                     else:
                         if verbose >= 1:
                             shared.printLock.acquire()
@@ -178,7 +174,7 @@ class outgoingSynSender(threading.Thread):
                             shared.printLock.release()
                 except Exception, err:
                     sys.stderr.write('An exception has occurred in the outgoingSynSender thread that was not caught by other exception types: %s\n' % err)
-            time.sleep(0.1)
+                time.sleep(0.1)
 
 #Only one singleListener thread will ever exist. It creates the receiveDataThread and sendDataThread for each incoming connection. Note that it cannot set the stream number because it is not known yet- the other node will have to tell us its stream number in a version message. If we don't care about their stream, we will close the connection (within the recversion function of the recieveData thread)
 class singleListener(threading.Thread):
@@ -325,8 +321,7 @@ class receiveDataThread(threading.Thread):
         if self.data[0:4] != '\xe9\xbe\xb4\xd9':
             if verbose >= 1:
                 shared.printLock.acquire()
-                sys.stderr.write('The magic bytes were not correct. First 40 bytes of data: %s\n' % repr(self.data[0:40]))
-                print 'self.data:', self.data.encode('hex')
+                print 'The magic bytes were not correct. First 40 bytes of data: '+ repr(self.data[0:40])
                 shared.printLock.release()
             self.data = ""
             return
@@ -449,7 +444,6 @@ class receiveDataThread(threading.Thread):
     def connectionFullyEstablished(self):
         self.connectionIsOrWasFullyEstablished = True
         if not self.initiatedConnection:
-            #self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"),'green')
             shared.UISignalQueue.put(('setStatusIcon','green'))
         self.sock.settimeout(600) #We'll send out a pong every 5 minutes to make sure the connection stays alive if there has been no other traffic to send lately.
         shared.UISignalQueue.put(('updateNetworkStatusTab','no data'))
@@ -569,7 +563,6 @@ class receiveDataThread(threading.Thread):
         shared.inventory[self.inventoryHash] = (objectType, self.streamNumber, data, embeddedTime)
         shared.inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
-        #self.emit(SIGNAL("incrementNumberOfBroadcastsProcessed()"))
         shared.UISignalQueue.put(('incrementNumberOfBroadcastsProcessed','no data'))
 
 
@@ -668,7 +661,8 @@ class receiveDataThread(threading.Thread):
                 shared.sqlReturnQueue.get()
                 shared.sqlSubmitQueue.put('commit')
                 shared.sqlLock.release()
-                shared.workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
+                #shared.workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
+                self.possibleNewPubkey(ripe.digest())
 
                 fromAddress = encodeAddress(sendersAddressVersion,sendersStream,ripe.digest())
                 shared.printLock.acquire()
@@ -700,7 +694,6 @@ class receiveDataThread(threading.Thread):
                     shared.sqlReturnQueue.get()
                     shared.sqlSubmitQueue.put('commit')
                     shared.sqlLock.release()
-                    #self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
                     shared.UISignalQueue.put(('displayNewInboxMessage',(self.inventoryHash,toAddress,fromAddress,subject,body)))
 
                     #If we are behaving as an API then we might need to run an outside command to let some program know that a new message has arrived.
@@ -802,7 +795,8 @@ class receiveDataThread(threading.Thread):
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            shared.workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
+            #shared.workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
+            self.possibleNewPubkey(ripe.digest())
 
             fromAddress = encodeAddress(sendersAddressVersion,sendersStream,ripe.digest())
             shared.printLock.acquire()
@@ -834,7 +828,6 @@ class receiveDataThread(threading.Thread):
                 shared.sqlReturnQueue.get()
                 shared.sqlSubmitQueue.put('commit')
                 shared.sqlLock.release()
-                #self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
                 shared.UISignalQueue.put(('displayNewInboxMessage',(self.inventoryHash,toAddress,fromAddress,subject,body)))
 
                 #If we are behaving as an API then we might need to run an outside command to let some program know that a new message has arrived.
@@ -896,7 +889,6 @@ class receiveDataThread(threading.Thread):
         shared.inventory[self.inventoryHash] = (objectType, self.streamNumber, data, embeddedTime)
         shared.inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
-        #self.emit(SIGNAL("incrementNumberOfMessagesProcessed()"))
         shared.UISignalQueue.put(('incrementNumberOfMessagesProcessed','no data'))
 
 
@@ -1051,7 +1043,8 @@ class receiveDataThread(threading.Thread):
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            shared.workerQueue.put(('newpubkey',(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
+            #shared.workerQueue.put(('newpubkey',(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest()))) #This will check to see whether we happen to be awaiting this pubkey in order to send a message. If we are, it will do the POW and send it.
+            self.possibleNewPubkey(ripe.digest())
             fromAddress = encodeAddress(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest())
             #If this message is bound for one of my version 3 addresses (or higher), then we must check to make sure it meets our demanded proof of work requirement.
             if decodeAddress(toAddress)[1] >= 3:#If the toAddress version number is 3 or higher:
@@ -1096,6 +1089,7 @@ class receiveDataThread(threading.Thread):
                     bodyPositionIndex = string.find(message,'\nBody:')
                     if bodyPositionIndex > 1:
                         subject = message[8:bodyPositionIndex]
+                        subject = subject[:500] #Only save and show the first 500 characters of the subject. Any more is probably an attak.
                         body = message[bodyPositionIndex+6:]
                     else:
                         subject = ''
@@ -1116,7 +1110,6 @@ class receiveDataThread(threading.Thread):
                     shared.sqlReturnQueue.get()
                     shared.sqlSubmitQueue.put('commit')
                     shared.sqlLock.release()
-                    #self.emit(SIGNAL("displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.inventoryHash,toAddress,fromAddress,subject,body)
                     shared.UISignalQueue.put(('displayNewInboxMessage',(self.inventoryHash,toAddress,fromAddress,subject,body)))
 
                 #If we are behaving as an API then we might need to run an outside command to let some program know that a new message has arrived.
@@ -1150,7 +1143,6 @@ class receiveDataThread(threading.Thread):
                     shared.sqlSubmitQueue.put('commit')
                     shared.sqlLock.release()
 
-                    #self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,'[Broadcast subscribers]',fromAddress,subject,message,ackdata)
                     shared.UISignalQueue.put(('displayNewSentMessage',(toAddress,'[Broadcast subscribers]',fromAddress,subject,message,ackdata)))
                     shared.workerQueue.put(('sendbroadcast',''))
 
@@ -1191,6 +1183,23 @@ class receiveDataThread(threading.Thread):
             return subject
         else:
             return '['+mailingListName+'] ' + subject
+
+    def possibleNewPubkey(self,toRipe):
+        if toRipe in neededPubkeys:
+            print 'We have been awaiting the arrival of this pubkey.'
+            del neededPubkeys[toRipe]
+            t = (toRipe,)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND status='awaitingpubkey' and folder='sent' ''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+            shared.workerQueue.put(('sendmessage',''))
+        else:
+            shared.printLock.acquire()
+            print 'We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:', toRipe.encode('hex')
+            shared.printLock.release()
 
     #We have received a pubkey
     def recpubkey(self,data):
@@ -1244,7 +1253,6 @@ class receiveDataThread(threading.Thread):
         shared.inventory[inventoryHash] = (objectType, self.streamNumber, data, embeddedTime)
         shared.inventoryLock.release()
         self.broadcastinv(inventoryHash)
-        #self.emit(SIGNAL("incrementNumberOfPubkeysProcessed()"))
         shared.UISignalQueue.put(('incrementNumberOfPubkeysProcessed','no data'))
 
         self.processpubkey(data)
@@ -1263,7 +1271,14 @@ class receiveDataThread(threading.Thread):
     def processpubkey(self,data):
         readPosition = 8 #for the nonce
         embeddedTime, = unpack('>I',data[readPosition:readPosition+4])
-        readPosition += 4 #for the time
+
+        #This section is used for the transition from 32 bit time to 64 bit time in the protocol.
+        if embeddedTime == 0:
+            embeddedTime, = unpack('>Q',data[readPosition:readPosition+8])
+            readPosition += 8
+        else:
+            readPosition += 4
+
         addressVersion, varintLength = decodeVarint(data[readPosition:readPosition+10])
         readPosition += varintLength
         streamNumber, varintLength = decodeVarint(data[readPosition:readPosition+10])
@@ -1311,23 +1326,17 @@ class receiveDataThread(threading.Thread):
             if queryreturn != []: #if this pubkey is already in our database and if we have used it personally:
                 print 'We HAVE used this pubkey personally. Updating time.'
                 t = (ripe,data,embeddedTime,'yes')
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
-                shared.sqlSubmitQueue.put(t)
-                shared.sqlReturnQueue.get()
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlLock.release()
-                shared.workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
             else:
                 print 'We have NOT used this pubkey personally. Inserting in database.'
                 t = (ripe,data,embeddedTime,'no')  #This will also update the embeddedTime.
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
-                shared.sqlSubmitQueue.put(t)
-                shared.sqlReturnQueue.get()
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlLock.release()
-                shared.workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+            #shared.workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
+            self.possibleNewPubkey(ripe)
         if addressVersion == 3:
             if len(data) < 170: #sanity check.
                 print '(within processpubkey) payloadLength less than 170. Sanity check failed.'
@@ -1378,22 +1387,17 @@ class receiveDataThread(threading.Thread):
             if queryreturn != []: #if this pubkey is already in our database and if we have used it personally:
                 print 'We HAVE used this pubkey personally. Updating time.'
                 t = (ripe,data,embeddedTime,'yes')
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
-                shared.sqlSubmitQueue.put(t)
-                shared.sqlReturnQueue.get()
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlLock.release()
             else:
                 print 'We have NOT used this pubkey personally. Inserting in database.'
                 t = (ripe,data,embeddedTime,'no')  #This will also update the embeddedTime.
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
-                shared.sqlSubmitQueue.put(t)
-                shared.sqlReturnQueue.get()
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlLock.release()
-            shared.workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+            #shared.workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
+            self.possibleNewPubkey(ripe)
 
 
     #We have received a getpubkey message
@@ -1461,23 +1465,6 @@ class receiveDataThread(threading.Thread):
             return
         print 'the hash requested in this getpubkey request is:', requestedHash.encode('hex')
 
-        """shared.sqlLock.acquire()
-        t = (requestedHash,int(time.time())-lengthOfTimeToHoldOnToAllPubkeys) #this prevents SQL injection
-        shared.sqlSubmitQueue.put('''SELECT hash, transmitdata, time FROM pubkeys WHERE hash=? AND havecorrectnonce=1 AND time>?''')
-        shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
-        if queryreturn != []:
-            for row in queryreturn:
-                hash, payload, timeEncodedInPubkey = row
-            shared.printLock.acquire()
-            print 'We have the requested pubkey stored in our database of pubkeys. Sending it.'
-            shared.printLock.release()
-            inventoryHash = calculateInventoryHash(payload)
-            objectType = 'pubkey'
-            shared.inventory[inventoryHash] = (objectType, self.streamNumber, payload, timeEncodedInPubkey)#If the time embedded in this pubkey is more than 3 days old then this object isn't going to last very long in the inventory- the cleanerThread is going to come along and move it from the inventory in memory to the SQL inventory and then delete it from the SQL inventory. It should still find its way back to the original requestor if he is online however.
-            self.broadcastinv(inventoryHash)"""
-        #else: #the pubkey is not in our database of pubkeys. Let's check if the requested key is ours (which would mean we should do the POW, put it in the pubkey table, and broadcast out the pubkey.)
         if requestedHash in shared.myAddressesByHash: #if this address hash is one of mine
             if decodeAddress(shared.myAddressesByHash[requestedHash])[1] != requestedAddressVersionNumber:
                 shared.printLock.acquire()
@@ -1898,10 +1885,7 @@ class receiveDataThread(threading.Thread):
             PORT, timeLastReceivedMessageFromThisNode = value
             if timeLastReceivedMessageFromThisNode > (int(time.time())- maximumAgeOfNodesThatIAdvertiseToOthers): #If it is younger than 3 hours old..
                 numberOfAddressesInAddrMessage += 1
-                if self.remoteProtocolVersion == 1:
-                    payload +=  pack('>I',timeLastReceivedMessageFromThisNode) #32-bit time
-                else:
-                    payload +=  pack('>Q',timeLastReceivedMessageFromThisNode) #64-bit time
+                payload +=  pack('>Q',timeLastReceivedMessageFromThisNode) #64-bit time
                 payload += pack('>I',self.streamNumber)
                 payload += pack('>q',1) #service bit flags offered by this node
                 payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + socket.inet_aton(HOST)
@@ -1910,10 +1894,7 @@ class receiveDataThread(threading.Thread):
             PORT, timeLastReceivedMessageFromThisNode = value
             if timeLastReceivedMessageFromThisNode > (int(time.time())- maximumAgeOfNodesThatIAdvertiseToOthers): #If it is younger than 3 hours old..
                 numberOfAddressesInAddrMessage += 1
-                if self.remoteProtocolVersion == 1:
-                    payload +=  pack('>I',timeLastReceivedMessageFromThisNode) #32-bit time
-                else:
-                    payload +=  pack('>Q',timeLastReceivedMessageFromThisNode) #64-bit time
+                payload +=  pack('>Q',timeLastReceivedMessageFromThisNode) #64-bit time
                 payload += pack('>I',self.streamNumber*2)
                 payload += pack('>q',1) #service bit flags offered by this node
                 payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + socket.inet_aton(HOST)
@@ -1922,10 +1903,7 @@ class receiveDataThread(threading.Thread):
             PORT, timeLastReceivedMessageFromThisNode = value
             if timeLastReceivedMessageFromThisNode > (int(time.time())- maximumAgeOfNodesThatIAdvertiseToOthers): #If it is younger than 3 hours old..
                 numberOfAddressesInAddrMessage += 1
-                if self.remoteProtocolVersion == 1:
-                    payload +=  pack('>I',timeLastReceivedMessageFromThisNode) #32-bit time
-                else:
-                    payload +=  pack('>Q',timeLastReceivedMessageFromThisNode) #64-bit time
+                payload +=  pack('>Q',timeLastReceivedMessageFromThisNode) #64-bit time
                 payload += pack('>I',(self.streamNumber*2)+1)
                 payload += pack('>q',1) #service bit flags offered by this node
                 payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + socket.inet_aton(HOST)
@@ -1955,6 +1933,12 @@ class receiveDataThread(threading.Thread):
             return
         elif not self.verackSent: 
             self.remoteProtocolVersion, = unpack('>L',data[:4])
+            if self.remoteProtocolVersion <= 1:
+                shared.broadcastToSendDataQueues((0, 'shutdown', self.HOST))
+                shared.printLock.acquire()
+                print 'Closing connection to old protocol version 1 node: ', self.HOST
+                shared.printLock.release()
+                return
             #print 'remoteProtocolVersion', self.remoteProtocolVersion
             self.myExternalIP = socket.inet_ntoa(data[40:44])
             #print 'myExternalIP', self.myExternalIP
@@ -2108,27 +2092,22 @@ class sendDataThread(threading.Thread):
                         shared.printLock.release()
                         self.remoteProtocolVersion = specifiedRemoteProtocolVersion
                 elif command == 'sendaddr':
-                    if self.remoteProtocolVersion == 1:
-                        shared.printLock.acquire()
-                        print 'a sendData thread is not sending an addr message to this particular peer ('+self.HOST+') because their protocol version is 1.'
-                        shared.printLock.release()
-                    else:
+                    try:
+                        #To prevent some network analysis, 'leak' the data out to our peer after waiting a random amount of time unless we have a long list of messages in our queue to send.
+                        random.seed()
+                        time.sleep(random.randrange(0, 10))
+                        self.sock.sendall(data)
+                        self.lastTimeISentData = int(time.time())
+                    except:
+                        print 'self.sock.sendall failed'
                         try:
-                            #To prevent some network analysis, 'leak' the data out to our peer after waiting a random amount of time unless we have a long list of messages in our queue to send.
-                            random.seed()
-                            time.sleep(random.randrange(0, 10))
-                            self.sock.sendall(data)
-                            self.lastTimeISentData = int(time.time())
+                            self.sock.shutdown(socket.SHUT_RDWR)
+                            self.sock.close()
                         except:
-                            print 'self.sock.sendall failed'
-                            try:
-                                self.sock.shutdown(socket.SHUT_RDWR)
-                                self.sock.close()
-                            except:
-                                pass
-                            shared.sendDataQueues.remove(self.mailbox)
-                            print 'sendDataThread thread (ID:',str(id(self))+') ending now. Was connected to', self.HOST
-                            break
+                            pass
+                        shared.sendDataQueues.remove(self.mailbox)
+                        print 'sendDataThread thread (ID:',str(id(self))+') ending now. Was connected to', self.HOST
+                        break
                 elif command == 'sendinv':
                     if data not in self.objectsOfWhichThisRemoteNodeIsAlreadyAware:
                         payload = '\x01' + data
@@ -2406,6 +2385,11 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte',str(shared.networkDefaultProofOfWorkNonceTrialsPerByte))
             shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes',str(shared.networkDefaultPayloadLengthExtraBytes))
             shared.config.set('bitmessagesettings','settingsversion','5')
+
+        if shared.config.getint('bitmessagesettings','settingsversion') == 5:
+            shared.config.set('bitmessagesettings','maxacceptablenoncetrialsperbyte','0')
+            shared.config.set('bitmessagesettings','maxacceptablepayloadlengthextrabytes','0')
+            shared.config.set('bitmessagesettings','settingsversion','6')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
 
@@ -2481,7 +2465,9 @@ class sqlThread(threading.Thread):
                 self.conn.commit()
             elif item == 'exit':
                 self.conn.close()
+                shared.printLock.acquire()
                 print 'sqlThread exiting gracefully.'
+                shared.printLock.release()
                 return
             elif item == 'movemessagstoprog':
                 shared.printLock.acquire()
@@ -2503,6 +2489,11 @@ class sqlThread(threading.Thread):
                 self.conn = sqlite3.connect(shared.appdata + 'messages.dat' )
                 self.conn.text_factory = str
                 self.cur = self.conn.cursor()
+            elif item == 'deleteandvacuume':
+                self.cur.execute('''delete from inbox where folder='trash' ''')
+                self.cur.execute('''delete from sent where folder='trash' ''')
+                self.conn.commit()
+                self.cur.execute( ''' VACUUM ''')
             else:
                 parameters = shared.sqlSubmitQueue.get()
                 #print 'item', item
@@ -2518,7 +2509,6 @@ class sqlThread(threading.Thread):
 
                 shared.sqlReturnQueue.put(self.cur.fetchall())
                 #shared.sqlSubmitQueue.task_done()
-            
 
 
 '''The singleCleaner class is a timer-driven thread that cleans data structures to free memory, resends messages when a remote node doesn't respond, and sends pong messages to keep connections alive if the network isn't busy.
@@ -2543,7 +2533,6 @@ class singleCleaner(threading.Thread):
 
         while True:
             shared.sqlLock.acquire()
-            #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing housekeeping (Flushing inventory in memory to disk...)")
             shared.UISignalQueue.put(('updateStatusBar','Doing housekeeping (Flushing inventory in memory to disk...)'))
             for hash, storedValue in shared.inventory.items():
                 objectType, streamNumber, payload, receivedTime = storedValue
@@ -2597,7 +2586,6 @@ class singleCleaner(threading.Thread):
                             except:
                                 pass
                             
-                            #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing work necessary to again attempt to request a public key...")
                             shared.UISignalQueue.put(('updateStatusBar','Doing work necessary to again attempt to request a public key...'))
                             t = (int(time.time()),pubkeyretrynumber+1,toripe)
                             shared.sqlSubmitQueue.put('''UPDATE sent SET lastactiontime=?, pubkeyretrynumber=?, status='msgqueued' WHERE toripe=?''')
@@ -2614,7 +2602,6 @@ class singleCleaner(threading.Thread):
                             shared.sqlReturnQueue.get()
                             shared.sqlSubmitQueue.put('commit')
                             shared.workerQueue.put(('sendmessage',''))
-                            #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"Doing work necessary to again attempt to deliver a message...")
                             shared.UISignalQueue.put(('updateStatusBar','Doing work necessary to again attempt to deliver a message...'))
                 shared.sqlSubmitQueue.put('commit')
                 shared.sqlLock.release()
@@ -2671,23 +2658,23 @@ class singleWorker(threading.Thread):
                 self.doPOWForMyV2Pubkey(data)
             elif command == 'doPOWForMyV3Pubkey':
                 self.doPOWForMyV3Pubkey(data)
-            elif command == 'newpubkey':
-                toAddressVersion,toStreamNumber,toRipe = data
-                if toRipe in neededPubkeys:
-                    print 'We have been awaiting the arrival of this pubkey.'
-                    del neededPubkeys[toRipe]
-                    t = (toRipe,)
-                    shared.sqlLock.acquire()
-                    shared.sqlSubmitQueue.put('''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND status='awaitingpubkey' and folder='sent' ''')
-                    shared.sqlSubmitQueue.put(t)
-                    shared.sqlReturnQueue.get()
-                    shared.sqlSubmitQueue.put('commit')
-                    shared.sqlLock.release()
-                    self.sendMsg()
-                else:
-                    shared.printLock.acquire()
-                    print 'We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:', toRipe.encode('hex')
-                    shared.printLock.release()
+                """elif command == 'newpubkey':
+                    toAddressVersion,toStreamNumber,toRipe = data
+                    if toRipe in neededPubkeys:
+                        print 'We have been awaiting the arrival of this pubkey.'
+                        del neededPubkeys[toRipe]
+                        t = (toRipe,)
+                        shared.sqlLock.acquire()
+                        shared.sqlSubmitQueue.put('''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND status='awaitingpubkey' and folder='sent' ''')
+                        shared.sqlSubmitQueue.put(t)
+                        shared.sqlReturnQueue.get()
+                        shared.sqlSubmitQueue.put('commit')
+                        shared.sqlLock.release()
+                        self.sendMsg()
+                    else:
+                        shared.printLock.acquire()
+                        print 'We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:', toRipe.encode('hex')
+                        shared.printLock.release()"""
             else:
                 shared.printLock.acquire()
                 sys.stderr.write('Probable programming error: The command sent to the workerThread is weird. It is: %s\n' % command)
@@ -2751,7 +2738,6 @@ class singleWorker(threading.Thread):
         print 'broadcasting inv with hash:', inventoryHash.encode('hex')
         shared.printLock.release()
         shared.broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
-        #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
         shared.UISignalQueue.put(('updateStatusBar',''))
         shared.config.set(myAddress,'lastpubkeysendtime',str(int(time.time())))
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
@@ -2813,7 +2799,6 @@ class singleWorker(threading.Thread):
         print 'broadcasting inv with hash:', inventoryHash.encode('hex')
         shared.printLock.release()
         shared.broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
-        #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),"")
         shared.UISignalQueue.put(('updateStatusBar',''))
         shared.config.set(myAddress,'lastpubkeysendtime',str(int(time.time())))
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
@@ -2835,7 +2820,6 @@ class singleWorker(threading.Thread):
                     privSigningKeyBase58 = shared.config.get(fromaddress, 'privsigningkey')
                     privEncryptionKeyBase58 = shared.config.get(fromaddress, 'privencryptionkey')
                 except:
-                    #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')))
                     continue
 
@@ -2845,7 +2829,7 @@ class singleWorker(threading.Thread):
                 pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode('hex') #At this time these pubkeys are 65 bytes long because they include the encoding byte which we won't be sending in the broadcast message.
                 pubEncryptionKey = highlevelcrypto.privToPub(privEncryptionKeyHex).decode('hex')
 
-                payload = pack('>I',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes
+                payload = pack('>Q',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes
                 payload += encodeVarint(1) #broadcast version
                 payload += encodeVarint(addressVersionNumber)
                 payload += encodeVarint(streamNumber)
@@ -2863,7 +2847,6 @@ class singleWorker(threading.Thread):
 
                 target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
-                #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send broadcast...')))
                 initialHash = hashlib.sha512(payload).digest()
                 trialValue, nonce = proofofwork.run(target, initialHash)
@@ -2877,7 +2860,6 @@ class singleWorker(threading.Thread):
                 print 'Broadcasting inv for my broadcast (within sendBroadcast function):', inventoryHash.encode('hex')
                 shared.broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
-                #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent on '+unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Broadcast sent on '+unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
 
                 #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
@@ -2894,7 +2876,6 @@ class singleWorker(threading.Thread):
                     privSigningKeyBase58 = shared.config.get(fromaddress, 'privsigningkey')
                     privEncryptionKeyBase58 = shared.config.get(fromaddress, 'privencryptionkey')
                 except:
-                    #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')))
                     continue
 
@@ -2904,7 +2885,7 @@ class singleWorker(threading.Thread):
                 pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode('hex') #At this time these pubkeys are 65 bytes long because they include the encoding byte which we won't be sending in the broadcast message.
                 pubEncryptionKey = highlevelcrypto.privToPub(privEncryptionKeyHex).decode('hex')
 
-                payload = pack('>I',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes
+                payload = pack('>Q',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes
                 payload += encodeVarint(2) #broadcast version
                 payload += encodeVarint(streamNumber)
                 
@@ -2929,7 +2910,6 @@ class singleWorker(threading.Thread):
 
                 target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
-                #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Doing work necessary to send broadcast...')
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send broadcast...')))
                 initialHash = hashlib.sha512(payload).digest()
                 trialValue, nonce = proofofwork.run(target, initialHash)
@@ -2943,7 +2923,6 @@ class singleWorker(threading.Thread):
                 print 'sending inv (within sendBroadcast function)'
                 shared.broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
-                #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Broadcast sent on '+unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Broadcast sent on '+unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
 
                 #Update the status of the message in the 'sent' table to have a 'broadcastsent' status
@@ -3005,21 +2984,21 @@ class singleWorker(threading.Thread):
                     shared.UISignalQueue.put(('updateSentItemStatusByHash',(toripe,'Sending a request for the recipient\'s encryption key.')))
                     self.requestPubKey(toaddress)
         shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('''SELECT toaddress, toripe, fromaddress, subject, message, ackdata FROM sent WHERE status='doingmsgpow' and folder='sent' ''')
-        shared.sqlSubmitQueue.put('')
+        #Get all messages that are ready to be sent, and also all messages which we have sent in the last 28 days which were previously marked as 'toodifficult'. If the user as raised the maximum acceptable difficulty then those messages may now be sendable.
+        shared.sqlSubmitQueue.put('''SELECT toaddress, toripe, fromaddress, subject, message, ackdata, status FROM sent WHERE (status='doingmsgpow' or status='forcepow' or (status='toodifficult' and lastactiontime>?)) and folder='sent' ''')
+        shared.sqlSubmitQueue.put((int(time.time())-2419200,))
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
-        for row in queryreturn:
-            toaddress, toripe, fromaddress, subject, message, ackdata = row
-
-            #Evidently there is a remote possibility that we may no longer have the recipient's pubkey. Let us make sure we still have it or else the sendMsg function will appear to freeze.
+        for row in queryreturn: #For each message we need to send..
+            toaddress, toripe, fromaddress, subject, message, ackdata, status = row
+            #There is a remote possibility that we may no longer have the recipient's pubkey. Let us make sure we still have it or else the sendMsg function will appear to freeze. This can happen if the user sends a message but doesn't let the POW function finish, then leaves their client off for a long time which could cause the needed pubkey to expire and be deleted.
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put('''SELECT hash FROM pubkeys WHERE hash=? ''')
             shared.sqlSubmitQueue.put((toripe,))
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlLock.release()
-            if queryreturn == []:
-                #We no longer have the needed pubkey
+            if queryreturn == [] and toripe not in neededPubkeys:
+                #We no longer have the needed pubkey and we haven't requested it.
                 shared.printLock.acquire()
                 sys.stderr.write('For some reason, the status of a message in our outbox is \'doingmsgpow\' even though we lack the pubkey. Here is the RIPE hash of the needed pubkey: %s\n' % toripe.encode('hex'))
                 shared.printLock.release()
@@ -3032,16 +3011,83 @@ class singleWorker(threading.Thread):
                 shared.sqlLock.release()
                 shared.UISignalQueue.put(('updateSentItemStatusByHash',(toripe,'Sending a request for the recipient\'s encryption key.')))
                 self.requestPubKey(toaddress)
-                return
+                continue
             ackdataForWhichImWatching[ackdata] = 0
             toStatus,toAddressVersionNumber,toStreamNumber,toHash = decodeAddress(toaddress)
             fromStatus,fromAddressVersionNumber,fromStreamNumber,fromHash = decodeAddress(fromaddress)
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send the message.')))
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Looking up the receiver\'s public key')))
             shared.printLock.acquire()
             print 'Found a message in our database that needs to be sent with this pubkey.'
-            print 'First 150 characters of message:', message[:150]
+            print 'First 150 characters of message:', repr(message[:150])
             shared.printLock.release()
-            embeddedTime = pack('>I',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes. We will use this time both for our message and for the ackdata packed within our message.
+
+            #mark the pubkey as 'usedpersonally' so that we don't ever delete it.
+            shared.sqlLock.acquire()
+            t = (toripe,)
+            shared.sqlSubmitQueue.put('''UPDATE pubkeys SET usedpersonally='yes' WHERE hash=?''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            #Let us fetch the recipient's public key out of our database. If the required proof of work difficulty is too hard then we'll abort.
+            shared.sqlSubmitQueue.put('SELECT transmitdata FROM pubkeys WHERE hash=?')
+            shared.sqlSubmitQueue.put((toripe,))
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            if queryreturn == []:
+                shared.printLock.acquire()
+                sys.stderr.write('(within sendMsg) The needed pubkey was not found. This should never happen. Aborting send.\n')
+                shared.printLock.release()
+                return
+            for row in queryreturn:
+                pubkeyPayload, = row
+
+            #The pubkey message is stored the way we originally received it which means that we need to read beyond things like the nonce and time to get to the actual public keys.
+            readPosition = 8 #to bypass the nonce
+            pubkeyEmbeddedTime, = unpack('>I',pubkeyPayload[readPosition:readPosition+4])
+            #This section is used for the transition from 32 bit time to 64 bit time in the protocol.
+            if pubkeyEmbeddedTime == 0:
+                pubkeyEmbeddedTime, = unpack('>Q',pubkeyPayload[readPosition:readPosition+8])
+                readPosition += 8
+            else:
+                readPosition += 4
+            readPosition += 1 #to bypass the address version whose length is definitely 1
+            streamNumber, streamNumberLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
+            readPosition += streamNumberLength
+            behaviorBitfield = pubkeyPayload[readPosition:readPosition+4]
+            readPosition += 4 #to bypass the bitfield of behaviors
+            #pubSigningKeyBase256 = pubkeyPayload[readPosition:readPosition+64] #We don't use this key for anything here.
+            readPosition += 64
+            pubEncryptionKeyBase256 = pubkeyPayload[readPosition:readPosition+64]
+            readPosition += 64
+            if toAddressVersionNumber == 2:
+                requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
+                requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send message. (There is no required difficulty for version 2 addresses like this.)')))
+            elif toAddressVersionNumber == 3:
+                requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
+                readPosition += varintLength
+                requiredPayloadLengthExtraBytes, varintLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
+                readPosition += varintLength
+                if requiredAverageProofOfWorkNonceTrialsPerByte < shared.networkDefaultProofOfWorkNonceTrialsPerByte: #We still have to meet a minimum POW difficulty regardless of what they say is allowed in order to get our message to propagate through the network.
+                    requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
+                if requiredPayloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
+                    requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send message.\nReceiver\'s required difficulty: '+str(float(requiredAverageProofOfWorkNonceTrialsPerByte)/shared.networkDefaultProofOfWorkNonceTrialsPerByte)+' and '+ str(float(requiredPayloadLengthExtraBytes)/shared.networkDefaultPayloadLengthExtraBytes))))
+                if status != 'forcepow':
+                    if (requiredAverageProofOfWorkNonceTrialsPerByte > shared.config.getint('bitmessagesettings','maxacceptablenoncetrialsperbyte') and shared.config.getint('bitmessagesettings','maxacceptablenoncetrialsperbyte') != 0) or (requiredPayloadLengthExtraBytes > shared.config.getint('bitmessagesettings','maxacceptablepayloadlengthextrabytes') and shared.config.getint('bitmessagesettings','maxacceptablepayloadlengthextrabytes') != 0):
+                        #The demanded difficulty is more than we are willing to do.
+                        shared.sqlLock.acquire()
+                        t = (ackdata,)
+                        shared.sqlSubmitQueue.put('''UPDATE sent SET status='toodifficult' WHERE ackdata=? ''')
+                        shared.sqlSubmitQueue.put(t)
+                        shared.sqlReturnQueue.get()
+                        shared.sqlSubmitQueue.put('commit')
+                        shared.sqlLock.release()
+                        shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Problem: The work demanded by the recipient (' + str(float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte) + ' and ' + str(float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes) + ') is more difficult than you are willing to do. ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
+                        continue
+            
+
+            embeddedTime = pack('>Q',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes. We will use this time both for our message and for the ackdata packed within our message.
             if fromAddressVersionNumber == 2:
                 payload = '\x01' #Message version.
                 payload += encodeVarint(fromAddressVersionNumber)
@@ -3053,7 +3099,6 @@ class singleWorker(threading.Thread):
                     privSigningKeyBase58 = shared.config.get(fromaddress, 'privsigningkey')
                     privEncryptionKeyBase58 = shared.config.get(fromaddress, 'privencryptionkey')
                 except:
-                    #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')))
                     continue
 
@@ -3089,7 +3134,6 @@ class singleWorker(threading.Thread):
                     privSigningKeyBase58 = shared.config.get(fromaddress, 'privsigningkey')
                     privEncryptionKeyBase58 = shared.config.get(fromaddress, 'privencryptionkey')
                 except:
-                    #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Error! Could not find sender address (your address) in the keys.dat file.')))
                     continue
 
@@ -3121,83 +3165,36 @@ class singleWorker(threading.Thread):
                 payload += encodeVarint(len(signature))
                 payload += signature
 
-
-            #We have assembled the data that will be encrypted. Now let us fetch the recipient's public key out of our database and do the encryption.
-
-            if toAddressVersionNumber == 2 or toAddressVersionNumber == 3:
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put('SELECT transmitdata FROM pubkeys WHERE hash=?')
-                shared.sqlSubmitQueue.put((toripe,))
-                queryreturn = shared.sqlReturnQueue.get()
-                shared.sqlLock.release()
-                if queryreturn == []:
-                    shared.printLock.acquire()
-                    sys.stderr.write('(within sendMsg) The needed pubkey was not found. This should never happen. Aborting send.\n')
-                    shared.printLock.release()
-                    return
-                for row in queryreturn:
-                    pubkeyPayload, = row
-
-                #The pubkey is stored the way we originally received it which means that we need to read beyond things like the nonce and time to get to the public keys.
-                readPosition = 8 #to bypass the nonce
-                readPosition += 4 #to bypass the embedded time
-                readPosition += 1 #to bypass the address version whose length is definitely 1
-                streamNumber, streamNumberLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
-                readPosition += streamNumberLength
-                behaviorBitfield = pubkeyPayload[readPosition:readPosition+4]
-                readPosition += 4 #to bypass the bitfield of behaviors
-                #pubSigningKeyBase256 = pubkeyPayload[readPosition:readPosition+64] #We don't use this key for anything here.
-                readPosition += 64
-                pubEncryptionKeyBase256 = pubkeyPayload[readPosition:readPosition+64]
-                readPosition += 64
-                if toAddressVersionNumber == 2:
-                    requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
-                    requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
-                elif toAddressVersionNumber == 3:
-                    requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
-                    readPosition += varintLength
-                    requiredPayloadLengthExtraBytes, varintLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
-                    readPosition += varintLength
-                    if requiredAverageProofOfWorkNonceTrialsPerByte < shared.networkDefaultProofOfWorkNonceTrialsPerByte: #We still have to meet a minimum POW difficulty regardless of what they say is allowed in order to get our message to propagate through the network.
-                        requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
-                    if requiredPayloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
-                        requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
-                    #todo: pull yet-to-be-added values out of config: maximumacceptabletotaldifficult and maximumacceptablesmallmessagedifficulty and compare.
-                encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
-
-            #We are now dropping the unencrypted data in payload since it has already been encrypted and replacing it with the encrypted payload that we will send out.
-            payload = embeddedTime + encodeVarint(toStreamNumber) + encrypted
-            target = 2**64 / ((len(payload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
+            #We have assembled the data that will be encrypted.
+            encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
+            encryptedPayload = embeddedTime + encodeVarint(toStreamNumber) + encrypted
+            target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
             shared.printLock.acquire()
             print '(For msg message) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte)/shared.networkDefaultProofOfWorkNonceTrialsPerByte,'Required small message difficulty:', float(requiredPayloadLengthExtraBytes)/shared.networkDefaultPayloadLengthExtraBytes
             shared.printLock.release()
             powStartTime = time.time()
-            initialHash = hashlib.sha512(payload).digest()
+            initialHash = hashlib.sha512(encryptedPayload).digest()
             trialValue, nonce = proofofwork.run(target, initialHash)
+            shared.printLock.acquire()
             print '(For msg message) Found proof of work', trialValue, 'Nonce:', nonce
             try:
                 print 'POW took', int(time.time()-powStartTime), 'seconds.', nonce/(time.time()-powStartTime), 'nonce trials per second.'
             except:
                 pass
-            payload = pack('>Q',nonce) + payload
+            shared.printLock.release()
+            encryptedPayload = pack('>Q',nonce) + encryptedPayload
 
-            inventoryHash = calculateInventoryHash(payload)
+            inventoryHash = calculateInventoryHash(encryptedPayload)
             objectType = 'msg'
-            shared.inventory[inventoryHash] = (objectType, toStreamNumber, payload, int(time.time()))
-            #self.emit(SIGNAL("updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"),ackdata,'Message sent. Waiting on acknowledgement. Sent on ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+            shared.inventory[inventoryHash] = (objectType, toStreamNumber, encryptedPayload, int(time.time()))
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Message sent. Waiting on acknowledgement. Sent on ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
             print 'Broadcasting inv for my msg(within sendmsg function):', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
 
-            #Update the status of the message in the 'sent' table to have a 'sent' status
+            #Update the status of the message in the 'sent' table to have a 'msgsent' status
             shared.sqlLock.acquire()
-            t = ('msgsent',toaddress, fromaddress, subject, message,'doingmsgpow')
-            shared.sqlSubmitQueue.put('UPDATE sent SET status=? WHERE toaddress=? AND fromaddress=? AND subject=? AND message=? AND status=?')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-
-            t = (toripe,)
-            shared.sqlSubmitQueue.put('''UPDATE pubkeys SET usedpersonally='yes' WHERE hash=?''')
+            t = (ackdata,)
+            shared.sqlSubmitQueue.put('''UPDATE sent SET status='msgsent' WHERE ackdata=? AND (status='doingmsgpow' or status='forcepow') ''')
             shared.sqlSubmitQueue.put(t)
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
@@ -3212,7 +3209,7 @@ class singleWorker(threading.Thread):
             shared.printLock.release()
             return
         neededPubkeys[ripe] = 0
-        payload = pack('>I',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes.
+        payload = pack('>Q',(int(time.time())+random.randrange(-300, 300)))#the current time plus or minus five minutes.
         payload += encodeVarint(addressVersionNumber)
         payload += encodeVarint(streamNumber)
         payload += ripe
@@ -3223,7 +3220,6 @@ class singleWorker(threading.Thread):
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
         shared.UISignalQueue.put(('updateStatusBar',statusbar))
         shared.UISignalQueue.put(('updateSentItemStatusByHash',(ripe,'Doing work necessary to request encryption key.')))
-        print 'Doing proof-of-work necessary to send getpubkey message.'
         target = 2**64 / ((len(payload)+shared.networkDefaultPayloadLengthExtraBytes+8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -3355,9 +3351,7 @@ class addressGenerator(threading.Thread):
                     #It may be the case that this address is being generated as a result of a call to the API. Let us put the result in the necessary queue.
                     apiAddressGeneratorReturnQueue.put(address)
 
-                    #self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"),'Done generating address. Doing work necessary to broadcast it...')
                     shared.UISignalQueue.put(('updateStatusBar','Done generating address. Doing work necessary to broadcast it...'))
-                    #self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(streamNumber))
                     shared.UISignalQueue.put(('writeNewAddressToTable',(label,address,streamNumber)))
                     shared.reloadMyAddressHashes()
                     shared.workerQueue.put(('doPOWForMyV3Pubkey',ripe.digest()))
@@ -3428,20 +3422,22 @@ class addressGenerator(threading.Thread):
                                 with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                                     shared.config.write(configfile)
 
-                                #self.emit(SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),self.label,address,str(self.streamNumber))
                                 shared.UISignalQueue.put(('writeNewAddressToTable',(label,address,str(streamNumber))))
                                 listOfNewAddressesToSendOutThroughTheAPI.append(address)
-                                if eighteenByteRipe:
-                                    shared.reloadMyAddressHashes()#This is necessary here (rather than just at the end) because otherwise if the human generates a large number of new addresses and uses one before they are done generating, the program will receive a getpubkey message and will ignore it.
+                                #if eighteenByteRipe:
+                                #    shared.reloadMyAddressHashes()#This is necessary here (rather than just at the end) because otherwise if the human generates a large number of new addresses and uses one before they are done generating, the program will receive a getpubkey message and will ignore it.
+                                shared.myECCryptorObjects[ripe.digest()] = highlevelcrypto.makeCryptor(potentialPrivEncryptionKey.encode('hex'))
+                                shared.myAddressesByHash[ripe.digest()] = address
+                                shared.workerQueue.put(('doPOWForMyV3Pubkey',ripe.digest()))
                             except:
                                 print address,'already exists. Not adding it again.'
 
                     #Done generating addresses.
-                    #It may be the case that this address is being generated as a result of a call to the API. Let us put the result in the necessary queue.
                     if command == 'createDeterministicAddresses':
+                        #It may be the case that this address is being generated as a result of a call to the API. Let us put the result in the necessary queue.
                         apiAddressGeneratorReturnQueue.put(listOfNewAddressesToSendOutThroughTheAPI)
                         shared.UISignalQueue.put(('updateStatusBar','Done generating address'))
-                        shared.reloadMyAddressHashes()
+                        #shared.reloadMyAddressHashes()
                     elif command == 'getDeterministicAddress':
                         apiAddressGeneratorReturnQueue.put(address)
                 else:
@@ -3578,6 +3574,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             else:
                 return 'API Error 0000: Too many parameters!'
             label = label.decode('base64')
+            try:
+               unicode(label,'utf-8')
+            except:
+               return 'API Error 0017: Label is not valid UTF-8 data.'
             apiAddressGeneratorReturnQueue.queue.clear()
             streamNumberForAddress = 1
             shared.addressGeneratorQueue.put(('createRandomAddress',3,streamNumberForAddress,label,1,"",eighteenByteRipe,nonceTrialsPerByte,payloadLengthExtraBytes))
@@ -3677,6 +3677,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data = '{"inboxMessages":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, received, message, = row
+                subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+                message = shared.fixPotentiallyInvalidUTF8Data(message)
                 if len(data) > 25:
                     data += ','
                 data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':2,'receivedTime':received},indent=4, separators=(',', ': '))
@@ -3821,8 +3823,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.sqlLock.release()
 
             toLabel = '[Broadcast subscribers]'
-            #apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
-            #self.emit(SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),toAddress,toLabel,fromAddress,subject,message,ackdata)
             shared.UISignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
             shared.workerQueue.put(('sendbroadcast',''))
 
@@ -3853,8 +3853,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 address, label = params
                 label = label.decode('base64')
                 try:
-                   label.decode('utf-8')
-                except UnicodeDecodeError:
+                   unicode(label,'utf-8')
+                except:
                    return 'API Error 0017: Label is not valid UTF-8 data.'
             if len(params) >2:
                 return 'API Error 0000: I need either 1 or 2 parameters!'
@@ -3970,7 +3970,7 @@ if __name__ == "__main__":
         except:
             #This appears to be the first time running the program; there is no config file (or it cannot be accessed). Create config file.
             shared.config.add_section('bitmessagesettings')
-            shared.config.set('bitmessagesettings','settingsversion','5')
+            shared.config.set('bitmessagesettings','settingsversion','6')
             shared.config.set('bitmessagesettings','port','8444')
             shared.config.set('bitmessagesettings','timeformat','%%a, %%d %%b %%Y  %%I:%%M %%p')
             shared.config.set('bitmessagesettings','blackwhitelist','black')
@@ -3992,6 +3992,8 @@ if __name__ == "__main__":
             shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte',str(shared.networkDefaultProofOfWorkNonceTrialsPerByte))
             shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes',str(shared.networkDefaultPayloadLengthExtraBytes))
             shared.config.set('bitmessagesettings','minimizeonclose','false')
+            shared.config.set('bitmessagesettings','maxacceptablenoncetrialsperbyte','0')
+            shared.config.set('bitmessagesettings','maxacceptablepayloadlengthextrabytes','0')
 
             if storeConfigFilesInSameDirectoryAsProgramByDefault:
                 #Just use the same directory as the program and forget about the appdata folder
@@ -4028,7 +4030,7 @@ if __name__ == "__main__":
         pickleFile = open(shared.appdata + 'knownnodes.dat', 'rb')
         shared.knownNodes = pickle.load(pickleFile)
         pickleFile.close()
-    if shared.config.getint('bitmessagesettings', 'settingsversion') > 5:
+    if shared.config.getint('bitmessagesettings', 'settingsversion') > 6:
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
         raise SystemExit
 
