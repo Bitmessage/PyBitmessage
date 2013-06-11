@@ -2465,7 +2465,9 @@ class sqlThread(threading.Thread):
                 self.conn.commit()
             elif item == 'exit':
                 self.conn.close()
+                shared.printLock.acquire()
                 print 'sqlThread exiting gracefully.'
+                shared.printLock.release()
                 return
             elif item == 'movemessagstoprog':
                 shared.printLock.acquire()
@@ -2507,7 +2509,6 @@ class sqlThread(threading.Thread):
 
                 shared.sqlReturnQueue.put(self.cur.fetchall())
                 #shared.sqlSubmitQueue.task_done()
-            
 
 
 '''The singleCleaner class is a timer-driven thread that cleans data structures to free memory, resends messages when a remote node doesn't respond, and sends pong messages to keep connections alive if the network isn't busy.
@@ -2983,14 +2984,14 @@ class singleWorker(threading.Thread):
                     shared.UISignalQueue.put(('updateSentItemStatusByHash',(toripe,'Sending a request for the recipient\'s encryption key.')))
                     self.requestPubKey(toaddress)
         shared.sqlLock.acquire()
+        #Get all messages that are ready to be sent, and also all messages which we have sent in the last 28 days which were previously marked as 'toodifficult'. If the user as raised the maximum acceptable difficulty then those messages may now be sendable.
         shared.sqlSubmitQueue.put('''SELECT toaddress, toripe, fromaddress, subject, message, ackdata, status FROM sent WHERE (status='doingmsgpow' or status='forcepow' or (status='toodifficult' and lastactiontime>?)) and folder='sent' ''')
         shared.sqlSubmitQueue.put((int(time.time())-2419200,))
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
-        for row in queryreturn:
+        for row in queryreturn: #For each message we need to send..
             toaddress, toripe, fromaddress, subject, message, ackdata, status = row
-
-            #Evidently there is a remote possibility that we may no longer have the recipient's pubkey. Let us make sure we still have it or else the sendMsg function will appear to freeze.
+            #There is a remote possibility that we may no longer have the recipient's pubkey. Let us make sure we still have it or else the sendMsg function will appear to freeze. This can happen if the user sends a message but doesn't let the POW function finish, then leaves their client off for a long time which could cause the needed pubkey to expire and be deleted.
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put('''SELECT hash FROM pubkeys WHERE hash=? ''')
             shared.sqlSubmitQueue.put((toripe,))
@@ -3020,17 +3021,17 @@ class singleWorker(threading.Thread):
             print 'First 150 characters of message:', repr(message[:150])
             shared.printLock.release()
 
-            #Now let us fetch the recipient's public key out of our database. If the required proof of work difficulty is too hard then we'll abort.
+            #mark the pubkey as 'usedpersonally' so that we don't ever delete it.
             shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('SELECT transmitdata FROM pubkeys WHERE hash=?')
-            shared.sqlSubmitQueue.put((toripe,))
-            queryreturn = shared.sqlReturnQueue.get()
-            #also mark the pubkey as 'usedpersonally' so that we don't delete it.
             t = (toripe,)
             shared.sqlSubmitQueue.put('''UPDATE pubkeys SET usedpersonally='yes' WHERE hash=?''')
             shared.sqlSubmitQueue.put(t)
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
+            #Let us fetch the recipient's public key out of our database. If the required proof of work difficulty is too hard then we'll abort.
+            shared.sqlSubmitQueue.put('SELECT transmitdata FROM pubkeys WHERE hash=?')
+            shared.sqlSubmitQueue.put((toripe,))
+            queryreturn = shared.sqlReturnQueue.get()
             shared.sqlLock.release()
             if queryreturn == []:
                 shared.printLock.acquire()
@@ -3040,7 +3041,7 @@ class singleWorker(threading.Thread):
             for row in queryreturn:
                 pubkeyPayload, = row
 
-            #The pubkey is stored the way we originally received it which means that we need to read beyond things like the nonce and time to get to the public keys.
+            #The pubkey message is stored the way we originally received it which means that we need to read beyond things like the nonce and time to get to the actual public keys.
             readPosition = 8 #to bypass the nonce
             pubkeyEmbeddedTime, = unpack('>I',pubkeyPayload[readPosition:readPosition+4])
             #This section is used for the transition from 32 bit time to 64 bit time in the protocol.
@@ -3061,7 +3062,7 @@ class singleWorker(threading.Thread):
             if toAddressVersionNumber == 2:
                 requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
                 requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send message.                                               (There is no required difficulty for version 2 addresses like this.)')))
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send message. (There is no required difficulty for version 2 addresses like this.)')))
             elif toAddressVersionNumber == 3:
                 requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(pubkeyPayload[readPosition:readPosition+10])
                 readPosition += varintLength
@@ -3071,7 +3072,7 @@ class singleWorker(threading.Thread):
                     requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
                 if requiredPayloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
                     requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send message.                                                    (Receiver\'s required difficulty: '+str(float(requiredAverageProofOfWorkNonceTrialsPerByte)/shared.networkDefaultProofOfWorkNonceTrialsPerByte)+' and '+ str(float(requiredPayloadLengthExtraBytes)/shared.networkDefaultPayloadLengthExtraBytes) + ')')))
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Doing work necessary to send message.\nReceiver\'s required difficulty: '+str(float(requiredAverageProofOfWorkNonceTrialsPerByte)/shared.networkDefaultProofOfWorkNonceTrialsPerByte)+' and '+ str(float(requiredPayloadLengthExtraBytes)/shared.networkDefaultPayloadLengthExtraBytes))))
                 if status != 'forcepow':
                     if (requiredAverageProofOfWorkNonceTrialsPerByte > shared.config.getint('bitmessagesettings','maxacceptablenoncetrialsperbyte') and shared.config.getint('bitmessagesettings','maxacceptablenoncetrialsperbyte') != 0) or (requiredPayloadLengthExtraBytes > shared.config.getint('bitmessagesettings','maxacceptablepayloadlengthextrabytes') and shared.config.getint('bitmessagesettings','maxacceptablepayloadlengthextrabytes') != 0):
                         #The demanded difficulty is more than we are willing to do.
@@ -3166,14 +3167,13 @@ class singleWorker(threading.Thread):
 
             #We have assembled the data that will be encrypted.
             encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
-            #We will now drop the unencrypted data in payload since it has already been encrypted and replace it with the encrypted payload that we will send out.
-            payload = embeddedTime + encodeVarint(toStreamNumber) + encrypted
-            target = 2**64 / ((len(payload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
+            encryptedPayload = embeddedTime + encodeVarint(toStreamNumber) + encrypted
+            target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
             shared.printLock.acquire()
             print '(For msg message) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte)/shared.networkDefaultProofOfWorkNonceTrialsPerByte,'Required small message difficulty:', float(requiredPayloadLengthExtraBytes)/shared.networkDefaultPayloadLengthExtraBytes
             shared.printLock.release()
             powStartTime = time.time()
-            initialHash = hashlib.sha512(payload).digest()
+            initialHash = hashlib.sha512(encryptedPayload).digest()
             trialValue, nonce = proofofwork.run(target, initialHash)
             shared.printLock.acquire()
             print '(For msg message) Found proof of work', trialValue, 'Nonce:', nonce
@@ -3182,11 +3182,11 @@ class singleWorker(threading.Thread):
             except:
                 pass
             shared.printLock.release()
-            payload = pack('>Q',nonce) + payload
+            encryptedPayload = pack('>Q',nonce) + encryptedPayload
 
-            inventoryHash = calculateInventoryHash(payload)
+            inventoryHash = calculateInventoryHash(encryptedPayload)
             objectType = 'msg'
-            shared.inventory[inventoryHash] = (objectType, toStreamNumber, payload, int(time.time()))
+            shared.inventory[inventoryHash] = (objectType, toStreamNumber, encryptedPayload, int(time.time()))
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Message sent. Waiting on acknowledgement. Sent on ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
             print 'Broadcasting inv for my msg(within sendmsg function):', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((streamNumber, 'sendinv', inventoryHash))
@@ -3194,7 +3194,7 @@ class singleWorker(threading.Thread):
             #Update the status of the message in the 'sent' table to have a 'msgsent' status
             shared.sqlLock.acquire()
             t = (ackdata,)
-            shared.sqlSubmitQueue.put('''UPDATE sent SET status='msgsent' WHERE ackdata=? AND status='doingmsgpow' or status='forcepow' ''')
+            shared.sqlSubmitQueue.put('''UPDATE sent SET status='msgsent' WHERE ackdata=? AND (status='doingmsgpow' or status='forcepow') ''')
             shared.sqlSubmitQueue.put(t)
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')

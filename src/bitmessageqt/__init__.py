@@ -33,6 +33,7 @@ import os
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
+import string
 
 class MyForm(QtGui.QMainWindow):
 
@@ -935,8 +936,13 @@ class MyForm(QtGui.QMainWindow):
             toAddress = str(self.ui.tableWidgetSent.item(i,0).data(Qt.UserRole).toPyObject())
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
             if ripe == toRipe:
-                self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
                 self.ui.tableWidgetSent.item(i,3).setToolTip(textToDisplay)
+                parenPositionIndex = string.find(textToDisplay,'\n')
+                if parenPositionIndex > 1:
+                    self.ui.tableWidgetSent.item(i,3).setText(textToDisplay[:parenPositionIndex])
+                else:
+                    self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
+                
 
     def updateSentItemStatusByAckdata(self,ackdata,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -944,9 +950,12 @@ class MyForm(QtGui.QMainWindow):
             tableAckdata = self.ui.tableWidgetSent.item(i,3).data(Qt.UserRole).toPyObject()
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
             if ackdata == tableAckdata:
-                #self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
-                self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
                 self.ui.tableWidgetSent.item(i,3).setToolTip(textToDisplay)
+                parenPositionIndex = string.find(textToDisplay,'\n')
+                if parenPositionIndex > 1:
+                    self.ui.tableWidgetSent.item(i,3).setText(textToDisplay[:parenPositionIndex])
+                else:
+                    self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
 
     def removeInboxRowByMsgid(self,msgid):#msgid and inventoryHash are the same thing
         for i in range(self.ui.tableWidgetInbox.rowCount()):

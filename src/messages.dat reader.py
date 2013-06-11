@@ -34,7 +34,7 @@ def readInbox():
 
 def readSent():
     print 'Printing everything in Sent table:'
-    item = '''select * from sent'''
+    item = '''select * from sent where folder !='trash' '''
     parameters = ''
     cur.execute(item, parameters)
     output = cur.fetchall()
@@ -107,8 +107,8 @@ def vacuum():
 #takeInboxMessagesOutOfTrash()
 #takeSentMessagesOutOfTrash()
 #markAllInboxMessagesAsUnread()
-readInbox()
-#readSent()
+#readInbox()
+readSent()
 #readPubkeys()
 #readSubscriptions()
 #readInventory()
