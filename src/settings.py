@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Mon Jun 03 23:09:01 2013
-#      by: PyQt4 UI code generator 4.9.5
+# Created: Mon Jun 10 11:31:56 2013
+#      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -74,6 +74,7 @@ class Ui_settingsDialog(object):
         self.label.setObjectName(_fromUtf8("label"))
         self.gridLayout_3.addWidget(self.label, 0, 1, 1, 1)
         self.lineEditTCPPort = QtGui.QLineEdit(self.groupBox)
+        self.lineEditTCPPort.setMaximumSize(QtCore.QSize(70, 16777215))
         self.lineEditTCPPort.setObjectName(_fromUtf8("lineEditTCPPort"))
         self.gridLayout_3.addWidget(self.lineEditTCPPort, 0, 2, 1, 1)
         self.gridLayout_4.addWidget(self.groupBox, 0, 0, 1, 1)
@@ -172,6 +173,48 @@ class Ui_settingsDialog(object):
         self.label_10.setObjectName(_fromUtf8("label_10"))
         self.gridLayout_6.addWidget(self.label_10, 2, 0, 1, 3)
         self.tabWidgetSettings.addTab(self.tab, _fromUtf8(""))
+        self.tab_2 = QtGui.QWidget()
+        self.tab_2.setObjectName(_fromUtf8("tab_2"))
+        self.gridLayout_7 = QtGui.QGridLayout(self.tab_2)
+        self.gridLayout_7.setObjectName(_fromUtf8("gridLayout_7"))
+        self.label_15 = QtGui.QLabel(self.tab_2)
+        self.label_15.setWordWrap(True)
+        self.label_15.setObjectName(_fromUtf8("label_15"))
+        self.gridLayout_7.addWidget(self.label_15, 0, 0, 1, 3)
+        spacerItem5 = QtGui.QSpacerItem(102, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.gridLayout_7.addItem(spacerItem5, 1, 0, 1, 1)
+        self.label_13 = QtGui.QLabel(self.tab_2)
+        self.label_13.setLayoutDirection(QtCore.Qt.LeftToRight)
+        self.label_13.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_13.setObjectName(_fromUtf8("label_13"))
+        self.gridLayout_7.addWidget(self.label_13, 1, 1, 1, 1)
+        self.lineEditMaxAcceptableTotalDifficulty = QtGui.QLineEdit(self.tab_2)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEditMaxAcceptableTotalDifficulty.sizePolicy().hasHeightForWidth())
+        self.lineEditMaxAcceptableTotalDifficulty.setSizePolicy(sizePolicy)
+        self.lineEditMaxAcceptableTotalDifficulty.setMaximumSize(QtCore.QSize(70, 16777215))
+        self.lineEditMaxAcceptableTotalDifficulty.setObjectName(_fromUtf8("lineEditMaxAcceptableTotalDifficulty"))
+        self.gridLayout_7.addWidget(self.lineEditMaxAcceptableTotalDifficulty, 1, 2, 1, 1)
+        spacerItem6 = QtGui.QSpacerItem(102, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.gridLayout_7.addItem(spacerItem6, 2, 0, 1, 1)
+        self.label_14 = QtGui.QLabel(self.tab_2)
+        self.label_14.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_14.setObjectName(_fromUtf8("label_14"))
+        self.gridLayout_7.addWidget(self.label_14, 2, 1, 1, 1)
+        self.lineEditMaxAcceptableSmallMessageDifficulty = QtGui.QLineEdit(self.tab_2)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEditMaxAcceptableSmallMessageDifficulty.sizePolicy().hasHeightForWidth())
+        self.lineEditMaxAcceptableSmallMessageDifficulty.setSizePolicy(sizePolicy)
+        self.lineEditMaxAcceptableSmallMessageDifficulty.setMaximumSize(QtCore.QSize(70, 16777215))
+        self.lineEditMaxAcceptableSmallMessageDifficulty.setObjectName(_fromUtf8("lineEditMaxAcceptableSmallMessageDifficulty"))
+        self.gridLayout_7.addWidget(self.lineEditMaxAcceptableSmallMessageDifficulty, 2, 2, 1, 1)
+        spacerItem7 = QtGui.QSpacerItem(20, 147, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.gridLayout_7.addItem(spacerItem7, 3, 1, 1, 1)
+        self.tabWidgetSettings.addTab(self.tab_2, _fromUtf8(""))
         self.gridLayout.addWidget(self.tabWidgetSettings, 0, 0, 1, 1)
 
         self.retranslateUi(settingsDialog)
@@ -222,4 +265,8 @@ class Ui_settingsDialog(object):
         self.label_12.setText(QtGui.QApplication.translate("settingsDialog", "The \'Small message difficulty\' mostly only affects the difficulty of sending small messages. Doubling this value makes it almost twice as difficult to send a small message but doesn\'t really affect large messages.", None, QtGui.QApplication.UnicodeUTF8))
         self.label_10.setText(QtGui.QApplication.translate("settingsDialog", "The \'Total difficulty\' affects the absolute amount of work the sender must complete. Doubling this value doubles the amount of work.", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab), QtGui.QApplication.translate("settingsDialog", "Demanded difficulty", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_15.setText(QtGui.QApplication.translate("settingsDialog", "Here you may set the maximum amount of work you are willing to do to send a message to another person. Setting these values to 0 means that any value is acceptable.", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_13.setText(QtGui.QApplication.translate("settingsDialog", "Maximum acceptable total difficulty:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_14.setText(QtGui.QApplication.translate("settingsDialog", "Maximum acceptable small message difficulty:", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab_2), QtGui.QApplication.translate("settingsDialog", "Max acceptable difficulty", None, QtGui.QApplication.UnicodeUTF8))
 

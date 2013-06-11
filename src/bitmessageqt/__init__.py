@@ -33,6 +33,7 @@ import os
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
+import string
 
 class MyForm(QtGui.QMainWindow):
 
@@ -169,11 +170,12 @@ class MyForm(QtGui.QMainWindow):
           # Actions
         self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction("Move to Trash", self.on_action_SentTrash)
         self.actionSentClipboard = self.ui.sentContextMenuToolbar.addAction("Copy destination address to clipboard", self.on_action_SentClipboard)
+        self.actionForceSend = self.ui.sentContextMenuToolbar.addAction("Force send", self.on_action_ForceSend)
         self.ui.tableWidgetSent.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetSent, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuSent)
-        self.popMenuSent = QtGui.QMenu( self )
-        self.popMenuSent.addAction( self.actionSentClipboard )
-        self.popMenuSent.addAction( self.actionTrashSentMessage )
+        #self.popMenuSent = QtGui.QMenu( self )
+        #self.popMenuSent.addAction( self.actionSentClipboard )
+        #self.popMenuSent.addAction( self.actionTrashSentMessage )
 
 
         #Popup menu for the Blacklist page
@@ -220,10 +222,9 @@ class MyForm(QtGui.QMainWindow):
                 if isEnabled:
                     status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
 
-        self.ui.tableWidgetSent.keyPressEvent = self.tableWidgetSentKeyPressEvent
+        #Load inbox from messages database file
         font = QFont()
         font.setBold(True)
-        #Load inbox from messages database file
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message, read FROM inbox where folder='inbox' ORDER BY received''')
         shared.sqlSubmitQueue.put('')
@@ -231,7 +232,8 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlLock.release()
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, received, message, read = row
-
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
             try:
                 if toAddress == self.str_broadcast_subscribers:
                     toLabel = self.str_broadcast_subscribers
@@ -268,6 +270,7 @@ class MyForm(QtGui.QMainWindow):
 
             self.ui.tableWidgetInbox.insertRow(0)
             newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
+            newItem.setToolTip(unicode(toLabel,'utf-8'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             if not read:
                 newItem.setFont(font)
@@ -277,8 +280,10 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.setItem(0,0,newItem)
             if fromLabel == '':
                 newItem =  QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
+                newItem.setToolTip(unicode(fromAddress,'utf-8'))
             else:
                 newItem =  QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
+                newItem.setToolTip(unicode(fromLabel,'utf-8'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             if not read:
                 newItem.setFont(font)
@@ -286,12 +291,14 @@ class MyForm(QtGui.QMainWindow):
 
             self.ui.tableWidgetInbox.setItem(0,1,newItem)
             newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8'))
+            newItem.setToolTip(unicode(subject,'utf-8'))
             newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             if not read:
                 newItem.setFont(font)
             self.ui.tableWidgetInbox.setItem(0,2,newItem)
             newItem =  myTableWidgetItem(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(received))),'utf-8'))
+            newItem.setToolTip(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(received))),'utf-8'))
             newItem.setData(Qt.UserRole,QByteArray(msgid))
             newItem.setData(33,int(received))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
@@ -299,8 +306,8 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setFont(font)
             self.ui.tableWidgetInbox.setItem(0,3,newItem)
         self.ui.tableWidgetInbox.sortItems(3,Qt.DescendingOrder)
-
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
+
         #Load Sent items from database
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime FROM sent where folder = 'sent' ORDER BY lastactiontime''')
@@ -309,6 +316,8 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlLock.release()
         for row in queryreturn:
             toAddress, fromAddress, subject, message, status, ackdata, lastactiontime = row
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
             try:
                 fromLabel = shared.config.get(fromAddress, 'label')
             except:
@@ -331,45 +340,57 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetSent.insertRow(0)
             if toLabel == '':
                 newItem =  QtGui.QTableWidgetItem(unicode(toAddress,'utf-8'))
+                newItem.setToolTip(unicode(toAddress,'utf-8'))
             else:
                 newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
+                newItem.setToolTip(unicode(toLabel,'utf-8'))
             newItem.setData(Qt.UserRole,str(toAddress))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,0,newItem)
             if fromLabel == '':
                 newItem =  QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
+                newItem.setToolTip(unicode(fromAddress,'utf-8'))
             else:
                 newItem =  QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
+                newItem.setToolTip(unicode(fromLabel,'utf-8'))
             newItem.setData(Qt.UserRole,str(fromAddress))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,1,newItem)
             newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8'))
+            newItem.setToolTip(unicode(subject,'utf-8'))
             newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,2,newItem)
             if status == 'awaitingpubkey':
-                newItem =  myTableWidgetItem('Waiting on their encryption key. Will request it again soon.')
+                statusText = 'Waiting on their encryption key. Will request it again soon.'
             elif status == 'doingpowforpubkey':
-                newItem =  myTableWidgetItem('Encryption key request queued.')
+                statusText = 'Encryption key request queued.'
             elif status == 'msgqueued':
-                newItem =  myTableWidgetItem('Queued.')
+                statusText = 'Queued.'
             elif status == 'msgsent':
-                newItem =  myTableWidgetItem('Message sent. Waiting on acknowledgement. Sent at ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(lastactiontime)),'utf-8'))
+                statusText = 'Message sent. Waiting on acknowledgement. Sent at ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(lastactiontime)),'utf-8')
             elif status == 'doingmsgpow':
-                newItem =  myTableWidgetItem('Need to do work to send message. Work is queued.')
+                statusText = 'Need to do work to send message. Work is queued.'
             elif status == 'ackreceived':
-                newItem =  myTableWidgetItem('Acknowledgement of the message received ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
+                statusText = 'Acknowledgement of the message received ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8')
             elif status == 'broadcastqueued':
-                newItem =  myTableWidgetItem('Broadcast queued.')
+                statusText = 'Broadcast queued.'
             elif status == 'broadcastsent':
-                newItem =  myTableWidgetItem('Broadcast on ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
+                statusText = 'Broadcast on ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8')
+            elif status == 'toodifficult':
+                statusText = 'Problem: The work demanded by the recipient is more difficult than you are willing to do. ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8')
+            elif status == 'forcepow':
+                statusText = 'Forced difficulty override. Send should start soon.'
             else:
-                newItem =  myTableWidgetItem('Unknown status.  ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
+                statusText = 'Unknown status: ' + status + '  ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8')
+            newItem =  myTableWidgetItem(statusText)
+            newItem.setToolTip(statusText)
             newItem.setData(Qt.UserRole,QByteArray(ackdata))
             newItem.setData(33,int(lastactiontime))
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetSent.setItem(0,3,newItem)
         self.ui.tableWidgetSent.sortItems(3,Qt.DescendingOrder)
+        self.ui.tableWidgetSent.keyPressEvent = self.tableWidgetSentKeyPressEvent
 
         #Initialize the address book
         shared.sqlLock.acquire()
@@ -764,19 +785,8 @@ class MyForm(QtGui.QMainWindow):
     def click_actionDeleteAllTrashedMessages(self):
         if QtGui.QMessageBox.question(self, 'Delete trash?',"Are you sure you want to delete all trashed messages?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
             return
-        self.statusBar().showMessage('Deleting messages and freeing empty space...')
         shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('''delete from inbox where folder='trash' ''')
-        shared.sqlSubmitQueue.put('')
-        shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('''delete from sent where folder='trash' ''')
-        shared.sqlSubmitQueue.put('')
-        shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit') #Commit takes no parameters and returns nothing
-        shared.sqlSubmitQueue.put('vacuum')
-        shared.sqlSubmitQueue.put('')
-        shared.sqlReturnQueue.get()
-        self.statusBar().showMessage('')
+        shared.sqlSubmitQueue.put('deleteandvacuume')
         shared.sqlLock.release()
 
     def click_actionRegenerateDeterministicAddresses(self):
@@ -926,8 +936,13 @@ class MyForm(QtGui.QMainWindow):
             toAddress = str(self.ui.tableWidgetSent.item(i,0).data(Qt.UserRole).toPyObject())
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
             if ripe == toRipe:
-                #self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
-                self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
+                self.ui.tableWidgetSent.item(i,3).setToolTip(textToDisplay)
+                parenPositionIndex = string.find(textToDisplay,'\n')
+                if parenPositionIndex > 1:
+                    self.ui.tableWidgetSent.item(i,3).setText(textToDisplay[:parenPositionIndex])
+                else:
+                    self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
+                
 
     def updateSentItemStatusByAckdata(self,ackdata,textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -935,8 +950,12 @@ class MyForm(QtGui.QMainWindow):
             tableAckdata = self.ui.tableWidgetSent.item(i,3).data(Qt.UserRole).toPyObject()
             status,addressVersionNumber,streamNumber,ripe = decodeAddress(toAddress)
             if ackdata == tableAckdata:
-                #self.ui.tableWidgetSent.item(i,3).setText(unicode(textToDisplay,'utf-8'))
-                self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
+                self.ui.tableWidgetSent.item(i,3).setToolTip(textToDisplay)
+                parenPositionIndex = string.find(textToDisplay,'\n')
+                if parenPositionIndex > 1:
+                    self.ui.tableWidgetSent.item(i,3).setText(textToDisplay[:parenPositionIndex])
+                else:
+                    self.ui.tableWidgetSent.item(i,3).setText(textToDisplay)
 
     def removeInboxRowByMsgid(self,msgid):#msgid and inventoryHash are the same thing
         for i in range(self.ui.tableWidgetInbox.rowCount()):
@@ -1078,7 +1097,7 @@ class MyForm(QtGui.QMainWindow):
                             continue
                         except:
                             pass
-                        if addressVersionNumber > 3 or addressVersionNumber == 0:
+                        if addressVersionNumber > 3 or addressVersionNumber <= 1:
                             QMessageBox.about(self, "Address version number", "Concerning the address "+toAddress+", Bitmessage cannot understand address version numbers of "+str(addressVersionNumber)+". Perhaps upgrade Bitmessage to the latest version.")
                             continue
                         if streamNumber > 1 or streamNumber == 0:
@@ -1208,6 +1227,8 @@ class MyForm(QtGui.QMainWindow):
 
     #This function is called by the processmsg function when that function receives a message to an address that is acting as a pseudo-mailing-list. The message will be broadcast out. This function puts the message on the 'Sent' tab.
     def displayNewSentMessage(self,toAddress,toLabel,fromAddress,subject,message,ackdata):
+        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+        message = shared.fixPotentiallyInvalidUTF8Data(message)
         try:
             fromLabel = shared.config.get(fromAddress, 'label')
         except:
@@ -1219,21 +1240,27 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSent.insertRow(0)
         if toLabel == '':
             newItem =  QtGui.QTableWidgetItem(unicode(toAddress,'utf-8'))
+            newItem.setToolTip(unicode(toAddress,'utf-8'))
         else:
             newItem =  QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
+            newItem.setToolTip(unicode(toLabel,'utf-8'))
         newItem.setData(Qt.UserRole,str(toAddress))
         self.ui.tableWidgetSent.setItem(0,0,newItem)
         if fromLabel == '':
             newItem =  QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
+            newItem.setToolTip(unicode(fromAddress,'utf-8'))
         else:
             newItem =  QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
+            newItem.setToolTip(unicode(fromLabel,'utf-8'))
         newItem.setData(Qt.UserRole,str(fromAddress))
         self.ui.tableWidgetSent.setItem(0,1,newItem)
         newItem =  QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
+        newItem.setToolTip(unicode(subject,'utf-8)'))
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
         self.ui.tableWidgetSent.setItem(0,2,newItem)
         #newItem =  QtGui.QTableWidgetItem('Doing work necessary to send broadcast...'+ unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
         newItem =  myTableWidgetItem('Work is queued. '+ unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+        newItem.setToolTip('Work is queued. '+ unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
         newItem.setData(Qt.UserRole,QByteArray(ackdata))
         newItem.setData(33,int(time.time()))
         self.ui.tableWidgetSent.setItem(0,3,newItem)
@@ -1241,6 +1268,8 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSent.setSortingEnabled(True)
 
     def displayNewInboxMessage(self,inventoryHash,toAddress,fromAddress,subject,message):
+        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+        message = shared.fixPotentiallyInvalidUTF8Data(message)
         fromLabel = ''
         shared.sqlLock.acquire()
         t = (fromAddress,)
@@ -1277,6 +1306,7 @@ class MyForm(QtGui.QMainWindow):
         font.setBold(True)
         self.ui.tableWidgetInbox.setSortingEnabled(False)
         newItem = QtGui.QTableWidgetItem(unicode(toLabel,'utf-8'))
+        newItem.setToolTip(unicode(toLabel,'utf-8'))
         newItem.setFont(font)
         newItem.setData(Qt.UserRole,str(toAddress))
         if shared.safeConfigGetBoolean(str(toAddress),'mailinglist'):
@@ -1286,20 +1316,24 @@ class MyForm(QtGui.QMainWindow):
 
         if fromLabel == '':
             newItem = QtGui.QTableWidgetItem(unicode(fromAddress,'utf-8'))
+            newItem.setToolTip(unicode(fromAddress,'utf-8'))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
                 self.notifierShow('New Message', 'From '+ fromAddress)
         else:
             newItem = QtGui.QTableWidgetItem(unicode(fromLabel,'utf-8'))
+            newItem.setToolTip(unicode(unicode(fromLabel,'utf-8')))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
                 self.notifierShow('New Message', 'From ' + fromLabel)
         newItem.setData(Qt.UserRole,str(fromAddress))
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,1,newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject,'utf-8)'))
+        newItem.setToolTip(unicode(subject,'utf-8)'))
         newItem.setData(Qt.UserRole,unicode(message,'utf-8)'))
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0,2,newItem)
         newItem = myTableWidgetItem(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+        newItem.setToolTip(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
         newItem.setData(Qt.UserRole,QByteArray(inventoryHash))
         newItem.setData(33,int(time.time()))
         newItem.setFont(font)
@@ -1439,6 +1473,11 @@ class MyForm(QtGui.QMainWindow):
                 shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte',str(int(float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text())*shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
             if float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) >= 1:
                 shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes',str(int(float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text())*shared.networkDefaultPayloadLengthExtraBytes)))
+            if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) == 0:
+                shared.config.set('bitmessagesettings', 'maxacceptablenoncetrialsperbyte',str(int(float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text())*shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
+            if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0:
+                shared.config.set('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes',str(int(float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text())*shared.networkDefaultPayloadLengthExtraBytes)))
+                
             #if str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()) == 'All':
             #    shared.config.set('bitmessagesettings', 'maxcores', '99999')
             #else:
@@ -1668,13 +1707,15 @@ class MyForm(QtGui.QMainWindow):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,0).data(Qt.UserRole).toPyObject())
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,1).data(Qt.UserRole).toPyObject())
-
         if toAddressAtCurrentInboxRow == self.str_broadcast_subscribers:
             self.ui.labelFrom.setText('')
+        elif not shared.config.has_section(toAddressAtCurrentInboxRow):
+            QtGui.QMessageBox.information(self, 'Address is gone','Bitmessage cannot find your address ' + toAddressAtCurrentInboxRow + '. Perhaps you removed it?', QMessageBox.Ok)
+            self.ui.labelFrom.setText('')
+        elif not shared.config.getboolean(toAddressAtCurrentInboxRow,'enabled'):
+            QtGui.QMessageBox.information(self, 'Address disabled','Error: The address from which you are trying to send is disabled. You\'ll have to enable it on the \'Your Identities\' tab before using it.', QMessageBox.Ok)
+            self.ui.labelFrom.setText('')
         else:
-            if not shared.config.get(toAddressAtCurrentInboxRow,'enabled'):
-                self.statusBar().showMessage('Error: The address from which you are trying to send is disabled. Enable it from the \'Your Identities\' tab first.')
-                return
             self.ui.labelFrom.setText(toAddressAtCurrentInboxRow)
         self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
@@ -1761,6 +1802,25 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetSent.selectRow(currentRow)
         else:
             self.ui.tableWidgetSent.selectRow(currentRow-1)
+
+    def on_action_ForceSend(self):
+        currentRow = self.ui.tableWidgetSent.currentRow()
+        addressAtCurrentRow = str(self.ui.tableWidgetSent.item(currentRow,0).data(Qt.UserRole).toPyObject())
+        toRipe = decodeAddress(addressAtCurrentRow)[3]
+        t = (toRipe,)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''UPDATE sent SET status='forcepow' WHERE toripe=? AND status='toodifficult' and folder='sent' ''')
+        shared.sqlSubmitQueue.put(t)
+        shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
+        shared.sqlSubmitQueue.put('''select ackdata FROM sent WHERE status='forcepow' ''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        for row in queryreturn:
+            ackdata, = row
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Overriding maximum-difficulty setting. Work queued.')))
+        shared.workerQueue.put(('sendmessage',''))
 
     def on_action_SentClipboard(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
@@ -1971,6 +2031,22 @@ class MyForm(QtGui.QMainWindow):
     def on_context_menuInbox(self, point):
         self.popMenuInbox.exec_( self.ui.tableWidgetInbox.mapToGlobal(point) )
     def on_context_menuSent(self, point):
+        self.popMenuSent = QtGui.QMenu( self )
+        self.popMenuSent.addAction( self.actionSentClipboard )
+        self.popMenuSent.addAction( self.actionTrashSentMessage )
+        
+        #Check to see if this item is toodifficult and display an additional menu option (Force Send) if it is.
+        currentRow = self.ui.tableWidgetSent.currentRow()
+        ackData = str(self.ui.tableWidgetSent.item(currentRow,3).data(Qt.UserRole).toPyObject())
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT status FROM sent where ackdata=?''')
+        shared.sqlSubmitQueue.put((ackData,))
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        for row in queryreturn:
+            status, = row
+        if status == 'toodifficult':
+            self.popMenuSent.addAction( self.actionForceSend )
         self.popMenuSent.exec_( self.ui.tableWidgetSent.mapToGlobal(point) )
 
     def tableWidgetInboxItemClicked(self):
@@ -2147,6 +2223,10 @@ class settingsDialog(QtGui.QDialog):
 
         self.ui.lineEditTotalDifficulty.setText(str((float(shared.config.getint('bitmessagesettings', 'defaultnoncetrialsperbyte'))/shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.ui.lineEditSmallMessageDifficulty.setText(str((float(shared.config.getint('bitmessagesettings', 'defaultpayloadlengthextrabytes'))/shared.networkDefaultPayloadLengthExtraBytes)))
+
+        #Max acceptable difficulty tab
+        self.ui.lineEditMaxAcceptableTotalDifficulty.setText(str((float(shared.config.getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte'))/shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
+        self.ui.lineEditMaxAcceptableSmallMessageDifficulty.setText(str((float(shared.config.getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes'))/shared.networkDefaultPayloadLengthExtraBytes)))
 
         #'System' tab removed for now.
         """try:
