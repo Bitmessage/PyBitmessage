@@ -562,7 +562,7 @@ class MyForm(QtGui.QMainWindow):
 
         m = QMenu()
 
-        self.actionStatus = QtGui.QAction('Not Connected',m,checkable=False)
+        self.actionStatus = QtGui.QAction(QtGui.QApplication.translate("MainWindow", "Not Connected"),m,checkable=False)
         m.addAction(self.actionStatus)
 
         # separator
@@ -775,9 +775,11 @@ class MyForm(QtGui.QMainWindow):
     def click_actionManageKeys(self):
         if 'darwin' in sys.platform or 'linux' in sys.platform:
             if shared.appdata == '':
-                reply = QtGui.QMessageBox.information(self, 'keys.dat?','You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file.', QMessageBox.Ok)
+                #reply = QtGui.QMessageBox.information(self, 'keys.dat?','You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file.', QMessageBox.Ok)
+                reply = QtGui.QMessageBox.information(self, 'keys.dat?',QtGui.QApplication.translate("MainWindow", "You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file."), QMessageBox.Ok)
+
             else:
-                QtGui.QMessageBox.information(self, 'keys.dat?','You may manage your keys by editing the keys.dat file stored in\n' + shared.appdata + '\nIt is important that you back up this file.', QMessageBox.Ok)
+                QtGui.QMessageBox.information(self, 'keys.dat?',QtGui.QApplication.translate("MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file.").arg(shared.appdata), QMessageBox.Ok)
         elif sys.platform == 'win32' or sys.platform == 'win64':
             if shared.appdata == '':
                 reply = QtGui.QMessageBox.question(self, 'Open keys.dat?','You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)', QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
