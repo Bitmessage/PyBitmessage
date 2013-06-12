@@ -1079,39 +1079,39 @@ class MyForm(QtGui.QMainWindow):
                         print 'Error: Could not decode', toAddress, ':', status
                         shared.printLock.release()
                         if status == 'missingbm':
-                            self.statusBar().showMessage('Error: Bitmessage addresses start with BM-   Please check ' + toAddress)
+                            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: Bitmessage addresses start with BM-   Please check %1").arg(toAddress))
                         elif status == 'checksumfailed':
-                            self.statusBar().showMessage('Error: The address ' + toAddress+' is not typed or copied correctly. Please check it.')
+                            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: The address %1 is not typed or copied correctly. Please check it.").arg(toAddress))
                         elif status == 'invalidcharacters':
-                            self.statusBar().showMessage('Error: The address '+ toAddress+ ' contains invalid characters. Please check it.')
+                            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: The address %1 contains invalid characters. Please check it.").arg(toAddress))
                         elif status == 'versiontoohigh':
-                            self.statusBar().showMessage('Error: The address version in '+ toAddress+ ' is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.')
+                            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.").arg(toAddress))
                         elif status == 'ripetooshort':
-                            self.statusBar().showMessage('Error: Some data encoded in the address '+ toAddress+ ' is too short. There might be something wrong with the software of your acquaintance.')
+                            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: Some data encoded in the address %1 is too short. There might be something wrong with the software of your acquaintance.").arg(toAddress))
                         elif status == 'ripetoolong':
-                            self.statusBar().showMessage('Error: Some data encoded in the address '+ toAddress+ ' is too long. There might be something wrong with the software of your acquaintance.')
+                            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.").arg(toAddress))
                         else:
-                            self.statusBar().showMessage('Error: Something is wrong with the address '+ toAddress+ '.')
+                            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: Something is wrong with the address %1.").arg(toAddress))
                     elif fromAddress == '':
-                        self.statusBar().showMessage('Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab.')
+                        self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab."))
                     else:
                         toAddress = addBMIfNotPresent(toAddress)
                         try:
                             shared.config.get(toAddress, 'enabled')
                             #The toAddress is one owned by me. We cannot send messages to ourselves without significant changes to the codebase.
-                            QMessageBox.about(self, "Sending to your address", "Error: One of the addresses to which you are sending a message, "+toAddress+", is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.")
+                            QMessageBox.about(self, QtGui.QApplication.translate("MainWindow", "Sending to your address"), QtGui.QApplication.translate("MainWindow", "Error: One of the addresses to which you are sending a message, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.").arg(toAddress))
                             continue
                         except:
                             pass
                         if addressVersionNumber > 3 or addressVersionNumber <= 1:
-                            QMessageBox.about(self, "Address version number", "Concerning the address "+toAddress+", Bitmessage cannot understand address version numbers of "+str(addressVersionNumber)+". Perhaps upgrade Bitmessage to the latest version.")
+                            QMessageBox.about(self, QtGui.QApplication.translate("MainWindow", "Address version number"), QtGui.QApplication.translate("MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
                             continue
                         if streamNumber > 1 or streamNumber == 0:
-                            QMessageBox.about(self, "Stream number", "Concerning the address "+toAddress+", Bitmessage cannot handle stream numbers of "+str(streamNumber)+". Perhaps upgrade Bitmessage to the latest version.")
+                            QMessageBox.about(self, QtGui.QApplication.translate("MainWindow", "Stream number"), QtGui.QApplication.translate("MainWindow", "Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(streamNumber)))
                             continue
                         self.statusBar().showMessage('')
                         if shared.statusIconColor == 'red':
-                            self.statusBar().showMessage('Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.')
+                            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect."))
                         ackdata = OpenSSL.rand(32)
                         shared.sqlLock.acquire()
                         t = ('',toAddress,ripe,fromAddress,subject,message,ackdata,int(time.time()),'msgqueued',1,1,'sent',2)
@@ -1143,10 +1143,10 @@ class MyForm(QtGui.QMainWindow):
                         self.ui.tabWidget.setCurrentIndex(2)
                         self.ui.tableWidgetSent.setCurrentCell(0,0)
                 else:
-                    self.statusBar().showMessage('Your \'To\' field is empty.')
+                    self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Your \'To\' field is empty."))
         else: #User selected 'Broadcast'
             if fromAddress == '':
-                self.statusBar().showMessage('Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab.')
+                self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab."))
             else:
                 self.statusBar().showMessage('')
                 #We don't actually need the ackdata for acknowledgement since this is a broadcast message, but we can use it to update the user interface when the POW is done generating.
@@ -1209,7 +1209,7 @@ class MyForm(QtGui.QMainWindow):
             time.sleep(0.1)
             self.statusBar().showMessage('')
             time.sleep(0.1)
-            self.statusBar().showMessage('Right click one or more entries in your address book and select \'Send message to this address\'.')
+            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Right click one or more entries in your address book and select \'Send message to this address\'."))
 
     def redrawLabelFrom(self,index):
         self.ui.labelFrom.setText(self.ui.comboBoxSendFrom.itemData(index).toPyObject())
@@ -1377,9 +1377,9 @@ class MyForm(QtGui.QMainWindow):
                     self.rerenderInboxFromLabels()
                     self.rerenderSentToLabels()
                 else:
-                    self.statusBar().showMessage('Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want.')
+                    self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
             else:
-                self.statusBar().showMessage('The address you entered was invalid. Ignoring it.')
+                self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "The address you entered was invalid. Ignoring it."))
 
     def click_pushButtonAddSubscription(self):
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
@@ -1412,9 +1412,9 @@ class MyForm(QtGui.QMainWindow):
                     self.rerenderInboxFromLabels()
                     shared.reloadBroadcastSendersForWhichImWatching()
                 else:
-                    self.statusBar().showMessage('Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want.')
+                    self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
             else:
-                self.statusBar().showMessage('The address you entered was invalid. Ignoring it.')
+                self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "The address you entered was invalid. Ignoring it."))
 
     def loadBlackWhiteList(self):
         #Initialize the Blacklist or Whitelist table
@@ -1462,11 +1462,11 @@ class MyForm(QtGui.QMainWindow):
             shared.config.set('bitmessagesettings', 'showtraynotifications', str(self.settingsDialogInstance.ui.checkBoxShowTrayNotifications.isChecked()))
             shared.config.set('bitmessagesettings', 'startintray', str(self.settingsDialogInstance.ui.checkBoxStartInTray.isChecked()))
             if int(shared.config.get('bitmessagesettings','port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
-                QMessageBox.about(self, "Restart", "You must restart Bitmessage for the port number change to take effect.")
+                QMessageBox.about(self, QtGui.QApplication.translate("MainWindow", "Restart"), QtGui.QApplication.translate("MainWindow", "You must restart Bitmessage for the port number change to take effect."))
                 shared.config.set('bitmessagesettings', 'port', str(self.settingsDialogInstance.ui.lineEditTCPPort.text()))
             if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText())[0:5] == 'SOCKS':
                 if shared.statusIconColor != 'red':
-                    QMessageBox.about(self, "Restart", "Bitmessage will use your proxy from now on now but you may want to manually restart Bitmessage now to close existing connections.")
+                    QMessageBox.about(self, QtGui.QApplication.translate("MainWindow", "Restart"), QtGui.QApplication.translate("MainWindow", "Bitmessage will use your proxy from now on now but you may want to manually restart Bitmessage now to close existing connections."))
             if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText()) == 'none':
                 self.statusBar().showMessage('')
             shared.config.set('bitmessagesettings', 'socksproxytype', str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText()))
@@ -1599,9 +1599,9 @@ class MyForm(QtGui.QMainWindow):
                     shared.sqlSubmitQueue.put('commit')
                     shared.sqlLock.release()
                 else:
-                    self.statusBar().showMessage('Error: You cannot add the same address to your list twice. Perhaps rename the existing one if you want.')
+                    self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your list twice. Perhaps rename the existing one if you want."))
             else:
-                self.statusBar().showMessage('The address you entered was invalid. Ignoring it.')
+                self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "The address you entered was invalid. Ignoring it."))
 
     def on_action_SpecialAddressBehaviorDialog(self):
         self.dialog = SpecialAddressBehaviorDialog(self)
@@ -1645,9 +1645,9 @@ class MyForm(QtGui.QMainWindow):
                 shared.addressGeneratorQueue.put(('createRandomAddress',3,streamNumberForAddress,str(self.dialog.ui.newaddresslabel.text().toUtf8()),1,"",self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
             else:
                 if self.dialog.ui.lineEditPassphrase.text() != self.dialog.ui.lineEditPassphraseAgain.text():
-                    QMessageBox.about(self, "Passphrase mismatch", "The passphrase you entered twice doesn\'t match. Try again.")
+                    QMessageBox.about(self, QtGui.QApplication.translate("MainWindow", "Passphrase mismatch"), QtGui.QApplication.translate("MainWindow", "The passphrase you entered twice doesn\'t match. Try again."))
                 elif self.dialog.ui.lineEditPassphrase.text() == "":
-                    QMessageBox.about(self, "Choose a passphrase", "You really do need a passphrase.")
+                    QMessageBox.about(self, QtGui.QApplication.translate("MainWindow", "Choose a passphrase"), QtGui.QApplication.translate("MainWindow", "You really do need a passphrase."))
                 else:
                     streamNumberForAddress = 1 #this will eventually have to be replaced by logic to determine the most available stream number.
                     #self.addressGenerator = addressGenerator()
@@ -1674,7 +1674,7 @@ class MyForm(QtGui.QMainWindow):
         # unregister the messaging system
         if self.mmapp is not None:
             self.mmapp.unregister()
-        self.statusBar().showMessage('All done. Closing user interface...')
+        self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "All done. Closing user interface..."))
         os._exit(0)
 
     # window close event
@@ -1716,10 +1716,10 @@ class MyForm(QtGui.QMainWindow):
         if toAddressAtCurrentInboxRow == self.str_broadcast_subscribers:
             self.ui.labelFrom.setText('')
         elif not shared.config.has_section(toAddressAtCurrentInboxRow):
-            QtGui.QMessageBox.information(self, 'Address is gone','Bitmessage cannot find your address ' + toAddressAtCurrentInboxRow + '. Perhaps you removed it?', QMessageBox.Ok)
+            QtGui.QMessageBox.information(self, QtGui.QApplication.translate("MainWindow", "Address is gone"),QtGui.QApplication.translate("MainWindow", "Bitmessage cannot find your address %1. Perhaps you removed it?").arg(toAddressAtCurrentInboxRow), QMessageBox.Ok)
             self.ui.labelFrom.setText('')
         elif not shared.config.getboolean(toAddressAtCurrentInboxRow,'enabled'):
-            QtGui.QMessageBox.information(self, 'Address disabled','Error: The address from which you are trying to send is disabled. You\'ll have to enable it on the \'Your Identities\' tab before using it.', QMessageBox.Ok)
+            QtGui.QMessageBox.information(self, QtGui.QApplication.translate("MainWindow", "Address disabled"),QtGui.QApplication.translate("MainWindow", "Error: The address from which you are trying to send is disabled. You\'ll have to enable it on the \'Your Identities\' tab before using it."), QMessageBox.Ok)
             self.ui.labelFrom.setText('')
         else:
             self.ui.labelFrom.setText(toAddressAtCurrentInboxRow)
@@ -1761,9 +1761,9 @@ class MyForm(QtGui.QMainWindow):
             shared.sqlLock.release()
             self.ui.tabWidget.setCurrentIndex(5)
             self.ui.tableWidgetAddressBook.setCurrentCell(0,0)
-            self.statusBar().showMessage('Entry added to the Address Book. Edit the label to your liking.')
+            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Entry added to the Address Book. Edit the label to your liking."))
         else:
-            self.statusBar().showMessage('Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want.')
+            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
 
     #Send item on the Inbox tab to trash
     def on_action_InboxTrash(self):
@@ -1778,7 +1778,7 @@ class MyForm(QtGui.QMainWindow):
             shared.sqlLock.release()
             self.ui.textEditInboxMessage.setText("")
             self.ui.tableWidgetInbox.removeRow(currentRow)
-            self.statusBar().showMessage('Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back."))
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
@@ -1800,7 +1800,7 @@ class MyForm(QtGui.QMainWindow):
             shared.sqlLock.release()
             self.ui.textEditSentMessage.setPlainText("")
             self.ui.tableWidgetSent.removeRow(currentRow)
-            self.statusBar().showMessage('Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.')
+            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back."))
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
@@ -1876,7 +1876,7 @@ class MyForm(QtGui.QMainWindow):
             else:
                 self.ui.lineEditTo.setText(str(self.ui.lineEditTo.text()) + '; '+ str(addressAtCurrentRow))
         if listOfSelectedRows == {}:
-            self.statusBar().showMessage('No addresses selected.')
+            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "No addresses selected."))
         else:
             self.statusBar().showMessage('')
             self.ui.tabWidget.setCurrentIndex(1)
@@ -2199,11 +2199,11 @@ class settingsDialog(QtGui.QDialog):
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
             self.ui.checkBoxShowTrayNotifications.setDisabled(True)
-            self.ui.labelSettingsNote.setText('Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implimented for your operating system.')
+            self.ui.labelSettingsNote.setText(QtGui.QApplication.translate("MainWindow", "Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implimented for your operating system."))
         elif 'linux' in sys.platform:
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
-            self.ui.labelSettingsNote.setText('Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implimented for your operating system.')
+            self.ui.labelSettingsNote.setText(QtGui.QApplication.translate("MainWindow", "Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implimented for your operating system."))
         #On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(shared.config.get('bitmessagesettings', 'port')))
         self.ui.checkBoxAuthentication.setChecked(shared.config.getboolean('bitmessagesettings', 'socksauthentication'))
@@ -2301,19 +2301,19 @@ class NewSubscriptionDialog(QtGui.QDialog):
     def subscriptionAddressChanged(self,QString):
         status,a,b,c = decodeAddress(str(QString))
         if status == 'missingbm':
-            self.ui.labelSubscriptionAddressCheck.setText('The address should start with ''BM-''')
+            self.ui.labelSubscriptionAddressCheck.setText(QtGui.QApplication.translate("MainWindow", "The address should start with ''BM-''"))
         elif status == 'checksumfailed':
-            self.ui.labelSubscriptionAddressCheck.setText('The address is not typed or copied correctly (the checksum failed).')
+            self.ui.labelSubscriptionAddressCheck.setText(QtGui.QApplication.translate("MainWindow", "The address is not typed or copied correctly (the checksum failed)."))
         elif status == 'versiontoohigh':
-            self.ui.labelSubscriptionAddressCheck.setText('The version number of this address is higher than this software can support. Please upgrade Bitmessage.')
+            self.ui.labelSubscriptionAddressCheck.setText(QtGui.QApplication.translate("MainWindow", "The version number of this address is higher than this software can support. Please upgrade Bitmessage."))
         elif status == 'invalidcharacters':
-            self.ui.labelSubscriptionAddressCheck.setText('The address contains invalid characters.')
+            self.ui.labelSubscriptionAddressCheck.setText(QtGui.QApplication.translate("MainWindow", "The address contains invalid characters."))
         elif status == 'ripetooshort':
-            self.ui.labelSubscriptionAddressCheck.setText('Some data encoded in the address is too short.')
+            self.ui.labelSubscriptionAddressCheck.setText(QtGui.QApplication.translate("MainWindow", "Some data encoded in the address is too short."))
         elif status == 'ripetoolong':
-            self.ui.labelSubscriptionAddressCheck.setText('Some data encoded in the address is too long.')
+            self.ui.labelSubscriptionAddressCheck.setText(QtGui.QApplication.translate("MainWindow", "Some data encoded in the address is too long."))
         elif status == 'success':
-            self.ui.labelSubscriptionAddressCheck.setText('Address is valid.')
+            self.ui.labelSubscriptionAddressCheck.setText(QtGui.QApplication.translate("MainWindow", "Address is valid."))
 
 class NewAddressDialog(QtGui.QDialog):
     def __init__(self, parent):
@@ -2337,7 +2337,7 @@ class iconGlossaryDialog(QtGui.QDialog):
         self.ui = Ui_iconGlossaryDialog()
         self.ui.setupUi(self)
         self.parent = parent
-        self.ui.labelPortNumber.setText('You are using TCP port ' + str(shared.config.getint('bitmessagesettings', 'port')) + '. (This can be changed in the settings).')
+        self.ui.labelPortNumber.setText(QtGui.QApplication.translate("MainWindow", "You are using TCP port %1. (This can be changed in the settings).").arg(str(shared.config.getint('bitmessagesettings', 'port'))))
         QtGui.QWidget.resize(self,QtGui.QWidget.sizeHint(self))
 
 
