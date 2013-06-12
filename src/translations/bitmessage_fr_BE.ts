@@ -266,17 +266,17 @@ p, li { white-space: pre-wrap; }
         <translation>Supprimer tous les messages dans la corbeille</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="889"/>
+        <location filename="../bitmessageqt/__init__.py" line="891"/>
         <source>Total Connections: %1</source>
         <translation>Nombre total de connexions : %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="910"/>
+        <location filename="../bitmessageqt/__init__.py" line="912"/>
         <source>Not Connected</source>
         <translation>Déconnecté</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="935"/>
+        <location filename="../bitmessageqt/__init__.py" line="937"/>
         <source>Connected</source>
         <translation>Connecté</translation>
     </message>
@@ -291,17 +291,17 @@ p, li { white-space: pre-wrap; }
         <translation>S&apos;abonner</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="840"/>
+        <location filename="../bitmessageqt/__init__.py" line="842"/>
         <source>Processed %1 person-to-person messages.</source>
         <translation>%1 messages de pair à pair traités.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="844"/>
+        <location filename="../bitmessageqt/__init__.py" line="846"/>
         <source>Processed %1 broadcast messages.</source>
         <translation>%1 messages de diffusion traités.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="848"/>
+        <location filename="../bitmessageqt/__init__.py" line="850"/>
         <source>Processed %1 public keys.</source>
         <translation>%1 clés publiques traitées.</translation>
     </message>
@@ -359,6 +359,20 @@ p, li { white-space: pre-wrap; }
         <location filename="../bitmessageqt/__init__.py" line="375"/>
         <source>Message sent. Waiting on acknowledgement. Sent at %1</source>
         <translation>Message envoyé. En attente de l&apos;accusé de réception. Envoyé le %1</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="779"/>
+        <source>You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file.</source>
+        <translation>Vous pouvez éditer vos clés en éditant le fichier keys.dat stocké dans le même répertoire que ce programme. Il est important de faire des sauvegardes de ce fichier.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="782"/>
+        <source>You may manage your keys by editing the keys.dat file stored in
+ %1 
+It is important that you back up this file.</source>
+        <translation>Vous pouvez éditer vos clés en éditant le fichier keys.dat stocké dans le répertoire 
+ %1. 
+Il est important de faire des sauvegardes de ce fichier.</translation>
     </message>
 </context>
 <context>
