@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS>
-<TS version="2.0" language="fr_BE" sourcelanguage="en">
+<!DOCTYPE TS><TS version="2.0" language="fr_BE" sourcelanguage="en">
 <context>
     <name>MainWindow</name>
     <message>
@@ -311,6 +310,56 @@ p, li { white-space: pre-wrap; }
         <source>Since startup on %1</source>
         <translation>Depuis lancement le %1</translation>
     </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="369"/>
+        <source>Waiting on their encryption key. Will request it again soon.</source>
+        <translation>En attente de la clé de chiffrement. Une nouvelle requête sera bientôt lancée.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="371"/>
+        <source>Encryption key request queued.</source>
+        <translation>Demande de clé de chiffrement en attente.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="373"/>
+        <source>Queued.</source>
+        <translation>En attente</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="377"/>
+        <source>Need to do work to send message. Work is queued.</source>
+        <translation>Travail nécessaire pour envoyer le message. Travail en attente.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="379"/>
+        <source>Acknowledgement of the message received %1</source>
+        <translation>Accusé de réception reçu le %1</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="381"/>
+        <source>Broadcast queued.</source>
+        <translation>Message de diffusion en attente.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="383"/>
+        <source>Broadcast on %1</source>
+        <translation>Message de diffusion à %1</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="385"/>
+        <source>Problem: The work demanded by the recipient is more difficult than you are willing to do. %1</source>
+        <translation>Problème : Le travail demandé par le destinataire est plus difficile que ce que vous avez paramétré. %1</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="387"/>
+        <source>Forced difficulty override. Send should start soon.</source>
+        <translation>Neutralisation forcée de la difficulté. L&apos;envoi devrait bientôt commencer.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="375"/>
+        <source>Message sent. Waiting on acknowledgement. Sent at %1</source>
+        <translation>Message envoyé. En attente de l&apos;accusé de réception. Envoyé le %1</translation>
+    </message>
 </context>
 <context>
     <name>NewAddressDialog</name>
@@ -475,7 +524,7 @@ L&apos;option \&apos;Nombre Aléatoire\&apos; est sélectionnée par défaut mai
         <source>About</source>
         <translation>À propos</translation>
     </message>
-    <message utf8="true">
+    <message encoding="UTF-8">
         <location filename="../about.py" line="60"/>
         <source>Copyright © 2013 Jonathan Warren</source>
         <translation>Copyright © 2013 Jonathan Warren</translation>
