@@ -1,3 +1,7 @@
+try:
+    import locale
+except:
+    pass
 
 try:
     from PyQt4.QtCore import *
