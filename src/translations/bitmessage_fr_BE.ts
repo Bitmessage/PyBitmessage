@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="2.0" language="fr_BE" sourcelanguage="en">
+<!DOCTYPE TS>
+<TS version="2.0" language="fr_BE" sourcelanguage="en">
 <context>
     <name>MainWindow</name>
     <message>
@@ -323,7 +324,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/__init__.py" line="373"/>
         <source>Queued.</source>
-        <translation>En attente</translation>
+        <translation>En attente.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="377"/>
@@ -373,6 +374,105 @@ It is important that you back up this file.</source>
         <translation>Vous pouvez éditer vos clés en éditant le fichier keys.dat stocké dans le répertoire 
  %1. 
 Il est important de faire des sauvegardes de ce fichier.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="785"/>
+        <source>You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)</source>
+        <translation>Vous pouvez éditer vos clés en éditant le fichier keys.dat stocké dans le même répertoire que ce programme. Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;ouvrir maintenant ? (Assurez-vous de fermer Bitmessage avant d&apos;effectuer des changements.)</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="787"/>
+        <source>You may manage your keys by editing the keys.dat file stored in
+ %1 
+It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)</source>
+        <translation>Vous pouvez éditer vos clés en éditant le fichier keys.dat stocké dans le répertoire 
+ %1. 
+Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;ouvrir maintenant ? (Assurez-vous de fermer Bitmessage avant d&apos;effectuer des changements.)</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="104"/>
+        <source>Add sender to your Address Book</source>
+        <translation>Ajouter l&apos;expéditeur au carnet d&apos;adresse</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="175"/>
+        <source>Move to Trash</source>
+        <translation>Envoyer à la Corbeille</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="106"/>
+        <source>View HTML code as formatted text</source>
+        <translation>Voir le code HTML comme du texte formaté</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="191"/>
+        <source>Enable</source>
+        <translation>Activer</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="192"/>
+        <source>Disable</source>
+        <translation>Désactiver</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="190"/>
+        <source>Copy address to clipboard</source>
+        <translation>Copier l&apos;adresse dans le presse-papier</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="125"/>
+        <source>Special address behavior...</source>
+        <translation>Comportement spécial de l&apos;adresse...</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="140"/>
+        <source>Send message to this address</source>
+        <translation>Envoyer un message à cette adresse</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="142"/>
+        <source>Add New Address</source>
+        <translation>Ajouter nouvelle adresse</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="189"/>
+        <source>Delete</source>
+        <translation>Supprimer</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="176"/>
+        <source>Copy destination address to clipboard</source>
+        <translation>Copier l&apos;adresse de destination dans le presse-papier</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="177"/>
+        <source>Force send</source>
+        <translation>Forcer l&apos;envoi</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="792"/>
+        <source>Are you sure you want to delete all trashed messages?</source>
+        <translation>Êtes-vous sûr de vouloir supprimer tous les messages dans la corbeille ?</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="802"/>
+        <source>You must type your passphrase. If you don&apos;t have one then this is not the form for you.</source>
+        <translation>Vous devez taper votre phrase secrète. Si vous n&apos;en avez pas, ce formulaire n&apos;est pas pour vous.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="792"/>
+        <source>Delete trash?</source>
+        <translation>Supprimer la corbeille ?</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="787"/>
+        <source>Open keys.dat?</source>
+        <translation>Ouvrir keys.dat ?</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="802"/>
+        <source>bad passphrase</source>
+        <translation>Mauvaise phrase secrète</translation>
     </message>
 </context>
 <context>
@@ -538,7 +638,7 @@ L&apos;option \&apos;Nombre Aléatoire\&apos; est sélectionnée par défaut mai
         <source>About</source>
         <translation>À propos</translation>
     </message>
-    <message encoding="UTF-8">
+    <message utf8="true">
         <location filename="../about.py" line="60"/>
         <source>Copyright © 2013 Jonathan Warren</source>
         <translation>Copyright © 2013 Jonathan Warren</translation>
