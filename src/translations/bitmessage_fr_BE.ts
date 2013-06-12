@@ -474,6 +474,232 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
         <source>bad passphrase</source>
         <translation>Mauvaise phrase secrète</translation>
     </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1469"/>
+        <source>Restart</source>
+        <translation>Redémarrer</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1465"/>
+        <source>You must restart Bitmessage for the port number change to take effect.</source>
+        <translation>Vous devez redémarrer Bitmessage pour que le changement de port prenne effet.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1469"/>
+        <source>Bitmessage will use your proxy from now on now but you may want to manually restart Bitmessage now to close existing connections.</source>
+        <translation>Bitmessage utilisera votre proxy à partir de maintenant mais il vous faudra redémarrer Bitmessage pour fermer les connexions existantes.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1602"/>
+        <source>Error: You cannot add the same address to your list twice. Perhaps rename the existing one if you want.</source>
+        <translation>Erreur : Vous ne pouvez pas ajouter une adresse déjà présente dans votre liste. Essayez de renommer l&apos;adresse existante.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1604"/>
+        <source>The address you entered was invalid. Ignoring it.</source>
+        <translation>L&apos;adresse que vous avez entré est invalide. Adresse ignorée.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1648"/>
+        <source>Passphrase mismatch</source>
+        <translation>Phrases secrètes différentes</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1648"/>
+        <source>The passphrase you entered twice doesn&apos;t match. Try again.</source>
+        <translation>Les phrases secrètes entrées sont différentes. Réessayez.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1650"/>
+        <source>Choose a passphrase</source>
+        <translation>Choisissez une phrase secrète</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1650"/>
+        <source>You really do need a passphrase.</source>
+        <translation>Vous devez vraiment utiliser une phrase secrète.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1677"/>
+        <source>All done. Closing user interface...</source>
+        <translation>Terminé. Fermeture de l&apos;interface...</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1719"/>
+        <source>Address is gone</source>
+        <translation>L&apos;adresse a disparu</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1719"/>
+        <source>Bitmessage cannot find your address %1. Perhaps you removed it?</source>
+        <translation>Bitmessage ne peut pas trouver votre adresse %1. Peut-être l&apos;avez-vous supprimée ?</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1722"/>
+        <source>Address disabled</source>
+        <translation>Adresse désactivée</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1722"/>
+        <source>Error: The address from which you are trying to send is disabled. You&apos;ll have to enable it on the &apos;Your Identities&apos; tab before using it.</source>
+        <translation>Erreur : L&apos;adresse avec laquelle vous essayez de communiquer est désactivée. Vous devez d&apos;abord l&apos;activer dans l&apos;onglet &apos;Vos identités&apos; avant de l&apos;utiliser.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1764"/>
+        <source>Entry added to the Address Book. Edit the label to your liking.</source>
+        <translation>Entrée ajoutée au carnet d&apos;adresse. Éditez le label selon votre souhait.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1766"/>
+        <source>Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want.</source>
+        <translation>Erreur : Vous ne pouvez pas ajouter une adresse déjà présente dans votre carnet d&apos;adresse. Essayez de renommer l&apos;adresse existante.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1803"/>
+        <source>Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.</source>
+        <translation>Messages déplacés dans la corbeille. Il n&apos;y a pas d&apos;interface utilisateur pour voir votre corbeille, mais ils sont toujours présents sur le disque si vous êtes désespérés pour les récupérer.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1879"/>
+        <source>No addresses selected.</source>
+        <translation>Aucune adresses sélectionnée.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2206"/>
+        <source>Options have been disabled because they either aren&apos;t applicable or because they haven&apos;t yet been implimented for your operating system.</source>
+        <translation>Certaines options ont été désactivées car elles n&apos;étaient pas applicables ou car elles n&apos;ont pas encore été implémentées pour votre système d&apos;exploitation.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2304"/>
+        <source>The address should start with &apos;&apos;BM-&apos;&apos;</source>
+        <translation>L&apos;adresse devrait commencer avec &quot;BM-&quot;</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2306"/>
+        <source>The address is not typed or copied correctly (the checksum failed).</source>
+        <translation>L&apos;adresse n&apos;est pas correcte (la somme de contrôle a échoué).</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2308"/>
+        <source>The version number of this address is higher than this software can support. Please upgrade Bitmessage.</source>
+        <translation>Le numéro de version de cette adresse est supérieure à celle que ce programme peut supporter. Veuiller mettre Bitmessage à jour.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2310"/>
+        <source>The address contains invalid characters.</source>
+        <translation>L&apos;adresse contient des caractères invalides.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2312"/>
+        <source>Some data encoded in the address is too short.</source>
+        <translation>Certaines données encodées dans l&apos;adresse sont trop courtes.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2314"/>
+        <source>Some data encoded in the address is too long.</source>
+        <translation>Certaines données encodées dans l&apos;adresse sont trop longues.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2316"/>
+        <source>Address is valid.</source>
+        <translation>L&apos;adresse est invalide.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2340"/>
+        <source>You are using TCP port %1. (This can be changed in the settings).</source>
+        <translation>Vous utilisez le port TCP %1. (Ceci peut être changé dans les paramètres).</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1082"/>
+        <source>Error: Bitmessage addresses start with BM-   Please check %1</source>
+        <translation>Erreur : Les adresses Bitmessage commencent avec BM-   Merci de vérifier %1</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1086"/>
+        <source>Error: The address %1 contains invalid characters. Please check it.</source>
+        <translation>Erreur : L&apos;adresse %1 contient des caractères invalides. Veuillez la vérifier.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1084"/>
+        <source>Error: The address %1 is not typed or copied correctly. Please check it.</source>
+        <translation>Erreur : L&apos;adresse %1 n&apos;est pas correctement recopiée. Veuillez la vérifier.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1088"/>
+        <source>Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.</source>
+        <translatorcomment>/*&quot;your acquaintance is being clever&quot;?*/ </translatorcomment>
+        <translation>Erreur : La version de l&apos;adresse %1 est trop grande. Pensez à mettre à jour Bitmessage.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1090"/>
+        <source>Error: Some data encoded in the address %1 is too short. There might be something wrong with the software of your acquaintance.</source>
+        <translation>Erreur : Certaines données encodées dans l&apos;adresse %1 sont trop courtes. Il peut y avoir un problème avec le logiciel ou votre connaissance. </translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1092"/>
+        <source>Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.</source>
+        <translation>Erreur : Certaines données encodées dans l&apos;adresse %1 sont trop longues. Il peut y avoir un problème avec le logiciel ou votre connaissance.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1094"/>
+        <source>Error: Something is wrong with the address %1.</source>
+        <translation>Erreur : Problème avec l&apos;adresse %1.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1149"/>
+        <source>Error: You must specify a From address. If you don&apos;t have one, go to the &apos;Your Identities&apos; tab.</source>
+        <translation>Erreur : Vous devez spécifier une adresse d&apos;expéditeur. Si vous n&apos;en avez pas, rendez-vous dans l&apos;onglet &apos;Vos identités&apos;.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1102"/>
+        <source>Sending to your address</source>
+        <translation>Envoi vers votre adresse</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1102"/>
+        <source>Error: One of the addresses to which you are sending a message, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.</source>
+        <translation>Erreur : Une des adresses vers lesquelles vous envoyez un message, %1, est vôtre. Malheureusement, Bitmessage ne peut pas traiter ses propres messages. Essayez de lancer un second client sur une machine différente.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1107"/>
+        <source>Address version number</source>
+        <translation>Numéro de version de l&apos;adresse</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1107"/>
+        <source>Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.</source>
+        <translation>Concernant l&apos;adresse %1, Bitmessage ne peut pas comprendre les numéros de version de %2. Essayez de mettre à jour Bitmessage vers la dernière version.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1110"/>
+        <source>Stream number</source>
+        <translation>Numéro de flux</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1110"/>
+        <source>Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.</source>
+        <translation>Concernant l&apos;adresse %1, Bitmessage ne peut pas supporter les nombres de flux de %2. Essayez de mettre à jour Bitmessage vers la dernière version.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1114"/>
+        <source>Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won&apos;t send until you connect.</source>
+        <translation>Avertissement : Vous êtes actuellement déconnecté. Bitmessage fera le travail nécessaire pour envoyer le message mais il ne sera pas envoyé tant que vous ne vous connecterez pas.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1146"/>
+        <source>Your &apos;To&apos; field is empty.</source>
+        <translation>Votre champ &apos;Vers&apos; est vide.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1212"/>
+        <source>Right click one or more entries in your address book and select &apos;Send message to this address&apos;.</source>
+        <translation>Cliquez droit sur une ou plusieurs entrées dans votre carnet d&apos;adresses et sélectionnez &apos;Envoyer un message à ces adresses&apos;.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1415"/>
+        <source>Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want.</source>
+        <translation>Erreur : Vous ne pouvez pas ajouter une même adresse à vos abonnements deux fois. Essayez de renommer l&apos;adresse existante.</translation>
+    </message>
 </context>
 <context>
     <name>NewAddressDialog</name>
