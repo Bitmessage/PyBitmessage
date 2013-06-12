@@ -101,9 +101,9 @@ class MyForm(QtGui.QMainWindow):
         self.ui.inboxContextMenuToolbar = QtGui.QToolBar()
           # Actions
         self.actionReply = self.ui.inboxContextMenuToolbar.addAction("Reply", self.on_action_InboxReply)
-        self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction("Add sender to your Address Book", self.on_action_InboxAddSenderToAddressBook)
-        self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction("Move to Trash", self.on_action_InboxTrash)
-        self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction("View HTML code as formatted text", self.on_action_InboxMessageForceHtml)
+        self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Add sender to your Address Book"), self.on_action_InboxAddSenderToAddressBook)
+        self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Move to Trash"), self.on_action_InboxTrash)
+        self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "View HTML code as formatted text"), self.on_action_InboxMessageForceHtml)
         self.ui.tableWidgetInbox.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuInbox)
         self.popMenuInbox = QtGui.QMenu( self )
@@ -118,11 +118,11 @@ class MyForm(QtGui.QMainWindow):
         #Popup menu for the Your Identities tab
         self.ui.addressContextMenuToolbar = QtGui.QToolBar()
           # Actions
-        self.actionNew = self.ui.addressContextMenuToolbar.addAction("New", self.on_action_YourIdentitiesNew)
-        self.actionEnable = self.ui.addressContextMenuToolbar.addAction("Enable", self.on_action_YourIdentitiesEnable)
-        self.actionDisable = self.ui.addressContextMenuToolbar.addAction("Disable", self.on_action_YourIdentitiesDisable)
-        self.actionClipboard = self.ui.addressContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_YourIdentitiesClipboard)
-        self.actionSpecialAddressBehavior = self.ui.addressContextMenuToolbar.addAction("Special address behavior...", self.on_action_SpecialAddressBehaviorDialog)
+        self.actionNew = self.ui.addressContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "New"), self.on_action_YourIdentitiesNew)
+        self.actionEnable = self.ui.addressContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Enable"), self.on_action_YourIdentitiesEnable)
+        self.actionDisable = self.ui.addressContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Disable"), self.on_action_YourIdentitiesDisable)
+        self.actionClipboard = self.ui.addressContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Copy address to clipboard"), self.on_action_YourIdentitiesClipboard)
+        self.actionSpecialAddressBehavior = self.ui.addressContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Special address behavior..."), self.on_action_SpecialAddressBehaviorDialog)
         self.ui.tableWidgetYourIdentities.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuYourIdentities)
         self.popMenu = QtGui.QMenu( self )
@@ -137,10 +137,10 @@ class MyForm(QtGui.QMainWindow):
         #Popup menu for the Address Book page
         self.ui.addressBookContextMenuToolbar = QtGui.QToolBar()
           # Actions
-        self.actionAddressBookSend = self.ui.addressBookContextMenuToolbar.addAction("Send message to this address", self.on_action_AddressBookSend)
-        self.actionAddressBookClipboard = self.ui.addressBookContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_AddressBookClipboard)
-        self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction("Add New Address", self.on_action_AddressBookNew)
-        self.actionAddressBookDelete = self.ui.addressBookContextMenuToolbar.addAction("Delete", self.on_action_AddressBookDelete)
+        self.actionAddressBookSend = self.ui.addressBookContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Send message to this address"), self.on_action_AddressBookSend)
+        self.actionAddressBookClipboard = self.ui.addressBookContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Copy address to clipboard"), self.on_action_AddressBookClipboard)
+        self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Add New Address"), self.on_action_AddressBookNew)
+        self.actionAddressBookDelete = self.ui.addressBookContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Delete"), self.on_action_AddressBookDelete)
         self.ui.tableWidgetAddressBook.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuAddressBook)
         self.popMenuAddressBook = QtGui.QMenu( self )
@@ -153,11 +153,11 @@ class MyForm(QtGui.QMainWindow):
         #Popup menu for the Subscriptions page
         self.ui.subscriptionsContextMenuToolbar = QtGui.QToolBar()
           # Actions
-        self.actionsubscriptionsNew = self.ui.subscriptionsContextMenuToolbar.addAction("New", self.on_action_SubscriptionsNew)
-        self.actionsubscriptionsDelete = self.ui.subscriptionsContextMenuToolbar.addAction("Delete", self.on_action_SubscriptionsDelete)
-        self.actionsubscriptionsClipboard = self.ui.subscriptionsContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_SubscriptionsClipboard)
-        self.actionsubscriptionsEnable = self.ui.subscriptionsContextMenuToolbar.addAction("Enable", self.on_action_SubscriptionsEnable)
-        self.actionsubscriptionsDisable = self.ui.subscriptionsContextMenuToolbar.addAction("Disable", self.on_action_SubscriptionsDisable)
+        self.actionsubscriptionsNew = self.ui.subscriptionsContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "New"), self.on_action_SubscriptionsNew)
+        self.actionsubscriptionsDelete = self.ui.subscriptionsContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Delete"), self.on_action_SubscriptionsDelete)
+        self.actionsubscriptionsClipboard = self.ui.subscriptionsContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Copy address to clipboard"), self.on_action_SubscriptionsClipboard)
+        self.actionsubscriptionsEnable = self.ui.subscriptionsContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Enable"), self.on_action_SubscriptionsEnable)
+        self.actionsubscriptionsDisable = self.ui.subscriptionsContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Disable"), self.on_action_SubscriptionsDisable)
         self.ui.tableWidgetSubscriptions.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetSubscriptions, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuSubscriptions)
         self.popMenuSubscriptions = QtGui.QMenu( self )
@@ -172,9 +172,9 @@ class MyForm(QtGui.QMainWindow):
         #Popup menu for the Sent page
         self.ui.sentContextMenuToolbar = QtGui.QToolBar()
           # Actions
-        self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction("Move to Trash", self.on_action_SentTrash)
-        self.actionSentClipboard = self.ui.sentContextMenuToolbar.addAction("Copy destination address to clipboard", self.on_action_SentClipboard)
-        self.actionForceSend = self.ui.sentContextMenuToolbar.addAction("Force send", self.on_action_ForceSend)
+        self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Move to Trash"), self.on_action_SentTrash)
+        self.actionSentClipboard = self.ui.sentContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Copy destination address to clipboard"), self.on_action_SentClipboard)
+        self.actionForceSend = self.ui.sentContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Force send"), self.on_action_ForceSend)
         self.ui.tableWidgetSent.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetSent, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuSent)
         #self.popMenuSent = QtGui.QMenu( self )
@@ -185,11 +185,11 @@ class MyForm(QtGui.QMainWindow):
         #Popup menu for the Blacklist page
         self.ui.blacklistContextMenuToolbar = QtGui.QToolBar()
           # Actions
-        self.actionBlacklistNew = self.ui.blacklistContextMenuToolbar.addAction("Add new entry", self.on_action_BlacklistNew)
-        self.actionBlacklistDelete = self.ui.blacklistContextMenuToolbar.addAction("Delete", self.on_action_BlacklistDelete)
-        self.actionBlacklistClipboard = self.ui.blacklistContextMenuToolbar.addAction("Copy address to clipboard", self.on_action_BlacklistClipboard)
-        self.actionBlacklistEnable = self.ui.blacklistContextMenuToolbar.addAction("Enable", self.on_action_BlacklistEnable)
-        self.actionBlacklistDisable = self.ui.blacklistContextMenuToolbar.addAction("Disable", self.on_action_BlacklistDisable)
+        self.actionBlacklistNew = self.ui.blacklistContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Add new entry"), self.on_action_BlacklistNew)
+        self.actionBlacklistDelete = self.ui.blacklistContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Delete"), self.on_action_BlacklistDelete)
+        self.actionBlacklistClipboard = self.ui.blacklistContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Copy address to clipboard"), self.on_action_BlacklistClipboard)
+        self.actionBlacklistEnable = self.ui.blacklistContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Enable"), self.on_action_BlacklistEnable)
+        self.actionBlacklistDisable = self.ui.blacklistContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Disable"), self.on_action_BlacklistDisable)
         self.ui.tableWidgetBlacklist.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetBlacklist, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuBlacklist)
         self.popMenuBlacklist = QtGui.QMenu( self )
@@ -782,14 +782,14 @@ class MyForm(QtGui.QMainWindow):
                 QtGui.QMessageBox.information(self, 'keys.dat?',QtGui.QApplication.translate("MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file.").arg(shared.appdata), QMessageBox.Ok)
         elif sys.platform == 'win32' or sys.platform == 'win64':
             if shared.appdata == '':
-                reply = QtGui.QMessageBox.question(self, 'Open keys.dat?','You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)', QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                reply = QtGui.QMessageBox.question(self, QtGui.QApplication.translate("MainWindow", "Open keys.dat?"),QtGui.QApplication.translate("MainWindow", "You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             else:
-                reply = QtGui.QMessageBox.question(self, 'Open keys.dat?','You may manage your keys by editing the keys.dat file stored in\n' + shared.appdata + '\nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)', QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                reply = QtGui.QMessageBox.question(self, QtGui.QApplication.translate("MainWindow", "Open keys.dat?"),QtGui.QApplication.translate("MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)").arg(shared.appdata), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
                 self.openKeysFile()
 
     def click_actionDeleteAllTrashedMessages(self):
-        if QtGui.QMessageBox.question(self, 'Delete trash?',"Are you sure you want to delete all trashed messages?", QtGui.QMessageBox.Yes, QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
+        if QtGui.QMessageBox.question(self, QtGui.QApplication.translate("MainWindow", "Delete trash?"),QtGui.QApplication.translate("MainWindow", "Are you sure you want to delete all trashed messages?"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
             return
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('deleteandvacuume')
@@ -799,7 +799,7 @@ class MyForm(QtGui.QMainWindow):
         self.regenerateAddressesDialogInstance = regenerateAddressesDialog(self)
         if self.regenerateAddressesDialogInstance.exec_():
             if self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text() == "":
-                QMessageBox.about(self, "bad passphrase", "You must type your passphrase. If you don\'t have one then this is not the form for you.")
+                QMessageBox.about(self, QtGui.QApplication.translate("MainWindow", "bad passphrase"), QtGui.QApplication.translate("MainWindow", "You must type your passphrase. If you don\'t have one then this is not the form for you."))
             else:
                 streamNumberForAddress = int(self.regenerateAddressesDialogInstance.ui.lineEditStreamNumber.text())
                 addressVersionNumber = int(self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
