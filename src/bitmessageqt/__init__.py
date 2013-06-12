@@ -433,7 +433,7 @@ class MyForm(QtGui.QMainWindow):
         #self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
         self.statusbar = self.statusBar()
         self.statusbar.insertPermanentWidget(0,self.ui.pushButtonStatusIcon)
-        self.ui.labelStartupTime.setText('Since startup on ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))
+        self.ui.labelStartupTime.setText(QtGui.QApplication.translate("MainWindow", "Since startup on %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))))
         self.numberOfMessagesProcessed = 0
         self.numberOfBroadcastsProcessed = 0
         self.numberOfPubkeysProcessed = 0
@@ -571,24 +571,24 @@ class MyForm(QtGui.QMainWindow):
         m.addAction(actionSeparator)
 
         # show bitmessage
-        self.actionShow = QtGui.QAction('Show Bitmessage',m,checkable=True)
+        self.actionShow = QtGui.QAction(QtGui.QApplication.translate("MainWindow", "Show Bitmessage"),m,checkable=True)
         self.actionShow.setChecked(not shared.config.getboolean('bitmessagesettings', 'startintray'))
         self.actionShow.triggered.connect(self.appIndicatorShowOrHideWindow)
         if not sys.platform[0:3] == 'win':
             m.addAction(self.actionShow)       
 
         # Send
-        actionSend = QtGui.QAction('Send',m,checkable=False)
+        actionSend = QtGui.QAction(QtGui.QApplication.translate("MainWindow", "Send"),m,checkable=False)
         actionSend.triggered.connect(self.appIndicatorSend)
         m.addAction(actionSend)
 
         # Subscribe
-        actionSubscribe = QtGui.QAction('Subscribe',m,checkable=False)
+        actionSubscribe = QtGui.QAction(QtGui.QApplication.translate("MainWindow", "Subscribe"),m,checkable=False)
         actionSubscribe.triggered.connect(self.appIndicatorSubscribe)
         m.addAction(actionSubscribe)
 
         # Address book
-        actionAddressBook = QtGui.QAction('Address Book',m,checkable=False)
+        actionAddressBook = QtGui.QAction(QtGui.QApplication.translate("MainWindow", "Address Book"),m,checkable=False)
         actionAddressBook.triggered.connect(self.appIndicatorAddressBook)
         m.addAction(actionAddressBook)
 
@@ -598,7 +598,7 @@ class MyForm(QtGui.QMainWindow):
         m.addAction(actionSeparator)
 
         # Quit
-        m.addAction("Quit", self.quit)
+        m.addAction(QtGui.QApplication.translate("MainWindow", "Quit"), self.quit)
 
         self.tray.setContextMenu(m)
         self.tray.show()
@@ -837,15 +837,15 @@ class MyForm(QtGui.QMainWindow):
 
     def incrementNumberOfMessagesProcessed(self):
         self.numberOfMessagesProcessed += 1
-        self.ui.labelMessageCount.setText('Processed ' + str(self.numberOfMessagesProcessed) + ' person-to-person messages.')
+        self.ui.labelMessageCount.setText(QtGui.QApplication.translate("MainWindow", "Processed %1 person-to-person messages.").arg(str(self.numberOfMessagesProcessed)))
 
     def incrementNumberOfBroadcastsProcessed(self):
         self.numberOfBroadcastsProcessed += 1
-        self.ui.labelBroadcastCount.setText('Processed ' + str(self.numberOfBroadcastsProcessed) + ' broadcast messages.')
+        self.ui.labelBroadcastCount.setText(QtGui.QApplication.translate("MainWindow", "Processed %1 broadcast messages.").arg(str(self.numberOfBroadcastsProcessed)))
 
     def incrementNumberOfPubkeysProcessed(self):
         self.numberOfPubkeysProcessed += 1
-        self.ui.labelPubkeyCount.setText('Processed ' + str(self.numberOfPubkeysProcessed) + ' public keys.')
+        self.ui.labelPubkeyCount.setText(QtGui.QApplication.translate("MainWindow", "Processed %1 public keys.").arg(str(self.numberOfPubkeysProcessed)))
 
     def updateNetworkStatusTab(self):
         #print 'updating network status tab'
@@ -886,7 +886,7 @@ class MyForm(QtGui.QMainWindow):
             newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
             self.ui.tableWidgetConnectionCount.setItem(0,1,newItem)
             totalNumberOfConnectionsFromAllStreams += connectionCount"""
-        self.ui.labelTotalConnections.setText('Total Connections: ' + str(len(shared.connectedHostsList)))
+        self.ui.labelTotalConnections.setText(QtGui.QApplication.translate("MainWindow", "Total Connections: %1").arg(str(len(shared.connectedHostsList))))
         if len(shared.connectedHostsList) > 0 and shared.statusIconColor == 'red': #FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
             self.setStatusIcon('yellow')
         elif len(shared.connectedHostsList) == 0:
@@ -907,7 +907,7 @@ class MyForm(QtGui.QMainWindow):
             self.connected = False
 
             if self.actionStatus != None:
-                self.actionStatus.setText('Not Connected')
+                self.actionStatus.setText(QtGui.QApplication.translate("MainWindow", "Not Connected"))
                 self.tray.setIcon(QtGui.QIcon(":/newPrefix/images/can-icon-24px-red.png"))
         if color == 'yellow':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
@@ -920,7 +920,7 @@ class MyForm(QtGui.QMainWindow):
             self.connected = True
 
             if self.actionStatus != None:
-                self.actionStatus.setText('Connected')
+                self.actionStatus.setText(QtGui.QApplication.translate("MainWindow", "Connected"))
                 self.tray.setIcon(QtGui.QIcon(":/newPrefix/images/can-icon-24px-yellow.png"))
         if color == 'green':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
@@ -932,7 +932,7 @@ class MyForm(QtGui.QMainWindow):
             self.connected = True
 
             if self.actionStatus != None:
-                self.actionStatus.setText('Connected')
+                self.actionStatus.setText(QtGui.QApplication.translate("MainWindow", "Connected"))
                 self.tray.setIcon(QtGui.QIcon(":/newPrefix/images/can-icon-24px-green.png"))
 
     def updateSentItemStatusByHash(self,toRipe,textToDisplay):
