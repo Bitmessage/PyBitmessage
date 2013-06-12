@@ -35,7 +35,7 @@
     <message>
         <location filename="../bitmessageui.py" line="471"/>
         <source>Load from Address book</source>
-        <translation>Charger depuis carnet d&apos;adresse</translation>
+        <translation>Charger depuis carnet d&apos;adresses</translation>
     </message>
     <message>
         <location filename="../bitmessageui.py" line="472"/>
@@ -148,7 +148,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageui.py" line="513"/>
         <source>The Address book is useful for adding names or labels to other people&apos;s Bitmessage addresses so that you can recognize them more easily in your inbox. You can add entries here using the &apos;Add&apos; button, or from your inbox by right-clicking on a message.</source>
-        <translation>Le carnet d&apos;adresse est utile pour mettre un nom sur une adresse Bitmessage et ainsi faciliter la gestion de votre boîte de réception. Vous pouvez ajouter des entrées ici en utilisant le bouton &apos;Ajouter&apos;, ou depuis votre boîte de réception en faisant un clic-droit sur un message.</translation>
+        <translation>Le carnet d&apos;adresses est utile pour mettre un nom sur une adresse Bitmessage et ainsi faciliter la gestion de votre boîte de réception. Vous pouvez ajouter des entrées ici en utilisant le bouton &apos;Ajouter&apos;, ou depuis votre boîte de réception en faisant un clic-droit sur un message.</translation>
     </message>
     <message>
         <location filename="../bitmessageui.py" line="523"/>
@@ -202,17 +202,17 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../bitmessageui.py" line="536"/>
-        <source>Processed 0 person-to-person messages.</source>
+        <source>Processed 0 person-to-person message.</source>
         <translation>0 message de pair à pair traité.</translation>
     </message>
     <message>
         <location filename="../bitmessageui.py" line="537"/>
-        <source>Processed 0 public keys.</source>
+        <source>Processed 0 public key.</source>
         <translation>0 clé publique traitée.</translation>
     </message>
     <message>
         <location filename="../bitmessageui.py" line="538"/>
-        <source>Processed 0 broadcasts.</source>
+        <source>Processed 0 broadcast.</source>
         <translation>0 message de diffusion traité.</translation>
     </message>
     <message>
@@ -391,7 +391,7 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
     <message>
         <location filename="../bitmessageqt/__init__.py" line="130"/>
         <source>Add sender to your Address Book</source>
-        <translation>Ajouter l&apos;expéditeur au carnet d&apos;adresse</translation>
+        <translation>Ajouter l&apos;expéditeur au carnet d&apos;adresses</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="225"/>
@@ -546,12 +546,12 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2080"/>
         <source>Entry added to the Address Book. Edit the label to your liking.</source>
-        <translation>Entrée ajoutée au carnet d&apos;adresse. Éditez le label selon votre souhait.</translation>
+        <translation>Entrée ajoutée au carnet d&apos;adresses. Éditez le label selon votre souhait.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2083"/>
         <source>Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want.</source>
-        <translation>Erreur : Vous ne pouvez pas ajouter une adresse déjà présente dans votre carnet d&apos;adresse. Essayez de renommer l&apos;adresse existante.</translation>
+        <translation>Erreur : Vous ne pouvez pas ajouter une adresse déjà présente dans votre carnet d&apos;adresses. Essayez de renommer l&apos;adresse existante.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2126"/>
@@ -1112,7 +1112,7 @@ L&apos;option &apos;Nombre Aléatoire&apos; est sélectionnée par défaut mais 
     <message>
         <location filename="../settings.py" line="262"/>
         <source>When someone sends you a message, their computer must first complete some work. The difficulty of this work, by default, is 1. You may raise this default for new addresses you create by changing the values here. Any new addresses you create will require senders to meet the higher difficulty. There is one exception: if you add a friend or acquaintance to your address book, Bitmessage will automatically notify them when you next send a message that they need only complete the minimum amount of work: difficulty 1. </source>
-        <translation>Lorsque quelqu&apos;un vous envoie un message, son ordinateur doit d&apos;abord effectuer un travail. La difficulté de ce travail, par défaut, est de 1. Vous pouvez augmenter cette valeur pour les adresses que vous créez en changeant la valeur ici. Chaque nouvelle adresse que vous créez requerra à l&apos;envoyeur de faire face à une difficulté supérieure. Il existe une exception : si vous ajoutez un ami ou une connaissance à votre carnet d&apos;adresse, Bitmessage les notifiera automatiquement lors du prochain message que vous leur envoyez qu&apos;ils ne doivent compléter que la charge de travail minimale : difficulté 1. </translation>
+        <translation>Lorsque quelqu&apos;un vous envoie un message, son ordinateur doit d&apos;abord effectuer un travail. La difficulté de ce travail, par défaut, est de 1. Vous pouvez augmenter cette valeur pour les adresses que vous créez en changeant la valeur ici. Chaque nouvelle adresse que vous créez requerra à l&apos;envoyeur de faire face à une difficulté supérieure. Il existe une exception : si vous ajoutez un ami ou une connaissance à votre carnet d&apos;adresses, Bitmessage les notifiera automatiquement lors du prochain message que vous leur envoyez qu&apos;ils ne doivent compléter que la charge de travail minimale : difficulté 1. </translation>
     </message>
     <message>
         <location filename="../settings.py" line="263"/>

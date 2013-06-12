@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Tue May 28 16:22:12 2013
-#      by: PyQt4 UI code generator 4.9.4
+# Created: Thu Jun 13 01:02:50 2013
+#      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,16 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
-    _fromUtf8 = lambda s: s
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -457,96 +466,106 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.tableWidgetConnectionCount, self.pushButtonStatusIcon)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Bitmessage", None, QtGui.QApplication.UnicodeUTF8))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Bitmessage", None))
         self.tableWidgetInbox.setSortingEnabled(True)
         item = self.tableWidgetInbox.horizontalHeaderItem(0)
-        item.setText(QtGui.QApplication.translate("MainWindow", "To", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "To", None))
         item = self.tableWidgetInbox.horizontalHeaderItem(1)
-        item.setText(QtGui.QApplication.translate("MainWindow", "From", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "From", None))
         item = self.tableWidgetInbox.horizontalHeaderItem(2)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Subject", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Subject", None))
         item = self.tableWidgetInbox.horizontalHeaderItem(3)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Received", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.inbox), QtGui.QApplication.translate("MainWindow", "Inbox", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButtonLoadFromAddressBook.setText(QtGui.QApplication.translate("MainWindow", "Load from Address book", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_4.setText(QtGui.QApplication.translate("MainWindow", "Message:", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_3.setText(QtGui.QApplication.translate("MainWindow", "Subject:", None, QtGui.QApplication.UnicodeUTF8))
-        self.radioButtonSpecific.setText(QtGui.QApplication.translate("MainWindow", "Send to one or more specific people", None, QtGui.QApplication.UnicodeUTF8))
-        self.textEditMessage.setHtml(QtGui.QApplication.translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
+        item.setText(_translate("MainWindow", "Received", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.inbox), _translate("MainWindow", "Inbox", None))
+        self.pushButtonLoadFromAddressBook.setText(_translate("MainWindow", "Load from Address book", None))
+        self.label_4.setText(_translate("MainWindow", "Message:", None))
+        self.label_3.setText(_translate("MainWindow", "Subject:", None))
+        self.radioButtonSpecific.setText(_translate("MainWindow", "Send to one or more specific people", None))
+        self.textEditMessage.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
 "</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("MainWindow", "To:", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_2.setText(QtGui.QApplication.translate("MainWindow", "From:", None, QtGui.QApplication.UnicodeUTF8))
-        self.radioButtonBroadcast.setText(QtGui.QApplication.translate("MainWindow", "Broadcast to everyone who is subscribed to your address", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButtonSend.setText(QtGui.QApplication.translate("MainWindow", "Send", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelSendBroadcastWarning.setText(QtGui.QApplication.translate("MainWindow", "Be aware that broadcasts are only encrypted with your address. Anyone who knows your address can read them.", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), QtGui.QApplication.translate("MainWindow", "Send", None, QtGui.QApplication.UnicodeUTF8))
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+        self.label.setText(_translate("MainWindow", "To:", None))
+        self.label_2.setText(_translate("MainWindow", "From:", None))
+        self.radioButtonBroadcast.setText(_translate("MainWindow", "Broadcast to everyone who is subscribed to your address", None))
+        self.pushButtonSend.setText(_translate("MainWindow", "Send", None))
+        self.labelSendBroadcastWarning.setText(_translate("MainWindow", "Be aware that broadcasts are only encrypted with your address. Anyone who knows your address can read them.", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send", None))
         self.tableWidgetSent.setSortingEnabled(True)
         item = self.tableWidgetSent.horizontalHeaderItem(0)
-        item.setText(QtGui.QApplication.translate("MainWindow", "To", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "To", None))
         item = self.tableWidgetSent.horizontalHeaderItem(1)
-        item.setText(QtGui.QApplication.translate("MainWindow", "From", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "From", None))
         item = self.tableWidgetSent.horizontalHeaderItem(2)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Subject", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Subject", None))
         item = self.tableWidgetSent.horizontalHeaderItem(3)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Status", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.sent), QtGui.QApplication.translate("MainWindow", "Sent", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButtonNewAddress.setText(QtGui.QApplication.translate("MainWindow", "New", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Status", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.sent), _translate("MainWindow", "Sent", None))
+        self.pushButtonNewAddress.setText(_translate("MainWindow", "New", None))
         self.tableWidgetYourIdentities.setSortingEnabled(True)
         item = self.tableWidgetYourIdentities.horizontalHeaderItem(0)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Label (not shown to anyone)", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Label (not shown to anyone)", None))
         item = self.tableWidgetYourIdentities.horizontalHeaderItem(1)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Address", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Address", None))
         item = self.tableWidgetYourIdentities.horizontalHeaderItem(2)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Stream", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.youridentities), QtGui.QApplication.translate("MainWindow", "Your Identities", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_5.setText(QtGui.QApplication.translate("MainWindow", "Here you can subscribe to \'broadcast messages\' that are sent by other users. Messages will appear in your Inbox. Addresses here override those on the Blacklist tab.", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButtonAddSubscription.setText(QtGui.QApplication.translate("MainWindow", "Add new Subscription", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Stream", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.youridentities), _translate("MainWindow", "Your Identities", None))
+        self.label_5.setText(_translate("MainWindow", "Here you can subscribe to \'broadcast messages\' that are sent by other users. Messages will appear in your Inbox. Addresses here override those on the Blacklist tab.", None))
+        self.pushButtonAddSubscription.setText(_translate("MainWindow", "Add new Subscription", None))
         self.tableWidgetSubscriptions.setSortingEnabled(True)
         item = self.tableWidgetSubscriptions.horizontalHeaderItem(0)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Label", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Label", None))
         item = self.tableWidgetSubscriptions.horizontalHeaderItem(1)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Address", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.subscriptions), QtGui.QApplication.translate("MainWindow", "Subscriptions", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_6.setText(QtGui.QApplication.translate("MainWindow", "The Address book is useful for adding names or labels to other people\'s Bitmessage addresses so that you can recognize them more easily in your inbox. You can add entries here using the \'Add\' button, or from your inbox by right-clicking on a message.", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButtonAddAddressBook.setText(QtGui.QApplication.translate("MainWindow", "Add new entry", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Address", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.subscriptions), _translate("MainWindow", "Subscriptions", None))
+        self.label_6.setText(_translate("MainWindow", "The Address book is useful for adding names or labels to other people\'s Bitmessage addresses so that you can recognize them more easily in your inbox. You can add entries here using the \'Add\' button, or from your inbox by right-clicking on a message.", None))
+        self.pushButtonAddAddressBook.setText(_translate("MainWindow", "Add new entry", None))
         self.tableWidgetAddressBook.setSortingEnabled(True)
         item = self.tableWidgetAddressBook.horizontalHeaderItem(0)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Name or Label", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Name or Label", None))
         item = self.tableWidgetAddressBook.horizontalHeaderItem(1)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Address", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.addressbook), QtGui.QApplication.translate("MainWindow", "Address Book", None, QtGui.QApplication.UnicodeUTF8))
-        self.radioButtonBlacklist.setText(QtGui.QApplication.translate("MainWindow", "Use a Blacklist (Allow all incoming messages except those on the Blacklist)", None, QtGui.QApplication.UnicodeUTF8))
-        self.radioButtonWhitelist.setText(QtGui.QApplication.translate("MainWindow", "Use a Whitelist (Block all incoming messages except those on the Whitelist)", None, QtGui.QApplication.UnicodeUTF8))
-        self.pushButtonAddBlacklist.setText(QtGui.QApplication.translate("MainWindow", "Add new entry", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Address", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.addressbook), _translate("MainWindow", "Address Book", None))
+        self.radioButtonBlacklist.setText(_translate("MainWindow", "Use a Blacklist (Allow all incoming messages except those on the Blacklist)", None))
+        self.radioButtonWhitelist.setText(_translate("MainWindow", "Use a Whitelist (Block all incoming messages except those on the Whitelist)", None))
+        self.pushButtonAddBlacklist.setText(_translate("MainWindow", "Add new entry", None))
         self.tableWidgetBlacklist.setSortingEnabled(True)
         item = self.tableWidgetBlacklist.horizontalHeaderItem(0)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Name or Label", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Name or Label", None))
         item = self.tableWidgetBlacklist.horizontalHeaderItem(1)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Address", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.blackwhitelist), QtGui.QApplication.translate("MainWindow", "Blacklist", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Address", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.blackwhitelist), _translate("MainWindow", "Blacklist", None))
         item = self.tableWidgetConnectionCount.horizontalHeaderItem(0)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Stream Number", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Stream Number", None))
         item = self.tableWidgetConnectionCount.horizontalHeaderItem(1)
-        item.setText(QtGui.QApplication.translate("MainWindow", "Number of Connections", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelTotalConnections.setText(QtGui.QApplication.translate("MainWindow", "Total connections: 0", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelStartupTime.setText(QtGui.QApplication.translate("MainWindow", "Since startup at asdf:", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelMessageCount.setText(QtGui.QApplication.translate("MainWindow", "Processed 0 person-to-person messages.", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelPubkeyCount.setText(QtGui.QApplication.translate("MainWindow", "Processed 0 public keys.", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelBroadcastCount.setText(QtGui.QApplication.translate("MainWindow", "Processed 0 broadcasts.", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus), QtGui.QApplication.translate("MainWindow", "Network Status", None, QtGui.QApplication.UnicodeUTF8))
-        self.menuFile.setTitle(QtGui.QApplication.translate("MainWindow", "File", None, QtGui.QApplication.UnicodeUTF8))
-        self.menuSettings.setTitle(QtGui.QApplication.translate("MainWindow", "Settings", None, QtGui.QApplication.UnicodeUTF8))
-        self.menuHelp.setTitle(QtGui.QApplication.translate("MainWindow", "Help", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionImport_keys.setText(QtGui.QApplication.translate("MainWindow", "Import keys", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionManageKeys.setText(QtGui.QApplication.translate("MainWindow", "Manage keys", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionExit.setText(QtGui.QApplication.translate("MainWindow", "Quit", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionHelp.setText(QtGui.QApplication.translate("MainWindow", "Help", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionAbout.setText(QtGui.QApplication.translate("MainWindow", "About", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionSettings.setText(QtGui.QApplication.translate("MainWindow", "Settings", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionRegenerateDeterministicAddresses.setText(QtGui.QApplication.translate("MainWindow", "Regenerate deterministic addresses", None, QtGui.QApplication.UnicodeUTF8))
-        self.actionDeleteAllTrashedMessages.setText(QtGui.QApplication.translate("MainWindow", "Delete all trashed messages", None, QtGui.QApplication.UnicodeUTF8))
+        item.setText(_translate("MainWindow", "Number of Connections", None))
+        self.labelTotalConnections.setText(_translate("MainWindow", "Total connections: 0", None))
+        self.labelStartupTime.setText(_translate("MainWindow", "Since startup at asdf:", None))
+        self.labelMessageCount.setText(_translate("MainWindow", "Processed 0 person-to-person message.", None))
+        self.labelPubkeyCount.setText(_translate("MainWindow", "Processed 0 public key.", None))
+        self.labelBroadcastCount.setText(_translate("MainWindow", "Processed 0 broadcast.", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus), _translate("MainWindow", "Network Status", None))
+        self.menuFile.setTitle(_translate("MainWindow", "File", None))
+        self.menuSettings.setTitle(_translate("MainWindow", "Settings", None))
+        self.menuHelp.setTitle(_translate("MainWindow", "Help", None))
+        self.actionImport_keys.setText(_translate("MainWindow", "Import keys", None))
+        self.actionManageKeys.setText(_translate("MainWindow", "Manage keys", None))
+        self.actionExit.setText(_translate("MainWindow", "Quit", None))
+        self.actionHelp.setText(_translate("MainWindow", "Help", None))
+        self.actionAbout.setText(_translate("MainWindow", "About", None))
+        self.actionSettings.setText(_translate("MainWindow", "Settings", None))
+        self.actionRegenerateDeterministicAddresses.setText(_translate("MainWindow", "Regenerate deterministic addresses", None))
+        self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
 
 import bitmessage_icons_rc
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    MainWindow = QtGui.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
+
