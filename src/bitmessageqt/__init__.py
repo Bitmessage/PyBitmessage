@@ -905,7 +905,7 @@ class MyForm(QtGui.QMainWindow):
             shared.statusIconColor = 'red'
             # if the connection is lost then show a notification
             if self.connected:
-                self.notifierShow('Bitmessage','Connection lost')
+                self.notifierShow('Bitmessage',QtGui.QApplication.translate("MainWindow", "Connection lost"))
             self.connected = False
 
             if self.actionStatus != None:
@@ -918,7 +918,7 @@ class MyForm(QtGui.QMainWindow):
             shared.statusIconColor = 'yellow'
             # if a new connection has been established then show a notification
             if not self.connected:
-                self.notifierShow('Bitmessage','Connected')
+                self.notifierShow('Bitmessage',QtGui.QApplication.translate("MainWindow", "Connected"))
             self.connected = True
 
             if self.actionStatus != None:
@@ -930,7 +930,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
             if not self.connected:
-                self.notifierShow('Bitmessage','Connected')
+                self.notifierShow('Bitmessage',QtGui.QApplication.translate("MainWindow", "Connected"))
             self.connected = True
 
             if self.actionStatus != None:
@@ -966,7 +966,7 @@ class MyForm(QtGui.QMainWindow):
     def removeInboxRowByMsgid(self,msgid):#msgid and inventoryHash are the same thing
         for i in range(self.ui.tableWidgetInbox.rowCount()):
             if msgid == str(self.ui.tableWidgetInbox.item(i,3).data(Qt.UserRole).toPyObject()):
-                self.statusBar().showMessage('Message trashed')
+                self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Message trashed"))
                 self.ui.tableWidgetInbox.removeRow(i)
                 break
 

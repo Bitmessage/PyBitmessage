@@ -627,7 +627,6 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1088"/>
         <source>Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.</source>
-        <translatorcomment>/*&quot;your acquaintance is being clever&quot;?*/ </translatorcomment>
         <translation>Erreur : La version de l&apos;adresse %1 est trop grande. Pensez à mettre à jour Bitmessage.</translation>
     </message>
     <message>
@@ -699,6 +698,11 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
         <location filename="../bitmessageqt/__init__.py" line="1415"/>
         <source>Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want.</source>
         <translation>Erreur : Vous ne pouvez pas ajouter une même adresse à vos abonnements deux fois. Essayez de renommer l&apos;adresse existante.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="969"/>
+        <source>Message trashed</source>
+        <translation>Message envoyé à la corbeille</translation>
     </message>
 </context>
 <context>
