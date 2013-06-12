@@ -2440,7 +2440,7 @@ class sqlThread(threading.Thread):
             self.conn.commit()
             if transmitdata == '':
                 sys.stderr.write('Problem: The version of SQLite you have cannot store Null values. Please download and install the latest revision of your version of Python (for example, the latest Python 2.7 revision) and try again.\n')
-                sys.stderr.write('PyBitmessage will now exist very abruptly. You may now see threading errors related to this abrupt exit but the problem you need to solve is related to SQLite.\n\n')
+                sys.stderr.write('PyBitmessage will now exit very abruptly. You may now see threading errors related to this abrupt exit but the problem you need to solve is related to SQLite.\n\n')
                 os._exit(0)
         except Exception, err:
             print err
