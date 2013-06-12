@@ -3,57 +3,57 @@
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../bitmessageui.py" line="460"/>
+        <location filename="../bitmessageui.py" line="469"/>
         <source>Bitmessage</source>
         <translation>Bitmessage</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="488"/>
+        <location filename="../bitmessageui.py" line="497"/>
         <source>To</source>
         <translation>Vers</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="490"/>
+        <location filename="../bitmessageui.py" line="499"/>
         <source>From</source>
         <translation>De</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="492"/>
+        <location filename="../bitmessageui.py" line="501"/>
         <source>Subject</source>
         <translation>Sujet</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="469"/>
+        <location filename="../bitmessageui.py" line="478"/>
         <source>Received</source>
         <translation>Reçu</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="470"/>
+        <location filename="../bitmessageui.py" line="479"/>
         <source>Inbox</source>
         <translation>Boîte de réception</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="471"/>
+        <location filename="../bitmessageui.py" line="480"/>
         <source>Load from Address book</source>
         <translation>Charger depuis carnet d&apos;adresses</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="472"/>
+        <location filename="../bitmessageui.py" line="481"/>
         <source>Message:</source>
         <translation>Message :</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="473"/>
+        <location filename="../bitmessageui.py" line="482"/>
         <source>Subject:</source>
         <translation>Sujet :</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="474"/>
+        <location filename="../bitmessageui.py" line="483"/>
         <source>Send to one or more specific people</source>
         <translation>Envoyer à une ou plusieurs personne(s)</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="475"/>
+        <location filename="../bitmessageui.py" line="484"/>
         <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
@@ -66,202 +66,202 @@ p, li { white-space: pre-wrap; }
 &lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="480"/>
+        <location filename="../bitmessageui.py" line="489"/>
         <source>To:</source>
         <translation>Vers :</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="481"/>
+        <location filename="../bitmessageui.py" line="490"/>
         <source>From:</source>
         <translation>De :</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="482"/>
+        <location filename="../bitmessageui.py" line="491"/>
         <source>Broadcast to everyone who is subscribed to your address</source>
         <translation>Diffuser à chaque abonné de cette adresse</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="485"/>
+        <location filename="../bitmessageui.py" line="494"/>
         <source>Send</source>
         <translation>Envoyer</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="484"/>
+        <location filename="../bitmessageui.py" line="493"/>
         <source>Be aware that broadcasts are only encrypted with your address. Anyone who knows your address can read them.</source>
         <translation>Gardez en tête que les diffusions sont seulement chiffrées avec votre adresse. Quiconque disposant de votre adresse peut les lire.</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="494"/>
+        <location filename="../bitmessageui.py" line="503"/>
         <source>Status</source>
         <translation>Statut</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="495"/>
+        <location filename="../bitmessageui.py" line="504"/>
         <source>Sent</source>
         <translation>Envoyé</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="496"/>
+        <location filename="../bitmessageui.py" line="505"/>
         <source>New</source>
         <translation>Nouveau</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="499"/>
+        <location filename="../bitmessageui.py" line="508"/>
         <source>Label (not shown to anyone)</source>
         <translation>Label (seulement visible par vous)</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="528"/>
+        <location filename="../bitmessageui.py" line="537"/>
         <source>Address</source>
         <translation>Adresse</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="503"/>
+        <location filename="../bitmessageui.py" line="512"/>
         <source>Stream</source>
         <translation>Flux</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="504"/>
+        <location filename="../bitmessageui.py" line="513"/>
         <source>Your Identities</source>
         <translation>Vos identités</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="505"/>
+        <location filename="../bitmessageui.py" line="514"/>
         <source>Here you can subscribe to &apos;broadcast messages&apos; that are sent by other users. Messages will appear in your Inbox. Addresses here override those on the Blacklist tab.</source>
         <translation>Vous pouvez ici souscrire aux &apos;messages de diffusion&apos; envoyés par d&apos;autres utilisateurs. Les messages apparaîtront dans votre boîte de récption. Les adresses placées ici outrepassent la liste noire.</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="506"/>
+        <location filename="../bitmessageui.py" line="515"/>
         <source>Add new Subscription</source>
         <translation>Ajouter un nouvel abonnement</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="509"/>
+        <location filename="../bitmessageui.py" line="518"/>
         <source>Label</source>
         <translation>Label</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="512"/>
+        <location filename="../bitmessageui.py" line="521"/>
         <source>Subscriptions</source>
         <translation>Abonnements</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="513"/>
+        <location filename="../bitmessageui.py" line="522"/>
         <source>The Address book is useful for adding names or labels to other people&apos;s Bitmessage addresses so that you can recognize them more easily in your inbox. You can add entries here using the &apos;Add&apos; button, or from your inbox by right-clicking on a message.</source>
         <translation>Le carnet d&apos;adresses est utile pour mettre un nom sur une adresse Bitmessage et ainsi faciliter la gestion de votre boîte de réception. Vous pouvez ajouter des entrées ici en utilisant le bouton &apos;Ajouter&apos;, ou depuis votre boîte de réception en faisant un clic-droit sur un message.</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="523"/>
+        <location filename="../bitmessageui.py" line="532"/>
         <source>Add new entry</source>
         <translation>Ajouter une nouvelle entrée</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="526"/>
+        <location filename="../bitmessageui.py" line="535"/>
         <source>Name or Label</source>
         <translation>Nom ou Label</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="520"/>
+        <location filename="../bitmessageui.py" line="529"/>
         <source>Address Book</source>
         <translation>Carnet d&apos;adresses</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="521"/>
+        <location filename="../bitmessageui.py" line="530"/>
         <source>Use a Blacklist (Allow all incoming messages except those on the Blacklist)</source>
         <translation>Utiliser une liste noire (autoriser tous les messages entrants exceptés ceux sur la liste noire)</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="522"/>
+        <location filename="../bitmessageui.py" line="531"/>
         <source>Use a Whitelist (Block all incoming messages except those on the Whitelist)</source>
         <translation>Utiliser une liste blanche (refuser tous les messages entrants exceptés ceux sur la liste blanche)</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="529"/>
+        <location filename="../bitmessageui.py" line="538"/>
         <source>Blacklist</source>
         <translation>Liste noire</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="531"/>
+        <location filename="../bitmessageui.py" line="540"/>
         <source>Stream Number</source>
         <translation>Numéro de flux</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="533"/>
+        <location filename="../bitmessageui.py" line="542"/>
         <source>Number of Connections</source>
         <translation>Nombre de connexions</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="534"/>
+        <location filename="../bitmessageui.py" line="543"/>
         <source>Total connections: 0</source>
         <translation>Nombre de connexions total : 0</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="535"/>
+        <location filename="../bitmessageui.py" line="544"/>
         <source>Since startup at asdf:</source>
         <translation>Depuis le lancement à asdf :</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="536"/>
+        <location filename="../bitmessageui.py" line="545"/>
         <source>Processed 0 person-to-person message.</source>
         <translation>0 message de pair à pair traité.</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="537"/>
+        <location filename="../bitmessageui.py" line="546"/>
         <source>Processed 0 public key.</source>
         <translation>0 clé publique traitée.</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="538"/>
+        <location filename="../bitmessageui.py" line="547"/>
         <source>Processed 0 broadcast.</source>
         <translation>0 message de diffusion traité.</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="539"/>
+        <location filename="../bitmessageui.py" line="548"/>
         <source>Network Status</source>
         <translation>État du réseau</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="540"/>
+        <location filename="../bitmessageui.py" line="549"/>
         <source>File</source>
         <translation>Fichier</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="548"/>
+        <location filename="../bitmessageui.py" line="557"/>
         <source>Settings</source>
         <translation>Paramètres</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="546"/>
+        <location filename="../bitmessageui.py" line="555"/>
         <source>Help</source>
         <translation>Aide</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="543"/>
+        <location filename="../bitmessageui.py" line="552"/>
         <source>Import keys</source>
         <translation>Importer les clés</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="544"/>
+        <location filename="../bitmessageui.py" line="553"/>
         <source>Manage keys</source>
         <translation>Gérer les clés</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="545"/>
+        <location filename="../bitmessageui.py" line="554"/>
         <source>Quit</source>
         <translation>Quitter</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="547"/>
+        <location filename="../bitmessageui.py" line="556"/>
         <source>About</source>
         <translation>À propos</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="549"/>
+        <location filename="../bitmessageui.py" line="558"/>
         <source>Regenerate deterministic addresses</source>
         <translation>Regénérer les clés déterministes</translation>
     </message>
     <message>
-        <location filename="../bitmessageui.py" line="550"/>
+        <location filename="../bitmessageui.py" line="559"/>
         <source>Delete all trashed messages</source>
         <translation>Supprimer tous les messages dans la corbeille</translation>
     </message>
@@ -485,7 +485,7 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1735"/>
-        <source>Bitmessage will use your proxy from now on now but you may want to manually restart Bitmessage now to close existing connections.</source>
+        <source>Bitmessage will use your proxy from now on but you may want to manually restart Bitmessage now to close existing connections.</source>
         <translation>Bitmessage utilisera votre proxy à partir de maintenant mais il vous faudra redémarrer Bitmessage pour fermer les connexions existantes.</translation>
     </message>
     <message>
@@ -496,7 +496,7 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1892"/>
         <source>The address you entered was invalid. Ignoring it.</source>
-        <translation>L&apos;adresse que vous avez entré est invalide. Adresse ignorée.</translation>
+        <translation>L&apos;adresse que vous avez entrée est invalide. Adresse ignorée.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1945"/>
@@ -556,12 +556,12 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2126"/>
         <source>Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.</source>
-        <translation>Messages déplacés dans la corbeille. Il n&apos;y a pas d&apos;interface utilisateur pour voir votre corbeille, mais ils sont toujours présents sur le disque si vous êtes désespérés pour les récupérer.</translation>
+        <translation>Messages déplacés dans la corbeille. Il n&apos;y a pas d&apos;interface utilisateur pour voir votre corbeille, mais ils sont toujours présents sur le disque si vous souhaitez les récupérer.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2220"/>
         <source>No addresses selected.</source>
-        <translation>Aucune adresses sélectionnée.</translation>
+        <translation>Aucune adresse sélectionnée.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2638"/>
@@ -581,7 +581,7 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2762"/>
         <source>The version number of this address is higher than this software can support. Please upgrade Bitmessage.</source>
-        <translation>Le numéro de version de cette adresse est supérieure à celle que ce programme peut supporter. Veuiller mettre Bitmessage à jour.</translation>
+        <translation>Le numéro de version de cette adresse est supérieur à celui que le programme peut supporter. Veuiller mettre Bitmessage à jour.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2765"/>
@@ -601,7 +601,7 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2774"/>
         <source>Address is valid.</source>
-        <translation>L&apos;adresse est invalide.</translation>
+        <translation>L&apos;adresse est valide.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2806"/>
