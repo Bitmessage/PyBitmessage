@@ -2390,6 +2390,9 @@ class UISignaler(QThread):
 
 def run():
     app = QtGui.QApplication(sys.argv)
+    translator = QtCore.QTranslator()
+    translator.load("translations/bitmessage_"+str(locale.getlocale()[0]))
+    QtGui.QApplication.installTranslator(translator)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
 
