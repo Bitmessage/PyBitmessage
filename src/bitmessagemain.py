@@ -177,7 +177,8 @@ class outgoingSynSender(threading.Thread):
                         shared.printLock.release()
                 except socks.Socks5AuthError as err:
                     shared.UISignalQueue.put((
-                        'updateStatusBar', "SOCKS5 Authentication problem: " + str(err)))
+                        'updateStatusBar', _translate(
+                        "MainWindow", "SOCKS5 Authentication problem: %1").arg(str(err))))
                 except socks.Socks5Error as err:
                     pass
                     print 'SOCKS5 error. (It is possible that the server wants authentication).)', str(err)
