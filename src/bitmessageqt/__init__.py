@@ -1594,7 +1594,7 @@ class MyForm(QtGui.QMainWindow):
     def click_pushButtonAddAddressBook(self):
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
         if self.NewSubscriptionDialogInstance.exec_():
-            if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() == 'Address is valid.':
+            if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() == _translate("MainWindow", "Address is valid."):
                 # First we must check to see if the address is already in the
                 # address book. The user cannot add it again or else it will
                 # cause problems when updating and deleting the entry.
