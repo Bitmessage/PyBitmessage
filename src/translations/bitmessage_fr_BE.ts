@@ -745,7 +745,7 @@ L&apos;option &apos;Nombre Aléatoire&apos; est sélectionnée par défaut mais 
     </message>
     <message>
         <location filename="../newaddressdialog.py" line="169"/>
-        <source>Use a passpharase to make addresses</source>
+        <source>Use a passphrase to make addresses</source>
         <translation>Utiliser une phrase secrète pour créer une adresse</translation>
     </message>
     <message>
@@ -930,7 +930,7 @@ L&apos;option &apos;Nombre Aléatoire&apos; est sélectionnée par défaut mais 
     </message>
     <message>
         <location filename="../iconglossary.py" line="75"/>
-        <source>You have made at least one connection to a peer using an outgoing connection but you have not yet received any incoming connections. Your firewall or home router probably isn&apos;t configured to foward incoming TCP connections to your computer. Bitmessage will work just fine but it would help the Bitmessage network if you allowed for incoming connections and will help you be a better-connected node.</source>
+        <source>You have made at least one connection to a peer using an outgoing connection but you have not yet received any incoming connections. Your firewall or home router probably isn&apos;t configured to forward incoming TCP connections to your computer. Bitmessage will work just fine but it would help the Bitmessage network if you allowed for incoming connections and will help you be a better-connected node.</source>
         <translation>Vous avez au moins une connexion sortante avec un pair mais vous n&apos;avez encore reçu aucune connexion entrante. Votre pare-feu ou routeur n&apos;est probablement pas configuré pour transmettre les connexions TCP vers votre ordinateur. Bitmessage fonctionnera correctement, mais le réseau Bitmessage se portera mieux si vous autorisez les connexions entrantes. Cela vous permettra d&apos;être un nœud mieux connecté.</translation>
     </message>
     <message>
