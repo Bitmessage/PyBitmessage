@@ -791,6 +791,11 @@ Difficulté requise par le destinataire : %1 et %2</translation>
         <source>Work is queued.</source>
         <translation>Travail en attente.</translation>
     </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1507"/>
+        <source>Work is queued. %1</source>
+        <translation>Travail en attente. %1</translation>
+    </message>
 </context>
 <context>
     <name>NewAddressDialog</name>
