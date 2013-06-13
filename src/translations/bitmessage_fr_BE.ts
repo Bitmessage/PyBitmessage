@@ -739,6 +739,11 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
         <source>Done generating address. Doing work necessary to broadcast it...</source>
         <translation>Génération de l&apos;adresse terminée. Travail pour la diffuser en cours...</translation>
     </message>
+    <message>
+        <location filename="../bitmessagemain.py" line="4095"/>
+        <source>Done generating address</source>
+        <translation>Génération de l&apos;adresse terminée</translation>
+    </message>
 </context>
 <context>
     <name>NewAddressDialog</name>
