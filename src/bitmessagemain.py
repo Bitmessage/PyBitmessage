@@ -2899,11 +2899,12 @@ class singleWorker(threading.Thread):
                     dataToEncrypt += encodeVarint(shared.config.getint(fromaddress,'noncetrialsperbyte'))
                     dataToEncrypt += encodeVarint(shared.config.getint(fromaddress,'payloadlengthextrabytes'))
                 dataToEncrypt += '\x02' #message encoding type
-                dataToEncrypt += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding.
+                dataToEncrypt += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding per the documentation on the wiki.
                 dataToEncrypt += 'Subject:' + subject + '\n' + 'Body:' + body
                 signature = highlevelcrypto.sign(dataToEncrypt,privSigningKeyHex)
                 dataToEncrypt += encodeVarint(len(signature))
                 dataToEncrypt += signature
+                #Encrypt the broadcast with the information contained in the broadcaster's address. Anyone who knows the address can generate the private encryption key to decrypt the broadcast. This provides virtually no privacy; its purpose is to keep questionable and illegal content from flowing through the Internet connections and being stored on the disk of 3rd parties.
                 privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()[:32]
                 pubEncryptionKey = pointMult(privEncryptionKey)
                 payload += highlevelcrypto.encrypt(dataToEncrypt,pubEncryptionKey.encode('hex'))
@@ -3166,7 +3167,18 @@ class singleWorker(threading.Thread):
                 payload += signature
 
             #We have assembled the data that will be encrypted.
-            encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
+            try:
+                encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
+            except:
+                shared.sqlLock.acquire()
+                t = (ackdata,)
+                shared.sqlSubmitQueue.put('''UPDATE sent SET status='badkey' WHERE ackdata=?''')
+                shared.sqlSubmitQueue.put(t)
+                queryreturn = shared.sqlReturnQueue.get()
+                shared.sqlSubmitQueue.put('commit')
+                shared.sqlLock.release()
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,'Problem: The recipient\'s encryption key is no good. Could not encrypt message. ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
+                continue
             encryptedPayload = embeddedTime + encodeVarint(toStreamNumber) + encrypted
             target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
             shared.printLock.acquire()
@@ -3194,7 +3206,7 @@ class singleWorker(threading.Thread):
             #Update the status of the message in the 'sent' table to have a 'msgsent' status
             shared.sqlLock.acquire()
             t = (ackdata,)
-            shared.sqlSubmitQueue.put('''UPDATE sent SET status='msgsent' WHERE ackdata=? AND (status='doingmsgpow' or status='forcepow') ''')
+            shared.sqlSubmitQueue.put('''UPDATE sent SET status='msgsent' WHERE ackdata=?''')
             shared.sqlSubmitQueue.put(t)
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
