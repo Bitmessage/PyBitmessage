@@ -52,6 +52,14 @@ import proofofwork
 # For each stream to which we connect, several outgoingSynSender threads
 # will exist and will collectively create 8 connections with peers.
 
+try:
+    from PyQt4 import QtCore, QtGui
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text):
+        return QtGui.QApplication.translate(context, text)
+except AttributeError:
+    print 'Error message:', err
+
 
 class outgoingSynSender(threading.Thread):
 
