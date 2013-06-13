@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="2.0" language="fr_BE" sourcelanguage="en">
+<!DOCTYPE TS>
+<TS version="2.0" language="fr_BE" sourcelanguage="en">
 <context>
     <name>MainWindow</name>
     <message>
@@ -266,107 +267,107 @@ p, li { white-space: pre-wrap; }
         <translation>Supprimer tous les messages dans la corbeille</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1041"/>
+        <location filename="../bitmessageqt/__init__.py" line="1050"/>
         <source>Total Connections: %1</source>
         <translation>Nombre total de connexions : %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1065"/>
+        <location filename="../bitmessageqt/__init__.py" line="1074"/>
         <source>Not Connected</source>
         <translation>Déconnecté</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1098"/>
+        <location filename="../bitmessageqt/__init__.py" line="1107"/>
         <source>Connected</source>
         <translation>Connecté</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="693"/>
+        <location filename="../bitmessageqt/__init__.py" line="702"/>
         <source>Show Bitmessage</source>
         <translation>Afficher Bitmessage</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="708"/>
+        <location filename="../bitmessageqt/__init__.py" line="717"/>
         <source>Subscribe</source>
         <translation>S&apos;abonner</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="987"/>
+        <location filename="../bitmessageqt/__init__.py" line="996"/>
         <source>Processed %1 person-to-person messages.</source>
         <translation>%1 messages de pair à pair traités.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="992"/>
+        <location filename="../bitmessageqt/__init__.py" line="1001"/>
         <source>Processed %1 broadcast messages.</source>
         <translation>%1 messages de diffusion traités.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="997"/>
+        <location filename="../bitmessageqt/__init__.py" line="1006"/>
         <source>Processed %1 public keys.</source>
         <translation>%1 clés publiques traitées.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="536"/>
+        <location filename="../bitmessageqt/__init__.py" line="545"/>
         <source>Since startup on %1</source>
         <translation>Depuis lancement le %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="452"/>
+        <location filename="../bitmessageqt/__init__.py" line="461"/>
         <source>Waiting on their encryption key. Will request it again soon.</source>
         <translation>En attente de la clé de chiffrement. Une nouvelle requête sera bientôt lancée.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="455"/>
+        <location filename="../bitmessageqt/__init__.py" line="464"/>
         <source>Encryption key request queued.</source>
         <translation>Demande de clé de chiffrement en attente.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="458"/>
+        <location filename="../bitmessageqt/__init__.py" line="467"/>
         <source>Queued.</source>
         <translation>En attente.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="464"/>
+        <location filename="../bitmessageqt/__init__.py" line="473"/>
         <source>Need to do work to send message. Work is queued.</source>
         <translation>Travail nécessaire pour envoyer le message. Travail en attente.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="467"/>
+        <location filename="../bitmessageqt/__init__.py" line="476"/>
         <source>Acknowledgement of the message received %1</source>
         <translation>Accusé de réception reçu le %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="470"/>
+        <location filename="../bitmessageqt/__init__.py" line="479"/>
         <source>Broadcast queued.</source>
         <translation>Message de diffusion en attente.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="473"/>
+        <location filename="../bitmessageqt/__init__.py" line="482"/>
         <source>Broadcast on %1</source>
         <translation>Message de diffusion à %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="476"/>
+        <location filename="../bitmessageqt/__init__.py" line="485"/>
         <source>Problem: The work demanded by the recipient is more difficult than you are willing to do. %1</source>
         <translation>Problème : Le travail demandé par le destinataire est plus difficile que ce que vous avez paramétré. %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="479"/>
+        <location filename="../bitmessageqt/__init__.py" line="488"/>
         <source>Forced difficulty override. Send should start soon.</source>
         <translation>Neutralisation forcée de la difficulté. L&apos;envoi devrait bientôt commencer.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="461"/>
+        <location filename="../bitmessageqt/__init__.py" line="470"/>
         <source>Message sent. Waiting on acknowledgement. Sent at %1</source>
         <translation>Message envoyé. En attente de l&apos;accusé de réception. Envoyé le %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="914"/>
+        <location filename="../bitmessageqt/__init__.py" line="923"/>
         <source>You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file.</source>
         <translation>Vous pouvez éditer vos clés en éditant le fichier keys.dat stocké dans le même répertoire que ce programme. Il est important de faire des sauvegardes de ce fichier.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="918"/>
+        <location filename="../bitmessageqt/__init__.py" line="927"/>
         <source>You may manage your keys by editing the keys.dat file stored in
  %1 
 It is important that you back up this file.</source>
@@ -375,12 +376,12 @@ It is important that you back up this file.</source>
 Il est important de faire des sauvegardes de ce fichier.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="922"/>
+        <location filename="../bitmessageqt/__init__.py" line="931"/>
         <source>You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)</source>
         <translation>Vous pouvez éditer vos clés en éditant le fichier keys.dat stocké dans le même répertoire que ce programme. Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;ouvrir maintenant ? (Assurez-vous de fermer Bitmessage avant d&apos;effectuer des changements.)</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="925"/>
+        <location filename="../bitmessageqt/__init__.py" line="934"/>
         <source>You may manage your keys by editing the keys.dat file stored in
  %1 
 It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)</source>
@@ -389,432 +390,442 @@ It is important that you back up this file. Would you like to open the file now?
 Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;ouvrir maintenant ? (Assurez-vous de fermer Bitmessage avant d&apos;effectuer des changements.)</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="130"/>
+        <location filename="../bitmessageqt/__init__.py" line="139"/>
         <source>Add sender to your Address Book</source>
         <translation>Ajouter l&apos;expéditeur au carnet d&apos;adresses</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="225"/>
+        <location filename="../bitmessageqt/__init__.py" line="234"/>
         <source>Move to Trash</source>
         <translation>Envoyer à la Corbeille</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="134"/>
+        <location filename="../bitmessageqt/__init__.py" line="143"/>
         <source>View HTML code as formatted text</source>
         <translation>Voir le code HTML comme du texte formaté</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="248"/>
+        <location filename="../bitmessageqt/__init__.py" line="257"/>
         <source>Enable</source>
         <translation>Activer</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="250"/>
+        <location filename="../bitmessageqt/__init__.py" line="259"/>
         <source>Disable</source>
         <translation>Désactiver</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="246"/>
+        <location filename="../bitmessageqt/__init__.py" line="255"/>
         <source>Copy address to clipboard</source>
         <translation>Copier l&apos;adresse dans le presse-papier</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="159"/>
+        <location filename="../bitmessageqt/__init__.py" line="168"/>
         <source>Special address behavior...</source>
         <translation>Comportement spécial de l&apos;adresse...</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="177"/>
+        <location filename="../bitmessageqt/__init__.py" line="186"/>
         <source>Send message to this address</source>
         <translation>Envoyer un message à cette adresse</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="181"/>
+        <location filename="../bitmessageqt/__init__.py" line="190"/>
         <source>Add New Address</source>
         <translation>Ajouter nouvelle adresse</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="244"/>
+        <location filename="../bitmessageqt/__init__.py" line="253"/>
         <source>Delete</source>
         <translation>Supprimer</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="227"/>
+        <location filename="../bitmessageqt/__init__.py" line="236"/>
         <source>Copy destination address to clipboard</source>
         <translation>Copier l&apos;adresse de destination dans le presse-papier</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="229"/>
+        <location filename="../bitmessageqt/__init__.py" line="238"/>
         <source>Force send</source>
         <translation>Forcer l&apos;envoi</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="931"/>
+        <location filename="../bitmessageqt/__init__.py" line="940"/>
         <source>Are you sure you want to delete all trashed messages?</source>
         <translation>Êtes-vous sûr de vouloir supprimer tous les messages dans la corbeille ?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="942"/>
+        <location filename="../bitmessageqt/__init__.py" line="951"/>
         <source>You must type your passphrase. If you don&apos;t have one then this is not the form for you.</source>
         <translation>Vous devez taper votre phrase secrète. Si vous n&apos;en avez pas, ce formulaire n&apos;est pas pour vous.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="931"/>
+        <location filename="../bitmessageqt/__init__.py" line="940"/>
         <source>Delete trash?</source>
         <translation>Supprimer la corbeille ?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="925"/>
+        <location filename="../bitmessageqt/__init__.py" line="934"/>
         <source>Open keys.dat?</source>
         <translation>Ouvrir keys.dat ?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="942"/>
+        <location filename="../bitmessageqt/__init__.py" line="951"/>
         <source>bad passphrase</source>
         <translation>Mauvaise phrase secrète</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1735"/>
+        <location filename="../bitmessageqt/__init__.py" line="1744"/>
         <source>Restart</source>
         <translation>Redémarrer</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1729"/>
+        <location filename="../bitmessageqt/__init__.py" line="1738"/>
         <source>You must restart Bitmessage for the port number change to take effect.</source>
         <translation>Vous devez redémarrer Bitmessage pour que le changement de port prenne effet.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1735"/>
+        <location filename="../bitmessageqt/__init__.py" line="1744"/>
         <source>Bitmessage will use your proxy from now on but you may want to manually restart Bitmessage now to close existing connections.</source>
         <translation>Bitmessage utilisera votre proxy à partir de maintenant mais il vous faudra redémarrer Bitmessage pour fermer les connexions existantes.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1889"/>
+        <location filename="../bitmessageqt/__init__.py" line="1898"/>
         <source>Error: You cannot add the same address to your list twice. Perhaps rename the existing one if you want.</source>
         <translation>Erreur : Vous ne pouvez pas ajouter une adresse déjà présente dans votre liste. Essayez de renommer l&apos;adresse existante.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1892"/>
+        <location filename="../bitmessageqt/__init__.py" line="1901"/>
         <source>The address you entered was invalid. Ignoring it.</source>
         <translation>L&apos;adresse que vous avez entrée est invalide. Adresse ignorée.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1945"/>
+        <location filename="../bitmessageqt/__init__.py" line="1954"/>
         <source>Passphrase mismatch</source>
         <translation>Phrases secrètes différentes</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1945"/>
+        <location filename="../bitmessageqt/__init__.py" line="1954"/>
         <source>The passphrase you entered twice doesn&apos;t match. Try again.</source>
         <translation>Les phrases secrètes entrées sont différentes. Réessayez.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1948"/>
+        <location filename="../bitmessageqt/__init__.py" line="1957"/>
         <source>Choose a passphrase</source>
         <translation>Choisissez une phrase secrète</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1948"/>
+        <location filename="../bitmessageqt/__init__.py" line="1957"/>
         <source>You really do need a passphrase.</source>
         <translation>Vous devez vraiment utiliser une phrase secrète.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1976"/>
+        <location filename="../bitmessageqt/__init__.py" line="1985"/>
         <source>All done. Closing user interface...</source>
         <translation>Terminé. Fermeture de l&apos;interface...</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2024"/>
+        <location filename="../bitmessageqt/__init__.py" line="2033"/>
         <source>Address is gone</source>
         <translation>L&apos;adresse a disparu</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2024"/>
+        <location filename="../bitmessageqt/__init__.py" line="2033"/>
         <source>Bitmessage cannot find your address %1. Perhaps you removed it?</source>
         <translation>Bitmessage ne peut pas trouver votre adresse %1. Peut-être l&apos;avez-vous supprimée ?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2028"/>
+        <location filename="../bitmessageqt/__init__.py" line="2037"/>
         <source>Address disabled</source>
         <translation>Adresse désactivée</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2028"/>
+        <location filename="../bitmessageqt/__init__.py" line="2037"/>
         <source>Error: The address from which you are trying to send is disabled. You&apos;ll have to enable it on the &apos;Your Identities&apos; tab before using it.</source>
         <translation>Erreur : L&apos;adresse avec laquelle vous essayez de communiquer est désactivée. Vous devez d&apos;abord l&apos;activer dans l&apos;onglet &apos;Vos identités&apos; avant de l&apos;utiliser.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2080"/>
+        <location filename="../bitmessageqt/__init__.py" line="2089"/>
         <source>Entry added to the Address Book. Edit the label to your liking.</source>
         <translation>Entrée ajoutée au carnet d&apos;adresses. Éditez le label selon votre souhait.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2083"/>
+        <location filename="../bitmessageqt/__init__.py" line="2092"/>
         <source>Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want.</source>
         <translation>Erreur : Vous ne pouvez pas ajouter une adresse déjà présente dans votre carnet d&apos;adresses. Essayez de renommer l&apos;adresse existante.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2126"/>
+        <location filename="../bitmessageqt/__init__.py" line="2135"/>
         <source>Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.</source>
         <translation>Messages déplacés dans la corbeille. Il n&apos;y a pas d&apos;interface utilisateur pour voir votre corbeille, mais ils sont toujours présents sur le disque si vous souhaitez les récupérer.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2220"/>
+        <location filename="../bitmessageqt/__init__.py" line="2229"/>
         <source>No addresses selected.</source>
         <translation>Aucune adresse sélectionnée.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2638"/>
+        <location filename="../bitmessageqt/__init__.py" line="2647"/>
         <source>Options have been disabled because they either aren&apos;t applicable or because they haven&apos;t yet been implimented for your operating system.</source>
         <translation>Certaines options ont été désactivées car elles n&apos;étaient pas applicables ou car elles n&apos;ont pas encore été implémentées pour votre système d&apos;exploitation.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2756"/>
+        <location filename="../bitmessageqt/__init__.py" line="2765"/>
         <source>The address should start with &apos;&apos;BM-&apos;&apos;</source>
         <translation>L&apos;adresse devrait commencer avec &quot;BM-&quot;</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2759"/>
+        <location filename="../bitmessageqt/__init__.py" line="2768"/>
         <source>The address is not typed or copied correctly (the checksum failed).</source>
         <translation>L&apos;adresse n&apos;est pas correcte (la somme de contrôle a échoué).</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2762"/>
+        <location filename="../bitmessageqt/__init__.py" line="2771"/>
         <source>The version number of this address is higher than this software can support. Please upgrade Bitmessage.</source>
         <translation>Le numéro de version de cette adresse est supérieur à celui que le programme peut supporter. Veuiller mettre Bitmessage à jour.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2765"/>
+        <location filename="../bitmessageqt/__init__.py" line="2774"/>
         <source>The address contains invalid characters.</source>
         <translation>L&apos;adresse contient des caractères invalides.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2768"/>
+        <location filename="../bitmessageqt/__init__.py" line="2777"/>
         <source>Some data encoded in the address is too short.</source>
         <translation>Certaines données encodées dans l&apos;adresse sont trop courtes.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2771"/>
+        <location filename="../bitmessageqt/__init__.py" line="2780"/>
         <source>Some data encoded in the address is too long.</source>
         <translation>Certaines données encodées dans l&apos;adresse sont trop longues.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2774"/>
+        <location filename="../bitmessageqt/__init__.py" line="2783"/>
         <source>Address is valid.</source>
         <translation>L&apos;adresse est valide.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2806"/>
+        <location filename="../bitmessageqt/__init__.py" line="2815"/>
         <source>You are using TCP port %1. (This can be changed in the settings).</source>
         <translation>Vous utilisez le port TCP %1. (Ceci peut être changé dans les paramètres).</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1272"/>
+        <location filename="../bitmessageqt/__init__.py" line="1281"/>
         <source>Error: Bitmessage addresses start with BM-   Please check %1</source>
         <translation>Erreur : Les adresses Bitmessage commencent avec BM-   Merci de vérifier %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1278"/>
+        <location filename="../bitmessageqt/__init__.py" line="1287"/>
         <source>Error: The address %1 contains invalid characters. Please check it.</source>
         <translation>Erreur : L&apos;adresse %1 contient des caractères invalides. Veuillez la vérifier.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1275"/>
+        <location filename="../bitmessageqt/__init__.py" line="1284"/>
         <source>Error: The address %1 is not typed or copied correctly. Please check it.</source>
         <translation>Erreur : L&apos;adresse %1 n&apos;est pas correctement recopiée. Veuillez la vérifier.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1281"/>
+        <location filename="../bitmessageqt/__init__.py" line="1290"/>
         <source>Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.</source>
         <translation>Erreur : La version de l&apos;adresse %1 est trop grande. Pensez à mettre à jour Bitmessage.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1284"/>
+        <location filename="../bitmessageqt/__init__.py" line="1293"/>
         <source>Error: Some data encoded in the address %1 is too short. There might be something wrong with the software of your acquaintance.</source>
         <translation>Erreur : Certaines données encodées dans l&apos;adresse %1 sont trop courtes. Il peut y avoir un problème avec le logiciel ou votre connaissance. </translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1287"/>
+        <location filename="../bitmessageqt/__init__.py" line="1296"/>
         <source>Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.</source>
         <translation>Erreur : Certaines données encodées dans l&apos;adresse %1 sont trop longues. Il peut y avoir un problème avec le logiciel ou votre connaissance.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1290"/>
+        <location filename="../bitmessageqt/__init__.py" line="1299"/>
         <source>Error: Something is wrong with the address %1.</source>
         <translation>Erreur : Problème avec l&apos;adresse %1.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1358"/>
+        <location filename="../bitmessageqt/__init__.py" line="1367"/>
         <source>Error: You must specify a From address. If you don&apos;t have one, go to the &apos;Your Identities&apos; tab.</source>
         <translation>Erreur : Vous devez spécifier une adresse d&apos;expéditeur. Si vous n&apos;en avez pas, rendez-vous dans l&apos;onglet &apos;Vos identités&apos;.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1302"/>
+        <location filename="../bitmessageqt/__init__.py" line="1311"/>
         <source>Sending to your address</source>
         <translation>Envoi vers votre adresse</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1302"/>
+        <location filename="../bitmessageqt/__init__.py" line="1311"/>
         <source>Error: One of the addresses to which you are sending a message, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.</source>
         <translation>Erreur : Une des adresses vers lesquelles vous envoyez un message, %1, est vôtre. Malheureusement, Bitmessage ne peut pas traiter ses propres messages. Essayez de lancer un second client sur une machine différente.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1308"/>
+        <location filename="../bitmessageqt/__init__.py" line="1317"/>
         <source>Address version number</source>
         <translation>Numéro de version de l&apos;adresse</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1308"/>
+        <location filename="../bitmessageqt/__init__.py" line="1317"/>
         <source>Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.</source>
         <translation>Concernant l&apos;adresse %1, Bitmessage ne peut pas comprendre les numéros de version de %2. Essayez de mettre à jour Bitmessage vers la dernière version.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1312"/>
+        <location filename="../bitmessageqt/__init__.py" line="1321"/>
         <source>Stream number</source>
         <translation>Numéro de flux</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1312"/>
+        <location filename="../bitmessageqt/__init__.py" line="1321"/>
         <source>Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.</source>
         <translation>Concernant l&apos;adresse %1, Bitmessage ne peut pas supporter les nombres de flux de %2. Essayez de mettre à jour Bitmessage vers la dernière version.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1317"/>
+        <location filename="../bitmessageqt/__init__.py" line="1326"/>
         <source>Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won&apos;t send until you connect.</source>
         <translation>Avertissement : Vous êtes actuellement déconnecté. Bitmessage fera le travail nécessaire pour envoyer le message mais il ne sera pas envoyé tant que vous ne vous connecterez pas.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1354"/>
+        <location filename="../bitmessageqt/__init__.py" line="1363"/>
         <source>Your &apos;To&apos; field is empty.</source>
         <translation>Votre champ &apos;Vers&apos; est vide.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1431"/>
+        <location filename="../bitmessageqt/__init__.py" line="1440"/>
         <source>Right click one or more entries in your address book and select &apos;Send message to this address&apos;.</source>
         <translation>Cliquez droit sur une ou plusieurs entrées dans votre carnet d&apos;adresses et sélectionnez &apos;Envoyer un message à ces adresses&apos;.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1670"/>
+        <location filename="../bitmessageqt/__init__.py" line="1679"/>
         <source>Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want.</source>
         <translation>Erreur : Vous ne pouvez pas ajouter une même adresse à vos abonnements deux fois. Essayez de renommer l&apos;adresse existante.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1138"/>
+        <location filename="../bitmessageqt/__init__.py" line="1147"/>
         <source>Message trashed</source>
         <translation>Message envoyé à la corbeille</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="60"/>
+        <location filename="../bitmessageqt/__init__.py" line="69"/>
         <source>One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer supported. May we delete it now?</source>
         <translation>Une de vos adresses, %1, est une vieille adresse de la version 1. Les adresses de la version 1 ne sont plus supportées. Nous pourrions la supprimer maintenant ?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="482"/>
+        <location filename="../bitmessageqt/__init__.py" line="491"/>
         <source>Unknown status: %1 %2</source>
         <translation>Statut inconnu : %1 %2</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1060"/>
+        <location filename="../bitmessageqt/__init__.py" line="1069"/>
         <source>Connection lost</source>
         <translation>Connexion perdue</translation>
+    </message>
+    <message>
+        <location filename="../bitmessagemain.py" line="179"/>
+        <source>SOCKS5 Authentication problem: %1</source>
+        <translation>Problème d&apos;authentification SOCKS5 : %1</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="137"/>
+        <source>Reply</source>
+        <translation>Répondre</translation>
     </message>
 </context>
 <context>
     <name>NewAddressDialog</name>
     <message>
-        <location filename="../newaddressdialog.py" line="164"/>
+        <location filename="../newaddressdialog.py" line="173"/>
         <source>Create new Address</source>
         <translation>Créer une nouvelle adresse</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="165"/>
+        <location filename="../newaddressdialog.py" line="174"/>
         <source>Here you may generate as many addresses as you like. Indeed, creating and abandoning addresses is encouraged. You may generate addresses by using either random numbers or by using a passphrase. If you use a passphrase, the address is called a &quot;deterministic&quot; address.
 The &apos;Random Number&apos; option is selected by default but deterministic addresses have several pros and cons:</source>
         <translation>Vous pouvez générer autant d&apos;adresses que vous le souhaitez. En effet, nous vous encourageons à créer et à délaisser vos adresses. Vous pouvez générer des adresses en utilisant des nombres aléatoires ou en utilisant une phrase secrète. Si vous utilisez une phrase secrète, l&apos;adresse sera une adresse &quot;déterministe&quot;.
 L&apos;option &apos;Nombre Aléatoire&apos; est sélectionnée par défaut mais les adresses déterministes ont certains avantages et inconvénients :</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="167"/>
+        <location filename="../newaddressdialog.py" line="176"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Pros:&lt;br/&gt;&lt;/span&gt;You can recreate your addresses on any computer from memory. &lt;br/&gt;You need-not worry about backing up your keys.dat file as long as you can remember your passphrase. &lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Cons:&lt;br/&gt;&lt;/span&gt;You must remember (or write down) your passphrase if you expect to be able to recreate your keys if they are lost. &lt;br/&gt;You must remember the address version number and the stream number along with your passphrase. &lt;br/&gt;If you choose a weak passphrase and someone on the Internet can brute-force it, they can read your messages and send messages as you.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Avantages :&lt;br/&gt;&lt;/span&gt;Vous pouvez recréer vos adresses sur n&apos;importe quel ordinateur. &lt;br/&gt;Vous n&apos;avez pas à vous inquiéter à propos de la sauvegarde de votre fichier keys.dat tant que vous vous rappelez de votre phrase secrète. &lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Inconvénients :&lt;br/&gt;&lt;/span&gt;Vous devez vous rappeler (ou noter) votre phrase secrète si vous souhaitez être capable de récréer vos clés si vous les perdez. &lt;br/&gt;Vous devez vous rappeler du numéro de version de l&apos;adresse et du numéro de flux en plus de votre phrase secrète. &lt;br/&gt;Si vous choisissez une phrase secrète faible et que quelqu&apos;un sur Internet parvient à la brute-forcer, il pourra lire vos messages et vous en envoyer.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="168"/>
+        <location filename="../newaddressdialog.py" line="177"/>
         <source>Use a random number generator to make an address</source>
         <translation>Utiliser un générateur de nombres aléatoires pour créer une adresse</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="169"/>
+        <location filename="../newaddressdialog.py" line="178"/>
         <source>Use a passphrase to make addresses</source>
         <translation>Utiliser une phrase secrète pour créer une adresse</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="170"/>
+        <location filename="../newaddressdialog.py" line="179"/>
         <source>Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter</source>
         <translation>Créer une adresse plus courte d&apos;un ou deux caractères (nécessite plusieurs minutes de temps de calcul supplémentaires)</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="171"/>
+        <location filename="../newaddressdialog.py" line="180"/>
         <source>Make deterministic addresses</source>
         <translation>Créer une adresse déterministe</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="172"/>
+        <location filename="../newaddressdialog.py" line="181"/>
         <source>Address version number: 3</source>
         <translation>Numéro de version de l&apos;adresse : 3</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="173"/>
+        <location filename="../newaddressdialog.py" line="182"/>
         <source>In addition to your passphrase, you must remember these numbers:</source>
         <translation>En plus de votre phrase secrète, vous devez vous rappeler ces numéros :</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="174"/>
+        <location filename="../newaddressdialog.py" line="183"/>
         <source>Passphrase</source>
         <translation>Phrase secrète</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="175"/>
+        <location filename="../newaddressdialog.py" line="184"/>
         <source>Number of addresses to make based on your passphrase:</source>
         <translation>Nombre d&apos;adresses à créer sur base de votre phrase secrète :</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="176"/>
+        <location filename="../newaddressdialog.py" line="185"/>
         <source>Stream number: 1</source>
         <translation>Nombre de flux : 1</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="177"/>
+        <location filename="../newaddressdialog.py" line="186"/>
         <source>Retype passphrase</source>
         <translation>Retapez la phrase secrète</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="178"/>
+        <location filename="../newaddressdialog.py" line="187"/>
         <source>Randomly generate address</source>
         <translation>Générer une adresse de manière aléatoire</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="179"/>
+        <location filename="../newaddressdialog.py" line="188"/>
         <source>Label (not shown to anyone except you)</source>
         <translation>Label (seulement visible par vous)</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="180"/>
+        <location filename="../newaddressdialog.py" line="189"/>
         <source>Use the most available stream</source>
         <translation>Utiliser le flux le plus disponible</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="181"/>
+        <location filename="../newaddressdialog.py" line="190"/>
         <source> (best if this is the first of many addresses you will create)</source>
         <translation> (préférable si vous générez votre première adresse)</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="182"/>
+        <location filename="../newaddressdialog.py" line="191"/>
         <source>Use the same stream as an existing address</source>
         <translation>Utiliser le même flux qu&apos;une adresse existante</translation>
     </message>
     <message>
-        <location filename="../newaddressdialog.py" line="183"/>
+        <location filename="../newaddressdialog.py" line="192"/>
         <source>(saves you some bandwidth and processing power)</source>
         <translation>(économise de la bande passante et de la puissance de calcul)</translation>
     </message>
@@ -882,7 +893,7 @@ L&apos;option &apos;Nombre Aléatoire&apos; est sélectionnée par défaut mais 
         <source>About</source>
         <translation>À propos</translation>
     </message>
-    <message encoding="UTF-8">
+    <message utf8="true">
         <location filename="../about.py" line="60"/>
         <source>Copyright © 2013 Jonathan Warren</source>
         <translation>Copyright © 2013 Jonathan Warren</translation>
@@ -919,27 +930,27 @@ L&apos;option &apos;Nombre Aléatoire&apos; est sélectionnée par défaut mais 
 <context>
     <name>iconGlossaryDialog</name>
     <message>
-        <location filename="../iconglossary.py" line="73"/>
+        <location filename="../iconglossary.py" line="82"/>
         <source>Icon Glossary</source>
         <translation>Glossaire des icônes</translation>
     </message>
     <message>
-        <location filename="../iconglossary.py" line="74"/>
+        <location filename="../iconglossary.py" line="83"/>
         <source>You have no connections with other peers. </source>
         <translation>Vous n&apos;avez aucune connexion avec d&apos;autres pairs.</translation>
     </message>
     <message>
-        <location filename="../iconglossary.py" line="75"/>
+        <location filename="../iconglossary.py" line="84"/>
         <source>You have made at least one connection to a peer using an outgoing connection but you have not yet received any incoming connections. Your firewall or home router probably isn&apos;t configured to forward incoming TCP connections to your computer. Bitmessage will work just fine but it would help the Bitmessage network if you allowed for incoming connections and will help you be a better-connected node.</source>
         <translation>Vous avez au moins une connexion sortante avec un pair mais vous n&apos;avez encore reçu aucune connexion entrante. Votre pare-feu ou routeur n&apos;est probablement pas configuré pour transmettre les connexions TCP vers votre ordinateur. Bitmessage fonctionnera correctement, mais le réseau Bitmessage se portera mieux si vous autorisez les connexions entrantes. Cela vous permettra d&apos;être un nœud mieux connecté.</translation>
     </message>
     <message>
-        <location filename="../iconglossary.py" line="76"/>
+        <location filename="../iconglossary.py" line="85"/>
         <source>You are using TCP port ?. (This can be changed in the settings).</source>
         <translation>Vous utilisez le port TCP ?. (Peut être changé dans les paramètres).</translation>
     </message>
     <message>
-        <location filename="../iconglossary.py" line="77"/>
+        <location filename="../iconglossary.py" line="86"/>
         <source>You do have connections with other peers and your firewall is correctly configured.</source>
         <translation>Vous avez des connexions avec d&apos;autres pairs et votre pare-feu est configuré correctement.</translation>
     </message>
