@@ -999,7 +999,7 @@ L&apos;option &apos;Nombre Aléatoire&apos; est sélectionnée par défaut mais 
     <message>
         <location filename="../regenerateaddresses.py" line="114"/>
         <source>If you have previously made deterministic addresses but lost them due to an accident (like hard drive failure), you can regenerate them here. If you used the random number generator to make your addresses then this form will be of no use to you.</source>
-        <translation>Si vous aviez généré des adresses déterministes mais les avez perdus à cause d&apos;un accident, vous pouvez les regénérer ici. Si vous aviez utilisé le générateur de nombres aléatoires pour créer vos adresses, ce formulaire ne vous sera d&apos;aucune utilité.</translation>
+        <translation>Si vous aviez généré des adresses déterministes mais les avez perdues à cause d&apos;un accident, vous pouvez les regénérer ici. Si vous aviez utilisé le générateur de nombres aléatoires pour créer vos adresses, ce formulaire ne vous sera d&apos;aucune utilité.</translation>
     </message>
 </context>
 <context>
