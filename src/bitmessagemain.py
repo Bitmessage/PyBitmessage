@@ -3899,7 +3899,7 @@ class addressGenerator(threading.Thread):
             if addressVersionNumber == 3:  # currently the only one supported.
                 if command == 'createRandomAddress':
                     shared.UISignalQueue.put((
-                        'updateStatusBar', 'Generating one new address'))
+                        'updateStatusBar', _translate("MainWindow", "Generating one new address")))
                     # This next section is a little bit strange. We're going to generate keys over and over until we
                     # find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
                     # we won't store the \x00 or \x00\x00 bytes thus making the
@@ -3970,7 +3970,7 @@ class addressGenerator(threading.Thread):
                     apiAddressGeneratorReturnQueue.put(address)
 
                     shared.UISignalQueue.put((
-                        'updateStatusBar', 'Done generating address. Doing work necessary to broadcast it...'))
+                        'updateStatusBar', _translate("MainWindow", "Done generating address. Doing work necessary to broadcast it...")))
                     shared.UISignalQueue.put(('writeNewAddressToTable', (
                         label, address, streamNumber)))
                     shared.reloadMyAddressHashes()
