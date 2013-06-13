@@ -750,7 +750,7 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
         <translation>Message envoyé. En attente de l&apos;accusé de réception. Envoyé le %1</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="3361"/>
+        <location filename="../bitmessagemain.py" line="3700"/>
         <source>Error! Could not find sender address (your address) in the keys.dat file.</source>
         <translation>Erreur ! L&apos;adresse de l&apos;expéditeur (vous) n&apos;a pas pu être trouvée dans le fichier keys.dat.</translation>
     </message>
@@ -785,6 +785,11 @@ Difficulté requise par le destinataire : %1 et %2</translation>
         <location filename="../bitmessagemain.py" line="3634"/>
         <source>Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do.</source>
         <translation>Problème : Le travail demandé par le destinataire (%1 et %2) est plus difficile que ce que vous souhaitez faire.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1418"/>
+        <source>Work is queued.</source>
+        <translation>Travail en attente.</translation>
     </message>
 </context>
 <context>
