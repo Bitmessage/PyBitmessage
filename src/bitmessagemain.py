@@ -3285,7 +3285,7 @@ class singleWorker(threading.Thread):
                         fromaddress, 'privencryptionkey')
                 except:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, 'Error! Could not find sender address (your address) in the keys.dat file.')))
+                        ackdata, _translate("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                     continue
 
                 privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -3320,7 +3320,7 @@ class singleWorker(threading.Thread):
                     payload) + shared.networkDefaultPayloadLengthExtraBytes + 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                    ackdata, 'Doing work necessary to send broadcast...')))
+                    ackdata, _translate("MainWindow", "Doing work necessary to send broadcast..."))))
                 initialHash = hashlib.sha512(payload).digest()
                 trialValue, nonce = proofofwork.run(target, initialHash)
                 print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
@@ -3335,8 +3335,8 @@ class singleWorker(threading.Thread):
                 shared.broadcastToSendDataQueues((
                     streamNumber, 'sendinv', inventoryHash))
 
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, 'Broadcast sent on ' + unicode(
-                    strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8'))))
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, _translate("MainWindow", "Broadcast sent on %1").arg(unicode(
+                    strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
 
                 # Update the status of the message in the 'sent' table to have
                 # a 'broadcastsent' status
@@ -3359,7 +3359,7 @@ class singleWorker(threading.Thread):
                         fromaddress, 'privencryptionkey')
                 except:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, 'Error! Could not find sender address (your address) in the keys.dat file.')))
+                        ackdata, _translate("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                     continue
 
                 privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -3406,7 +3406,7 @@ class singleWorker(threading.Thread):
                     payload) + shared.networkDefaultPayloadLengthExtraBytes + 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                    ackdata, 'Doing work necessary to send broadcast...')))
+                    ackdata, _translate("MainWindow", "Doing work necessary to send broadcast..."))))
                 initialHash = hashlib.sha512(payload).digest()
                 trialValue, nonce = proofofwork.run(target, initialHash)
                 print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
@@ -3421,8 +3421,8 @@ class singleWorker(threading.Thread):
                 shared.broadcastToSendDataQueues((
                     streamNumber, 'sendinv', inventoryHash))
 
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, 'Broadcast sent on ' + unicode(
-                    strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8'))))
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, _translate("MainWindow", "Broadcast sent on %1").arg(unicode(
+                    strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
 
                 # Update the status of the message in the 'sent' table to have
                 # a 'broadcastsent' status
@@ -3542,7 +3542,7 @@ class singleWorker(threading.Thread):
             fromStatus, fromAddressVersionNumber, fromStreamNumber, fromHash = decodeAddress(
                 fromaddress)
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                ackdata, 'Looking up the receiver\'s public key')))
+                ackdata, _translate("MainWindow", "Looking up the receiver\'s public key"))))
             shared.printLock.acquire()
             print 'Found a message in our database that needs to be sent with this pubkey.'
             print 'First 150 characters of message:', repr(message[:150])
@@ -3605,7 +3605,7 @@ class singleWorker(threading.Thread):
                 requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
                 requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                    ackdata, 'Doing work necessary to send message. (There is no required difficulty for version 2 addresses like this.)')))
+                    ackdata, _translate("MainWindow", "Doing work necessary to send message. (There is no required difficulty for version 2 addresses like this.)"))))
             elif toAddressVersionNumber == 3:
                 requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(
                     pubkeyPayload[readPosition:readPosition + 10])
@@ -3617,8 +3617,8 @@ class singleWorker(threading.Thread):
                     requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
                 if requiredPayloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
                     requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, 'Doing work necessary to send message.\nReceiver\'s required difficulty: ' + str(float(
-                    requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte) + ' and ' + str(float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes))))
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, _translate("MainWindow", "Doing work necessary to send message.\nReceiver\'s required difficulty: %1 and %2").arg(str(float(
+                    requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes)))))
                 if status != 'forcepow':
                     if (requiredAverageProofOfWorkNonceTrialsPerByte > shared.config.getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') and shared.config.getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') != 0) or (requiredPayloadLengthExtraBytes > shared.config.getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') and shared.config.getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') != 0):
                         # The demanded difficulty is more than we are willing
@@ -3631,8 +3631,8 @@ class singleWorker(threading.Thread):
                         shared.sqlReturnQueue.get()
                         shared.sqlSubmitQueue.put('commit')
                         shared.sqlLock.release()
-                        shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, 'Problem: The work demanded by the recipient (' + str(float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte) + ' and ' + str(float(
-                            requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes) + ') is more difficult than you are willing to do. ' + unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8'))))
+                        shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, _translate("MainWindow", "Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do.").arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(
+                            requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes)).arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
                         continue
 
             embeddedTime = pack('>Q', (int(time.time()) + random.randrange(
@@ -3652,7 +3652,7 @@ class singleWorker(threading.Thread):
                         fromaddress, 'privencryptionkey')
                 except:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, 'Error! Could not find sender address (your address) in the keys.dat file.')))
+                        ackdata, _translate("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                     continue
 
                 privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -3698,7 +3698,7 @@ class singleWorker(threading.Thread):
                         fromaddress, 'privencryptionkey')
                 except:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, 'Error! Could not find sender address (your address) in the keys.dat file.')))
+                        ackdata, _translate("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                     continue
 
                 privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -3769,8 +3769,8 @@ class singleWorker(threading.Thread):
             objectType = 'msg'
             shared.inventory[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, int(time.time()))
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, 'Message sent. Waiting on acknowledgement. Sent on ' + unicode(
-                strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8'))))
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, _translate("MainWindow", "Message sent. Waiting on acknowledgement. Sent on %1").ack(unicode(
+                strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
             print 'Broadcasting inv for my msg(within sendmsg function):', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
                 streamNumber, 'sendinv', inventoryHash))
