@@ -729,6 +729,16 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
         <source>Reply</source>
         <translation>Répondre</translation>
     </message>
+    <message>
+        <location filename="../bitmessagemain.py" line="3901"/>
+        <source>Generating one new address</source>
+        <translation>Génération d&apos;une nouvelle adresse</translation>
+    </message>
+    <message>
+        <location filename="../bitmessagemain.py" line="3972"/>
+        <source>Done generating address. Doing work necessary to broadcast it...</source>
+        <translation>Génération de l&apos;adresse terminée. Travail pour la diffuser en cours...</translation>
+    </message>
 </context>
 <context>
     <name>NewAddressDialog</name>
