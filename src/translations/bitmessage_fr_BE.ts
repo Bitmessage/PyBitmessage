@@ -994,7 +994,7 @@ L&apos;option &apos;Nombre Aléatoire&apos; est sélectionnée par défaut mais 
     <message>
         <location filename="../regenerateaddresses.py" line="113"/>
         <source>You must check (or not check) this box just like you did (or didn&apos;t) when you made your addresses the first time.</source>
-        <translation>Vous devez cocher (ou décocher) cette case comme vous l&apos;avez fait (ou non) lors de la création de vos adresses la première fois.</translation>
+        <translation>Vous devez cocher (ou décocher) cette case comme vous l&apos;aviez fait (ou non) lors de la création de vos adresses la première fois.</translation>
     </message>
     <message>
         <location filename="../regenerateaddresses.py" line="114"/>
