@@ -45,7 +45,7 @@ import signal #Used to capture a Ctrl-C keypress so that Bitmessage can shutdown
 from SimpleXMLRPCServer import *
 import json
 from subprocess import call #used when the API must execute an outside program
-import singleton
+from tendo.singleton import SingleInstance
 import proofofwork
 
 #For each stream to which we connect, several outgoingSynSender threads will exist and will collectively create 8 connections with peers.
@@ -3954,7 +3954,7 @@ if useVeryEasyProofOfWorkForTesting:
 
 if __name__ == "__main__":
     # is the application already running?  If yes then exit.
-    thisapp = singleton.singleinstance()
+    thisapp = SingleInstance()
 
     signal.signal(signal.SIGINT, signal_handler)
     #signal.signal(signal.SIGINT, signal.SIG_DFL)
