@@ -4093,7 +4093,7 @@ class addressGenerator(threading.Thread):
                         apiAddressGeneratorReturnQueue.put(
                             listOfNewAddressesToSendOutThroughTheAPI)
                         shared.UISignalQueue.put((
-                            'updateStatusBar', _translate("MainWindows", "Done generating address")))
+                            'updateStatusBar', _translate("MainWindow", "Done generating address")))
                         # shared.reloadMyAddressHashes()
                     elif command == 'getDeterministicAddress':
                         apiAddressGeneratorReturnQueue.put(address)
