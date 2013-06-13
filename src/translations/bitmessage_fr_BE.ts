@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS>
-<TS version="2.0" language="fr_BE" sourcelanguage="en">
+<!DOCTYPE TS><TS version="2.0" language="fr_BE" sourcelanguage="en">
 <context>
     <name>MainWindow</name>
     <message>
@@ -720,7 +719,7 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
         <translation>Connexion perdue</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="179"/>
+        <location filename="../bitmessagemain.py" line="187"/>
         <source>SOCKS5 Authentication problem: %1</source>
         <translation>Problème d&apos;authentification SOCKS5 : %1</translation>
     </message>
@@ -730,59 +729,59 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
         <translation>Répondre</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="3901"/>
+        <location filename="../bitmessagemain.py" line="3909"/>
         <source>Generating one new address</source>
         <translation>Génération d&apos;une nouvelle adresse</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="3972"/>
+        <location filename="../bitmessagemain.py" line="3980"/>
         <source>Done generating address. Doing work necessary to broadcast it...</source>
         <translation>Génération de l&apos;adresse terminée. Travail pour la diffuser en cours...</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="4095"/>
+        <location filename="../bitmessagemain.py" line="4103"/>
         <source>Done generating address</source>
         <translation>Génération de l&apos;adresse terminée</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="3772"/>
+        <location filename="../bitmessagemain.py" line="3780"/>
         <source>Message sent. Waiting on acknowledgement. Sent on %1</source>
         <translation>Message envoyé. En attente de l&apos;accusé de réception. Envoyé le %1</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="3700"/>
+        <location filename="../bitmessagemain.py" line="3708"/>
         <source>Error! Could not find sender address (your address) in the keys.dat file.</source>
         <translation>Erreur ! L&apos;adresse de l&apos;expéditeur (vous) n&apos;a pas pu être trouvée dans le fichier keys.dat.</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="3408"/>
+        <location filename="../bitmessagemain.py" line="3416"/>
         <source>Doing work necessary to send broadcast...</source>
         <translation>Travail pour envoyer la diffusion en cours...</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="3424"/>
+        <location filename="../bitmessagemain.py" line="3432"/>
         <source>Broadcast sent on %1</source>
         <translation>Message de diffusion envoyé le %1</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="3544"/>
+        <location filename="../bitmessagemain.py" line="3552"/>
         <source>Looking up the receiver&apos;s public key</source>
         <translation>Recherche de la clé publique du destinataire</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="3607"/>
+        <location filename="../bitmessagemain.py" line="3615"/>
         <source>Doing work necessary to send message. (There is no required difficulty for version 2 addresses like this.)</source>
         <translation>Travail nécessaire pour envoyer le message en cours. (Il n&apos;y a pas de difficulté requise pour ces adresses de version 2.)</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="3620"/>
+        <location filename="../bitmessagemain.py" line="3628"/>
         <source>Doing work necessary to send message.
 Receiver&apos;s required difficulty: %1 and %2</source>
         <translation>Travail nécessaire pour envoyer le message.
 Difficulté requise par le destinataire : %1 et %2</translation>
     </message>
     <message>
-        <location filename="../bitmessagemain.py" line="3634"/>
+        <location filename="../bitmessagemain.py" line="3642"/>
         <source>Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do.</source>
         <translation>Problème : Le travail demandé par le destinataire (%1 et %2) est plus difficile que ce que vous souhaitez faire.</translation>
     </message>
@@ -795,6 +794,14 @@ Difficulté requise par le destinataire : %1 et %2</translation>
         <location filename="../bitmessageqt/__init__.py" line="1507"/>
         <source>Work is queued. %1</source>
         <translation>Travail en attente. %1</translation>
+    </message>
+</context>
+<context>
+    <name>MainWindows</name>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1597"/>
+        <source>Address is valid.</source>
+        <translation type="obsolete">L&apos;adresse est valide.</translation>
     </message>
 </context>
 <context>
@@ -960,7 +967,7 @@ L&apos;option &apos;Nombre Aléatoire&apos; est sélectionnée par défaut mais 
         <source>About</source>
         <translation>À propos</translation>
     </message>
-    <message utf8="true">
+    <message encoding="UTF-8">
         <location filename="../about.py" line="60"/>
         <source>Copyright © 2013 Jonathan Warren</source>
         <translation>Copyright © 2013 Jonathan Warren</translation>
