@@ -744,6 +744,48 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
         <source>Done generating address</source>
         <translation>Génération de l&apos;adresse terminée</translation>
     </message>
+    <message>
+        <location filename="../bitmessagemain.py" line="3772"/>
+        <source>Message sent. Waiting on acknowledgement. Sent on %1</source>
+        <translation>Message envoyé. En attente de l&apos;accusé de réception. Envoyé le %1</translation>
+    </message>
+    <message>
+        <location filename="../bitmessagemain.py" line="3361"/>
+        <source>Error! Could not find sender address (your address) in the keys.dat file.</source>
+        <translation>Erreur ! L&apos;adresse de l&apos;expéditeur (vous) n&apos;a pas pu être trouvée dans le fichier keys.dat.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessagemain.py" line="3408"/>
+        <source>Doing work necessary to send broadcast...</source>
+        <translation>Travail pour envoyer la diffusion en cours...</translation>
+    </message>
+    <message>
+        <location filename="../bitmessagemain.py" line="3424"/>
+        <source>Broadcast sent on %1</source>
+        <translation>Message de diffusion envoyé le %1</translation>
+    </message>
+    <message>
+        <location filename="../bitmessagemain.py" line="3544"/>
+        <source>Looking up the receiver&apos;s public key</source>
+        <translation>Recherche de la clé publique du destinataire</translation>
+    </message>
+    <message>
+        <location filename="../bitmessagemain.py" line="3607"/>
+        <source>Doing work necessary to send message. (There is no required difficulty for version 2 addresses like this.)</source>
+        <translation>Travail nécessaire pour envoyer le message en cours. (Il n&apos;y a pas de difficulté requise pour ces adresses de version 2.)</translation>
+    </message>
+    <message>
+        <location filename="../bitmessagemain.py" line="3620"/>
+        <source>Doing work necessary to send message.
+Receiver&apos;s required difficulty: %1 and %2</source>
+        <translation>Travail nécessaire pour envoyer le message.
+Difficulté requise par le destinataire : %1 et %2</translation>
+    </message>
+    <message>
+        <location filename="../bitmessagemain.py" line="3634"/>
+        <source>Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do.</source>
+        <translation>Problème : Le travail demandé par le destinataire (%1 et %2) est plus difficile que ce que vous souhaitez faire.</translation>
+    </message>
 </context>
 <context>
     <name>NewAddressDialog</name>
