@@ -1415,7 +1415,7 @@ class MyForm(QtGui.QMainWindow):
                 # send broadcast...'+
                 # unicode(strftime(config.get('bitmessagesettings',
                 # 'timeformat'),localtime(int(time.time()))),'utf-8'))
-                newItem = myTableWidgetItem('Work is queued.')
+                newItem = myTableWidgetItem(_translate("MainWindow", "Work is queued."))
                 newItem.setData(Qt.UserRole, QByteArray(ackdata))
                 newItem.setData(33, int(time.time()))
                 self.ui.tableWidgetSent.setItem(0, 3, newItem)
@@ -1502,10 +1502,10 @@ class MyForm(QtGui.QMainWindow):
         # broadcast...'+
         # unicode(strftime(shared.config.get('bitmessagesettings',
         # 'timeformat'),localtime(int(time.time()))),'utf-8'))
-        newItem = myTableWidgetItem('Work is queued. ' + unicode(strftime(shared.config.get(
-            'bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8'))
-        newItem.setToolTip('Work is queued. ' + unicode(strftime(shared.config.get(
-            'bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8'))
+        newItem = myTableWidgetItem(_translate("MainWindow", "Work is queued. %1").arg(unicode(strftime(shared.config.get(
+            'bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))
+        newItem.setToolTip(_translate("MainWindow", "Work is queued. %1").arg(unicode(strftime(shared.config.get(
+            'bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))
         newItem.setData(Qt.UserRole, QByteArray(ackdata))
         newItem.setData(33, int(time.time()))
         self.ui.tableWidgetSent.setItem(0, 3, newItem)
