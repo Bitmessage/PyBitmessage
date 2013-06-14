@@ -484,6 +484,9 @@ class MyForm(QtGui.QMainWindow):
             elif status == 'toodifficult':
                 statusText = _translate("MainWindow", "Problem: The work demanded by the recipient is more difficult than you are willing to do. %1").arg(
                     unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(lastactiontime)))))
+            elif status == 'badkey':
+                statusText = QtGui.QApplication.translate("MainWindow", "Problem: The recipient\'s encryption key is no good. Could not encrypt message. %1").arg(
+                    unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(lastactiontime))))) 
             elif status == 'forcepow':
                 statusText = _translate(
                     "MainWindow", "Forced difficulty override. Send should start soon.")
