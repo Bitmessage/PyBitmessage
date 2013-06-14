@@ -1892,12 +1892,12 @@ class MyForm(QtGui.QMainWindow):
         for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
             listOfSelectedRows[self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
         for currentRow in listOfSelectedRows:
-            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,1).text()
+            addressAtCurrentRow = str(self.ui.tableWidgetAddressBook.item(currentRow,1).text())
             # Then subscribe to it... provided it's not already in the address book
             if shared.isAddressInMySubscriptionsList(addressAtCurrentRow):
                 self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
                 continue
-            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text()
+            labelAtCurrentRow = str(self.ui.tableWidgetAddressBook.item(currentRow,0).text())
             self.addSubscription(labelAtCurrentRow, addressAtCurrentRow)
     def on_context_menuAddressBook(self, point):
         self.popMenuAddressBook.exec_( self.ui.tableWidgetAddressBook.mapToGlobal(point) )
