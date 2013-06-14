@@ -3790,7 +3790,7 @@ class singleWorker(threading.Thread):
             objectType = 'msg'
             shared.inventory[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, int(time.time()))
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, _translate("MainWindow", "Message sent. Waiting on acknowledgement. Sent on %1").ack(unicode(
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, _translate("MainWindow", "Message sent. Waiting on acknowledgement. Sent on %1").arg(unicode(
                 strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
             print 'Broadcasting inv for my msg(within sendmsg function):', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
