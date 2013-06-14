@@ -139,6 +139,7 @@ class MyForm(QtGui.QMainWindow):
           # Actions
         self.actionAddressBookSend = self.ui.addressBookContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Send message to this address"), self.on_action_AddressBookSend)
         self.actionAddressBookClipboard = self.ui.addressBookContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Copy address to clipboard"), self.on_action_AddressBookClipboard)
+        self.actionAddressBookSubscribe = self.ui.addressBookContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Subscribe to this address"), self.on_action_AddressBookSubscribe)
         self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Add New Address"), self.on_action_AddressBookNew)
         self.actionAddressBookDelete = self.ui.addressBookContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Delete"), self.on_action_AddressBookDelete)
         self.ui.tableWidgetAddressBook.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
@@ -146,6 +147,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuAddressBook = QtGui.QMenu( self )
         self.popMenuAddressBook.addAction( self.actionAddressBookSend )
         self.popMenuAddressBook.addAction( self.actionAddressBookClipboard )
+        self.popMenuAddressBook.addAction( self.actionAddressBookSubscribe )
         self.popMenuAddressBook.addSeparator()
         self.popMenuAddressBook.addAction( self.actionAddressBookNew )
         self.popMenuAddressBook.addAction( self.actionAddressBookDelete )
@@ -1380,37 +1382,41 @@ class MyForm(QtGui.QMainWindow):
                     self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
             else:
                 self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "The address you entered was invalid. Ignoring it."))
+    def addSubscription(self, label, address):
+        address = addBMIfNotPresent(address)
+        #This should be handled outside of this function, for error displaying and such, but it must also be checked here.
+        if shared.isAddressInMySubscriptionsList(address):
+            return
+        #Add to UI list
+        self.ui.tableWidgetSubscriptions.setSortingEnabled(False)
+        self.ui.tableWidgetSubscriptions.insertRow(0)
+        newItem =  QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+        self.ui.tableWidgetSubscriptions.setItem(0,0,newItem)
+        newItem =  QtGui.QTableWidgetItem(address)
+        newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
+        self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
+        self.ui.tableWidgetSubscriptions.setSortingEnabled(True)
+        #Add to database (perhaps this should be separated from the MyForm class)
+        t = (str(label),address,True)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''INSERT INTO subscriptions VALUES (?,?,?)''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
+        shared.sqlLock.release()
+        self.rerenderInboxFromLabels()
+        shared.reloadBroadcastSendersForWhichImWatching()
 
     def click_pushButtonAddSubscription(self):
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
 
         if self.NewSubscriptionDialogInstance.exec_():
             if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() == 'Address is valid.':
-                #First we must check to see if the address is already in the subscriptions list. The user cannot add it again or else it will cause problems when updating and deleting the entry.
-                shared.sqlLock.acquire()
-                t = (addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())),)
-                shared.sqlSubmitQueue.put('''select * from subscriptions where address=?''')
-                shared.sqlSubmitQueue.put(t)
-                queryreturn = shared.sqlReturnQueue.get()
-                shared.sqlLock.release()
-                if queryreturn == []:
-                    self.ui.tableWidgetSubscriptions.setSortingEnabled(False)
-                    self.ui.tableWidgetSubscriptions.insertRow(0)
-                    newItem =  QtGui.QTableWidgetItem(unicode(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8(),'utf-8'))
-                    self.ui.tableWidgetSubscriptions.setItem(0,0,newItem)
-                    newItem =  QtGui.QTableWidgetItem(addBMIfNotPresent(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
-                    newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
-                    self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
-                    self.ui.tableWidgetSubscriptions.setSortingEnabled(True)
-                    t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()),addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())),True)
-                    shared.sqlLock.acquire()
-                    shared.sqlSubmitQueue.put('''INSERT INTO subscriptions VALUES (?,?,?)''')
-                    shared.sqlSubmitQueue.put(t)
-                    queryreturn = shared.sqlReturnQueue.get()
-                    shared.sqlSubmitQueue.put('commit')
-                    shared.sqlLock.release()
-                    self.rerenderInboxFromLabels()
-                    shared.reloadBroadcastSendersForWhichImWatching()
+                address = str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())
+                #We must check to see if the address is already in the subscriptions list. The user cannot add it again or else it will cause problems when updating and deleting the entry.
+                if not shared.isAddressInMySubscriptionsList(address):
+                    label = self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()
+                    self.addSubscription(label, address)
                 else:
                     self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
             else:
@@ -1880,6 +1886,17 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.statusBar().showMessage('')
             self.ui.tabWidget.setCurrentIndex(1)
+    def on_action_AddressBookSubscribe(self):
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
+            listOfSelectedRows[self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
+        for currentRow in listOfSelectedRows:
+            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,1).text()
+            # Then subscribe to it... provided it's not already in the address book
+            if shared.isAddressInMySubscriptionsList(addressAtCurrentRow):
+                continue # maybe set the status bar or something
+            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text()
+            self.addSubscription(labelAtCurrentRow, addressAtCurrentRow)
     def on_context_menuAddressBook(self, point):
         self.popMenuAddressBook.exec_( self.ui.tableWidgetAddressBook.mapToGlobal(point) )
 
