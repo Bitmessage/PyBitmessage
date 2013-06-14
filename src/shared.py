@@ -61,7 +61,7 @@ def isAddressInMyAddressBook(address):
 
 #At this point we should really just have a isAddressInMy(book, address)...
 def isAddressInMySubscriptionsList(address):
-    t = (address,)
+    t = (str(address),) # As opposed to Qt str
     sqlLock.acquire()
     sqlSubmitQueue.put('''select * from subscriptions where address=?''')
     sqlSubmitQueue.put(t)
