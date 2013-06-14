@@ -51,7 +51,7 @@ def lookupAppdataFolder():
     return dataFolder
 
 def isAddressInMyAddressBook(address):
-    t = (addBMIfNotPresent(address,))
+    t = (address,)
     sqlLock.acquire()
     sqlSubmitQueue.put('''select address from addressbook where address=?''')
     sqlSubmitQueue.put(t)
@@ -61,7 +61,7 @@ def isAddressInMyAddressBook(address):
 
 #At this point we should really just have a isAddressInMy(book, address)...
 def isAddressInMySubscriptionsList(address):
-    t = (addBMIfNotPresent(address),)
+    t = (address,)
     sqlLock.acquire()
     sqlSubmitQueue.put('''select * from subscriptions where address=?''')
     sqlSubmitQueue.put(t)
