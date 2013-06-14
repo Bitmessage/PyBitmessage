@@ -1382,6 +1382,7 @@ class MyForm(QtGui.QMainWindow):
                     self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
             else:
                 self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "The address you entered was invalid. Ignoring it."))
+
     def addSubscription(self, label, address):
         address = addBMIfNotPresent(address)
         #This should be handled outside of this function, for error displaying and such, but it must also be checked here.
@@ -1894,7 +1895,8 @@ class MyForm(QtGui.QMainWindow):
             addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,1).text()
             # Then subscribe to it... provided it's not already in the address book
             if shared.isAddressInMySubscriptionsList(addressAtCurrentRow):
-                continue # maybe set the status bar or something
+                self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
+                continue
             labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text()
             self.addSubscription(labelAtCurrentRow, addressAtCurrentRow)
     def on_context_menuAddressBook(self, point):
