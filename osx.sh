@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# OS X Build script wrapper around the py2app script.
+# These build can only be generated on OS X.
+# Requires all build dependencies for Bitmessage
+
+export ARCHFLAGS="-arch i386 -arch x86_64" 
+
+if [[ -z "$1" ]]; then
+  echo "Please supply a version number for this release as the first argument."
+  exit
+fi
+
+echo "Creating OS X packages for Bitmessage. This script will ask for sudo to create the dmg volume"
+
+cd src && python build_osx.py py2app
+
+if [[ $? = "0" ]]; then
+  sudo hdiutil create -fs HFS+ -volname "Bitmessage" -srcfolder dist/Bitmessage.app dist/bitmessage-v$1.dmg
+else
+  echo "Problem creating Bitmessage.app, stopping."
+  exit
+fi
