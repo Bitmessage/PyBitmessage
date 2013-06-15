@@ -1,3 +1,5 @@
 **pyc
 **dat
 **.DS_Store
+src/build
+src/dist
