@@ -1799,7 +1799,7 @@ class MyForm(QtGui.QMainWindow):
             return
         try:
             f = open(filename, 'w')
-	    f.write( self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject() )
+            f.write( self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject() )
             f.close()
         except Exception, e:
             print 'Write error'
