@@ -21,8 +21,9 @@ if sys.platform == 'darwin':
         setup_requires=['py2app'],
         app=[mainscript],
         options=dict(py2app=dict(argv_emulation=True,
-                                 includes = ['PyQt4.QtCore','PyQt4.QtGui', 'sip', 'sqlite'],
+                                 includes = ['PyQt4.QtCore','PyQt4.QtGui', 'sip'],
                                  packages = ['bitmessageqt'],
+                                 frameworks = ['/usr/local/opt/openssl/lib/libcrypto.dylib'],
                                  iconfile='images/bitmessage.icns',
                                  resources=["images"])),
     )
@@ -44,9 +45,17 @@ setup(
     **extra_options
 )
 from distutils import dir_util
+import glob
 
 if sys.platform == 'darwin':
     resource = "dist/" + name + ".app/Contents/Resources/"
+    framework = "dist/" + name + ".app/Contents/Frameworks/"
+
+    # The pyElliptive module only works with hardcoded libcrypto paths so rename it so it can actually find it.
+    libs = glob.glob(framework + "libcrypto*.dylib")
+    for lib in libs:
+      os.rename(lib, framework + "libcrypto.dylib")
+      break
 
     # Try to locate qt_menu
     # Let's try the port version first!
