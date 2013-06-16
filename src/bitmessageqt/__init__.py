@@ -104,6 +104,7 @@ class MyForm(QtGui.QMainWindow):
         self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Add sender to your Address Book"), self.on_action_InboxAddSenderToAddressBook)
         self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Move to Trash"), self.on_action_InboxTrash)
         self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "View HTML code as formatted text"), self.on_action_InboxMessageForceHtml)
+        self.actionSaveMessageAs = self.ui.inboxContextMenuToolbar.addAction(QtGui.QApplication.translate("MainWindow", "Save message as..."), self.on_action_InboxSaveMessageAs)
         self.ui.tableWidgetInbox.setContextMenuPolicy( QtCore.Qt.CustomContextMenu )
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL('customContextMenuRequested(const QPoint&)'), self.on_context_menuInbox)
         self.popMenuInbox = QtGui.QMenu( self )
@@ -112,6 +113,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuInbox.addAction( self.actionReply )
         self.popMenuInbox.addAction( self.actionAddSenderToAddressBook )
         self.popMenuInbox.addSeparator()
+        self.popMenuInbox.addAction( self.actionSaveMessageAs )
         self.popMenuInbox.addAction( self.actionTrashInboxMessage )
 
 
@@ -1788,6 +1790,24 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.selectRow(currentRow)
         else:
             self.ui.tableWidgetInbox.selectRow(currentRow-1)
+
+    def on_action_InboxSaveMessageAs(self):
+        currentInboxRow = self.ui.tableWidgetInbox.currentRow()
+        subjectAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text())
+        defaultFilename = "".join(x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
+        data = self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject()
+        filename = QFileDialog.getSaveFileName(self, "Save As...", defaultFilename, "Text files (*.txt);;All files (*.*)")
+        if filename == '':
+            return
+        try:
+            f = open(filename, 'w')
+            f.write( self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject() )
+            f.close()
+        except Exception, e:
+            print 'Write error'
+            print e
+            self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Write error."))
+
 
     #Send item on the Sent tab to trash
     def on_action_SentTrash(self):

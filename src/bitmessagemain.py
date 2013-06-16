@@ -932,7 +932,7 @@ class receiveDataThread(threading.Thread):
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(encryptedData[readPosition:],'Acknowledgement of the message received just now. '+ unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(encryptedData[readPosition:],'Acknowledgement of the message received at'+ unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8'))))
             return
         else:
             shared.printLock.acquire()
