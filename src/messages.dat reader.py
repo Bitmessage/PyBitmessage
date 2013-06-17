@@ -59,7 +59,7 @@ def readPubkeys():
     output = cur.fetchall()
     for row in output:
         hash, havecorrectnonce, transmitdata, time, usedpersonally = row
-        print 'Hash:', hash.encode('hex'), '\tHave correct nonce:', havecorrectnonce, '\tTime first broadcast:', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(time))), '\tUsed by me personally:', usedpersonally, '\tFull pubkey message:', transmitdata.encode('hex')
+        print 'Hash:', hash.encode('hex'), '\tHave correct nonce:', havecorrectnonce, '\tTime first broadcast:', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(time)),'utf-8'), '\tUsed by me personally:', usedpersonally, '\tFull pubkey message:', transmitdata.encode('hex')
 
 def readInventory():
     print 'Printing everything in inventory table:'
@@ -69,7 +69,7 @@ def readInventory():
     output = cur.fetchall()
     for row in output:
         hash, objecttype, streamnumber, payload, receivedtime = row
-        print 'Hash:', hash.encode('hex'), objecttype, streamnumber, '\t', payload.encode('hex'), '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(receivedtime)))
+        print 'Hash:', hash.encode('hex'), objecttype, streamnumber, '\t', payload.encode('hex'), '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(receivedtime)),'utf-8')
 
 
 def takeInboxMessagesOutOfTrash():
