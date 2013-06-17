@@ -8,7 +8,7 @@ try:
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
 except Exception as err:
-    print 'PyBitmessage requires PyQt. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
+    print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
     print 'Error message:', err
     sys.exit()
 
@@ -1122,9 +1122,9 @@ class MyForm(QtGui.QMainWindow):
             if ripe == toRipe:
                 self.ui.tableWidgetSent.item(i, 3).setToolTip(textToDisplay)
                 newlinePosition = textToDisplay.indexOf('\n')
-                if parenPositionIndex > 1:
+                if newlinePosition > 1:
                     self.ui.tableWidgetSent.item(i, 3).setText(
-                        textToDisplay[:parenPositionIndex])
+                        textToDisplay[:newlinePosition])
                 else:
                     self.ui.tableWidgetSent.item(i, 3).setText(textToDisplay)
 
