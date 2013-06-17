@@ -52,15 +52,6 @@ import proofofwork
 # For each stream to which we connect, several outgoingSynSender threads
 # will exist and will collectively create 8 connections with peers.
 
-try:
-    from PyQt4 import QtCore, QtGui
-    _encoding = QtGui.QApplication.UnicodeUTF8
-    def _translate(context, text):
-        return QtGui.QApplication.translate(context, text)
-except AttributeError:
-    print 'Error message:', err
-
-
 class outgoingSynSender(threading.Thread):
 
     def __init__(self):
@@ -1094,8 +1085,8 @@ class receiveDataThread(threading.Thread):
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (encryptedData[readPosition:], 'Acknowledgement of the message received just now. ' + unicode(
-                strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8'))))
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (encryptedData[readPosition:], _translate("MainWindow",'Acknowledgement of the message received. %1').arg(unicode(
+                strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
             return
         else:
             shared.printLock.acquire()
@@ -4654,6 +4645,18 @@ class singleAPI(threading.Thread):
         se.register_introspection_functions()
         se.serve_forever()
 
+# This is used so that the _translate function can be used when we are in daemon mode and not using any QT functions.
+class translateClass:
+    def __init__(self, context, text):
+        self.context = context
+        self.text = text
+    def arg(self,argument):
+        if '%' in self.text:
+            return translateClass(self.context, self.text.replace('%','',1)) # This doesn't actually do anything with the arguments because we don't have a UI in which to display this information anyway.
+        else:
+            return self.text
+
+
 selfInitiatedConnections = {}
     # This is a list of current connections (the thread pointers at least)
 alreadyAttemptedConnectionsList = {
@@ -4867,19 +4870,34 @@ if __name__ == "__main__":
         try:
             from PyQt4.QtCore import *
             from PyQt4.QtGui import *
+            from PyQt4 import QtCore, QtGui
         except Exception as err:
             print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
             print 'Error message:', err
             os._exit(0)
 
+        try:
+            _encoding = QtGui.QApplication.UnicodeUTF8
+            def _translate(context, text): # A non-QT version of _translate is defined below.
+                return QtGui.QApplication.translate(context, text)
+        except Exception as err:
+            print 'Error:', err
+
         import bitmessageqt
         bitmessageqt.run()
     else:
+        def _translate(context, text): # A QT version of _translate is defined above. 
+            if '%' in text:
+                return translateClass(context, text.replace('%','',1))
+            else:
+                return text
+        shared.printLock.acquire()
         print 'Running as a daemon. You can use Ctrl+C to exit.'
+        shared.printLock.release()
         while True:
             time.sleep(20)
 
 
-# So far, the Bitmessage protocol, this client, the Wiki, and the forums
-# are all a one-man operation. Bitcoin tips are quite appreciated!
+# So far, the creation of and management of the Bitmessage protocol and this
+# client is a one-man operation. Bitcoin tips are quite appreciated.
 # 1H5XaDA6fYENLbknwZyjiYXYPQaFjjLX2u
