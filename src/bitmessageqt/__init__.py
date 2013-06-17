@@ -372,23 +372,23 @@ class MyForm(QtGui.QMainWindow):
             elif status == 'msgqueued':
                 statusText = QtGui.QApplication.translate("MainWindow", "Queued.")
             elif status == 'msgsent':
-                statusText = QtGui.QApplication.translate("MainWindow", "Message sent. Waiting on acknowledgement. Sent at %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(lastactiontime))))
+                statusText = QtGui.QApplication.translate("MainWindow", "Message sent. Waiting on acknowledgement. Sent at %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(lastactiontime)),'utf-8)'))
             elif status == 'doingmsgpow':
                 statusText = QtGui.QApplication.translate("MainWindow", "Need to do work to send message. Work is queued.")
             elif status == 'ackreceived':
-                statusText = QtGui.QApplication.translate("MainWindow", "Acknowledgement of the message received %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime)))))
+                statusText = QtGui.QApplication.translate("MainWindow", "Acknowledgement of the message received %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8)'))
             elif status == 'broadcastqueued':
                 statusText = QtGui.QApplication.translate("MainWindow", "Broadcast queued.")
             elif status == 'broadcastsent':
-                statusText = QtGui.QApplication.translate("MainWindow", "Broadcast on %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime)))))
+                statusText = QtGui.QApplication.translate("MainWindow", "Broadcast on %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             elif status == 'toodifficult':
-                statusText = QtGui.QApplication.translate("MainWindow", "Problem: The work demanded by the recipient is more difficult than you are willing to do. %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime)))))
+                statusText = QtGui.QApplication.translate("MainWindow", "Problem: The work demanded by the recipient is more difficult than you are willing to do. %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             elif status == 'badkey':
-                statusText = QtGui.QApplication.translate("MainWindow", "Problem: The recipient\'s encryption key is no good. Could not encrypt message. %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime)))))
+                statusText = QtGui.QApplication.translate("MainWindow", "Problem: The recipient\'s encryption key is no good. Could not encrypt message. %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             elif status == 'forcepow':
                 statusText = QtGui.QApplication.translate("MainWindow", "Forced difficulty override. Send should start soon.")
             else:
-                statusText = QtGui.QApplication.translate("Unknown status: %1 %2").arg(status).arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime)))))
+                statusText = QtGui.QApplication.translate("Unknown status: %1 %2").arg(status).arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(lastactiontime))),'utf-8'))
             newItem =  myTableWidgetItem(statusText)
             newItem.setToolTip(statusText)
             newItem.setData(Qt.UserRole,QByteArray(ackdata))
@@ -435,7 +435,7 @@ class MyForm(QtGui.QMainWindow):
         #self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
         self.statusbar = self.statusBar()
         self.statusbar.insertPermanentWidget(0,self.ui.pushButtonStatusIcon)
-        self.ui.labelStartupTime.setText(QtGui.QApplication.translate("MainWindow", "Since startup on %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))))))
+        self.ui.labelStartupTime.setText(QtGui.QApplication.translate("MainWindow", "Since startup on %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8)')))
         self.numberOfMessagesProcessed = 0
         self.numberOfBroadcastsProcessed = 0
         self.numberOfPubkeysProcessed = 0
