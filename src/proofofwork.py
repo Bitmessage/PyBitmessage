@@ -8,18 +8,18 @@ import sys
 
 def _set_idle():
     if 'linux' in sys.platform:
-      import os
-      os.nice(20)
+        import os
+        os.nice(20)
     else:
-      try:
-        sys.getwindowsversion()
-        import win32api,win32process,win32con
-        pid = win32api.GetCurrentProcessId()
-        handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
-        win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
-      except:
-        #Windows 64-bit
-        pass
+        try:
+            sys.getwindowsversion()
+            import win32api,win32process,win32con
+            pid = win32api.GetCurrentProcessId()
+            handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
+            win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
+        except:
+            #Windows 64-bit
+            pass
 
 def _pool_worker(nonce, initialHash, target, pool_size):
     _set_idle()
@@ -70,6 +70,6 @@ def _doFastPoW(target, initialHash):
 
 def run(target, initialHash):
     if 'linux' in sys.platform:
-      return _doFastPoW(target, initialHash)
+        return _doFastPoW(target, initialHash)
     else:
-      return _doSafePoW(target, initialHash)
+        return _doSafePoW(target, initialHash)
