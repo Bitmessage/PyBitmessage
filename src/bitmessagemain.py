@@ -4366,35 +4366,37 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif method == 'getAllInboxMessages':
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put(
-                '''SELECT msgid, toaddress, fromaddress, subject, received, message FROM inbox where folder='inbox' ORDER BY received''')
+                '''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype FROM inbox where folder='inbox' ORDER BY received''')
             shared.sqlSubmitQueue.put('')
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlLock.release()
             data = '{"inboxMessages":['
             for row in queryreturn:
-                msgid, toAddress, fromAddress, subject, received, message, = row
+                msgid, toAddress, fromAddress, subject, received, message, encodingtype = row
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
                 if len(data) > 25:
                     data += ','
                 data += json.dumps({'msgid': msgid.encode('hex'), 'toAddress': toAddress, 'fromAddress': fromAddress, 'subject': subject.encode(
-                    'base64'), 'message': message.encode('base64'), 'encodingType': 2, 'receivedTime': received}, indent=4, separators=(',', ': '))
+                    'base64'), 'message': message.encode('base64'), 'encodingType': encodingtype, 'receivedTime': received}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif method == 'getInboxMessageById':
+            if len(params) < 1:
+                return 'API Error 0000: I need one parameter.'
             msgid = params[0].decode('hex')
             v = (msgid,)
             shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT toaddress, fromaddress, subject, received, message FROM inbox WHERE msgid=?''')
+            shared.sqlSubmitQueue.put('''SELECT toaddress, fromaddress, subject, received, message, encodingtype FROM inbox WHERE msgid=?''')
             shared.sqlSubmitQueue.put(v)
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlLock.release()
             data = '{"inboxMessage":['
             for row in queryreturn:
-                toAddress, fromAddress, subject, received, message, = row
+                toAddress, fromAddress, subject, received, message, encodingtype = row
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
-                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':2,'receivedTime':received},indent=4, separators=(',', ': '))
+                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':encodingtype,'receivedTime':received},indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif method == 'trashMessage':
