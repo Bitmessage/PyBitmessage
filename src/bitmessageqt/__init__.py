@@ -1121,7 +1121,10 @@ class MyForm(QtGui.QMainWindow):
                 toAddress)
             if ripe == toRipe:
                 self.ui.tableWidgetSent.item(i, 3).setToolTip(textToDisplay)
-                newlinePosition = textToDisplay.indexOf('\n')
+                try:
+                    newlinePosition = textToDisplay.indexOf('\n')
+                except: # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
+                    newlinePosition = 0
                 if newlinePosition > 1:
                     self.ui.tableWidgetSent.item(i, 3).setText(
                         textToDisplay[:newlinePosition])
@@ -1138,7 +1141,10 @@ class MyForm(QtGui.QMainWindow):
                 toAddress)
             if ackdata == tableAckdata:
                 self.ui.tableWidgetSent.item(i, 3).setToolTip(textToDisplay)
-                newlinePosition = textToDisplay.indexOf('\n')
+                try:
+                    newlinePosition = textToDisplay.indexOf('\n')
+                except: # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
+                    newlinePosition = 0
                 if newlinePosition > 1:
                     self.ui.tableWidgetSent.item(i, 3).setText(
                         textToDisplay[:newlinePosition])
