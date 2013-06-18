@@ -3477,7 +3477,7 @@ class singleWorker(threading.Thread):
                     shared.sqlSubmitQueue.put('commit')
                     shared.sqlLock.release()
                     shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-                        toripe, 'Encryption key was requested earlier.')))
+                        toripe, _translate("MainWindow",'Encryption key was requested earlier.'))))
                 else:
                     # We have not yet sent a request for the pubkey
                     t = (toaddress,)
@@ -3489,7 +3489,7 @@ class singleWorker(threading.Thread):
                     shared.sqlSubmitQueue.put('commit')
                     shared.sqlLock.release()
                     shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-                        toripe, 'Sending a request for the recipient\'s encryption key.')))
+                        toripe, _translate("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
                     self.requestPubKey(toaddress)
         shared.sqlLock.acquire()
         # Get all messages that are ready to be sent, and also all messages
@@ -3531,7 +3531,7 @@ class singleWorker(threading.Thread):
                 shared.sqlSubmitQueue.put('commit')
                 shared.sqlLock.release()
                 shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-                    toripe, 'Sending a request for the recipient\'s encryption key.')))
+                    toripe, _translate("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
                 self.requestPubKey(toaddress)
                 continue
             ackdataForWhichImWatching[ackdata] = 0
@@ -3814,7 +3814,7 @@ class singleWorker(threading.Thread):
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
         shared.UISignalQueue.put(('updateStatusBar', statusbar))
         shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-            ripe, 'Doing work necessary to request encryption key.')))
+            ripe, _translate("MainWindow",'Doing work necessary to request encryption key.'))))
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         initialHash = hashlib.sha512(payload).digest()
@@ -3842,9 +3842,9 @@ class singleWorker(threading.Thread):
         shared.sqlLock.release()
 
         shared.UISignalQueue.put((
-            'updateStatusBar', 'Broacasting the public key request. This program will auto-retry if they are offline.'))
-        shared.UISignalQueue.put(('updateSentItemStatusByHash', (ripe, 'Sending public key request. Waiting for reply. Requested at ' + unicode(
-            strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8'))))
+            'updateStatusBar', _translate("MainWindow",'Broacasting the public key request. This program will auto-retry if they are offline.')))
+        shared.UISignalQueue.put(('updateSentItemStatusByHash', (ripe, _translate("MainWindow",'Sending public key request. Waiting for reply. Requested at %1').arg(unicode(
+            strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
 
     def generateFullAckMessage(self, ackdata, toStreamNumber, embeddedTime):
         payload = embeddedTime + encodeVarint(toStreamNumber) + ackdata
