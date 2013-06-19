@@ -3697,7 +3697,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'getInboxMessageById':
-			if len(params) == 0:
+            if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
             msgid = params[0].decode('hex')
             v = (msgid,)
@@ -3731,7 +3731,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'getSentMessageById':
-			if len(params) == 0:
+            if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
             msgid = params[0].decode('hex')
             v = (msgid,)
@@ -3748,7 +3748,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':2,'lastActionTime':lastactiontime},indent=4, separators=(',', ': '))
             data += ']}'
             return data
-        elif method == 'trashMessage':
+        elif (method == 'trashMessage') or (method == 'trashInboxMessage'):
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
             msgid = params[0].decode('hex')
@@ -3760,7 +3760,20 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
             shared.UISignalQueue.put(('removeInboxRowByMsgid',msgid))
-            return 'Trashed message (assuming message existed).'
+            return 'Trashed inbox message (assuming message existed).'
+        elif method == 'trashSentMessage':
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
+            msgid = params[0].decode('hex')
+            t = (msgid,)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE msgid=?''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+            shared.UISignalQueue.put(('removeSentRowByMsgid',msgid))
+            return 'Trashed sent message (assuming message existed).'
         elif method == 'sendMessage':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
