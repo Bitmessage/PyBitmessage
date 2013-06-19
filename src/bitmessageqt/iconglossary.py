@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'iconglossary.ui'
 #
-# Created: Tue Dec 18 14:31:18 2012
-#      by: PyQt4 UI code generator 4.9.4
+# Created: Thu Jun 13 20:15:48 2013
+#      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,16 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
-    _fromUtf8 = lambda s: s
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_iconGlossaryDialog(object):
     def setupUi(self, iconGlossaryDialog):
@@ -69,11 +78,21 @@ class Ui_iconGlossaryDialog(object):
         QtCore.QMetaObject.connectSlotsByName(iconGlossaryDialog)
 
     def retranslateUi(self, iconGlossaryDialog):
-        iconGlossaryDialog.setWindowTitle(QtGui.QApplication.translate("iconGlossaryDialog", "Icon Glossary", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox.setTitle(QtGui.QApplication.translate("iconGlossaryDialog", "Icon Glossary", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_2.setText(QtGui.QApplication.translate("iconGlossaryDialog", "You have no connections with other peers. ", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_4.setText(QtGui.QApplication.translate("iconGlossaryDialog", "You have made at least one connection to a peer using an outgoing connection but you have not yet received any incoming connections. Your firewall or home router probably isn\'t configured to foward incoming TCP connections to your computer. Bitmessage will work just fine but it would help the Bitmessage network if you allowed for incoming connections and will help you be a better-connected node.", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelPortNumber.setText(QtGui.QApplication.translate("iconGlossaryDialog", "You are using TCP port ?. (This can be changed in the settings).", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_6.setText(QtGui.QApplication.translate("iconGlossaryDialog", "You do have connections with other peers and your firewall is correctly configured.", None, QtGui.QApplication.UnicodeUTF8))
+        iconGlossaryDialog.setWindowTitle(_translate("iconGlossaryDialog", "Icon Glossary", None))
+        self.groupBox.setTitle(_translate("iconGlossaryDialog", "Icon Glossary", None))
+        self.label_2.setText(_translate("iconGlossaryDialog", "You have no connections with other peers. ", None))
+        self.label_4.setText(_translate("iconGlossaryDialog", "You have made at least one connection to a peer using an outgoing connection but you have not yet received any incoming connections. Your firewall or home router probably isn\'t configured to forward incoming TCP connections to your computer. Bitmessage will work just fine but it would help the Bitmessage network if you allowed for incoming connections and will help you be a better-connected node.", None))
+        self.labelPortNumber.setText(_translate("iconGlossaryDialog", "You are using TCP port ?. (This can be changed in the settings).", None))
+        self.label_6.setText(_translate("iconGlossaryDialog", "You do have connections with other peers and your firewall is correctly configured.", None))
 
 import bitmessage_icons_rc
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    iconGlossaryDialog = QtGui.QDialog()
+    ui = Ui_iconGlossaryDialog()
+    ui.setupUi(iconGlossaryDialog)
+    iconGlossaryDialog.show()
+    sys.exit(app.exec_())
+
