@@ -3728,7 +3728,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':2,'lastActionTime':lastactiontime,'status':status},indent=4, separators=(',', ': '))
             data += ']}'
             return data
-         elif method == 'getSentMessageById':
+        elif method == 'getSentMessageById':
             msgid = params[0].decode('hex')
             v = (msgid,)
             shared.sqlLock.acquire()
