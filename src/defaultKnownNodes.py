@@ -9,14 +9,15 @@ from time import strftime, localtime
 def createDefaultKnownNodes(appdata):
     ############## Stream 1 ################
     stream1 = {}
-    
-    stream1['109.91.57.2'] = (8443,int(time.time()))
-    stream1['66.65.120.151'] = (8080,int(time.time()))
-    stream1['188.18.69.115'] = (8443,int(time.time()))
+
+    stream1['85.171.174.131'] = (8444,int(time.time()))
+    stream1['23.28.68.159'] = (8444,int(time.time()))
+    stream1['66.108.210.240'] = (8080,int(time.time()))
     stream1['204.236.246.212'] = (8444,int(time.time()))
-    stream1['85.177.81.73'] = (8444,int(time.time()))
     stream1['78.81.56.239'] = (8444,int(time.time()))
+    stream1['122.60.235.157'] = (8444,int(time.time()))
     stream1['204.236.246.212'] = (8444,int(time.time()))
+    stream1['24.98.219.109'] = (8444,int(time.time()))
 
 
     ############# Stream 2 #################
@@ -51,7 +52,7 @@ def readDefaultKnownNodes(appdata):
     for stream, storedValue in knownNodes.items():
         for host,value in storedValue.items():
             port, storedtime = storedValue[host]
-            print host, '\t', port, '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(storedtime)))
+            print host, '\t', port, '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(storedtime)),'utf-8')
 
 if __name__ == "__main__":
 

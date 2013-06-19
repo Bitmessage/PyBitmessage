@@ -76,7 +76,7 @@ The 'Random Number' option is selected by default but deterministic addresses ha
    <item row="6" column="0">
     <widget class="QRadioButton" name="radioButtonDeterministicAddress">
      <property name="text">
-      <string>Use a passpharase to make addresses</string>
+      <string>Use a passphrase to make addresses</string>
      </property>
      <attribute name="buttonGroup">
       <string notr="true">buttonGroup</string>
