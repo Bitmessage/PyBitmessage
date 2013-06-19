@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'newaddressdialog.ui'
 #
-# Created: Tue Apr 30 12:21:14 2013
-#      by: PyQt4 UI code generator 4.9.4
+# Created: Thu Jun 13 20:12:21 2013
+#      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,16 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
-    _fromUtf8 = lambda s: s
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_NewAddressDialog(object):
     def setupUi(self, NewAddressDialog):
@@ -161,24 +170,34 @@ class Ui_NewAddressDialog(object):
         NewAddressDialog.setTabOrder(self.checkBoxEighteenByteRipe, self.buttonBox)
 
     def retranslateUi(self, NewAddressDialog):
-        NewAddressDialog.setWindowTitle(QtGui.QApplication.translate("NewAddressDialog", "Create new Address", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("NewAddressDialog", "Here you may generate as many addresses as you like. Indeed, creating and abandoning addresses is encouraged. You may generate addresses by using either random numbers or by using a passphrase. If you use a passphrase, the address is called a \"deterministic\" address.\n"
-"The \'Random Number\' option is selected by default but deterministic addresses have several pros and cons:", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_5.setText(QtGui.QApplication.translate("NewAddressDialog", "<html><head/><body><p><span style=\" font-weight:600;\">Pros:<br/></span>You can recreate your addresses on any computer from memory. <br/>You need-not worry about backing up your keys.dat file as long as you can remember your passphrase. <br/><span style=\" font-weight:600;\">Cons:<br/></span>You must remember (or write down) your passphrase if you expect to be able to recreate your keys if they are lost. <br/>You must remember the address version number and the stream number along with your passphrase. <br/>If you choose a weak passphrase and someone on the Internet can brute-force it, they can read your messages and send messages as you.</p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
-        self.radioButtonRandomAddress.setText(QtGui.QApplication.translate("NewAddressDialog", "Use a random number generator to make an address", None, QtGui.QApplication.UnicodeUTF8))
-        self.radioButtonDeterministicAddress.setText(QtGui.QApplication.translate("NewAddressDialog", "Use a passpharase to make addresses", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBoxEighteenByteRipe.setText(QtGui.QApplication.translate("NewAddressDialog", "Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBoxDeterministic.setTitle(QtGui.QApplication.translate("NewAddressDialog", "Make deterministic addresses", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_9.setText(QtGui.QApplication.translate("NewAddressDialog", "Address version number: 3", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_8.setText(QtGui.QApplication.translate("NewAddressDialog", "In addition to your passphrase, you must remember these numbers:", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_6.setText(QtGui.QApplication.translate("NewAddressDialog", "Passphrase", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_11.setText(QtGui.QApplication.translate("NewAddressDialog", "Number of addresses to make based on your passphrase:", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_10.setText(QtGui.QApplication.translate("NewAddressDialog", "Stream number: 1", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_7.setText(QtGui.QApplication.translate("NewAddressDialog", "Retype passphrase", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox.setTitle(QtGui.QApplication.translate("NewAddressDialog", "Randomly generate address", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_2.setText(QtGui.QApplication.translate("NewAddressDialog", "Label (not shown to anyone except you)", None, QtGui.QApplication.UnicodeUTF8))
-        self.radioButtonMostAvailable.setText(QtGui.QApplication.translate("NewAddressDialog", "Use the most available stream", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_3.setText(QtGui.QApplication.translate("NewAddressDialog", " (best if this is the first of many addresses you will create)", None, QtGui.QApplication.UnicodeUTF8))
-        self.radioButtonExisting.setText(QtGui.QApplication.translate("NewAddressDialog", "Use the same stream as an existing address", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_4.setText(QtGui.QApplication.translate("NewAddressDialog", "(saves you some bandwidth and processing power)", None, QtGui.QApplication.UnicodeUTF8))
+        NewAddressDialog.setWindowTitle(_translate("NewAddressDialog", "Create new Address", None))
+        self.label.setText(_translate("NewAddressDialog", "Here you may generate as many addresses as you like. Indeed, creating and abandoning addresses is encouraged. You may generate addresses by using either random numbers or by using a passphrase. If you use a passphrase, the address is called a \"deterministic\" address.\n"
+"The \'Random Number\' option is selected by default but deterministic addresses have several pros and cons:", None))
+        self.label_5.setText(_translate("NewAddressDialog", "<html><head/><body><p><span style=\" font-weight:600;\">Pros:<br/></span>You can recreate your addresses on any computer from memory. <br/>You need-not worry about backing up your keys.dat file as long as you can remember your passphrase. <br/><span style=\" font-weight:600;\">Cons:<br/></span>You must remember (or write down) your passphrase if you expect to be able to recreate your keys if they are lost. <br/>You must remember the address version number and the stream number along with your passphrase. <br/>If you choose a weak passphrase and someone on the Internet can brute-force it, they can read your messages and send messages as you.</p></body></html>", None))
+        self.radioButtonRandomAddress.setText(_translate("NewAddressDialog", "Use a random number generator to make an address", None))
+        self.radioButtonDeterministicAddress.setText(_translate("NewAddressDialog", "Use a passphrase to make addresses", None))
+        self.checkBoxEighteenByteRipe.setText(_translate("NewAddressDialog", "Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter", None))
+        self.groupBoxDeterministic.setTitle(_translate("NewAddressDialog", "Make deterministic addresses", None))
+        self.label_9.setText(_translate("NewAddressDialog", "Address version number: 3", None))
+        self.label_8.setText(_translate("NewAddressDialog", "In addition to your passphrase, you must remember these numbers:", None))
+        self.label_6.setText(_translate("NewAddressDialog", "Passphrase", None))
+        self.label_11.setText(_translate("NewAddressDialog", "Number of addresses to make based on your passphrase:", None))
+        self.label_10.setText(_translate("NewAddressDialog", "Stream number: 1", None))
+        self.label_7.setText(_translate("NewAddressDialog", "Retype passphrase", None))
+        self.groupBox.setTitle(_translate("NewAddressDialog", "Randomly generate address", None))
+        self.label_2.setText(_translate("NewAddressDialog", "Label (not shown to anyone except you)", None))
+        self.radioButtonMostAvailable.setText(_translate("NewAddressDialog", "Use the most available stream", None))
+        self.label_3.setText(_translate("NewAddressDialog", " (best if this is the first of many addresses you will create)", None))
+        self.radioButtonExisting.setText(_translate("NewAddressDialog", "Use the same stream as an existing address", None))
+        self.label_4.setText(_translate("NewAddressDialog", "(saves you some bandwidth and processing power)", None))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    NewAddressDialog = QtGui.QDialog()
+    ui = Ui_NewAddressDialog()
+    ui.setupUi(NewAddressDialog)
+    NewAddressDialog.show()
+    sys.exit(app.exec_())
 
