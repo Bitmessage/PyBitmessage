@@ -143,6 +143,8 @@ class MyForm(QtGui.QMainWindow):
             _translate("MainWindow", "Move to Trash"), self.on_action_InboxTrash)
         self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction(_translate(
             "MainWindow", "View HTML code as formatted text"), self.on_action_InboxMessageForceHtml)
+        self.actionSaveMessageAs = self.ui.inboxContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Save message as..."), self.on_action_InboxSaveMessageAs)
         self.ui.tableWidgetInbox.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
@@ -153,7 +155,8 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuInbox.addAction(self.actionReply)
         self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
         self.popMenuInbox.addSeparator()
-        self.popMenuInbox.addAction(self.actionTrashInboxMessage)
+        self.popMenuInbox.addAction( self.actionSaveMessageAs )
+        self.popMenuInbox.addAction( self.actionTrashInboxMessage )
 
         # Popup menu for the Your Identities tab
         self.ui.addressContextMenuToolbar = QtGui.QToolBar()
@@ -2122,6 +2125,25 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.selectRow(currentRow)
         else:
             self.ui.tableWidgetInbox.selectRow(currentRow - 1)
+
+    def on_action_InboxSaveMessageAs(self):
+        currentInboxRow = self.ui.tableWidgetInbox.currentRow()
+        try:
+            subjectAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text())
+        except:
+            subjectAtCurrentInboxRow = ''
+        defaultFilename = "".join(x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
+        data = self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject()
+        filename = QFileDialog.getSaveFileName(self, _translate("MainWindow","Save As..."), defaultFilename, "Text files (*.txt);;All files (*.*)")
+        if filename == '':
+            return
+        try:
+            f = open(filename, 'w')
+            f.write( self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject() )
+            f.close()
+        except Exception, e:
+            sys.stderr.write('Write error: '+ e)
+            self.statusBar().showMessage(_translate("MainWindow", "Write error."))
 
     # Send item on the Sent tab to trash
     def on_action_SentTrash(self):
