@@ -4647,6 +4647,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
             shared.UISignalQueue.put(('rerenderSubscriptions', ''))
             return 'Deleted subscription if it existed.'
+        elif method == 'clientStatus':
+            return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
         else:
             return 'Invalid Method: %s' % method
 
