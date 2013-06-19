@@ -3725,7 +3725,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 toAddress, fromAddress, subject, received, message, = row
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
-                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':2,'receivedTime':received},indent=4, separators=(',', ': '))
+                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':2,'lastActionTime':lastactiontime},indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif method == 'trashMessage':
