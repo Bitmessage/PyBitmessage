@@ -2248,7 +2248,7 @@ class MyForm(QtGui.QMainWindow):
             if shared.isAddressInMySubscriptionsList(addressAtCurrentRow):
                 self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
                 continue
-            labelAtCurrentRow = str(self.ui.tableWidgetAddressBook.item(currentRow,0).text())
+            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
             self.addSubscription(labelAtCurrentRow, addressAtCurrentRow)
             self.ui.tabWidget.setCurrentIndex(4)
 
