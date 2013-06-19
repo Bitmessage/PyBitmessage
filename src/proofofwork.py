@@ -58,7 +58,8 @@ def _doFastPoW(target, initialHash):
     while True:
         if shared.shutdown:
             pool.terminate()
-            pool.join() #Don't return anything (doing so will cause exceptions because we'll return an unusable response). Sit here and wait for this thread to close.
+            while True:
+                time.sleep(10) # Don't let this thread return here; it will return nothing and cause an exception in bitmessagemain.py
             return
         for i in range(pool_size):
             if result[i].ready():
