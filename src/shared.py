@@ -59,6 +59,16 @@ def isAddressInMyAddressBook(address):
     sqlLock.release()
     return queryreturn != []
 
+#At this point we should really just have a isAddressInMy(book, address)...
+def isAddressInMySubscriptionsList(address):
+    t = (str(address),) # As opposed to Qt str
+    sqlLock.acquire()
+    sqlSubmitQueue.put('''select * from subscriptions where address=?''')
+    sqlSubmitQueue.put(t)
+    queryreturn = sqlReturnQueue.get()
+    sqlLock.release()
+    return queryreturn != []
+
 def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
     if isAddressInMyAddressBook(address):
         return True
@@ -185,7 +195,7 @@ def doCleanShutdown():
         printLock.release()
         os._exit(0)
 
-#Wen you want to command a sendDataThread to do something, like shutdown or send some data, this function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are responsible for putting their queue into (and out of) the sendDataQueues list.
+#When you want to command a sendDataThread to do something, like shutdown or send some data, this function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are responsible for putting their queue into (and out of) the sendDataQueues list.
 def broadcastToSendDataQueues(data):
     #print 'running broadcastToSendDataQueues'
     for q in sendDataQueues:
