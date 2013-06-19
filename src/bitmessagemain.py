@@ -3712,6 +3712,22 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':2,'lastActionTime':lastactiontime,'status':status},indent=4, separators=(',', ': '))
             data += ']}'
             return data
+         elif method == 'getSentMessageById':
+            msgid = params[0].decode('hex')
+            v = (msgid,)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, status FROM sent WHERE msgid=?''')
+            shared.sqlSubmitQueue.put(v)
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            data = '{"sentMessage":['
+            for row in queryreturn:
+                toAddress, fromAddress, subject, received, message, = row
+                subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+                message = shared.fixPotentiallyInvalidUTF8Data(message)
+                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':2,'receivedTime':received},indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
         elif method == 'trashMessage':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
