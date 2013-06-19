@@ -3697,6 +3697,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'getInboxMessageById':
+			if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
             msgid = params[0].decode('hex')
             v = (msgid,)
             shared.sqlLock.acquire()
@@ -3729,6 +3731,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'getSentMessageById':
+			if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
             msgid = params[0].decode('hex')
             v = (msgid,)
             shared.sqlLock.acquire()
