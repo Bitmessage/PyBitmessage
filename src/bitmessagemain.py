@@ -32,7 +32,6 @@ from struct import *
 import pickle
 import random
 import sqlite3
-import threading
 from time import strftime, localtime, gmtime
 import shutil  # used for moving the messages.dat file
 import string
