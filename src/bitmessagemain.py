@@ -99,14 +99,11 @@ class outgoingSynSender(threading.Thread):
             # can rebind faster
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.settimeout(20)
-            if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and verbose >= 2:
+            if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none':
                 logger.info('Trying an outgoing connection to %s:%s' % (HOST, PORT))
                 # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS4a':
-                if verbose >= 2:
-                    shared.printLock.acquire()
-                    print '(Using SOCKS4a) Trying an outgoing connection to', HOST, ':', PORT
-                    shared.printLock.release()
+                logger.debug('(Using SOCKS4) Trying an outgoing connection to %s:%s.' % (HOST, PORT))
                 proxytype = socks.PROXY_TYPE_SOCKS4
                 sockshostname = shared.config.get(
                     'bitmessagesettings', 'sockshostname')
@@ -124,10 +121,7 @@ class outgoingSynSender(threading.Thread):
                     sock.setproxy(
                         proxytype, sockshostname, socksport, rdns)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
-                if verbose >= 2:
-                    shared.printLock.acquire()
-                    print '(Using SOCKS5) Trying an outgoing connection to', HOST, ':', PORT
-                    shared.printLock.release()
+                logger.info('(Using SOCKS5) Trying an outgiong connection to %s:%s.' % (HOST, PORT))
                 proxytype = socks.PROXY_TYPE_SOCKS5
                 sockshostname = shared.config.get(
                     'bitmessagesettings', 'sockshostname')
@@ -164,48 +158,37 @@ class outgoingSynSender(threading.Thread):
                 sd.sendVersionMessage()
 
             except socks.GeneralProxyError as err:
-                if verbose >= 2:
-                    shared.printLock.acquire()
-                    print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
-                    shared.printLock.release()
+                logger.debug('Could NOT connect to %s during outgoing attempt. %s' % (HOST, str(err)))
                 PORT, timeLastSeen = shared.knownNodes[
                     self.streamNumber][HOST]
                 if (int(time.time()) - timeLastSeen) > 172800 and len(shared.knownNodes[self.streamNumber]) > 1000:  # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the shared.knownNodes data-structure.
                     shared.knownNodesLock.acquire()
                     del shared.knownNodes[self.streamNumber][HOST]
                     shared.knownNodesLock.release()
-                    shared.printLock.acquire()
-                    print 'deleting ', HOST, 'from shared.knownNodes because it is more than 48 hours old and we could not connect to it.'
-                    shared.printLock.release()
+                    logger.info('Deleting %s from shared.knownNodes because it is more that 48 hours old and we could not connect to it.' % HOST)
             except socks.Socks5AuthError as err:
                 shared.UISignalQueue.put((
                     'updateStatusBar', _translate(
                     "MainWindow", "SOCKS5 Authentication problem: %1").arg(str(err))))
             except socks.Socks5Error as err:
-                pass
-                print 'SOCKS5 error. (It is possible that the server wants authentication).)', str(err)
+                logger.debug('SOCKS5 error (It is possible that the server wants authentication): %s' % str(err))
             except socks.Socks4Error as err:
-                print 'Socks4Error:', err
+                logger.debug('SOCKS4 Error: %s' % str(err))
             except socket.error as err:
                 if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
-                    print 'Bitmessage MIGHT be having trouble connecting to the SOCKS server. ' + str(err)
+                    logger.debug('Bitmessage MIGHT be having trouble connecting to the SOCKS server: %s' % str(err))
                 else:
-                    if verbose >= 1:
-                        shared.printLock.acquire()
-                        print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
-                        shared.printLock.release()
+                    logger.debug('Could NOT connect to %s during outgoing attempt: %s' % (HOST, str(err)))
                     PORT, timeLastSeen = shared.knownNodes[
                         self.streamNumber][HOST]
                     if (int(time.time()) - timeLastSeen) > 172800 and len(shared.knownNodes[self.streamNumber]) > 1000:  # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
                         shared.knownNodesLock.acquire()
                         del shared.knownNodes[self.streamNumber][HOST]
                         shared.knownNodesLock.release()
-                        shared.printLock.acquire()
-                        print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
-                        shared.printLock.release()
+                        logger.info('Deleting %s from knownNodes beause it is more than 48 hours old and we could not connect to it.' % HOST)
             except Exception as err:
-                sys.stderr.write(
-                    'An exception has occurred in the outgoingSynSender thread that was not caught by other exception types: %s\n' % err)
+                logger.debug(
+                    'An exception has occurred in the outgoingSynSender thread that was not caught by other exception types: %s' % str(err))
             time.sleep(0.1)
 
 # Only one singleListener thread will ever exist. It creates the
@@ -228,9 +211,7 @@ class singleListener(threading.Thread):
         while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
             time.sleep(300)
 
-        shared.printLock.acquire()
-        print 'Listening for incoming connections.'
-        shared.printLock.release()
+        logger.info('Listening for incoming connections.')
         HOST = ''  # Symbolic name meaning all available interfaces
         PORT = shared.config.getint('bitmessagesettings', 'port')
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -247,9 +228,7 @@ class singleListener(threading.Thread):
             while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
                 time.sleep(10)
             while len(shared.connectedHostsList) > 220:
-                shared.printLock.acquire()
-                print 'We are connected to too many people. Not accepting further incoming connections for ten seconds.'
-                shared.printLock.release()
+                logger.info('We are connected to too many people. Not accepting further incoming connections for ten seconds.')
                 time.sleep(10)
             a, (HOST, PORT) = sock.accept()
 
@@ -258,9 +237,7 @@ class singleListener(threading.Thread):
             # because the two computers will share the same external IP. This
             # is here to prevent connection flooding.
             while HOST in shared.connectedHostsList:
-                shared.printLock.acquire()
-                print 'We are already connected to', HOST + '. Ignoring connection.'
-                shared.printLock.release()
+                logger.info('We are already connected to %s. Ignoring connection.' % HOST)
                 a.close()
                 a, (HOST, PORT) = sock.accept()
             objectsOfWhichThisRemoteNodeIsAlreadyAware = {}
@@ -277,9 +254,7 @@ class singleListener(threading.Thread):
                 a, HOST, PORT, -1, objectsOfWhichThisRemoteNodeIsAlreadyAware)
             rd.start()
 
-            shared.printLock.acquire()
-            print self, 'connected to', HOST, 'during INCOMING request.'
-            shared.printLock.release()
+            logger.info('Connected to %s during INCOMING request.' % HOST)
 
 # This thread is created either by the synSenderThread(for outgoing
 # connections) or the singleListenerThread(for incoming connectiosn).
@@ -319,54 +294,41 @@ class receiveDataThread(threading.Thread):
         self.objectsOfWhichThisRemoteNodeIsAlreadyAware = objectsOfWhichThisRemoteNodeIsAlreadyAware
 
     def run(self):
-        shared.printLock.acquire()
-        print 'ID of the receiveDataThread is', str(id(self)) + '. The size of the shared.connectedHostsList is now', len(shared.connectedHostsList)
-        shared.printLock.release()
+        logger.info('ID of the recieveDataThread is %s. The size of the shared.connectedHostsList is now %d' %
+                    (str(id(self)), len(shared.connectedHostsList)))
         while True:
             try:
                 self.data += self.sock.recv(4096)
             except socket.timeout:
-                shared.printLock.acquire()
-                print 'Timeout occurred waiting for data from', self.HOST + '. Closing receiveData thread. (ID:', str(id(self)) + ')'
-                shared.printLock.release()
+                logger.exception('Timeout occurred waiting for data from %s. Closing recieveData thread. (ID: %s)' % (self.HOST, str(id(self))))
                 break
             except Exception as err:
-                shared.printLock.acquire()
-                print 'sock.recv error. Closing receiveData thread (HOST:', self.HOST, 'ID:', str(id(self)) + ').', err
-                shared.printLock.release()
+                logger.exception('sock.recv error. Closing recieveData thread (HOST: %s, ID: %s): %s' % (self.HOST, str(id(self)), str(err)))
                 break
-            # print 'Received', repr(self.data)
+            logger.debug('Recieved %s' % str(repr(self.data)))
             if self.data == "":
-                shared.printLock.acquire()
-                print 'Connection to', self.HOST, 'closed. Closing receiveData thread. (ID:', str(id(self)) + ')'
-                shared.printLock.release()
+                logger.debug('Connection to %s closed. Closing recieveData thread. (ID: %s)' % (self.HOST, str(id(self))))
                 break
             else:
                 self.processData()
 
         try:
             del selfInitiatedConnections[self.streamNumber][self]
-            shared.printLock.acquire()
-            print 'removed self (a receiveDataThread) from selfInitiatedConnections'
-            shared.printLock.release()
+            logger.info('Removed a recieveDataThread (self) from selfInitatedConnections')
         except:
             pass
         shared.broadcastToSendDataQueues((0, 'shutdown', self.HOST))
         try:
             del shared.connectedHostsList[self.HOST]
         except Exception as err:
-            shared.printLock.acquire()
-            print 'Could not delete', self.HOST, 'from shared.connectedHostsList.', err
-            shared.printLock.release()
+            logger.debug('Could not delete %s from shared.connectionsHostsList. %s' % (self.HOST, str(err)))
         try:
             del numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
                 self.HOST]
         except:
             pass
         shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
-        shared.printLock.acquire()
-        print 'The size of the connectedHostsList is now:', len(shared.connectedHostsList)
-        shared.printLock.release()
+        logger.info('The size of the connectedHosts list is now: %d' % len(shared.connectedHostsList))
 
     def processData(self):
         global verbose
