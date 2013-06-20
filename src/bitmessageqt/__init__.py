@@ -1093,8 +1093,8 @@ class MyForm(QtGui.QMainWindow):
             shared.statusIconColor = 'yellow'
             # if a new connection has been established then show a notification
             if not self.connected:
-                self.notifierShow('Bitmessage', _translate(
-                    "MainWindow", "Connected"))
+                self.notifierShow('Bitmessage', unicode(_translate(
+                    "MainWindow", "Connected").toUtf8(),'utf-8'))
             self.connected = True
 
             if self.actionStatus is not None:

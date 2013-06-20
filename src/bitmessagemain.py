@@ -4387,27 +4387,45 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             msgid = params[0].decode('hex')
             v = (msgid,)
             shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message FROM inbox WHERE msgid=?''')
+            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype FROM inbox WHERE msgid=?''')
             shared.sqlSubmitQueue.put(v)
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlLock.release()
             data = '{"inboxMessage":['
             for row in queryreturn:
-                msgid, toAddress, fromAddress, subject, received, message, = row
+                msgid, toAddress, fromAddress, subject, received, message, encodingtype = row
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
-                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':2,'receivedTime':received},indent=4, separators=(',', ': '))
+                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':encodingtype,'receivedTime':received},indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif method == 'getAllSentMessages':
             shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, status FROM sent where folder='sent' ORDER BY lastactiontime''')
+            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status FROM sent where folder='sent' ORDER BY lastactiontime''')
             shared.sqlSubmitQueue.put('')
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlLock.release()
             data = '{"sentMessages":['
             for row in queryreturn:
-                msgid, toAddress, fromAddress, subject, lastactiontime, message, status = row
+                msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status = row
+                subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+                message = shared.fixPotentiallyInvalidUTF8Data(message)
+                if len(data) > 25:
+                    data += ','
+               data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':encodingtype,'lastActionTime':lastactiontime,'status':status},indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+        elif method == 'getInboxMessagesByAddress':
+            toAddress = params[0]
+            v = (toAddress,)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''SELECT msgid, fromaddress, subject, received, message FROM inbox WHERE toAddress=?''')
+            shared.sqlSubmitQueue.put(v)
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            data = '{"inboxMessages":['
+            for row in queryreturn:
+                msgid, fromAddress, subject, received, message, = row
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
                 if len(data) > 25:
@@ -4421,16 +4439,16 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             msgid = params[0].decode('hex')
             v = (msgid,)
             shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, status FROM sent WHERE msgid=?''')
+            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status FROM sent WHERE msgid=?''')
             shared.sqlSubmitQueue.put(v)
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlLock.release()
             data = '{"sentMessage":['
             for row in queryreturn:
-                toAddress, fromAddress, subject, received, message, = row
+                msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status = row
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
-                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':2,'lastActionTime':lastactiontime},indent=4, separators=(',', ': '))
+                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':encodingtype,'lastActionTime':lastactiontime,'status':status},indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif (method == 'trashMessage') or (method == 'trashInboxMessage'):
@@ -4458,7 +4476,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            shared.UISignalQueue.put(('removeSentRowByMsgid',msgid))
+            #shared.UISignalQueue.put(('removeSentRowByMsgid',msgid)) This function doesn't exist yet.
             return 'Trashed sent message (assuming message existed).'
         elif method == 'sendMessage':
             if len(params) == 0:
