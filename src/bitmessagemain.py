@@ -305,7 +305,6 @@ class receiveDataThread(threading.Thread):
             except Exception as err:
                 logger.exception('sock.recv error. Closing recieveData thread (HOST: %s, ID: %s): %s' % (self.HOST, str(id(self)), str(err)))
                 break
-            logger.debug('Recieved %s' % str(repr(self.data)))
             if self.data == "":
                 logger.debug('Connection to %s closed. Closing recieveData thread. (ID: %s)' % (self.HOST, str(id(self))))
                 break
@@ -339,17 +338,14 @@ class receiveDataThread(threading.Thread):
         if len(self.data) < 20:  # if so little of the data has arrived that we can't even unpack the payload length
             return
         if self.data[0:4] != '\xe9\xbe\xb4\xd9':
-            if verbose >= 1:
-                shared.printLock.acquire()
-                print 'The magic bytes were not correct. First 40 bytes of data: ' + repr(self.data[0:40])
-                shared.printLock.release()
+            logger.info('The magic bytes were not correct. First 40 bytes of data: %s' % str(repr(self.data[0:40])))
             self.data = ""
             return
         self.payloadLength, = unpack('>L', self.data[16:20])
         if len(self.data) < self.payloadLength + 24:  # check if the whole message has arrived yet.
             return
         if self.data[20:24] != hashlib.sha512(self.data[24:self.payloadLength + 24]).digest()[0:4]:  # test the checksum in the message. If it is correct...
-            print 'Checksum incorrect. Clearing this message.'
+            logger.info('Checksum incorrect. Clearning this message.')
             self.data = self.data[self.payloadLength + 24:]
             self.processData()
             return
@@ -363,9 +359,7 @@ class receiveDataThread(threading.Thread):
             shared.knownNodesLock.release()
         if self.payloadLength <= 180000000:  # If the size of the message is greater than 180MB, ignore it. (I get memory errors when processing messages much larger than this though it is concievable that this value will have to be lowered if some systems are less tolarant of large messages.)
             remoteCommand = self.data[4:16]
-            shared.printLock.acquire()
-            print 'remoteCommand', repr(remoteCommand.replace('\x00', '')), ' from', self.HOST
-            shared.printLock.release()
+            logger.info('remoteCommand %s from %s' % (repr(remoteCommand.replace('\x00', '')), self.HOST))
             if remoteCommand == 'version\x00\x00\x00\x00\x00':
                 self.recversion(self.data[24:self.payloadLength + 24])
             elif remoteCommand == 'verack\x00\x00\x00\x00\x00\x00':
@@ -399,16 +393,11 @@ class receiveDataThread(threading.Thread):
                 objectHash, = random.sample(
                     self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave, 1)
                 if objectHash in shared.inventory:
-                    shared.printLock.acquire()
-                    print 'Inventory (in memory) already has object listed in inv message.'
-                    shared.printLock.release()
+                    logger.info('Inventory (in memory) already has object listen in inv message.')
                     del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[
                         objectHash]
                 elif isInSqlInventory(objectHash):
-                    if verbose >= 3:
-                        shared.printLock.acquire()
-                        print 'Inventory (SQL on disk) already has object listed in inv message.'
-                        shared.printLock.release()
+                    logger.info('Inventory (SQL on disk) alredy has object listen in inv message.')
                     del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[
                         objectHash]
                 else:
@@ -416,9 +405,7 @@ class receiveDataThread(threading.Thread):
                     del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[
                         objectHash]  # It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
                     if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) == 0:
-                        shared.printLock.acquire()
-                        print '(concerning', self.HOST + ')', 'number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
-                        shared.printLock.release()
+                        logger.info('(concerning %s) Number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now: 0' % self.HOST)
                         try:
                             del numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
                                 self.HOST]  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
@@ -426,18 +413,15 @@ class receiveDataThread(threading.Thread):
                             pass
                     break
                 if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) == 0:
-                    shared.printLock.acquire()
-                    print '(concerning', self.HOST + ')', 'number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
-                    shared.printLock.release()
+                    logger.info('(concerning %s) number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now 0' % self.HOST)
                     try:
                         del numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
                             self.HOST]  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
                     except:
                         pass
             if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) > 0:
-                shared.printLock.acquire()
-                print '(concerning', self.HOST + ')', 'number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
-                shared.printLock.release()
+                logger.info('(concerning %s ) number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now %d' %
+                            (self.HOST, len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)))
                 numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[self.HOST] = len(
                     self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
             if len(self.ackDataThatWeHaveYetToSend) > 0:
@@ -465,9 +449,7 @@ class receiveDataThread(threading.Thread):
                 '\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
         except Exception as err:
             # if not 'Bad file descriptor' in err:
-            shared.printLock.acquire()
-            sys.stderr.write('sock.sendall error: %s\n' % err)
-            shared.printLock.release()
+            logger.exception(err)
 
     def recverack(self):
         print 'verack received'
@@ -485,19 +467,14 @@ class receiveDataThread(threading.Thread):
         shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         remoteNodeIncomingPort, remoteNodeSeenTime = shared.knownNodes[
             self.streamNumber][self.HOST]
-        shared.printLock.acquire()
-        print 'Connection fully established with', self.HOST, remoteNodeIncomingPort
-        print 'The size of the connectedHostsList is now', len(shared.connectedHostsList)
-        print 'The length of sendDataQueues is now:', len(shared.sendDataQueues)
-        print 'broadcasting addr from within connectionFullyEstablished function.'
-        shared.printLock.release()
+        logger.info('Connection fully established with %s:%d' % (self.HOST, remoteNodeIncomingPort))
+        logger.info('The size of the connectedHostsList is now %d' % len(shared.connectedHostsList))
+        logger.info('Broadcasting addr from within connectionFullyEstablished()')
         self.broadcastaddr([(int(time.time()), self.streamNumber, 1, self.HOST,
                            remoteNodeIncomingPort)])  # This lets all of our peers know about this new node.
         self.sendaddr()  # This is one large addr message to this one peer.
         if not self.initiatedConnection and len(shared.connectedHostsList) > 200:
-            shared.printLock.acquire()
-            print 'We are connected to too many people. Closing connection.'
-            shared.printLock.release()
+            logger.info('We are connected to too many people. Closing connection.')
             shared.broadcastToSendDataQueues((0, 'shutdown', self.HOST))
             return
         self.sendBigInv()
@@ -532,7 +509,9 @@ class receiveDataThread(threading.Thread):
         for hash, storedValue in bigInvList.items():
             payload += hash
             numberOfObjectsInInvMessage += 1
-            if numberOfObjectsInInvMessage >= 50000:  # We can only send a max of 50000 items per inv message but we may have more objects to advertise. They must be split up into multiple inv messages.
+            if numberOfObjectsInInvMessage >= 50000:
+            # We can only send a max of 50000 items per inv message but we may have more
+            # objects to advertise. They must be split up into multiple inv messages.
                 self.sendinvMessageToJustThisOnePeer(
                     numberOfObjectsInInvMessage, payload)
                 payload = ''
@@ -549,23 +528,19 @@ class receiveDataThread(threading.Thread):
         headerData += 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         headerData += pack('>L', len(payload))
         headerData += hashlib.sha512(payload).digest()[:4]
-        shared.printLock.acquire()
-        print 'Sending huge inv message with', numberOfObjects, 'objects to just this one peer'
-        shared.printLock.release()
+        logger.info('Sending huge inv message with %d objects to just this one peer.' % numberOfObjects)
         try:
             self.sock.sendall(headerData + payload)
         except Exception as err:
             # if not 'Bad file descriptor' in err:
-            shared.printLock.acquire()
-            sys.stderr.write('sock.sendall error: %s\n' % err)
-            shared.printLock.release()
+            logger.exception('sock.sendall error: %s' % str(err))
 
     # We have received a broadcast message
     def recbroadcast(self, data):
         self.messageProcessingStartTime = time.time()
         # First we must check to make sure the proof of work is sufficient.
         if not self.isProofOfWorkSufficient(data):
-            print 'Proof of work in broadcast message insufficient.'
+            logger.info('Proof of work in broadcast message insufficient.')
             return
         readPosition = 8  # bypass the nonce
         embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
@@ -579,13 +554,13 @@ class receiveDataThread(threading.Thread):
             readPosition += 4
 
         if embeddedTime > (int(time.time()) + 10800):  # prevent funny business
-            print 'The embedded time in this broadcast message is more than three hours in the future. That doesn\'t make sense. Ignoring message.'
+            logger.info('The embedded time in this broadcast message in more than three hours in the future. Ignoring message.')
             return
         if embeddedTime < (int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept):
-            print 'The embedded time in this broadcast message is too old. Ignoring message.'
+            logger.info('The embedded time in this broadcast message is too old. Ignoring message.')
             return
         if len(data) < 180:
-            print 'The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.'
+            logger.info('The payload length of this broadcast packet is unreasonably low. Ignoring message.')
             return
         # Let us check to make sure the stream number is correct (thus
         # preventing an individual from sending broadcasts out on the wrong
@@ -596,17 +571,18 @@ class receiveDataThread(threading.Thread):
             streamNumber, streamNumberLength = decodeVarint(data[
                                                             readPosition + broadcastVersionLength:readPosition + broadcastVersionLength + 10])
             if streamNumber != self.streamNumber:
-                print 'The stream number encoded in this broadcast message (' + str(streamNumber) + ') does not match the stream number on which it was received. Ignoring it.'
+                logger.info("The stream number encoded in this broadcast message (%d) doesn't match the stream number it was recieved on. Ignoring it." %
+                            streamNumber)
                 return
 
         shared.inventoryLock.acquire()
         self.inventoryHash = calculateInventoryHash(data)
         if self.inventoryHash in shared.inventory:
-            print 'We have already received this broadcast object. Ignoring.'
+            logger.info('We have already recieved this broadcast object. Ignoring.')
             shared.inventoryLock.release()
             return
         elif isInSqlInventory(self.inventoryHash):
-            print 'We have already received this broadcast object (it is stored on disk in the SQL inventory). Ignoring it.'
+            logger.info('We have already received this broadcast object (it is stored on disk in the SQL inventory). Ignoring it.')
             shared.inventoryLock.release()
             return
         # It is valid so far. Let's let our peers know about it.
@@ -648,7 +624,7 @@ class receiveDataThread(threading.Thread):
             data[readPosition:readPosition + 9])
         readPosition += broadcastVersionLength
         if broadcastVersion < 1 or broadcastVersion > 2:
-            print 'Cannot decode incoming broadcast versions higher than 2. Assuming the sender isn\'t being silly, you should upgrade Bitmessage because this message shall be ignored.'
+            logger.info('Cannot decode incoming broadcast versions higher than 2. Ignoring.')
             return
         if broadcastVersion == 1:
             beginningOfPubkeyPosition = readPosition  # used when we add the pubkey to our pubkey table
@@ -676,8 +652,8 @@ class receiveDataThread(threading.Thread):
                 sendersHash = data[readPosition:readPosition + 20]
                 if sendersHash not in shared.broadcastSendersForWhichImWatching:
                     # Display timing data
-                    logger.info('Time spent deciding that we are not interested in this v1 broadcast: %s' %
-                                str(time.time() - self.messageProcessingStartTime))
+                    logger.info('Time spent deciding that we are not interested in this v1 broadcast: %d' %
+                                time.time() - self.messageProcessingStartTime)
                     return
                 # At this point, this message claims to be from sendersHash and
                 # we are interested in it. We still have to hash the public key
@@ -713,7 +689,7 @@ class receiveDataThread(threading.Thread):
                         return
                     logger.info('ECDSA verify passed')
                 except Exception as err:
-                    logger.debug('ECDSA verify failed: %s' % str(err))
+                    logger.exception('ECDSA verify failed: %s' % str(err))
                     return
                 # verify passed
 
@@ -740,9 +716,7 @@ class receiveDataThread(threading.Thread):
 
                 fromAddress = encodeAddress(
                     sendersAddressVersion, sendersStream, ripe.digest())
-                shared.printLock.acquire()
-                print 'fromAddress:', fromAddress
-                shared.printLock.release()
+                logger.info('fromAddress: %s' str(fromAddress))
                 if messageEncodingType == 2:
                     bodyPositionIndex = string.find(message, '\nBody:')
                     if bodyPositionIndex > 1:
@@ -755,7 +729,7 @@ class receiveDataThread(threading.Thread):
                     body = message
                     subject = ''
                 elif messageEncodingType == 0:
-                    print 'messageEncodingType == 0. Doing nothing with the message.'
+                    logger.info('messageEncodingType == 0. Doing nothing with the message.')
                 else:
                     body = 'Unknown encoding type.\n\n' + repr(message)
                     subject = ''
@@ -787,9 +761,7 @@ class receiveDataThread(threading.Thread):
                             call([apiNotifyPath, "newBroadcast"])
 
                 # Display timing data
-                shared.printLock.acquire()
-                print 'Time spent processing this interesting broadcast:', time.time() - self.messageProcessingStartTime
-                shared.printLock.release()
+                logger.info('Time spent processing this interesting broadcast: %d' % time.time() - self.messageProcessingStartTime)
         if broadcastVersion == 2:
             cleartextStreamNumber, cleartextStreamNumberLength = decodeVarint(
                 data[readPosition:readPosition + 10])
@@ -800,16 +772,13 @@ class receiveDataThread(threading.Thread):
                     decryptedData = cryptorObject.decrypt(data[readPosition:])
                     toRipe = key  # This is the RIPE hash of the sender's pubkey. We need this below to compare to the RIPE hash of the sender's address to verify that it was encrypted by with their key rather than some other key.
                     initialDecryptionSuccessful = True
-                    print 'EC decryption successful using key associated with ripe hash:', key.encode('hex')
+                    logger.info('EC decryption successful using key associated with ripe hash: %d' % key.encode('hex'))
                     break
                 except Exception as err:
-                    pass
-                    # print 'cryptorObject.decrypt Exception:', err
+                    logger.exception('cryptorObject.decrypt Exception: %s' % str(err))
             if not initialDecryptionSuccessful:
                 # This is not a broadcast I am interested in.
-                shared.printLock.acquire()
-                print 'Length of time program spent failing to decrypt this v2 broadcast:', time.time() - self.messageProcessingStartTime, 'seconds.'
-                shared.printLock.release()
+                logger.info('Length of time program spent failinf to decrypt this v2 broadcast %ds' % time.time() - self.messageProcessingStartTime)
                 return
             # At this point this is a broadcast I have decrypted and thus am
             # interested in.
