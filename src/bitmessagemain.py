@@ -326,7 +326,6 @@ class receiveDataThread(threading.Thread):
                 logger.exception('sock.recv error. Closing receiveData thread (HOST:%s, ID:%s).',
                                   self.HOST, id(self))
                 break
-            logger.debug('Received data: %s.' % repr(self.data))
             if self.data == "":
                 logger.info('Connection to %s closed. Closing receiveData thread. (ID:%s)', self.HOST, id(self))
                 break
@@ -352,7 +351,6 @@ class receiveDataThread(threading.Thread):
         logger.info('The size of the connectedHostsList is now: %s' % len(shared.connectedHostsList))
 
     def processData(self):
-        logger.debug('self.data is currently %s', self.data)
         if len(self.data) < 20:  # if so little of the data has arrived that we can't even unpack the payload length
             return
         if self.data[0:4] != '\xe9\xbe\xb4\xd9':
