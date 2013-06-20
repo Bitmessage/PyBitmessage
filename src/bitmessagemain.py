@@ -56,6 +56,8 @@ from class_singleCleaner import *
 # Helper Functions
 import helper_startup
 import helper_bootstrap
+import helper_inbox
+import helper_sent
 
 # For each stream to which we connect, several outgoingSynSender threads
 # will exist and will collectively create 8 connections with peers.
@@ -742,15 +744,11 @@ class receiveDataThread(threading.Thread):
 
                 toAddress = '[Broadcast subscribers]'
                 if messageEncodingType != 0:
-                    shared.sqlLock.acquire()
+                    
                     t = (self.inventoryHash, toAddress, fromAddress, subject, int(
                         time.time()), body, 'inbox', messageEncodingType, 0)
-                    shared.sqlSubmitQueue.put(
-                        '''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?)''')
-                    shared.sqlSubmitQueue.put(t)
-                    shared.sqlReturnQueue.get()
-                    shared.sqlSubmitQueue.put('commit')
-                    shared.sqlLock.release()
+                    helper_inbox.insert(t)
+                    
                     shared.UISignalQueue.put(('displayNewInboxMessage', (
                         self.inventoryHash, toAddress, fromAddress, subject, body)))
 
@@ -902,15 +900,11 @@ class receiveDataThread(threading.Thread):
 
             toAddress = '[Broadcast subscribers]'
             if messageEncodingType != 0:
-                shared.sqlLock.acquire()
+                
                 t = (self.inventoryHash, toAddress, fromAddress, subject, int(
                     time.time()), body, 'inbox', messageEncodingType, 0)
-                shared.sqlSubmitQueue.put(
-                    '''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?)''')
-                shared.sqlSubmitQueue.put(t)
-                shared.sqlReturnQueue.get()
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlLock.release()
+                helper_inbox.insert(t)
+                
                 shared.UISignalQueue.put(('displayNewInboxMessage', (
                     self.inventoryHash, toAddress, fromAddress, subject, body)))
 
@@ -1226,15 +1220,10 @@ class receiveDataThread(threading.Thread):
                     body = 'Unknown encoding type.\n\n' + repr(message)
                     subject = ''
                 if messageEncodingType != 0:
-                    shared.sqlLock.acquire()
                     t = (self.inventoryHash, toAddress, fromAddress, subject, int(
                         time.time()), body, 'inbox', messageEncodingType, 0)
-                    shared.sqlSubmitQueue.put(
-                        '''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?)''')
-                    shared.sqlSubmitQueue.put(t)
-                    shared.sqlReturnQueue.get()
-                    shared.sqlSubmitQueue.put('commit')
-                    shared.sqlLock.release()
+                    helper_inbox.insert(t)
+                    
                     shared.UISignalQueue.put(('displayNewInboxMessage', (
                         self.inventoryHash, toAddress, fromAddress, subject, body)))
 
@@ -1269,15 +1258,10 @@ class receiveDataThread(threading.Thread):
                         32)  # We don't actually need the ackdata for acknowledgement since this is a broadcast message but we can use it to update the user interface when the POW is done generating.
                     toAddress = '[Broadcast subscribers]'
                     ripe = ''
-                    shared.sqlLock.acquire()
+                    
                     t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
                         time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
-                    shared.sqlSubmitQueue.put(
-                        '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
-                    shared.sqlSubmitQueue.put(t)
-                    shared.sqlReturnQueue.get()
-                    shared.sqlSubmitQueue.put('commit')
-                    shared.sqlLock.release()
+                    helper_sent.insert(t)
 
                     shared.UISignalQueue.put(('displayNewSentMessage', (
                         toAddress, '[Broadcast subscribers]', fromAddress, subject, message, ackdata)))
@@ -4046,15 +4030,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
             msgid = params[0].decode('hex')
-            t = (msgid,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''UPDATE inbox SET folder='trash' WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
-            shared.UISignalQueue.put(('removeInboxRowByMsgid',msgid))
+            helper_inbox.trash(msgid)
             return 'Trashed inbox message (assuming message existed).'
         elif method == 'trashSentMessage':
             if len(params) == 0:
@@ -4126,15 +4102,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 return 'API Error 0014: Your fromAddress is disabled. Cannot send.'
 
             ackdata = OpenSSL.rand(32)
-            shared.sqlLock.acquire()
+            
             t = ('', toAddress, toRipe, fromAddress, subject, message, ackdata, int(
                 time.time()), 'msgqueued', 1, 1, 'sent', 2)
-            shared.sqlSubmitQueue.put(
-                '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            helper_sent.insert(t)
 
             toLabel = ''
             t = (toAddress,)
@@ -4195,15 +4166,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             toAddress = '[Broadcast subscribers]'
             ripe = ''
 
-            shared.sqlLock.acquire()
+            
             t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
                 time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
-            shared.sqlSubmitQueue.put(
-                '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            helper_sent.insert(t)
 
             toLabel = '[Broadcast subscribers]'
             shared.UISignalQueue.put(('displayNewSentMessage', (
