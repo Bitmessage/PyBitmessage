@@ -885,7 +885,7 @@ p, li { white-space: pre-wrap; }
          </rect>
         </property>
         <property name="text">
-         <string>Processed 0 person-to-person messages.</string>
+         <string>Processed 0 person-to-person message.</string>
         </property>
        </widget>
        <widget class="QLabel" name="labelPubkeyCount">
@@ -898,7 +898,7 @@ p, li { white-space: pre-wrap; }
          </rect>
         </property>
         <property name="text">
-         <string>Processed 0 public keys.</string>
+         <string>Processed 0 public key.</string>
         </property>
        </widget>
        <widget class="QLabel" name="labelBroadcastCount">
@@ -911,7 +911,7 @@ p, li { white-space: pre-wrap; }
          </rect>
         </property>
         <property name="text">
-         <string>Processed 0 broadcasts.</string>
+         <string>Processed 0 broadcast.</string>
         </property>
        </widget>
       </widget>
