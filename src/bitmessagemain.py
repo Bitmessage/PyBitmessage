@@ -47,6 +47,8 @@ import json
 from subprocess import call  # used when the API must execute an outside program
 import singleton
 import proofofwork
+# Logging
+from debug import logger
 
 # For each stream to which we connect, several outgoingSynSender threads
 # will exist and will collectively create 8 connections with peers.
@@ -95,9 +97,10 @@ class outgoingSynSender(threading.Thread):
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.settimeout(20)
             if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and verbose >= 2:
-                shared.printLock.acquire()
-                print 'Trying an outgoing connection to', HOST, ':', PORT
-                shared.printLock.release()
+                #shared.printLock.acquire()
+                #print 'Trying an outgoing connection to', HOST, ':', PORT
+                logger.info('Trying an outgoing connection to %s:%s' % (HOST, PORT))
+                #shared.printLock.release()
                 # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS4a':
                 if verbose >= 2:
@@ -672,13 +675,9 @@ class receiveDataThread(threading.Thread):
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
             (time.time() - self.messageProcessingStartTime)
         if sleepTime > 0:
-            shared.printLock.acquire()
-            print 'Timing attack mitigation: Sleeping for', sleepTime, 'seconds.'
-            shared.printLock.release()
+            logger.info('Timing attack mitigation: Sleeping for %s seconds' % str(sleepTime))
             time.sleep(sleepTime)
-        shared.printLock.acquire()
-        print 'Total message processing time:', time.time() - self.messageProcessingStartTime, 'seconds.'
-        shared.printLock.release()
+        logger.info('Total message processing time: %ss' % str(time.time() - self.messageProcessingStartTime))
 
     # A broadcast message has a valid time and POW and requires processing.
     # The recbroadcast function calls this one.
@@ -715,9 +714,8 @@ class receiveDataThread(threading.Thread):
                 sendersHash = data[readPosition:readPosition + 20]
                 if sendersHash not in shared.broadcastSendersForWhichImWatching:
                     # Display timing data
-                    shared.printLock.acquire()
-                    print 'Time spent deciding that we are not interested in this v1 broadcast:', time.time() - self.messageProcessingStartTime
-                    shared.printLock.release()
+                    logger.info('Time spent deciding that we are not interested in this v1 broadcast: %s' %
+                                str(time.time() - self.messageProcessingStartTime))
                     return
                 # At this point, this message claims to be from sendersHash and
                 # we are interested in it. We still have to hash the public key
@@ -749,11 +747,11 @@ class receiveDataThread(threading.Thread):
                 signature = data[readPosition:readPosition + signatureLength]
                 try:
                     if not highlevelcrypto.verify(data[12:readPositionAtBottomOfMessage], signature, sendersPubSigningKey.encode('hex')):
-                        print 'ECDSA verify failed'
+                        logger.info('ECDSA verify failed')
                         return
-                    print 'ECDSA verify passed'
+                    logger.info('ECDSA verify passed')
                 except Exception as err:
-                    print 'ECDSA verify failed', err
+                    logger.debug('ECDSA verify failed: %s' % str(err))
                     return
                 # verify passed
 
@@ -1059,13 +1057,9 @@ class receiveDataThread(threading.Thread):
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
             (time.time() - self.messageProcessingStartTime)
         if sleepTime > 0:
-            shared.printLock.acquire()
-            print 'Timing attack mitigation: Sleeping for', sleepTime, 'seconds.'
-            shared.printLock.release()
+            logger.info('Timing attack mitigation: Sleeping for %s seconds' % str(sleepTime))
             time.sleep(sleepTime)
-        shared.printLock.acquire()
-        print 'Total message processing time:', time.time() - self.messageProcessingStartTime, 'seconds.'
-        shared.printLock.release()
+        logger.info('Total message processing time: %ss' % str(time.time() - self.messageProcessingStartTime))
 
     # A msg message has a valid time and POW and requires processing. The
     # recmsg function calls this one.
@@ -1089,10 +1083,8 @@ class receiveDataThread(threading.Thread):
                 strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
             return
         else:
-            shared.printLock.acquire()
-            print 'This was NOT an acknowledgement bound for me.'
-            # print 'ackdataForWhichImWatching', ackdataForWhichImWatching
-            shared.printLock.release()
+            logger.info('This was NOT on acknowledgement bound for me.')
+            # logger.info("Ack data for which I'm watching: %s" % ackdataForWhichImWatching)
 
         # This is not an acknowledgement bound for me. See if it is a message
         # bound for me by trying to decrypt it with my private keys.
@@ -1109,9 +1101,8 @@ class receiveDataThread(threading.Thread):
                 # print 'cryptorObject.decrypt Exception:', err
         if not initialDecryptionSuccessful:
             # This is not a message bound for me.
-            shared.printLock.acquire()
-            print 'Length of time program spent failing to decrypt this message:', time.time() - self.messageProcessingStartTime, 'seconds.'
-            shared.printLock.release()
+            logger.info('Length of time program spent failing to decrypt this message %s seconds' %
+                        str(time.time() - self.messageProcessingStartTime))
         else:
             # This is a message bound for me.
             toAddress = shared.myAddressesByHash[

@@ -1,5 +1,6 @@
 **pyc
 **dat
 **.DS_Store
+*.log
 src/build
 src/dist
