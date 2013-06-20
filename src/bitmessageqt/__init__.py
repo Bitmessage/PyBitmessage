@@ -1076,8 +1076,8 @@ class MyForm(QtGui.QMainWindow):
             shared.statusIconColor = 'red'
             # if the connection is lost then show a notification
             if self.connected:
-                self.notifierShow('Bitmessage', _translate(
-                    "MainWindow", "Connection lost"))
+                self.notifierShow('Bitmessage', unicode(_translate(
+                    "MainWindow", "Connection lost").toUtf8(),'utf-8'))
             self.connected = False
 
             if self.actionStatus is not None:
@@ -1109,8 +1109,8 @@ class MyForm(QtGui.QMainWindow):
                 QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
             if not self.connected:
-                self.notifierShow('Bitmessage', _translate(
-                    "MainWindow", "Connected"))
+                self.notifierShow('Bitmessage', unicode(_translate(
+                    "MainWindow", "Connected").toUtf8(),'utf-8'))
             self.connected = True
 
             if self.actionStatus is not None:
@@ -1582,12 +1582,12 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(unicode(fromAddress, 'utf-8'))
             newItem.setToolTip(unicode(fromAddress, 'utf-8'))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
-                self.notifierShow('New Message', 'From ' + fromAddress)
+                self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(fromAddress, 'utf-8'))
         else:
             newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
             newItem.setToolTip(unicode(unicode(fromLabel, 'utf-8')))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
-                self.notifierShow('New Message', 'From ' + fromLabel)
+                self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(fromLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0, 1, newItem)
