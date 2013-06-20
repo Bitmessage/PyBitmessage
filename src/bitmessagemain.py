@@ -97,10 +97,7 @@ class outgoingSynSender(threading.Thread):
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.settimeout(20)
             if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and verbose >= 2:
-                #shared.printLock.acquire()
-                #print 'Trying an outgoing connection to', HOST, ':', PORT
                 logger.info('Trying an outgoing connection to %s:%s' % (HOST, PORT))
-                #shared.printLock.release()
                 # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS4a':
                 if verbose >= 2:
@@ -1084,7 +1081,7 @@ class receiveDataThread(threading.Thread):
             return
         else:
             logger.info('This was NOT on acknowledgement bound for me.')
-            # logger.info("Ack data for which I'm watching: %s" % ackdataForWhichImWatching)
+            logger.debug("Ack data for which I'm watching: %s" % ackdataForWhichImWatching)
 
         # This is not an acknowledgement bound for me. See if it is a message
         # bound for me by trying to decrypt it with my private keys.
@@ -1094,11 +1091,11 @@ class receiveDataThread(threading.Thread):
                     encryptedData[readPosition:])
                 toRipe = key  # This is the RIPE hash of my pubkeys. We need this below to compare to the destination_ripe included in the encrypted data.
                 initialDecryptionSuccessful = True
-                print 'EC decryption successful using key associated with ripe hash:', key.encode('hex')
+                logger.info('EC decryption successful using key associated with ripe hash: %s' % str(key.encode('hex')))
                 break
             except Exception as err:
                 pass
-                # print 'cryptorObject.decrypt Exception:', err
+                logger.debug('cryptorObject.decrypt Exception: %s' % str(err))
         if not initialDecryptionSuccessful:
             # This is not a message bound for me.
             logger.info('Length of time program spent failing to decrypt this message %s seconds' %
