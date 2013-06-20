@@ -53,6 +53,10 @@ from class_singleListener import *
 from class_sqlThread import *
 from class_singleCleaner import *
 
+# Helper Functions
+import helper_startup
+import helper_bootstrap
+
 # For each stream to which we connect, several outgoingSynSender threads
 # will exist and will collectively create 8 connections with peers.
 
@@ -4364,129 +4368,11 @@ if __name__ == "__main__":
         print 'This program requires sqlite version 3 or higher because 2 and lower cannot store NULL values. I see version:', sqlite3.sqlite_version_info
         os._exit(0)
 
-    # First try to load the config file (the keys.dat file) from the program
-    # directory
-    shared.config = ConfigParser.SafeConfigParser()
-    shared.config.read('keys.dat')
-    try:
-        shared.config.get('bitmessagesettings', 'settingsversion')
-        print 'Loading config files from same directory as program'
-        shared.appdata = ''
-    except:
-        # Could not load the keys.dat file in the program directory. Perhaps it
-        # is in the appdata directory.
-        shared.appdata = shared.lookupAppdataFolder()
-        shared.config = ConfigParser.SafeConfigParser()
-        shared.config.read(shared.appdata + 'keys.dat')
-        try:
-            shared.config.get('bitmessagesettings', 'settingsversion')
-            print 'Loading existing config files from', shared.appdata
-        except:
-            # This appears to be the first time running the program; there is
-            # no config file (or it cannot be accessed). Create config file.
-            shared.config.add_section('bitmessagesettings')
-            shared.config.set('bitmessagesettings', 'settingsversion', '6')
-            shared.config.set('bitmessagesettings', 'port', '8444')
-            shared.config.set(
-                'bitmessagesettings', 'timeformat', '%%a, %%d %%b %%Y  %%I:%%M %%p')
-            shared.config.set('bitmessagesettings', 'blackwhitelist', 'black')
-            shared.config.set('bitmessagesettings', 'startonlogon', 'false')
-            if 'linux' in sys.platform:
-                shared.config.set(
-                    'bitmessagesettings', 'minimizetotray', 'false')
-                                  # This isn't implimented yet and when True on
-                                  # Ubuntu causes Bitmessage to disappear while
-                                  # running when minimized.
-            else:
-                shared.config.set(
-                    'bitmessagesettings', 'minimizetotray', 'true')
-            shared.config.set(
-                'bitmessagesettings', 'showtraynotifications', 'true')
-            shared.config.set('bitmessagesettings', 'startintray', 'false')
-            shared.config.set('bitmessagesettings', 'socksproxytype', 'none')
-            shared.config.set(
-                'bitmessagesettings', 'sockshostname', 'localhost')
-            shared.config.set('bitmessagesettings', 'socksport', '9050')
-            shared.config.set(
-                'bitmessagesettings', 'socksauthentication', 'false')
-            shared.config.set('bitmessagesettings', 'socksusername', '')
-            shared.config.set('bitmessagesettings', 'sockspassword', '')
-            shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
-            shared.config.set(
-                'bitmessagesettings', 'messagesencrypted', 'false')
-            shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte))
-            shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
-                shared.networkDefaultPayloadLengthExtraBytes))
-            shared.config.set('bitmessagesettings', 'minimizeonclose', 'false')
-            shared.config.set(
-                'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
-            shared.config.set(
-                'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
+    helper_startup.loadConfig()
 
-            if storeConfigFilesInSameDirectoryAsProgramByDefault:
-                # Just use the same directory as the program and forget about
-                # the appdata folder
-                shared.appdata = ''
-                print 'Creating new config files in same directory as program.'
-            else:
-                print 'Creating new config files in', shared.appdata
-                if not os.path.exists(shared.appdata):
-                    os.makedirs(shared.appdata)
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
-
-    if shared.config.getint('bitmessagesettings', 'settingsversion') == 1:
-        shared.config.set('bitmessagesettings', 'settingsversion', '4')
-                          # If the settings version is equal to 2 or 3 then the
-                          # sqlThread will modify the pubkeys table and change
-                          # the settings version to 4.
-        shared.config.set('bitmessagesettings', 'socksproxytype', 'none')
-        shared.config.set('bitmessagesettings', 'sockshostname', 'localhost')
-        shared.config.set('bitmessagesettings', 'socksport', '9050')
-        shared.config.set('bitmessagesettings', 'socksauthentication', 'false')
-        shared.config.set('bitmessagesettings', 'socksusername', '')
-        shared.config.set('bitmessagesettings', 'sockspassword', '')
-        shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
-        shared.config.set('bitmessagesettings', 'messagesencrypted', 'false')
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
-
-    try:
-        # We shouldn't have to use the shared.knownNodesLock because this had
-        # better be the only thread accessing knownNodes right now.
-        pickleFile = open(shared.appdata + 'knownnodes.dat', 'rb')
-        shared.knownNodes = pickle.load(pickleFile)
-        pickleFile.close()
-    except:
-        createDefaultKnownNodes(shared.appdata)
-        pickleFile = open(shared.appdata + 'knownnodes.dat', 'rb')
-        shared.knownNodes = pickle.load(pickleFile)
-        pickleFile.close()
-    if shared.config.getint('bitmessagesettings', 'settingsversion') > 6:
-        print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
-        raise SystemExit
-
-    # DNS bootstrap. This could be programmed to use the SOCKS proxy to do the
-    # DNS lookup some day but for now we will just rely on the entries in
-    # defaultKnownNodes.py. Hopefully either they are up to date or the user
-    # has run Bitmessage recently without SOCKS turned on and received good
-    # bootstrap nodes using that method.
-    if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none':
-        try:
-            for item in socket.getaddrinfo('bootstrap8080.bitmessage.org', 80):
-                print 'Adding', item[4][0], 'to knownNodes based on DNS boostrap method'
-                shared.knownNodes[1][item[4][0]] = (8080, int(time.time()))
-        except:
-            print 'bootstrap8080.bitmessage.org DNS bootstraping failed.'
-        try:
-            for item in socket.getaddrinfo('bootstrap8444.bitmessage.org', 80):
-                print 'Adding', item[4][0], 'to knownNodes based on DNS boostrap method'
-                shared.knownNodes[1][item[4][0]] = (8444, int(time.time()))
-        except:
-            print 'bootstrap8444.bitmessage.org DNS bootstrapping failed.'
-    else:
-        print 'DNS bootstrap skipped because SOCKS is used.'
+    helper_bootstrap.knownNodes()
+    helper_bootstrap.dns()
+    
     # Start the address generation thread
     addressGeneratorThread = addressGenerator()
     addressGeneratorThread.daemon = True  # close the main program even if there are threads left
@@ -4540,8 +4426,6 @@ if __name__ == "__main__":
 
     if not shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
         try:
-            from PyQt4.QtCore import *
-            from PyQt4.QtGui import *
             from PyQt4 import QtCore, QtGui
         except Exception as err:
             print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
