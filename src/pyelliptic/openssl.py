@@ -419,17 +419,21 @@ except:
                 OpenSSL = _OpenSSL('/usr/local/opt/openssl/lib/libcrypto.dylib')
             except:
                 try:
-                    from os import path
-                    lib_path = path.join(sys._MEIPASS, "libeay32.dll")
-                    OpenSSL = _OpenSSL(lib_path)
+                  # Load it from an Bitmessage.app on OSX
+                  OpenSSL = _OpenSSL('./../Frameworks/libcrypto.dylib')
                 except:
-                    if 'linux' in sys.platform or 'darwin' in sys.platform:
-                        try:
-                            from ctypes.util import find_library
-                            OpenSSL = _OpenSSL(find_library('ssl'))
-                        except Exception, err:
-                            sys.stderr.write('(On Linux) Couldn\'t find and load the OpenSSL library. You must install it. If you believe that you already have it installed, this exception information might be of use:\n')
-                            from ctypes.util import find_library
-                            OpenSSL = _OpenSSL(find_library('ssl'))
-                    else:
-                        raise Exception("Couldn't find and load the OpenSSL library. You must install it.")
+                  try:
+                      from os import path
+                      lib_path = path.join(sys._MEIPASS, "libeay32.dll")
+                      OpenSSL = _OpenSSL(lib_path)
+                  except:
+                      if 'linux' in sys.platform or 'darwin' in sys.platform:
+                          try:
+                              from ctypes.util import find_library
+                              OpenSSL = _OpenSSL(find_library('ssl'))
+                          except Exception, err:
+                              sys.stderr.write('(On Linux) Couldn\'t find and load the OpenSSL library. You must install it. If you believe that you already have it installed, this exception information might be of use:\n')
+                              from ctypes.util import find_library
+                              OpenSSL = _OpenSSL(find_library('ssl'))
+                      else:
+                          raise Exception("Couldn't find and load the OpenSSL library. You must install it.")
