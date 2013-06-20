@@ -68,14 +68,17 @@ class outgoingSynSender(threading.Thread):
             if shared.shutdown:
                 break
             random.seed()
+            shared.knownNodesLock.acquire()
             HOST, = random.sample(shared.knownNodes[self.streamNumber], 1)
+            shared.knownNodesLock.release()
             alreadyAttemptedConnectionsListLock.acquire()
             while HOST in alreadyAttemptedConnectionsList or HOST in shared.connectedHostsList:
                 alreadyAttemptedConnectionsListLock.release()
                 # print 'choosing new sample'
                 random.seed()
-                HOST, = random.sample(shared.knownNodes[
-                                      self.streamNumber], 1)
+                shared.knownNodesLock.acquire()
+                HOST, = random.sample(shared.knownNodes[self.streamNumber], 1)
+                shared.knownNodesLock.release()
                 time.sleep(1)
                 # Clear out the alreadyAttemptedConnectionsList every half
                 # hour so that this program will again attempt a connection
