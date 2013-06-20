@@ -3,7 +3,8 @@
 import logging
 import logging.config
 
-log_level = 'DEBUG' # Get from a config file at some point?
+# TODO(xj9): Get from a config file at some point?
+log_level = 'DEBUG'
 
 logging.config.dictConfig({
     'version': 1,
