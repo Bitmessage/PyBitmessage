@@ -4058,26 +4058,17 @@ if __name__ == "__main__":
             print 'Error message:', err
             os._exit(0)
 
-        try:
-            _encoding = QtGui.QApplication.UnicodeUTF8
-            def _translate(context, text): # A non-QT version of _translate is defined below.
-                return QtGui.QApplication.translate(context, text)
-        except Exception as err:
-            print 'Error:', err
-
         import bitmessageqt
         bitmessageqt.run()
     else:
-        def _translate(context, text): # A QT version of _translate is defined above. 
-            if '%' in text:
-                return translateClass(context, text.replace('%','',1))
-            else:
-                return text
         shared.printLock.acquire()
         print 'Running as a daemon. You can use Ctrl+C to exit.'
         shared.printLock.release()
         while True:
             time.sleep(20)
+
+def _translate(context, text):
+    return translateText(context, text)
 
 def translateText(context, text):
     if not shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
