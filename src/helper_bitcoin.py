@@ -1,4 +1,5 @@
 import hashlib
+from pyelliptic import arithmetic
 
 # This function expects that pubkey begin with \x04
 def calculateBitcoinAddressFromPubkey(pubkey):
