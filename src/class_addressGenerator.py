@@ -6,6 +6,7 @@ from pyelliptic.openssl import OpenSSL
 import ctypes
 import hashlib
 from addresses import *
+from pyelliptic import arithmetic
 
 class addressGenerator(threading.Thread):
 

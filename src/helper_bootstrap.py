@@ -2,6 +2,7 @@ import shared
 import socket
 import defaultKnownNodes
 import pickle
+import time
 
 def knownNodes():
     try:
