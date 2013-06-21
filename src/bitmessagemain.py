@@ -457,7 +457,7 @@ class receiveDataThread(threading.Thread):
             if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) > 0:
                 logger.debug('(concerning %s) number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now %s',
                              self.HOST,
-                             self.len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave))
+                             len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave))
                 numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[self.HOST] = len(
                     self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
             if len(self.ackDataThatWeHaveYetToSend) > 0:
@@ -752,7 +752,7 @@ class receiveDataThread(threading.Thread):
 
                 fromAddress = encodeAddress(
                     sendersAddressVersion, sendersStream, ripe.digest())
-                logger.info('fromAddress: %s' str(fromAddress))
+                logger.info('fromAddress: %s', str(fromAddress))
                 if messageEncodingType == 2:
                     bodyPositionIndex = string.find(message, '\nBody:')
                     if bodyPositionIndex > 1:
@@ -813,11 +813,13 @@ class receiveDataThread(threading.Thread):
                     # their key rather than some other key.
                     toRipe = key
                     initialDecryptionSuccessful = True
-                    logger.info('EC decryption successful using key associated with ripe hash:',
+                    logger.info('EC decryption successful using key associated with ripe hash: %s',
                                  key.encode('hex'))
                     break
                 except Exception as err:
-                    logger.exception('cryptorObject.decrypt Exception: %s' % str(err))
+                    # TODO(grobinson): Avoid using exceptions for normal
+                    # application logic.
+                    pass
             if not initialDecryptionSuccessful:
                 # This is not a broadcast I am interested in.
                 logger.info('Time spent failing to decrypt this v2 broadcast: %s seconds.',
