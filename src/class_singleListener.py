@@ -2,6 +2,9 @@ import threading
 import shared
 import socket
 
+from class_sendDataThread import *
+from class_receiveDataThread import *
+
 # Only one singleListener thread will ever exist. It creates the
 # receiveDataThread and sendDataThread for each incoming connection. Note
 # that it cannot set the stream number because it is not known yet- the
