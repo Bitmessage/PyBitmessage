@@ -161,8 +161,7 @@ class outgoingSynSender(threading.Thread):
                 sd.sendVersionMessage()
 
             except socks.GeneralProxyError as err:
-                # TODO(fiatflux): turn off traceback, but preserve terse exception info.
-                logger.debug('Could NOT connect to %s during outgoing attempt.', HOST, exc_info=True)
+                logger.debug('Could NOT connect to %s during outgoing attempt. %s' % (HOST, str(err)))
                 PORT, timeLastSeen = shared.knownNodes[
                     self.streamNumber][HOST]
                 # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the
@@ -263,7 +262,7 @@ class singleListener(threading.Thread):
                 a, HOST, PORT, -1, objectsOfWhichThisRemoteNodeIsAlreadyAware)
             rd.start()
 
-            logger.info(self, 'connected to %s during INCOMING request.' % (HOST))
+            logger.info('Connected to %s during INCOMING request.' % HOST)
 
 # This thread is created either by the synSenderThread(for outgoing
 # connections) or the singleListenerThread(for incoming connectiosn).
@@ -351,7 +350,7 @@ class receiveDataThread(threading.Thread):
         except:
             pass
         shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
-        logger.info('The size of the connectedHostsList is now: %s' % len(shared.connectedHostsList))
+        logger.info('The size of the connectedHosts list is now: %d' % len(shared.connectedHostsList))
 
     def processData(self):
         if len(self.data) < 20:  # if so little of the data has arrived that we can't even unpack the payload length
@@ -545,7 +544,9 @@ class receiveDataThread(threading.Thread):
         for hash, storedValue in bigInvList.items():
             payload += hash
             numberOfObjectsInInvMessage += 1
-            if numberOfObjectsInInvMessage >= 50000:  # We can only send a max of 50000 items per inv message but we may have more objects to advertise. They must be split up into multiple inv messages.
+            if numberOfObjectsInInvMessage >= 50000:
+            # We can only send a max of 50000 items per inv message but we may have more
+            # objects to advertise. They must be split up into multiple inv messages.
                 self.sendinvMessageToJustThisOnePeer(
                     numberOfObjectsInInvMessage, payload)
                 payload = ''
@@ -566,14 +567,14 @@ class receiveDataThread(threading.Thread):
         try:
             self.sock.sendall(headerData + payload)
         except Exception as err:
-            logg.exception('Error sending inv.')
+            logger.exception('Error sending inv.')
 
     # We have received a broadcast message
     def recbroadcast(self, data):
         self.messageProcessingStartTime = time.time()
         # First we must check to make sure the proof of work is sufficient.
         if not self.isProofOfWorkSufficient(data):
-            logg.info('Proof of work in broadcast message insufficient.')
+            logger.info('Proof of work in broadcast message insufficient.')
             return
         readPosition = 8  # bypass the nonce
         embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
@@ -587,13 +588,13 @@ class receiveDataThread(threading.Thread):
             readPosition += 4
 
         if embeddedTime > (int(time.time()) + 10800):  # prevent funny business
-            logger.info('The embedded time in this broadcast message is more than three hours in the future. That doesn\'t make sense. Ignoring message.')
+            logger.info('The embedded time in this broadcast message in more than three hours in the future. Ignoring message.')
             return
         if embeddedTime < (int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept):
             logger.info('The embedded time in this broadcast message is too old. Ignoring message.')
             return
         if len(data) < 180:
-            logger.info('The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.')
+            logger.info('The payload length of this broadcast packet is unreasonably low. Ignoring message.')
             return
         # Let us check to make sure the stream number is correct (thus
         # preventing an individual from sending broadcasts out on the wrong
@@ -659,9 +660,7 @@ class receiveDataThread(threading.Thread):
             data[readPosition:readPosition + 9])
         readPosition += broadcastVersionLength
         if broadcastVersion < 1 or broadcastVersion > 2:
-            logger.error('Cannot decode incoming broadcast versions higher than 2. '
-                         'Assuming the sender isn\'t being silly, you should upgrade '
-                         'Bitmessage because this message shall be ignored.')
+            logger.info('Cannot decode incoming broadcast versions higher than 2. Ignoring.')
             return
         if broadcastVersion == 1:
             beginningOfPubkeyPosition = readPosition  # used when we add the pubkey to our pubkey table
@@ -689,8 +688,8 @@ class receiveDataThread(threading.Thread):
                 sendersHash = data[readPosition:readPosition + 20]
                 if sendersHash not in shared.broadcastSendersForWhichImWatching:
                     # Display timing data
-                    logger.info('Time spent deciding that we are not interested in this v1 broadcast: %s' %
-                                str(time.time() - self.messageProcessingStartTime))
+                    logger.info('Time spent deciding that we are not interested in this v1 broadcast: %d' %
+                                time.time() - self.messageProcessingStartTime)
                     return
                 # At this point, this message claims to be from sendersHash and
                 # we are interested in it. We still have to hash the public key
@@ -726,7 +725,7 @@ class receiveDataThread(threading.Thread):
                         return
                     logger.info('ECDSA verify passed')
                 except Exception as err:
-                    logger.debug('ECDSA verify failed: %s' % str(err))
+                    logger.exception('ECDSA verify failed: %s' % str(err))
                     return
                 # verify passed
 
@@ -753,7 +752,7 @@ class receiveDataThread(threading.Thread):
 
                 fromAddress = encodeAddress(
                     sendersAddressVersion, sendersStream, ripe.digest())
-                logger.debug('fromAddress: %s', fromAddress)
+                logger.info('fromAddress: %s' str(fromAddress))
                 if messageEncodingType == 2:
                     bodyPositionIndex = string.find(message, '\nBody:')
                     if bodyPositionIndex > 1:
@@ -818,8 +817,7 @@ class receiveDataThread(threading.Thread):
                                  key.encode('hex'))
                     break
                 except Exception as err:
-                    # TODO(fiatflux): avoid relying on exceptions for normal operation.
-                    pass
+                    logger.exception('cryptorObject.decrypt Exception: %s' % str(err))
             if not initialDecryptionSuccessful:
                 # This is not a broadcast I am interested in.
                 logger.info('Time spent failing to decrypt this v2 broadcast: %s seconds.',
