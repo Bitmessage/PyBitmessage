@@ -58,6 +58,8 @@ import helper_startup
 import helper_bootstrap
 import helper_inbox
 import helper_sent
+import helper_generic
+import helper_bitcoin
 
 # For each stream to which we connect, several outgoingSynSender threads
 # will exist and will collectively create 8 connections with peers.
@@ -1131,7 +1133,7 @@ class receiveDataThread(threading.Thread):
                 print 'ECDSA verify failed', err
                 return
             shared.printLock.acquire()
-            print 'As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person:', calculateBitcoinAddressFromPubkey(pubSigningKey), '  ..and here is the testnet address:', calculateTestnetAddressFromPubkey(pubSigningKey), '. The other person must take their private signing key from Bitmessage and import it into Bitcoin (or a service like Blockchain.info) for it to be of any use. Do not use this unless you know what you are doing.'
+            print 'As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person:', helper_bitcoin.calculateBitcoinAddressFromPubkey(pubSigningKey), '  ..and here is the testnet address:', helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey), '. The other person must take their private signing key from Bitmessage and import it into Bitcoin (or a service like Blockchain.info) for it to be of any use. Do not use this unless you know what you are doing.'
             shared.printLock.release()
             # calculate the fromRipe.
             sha = hashlib.new('sha512')
@@ -1867,7 +1869,7 @@ class receiveDataThread(threading.Thread):
                 if data[28 + lengthOfNumberOfAddresses + (34 * i)] == '\x7F':
                     print 'Ignoring IP address in loopback range:', hostFromAddrMessage
                     continue
-                if isHostInPrivateIPRange(hostFromAddrMessage):
+                if helper_generic.isHostInPrivateIPRange(hostFromAddrMessage):
                     print 'Ignoring IP address in private range:', hostFromAddrMessage
                     continue
                 timeSomeoneElseReceivedMessageFromThisNode, = unpack('>I', data[lengthOfNumberOfAddresses + (
@@ -2065,7 +2067,7 @@ class receiveDataThread(threading.Thread):
             for i in range(500):
                 random.seed()
                 HOST, = random.sample(shared.knownNodes[self.streamNumber], 1)
-                if isHostInPrivateIPRange(HOST):
+                if helper_generic.isHostInPrivateIPRange(HOST):
                     continue
                 addrsInMyStream[HOST] = shared.knownNodes[
                     self.streamNumber][HOST]
@@ -2074,7 +2076,7 @@ class receiveDataThread(threading.Thread):
                 random.seed()
                 HOST, = random.sample(shared.knownNodes[
                                       self.streamNumber * 2], 1)
-                if isHostInPrivateIPRange(HOST):
+                if helper_generic.isHostInPrivateIPRange(HOST):
                     continue
                 addrsInChildStreamLeft[HOST] = shared.knownNodes[
                     self.streamNumber * 2][HOST]
@@ -2083,7 +2085,7 @@ class receiveDataThread(threading.Thread):
                 random.seed()
                 HOST, = random.sample(shared.knownNodes[
                                       (self.streamNumber * 2) + 1], 1)
-                if isHostInPrivateIPRange(HOST):
+                if helper_generic.isHostInPrivateIPRange(HOST):
                     continue
                 addrsInChildStreamRight[HOST] = shared.knownNodes[
                     (self.streamNumber * 2) + 1][HOST]
@@ -2421,71 +2423,6 @@ def isInSqlInventory(hash):
         return True
 
 
-def convertIntToString(n):
-    a = __builtins__.hex(n)
-    if a[-1:] == 'L':
-        a = a[:-1]
-    if (len(a) % 2) == 0:
-        return a[2:].decode('hex')
-    else:
-        return ('0' + a[2:]).decode('hex')
-
-
-def convertStringToInt(s):
-    return int(s.encode('hex'), 16)
-
-
-# This function expects that pubkey begin with \x04
-def calculateBitcoinAddressFromPubkey(pubkey):
-    if len(pubkey) != 65:
-        print 'Could not calculate Bitcoin address from pubkey because function was passed a pubkey that was', len(pubkey), 'bytes long rather than 65.'
-        return "error"
-    ripe = hashlib.new('ripemd160')
-    sha = hashlib.new('sha256')
-    sha.update(pubkey)
-    ripe.update(sha.digest())
-    ripeWithProdnetPrefix = '\x00' + ripe.digest()
-
-    checksum = hashlib.sha256(hashlib.sha256(
-        ripeWithProdnetPrefix).digest()).digest()[:4]
-    binaryBitcoinAddress = ripeWithProdnetPrefix + checksum
-    numberOfZeroBytesOnBinaryBitcoinAddress = 0
-    while binaryBitcoinAddress[0] == '\x00':
-        numberOfZeroBytesOnBinaryBitcoinAddress += 1
-        binaryBitcoinAddress = binaryBitcoinAddress[1:]
-    base58encoded = arithmetic.changebase(binaryBitcoinAddress, 256, 58)
-    return "1" * numberOfZeroBytesOnBinaryBitcoinAddress + base58encoded
-
-
-def calculateTestnetAddressFromPubkey(pubkey):
-    if len(pubkey) != 65:
-        print 'Could not calculate Bitcoin address from pubkey because function was passed a pubkey that was', len(pubkey), 'bytes long rather than 65.'
-        return "error"
-    ripe = hashlib.new('ripemd160')
-    sha = hashlib.new('sha256')
-    sha.update(pubkey)
-    ripe.update(sha.digest())
-    ripeWithProdnetPrefix = '\x6F' + ripe.digest()
-
-    checksum = hashlib.sha256(hashlib.sha256(
-        ripeWithProdnetPrefix).digest()).digest()[:4]
-    binaryBitcoinAddress = ripeWithProdnetPrefix + checksum
-    numberOfZeroBytesOnBinaryBitcoinAddress = 0
-    while binaryBitcoinAddress[0] == '\x00':
-        numberOfZeroBytesOnBinaryBitcoinAddress += 1
-        binaryBitcoinAddress = binaryBitcoinAddress[1:]
-    base58encoded = arithmetic.changebase(binaryBitcoinAddress, 256, 58)
-    return "1" * numberOfZeroBytesOnBinaryBitcoinAddress + base58encoded
-
-
-def signal_handler(signal, frame):
-    if shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
-        shared.doCleanShutdown()
-        sys.exit(0)
-    else:
-        print 'Unfortunately you cannot use Ctrl+C when running the UI because the UI captures the signal.'
-
-
 def connectToStream(streamNumber):
     selfInitiatedConnections[streamNumber] = {}
     if sys.platform[0:3] == 'win':
@@ -2562,21 +2499,6 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     datatosend = datatosend + pack('>L', len(payload))  # payload length
     datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
     return datatosend + payload
-
-
-def isHostInPrivateIPRange(host):
-    if host[:3] == '10.':
-        return True
-    if host[:4] == '172.':
-        if host[6] == '.':
-            if int(host[4:6]) >= 16 and int(host[4:6]) <= 31:
-                return True
-    if host[:8] == '192.168.':
-        return True
-    return False
-
-
-
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
@@ -4326,7 +4248,7 @@ if __name__ == "__main__":
     # is the application already running?  If yes then exit.
     thisapp = singleton.singleinstance()
 
-    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGINT, helper_generic.signal_handler)
     # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     # Check the Major version, the first element in the array
