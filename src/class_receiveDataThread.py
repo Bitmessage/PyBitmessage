@@ -1,6 +1,18 @@
 import time
 import threading
 import shared
+import hashlib
+import socket
+import pickle
+import random
+from struct import unpack, pack
+import sys
+
+from addresses import *
+import helper_generic
+import bitmessagemain
+from bitmessagemain import lengthOfTimeToLeaveObjectsInInventory, lengthOfTimeToHoldOnToAllPubkeys, maximumAgeOfAnObjectThatIAmWillingToAccept, maximumAgeOfObjectsThatIAdvertiseToOthers, maximumAgeOfNodesThatIAdvertiseToOthers, numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer, neededPubkeys
+
 
 # This thread is created either by the synSenderThread(for outgoing
 # connections) or the singleListenerThread(for incoming connectiosn).
@@ -20,13 +32,15 @@ class receiveDataThread(threading.Thread):
         HOST,
         port,
         streamNumber,
-            objectsOfWhichThisRemoteNodeIsAlreadyAware):
+            objectsOfWhichThisRemoteNodeIsAlreadyAware,
+            selfInitiatedConnections):
         self.sock = sock
         self.HOST = HOST
         self.PORT = port
         self.streamNumber = streamNumber
         self.payloadLength = 0  # This is the protocol payload length thus it doesn't include the 24 byte message header
         self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave = {}
+        self.selfInitiatedConnections = selfInitiatedConnections
         shared.connectedHostsList[
             self.HOST] = 0  # The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
         self.connectionIsOrWasFullyEstablished = False  # set to true after the remote node and I accept each other's version messages. This is needed to allow the user interface to accurately reflect the current number of connections.
@@ -34,7 +48,7 @@ class receiveDataThread(threading.Thread):
             self.initiatedConnection = False
         else:
             self.initiatedConnection = True
-            selfInitiatedConnections[streamNumber][self] = 0
+            self.selfInitiatedConnections[streamNumber][self] = 0
         self.ackDataThatWeHaveYetToSend = [
         ]  # When we receive a message bound for us, we store the acknowledgement that we need to send (the ackdata) here until we are done processing all other data received from this peer.
         self.objectsOfWhichThisRemoteNodeIsAlreadyAware = objectsOfWhichThisRemoteNodeIsAlreadyAware
@@ -66,7 +80,7 @@ class receiveDataThread(threading.Thread):
                 self.processData()
 
         try:
-            del selfInitiatedConnections[self.streamNumber][self]
+            del self.selfInitiatedConnections[self.streamNumber][self]
             shared.printLock.acquire()
             print 'removed self (a receiveDataThread) from selfInitiatedConnections'
             shared.printLock.release()
@@ -90,15 +104,14 @@ class receiveDataThread(threading.Thread):
         shared.printLock.release()
 
     def processData(self):
-        global verbose
-        # if verbose >= 3:
+        # if bitmessagemain.verbose >= 3:
             # shared.printLock.acquire()
             # print 'self.data is currently ', repr(self.data)
             # shared.printLock.release()
         if len(self.data) < 20:  # if so little of the data has arrived that we can't even unpack the payload length
             return
         if self.data[0:4] != '\xe9\xbe\xb4\xd9':
-            if verbose >= 1:
+            if bitmessagemain.verbose >= 1:
                 shared.printLock.acquire()
                 print 'The magic bytes were not correct. First 40 bytes of data: ' + repr(self.data[0:40])
                 shared.printLock.release()
@@ -163,8 +176,8 @@ class receiveDataThread(threading.Thread):
                     shared.printLock.release()
                     del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[
                         objectHash]
-                elif isInSqlInventory(objectHash):
-                    if verbose >= 3:
+                elif bitmessagemain.isInSqlInventory(objectHash):
+                    if bitmessagemain.verbose >= 3:
                         shared.printLock.acquire()
                         print 'Inventory (SQL on disk) already has object listed in inv message.'
                         shared.printLock.release()
@@ -364,7 +377,7 @@ class receiveDataThread(threading.Thread):
             print 'We have already received this broadcast object. Ignoring.'
             shared.inventoryLock.release()
             return
-        elif isInSqlInventory(self.inventoryHash):
+        elif bitmessagemain.isInSqlInventory(self.inventoryHash):
             print 'We have already received this broadcast object (it is stored on disk in the SQL inventory). Ignoring it.'
             shared.inventoryLock.release()
             return
@@ -744,7 +757,7 @@ class receiveDataThread(threading.Thread):
             print 'We have already received this msg message. Ignoring.'
             shared.inventoryLock.release()
             return
-        elif isInSqlInventory(self.inventoryHash):
+        elif bitmessagemain.isInSqlInventory(self.inventoryHash):
             print 'We have already received this msg message (it is stored on disk in the SQL inventory). Ignoring it.'
             shared.inventoryLock.release()
             return
@@ -788,11 +801,11 @@ class receiveDataThread(threading.Thread):
     def processmsg(self, readPosition, encryptedData):
         initialDecryptionSuccessful = False
         # Let's check whether this is a message acknowledgement bound for us.
-        if encryptedData[readPosition:] in ackdataForWhichImWatching:
+        if encryptedData[readPosition:] in bitmessagemain.ackdataForWhichImWatching:
             shared.printLock.acquire()
             print 'This msg IS an acknowledgement bound for me.'
             shared.printLock.release()
-            del ackdataForWhichImWatching[encryptedData[readPosition:]]
+            del bitmessagemain.ackdataForWhichImWatching[encryptedData[readPosition:]]
             t = ('ackreceived', encryptedData[readPosition:])
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put(
@@ -807,7 +820,7 @@ class receiveDataThread(threading.Thread):
         else:
             shared.printLock.acquire()
             print 'This was NOT an acknowledgement bound for me.'
-            # print 'ackdataForWhichImWatching', ackdataForWhichImWatching
+            # print 'bitmessagemain.ackdataForWhichImWatching', bitmessagemain.ackdataForWhichImWatching
             shared.printLock.release()
 
         # This is not an acknowledgement bound for me. See if it is a message
@@ -1155,7 +1168,7 @@ class receiveDataThread(threading.Thread):
             print 'We have already received this pubkey. Ignoring it.'
             shared.inventoryLock.release()
             return
-        elif isInSqlInventory(inventoryHash):
+        elif bitmessagemain.isInSqlInventory(inventoryHash):
             print 'We have already received this pubkey (it is stored on disk in the SQL inventory). Ignoring it.'
             shared.inventoryLock.release()
             return
@@ -1370,7 +1383,7 @@ class receiveDataThread(threading.Thread):
             print 'We have already received this getpubkey request. Ignoring it.'
             shared.inventoryLock.release()
             return
-        elif isInSqlInventory(inventoryHash):
+        elif bitmessagemain.isInSqlInventory(inventoryHash):
             print 'We have already received this getpubkey request (it is stored on disk in the SQL inventory). Ignoring it.'
             shared.inventoryLock.release()
             return
@@ -1458,7 +1471,7 @@ class receiveDataThread(threading.Thread):
                 shared.printLock.acquire()
                 print 'Inventory (in memory) has inventory item already.'
                 shared.printLock.release()
-            elif isInSqlInventory(data[lengthOfVarint:32 + lengthOfVarint]):
+            elif bitmessagemain.isInSqlInventory(data[lengthOfVarint:32 + lengthOfVarint]):
                 print 'Inventory (SQL on disk) has inventory item already.'
             else:
                 self.sendgetdata(data[lengthOfVarint:32 + lengthOfVarint])
@@ -1582,7 +1595,7 @@ class receiveDataThread(threading.Thread):
         numberOfAddressesIncluded, lengthOfNumberOfAddresses = decodeVarint(
             data[:10])
 
-        if verbose >= 1:
+        if bitmessagemain.verbose >= 1:
             shared.printLock.acquire()
             print 'addr message contains', numberOfAddressesIncluded, 'IP addresses.'
             shared.printLock.release()
@@ -1825,7 +1838,7 @@ class receiveDataThread(threading.Thread):
         datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
         datatosend = datatosend + payload
 
-        if verbose >= 1:
+        if bitmessagemain.verbose >= 1:
             shared.printLock.acquire()
             print 'Broadcasting addr with', numberOfAddressesInAddrMessage, 'entries.'
             shared.printLock.release()
@@ -1917,7 +1930,7 @@ class receiveDataThread(threading.Thread):
         datatosend = datatosend + payload
         try:
             self.sock.sendall(datatosend)
-            if verbose >= 1:
+            if bitmessagemain.verbose >= 1:
                 shared.printLock.acquire()
                 print 'Sending addr with', numberOfAddressesInAddrMessage, 'entries.'
                 shared.printLock.release()
@@ -1971,7 +1984,7 @@ class receiveDataThread(threading.Thread):
             if not self.initiatedConnection:
                 shared.broadcastToSendDataQueues((
                     0, 'setStreamNumber', (self.HOST, self.streamNumber)))
-            if data[72:80] == eightBytesOfRandomDataUsedToDetectConnectionsToSelf:
+            if data[72:80] == bitmessagemain.eightBytesOfRandomDataUsedToDetectConnectionsToSelf:
                 shared.broadcastToSendDataQueues((0, 'shutdown', self.HOST))
                 shared.printLock.acquire()
                 print 'Closing connection to myself: ', self.HOST
@@ -1998,7 +2011,7 @@ class receiveDataThread(threading.Thread):
         print 'Sending version message'
         shared.printLock.release()
         try:
-            self.sock.sendall(assembleVersionMessage(
+            self.sock.sendall(bitmessagemain.assembleVersionMessage(
                 self.HOST, self.PORT, self.streamNumber))
         except Exception as err:
             # if not 'Bad file descriptor' in err:

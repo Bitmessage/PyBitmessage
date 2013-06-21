@@ -2,6 +2,7 @@ import threading
 import shared
 import sqlite3
 import time
+import shutil  # used for moving the messages.dat file
 
 # This thread exists because SQLITE3 is so un-threadsafe that we must
 # submit queries to it and it puts results back in a different queue. They

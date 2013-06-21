@@ -1,6 +1,10 @@
 import time
 import threading
 import shared
+import Queue
+from struct import unpack, pack
+
+import bitmessagemain
 
 # Every connection to a peer has a sendDataThread (and also a
 # receiveDataThread).
@@ -36,7 +40,7 @@ class sendDataThread(threading.Thread):
         shared.printLock.release()
 
     def sendVersionMessage(self):
-        datatosend = assembleVersionMessage(
+        datatosend = bitmessagemain.assembleVersionMessage(
             self.HOST, self.PORT, self.streamNumber)  # the IP and port of the remote host, and my streamNumber.
 
         shared.printLock.acquire()
