@@ -4422,7 +4422,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             toAddress = params[0]
             v = (toAddress,)
             shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype FROM inbox WHERE toAddress=?''')
+            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype FROM inbox WHERE folder='inbox' AND toAddress=?''')
             shared.sqlSubmitQueue.put(v)
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlLock.release()
