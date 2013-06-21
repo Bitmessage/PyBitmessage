@@ -1,6 +1,7 @@
 import threading
 import shared
 import socket
+import Queue
 
 from class_sendDataThread import *
 from class_receiveDataThread import *
@@ -17,6 +18,9 @@ class singleListener(threading.Thread):
 
     def __init__(self):
         threading.Thread.__init__(self)
+
+    def setup(self, selfInitiatedConnections):
+        self.selfInitiatedConnections = selfInitiatedConnections
 
     def run(self):
         # We don't want to accept incoming connections if the user is using a
@@ -71,7 +75,7 @@ class singleListener(threading.Thread):
             rd = receiveDataThread()
             rd.daemon = True  # close the main program even if there are threads left
             rd.setup(
-                a, HOST, PORT, -1, objectsOfWhichThisRemoteNodeIsAlreadyAware)
+                a, HOST, PORT, -1, objectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections)
             rd.start()
 
             shared.printLock.acquire()
