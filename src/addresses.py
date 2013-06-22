@@ -1,7 +1,7 @@
 import hashlib
 from struct import *
 from pyelliptic import arithmetic
-
+from debug import logger
 
 
 #There is another copy of this function in Bitmessagemain.py
@@ -28,7 +28,7 @@ def encodeBase58(num, alphabet=ALPHABET):
     base = len(alphabet)
     while num:
         rem = num % base
-        #print 'num is:', num
+        #logger.info('num is: %d' % num)
         num = num // base
         arr.append(alphabet[rem])
     arr.reverse()
@@ -68,7 +68,7 @@ def encodeVarint(integer):
     if integer >= 4294967296 and integer < 18446744073709551616:
         return pack('>B',255) + pack('>Q',integer)
     if integer >= 18446744073709551616:
-        print 'varint cannot be >= 18446744073709551616'
+        logger.debug('varint cannot be >= 18446744073709551616')
         raise SystemExit
 
 def decodeVarint(data):
@@ -108,15 +108,15 @@ def encodeAddress(version,stream,ripe):
     sha = hashlib.new('sha512')
     sha.update(a)
     currentHash = sha.digest()
-    #print 'sha after first hashing: ', sha.hexdigest()
+    #logger.info('sha after first hashing: %d' % sha.hexdigest())
     sha = hashlib.new('sha512')
     sha.update(currentHash)
-    #print 'sha after second hashing: ', sha.hexdigest()
+    #logger.info('sha after second hashing: %d' % sha.hexdigest())
 
     checksum = sha.digest()[0:4]
-    #print 'len(a) = ', len(a)
-    #print 'checksum = ', checksum.encode('hex')
-    #print 'len(checksum) = ', len(checksum)
+    #logger.info('len(a) = %d' % len(a))
+    #logger.info('checksum = %d' % checksum.encode('hex'))
+    #logger.info('len(checksum) = %d' % len(checksum))
 
     asInt = int(a.encode('hex') + checksum.encode('hex'),16)
     #asInt = int(checksum.encode('hex') + a.encode('hex'),16)
@@ -141,7 +141,7 @@ def decodeAddress(address):
     if len(hexdata) % 2 != 0:
         hexdata = '0' + hexdata
 
-    #print 'hexdata', hexdata
+    #logger.info('hexdata %d' % hexdata)
 
     data = hexdata.decode('hex')
     checksum = data[-4:]
@@ -149,10 +149,10 @@ def decodeAddress(address):
     sha = hashlib.new('sha512')
     sha.update(data[:-4])
     currentHash = sha.digest()
-    #print 'sha after first hashing: ', sha.hexdigest()
+    #logger.info('sha after first hashing: %d' % sha.hexdigest())
     sha = hashlib.new('sha512')
     sha.update(currentHash)
-    #print 'sha after second hashing: ', sha.hexdigest()
+    #logger.info('sha after second hashing: %d' % sha.hexdigest())
 
     if checksum != sha.digest()[0:4]:
         status = 'checksumfailed'
@@ -165,11 +165,11 @@ def decodeAddress(address):
     #print 'bytesUsedByVersionNumber', bytesUsedByVersionNumber
 
     if addressVersionNumber > 3:
-        print 'cannot decode address version numbers this high'
+        logger.info('Cannot decode address version numbers this high.')
         status = 'versiontoohigh'
         return status,0,0,0
     elif addressVersionNumber == 0:
-        print 'cannot decode address version numbers of zero.'
+        logger.info('Cannot decode address version numbers of zero.')
         status = 'versiontoohigh'
         return status,0,0,0
 
@@ -228,7 +228,7 @@ def addressStream(address):
     #print 'sha after second hashing: ', sha.hexdigest()
 
     if checksum != sha.digest()[0:4]:
-        print 'checksum failed'
+        logger.info('Checksum failed.')
         status = 'checksumfailed'
         return False
     #else:
@@ -239,7 +239,7 @@ def addressStream(address):
     #print 'bytesUsedByVersionNumber', bytesUsedByVersionNumber
 
     if addressVersionNumber < 1:
-        print 'cannot decode version address version numbers this high'
+        logger.info('Cannot decode version address version numbers this high')
         status = 'versiontoohigh'
         return False
 
