@@ -14,7 +14,6 @@ lengthOfTimeToLeaveObjectsInInventory = 237600  # Equals two days and 18 hours. 
 lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
 maximumAgeOfObjectsThatIAdvertiseToOthers = 216000  # Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
-storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may de-select Portable Mode in the settings if they want the config files to stay in the application data folder.
 useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
 encryptedBroadcastSwitchoverTime = 1369735200
 
