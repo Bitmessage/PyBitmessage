@@ -4,6 +4,9 @@ import shared
 import Queue
 from struct import unpack, pack
 import hashlib
+import random
+import sys
+import socket
 
 import bitmessagemain
 

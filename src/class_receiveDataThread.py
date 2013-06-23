@@ -7,9 +7,16 @@ import pickle
 import random
 from struct import unpack, pack
 import sys
+import string
+from subprocess import call  # used when the API must execute an outside program
+from pyelliptic.openssl import OpenSSL
 
+import highlevelcrypto
 from addresses import *
 import helper_generic
+import helper_bitcoin
+import helper_inbox
+import helper_sent
 import bitmessagemain
 from bitmessagemain import lengthOfTimeToLeaveObjectsInInventory, lengthOfTimeToHoldOnToAllPubkeys, maximumAgeOfAnObjectThatIAmWillingToAccept, maximumAgeOfObjectsThatIAdvertiseToOthers, maximumAgeOfNodesThatIAdvertiseToOthers, numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer, neededPubkeys
 
@@ -814,8 +821,8 @@ class receiveDataThread(threading.Thread):
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (encryptedData[readPosition:], translateText("MainWindow",'Acknowledgement of the message received. %1').arg(unicode(
-                strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (encryptedData[readPosition:], bitmessagemain.translateText("MainWindow",'Acknowledgement of the message received. %1').arg(unicode(
+                time.strftime(shared.config.get('bitmessagesettings', 'timeformat'), time.localtime(int(time.time()))), 'utf-8')))))
             return
         else:
             shared.printLock.acquire()
@@ -1046,7 +1053,7 @@ class receiveDataThread(threading.Thread):
                     subject = self.addMailingListNameToSubject(
                         subject, mailingListName)
                     # Let us now send this message out as a broadcast
-                    message = strftime("%a, %Y-%m-%d %H:%M:%S UTC", gmtime(
+                    message = time.strftime("%a, %Y-%m-%d %H:%M:%S UTC", time.gmtime(
                     )) + '   Message ostensibly from ' + fromAddress + ':\n\n' + body
                     fromAddress = toAddress  # The fromAddress for the broadcast that we are about to send is the toAddress (my address) for the msg message we are currently processing.
                     ackdata = OpenSSL.rand(
@@ -1069,14 +1076,14 @@ class receiveDataThread(threading.Thread):
             # Display timing data
             timeRequiredToAttemptToDecryptMessage = time.time(
             ) - self.messageProcessingStartTime
-            successfullyDecryptMessageTimings.append(
+            bitmessagemain.successfullyDecryptMessageTimings.append(
                 timeRequiredToAttemptToDecryptMessage)
             sum = 0
-            for item in successfullyDecryptMessageTimings:
+            for item in bitmessagemain.successfullyDecryptMessageTimings:
                 sum += item
             shared.printLock.acquire()
             print 'Time to decrypt this message successfully:', timeRequiredToAttemptToDecryptMessage
-            print 'Average time for all message decryption successes since startup:', sum / len(successfullyDecryptMessageTimings)
+            print 'Average time for all message decryption successes since startup:', sum / len(bitmessagemain.successfullyDecryptMessageTimings)
             shared.printLock.release()
 
     def isAckDataValid(self, ackData):
