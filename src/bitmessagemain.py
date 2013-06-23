@@ -14,12 +14,10 @@ lengthOfTimeToLeaveObjectsInInventory = 237600  # Equals two days and 18 hours. 
 lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
 maximumAgeOfObjectsThatIAdvertiseToOthers = 216000  # Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
-storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may de-select Portable Mode in the settings if they want the config files to stay in the application data folder.
 useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
 encryptedBroadcastSwitchoverTime = 1369735200
 
 import sys
-import ConfigParser
 import Queue
 from addresses import *
 import shared
@@ -33,13 +31,11 @@ import pickle
 import random
 import sqlite3
 from time import strftime, localtime, gmtime
-import shutil  # used for moving the messages.dat file
 import string
 import socks
 import highlevelcrypto
 from pyelliptic.openssl import OpenSSL
-import ctypes
-from pyelliptic import arithmetic
+#import ctypes
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
 from SimpleXMLRPCServer import *
@@ -50,6 +46,19 @@ import proofofwork
 # Logging
 # TODO(fiatflux): Add option to suppress extra logging info (e.g. tracebacks) in stdout/stderr.
 from debug import logger
+
+# Classes
+from class_sqlThread import *
+from class_singleCleaner import *
+from class_addressGenerator import *
+
+# Helper Functions
+import helper_startup
+import helper_bootstrap
+import helper_inbox
+import helper_sent
+import helper_generic
+import helper_bitcoin
 
 # For each stream to which we connect, several outgoingSynSender threads
 # will exist and will collectively create 8 connections with peers.
@@ -174,7 +183,7 @@ class outgoingSynSender(threading.Thread):
                                   'could not connect to it.' % (HOST))
             except socks.Socks5AuthError as err:
                 shared.UISignalQueue.put((
-                    'updateStatusBar', _translate(
+                    'updateStatusBar', translateText(
                     "MainWindow", "SOCKS5 Authentication problem: %1").arg(str(err))))
             except socks.Socks5Error as err:
                 logger.exception('SOCKS5 error. It is possible that the server wants authentication.')
@@ -199,13 +208,13 @@ class outgoingSynSender(threading.Thread):
                 logger.exception('An uncaught exception has occurred in the outgoingSynSender thread.')
             time.sleep(0.1)
 
+
 # Only one singleListener thread will ever exist. It creates the
 # receiveDataThread and sendDataThread for each incoming connection. Note
 # that it cannot set the stream number because it is not known yet- the
 # other node will have to tell us its stream number in a version message.
 # If we don't care about their stream, we will close the connection
 # (within the recversion function of the recieveData thread)
-
 
 class singleListener(threading.Thread):
 
@@ -266,7 +275,6 @@ class singleListener(threading.Thread):
 
 # This thread is created either by the synSenderThread(for outgoing
 # connections) or the singleListenerThread(for incoming connectiosn).
-
 
 class receiveDataThread(threading.Thread):
 
@@ -772,15 +780,11 @@ class receiveDataThread(threading.Thread):
 
                 toAddress = '[Broadcast subscribers]'
                 if messageEncodingType != 0:
-                    shared.sqlLock.acquire()
+                    
                     t = (self.inventoryHash, toAddress, fromAddress, subject, int(
                         time.time()), body, 'inbox', messageEncodingType, 0)
-                    shared.sqlSubmitQueue.put(
-                        '''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?)''')
-                    shared.sqlSubmitQueue.put(t)
-                    shared.sqlReturnQueue.get()
-                    shared.sqlSubmitQueue.put('commit')
-                    shared.sqlLock.release()
+                    helper_inbox.insert(t)
+                    
                     shared.UISignalQueue.put(('displayNewInboxMessage', (
                         self.inventoryHash, toAddress, fromAddress, subject, body)))
 
@@ -941,15 +945,11 @@ class receiveDataThread(threading.Thread):
 
             toAddress = '[Broadcast subscribers]'
             if messageEncodingType != 0:
-                shared.sqlLock.acquire()
+                
                 t = (self.inventoryHash, toAddress, fromAddress, subject, int(
                     time.time()), body, 'inbox', messageEncodingType, 0)
-                shared.sqlSubmitQueue.put(
-                    '''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?)''')
-                shared.sqlSubmitQueue.put(t)
-                shared.sqlReturnQueue.get()
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlLock.release()
+                helper_inbox.insert(t)
+                
                 shared.UISignalQueue.put(('displayNewInboxMessage', (
                     self.inventoryHash, toAddress, fromAddress, subject, body)))
 
@@ -1059,7 +1059,7 @@ class receiveDataThread(threading.Thread):
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (encryptedData[readPosition:], _translate("MainWindow",'Acknowledgement of the message received. %1').arg(unicode(
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (encryptedData[readPosition:], translateText("MainWindow",'Acknowledgement of the message received. %1').arg(unicode(
                 strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
             return
         else:
@@ -1168,7 +1168,7 @@ class receiveDataThread(threading.Thread):
                 print 'ECDSA verify failed', err
                 return
             shared.printLock.acquire()
-            print 'As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person:', calculateBitcoinAddressFromPubkey(pubSigningKey), '  ..and here is the testnet address:', calculateTestnetAddressFromPubkey(pubSigningKey), '. The other person must take their private signing key from Bitmessage and import it into Bitcoin (or a service like Blockchain.info) for it to be of any use. Do not use this unless you know what you are doing.'
+            print 'As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person:', helper_bitcoin.calculateBitcoinAddressFromPubkey(pubSigningKey), '  ..and here is the testnet address:', helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey), '. The other person must take their private signing key from Bitmessage and import it into Bitcoin (or a service like Blockchain.info) for it to be of any use. Do not use this unless you know what you are doing.'
             shared.printLock.release()
             # calculate the fromRipe.
             sha = hashlib.new('sha512')
@@ -1257,15 +1257,10 @@ class receiveDataThread(threading.Thread):
                     body = 'Unknown encoding type.\n\n' + repr(message)
                     subject = ''
                 if messageEncodingType != 0:
-                    shared.sqlLock.acquire()
                     t = (self.inventoryHash, toAddress, fromAddress, subject, int(
                         time.time()), body, 'inbox', messageEncodingType, 0)
-                    shared.sqlSubmitQueue.put(
-                        '''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?)''')
-                    shared.sqlSubmitQueue.put(t)
-                    shared.sqlReturnQueue.get()
-                    shared.sqlSubmitQueue.put('commit')
-                    shared.sqlLock.release()
+                    helper_inbox.insert(t)
+                    
                     shared.UISignalQueue.put(('displayNewInboxMessage', (
                         self.inventoryHash, toAddress, fromAddress, subject, body)))
 
@@ -1300,15 +1295,10 @@ class receiveDataThread(threading.Thread):
                         32)  # We don't actually need the ackdata for acknowledgement since this is a broadcast message but we can use it to update the user interface when the POW is done generating.
                     toAddress = '[Broadcast subscribers]'
                     ripe = ''
-                    shared.sqlLock.acquire()
+                    
                     t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
                         time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
-                    shared.sqlSubmitQueue.put(
-                        '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
-                    shared.sqlSubmitQueue.put(t)
-                    shared.sqlReturnQueue.get()
-                    shared.sqlSubmitQueue.put('commit')
-                    shared.sqlLock.release()
+                    helper_sent.insert(t)
 
                     shared.UISignalQueue.put(('displayNewSentMessage', (
                         toAddress, '[Broadcast subscribers]', fromAddress, subject, message, ackdata)))
@@ -1914,7 +1904,7 @@ class receiveDataThread(threading.Thread):
                 if data[28 + lengthOfNumberOfAddresses + (34 * i)] == '\x7F':
                     print 'Ignoring IP address in loopback range:', hostFromAddrMessage
                     continue
-                if isHostInPrivateIPRange(hostFromAddrMessage):
+                if helper_generic.isHostInPrivateIPRange(hostFromAddrMessage):
                     print 'Ignoring IP address in private range:', hostFromAddrMessage
                     continue
                 timeSomeoneElseReceivedMessageFromThisNode, = unpack('>I', data[lengthOfNumberOfAddresses + (
@@ -2112,7 +2102,7 @@ class receiveDataThread(threading.Thread):
             for i in range(500):
                 random.seed()
                 HOST, = random.sample(shared.knownNodes[self.streamNumber], 1)
-                if isHostInPrivateIPRange(HOST):
+                if helper_generic.isHostInPrivateIPRange(HOST):
                     continue
                 addrsInMyStream[HOST] = shared.knownNodes[
                     self.streamNumber][HOST]
@@ -2121,7 +2111,7 @@ class receiveDataThread(threading.Thread):
                 random.seed()
                 HOST, = random.sample(shared.knownNodes[
                                       self.streamNumber * 2], 1)
-                if isHostInPrivateIPRange(HOST):
+                if helper_generic.isHostInPrivateIPRange(HOST):
                     continue
                 addrsInChildStreamLeft[HOST] = shared.knownNodes[
                     self.streamNumber * 2][HOST]
@@ -2130,7 +2120,7 @@ class receiveDataThread(threading.Thread):
                 random.seed()
                 HOST, = random.sample(shared.knownNodes[
                                       (self.streamNumber * 2) + 1], 1)
-                if isHostInPrivateIPRange(HOST):
+                if helper_generic.isHostInPrivateIPRange(HOST):
                     continue
                 addrsInChildStreamRight[HOST] = shared.knownNodes[
                     (self.streamNumber * 2) + 1][HOST]
@@ -2468,71 +2458,6 @@ def isInSqlInventory(hash):
         return True
 
 
-def convertIntToString(n):
-    a = __builtins__.hex(n)
-    if a[-1:] == 'L':
-        a = a[:-1]
-    if (len(a) % 2) == 0:
-        return a[2:].decode('hex')
-    else:
-        return ('0' + a[2:]).decode('hex')
-
-
-def convertStringToInt(s):
-    return int(s.encode('hex'), 16)
-
-
-# This function expects that pubkey begin with \x04
-def calculateBitcoinAddressFromPubkey(pubkey):
-    if len(pubkey) != 65:
-        print 'Could not calculate Bitcoin address from pubkey because function was passed a pubkey that was', len(pubkey), 'bytes long rather than 65.'
-        return "error"
-    ripe = hashlib.new('ripemd160')
-    sha = hashlib.new('sha256')
-    sha.update(pubkey)
-    ripe.update(sha.digest())
-    ripeWithProdnetPrefix = '\x00' + ripe.digest()
-
-    checksum = hashlib.sha256(hashlib.sha256(
-        ripeWithProdnetPrefix).digest()).digest()[:4]
-    binaryBitcoinAddress = ripeWithProdnetPrefix + checksum
-    numberOfZeroBytesOnBinaryBitcoinAddress = 0
-    while binaryBitcoinAddress[0] == '\x00':
-        numberOfZeroBytesOnBinaryBitcoinAddress += 1
-        binaryBitcoinAddress = binaryBitcoinAddress[1:]
-    base58encoded = arithmetic.changebase(binaryBitcoinAddress, 256, 58)
-    return "1" * numberOfZeroBytesOnBinaryBitcoinAddress + base58encoded
-
-
-def calculateTestnetAddressFromPubkey(pubkey):
-    if len(pubkey) != 65:
-        print 'Could not calculate Bitcoin address from pubkey because function was passed a pubkey that was', len(pubkey), 'bytes long rather than 65.'
-        return "error"
-    ripe = hashlib.new('ripemd160')
-    sha = hashlib.new('sha256')
-    sha.update(pubkey)
-    ripe.update(sha.digest())
-    ripeWithProdnetPrefix = '\x6F' + ripe.digest()
-
-    checksum = hashlib.sha256(hashlib.sha256(
-        ripeWithProdnetPrefix).digest()).digest()[:4]
-    binaryBitcoinAddress = ripeWithProdnetPrefix + checksum
-    numberOfZeroBytesOnBinaryBitcoinAddress = 0
-    while binaryBitcoinAddress[0] == '\x00':
-        numberOfZeroBytesOnBinaryBitcoinAddress += 1
-        binaryBitcoinAddress = binaryBitcoinAddress[1:]
-    base58encoded = arithmetic.changebase(binaryBitcoinAddress, 256, 58)
-    return "1" * numberOfZeroBytesOnBinaryBitcoinAddress + base58encoded
-
-
-def signal_handler(signal, frame):
-    if shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
-        shared.doCleanShutdown()
-        sys.exit(0)
-    else:
-        print 'Unfortunately you cannot use Ctrl+C when running the UI because the UI captures the signal.'
-
-
 def connectToStream(streamNumber):
     selfInitiatedConnections[streamNumber] = {}
     if sys.platform[0:3] == 'win':
@@ -2544,34 +2469,6 @@ def connectToStream(streamNumber):
         a.setup(streamNumber)
         a.start()
 
-# Does an EC point multiplication; turns a private key into a public key.
-
-
-def pointMult(secret):
-    # ctx = OpenSSL.BN_CTX_new() #This value proved to cause Seg Faults on
-    # Linux. It turns out that it really didn't speed up EC_POINT_mul anyway.
-    k = OpenSSL.EC_KEY_new_by_curve_name(OpenSSL.get_curve('secp256k1'))
-    priv_key = OpenSSL.BN_bin2bn(secret, 32, 0)
-    group = OpenSSL.EC_KEY_get0_group(k)
-    pub_key = OpenSSL.EC_POINT_new(group)
-
-    OpenSSL.EC_POINT_mul(group, pub_key, priv_key, None, None, None)
-    OpenSSL.EC_KEY_set_private_key(k, priv_key)
-    OpenSSL.EC_KEY_set_public_key(k, pub_key)
-    # print 'priv_key',priv_key
-    # print 'pub_key',pub_key
-
-    size = OpenSSL.i2o_ECPublicKey(k, 0)
-    mb = ctypes.create_string_buffer(size)
-    OpenSSL.i2o_ECPublicKey(k, ctypes.byref(ctypes.pointer(mb)))
-    # print 'mb.raw', mb.raw.encode('hex'), 'length:', len(mb.raw)
-    # print 'mb.raw', mb.raw, 'length:', len(mb.raw)
-
-    OpenSSL.EC_POINT_free(pub_key)
-    # OpenSSL.BN_CTX_free(ctx)
-    OpenSSL.BN_free(priv_key)
-    OpenSSL.EC_KEY_free(k)
-    return mb.raw
 
 
 def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
@@ -2609,388 +2506,6 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     datatosend = datatosend + pack('>L', len(payload))  # payload length
     datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
     return datatosend + payload
-
-
-def isHostInPrivateIPRange(host):
-    if host[:3] == '10.':
-        return True
-    if host[:4] == '172.':
-        if host[6] == '.':
-            if int(host[4:6]) >= 16 and int(host[4:6]) <= 31:
-                return True
-    if host[:8] == '192.168.':
-        return True
-    return False
-
-# This thread exists because SQLITE3 is so un-threadsafe that we must
-# submit queries to it and it puts results back in a different queue. They
-# won't let us just use locks.
-
-
-class sqlThread(threading.Thread):
-
-    def __init__(self):
-        threading.Thread.__init__(self)
-
-    def run(self):
-        self.conn = sqlite3.connect(shared.appdata + 'messages.dat')
-        self.conn.text_factory = str
-        self.cur = self.conn.cursor()
-        try:
-            self.cur.execute(
-                '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text, received text, message text, folder text, encodingtype int, read bool, UNIQUE(msgid) ON CONFLICT REPLACE)''' )
-            self.cur.execute(
-                '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text, ackdata blob, lastactiontime integer, status text, pubkeyretrynumber integer, msgretrynumber integer, folder text, encodingtype int)''' )
-            self.cur.execute(
-                '''CREATE TABLE subscriptions (label text, address text, enabled bool)''' )
-            self.cur.execute(
-                '''CREATE TABLE addressbook (label text, address text)''' )
-            self.cur.execute(
-                '''CREATE TABLE blacklist (label text, address text, enabled bool)''' )
-            self.cur.execute(
-                '''CREATE TABLE whitelist (label text, address text, enabled bool)''' )
-            # Explanation of what is in the pubkeys table:
-            #   The hash is the RIPEMD160 hash that is encoded in the Bitmessage address.
-            #   transmitdata is literally the data that was included in the Bitmessage pubkey message when it arrived, except for the 24 byte protocol header- ie, it starts with the POW nonce.
-            #   time is the time that the pubkey was broadcast on the network same as with every other type of Bitmessage object.
-            # usedpersonally is set to "yes" if we have used the key
-            # personally. This keeps us from deleting it because we may want to
-            # reply to a message in the future. This field is not a bool
-            # because we may need more flexability in the future and it doesn't
-            # take up much more space anyway.
-            self.cur.execute(
-                '''CREATE TABLE pubkeys (hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE)''' )
-            self.cur.execute(
-                '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE)''' )
-            self.cur.execute(
-                '''CREATE TABLE knownnodes (timelastseen int, stream int, services blob, host blob, port blob, UNIQUE(host, stream, port) ON CONFLICT REPLACE)''' )
-                             # This table isn't used in the program yet but I
-                             # have a feeling that we'll need it.
-            self.cur.execute(
-                '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
-            self.cur.execute(
-                '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','1')''')
-            self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
-                int(time.time()),))
-            self.conn.commit()
-            print 'Created messages database file'
-        except Exception as err:
-            if str(err) == 'table inbox already exists':
-                shared.printLock.acquire()
-                print 'Database file already exists.'
-                shared.printLock.release()
-            else:
-                sys.stderr.write(
-                    'ERROR trying to create database file (message.dat). Error message: %s\n' % str(err))
-                os._exit(0)
-
-        # People running earlier versions of PyBitmessage do not have the
-        # usedpersonally field in their pubkeys table. Let's add it.
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 2:
-            item = '''ALTER TABLE pubkeys ADD usedpersonally text DEFAULT 'no' '''
-            parameters = ''
-            self.cur.execute(item, parameters)
-            self.conn.commit()
-
-            shared.config.set('bitmessagesettings', 'settingsversion', '3')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
-
-        # People running earlier versions of PyBitmessage do not have the
-        # encodingtype field in their inbox and sent tables or the read field
-        # in the inbox table. Let's add them.
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 3:
-            item = '''ALTER TABLE inbox ADD encodingtype int DEFAULT '2' '''
-            parameters = ''
-            self.cur.execute(item, parameters)
-
-            item = '''ALTER TABLE inbox ADD read bool DEFAULT '1' '''
-            parameters = ''
-            self.cur.execute(item, parameters)
-
-            item = '''ALTER TABLE sent ADD encodingtype int DEFAULT '2' '''
-            parameters = ''
-            self.cur.execute(item, parameters)
-            self.conn.commit()
-
-            shared.config.set('bitmessagesettings', 'settingsversion', '4')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
-
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 4:
-            shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte))
-            shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
-                shared.networkDefaultPayloadLengthExtraBytes))
-            shared.config.set('bitmessagesettings', 'settingsversion', '5')
-
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 5:
-            shared.config.set(
-                'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
-            shared.config.set(
-                'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
-            shared.config.set('bitmessagesettings', 'settingsversion', '6')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
-
-        # From now on, let us keep a 'version' embedded in the messages.dat
-        # file so that when we make changes to the database, the database
-        # version we are on can stay embedded in the messages.dat file. Let us
-        # check to see if the settings table exists yet.
-        item = '''SELECT name FROM sqlite_master WHERE type='table' AND name='settings';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
-        if self.cur.fetchall() == []:
-            # The settings table doesn't exist. We need to make it.
-            print 'In messages.dat database, creating new \'settings\' table.'
-            self.cur.execute(
-                '''CREATE TABLE settings (key text, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','1')''')
-            self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
-                int(time.time()),))
-            print 'In messages.dat database, removing an obsolete field from the pubkeys table.'
-            self.cur.execute(
-                '''CREATE TEMPORARY TABLE pubkeys_backup(hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE);''')
-            self.cur.execute(
-                '''INSERT INTO pubkeys_backup SELECT hash, transmitdata, time, usedpersonally FROM pubkeys;''')
-            self.cur.execute( '''DROP TABLE pubkeys''')
-            self.cur.execute(
-                '''CREATE TABLE pubkeys (hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE)''' )
-            self.cur.execute(
-                '''INSERT INTO pubkeys SELECT hash, transmitdata, time, usedpersonally FROM pubkeys_backup;''')
-            self.cur.execute( '''DROP TABLE pubkeys_backup;''')
-            print 'Deleting all pubkeys from inventory. They will be redownloaded and then saved with the correct times.'
-            self.cur.execute(
-                '''delete from inventory where objecttype = 'pubkey';''')
-            print 'replacing Bitmessage announcements mailing list with a new one.'
-            self.cur.execute(
-                '''delete from subscriptions where address='BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx' ''')
-            self.cur.execute(
-                '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
-            print 'Commiting.'
-            self.conn.commit()
-            print 'Vacuuming message.dat. You might notice that the file size gets much smaller.'
-            self.cur.execute( ''' VACUUM ''')
-
-        # After code refactoring, the possible status values for sent messages
-        # as changed.
-        self.cur.execute(
-            '''update sent set status='doingmsgpow' where status='doingpow'  ''')
-        self.cur.execute(
-            '''update sent set status='msgsent' where status='sentmessage'  ''')
-        self.cur.execute(
-            '''update sent set status='doingpubkeypow' where status='findingpubkey'  ''')
-        self.cur.execute(
-            '''update sent set status='broadcastqueued' where status='broadcastpending'  ''')
-        self.conn.commit()
-
-        try:
-            testpayload = '\x00\x00'
-            t = ('1234', testpayload, '12345678', 'no')
-            self.cur.execute( '''INSERT INTO pubkeys VALUES(?,?,?,?)''', t)
-            self.conn.commit()
-            self.cur.execute(
-                '''SELECT transmitdata FROM pubkeys WHERE hash='1234' ''')
-            queryreturn = self.cur.fetchall()
-            for row in queryreturn:
-                transmitdata, = row
-            self.cur.execute('''DELETE FROM pubkeys WHERE hash='1234' ''')
-            self.conn.commit()
-            if transmitdata == '':
-                sys.stderr.write('Problem: The version of SQLite you have cannot store Null values. Please download and install the latest revision of your version of Python (for example, the latest Python 2.7 revision) and try again.\n')
-                sys.stderr.write('PyBitmessage will now exit very abruptly. You may now see threading errors related to this abrupt exit but the problem you need to solve is related to SQLite.\n\n')
-                os._exit(0)
-        except Exception as err:
-            print err
-
-        # Let us check to see the last time we vaccumed the messages.dat file.
-        # If it has been more than a month let's do it now.
-        item = '''SELECT value FROM settings WHERE key='lastvacuumtime';'''
-        parameters = ''
-        self.cur.execute(item, parameters)
-        queryreturn = self.cur.fetchall()
-        for row in queryreturn:
-            value, = row
-            if int(value) < int(time.time()) - 2592000:
-                print 'It has been a long time since the messages.dat file has been vacuumed. Vacuuming now...'
-                self.cur.execute( ''' VACUUM ''')
-                item = '''update settings set value=? WHERE key='lastvacuumtime';'''
-                parameters = (int(time.time()),)
-                self.cur.execute(item, parameters)
-
-        while True:
-            item = shared.sqlSubmitQueue.get()
-            if item == 'commit':
-                self.conn.commit()
-            elif item == 'exit':
-                self.conn.close()
-                shared.printLock.acquire()
-                print 'sqlThread exiting gracefully.'
-                shared.printLock.release()
-                return
-            elif item == 'movemessagstoprog':
-                shared.printLock.acquire()
-                print 'the sqlThread is moving the messages.dat file to the local program directory.'
-                shared.printLock.release()
-                self.conn.commit()
-                self.conn.close()
-                shutil.move(
-                    shared.lookupAppdataFolder() + 'messages.dat', 'messages.dat')
-                self.conn = sqlite3.connect('messages.dat')
-                self.conn.text_factory = str
-                self.cur = self.conn.cursor()
-            elif item == 'movemessagstoappdata':
-                shared.printLock.acquire()
-                print 'the sqlThread is moving the messages.dat file to the Appdata folder.'
-                shared.printLock.release()
-                self.conn.commit()
-                self.conn.close()
-                shutil.move(
-                    'messages.dat', shared.lookupAppdataFolder() + 'messages.dat')
-                self.conn = sqlite3.connect(shared.appdata + 'messages.dat')
-                self.conn.text_factory = str
-                self.cur = self.conn.cursor()
-            elif item == 'deleteandvacuume':
-                self.cur.execute('''delete from inbox where folder='trash' ''')
-                self.cur.execute('''delete from sent where folder='trash' ''')
-                self.conn.commit()
-                self.cur.execute( ''' VACUUM ''')
-            else:
-                parameters = shared.sqlSubmitQueue.get()
-                # print 'item', item
-                # print 'parameters', parameters
-                try:
-                    self.cur.execute(item, parameters)
-                except Exception as err:
-                    shared.printLock.acquire()
-                    sys.stderr.write('\nMajor error occurred when trying to execute a SQL statement within the sqlThread. Please tell Atheros about this error message or post it in the forum! Error occurred while trying to execute statement: "' + str(
-                        item) + '"  Here are the parameters; you might want to censor this data with asterisks (***) as it can contain private information: ' + str(repr(parameters)) + '\nHere is the actual error message thrown by the sqlThread: ' + str(err) + '\n')
-                    sys.stderr.write('This program shall now abruptly exit!\n')
-                    shared.printLock.release()
-                    os._exit(0)
-
-                shared.sqlReturnQueue.put(self.cur.fetchall())
-                # shared.sqlSubmitQueue.task_done()
-
-
-'''The singleCleaner class is a timer-driven thread that cleans data structures to free memory, resends messages when a remote node doesn't respond, and sends pong messages to keep connections alive if the network isn't busy.
-It cleans these data structures in memory:
-    inventory (moves data to the on-disk sql database)
-
-It cleans these tables on the disk:
-    inventory (clears data more than 2 days and 12 hours old)
-    pubkeys (clears pubkeys older than 4 weeks old which we have not used personally)
-
-It resends messages when there has been no response:
-    resends getpubkey messages in 4 days (then 8 days, then 16 days, etc...)
-    resends msg messages in 4 days (then 8 days, then 16 days, etc...)
-
-'''
-
-
-class singleCleaner(threading.Thread):
-
-    def __init__(self):
-        threading.Thread.__init__(self)
-
-    def run(self):
-        timeWeLastClearedInventoryAndPubkeysTables = 0
-
-        while True:
-            shared.sqlLock.acquire()
-            shared.UISignalQueue.put((
-                'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
-            for hash, storedValue in shared.inventory.items():
-                objectType, streamNumber, payload, receivedTime = storedValue
-                if int(time.time()) - 3600 > receivedTime:
-                    t = (hash, objectType, streamNumber, payload, receivedTime)
-                    shared.sqlSubmitQueue.put(
-                        '''INSERT INTO inventory VALUES (?,?,?,?,?)''')
-                    shared.sqlSubmitQueue.put(t)
-                    shared.sqlReturnQueue.get()
-                    del shared.inventory[hash]
-            shared.sqlSubmitQueue.put('commit')
-            shared.UISignalQueue.put(('updateStatusBar', ''))
-            shared.sqlLock.release()
-            shared.broadcastToSendDataQueues((
-                0, 'pong', 'no data'))  # commands the sendData threads to send out a pong message if they haven't sent anything else in the last five minutes. The socket timeout-time is 10 minutes.
-            # If we are running as a daemon then we are going to fill up the UI
-            # queue which will never be handled by a UI. We should clear it to
-            # save memory.
-            if shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
-                shared.UISignalQueue.queue.clear()
-            if timeWeLastClearedInventoryAndPubkeysTables < int(time.time()) - 7380:
-                timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
-                # inventory (moves data from the inventory data structure to
-                # the on-disk sql database)
-                shared.sqlLock.acquire()
-                # inventory (clears pubkeys after 28 days and everything else
-                # after 2 days and 12 hours)
-                t = (int(time.time()) - lengthOfTimeToLeaveObjectsInInventory, int(
-                    time.time()) - lengthOfTimeToHoldOnToAllPubkeys)
-                shared.sqlSubmitQueue.put(
-                    '''DELETE FROM inventory WHERE (receivedtime<? AND objecttype<>'pubkey') OR (receivedtime<?  AND objecttype='pubkey') ''')
-                shared.sqlSubmitQueue.put(t)
-                shared.sqlReturnQueue.get()
-
-                # pubkeys
-                t = (int(time.time()) - lengthOfTimeToHoldOnToAllPubkeys,)
-                shared.sqlSubmitQueue.put(
-                    '''DELETE FROM pubkeys WHERE time<? AND usedpersonally='no' ''')
-                shared.sqlSubmitQueue.put(t)
-                shared.sqlReturnQueue.get()
-                shared.sqlSubmitQueue.put('commit')
-
-                t = ()
-                shared.sqlSubmitQueue.put(
-                    '''select toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber FROM sent WHERE ((status='awaitingpubkey' OR status='msgsent') AND folder='sent') ''')  # If the message's folder='trash' then we'll ignore it.
-                shared.sqlSubmitQueue.put(t)
-                queryreturn = shared.sqlReturnQueue.get()
-                for row in queryreturn:
-                    if len(row) < 5:
-                        shared.printLock.acquire()
-                        sys.stderr.write(
-                            'Something went wrong in the singleCleaner thread: a query did not return the requested fields. ' + repr(row))
-                        time.sleep(3)
-                        shared.printLock.release()
-                        break
-                    toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber = row
-                    if status == 'awaitingpubkey':
-                        if int(time.time()) - lastactiontime > (maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
-                            print 'It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.'
-                            try:
-                                del neededPubkeys[
-                                    toripe]  # We need to take this entry out of the neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
-                            except:
-                                pass
-
-                            shared.UISignalQueue.put((
-                                'updateStatusBar', 'Doing work necessary to again attempt to request a public key...'))
-                            t = (int(
-                                time.time()), pubkeyretrynumber + 1, toripe)
-                            shared.sqlSubmitQueue.put(
-                                '''UPDATE sent SET lastactiontime=?, pubkeyretrynumber=?, status='msgqueued' WHERE toripe=?''')
-                            shared.sqlSubmitQueue.put(t)
-                            shared.sqlReturnQueue.get()
-                            shared.sqlSubmitQueue.put('commit')
-                            shared.workerQueue.put(('sendmessage', ''))
-                    else:  # status == msgsent
-                        if int(time.time()) - lastactiontime > (maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
-                            print 'It has been a long time and we haven\'t heard an acknowledgement to our msg. Sending again.'
-                            t = (int(
-                                time.time()), msgretrynumber + 1, 'msgqueued', ackdata)
-                            shared.sqlSubmitQueue.put(
-                                '''UPDATE sent SET lastactiontime=?, msgretrynumber=?, status=? WHERE ackdata=?''')
-                            shared.sqlSubmitQueue.put(t)
-                            shared.sqlReturnQueue.get()
-                            shared.sqlSubmitQueue.put('commit')
-                            shared.workerQueue.put(('sendmessage', ''))
-                            shared.UISignalQueue.put((
-                                'updateStatusBar', 'Doing work necessary to again attempt to deliver a message...'))
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlLock.release()
-            time.sleep(300)
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
@@ -3253,7 +2768,7 @@ class singleWorker(threading.Thread):
                         fromaddress, 'privencryptionkey')
                 except:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, _translate("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
+                        ackdata, translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                     continue
 
                 privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -3288,7 +2803,7 @@ class singleWorker(threading.Thread):
                     payload) + shared.networkDefaultPayloadLengthExtraBytes + 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                    ackdata, _translate("MainWindow", "Doing work necessary to send broadcast..."))))
+                    ackdata, translateText("MainWindow", "Doing work necessary to send broadcast..."))))
                 initialHash = hashlib.sha512(payload).digest()
                 trialValue, nonce = proofofwork.run(target, initialHash)
                 print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
@@ -3303,7 +2818,7 @@ class singleWorker(threading.Thread):
                 shared.broadcastToSendDataQueues((
                     streamNumber, 'sendinv', inventoryHash))
 
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, _translate("MainWindow", "Broadcast sent on %1").arg(unicode(
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, translateText("MainWindow", "Broadcast sent on %1").arg(unicode(
                     strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
 
                 # Update the status of the message in the 'sent' table to have
@@ -3327,7 +2842,7 @@ class singleWorker(threading.Thread):
                         fromaddress, 'privencryptionkey')
                 except:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, _translate("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
+                        ackdata, translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                     continue
 
                 privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -3375,7 +2890,7 @@ class singleWorker(threading.Thread):
                     payload) + shared.networkDefaultPayloadLengthExtraBytes + 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
                 print '(For broadcast message) Doing proof of work...'
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                    ackdata, _translate("MainWindow", "Doing work necessary to send broadcast..."))))
+                    ackdata, translateText("MainWindow", "Doing work necessary to send broadcast..."))))
                 initialHash = hashlib.sha512(payload).digest()
                 trialValue, nonce = proofofwork.run(target, initialHash)
                 print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
@@ -3390,7 +2905,7 @@ class singleWorker(threading.Thread):
                 shared.broadcastToSendDataQueues((
                     streamNumber, 'sendinv', inventoryHash))
 
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, _translate("MainWindow", "Broadcast sent on %1").arg(unicode(
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, translateText("MainWindow", "Broadcast sent on %1").arg(unicode(
                     strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
 
                 # Update the status of the message in the 'sent' table to have
@@ -3448,7 +2963,7 @@ class singleWorker(threading.Thread):
                     shared.sqlSubmitQueue.put('commit')
                     shared.sqlLock.release()
                     shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-                        toripe, _translate("MainWindow",'Encryption key was requested earlier.'))))
+                        toripe, translateText("MainWindow",'Encryption key was requested earlier.'))))
                 else:
                     # We have not yet sent a request for the pubkey
                     t = (toaddress,)
@@ -3460,7 +2975,7 @@ class singleWorker(threading.Thread):
                     shared.sqlSubmitQueue.put('commit')
                     shared.sqlLock.release()
                     shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-                        toripe, _translate("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
+                        toripe, translateText("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
                     self.requestPubKey(toaddress)
         shared.sqlLock.acquire()
         # Get all messages that are ready to be sent, and also all messages
@@ -3502,7 +3017,7 @@ class singleWorker(threading.Thread):
                 shared.sqlSubmitQueue.put('commit')
                 shared.sqlLock.release()
                 shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-                    toripe, _translate("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
+                    toripe, translateText("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
                 self.requestPubKey(toaddress)
                 continue
             ackdataForWhichImWatching[ackdata] = 0
@@ -3511,7 +3026,7 @@ class singleWorker(threading.Thread):
             fromStatus, fromAddressVersionNumber, fromStreamNumber, fromHash = decodeAddress(
                 fromaddress)
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                ackdata, _translate("MainWindow", "Looking up the receiver\'s public key"))))
+                ackdata, translateText("MainWindow", "Looking up the receiver\'s public key"))))
             shared.printLock.acquire()
             print 'Found a message in our database that needs to be sent with this pubkey.'
             print 'First 150 characters of message:', repr(message[:150])
@@ -3574,7 +3089,7 @@ class singleWorker(threading.Thread):
                 requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
                 requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                    ackdata, _translate("MainWindow", "Doing work necessary to send message.\nThere is no required difficulty for version 2 addresses like this."))))
+                    ackdata, translateText("MainWindow", "Doing work necessary to send message.\nThere is no required difficulty for version 2 addresses like this."))))
             elif toAddressVersionNumber == 3:
                 requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(
                     pubkeyPayload[readPosition:readPosition + 10])
@@ -3586,7 +3101,7 @@ class singleWorker(threading.Thread):
                     requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
                 if requiredPayloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
                     requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, _translate("MainWindow", "Doing work necessary to send message.\nReceiver\'s required difficulty: %1 and %2").arg(str(float(
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, translateText("MainWindow", "Doing work necessary to send message.\nReceiver\'s required difficulty: %1 and %2").arg(str(float(
                     requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes)))))
                 if status != 'forcepow':
                     if (requiredAverageProofOfWorkNonceTrialsPerByte > shared.config.getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') and shared.config.getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') != 0) or (requiredPayloadLengthExtraBytes > shared.config.getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') and shared.config.getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') != 0):
@@ -3600,7 +3115,7 @@ class singleWorker(threading.Thread):
                         shared.sqlReturnQueue.get()
                         shared.sqlSubmitQueue.put('commit')
                         shared.sqlLock.release()
-                        shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, _translate("MainWindow", "Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do.").arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(
+                        shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, translateText("MainWindow", "Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do.").arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(
                             requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes)).arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
                         continue
 
@@ -3621,7 +3136,7 @@ class singleWorker(threading.Thread):
                         fromaddress, 'privencryptionkey')
                 except:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, _translate("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
+                        ackdata, translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                     continue
 
                 privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -3667,7 +3182,7 @@ class singleWorker(threading.Thread):
                         fromaddress, 'privencryptionkey')
                 except:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, _translate("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
+                        ackdata, translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                     continue
 
                 privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -3724,7 +3239,7 @@ class singleWorker(threading.Thread):
                 queryreturn = shared.sqlReturnQueue.get()
                 shared.sqlSubmitQueue.put('commit')
                 shared.sqlLock.release()
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,_translate("MainWindow",'Problem: The recipient\'s encryption key is no good. Could not encrypt message. %1').arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8')))))
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,translateText("MainWindow",'Problem: The recipient\'s encryption key is no good. Could not encrypt message. %1').arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8')))))
                 continue
             encryptedPayload = embeddedTime + encodeVarint(toStreamNumber) + encrypted
             target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
@@ -3747,7 +3262,7 @@ class singleWorker(threading.Thread):
             objectType = 'msg'
             shared.inventory[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, int(time.time()))
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, _translate("MainWindow", "Message sent. Waiting on acknowledgement. Sent on %1").arg(unicode(
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, translateText("MainWindow", "Message sent. Waiting on acknowledgement. Sent on %1").arg(unicode(
                 strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
             print 'Broadcasting inv for my msg(within sendmsg function):', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
@@ -3785,7 +3300,7 @@ class singleWorker(threading.Thread):
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
         shared.UISignalQueue.put(('updateStatusBar', statusbar))
         shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-            ripe, _translate("MainWindow",'Doing work necessary to request encryption key.'))))
+            ripe, translateText("MainWindow",'Doing work necessary to request encryption key.'))))
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         initialHash = hashlib.sha512(payload).digest()
@@ -3813,8 +3328,8 @@ class singleWorker(threading.Thread):
         shared.sqlLock.release()
 
         shared.UISignalQueue.put((
-            'updateStatusBar', _translate("MainWindow",'Broacasting the public key request. This program will auto-retry if they are offline.')))
-        shared.UISignalQueue.put(('updateSentItemStatusByHash', (ripe, _translate("MainWindow",'Sending public key request. Waiting for reply. Requested at %1').arg(unicode(
+            'updateStatusBar', translateText("MainWindow",'Broacasting the public key request. This program will auto-retry if they are offline.')))
+        shared.UISignalQueue.put(('updateSentItemStatusByHash', (ripe, translateText("MainWindow",'Sending public key request. Waiting for reply. Requested at %1').arg(unicode(
             strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
 
     def generateFullAckMessage(self, ackdata, toStreamNumber, embeddedTime):
@@ -3842,241 +3357,6 @@ class singleWorker(threading.Thread):
         return headerData + payload
 
 
-class addressGenerator(threading.Thread):
-
-    def __init__(self):
-        # QThread.__init__(self, parent)
-        threading.Thread.__init__(self)
-
-    def run(self):
-        while True:
-            queueValue = shared.addressGeneratorQueue.get()
-            nonceTrialsPerByte = 0
-            payloadLengthExtraBytes = 0
-            if len(queueValue) == 7:
-                command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe = queueValue
-            elif len(queueValue) == 9:
-                command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes = queueValue
-            else:
-                sys.stderr.write(
-                    'Programming error: A structure with the wrong number of values was passed into the addressGeneratorQueue. Here is the queueValue: %s\n' % queueValue)
-            if addressVersionNumber < 3 or addressVersionNumber > 3:
-                sys.stderr.write(
-                    'Program error: For some reason the address generator queue has been given a request to create at least one version %s address which it cannot do.\n' % addressVersionNumber)
-            if nonceTrialsPerByte == 0:
-                nonceTrialsPerByte = shared.config.getint(
-                    'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            if nonceTrialsPerByte < shared.networkDefaultProofOfWorkNonceTrialsPerByte:
-                nonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
-            if payloadLengthExtraBytes == 0:
-                payloadLengthExtraBytes = shared.config.getint(
-                    'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-            if payloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
-                payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
-            if addressVersionNumber == 3:  # currently the only one supported.
-                if command == 'createRandomAddress':
-                    shared.UISignalQueue.put((
-                        'updateStatusBar', _translate("MainWindow", "Generating one new address")))
-                    # This next section is a little bit strange. We're going to generate keys over and over until we
-                    # find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
-                    # we won't store the \x00 or \x00\x00 bytes thus making the
-                    # address shorter.
-                    startTime = time.time()
-                    numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
-                    potentialPrivSigningKey = OpenSSL.rand(32)
-                    potentialPubSigningKey = pointMult(potentialPrivSigningKey)
-                    while True:
-                        numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
-                        potentialPrivEncryptionKey = OpenSSL.rand(32)
-                        potentialPubEncryptionKey = pointMult(
-                            potentialPrivEncryptionKey)
-                        # print 'potentialPubSigningKey', potentialPubSigningKey.encode('hex')
-                        # print 'potentialPubEncryptionKey',
-                        # potentialPubEncryptionKey.encode('hex')
-                        ripe = hashlib.new('ripemd160')
-                        sha = hashlib.new('sha512')
-                        sha.update(
-                            potentialPubSigningKey + potentialPubEncryptionKey)
-                        ripe.update(sha.digest())
-                        # print 'potential ripe.digest',
-                        # ripe.digest().encode('hex')
-                        if eighteenByteRipe:
-                            if ripe.digest()[:2] == '\x00\x00':
-                                break
-                        else:
-                            if ripe.digest()[:1] == '\x00':
-                                break
-                    print 'Generated address with ripe digest:', ripe.digest().encode('hex')
-                    print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime), 'addresses per second before finding one with the correct ripe-prefix.'
-                    address = encodeAddress(3, streamNumber, ripe.digest())
-
-                    # An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
-                    # https://en.bitcoin.it/wiki/Wallet_import_format
-                    privSigningKey = '\x80' + potentialPrivSigningKey
-                    checksum = hashlib.sha256(hashlib.sha256(
-                        privSigningKey).digest()).digest()[0:4]
-                    privSigningKeyWIF = arithmetic.changebase(
-                        privSigningKey + checksum, 256, 58)
-                    # print 'privSigningKeyWIF',privSigningKeyWIF
-
-                    privEncryptionKey = '\x80' + potentialPrivEncryptionKey
-                    checksum = hashlib.sha256(hashlib.sha256(
-                        privEncryptionKey).digest()).digest()[0:4]
-                    privEncryptionKeyWIF = arithmetic.changebase(
-                        privEncryptionKey + checksum, 256, 58)
-                    # print 'privEncryptionKeyWIF',privEncryptionKeyWIF
-
-                    shared.config.add_section(address)
-                    shared.config.set(address, 'label', label)
-                    shared.config.set(address, 'enabled', 'true')
-                    shared.config.set(address, 'decoy', 'false')
-                    shared.config.set(address, 'noncetrialsperbyte', str(
-                        nonceTrialsPerByte))
-                    shared.config.set(address, 'payloadlengthextrabytes', str(
-                        payloadLengthExtraBytes))
-                    shared.config.set(
-                        address, 'privSigningKey', privSigningKeyWIF)
-                    shared.config.set(
-                        address, 'privEncryptionKey', privEncryptionKeyWIF)
-                    with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                        shared.config.write(configfile)
-
-                    # It may be the case that this address is being generated
-                    # as a result of a call to the API. Let us put the result
-                    # in the necessary queue.
-                    apiAddressGeneratorReturnQueue.put(address)
-
-                    shared.UISignalQueue.put((
-                        'updateStatusBar', _translate("MainWindow", "Done generating address. Doing work necessary to broadcast it...")))
-                    shared.UISignalQueue.put(('writeNewAddressToTable', (
-                        label, address, streamNumber)))
-                    shared.reloadMyAddressHashes()
-                    shared.workerQueue.put((
-                        'doPOWForMyV3Pubkey', ripe.digest()))
-
-                elif command == 'createDeterministicAddresses' or command == 'getDeterministicAddress':
-                    if len(deterministicPassphrase) == 0:
-                        sys.stderr.write(
-                            'WARNING: You are creating deterministic address(es) using a blank passphrase. Bitmessage will do it but it is rather stupid.')
-                    if command == 'createDeterministicAddresses':
-                        statusbar = 'Generating ' + str(
-                            numberOfAddressesToMake) + ' new addresses.'
-                        shared.UISignalQueue.put((
-                            'updateStatusBar', statusbar))
-                    signingKeyNonce = 0
-                    encryptionKeyNonce = 1
-                    listOfNewAddressesToSendOutThroughTheAPI = [
-                    ]  # We fill out this list no matter what although we only need it if we end up passing the info to the API.
-
-                    for i in range(numberOfAddressesToMake):
-                        # This next section is a little bit strange. We're going to generate keys over and over until we
-                        # find one that has a RIPEMD hash that starts with either \x00 or \x00\x00. Then when we pack them
-                        # into a Bitmessage address, we won't store the \x00 or
-                        # \x00\x00 bytes thus making the address shorter.
-                        startTime = time.time()
-                        numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
-                        while True:
-                            numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
-                            potentialPrivSigningKey = hashlib.sha512(
-                                deterministicPassphrase + encodeVarint(signingKeyNonce)).digest()[:32]
-                            potentialPrivEncryptionKey = hashlib.sha512(
-                                deterministicPassphrase + encodeVarint(encryptionKeyNonce)).digest()[:32]
-                            potentialPubSigningKey = pointMult(
-                                potentialPrivSigningKey)
-                            potentialPubEncryptionKey = pointMult(
-                                potentialPrivEncryptionKey)
-                            # print 'potentialPubSigningKey', potentialPubSigningKey.encode('hex')
-                            # print 'potentialPubEncryptionKey',
-                            # potentialPubEncryptionKey.encode('hex')
-                            signingKeyNonce += 2
-                            encryptionKeyNonce += 2
-                            ripe = hashlib.new('ripemd160')
-                            sha = hashlib.new('sha512')
-                            sha.update(
-                                potentialPubSigningKey + potentialPubEncryptionKey)
-                            ripe.update(sha.digest())
-                            # print 'potential ripe.digest',
-                            # ripe.digest().encode('hex')
-                            if eighteenByteRipe:
-                                if ripe.digest()[:2] == '\x00\x00':
-                                    break
-                            else:
-                                if ripe.digest()[:1] == '\x00':
-                                    break
-
-                        print 'ripe.digest', ripe.digest().encode('hex')
-                        print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime), 'keys per second.'
-                        address = encodeAddress(3, streamNumber, ripe.digest())
-
-                        if command == 'createDeterministicAddresses':
-                            # An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
-                            # https://en.bitcoin.it/wiki/Wallet_import_format
-                            privSigningKey = '\x80' + potentialPrivSigningKey
-                            checksum = hashlib.sha256(hashlib.sha256(
-                                privSigningKey).digest()).digest()[0:4]
-                            privSigningKeyWIF = arithmetic.changebase(
-                                privSigningKey + checksum, 256, 58)
-
-                            privEncryptionKey = '\x80' + \
-                                potentialPrivEncryptionKey
-                            checksum = hashlib.sha256(hashlib.sha256(
-                                privEncryptionKey).digest()).digest()[0:4]
-                            privEncryptionKeyWIF = arithmetic.changebase(
-                                privEncryptionKey + checksum, 256, 58)
-
-                            try:
-                                shared.config.add_section(address)
-                                print 'label:', label
-                                shared.config.set(address, 'label', label)
-                                shared.config.set(address, 'enabled', 'true')
-                                shared.config.set(address, 'decoy', 'false')
-                                shared.config.set(address, 'noncetrialsperbyte', str(
-                                    nonceTrialsPerByte))
-                                shared.config.set(address, 'payloadlengthextrabytes', str(
-                                    payloadLengthExtraBytes))
-                                shared.config.set(
-                                    address, 'privSigningKey', privSigningKeyWIF)
-                                shared.config.set(
-                                    address, 'privEncryptionKey', privEncryptionKeyWIF)
-                                with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                                    shared.config.write(configfile)
-
-                                shared.UISignalQueue.put(('writeNewAddressToTable', (
-                                    label, address, str(streamNumber))))
-                                listOfNewAddressesToSendOutThroughTheAPI.append(
-                                    address)
-                                # if eighteenByteRipe:
-                                # shared.reloadMyAddressHashes()#This is
-                                # necessary here (rather than just at the end)
-                                # because otherwise if the human generates a
-                                # large number of new addresses and uses one
-                                # before they are done generating, the program
-                                # will receive a getpubkey message and will
-                                # ignore it.
-                                shared.myECCryptorObjects[ripe.digest()] = highlevelcrypto.makeCryptor(
-                                    potentialPrivEncryptionKey.encode('hex'))
-                                shared.myAddressesByHash[
-                                    ripe.digest()] = address
-                                shared.workerQueue.put((
-                                    'doPOWForMyV3Pubkey', ripe.digest()))
-                            except:
-                                print address, 'already exists. Not adding it again.'
-
-                    # Done generating addresses.
-                    if command == 'createDeterministicAddresses':
-                        # It may be the case that this address is being
-                        # generated as a result of a call to the API. Let us
-                        # put the result in the necessary queue.
-                        apiAddressGeneratorReturnQueue.put(
-                            listOfNewAddressesToSendOutThroughTheAPI)
-                        shared.UISignalQueue.put((
-                            'updateStatusBar', _translate("MainWindow", "Done generating address")))
-                        # shared.reloadMyAddressHashes()
-                    elif command == 'getDeterministicAddress':
-                        apiAddressGeneratorReturnQueue.put(address)
-                else:
-                    raise Exception(
-                        "Error in the addressGenerator thread. Thread was given a command it could not understand: " + command)
 
 # This is one of several classes that constitute the API
 # This class was written by Vaibhav Bhatia. Modified by Jonathan Warren (Atheros).
@@ -4444,15 +3724,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
             msgid = params[0].decode('hex')
-            t = (msgid,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''UPDATE inbox SET folder='trash' WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
-            shared.UISignalQueue.put(('removeInboxRowByMsgid',msgid))
+            helper_inbox.trash(msgid)
             return 'Trashed inbox message (assuming message existed).'
         elif method == 'trashSentMessage':
             if len(params) == 0:
@@ -4524,15 +3796,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 return 'API Error 0014: Your fromAddress is disabled. Cannot send.'
 
             ackdata = OpenSSL.rand(32)
-            shared.sqlLock.acquire()
+            
             t = ('', toAddress, toRipe, fromAddress, subject, message, ackdata, int(
                 time.time()), 'msgqueued', 1, 1, 'sent', 2)
-            shared.sqlSubmitQueue.put(
-                '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            helper_sent.insert(t)
 
             toLabel = ''
             t = (toAddress,)
@@ -4593,15 +3860,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             toAddress = '[Broadcast subscribers]'
             ripe = ''
 
-            shared.sqlLock.acquire()
+            
             t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
                 time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
-            shared.sqlSubmitQueue.put(
-                '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            helper_sent.insert(t)
 
             toLabel = '[Broadcast subscribers]'
             shared.UISignalQueue.put(('displayNewSentMessage', (
@@ -4719,7 +3981,7 @@ class singleAPI(threading.Thread):
         se.register_introspection_functions()
         se.serve_forever()
 
-# This is used so that the _translate function can be used when we are in daemon mode and not using any QT functions.
+# This is used so that the translateText function can be used when we are in daemon mode and not using any QT functions.
 class translateClass:
     def __init__(self, context, text):
         self.context = context
@@ -4730,6 +3992,24 @@ class translateClass:
         else:
             return self.text
 
+def _translate(context, text):
+    return translateText(context, text)
+
+def translateText(context, text):
+    if not shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
+        try:
+            from PyQt4 import QtCore, QtGui
+        except Exception as err:
+            print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
+            print 'Error message:', err
+            os._exit(0)
+        return QtGui.QApplication.translate(context, text)
+    else:
+        if '%' in text:
+            return translateClass(context, text.replace('%','',1))
+        else:
+            return text
+            
 
 selfInitiatedConnections = {}
     # This is a list of current connections (the thread pointers at least)
@@ -4758,7 +4038,7 @@ if __name__ == "__main__":
     # is the application already running?  If yes then exit.
     thisapp = singleton.singleinstance()
 
-    signal.signal(signal.SIGINT, signal_handler)
+    signal.signal(signal.SIGINT, helper_generic.signal_handler)
     # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     # Check the Major version, the first element in the array
@@ -4766,129 +4046,11 @@ if __name__ == "__main__":
         print 'This program requires sqlite version 3 or higher because 2 and lower cannot store NULL values. I see version:', sqlite3.sqlite_version_info
         os._exit(0)
 
-    # First try to load the config file (the keys.dat file) from the program
-    # directory
-    shared.config = ConfigParser.SafeConfigParser()
-    shared.config.read('keys.dat')
-    try:
-        shared.config.get('bitmessagesettings', 'settingsversion')
-        print 'Loading config files from same directory as program'
-        shared.appdata = ''
-    except:
-        # Could not load the keys.dat file in the program directory. Perhaps it
-        # is in the appdata directory.
-        shared.appdata = shared.lookupAppdataFolder()
-        shared.config = ConfigParser.SafeConfigParser()
-        shared.config.read(shared.appdata + 'keys.dat')
-        try:
-            shared.config.get('bitmessagesettings', 'settingsversion')
-            print 'Loading existing config files from', shared.appdata
-        except:
-            # This appears to be the first time running the program; there is
-            # no config file (or it cannot be accessed). Create config file.
-            shared.config.add_section('bitmessagesettings')
-            shared.config.set('bitmessagesettings', 'settingsversion', '6')
-            shared.config.set('bitmessagesettings', 'port', '8444')
-            shared.config.set(
-                'bitmessagesettings', 'timeformat', '%%a, %%d %%b %%Y  %%I:%%M %%p')
-            shared.config.set('bitmessagesettings', 'blackwhitelist', 'black')
-            shared.config.set('bitmessagesettings', 'startonlogon', 'false')
-            if 'linux' in sys.platform:
-                shared.config.set(
-                    'bitmessagesettings', 'minimizetotray', 'false')
-                                  # This isn't implimented yet and when True on
-                                  # Ubuntu causes Bitmessage to disappear while
-                                  # running when minimized.
-            else:
-                shared.config.set(
-                    'bitmessagesettings', 'minimizetotray', 'true')
-            shared.config.set(
-                'bitmessagesettings', 'showtraynotifications', 'true')
-            shared.config.set('bitmessagesettings', 'startintray', 'false')
-            shared.config.set('bitmessagesettings', 'socksproxytype', 'none')
-            shared.config.set(
-                'bitmessagesettings', 'sockshostname', 'localhost')
-            shared.config.set('bitmessagesettings', 'socksport', '9050')
-            shared.config.set(
-                'bitmessagesettings', 'socksauthentication', 'false')
-            shared.config.set('bitmessagesettings', 'socksusername', '')
-            shared.config.set('bitmessagesettings', 'sockspassword', '')
-            shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
-            shared.config.set(
-                'bitmessagesettings', 'messagesencrypted', 'false')
-            shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte))
-            shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
-                shared.networkDefaultPayloadLengthExtraBytes))
-            shared.config.set('bitmessagesettings', 'minimizeonclose', 'false')
-            shared.config.set(
-                'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
-            shared.config.set(
-                'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
+    helper_startup.loadConfig()
 
-            if storeConfigFilesInSameDirectoryAsProgramByDefault:
-                # Just use the same directory as the program and forget about
-                # the appdata folder
-                shared.appdata = ''
-                print 'Creating new config files in same directory as program.'
-            else:
-                print 'Creating new config files in', shared.appdata
-                if not os.path.exists(shared.appdata):
-                    os.makedirs(shared.appdata)
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
-
-    if shared.config.getint('bitmessagesettings', 'settingsversion') == 1:
-        shared.config.set('bitmessagesettings', 'settingsversion', '4')
-                          # If the settings version is equal to 2 or 3 then the
-                          # sqlThread will modify the pubkeys table and change
-                          # the settings version to 4.
-        shared.config.set('bitmessagesettings', 'socksproxytype', 'none')
-        shared.config.set('bitmessagesettings', 'sockshostname', 'localhost')
-        shared.config.set('bitmessagesettings', 'socksport', '9050')
-        shared.config.set('bitmessagesettings', 'socksauthentication', 'false')
-        shared.config.set('bitmessagesettings', 'socksusername', '')
-        shared.config.set('bitmessagesettings', 'sockspassword', '')
-        shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
-        shared.config.set('bitmessagesettings', 'messagesencrypted', 'false')
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
-
-    try:
-        # We shouldn't have to use the shared.knownNodesLock because this had
-        # better be the only thread accessing knownNodes right now.
-        pickleFile = open(shared.appdata + 'knownnodes.dat', 'rb')
-        shared.knownNodes = pickle.load(pickleFile)
-        pickleFile.close()
-    except:
-        createDefaultKnownNodes(shared.appdata)
-        pickleFile = open(shared.appdata + 'knownnodes.dat', 'rb')
-        shared.knownNodes = pickle.load(pickleFile)
-        pickleFile.close()
-    if shared.config.getint('bitmessagesettings', 'settingsversion') > 6:
-        print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
-        raise SystemExit
-
-    # DNS bootstrap. This could be programmed to use the SOCKS proxy to do the
-    # DNS lookup some day but for now we will just rely on the entries in
-    # defaultKnownNodes.py. Hopefully either they are up to date or the user
-    # has run Bitmessage recently without SOCKS turned on and received good
-    # bootstrap nodes using that method.
-    if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none':
-        try:
-            for item in socket.getaddrinfo('bootstrap8080.bitmessage.org', 80):
-                print 'Adding', item[4][0], 'to knownNodes based on DNS boostrap method'
-                shared.knownNodes[1][item[4][0]] = (8080, int(time.time()))
-        except:
-            print 'bootstrap8080.bitmessage.org DNS bootstraping failed.'
-        try:
-            for item in socket.getaddrinfo('bootstrap8444.bitmessage.org', 80):
-                print 'Adding', item[4][0], 'to knownNodes based on DNS boostrap method'
-                shared.knownNodes[1][item[4][0]] = (8444, int(time.time()))
-        except:
-            print 'bootstrap8444.bitmessage.org DNS bootstrapping failed.'
-    else:
-        print 'DNS bootstrap skipped because SOCKS is used.'
+    helper_bootstrap.knownNodes()
+    helper_bootstrap.dns()
+    
     # Start the address generation thread
     addressGeneratorThread = addressGenerator()
     addressGeneratorThread.daemon = True  # close the main program even if there are threads left
@@ -4942,35 +4104,20 @@ if __name__ == "__main__":
 
     if not shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
         try:
-            from PyQt4.QtCore import *
-            from PyQt4.QtGui import *
             from PyQt4 import QtCore, QtGui
         except Exception as err:
             print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
             print 'Error message:', err
             os._exit(0)
 
-        try:
-            _encoding = QtGui.QApplication.UnicodeUTF8
-            def _translate(context, text): # A non-QT version of _translate is defined below.
-                return QtGui.QApplication.translate(context, text)
-        except Exception as err:
-            print 'Error:', err
-
         import bitmessageqt
         bitmessageqt.run()
     else:
-        def _translate(context, text): # A QT version of _translate is defined above. 
-            if '%' in text:
-                return translateClass(context, text.replace('%','',1))
-            else:
-                return text
         shared.printLock.acquire()
         print 'Running as a daemon. You can use Ctrl+C to exit.'
         shared.printLock.release()
         while True:
             time.sleep(20)
-
 
 # So far, the creation of and management of the Bitmessage protocol and this
 # client is a one-man operation. Bitcoin tips are quite appreciated.
