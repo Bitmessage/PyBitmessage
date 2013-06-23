@@ -22,32 +22,12 @@ alreadyAttemptedConnectionsList = {
 numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer = {}
 neededPubkeys = {}
 
-import sys
-import Queue
-from addresses import *
-import shared
-from defaultKnownNodes import *
-import time
-import socket
-import threading
-import hashlib
-from struct import *
-import pickle
-import random
-import sqlite3
-from time import strftime, localtime, gmtime
-import string
-import socks
-import highlevelcrypto
-from pyelliptic.openssl import OpenSSL
 #import ctypes
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
 from SimpleXMLRPCServer import *
 import json
-from subprocess import call  # used when the API must execute an outside program
 import singleton
-import proofofwork
 
 # Classes
 from class_sqlThread import *
@@ -60,10 +40,6 @@ from class_addressGenerator import *
 # Helper Functions
 import helper_startup
 import helper_bootstrap
-import helper_inbox
-import helper_sent
-import helper_generic
-import helper_bitcoin
 
 def isInSqlInventory(hash):
     t = (hash,)
