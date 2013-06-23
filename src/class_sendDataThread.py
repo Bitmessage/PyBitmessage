@@ -3,6 +3,7 @@ import threading
 import shared
 import Queue
 from struct import unpack, pack
+import hashlib
 
 import bitmessagemain
 
