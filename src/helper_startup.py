@@ -1,6 +1,9 @@
 import shared
 import ConfigParser
-import time
+import sys
+import os
+
+storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may de-select Portable Mode in the settings if they want the config files to stay in the application data folder.
 
 def loadConfig():
     # First try to load the config file (the keys.dat file) from the program
