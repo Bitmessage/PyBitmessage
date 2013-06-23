@@ -3,3 +3,6 @@
 **.DS_Store
 src/build
 src/dist
+src/.project
+src/.pydevproject
+src/.settings/

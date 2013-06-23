@@ -1,4 +1,5 @@
 import shared
+import sys
 
 def convertIntToString(n):
     a = __builtins__.hex(n)

@@ -34,7 +34,7 @@ class singleinstance:
                 print(e.errno)
                 raise
         else:  # non Windows
-            import fcntl
+            import fcntl  # @UnresolvedImport
             self.fp = open(self.lockfile, 'w')
             try:
                 fcntl.lockf(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -53,7 +53,7 @@ class singleinstance:
                     os.close(self.fd)
                     os.unlink(self.lockfile)
             else:
-                import fcntl
+                import fcntl  # @UnresolvedImport
                 fcntl.lockf(self.fp, fcntl.LOCK_UN)
                 if os.path.isfile(self.lockfile):
                     os.unlink(self.lockfile)

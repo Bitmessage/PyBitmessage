@@ -9,7 +9,7 @@ Usage (Windows):
 """
 
 import sys, os, shutil, re
-from setuptools import setup
+from setuptools import setup  # @UnresolvedImport
 
 
 name = "Bitmessage"

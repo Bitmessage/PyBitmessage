@@ -2,9 +2,11 @@ import shared
 import threading
 import bitmessagemain
 import time
+import sys
 from pyelliptic.openssl import OpenSSL
 import ctypes
 import hashlib
+import highlevelcrypto
 from addresses import *
 from pyelliptic import arithmetic
 
