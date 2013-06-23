@@ -7,6 +7,9 @@ from addresses import *
 import bitmessagemain
 import highlevelcrypto
 import proofofwork
+from bitmessagemain import neededPubkeys, encryptedBroadcastSwitchoverTime
+import sys
+from class_addressGenerator import pointMult
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.

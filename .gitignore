@@ -3,3 +3,5 @@
 **.DS_Store
 src/build
 src/dist
+src/.project
+src/.pydevprojecy

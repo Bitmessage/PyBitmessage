@@ -8,7 +8,9 @@ import Queue
 import pickle
 import os
 import time
+import ConfigParser
 
+config = ConfigParser.SafeConfigParser()
 myECCryptorObjects = {}
 MyECSubscriptionCryptorObjects = {}
 myAddressesByHash = {} #The key in this dictionary is the RIPE hash which is encoded in an address and value is the address itself.

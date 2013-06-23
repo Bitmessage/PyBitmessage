@@ -8,7 +8,6 @@ storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may de-sel
 def loadConfig():
     # First try to load the config file (the keys.dat file) from the program
     # directory
-    shared.config = ConfigParser.SafeConfigParser()
     shared.config.read('keys.dat')
     try:
         shared.config.get('bitmessagesettings', 'settingsversion')
