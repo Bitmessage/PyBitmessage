@@ -28,7 +28,7 @@ class singleWorker(threading.Thread):
         shared.sqlLock.release()
         for row in queryreturn:
             toripe, = row
-            neededPubkeys[toripe] = 0
+            shared.neededPubkeys[toripe] = 0
 
         # Initialize the shared.ackdataForWhichImWatching data structure using data
         # from the sql database.
@@ -75,9 +75,9 @@ class singleWorker(threading.Thread):
                 self.doPOWForMyV3Pubkey(data)
                 """elif command == 'newpubkey':
                     toAddressVersion,toStreamNumber,toRipe = data
-                    if toRipe in neededPubkeys:
+                    if toRipe in shared.neededPubkeys:
                         print 'We have been awaiting the arrival of this pubkey.'
-                        del neededPubkeys[toRipe]
+                        del shared.neededPubkeys[toRipe]
                         t = (toRipe,)
                         shared.sqlLock.acquire()
                         shared.sqlSubmitQueue.put('''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND status='awaitingpubkey' and folder='sent' ''')
@@ -454,7 +454,7 @@ class singleWorker(threading.Thread):
                 shared.sqlSubmitQueue.put('commit')
                 shared.sqlLock.release()
             else:  # We don't have the needed pubkey. Set the status to 'awaitingpubkey' and request it if we haven't already
-                if toripe in neededPubkeys:
+                if toripe in shared.neededPubkeys:
                     # We already sent a request for the pubkey
                     t = (toaddress,)
                     shared.sqlLock.acquire()
@@ -503,7 +503,7 @@ class singleWorker(threading.Thread):
             shared.sqlSubmitQueue.put((toripe,))
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlLock.release()
-            if queryreturn == [] and toripe not in neededPubkeys:
+            if queryreturn == [] and toripe not in shared.neededPubkeys:
                 # We no longer have the needed pubkey and we haven't requested
                 # it.
                 shared.printLock.acquire()
@@ -789,7 +789,7 @@ class singleWorker(threading.Thread):
                 toAddress) + '. Please report this error to Atheros.')
             shared.printLock.release()
             return
-        neededPubkeys[ripe] = 0
+        shared.neededPubkeys[ripe] = 0
         payload = pack('>Q', (int(time.time()) + random.randrange(
             -300, 300)))  # the current time plus or minus five minutes.
         payload += encodeVarint(addressVersionNumber)
