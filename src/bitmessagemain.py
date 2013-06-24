@@ -1396,7 +1396,7 @@ class receiveDataThread(threading.Thread):
             shared.sqlLock.release()
             shared.workerQueue.put(('sendmessage', ''))
         else:
-            logger.info('We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:',
+            logger.info('We don\'t need this pub key. We didn\'t ask for it. Pubkey hash: %s.',
                         toRipe.encode('hex'))
 
     # We have received a pubkey
