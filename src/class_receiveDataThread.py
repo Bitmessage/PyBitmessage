@@ -243,7 +243,7 @@ class receiveDataThread(threading.Thread):
         except Exception as err:
             # if not 'Bad file descriptor' in err:
             shared.printLock.acquire()
-            sys.stderr.write('sock.sendall error: %s\n' % err)
+            print 'sock.sendall error:', err
             shared.printLock.release()
 
     def recverack(self):
@@ -334,7 +334,7 @@ class receiveDataThread(threading.Thread):
         except Exception as err:
             # if not 'Bad file descriptor' in err:
             shared.printLock.acquire()
-            sys.stderr.write('sock.sendall error: %s\n' % err)
+            print 'sock.sendall error:', err
             shared.printLock.release()
 
     # We have received a broadcast message
@@ -1513,7 +1513,7 @@ class receiveDataThread(threading.Thread):
         except Exception as err:
             # if not 'Bad file descriptor' in err:
             shared.printLock.acquire()
-            sys.stderr.write('sock.sendall error: %s\n' % err)
+            print 'sock.sendall error:', err
             shared.printLock.release()
 
     # We have received a getdata request from our peer
@@ -1583,7 +1583,7 @@ class receiveDataThread(threading.Thread):
         except Exception as err:
             # if not 'Bad file descriptor' in err:
             shared.printLock.acquire()
-            sys.stderr.write('sock.sendall error: %s\n' % err)
+            print 'sock.sendall error:', err
             shared.printLock.release()
 
     # Send an inv message with just one hash to all of our peers
@@ -1942,7 +1942,7 @@ class receiveDataThread(threading.Thread):
         except Exception as err:
             # if not 'Bad file descriptor' in err:
             shared.printLock.acquire()
-            sys.stderr.write('sock.sendall error: %s\n' % err)
+            print 'sock.sendall error:', err
             shared.printLock.release()
 
     # We have received a version message
@@ -2021,7 +2021,7 @@ class receiveDataThread(threading.Thread):
         except Exception as err:
             # if not 'Bad file descriptor' in err:
             shared.printLock.acquire()
-            sys.stderr.write('sock.sendall error: %s\n' % err)
+            print 'sock.sendall error:', err
             shared.printLock.release()
 
     # Sends a verack message
@@ -2035,7 +2035,7 @@ class receiveDataThread(threading.Thread):
         except Exception as err:
             # if not 'Bad file descriptor' in err:
             shared.printLock.acquire()
-            sys.stderr.write('sock.sendall error: %s\n' % err)
+            print 'sock.sendall error:', err
             shared.printLock.release()
                                                                                                              # cf
                                                                                                              # 83
