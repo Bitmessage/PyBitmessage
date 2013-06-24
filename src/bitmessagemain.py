@@ -1235,7 +1235,7 @@ class receiveDataThread(threading.Thread):
                     if not self.isProofOfWorkSufficient(encryptedData, requiredNonceTrialsPerByte,
                                                         requiredPayloadLengthExtraBytes):
                         logger.info('Proof of work in msg message insufficient only because it '
-                                    'does not meet our higher requirement.'
+                                    'does not meet our higher requirement.')
                         return
             # Gets set to True if the user shouldn't see the message according to black/white lists.
             blockMessage = False
@@ -1422,7 +1422,7 @@ class receiveDataThread(threading.Thread):
 
         if embeddedTime < int(time.time()) - lengthOfTimeToHoldOnToAllPubkeys:
             logger.info('The embedded time in this pubkey message is too old. Ignoring. '
-                         'Embedded time is: %s', embeddedTime
+                         'Embedded time is: %s', embeddedTime)
             return
         if embeddedTime > int(time.time()) + 10800:
             logger.info('The embedded time in this pubkey message more than several hours in the '
@@ -1498,7 +1498,7 @@ class receiveDataThread(threading.Thread):
         if addressVersion == 2:
             if len(data) < 146:  # sanity check. This is the minimum possible length.
                 logger.info('(within processpubkey) payloadLength less than 146. '
-                            'Sanity check failed.'
+                            'Sanity check failed.')
                 return
             bitfieldBehaviors = data[readPosition:readPosition + 4]
             readPosition += 4
