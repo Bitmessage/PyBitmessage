@@ -1095,7 +1095,7 @@ class receiveDataThread(threading.Thread):
                 break
             except Exception as err:
                 pass
-                logger.debug('cryptorObject.decrypt Exception: %s' % str(err))
+                # logger.debug('cryptorObject.decrypt Exception: %s' % str(err))
         if not initialDecryptionSuccessful:
             # This is not a message bound for me.
             logger.info('Length of time program spent failing to decrypt this message %s seconds.' %
