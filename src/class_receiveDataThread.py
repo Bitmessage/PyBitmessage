@@ -1,4 +1,4 @@
-doTimingAttackMitigation = False
+doTimingAttackMitigation = True
 
 import time
 import threading
