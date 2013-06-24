@@ -186,12 +186,14 @@ class outgoingSynSender(threading.Thread):
                     'updateStatusBar', translateText(
                     "MainWindow", "SOCKS5 Authentication problem: %1").arg(str(err))))
             except socks.Socks5Error as err:
-                logger.exception('SOCKS5 error. It is possible that the server wants authentication.')
+                logger.info('It is possible that the server wants authentication. %s',
+                            repr(err))
             except socks.Socks4Error as err:
-                logger.exception('Socks4Error')
+                logger.info(repr(err))
             except socket.error as err:
                 if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
-                    logger.exception('Bitmessage MIGHT be having trouble connecting to the SOCKS server.')
+                    logger.info('%s Bitmessage MIGHT be having trouble connecting to the '
+                                'SOCKS server.', repr(err))
                 else:
                     logger.info('Could NOT connect to %s during outgoing attempt.', HOST, exc_info=True)
                     PORT, timeLastSeen = shared.knownNodes[
@@ -448,18 +450,27 @@ class receiveDataThread(threading.Thread):
                             'objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now %s',
                             self.HOST, len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave))
                         try:
+                            # this data structure is maintained so that we can keep track of how
+                            # many total objects, across all connections, are currently outstanding.
+                            # If it goes too high it can indicate that we are under attack by
+                            # multiple nodes working together.
                             del numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
-                                self.HOST]  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
+                                self.HOST]
                         except:
                             pass
                     break
                 if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) == 0:
-                    logger.debug('(concerning %s) number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now %s',
+                    logger.debug('(concerning %s) number of '
+                                 'objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now %s',
                                  self.HOST,
                                  len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave))
                     try:
+                        # this data structure is maintained so that we can keep track of how many
+                        # total objects, across all connections, are currently outstanding. If it
+                        # goes too high it can indicate that we are under attack by multiple nodes
+                        # working together.
                         del numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
-                            self.HOST]  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
+                            self.HOST]
                     except:
                         pass
             if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) > 0:
@@ -731,9 +742,9 @@ class receiveDataThread(threading.Thread):
                     if not highlevelcrypto.verify(data[12:readPositionAtBottomOfMessage], signature, sendersPubSigningKey.encode('hex')):
                         logger.info('ECDSA verify failed')
                         return
-                    logger.info('ECDSA verify passed')
+                    logger.info('ECDSA verify passed.')
                 except Exception as err:
-                    logger.exception('ECDSA verify failed: %s' % str(err))
+                    logger.debug('ECDSA verify failed: %s' % str(err))
                     return
                 # verify passed
 
@@ -902,7 +913,7 @@ class receiveDataThread(threading.Thread):
                     return
                 logger.debug('ECDSA verify passed.')
             except Exception as err:
-                logger.exception('ECDSA verify failed')
+                logger.debug('ECDSA verify failed. %s', repr(err))
                 return
             # verify passed
 
@@ -989,25 +1000,30 @@ class receiveDataThread(threading.Thread):
             readPosition += 4
 
         if embeddedTime > int(time.time()) + 10800:
-            logger.warning('The time in the msg message is too new. Ignoring it. Time: %s', embeddedTime)
+            logger.warning('The time in the msg message is too new. Ignoring it. Time: %s',
+                embeddedTime)
             return
         if embeddedTime < int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept:
-            logger.warning('The time in the msg message is too old. Ignoring it. Time:', embeddedTime)
+            logger.warning('The time in the msg message is too old. Ignoring it. Time: %s',
+                embeddedTime)
             return
         streamNumberAsClaimedByMsg, streamNumberAsClaimedByMsgLength = decodeVarint(
             data[readPosition:readPosition + 9])
         if streamNumberAsClaimedByMsg != self.streamNumber:
-            print 'The stream number encoded in this msg (' + str(streamNumberAsClaimedByMsg) + ') message does not match the stream number on which it was received. Ignoring it.'
+            logger.warning('The stream number (%s) encoded in this msg (%s) message does not '
+                           'match the stream number (%s) on which it was received. Ignoring it.',
+                           streamNumberAsClaimedByMsg)
             return
         readPosition += streamNumberAsClaimedByMsgLength
         self.inventoryHash = calculateInventoryHash(data)
         shared.inventoryLock.acquire()
         if self.inventoryHash in shared.inventory:
-            print 'We have already received this msg message. Ignoring.'
+            logger.debug('We have already received this msg message. Ignoring.')
             shared.inventoryLock.release()
             return
         elif isInSqlInventory(self.inventoryHash):
-            print 'We have already received this msg message (it is stored on disk in the SQL inventory). Ignoring it.'
+            logger.debug('We have already received this msg message (it is stored on disk in the SQL '
+                          'inventory). Ignoring it.')
             shared.inventoryLock.release()
             return
         # This msg message is valid. Let's let our peers know about it.
@@ -1037,9 +1053,9 @@ class receiveDataThread(threading.Thread):
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
             (time.time() - self.messageProcessingStartTime)
         if sleepTime > 0:
-            logger.info('Timing attack mitigation: Sleeping for %s seconds' % str(sleepTime))
+            logger.debug('Timing attack mitigation: Sleeping for %s seconds' % str(sleepTime))
             time.sleep(sleepTime)
-        logger.info('Total message processing time: %ss' % str(time.time() - self.messageProcessingStartTime))
+        logger.debug('Total message processing time: %ss' % str(time.time() - self.messageProcessingStartTime))
 
     # A msg message has a valid time and POW and requires processing. The
     # recmsg function calls this one.
@@ -1047,9 +1063,7 @@ class receiveDataThread(threading.Thread):
         initialDecryptionSuccessful = False
         # Let's check whether this is a message acknowledgement bound for us.
         if encryptedData[readPosition:] in ackdataForWhichImWatching:
-            shared.printLock.acquire()
-            print 'This msg IS an acknowledgement bound for me.'
-            shared.printLock.release()
+            logger.info('This msg IS an acknowledgement bound for me.')
             del ackdataForWhichImWatching[encryptedData[readPosition:]]
             t = ('ackreceived', encryptedData[readPosition:])
             shared.sqlLock.acquire()
@@ -1072,16 +1086,19 @@ class receiveDataThread(threading.Thread):
             try:
                 decryptedData = cryptorObject.decrypt(
                     encryptedData[readPosition:])
-                toRipe = key  # This is the RIPE hash of my pubkeys. We need this below to compare to the destination_ripe included in the encrypted data.
+                # This is the RIPE hash of my pubkeys. We need this below to compare to the
+                # destination_ripe included in the encrypted data.
+                toRipe = key
                 initialDecryptionSuccessful = True
-                logger.info('EC decryption successful using key associated with ripe hash: %s' % str(key.encode('hex')))
+                logger.info('EC decryption successful using key associated with ripe hash: %s',
+                            key.encode('hex'))
                 break
             except Exception as err:
                 pass
                 logger.debug('cryptorObject.decrypt Exception: %s' % str(err))
         if not initialDecryptionSuccessful:
             # This is not a message bound for me.
-            logger.info('Length of time program spent failing to decrypt this message %s seconds' %
+            logger.info('Length of time program spent failing to decrypt this message %s seconds.' %
                         str(time.time() - self.messageProcessingStartTime))
         else:
             # This is a message bound for me.
@@ -1092,24 +1109,27 @@ class receiveDataThread(threading.Thread):
                 decryptedData[readPosition:readPosition + 10])
             readPosition += messageVersionLength
             if messageVersion != 1:
-                print 'Cannot understand message versions other than one. Ignoring message.'
+                logger.debug('Cannot understand message versions other than one. Ignoring message.')
                 return
             sendersAddressVersionNumber, sendersAddressVersionNumberLength = decodeVarint(
                 decryptedData[readPosition:readPosition + 10])
             readPosition += sendersAddressVersionNumberLength
             if sendersAddressVersionNumber == 0:
-                print 'Cannot understand sendersAddressVersionNumber = 0. Ignoring message.'
+                logger.warning(
+                        'Cannot understand sendersAddressVersionNumber = 0. Ignoring message.')
                 return
             if sendersAddressVersionNumber >= 4:
-                print 'Sender\'s address version number', sendersAddressVersionNumber, 'not yet supported. Ignoring message.'
+                logger.warning('Sender\'s address version number %s not yet supported. '
+                               'Ignoring message.', sendersAddressVersionNumber)
                 return
             if len(decryptedData) < 170:
-                print 'Length of the unencrypted data is unreasonably short. Sanity check failed. Ignoring message.'
+                logger.warning('Length of the unencrypted data is unreasonably short. '
+                               'Sanity check failed. Ignoring message.')
                 return
             sendersStreamNumber, sendersStreamNumberLength = decodeVarint(
                 decryptedData[readPosition:readPosition + 10])
             if sendersStreamNumber == 0:
-                print 'sender\'s stream number is 0. Ignoring message.'
+                logger.warning('Sender\'s stream number is 0. Ignoring message.')
                 return
             readPosition += sendersStreamNumberLength
             behaviorBitfield = decryptedData[readPosition:readPosition + 4]
@@ -1124,19 +1144,22 @@ class receiveDataThread(threading.Thread):
                 requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(
                     decryptedData[readPosition:readPosition + 10])
                 readPosition += varintLength
-                print 'sender\'s requiredAverageProofOfWorkNonceTrialsPerByte is', requiredAverageProofOfWorkNonceTrialsPerByte
+                logger.debug('Sender\'s requiredAverageProofOfWorkNonceTrialsPerByte is %s.',
+                             requiredAverageProofOfWorkNonceTrialsPerByte)
                 requiredPayloadLengthExtraBytes, varintLength = decodeVarint(
                     decryptedData[readPosition:readPosition + 10])
                 readPosition += varintLength
-                print 'sender\'s requiredPayloadLengthExtraBytes is', requiredPayloadLengthExtraBytes
+                logger.debug('Sender\'s requiredPayloadLengthExtraBytes is',
+                             requiredPayloadLengthExtraBytes)
             endOfThePublicKeyPosition = readPosition  # needed for when we store the pubkey in our database of pubkeys for later use.
             if toRipe != decryptedData[readPosition:readPosition + 20]:
-                shared.printLock.acquire()
-                print 'The original sender of this message did not send it to you. Someone is attempting a Surreptitious Forwarding Attack.'
-                print 'See: http://world.std.com/~dtd/sign_encrypt/sign_encrypt7.html'
-                print 'your toRipe:', toRipe.encode('hex')
-                print 'embedded destination toRipe:', decryptedData[readPosition:readPosition + 20].encode('hex')
-                shared.printLock.release()
+                logger.warning('The original sender of this message did not send it to you.\n'
+                               'Someone is attempting a Surreptitious Forwarding Attack.\n'
+                               'See: http://world.std.com/~dtd/sign_encrypt/sign_encrypt7.html\n'
+                               'your toRipe: %s \n'
+                               'embedded destination toRipe: %s',
+                               toRipe.encode('hex'),
+                               decryptedData[readPosition:readPosition + 20].encode('hex'))
                 return
             readPosition += 20
             messageEncodingType, messageEncodingTypeLength = decodeVarint(
@@ -1146,7 +1169,7 @@ class receiveDataThread(threading.Thread):
                 decryptedData[readPosition:readPosition + 10])
             readPosition += messageLengthLength
             message = decryptedData[readPosition:readPosition + messageLength]
-            # print 'First 150 characters of message:', repr(message[:150])
+            # logger.debug('First 150 characters of message: %s', repr(message[:150]))
             readPosition += messageLength
             ackLength, ackLengthLength = decodeVarint(
                 decryptedData[readPosition:readPosition + 10])
@@ -1161,15 +1184,21 @@ class receiveDataThread(threading.Thread):
                 readPosition:readPosition + signatureLength]
             try:
                 if not highlevelcrypto.verify(decryptedData[:positionOfBottomOfAckData], signature, pubSigningKey.encode('hex')):
-                    print 'ECDSA verify failed'
+                    logger.debug('ECDSA verify failed.')
                     return
-                print 'ECDSA verify passed'
+                logger.debug('ECDSA verify passed.')
             except Exception as err:
-                print 'ECDSA verify failed', err
+                logger.debug('ECDSA verify failed: %s', repr(err))
                 return
-            shared.printLock.acquire()
-            print 'As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person:', helper_bitcoin.calculateBitcoinAddressFromPubkey(pubSigningKey), '  ..and here is the testnet address:', helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey), '. The other person must take their private signing key from Bitmessage and import it into Bitcoin (or a service like Blockchain.info) for it to be of any use. Do not use this unless you know what you are doing.'
-            shared.printLock.release()
+            logger.info('As a matter of intellectual curiosity, here is the Bitcoin address '
+                        'associated with the keys owned by the other person: %s. \n'
+                        'And here is the testnet address: %s. \n'
+                        'The other person must take their private signing key from Bitmessage and '
+                        'import it into Bitcoin (or a service like Blockchain.info) for it to be '
+                        'of any use. \n'
+                        'Do not use this unless you know what you are doing.',
+                        helper_bitcoin.calculateBitcoinAddressFromPubkey(pubSigningKey),
+                        helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey))
             # calculate the fromRipe.
             sha = hashlib.new('sha512')
             sha.update(pubSigningKey + pubEncryptionKey)
