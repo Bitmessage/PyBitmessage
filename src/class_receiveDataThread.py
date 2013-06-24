@@ -1115,7 +1115,7 @@ class receiveDataThread(threading.Thread):
             t = (toRipe,)
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put(
-                '''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND status='awaitingpubkey' and folder='sent' ''')
+                '''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND (status='awaitingpubkey' or status='doingpubkeypow') and folder='sent' ''')
             shared.sqlSubmitQueue.put(t)
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
