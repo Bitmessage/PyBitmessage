@@ -8,7 +8,7 @@ import random
 import sys
 import socket
 
-import bitmessagemain
+#import bitmessagemain
 
 # Every connection to a peer has a sendDataThread (and also a
 # receiveDataThread).
@@ -29,7 +29,7 @@ class sendDataThread(threading.Thread):
         HOST,
         PORT,
         streamNumber,
-            objectsOfWhichThisRemoteNodeIsAlreadyAware):
+            someObjectsOfWhichThisRemoteNodeIsAlreadyAware):
         self.sock = sock
         self.HOST = HOST
         self.PORT = PORT
@@ -38,13 +38,13 @@ class sendDataThread(threading.Thread):
             1  # This must be set using setRemoteProtocolVersion command which is sent through the self.mailbox queue.
         self.lastTimeISentData = int(
             time.time())  # If this value increases beyond five minutes ago, we'll send a pong message to keep the connection alive.
-        self.objectsOfWhichThisRemoteNodeIsAlreadyAware = objectsOfWhichThisRemoteNodeIsAlreadyAware
+        self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware = someObjectsOfWhichThisRemoteNodeIsAlreadyAware
         shared.printLock.acquire()
         print 'The streamNumber of this sendDataThread (ID:', str(id(self)) + ') at setup() is', self.streamNumber
         shared.printLock.release()
 
     def sendVersionMessage(self):
-        datatosend = bitmessagemain.assembleVersionMessage(
+        datatosend = shared.assembleVersionMessage(
             self.HOST, self.PORT, self.streamNumber)  # the IP and port of the remote host, and my streamNumber.
 
         shared.printLock.acquire()
@@ -123,7 +123,7 @@ class sendDataThread(threading.Thread):
                         print 'sendDataThread thread (ID:', str(id(self)) + ') ending now. Was connected to', self.HOST
                         break
                 elif command == 'sendinv':
-                    if data not in self.objectsOfWhichThisRemoteNodeIsAlreadyAware:
+                    if data not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
                         payload = '\x01' + data
                         headerData = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
                         headerData += 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -147,6 +147,7 @@ class sendDataThread(threading.Thread):
                             print 'sendDataThread thread (ID:', str(id(self)) + ') ending now. Was connected to', self.HOST
                             break
                 elif command == 'pong':
+                    self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware.clear() # To save memory, let us clear this data structure from time to time. As its function is to help us keep from sending inv messages to peers which sent us the same inv message mere seconds earlier, it will be fine to clear this data structure from time to time.
                     if self.lastTimeISentData < (int(time.time()) - 298):
                         # Send out a pong message to keep the connection alive.
                         shared.printLock.acquire()

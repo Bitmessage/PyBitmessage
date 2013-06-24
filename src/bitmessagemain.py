@@ -8,19 +8,6 @@
 # yet contain logic to expand into further streams.
 
 # The software version variable is now held in shared.py
-verbose = 1
-maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # Equals two days and 12 hours.
-lengthOfTimeToLeaveObjectsInInventory = 237600  # Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
-lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
-maximumAgeOfObjectsThatIAdvertiseToOthers = 216000  # Equals two days and 12 hours
-maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
-useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
-encryptedBroadcastSwitchoverTime = 1369735200
-
-alreadyAttemptedConnectionsList = {
-}  # This is a list of nodes to which we have already attempted a connection
-numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer = {}
-neededPubkeys = {}
 
 #import ctypes
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
@@ -41,19 +28,6 @@ from class_addressGenerator import *
 import helper_startup
 import helper_bootstrap
 
-def isInSqlInventory(hash):
-    t = (hash,)
-    shared.sqlLock.acquire()
-    shared.sqlSubmitQueue.put('''select hash from inventory where hash=?''')
-    shared.sqlSubmitQueue.put(t)
-    queryreturn = shared.sqlReturnQueue.get()
-    shared.sqlLock.release()
-    if queryreturn == []:
-        return False
-    else:
-        return True
-
-
 def connectToStream(streamNumber):
     selfInitiatedConnections[streamNumber] = {}
     if sys.platform[0:3] == 'win':
@@ -64,46 +38,6 @@ def connectToStream(streamNumber):
         a = outgoingSynSender()
         a.setup(streamNumber, selfInitiatedConnections)
         a.start()
-
-
-
-def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
-    shared.softwareVersion
-    payload = ''
-    payload += pack('>L', 2)  # protocol version.
-    payload += pack('>q', 1)  # bitflags of the services I offer.
-    payload += pack('>q', int(time.time()))
-
-    payload += pack(
-        '>q', 1)  # boolservices of remote connection. How can I even know this for sure? This is probably ignored by the remote host.
-    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-        socket.inet_aton(remoteHost)
-    payload += pack('>H', remotePort)  # remote IPv6 and port
-
-    payload += pack('>q', 1)  # bitflags of the services I offer.
-    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
-        '>L', 2130706433)  # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
-    payload += pack('>H', shared.config.getint(
-        'bitmessagesettings', 'port'))  # my external IPv6 and port
-
-    random.seed()
-    payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
-    userAgent = '/PyBitmessage:' + shared.softwareVersion + \
-        '/'  # Length of userAgent must be less than 253.
-    payload += pack('>B', len(
-        userAgent))  # user agent string length. If the user agent is more than 252 bytes long, this code isn't going to work.
-    payload += userAgent
-    payload += encodeVarint(
-        1)  # The number of streams about which I care. PyBitmessage currently only supports 1 per connection.
-    payload += encodeVarint(myStreamNumber)
-
-    datatosend = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
-    datatosend = datatosend + 'version\x00\x00\x00\x00\x00'  # version command
-    datatosend = datatosend + pack('>L', len(payload))  # payload length
-    datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
-    return datatosend + payload
-
-
 
 
 # This is one of several classes that constitute the API
@@ -729,50 +663,14 @@ class singleAPI(threading.Thread):
         se.register_introspection_functions()
         se.serve_forever()
 
-# This is used so that the translateText function can be used when we are in daemon mode and not using any QT functions.
-class translateClass:
-    def __init__(self, context, text):
-        self.context = context
-        self.text = text
-    def arg(self,argument):
-        if '%' in self.text:
-            return translateClass(self.context, self.text.replace('%','',1)) # This doesn't actually do anything with the arguments because we don't have a UI in which to display this information anyway.
-        else:
-            return self.text
-
-def _translate(context, text):
-    return translateText(context, text)
-
-def translateText(context, text):
-    if not shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
-        try:
-            from PyQt4 import QtCore, QtGui
-        except Exception as err:
-            print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
-            print 'Error message:', err
-            os._exit(0)
-        return QtGui.QApplication.translate(context, text)
-    else:
-        if '%' in text:
-            return translateClass(context, text.replace('%','',1))
-        else:
-            return text
-            
-
 selfInitiatedConnections = {}
     # This is a list of current connections (the thread pointers at least)
-ackdataForWhichImWatching = {}
-alreadyAttemptedConnectionsListLock = threading.Lock()
-eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
-    '>Q', random.randrange(1, 18446744073709551615))
-successfullyDecryptMessageTimings = [
-]  # A list of the amounts of time it took to successfully decrypt msg messages
-apiAddressGeneratorReturnQueue = Queue.Queue(
-)  # The address generator thread uses this queue to get information back to the API thread.
-alreadyAttemptedConnectionsListResetTime = int(
-    time.time())  # used to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
 
-if useVeryEasyProofOfWorkForTesting:
+
+
+
+
+if shared.useVeryEasyProofOfWorkForTesting:
     shared.networkDefaultProofOfWorkNonceTrialsPerByte = int(
         shared.networkDefaultProofOfWorkNonceTrialsPerByte / 16)
     shared.networkDefaultPayloadLengthExtraBytes = int(

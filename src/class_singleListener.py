@@ -1,8 +1,6 @@
 import threading
 import shared
 import socket
-import Queue
-
 from class_sendDataThread import *
 from class_receiveDataThread import *
 
@@ -64,18 +62,18 @@ class singleListener(threading.Thread):
                 shared.printLock.release()
                 a.close()
                 a, (HOST, PORT) = sock.accept()
-            objectsOfWhichThisRemoteNodeIsAlreadyAware = {}
+            someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
             a.settimeout(20)
 
             sd = sendDataThread()
             sd.setup(
-                a, HOST, PORT, -1, objectsOfWhichThisRemoteNodeIsAlreadyAware)
+                a, HOST, PORT, -1, someObjectsOfWhichThisRemoteNodeIsAlreadyAware)
             sd.start()
 
             rd = receiveDataThread()
             rd.daemon = True  # close the main program even if there are threads left
             rd.setup(
-                a, HOST, PORT, -1, objectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections)
+                a, HOST, PORT, -1, someObjectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections)
             rd.start()
 
             shared.printLock.acquire()
