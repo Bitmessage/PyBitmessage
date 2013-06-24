@@ -1225,17 +1225,22 @@ class receiveDataThread(threading.Thread):
             # If this message is bound for one of my version 3 addresses (or
             # higher), then we must check to make sure it meets our demanded
             # proof of work requirement.
-            if decodeAddress(toAddress)[1] >= 3:  # If the toAddress version number is 3 or higher:
-                if not shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(fromAddress):  # If I'm not friendly with this person:
+            if decodeAddress(toAddress)[1] >= 3:
+                # If I'm not friendly with this person:
+                if not shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(fromAddress):
                     requiredNonceTrialsPerByte = shared.config.getint(
                         toAddress, 'noncetrialsperbyte')
                     requiredPayloadLengthExtraBytes = shared.config.getint(
                         toAddress, 'payloadlengthextrabytes')
-                    if not self.isProofOfWorkSufficient(encryptedData, requiredNonceTrialsPerByte, requiredPayloadLengthExtraBytes):
-                        print 'Proof of work in msg message insufficient only because it does not meet our higher requirement.'
+                    if not self.isProofOfWorkSufficient(encryptedData, requiredNonceTrialsPerByte,
+                                                        requiredPayloadLengthExtraBytes):
+                        logger.info('Proof of work in msg message insufficient only because it '
+                                    'does not meet our higher requirement.'
                         return
-            blockMessage = False  # Gets set to True if the user shouldn't see the message according to black or white lists.
-            if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':  # If we are using a blacklist
+            # Gets set to True if the user shouldn't see the message according to black/white lists.
+            blockMessage = False
+            # If we are using a blacklist
+            if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
                 t = (fromAddress,)
                 shared.sqlLock.acquire()
                 shared.sqlSubmitQueue.put(
@@ -1244,9 +1249,7 @@ class receiveDataThread(threading.Thread):
                 queryreturn = shared.sqlReturnQueue.get()
                 shared.sqlLock.release()
                 if queryreturn != []:
-                    shared.printLock.acquire()
-                    print 'Message ignored because address is in blacklist.'
-                    shared.printLock.release()
+                    logging.info('Message ignored because address is in blacklist.')
                     blockMessage = True
             else:  # We're using a whitelist
                 t = (fromAddress,)
@@ -1257,11 +1260,11 @@ class receiveDataThread(threading.Thread):
                 queryreturn = shared.sqlReturnQueue.get()
                 shared.sqlLock.release()
                 if queryreturn == []:
-                    print 'Message ignored because address not in whitelist.'
+                    logging.info('Message ignored because address not in whitelist.')
                     blockMessage = True
             if not blockMessage:
-                print 'fromAddress:', fromAddress
-                print 'First 150 characters of message:', repr(message[:150])
+                logger.debug('fromAddress: %s', fromAddress)
+                logger.debug('First 150 characters of message: %s', repr(message[:150]))
 
                 toLabel = shared.config.get(toAddress, 'label')
                 if toLabel == '':
@@ -1271,8 +1274,10 @@ class receiveDataThread(threading.Thread):
                     bodyPositionIndex = string.find(message, '\nBody:')
                     if bodyPositionIndex > 1:
                         subject = message[8:bodyPositionIndex]
+                        # Only save and show the first 500 characters of the subject. Any more is
+                        # probably an attack.
                         subject = subject[
-                            :500]  # Only save and show the first 500 characters of the subject. Any more is probably an attak.
+                            :500]
                         body = message[bodyPositionIndex + 6:]
                     else:
                         subject = ''
@@ -1281,7 +1286,9 @@ class receiveDataThread(threading.Thread):
                     body = message
                     subject = ''
                 elif messageEncodingType == 0:
-                    print 'messageEncodingType == 0. Doing nothing with the message. They probably just sent it so that we would store their public key or send their ack data for them.'
+                    logging.info('messageEncodingType == 0. Doing nothing with the message. '
+                                 'They probably just sent it so that we would store their '
+                                 'public key or send their ack data for them.')
                 else:
                     body = 'Unknown encoding type.\n\n' + repr(message)
                     subject = ''
@@ -1334,7 +1341,7 @@ class receiveDataThread(threading.Thread):
                     shared.workerQueue.put(('sendbroadcast', ''))
 
             if self.isAckDataValid(ackData):
-                print 'ackData is valid. Will process it.'
+                logger.info('ackData is valid. Will process it.')
                 self.ackDataThatWeHaveYetToSend.append(
                     ackData)  # When we have processed all data, the processData function will pop the ackData out and process it as if it is a message received from our peer.
             # Display timing data
@@ -1345,21 +1352,22 @@ class receiveDataThread(threading.Thread):
             sum = 0
             for item in successfullyDecryptMessageTimings:
                 sum += item
-            shared.printLock.acquire()
-            print 'Time to decrypt this message successfully:', timeRequiredToAttemptToDecryptMessage
-            print 'Average time for all message decryption successes since startup:', sum / len(successfullyDecryptMessageTimings)
-            shared.printLock.release()
+            logger.info('Time to decrypt this message successfully: %s',
+                        timeRequiredToAttemptToDecryptMessage)
+            logger.info('Average time for all message decryption successes since startup: %s',
+                        sum / len(successfullyDecryptMessageTimings))
 
     def isAckDataValid(self, ackData):
         if len(ackData) < 24:
-            print 'The length of ackData is unreasonably short. Not sending ackData.'
+            logger.info('The length of ackData is unreasonably short. Not sending ackData.')
             return False
         if ackData[0:4] != '\xe9\xbe\xb4\xd9':
-            print 'Ackdata magic bytes were wrong. Not sending ackData.'
+            logger.info('Ackdata magic bytes were wrong. Not sending ackData.')
             return False
         ackDataPayloadLength, = unpack('>L', ackData[16:20])
         if len(ackData) - 24 != ackDataPayloadLength:
-            print 'ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.'
+            logger.info('ackData payload length doesn\'t match the payload length specified in the '
+                        'header. Not sending ackdata.')
             return False
         if ackData[4:16] != 'getpubkey\x00\x00\x00' and ackData[4:16] != 'pubkey\x00\x00\x00\x00\x00\x00' and ackData[4:16] != 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and ackData[4:16] != 'broadcast\x00\x00\x00':
             return False
@@ -1376,7 +1384,7 @@ class receiveDataThread(threading.Thread):
 
     def possibleNewPubkey(self, toRipe):
         if toRipe in neededPubkeys:
-            print 'We have been awaiting the arrival of this pubkey.'
+            logger.info('We have been awaiting the arrival of this pubkey.')
             del neededPubkeys[toRipe]
             t = (toRipe,)
             shared.sqlLock.acquire()
@@ -1388,9 +1396,8 @@ class receiveDataThread(threading.Thread):
             shared.sqlLock.release()
             shared.workerQueue.put(('sendmessage', ''))
         else:
-            shared.printLock.acquire()
-            print 'We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:', toRipe.encode('hex')
-            shared.printLock.release()
+            logger.info('We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:',
+                        toRipe.encode('hex'))
 
     # We have received a pubkey
     def recpubkey(self, data):
@@ -1399,7 +1406,7 @@ class receiveDataThread(threading.Thread):
             return
         # We must check to make sure the proof of work is sufficient.
         if not self.isProofOfWorkSufficient(data):
-            print 'Proof of work in pubkey message insufficient.'
+            logger.info('Proof of work in pubkey message insufficient.')
             return
 
         readPosition = 8  # for the nonce
@@ -1414,14 +1421,12 @@ class receiveDataThread(threading.Thread):
             readPosition += 4
 
         if embeddedTime < int(time.time()) - lengthOfTimeToHoldOnToAllPubkeys:
-            shared.printLock.acquire()
-            print 'The embedded time in this pubkey message is too old. Ignoring. Embedded time is:', embeddedTime
-            shared.printLock.release()
+            logger.info('The embedded time in this pubkey message is too old. Ignoring. '
+                         'Embedded time is: %s', embeddedTime
             return
         if embeddedTime > int(time.time()) + 10800:
-            shared.printLock.acquire()
-            print 'The embedded time in this pubkey message more than several hours in the future. This is irrational. Ignoring message.'
-            shared.printLock.release()
+            logger.info('The embedded time in this pubkey message more than several hours in the '
+                        'future. Ignoring message.')
             return
         addressVersion, varintLength = decodeVarint(
             data[readPosition:readPosition + 10])
@@ -1430,17 +1435,20 @@ class receiveDataThread(threading.Thread):
             data[readPosition:readPosition + 10])
         readPosition += varintLength
         if self.streamNumber != streamNumber:
-            print 'stream number embedded in this pubkey doesn\'t match our stream number. Ignoring.'
+            logger.info('Stream number (%s) embedded in this pubkey doesn\'t match our stream '
+                        'number. Ignoring.',
+                        streamNumber)
             return
 
         inventoryHash = calculateInventoryHash(data)
         shared.inventoryLock.acquire()
         if inventoryHash in shared.inventory:
-            print 'We have already received this pubkey. Ignoring it.'
+            logger.info('We have already received this pubkey. Ignoring it.')
             shared.inventoryLock.release()
             return
         elif isInSqlInventory(inventoryHash):
-            print 'We have already received this pubkey (it is stored on disk in the SQL inventory). Ignoring it.'
+            logger.info('We have already received this pubkey (it is stored on disk in the SQL '
+                        'inventory). Ignoring it.')
             shared.inventoryLock.release()
             return
         objectType = 'pubkey'
@@ -1457,13 +1465,10 @@ class receiveDataThread(threading.Thread):
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
             (time.time() - self.pubkeyProcessingStartTime)
         if sleepTime > 0:
-            shared.printLock.acquire()
-            print 'Timing attack mitigation: Sleeping for', sleepTime, 'seconds.'
-            shared.printLock.release()
+            logger.debug('Timing attack mitigation: Sleeping for %s seconds.', sleepTime)
             time.sleep(sleepTime)
-        shared.printLock.acquire()
-        print 'Total pubkey processing time:', time.time() - self.pubkeyProcessingStartTime, 'seconds.'
-        shared.printLock.release()
+        logger.debug('Total pubkey processing time: %s seconds.',
+                     time.time() - self.pubkeyProcessingStartTime)
 
     def processpubkey(self, data):
         readPosition = 8  # for the nonce
@@ -1484,16 +1489,16 @@ class receiveDataThread(threading.Thread):
             data[readPosition:readPosition + 10])
         readPosition += varintLength
         if addressVersion == 0:
-            print '(Within processpubkey) addressVersion of 0 doesn\'t make sense.'
+            logger.info('addressVersion of 0 doesn\'t make sense.')
             return
         if addressVersion >= 4 or addressVersion == 1:
-            shared.printLock.acquire()
-            print 'This version of Bitmessage cannot handle version', addressVersion, 'addresses.'
-            shared.printLock.release()
+            logger.info('This version of Bitmessage cannot handle version %s addresses.',
+                        addressVersion)
             return
         if addressVersion == 2:
             if len(data) < 146:  # sanity check. This is the minimum possible length.
-                print '(within processpubkey) payloadLength less than 146. Sanity check failed.'
+                logger.info('(within processpubkey) payloadLength less than 146. '
+                            'Sanity check failed.'
                 return
             bitfieldBehaviors = data[readPosition:readPosition + 4]
             readPosition += 4
@@ -1504,7 +1509,7 @@ class receiveDataThread(threading.Thread):
             readPosition += 64
             publicEncryptionKey = data[readPosition:readPosition + 64]
             if len(publicEncryptionKey) < 64:
-                print 'publicEncryptionKey length less than 64. Sanity check failed.'
+                logger.info('publicEncryptionKey length less than 64. Sanity check failed.')
                 return
             sha = hashlib.new('sha512')
             sha.update(
