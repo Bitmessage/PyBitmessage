@@ -1,3 +1,5 @@
+doTimingAttackMitigation = False
+
 import time
 import threading
 import shared
@@ -413,7 +415,7 @@ class receiveDataThread(threading.Thread):
 
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
             (time.time() - self.messageProcessingStartTime)
-        if sleepTime > 0:
+        if sleepTime > 0 and doTimingAttackMitigation:
             shared.printLock.acquire()
             print 'Timing attack mitigation: Sleeping for', sleepTime, 'seconds.'
             shared.printLock.release()
@@ -792,7 +794,7 @@ class receiveDataThread(threading.Thread):
 
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
             (time.time() - self.messageProcessingStartTime)
-        if sleepTime > 0:
+        if sleepTime > 0 and doTimingAttackMitigation:
             shared.printLock.acquire()
             print 'Timing attack mitigation: Sleeping for', sleepTime, 'seconds.'
             shared.printLock.release()
@@ -1190,7 +1192,7 @@ class receiveDataThread(threading.Thread):
         lengthOfTimeWeShouldUseToProcessThisMessage = .2
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
             (time.time() - self.pubkeyProcessingStartTime)
-        if sleepTime > 0:
+        if sleepTime > 0 and doTimingAttackMitigation:
             shared.printLock.acquire()
             print 'Timing attack mitigation: Sleeping for', sleepTime, 'seconds.'
             shared.printLock.release()
@@ -1428,7 +1430,7 @@ class receiveDataThread(threading.Thread):
                     shared.myAddressesByHash[requestedHash], 'lastpubkeysendtime'))
             except:
                 lastPubkeySendTime = 0
-            if lastPubkeySendTime < time.time() - shared.lengthOfTimeToHoldOnToAllPubkeys:  # If the last time we sent our pubkey was 28 days ago
+            if lastPubkeySendTime < time.time() - shared.lengthOfTimeToHoldOnToAllPubkeys:  # If the last time we sent our pubkey was at least 28 days ago...
                 shared.printLock.acquire()
                 print 'Found getpubkey-requested-hash in my list of EC hashes. Telling Worker thread to do the POW for a pubkey message and send it out.'
                 shared.printLock.release()
