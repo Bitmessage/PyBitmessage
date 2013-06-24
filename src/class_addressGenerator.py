@@ -1,6 +1,5 @@
 import shared
 import threading
-import bitmessagemain
 import time
 import sys
 from pyelliptic.openssl import OpenSSL
@@ -9,6 +8,7 @@ import hashlib
 import highlevelcrypto
 from addresses import *
 from pyelliptic import arithmetic
+import tr
 
 class addressGenerator(threading.Thread):
 
@@ -44,7 +44,7 @@ class addressGenerator(threading.Thread):
             if addressVersionNumber == 3:  # currently the only one supported.
                 if command == 'createRandomAddress':
                     shared.UISignalQueue.put((
-                        'updateStatusBar', bitmessagemain.translateText("MainWindow", "Generating one new address")))
+                        'updateStatusBar', tr.translateText("MainWindow", "Generating one new address")))
                     # This next section is a little bit strange. We're going to generate keys over and over until we
                     # find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
                     # we won't store the \x00 or \x00\x00 bytes thus making the
@@ -112,10 +112,10 @@ class addressGenerator(threading.Thread):
                     # It may be the case that this address is being generated
                     # as a result of a call to the API. Let us put the result
                     # in the necessary queue.
-                    bitmessagemain.apiAddressGeneratorReturnQueue.put(address)
+                    shared.apiAddressGeneratorReturnQueue.put(address)
 
                     shared.UISignalQueue.put((
-                        'updateStatusBar', bitmessagemain.translateText("MainWindow", "Done generating address. Doing work necessary to broadcast it...")))
+                        'updateStatusBar', tr.translateText("MainWindow", "Done generating address. Doing work necessary to broadcast it...")))
                     shared.UISignalQueue.put(('writeNewAddressToTable', (
                         label, address, streamNumber)))
                     shared.reloadMyAddressHashes()
@@ -235,13 +235,13 @@ class addressGenerator(threading.Thread):
                         # It may be the case that this address is being
                         # generated as a result of a call to the API. Let us
                         # put the result in the necessary queue.
-                        bitmessagemain.apiAddressGeneratorReturnQueue.put(
+                        shared.apiAddressGeneratorReturnQueue.put(
                             listOfNewAddressesToSendOutThroughTheAPI)
                         shared.UISignalQueue.put((
-                            'updateStatusBar', bitmessagemain.translateText("MainWindow", "Done generating address")))
+                            'updateStatusBar', tr.translateText("MainWindow", "Done generating address")))
                         # shared.reloadMyAddressHashes()
                     elif command == 'getDeterministicAddress':
-                        bitmessagemain.apiAddressGeneratorReturnQueue.put(address)
+                        shared.apiAddressGeneratorReturnQueue.put(address)
                 else:
                     raise Exception(
                         "Error in the addressGenerator thread. Thread was given a command it could not understand: " + command)

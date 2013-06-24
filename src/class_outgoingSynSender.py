@@ -5,8 +5,9 @@ import shared
 import socks
 import socket
 import sys
+import tr
 
-import bitmessagemain
+#import bitmessagemain
 from class_sendDataThread import *
 from class_receiveDataThread import *
 
@@ -33,25 +34,25 @@ class outgoingSynSender(threading.Thread):
             shared.knownNodesLock.acquire()
             HOST, = random.sample(shared.knownNodes[self.streamNumber], 1)
             shared.knownNodesLock.release()
-            bitmessagemain.alreadyAttemptedConnectionsListLock.acquire()
-            while HOST in bitmessagemain.alreadyAttemptedConnectionsList or HOST in shared.connectedHostsList:
-                bitmessagemain.alreadyAttemptedConnectionsListLock.release()
+            shared.alreadyAttemptedConnectionsListLock.acquire()
+            while HOST in shared.alreadyAttemptedConnectionsList or HOST in shared.connectedHostsList:
+                shared.alreadyAttemptedConnectionsListLock.release()
                 # print 'choosing new sample'
                 random.seed()
                 shared.knownNodesLock.acquire()
                 HOST, = random.sample(shared.knownNodes[self.streamNumber], 1)
                 shared.knownNodesLock.release()
                 time.sleep(1)
-                # Clear out the bitmessagemain.alreadyAttemptedConnectionsList every half
+                # Clear out the shared.alreadyAttemptedConnectionsList every half
                 # hour so that this program will again attempt a connection
                 # to any nodes, even ones it has already tried.
-                if (time.time() - bitmessagemain.alreadyAttemptedConnectionsListResetTime) > 1800:
-                    bitmessagemain.alreadyAttemptedConnectionsList.clear()
-                    bitmessagemain.alreadyAttemptedConnectionsListResetTime = int(
+                if (time.time() - shared.alreadyAttemptedConnectionsListResetTime) > 1800:
+                    shared.alreadyAttemptedConnectionsList.clear()
+                    shared.alreadyAttemptedConnectionsListResetTime = int(
                         time.time())
-                bitmessagemain.alreadyAttemptedConnectionsListLock.acquire()
-            bitmessagemain.alreadyAttemptedConnectionsList[HOST] = 0
-            bitmessagemain.alreadyAttemptedConnectionsListLock.release()
+                shared.alreadyAttemptedConnectionsListLock.acquire()
+            shared.alreadyAttemptedConnectionsList[HOST] = 0
+            shared.alreadyAttemptedConnectionsListLock.release()
             PORT, timeNodeLastSeen = shared.knownNodes[
                 self.streamNumber][HOST]
             sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
@@ -59,13 +60,13 @@ class outgoingSynSender(threading.Thread):
             # can rebind faster
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.settimeout(20)
-            if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and bitmessagemain.verbose >= 2:
+            if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and shared.verbose >= 2:
                 shared.printLock.acquire()
                 print 'Trying an outgoing connection to', HOST, ':', PORT
                 shared.printLock.release()
                 # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS4a':
-                if bitmessagemain.verbose >= 2:
+                if shared.verbose >= 2:
                     shared.printLock.acquire()
                     print '(Using SOCKS4a) Trying an outgoing connection to', HOST, ':', PORT
                     shared.printLock.release()
@@ -86,7 +87,7 @@ class outgoingSynSender(threading.Thread):
                     sock.setproxy(
                         proxytype, sockshostname, socksport, rdns)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
-                if bitmessagemain.verbose >= 2:
+                if shared.verbose >= 2:
                     shared.printLock.acquire()
                     print '(Using SOCKS5) Trying an outgoing connection to', HOST, ':', PORT
                     shared.printLock.release()
@@ -111,9 +112,9 @@ class outgoingSynSender(threading.Thread):
                 sock.connect((HOST, PORT))
                 rd = receiveDataThread()
                 rd.daemon = True  # close the main program even if there are threads left
-                objectsOfWhichThisRemoteNodeIsAlreadyAware = {}
+                someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
                 rd.setup(sock, HOST, PORT, self.streamNumber,
-                         objectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections)
+                         someObjectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections)
                 rd.start()
                 shared.printLock.acquire()
                 print self, 'connected to', HOST, 'during an outgoing attempt.'
@@ -121,12 +122,12 @@ class outgoingSynSender(threading.Thread):
 
                 sd = sendDataThread()
                 sd.setup(sock, HOST, PORT, self.streamNumber,
-                         objectsOfWhichThisRemoteNodeIsAlreadyAware)
+                         someObjectsOfWhichThisRemoteNodeIsAlreadyAware)
                 sd.start()
                 sd.sendVersionMessage()
 
             except socks.GeneralProxyError as err:
-                if bitmessagemain.verbose >= 2:
+                if shared.verbose >= 2:
                     shared.printLock.acquire()
                     print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
                     shared.printLock.release()
@@ -141,7 +142,7 @@ class outgoingSynSender(threading.Thread):
                     shared.printLock.release()
             except socks.Socks5AuthError as err:
                 shared.UISignalQueue.put((
-                    'updateStatusBar', bitmessagemain.translateText(
+                    'updateStatusBar', tr.translateText(
                     "MainWindow", "SOCKS5 Authentication problem: %1").arg(str(err))))
             except socks.Socks5Error as err:
                 pass
@@ -152,7 +153,7 @@ class outgoingSynSender(threading.Thread):
                 if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
                     print 'Bitmessage MIGHT be having trouble connecting to the SOCKS server. ' + str(err)
                 else:
-                    if bitmessagemain.verbose >= 1:
+                    if shared.verbose >= 1:
                         shared.printLock.acquire()
                         print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
                         shared.printLock.release()

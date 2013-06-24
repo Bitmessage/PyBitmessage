@@ -1,8 +1,6 @@
 import threading
 import shared
 import time
-from bitmessagemain import lengthOfTimeToLeaveObjectsInInventory, lengthOfTimeToHoldOnToAllPubkeys, maximumAgeOfAnObjectThatIAmWillingToAccept, maximumAgeOfObjectsThatIAdvertiseToOthers, maximumAgeOfNodesThatIAdvertiseToOthers,\
-    neededPubkeys
 import sys
 
 '''The singleCleaner class is a timer-driven thread that cleans data structures to free memory, resends messages when a remote node doesn't respond, and sends pong messages to keep connections alive if the network isn't busy.
@@ -58,15 +56,15 @@ class singleCleaner(threading.Thread):
                 shared.sqlLock.acquire()
                 # inventory (clears pubkeys after 28 days and everything else
                 # after 2 days and 12 hours)
-                t = (int(time.time()) - lengthOfTimeToLeaveObjectsInInventory, int(
-                    time.time()) - lengthOfTimeToHoldOnToAllPubkeys)
+                t = (int(time.time()) - shared.lengthOfTimeToLeaveObjectsInInventory, int(
+                    time.time()) - shared.lengthOfTimeToHoldOnToAllPubkeys)
                 shared.sqlSubmitQueue.put(
                     '''DELETE FROM inventory WHERE (receivedtime<? AND objecttype<>'pubkey') OR (receivedtime<?  AND objecttype='pubkey') ''')
                 shared.sqlSubmitQueue.put(t)
                 shared.sqlReturnQueue.get()
 
                 # pubkeys
-                t = (int(time.time()) - lengthOfTimeToHoldOnToAllPubkeys,)
+                t = (int(time.time()) - shared.lengthOfTimeToHoldOnToAllPubkeys,)
                 shared.sqlSubmitQueue.put(
                     '''DELETE FROM pubkeys WHERE time<? AND usedpersonally='no' ''')
                 shared.sqlSubmitQueue.put(t)
@@ -88,11 +86,11 @@ class singleCleaner(threading.Thread):
                         break
                     toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber = row
                     if status == 'awaitingpubkey':
-                        if int(time.time()) - lastactiontime > (maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
+                        if int(time.time()) - lastactiontime > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
                             print 'It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.'
                             try:
-                                del neededPubkeys[
-                                    toripe]  # We need to take this entry out of the neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
+                                del shared.neededPubkeys[
+                                    toripe]  # We need to take this entry out of the shared.neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
                             except:
                                 pass
 
@@ -107,7 +105,7 @@ class singleCleaner(threading.Thread):
                             shared.sqlSubmitQueue.put('commit')
                             shared.workerQueue.put(('sendmessage', ''))
                     else:  # status == msgsent
-                        if int(time.time()) - lastactiontime > (maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
+                        if int(time.time()) - lastactiontime > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
                             print 'It has been a long time and we haven\'t heard an acknowledgement to our msg. Sending again.'
                             t = (int(
                                 time.time()), msgretrynumber + 1, 'msgqueued', ackdata)
