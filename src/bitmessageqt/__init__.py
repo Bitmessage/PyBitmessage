@@ -3,23 +3,6 @@ try:
 except:
     pass
 
-try:
-    from PyQt4 import QtCore, QtGui
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
-except Exception as err:
-    print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
-    print 'Error message:', err
-    sys.exit()
-
-try:
-    _encoding = QtGui.QApplication.UnicodeUTF8
-except AttributeError:
-    print 'QtGui.QApplication.UnicodeUTF8 error:', err
-
-def _translate(context, text):
-    return QtGui.QApplication.translate(context, text)
-
 withMessagingMenu = False
 try:
     from gi.repository import MessagingMenu
@@ -46,6 +29,23 @@ import os
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
+
+try:
+    from PyQt4 import QtCore, QtGui
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
+except Exception as err:
+    print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
+    print 'Error message:', err
+    sys.exit()
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+except AttributeError:
+    print 'QtGui.QApplication.UnicodeUTF8 error:', err
+
+def _translate(context, text):
+    return QtGui.QApplication.translate(context, text)
 
 
 class MyForm(QtGui.QMainWindow):

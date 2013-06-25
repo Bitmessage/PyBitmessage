@@ -15,6 +15,7 @@ import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdo
 from SimpleXMLRPCServer import *
 import json
 import singleton
+import os
 
 # Classes
 from class_sqlThread import *
