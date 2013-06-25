@@ -187,11 +187,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 unicode(label, 'utf-8')
             except:
                 return 'API Error 0017: Label is not valid UTF-8 data.'
-            apiAddressGeneratorReturnQueue.queue.clear()
+            shared.apiAddressGeneratorReturnQueue.queue.clear()
             streamNumberForAddress = 1
             shared.addressGeneratorQueue.put((
                 'createRandomAddress', 3, streamNumberForAddress, label, 1, "", eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
-            return apiAddressGeneratorReturnQueue.get()
+            return shared.apiAddressGeneratorReturnQueue.get()
         elif method == 'createDeterministicAddresses':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
@@ -264,13 +264,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 return 'API Error 0004: Why would you ask me to generate 0 addresses for you?'
             if numberOfAddresses > 999:
                 return 'API Error 0005: You have (accidentally?) specified too many addresses to make. Maximum 999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
-            apiAddressGeneratorReturnQueue.queue.clear()
+            shared.apiAddressGeneratorReturnQueue.queue.clear()
             print 'Requesting that the addressGenerator create', numberOfAddresses, 'addresses.'
             shared.addressGeneratorQueue.put(
                 ('createDeterministicAddresses', addressVersionNumber, streamNumber,
                  'unused API address', numberOfAddresses, passphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
             data = '{"addresses":['
-            queueReturn = apiAddressGeneratorReturnQueue.get()
+            queueReturn = shared.apiAddressGeneratorReturnQueue.get()
             for item in queueReturn:
                 if len(data) > 20:
                     data += ','
@@ -290,12 +290,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 return 'API Error 0002: The address version number currently must be 3. ' + addressVersionNumber + ' isn\'t supported.'
             if streamNumber != 1:
                 return 'API Error 0003: The stream number must be 1. Others aren\'t supported.'
-            apiAddressGeneratorReturnQueue.queue.clear()
+            shared.apiAddressGeneratorReturnQueue.queue.clear()
             print 'Requesting that the addressGenerator create', numberOfAddresses, 'addresses.'
             shared.addressGeneratorQueue.put(
                 ('getDeterministicAddress', addressVersionNumber,
                  streamNumber, 'unused API address', numberOfAddresses, passphrase, eighteenByteRipe))
-            return apiAddressGeneratorReturnQueue.get()
+            return shared.apiAddressGeneratorReturnQueue.get()
         elif method == 'getAllInboxMessages':
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put(
