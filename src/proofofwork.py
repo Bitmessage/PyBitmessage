@@ -4,16 +4,17 @@
 import hashlib
 from struct import unpack, pack
 import sys
+from shared import config
 #import os
 
 def _set_idle():
     if 'linux' in sys.platform:
         import os
-        os.nice(20)
+        os.nice(20)  # @UndefinedVariable
     else:
         try:
             sys.getwindowsversion()
-            import win32api,win32process,win32con
+            import win32api,win32process,win32con  # @UnresolvedImport
             pid = win32api.GetCurrentProcessId()
             handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
             win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
