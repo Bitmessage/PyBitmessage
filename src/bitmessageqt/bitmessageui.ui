@@ -840,12 +840,12 @@ p, li { white-space: pre-wrap; }
         </attribute>
         <column>
          <property name="text">
-          <string>Stream Number</string>
+          <string>Stream #</string>
          </property>
         </column>
         <column>
          <property name="text">
-          <string>Number of Connections</string>
+          <string>Connections</string>
          </property>
         </column>
        </widget>
