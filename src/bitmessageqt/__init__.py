@@ -12,7 +12,6 @@ except Exception as err:
     print 'Error message:', err
     sys.exit()
 
-
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
 except AttributeError:
@@ -20,7 +19,6 @@ except AttributeError:
 
 def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
-
 
 withMessagingMenu = False
 try:
