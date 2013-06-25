@@ -2680,12 +2680,12 @@ class settingsDialog(QtGui.QDialog):
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
             self.ui.checkBoxShowTrayNotifications.setDisabled(True)
             self.ui.labelSettingsNote.setText(_translate(
-                "MainWindow", "Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implimented for your operating system."))
+                "MainWindow", "Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implemented for your operating system."))
         elif 'linux' in sys.platform:
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
             self.ui.labelSettingsNote.setText(_translate(
-                "MainWindow", "Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implimented for your operating system."))
+                "MainWindow", "Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implemented for your operating system."))
         # On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(
             shared.config.get('bitmessagesettings', 'port')))
