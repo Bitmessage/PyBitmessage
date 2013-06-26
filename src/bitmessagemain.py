@@ -706,11 +706,6 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, helper_generic.signal_handler)
     # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    # Check the Major version, the first element in the array
-    if sqlite3.sqlite_version_info[0] < 3:
-        print 'This program requires sqlite version 3 or higher because 2 and lower cannot store NULL values. I see version:', sqlite3.sqlite_version_info
-        os._exit(0)
-
     helper_startup.loadConfig()
 
     helper_bootstrap.knownNodes()
