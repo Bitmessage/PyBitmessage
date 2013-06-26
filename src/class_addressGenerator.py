@@ -7,6 +7,7 @@ import ctypes
 import hashlib
 from addresses import *
 from pyelliptic import arithmetic
+from debug import logger
 
 class addressGenerator(threading.Thread):
 
@@ -24,11 +25,11 @@ class addressGenerator(threading.Thread):
             elif len(queueValue) == 9:
                 command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes = queueValue
             else:
-                sys.stderr.write(
-                    'Programming error: A structure with the wrong number of values was passed into the addressGeneratorQueue. Here is the queueValue: %s\n' % queueValue)
+                logger.debug(
+                    'Invalid queueValue: %s' % queueValue)
             if addressVersionNumber < 3 or addressVersionNumber > 3:
-                sys.stderr.write(
-                    'Program error: For some reason the address generator queue has been given a request to create at least one version %s address which it cannot do.\n' % addressVersionNumber)
+                logger.debug(
+                    'The address generator cannot create v%s addresses.' % addressVersionNumber)
             if nonceTrialsPerByte == 0:
                 nonceTrialsPerByte = shared.config.getint(
                     'bitmessagesettings', 'defaultnoncetrialsperbyte')
@@ -72,7 +73,7 @@ class addressGenerator(threading.Thread):
                         else:
                             if ripe.digest()[:1] == '\x00':
                                 break
-                    print 'Generated address with ripe digest:', ripe.digest().encode('hex')
+                    logger.info('Generated address with ripe digest: %d' % ripe.digest().encode('hex'))
                     print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime), 'addresses per second before finding one with the correct ripe-prefix.'
                     address = encodeAddress(3, streamNumber, ripe.digest())
 
