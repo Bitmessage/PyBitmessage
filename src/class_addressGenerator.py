@@ -21,7 +21,15 @@ class addressGenerator(threading.Thread):
             queueValue = shared.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0
             payloadLengthExtraBytes = 0
-            if len(queueValue) == 7:
+            if queueValue[0] == 'createChan':
+                command, addressVersionNumber, streamNumber, label, deterministicPassphrase = queueValue
+                eighteenByteRipe = False
+                numberOfAddressesToMake = 1
+            elif queueValue[0] == 'joinChan':
+                command, chanAddress, label, deterministicPassphrase = queueValue
+                eighteenByteRipe = False
+                numberOfAddressesToMake = 1
+            elif len(queueValue) == 7:
                 command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe = queueValue
             elif len(queueValue) == 9:
                 command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes = queueValue
@@ -122,7 +130,7 @@ class addressGenerator(threading.Thread):
                     shared.workerQueue.put((
                         'doPOWForMyV3Pubkey', ripe.digest()))
 
-                elif command == 'createDeterministicAddresses' or command == 'getDeterministicAddress':
+                elif command == 'createDeterministicAddresses' or command == 'getDeterministicAddress' or command == 'createChan' or command == 'joinChan':
                     if len(deterministicPassphrase) == 0:
                         sys.stderr.write(
                             'WARNING: You are creating deterministic address(es) using a blank passphrase. Bitmessage will do it but it is rather stupid.')
@@ -176,7 +184,17 @@ class addressGenerator(threading.Thread):
                         print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime), 'keys per second.'
                         address = encodeAddress(3, streamNumber, ripe.digest())
 
-                        if command == 'createDeterministicAddresses':
+                        saveAddressToDisk = True
+                        # If we are joining an existing chan, let us check to make sure it matches the provided Bitmessage address
+                        if command == 'joinChan':
+                            if address != chanAddress:
+                                #todo: show an error message in the UI
+                                shared.apiAddressGeneratorReturnQueue.put('API Error 0018: Chan name does not match address.')
+                                saveAddressToDisk = False
+                        if command == 'getDeterministicAddress':
+                            saveAddressToDisk = False
+
+                        if saveAddressToDisk:
                             # An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
                             # https://en.bitcoin.it/wiki/Wallet_import_format
                             privSigningKey = '\x80' + potentialPrivSigningKey
@@ -198,6 +216,8 @@ class addressGenerator(threading.Thread):
                                 shared.config.set(address, 'label', label)
                                 shared.config.set(address, 'enabled', 'true')
                                 shared.config.set(address, 'decoy', 'false')
+                                if command == 'joinChan' or command == 'createChan':
+                                    shared.config.set(address, 'chan', 'true')
                                 shared.config.set(address, 'noncetrialsperbyte', str(
                                     nonceTrialsPerByte))
                                 shared.config.set(address, 'payloadlengthextrabytes', str(
@@ -213,18 +233,11 @@ class addressGenerator(threading.Thread):
                                     label, address, str(streamNumber))))
                                 listOfNewAddressesToSendOutThroughTheAPI.append(
                                     address)
-                                # if eighteenByteRipe:
-                                # shared.reloadMyAddressHashes()#This is
-                                # necessary here (rather than just at the end)
-                                # because otherwise if the human generates a
-                                # large number of new addresses and uses one
-                                # before they are done generating, the program
-                                # will receive a getpubkey message and will
-                                # ignore it.
                                 shared.myECCryptorObjects[ripe.digest()] = highlevelcrypto.makeCryptor(
                                     potentialPrivEncryptionKey.encode('hex'))
                                 shared.myAddressesByHash[
                                     ripe.digest()] = address
+                                #todo: don't send out pubkey if dealing with a chan; save in pubkeys table instead.
                                 shared.workerQueue.put((
                                     'doPOWForMyV3Pubkey', ripe.digest()))
                             except:
@@ -242,6 +255,7 @@ class addressGenerator(threading.Thread):
                         # shared.reloadMyAddressHashes()
                     elif command == 'getDeterministicAddress':
                         shared.apiAddressGeneratorReturnQueue.put(address)
+                    #todo: return things to the API if createChan or joinChan assuming saveAddressToDisk
                 else:
                     raise Exception(
                         "Error in the addressGenerator thread. Thread was given a command it could not understand: " + command)
