@@ -124,7 +124,18 @@ def lookupAppdataFolder():
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         dataFolder = path.join(environ['APPDATA'], APPNAME) + '\\'
     else:
-        dataFolder = path.expanduser(path.join("~", "." + APPNAME + "/"))
+        from shutil import move
+        try:
+            dataFolder = path.join(environ["XDG_CONFIG_HOME"], APPNAME)
+        except KeyError:
+            dataFolder = path.join(environ["HOME"], ".config", APPNAME)
+        # Migrate existing data to the proper location if this is an existing install
+        try:
+            print "Moving data folder to ~/.config/%s" % APPNAME
+            move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
+            dataFolder = dataFolder + '/'
+        except IOError:
+            dataFolder = dataFolder + '/'
     return dataFolder
 
 def isAddressInMyAddressBook(address):
