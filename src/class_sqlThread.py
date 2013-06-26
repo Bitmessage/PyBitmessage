@@ -69,6 +69,22 @@ class sqlThread(threading.Thread):
                     'ERROR trying to create database file (message.dat). Error message: %s\n' % str(err))
                 os._exit(0)
 
+        if shared.config.getint('bitmessagesettings', 'settingsversion') == 1:
+            shared.config.set('bitmessagesettings', 'settingsversion', '2')
+                      # If the settings version is equal to 2 or 3 then the
+                      # sqlThread will modify the pubkeys table and change
+                      # the settings version to 4.
+            shared.config.set('bitmessagesettings', 'socksproxytype', 'none')
+            shared.config.set('bitmessagesettings', 'sockshostname', 'localhost')
+            shared.config.set('bitmessagesettings', 'socksport', '9050')
+            shared.config.set('bitmessagesettings', 'socksauthentication', 'false')
+            shared.config.set('bitmessagesettings', 'socksusername', '')
+            shared.config.set('bitmessagesettings', 'sockspassword', '')
+            shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
+            shared.config.set('bitmessagesettings', 'messagesencrypted', 'false')
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
+
         # People running earlier versions of PyBitmessage do not have the
         # usedpersonally field in their pubkeys table. Let's add it.
         if shared.config.getint('bitmessagesettings', 'settingsversion') == 2:
@@ -158,7 +174,7 @@ class sqlThread(threading.Thread):
             self.cur.execute( ''' VACUUM ''')
 
         # After code refactoring, the possible status values for sent messages
-        # as changed.
+        # have changed.
         self.cur.execute(
             '''update sent set status='doingmsgpow' where status='doingpow'  ''')
         self.cur.execute(
