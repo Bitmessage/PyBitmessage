@@ -1,5 +1,5 @@
 APP=pybitmessage
-VERSION=0.3.3-2
+VERSION=0.3.4
 DEST_SHARE=$(DESTDIR)/usr/share
 DEST_APP=$(DEST_SHARE)/$(APP)
 
@@ -18,6 +18,7 @@ install:
 	mkdir -m 755 -p $(DEST_APP)/pyelliptic
 	mkdir -m 755 -p $(DEST_APP)/socks
 	mkdir -m 755 -p $(DEST_APP)/bitmessageqt
+	mkdir -m 755 -p $(DEST_APP)/translations
 	mkdir -m 755 -p $(DEST_SHARE)/pixmaps
 	mkdir -m 755 -p $(DEST_SHARE)/icons
 	mkdir -m 755 -p $(DEST_SHARE)/icons/hicolor
@@ -35,6 +36,7 @@ install:
 	install -m 644 src/pyelliptic/*.py $(DEST_APP)/pyelliptic
 	install -m 644 src/socks/*.py $(DEST_APP)/socks
 	install -m 644 src/bitmessageqt/*.py $(DEST_APP)/bitmessageqt
+	install -m 644 src/translations/*.qm $(DEST_APP)/translations
 	install -m 755 debian/pybm $(DESTDIR)/usr/bin/$(APP)
 
 	install -m 644 desktop/$(APP).desktop $(DEST_SHARE)/applications/$(APP).desktop
