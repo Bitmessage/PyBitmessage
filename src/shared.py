@@ -21,6 +21,7 @@ import socket
 import random
 import highlevelcrypto
 import shared
+import stat
 
 config = ConfigParser.SafeConfigParser()
 myECCryptorObjects = {}
@@ -196,8 +197,10 @@ def reloadMyAddressHashes():
     myAddressesByHash.clear()
     #myPrivateKeys.clear()
     configSections = config.sections()
+    hasExistingKeys = False
     for addressInKeysFile in configSections:
         if addressInKeysFile <> 'bitmessagesettings':
+            hasExistingKeys = True
             isEnabled = config.getboolean(addressInKeysFile, 'enabled')
             if isEnabled:
                 status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
@@ -208,6 +211,7 @@ def reloadMyAddressHashes():
                         myAddressesByHash[hash] = addressInKeysFile
                 else:
                     sys.stderr.write('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2 or 3.\n')
+    fixKeyfilePermissions(appdata + 'keys.dat', hasExistingKeys)
 
 def reloadBroadcastSendersForWhichImWatching():
     printLock.acquire()
@@ -298,3 +302,26 @@ def fixPotentiallyInvalidUTF8Data(text):
     except:
         output = 'Part of the message is corrupt. The message cannot be displayed the normal way.\n\n' + repr(text)
         return output
+
+# Fix keyfile permissions due to inappropriate umask during keys.dat creation.
+def fixKeyfilePermissions(keyfile, hasExistingKeys):
+    present_keyfile_permissions = os.stat(keyfile)[0]
+    keyfile_disallowed_permissions = stat.S_IRWXG | stat.S_IRWXO
+    if (present_keyfile_permissions & keyfile_disallowed_permissions) != 0:
+        allowed_keyfile_permissions = ((1<<32)-1) ^ keyfile_disallowed_permissions
+        new_keyfile_permissions = (
+            allowed_keyfile_permissions & present_keyfile_permissions)
+        os.chmod(keyfile, new_keyfile_permissions)
+        if hasExistingKeys:
+            print
+            print '******************************************************************'
+            print '**                      !! WARNING !!                           **'
+            print '******************************************************************'
+            print '** Possibly major security problem:                             **'
+            print '** Your keyfiles were vulnerable to being read by other users   **'
+            print '** (including some untrusted daemons). You may wish to consider **'
+            print '** generating new keys and discontinuing use of your old ones.  **'
+            print '** The problem has been automatically fixed.                    **'
+            print '******************************************************************'
+            print
+
