@@ -169,10 +169,10 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
     return False
 
 def safeConfigGetBoolean(section,field):
-        try:
-            return config.getboolean(section,field)
-        except:
-            return False
+    try:
+        return config.getboolean(section,field)
+    except:
+          return False
 
 def decodeWalletImportFormat(WIFstring):
     fullString = arithmetic.changebase(WIFstring,58,256)
@@ -196,22 +196,37 @@ def reloadMyAddressHashes():
     myECCryptorObjects.clear()
     myAddressesByHash.clear()
     #myPrivateKeys.clear()
+
+    keyfileSecure = checkSensitiveFilePermissions(appdata + 'keys.dat')
     configSections = config.sections()
-    hasExistingKeys = False
+    hasEnabledKeys = False
     for addressInKeysFile in configSections:
         if addressInKeysFile <> 'bitmessagesettings':
-            hasExistingKeys = True
+            hasEnabledKeys = True
             isEnabled = config.getboolean(addressInKeysFile, 'enabled')
             if isEnabled:
-                status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
-                if addressVersionNumber == 2 or addressVersionNumber == 3:
-                    privEncryptionKey = decodeWalletImportFormat(config.get(addressInKeysFile, 'privencryptionkey')).encode('hex') #returns a simple 32 bytes of information encoded in 64 Hex characters, or null if there was an error
-                    if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
-                        myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
-                        myAddressesByHash[hash] = addressInKeysFile
+                if keyfileSecure:
+                    status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
+                    if addressVersionNumber == 2 or addressVersionNumber == 3:
+                        # Returns a simple 32 bytes of information encoded in 64 Hex characters, or null if there was an error.
+                        privEncryptionKey = decodeWalletImportFormat(
+                                config.get(addressInKeysFile, 'privencryptionkey')).encode('hex')
+
+                        if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
+                            myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
+                            myAddressesByHash[hash] = addressInKeysFile
+                    else:
+                        sys.stderr.write('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2 or 3.\n')
                 else:
-                    sys.stderr.write('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2 or 3.\n')
-    fixKeyfilePermissions(appdata + 'keys.dat', hasExistingKeys)
+                    # Insecure keyfile permissions. Disable key.
+                    config.set(addressInKeysFile, 'enabled', 'false')
+    try:
+        if not keyfileSecure:
+            with open(appdata + 'keys.dat', 'wb') as keyfile:
+                config.write(keyfile)
+    except:
+        print 'Failed to disable vulnerable keyfiles.'
+        raise
 
 def reloadBroadcastSendersForWhichImWatching():
     printLock.acquire()
@@ -303,16 +318,14 @@ def fixPotentiallyInvalidUTF8Data(text):
         output = 'Part of the message is corrupt. The message cannot be displayed the normal way.\n\n' + repr(text)
         return output
 
-# Fix keyfile permissions due to inappropriate umask during keys.dat creation.
-def fixKeyfilePermissions(keyfile, hasExistingKeys):
-    present_keyfile_permissions = os.stat(keyfile)[0]
-    keyfile_disallowed_permissions = stat.S_IRWXG | stat.S_IRWXO
-    if (present_keyfile_permissions & keyfile_disallowed_permissions) != 0:
-        allowed_keyfile_permissions = ((1<<32)-1) ^ keyfile_disallowed_permissions
-        new_keyfile_permissions = (
-            allowed_keyfile_permissions & present_keyfile_permissions)
-        os.chmod(keyfile, new_keyfile_permissions)
-        if hasExistingKeys:
+def checkSensitiveFilePermissions(filename):
+    if sys.platform == 'win32':
+        # TODO: This might deserve extra checks by someone familiar with
+        # Windows systems.
+        fileSecure = True
+    else:
+        fileSecure = secureFilePermissions(filename)
+        if not fileSecure:
             print
             print '******************************************************************'
             print '**                      !! WARNING !!                           **'
@@ -321,7 +334,37 @@ def fixKeyfilePermissions(keyfile, hasExistingKeys):
             print '** Your keyfiles were vulnerable to being read by other users   **'
             print '** (including some untrusted daemons). You may wish to consider **'
             print '** generating new keys and discontinuing use of your old ones.  **'
-            print '** The problem has been automatically fixed.                    **'
-            print '******************************************************************'
-            print
+            print '** Your private keys have been disabled for your security, but  **'
+            print '** you may re-enable them using the "Your Identities" tab in    **'
+            print '** the default GUI or by modifying keys.dat such that your keys **'
+            print '** show "enabled = true".                                       **'
+            try:
+                fixSensitiveFilePermissions(filename)
+                print '** The problem has been automatically fixed.                    **'
+                print '******************************************************************'
+                print
+            except Exception, e:
+                print '** Could NOT automatically fix permissions.                     **'
+                print '******************************************************************'
+                print
+                raise
+    return fileSecure
+
+
+# Checks sensitive file permissions for inappropriate umask during keys.dat creation.
+# (Or unwise subsequent chmod.)
+# Returns true iff file appears to have appropriate permissions.
+def secureFilePermissions(filename):
+    present_permissions = os.stat(filename)[0]
+    disallowed_permissions = stat.S_IRWXG | stat.S_IRWXO
+    return present_permissions & disallowed_permissions == 0
+
+# Fixes permissions on a sensitive file.
+def fixSensitiveFilePermissions(filename):
+    present_permissions = os.stat(filename)[0]
+    disallowed_permissions = stat.S_IRWXG | stat.S_IRWXO
+    allowed_permissions = ((1<<32)-1) ^ disallowed_permissions
+    new_permissions = (
+        allowed_permissions & present_permissions)
+    os.chmod(filename, new_permissions)
 
