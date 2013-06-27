@@ -29,6 +29,7 @@ import os
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
+import helper_config
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -72,11 +73,10 @@ class MyForm(QtGui.QMainWindow):
                         self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
                     if reply == QtGui.QMessageBox.Yes:
                         shared.config.remove_section(addressInKeysFile)
-                        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                            shared.config.write(configfile)
+                        helper_config.saveConfig();
 
         # Configure Bitmessage to start on startup (or remove the
-        # configuration) based on the setting in the keys.dat file
+        # configuration) based on the setting in the config file
         if 'win32' in sys.platform or 'win64' in sys.platform:
             # Auto-startup for Windows
             RUN_PATH = "HKEY_CURRENT_USER\\Software\\Microsoft\\Windows\\CurrentVersion\\Run"
@@ -924,23 +924,19 @@ class MyForm(QtGui.QMainWindow):
     def click_actionManageKeys(self):
         if 'darwin' in sys.platform or 'linux' in sys.platform:
             if shared.appdata == '':
-                # reply = QtGui.QMessageBox.information(self, 'keys.dat?','You
-                # may manage your keys by editing the keys.dat file stored in
-                # the same directory as this program. It is important that you
-                # back up this file.', QMessageBox.Ok)
-                reply = QtGui.QMessageBox.information(self, 'keys.dat?', _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file."), QMessageBox.Ok)
+                reply = QtGui.QMessageBox.information(self, helper_config.getFileName()+'?', _translate(
+                    "MainWindow", "You may manage your keys by editing the "+helper_config.getFileName()+" file stored in the same directory as this program. It is important that you back up this file."), QMessageBox.Ok)
 
             else:
-                QtGui.QMessageBox.information(self, 'keys.dat?', _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file.").arg(shared.appdata), QMessageBox.Ok)
+                QtGui.QMessageBox.information(self, helper_config.getFileName()+'?', _translate(
+                    "MainWindow", "You may manage your keys by editing the "+helper_config.getFileName()+" file stored in\n %1 \nIt is important that you back up this file.").arg(shared.appdata), QMessageBox.Ok)
         elif sys.platform == 'win32' or sys.platform == 'win64':
             if shared.appdata == '':
-                reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open keys.dat?"), _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open "+helper_config.getFileName()+"?"), _translate(
+                    "MainWindow", "You may manage your keys by editing the "+helper_config.getFileName()+" file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             else:
-                reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open keys.dat?"), _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)").arg(shared.appdata), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open "+helper_config.getFileName()+"?"), _translate(
+                    "MainWindow", "You may manage your keys by editing the "+helper_config.getFileName()+" file stored in\n %1 \nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)").arg(shared.appdata), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
                 self.openKeysFile()
 
@@ -974,9 +970,9 @@ class MyForm(QtGui.QMainWindow):
 
     def openKeysFile(self):
         if 'linux' in sys.platform:
-            subprocess.call(["xdg-open", shared.appdata + 'keys.dat'])
+            subprocess.call(["xdg-open", helper_config.getFilepath()])
         else:
-            os.startfile(shared.appdata + 'keys.dat')
+            os.startfile(helper_config.getFilepath())
 
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.WindowStateChange:
@@ -1783,8 +1779,7 @@ class MyForm(QtGui.QMainWindow):
             # shared.config.set('bitmessagesettings', 'maxcores',
             # str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()))
 
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            helper_config.saveConfig()
 
             if 'win32' in sys.platform or 'win64' in sys.platform:
             # Auto-startup for Windows
@@ -1802,19 +1797,19 @@ class MyForm(QtGui.QMainWindow):
                 pass
 
             if shared.appdata != '' and self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we are NOT using portable mode now but the user selected that we should...
-                # Write the keys.dat file to disk in the new location
+                # Write the config file to disk in the new location
                 shared.sqlLock.acquire()
                 shared.sqlSubmitQueue.put('movemessagstoprog')
                 shared.sqlLock.release()
-                with open('keys.dat', 'wb') as configfile:
-                    shared.config.write(configfile)
+                shared.appdata = ''
+                helper_config.saveConfig()
                 # Write the knownnodes.dat file to disk in the new location
                 shared.knownNodesLock.acquire()
                 output = open('knownnodes.dat', 'wb')
                 pickle.dump(shared.knownNodes, output)
                 output.close()
                 shared.knownNodesLock.release()
-                os.remove(shared.appdata + 'keys.dat')
+                os.remove(shared.appdata + helper_config.getFileName())
                 os.remove(shared.appdata + 'knownnodes.dat')
                 shared.appdata = ''
 
@@ -1825,23 +1820,21 @@ class MyForm(QtGui.QMainWindow):
                 shared.sqlLock.acquire()
                 shared.sqlSubmitQueue.put('movemessagstoappdata')
                 shared.sqlLock.release()
-                # Write the keys.dat file to disk in the new location
-                with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                    shared.config.write(configfile)
+                # Write the config file to disk in the new location
+                helper_config.saveConfig()
                 # Write the knownnodes.dat file to disk in the new location
                 shared.knownNodesLock.acquire()
                 output = open(shared.appdata + 'knownnodes.dat', 'wb')
                 pickle.dump(shared.knownNodes, output)
                 output.close()
                 shared.knownNodesLock.release()
-                os.remove('keys.dat')
+                os.remove(helper_config.getFileName())
                 os.remove('knownnodes.dat')
 
     def click_radioButtonBlacklist(self):
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
             shared.config.set('bitmessagesettings', 'blackwhitelist', 'black')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            helper_config.saveConfig()
             # self.ui.tableWidgetBlacklist.clearContents()
             self.ui.tableWidgetBlacklist.setRowCount(0)
             self.loadBlackWhiteList()
@@ -1850,8 +1843,7 @@ class MyForm(QtGui.QMainWindow):
     def click_radioButtonWhitelist(self):
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
             shared.config.set('bitmessagesettings', 'blackwhitelist', 'white')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            helper_config.saveConfig()
             # self.ui.tableWidgetBlacklist.clearContents()
             self.ui.tableWidgetBlacklist.setRowCount(0)
             self.loadBlackWhiteList()
@@ -1931,8 +1923,7 @@ class MyForm(QtGui.QMainWindow):
                 shared.config.set(str(addressAtCurrentRow), 'mailinglistname', str(
                     self.dialog.ui.lineEditMailingListName.text().toUtf8()))
                 self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(137, 04, 177))
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            helper_config.saveConfig()
             self.rerenderInboxToLabels()
 
     def click_NewAddressDialog(self):
@@ -2442,8 +2433,7 @@ class MyForm(QtGui.QMainWindow):
         addressAtCurrentRow = str(
             self.ui.tableWidgetYourIdentities.item(currentRow, 1).text())
         shared.config.set(addressAtCurrentRow, 'enabled', 'true')
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
+        helper_config.saveConfig()
         self.ui.tableWidgetYourIdentities.item(
             currentRow, 0).setTextColor(QtGui.QColor(0, 0, 0))
         self.ui.tableWidgetYourIdentities.item(
@@ -2467,8 +2457,7 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 2).setTextColor(QtGui.QColor(128, 128, 128))
         if shared.safeConfigGetBoolean(addressAtCurrentRow, 'mailinglist'):
             self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(137, 04, 177))
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
+        helper_config.saveConfig()
         shared.reloadMyAddressHashes()
 
     def on_action_YourIdentitiesClipboard(self):
@@ -2561,8 +2550,7 @@ class MyForm(QtGui.QMainWindow):
                 currentRow, 1).text()
             shared.config.set(str(addressAtCurrentRow), 'label', str(
                 self.ui.tableWidgetYourIdentities.item(currentRow, 0).text().toUtf8()))
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            helper_config.saveConfig()
             self.rerenderComboBoxSendFrom()
             # self.rerenderInboxFromLabels()
             self.rerenderInboxToLabels()

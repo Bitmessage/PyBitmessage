@@ -26,7 +26,7 @@ from class_singleListener import *
 from class_addressGenerator import *
 
 # Helper Functions
-import helper_startup
+import helper_config
 import helper_bootstrap
 
 def connectToStream(streamNumber):
@@ -496,7 +496,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 fromAddressEnabled = shared.config.getboolean(
                     fromAddress, 'enabled')
             except:
-                return 'API Error 0013: Could not find your fromAddress in the keys.dat file.'
+                return 'API Error 0013: Could not find your fromAddress in the '+helper_config.getFileName()+' file.'
             if not fromAddressEnabled:
                 return 'API Error 0014: Your fromAddress is disabled. Cannot send.'
 
@@ -560,7 +560,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 fromAddressEnabled = shared.config.getboolean(
                     fromAddress, 'enabled')
             except:
-                return 'API Error 0013: could not find your fromAddress in the keys.dat file.'
+                return 'API Error 0013: could not find your fromAddress in the '+helper_config.getFileName()+' file.'
             ackdata = OpenSSL.rand(32)
             toAddress = '[Broadcast subscribers]'
             ripe = ''
@@ -706,7 +706,7 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, helper_generic.signal_handler)
     # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    helper_startup.loadConfig()
+    helper_config.loadConfig()
 
     helper_bootstrap.knownNodes()
     helper_bootstrap.dns()

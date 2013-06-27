@@ -5,6 +5,7 @@ import time
 import shutil  # used for moving the messages.dat file
 import sys
 import os
+import helper_config
 
 # This thread exists because SQLITE3 is so un-threadsafe that we must
 # submit queries to it and it puts results back in a different queue. They
@@ -82,8 +83,7 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'sockspassword', '')
             shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
             shared.config.set('bitmessagesettings', 'messagesencrypted', 'false')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            helper_config.saveConfig()
 
         # People running earlier versions of PyBitmessage do not have the
         # usedpersonally field in their pubkeys table. Let's add it.
@@ -94,8 +94,7 @@ class sqlThread(threading.Thread):
             self.conn.commit()
 
             shared.config.set('bitmessagesettings', 'settingsversion', '3')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            helper_config.saveConfig()
 
         # People running earlier versions of PyBitmessage do not have the
         # encodingtype field in their inbox and sent tables or the read field
@@ -115,8 +114,7 @@ class sqlThread(threading.Thread):
             self.conn.commit()
 
             shared.config.set('bitmessagesettings', 'settingsversion', '4')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            helper_config.saveConfig()
 
         if shared.config.getint('bitmessagesettings', 'settingsversion') == 4:
             shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
@@ -131,8 +129,7 @@ class sqlThread(threading.Thread):
             shared.config.set(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
             shared.config.set('bitmessagesettings', 'settingsversion', '6')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            helper_config.saveConfig()
 
         # From now on, let us keep a 'version' embedded in the messages.dat
         # file so that when we make changes to the database, the database
