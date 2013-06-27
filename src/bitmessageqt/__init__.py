@@ -1801,6 +1801,7 @@ class MyForm(QtGui.QMainWindow):
                 shared.sqlLock.acquire()
                 shared.sqlSubmitQueue.put('movemessagstoprog')
                 shared.sqlLock.release()
+                shared.appdata = ''
                 helper_config.saveConfig()
                 # Write the knownnodes.dat file to disk in the new location
                 shared.knownNodesLock.acquire()
