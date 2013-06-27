@@ -3,6 +3,7 @@ import socket
 import defaultKnownNodes
 import pickle
 import time
+import helper_config
 
 def knownNodes():
     try:
@@ -17,7 +18,7 @@ def knownNodes():
         shared.knownNodes = pickle.load(pickleFile)
         pickleFile.close()
     if shared.config.getint('bitmessagesettings', 'settingsversion') > 6:
-        print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
+        print 'Bitmessage cannot read future versions of the keys file ('+helper_config.getFileName()+'). Run the newer version of Bitmessage.'
         raise SystemExit
         
 

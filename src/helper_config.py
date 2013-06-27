@@ -4,21 +4,28 @@ import sys
 import os
 
 storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may de-select Portable Mode in the settings if they want the config files to stay in the application data folder.
+filename = 'keys.dat'
+
+def getFileName():
+    return filename
+
+def getFilePath():
+    return shared.appdata + filename
 
 def loadConfig():
-    # First try to load the config file (the keys.dat file) from the program
+    # First try to load the config file (as defiend in 'filename') from the program
     # directory
-    shared.config.read('keys.dat')
+    shared.config.read(getFilePath())
     try:
         shared.config.get('bitmessagesettings', 'settingsversion')
         print 'Loading config files from same directory as program'
         shared.appdata = ''
     except:
-        # Could not load the keys.dat file in the program directory. Perhaps it
+        # Could not load the config file in the program directory. Perhaps it
         # is in the appdata directory.
         shared.appdata = shared.lookupAppdataFolder()
         shared.config = ConfigParser.SafeConfigParser()
-        shared.config.read(shared.appdata + 'keys.dat')
+        shared.config.read(getFilePath())
         try:
             shared.config.get('bitmessagesettings', 'settingsversion')
             print 'Loading existing config files from', shared.appdata
@@ -74,5 +81,11 @@ def loadConfig():
                 print 'Creating new config files in', shared.appdata
                 if not os.path.exists(shared.appdata):
                     os.makedirs(shared.appdata)
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+            
+            saveConfig();
+            
+
+def saveConfig():
+    
+    with open(getFilePath(), 'wb') as configfile:
                 shared.config.write(configfile)

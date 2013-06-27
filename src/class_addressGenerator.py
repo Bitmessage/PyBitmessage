@@ -9,6 +9,7 @@ import highlevelcrypto
 from addresses import *
 from pyelliptic import arithmetic
 import tr
+import helper_config
 
 class addressGenerator(threading.Thread):
 
@@ -114,8 +115,7 @@ class addressGenerator(threading.Thread):
                         address, 'privSigningKey', privSigningKeyWIF)
                     shared.config.set(
                         address, 'privEncryptionKey', privEncryptionKeyWIF)
-                    with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                        shared.config.write(configfile)
+                    helper_config.saveConfig()
 
                     # It may be the case that this address is being generated
                     # as a result of a call to the API. Let us put the result
@@ -226,8 +226,7 @@ class addressGenerator(threading.Thread):
                                     address, 'privSigningKey', privSigningKeyWIF)
                                 shared.config.set(
                                     address, 'privEncryptionKey', privEncryptionKeyWIF)
-                                with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                                    shared.config.write(configfile)
+                                helper_config.saveConfig()
 
                                 shared.UISignalQueue.put(('writeNewAddressToTable', (
                                     label, address, str(streamNumber))))

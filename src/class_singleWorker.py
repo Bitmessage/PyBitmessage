@@ -125,7 +125,7 @@ class singleWorker(threading.Thread):
         except Exception as err:
             shared.printLock.acquire()
             sys.stderr.write(
-                'Error within doPOWForMyV2Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
+                'Error within doPOWForMyV2Pubkey. Could not read the keys from the '+helper_config.getFileName()+' file for a requested address. %s\n' % err)
             shared.printLock.release()
             return
 
@@ -170,8 +170,7 @@ class singleWorker(threading.Thread):
         shared.UISignalQueue.put(('updateStatusBar', ''))
         shared.config.set(
             myAddress, 'lastpubkeysendtime', str(int(time.time())))
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
+        helper_config.saveConfig()
 
     def doPOWForMyV3Pubkey(self, hash):  # This function also broadcasts out the pubkey message once it is done with the POW
         myAddress = shared.myAddressesByHash[hash]
@@ -192,7 +191,7 @@ class singleWorker(threading.Thread):
         except Exception as err:
             shared.printLock.acquire()
             sys.stderr.write(
-                'Error within doPOWForMyV3Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
+                'Error within doPOWForMyV3Pubkey. Could not read the keys from the '+helper_config.getFileName()+' file for a requested address. %s\n' % err)
             shared.printLock.release()
             return
 
@@ -246,8 +245,7 @@ class singleWorker(threading.Thread):
         shared.UISignalQueue.put(('updateStatusBar', ''))
         shared.config.set(
             myAddress, 'lastpubkeysendtime', str(int(time.time())))
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
+        helper_config.saveConfig()
 
     def sendBroadcast(self):
         shared.sqlLock.acquire()
@@ -271,7 +269,7 @@ class singleWorker(threading.Thread):
                         fromaddress, 'privencryptionkey')
                 except:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
+                        ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the "+helper_config.getFileName()+" file."))))
                     continue
 
                 privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -345,7 +343,7 @@ class singleWorker(threading.Thread):
                         fromaddress, 'privencryptionkey')
                 except:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
+                        ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the "+helper_config.getFileName()+" file."))))
                     continue
 
                 privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -639,7 +637,7 @@ class singleWorker(threading.Thread):
                         fromaddress, 'privencryptionkey')
                 except:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
+                        ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the "+helper_config.getFileName()+" file."))))
                     continue
 
                 privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -685,7 +683,7 @@ class singleWorker(threading.Thread):
                         fromaddress, 'privencryptionkey')
                 except:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
+                        ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the "+helper_config.getFileName()+" file."))))
                     continue
 
                 privSigningKeyHex = shared.decodeWalletImportFormat(

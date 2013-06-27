@@ -21,6 +21,7 @@ import socket
 import random
 import highlevelcrypto
 import shared
+import helper_config
 
 config = ConfigParser.SafeConfigParser()
 myECCryptorObjects = {}
@@ -201,7 +202,7 @@ def decodeWalletImportFormat(WIFstring):
 
 def reloadMyAddressHashes():
     printLock.acquire()
-    print 'reloading keys from keys.dat file'
+    print 'reloading keys from '+helper_config.getFileName()+' file'
     printLock.release()
     myECCryptorObjects.clear()
     myAddressesByHash.clear()

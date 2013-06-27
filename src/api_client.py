@@ -35,7 +35,7 @@ print 'Uncomment these next four lines to create new deterministic addresses.'
 #print jsonDeterministicAddresses
 #print json.loads(jsonDeterministicAddresses)
 
-#print 'Uncomment this next line to print the first deterministic address that would be generated with the given passphrase. This will Not add it to the Bitmessage interface or the keys.dat file.'
+#print 'Uncomment this next line to print the first deterministic address that would be generated with the given passphrase. This will Not add it to the Bitmessage interface or the '+helper_config.getFileName()+' file.'
 #print api.getDeterministicAddress('asdfasdfqwser'.encode('base64'),3,1)
 
 #print 'Uncomment this line to subscribe to an address. (You must use your own address, this one is invalid).'
