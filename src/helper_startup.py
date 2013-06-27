@@ -78,19 +78,3 @@ def loadConfig():
                 os.umask(0o077)
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
-
-            if shared.config.getint('bitmessagesettings', 'settingsversion') == 1:
-                shared.config.set('bitmessagesettings', 'settingsversion', '4')
-                          # If the settings version is equal to 2 or 3 then the
-                          # sqlThread will modify the pubkeys table and change
-                          # the settings version to 4.
-                shared.config.set('bitmessagesettings', 'socksproxytype', 'none')
-                shared.config.set('bitmessagesettings', 'sockshostname', 'localhost')
-                shared.config.set('bitmessagesettings', 'socksport', '9050')
-                shared.config.set('bitmessagesettings', 'socksauthentication', 'false')
-                shared.config.set('bitmessagesettings', 'socksusername', '')
-                shared.config.set('bitmessagesettings', 'sockspassword', '')
-                shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
-                shared.config.set('bitmessagesettings', 'messagesencrypted', 'false')
-                with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                    shared.config.write(configfile)

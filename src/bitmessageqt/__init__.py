@@ -2844,6 +2844,16 @@ class NewAddressDialog(QtGui.QDialog):
         self.ui.groupBoxDeterministic.setHidden(True)
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
+class NewChanDialog(QtGui.QDialog):
+
+    def __init__(self, parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_NewChanDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        self.ui.groupBoxCreateChan.setHidden(True)
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))     
+
 
 class iconGlossaryDialog(QtGui.QDialog):
 
