@@ -2938,7 +2938,7 @@ else:
             while app.hasPendingEvents():
                 app.processEvents()
                 gevent.sleep()
-            gevent.sleep() # don't appear to get here but cooperate again
+            gevent.sleep(0.01) # don't appear to get here but cooperate again
     def testprint():
         #print 'this is running'
         gevent.spawn_later(1, testprint)
