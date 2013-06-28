@@ -9,7 +9,7 @@ import threading
 import Queue
 import time
 
-class BGWorker(threading.Thread):
+class bgWorker(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.q = Queue.Queue()
@@ -33,6 +33,6 @@ class BGWorker(threading.Thread):
             finally:
                 time.sleep(0.05)
 
-bgworker = BGWorker()
+bgworker = bgWorker()
 bgworker.setDaemon(True)
 bgworker.start()
