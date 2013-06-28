@@ -2875,58 +2875,68 @@ class myTableWidgetItem(QTableWidgetItem):
     def __lt__(self, other):
         return int(self.data(33).toPyObject()) < int(other.data(33).toPyObject())
 
-
-class UISignaler(QThread):
+from threading import Thread
+class UISignaler(Thread,QThread):
 
     def __init__(self, parent=None):
+        Thread.__init__(self, parent)
         QThread.__init__(self, parent)
 
     def run(self):
         while True:
-            command, data = shared.UISignalQueue.get()
-            if command == 'writeNewAddressToTable':
-                label, address, streamNumber = data
-                self.emit(SIGNAL(
-                    "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), label, address, str(streamNumber))
-            elif command == 'updateStatusBar':
-                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
-            elif command == 'updateSentItemStatusByHash':
-                hash, message = data
-                self.emit(SIGNAL(
-                    "updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), hash, message)
-            elif command == 'updateSentItemStatusByAckdata':
-                ackData, message = data
-                self.emit(SIGNAL(
-                    "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), ackData, message)
-            elif command == 'displayNewInboxMessage':
-                inventoryHash, toAddress, fromAddress, subject, body = data
-                self.emit(SIGNAL(
-                    "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
-                    inventoryHash, toAddress, fromAddress, subject, body)
-            elif command == 'displayNewSentMessage':
-                toAddress, fromLabel, fromAddress, subject, message, ackdata = data
-                self.emit(SIGNAL(
-                    "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
-                    toAddress, fromLabel, fromAddress, subject, message, ackdata)
-            elif command == 'updateNetworkStatusTab':
-                self.emit(SIGNAL("updateNetworkStatusTab()"))
-            elif command == 'incrementNumberOfMessagesProcessed':
-                self.emit(SIGNAL("incrementNumberOfMessagesProcessed()"))
-            elif command == 'incrementNumberOfPubkeysProcessed':
-                self.emit(SIGNAL("incrementNumberOfPubkeysProcessed()"))
-            elif command == 'incrementNumberOfBroadcastsProcessed':
-                self.emit(SIGNAL("incrementNumberOfBroadcastsProcessed()"))
-            elif command == 'setStatusIcon':
-                self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"), data)
-            elif command == 'rerenderInboxFromLabels':
-                self.emit(SIGNAL("rerenderInboxFromLabels()"))
-            elif command == 'rerenderSubscriptions':
-                self.emit(SIGNAL("rerenderSubscriptions()"))
-            elif command == 'removeInboxRowByMsgid':
-                self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), data)
-            else:
-                sys.stderr.write(
-                    'Command sent to UISignaler not recognized: %s\n' % command)
+            try:
+                command, data = shared.UISignalQueue.get()
+                if command == 'writeNewAddressToTable':
+                    label, address, streamNumber = data
+                    self.emit(SIGNAL(
+                        "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), label, address, str(streamNumber))
+                elif command == 'updateStatusBar':
+                    self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
+                elif command == 'updateSentItemStatusByHash':
+                    hash, message = data
+                    self.emit(SIGNAL(
+                        "updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), hash, message)
+                elif command == 'updateSentItemStatusByAckdata':
+                    ackData, message = data
+                    self.emit(SIGNAL(
+                        "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), ackData, message)
+                elif command == 'displayNewInboxMessage':
+                    inventoryHash, toAddress, fromAddress, subject, body = data
+                    self.emit(SIGNAL(
+                        "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
+                        inventoryHash, toAddress, fromAddress, subject, body)
+                elif command == 'displayNewSentMessage':
+                    toAddress, fromLabel, fromAddress, subject, message, ackdata = data
+                    self.emit(SIGNAL(
+                        "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
+                        toAddress, fromLabel, fromAddress, subject, message, ackdata)
+                elif command == 'updateNetworkStatusTab':
+                    self.emit(SIGNAL("updateNetworkStatusTab()"))
+                elif command == 'incrementNumberOfMessagesProcessed':
+                    self.emit(SIGNAL("incrementNumberOfMessagesProcessed()"))
+                elif command == 'incrementNumberOfPubkeysProcessed':
+                    self.emit(SIGNAL("incrementNumberOfPubkeysProcessed()"))
+                elif command == 'incrementNumberOfBroadcastsProcessed':
+                    self.emit(SIGNAL("incrementNumberOfBroadcastsProcessed()"))
+                elif command == 'setStatusIcon':
+                    self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"), data)
+                elif command == 'rerenderInboxFromLabels':
+                    self.emit(SIGNAL("rerenderInboxFromLabels()"))
+                elif command == 'rerenderSubscriptions':
+                    self.emit(SIGNAL("rerenderSubscriptions()"))
+                elif command == 'removeInboxRowByMsgid':
+                    self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), data)
+                else:
+                    sys.stderr.write(
+                        'Command sent to UISignaler not recognized: %s\n' % command)
+            except Exception,ex:
+                # uncaught exception will block gevent
+                import traceback
+                traceback.print_exc()
+                traceback.print_stack()
+                print ex
+                pass
+
 try:
     import gevent
 except ImportError as ex:
