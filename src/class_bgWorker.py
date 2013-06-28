@@ -13,6 +13,7 @@ class bgWorker(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
         self.q = Queue.Queue()
+        self.setDaemon(True)
 
     def post(self,job):
         self.q.put(job)
@@ -34,5 +35,4 @@ class bgWorker(threading.Thread):
                 time.sleep(0.05)
 
 bgworker = bgWorker()
-bgworker.setDaemon(True)
 bgworker.start()
