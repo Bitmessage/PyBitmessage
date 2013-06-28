@@ -2937,7 +2937,7 @@ else:
             app.processEvents()
             while app.hasPendingEvents():
                 app.processEvents()
-                gevent.sleep()
+                gevent.sleep(0.01)
             gevent.sleep(0.01) # don't appear to get here but cooperate again
     def testprint():
         #print 'this is running'
