@@ -2927,7 +2927,22 @@ class UISignaler(QThread):
             else:
                 sys.stderr.write(
                     'Command sent to UISignaler not recognized: %s\n' % command)
+try:
+    import gevent
+except ImportError as ex:
+    print "cannot find gevent"
+else:
+    def mainloop(app):
+        while True:
+            app.processEvents()
+            while app.hasPendingEvents():
+                app.processEvents()
+                gevent.sleep()
+            gevent.sleep() # don't appear to get here but cooperate again
 
+    def testprint():
+        #print 'this is running'
+        gevent.spawn_later(1, testprint)
 
 def run():
     app = QtGui.QApplication(sys.argv)
@@ -2946,5 +2961,8 @@ def run():
     myapp.appIndicatorInit(app)
     myapp.ubuntuMessagingMenuInit()
     myapp.notifierInit()
-
-    sys.exit(app.exec_())
+    if gevent is None:
+        sys.exit(app.exec_())
+    else:
+        gevent.joinall([gevent.spawn(testprint), gevent.spawn(mainloop, app)])
+        print 'done'
