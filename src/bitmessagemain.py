@@ -465,9 +465,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, toRipe = decodeAddress(
                 toAddress)
             if status != 'success':
-                shared.printLock.acquire()
-                print 'API Error 0007: Could not decode address:', toAddress, ':', status
-                shared.printLock.release()
+                with shared.printLock:
+                    print 'API Error 0007: Could not decode address:', toAddress, ':', status
+
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + toAddress
                 if status == 'invalidcharacters':
@@ -482,9 +482,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(
                 fromAddress)
             if status != 'success':
-                shared.printLock.acquire()
-                print 'API Error 0007: Could not decode address:', fromAddress, ':', status
-                shared.printLock.release()
+                with shared.printLock:
+                    print 'API Error 0007: Could not decode address:', fromAddress, ':', status
+
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + fromAddress
                 if status == 'invalidcharacters':
@@ -547,9 +547,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(
                 fromAddress)
             if status != 'success':
-                shared.printLock.acquire()
-                print 'API Error 0007: Could not decode address:', fromAddress, ':', status
-                shared.printLock.release()
+                with shared.printLock:
+                    print 'API Error 0007: Could not decode address:', fromAddress, ':', status
+
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + fromAddress
                 if status == 'invalidcharacters':
@@ -618,9 +618,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, toRipe = decodeAddress(
                 address)
             if status != 'success':
-                shared.printLock.acquire()
-                print 'API Error 0007: Could not decode address:', address, ':', status
-                shared.printLock.release()
+                with shared.printLock:
+                    print 'API Error 0007: Could not decode address:', address, ':', status
+
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + address
                 if status == 'invalidcharacters':
@@ -747,9 +747,9 @@ if __name__ == "__main__":
         except:
             apiNotifyPath = ''
         if apiNotifyPath != '':
-            shared.printLock.acquire()
-            print 'Trying to call', apiNotifyPath
-            shared.printLock.release()
+            with shared.printLock:
+                print 'Trying to call', apiNotifyPath
+
             call([apiNotifyPath, "startingUp"])
         singleAPIThread = singleAPI()
         singleAPIThread.daemon = True  # close the main program even if there are threads left
@@ -780,9 +780,9 @@ if __name__ == "__main__":
         import bitmessageqt
         bitmessageqt.run()
     else:
-        shared.printLock.acquire()
-        print 'Running as a daemon. You can use Ctrl+C to exit.'
-        shared.printLock.release()
+        with shared.printLock:
+            print 'Running as a daemon. You can use Ctrl+C to exit.'
+
         while True:
             time.sleep(20)
 
