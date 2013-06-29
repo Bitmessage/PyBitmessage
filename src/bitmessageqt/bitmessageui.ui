@@ -144,6 +144,10 @@
        </layout>
       </widget>
       <widget class="QWidget" name="broadcasts">
+       <attribute name="icon">
+        <iconset>
+         <normaloff>../images/broadcasts.png</normaloff>../images/broadcasts.png</iconset>
+       </attribute>
        <attribute name="title">
         <string>Broadcasts</string>
        </attribute>

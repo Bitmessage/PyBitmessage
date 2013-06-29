@@ -167,7 +167,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuInbox.addAction( self.actionSaveMessageAs )
         self.popMenuInbox.addAction( self.actionTrashInboxMessage )
 
-        # Popup menu for the Broadcasts tab
+        # Popup menu for the Broadcasts tab (reusing inbox actions)
         self.ui.broadcastsContextMenuToolbar = QtGui.QToolBar()
           # Actions
         self.actionReply = self.ui.broadcastsContextMenuToolbar.addAction(_translate(
@@ -585,7 +585,7 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
         QtCore.QObject.connect(self.ui.tableWidgetBroadcasts, QtCore.SIGNAL(
-            "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
+            "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked) # reusing Inbox slot
         QtCore.QObject.connect(self.ui.tableWidgetSent, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.tableWidgetSentItemClicked)
 
