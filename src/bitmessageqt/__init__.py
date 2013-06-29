@@ -1288,9 +1288,9 @@ class MyForm(QtGui.QMainWindow):
                     status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                         toAddress)
                     if status != 'success':
-                        shared.printLock.acquire()
-                        print 'Error: Could not decode', toAddress, ':', status
-                        shared.printLock.release()
+                        with shared.printLock:
+                            print 'Error: Could not decode', toAddress, ':', status
+
                         if status == 'missingbm':
                             self.statusBar().showMessage(_translate(
                                 "MainWindow", "Error: Bitmessage addresses start with BM-   Please check %1").arg(toAddress))
@@ -2621,9 +2621,9 @@ class MyForm(QtGui.QMainWindow):
 
     def updateStatusBar(self, data):
         if data != "":
-            shared.printLock.acquire()
-            print 'Status bar:', data
-            shared.printLock.release()
+            with shared.printLock:
+                print 'Status bar:', data
+
         self.statusBar().showMessage(data)
 
 
@@ -2973,5 +2973,5 @@ def run():
     if gevent is None:
         sys.exit(app.exec_())
     else:
-        gevent.joinall([gevent.spawn(testprint), gevent.spawn(mainloop, app)])
+        gevent.joinall([gevent.spawn(testprint), gevent.spawn(mainloop, app), gevent.spawn(mainloop, app), gevent.spawn(mainloop, app), gevent.spawn(mainloop, app), gevent.spawn(mainloop, app)])
         print 'done'
