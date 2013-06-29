@@ -57,6 +57,17 @@ class MyForm(QtGui.QMainWindow):
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
 
+        # Define tab indexes here to avoid ghost numbers laster on
+        self.TabIndex_Inbox = 0
+        self.TabIndex_Broadcasts = 1
+        self.TabIndex_Send = 2
+        self.TabIndex_Sent = 3
+        self.TabIndex_YourIdentities = 4
+        self.TabIndex_Subscriptions = 5
+        self.TabIndex_AddressBook = 6
+        self.TabIndex_Blacklist = 7
+        self.TabIndex_NetworkStatus = 8
+        
         # Ask the user if we may delete their old version 1 addresses if they
         # have any.
         configSections = shared.config.sections()
@@ -92,7 +103,7 @@ class MyForm(QtGui.QMainWindow):
             # startup for linux
             pass
 
-        self.ui.labelSendBroadcastWarning.setVisible(False)
+        self.ui.labelSendBroadcastWarning.setVisible(False)        
 
         # FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
@@ -156,6 +167,32 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuInbox.addAction( self.actionSaveMessageAs )
         self.popMenuInbox.addAction( self.actionTrashInboxMessage )
 
+        # Popup menu for the Broadcasts tab
+        self.ui.broadcastsContextMenuToolbar = QtGui.QToolBar()
+          # Actions
+        self.actionReply = self.ui.broadcastsContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Reply"), self.on_action_InboxReply)
+        self.actionAddSenderToAddressBook = self.ui.broadcastsContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Add sender to your Address Book"), self.on_action_InboxAddSenderToAddressBook)
+        self.actionTrashInboxMessage = self.ui.broadcastsContextMenuToolbar.addAction(
+            _translate("MainWindow", "Move to Trash"), self.on_action_InboxTrash)
+        self.actionForceHtml = self.ui.broadcastsContextMenuToolbar.addAction(_translate(
+            "MainWindow", "View HTML code as formatted text"), self.on_action_InboxMessageForceHtml)
+        self.actionSaveMessageAs = self.ui.broadcastsContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Save message as..."), self.on_action_InboxSaveMessageAs)
+        self.ui.tableWidgetBroadcasts.setContextMenuPolicy(
+            QtCore.Qt.CustomContextMenu)
+        self.connect(self.ui.tableWidgetBroadcasts, QtCore.SIGNAL(
+            'customContextMenuRequested(const QPoint&)'), self.on_context_menuBroadcasts)
+        self.popMenuBroadcasts = QtGui.QMenu(self)
+        self.popMenuBroadcasts.addAction(self.actionForceHtml)
+        self.popMenuBroadcasts.addSeparator()
+        self.popMenuBroadcasts.addAction(self.actionReply)
+        self.popMenuBroadcasts.addAction(self.actionAddSenderToAddressBook)
+        self.popMenuBroadcasts.addSeparator()
+        self.popMenuBroadcasts.addAction( self.actionSaveMessageAs )
+        self.popMenuBroadcasts.addAction( self.actionTrashInboxMessage )
+        
         # Popup menu for the Your Identities tab
         self.ui.addressContextMenuToolbar = QtGui.QToolBar()
           # Actions
@@ -323,8 +360,10 @@ class MyForm(QtGui.QMainWindow):
             try:
                 if toAddress == self.str_broadcast_subscribers:
                     toLabel = self.str_broadcast_subscribers
+                    table = self.ui.tableWidgetBroadcasts
                 else:
                     toLabel = shared.config.get(toAddress, 'label')
+                    table = self.ui.tableWidgetInbox                    
             except:
                 toLabel = ''
             if toLabel == '':
@@ -356,7 +395,7 @@ class MyForm(QtGui.QMainWindow):
                     for row in queryreturn:
                         fromLabel, = row
 
-            self.ui.tableWidgetInbox.insertRow(0)
+            table.insertRow(0)
             newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
             newItem.setToolTip(unicode(toLabel, 'utf-8'))
             newItem.setFlags(
@@ -366,7 +405,7 @@ class MyForm(QtGui.QMainWindow):
             newItem.setData(Qt.UserRole, str(toAddress))
             if shared.safeConfigGetBoolean(toAddress, 'mailinglist'):
                 newItem.setTextColor(QtGui.QColor(137, 04, 177))
-            self.ui.tableWidgetInbox.setItem(0, 0, newItem)
+            table.setItem(0, 0, newItem)
             if fromLabel == '':
                 newItem = QtGui.QTableWidgetItem(
                     unicode(fromAddress, 'utf-8'))
@@ -380,7 +419,7 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setFont(font)
             newItem.setData(Qt.UserRole, str(fromAddress))
 
-            self.ui.tableWidgetInbox.setItem(0, 1, newItem)
+            table.setItem(0, 1, newItem)
             newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
             newItem.setToolTip(unicode(subject, 'utf-8'))
             newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
@@ -388,7 +427,7 @@ class MyForm(QtGui.QMainWindow):
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
                 newItem.setFont(font)
-            self.ui.tableWidgetInbox.setItem(0, 2, newItem)
+            table.setItem(0, 2, newItem)
             newItem = myTableWidgetItem(unicode(strftime(shared.config.get(
                 'bitmessagesettings', 'timeformat'), localtime(int(received))), 'utf-8'))
             newItem.setToolTip(unicode(strftime(shared.config.get(
@@ -399,9 +438,11 @@ class MyForm(QtGui.QMainWindow):
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
                 newItem.setFont(font)
-            self.ui.tableWidgetInbox.setItem(0, 3, newItem)
+            table.setItem(0, 3, newItem)
         self.ui.tableWidgetInbox.sortItems(3, Qt.DescendingOrder)
+        self.ui.tableWidgetBroadcasts.sortItems(3, Qt.DescendingOrder)
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
+        self.ui.tableWidgetBroadcasts.keyPressEvent = self.tableWidgetBroadcastsKeyPressEvent
 
         # Load Sent items from database
         shared.sqlLock.acquire()
@@ -543,6 +584,8 @@ class MyForm(QtGui.QMainWindow):
             "itemChanged(QTableWidgetItem *)"), self.tableWidgetSubscriptionsItemChanged)
         QtCore.QObject.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
+        QtCore.QObject.connect(self.ui.tableWidgetBroadcasts, QtCore.SIGNAL(
+            "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
         QtCore.QObject.connect(self.ui.tableWidgetSent, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.tableWidgetSentItemClicked)
 
@@ -647,7 +690,7 @@ class MyForm(QtGui.QMainWindow):
     def appIndicatorInbox(self, mm_app, source_id):
         self.appIndicatorShow()
         # select inbox
-        self.ui.tabWidget.setCurrentIndex(0)
+        self.ui.tabWidget.setCurrentIndex(self.TabIndex_Inbox)
         selectedItem = None
         if source_id == 'Subscriptions':
             # select unread broadcast
@@ -674,17 +717,17 @@ class MyForm(QtGui.QMainWindow):
     # Show the program window and select send tab
     def appIndicatorSend(self):
         self.appIndicatorShow()
-        self.ui.tabWidget.setCurrentIndex(1)
+        self.ui.tabWidget.setCurrentIndex(self.TabIndex_Send)
 
     # Show the program window and select subscriptions tab
     def appIndicatorSubscribe(self):
         self.appIndicatorShow()
-        self.ui.tabWidget.setCurrentIndex(4)
+        self.ui.tabWidget.setCurrentIndex(self.TabIndex_Subscriptions)
 
     # Show the program window and select the address book tab
     def appIndicatorAddressBook(self):
         self.appIndicatorShow()
-        self.ui.tabWidget.setCurrentIndex(5)
+        self.ui.tabWidget.setCurrentIndex(self.TabIndex_AddressBook)
 
     # create application indicator
     def appIndicatorInit(self, app):
@@ -745,6 +788,12 @@ class MyForm(QtGui.QMainWindow):
         self.tray.setContextMenu(m)
         self.tray.show()
 
+    def getCurrentTableAndEdit(self):
+        if self.ui.tabWidget.currentIndex() == self.TabIndex_Inbox:
+            return self.ui.tableWidgetInbox, self.ui.textEditInboxMessage            
+        else:
+            return self.ui.tableWidgetBroadcasts, self.ui.textEditBroadcastsMessage            
+            
     # Ubuntu Messaging menu object
     mmapp = None
 
@@ -915,6 +964,11 @@ class MyForm(QtGui.QMainWindow):
         if event.key() == QtCore.Qt.Key_Delete:
             self.on_action_InboxTrash()
         return QtGui.QTableWidget.keyPressEvent(self.ui.tableWidgetInbox, event)
+        
+    def tableWidgetBroadcastsKeyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Delete:
+            self.on_action_BroadcastsTrash()
+        return QtGui.QTableWidget.keyPressEvent(self.ui.tableWidgetBroadcasts, event)
 
     def tableWidgetSentKeyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Delete:
@@ -970,7 +1024,7 @@ class MyForm(QtGui.QMainWindow):
                 # self.addressGenerator.start()
                 shared.addressGeneratorQueue.put(('createDeterministicAddresses', addressVersionNumber, streamNumberForAddress, "regenerated deterministic address", self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(
                 ), self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(), self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked()))
-                self.ui.tabWidget.setCurrentIndex(3)
+                self.ui.tabWidget.setCurrentIndex(self.TabIndex_YourIdentities)
 
     def openKeysFile(self):
         if 'linux' in sys.platform:
@@ -1161,8 +1215,8 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage(_translate(
                     "MainWindow", "Message trashed"))
                 self.ui.tableWidgetInbox.removeRow(i)
-                break
-
+                break    
+            
     def rerenderInboxFromLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
             addressToLookup = str(self.ui.tableWidgetInbox.item(
@@ -1217,6 +1271,68 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.tableWidgetInbox.item(
                     i, 0).setTextColor(QtGui.QColor(0, 0, 0))
 
+    def removeBroadcastsRowByMsgid(self, msgid):  # msgid and inventoryHash are the same thing
+        for i in range(self.ui.tableWidgetBroadcasts.rowCount()):
+            if msgid == str(self.ui.tableWidgetBroadcasts.item(i, 3).data(Qt.UserRole).toPyObject()):
+                self.statusBar().showMessage(_translate(
+                    "MainWindow", "Message trashed"))
+                self.ui.tableWidgetBroadcasts.removeRow(i)
+                break
+            
+    def rerenderBroadcastsFromLabels(self):
+        for i in range(self.ui.tableWidgetBroadcasts.rowCount()):
+            addressToLookup = str(self.ui.tableWidgetBroadcasts.item(
+                i, 1).data(Qt.UserRole).toPyObject())
+            fromLabel = ''
+            t = (addressToLookup,)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put(
+                '''select label from addressbook where address=?''')
+            shared.sqlSubmitQueue.put(t)
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+
+            if queryreturn != []:
+                for row in queryreturn:
+                    fromLabel, = row
+                    self.ui.tableWidgetBroadcasts.item(
+                        i, 1).setText(unicode(fromLabel, 'utf-8'))
+            else:
+                # It might be a broadcast message. We should check for that
+                # label.
+                shared.sqlLock.acquire()
+                shared.sqlSubmitQueue.put(
+                    '''select label from subscriptions where address=?''')
+                shared.sqlSubmitQueue.put(t)
+                queryreturn = shared.sqlReturnQueue.get()
+                shared.sqlLock.release()
+
+                if queryreturn != []:
+                    for row in queryreturn:
+                        fromLabel, = row
+                        self.ui.tableWidgetBroadcasts.item(
+                            i, 1).setText(unicode(fromLabel, 'utf-8'))
+
+    def rerenderBroadcastsToLabels(self):
+        for i in range(self.ui.tableWidgetBroadcasts.rowCount()):
+            toAddress = str(self.ui.tableWidgetBroadcasts.item(
+                i, 0).data(Qt.UserRole).toPyObject())
+            try:
+                toLabel = shared.config.get(toAddress, 'label')
+            except:
+                toLabel = ''
+            if toLabel == '':
+                toLabel = toAddress
+            self.ui.tableWidgetBroadcasts.item(
+                i, 0).setText(unicode(toLabel, 'utf-8'))
+            # Set the color according to whether it is the address of a mailing
+            # list or not.
+            if shared.safeConfigGetBoolean(toAddress, 'mailinglist'):
+                self.ui.tableWidgetBroadcasts.item(i, 0).setTextColor(QtGui.QColor(137, 04, 177))
+            else:
+                self.ui.tableWidgetBroadcasts.item(
+                    i, 0).setTextColor(QtGui.QColor(0, 0, 0))
+                    
     def rerenderSentFromLabels(self):
         for i in range(self.ui.tableWidgetSent.rowCount()):
             fromAddress = str(self.ui.tableWidgetSent.item(
@@ -1371,7 +1487,7 @@ class MyForm(QtGui.QMainWindow):
                         self.ui.lineEditTo.setText('')
                         self.ui.lineEditSubject.setText('')
                         self.ui.textEditMessage.setText('')
-                        self.ui.tabWidget.setCurrentIndex(2)
+                        self.ui.tabWidget.setCurrentIndex(self.TabIndex_Sent)
                         self.ui.tableWidgetSent.setCurrentCell(0, 0)
                 else:
                     self.statusBar().showMessage(_translate(
@@ -1442,11 +1558,11 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.lineEditTo.setText('')
                 self.ui.lineEditSubject.setText('')
                 self.ui.textEditMessage.setText('')
-                self.ui.tabWidget.setCurrentIndex(2)
+                self.ui.tabWidget.setCurrentIndex(self.TabIndex_Sent)
                 self.ui.tableWidgetSent.setCurrentCell(0, 0)
 
     def click_pushButtonLoadFromAddressBook(self):
-        self.ui.tabWidget.setCurrentIndex(5)
+        self.ui.tabWidget.setCurrentIndex(self.TabIndex_AddressBook)
         for i in range(4):
             time.sleep(0.1)
             self.statusBar().showMessage('')
@@ -1557,8 +1673,10 @@ class MyForm(QtGui.QMainWindow):
         try:
             if toAddress == self.str_broadcast_subscribers:
                 toLabel = self.str_broadcast_subscribers
+                table = self.ui.tableWidgetBroadcasts
             else:
                 toLabel = shared.config.get(toAddress, 'label')
+                table = self.ui.tableWidgetInbox
         except:
             toLabel = ''
         if toLabel == '':
@@ -1566,15 +1684,15 @@ class MyForm(QtGui.QMainWindow):
 
         font = QFont()
         font.setBold(True)
-        self.ui.tableWidgetInbox.setSortingEnabled(False)
+        table.setSortingEnabled(False)
         newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
         newItem.setToolTip(unicode(toLabel, 'utf-8'))
         newItem.setFont(font)
         newItem.setData(Qt.UserRole, str(toAddress))
         if shared.safeConfigGetBoolean(str(toAddress), 'mailinglist'):
             newItem.setTextColor(QtGui.QColor(137, 04, 177))
-        self.ui.tableWidgetInbox.insertRow(0)
-        self.ui.tableWidgetInbox.setItem(0, 0, newItem)
+        table.insertRow(0)
+        table.setItem(0, 0, newItem)
 
         if fromLabel == '':
             newItem = QtGui.QTableWidgetItem(unicode(fromAddress, 'utf-8'))
@@ -1588,12 +1706,12 @@ class MyForm(QtGui.QMainWindow):
                 self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(fromLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setFont(font)
-        self.ui.tableWidgetInbox.setItem(0, 1, newItem)
+        table.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
         newItem.setToolTip(unicode(subject, 'utf-8)'))
         newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
         newItem.setFont(font)
-        self.ui.tableWidgetInbox.setItem(0, 2, newItem)
+        table.setItem(0, 2, newItem)
         newItem = myTableWidgetItem(unicode(strftime(shared.config.get(
             'bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8'))
         newItem.setToolTip(unicode(strftime(shared.config.get(
@@ -1601,8 +1719,8 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(Qt.UserRole, QByteArray(inventoryHash))
         newItem.setData(33, int(time.time()))
         newItem.setFont(font)
-        self.ui.tableWidgetInbox.setItem(0, 3, newItem)
-        self.ui.tableWidgetInbox.setSortingEnabled(True)
+        table.setItem(0, 3, newItem)
+        table.setSortingEnabled(True)
         self.ubuntuMessagingMenuUpdate(True, newItem, toLabel)
 
     def click_pushButtonAddAddressBook(self):
@@ -2013,8 +2131,9 @@ class MyForm(QtGui.QMainWindow):
             self.quit()
 
     def on_action_InboxMessageForceHtml(self):
-        currentInboxRow = self.ui.tableWidgetInbox.currentRow()
-        lines = self.ui.tableWidgetInbox.item(
+        table, editbox = self.getCurrentTableAndEdit()        
+        currentInboxRow = table.currentRow()
+        lines = table.item(
             currentInboxRow, 2).data(Qt.UserRole).toPyObject().split('\n')
         for i in xrange(len(lines)):
             if lines[i].contains('Message ostensibly from '):
@@ -2026,13 +2145,14 @@ class MyForm(QtGui.QMainWindow):
         for i in xrange(len(lines)):
             content += lines[i]
         content = content.replace('\n\n', '<br><br>')
-        self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
+        editbox.setHtml(QtCore.QString(content))
 
     def on_action_InboxReply(self):
-        currentInboxRow = self.ui.tableWidgetInbox.currentRow()
-        toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
+        table, editbox = self.getCurrentTableAndEdit()        
+        currentInboxRow = table.currentRow()
+        toAddressAtCurrentInboxRow = str(table.item(
             currentInboxRow, 0).data(Qt.UserRole).toPyObject())
-        fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
+        fromAddressAtCurrentInboxRow = str(table.item(
             currentInboxRow, 1).data(Qt.UserRole).toPyObject())
         if toAddressAtCurrentInboxRow == self.str_broadcast_subscribers:
             self.ui.labelFrom.setText('')
@@ -2049,21 +2169,22 @@ class MyForm(QtGui.QMainWindow):
         self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
         # self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
-        self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + self.ui.tableWidgetInbox.item(
+        self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + table.item(
             currentInboxRow, 2).data(Qt.UserRole).toPyObject())
-        if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] == 'Re:':
+        if table.item(currentInboxRow, 2).text()[0:3] == 'Re:':
             self.ui.lineEditSubject.setText(
-                self.ui.tableWidgetInbox.item(currentInboxRow, 2).text())
+                table.item(currentInboxRow, 2).text())
         else:
             self.ui.lineEditSubject.setText(
-                'Re: ' + self.ui.tableWidgetInbox.item(currentInboxRow, 2).text())
+                'Re: ' + table.item(currentInboxRow, 2).text())
         self.ui.radioButtonSpecific.setChecked(True)
-        self.ui.tabWidget.setCurrentIndex(1)
+        self.ui.tabWidget.setCurrentIndex(self.TabIndex_Send)
 
     def on_action_InboxAddSenderToAddressBook(self):
-        currentInboxRow = self.ui.tableWidgetInbox.currentRow()
+        table, editbox = self.getCurrentTableAndEdit()        
+        currentInboxRow = table.currentRow()
         # self.ui.tableWidgetInbox.item(currentRow,1).data(Qt.UserRole).toPyObject()
-        addressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
+        addressAtCurrentInboxRow = str(table.item(
             currentInboxRow, 1).data(Qt.UserRole).toPyObject())
         # Let's make sure that it isn't already in the address book
         shared.sqlLock.acquire()
@@ -2091,7 +2212,7 @@ class MyForm(QtGui.QMainWindow):
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            self.ui.tabWidget.setCurrentIndex(5)
+            self.ui.tabWidget.setCurrentIndex(self.TabIndex_AddressBook)
             self.ui.tableWidgetAddressBook.setCurrentCell(0, 0)
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Entry added to the Address Book. Edit the label to your liking."))
@@ -2101,9 +2222,10 @@ class MyForm(QtGui.QMainWindow):
 
     # Send item on the Inbox tab to trash
     def on_action_InboxTrash(self):
-        while self.ui.tableWidgetInbox.selectedIndexes() != []:
-            currentRow = self.ui.tableWidgetInbox.selectedIndexes()[0].row()
-            inventoryHashToTrash = str(self.ui.tableWidgetInbox.item(
+        table, editbox = self.getCurrentTableAndEdit()        
+        while table.selectedIndexes() != []:
+            currentRow = table.selectedIndexes()[0].row()
+            inventoryHashToTrash = str(table.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
             t = (inventoryHashToTrash,)
             shared.sqlLock.acquire()
@@ -2112,32 +2234,33 @@ class MyForm(QtGui.QMainWindow):
             shared.sqlSubmitQueue.put(t)
             shared.sqlReturnQueue.get()
             shared.sqlLock.release()
-            self.ui.textEditInboxMessage.setText("")
-            self.ui.tableWidgetInbox.removeRow(currentRow)
+            editbox.setText("")
+            table.removeRow(currentRow)
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back."))
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
         if currentRow == 0:
-            self.ui.tableWidgetInbox.selectRow(currentRow)
+            table.selectRow(currentRow)
         else:
-            self.ui.tableWidgetInbox.selectRow(currentRow - 1)
+            table.selectRow(currentRow - 1)
 
     def on_action_InboxSaveMessageAs(self):
-        currentInboxRow = self.ui.tableWidgetInbox.currentRow()
+        table, editbox = self.getCurrentTableAndEdit()        
+        currentInboxRow = table.currentRow()
         try:
-            subjectAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text())
+            subjectAtCurrentInboxRow = str(table.item(currentInboxRow,2).text())
         except:
             subjectAtCurrentInboxRow = ''
         defaultFilename = "".join(x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
-        data = self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject()
+        data = table.item(currentInboxRow,2).data(Qt.UserRole).toPyObject()
         filename = QFileDialog.getSaveFileName(self, _translate("MainWindow","Save As..."), defaultFilename, "Text files (*.txt);;All files (*.*)")
         if filename == '':
             return
         try:
             f = open(filename, 'w')
-            f.write( self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject() )
+            f.write( table.item(currentInboxRow,2).data(Qt.UserRole).toPyObject() )
             f.close()
         except Exception, e:
             sys.stderr.write('Write error: '+ e)
@@ -2256,7 +2379,7 @@ class MyForm(QtGui.QMainWindow):
                 "MainWindow", "No addresses selected."))
         else:
             self.statusBar().showMessage('')
-            self.ui.tabWidget.setCurrentIndex(1)
+            self.ui.tabWidget.setCurrentIndex(self.TabIndex_Send)
 
     def on_action_AddressBookSubscribe(self):
         listOfSelectedRows = {}
@@ -2270,7 +2393,7 @@ class MyForm(QtGui.QMainWindow):
                 continue
             labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
             self.addSubscription(labelAtCurrentRow, addressAtCurrentRow)
-            self.ui.tabWidget.setCurrentIndex(4)
+            self.ui.tabWidget.setCurrentIndex(self.TabIndex_Subscriptions)
 
     def on_context_menuAddressBook(self, point):
         self.popMenuAddressBook.exec_(
@@ -2485,6 +2608,9 @@ class MyForm(QtGui.QMainWindow):
     def on_context_menuInbox(self, point):
         self.popMenuInbox.exec_(self.ui.tableWidgetInbox.mapToGlobal(point))
 
+    def on_context_menuBroadcasts(self, point):
+        self.popMenuBroadcasts.exec_(self.ui.tableWidgetBroadcasts.mapToGlobal(point))
+        
     def on_context_menuSent(self, point):
         self.popMenuSent = QtGui.QMenu(self)
         self.popMenuSent.addAction(self.actionSentClipboard)
@@ -2507,37 +2633,38 @@ class MyForm(QtGui.QMainWindow):
             self.popMenuSent.addAction(self.actionForceSend)
         self.popMenuSent.exec_(self.ui.tableWidgetSent.mapToGlobal(point))
 
-    def tableWidgetInboxItemClicked(self):
-        currentRow = self.ui.tableWidgetInbox.currentRow()
+    def tableWidgetInboxItemClicked(self):        
+        table, editbox = self.getCurrentTableAndEdit() 
+        #QtGui.QMessageBox.information(self, 'tableWidgetInboxItemClicked', str(editbox.objectName))
+        currentRow = table.currentRow()
         if currentRow >= 0:
-            fromAddress = str(self.ui.tableWidgetInbox.item(
+            fromAddress = str(table.item(
                 currentRow, 1).data(Qt.UserRole).toPyObject())
             # If we have received this message from either a broadcast address
             # or from someone in our address book, display as HTML
             if decodeAddress(fromAddress)[3] in shared.broadcastSendersForWhichImWatching or shared.isAddressInMyAddressBook(fromAddress):
-                if len(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
-                    self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(
+                if len(table.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
+                    editbox.setText(table.item(
                         currentRow, 2).data(Qt.UserRole).toPyObject())  # Only show the first 30K characters
                 else:
-                    self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()[
+                    editbox.setText(table.item(currentRow, 2).data(Qt.UserRole).toPyObject()[
                                                          :30000] + '\n\nDisplay of the remainder of the message truncated because it is too long.')  # Only show the first 30K characters
             else:
-                if len(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
-                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(
+                if len(table.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
+                    editbox.setPlainText(table.item(
                         currentRow, 2).data(Qt.UserRole).toPyObject())  # Only show the first 30K characters
                 else:
-                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()[
+                    editbox.setPlainText(table.item(currentRow, 2).data(Qt.UserRole).toPyObject()[
                                                               :30000] + '\n\nDisplay of the remainder of the message truncated because it is too long.')  # Only show the first 30K characters
 
             font = QFont()
             font.setBold(False)
-            self.ui.tableWidgetInbox.item(currentRow, 0).setFont(font)
-            self.ui.tableWidgetInbox.item(currentRow, 1).setFont(font)
-            self.ui.tableWidgetInbox.item(currentRow, 2).setFont(font)
-            self.ui.tableWidgetInbox.item(currentRow, 3).setFont(font)
+            table.item(currentRow, 0).setFont(font)
+            table.item(currentRow, 1).setFont(font)
+            table.item(currentRow, 2).setFont(font)
+            table.item(currentRow, 3).setFont(font)
 
-            inventoryHash = str(self.ui.tableWidgetInbox.item(
-                currentRow, 3).data(Qt.UserRole).toPyObject())
+            inventoryHash = str(table.item(currentRow, 3).data(Qt.UserRole).toPyObject())
             t = (inventoryHash,)
             self.ubuntuMessagingMenuClear(t)
             shared.sqlLock.acquire()

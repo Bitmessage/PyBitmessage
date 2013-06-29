@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Thu Jun 13 01:02:50 2013
-#      by: PyQt4 UI code generator 4.10.1
+# Created: Sat Jun 29 15:09:14 2013
+#      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(795, 561)
+        MainWindow.resize(847, 561)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
@@ -86,6 +86,40 @@ class Ui_MainWindow(object):
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/inbox.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.inbox, icon1, _fromUtf8(""))
+        self.broadcasts = QtGui.QWidget()
+        self.broadcasts.setObjectName(_fromUtf8("broadcasts"))
+        self.verticalLayout_3 = QtGui.QVBoxLayout(self.broadcasts)
+        self.verticalLayout_3.setObjectName(_fromUtf8("verticalLayout_3"))
+        self.tableWidgetBroadcasts = QtGui.QTableWidget(self.broadcasts)
+        self.tableWidgetBroadcasts.setAlternatingRowColors(True)
+        self.tableWidgetBroadcasts.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
+        self.tableWidgetBroadcasts.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
+        self.tableWidgetBroadcasts.setWordWrap(False)
+        self.tableWidgetBroadcasts.setObjectName(_fromUtf8("tableWidgetBroadcasts"))
+        self.tableWidgetBroadcasts.setColumnCount(4)
+        self.tableWidgetBroadcasts.setRowCount(0)
+        item = QtGui.QTableWidgetItem()
+        self.tableWidgetBroadcasts.setHorizontalHeaderItem(0, item)
+        item = QtGui.QTableWidgetItem()
+        self.tableWidgetBroadcasts.setHorizontalHeaderItem(1, item)
+        item = QtGui.QTableWidgetItem()
+        self.tableWidgetBroadcasts.setHorizontalHeaderItem(2, item)
+        item = QtGui.QTableWidgetItem()
+        self.tableWidgetBroadcasts.setHorizontalHeaderItem(3, item)
+        self.tableWidgetBroadcasts.horizontalHeader().setCascadingSectionResizes(True)
+        self.tableWidgetBroadcasts.horizontalHeader().setDefaultSectionSize(200)
+        self.tableWidgetBroadcasts.horizontalHeader().setHighlightSections(False)
+        self.tableWidgetBroadcasts.horizontalHeader().setMinimumSectionSize(27)
+        self.tableWidgetBroadcasts.horizontalHeader().setSortIndicatorShown(False)
+        self.tableWidgetBroadcasts.horizontalHeader().setStretchLastSection(True)
+        self.tableWidgetBroadcasts.verticalHeader().setVisible(False)
+        self.tableWidgetBroadcasts.verticalHeader().setDefaultSectionSize(26)
+        self.verticalLayout_3.addWidget(self.tableWidgetBroadcasts)
+        self.textEditBroadcastsMessage = QtGui.QTextEdit(self.broadcasts)
+        self.textEditBroadcastsMessage.setBaseSize(QtCore.QSize(0, 500))
+        self.textEditBroadcastsMessage.setObjectName(_fromUtf8("textEditBroadcastsMessage"))
+        self.verticalLayout_3.addWidget(self.textEditBroadcastsMessage)
+        self.tabWidget.addTab(self.broadcasts, _fromUtf8(""))
         self.send = QtGui.QWidget()
         self.send.setObjectName(_fromUtf8("send"))
         self.gridLayout_2 = QtGui.QGridLayout(self.send)
@@ -392,7 +426,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 18))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 847, 24))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -477,6 +511,16 @@ class Ui_MainWindow(object):
         item = self.tableWidgetInbox.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Received", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.inbox), _translate("MainWindow", "Inbox", None))
+        self.tableWidgetBroadcasts.setSortingEnabled(True)
+        item = self.tableWidgetBroadcasts.horizontalHeaderItem(0)
+        item.setText(_translate("MainWindow", "To", None))
+        item = self.tableWidgetBroadcasts.horizontalHeaderItem(1)
+        item.setText(_translate("MainWindow", "From", None))
+        item = self.tableWidgetBroadcasts.horizontalHeaderItem(2)
+        item.setText(_translate("MainWindow", "Subject", None))
+        item = self.tableWidgetBroadcasts.horizontalHeaderItem(3)
+        item.setText(_translate("MainWindow", "Received", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.broadcasts), _translate("MainWindow", "Broadcasts", None))
         self.pushButtonLoadFromAddressBook.setText(_translate("MainWindow", "Load from Address book", None))
         self.label_4.setText(_translate("MainWindow", "Message:", None))
         self.label_3.setText(_translate("MainWindow", "Subject:", None))
@@ -484,8 +528,8 @@ class Ui_MainWindow(object):
         self.textEditMessage.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+"</style></head><body style=\" font-family:\'Droid Sans [unknown]\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>", None))
         self.label.setText(_translate("MainWindow", "To:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.radioButtonBroadcast.setText(_translate("MainWindow", "Broadcast to everyone who is subscribed to your address", None))
@@ -559,13 +603,3 @@ class Ui_MainWindow(object):
         self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
 
 import bitmessage_icons_rc
-
-if __name__ == "__main__":
-    import sys
-    app = QtGui.QApplication(sys.argv)
-    MainWindow = QtGui.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
-
