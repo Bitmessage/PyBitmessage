@@ -27,16 +27,7 @@ install:
 	mkdir -m 755 -p $(DEST_SHARE)/icons/hicolor/24x24
 	mkdir -m 755 -p $(DEST_SHARE)/icons/hicolor/24x24/apps
 
-	install -m 644 src/*.ui $(DEST_APP)
-	install -m 644 src/*.py $(DEST_APP)
-	install -m 644 src/*.qrc $(DEST_APP)
-
-	install -m 644 src/images/*.png $(DEST_APP)/images
-	install -m 644 src/images/*.ico $(DEST_APP)/images
-	install -m 644 src/pyelliptic/*.py $(DEST_APP)/pyelliptic
-	install -m 644 src/socks/*.py $(DEST_APP)/socks
-	install -m 644 src/bitmessageqt/*.py $(DEST_APP)/bitmessageqt
-	install -m 644 src/translations/*.qm $(DEST_APP)/translations
+	cp -r src/* $(DEST_APP)
 	install -m 755 debian/pybm $(DESTDIR)/usr/bin/$(APP)
 
 	install -m 644 desktop/$(APP).desktop $(DEST_SHARE)/applications/$(APP).desktop
