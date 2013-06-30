@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Sat Jun 29 15:47:38 2013
+# Created: Sun Jun 30 03:08:39 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(847, 561)
+        MainWindow.resize(856, 564)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
@@ -120,7 +120,7 @@ class Ui_MainWindow(object):
         self.textEditBroadcastsMessage.setObjectName(_fromUtf8("textEditBroadcastsMessage"))
         self.verticalLayout_3.addWidget(self.textEditBroadcastsMessage)
         icon2 = QtGui.QIcon()
-        icon2.addPixmap(QtGui.QPixmap(_fromUtf8("../images/broadcasts.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon2.addPixmap(QtGui.QPixmap(_fromUtf8("images/broadcasts.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.broadcasts, icon2, _fromUtf8(""))
         self.send = QtGui.QWidget()
         self.send.setObjectName(_fromUtf8("send"))
@@ -128,7 +128,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.setObjectName(_fromUtf8("gridLayout_2"))
         self.pushButtonLoadFromAddressBook = QtGui.QPushButton(self.send)
         font = QtGui.QFont()
-        font.setPointSize(7)
+        font.setPointSize(9)
         self.pushButtonLoadFromAddressBook.setFont(font)
         self.pushButtonLoadFromAddressBook.setObjectName(_fromUtf8("pushButtonLoadFromAddressBook"))
         self.gridLayout_2.addWidget(self.pushButtonLoadFromAddressBook, 3, 2, 1, 2)
@@ -174,6 +174,7 @@ class Ui_MainWindow(object):
         spacerItem1 = QtGui.QSpacerItem(20, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.gridLayout_2.addItem(spacerItem1, 3, 4, 1, 1)
         self.pushButtonSend = QtGui.QPushButton(self.send)
+        self.pushButtonSend.setMinimumSize(QtCore.QSize(100, 0))
         self.pushButtonSend.setObjectName(_fromUtf8("pushButtonSend"))
         self.gridLayout_2.addWidget(self.pushButtonSend, 7, 5, 1, 1)
         self.labelSendBroadcastWarning = QtGui.QLabel(self.send)
@@ -371,7 +372,7 @@ class Ui_MainWindow(object):
         self.networkstatus = QtGui.QWidget()
         self.networkstatus.setObjectName(_fromUtf8("networkstatus"))
         self.pushButtonStatusIcon = QtGui.QPushButton(self.networkstatus)
-        self.pushButtonStatusIcon.setGeometry(QtCore.QRect(680, 440, 21, 23))
+        self.pushButtonStatusIcon.setGeometry(QtCore.QRect(780, 440, 21, 23))
         self.pushButtonStatusIcon.setText(_fromUtf8(""))
         icon9 = QtGui.QIcon()
         icon9.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/redicon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
@@ -428,7 +429,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 847, 24))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 856, 24))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -471,7 +472,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.lineEditTo.setEnabled)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("clicked(bool)")), self.labelSendBroadcastWarning.hide)
         QtCore.QObject.connect(self.radioButtonBroadcast, QtCore.SIGNAL(_fromUtf8("clicked()")), self.labelSendBroadcastWarning.show)
@@ -605,3 +606,13 @@ class Ui_MainWindow(object):
         self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
 
 import bitmessage_icons_rc
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    MainWindow = QtGui.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
+
