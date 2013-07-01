@@ -817,13 +817,7 @@ class receiveDataThread(threading.Thread):
             shared.printLock.release()
             del shared.ackdataForWhichImWatching[encryptedData[readPosition:]]
             t = ('ackreceived', encryptedData[readPosition:])
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                'UPDATE sent SET status=? WHERE ackdata=?')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            helper_sent.updateStatusByAckData(t)
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (encryptedData[readPosition:], tr.translateText("MainWindow",'Acknowledgement of the message received. %1').arg(unicode(
                 time.strftime(shared.config.get('bitmessagesettings', 'timeformat'), time.localtime(int(time.time()))), 'utf-8')))))
             return
@@ -1118,13 +1112,7 @@ class receiveDataThread(threading.Thread):
             print 'We have been awaiting the arrival of this pubkey.'
             del shared.neededPubkeys[toRipe]
             t = (toRipe,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND (status='awaitingpubkey' or status='doingpubkeypow') and folder='sent' ''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            helper_sent.updateStatusForPossibleNewPubKey(t)
             shared.workerQueue.put(('sendmessage', ''))
         else:
             shared.printLock.acquire()

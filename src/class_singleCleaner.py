@@ -2,6 +2,7 @@ import threading
 import shared
 import time
 import sys
+import helper_sent
 
 '''The singleCleaner class is a timer-driven thread that cleans data structures to free memory, resends messages when a remote node doesn't respond, and sends pong messages to keep connections alive if the network isn't busy.
 It cleans these data structures in memory:
@@ -98,22 +99,14 @@ class singleCleaner(threading.Thread):
                                 'updateStatusBar', 'Doing work necessary to again attempt to request a public key...'))
                             t = (int(
                                 time.time()), pubkeyretrynumber + 1, toripe)
-                            shared.sqlSubmitQueue.put(
-                                '''UPDATE sent SET lastactiontime=?, pubkeyretrynumber=?, status='msgqueued' WHERE toripe=?''')
-                            shared.sqlSubmitQueue.put(t)
-                            shared.sqlReturnQueue.get()
-                            shared.sqlSubmitQueue.put('commit')
+                            helper_sent.updateStatusForRerequestPubKey(t)
                             shared.workerQueue.put(('sendmessage', ''))
                     else:  # status == msgsent
                         if int(time.time()) - lastactiontime > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
                             print 'It has been a long time and we haven\'t heard an acknowledgement to our msg. Sending again.'
                             t = (int(
                                 time.time()), msgretrynumber + 1, 'msgqueued', ackdata)
-                            shared.sqlSubmitQueue.put(
-                                '''UPDATE sent SET lastactiontime=?, msgretrynumber=?, status=? WHERE ackdata=?''')
-                            shared.sqlSubmitQueue.put(t)
-                            shared.sqlReturnQueue.get()
-                            shared.sqlSubmitQueue.put('commit')
+                            helper_sent.updateStatusForResend(t)
                             shared.workerQueue.put(('sendmessage', ''))
                             shared.UISignalQueue.put((
                                 'updateStatusBar', 'Doing work necessary to again attempt to deliver a message...'))
