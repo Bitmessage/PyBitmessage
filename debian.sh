@@ -9,6 +9,7 @@
 APP=pybitmessage
 PREV_VERSION=0.3.3
 VERSION=0.3.4
+RELEASE=1
 ARCH_TYPE=all
 
 #update version numbers automatically - so you don't have to
@@ -27,5 +28,5 @@ dpkg-buildpackage -A
 # change the directory name back
 mv ../${APP}-${VERSION} ../PyBitmessage
 
-gpg -ba ../${APP}_${VERSION}-1_${ARCH_TYPE}.deb
+gpg -ba ../${APP}_${VERSION}-${RELEASE}_${ARCH_TYPE}.deb
 gpg -ba ../${APP}_${VERSION}.orig.tar.gz
