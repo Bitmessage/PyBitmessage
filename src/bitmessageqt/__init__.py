@@ -2933,8 +2933,11 @@ def run():
     app = QtGui.QApplication(sys.argv)
     translator = QtCore.QTranslator()
 
-    translator.load("translations/bitmessage_" + str(locale.getlocale()[0]))
-    #translator.load("translations/bitmessage_fr_BE") # Try French instead
+    try:
+        translator.load("translations/bitmessage_" + str(locale.getlocale()[0]))
+    except:
+        # The above is not compatible with all versions of OSX.
+        translator.load("translations/bitmessage_en_US") # Default to english.
 
     QtGui.QApplication.installTranslator(translator)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
