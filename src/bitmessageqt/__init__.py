@@ -2072,7 +2072,7 @@ class MyForm(QtGui.QMainWindow):
         # self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
         originalMessage = self.ui.tableWidgetInbox.item(currentInboxRow, 2)
         originalMessageText = originalMessage.data(Qt.UserRole).toPyObject()
-        quotedText = self.quoted_text(str(originalMessageText))
+        quotedText = self.quoted_text(unicode(originalMessageText))
         self.ui.textEditMessage.setText(quotedText + '\n\n')
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] == 'Re:':
             self.ui.lineEditSubject.setText(
