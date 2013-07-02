@@ -65,11 +65,9 @@ class receiveDataThread(threading.Thread):
         print 'ID of the receiveDataThread is', str(id(self)) + '. The size of the shared.connectedHostsList is now', len(shared.connectedHostsList)
         shared.printLock.release()
         while True:
+            dataLen = len(self.data)
             try:
-                dataLen = len(self.data)
                 self.data += self.sock.recv(4096)
-                if len(self.data) == dataLen: # recv returns 0 bytes when the remote closes the connection
-                    raise Exception("Remote closed the connection")
             except socket.timeout:
                 shared.printLock.acquire()
                 print 'Timeout occurred waiting for data from', self.HOST + '. Closing receiveData thread. (ID:', str(id(self)) + ')'
@@ -81,7 +79,7 @@ class receiveDataThread(threading.Thread):
                 shared.printLock.release()
                 break
             # print 'Received', repr(self.data)
-            if self.data == "":
+            if len(self.data) == dataLen:
                 shared.printLock.acquire()
                 print 'Connection to', self.HOST, 'closed. Closing receiveData thread. (ID:', str(id(self)) + ')'
                 shared.printLock.release()
