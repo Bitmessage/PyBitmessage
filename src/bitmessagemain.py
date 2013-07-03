@@ -24,6 +24,7 @@ from class_singleWorker import *
 from class_outgoingSynSender import *
 from class_singleListener import *
 from class_addressGenerator import *
+from class_asyncoreThread import *
 
 # Helper Functions
 import helper_startup
@@ -730,6 +731,17 @@ if __name__ == "__main__":
     singleCleanerThread = singleCleaner()
     singleCleanerThread.daemon = True  # close the main program even if there are threads left
     singleCleanerThread.start()
+
+    # Start the SMTP server 
+    smtpServer = bitmessageSMTPServer()
+
+    # And the POP3 server...
+    pop3Server = bitmessagePOP3Server(debug=True)
+
+    # And finally launch asyncore
+    asyncoreThread = asyncoreThread()
+    asyncoreThread.daemon = True
+    asyncoreThread.start()
 
     shared.reloadMyAddressHashes()
     shared.reloadBroadcastSendersForWhichImWatching()
