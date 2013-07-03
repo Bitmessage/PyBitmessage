@@ -277,7 +277,7 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
         sock, peer_address = self.accept()
         if self.ssl:
             sock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile, keyfile=self.keyfile, ssl_version=ssl.PROTOCOL_SSLv23)
-            bitmessageSMTPChannel(self, sock, peer_address)
+        bitmessageSMTPChannel(self, sock, peer_address)
 
     def process_message(self, peer, mailfrom, rcpttos, data):
         #print("Peer", peer)
