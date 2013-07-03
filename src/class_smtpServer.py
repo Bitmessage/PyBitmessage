@@ -147,16 +147,20 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             shared.printLock.release()
             raise Exception("Invalid Bitmessage address: {}".format(self.address))
 
+        self.address = addBMIfNotPresent(self.address)
+
         # Each identity must be enabled independly by setting the smtppop3password for the identity
         # If no password is set, then the identity is not available for SMTP/POP3 access.
         try:
-            self.pw = shared.config.get(addBMIfNotPresent(self.address), "smtppop3password")
-            if pw == self.pw:
-                self.push('235 Authentication successful. Proceed.')
-                self.logged_in = True
-                return
+            if shared.config.getboolean(self.address, "enabled"):
+                self.pw = shared.config.get(self.address, "smtppop3password")
+                if pw == self.pw:
+                    self.push('235 Authentication successful. Proceed.')
+                    self.logged_in = True
+                    return
         except:
             pass
+
         self.push('530 Access denied.')
         self.close_when_done()
 

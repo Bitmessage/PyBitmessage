@@ -176,14 +176,20 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
             shared.printLock.release()
             raise Exception("Invalid Bitmessage address: {}".format(self.address))
 
+        self.address = addBMIfNotPresent(self.address)
+
         # Each identity must be enabled independly by setting the smtppop3password for the identity
         # If no password is set, then the identity is not available for SMTP/POP3 access.
         try:
-            self.pw = shared.config.get(addBMIfNotPresent(self.address), "smtppop3password")
-            yield "+OK user accepted"
+            if shared.config.getboolean(self.address, "enabled"):
+                self.pw = shared.config.get(self.address, "smtppop3password")
+                yield "+OK user accepted"
+                return
         except:
-            yield "-ERR account not available"
-            self.close()
+            pass
+
+        yield "-ERR access denied"
+        self.close()
     
     def handlePass(self, data):
         if self.pw is None:
