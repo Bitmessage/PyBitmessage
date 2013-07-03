@@ -268,7 +268,6 @@ class sqlThread(threading.Thread):
                         item) + '"  Here are the parameters; you might want to censor this data with asterisks (***) as it can contain private information: ' + str(repr(parameters)) + '\nHere is the actual error message thrown by the sqlThread: ' + str(err) + '\n')
                     sys.stderr.write('This program shall now abruptly exit!\n')
                     shared.printLock.release()
-                    raw_input('Press enter to exit...')
                     os._exit(0)
 
                 shared.sqlReturnQueue.put(self.cur.fetchall())
