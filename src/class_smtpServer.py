@@ -1,6 +1,7 @@
 from pyelliptic.openssl import OpenSSL
 import shared
 import smtpd
+import ssl
 import time
 
 from addresses import *
@@ -10,11 +11,25 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
     def __init__(self):
         # TODO - move to separate file/class
         smtpport = shared.config.getint('bitmessagesettings', 'smtpport')
-        smtpd.SMTPServer.__init__(self, ('127.0.0.1', smtpport), None)
 
+        self.ssl = shared.config.getboolean('bitmessagesettings', 'smtpssl')
+        if self.ssl:
+            self.keyfile = shared.config.get('bitmessagesettings', 'keyfile')
+            self.certfile = shared.config.get('bitmessagesettings', 'certfile')
+
+        smtpd.SMTPServer.__init__(self, ('127.0.0.1', smtpport), None)
         shared.printLock.acquire()
         print "SMTP server started"
         shared.printLock.release()
+
+    def handle_accept(self):
+        # Override SMTPServer's handle_accept so that we can start an SSL connection.
+        if not self.ssl:
+            return smtpd.SMTPServer.handle_accept(self)
+
+        sock, peer_address = self.accept()
+        sock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile, keyfile=self.keyfile, ssl_version=ssl.PROTOCOL_SSLv23)
+        channel = smtpd.SMTPChannel(self, sock, peer_address)
 
     def process_message(self, peer, mailfrom, rcpttos, data):
         #print("Peer", peer)

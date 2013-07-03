@@ -734,11 +734,15 @@ if __name__ == "__main__":
     singleCleanerThread.daemon = True  # close the main program even if there are threads left
     singleCleanerThread.start()
 
-    # Start the SMTP server 
-    smtpServer = bitmessageSMTPServer()
-
-    # And the POP3 server...
-    pop3Server = bitmessagePOP3Server(debug=True)
+    # Start the SMTP and POP3 server if necessary
+    smtpServer = None
+    pop3Server = None
+    try:
+        if shared.config.get('bitmessagesettings', 'smtppop3enable') == 'true':
+            smtpServer = bitmessageSMTPServer()
+            pop3Server = bitmessagePOP3Server(debug=True)
+    except:
+        pass
 
     # And finally launch asyncore
     asyncoreThread = asyncoreThread()

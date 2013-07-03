@@ -2,6 +2,7 @@ from collections import deque
 import asyncore
 import shared
 import socket
+import ssl
 import sys
 
 from addresses import *
@@ -227,6 +228,12 @@ class bitmessagePOP3Server(asyncore.dispatcher):
         self.debug = debug
 
         pop3port = shared.config.getint('bitmessagesettings', 'pop3port')
+
+        self.ssl = shared.config.getboolean('bitmessagesettings', 'pop3ssl')
+        if self.ssl:
+            self.keyfile = shared.config.get('bitmessagesettings', 'keyfile')
+            self.certfile = shared.config.get('bitmessagesettings', 'certfile')
+
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.bind(('127.0.0.1', pop3port))
         self.listen(10)
@@ -237,6 +244,8 @@ class bitmessagePOP3Server(asyncore.dispatcher):
 
     def handle_accept(self):
         sock, peer_address = self.accept()
+        if self.ssl:
+            sock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile, keyfile=self.keyfile, ssl_version=ssl.PROTOCOL_SSLv23)
         _ = bitmessagePOP3Connection(sock, peer_address, debug=self.debug)
 
 
