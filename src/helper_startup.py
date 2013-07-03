@@ -29,6 +29,7 @@ def loadConfig():
             shared.config.set('bitmessagesettings', 'settingsversion', '6')
             shared.config.set('bitmessagesettings', 'port', '8444')
             shared.config.set('bitmessagesettings', 'smtpport', '10025')
+            shared.config.set('bitmessagesettings', 'pop3port', '10110')
             shared.config.set(
                 'bitmessagesettings', 'timeformat', '%%a, %%d %%b %%Y  %%I:%%M %%p')
             shared.config.set('bitmessagesettings', 'blackwhitelist', 'black')
