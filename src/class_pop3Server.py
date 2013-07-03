@@ -33,10 +33,15 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
         self.messages = None
         self.storage_size = 0
         self.address = None
+        self.pw = None
+        self.loggedin = False
         
         self.sendline("+OK Bitmessage POP3 server ready")
 
     def populateMessageIndex(self):
+        if not self.loggedin:
+            raise Exception("Cannot be called when not logged in.")
+
         if self.address is None:
             raise Exception("Invalid address: {}".format(self.address))
 
@@ -153,6 +158,9 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
                 break
 
     def handleUser(self, data):
+        if self.loggedin:
+            raise Exception("Cannot login twice")
+
         self.address = data
 
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.address)
@@ -168,12 +176,26 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
             shared.printLock.release()
             raise Exception("Invalid Bitmessage address: {}".format(self.address))
 
-        return ["+OK user accepted"]
+        # Each identity must be enabled independly by setting the smtppop3password for the identity
+        # If no password is set, then the identity is not available for SMTP/POP3 access.
+        try:
+            self.pw = shared.config.get(addBMIfNotPresent(self.address), "smtppop3password")
+            yield "+OK user accepted"
+        except:
+            yield "-ERR account not available"
+            self.close()
     
     def handlePass(self, data):
-        # TODO
-        return ["+OK pass accepted"]
-    
+        if self.pw is None:
+            yield "-ERR must specify USER"
+        else:
+            pw = data.decode('ascii')
+            if pw == self.pw: # TODO - hashed passwords?
+                yield "+OK pass accepted"
+                self.loggedin = True
+            else:
+                yield "-ERR invalid password"
+
     def handleStat(self, data):
         self.populateMessageIndex()
         return ["+OK {} {}".format(len(self.messages), self.storage_size)]
