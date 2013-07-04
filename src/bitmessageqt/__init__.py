@@ -117,6 +117,8 @@ class MyForm(QtGui.QMainWindow):
             "clicked()"), self.click_pushButtonSend)
         QtCore.QObject.connect(self.ui.pushButtonLoadFromAddressBook, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonLoadFromAddressBook)
+        QtCore.QObject.connect(self.ui.pushButtonFetchNamecoinID, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonFetchNamecoinID)
         QtCore.QObject.connect(self.ui.radioButtonBlacklist, QtCore.SIGNAL(
             "clicked()"), self.click_radioButtonBlacklist)
         QtCore.QObject.connect(self.ui.radioButtonWhitelist, QtCore.SIGNAL(
@@ -1453,6 +1455,9 @@ class MyForm(QtGui.QMainWindow):
             time.sleep(0.1)
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Right click one or more entries in your address book and select \'Send message to this address\'."))
+
+    def click_pushButtonFetchNamecoinID(self):
+        self.ui.lineEditTo.setText ("BM-Foobar")
 
     def redrawLabelFrom(self, index):
         self.ui.labelFrom.setText(
