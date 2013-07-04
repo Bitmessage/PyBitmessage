@@ -1,6 +1,8 @@
+from cStringIO import StringIO
 from pyelliptic.openssl import OpenSSL
 import asynchat
 import base64
+from email import parser, generator
 import errno
 import shared
 import smtpd
@@ -291,7 +293,17 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
         #print('--------')
         #print(type(address))
 
-        message = data
+        message = parser.Parser().parsestr(data)
+        message['Bitmessage-Version'] = shared.softwareVersion
+        print(message)
+
+        fp = StringIO()
+        gen = generator.Generator(fp, mangle_from_=False, maxheaderlen=128)
+        gen.flatten(message)
+        message_as_text = fp.getvalue()
+
+        checksum = hashlib.sha256(message_as_text).digest()[:2]
+        checksum = (ord(checksum[0]) << 8) | ord(checksum[1])
 
         # Determine the fromAddress and make sure it's an owned identity
         fromAddress = address
@@ -367,10 +379,11 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
 
                 # The subject is specially formatted to identify it from non-E-mail messages.
                 # TODO - The bitfield will be used to convey things like external attachments, etc.
-                subject = "<Bitmessage Mail: 00000000000000000000>" # Reserved flags.
+                # Last 2 bytes are two bytes of the sha256 checksum of message
+                subject = "<Bitmessage Mail: 0000000000000000{:04x}>".format(checksum) # Reserved flags.
 
                 ackdata = OpenSSL.rand(32)
-                t = ('', toAddress, toRipe, fromAddress, subject, message, ackdata, int(time.time()), 'msgqueued', 1, 1, 'sent', 2)
+                t = ('', toAddress, toRipe, fromAddress, subject, message_as_text, ackdata, int(time.time()), 'msgqueued', 1, 1, 'sent', 2)
                 helper_sent.insert(t)
 
                 toLabel = ''
@@ -383,7 +396,7 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
                 if queryreturn != []:
                     for row in queryreturn:
                         toLabel, = row
-                shared.UISignalQueue.put(('displayNewSentMessage', (toAddress, toLabel, fromAddress, subject, message, ackdata)))
+                shared.UISignalQueue.put(('displayNewSentMessage', (toAddress, toLabel, fromAddress, subject, message_as_text, ackdata)))
                 shared.workerQueue.put(('sendmessage', toAddress))
 
                 # TODO - what should we do with ackdata.encode('hex') ?
