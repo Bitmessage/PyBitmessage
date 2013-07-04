@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Thu Jul 04 16:15:21 2013
+# Created: Thu Jul 04 16:56:12 2013
 #      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -320,7 +320,7 @@ class Ui_settingsDialog(object):
         self.gridLayout.addWidget(self.tabWidgetSettings, 0, 0, 1, 1)
 
         self.retranslateUi(settingsDialog)
-        self.tabWidgetSettings.setCurrentIndex(4)
+        self.tabWidgetSettings.setCurrentIndex(0)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), settingsDialog.accept)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), settingsDialog.reject)
         QtCore.QObject.connect(self.checkBoxAuthentication, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.lineEditSocksUsername.setEnabled)
