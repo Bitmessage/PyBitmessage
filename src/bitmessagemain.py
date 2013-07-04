@@ -12,6 +12,7 @@
 #import ctypes
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
+from ConfigParser import NoOptionError
 from SimpleXMLRPCServer import *
 import json
 import singleton
@@ -740,8 +741,8 @@ if __name__ == "__main__":
     try:
         if shared.config.get('bitmessagesettings', 'smtppop3enable') == 'true':
             smtpServer = bitmessageSMTPServer()
-            pop3Server = bitmessagePOP3Server(debug=True)
-    except:
+            pop3Server = bitmessagePOP3Server()
+    except NoOptionError:
         pass
 
     # And finally launch asyncore

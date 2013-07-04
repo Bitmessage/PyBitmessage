@@ -88,7 +88,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
                     data.append(text)
             self.__data = '\n'.join(data)
             status = self.__server.process_message(self.__peer,
-                                                   self.__mailfrom,
+                                                   self.address,
                                                    self.__rcpttos,
                                                    self.__data)
             self.__rcpttos = []
@@ -203,6 +203,10 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         if self.__mailfrom:
             self.push('503 Error: nested MAIL command')
             return
+        _, domain = address.split('@', 1)
+        if domain != self.address:
+            self.push('530 Access denied: address domain must match Bitmessage identity')
+            return
         self.__mailfrom = address
         print >> smtpd.DEBUGSTREAM, 'sender:', self.__mailfrom
         self.push('250 Ok')
@@ -259,7 +263,6 @@ class bitmessageSMTPChannel(asynchat.async_chat):
 
 class bitmessageSMTPServer(smtpd.SMTPServer):
     def __init__(self):
-        # TODO - move to separate file/class
         smtpport = shared.config.getint('bitmessagesettings', 'smtpport')
 
         self.ssl = shared.config.getboolean('bitmessagesettings', 'smtpssl')
@@ -279,22 +282,19 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
             sock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile, keyfile=self.keyfile, ssl_version=ssl.PROTOCOL_SSLv23)
         bitmessageSMTPChannel(self, sock, peer_address)
 
-    def process_message(self, peer, mailfrom, rcpttos, data):
+    def process_message(self, peer, address, rcpttos, data):
         #print("Peer", peer)
-        #print("Mail From", mailfrom)
+        #print("Mail From", address)
         #print("Rcpt To", rcpttos)
         #print("Data")
         #print(data)
         #print('--------')
-        #print(type(mailfrom))
+        #print(type(address))
 
         message = data
 
         # Determine the fromAddress and make sure it's an owned identity
-        # TODO - determine the address from a SMTP authorization.
-        # TODO - use the mailfrom (a legitimate email address?) when delivering
-        # real e-mail.
-        _, fromAddress = mailfrom.split('@', 1)
+        fromAddress = address
         if not (fromAddress.startswith('BM-') and '.' not in fromAddress):
             raise Exception("From Address must be a Bitmessage address.")
         else:
@@ -328,11 +328,14 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
         for recipient in rcpttos:
             _, toAddress = recipient.split('@', 1)
             if not (toAddress.startswith('BM-') and '.' not in toAddress):
-                # TODO - deliver message to another SMTP server.. ?
+                # TODO - deliver message to another SMTP server..
+                # I think this feature would urge adoption: the ability to use the same bitmessage address
+                # for delivering standard E-mail as well bitmessages.
                 raise Exception("Cannot yet handle normal E-mail addresses.")
             else:
-                # This is now the 3rd copy of this code. There's one in the API, there's another
-                # copy in __init__ for the UI.  Yet another exists here.  It needs to be refactored
+                # This is now the 3rd copy of this message delivery code.
+                # There's one in the API, there's another copy in __init__ for
+                # the UI.  Yet another exists here.  It needs to be refactored
                 # into a utility func!
                 status, addressVersionNumber, streamNumber, toRipe = decodeAddress(toAddress)
                 if status != 'success':
@@ -346,25 +349,25 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
                         print 'Error: Address version number too high (or zero) in address: ' + toAddress
                     shared.printLock.release()
                     raise Exception("Invalid Bitmessage address: {}".format(toAddress))
-                #toAddress = addBMIfNotPresent(toAddress) # I know there's a BM-, because it's required when using SMTP
 
                 toAddressIsOK = False
                 try:
                     shared.config.get(toAddress, 'enabled')
+                except:
+                    toAddressIsOK = True
+
+                if not toAddressIsOK:
                     # The toAddress is one owned by me. We cannot send
                     # messages to ourselves without significant changes
                     # to the codebase.
                     shared.printLock.acquire()
                     print "Error: One of the addresses to which you are sending a message, {}, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.".format(toAddress)
                     shared.printLock.release()
-                except:
-                    toAddressIsOK = True
-
-                if not toAddressIsOK:
                     raise Exception("Cannot send message to {}".format(toAddress))
 
                 # The subject is specially formatted to identify it from non-E-mail messages.
-                subject = "<Bitmessage Mail: 00000000000000000000>" # Reserved, flags.
+                # TODO - The bitfield will be used to convey things like external attachments, etc.
+                subject = "<Bitmessage Mail: 00000000000000000000>" # Reserved flags.
 
                 ackdata = OpenSSL.rand(32)
                 t = ('', toAddress, toRipe, fromAddress, subject, message, ackdata, int(time.time()), 'msgqueued', 1, 1, 'sent', 2)
@@ -373,7 +376,7 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
                 toLabel = ''
                 t = (toAddress,)
                 shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put('''select label from addressbook where address=?''')
+                shared.sqlSubmitQueue.put('''SELECT label FROM addressbook WHERE address=?''')
                 shared.sqlSubmitQueue.put(t)
                 queryreturn = shared.sqlReturnQueue.get()
                 shared.sqlLock.release()
@@ -384,7 +387,6 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
                 shared.workerQueue.put(('sendmessage', toAddress))
 
                 # TODO - what should we do with ackdata.encode('hex') ?
-
 
 import sys
 smtpd.DEBUGSTREAM = sys.stdout
