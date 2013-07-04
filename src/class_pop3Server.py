@@ -161,7 +161,12 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
         if self.loggedin:
             raise Exception("Cannot login twice")
 
-        self.address = data
+        if '@' not in data:
+            yield "-ERR access denied"
+            return
+
+        capitalization, address = data.split('@', 1)
+        self.address = applyBase58Capitalization(address, int(capitalization))
 
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.address)
         if status != 'success':
@@ -176,7 +181,12 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
             shared.printLock.release()
             raise Exception("Invalid Bitmessage address: {}".format(self.address))
 
-        self.address = addBMIfNotPresent(self.address)
+        username = '{}@{}'.format(getBase58Capitaliation(self.address), self.address)
+
+        # Must login with the full E-mail address
+        if data != username:
+            yield "-ERR access denied"
+            return
 
         # Each identity must be enabled independly by setting the smtppop3password for the identity
         # If no password is set, then the identity is not available for SMTP/POP3 access.

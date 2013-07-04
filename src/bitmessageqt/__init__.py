@@ -2873,7 +2873,6 @@ class settingsDialog(QtGui.QDialog):
 
     def comboBoxEmailIdentitiesChanged(self, comboBoxIndex):
         address = str(self.ui.comboBoxEmailIdentities.itemData(comboBoxIndex).toPyObject())
-        self.ui.labelEmailIdentity.setText(address)
 
         try:
             shared.config.get(address, 'smtppop3password')
@@ -2882,6 +2881,8 @@ class settingsDialog(QtGui.QDialog):
         except:
             self.ui.labelAccountStatus.setText('Account inaccessible via SMTP/POP3. Set a password to grant access.')
             self.ui.pushButtonClearPassword.setEnabled(False)
+
+        self.ui.lineEditEmailAddress.setText('{}@{}'.format(getBase58Capitaliation(address), address))
 
     def click_ClearPassword(self):
         comboBoxIndex = self.ui.comboBoxEmailIdentities.currentIndex()

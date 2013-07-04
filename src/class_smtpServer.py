@@ -131,11 +131,19 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             self.close_when_done()
             return
 
-        z, self.address, pw = base64.b64decode(pw).split('\x00')
+        z, username, pw = base64.b64decode(pw).split('\x00')
         if z != '':
             self.push('501 encoding not understood')
             self.close_when_done()
             return
+
+        if '@' not in username:
+            self.push('530 Access denied.')
+            self.close_when_done()
+            return
+
+        capitalization, address = username.split('@', 1)
+        self.address = applyBase58Capitalization(address, int(capitalization))
 
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.address)
         if status != 'success':
@@ -150,7 +158,12 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             shared.printLock.release()
             raise Exception("Invalid Bitmessage address: {}".format(self.address))
 
-        self.address = addBMIfNotPresent(self.address)
+        self.fullUsername = '{}@{}'.format(getBase58Capitaliation(self.address), address)
+
+        if username != self.fullUsername:
+            self.push('530 Access denied.')
+            self.close_when_done()
+            return
 
         # Each identity must be enabled independly by setting the smtppop3password for the identity
         # If no password is set, then the identity is not available for SMTP/POP3 access.
@@ -206,8 +219,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         if self.__mailfrom:
             self.push('503 Error: nested MAIL command')
             return
-        _, domain = address.split('@', 1)
-        if domain != self.address:
+        if address != self.fullUsername:
             self.push('530 Access denied: address domain must match Bitmessage identity')
             return
         self.__mailfrom = address
@@ -228,7 +240,9 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         if not address:
             self.push('501 Syntax: RCPT TO: <address>')
             return
-        self.__rcpttos.append(address)
+        capitalization, address = address.split('@', 1)
+        realAddress = applyBase58Capitalization(address, int(capitalization))
+        self.__rcpttos.append('{}@{}'.format(getBase58Capitaliation(realAddress), realAddress))
         print >> smtpd.DEBUGSTREAM, 'recips:', self.__rcpttos
         self.push('250 Ok')
 

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Thu Jul 04 16:56:12 2013
+# Created: Fri Jul 05 01:56:20 2013
 #      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -253,12 +253,9 @@ class Ui_settingsDialog(object):
         self.labelAccountStatus = QtGui.QLabel(self.groupBox_3)
         self.labelAccountStatus.setObjectName(_fromUtf8("labelAccountStatus"))
         self.horizontalLayout_2.addWidget(self.labelAccountStatus)
-        self.gridLayout_9.addLayout(self.horizontalLayout_2, 1, 0, 1, 3)
+        self.gridLayout_9.addLayout(self.horizontalLayout_2, 2, 0, 1, 2)
         spacerItem10 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.gridLayout_9.addItem(spacerItem10, 0, 2, 1, 1)
-        self.labelEmailIdentity = QtGui.QLabel(self.groupBox_3)
-        self.labelEmailIdentity.setObjectName(_fromUtf8("labelEmailIdentity"))
-        self.gridLayout_9.addWidget(self.labelEmailIdentity, 0, 1, 1, 1)
+        self.gridLayout_9.addItem(spacerItem10, 0, 1, 1, 1)
         self.comboBoxEmailIdentities = QtGui.QComboBox(self.groupBox_3)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Preferred, QtGui.QSizePolicy.Fixed)
         sizePolicy.setHorizontalStretch(0)
@@ -267,6 +264,29 @@ class Ui_settingsDialog(object):
         self.comboBoxEmailIdentities.setSizePolicy(sizePolicy)
         self.comboBoxEmailIdentities.setObjectName(_fromUtf8("comboBoxEmailIdentities"))
         self.gridLayout_9.addWidget(self.comboBoxEmailIdentities, 0, 0, 1, 1)
+        self.horizontalLayout_5 = QtGui.QHBoxLayout()
+        self.horizontalLayout_5.setObjectName(_fromUtf8("horizontalLayout_5"))
+        self.label_18 = QtGui.QLabel(self.groupBox_3)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Preferred)
+        sizePolicy.setHorizontalStretch(1)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.label_18.sizePolicy().hasHeightForWidth())
+        self.label_18.setSizePolicy(sizePolicy)
+        self.label_18.setMaximumSize(QtCore.QSize(153, 16777215))
+        self.label_18.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.label_18.setObjectName(_fromUtf8("label_18"))
+        self.horizontalLayout_5.addWidget(self.label_18)
+        self.lineEditEmailAddress = QtGui.QLineEdit(self.groupBox_3)
+        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Fixed)
+        sizePolicy.setHorizontalStretch(0)
+        sizePolicy.setVerticalStretch(0)
+        sizePolicy.setHeightForWidth(self.lineEditEmailAddress.sizePolicy().hasHeightForWidth())
+        self.lineEditEmailAddress.setSizePolicy(sizePolicy)
+        self.lineEditEmailAddress.setMinimumSize(QtCore.QSize(0, 0))
+        self.lineEditEmailAddress.setReadOnly(True)
+        self.lineEditEmailAddress.setObjectName(_fromUtf8("lineEditEmailAddress"))
+        self.horizontalLayout_5.addWidget(self.lineEditEmailAddress)
+        self.gridLayout_9.addLayout(self.horizontalLayout_5, 1, 0, 1, 2)
         self.gridLayout_8.addWidget(self.groupBox_3, 7, 0, 1, 4)
         self.label_17 = QtGui.QLabel(self.tab_3)
         self.label_17.setObjectName(_fromUtf8("label_17"))
@@ -376,7 +396,8 @@ class Ui_settingsDialog(object):
         self.pushButtonSetPassword.setText(_translate("settingsDialog", "Set Password...", None))
         self.pushButtonClearPassword.setText(_translate("settingsDialog", "Clear Password", None))
         self.labelAccountStatus.setText(_translate("settingsDialog", "Account Inaccessible via SMTP/POP3. Set a password to allow access.", None))
-        self.labelEmailIdentity.setText(_translate("settingsDialog", "TextLabel", None))
+        self.label_18.setText(_translate("settingsDialog", "E-Mail Address for this Identity:", None))
+        self.lineEditEmailAddress.setText(_translate("settingsDialog", "fsdpffffffffffffffffffffffffffffffffffffffffffffffasdpofiasjdf", None))
         self.label_17.setText(_translate("settingsDialog", "POP3 Port", None))
         self.label_16.setText(_translate("settingsDialog", "SMTP Port:", None))
         self.checkBoxEnablePOP3SSL.setText(_translate("settingsDialog", "SSL", None))

@@ -526,7 +526,7 @@
           <string>Identities</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_9">
-          <item row="1" column="0" colspan="3">
+          <item row="2" column="0" colspan="2">
            <layout class="QHBoxLayout" name="horizontalLayout_2">
             <item>
              <widget class="QPushButton" name="pushButtonSetPassword">
@@ -564,7 +564,7 @@
             </item>
            </layout>
           </item>
-          <item row="0" column="2">
+          <item row="0" column="1">
            <spacer name="horizontalSpacer_8">
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
@@ -577,13 +577,6 @@
             </property>
            </spacer>
           </item>
-          <item row="0" column="1">
-           <widget class="QLabel" name="labelEmailIdentity">
-            <property name="text">
-             <string>TextLabel</string>
-            </property>
-           </widget>
-          </item>
           <item row="0" column="0">
            <widget class="QComboBox" name="comboBoxEmailIdentities">
             <property name="sizePolicy">
@@ -593,6 +586,54 @@
              </sizepolicy>
             </property>
            </widget>
+          </item>
+          <item row="1" column="0" colspan="2">
+           <layout class="QHBoxLayout" name="horizontalLayout_5">
+            <item>
+             <widget class="QLabel" name="label_18">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Minimum" vsizetype="Preferred">
+                <horstretch>1</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="maximumSize">
+               <size>
+                <width>153</width>
+                <height>16777215</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>E-Mail Address for this Identity:</string>
+              </property>
+              <property name="alignment">
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+              </property>
+             </widget>
+            </item>
+            <item>
+             <widget class="QLineEdit" name="lineEditEmailAddress">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Expanding" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimumSize">
+               <size>
+                <width>0</width>
+                <height>0</height>
+               </size>
+              </property>
+              <property name="text">
+               <string>fsdpffffffffffffffffffffffffffffffffffffffffffffffasdpofiasjdf</string>
+              </property>
+              <property name="readOnly">
+               <bool>true</bool>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>

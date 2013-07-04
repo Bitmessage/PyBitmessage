@@ -199,6 +199,26 @@ def addBMIfNotPresent(address):
     else:
         return address
 
+def getBase58Capitaliation(address):
+    if address[:3] == 'BM-':
+        address = address[3:]
+    i = []
+    for c in address:
+        i.append('1' if c.isupper() else '0')
+    return int(''.join(i), 2)
+
+def applyBase58Capitalization(address, capitalization):
+    address = address.lower()
+    if address.startswith('bm-'):
+        address = address[3:]
+    n = []
+    for i, c in enumerate(address):
+        if (capitalization & (1 << (len(address)-i-1))) != 0:
+            n.append(c.upper())
+        else:
+            n.append(c)
+    return 'BM-' + ''.join(n)
+
 def addressStream(address):
     #returns the stream number of an address or False if there is a problem with the address.
 
