@@ -183,7 +183,7 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
 
         username = '{}@{}'.format(getBase58Capitaliation(self.address), self.address)
 
-        # Must login with the full E-mail address
+        # Must login with the full E-mail address and capitalization
         if data != username:
             yield "-ERR access denied"
             return

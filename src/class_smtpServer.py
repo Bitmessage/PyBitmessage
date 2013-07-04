@@ -160,6 +160,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
 
         self.fullUsername = '{}@{}'.format(getBase58Capitaliation(self.address), address)
 
+        # Must match full email address with capitalization
         if username != self.fullUsername:
             self.push('530 Access denied.')
             self.close_when_done()
