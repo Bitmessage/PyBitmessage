@@ -130,6 +130,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             self.push('501 encoding not understood')
             self.close_when_done()
             return
+
         z, self.address, pw = base64.b64decode(pw).split('\x00')
         if z != '':
             self.push('501 encoding not understood')
@@ -274,7 +275,7 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
 
         smtpd.SMTPServer.__init__(self, ('127.0.0.1', smtpport), None)
         shared.printLock.acquire()
-        print "SMTP server started"
+        print "SMTP server started: SSL enabled={}".format(str(self.ssl))
         shared.printLock.release()
 
     def handle_accept(self):

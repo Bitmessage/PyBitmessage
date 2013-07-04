@@ -12,4 +12,8 @@ class asyncoreThread(threading.Thread):
         print "Asyncore thread started"
         shared.printLock.release()
 
-        asyncore.loop(timeout=1) # Despite the horrible parameter name, this function will not timeout until all channels are closed.
+        while True:
+            asyncore.loop(timeout=1) # Despite the horrible parameter name, this function will not timeout until all channels are closed.
+            shared.printLock.acquire()
+            print("all asyncore modules dead!")
+            shared.printLock.release()

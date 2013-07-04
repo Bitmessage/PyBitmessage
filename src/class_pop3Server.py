@@ -267,7 +267,7 @@ class bitmessagePOP3Server(asyncore.dispatcher):
         self.listen(10)
 
         shared.printLock.acquire()
-        print "POP3 server started"
+        print "POP3 server started: SSL enabled={}".format(str(self.ssl))
         shared.printLock.release()
 
     def handle_accept(self):

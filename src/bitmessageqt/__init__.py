@@ -1741,6 +1741,26 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxShowTrayNotifications.isChecked()))
             shared.config.set('bitmessagesettings', 'startintray', str(
                 self.settingsDialogInstance.ui.checkBoxStartInTray.isChecked()))
+            shared.config.set('bitmessagesettings', 'smtppop3enable', str(
+                self.settingsDialogInstance.ui.checkBoxEnableSMTPPOP3Servers.isChecked()))
+            shared.config.set('bitmessagesettings', 'smtpport', str(
+                self.settingsDialogInstance.ui.lineEditSMTPPort.text()))
+            shared.config.set('bitmessagesettings', 'smtpssl', str(
+                self.settingsDialogInstance.ui.checkBoxEnableSMTPSSL.isChecked()))
+            shared.config.set('bitmessagesettings', 'pop3port', str(
+                self.settingsDialogInstance.ui.lineEditPOP3Port.text()))
+            shared.config.set('bitmessagesettings', 'pop3ssl', str(
+                self.settingsDialogInstance.ui.checkBoxEnablePOP3SSL.isChecked()))
+            if self.settingsDialogInstance.sslCertFile is None:
+                shared.config.remove_option('bitmessagesettings', 'certfile')
+            else:
+                shared.config.set('bitmessagesettings', 'certfile', str(
+                    self.settingsDialogInstance.sslCertFile))
+            if self.settingsDialogInstance.sslKeyFile is None:
+                shared.config.remove_option('bitmessagesettings', 'keyfile')
+            else:
+                shared.config.set('bitmessagesettings', 'keyfile', str(
+                    self.settingsDialogInstance.sslKeyFile))
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
                     "MainWindow", "You must restart Bitmessage for the port number change to take effect."))
@@ -1836,6 +1856,11 @@ class MyForm(QtGui.QMainWindow):
                 shared.knownNodesLock.release()
                 os.remove('keys.dat')
                 os.remove('knownnodes.dat')
+
+            # We'll always restart the servers just in case ports/keys/etc changed.
+            shared.stopSMTPOP3Servers()
+            if self.settingsDialogInstance.ui.checkBoxEnableSMTPPOP3Servers.isChecked():
+                shared.startSMTPPOP3Servers()
 
     def click_radioButtonBlacklist(self):
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
@@ -2745,7 +2770,157 @@ class settingsDialog(QtGui.QDialog):
         else:
             self.ui.comboBoxMaxCores.setCurrentIndex(5)"""
 
+        # SMTP & POP3 tab
+        self.ui.checkBoxEnableSMTPPOP3Servers.setChecked(
+            shared.config.getboolean('bitmessagesettings', 'smtppop3enable'))
+        try:
+            self.ui.lineEditSMTPPort.setText(
+                str(shared.config.getint('bitmessagesettings', 'smtpport')))
+            self.ui.checkBoxEnableSMTPSSL.setChecked(
+                shared.config.getboolean('bitmessagesettings', 'smtpssl'))
+        except:
+            self.ui.lineEditSMTPPort.setText('10025')
+            self.ui.checkBoxEnableSMTPSSL.setChecked(False)
+        try:
+            self.ui.lineEditPOP3Port.setText(
+                str(shared.config.getint('bitmessagesettings', 'pop3port')))
+            self.ui.checkBoxEnablePOP3SSL.setChecked(
+                shared.config.getboolean('bitmessagesettings', 'pop3ssl'))
+        except:
+            self.ui.lineEditPOP3Port.setText('10110')
+            self.ui.checkBoxEnablePOP3SSL.setChecked(False)
+
+        try:
+            fn = shared.config.get('bitmessagesettings', 'certfile')
+            self.configurePushButtonFindSSLCerficiate(fn)
+        except:
+            self.configurePushButtonFindSSLCerficiate(None)
+
+        try:
+            fn = shared.config.get('bitmessagesettings', 'keyfile')
+            self.configurePushButtonFindSSLKeyfile(fn)
+        except:
+            self.configurePushButtonFindSSLKeyfile(None)
+
+        configSections = shared.config.sections()
+        for addressInKeysFile in configSections:
+            if addressInKeysFile != 'bitmessagesettings':
+                status, addressVersionNumber, streamNumber, hash = decodeAddress(
+                    addressInKeysFile)
+
+                if status != 'success':
+                    continue
+                isEnabled = shared.config.getboolean(
+                    addressInKeysFile, 'enabled')
+                if not isEnabled:
+                    continue
+
+                self.ui.comboBoxEmailIdentities.insertItem(0, unicode(shared.config.get(
+                    addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
+ 
+        self.ui.comboBoxEmailIdentities.setCurrentIndex(0)
+        self.comboBoxEmailIdentitiesChanged(0)
+        QtCore.QObject.connect(self.ui.comboBoxEmailIdentities, QtCore.SIGNAL(
+            "currentIndexChanged(int)"), self.comboBoxEmailIdentitiesChanged)
+
+        QtCore.QObject.connect(self.ui.pushButtonClearPassword, QtCore.SIGNAL(
+            "clicked()"), self.click_ClearPassword)
+        QtCore.QObject.connect(self.ui.pushButtonSetPassword, QtCore.SIGNAL(
+            "clicked()"), self.click_SetPassword)
+        QtCore.QObject.connect(self.ui.pushButtonFindSSLCertificate, QtCore.SIGNAL(
+            "clicked()"), self.click_FindSSLCertificate)
+        QtCore.QObject.connect(self.ui.pushButtonFindSSLKeyfile, QtCore.SIGNAL(
+            "clicked()"), self.click_FindSSLKeyfile)
+
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+
+    def accept(self):
+        if self.areSSLFilesOK():
+            QtGui.QDialog.accept(self)
+        else:
+            QtGui.QMessageBox.information(self, 'SSL Files', _translate(
+                    "Settings", "Because you have enabled SSL on either SMTP or POP3 servers, you must specify valid SSL Certificate and Key files before continuing."), QMessageBox.Ok)
+
+    def configurePushButtonFindSSLCerficiate(self, fn):
+        self.ui.pushButtonFindSSLCertificate.setText('Find SSL Certificate...')
+        try:
+            self.sslCertFile = fn
+            if fn is not None and os.path.exists(fn):
+                self.ui.pushButtonFindSSLCertificate.setText('SSL Certificate: {} ...'.format(fn))
+        except:
+            pass
+
+    def configurePushButtonFindSSLKeyfile(self, fn):
+        self.ui.pushButtonFindSSLKeyfile.setText('Find SSL Keyfile...')
+        try:
+            self.sslKeyFile = fn
+            if fn is not None and os.path.exists(fn):
+                self.ui.pushButtonFindSSLKeyfile.setText('SSL Keyfile: {} ...'.format(fn))
+        except:
+            pass
+
+    def areSSLFilesOK(self):
+        if not self.ui.checkBoxEnableSMTPPOP3Servers.isChecked():
+            return True
+
+        if not self.ui.checkBoxEnablePOP3SSL.isChecked() and not self.ui.checkBoxEnableSMTPSSL.isChecked():
+            return True
+
+        if self.sslCertFile is not None and self.sslKeyFile is not None and os.path.exists(self.sslCertFile) and os.path.exists(self.sslKeyFile):
+            return True
+
+        return False
+
+    def comboBoxEmailIdentitiesChanged(self, comboBoxIndex):
+        address = str(self.ui.comboBoxEmailIdentities.itemData(comboBoxIndex).toPyObject())
+        self.ui.labelEmailIdentity.setText(address)
+
+        try:
+            shared.config.get(address, 'smtppop3password')
+            self.ui.pushButtonClearPassword.setEnabled(True)
+            self.ui.labelAccountStatus.setText('Password set.')
+        except:
+            self.ui.labelAccountStatus.setText('Account inaccessible via SMTP/POP3. Set a password to grant access.')
+            self.ui.pushButtonClearPassword.setEnabled(False)
+
+    def click_ClearPassword(self):
+        comboBoxIndex = self.ui.comboBoxEmailIdentities.currentIndex()
+        address = str(self.ui.comboBoxEmailIdentities.itemData(comboBoxIndex).toPyObject())
+        try:
+            shared.config.remove_option(address, 'smtppop3password')
+        except:
+            pass
+        self.comboBoxEmailIdentitiesChanged(comboBoxIndex)
+
+    def click_SetPassword(self):
+        comboBoxIndex = self.ui.comboBoxEmailIdentities.currentIndex()
+        address = str(self.ui.comboBoxEmailIdentities.itemData(comboBoxIndex).toPyObject())
+
+        text, response = QtGui.QInputDialog.getText(self, "Set Password", "Enter password:", QtGui.QLineEdit.Password)
+        if response:
+            try:
+                shared.config.set(address, 'smtppop3password', str(text))
+            except:
+                import traceback
+                traceback.print_exc()
+                pass
+            self.comboBoxEmailIdentitiesChanged(comboBoxIndex)
+
+    def click_FindSSLCertificate(self):
+        text = QtGui.QFileDialog.getOpenFileName(self, "Open SSL Certificate", os.getcwd(), "Certificate files (*.crt *.pem)")
+        if os.path.exists(text):
+            text = os.path.normpath(str(text))
+        else:
+            text = None
+        self.configurePushButtonFindSSLCerficiate(text)
+
+    def click_FindSSLKeyfile(self):
+        text = QtGui.QFileDialog.getOpenFileName(self, "Open SSL Key file", os.getcwd(), "Key files (*.key *.pem)")
+        if os.path.exists(text):
+            text = os.path.normpath(str(text))
+        else:
+            text = None
+        self.configurePushButtonFindSSLKeyfile(text)
 
     def comboBoxProxyTypeChanged(self, comboBoxIndex):
         if comboBoxIndex == 0:

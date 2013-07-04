@@ -736,12 +736,9 @@ if __name__ == "__main__":
     singleCleanerThread.start()
 
     # Start the SMTP and POP3 server if necessary
-    smtpServer = None
-    pop3Server = None
     try:
-        if shared.config.get('bitmessagesettings', 'smtppop3enable') == 'true':
-            smtpServer = bitmessageSMTPServer()
-            pop3Server = bitmessagePOP3Server()
+        if shared.config.getboolean('bitmessagesettings', 'smtppop3enable'):
+            shared.startSMTPPOP3Servers()
     except NoOptionError:
         pass
 
