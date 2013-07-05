@@ -14,6 +14,7 @@ except ImportError:
 from addresses import *
 import shared
 from bitmessageui import *
+from class_namecoin import *
 from newaddressdialog import *
 from newsubscriptiondialog import *
 from regenerateaddresses import *
@@ -1457,7 +1458,13 @@ class MyForm(QtGui.QMainWindow):
                 "MainWindow", "Right click one or more entries in your address book and select \'Send message to this address\'."))
 
     def click_pushButtonFetchNamecoinID(self):
-        self.ui.lineEditTo.setText ("BM-Foobar")
+        nc = namecoinConnection()
+        err, addr = nc.query("")
+        if err is not None:
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: " + err))
+        else:
+            self.ui.lineEditTo.setText(addr)
 
     def redrawLabelFrom(self, index):
         self.ui.labelFrom.setText(
