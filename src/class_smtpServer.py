@@ -31,6 +31,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         self.__data = ''
         self.__fqdn = socket.getfqdn()
         self.__version = 'Python SMTP proxy version 0.2a'
+        self.__invalid_command_count = 0
         self.logged_in = False
         try:
             self.__peer = conn.getpeername()
@@ -53,6 +54,15 @@ class bitmessageSMTPChannel(asynchat.async_chat):
     def collect_incoming_data(self, data):
         self.__line.append(data)
 
+    # Close the connection after enough errors
+    def invalid_command(self, msg):
+        self.__invalid_command_count += 1
+        if self.__invalid_command_count >= 10:
+            self.push(msg + " (closing connection)")
+            self.close_when_done()
+        else:
+            self.push(msg)
+
     # Implementation of base class abstract method
     def found_terminator(self):
         line = ''.join(self.__line)
@@ -60,7 +70,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         self.__line = []
         if self.__state == self.COMMAND:
             if not line:
-                self.push('500 Error: bad syntax')
+                self.invalid_command('500 Error: bad syntax')
                 return
             method = None
             i = line.find(' ')
@@ -72,13 +82,13 @@ class bitmessageSMTPChannel(asynchat.async_chat):
                 arg = line[i+1:].strip()
             method = getattr(self, 'smtp_' + command, None)
             if not method:
-                self.push('502 Error: command "%s" not implemented' % command)
+                self.invalid_command('502 Error: command "%s" not implemented' % command)
                 return
             method(arg)
             return
         else:
             if self.__state != self.DATA:
-                self.push('451 Internal confusion')
+                self.invalid_command('451 Internal confusion')
                 return
             # Remove extraneous carriage returns and de-transparency according
             # to RFC 821, Section 4.5.2.
@@ -110,10 +120,11 @@ class bitmessageSMTPChannel(asynchat.async_chat):
 
     def smtp_EHLO(self, arg):
         if not arg:
-            self.push('501 Syntax: EHLO hostname')
+            self.invalid_command('501 Syntax: EHLO hostname')
             return
         if self.__greeting:
-            self.push('503 Duplicate HELO/EHLO')
+            self.invalid_command('503 Duplicate HELO/EHLO')
+            return
         else:
             self.__greeting = arg
             self.push('250-%s offers:' % self.__fqdn)
@@ -121,10 +132,10 @@ class bitmessageSMTPChannel(asynchat.async_chat):
 
     def smtp_HELO(self, arg):
         if not arg:
-            self.push('501 Syntax: HELO hostname')
+            self.invalid_command('501 Syntax: HELO hostname')
             return
         if self.__greeting:
-            self.push('503 Duplicate HELO/EHLO')
+            self.invalid_command('503 Duplicate HELO/EHLO')
         else:
             self.__greeting = arg
             self.push('250 %s' % self.__fqdn)
@@ -132,7 +143,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
     def smtp_AUTH(self, arg):
         encoding, pw = arg.split(' ')
         if encoding != 'PLAIN':
-            self.push('501 method not understood')
+            self.invalid_command('501 method not understood')
             return
 
         try:
@@ -141,11 +152,11 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             z = 'error'
 
         if z != '':
-            self.push('501 method not understood')
+            self.invalid_command('501 method not understood')
             return
 
         if '@' not in username:
-            self.push('530 Access denied.')
+            self.invalid_command('530 Access denied.')
             return
 
         capitalization, address = username.split('@', 1)
@@ -168,7 +179,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
 
         # Must match full email address with capitalization
         if username != self.fullUsername:
-            self.push('530 Access denied.')
+            self.invalid_command('530 Access denied.')
             return
 
         # Each identity must be enabled independly by setting the smtppop3password for the identity
@@ -183,11 +194,11 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         except:
             pass
 
-        self.push('530 Access denied.')
+        self.invalid_command('530 Access denied.')
 
     def smtp_NOOP(self, arg):
         if arg:
-            self.push('501 Syntax: NOOP')
+            self.invalid_command('501 Syntax: NOOP')
         else:
             self.push('250 Ok')
 
@@ -215,19 +226,19 @@ class bitmessageSMTPChannel(asynchat.async_chat):
 
         address = self.__getaddr('FROM:', arg) if arg else None
         if not address:
-            self.push('501 Syntax: MAIL FROM:<address>')
+            self.invalid_command('501 Syntax: MAIL FROM: <address>')
             return
 
         if self.__mailfrom:
-            self.push('503 Error: nested MAIL command')
+            self.invalid_command('503 Error: nested MAIL command')
             return
 
         if not self.logged_in:
-            self.push('503 Not authenticated.')
+            self.invalid_command('503 Not authenticated.')
             return
 
         if address != self.fullUsername:
-            self.push('530 Access denied: address domain must match Bitmessage identity')
+            self.invalid_command('530 Access denied: address domain must match Bitmessage identity')
             return
 
         self.__mailfrom = address
@@ -237,15 +248,15 @@ class bitmessageSMTPChannel(asynchat.async_chat):
     def smtp_RCPT(self, arg):
         print >> smtpd.DEBUGSTREAM, '===> RCPT', arg
         if not self.__mailfrom:
-            self.push('503 Error: need MAIL command')
+            self.invalid_command('503 Error: need MAIL command')
             return
         if not self.logged_in:
             # This will never happen. :)
-            self.push('503 Not authenticated.')
+            self.invalid_command('503 Not authenticated.')
             return
         address = self.__getaddr('TO:', arg) if arg else None
         if not address:
-            self.push('501 Syntax: RCPT TO: <address>')
+            self.invalid_command('501 Syntax: RCPT TO: <address>')
             return
         capitalization, address = address.split('@', 1)
         realAddress = applyBase58Capitalization(address, int(capitalization))
@@ -255,7 +266,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
 
     def smtp_RSET(self, arg):
         if arg:
-            self.push('501 Syntax: RSET')
+            self.invalid_command('501 Syntax: RSET')
             return
         # Resets the sender, recipients, and data, but not the greeting
         self.__mailfrom = None
@@ -266,13 +277,13 @@ class bitmessageSMTPChannel(asynchat.async_chat):
 
     def smtp_DATA(self, arg):
         if not self.logged_in:
-            self.push('503 Not authenticated.')
+            self.invalid_command('503 Not authenticated.')
             return
         if not self.__rcpttos:
-            self.push('503 Error: need RCPT command')
+            self.invalid_command('503 Error: need RCPT command')
             return
         if arg:
-            self.push('501 Syntax: DATA')
+            self.invalid_command('501 Syntax: DATA')
             return
         self.__state = self.DATA
         self.set_terminator('\r\n.\r\n')
