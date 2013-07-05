@@ -22,6 +22,11 @@
 import base64
 import json
 import socket
+import sys
+
+import shared
+
+configSection = "bitmessagesettings"
 
 # Error thrown when the RPC call returns an error.
 class RPCError (Exception):
@@ -40,10 +45,11 @@ class namecoinConnection (object):
     queryid = 1
 
     def __init__ (self):
-        self.user = "daniel"
-        self.password = "password"
-        self.host = "localhost"
-        self.port = "8336"
+        ensureNamecoinOptions ()
+        self.user = shared.config.get (configSection, "namecoinrpcuser")
+        self.password = shared.config.get (configSection, "namecoinrpcpassword")
+        self.host = shared.config.get (configSection, "namecoinrpchost")
+        self.port = shared.config.get (configSection, "namecoinrpcport")
 
     # Query for the bitmessage address corresponding to the given identity
     # string.  If it doesn't contain a slash, id/ is prepended.  We return
@@ -138,3 +144,67 @@ class namecoinConnection (object):
 
         except socket.error as exc:
             raise Exception ("Socket error in RPC connection: %s" % str (exc))
+
+# Look up the namecoin data folder.
+# FIXME: Check whether this works on other platforms as well!
+def lookupNamecoinFolder ():
+    app = "namecoin"
+    from os import path, environ
+    if sys.platform == "darwin":
+        if "HOME" in environ:
+            dataFolder = path.join (os.environ["HOME"],
+                                    "Library/Application Support/", app) + '/'
+        else:
+            print ("Could not find home folder, please report this message"
+                    + " and your OS X version to the BitMessage Github.")
+            sys.exit()
+
+    elif "win32" in sys.platform or "win64" in sys.platform:
+        dataFolder = path.join(environ["APPDATA"], app) + "\\"
+    else:
+        dataFolder = path.join(environ["HOME"], ".%s" % app) + "/"
+
+    return dataFolder
+
+# Ensure all namecoin options are set, by setting those to default values
+# that aren't there.
+def ensureNamecoinOptions ():
+    if not shared.config.has_option (configSection, "namecoinrpchost"):
+        shared.config.set (configSection, "namecoinrpchost", "localhost")
+    if not shared.config.has_option (configSection, "namecoinrpcport"):
+        shared.config.set (configSection, "namecoinrpcport", "8336")
+
+    hasUser = shared.config.has_option (configSection, "namecoinrpcuser")
+    hasPass = shared.config.has_option (configSection, "namecoinrpcpassword")
+
+    # Try to read user/password from .namecoin configuration file.
+    if (not hasUser) or (not hasPass):
+        try:
+            nmcFolder = lookupNamecoinFolder ()
+            nmcConfig = nmcFolder + "bitcoin.conf"
+            nmc = open (nmcConfig, "r")
+
+            while True:
+                line = nmc.readline ()
+                if line == "":
+                    break
+                parts = line.split ("=")
+                if len (parts) == 2:
+                    key = parts[0]
+                    val = parts[1].rstrip ()
+
+                    if key == "rpcuser" and not hasUser:
+                        shared.config.set (configSection,
+                                           "namecoinrpcuser", val)
+                    if key == "rpcpassword" and not hasPass:
+                        shared.config.set (configSection,
+                                           "namecoinrpcpassword", val)
+                    
+            nmc.close ()
+
+        except Exception as exc:
+            print "Failure reading namecoin config file: %s" % str (exc)
+            if (not hasUser):
+                shared.config.set (configSection, "namecoinrpcuser", "")
+            if (not hasPass):
+                shared.config.set (configSection, "namecoinrpcpassword", "")
