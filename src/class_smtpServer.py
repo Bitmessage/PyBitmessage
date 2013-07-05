@@ -107,7 +107,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
                                                        self.__rcpttos,
                                                        self.__data)
             except Exception, e:
-                status = '451 Requested action aborted: {}'.format(str(e))
+                status = '554 Requested transaction failed: {}'.format(str(e))
 
             self.__rcpttos = []
             self.__mailfrom = None
@@ -158,7 +158,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             return
 
         if encoding != 'PLAIN':
-            self.invalid_command('501 method not understood')
+            self.invalid_command('502 method not understood')
             return
 
         try:
@@ -167,7 +167,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             z = 'error'
 
         if z != '':
-            self.invalid_command('501 method not understood')
+            self.invalid_command('501 authorization not understood')
             return
 
         if '@' not in username:
@@ -253,7 +253,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             return
 
         if address != self.fullUsername:
-            self.invalid_command('530 Access denied: address domain must match Bitmessage identity')
+            self.invalid_command('530 Access denied: address must be the same as the authorized account')
             return
 
         self.__mailfrom = address
@@ -271,9 +271,13 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             return
         address = self.__getaddr('TO:', arg) if arg else None
         if not address:
-            self.invalid_command('501 Syntax: RCPT TO: <address>')
+            self.invalid_command('501 Syntax: RCPT TO: <user@address>')
             return
-        capitalization, address = address.split('@', 1)
+        try:
+            capitalization, address = address.split('@', 1)
+        except ValueError:
+            self.invalid_command('501 Syntax: RCPT TO: <user@address>')
+            return
         realAddress = applyBase58Capitalization(address, int(capitalization))
         self.__rcpttos.append('{}@{}'.format(getBase58Capitaliation(realAddress), realAddress))
         print >> smtpd.DEBUGSTREAM, 'recips:', self.__rcpttos
@@ -336,7 +340,7 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
         #print(type(address))
 
         message = parser.Parser().parsestr(data)
-        message['Bitmessage-Version'] = shared.softwareVersion
+        message['X-Bitmessage-Version'] = shared.softwareVersion
         print(message)
 
         fp = StringIO()
