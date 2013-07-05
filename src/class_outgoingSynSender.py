@@ -61,15 +61,15 @@ class outgoingSynSender(threading.Thread):
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.settimeout(20)
             if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and shared.verbose >= 2:
-                shared.printLock.acquire()
-                print 'Trying an outgoing connection to', HOST, ':', PORT
-                shared.printLock.release()
+                with shared.printLock:
+                    print 'Trying an outgoing connection to', HOST, ':', PORT
+
                 # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS4a':
                 if shared.verbose >= 2:
-                    shared.printLock.acquire()
-                    print '(Using SOCKS4a) Trying an outgoing connection to', HOST, ':', PORT
-                    shared.printLock.release()
+                    with shared.printLock:
+                        print '(Using SOCKS4a) Trying an outgoing connection to', HOST, ':', PORT
+
                 proxytype = socks.PROXY_TYPE_SOCKS4
                 sockshostname = shared.config.get(
                     'bitmessagesettings', 'sockshostname')
@@ -88,9 +88,9 @@ class outgoingSynSender(threading.Thread):
                         proxytype, sockshostname, socksport, rdns)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
                 if shared.verbose >= 2:
-                    shared.printLock.acquire()
-                    print '(Using SOCKS5) Trying an outgoing connection to', HOST, ':', PORT
-                    shared.printLock.release()
+                    with shared.printLock:
+                        print '(Using SOCKS5) Trying an outgoing connection to', HOST, ':', PORT
+
                 proxytype = socks.PROXY_TYPE_SOCKS5
                 sockshostname = shared.config.get(
                     'bitmessagesettings', 'sockshostname')
@@ -116,9 +116,9 @@ class outgoingSynSender(threading.Thread):
                 rd.setup(sock, HOST, PORT, self.streamNumber,
                          someObjectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections)
                 rd.start()
-                shared.printLock.acquire()
-                print self, 'connected to', HOST, 'during an outgoing attempt.'
-                shared.printLock.release()
+                with shared.printLock:
+                    print self, 'connected to', HOST, 'during an outgoing attempt.'
+
 
                 sd = sendDataThread()
                 sd.setup(sock, HOST, PORT, self.streamNumber,
@@ -128,18 +128,18 @@ class outgoingSynSender(threading.Thread):
 
             except socks.GeneralProxyError as err:
                 if shared.verbose >= 2:
-                    shared.printLock.acquire()
-                    print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
-                    shared.printLock.release()
+                    with shared.printLock:
+                        print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
+
                 PORT, timeLastSeen = shared.knownNodes[
                     self.streamNumber][HOST]
                 if (int(time.time()) - timeLastSeen) > 172800 and len(shared.knownNodes[self.streamNumber]) > 1000:  # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the shared.knownNodes data-structure.
                     shared.knownNodesLock.acquire()
                     del shared.knownNodes[self.streamNumber][HOST]
                     shared.knownNodesLock.release()
-                    shared.printLock.acquire()
-                    print 'deleting ', HOST, 'from shared.knownNodes because it is more than 48 hours old and we could not connect to it.'
-                    shared.printLock.release()
+                    with shared.printLock:
+                        print 'deleting ', HOST, 'from shared.knownNodes because it is more than 48 hours old and we could not connect to it.'
+
             except socks.Socks5AuthError as err:
                 shared.UISignalQueue.put((
                     'updateStatusBar', tr.translateText(
@@ -154,18 +154,18 @@ class outgoingSynSender(threading.Thread):
                     print 'Bitmessage MIGHT be having trouble connecting to the SOCKS server. ' + str(err)
                 else:
                     if shared.verbose >= 1:
-                        shared.printLock.acquire()
-                        print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
-                        shared.printLock.release()
+                        with shared.printLock:
+                            print 'Could NOT connect to', HOST, 'during outgoing attempt.', err
+
                     PORT, timeLastSeen = shared.knownNodes[
                         self.streamNumber][HOST]
                     if (int(time.time()) - timeLastSeen) > 172800 and len(shared.knownNodes[self.streamNumber]) > 1000:  # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownNodes data-structure.
                         shared.knownNodesLock.acquire()
                         del shared.knownNodes[self.streamNumber][HOST]
                         shared.knownNodesLock.release()
-                        shared.printLock.acquire()
-                        print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
-                        shared.printLock.release()
+                        with shared.printLock:
+                            print 'deleting ', HOST, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
+
             except Exception as err:
                 sys.stderr.write(
                     'An exception has occurred in the outgoingSynSender thread that was not caught by other exception types: ')
