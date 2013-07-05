@@ -248,11 +248,6 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         self.push('250 Ok')
 
     def smtp_RSET(self, arg):
-        if not self.logged_in:
-            self.push('503 Not authenticated.')
-            self.close_when_done()
-            return
-
         if arg:
             self.push('501 Syntax: RSET')
             return
