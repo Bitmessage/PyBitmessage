@@ -103,6 +103,11 @@ class bitmessageSMTPChannel(asynchat.async_chat):
                 self.push(status)
 
     # SMTP and ESMTP commands
+    def smtp_HELP(self, arg):
+        self.push('214 HELP HELO EHLO AUTH NOOP QUIT MAIL RCPT RSET DATA')
+        # TODO - detailed help for all commands.
+        return
+
     def smtp_EHLO(self, arg):
         if not arg:
             self.push('501 Syntax: EHLO hostname')
@@ -130,7 +135,11 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             self.push('501 method not understood')
             return
 
-        z, username, pw = base64.b64decode(pw).split('\x00')
+        try:
+            z, username, pw = base64.b64decode(pw).split('\x00')
+        except:
+            z = 'error'
+
         if z != '':
             self.push('501 method not understood')
             return
