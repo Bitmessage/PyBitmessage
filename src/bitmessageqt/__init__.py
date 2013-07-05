@@ -2771,8 +2771,12 @@ class settingsDialog(QtGui.QDialog):
             self.ui.comboBoxMaxCores.setCurrentIndex(5)"""
 
         # SMTP & POP3 tab
-        self.ui.checkBoxEnableSMTPPOP3Servers.setChecked(
-            shared.config.getboolean('bitmessagesettings', 'smtppop3enable'))
+        try:
+            self.ui.checkBoxEnableSMTPPOP3Servers.setChecked(
+                shared.config.getboolean('bitmessagesettings', 'smtppop3enable'))
+        except:
+            self.ui.checkBoxEnableSMTPPOP3Servers.setChecked(False)
+
         try:
             self.ui.lineEditSMTPPort.setText(
                 str(shared.config.getint('bitmessagesettings', 'smtpport')))
