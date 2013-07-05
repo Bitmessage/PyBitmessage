@@ -2941,6 +2941,7 @@ try:
     import gevent
 except ImportError as ex:
     print "cannot find gevent"
+    gevent = None
 else:
     def mainloop(app):
         while True:
