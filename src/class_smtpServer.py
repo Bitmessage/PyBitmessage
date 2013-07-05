@@ -141,7 +141,12 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             self.push('250 %s' % self.__fqdn)
 
     def smtp_AUTH(self, arg):
-        encoding, pw = arg.split(' ')
+        try:
+            encoding, pw = arg.split(' ')
+        except ValueError:
+            self.invalid_command('501 Syntax: AUTH PLAIN auth')
+            return
+
         if encoding != 'PLAIN':
             self.invalid_command('501 method not understood')
             return
