@@ -128,18 +128,15 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         encoding, pw = arg.split(' ')
         if encoding != 'PLAIN':
             self.push('501 encoding not understood')
-            self.close_when_done()
             return
 
         z, username, pw = base64.b64decode(pw).split('\x00')
         if z != '':
             self.push('501 encoding not understood')
-            self.close_when_done()
             return
 
         if '@' not in username:
             self.push('530 Access denied.')
-            self.close_when_done()
             return
 
         capitalization, address = username.split('@', 1)
@@ -163,7 +160,6 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         # Must match full email address with capitalization
         if username != self.fullUsername:
             self.push('530 Access denied.')
-            self.close_when_done()
             return
 
         # Each identity must be enabled independly by setting the smtppop3password for the identity
@@ -179,7 +175,6 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             pass
 
         self.push('530 Access denied.')
-        self.close_when_done()
 
     def smtp_NOOP(self, arg):
         if arg:
@@ -209,7 +204,6 @@ class bitmessageSMTPChannel(asynchat.async_chat):
     def smtp_MAIL(self, arg):
         if not self.logged_in:
             self.push('503 Not authenticated.')
-            self.close_when_done()
             return
 
         print >> smtpd.DEBUGSTREAM, '===> MAIL', arg
@@ -230,7 +224,6 @@ class bitmessageSMTPChannel(asynchat.async_chat):
     def smtp_RCPT(self, arg):
         if not self.logged_in:
             self.push('503 Not authenticated.')
-            self.close_when_done()
             return
 
         print >> smtpd.DEBUGSTREAM, '===> RCPT', arg
@@ -261,7 +254,6 @@ class bitmessageSMTPChannel(asynchat.async_chat):
     def smtp_DATA(self, arg):
         if not self.logged_in:
             self.push('503 Not authenticated.')
-            self.close_when_done()
             return
         if not self.__rcpttos:
             self.push('503 Error: need RCPT command')
