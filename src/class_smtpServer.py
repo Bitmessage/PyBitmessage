@@ -127,12 +127,12 @@ class bitmessageSMTPChannel(asynchat.async_chat):
     def smtp_AUTH(self, arg):
         encoding, pw = arg.split(' ')
         if encoding != 'PLAIN':
-            self.push('501 encoding not understood')
+            self.push('501 method not understood')
             return
 
         z, username, pw = base64.b64decode(pw).split('\x00')
         if z != '':
-            self.push('501 encoding not understood')
+            self.push('501 method not understood')
             return
 
         if '@' not in username:
@@ -202,33 +202,37 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         return address
 
     def smtp_MAIL(self, arg):
-        if not self.logged_in:
-            self.push('503 Not authenticated.')
-            return
-
         print >> smtpd.DEBUGSTREAM, '===> MAIL', arg
+
         address = self.__getaddr('FROM:', arg) if arg else None
         if not address:
             self.push('501 Syntax: MAIL FROM:<address>')
             return
+
         if self.__mailfrom:
             self.push('503 Error: nested MAIL command')
             return
+
+        if not self.logged_in:
+            self.push('503 Not authenticated.')
+            return
+
         if address != self.fullUsername:
             self.push('530 Access denied: address domain must match Bitmessage identity')
             return
+
         self.__mailfrom = address
         print >> smtpd.DEBUGSTREAM, 'sender:', self.__mailfrom
         self.push('250 Ok')
 
     def smtp_RCPT(self, arg):
-        if not self.logged_in:
-            self.push('503 Not authenticated.')
-            return
-
         print >> smtpd.DEBUGSTREAM, '===> RCPT', arg
         if not self.__mailfrom:
             self.push('503 Error: need MAIL command')
+            return
+        if not self.logged_in:
+            # This will never happen. :)
+            self.push('503 Not authenticated.')
             return
         address = self.__getaddr('TO:', arg) if arg else None
         if not address:
