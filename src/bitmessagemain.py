@@ -35,6 +35,13 @@ from class_addressGenerator import *
 import helper_startup
 import helper_bootstrap
 
+import sys
+if sys.platform == 'darwin':
+    if float( "{1}.{2}".format(*sys.version_info) ) < 7.5:
+        print "You should use python 2.7.5 or greater."
+        print "Your version: {0}.{1}.{2}".format(*sys.version_info)
+        sys.exit(0)
+
 def connectToStream(streamNumber):
     selfInitiatedConnections[streamNumber] = {}
     if sys.platform[0:3] == 'win':
