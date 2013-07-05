@@ -25,7 +25,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         self.__addr = addr
         self.__line = []
         self.__state = self.COMMAND
-        self.__greeting = 0
+        self.__greeting = None
         self.__mailfrom = None
         self.__rcpttos = []
         self.__data = ''
@@ -128,7 +128,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         if not arg:
             self.invalid_command('501 Syntax: EHLO hostname')
             return
-        if self.__greeting:
+        if self.__greeting is not None:
             self.invalid_command('503 Duplicate HELO/EHLO')
             return
         else:
@@ -140,13 +140,17 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         if not arg:
             self.invalid_command('501 Syntax: HELO hostname')
             return
-        if self.__greeting:
+        if self.__greeting is not None:
             self.invalid_command('503 Duplicate HELO/EHLO')
         else:
             self.__greeting = arg
             self.push('250 %s' % self.__fqdn)
 
     def smtp_AUTH(self, arg):
+        if self.__greeting is None:
+            self.invalid_command('503 Error: required EHLO')
+            return
+
         try:
             encoding, pw = arg.split(' ')
         except ValueError:
