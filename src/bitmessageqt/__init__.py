@@ -1459,7 +1459,7 @@ class MyForm(QtGui.QMainWindow):
 
     def click_pushButtonFetchNamecoinID(self):
         nc = namecoinConnection()
-        err, addr = nc.query("")
+        err, addr = nc.query(str(self.ui.lineEditTo.text()))
         if err is not None:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Error: " + err))
