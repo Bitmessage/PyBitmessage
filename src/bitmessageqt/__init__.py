@@ -2940,16 +2940,12 @@ class UISignaler(Thread,QThread):
 try:
     import gevent
 except ImportError as ex:
-    print "cannot find gevent"
     gevent = None
 else:
     def mainloop(app):
         while True:
             app.processEvents()
-            while app.hasPendingEvents():
-                app.processEvents()
-                gevent.sleep(0.01)
-            gevent.sleep(0.01) # don't appear to get here but cooperate again
+            gevent.sleep(0.01)
     def testprint():
         #print 'this is running'
         gevent.spawn_later(1, testprint)
