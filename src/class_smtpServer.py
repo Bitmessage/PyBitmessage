@@ -90,6 +90,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             if self.__state != self.DATA:
                 self.invalid_command('451 Internal confusion')
                 return
+
             # Remove extraneous carriage returns and de-transparency according
             # to RFC 821, Section 4.5.2.
             data = []
@@ -98,11 +99,16 @@ class bitmessageSMTPChannel(asynchat.async_chat):
                     data.append(text[1:])
                 else:
                     data.append(text)
+
             self.__data = '\n'.join(data)
-            status = self.__server.process_message(self.__peer,
-                                                   self.address,
-                                                   self.__rcpttos,
-                                                   self.__data)
+            try:
+                status = self.__server.process_message(self.__peer,
+                                                       self.address,
+                                                       self.__rcpttos,
+                                                       self.__data)
+            except Exception, e:
+                status = '451 Requested action aborted: {}'.format(str(e))
+
             self.__rcpttos = []
             self.__mailfrom = None
             self.__state = self.COMMAND
@@ -110,7 +116,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             if not status:
                 self.push('250 Ok')
             else:
-                self.push(status)
+                self.invalid_command(status)
 
     # SMTP and ESMTP commands
     def smtp_HELP(self, arg):
@@ -407,7 +413,7 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
                     shared.printLock.acquire()
                     print "Error: One of the addresses to which you are sending a message, {}, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.".format(toAddress)
                     shared.printLock.release()
-                    raise Exception("Cannot send message to {}".format(toAddress))
+                    raise Exception("An address that you are sending a message to, {}, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.".format(toAddress))
 
                 # The subject is specially formatted to identify it from non-E-mail messages.
                 # TODO - The bitfield will be used to convey things like external attachments, etc.
