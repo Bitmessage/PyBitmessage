@@ -104,11 +104,10 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
 
     def sendline(self, data, END=END):
         if self.debug:
-            shared.printLock.acquire()
-            sys.stdout.write("sending ")
-            sys.stdout.write(data)
-            sys.stdout.write("\n")
-            shared.printLock.release()
+            with shared.printLock:
+                sys.stdout.write("sending ")
+                sys.stdout.write(data)
+                sys.stdout.write("\n")
         data = data + END
         while len(data) > 4096:
             self.send(data[:4096])
@@ -130,11 +129,10 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
             self.data_buffer.append(chunk)
 
         if self.debug:
-            shared.printLock.acquire()
-            print('data_buffer', self.data_buffer)
-            print('commands', self.commands)
-            print('-')
-            shared.printLock.release()
+            with shared.printLock:
+                print('data_buffer', self.data_buffer)
+                print('commands', self.commands)
+                print('-')
 
         while len(self.commands):
             line = self.commands.popleft()
@@ -170,15 +168,14 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
 
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.address)
         if status != 'success':
-            shared.printLock.acquire()
-            print 'Error: Could not decode address: ' + self.address + ' : ' + status
-            if status == 'checksumfailed':
-                print 'Error: Checksum failed for address: ' + self.address
-            if status == 'invalidcharacters':
-                print 'Error: Invalid characters in address: ' + self.address
-            if status == 'versiontoohigh':
-                print 'Error: Address version number too high (or zero) in address: ' + self.address
-            shared.printLock.release()
+            with shared.printLock:
+                print 'Error: Could not decode address: ' + self.address + ' : ' + status
+                if status == 'checksumfailed':
+                    print 'Error: Checksum failed for address: ' + self.address
+                if status == 'invalidcharacters':
+                    print 'Error: Invalid characters in address: ' + self.address
+                if status == 'versiontoohigh':
+                    print 'Error: Address version number too high (or zero) in address: ' + self.address
             raise Exception("Invalid Bitmessage address: {}".format(self.address))
 
         username = '{}@{}'.format(getBase58Capitaliation(self.address), self.address)
@@ -237,9 +234,8 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
         msg = self.messages[index]
         content = self.getMessageContent(msg['msgid'])
         if self.debug:
-            shared.printLock.acquire()
-            sys.stdout.write(str(msg) + ": " + str(content))
-            shared.printLock.release()
+            with shared.printLock:
+                sys.stdout.write(str(msg) + ": " + str(content))
         yield "+OK {} octets".format(msg['size'])
         yield content['message']
         yield '.'
@@ -281,9 +277,8 @@ class bitmessagePOP3Server(asyncore.dispatcher):
         self.bind((bindAddress, pop3port))
         self.listen(10)
 
-        shared.printLock.acquire()
-        print "POP3 server started: SSL enabled={}".format(str(self.ssl))
-        shared.printLock.release()
+        with shared.printLock:
+            print "POP3 server started: SSL enabled={}".format(str(self.ssl))
 
     def handle_accept(self):
         sock, peer_address = self.accept()

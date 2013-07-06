@@ -179,16 +179,15 @@ class bitmessageSMTPChannel(asynchat.async_chat):
 
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.address)
         if status != 'success':
-            shared.printLock.acquire()
-            print 'Error: Could not decode address: ' + self.address + ' : ' + status
-            if status == 'checksumfailed':
-                print 'Error: Checksum failed for address: ' + self.address
-            if status == 'invalidcharacters':
-                print 'Error: Invalid characters in address: ' + self.address
-            if status == 'versiontoohigh':
-                print 'Error: Address version number too high (or zero) in address: ' + self.address
-            shared.printLock.release()
-            raise Exception("Invalid Bitmessage address: {}".format(self.address))
+            with shared.printLock:
+                print 'Error: Could not decode address: ' + self.address + ' : ' + status
+                if status == 'checksumfailed':
+                    print 'Error: Checksum failed for address: ' + self.address
+                if status == 'invalidcharacters':
+                    print 'Error: Invalid characters in address: ' + self.address
+                if status == 'versiontoohigh':
+                    print 'Error: Address version number too high (or zero) in address: ' + self.address
+                raise Exception("Invalid Bitmessage address: {}".format(self.address))
 
         self.fullUsername = '{}@{}'.format(getBase58Capitaliation(self.address), address)
 
@@ -324,9 +323,8 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
             bindAddress = '127.0.0.1'
 
         smtpd.SMTPServer.__init__(self, (bindAddress, smtpport), None)
-        shared.printLock.acquire()
-        print "SMTP server started: SSL enabled={}".format(str(self.ssl))
-        shared.printLock.release()
+        with shared.printLock:
+            print "SMTP server started: SSL enabled={}".format(str(self.ssl))
 
     def handle_accept(self):
         # Override SMTPServer's handle_accept so that we can start an SSL connection.
@@ -363,29 +361,26 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
         else:
             status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(fromAddress)
             if status != 'success':
-                shared.printLock.acquire()
-                print 'Error: Could not decode address: ' + fromAddress + ' : ' + status
-                if status == 'checksumfailed':
-                    print 'Error: Checksum failed for address: ' + fromAddress
-                if status == 'invalidcharacters':
-                    print 'Error: Invalid characters in address: ' + fromAddress
-                if status == 'versiontoohigh':
-                    print 'Error: Address version number too high (or zero) in address: ' + fromAddress
-                shared.printLock.release()
+                with shared.printLock:
+                    print 'Error: Could not decode address: ' + fromAddress + ' : ' + status
+                    if status == 'checksumfailed':
+                        print 'Error: Checksum failed for address: ' + fromAddress
+                    if status == 'invalidcharacters':
+                        print 'Error: Invalid characters in address: ' + fromAddress
+                    if status == 'versiontoohigh':
+                        print 'Error: Address version number too high (or zero) in address: ' + fromAddress
                 raise Exception("Invalid Bitmessage address: {}".format(fromAddress))
             #fromAddress = addBMIfNotPresent(fromAddress) # I know there's a BM-, because it's required when using SMTP
 
             try:
                 fromAddressEnabled = shared.config.getboolean(fromAddress, 'enabled')
             except:
-                shared.printLock.acquire()
-                print 'Error: Could not find your fromAddress in the keys.dat file.'
-                shared.printLock.release()
+                with shared.printLock:
+                    print 'Error: Could not find your fromAddress in the keys.dat file.'
                 raise Exception("Could not find address in keys.dat: {}".format(fromAddress))
             if not fromAddressEnabled:
-                shared.printLock.acquire()
-                print 'Error: Your fromAddress is disabled. Cannot send.'
-                shared.printLock.release()
+                with shared.printLock:
+                    print 'Error: Your fromAddress is disabled. Cannot send.'
                 raise Exception("The fromAddress is disabled: {}".format(fromAddress))
 
         for recipient in rcpttos:
@@ -402,15 +397,14 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
                 # into a utility func!
                 status, addressVersionNumber, streamNumber, toRipe = decodeAddress(toAddress)
                 if status != 'success':
-                    shared.printLock.acquire()
-                    print 'Error: Could not decode address: ' + toAddress + ' : ' + status
-                    if status == 'checksumfailed':
-                        print 'Error: Checksum failed for address: ' + toAddress
-                    if status == 'invalidcharacters':
-                        print 'Error: Invalid characters in address: ' + toAddress
-                    if status == 'versiontoohigh':
-                        print 'Error: Address version number too high (or zero) in address: ' + toAddress
-                    shared.printLock.release()
+                    with shared.printLock:
+                        print 'Error: Could not decode address: ' + toAddress + ' : ' + status
+                        if status == 'checksumfailed':
+                            print 'Error: Checksum failed for address: ' + toAddress
+                        if status == 'invalidcharacters':
+                            print 'Error: Invalid characters in address: ' + toAddress
+                        if status == 'versiontoohigh':
+                            print 'Error: Address version number too high (or zero) in address: ' + toAddress
                     raise Exception("Invalid Bitmessage address: {}".format(toAddress))
 
                 toAddressIsOK = False
@@ -423,9 +417,8 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
                     # The toAddress is one owned by me. We cannot send
                     # messages to ourselves without significant changes
                     # to the codebase.
-                    shared.printLock.acquire()
-                    print "Error: One of the addresses to which you are sending a message, {}, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.".format(toAddress)
-                    shared.printLock.release()
+                    with shared.printLock:
+                        print "Error: One of the addresses to which you are sending a message, {}, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.".format(toAddress)
                     raise Exception("An address that you are sending a message to, {}, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.".format(toAddress))
 
                 # The subject is specially formatted to identify it from non-E-mail messages.
