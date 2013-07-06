@@ -78,11 +78,11 @@ class singleCleaner(threading.Thread):
                 queryreturn = shared.sqlReturnQueue.get()
                 for row in queryreturn:
                     if len(row) < 5:
-                        shared.printLock.acquire()
-                        sys.stderr.write(
-                            'Something went wrong in the singleCleaner thread: a query did not return the requested fields. ' + repr(row))
+                        with shared.printLock:
+                            sys.stderr.write(
+                                'Something went wrong in the singleCleaner thread: a query did not return the requested fields. ' + repr(row))
                         time.sleep(3)
-                        shared.printLock.release()
+
                         break
                     toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber = row
                     if status == 'awaitingpubkey':
