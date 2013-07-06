@@ -272,8 +272,13 @@ class bitmessagePOP3Server(asyncore.dispatcher):
             self.keyfile = shared.config.get('bitmessagesettings', 'keyfile')
             self.certfile = shared.config.get('bitmessagesettings', 'certfile')
 
+        try:
+            bindAddress = shared.config.get('bitmessagesettings', 'pop3address')
+        except:
+            bindAddress = '127.0.0.1'
+
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.bind(('127.0.0.1', pop3port))
+        self.bind((bindAddress, pop3port))
         self.listen(10)
 
         shared.printLock.acquire()

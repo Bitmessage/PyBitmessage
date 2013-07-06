@@ -318,7 +318,12 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
             self.keyfile = shared.config.get('bitmessagesettings', 'keyfile')
             self.certfile = shared.config.get('bitmessagesettings', 'certfile')
 
-        smtpd.SMTPServer.__init__(self, ('127.0.0.1', smtpport), None)
+        try:
+            bindAddress = shared.config.get('bitmessagesettings', 'smtpaddress')
+        except:
+            bindAddress = '127.0.0.1'
+
+        smtpd.SMTPServer.__init__(self, (bindAddress, smtpport), None)
         shared.printLock.acquire()
         print "SMTP server started: SSL enabled={}".format(str(self.ssl))
         shared.printLock.release()

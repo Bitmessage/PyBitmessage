@@ -2778,6 +2778,8 @@ class settingsDialog(QtGui.QDialog):
             self.ui.checkBoxEnableSMTPPOP3Servers.setChecked(False)
 
         try:
+            self.ui.lineEditSMTPAddress.setText(
+                str(shared.config.getint('bitmessagesettings', 'smtpaddress')))
             self.ui.lineEditSMTPPort.setText(
                 str(shared.config.getint('bitmessagesettings', 'smtpport')))
             self.ui.checkBoxEnableSMTPSSL.setChecked(
@@ -2786,6 +2788,8 @@ class settingsDialog(QtGui.QDialog):
             self.ui.lineEditSMTPPort.setText('10025')
             self.ui.checkBoxEnableSMTPSSL.setChecked(False)
         try:
+            self.ui.lineEditPOP3Address.setText(
+                str(shared.config.getint('bitmessagesettings', 'pop3address')))
             self.ui.lineEditPOP3Port.setText(
                 str(shared.config.getint('bitmessagesettings', 'pop3port')))
             self.ui.checkBoxEnablePOP3SSL.setChecked(
