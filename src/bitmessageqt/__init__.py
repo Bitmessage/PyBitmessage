@@ -14,7 +14,7 @@ except ImportError:
 from addresses import *
 import shared
 from bitmessageui import *
-from namecoin import namecoinConnection
+from namecoin import namecoinConnection, ensureNamecoinOptions
 from newaddressdialog import *
 from newsubscriptiondialog import *
 from regenerateaddresses import *
@@ -1776,6 +1776,16 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.lineEditSocksUsername.text()))
             shared.config.set('bitmessagesettings', 'sockspassword', str(
                 self.settingsDialogInstance.ui.lineEditSocksPassword.text()))
+
+            shared.config.set('bitmessagesettings', 'namecoinrpchost', str(
+                self.settingsDialogInstance.ui.lineEditNamecoinHost.text()))
+            shared.config.set('bitmessagesettings', 'namecoinrpcport', str(
+                self.settingsDialogInstance.ui.lineEditNamecoinPort.text()))
+            shared.config.set('bitmessagesettings', 'namecoinrpcuser', str(
+                self.settingsDialogInstance.ui.lineEditNamecoinUser.text()))
+            shared.config.set('bitmessagesettings', 'namecoinrpcpassword', str(
+                self.settingsDialogInstance.ui.lineEditNamecoinPassword.text()))
+
             if float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) >= 1:
                 shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(int(float(
                     self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
@@ -2738,6 +2748,17 @@ class settingsDialog(QtGui.QDialog):
             'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.ui.lineEditMaxAcceptableSmallMessageDifficulty.setText(str((float(shared.config.getint(
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / shared.networkDefaultPayloadLengthExtraBytes)))
+
+        # Namecoin integration tab
+        ensureNamecoinOptions()
+        self.ui.lineEditNamecoinHost.setText(str(
+            shared.config.get('bitmessagesettings', 'namecoinrpchost')))
+        self.ui.lineEditNamecoinPort.setText(str(
+            shared.config.get('bitmessagesettings', 'namecoinrpcport')))
+        self.ui.lineEditNamecoinUser.setText(str(
+            shared.config.get('bitmessagesettings', 'namecoinrpcuser')))
+        self.ui.lineEditNamecoinPassword.setText(str(
+            shared.config.get('bitmessagesettings', 'namecoinrpcpassword')))
 
         #'System' tab removed for now.
         """try:
