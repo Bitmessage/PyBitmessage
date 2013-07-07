@@ -1465,6 +1465,8 @@ class MyForm(QtGui.QMainWindow):
                 "MainWindow", "Error: " + err))
         else:
             self.ui.lineEditTo.setText(addr)
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Fetched address from namecoin identity."))
 
     def redrawLabelFrom(self, index):
         self.ui.labelFrom.setText(
