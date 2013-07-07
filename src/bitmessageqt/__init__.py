@@ -1779,6 +1779,8 @@ class MyForm(QtGui.QMainWindow):
             shared.config.set('bitmessagesettings', 'sockspassword', str(
                 self.settingsDialogInstance.ui.lineEditSocksPassword.text()))
 
+            shared.config.set('bitmessagesettings', 'namecoinrpctype',
+                self.settingsDialogInstance.getNamecoinType())
             shared.config.set('bitmessagesettings', 'namecoinrpchost', str(
                 self.settingsDialogInstance.ui.lineEditNamecoinHost.text()))
             shared.config.set('bitmessagesettings', 'namecoinrpcport', str(
@@ -2752,7 +2754,9 @@ class settingsDialog(QtGui.QDialog):
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / shared.networkDefaultPayloadLengthExtraBytes)))
 
         # Namecoin integration tab
+
         ensureNamecoinOptions()
+        nmctype = shared.config.get('bitmessagesettings', 'namecoinrpctype')
         self.ui.lineEditNamecoinHost.setText(str(
             shared.config.get('bitmessagesettings', 'namecoinrpchost')))
         self.ui.lineEditNamecoinPort.setText(str(
@@ -2761,6 +2765,22 @@ class settingsDialog(QtGui.QDialog):
             shared.config.get('bitmessagesettings', 'namecoinrpcuser')))
         self.ui.lineEditNamecoinPassword.setText(str(
             shared.config.get('bitmessagesettings', 'namecoinrpcpassword')))
+
+        if nmctype == "namecoind":
+            self.ui.radioButtonNamecoinNamecoind.setChecked(True)
+        elif nmctype == "nmcontrol":
+            self.ui.radioButtonNamecoinNmcontrol.setChecked(True)
+            self.ui.lineEditNamecoinUser.setEnabled(False)
+            self.ui.labelNamecoinUser.setEnabled(False)
+            self.ui.lineEditNamecoinPassword.setEnabled(False)
+            self.ui.labelNamecoinPassword.setEnabled(False)
+        else:
+            assert False
+
+        QtCore.QObject.connect(self.ui.radioButtonNamecoinNamecoind, QtCore.SIGNAL(
+            "toggled(bool)"), self.namecoinTypeChanged)
+        QtCore.QObject.connect(self.ui.radioButtonNamecoinNmcontrol, QtCore.SIGNAL(
+            "toggled(bool)"), self.namecoinTypeChanged)
         QtCore.QObject.connect(self.ui.pushButtonNamecoinTest, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonNamecoinTest)
 
@@ -2801,9 +2821,35 @@ class settingsDialog(QtGui.QDialog):
                 self.ui.lineEditSocksPassword.setEnabled(True)
             self.ui.lineEditTCPPort.setEnabled(False)
 
+    # Check status of namecoin integration radio buttons and translate
+    # it to a string as in the options.
+    def getNamecoinType(self):
+        if self.ui.radioButtonNamecoinNamecoind.isChecked():
+            return "namecoind"
+        if self.ui.radioButtonNamecoinNmcontrol.isChecked():
+            return "nmcontrol"
+        assert False
+
+    # Namecoin connection type was changed.
+    def namecoinTypeChanged(self, checked):
+        nmctype = self.getNamecoinType()
+        assert nmctype == "namecoind" or nmctype == "nmcontrol"
+            
+        isNamecoind = (nmctype == "namecoind")
+        self.ui.lineEditNamecoinUser.setEnabled(isNamecoind)
+        self.ui.labelNamecoinUser.setEnabled(isNamecoind)
+        self.ui.lineEditNamecoinPassword.setEnabled(isNamecoind)
+        self.ui.labelNamecoinPassword.setEnabled(isNamecoind)
+
+        if isNamecoind:
+            self.ui.lineEditNamecoinPort.setText("8336")
+        else:
+            self.ui.lineEditNamecoinPort.setText("9000")
+
     # Test the namecoin settings specified in the settings dialog.
     def click_pushButtonNamecoinTest(self):
         options = {}
+        options["type"] = self.getNamecoinType()
         options["host"] = self.ui.lineEditNamecoinHost.text()
         options["port"] = self.ui.lineEditNamecoinPort.text()
         options["user"] = self.ui.lineEditNamecoinUser.text()
