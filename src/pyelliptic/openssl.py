@@ -289,7 +289,12 @@ class _OpenSSL:
         self.HMAC.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int,
                               ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p]
 
-        self.PKCS5_PBKDF2_HMAC = self._lib.PKCS5_PBKDF2_HMAC
+        try:
+            self.PKCS5_PBKDF2_HMAC = self._lib.PKCS5_PBKDF2_HMAC
+        except:
+            # The above is not compatible with all versions of OSX.
+            self.PKCS5_PBKDF2_HMAC = self._lib.PKCS5_PBKDF2_HMAC_SHA1
+            
         self.PKCS5_PBKDF2_HMAC.restype = ctypes.c_int
         self.PKCS5_PBKDF2_HMAC.argtypes = [ctypes.c_void_p, ctypes.c_int,
                                            ctypes.c_void_p, ctypes.c_int,
