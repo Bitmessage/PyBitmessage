@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Mon Jun 10 11:31:56 2013
-#      by: PyQt4 UI code generator 4.9.4
+# Created: Sun Jul  7 17:25:43 2013
+#      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -215,6 +215,55 @@ class Ui_settingsDialog(object):
         spacerItem7 = QtGui.QSpacerItem(20, 147, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.gridLayout_7.addItem(spacerItem7, 3, 1, 1, 1)
         self.tabWidgetSettings.addTab(self.tab_2, _fromUtf8(""))
+        self.tabNamecoin = QtGui.QWidget()
+        self.tabNamecoin.setObjectName(_fromUtf8("tabNamecoin"))
+        self.gridLayout_8 = QtGui.QGridLayout(self.tabNamecoin)
+        self.gridLayout_8.setObjectName(_fromUtf8("gridLayout_8"))
+        spacerItem8 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.gridLayout_8.addItem(spacerItem8, 1, 0, 1, 1)
+        self.label_16 = QtGui.QLabel(self.tabNamecoin)
+        self.label_16.setWordWrap(True)
+        self.label_16.setObjectName(_fromUtf8("label_16"))
+        self.gridLayout_8.addWidget(self.label_16, 0, 0, 1, 3)
+        self.label_17 = QtGui.QLabel(self.tabNamecoin)
+        self.label_17.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_17.setObjectName(_fromUtf8("label_17"))
+        self.gridLayout_8.addWidget(self.label_17, 1, 1, 1, 1)
+        self.lineEditNamecoinHost = QtGui.QLineEdit(self.tabNamecoin)
+        self.lineEditNamecoinHost.setObjectName(_fromUtf8("lineEditNamecoinHost"))
+        self.gridLayout_8.addWidget(self.lineEditNamecoinHost, 1, 2, 1, 1)
+        spacerItem9 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.gridLayout_8.addItem(spacerItem9, 2, 0, 1, 1)
+        self.label_18 = QtGui.QLabel(self.tabNamecoin)
+        self.label_18.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_18.setObjectName(_fromUtf8("label_18"))
+        self.gridLayout_8.addWidget(self.label_18, 2, 1, 1, 1)
+        self.lineEditNamecoinPort = QtGui.QLineEdit(self.tabNamecoin)
+        self.lineEditNamecoinPort.setObjectName(_fromUtf8("lineEditNamecoinPort"))
+        self.gridLayout_8.addWidget(self.lineEditNamecoinPort, 2, 2, 1, 1)
+        spacerItem10 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.gridLayout_8.addItem(spacerItem10, 5, 1, 1, 1)
+        spacerItem11 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.gridLayout_8.addItem(spacerItem11, 3, 0, 1, 1)
+        self.label_19 = QtGui.QLabel(self.tabNamecoin)
+        self.label_19.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_19.setObjectName(_fromUtf8("label_19"))
+        self.gridLayout_8.addWidget(self.label_19, 3, 1, 1, 1)
+        self.lineEditNamecoinUser = QtGui.QLineEdit(self.tabNamecoin)
+        self.lineEditNamecoinUser.setObjectName(_fromUtf8("lineEditNamecoinUser"))
+        self.gridLayout_8.addWidget(self.lineEditNamecoinUser, 3, 2, 1, 1)
+        spacerItem12 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.gridLayout_8.addItem(spacerItem12, 4, 0, 1, 1)
+        self.label_20 = QtGui.QLabel(self.tabNamecoin)
+        self.label_20.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_20.setObjectName(_fromUtf8("label_20"))
+        self.gridLayout_8.addWidget(self.label_20, 4, 1, 1, 1)
+        self.lineEditNamecoinPassword = QtGui.QLineEdit(self.tabNamecoin)
+        self.lineEditNamecoinPassword.setInputMethodHints(QtCore.Qt.ImhHiddenText|QtCore.Qt.ImhNoAutoUppercase|QtCore.Qt.ImhNoPredictiveText)
+        self.lineEditNamecoinPassword.setEchoMode(QtGui.QLineEdit.Password)
+        self.lineEditNamecoinPassword.setObjectName(_fromUtf8("lineEditNamecoinPassword"))
+        self.gridLayout_8.addWidget(self.lineEditNamecoinPassword, 4, 2, 1, 1)
+        self.tabWidgetSettings.addTab(self.tabNamecoin, _fromUtf8(""))
         self.gridLayout.addWidget(self.tabWidgetSettings, 0, 0, 1, 1)
 
         self.retranslateUi(settingsDialog)
@@ -269,4 +318,10 @@ class Ui_settingsDialog(object):
         self.label_13.setText(QtGui.QApplication.translate("settingsDialog", "Maximum acceptable total difficulty:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_14.setText(QtGui.QApplication.translate("settingsDialog", "Maximum acceptable small message difficulty:", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab_2), QtGui.QApplication.translate("settingsDialog", "Max acceptable difficulty", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_16.setText(QtGui.QApplication.translate("settingsDialog", "Bitmessage addresses can be fetched automatically from Namecoin identities.  If you have namecoind installed and running, chances are that the automatic configuration below works already for you.  If not, you can fine-tune the settings to use for connecting to your local namecoind instance.  Alternatively, you may also use nmcontrol instead of namecoind.", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_17.setText(QtGui.QApplication.translate("settingsDialog", "Host:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_18.setText(QtGui.QApplication.translate("settingsDialog", "Port:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_19.setText(QtGui.QApplication.translate("settingsDialog", "Username:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label_20.setText(QtGui.QApplication.translate("settingsDialog", "Password:", None, QtGui.QApplication.UnicodeUTF8))
+        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabNamecoin), QtGui.QApplication.translate("settingsDialog", "Namecoin integration", None, QtGui.QApplication.UnicodeUTF8))
 
