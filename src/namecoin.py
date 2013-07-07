@@ -41,6 +41,7 @@ class namecoinConnection (object):
     password = None
     host = None
     port = None
+    nmctype = None
     bufsize = 4096
     queryid = 1
 
@@ -51,16 +52,20 @@ class namecoinConnection (object):
     def __init__ (self, options = None):
         if options is None:
           ensureNamecoinOptions ()
+          self.nmctype = shared.config.get (configSection, "namecoinrpctype")
           self.host = shared.config.get (configSection, "namecoinrpchost")
           self.port = shared.config.get (configSection, "namecoinrpcport")
           self.user = shared.config.get (configSection, "namecoinrpcuser")
           self.password = shared.config.get (configSection,
                                              "namecoinrpcpassword")
         else:
+          self.nmctype = options["type"]
           self.host = options["host"]
           self.port = options["port"]
           self.user = options["user"]
           self.password = options["password"]
+
+        assert self.nmctype == "namecoind" or self.nmctype == "nmcontrol"
 
     # Query for the bitmessage address corresponding to the given identity
     # string.  If it doesn't contain a slash, id/ is prepended.  We return
@@ -72,7 +77,16 @@ class namecoinConnection (object):
             string = "id/" + string
 
         try:
-            res = self.callRPC ("name_show", [string])
+            if self.nmctype == "namecoind":
+                res = self.callRPC ("name_show", [string])
+                res = res["value"]
+            elif self.nmctype == "nmcontrol":
+                res = self.callRPC ("data", ["getValue", string])
+                res = res["reply"]
+                if res == False:
+                    raise RPCError ({"code": -4})
+            else:
+                assert False
         except RPCError as exc:
             if exc.error["code"] == -4:
                 return ("The name '%s' was not found." % string, None)
@@ -84,7 +98,7 @@ class namecoinConnection (object):
             return ("The namecoin query failed.", None)
 
         try:
-            val = json.loads (res["value"])
+            val = json.loads (res)
         except:
             return ("The name '%s' has no valid JSON data." % string, None)
 
@@ -99,28 +113,47 @@ class namecoinConnection (object):
     # some info from it.
     def test (self):
         try:
-            res = self.callRPC ("getinfo", [])
-            vers = res["version"]
-            
-            v3 = vers % 100
-            vers = vers / 100
-            v2 = vers % 100
-            vers = vers / 100
-            v1 = vers
-            if v3 == 0:
-              versStr = "0.%d.%d" % (v1, v2)
+            if self.nmctype == "namecoind":
+                res = self.callRPC ("getinfo", [])
+                vers = res["version"]
+                
+                v3 = vers % 100
+                vers = vers / 100
+                v2 = vers % 100
+                vers = vers / 100
+                v1 = vers
+                if v3 == 0:
+                  versStr = "0.%d.%d" % (v1, v2)
+                else:
+                  versStr = "0.%d.%d.%d" % (v1, v2, v3)
+
+                return "Success!  Namecoind version %s running." % versStr
+
+            elif self.nmctype == "nmcontrol":
+                res = self.callRPC ("data", ["status"])
+                prefix = "Plugin data running"
+                if ("reply" in res) and res["reply"][:len(prefix)] == prefix:
+                    return "Success!  NMControll is up and running."
+
+                print "Unexpected nmcontrol reply: %s" % res
+                return "Couldn't understand NMControl."
+
             else:
-              versStr = "0.%d.%d.%d" % (v1, v2, v3)
+                assert False
 
-            return "Success!  Namecoind version %s running." % versStr
-
-        except:
-            return "The connection to namecoind failed."
+        except Exception as exc:
+            print "Exception testing the namecoin connection:\n%s" % str (exc)
+            return "The connection to namecoin failed."
 
     # Helper routine that actually performs an JSON RPC call.
     def callRPC (self, method, params):
         data = {"method": method, "params": params, "id": self.queryid}
-        resp = self.queryHTTP (json.dumps (data))
+        if self.nmctype == "namecoind":
+          resp = self.queryHTTP (json.dumps (data))
+        elif self.nmctype == "nmcontrol":
+          resp = self.queryServer (json.dumps (data))
+        else:
+          assert False
         val = json.loads (resp)
 
         if val["id"] != self.queryid:
@@ -203,6 +236,8 @@ def lookupNamecoinFolder ():
 # Ensure all namecoin options are set, by setting those to default values
 # that aren't there.
 def ensureNamecoinOptions ():
+    if not shared.config.has_option (configSection, "namecoinrpctype"):
+        shared.config.set (configSection, "namecoinrpctype", "namecoind")
     if not shared.config.has_option (configSection, "namecoinrpchost"):
         shared.config.set (configSection, "namecoinrpchost", "localhost")
     if not shared.config.has_option (configSection, "namecoinrpcport"):
