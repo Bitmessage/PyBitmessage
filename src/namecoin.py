@@ -44,12 +44,23 @@ class namecoinConnection (object):
     bufsize = 4096
     queryid = 1
 
-    def __init__ (self):
-        ensureNamecoinOptions ()
-        self.user = shared.config.get (configSection, "namecoinrpcuser")
-        self.password = shared.config.get (configSection, "namecoinrpcpassword")
-        self.host = shared.config.get (configSection, "namecoinrpchost")
-        self.port = shared.config.get (configSection, "namecoinrpcport")
+    # Initialise.  If options are given, take the connection settings from
+    # them instead of loading from the configs.  This can be used to test
+    # currently entered connection settings in the config dialog without
+    # actually changing the values (yet).
+    def __init__ (self, options = None):
+        if options is None:
+          ensureNamecoinOptions ()
+          self.host = shared.config.get (configSection, "namecoinrpchost")
+          self.port = shared.config.get (configSection, "namecoinrpcport")
+          self.user = shared.config.get (configSection, "namecoinrpcuser")
+          self.password = shared.config.get (configSection,
+                                             "namecoinrpcpassword")
+        else:
+          self.host = options["host"]
+          self.port = options["port"]
+          self.user = options["user"]
+          self.password = options["password"]
 
     # Query for the bitmessage address corresponding to the given identity
     # string.  If it doesn't contain a slash, id/ is prepended.  We return
@@ -82,6 +93,29 @@ class namecoinConnection (object):
 
         return ("The name '%s' has no associated Bitmessage address." % string,
                 None)
+
+    # Test the connection settings.  This routine tries to query a "getinfo"
+    # command, and builds either an error message or a success message with
+    # some info from it.
+    def test (self):
+        try:
+            res = self.callRPC ("getinfo", [])
+            vers = res["version"]
+            
+            v3 = vers % 100
+            vers = vers / 100
+            v2 = vers % 100
+            vers = vers / 100
+            v1 = vers
+            if v3 == 0:
+              versStr = "0.%d.%d" % (v1, v2)
+            else:
+              versStr = "0.%d.%d.%d" % (v1, v2, v3)
+
+            return "Success!  Namecoind version %s running." % versStr
+
+        except:
+            return "The connection to namecoind failed."
 
     # Helper routine that actually performs an JSON RPC call.
     def callRPC (self, method, params):
@@ -181,7 +215,7 @@ def ensureNamecoinOptions ():
     if (not hasUser) or (not hasPass):
         try:
             nmcFolder = lookupNamecoinFolder ()
-            nmcConfig = nmcFolder + "bitcoin.conf"
+            nmcConfig = nmcFolder + "namecoin.conf"
             nmc = open (nmcConfig, "r")
 
             while True:

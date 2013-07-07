@@ -2759,6 +2759,8 @@ class settingsDialog(QtGui.QDialog):
             shared.config.get('bitmessagesettings', 'namecoinrpcuser')))
         self.ui.lineEditNamecoinPassword.setText(str(
             shared.config.get('bitmessagesettings', 'namecoinrpcpassword')))
+        QtCore.QObject.connect(self.ui.pushButtonNamecoinTest, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonNamecoinTest)
 
         #'System' tab removed for now.
         """try:
@@ -2796,6 +2798,17 @@ class settingsDialog(QtGui.QDialog):
                 self.ui.lineEditSocksUsername.setEnabled(True)
                 self.ui.lineEditSocksPassword.setEnabled(True)
             self.ui.lineEditTCPPort.setEnabled(False)
+
+    # Test the namecoin settings specified in the settings dialog.
+    def click_pushButtonNamecoinTest(self):
+        options = {}
+        options["host"] = self.ui.lineEditNamecoinHost.text()
+        options["port"] = self.ui.lineEditNamecoinPort.text()
+        options["user"] = self.ui.lineEditNamecoinUser.text()
+        options["password"] = self.ui.lineEditNamecoinPassword.text()
+        nc = namecoinConnection(options)
+        res = nc.test()
+        self.ui.labelNamecoinTestResult.setText(res)
 
 
 class SpecialAddressBehaviorDialog(QtGui.QDialog):

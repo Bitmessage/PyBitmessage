@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Sun Jul  7 17:25:43 2013
+# Created: Sun Jul  7 18:40:01 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -242,7 +242,7 @@ class Ui_settingsDialog(object):
         self.lineEditNamecoinPort.setObjectName(_fromUtf8("lineEditNamecoinPort"))
         self.gridLayout_8.addWidget(self.lineEditNamecoinPort, 2, 2, 1, 1)
         spacerItem10 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        self.gridLayout_8.addItem(spacerItem10, 5, 1, 1, 1)
+        self.gridLayout_8.addItem(spacerItem10, 7, 1, 1, 1)
         spacerItem11 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.gridLayout_8.addItem(spacerItem11, 3, 0, 1, 1)
         self.label_19 = QtGui.QLabel(self.tabNamecoin)
@@ -263,6 +263,13 @@ class Ui_settingsDialog(object):
         self.lineEditNamecoinPassword.setEchoMode(QtGui.QLineEdit.Password)
         self.lineEditNamecoinPassword.setObjectName(_fromUtf8("lineEditNamecoinPassword"))
         self.gridLayout_8.addWidget(self.lineEditNamecoinPassword, 4, 2, 1, 1)
+        self.labelNamecoinTestResult = QtGui.QLabel(self.tabNamecoin)
+        self.labelNamecoinTestResult.setText(_fromUtf8(""))
+        self.labelNamecoinTestResult.setObjectName(_fromUtf8("labelNamecoinTestResult"))
+        self.gridLayout_8.addWidget(self.labelNamecoinTestResult, 6, 0, 1, 2)
+        self.pushButtonNamecoinTest = QtGui.QPushButton(self.tabNamecoin)
+        self.pushButtonNamecoinTest.setObjectName(_fromUtf8("pushButtonNamecoinTest"))
+        self.gridLayout_8.addWidget(self.pushButtonNamecoinTest, 6, 2, 1, 1)
         self.tabWidgetSettings.addTab(self.tabNamecoin, _fromUtf8(""))
         self.gridLayout.addWidget(self.tabWidgetSettings, 0, 0, 1, 1)
 
@@ -323,5 +330,6 @@ class Ui_settingsDialog(object):
         self.label_18.setText(QtGui.QApplication.translate("settingsDialog", "Port:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_19.setText(QtGui.QApplication.translate("settingsDialog", "Username:", None, QtGui.QApplication.UnicodeUTF8))
         self.label_20.setText(QtGui.QApplication.translate("settingsDialog", "Password:", None, QtGui.QApplication.UnicodeUTF8))
+        self.pushButtonNamecoinTest.setText(QtGui.QApplication.translate("settingsDialog", "Test", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabNamecoin), QtGui.QApplication.translate("settingsDialog", "Namecoin integration", None, QtGui.QApplication.UnicodeUTF8))
 
