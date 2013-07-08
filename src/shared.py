@@ -8,20 +8,24 @@ maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
 useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
 
 
-import threading
-import sys
-from addresses import *
-import highlevelcrypto
-import Queue
-import pickle
-import os
-import time
+# Libraries.
 import ConfigParser
-import socket
+import os
+import pickle
+import Queue
 import random
+import socket
+import sys
+import stat
+import threading
+import time
+
+# Project imports.
+from addresses import *
+from debug import logger
 import highlevelcrypto
 import shared
-import stat
+
 
 config = ConfigParser.SafeConfigParser()
 myECCryptorObjects = {}
@@ -131,12 +135,14 @@ def lookupAppdataFolder():
         except KeyError:
             dataFolder = path.join(environ["HOME"], ".config", APPNAME)
         # Migrate existing data to the proper location if this is an existing install
-        try:
-            print "Moving data folder to ~/.config/%s" % APPNAME
-            move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
-            dataFolder = dataFolder + '/'
-        except IOError:
-            dataFolder = dataFolder + '/'
+        if not os.path.exists(dataFolder):
+            try:
+                print "Moving data folder to ~/.config/%s" % APPNAME
+                move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
+                dataFolder = dataFolder
+            except IOError:
+                dataFolder = dataFolder
+        dataFolder = dataFolder + '/'
     return dataFolder
 
 def isAddressInMyAddressBook(address):
@@ -227,22 +233,12 @@ def reloadMyAddressHashes():
                         myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
                         myAddressesByHash[hash] = addressInKeysFile
 
-                    if not keyfileSecure:
-                        # Insecure keyfile permissions. Disable key.
-                        config.set(addressInKeysFile, 'enabled', 'false')
                 else:
                     sys.stderr.write('Error in reloadMyAddressHashes: Can\'t handle address '
                                      'versions other than 2 or 3.\n')
 
     if not keyfileSecure:
         fixSensitiveFilePermissions(appdata + 'keys.dat', hasEnabledKeys)
-        if hasEnabledKeys:
-            try:
-                with open(appdata + 'keys.dat', 'wb') as keyfile:
-                    config.write(keyfile)
-            except:
-                print 'Failed to disable vulnerable keys.'
-                raise
 
 def reloadBroadcastSendersForWhichImWatching():
     printLock.acquire()
@@ -350,28 +346,10 @@ def checkSensitiveFilePermissions(filename):
 # Fixes permissions on a sensitive file.
 def fixSensitiveFilePermissions(filename, hasEnabledKeys):
     if hasEnabledKeys:
-        print
-        print '******************************************************************'
-        print '**                      !! WARNING !!                           **'
-        print '******************************************************************'
-        print '** Possibly major security problem:                             **'
-        print '** Your keyfile was vulnerable to being read by other users     **'
-        print '** (including some untrusted daemons). You may wish to consider **'
-        print '** generating new keys and discontinuing use of your old ones.  **'
-        print '** Your private keys have been disabled for your security, but  **'
-        print '** you may re-enable them using the "Your Identities" tab in    **'
-        print '** the default GUI or by modifying keys.dat such that your keys **'
-        print '** show "enabled = true".                                       **'
+        logger.warning('Keyfile had insecure permissions, and there were enabled keys. '
+                       'The truly paranoid should stop using them immediately.')
     else:
-        print '******************************************************************'
-        print '**                      !! WARNING !!                           **'
-        print '******************************************************************'
-        print '** Possibly major security problem:                             **'
-        print '** Your keyfile was vulnerable to being read by other users.    **'
-        print '** Fortunately, you don\'t have any enabled keys, but be aware   **'
-        print '** that any disabled keys may have been compromised by malware  **'
-        print '** running by other users and that you should reboot before     **'
-        print '** generating any new keys.                                     **'
+        logger.warning('Keyfile had insecure permissions, but there were no enabled keys.')
     try:
         present_permissions = os.stat(filename)[0]
         disallowed_permissions = stat.S_IRWXG | stat.S_IRWXO
@@ -380,12 +358,9 @@ def fixSensitiveFilePermissions(filename, hasEnabledKeys):
             allowed_permissions & present_permissions)
         os.chmod(filename, new_permissions)
 
-        print '** The file permissions have been automatically fixed.          **'
-        print '******************************************************************'
-        print
+        logger.info('Keyfile permissions automatically fixed.')
+
     except Exception, e:
-        print '** Could NOT automatically fix permissions.                     **'
-        print '******************************************************************'
-        print
+        logger.exception('Keyfile permissions could not be fixed.')
         raise
 
