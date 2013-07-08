@@ -88,14 +88,14 @@ class singleWorker(threading.Thread):
                         shared.sqlLock.release()
                         self.sendMsg()
                     else:
-                        shared.printLock.acquire()
-                        print 'We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:', toRipe.encode('hex')
-                        shared.printLock.release()"""
+                        with shared.printLock:
+                            print 'We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:', toRipe.encode('hex')
+                        """
             else:
-                shared.printLock.acquire()
-                sys.stderr.write(
-                    'Probable programming error: The command sent to the workerThread is weird. It is: %s\n' % command)
-                shared.printLock.release()
+                with shared.printLock:
+                    sys.stderr.write(
+                        'Probable programming error: The command sent to the workerThread is weird. It is: %s\n' % command)
+
             shared.workerQueue.task_done()
 
     def doPOWForMyV2Pubkey(self, hash):  # This function also broadcasts out the pubkey message once it is done with the POW
@@ -123,10 +123,10 @@ class singleWorker(threading.Thread):
             privEncryptionKeyBase58 = shared.config.get(
                 myAddress, 'privencryptionkey')
         except Exception as err:
-            shared.printLock.acquire()
-            sys.stderr.write(
-                'Error within doPOWForMyV2Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
-            shared.printLock.release()
+            with shared.printLock:
+                sys.stderr.write(
+                    'Error within doPOWForMyV2Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
+
             return
 
         privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -162,9 +162,9 @@ class singleWorker(threading.Thread):
         shared.inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime)
 
-        shared.printLock.acquire()
-        print 'broadcasting inv with hash:', inventoryHash.encode('hex')
-        shared.printLock.release()
+        with shared.printLock:
+            print 'broadcasting inv with hash:', inventoryHash.encode('hex')
+
         shared.broadcastToSendDataQueues((
             streamNumber, 'sendinv', inventoryHash))
         shared.UISignalQueue.put(('updateStatusBar', ''))
@@ -190,10 +190,10 @@ class singleWorker(threading.Thread):
             privEncryptionKeyBase58 = shared.config.get(
                 myAddress, 'privencryptionkey')
         except Exception as err:
-            shared.printLock.acquire()
-            sys.stderr.write(
-                'Error within doPOWForMyV3Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
-            shared.printLock.release()
+            with shared.printLock:
+                sys.stderr.write(
+                    'Error within doPOWForMyV3Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
+
             return
 
         privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -238,9 +238,9 @@ class singleWorker(threading.Thread):
         shared.inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime)
 
-        shared.printLock.acquire()
-        print 'broadcasting inv with hash:', inventoryHash.encode('hex')
-        shared.printLock.release()
+        with shared.printLock:
+            print 'broadcasting inv with hash:', inventoryHash.encode('hex')
+
         shared.broadcastToSendDataQueues((
             streamNumber, 'sendinv', inventoryHash))
         shared.UISignalQueue.put(('updateStatusBar', ''))
@@ -423,10 +423,10 @@ class singleWorker(threading.Thread):
                 shared.sqlSubmitQueue.put('commit')
                 shared.sqlLock.release()
             else:
-                shared.printLock.acquire()
-                sys.stderr.write(
-                    'Error: In the singleWorker thread, the sendBroadcast function doesn\'t understand the address version.\n')
-                shared.printLock.release()
+                with shared.printLock:
+                    sys.stderr.write(
+                        'Error: In the singleWorker thread, the sendBroadcast function doesn\'t understand the address version.\n')
+
 
     def sendMsg(self):
         # Check to see if there are any messages queued to be sent
@@ -507,10 +507,10 @@ class singleWorker(threading.Thread):
             if queryreturn == [] and toripe not in shared.neededPubkeys:
                 # We no longer have the needed pubkey and we haven't requested
                 # it.
-                shared.printLock.acquire()
-                sys.stderr.write(
-                    'For some reason, the status of a message in our outbox is \'doingmsgpow\' even though we lack the pubkey. Here is the RIPE hash of the needed pubkey: %s\n' % toripe.encode('hex'))
-                shared.printLock.release()
+                with shared.printLock:
+                    sys.stderr.write(
+                        'For some reason, the status of a message in our outbox is \'doingmsgpow\' even though we lack the pubkey. Here is the RIPE hash of the needed pubkey: %s\n' % toripe.encode('hex'))
+
                 t = (toaddress,)
                 shared.sqlLock.acquire()
                 shared.sqlSubmitQueue.put(
@@ -530,10 +530,10 @@ class singleWorker(threading.Thread):
                 fromaddress)
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                 ackdata, tr.translateText("MainWindow", "Looking up the receiver\'s public key"))))
-            shared.printLock.acquire()
-            print 'Found a message in our database that needs to be sent with this pubkey.'
-            print 'First 150 characters of message:', repr(message[:150])
-            shared.printLock.release()
+            with shared.printLock:
+                print 'Found a message in our database that needs to be sent with this pubkey.'
+                print 'First 150 characters of message:', repr(message[:150])
+
 
             # mark the pubkey as 'usedpersonally' so that we don't ever delete
             # it.
@@ -553,10 +553,10 @@ class singleWorker(threading.Thread):
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlLock.release()
             if queryreturn == []:
-                shared.printLock.acquire()
-                sys.stderr.write(
-                    '(within sendMsg) The needed pubkey was not found. This should never happen. Aborting send.\n')
-                shared.printLock.release()
+                with shared.printLock:
+                    sys.stderr.write(
+                        '(within sendMsg) The needed pubkey was not found. This should never happen. Aborting send.\n')
+
                 return
             for row in queryreturn:
                 pubkeyPayload, = row
@@ -746,19 +746,19 @@ class singleWorker(threading.Thread):
                 continue
             encryptedPayload = embeddedTime + encodeVarint(toStreamNumber) + encrypted
             target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
-            shared.printLock.acquire()
-            print '(For msg message) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes
-            shared.printLock.release()
+            with shared.printLock:
+                print '(For msg message) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes
+
             powStartTime = time.time()
             initialHash = hashlib.sha512(encryptedPayload).digest()
             trialValue, nonce = proofofwork.run(target, initialHash)
-            shared.printLock.acquire()
-            print '(For msg message) Found proof of work', trialValue, 'Nonce:', nonce
-            try:
-                print 'POW took', int(time.time() - powStartTime), 'seconds.', nonce / (time.time() - powStartTime), 'nonce trials per second.'
-            except:
-                pass
-            shared.printLock.release()
+            with shared.printLock:
+                print '(For msg message) Found proof of work', trialValue, 'Nonce:', nonce
+                try:
+                    print 'POW took', int(time.time() - powStartTime), 'seconds.', nonce / (time.time() - powStartTime), 'nonce trials per second.'
+                except:
+                    pass
+
             encryptedPayload = pack('>Q', nonce) + encryptedPayload
 
             inventoryHash = calculateInventoryHash(encryptedPayload)
@@ -785,10 +785,10 @@ class singleWorker(threading.Thread):
         toStatus, addressVersionNumber, streamNumber, ripe = decodeAddress(
             toAddress)
         if toStatus != 'success':
-            shared.printLock.acquire()
-            sys.stderr.write('Very abnormal error occurred in requestPubKey. toAddress is: ' + repr(
-                toAddress) + '. Please report this error to Atheros.')
-            shared.printLock.release()
+            with shared.printLock:
+                sys.stderr.write('Very abnormal error occurred in requestPubKey. toAddress is: ' + repr(
+                    toAddress) + '. Please report this error to Atheros.')
+
             return
         shared.neededPubkeys[ripe] = 0
         payload = pack('>Q', (int(time.time()) + random.randrange(
@@ -796,9 +796,9 @@ class singleWorker(threading.Thread):
         payload += encodeVarint(addressVersionNumber)
         payload += encodeVarint(streamNumber)
         payload += ripe
-        shared.printLock.acquire()
-        print 'making request for pubkey with ripe:', ripe.encode('hex')
-        shared.printLock.release()
+        with shared.printLock:
+            print 'making request for pubkey with ripe:', ripe.encode('hex')
+
         # print 'trial value', trialValue
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
         shared.UISignalQueue.put(('updateStatusBar', statusbar))
@@ -808,9 +808,9 @@ class singleWorker(threading.Thread):
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        shared.printLock.acquire()
-        print 'Found proof of work', trialValue, 'Nonce:', nonce
-        shared.printLock.release()
+        with shared.printLock:
+            print 'Found proof of work', trialValue, 'Nonce:', nonce
+
 
         payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
@@ -839,19 +839,19 @@ class singleWorker(threading.Thread):
         payload = embeddedTime + encodeVarint(toStreamNumber) + ackdata
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
-        shared.printLock.acquire()
-        print '(For ack message) Doing proof of work...'
-        shared.printLock.release()
+        with shared.printLock:
+            print '(For ack message) Doing proof of work...'
+
         powStartTime = time.time()
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        shared.printLock.acquire()
-        print '(For ack message) Found proof of work', trialValue, 'Nonce:', nonce
-        try:
-            print 'POW took', int(time.time() - powStartTime), 'seconds.', nonce / (time.time() - powStartTime), 'nonce trials per second.'
-        except:
-            pass
-        shared.printLock.release()
+        with shared.printLock:
+            print '(For ack message) Found proof of work', trialValue, 'Nonce:', nonce
+            try:
+                print 'POW took', int(time.time() - powStartTime), 'seconds.', nonce / (time.time() - powStartTime), 'nonce trials per second.'
+            except:
+                pass
+
         payload = pack('>Q', nonce) + payload
         headerData = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
         headerData += 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
