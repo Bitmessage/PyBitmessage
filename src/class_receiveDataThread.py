@@ -20,6 +20,8 @@ import helper_bitcoin
 import helper_inbox
 import helper_sent
 import tr
+from class_pop3Server import bitmessagePOP3Server
+
 #from bitmessagemain import shared.lengthOfTimeToLeaveObjectsInInventory, shared.lengthOfTimeToHoldOnToAllPubkeys, shared.maximumAgeOfAnObjectThatIAmWillingToAccept, shared.maximumAgeOfObjectsThatIAdvertiseToOthers, shared.maximumAgeOfNodesThatIAdvertiseToOthers, shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer, shared.neededPubkeys
 
 # This thread is created either by the synSenderThread(for outgoing
@@ -997,7 +999,13 @@ class receiveDataThread(threading.Thread):
                     print 'Message ignored because address not in whitelist.'
                     blockMessage = True
             if not blockMessage:
+                try:
+                    isEmailAddress = shared.config.getboolean(toAddress, 'foremail')
+                except:
+                    isEmailAddress = False
+
                 print 'fromAddress:', fromAddress
+                print 'toAddress is for E-mail:', isEmailAddress
                 print 'First 150 characters of message:', repr(message[:150])
 
                 toLabel = shared.config.get(toAddress, 'label')
@@ -1022,6 +1030,11 @@ class receiveDataThread(threading.Thread):
                 else:
                     body = 'Unknown encoding type.\n\n' + repr(message)
                     subject = ''
+
+                if isEmailAddress:
+                    # The above 'message/subject' formatting may give us weird values if messageEncodingType is bad
+                    body, subject = bitmessagePOP3Server.reformatMessageForEmail(toAddress, fromAddress, body, subject)
+
                 if messageEncodingType != 0:
                     t = (self.inventoryHash, toAddress, fromAddress, subject, int(
                         time.time()), body, 'inbox', messageEncodingType, 0)

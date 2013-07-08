@@ -1,9 +1,13 @@
+from cStringIO import StringIO
 from collections import deque
 import asyncore
+import hashlib
 import shared
 import socket
 import ssl
 import sys
+
+from email import parser, generator, utils
 
 from addresses import *
 import helper_inbox
@@ -61,19 +65,21 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
         for row in queryreturn:
             msgid, fromAddress, subject, size = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            if subject.startswith("<Bitmessage Mail: ") and subject[-1] == '>':
-                subject = "<Bitmessage Mail: 00000000000000000000>" # Reserved, flags.
-                flags = subject[-21:-1]
-                # TODO - checksum?
+            i = subject.find('<Bitmessage Mail: ')
+            if i >= 0:
+                tmp = subject[i:]
+                i = tmp.find('>')
+                if i >= 0:
+                    flags = tmp[i-21:i] # TODO - verify checksum?
 
-                self.messages.append({
-                    'msgid': msgid,
-                    'fromAddress': fromAddress,
-                    'subject': subject,
-                    'size': size,
-                })
+                    self.messages.append({
+                        'msgid': msgid,
+                        'fromAddress': fromAddress,
+                        'subject': subject,
+                        'size': size,
+                    })
 
-                self.storage_size += size
+                    self.storage_size += size
 
 
     def getMessageContent(self, msgid):
@@ -286,4 +292,89 @@ class bitmessagePOP3Server(asyncore.dispatcher):
             sock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile, keyfile=self.keyfile, ssl_version=ssl.PROTOCOL_SSLv23)
         _ = bitmessagePOP3Connection(sock, peer_address, debug=self.debug)
 
+    @staticmethod
+    def reformatMessageForEmail(toAddress, fromAddress, body, subject):
+        message = parser.Parser().parsestr(body)
+        print(message)
 
+        subject_is_valid = False
+
+        i = subject.find('<Bitmessage Mail: ')
+        if i >= 0:
+            tmp = subject[i:]
+            i = tmp.find('>')
+            if i >= 0:
+                flags = tmp[i-21:i]
+                checksum = int(flags[-4:], 16)
+
+                # Checksum to makesure incoming message hasn't been tampered with
+                c = hashlib.sha256(body).digest()[:2]
+                c = (ord(checksum[0]) << 8) | ord(checksum[1])
+
+                # Valid Bitmessage subject line already
+                if c == checksum:
+                    subject_is_valid = True
+                else:
+                    with shared.printLock:
+                        print 'Got E-Mail formatted message with incorrect checksum...'
+
+        body_is_valid = False
+        if 'Date' in message and 'From' in message:
+            body_is_valid = True
+
+        if not body_is_valid:
+            fromLabel = '{}@{}'.format(getBase58Capitaliation(fromAddress), fromAddress)
+
+            t = (fromAddress,)
+            with shared.sqlLock:
+                shared.sqlSubmitQueue.put(
+                    '''SELECT label FROM addressbook WHERE address=?''')
+                shared.sqlSubmitQueue.put(t)
+                queryreturn = shared.sqlReturnQueue.get()
+            for row in queryreturn:
+                fromLabel = '{} <{}>'.format(row[0], fromLabel)
+                break
+
+            message['From'] = fromLabel
+            message['Date'] = utils.formatdate()
+
+        #if subject_is_valid and body_is_valid:
+        #    return body, subject
+
+        if not subject_is_valid and 'Subject' not in message:
+            message['Subject'] = subject
+
+        toLabel = '{}@{}'.format(getBase58Capitaliation(toAddress), toAddress)
+        try:
+            toLabel = '{} <{}>'.format(shared.config.get(toAddress, 'label'), toLabel)
+        except:
+            pass
+
+        if "To" not in message:
+            message['To'] = toLabel
+
+        # Return-Path
+        returnPath = "{}@{}".format(getBase58Capitaliation(fromAddress), fromAddress)
+        message['Return-Path'] = returnPath
+
+        # X-Delivered-To
+        deliveredTo = "{}@{}".format(getBase58Capitaliation(toAddress), toAddress)
+        message['X-Delivered-To'] = deliveredTo
+
+        # X-Bitmessage-Receiving-Version
+        message["X-Bitmessage-Receiving-Version"] = shared.softwareVersion
+
+        fp = StringIO()
+        gen = generator.Generator(fp, mangle_from_=False, maxheaderlen=128)
+        gen.flatten(message)
+
+        message_as_text = fp.getvalue()
+
+        # Checksum to makesure incoming message hasn't been tampered with
+        # TODO - if subject_is_valid, then don't completely overwrite the subject, instead include all the data outside of <> too
+        checksum = hashlib.sha256(message_as_text).digest()[:2]
+        checksum = (ord(checksum[0]) << 8) | ord(checksum[1])
+        subject = "<Bitmessage Mail: 0000000000000000{:04x}>".format(checksum) # Reserved flags.
+
+        return message_as_text, subject
+            

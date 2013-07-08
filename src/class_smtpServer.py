@@ -343,7 +343,7 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
         #print(type(address))
 
         message = parser.Parser().parsestr(data)
-        message['X-Bitmessage-Version'] = shared.softwareVersion
+        message['X-Bitmessage-Sending-Version'] = shared.softwareVersion
         print(message)
 
         fp = StringIO()
