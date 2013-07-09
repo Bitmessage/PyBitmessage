@@ -35,6 +35,14 @@ install:
 	install -m 644 desktop/can-icon.svg ${DEST_SHARE}/icons/hicolor/scalable/apps/${APP}.svg
 	install -m 644 desktop/can-icon.svg ${DEST_SHARE}/pixmaps/${APP}.svg
 
+uninstall:
+	rm -Rf "${DEST_APP}"
+	rm -f "${DESTDIR}/usr/bin/${APP}"
+	rm -f "${DEST_SHARE}/applications/${APP}.desktop"
+	rm -f "${DEST_SHARE}/icons/hicolor/24x24/apps/${APP}.png"
+	rm -f "${DEST_SHARE}/icons/hicolor/scalable/apps/${APP}.svg"
+	rm -f "${DEST_SHARE}/pixmaps/${APP}.svg"
+
 clean:
 	rm -rf debian/${APP}
 	rm -f ../${APP}_*.deb ../${APP}_*.asc ../${APP}_*.dsc ../${APP}*.changes
