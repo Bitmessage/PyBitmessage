@@ -236,8 +236,8 @@ def reloadMyAddressHashes():
                         myAddressesByHash[hash] = addressInKeysFile
 
                 else:
-                    sys.stderr.write('Error in reloadMyAddressHashes: Can\'t handle address '
-                                     'versions other than 2 or 3.\n')
+                    logger.error('Error in reloadMyAddressHashes: Can\'t handle address '
+                                 'versions other than 2 or 3.\n')
 
     if not keyfileSecure:
         fixSensitiveFilePermissions(appdata + 'keys.dat', hasEnabledKeys)
