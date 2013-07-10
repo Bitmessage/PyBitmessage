@@ -27,7 +27,7 @@
    <item row="0" column="0">
     <widget class="QTabWidget" name="tabWidgetSettings">
      <property name="currentIndex">
-      <number>4</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tabUserInterface">
       <property name="enabled">
@@ -832,7 +832,7 @@
           <item row="0" column="0">
            <widget class="QCheckBox" name="checkBoxStripMessageHeaders">
             <property name="text">
-             <string>Strip these de-anonymizing message meaders from outgoing messages (comma-separated list):</string>
+             <string>Strip these non-anonymizing message meaders from outgoing messages (comma-separated list):</string>
             </property>
             <property name="checked">
              <bool>true</bool>
