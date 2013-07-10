@@ -219,6 +219,18 @@ class sqlThread(threading.Thread):
                 parameters = (int(time.time()),)
                 self.cur.execute(item, parameters)
 
+        # We need a receiving identity in subscriptions table.  This allows us to 
+        # Route broadcast messages to a number of individual identities (some 
+        # can be wrapped with E-mail, some can be left in the users inbox)
+        item = '''SELECT value FROM settings WHERE key='subscriptionidentities';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        queryreturn = self.cur.fetchall()
+        if len(queryreturn) == 0:
+            print 'Modifying subscriptions table to include a receiving identity'
+            self.cur.execute('''ALTER TABLE subscriptions ADD COLUMN receiving_identity TEXT DEFAULT '';''')
+            self.cur.execute('''INSERT INTO settings (value, key) VALUES ('1', 'subscriptionidentities');''')
+
         while True:
             item = shared.sqlSubmitQueue.get()
             if item == 'commit':

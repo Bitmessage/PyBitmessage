@@ -1259,12 +1259,12 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSubscriptions.setRowCount(0)
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(
-            'SELECT label, address, enabled FROM subscriptions')
+            'SELECT label, address, receiving_identity, enabled FROM subscriptions')
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
         for row in queryreturn:
-            label, address, enabled = row
+            label, address, receivingIdentity, enabled = row
             self.ui.tableWidgetSubscriptions.insertRow(0)
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
             if not enabled:
@@ -1276,6 +1276,10 @@ class MyForm(QtGui.QMainWindow):
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetSubscriptions.setItem(0, 1, newItem)
+            newItem = QtGui.QTableWidgetItem(unicode(receivingIdentity, 'utf-8'))
+            newItem.setFlags(
+                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidgetSubscriptions.setItem(0, 2, newItem)
 
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
@@ -1656,7 +1660,7 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage(_translate(
                     "MainWindow", "The address you entered was invalid. Ignoring it."))
 
-    def addSubscription(self, label, address):
+    def addSubscription(self, label, address, receivingIdentity):
         address = addBMIfNotPresent(address)
         #This should be handled outside of this function, for error displaying and such, but it must also be checked here.
         if shared.isAddressInMySubscriptionsList(address):
@@ -1669,11 +1673,14 @@ class MyForm(QtGui.QMainWindow):
         newItem =  QtGui.QTableWidgetItem(address)
         newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
         self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
+        newItem = QtGui.QTableWidgetItem(unicode(receivingIdentity, 'utf-8'))
+        newItem.setFlags( QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled )
+        self.ui.tableWidgetSubscriptions.setItem(0,2,newItem)
         self.ui.tableWidgetSubscriptions.setSortingEnabled(True)
         #Add to database (perhaps this should be separated from the MyForm class)
-        t = (str(label),address,True)
+        t = (str(label),address,receivingIdentity,True)
         shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('''INSERT INTO subscriptions VALUES (?,?,?)''')
+        shared.sqlSubmitQueue.put('''INSERT INTO subscriptions (label, address, receiving_identity, enabled) VALUES (?,?,?,?)''')
         shared.sqlSubmitQueue.put(t)
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlSubmitQueue.put('commit')
@@ -1682,7 +1689,7 @@ class MyForm(QtGui.QMainWindow):
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def click_pushButtonAddSubscription(self):
-        self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
+        self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self, True)
         if self.NewSubscriptionDialogInstance.exec_():
             if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() != _translate("MainWindow", "Address is valid."):
                 self.statusBar().showMessage(_translate("MainWindow", "The address you entered was invalid. Ignoring it."))
@@ -1693,7 +1700,9 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage(_translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
                 return
             label = self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()
-            self.addSubscription(label, address)
+            comboBoxIndex = self.NewSubscriptionDialogInstance.ui.comboBoxReceivingIdentity.currentIndex()
+            receivingIdentity = str(self.NewSubscriptionDialogInstance.ui.comboBoxReceivingIdentity.itemData(comboBoxIndex).toPyObject())
+            self.addSubscription(label, address, receivingIdentity)
 
     def loadBlackWhiteList(self):
         # Initialize the Blacklist or Whitelist table
@@ -2321,7 +2330,7 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
                 continue
             labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
-            self.addSubscription(labelAtCurrentRow, addressAtCurrentRow)
+            self.addSubscription(labelAtCurrentRow, addressAtCurrentRow, '') # TODO
             self.ui.tabWidget.setCurrentIndex(4)
 
     def on_context_menuAddressBook(self, point):
@@ -2339,10 +2348,12 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
+        receivingIdentity = self.ui.tableWidgetSubscriptions.item(
+            currentRow, 2).text()
+        t = (str(labelAtCurrentRow), str(addressAtCurrentRow), str(receivingIdentity))
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(
-            '''DELETE FROM subscriptions WHERE label=? AND address=?''')
+            '''DELETE FROM subscriptions WHERE label=? AND address=? AND receiving_identity=?''')
         shared.sqlSubmitQueue.put(t)
         shared.sqlReturnQueue.get()
         shared.sqlSubmitQueue.put('commit')
@@ -2364,18 +2375,19 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
+        receivingIdentity = self.ui.tableWidgetSubscriptions.item(
+            currentRow, 2).text()
+        t = (str(labelAtCurrentRow), str(addressAtCurrentRow), str(receivingIdentity))
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(
-            '''update subscriptions set enabled=1 WHERE label=? AND address=?''')
+            '''update subscriptions set enabled=1 WHERE label=? AND address=? AND receiving_identity=?''')
         shared.sqlSubmitQueue.put(t)
         shared.sqlReturnQueue.get()
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
-        self.ui.tableWidgetSubscriptions.item(
-            currentRow, 0).setTextColor(QtGui.QColor(0, 0, 0))
-        self.ui.tableWidgetSubscriptions.item(
-            currentRow, 1).setTextColor(QtGui.QColor(0, 0, 0))
+        for i in range(3):
+            self.ui.tableWidgetSubscriptions.item(
+                currentRow, i).setTextColor(QtGui.QColor(0, 0, 0))
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_action_SubscriptionsDisable(self):
@@ -2384,18 +2396,19 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
+        receivingIdentity = self.ui.tableWidgetSubscriptions.item(
+            currentRow, 2).text()
+        t = (str(labelAtCurrentRow), str(addressAtCurrentRow), str(receivingIdentity))
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(
-            '''update subscriptions set enabled=0 WHERE label=? AND address=?''')
+            '''update subscriptions set enabled=0 WHERE label=? AND address=? AND receiving_identity=?''')
         shared.sqlSubmitQueue.put(t)
         shared.sqlReturnQueue.get()
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
-        self.ui.tableWidgetSubscriptions.item(
-            currentRow, 0).setTextColor(QtGui.QColor(128, 128, 128))
-        self.ui.tableWidgetSubscriptions.item(
-            currentRow, 1).setTextColor(QtGui.QColor(128, 128, 128))
+        for i in range(3):
+            self.ui.tableWidgetSubscriptions.item(
+                currentRow, i).setTextColor(QtGui.QColor(128, 128, 128))
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_context_menuSubscriptions(self, point):
@@ -2651,10 +2664,12 @@ class MyForm(QtGui.QMainWindow):
         if currentRow >= 0:
             addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
                 currentRow, 1).text()
+            receivingIdentity = self.ui.tableWidgetSubscriptions.item(
+                currentRow, 2).text()
             t = (str(self.ui.tableWidgetSubscriptions.item(
-                currentRow, 0).text().toUtf8()), str(addressAtCurrentRow))
+                currentRow, 0).text().toUtf8()), str(addressAtCurrentRow), str(receivingIdentity))
             shared.sqlSubmitQueue.put(
-                '''UPDATE subscriptions set label=? WHERE address=?''')
+                '''UPDATE subscriptions set label=? WHERE address=? AND receiving_identity=?''')
             shared.sqlSubmitQueue.put(t)
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
@@ -3027,13 +3042,36 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
 
 class NewSubscriptionDialog(QtGui.QDialog):
 
-    def __init__(self, parent):
+    def __init__(self, parent, showReceivingIdentity=False):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_NewSubscriptionDialog()
         self.ui.setupUi(self)
         self.parent = parent
         QtCore.QObject.connect(self.ui.lineEditSubscriptionAddress, QtCore.SIGNAL(
             "textChanged(QString)"), self.subscriptionAddressChanged)
+
+        if showReceivingIdentity:
+            self.ui.label_3.setVisible(True)
+            self.ui.comboBoxReceivingIdentity.setVisible(True)
+
+            configSections = shared.config.sections()
+            for addressInKeysFile in configSections:
+                if addressInKeysFile != 'bitmessagesettings':
+                    status, addressVersionNumber, streamNumber, hash = decodeAddress(
+                        addressInKeysFile)
+
+                    if status != 'success':
+                        continue
+                    isEnabled = shared.config.getboolean(
+                        addressInKeysFile, 'enabled')
+                    if not isEnabled:
+                        continue
+
+                    self.ui.comboBoxReceivingIdentity.insertItem(0, unicode("{} - {}".format(shared.config.get(
+                        addressInKeysFile, 'label'), addressInKeysFile), 'utf-8'), addressInKeysFile)
+        else:
+            self.ui.label_3.setVisible(False)
+            self.ui.comboBoxReceivingIdentity.setVisible(False)
 
     def subscriptionAddressChanged(self, QString):
         status, a, b, c = decodeAddress(str(QString))

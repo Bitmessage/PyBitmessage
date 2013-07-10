@@ -702,27 +702,58 @@ class receiveDataThread(threading.Thread):
                 body = 'Unknown encoding type.\n\n' + repr(message)
                 subject = ''
 
-            toAddress = '[Broadcast subscribers]'
             if messageEncodingType != 0:
-                
-                t = (self.inventoryHash, toAddress, fromAddress, subject, int(
-                    time.time()), body, 'inbox', messageEncodingType, 0)
-                helper_inbox.insert(t)
-                
-                shared.UISignalQueue.put(('displayNewInboxMessage', (
-                    self.inventoryHash, toAddress, fromAddress, subject, body)))
+                t = (fromAddress,)
+                shared.sqlLock.acquire()
+                shared.sqlSubmitQueue.put(
+                    '''SELECT receiving_identity FROM subscriptions WHERE address=?''')
+                shared.sqlSubmitQueue.put(t)
+                queryreturn = shared.sqlReturnQueue.get()
+                shared.sqlLock.release()
 
-                # If we are behaving as an API then we might need to run an
-                # outside command to let some program know that a new message
-                # has arrived.
-                if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
-                    try:
-                        apiNotifyPath = shared.config.get(
-                            'bitmessagesettings', 'apinotifypath')
-                    except:
-                        apiNotifyPath = ''
-                    if apiNotifyPath != '':
-                        call([apiNotifyPath, "newBroadcast"])
+                print('queryreturn: {}'.format(queryreturn))
+                for row in queryreturn:
+                    receivingIdentity, = row
+
+                    if receivingIdentity == '':
+                        toAddress = '[Broadcast subscribers]'
+                        formattedBody = body
+                        formattedSubject = subject
+                    elif not shared.safeConfigGetBoolean(receivingIdentity, 'enabled'):
+                        continue
+                    else:
+                        try:
+                            isEmailAddress = shared.config.getboolean(receivingIdentity, 'foremail')
+                        except:
+                            isEmailAddress = False
+
+                        # TODO - kinda stinks that the 'inbox' toAddress is used for both the recipient AND broadcast flag
+                        toAddress = receivingIdentity
+                    
+                        if isEmailAddress:
+                            formattedBody, formattedSubject = bitmessagePOP3Server.reformatMessageForReceipt(receivingIdentity, fromAddress, body, subject, broadcast=True)
+                        else:
+                            formattedBody = body
+                            formattedSubject = subject
+
+                    t = (self.inventoryHash, toAddress, fromAddress, formattedSubject, int(
+                        time.time()), formattedBody, 'inbox', messageEncodingType, 0)
+                    helper_inbox.insert(t)
+                    
+                    shared.UISignalQueue.put(('displayNewInboxMessage', (
+                        self.inventoryHash, toAddress, fromAddress, formattedSubject, formattedBody)))
+
+            # If we are behaving as an API then we might need to run an
+            # outside command to let some program know that a new message
+            # has arrived.
+            if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+                try:
+                    apiNotifyPath = shared.config.get(
+                        'bitmessagesettings', 'apinotifypath')
+                except:
+                    apiNotifyPath = ''
+                if apiNotifyPath != '':
+                    call([apiNotifyPath, "newBroadcast"])
 
             # Display timing data
             with shared.printLock:

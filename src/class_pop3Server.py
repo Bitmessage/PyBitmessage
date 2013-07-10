@@ -293,7 +293,7 @@ class bitmessagePOP3Server(asyncore.dispatcher):
         _ = bitmessagePOP3Connection(sock, peer_address, debug=self.debug)
 
     @staticmethod
-    def reformatMessageForReceipt(toAddress, fromAddress, body, subject):
+    def reformatMessageForReceipt(toAddress, fromAddress, body, subject, broadcast=False):
         message = parser.Parser().parsestr(body)
         with shared.printLock:
             print(message)
@@ -310,7 +310,8 @@ class bitmessagePOP3Server(asyncore.dispatcher):
 
                 # Checksum to make sure incoming message hasn't been tampered with
                 c = hashlib.sha256(body).digest()[:2]
-                c = (ord(checksum[0]) << 8) | ord(checksum[1])
+                #c = (ord(checksum[0]) << 8) | ord(checksum[1])
+                print(c, checksum)
 
                 # Valid Bitmessage subject line already
                 if c == checksum:
@@ -323,33 +324,58 @@ class bitmessagePOP3Server(asyncore.dispatcher):
         if 'Date' in message and 'From' in message:
             body_is_valid = True
 
-        if not body_is_valid:
-            fromLabel = '{}@{}'.format(getBase58Capitaliation(fromAddress), fromAddress)
-
-            t = (fromAddress,)
+        mailingListName = None
+        if broadcast:
+            # Determine a mailing list label, just in case
             with shared.sqlLock:
+                t = (fromAddress,toAddress)
                 shared.sqlSubmitQueue.put(
-                    '''SELECT label FROM addressbook WHERE address=?''')
+                    '''SELECT label FROM subscriptions WHERE address=? AND receiving_identity=?''')
                 shared.sqlSubmitQueue.put(t)
                 queryreturn = shared.sqlReturnQueue.get()
             for row in queryreturn:
-                fromLabel = '{} <{}>'.format(row[0], fromLabel)
+                mailingListName = row[0]
                 break
 
+        if not body_is_valid:
+            fromLabel = '{}@{}'.format(getBase58Capitaliation(fromAddress), fromAddress)
+
+            if broadcast and mailingListName is not None:
+                fromLabel = '{} <{}>'.format(mailingListName, fromLabel)
+            else:
+                with shared.sqlLock:
+                    t = (fromAddress,)
+                    shared.sqlSubmitQueue.put(
+                        '''SELECT label FROM addressbook WHERE address=?''')
+                    shared.sqlSubmitQueue.put(t)
+                    queryreturn = shared.sqlReturnQueue.get()
+                for row in queryreturn:
+                    fromLabel = '{} <{}>'.format(row[0], fromLabel)
+                    break
+
             message['From'] = fromLabel
-            message['Date'] = utils.formatdate()
+            message['Date'] = utils.formatdate(localtime=False)
 
         message['X-Bitmessage-Subject'] = subject
         if not subject_is_valid and 'Subject' not in message:
-            message['Subject'] = subject
+            if mailingListName is not None:
+                message['Subject'] = bitmessagePOP3Server.addMailingListNameToSubject(subject, mailingListName)
+            else:
+                message['Subject'] = subject
 
-        toLabel = '{}@{}'.format(getBase58Capitaliation(toAddress), toAddress)
-        try:
-            toLabel = '{} <{}>'.format(shared.config.get(toAddress, 'label'), toLabel)
-        except:
-            pass
+        if broadcast:
+            # The To: field on a broadcast is the mailing list, not you
+            toLabel = '{}@{}'.format(getBase58Capitaliation(fromAddress), fromAddress)
+            if mailingListName is not None:
+                toLabel = '{} <{}>'.format(mailingListName, toLabel)
+            message['To'] = toLabel
+        elif 'To' not in message:
+            toLabel = '{}@{}'.format(getBase58Capitaliation(toAddress), toAddress)
+            try:
+                toLabel = '{} <{}>'.format(shared.config.get(toAddress, 'label'), toLabel)
+            except:
+                pass
 
-        if "To" not in message:
             message['To'] = toLabel
 
         # Return-Path
