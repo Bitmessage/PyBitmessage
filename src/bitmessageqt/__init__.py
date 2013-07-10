@@ -1757,6 +1757,10 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.lineEditPOP3Port.text()))
             shared.config.set('bitmessagesettings', 'pop3ssl', str(
                 self.settingsDialogInstance.ui.checkBoxEnablePOP3SSL.isChecked()))
+            shared.config.set('bitmessagesettings', 'stripmessageheadersenable', str(
+                self.settingsDialogInstance.ui.checkBoxStripMessageHeaders.isChecked()))
+            shared.config.set('bitmessagesettings', 'stripmessageheaders', str(
+                self.settingsDialogInstance.ui.lineEditMessageHeadersToStrip.text()))
             if self.settingsDialogInstance.sslCertFile is None:
                 shared.config.remove_option('bitmessagesettings', 'certfile')
             else:
@@ -2728,6 +2732,15 @@ class settingsDialog(QtGui.QDialog):
             shared.config.getboolean('bitmessagesettings', 'showtraynotifications'))
         self.ui.checkBoxStartInTray.setChecked(
             shared.config.getboolean('bitmessagesettings', 'startintray'))
+        try:
+            self.ui.checkBoxStripMessageHeaders.setChecked(
+                shared.config.getboolean('bitmessagesettings', 'stripmessageheadersenable'))
+            self.ui.lineEditMessageHeadersToStrip.setText(
+                shared.config.get('bitmessagesettings', 'stripmessageheaders'))
+        except:
+            self.ui.checkBoxStripMessageHeaders.setChecked(True)
+            self.ui.lineEditMessageHeadersToStrip.setText('Message-ID, User-Agent')
+
         if shared.appdata == '':
             self.ui.checkBoxPortableMode.setChecked(True)
         if 'darwin' in sys.platform:
@@ -2869,6 +2882,9 @@ class settingsDialog(QtGui.QDialog):
             "clicked()"), self.click_FindSSLCertificate)
         QtCore.QObject.connect(self.ui.pushButtonFindSSLKeyfile, QtCore.SIGNAL(
             "clicked()"), self.click_FindSSLKeyfile)
+        QtCore.QObject.connect(self.ui.checkBoxStripMessageHeaders, QtCore.SIGNAL(
+            "clicked()"), self.click_StripMessageHeaders)
+        self.click_StripMessageHeaders()
 
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
@@ -2878,6 +2894,9 @@ class settingsDialog(QtGui.QDialog):
         else:
             QtGui.QMessageBox.information(self, 'SSL Files', _translate(
                     "Settings", "Because you have enabled SSL on either SMTP or POP3 servers, you must specify valid SSL Certificate and Key files before continuing."), QMessageBox.Ok)
+
+    def click_StripMessageHeaders(self):
+        self.ui.lineEditMessageHeadersToStrip.setEnabled(self.ui.checkBoxStripMessageHeaders.isChecked())
 
     def configurePushButtonFindSSLCerficiate(self, fn):
         self.ui.pushButtonFindSSLCertificate.setText('Find SSL Certificate...')

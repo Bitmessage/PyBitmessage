@@ -333,6 +333,25 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
             sock = ssl.wrap_socket(sock, server_side=True, certfile=self.certfile, keyfile=self.keyfile, ssl_version=ssl.PROTOCOL_SSLv23)
         bitmessageSMTPChannel(self, sock, peer_address)
 
+    @staticmethod
+    def stripMessageHeaders(message):
+        try:
+            if not shared.config.getboolean('bitmessagesettings', 'stripmessageheadersenable'):
+                return
+        except:
+            pass
+
+        try:
+            headersToStrip = shared.config.get('bitmessagesettings', 'stripmessageheaders')
+        except:
+            headersToStrip = "Message-ID, User-Agent"
+
+        headersToStrip = [x.strip() for x in headersToStrip.split(',') if len(x.strip()) > 0]
+        print(headersToStrip)
+        for h in headersToStrip:
+            if h in message:
+                del message[h]
+
     def process_message(self, peer, address, rcpttos, data):
         #print("Peer", peer)
         #print("Mail From", address)
@@ -344,12 +363,13 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
 
         message = parser.Parser().parsestr(data)
         message['X-Bitmessage-Sending-Version'] = shared.softwareVersion
-        print(message)
 
+        bitmessageSMTPServer.stripMessageHeaders(message)
         fp = StringIO()
         gen = generator.Generator(fp, mangle_from_=False, maxheaderlen=128)
         gen.flatten(message)
         message_as_text = fp.getvalue()
+        print(message_as_text)
 
         checksum = hashlib.sha256(message_as_text).digest()[:2]
         checksum = (ord(checksum[0]) << 8) | ord(checksum[1])

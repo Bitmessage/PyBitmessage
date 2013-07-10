@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Sat Jul 06 18:24:20 2013
+# Created: Wed Jul 10 16:19:56 2013
 #      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_settingsDialog(object):
     def setupUi(self, settingsDialog):
         settingsDialog.setObjectName(_fromUtf8("settingsDialog"))
-        settingsDialog.resize(623, 343)
+        settingsDialog.resize(623, 406)
         self.gridLayout = QtGui.QGridLayout(settingsDialog)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.buttonBox = QtGui.QDialogButtonBox(settingsDialog)
@@ -354,6 +354,19 @@ class Ui_settingsDialog(object):
         self.horizontalLayout_5.addWidget(self.lineEditEmailAddress)
         self.gridLayout_9.addLayout(self.horizontalLayout_5, 1, 0, 1, 2)
         self.gridLayout_8.addWidget(self.groupBox_3, 7, 0, 1, 7)
+        self.groupBox_4 = QtGui.QGroupBox(self.tab_3)
+        self.groupBox_4.setObjectName(_fromUtf8("groupBox_4"))
+        self.gridLayout_10 = QtGui.QGridLayout(self.groupBox_4)
+        self.gridLayout_10.setObjectName(_fromUtf8("gridLayout_10"))
+        self.checkBoxStripMessageHeaders = QtGui.QCheckBox(self.groupBox_4)
+        self.checkBoxStripMessageHeaders.setChecked(True)
+        self.checkBoxStripMessageHeaders.setTristate(False)
+        self.checkBoxStripMessageHeaders.setObjectName(_fromUtf8("checkBoxStripMessageHeaders"))
+        self.gridLayout_10.addWidget(self.checkBoxStripMessageHeaders, 0, 0, 1, 1)
+        self.lineEditMessageHeadersToStrip = QtGui.QLineEdit(self.groupBox_4)
+        self.lineEditMessageHeadersToStrip.setObjectName(_fromUtf8("lineEditMessageHeadersToStrip"))
+        self.gridLayout_10.addWidget(self.lineEditMessageHeadersToStrip, 1, 0, 1, 1)
+        self.gridLayout_8.addWidget(self.groupBox_4, 5, 0, 1, 7)
         self.tabWidgetSettings.addTab(self.tab_3, _fromUtf8(""))
         self.gridLayout.addWidget(self.tabWidgetSettings, 0, 0, 1, 1)
 
@@ -426,5 +439,8 @@ class Ui_settingsDialog(object):
         self.labelAccountStatus.setText(_translate("settingsDialog", "Account Inaccessible via SMTP/POP3. Set a password to allow access.", None))
         self.label_18.setText(_translate("settingsDialog", "E-Mail Address for this Identity:", None))
         self.lineEditEmailAddress.setText(_translate("settingsDialog", "fsdpffffffffffffffffffffffffffffffffffffffffffffffasdpofiasjdf", None))
+        self.groupBox_4.setTitle(_translate("settingsDialog", "Mail Content", None))
+        self.checkBoxStripMessageHeaders.setText(_translate("settingsDialog", "Strip these non-anonymizing message meaders from outgoing messages (comma-separated list):", None))
+        self.lineEditMessageHeadersToStrip.setText(_translate("settingsDialog", "User-Agent, Message-ID", None))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab_3), _translate("settingsDialog", "SMTP && POP3", None))
 

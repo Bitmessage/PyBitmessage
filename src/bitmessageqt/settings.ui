@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>623</width>
-    <height>343</height>
+    <height>406</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -819,6 +819,35 @@
              </widget>
             </item>
            </layout>
+          </item>
+         </layout>
+        </widget>
+       </item>
+       <item row="5" column="0" colspan="7">
+        <widget class="QGroupBox" name="groupBox_4">
+         <property name="title">
+          <string>Mail Content</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_10">
+          <item row="0" column="0">
+           <widget class="QCheckBox" name="checkBoxStripMessageHeaders">
+            <property name="text">
+             <string>Strip these non-anonymizing message meaders from outgoing messages (comma-separated list):</string>
+            </property>
+            <property name="checked">
+             <bool>true</bool>
+            </property>
+            <property name="tristate">
+             <bool>false</bool>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLineEdit" name="lineEditMessageHeadersToStrip">
+            <property name="text">
+             <string>User-Agent, Message-ID</string>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
