@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Wed Jul 10 16:19:56 2013
+# Created: Wed Jul 10 17:07:36 2013
 #      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -440,7 +440,7 @@ class Ui_settingsDialog(object):
         self.label_18.setText(_translate("settingsDialog", "E-Mail Address for this Identity:", None))
         self.lineEditEmailAddress.setText(_translate("settingsDialog", "fsdpffffffffffffffffffffffffffffffffffffffffffffffasdpofiasjdf", None))
         self.groupBox_4.setTitle(_translate("settingsDialog", "Mail Content", None))
-        self.checkBoxStripMessageHeaders.setText(_translate("settingsDialog", "Strip these non-anonymizing message meaders from outgoing messages (comma-separated list):", None))
+        self.checkBoxStripMessageHeaders.setText(_translate("settingsDialog", "Strip these de-anonymizing message meaders from outgoing messages (comma-separated list):", None))
         self.lineEditMessageHeadersToStrip.setText(_translate("settingsDialog", "User-Agent, Message-ID", None))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab_3), _translate("settingsDialog", "SMTP && POP3", None))
 

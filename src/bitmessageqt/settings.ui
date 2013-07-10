@@ -832,7 +832,7 @@
           <item row="0" column="0">
            <widget class="QCheckBox" name="checkBoxStripMessageHeaders">
             <property name="text">
-             <string>Strip these non-anonymizing message meaders from outgoing messages (comma-separated list):</string>
+             <string>Strip these de-anonymizing message meaders from outgoing messages (comma-separated list):</string>
             </property>
             <property name="checked">
              <bool>true</bool>
