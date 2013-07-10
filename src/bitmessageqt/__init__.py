@@ -1962,6 +1962,7 @@ class MyForm(QtGui.QMainWindow):
                 shared.config.set(str(addressAtCurrentRow), 'mailinglistname', str(
                     self.dialog.ui.lineEditMailingListName.text().toUtf8()))
                 self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(137, 04, 177))
+            shared.config.set(str(addressAtCurrentRow), 'foremail', str(self.dialog.ui.checkBoxWrapMessagesWithEmailHeaders.isChecked()))
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
             self.rerenderInboxToLabels()
@@ -2997,6 +2998,9 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
                 addressAtCurrentRow, 'mailinglistname')
         except:
             mailingListName = ''
+        
+        self.ui.checkBoxWrapMessagesWithEmailHeaders.setChecked(
+            shared.safeConfigGetBoolean(addressAtCurrentRow, 'foremail'))
         self.ui.lineEditMailingListName.setText(
             unicode(mailingListName, 'utf-8'))
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))

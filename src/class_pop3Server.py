@@ -293,7 +293,7 @@ class bitmessagePOP3Server(asyncore.dispatcher):
         _ = bitmessagePOP3Connection(sock, peer_address, debug=self.debug)
 
     @staticmethod
-    def reformatMessageForEmail(toAddress, fromAddress, body, subject):
+    def reformatMessageForReceipt(toAddress, fromAddress, body, subject):
         message = parser.Parser().parsestr(body)
         print(message)
 
@@ -307,7 +307,7 @@ class bitmessagePOP3Server(asyncore.dispatcher):
                 flags = tmp[i-21:i]
                 checksum = int(flags[-4:], 16)
 
-                # Checksum to makesure incoming message hasn't been tampered with
+                # Checksum to make sure incoming message hasn't been tampered with
                 c = hashlib.sha256(body).digest()[:2]
                 c = (ord(checksum[0]) << 8) | ord(checksum[1])
 
@@ -338,9 +338,7 @@ class bitmessagePOP3Server(asyncore.dispatcher):
             message['From'] = fromLabel
             message['Date'] = utils.formatdate()
 
-        #if subject_is_valid and body_is_valid:
-        #    return body, subject
-
+        message['X-Bitmessage-Subject'] = subject
         if not subject_is_valid and 'Subject' not in message:
             message['Subject'] = subject
 
@@ -377,4 +375,102 @@ class bitmessagePOP3Server(asyncore.dispatcher):
         subject = "<Bitmessage Mail: 0000000000000000{:04x}>".format(checksum) # Reserved flags.
 
         return message_as_text, subject
-            
+
+    @staticmethod
+    def addMailingListNameToSubject(subject, mailingListName):
+        withoutre = subject = subject.strip()
+        re = ''
+        if subject[:3] == 'Re:' or subject[:3] == 'RE:':
+            re = subject[:3] + ' '
+            withoutre = subject[3:].strip()
+        a = '[' + mailingListName + ']'
+        if withoutre.startswith(a):
+            return subject
+        else:
+            return re + a + ' ' + subject
+
+    @staticmethod
+    def reformatMessageForMailingList(toAddress, fromAddress, body, subject, mailingListName):
+        message = parser.Parser().parsestr(body)
+        print(message)
+
+        subject_is_valid = False
+
+        i = subject.find('<Bitmessage Mail: ')
+        if i >= 0:
+            tmp = subject[i:]
+            i = tmp.find('>')
+            if i >= 0:
+                flags = tmp[i-21:i]
+                checksum = int(flags[-4:], 16)
+
+                # Checksum to make sure incoming message hasn't been tampered with
+                c = hashlib.sha256(body).digest()[:2]
+                c = (ord(checksum[0]) << 8) | ord(checksum[1])
+
+                # Valid Bitmessage subject line already
+                if c == checksum:
+                    subject_is_valid = True
+                else:
+                    with shared.printLock:
+                        print 'Got E-Mail formatted message with incorrect checksum...'
+
+        # The mailing list code will override some headers, including Date and From, so
+        # that the trust can be moved from the original sender to the mailing list owner.
+        fromLabel = '{}@{}'.format(getBase58Capitaliation(fromAddress), fromAddress)
+
+        if 'From' in message:
+            originalFrom = message['From']
+            message['X-Original-From'] = originalFrom
+
+            i = originalFrom.find('<' + fromLabel + '>')
+            if i >= 0:
+                fromLabel = '{} <{}>'.format(originalFrom[:i].strip(), fromLabel)
+
+        message['From'] = fromLabel
+        message['Date'] = utils.formatdate()
+
+        message['X-Bitmessage-Subject'] = subject
+        if 'Subject' not in message:
+            if not subject_is_valid:
+                message['Subject'] = bitmessagePOP3Server.addMailingListNameToSubject(subject, mailingListName)
+            else:
+                # TODO - strip <Bitmessage Mail: ...> from bitmessage subject?
+                message['Subject'] = bitmessagePOP3Server.addMailingListNameToSubject('', mailingListName)
+        else:
+            message['Subject'] = bitmessagePOP3Server.addMailingListNameToSubject(message['Subject'], mailingListName)
+
+        toLabel = '{}@{}'.format(getBase58Capitaliation(toAddress), toAddress)
+        try:
+            toLabel = '{} <{}>'.format(shared.config.get(toAddress, 'label'), toLabel)
+        except:
+            pass
+
+        if 'To' in message:
+            message['X-Original-To'] = message['To']
+        message['To'] = toLabel
+
+        # X-Bitmessage-MailingList-Name
+        message['X-Bitmessage-MailingList-Name'] = mailingListName
+
+        # X-Bitmessage-MailingList-Address
+        mailingListAddress = "{}@{}".format(getBase58Capitaliation(toAddress), toAddress)
+        message['X-Bitmessage-MailingList-Address'] = mailingListAddress
+
+        # X-Bitmessage-MailingList-Version
+        message["X-Bitmessage-MailingList-Version"] = shared.softwareVersion
+
+        fp = StringIO()
+        gen = generator.Generator(fp, mangle_from_=False, maxheaderlen=128)
+        gen.flatten(message)
+
+        message_as_text = fp.getvalue()
+
+        # Checksum to makesure incoming message hasn't been tampered with
+        # TODO - if subject_is_valid, then don't completely overwrite the subject, instead include all the data outside of <> too
+        checksum = hashlib.sha256(message_as_text).digest()[:2]
+        checksum = (ord(checksum[0]) << 8) | ord(checksum[1])
+        subject = bitmessagePOP3Server.addMailingListNameToSubject("<Bitmessage Mail: 0000000000000000{:04x}>".format(checksum), mailingListAddress)
+
+        return message_as_text, subject
+                        
