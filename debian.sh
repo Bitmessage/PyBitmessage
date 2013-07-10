@@ -23,7 +23,7 @@ mv ../PyBitmessage ../${APP}-${VERSION}
 make source
 
 # Build the package
-dpkg-buildpackage -A
+dpkg-buildpackage -A || exit 1
 
 # change the directory name back
 mv ../${APP}-${VERSION} ../PyBitmessage
