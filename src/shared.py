@@ -123,7 +123,8 @@ def lookupAppdataFolder():
         if "HOME" in environ:
             dataFolder = path.join(os.environ["HOME"], "Library/Application Support/", APPNAME) + '/'
         else:
-            print 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
+            logger.critical('Could not find home folder, please report this message and your '
+                             'OS X version to the BitMessage Github.')
             sys.exit()
 
     elif 'win32' in sys.platform or 'win64' in sys.platform:
@@ -137,7 +138,7 @@ def lookupAppdataFolder():
         # Migrate existing data to the proper location if this is an existing install
         if not os.path.exists(dataFolder):
             try:
-                print "Moving data folder to ~/.config/%s" % APPNAME
+                logger.info("Moving data folder to %s" % (dataFolder))
                 move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
                 dataFolder = dataFolder
             except IOError:
@@ -195,21 +196,22 @@ def decodeWalletImportFormat(WIFstring):
     fullString = arithmetic.changebase(WIFstring,58,256)
     privkey = fullString[:-4]
     if fullString[-4:] != hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
-        sys.stderr.write('Major problem! When trying to decode one of your private keys, the checksum failed. Here is the PRIVATE key: %s\n' % str(WIFstring))
+        logger.error('Major problem! When trying to decode one of your private keys, the checksum '
+                     'failed. Here is the PRIVATE key: %s\n' % str(WIFstring))
         return ""
     else:
         #checksum passed
         if privkey[0] == '\x80':
             return privkey[1:]
         else:
-            sys.stderr.write('Major problem! When trying to decode one of your private keys, the checksum passed but the key doesn\'t begin with hex 80. Here is the PRIVATE key: %s\n' % str(WIFstring))
+            logger.error('Major problem! When trying to decode one of your private keys, the '
+                         'checksum passed but the key doesn\'t begin with hex 80. Here is the '
+                         'PRIVATE key: %s\n' % str(WIFstring))
             return ""
 
 
 def reloadMyAddressHashes():
-    printLock.acquire()
-    print 'reloading keys from keys.dat file'
-    printLock.release()
+    logger.debug('reloading keys from keys.dat file')
     myECCryptorObjects.clear()
     myAddressesByHash.clear()
     #myPrivateKeys.clear()
@@ -241,9 +243,7 @@ def reloadMyAddressHashes():
         fixSensitiveFilePermissions(appdata + 'keys.dat', hasEnabledKeys)
 
 def reloadBroadcastSendersForWhichImWatching():
-    printLock.acquire()
-    print 'reloading subscriptions...'
-    printLock.release()
+    logger.debug('reloading subscriptions...')
     broadcastSendersForWhichImWatching.clear()
     MyECSubscriptionCryptorObjects.clear()
     sqlLock.acquire()
@@ -266,46 +266,44 @@ def doCleanShutdown():
     knownNodesLock.acquire()
     UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
     output = open(appdata + 'knownnodes.dat', 'wb')
-    print 'finished opening knownnodes.dat. Now pickle.dump'
+    logger.info('finished opening knownnodes.dat. Now pickle.dump')
     pickle.dump(knownNodes, output)
-    print 'Completed pickle.dump. Closing output...'
+    logger.info('Completed pickle.dump. Closing output...')
     output.close()
     knownNodesLock.release()
-    printLock.acquire()
-    print 'Finished closing knownnodes.dat output file.'
-    printLock.release()
+    logger.info('Finished closing knownnodes.dat output file.')
     UISignalQueue.put(('updateStatusBar','Done saving the knownNodes list of peers to disk.'))
 
     broadcastToSendDataQueues((0, 'shutdown', 'all'))
 
-    printLock.acquire()
-    print 'Flushing inventory in memory out to disk...'
-    printLock.release()
-    UISignalQueue.put(('updateStatusBar','Flushing inventory in memory out to disk. This should normally only take a second...'))
+    logger.info('Flushing inventory in memory out to disk...')
+    UISignalQueue.put(('updateStatusBar','Flushing inventory in memory out to disk. '
+                       'This should normally only take a second...'))
     flushInventory()
 
-    #This one last useless query will guarantee that the previous flush committed before we close the program.
+    # This one last useless query will guarantee that the previous flush committed before we close
+    # the program.
     sqlLock.acquire()
     sqlSubmitQueue.put('SELECT address FROM subscriptions')
     sqlSubmitQueue.put('')
     sqlReturnQueue.get()
     sqlSubmitQueue.put('exit')
     sqlLock.release()
-    printLock.acquire()
-    print 'Finished flushing inventory.'
-    printLock.release()
+    logger.info('Finished flushing inventory.')
 
-    time.sleep(.25) #Wait long enough to guarantee that any running proof of work worker threads will check the shutdown variable and exit. If the main thread closes before they do then they won't stop.
+    # Wait long enough to guarantee that any running proof of work worker threads will check the
+    # shutdown variable and exit. If the main thread closes before they do then they won't stop.
+    time.sleep(.25) 
 
     if safeConfigGetBoolean('bitmessagesettings','daemon'):
-        printLock.acquire()
-        print 'Done.'
-        printLock.release()
+        logger.info('Clean shutdown complete.')
         os._exit(0)
 
-#When you want to command a sendDataThread to do something, like shutdown or send some data, this function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are responsible for putting their queue into (and out of) the sendDataQueues list.
+# When you want to command a sendDataThread to do something, like shutdown or send some data, this
+# function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are
+# responsible for putting their queue into (and out of) the sendDataQueues list.
 def broadcastToSendDataQueues(data):
-    #print 'running broadcastToSendDataQueues'
+    # logger.debug('running broadcastToSendDataQueues')
     for q in sendDataQueues:
         q.put((data))
         
@@ -332,6 +330,7 @@ def fixPotentiallyInvalidUTF8Data(text):
 
 # Checks sensitive file permissions for inappropriate umask during keys.dat creation.
 # (Or unwise subsequent chmod.)
+#
 # Returns true iff file appears to have appropriate permissions.
 def checkSensitiveFilePermissions(filename):
     if sys.platform == 'win32':
