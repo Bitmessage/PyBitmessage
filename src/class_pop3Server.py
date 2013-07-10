@@ -243,8 +243,11 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
             with shared.printLock:
                 sys.stdout.write(str(msg) + ": " + str(content))
         yield "+OK {} octets".format(msg['size'])
-        yield content['message']
-        yield '.'
+        #yield content['message']
+        # TODO - this is temporary until I come up with better organization for 
+        # the responses.
+        self.sendline(content['message'], END='')
+        yield (bitmessagePOP3Connection.END + '.')
     
     def handleDele(self, data):
         index = int(data.decode('ascii')) - 1
@@ -294,11 +297,40 @@ class bitmessagePOP3Server(asyncore.dispatcher):
 
     @staticmethod
     def reformatMessageForReceipt(toAddress, fromAddress, body, subject, broadcast=False):
+        originalBody = body
+        ostensiblyFrom = None
+        if broadcast:
+            # Temporarily strip out the annoying 'message ostensibly from' to see if there are already headers
+            i = body.find('Message ostensibly from')
+            if i >= 0:
+                e = body.find(':\n\n')
+                if e >= i and '\n' not in body[i:e]:
+                    line = body[:e]
+                    body = body[e+3:]
+                    i = line.rfind(' ')
+                    if i >= 0:
+                        testFromAddress = line[i+1:]
+                        status, addressVersionNumber, streamNumber, ripe = decodeAddress(testFromAddress)
+                        if status == 'success':
+                            ostensiblyFrom = testFromAddress
+
         message = parser.Parser().parsestr(body)
+
+        body_is_valid = False
+        if 'Date' in message and 'From' in message:
+            body_is_valid = True
+
+        if broadcast and not body_is_valid:
+            # Let's keep the "ostensibly from" stuff since beneath it does not lie an internet message
+            body = originalBody
+            message = parser.Parser().parsestr(body)
+            if 'Date' in message and 'From' in message:
+                body_is_valid = True
+
+        print '--------'
         with shared.printLock:
             print(message)
-
-        subject_is_valid = False
+        print '--------'
 
         i = subject.find('<Bitmessage Mail: ')
         if i >= 0:
@@ -314,15 +346,9 @@ class bitmessagePOP3Server(asyncore.dispatcher):
                 print(c, checksum)
 
                 # Valid Bitmessage subject line already
-                if c == checksum:
-                    subject_is_valid = True
-                else:
+                if c != checksum:
                     with shared.printLock:
                         print 'Got E-Mail formatted message with incorrect checksum...'
-
-        body_is_valid = False
-        if 'Date' in message and 'From' in message:
-            body_is_valid = True
 
         mailingListName = None
         if broadcast:
@@ -338,11 +364,17 @@ class bitmessagePOP3Server(asyncore.dispatcher):
                 break
 
         if not body_is_valid:
-            fromLabel = '{}@{}'.format(getBase58Capitaliation(fromAddress), fromAddress)
-
-            if broadcast and mailingListName is not None:
-                fromLabel = '{} <{}>'.format(mailingListName, fromLabel)
+            if broadcast:
+                if ostensiblyFrom is not None:
+                    fromLabel = '{}@{}'.format(getBase58Capitaliation(ostensiblyFrom), ostensiblyFrom)
+                    # TODO - check address book?
+                else:
+                    fromLabel = '{}@{}'.format(getBase58Capitaliation(fromAddress), fromAddress)
+                    if mailingListName is not None:
+                        fromLabel = '{} <{}>'.format(mailingListName, fromLabel)
             else:
+                fromLabel = '{}@{}'.format(getBase58Capitaliation(fromAddress), fromAddress)
+
                 with shared.sqlLock:
                     t = (fromAddress,)
                     shared.sqlSubmitQueue.put(
@@ -357,18 +389,26 @@ class bitmessagePOP3Server(asyncore.dispatcher):
             message['Date'] = utils.formatdate(localtime=False)
 
         message['X-Bitmessage-Subject'] = subject
-        if not subject_is_valid and 'Subject' not in message:
+
+        if 'Subject' in message:
             if mailingListName is not None:
-                message['Subject'] = bitmessagePOP3Server.addMailingListNameToSubject(subject, mailingListName)
-            else:
-                message['Subject'] = subject
+                s = message['Subject']
+                del message['Subject']
+                message['Subject'] = bitmessagePOP3Server.addMailingListNameToSubject(s, mailingListName)
+        else:
+            message['Subject'] = subject
 
         if broadcast:
             # The To: field on a broadcast is the mailing list, not you
             toLabel = '{}@{}'.format(getBase58Capitaliation(fromAddress), fromAddress)
             if mailingListName is not None:
                 toLabel = '{} <{}>'.format(mailingListName, toLabel)
+            if 'To' in message:
+                del message['To']
             message['To'] = toLabel
+            if 'Reply-To' not in message:
+                del message['Reply-To']
+            message['Reply-To'] = toLabel
         elif 'To' not in message:
             toLabel = '{}@{}'.format(getBase58Capitaliation(toAddress), toAddress)
             try:
