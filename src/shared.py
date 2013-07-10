@@ -25,6 +25,7 @@ from addresses import *
 from debug import logger
 import highlevelcrypto
 import shared
+from debug import logger
 
 
 config = ConfigParser.SafeConfigParser()
@@ -135,14 +136,13 @@ def lookupAppdataFolder():
             dataFolder = path.join(environ["XDG_CONFIG_HOME"], APPNAME)
         except KeyError:
             dataFolder = path.join(environ["HOME"], ".config", APPNAME)
+
         # Migrate existing data to the proper location if this is an existing install
-        if not os.path.exists(dataFolder):
-            try:
-                logger.info("Moving data folder to %s" % (dataFolder))
-                move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
-                dataFolder = dataFolder
-            except IOError:
-                dataFolder = dataFolder
+        try:
+            logger.info("Moving data folder to %s" % (dataFolder))
+            move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
+        except IOError:
+            pass
         dataFolder = dataFolder + '/'
     return dataFolder
 
@@ -277,8 +277,9 @@ def doCleanShutdown():
     broadcastToSendDataQueues((0, 'shutdown', 'all'))
 
     logger.info('Flushing inventory in memory out to disk...')
-    UISignalQueue.put(('updateStatusBar','Flushing inventory in memory out to disk. '
-                       'This should normally only take a second...'))
+    UISignalQueue.put((
+        'updateStatusBar',
+        'Flushing inventory in memory out to disk. This should normally only take a second...'))
     flushInventory()
 
     # This one last useless query will guarantee that the previous flush committed before we close
