@@ -2,7 +2,7 @@ from cStringIO import StringIO
 from pyelliptic.openssl import OpenSSL
 import asynchat
 import base64
-from email import parser, generator
+from email import parser, generator, utils
 import errno
 import shared
 import smtpd
@@ -341,6 +341,17 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
 
     @staticmethod
     def stripMessageHeaders(message):
+        # Convert Date header into GMT
+        if 'Date' in message:
+            oldDate = message['Date']
+            del message['Date']
+
+            message['Date'] = utils.formatdate(utils.mktime_tz(utils.parsedate_tz(oldDate)), localtime=False)
+
+            with shared.printLock: 
+                print 'old date --', oldDate
+                print 'new date --', message['Date'] 
+
         try:
             if not shared.config.getboolean('bitmessagesettings', 'stripmessageheadersenable'):
                 return
@@ -350,7 +361,7 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
         try:
             headersToStrip = shared.config.get('bitmessagesettings', 'stripmessageheaders')
         except:
-            headersToStrip = "Message-ID, User-Agent"
+            headersToStrip = "User-Agent"
 
         headersToStrip = [x.strip() for x in headersToStrip.split(',') if len(x.strip()) > 0]
         for h in headersToStrip:
@@ -374,7 +385,7 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
         gen = generator.Generator(fp, mangle_from_=False, maxheaderlen=128)
         gen.flatten(message)
         message_as_text = fp.getvalue()
-        with shared.printLink:
+        with shared.printLock:
             print(message_as_text)
 
         checksum = hashlib.sha256(message_as_text).digest()[:2]

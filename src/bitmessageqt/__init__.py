@@ -2739,7 +2739,7 @@ class settingsDialog(QtGui.QDialog):
                 shared.config.get('bitmessagesettings', 'stripmessageheaders'))
         except:
             self.ui.checkBoxStripMessageHeaders.setChecked(True)
-            self.ui.lineEditMessageHeadersToStrip.setText('Message-ID, User-Agent')
+            self.ui.lineEditMessageHeadersToStrip.setText('User-Agent')
 
         if shared.appdata == '':
             self.ui.checkBoxPortableMode.setChecked(True)
