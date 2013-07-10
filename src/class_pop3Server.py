@@ -295,7 +295,8 @@ class bitmessagePOP3Server(asyncore.dispatcher):
     @staticmethod
     def reformatMessageForReceipt(toAddress, fromAddress, body, subject):
         message = parser.Parser().parsestr(body)
-        print(message)
+        with shared.printLock:
+            print(message)
 
         subject_is_valid = False
 
@@ -392,7 +393,8 @@ class bitmessagePOP3Server(asyncore.dispatcher):
     @staticmethod
     def reformatMessageForMailingList(toAddress, fromAddress, body, subject, mailingListName):
         message = parser.Parser().parsestr(body)
-        print(message)
+        with shared.printLock:
+            print(message)
 
         subject_is_valid = False
 

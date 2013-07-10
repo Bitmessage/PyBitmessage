@@ -42,7 +42,8 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             if err[0] != errno.ENOTCONN:
                 raise
             return
-        print >> smtpd.DEBUGSTREAM, 'Peer:', repr(self.__peer)
+        with shared.printLock:
+            print >> smtpd.DEBUGSTREAM, 'Peer:', repr(self.__peer)
         self.push('220 %s %s' % (self.__fqdn, self.__version))
         self.set_terminator('\r\n')
 
@@ -66,7 +67,8 @@ class bitmessageSMTPChannel(asynchat.async_chat):
     # Implementation of base class abstract method
     def found_terminator(self):
         line = ''.join(self.__line)
-        print >> smtpd.DEBUGSTREAM, 'Data:', repr(line)
+        with shared.printLock:
+            print >> smtpd.DEBUGSTREAM, 'Data:', repr(line)
         self.__line = []
         if self.__state == self.COMMAND:
             if not line:
@@ -236,7 +238,8 @@ class bitmessageSMTPChannel(asynchat.async_chat):
         return address
 
     def smtp_MAIL(self, arg):
-        print >> smtpd.DEBUGSTREAM, '===> MAIL', arg
+        with shared.printLock:
+            print >> smtpd.DEBUGSTREAM, '===> MAIL', arg
 
         address = self.__getaddr('FROM:', arg) if arg else None
         if not address:
@@ -256,11 +259,13 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             return
 
         self.__mailfrom = address
-        print >> smtpd.DEBUGSTREAM, 'sender:', self.__mailfrom
+        with shared.printLock:
+            print >> smtpd.DEBUGSTREAM, 'sender:', self.__mailfrom
         self.push('250 Ok')
 
     def smtp_RCPT(self, arg):
-        print >> smtpd.DEBUGSTREAM, '===> RCPT', arg
+        with shared.printLock:
+            print >> smtpd.DEBUGSTREAM, '===> RCPT', arg
         if not self.__mailfrom:
             self.invalid_command('503 Error: need MAIL command')
             return
@@ -279,7 +284,8 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             return
         realAddress = applyBase58Capitalization(address, int(capitalization))
         self.__rcpttos.append('{}@{}'.format(getBase58Capitaliation(realAddress), realAddress))
-        print >> smtpd.DEBUGSTREAM, 'recips:', self.__rcpttos
+        with shared.printLock:
+            print >> smtpd.DEBUGSTREAM, 'recips:', self.__rcpttos
         self.push('250 Ok')
 
     def smtp_RSET(self, arg):
@@ -347,7 +353,6 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
             headersToStrip = "Message-ID, User-Agent"
 
         headersToStrip = [x.strip() for x in headersToStrip.split(',') if len(x.strip()) > 0]
-        print(headersToStrip)
         for h in headersToStrip:
             if h in message:
                 del message[h]
@@ -369,7 +374,8 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
         gen = generator.Generator(fp, mangle_from_=False, maxheaderlen=128)
         gen.flatten(message)
         message_as_text = fp.getvalue()
-        print(message_as_text)
+        with shared.printLink:
+            print(message_as_text)
 
         checksum = hashlib.sha256(message_as_text).digest()[:2]
         checksum = (ord(checksum[0]) << 8) | ord(checksum[1])
