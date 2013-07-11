@@ -142,6 +142,7 @@ def lookupAppdataFolder():
             logger.info("Moving data folder to %s" % (dataFolder))
             move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
         except IOError:
+            # Old directory may not exist.
             pass
         dataFolder = dataFolder + '/'
     return dataFolder
