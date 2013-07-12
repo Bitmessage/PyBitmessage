@@ -80,6 +80,7 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'socksauthentication', 'false')
             shared.config.set('bitmessagesettings', 'socksusername', '')
             shared.config.set('bitmessagesettings', 'sockspassword', '')
+            shared.config.set('bitmessagesettings', 'sockslisten', 'false')
             shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
             shared.config.set('bitmessagesettings', 'messagesencrypted', 'false')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:

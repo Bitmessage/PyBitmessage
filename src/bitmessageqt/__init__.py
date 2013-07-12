@@ -1764,6 +1764,8 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.lineEditSocksUsername.text()))
             shared.config.set('bitmessagesettings', 'sockspassword', str(
                 self.settingsDialogInstance.ui.lineEditSocksPassword.text()))
+            shared.config.set('bitmessagesettings', 'sockslisten', str(
+                self.settingsDialogInstance.ui.checkBoxSocksListen.isChecked()))
             if float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) >= 1:
                 shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(int(float(
                     self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
@@ -2691,6 +2693,8 @@ class settingsDialog(QtGui.QDialog):
             shared.config.get('bitmessagesettings', 'port')))
         self.ui.checkBoxAuthentication.setChecked(shared.config.getboolean(
             'bitmessagesettings', 'socksauthentication'))
+	self.ui.checkBoxSocksListen.setChecked(shared.config.getboolean(
+            'bitmessagesettings', 'sockslisten'))
         if str(shared.config.get('bitmessagesettings', 'socksproxytype')) == 'none':
             self.ui.comboBoxProxyType.setCurrentIndex(0)
             self.ui.lineEditSocksHostname.setEnabled(False)
@@ -2698,6 +2702,7 @@ class settingsDialog(QtGui.QDialog):
             self.ui.lineEditSocksUsername.setEnabled(False)
             self.ui.lineEditSocksPassword.setEnabled(False)
             self.ui.checkBoxAuthentication.setEnabled(False)
+            self.ui.checkBoxSocksListen.setEnabled(False)
         elif str(shared.config.get('bitmessagesettings', 'socksproxytype')) == 'SOCKS4a':
             self.ui.comboBoxProxyType.setCurrentIndex(1)
             self.ui.lineEditTCPPort.setEnabled(False)
@@ -2754,11 +2759,13 @@ class settingsDialog(QtGui.QDialog):
             self.ui.lineEditSocksUsername.setEnabled(False)
             self.ui.lineEditSocksPassword.setEnabled(False)
             self.ui.checkBoxAuthentication.setEnabled(False)
+            self.ui.checkBoxSocksListen.setEnabled(False)
             self.ui.lineEditTCPPort.setEnabled(True)
         elif comboBoxIndex == 1 or comboBoxIndex == 2:
             self.ui.lineEditSocksHostname.setEnabled(True)
             self.ui.lineEditSocksPort.setEnabled(True)
             self.ui.checkBoxAuthentication.setEnabled(True)
+            self.ui.checkBoxSocksListen.setEnabled(True)
             if self.ui.checkBoxAuthentication.isChecked():
                 self.ui.lineEditSocksUsername.setEnabled(True)
                 self.ui.lineEditSocksPassword.setEnabled(True)

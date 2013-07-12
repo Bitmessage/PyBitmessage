@@ -50,6 +50,8 @@ def loadConfig():
             shared.config.set('bitmessagesettings', 'socksport', '9050')
             shared.config.set(
                 'bitmessagesettings', 'socksauthentication', 'false')
+            shared.config.set(
+                'bitmessagesettings', 'sockslisten', 'false')
             shared.config.set('bitmessagesettings', 'socksusername', '')
             shared.config.set('bitmessagesettings', 'sockspassword', '')
             shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
