@@ -29,6 +29,8 @@ import os
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
+import base64
+
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -56,6 +58,9 @@ class MyForm(QtGui.QMainWindow):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        #init attach array
+        self.attach=[]
 
         # Ask the user if we may delete their old version 1 addresses if they
         # have any.
@@ -543,6 +548,13 @@ class MyForm(QtGui.QMainWindow):
             "itemChanged(QTableWidgetItem *)"), self.tableWidgetSubscriptionsItemChanged)
         QtCore.QObject.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
+        
+        QtCore.QObject.connect(self.ui.textEditInboxMessage,
+             QtCore.SIGNAL("anchorClicked(const QUrl&)"), self.openURL)
+        
+        QtCore.QObject.connect(self.ui.AddAttach, QtCore.SIGNAL("clicked()"), self.AddAttach)
+        
+        
         QtCore.QObject.connect(self.ui.tableWidgetSent, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.tableWidgetSentItemClicked)
 
@@ -614,6 +626,43 @@ class MyForm(QtGui.QMainWindow):
 
     # The most recent broadcast
     newBroadcastItem = None
+
+
+    def openURL(self,link):
+        print "jest link"
+
+    def AddAttach(self):
+        attachFile=QtGui.QFileDialog.getOpenFileName(self, 'Open file', '')
+        f = open(attachFile, 'r')
+        
+        
+        attachFile=str(attachFile)
+        AFile = attachFile.split("/")[-1]
+        
+        ext = AFile.split(".")[-1]
+        
+        ext = ext.lower()
+                
+        with f:        
+            data = f.read()
+        
+        if ext == 'jpg' or ext == 'png' or ext == 'gif':
+            if ext == 'jpg' or ext == 'jpeg':
+                t='image/jpeg'
+            else:
+                t='image/'+ext
+        else:
+            t='application/octet-stream;'
+        
+        #encode base64 file
+        dataenc = base64.b64encode(data)
+        content = "\nContent-Type: image/pjpeg;"
+        content+="name=\""+AFile+"\""
+        content+="\nContent-Transfer-Encoding: base64\n"
+        content+="Content-Disposition: attachment; filename=\""+AFile+"\"\n\n"
+        content+=dataenc
+        self.ui.attachmentListSend.addItem(AFile)
+        self.attach.append(content)
 
     # show the application window
     def appIndicatorShow(self):
@@ -1277,7 +1326,13 @@ class MyForm(QtGui.QMainWindow):
         fromAddress = str(self.ui.labelFrom.text())
         subject = str(self.ui.lineEditSubject.text().toUtf8())
         message = str(
-            self.ui.textEditMessage.document().toPlainText().toUtf8())
+        self.ui.textEditMessage.document().toPlainText().toUtf8())
+        message+=str("\n".join(self.attach)+"\n")
+        self.attach=[]
+        #self.ui.attachmentListSend
+            
+            
+            
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
                                for s in toAddresses.replace(',', ';').split(';')]
