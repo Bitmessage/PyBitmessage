@@ -515,16 +515,17 @@ class MyForm(QtGui.QMainWindow):
 
         sqlQuery = '''
             SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime 
-            FROM sent WHERE folder="sent" AND %s LIKE "%s" 
+            FROM sent WHERE folder="sent" AND %s LIKE ? 
             ORDER BY lastactiontime
-            ''' % (where, what)
+            ''' % (where,)
 
         while self.ui.tableWidgetSent.rowCount() > 0:
             self.ui.tableWidgetSent.removeRow(0)
 
+        t = (what,)
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(sqlQuery)
-        shared.sqlSubmitQueue.put('')
+        shared.sqlSubmitQueue.put(t)
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
         for row in queryreturn:
@@ -641,18 +642,19 @@ class MyForm(QtGui.QMainWindow):
 
         sqlQuery = '''
             SELECT msgid, toaddress, fromaddress, subject, received, message, read 
-            FROM inbox WHERE folder="inbox" AND %s LIKE "%s" 
+            FROM inbox WHERE folder="inbox" AND %s LIKE ? 
             ORDER BY received
-            ''' % (where, what)
+            ''' % (where,)
 
         while self.ui.tableWidgetInbox.rowCount() > 0:
             self.ui.tableWidgetInbox.removeRow(0)
 
         font = QFont()
         font.setBold(True)
+        t = (what,)
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(sqlQuery)
-        shared.sqlSubmitQueue.put('')
+        shared.sqlSubmitQueue.put(t)
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
         for row in queryreturn:
