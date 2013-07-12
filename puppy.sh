@@ -44,7 +44,7 @@ cp ${PROJECTDIR}/usr/bin/* ${PROJECTDIR}/usr/local/bin/
 cp ${CURRDIR}/puppypackage/${APP}-${VERSION}.pet.specs ${PROJECTDIR}
 
 # Copy the XPM mini icon into the build directory
-cp ${CURRDIR}//home/motters/develop/pybitmessage/desktop/icon14.xpm ${PROJECTDIR}/pybitmessage.xpm
+cp ${CURRDIR}/desktop/icon14.xpm ${PROJECTDIR}/${APP}.xpm
 
 # Compress the build directory
 cd ${BUILDDIR}
