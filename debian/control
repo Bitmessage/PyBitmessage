@@ -4,7 +4,7 @@ Maintainer: Bob Mottram (4096 bits) <bob@robotics.uk.to>
 Build-Depends: debhelper (>= 9.0.0)
 Standards-Version: 3.9.4
 Homepage: https://github.com/Bitmessage/PyBitmessage
-Vcs-Git: https://github.com/fuzzgun/autocv.git
+Vcs-Git: https://github.com/fuzzgun/libgpr.git
 
 Package: pybitmessage
 Section: mail
