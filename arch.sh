@@ -38,7 +38,10 @@ sed -i "s/md5sums[^)]*)/md5sums=(${CHECKSM%% *})/g" archpackage/PKGBUILD
 cd archpackage
 
 # Create the package
-makepkg
+tar -c -f ${APP}-${VERSION}.pkg.tar .
+sync
+xz ${APP}-${VERSION}.pkg.tar
+sync
 
 # Move back to the original directory
 cd ${CURRDIR}
