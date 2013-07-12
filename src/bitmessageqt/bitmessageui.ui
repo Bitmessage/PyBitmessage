@@ -14,7 +14,7 @@
    <string>Bitmessage</string>
   </property>
   <property name="windowIcon">
-   <iconset>
+   <iconset resource="bitmessage_icons.qrc">
     <normaloff>:/newPrefix/images/can-icon-24px.png</normaloff>:/newPrefix/images/can-icon-24px.png</iconset>
   </property>
   <property name="tabShape">
@@ -70,7 +70,7 @@
       </property>
       <widget class="QWidget" name="inbox">
        <attribute name="icon">
-        <iconset>
+        <iconset resource="bitmessage_icons.qrc">
          <normaloff>:/newPrefix/images/inbox.png</normaloff>:/newPrefix/images/inbox.png</iconset>
        </attribute>
        <attribute name="title">
@@ -193,7 +193,7 @@
       </widget>
       <widget class="QWidget" name="send">
        <attribute name="icon">
-        <iconset>
+        <iconset resource="bitmessage_icons.qrc">
          <normaloff>:/newPrefix/images/send.png</normaloff>:/newPrefix/images/send.png</iconset>
        </attribute>
        <attribute name="title">
@@ -351,7 +351,7 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="sent">
        <attribute name="icon">
-        <iconset>
+        <iconset resource="bitmessage_icons.qrc">
          <normaloff>:/newPrefix/images/sent.png</normaloff>:/newPrefix/images/sent.png</iconset>
        </attribute>
        <attribute name="title">
@@ -428,7 +428,7 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="youridentities">
        <attribute name="icon">
-        <iconset>
+        <iconset resource="bitmessage_icons.qrc">
          <normaloff>:/newPrefix/images/identities.png</normaloff>:/newPrefix/images/identities.png</iconset>
        </attribute>
        <attribute name="title">
@@ -528,7 +528,7 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="subscriptions">
        <attribute name="icon">
-        <iconset>
+        <iconset resource="bitmessage_icons.qrc">
          <normaloff>:/newPrefix/images/subscriptions.png</normaloff>:/newPrefix/images/subscriptions.png</iconset>
        </attribute>
        <attribute name="title">
@@ -613,7 +613,7 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="addressbook">
        <attribute name="icon">
-        <iconset>
+        <iconset resource="bitmessage_icons.qrc">
          <normaloff>:/newPrefix/images/addressbook.png</normaloff>:/newPrefix/images/addressbook.png</iconset>
        </attribute>
        <attribute name="title">
@@ -695,7 +695,7 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="blackwhitelist">
        <attribute name="icon">
-        <iconset>
+        <iconset resource="bitmessage_icons.qrc">
          <normaloff>:/newPrefix/images/blacklist.png</normaloff>:/newPrefix/images/blacklist.png</iconset>
        </attribute>
        <attribute name="title">
@@ -787,7 +787,7 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="networkstatus">
        <attribute name="icon">
-        <iconset>
+        <iconset resource="bitmessage_icons.qrc">
          <normaloff>:/newPrefix/images/networkstatus.png</normaloff>:/newPrefix/images/networkstatus.png</iconset>
        </attribute>
        <attribute name="title">
@@ -806,7 +806,7 @@ p, li { white-space: pre-wrap; }
          <string/>
         </property>
         <property name="icon">
-         <iconset>
+         <iconset resource="bitmessage_icons.qrc">
           <normaloff>:/newPrefix/images/redicon.png</normaloff>:/newPrefix/images/redicon.png</iconset>
         </property>
         <property name="flat">

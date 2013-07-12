@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Thu Jun 13 01:02:50 2013
-#      by: PyQt4 UI code generator 4.10.1
+# Created: Fri Jul 12 01:59:15 2013
+#      by: PyQt4 UI code generator 4.10
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -54,6 +54,21 @@ class Ui_MainWindow(object):
         self.inbox.setObjectName(_fromUtf8("inbox"))
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.inbox)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
+        self.horizontalLayoutSearch = QtGui.QHBoxLayout()
+        self.horizontalLayoutSearch.setContentsMargins(-1, 0, -1, -1)
+        self.horizontalLayoutSearch.setObjectName(_fromUtf8("horizontalLayoutSearch"))
+        self.searchLineEdit = QtGui.QLineEdit(self.inbox)
+        self.searchLineEdit.setObjectName(_fromUtf8("searchLineEdit"))
+        self.horizontalLayoutSearch.addWidget(self.searchLineEdit)
+        self.searchOptionCB = QtGui.QComboBox(self.inbox)
+        self.searchOptionCB.setObjectName(_fromUtf8("searchOptionCB"))
+        self.searchOptionCB.addItem(_fromUtf8(""))
+        self.searchOptionCB.addItem(_fromUtf8(""))
+        self.searchOptionCB.addItem(_fromUtf8(""))
+        self.searchOptionCB.addItem(_fromUtf8(""))
+        self.searchOptionCB.addItem(_fromUtf8(""))
+        self.horizontalLayoutSearch.addWidget(self.searchOptionCB)
+        self.verticalLayout_2.addLayout(self.horizontalLayoutSearch)
         self.tableWidgetInbox = QtGui.QTableWidget(self.inbox)
         self.tableWidgetInbox.setAlternatingRowColors(True)
         self.tableWidgetInbox.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
@@ -392,7 +407,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 18))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 20))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -467,6 +482,11 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "Bitmessage", None))
+        self.searchOptionCB.setItemText(0, _translate("MainWindow", "All", None))
+        self.searchOptionCB.setItemText(1, _translate("MainWindow", "To", None))
+        self.searchOptionCB.setItemText(2, _translate("MainWindow", "From", None))
+        self.searchOptionCB.setItemText(3, _translate("MainWindow", "Subject", None))
+        self.searchOptionCB.setItemText(4, _translate("MainWindow", "Received", None))
         self.tableWidgetInbox.setSortingEnabled(True)
         item = self.tableWidgetInbox.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "To", None))
@@ -484,8 +504,8 @@ class Ui_MainWindow(object):
         self.textEditMessage.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+"</style></head><body style=\" font-family:\'Sans Serif\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>", None))
         self.label.setText(_translate("MainWindow", "To:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.radioButtonBroadcast.setText(_translate("MainWindow", "Broadcast to everyone who is subscribed to your address", None))
