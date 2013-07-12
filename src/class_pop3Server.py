@@ -357,16 +357,16 @@ class bitmessagePOP3Server(asyncore.dispatcher):
         if not body_is_valid:
             if broadcast:
                 if ostensiblyFrom is not None:
-                    fromLabel = '{} <{}@default>'.format(ostensiblyFrom, ostensiblyFrom)
+                    fromLabel = '{} <{}@bm.addr>'.format(ostensiblyFrom, ostensiblyFrom)
                     # TODO - check address book for label?
                 else:
-                    fromLabel = '{}@default'.format(fromAddress)
+                    fromLabel = '{}@bm.addr'.format(fromAddress)
                     if mailingListName is not None:
                         fromLabel = '{} <{}>'.format(mailingListName, fromLabel)
                     else:
                         fromLabel = '{} <{}>'.format(fromAddress, fromLabel)
             else:
-                fromLabel = '{}@default'.format(fromAddress)
+                fromLabel = '{}@bm.addr'.format(fromAddress)
 
                 with shared.sqlLock:
                     t = (fromAddress,)
@@ -393,7 +393,7 @@ class bitmessagePOP3Server(asyncore.dispatcher):
 
         if broadcast:
             # The To: field on a broadcast is the mailing list, not you
-            toLabel = '{}@default'.format(fromAddress)
+            toLabel = '{}@bm.addr'.format(fromAddress)
             if mailingListName is not None:
                 toLabel = '{} <{}>'.format(mailingListName, toLabel)
             if 'To' in message:
@@ -404,7 +404,7 @@ class bitmessagePOP3Server(asyncore.dispatcher):
             message['Reply-To'] = toLabel
         else:
             if 'To' not in message:
-                toLabel = '{}@default'.format(toAddress)
+                toLabel = '{}@bm.addr'.format(toAddress)
                 try:
                     toLabel = '{} <{}>'.format(shared.config.get(toAddress, 'label'), toLabel)
                 except:
@@ -413,11 +413,11 @@ class bitmessagePOP3Server(asyncore.dispatcher):
                 message['To'] = toLabel
 
         # Return-Path
-        returnPath = "{}@default".format(fromAddress)
+        returnPath = "{}@bm.addr".format(fromAddress)
         message['Return-Path'] = returnPath
 
         # X-Delivered-To
-        deliveredTo = "{}@default".format(toAddress)
+        deliveredTo = "{}@bm.addr".format(toAddress)
         message['X-Delivered-To'] = deliveredTo
 
         # X-Bitmessage-Receiving-Version
@@ -446,7 +446,7 @@ class bitmessagePOP3Server(asyncore.dispatcher):
             del message['X-Bitmessage-Flags']
 
         # The mailing list code will override some headers, including Date and From
-        fromLabel = '{}@default'.format(fromAddress)
+        fromLabel = '{}@bm.addr'.format(fromAddress)
 
         if 'From' in message:
             originalFrom = message['From']
@@ -475,7 +475,7 @@ class bitmessagePOP3Server(asyncore.dispatcher):
             del message['Subject']
             message['Subject'] = bitmessagePOP3Server.addMailingListNameToSubject(s, mailingListName)
 
-        toLabel = '"{}" <{}@default>'.format(mailingListName, toAddress)
+        toLabel = '"{}" <{}@bm.addr>'.format(mailingListName, toAddress)
         if 'To' in message:
             message['X-Original-To'] = message['To']
             del message['To']
