@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Fri Jul 12 04:16:52 2013
+# Created: Fri Jul 12 04:40:47 2013
 #      by: PyQt4 UI code generator 4.10
 #
 # WARNING! All changes made in this file will be lost!
@@ -172,6 +172,21 @@ class Ui_MainWindow(object):
         self.sent.setObjectName(_fromUtf8("sent"))
         self.verticalLayout = QtGui.QVBoxLayout(self.sent)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
+        self.horizontalLayout = QtGui.QHBoxLayout()
+        self.horizontalLayout.setContentsMargins(-1, 0, -1, -1)
+        self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
+        self.sentSearchLineEdit = QtGui.QLineEdit(self.sent)
+        self.sentSearchLineEdit.setObjectName(_fromUtf8("sentSearchLineEdit"))
+        self.horizontalLayout.addWidget(self.sentSearchLineEdit)
+        self.sentSearchOptionCB = QtGui.QComboBox(self.sent)
+        self.sentSearchOptionCB.setObjectName(_fromUtf8("sentSearchOptionCB"))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.horizontalLayout.addWidget(self.sentSearchOptionCB)
+        self.verticalLayout.addLayout(self.horizontalLayout)
         self.tableWidgetSent = QtGui.QTableWidget(self.sent)
         self.tableWidgetSent.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
         self.tableWidgetSent.setAlternatingRowColors(True)
@@ -407,7 +422,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 20))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 25))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -504,7 +519,7 @@ class Ui_MainWindow(object):
         self.textEditMessage.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Sans Serif\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"</style></head><body style=\" font-family:\'Sans\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>", None))
         self.label.setText(_translate("MainWindow", "To:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
@@ -512,6 +527,11 @@ class Ui_MainWindow(object):
         self.pushButtonSend.setText(_translate("MainWindow", "Send", None))
         self.labelSendBroadcastWarning.setText(_translate("MainWindow", "Be aware that broadcasts are only encrypted with your address. Anyone who knows your address can read them.", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send", None))
+        self.sentSearchOptionCB.setItemText(0, _translate("MainWindow", "All", None))
+        self.sentSearchOptionCB.setItemText(1, _translate("MainWindow", "To", None))
+        self.sentSearchOptionCB.setItemText(2, _translate("MainWindow", "From", None))
+        self.sentSearchOptionCB.setItemText(3, _translate("MainWindow", "Subject", None))
+        self.sentSearchOptionCB.setItemText(4, _translate("MainWindow", "Message", None))
         self.tableWidgetSent.setSortingEnabled(True)
         item = self.tableWidgetSent.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "To", None))
