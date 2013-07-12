@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Fri Jul 12 01:59:15 2013
+# Created: Fri Jul 12 04:16:52 2013
 #      by: PyQt4 UI code generator 4.10
 #
 # WARNING! All changes made in this file will be lost!
@@ -57,17 +57,17 @@ class Ui_MainWindow(object):
         self.horizontalLayoutSearch = QtGui.QHBoxLayout()
         self.horizontalLayoutSearch.setContentsMargins(-1, 0, -1, -1)
         self.horizontalLayoutSearch.setObjectName(_fromUtf8("horizontalLayoutSearch"))
-        self.searchLineEdit = QtGui.QLineEdit(self.inbox)
-        self.searchLineEdit.setObjectName(_fromUtf8("searchLineEdit"))
-        self.horizontalLayoutSearch.addWidget(self.searchLineEdit)
-        self.searchOptionCB = QtGui.QComboBox(self.inbox)
-        self.searchOptionCB.setObjectName(_fromUtf8("searchOptionCB"))
-        self.searchOptionCB.addItem(_fromUtf8(""))
-        self.searchOptionCB.addItem(_fromUtf8(""))
-        self.searchOptionCB.addItem(_fromUtf8(""))
-        self.searchOptionCB.addItem(_fromUtf8(""))
-        self.searchOptionCB.addItem(_fromUtf8(""))
-        self.horizontalLayoutSearch.addWidget(self.searchOptionCB)
+        self.inboxSearchLineEdit = QtGui.QLineEdit(self.inbox)
+        self.inboxSearchLineEdit.setObjectName(_fromUtf8("inboxSearchLineEdit"))
+        self.horizontalLayoutSearch.addWidget(self.inboxSearchLineEdit)
+        self.inboxSearchOptionCB = QtGui.QComboBox(self.inbox)
+        self.inboxSearchOptionCB.setObjectName(_fromUtf8("inboxSearchOptionCB"))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.horizontalLayoutSearch.addWidget(self.inboxSearchOptionCB)
         self.verticalLayout_2.addLayout(self.horizontalLayoutSearch)
         self.tableWidgetInbox = QtGui.QTableWidget(self.inbox)
         self.tableWidgetInbox.setAlternatingRowColors(True)
@@ -482,11 +482,11 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "Bitmessage", None))
-        self.searchOptionCB.setItemText(0, _translate("MainWindow", "All", None))
-        self.searchOptionCB.setItemText(1, _translate("MainWindow", "To", None))
-        self.searchOptionCB.setItemText(2, _translate("MainWindow", "From", None))
-        self.searchOptionCB.setItemText(3, _translate("MainWindow", "Subject", None))
-        self.searchOptionCB.setItemText(4, _translate("MainWindow", "Received", None))
+        self.inboxSearchOptionCB.setItemText(0, _translate("MainWindow", "All", None))
+        self.inboxSearchOptionCB.setItemText(1, _translate("MainWindow", "To", None))
+        self.inboxSearchOptionCB.setItemText(2, _translate("MainWindow", "From", None))
+        self.inboxSearchOptionCB.setItemText(3, _translate("MainWindow", "Subject", None))
+        self.inboxSearchOptionCB.setItemText(4, _translate("MainWindow", "Message", None))
         self.tableWidgetInbox.setSortingEnabled(True)
         item = self.tableWidgetInbox.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "To", None))
