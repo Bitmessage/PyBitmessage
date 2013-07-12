@@ -172,13 +172,12 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             self.invalid_command('501 authorization not understood')
             return
 
-        if '@' not in username:
-            self.invalid_command('530 Access denied.')
-            return
+        if '@' in username:
+            username, _ = username.split('@', 1)
 
-        capitalization, address = username.split('@', 1)
-        self.address = applyBase58Capitalization(address, int(capitalization))
-
+        self.address = username
+        with shared.printLock:
+            print 'Login request from {}'.format(self.address)
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.address)
         if status != 'success':
             with shared.printLock:
@@ -190,13 +189,6 @@ class bitmessageSMTPChannel(asynchat.async_chat):
                 if status == 'versiontoohigh':
                     print 'Error: Address version number too high (or zero) in address: ' + self.address
                 raise Exception("Invalid Bitmessage address: {}".format(self.address))
-
-        self.fullUsername = '{}@{}'.format(getBase58Capitaliation(self.address), address)
-
-        # Must match full email address with capitalization
-        if username != self.fullUsername:
-            self.invalid_command('530 Access denied.')
-            return
 
         # Each identity must be enabled independly by setting the smtppop3password for the identity
         # If no password is set, then the identity is not available for SMTP/POP3 access.
@@ -242,7 +234,7 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             print >> smtpd.DEBUGSTREAM, '===> MAIL', arg
 
         address = self.__getaddr('FROM:', arg) if arg else None
-        if not address:
+        if not address or '@' not in address:
             self.invalid_command('501 Syntax: MAIL FROM: <address>')
             return
 
@@ -254,7 +246,8 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             self.invalid_command('503 Not authenticated.')
             return
 
-        if address != self.fullUsername:
+        localPart, _ = address.split('@', 1)
+        if self.address != localPart:
             self.invalid_command('530 Access denied: address must be the same as the authorized account')
             return
 
@@ -278,12 +271,15 @@ class bitmessageSMTPChannel(asynchat.async_chat):
             self.invalid_command('501 Syntax: RCPT TO: <user@address>')
             return
         try:
-            capitalization, address = address.split('@', 1)
+            localPart, dom = address.split('@', 1)
         except ValueError:
             self.invalid_command('501 Syntax: RCPT TO: <user@address>')
             return
-        realAddress = applyBase58Capitalization(address, int(capitalization))
-        self.__rcpttos.append('{}@{}'.format(getBase58Capitaliation(realAddress), realAddress))
+        status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(localPart)
+        if status != 'success':
+            self.invalid_command('501 Bitmessage address is incorrect: {}'.format(status))
+            return
+        self.__rcpttos.append(address)
         with shared.printLock:
             print >> smtpd.DEBUGSTREAM, 'recips:', self.__rcpttos
         self.push('250 Ok')
@@ -341,16 +337,11 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
 
     @staticmethod
     def stripMessageHeaders(message):
-        # Convert Date header into GMT
+        # Always convert Date header into GMT
         if 'Date' in message:
             oldDate = message['Date']
             del message['Date']
-
             message['Date'] = utils.formatdate(utils.mktime_tz(utils.parsedate_tz(oldDate)), localtime=False)
-
-            with shared.printLock: 
-                print 'old date --', oldDate
-                print 'new date --', message['Date'] 
 
         try:
             if not shared.config.getboolean('bitmessagesettings', 'stripmessageheadersenable'):
@@ -368,22 +359,24 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
             if h in message:
                 del message[h]
 
-    def process_message(self, peer, address, rcpttos, data):
+    def process_message(self, peer, fromAddress, rcpttos, data):
         #print("Peer", peer)
-        #print("Mail From", address)
+        #print("Mail From", fromAddress)
         #print("Rcpt To", rcpttos)
         #print("Data")
         #print(data)
         #print('--------')
-        #print(type(address))
+        #print(type(fromAddress))
 
         message = parser.Parser().parsestr(data)
         message['X-Bitmessage-Sending-Version'] = shared.softwareVersion
+        message['X-Bitmessage-Flags'] = '0'
 
         bitmessageSMTPServer.stripMessageHeaders(message)
         fp = StringIO()
         gen = generator.Generator(fp, mangle_from_=False, maxheaderlen=128)
         gen.flatten(message)
+
         message_as_text = fp.getvalue()
         with shared.printLock:
             print(message_as_text)
@@ -392,7 +385,6 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
         checksum = (ord(checksum[0]) << 8) | ord(checksum[1])
 
         # Determine the fromAddress and make sure it's an owned identity
-        fromAddress = address
         if not (fromAddress.startswith('BM-') and '.' not in fromAddress):
             raise Exception("From Address must be a Bitmessage address.")
         else:
@@ -421,7 +413,7 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
                 raise Exception("The fromAddress is disabled: {}".format(fromAddress))
 
         for recipient in rcpttos:
-            _, toAddress = recipient.split('@', 1)
+            toAddress, _ = recipient.split('@', 1)
             if not (toAddress.startswith('BM-') and '.' not in toAddress):
                 # TODO - deliver message to another SMTP server..
                 # I think this feature would urge adoption: the ability to use the same bitmessage address
@@ -461,7 +453,10 @@ class bitmessageSMTPServer(smtpd.SMTPServer):
                 # The subject is specially formatted to identify it from non-E-mail messages.
                 # TODO - The bitfield will be used to convey things like external attachments, etc.
                 # Last 2 bytes are two bytes of the sha256 checksum of message
-                subject = "<Bitmessage Mail: 0000000000000000{:04x}>".format(checksum) # Reserved flags.
+                if 'Subject' in message:
+                    subject = message['Subject']
+                else:
+                    subject = ''
 
                 ackdata = OpenSSL.rand(32)
                 t = ('', toAddress, toRipe, fromAddress, subject, message_as_text, ackdata, int(time.time()), 'msgqueued', 1, 1, 'sent', 2)
