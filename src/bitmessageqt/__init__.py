@@ -167,8 +167,6 @@ class MyForm(QtGui.QMainWindow):
             "MainWindow", "Disable"), self.on_action_YourIdentitiesDisable)
         self.actionClipboard = self.ui.addressContextMenuToolbar.addAction(_translate(
             "MainWindow", "Copy address to clipboard"), self.on_action_YourIdentitiesClipboard)
-        self.actionClipboardEmail = self.ui.addressContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Copy E-Mail formatted address to clipboard"), self.on_action_YourIdentitiesClipboardEmail)
         self.actionSpecialAddressBehavior = self.ui.addressContextMenuToolbar.addAction(_translate(
             "MainWindow", "Special address behavior..."), self.on_action_SpecialAddressBehaviorDialog)
         self.ui.tableWidgetYourIdentities.setContextMenuPolicy(
@@ -179,7 +177,6 @@ class MyForm(QtGui.QMainWindow):
         self.popMenu.addAction(self.actionNew)
         self.popMenu.addSeparator()
         self.popMenu.addAction(self.actionClipboard)
-        self.popMenu.addAction(self.actionClipboardEmail)
         self.popMenu.addSeparator()
         self.popMenu.addAction(self.actionEnable)
         self.popMenu.addAction(self.actionDisable)
@@ -192,8 +189,6 @@ class MyForm(QtGui.QMainWindow):
             "MainWindow", "Send message to this address"), self.on_action_AddressBookSend)
         self.actionAddressBookClipboard = self.ui.addressBookContextMenuToolbar.addAction(_translate(
             "MainWindow", "Copy address to clipboard"), self.on_action_AddressBookClipboard)
-        self.actionAddressBookClipboardEmail = self.ui.addressBookContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Copy E-Mail formatted address to clipboard"), self.on_action_AddressBookClipboardEmail)
         self.actionAddressBookSubscribe = self.ui.addressBookContextMenuToolbar.addAction(_translate(
             "MainWindow", "Subscribe to this address"), self.on_action_AddressBookSubscribe)
         self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction(_translate(
@@ -207,7 +202,6 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuAddressBook = QtGui.QMenu(self)
         self.popMenuAddressBook.addAction(self.actionAddressBookSend)
         self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
-        self.popMenuAddressBook.addAction(self.actionAddressBookClipboardEmail)
         self.popMenuAddressBook.addAction( self.actionAddressBookSubscribe )
         self.popMenuAddressBook.addSeparator()
         self.popMenuAddressBook.addAction(self.actionAddressBookNew)
@@ -2283,22 +2277,6 @@ class MyForm(QtGui.QMainWindow):
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(fullStringOfAddresses)
 
-    def on_action_AddressBookClipboardEmail(self):
-        fullStringOfAddresses = ''
-        listOfSelectedRows = {}
-        for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
-            listOfSelectedRows[
-                self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
-        for currentRow in listOfSelectedRows:
-            addressAtCurrentRow = str(self.ui.tableWidgetAddressBook.item(
-                currentRow, 1).text())
-            if fullStringOfAddresses == '':
-                fullStringOfAddresses = '{}@{}'.format(getBase58Capitaliation(addressAtCurrentRow), addressAtCurrentRow)
-            else:
-                fullStringOfAddresses += ', ' + '{}@{}'.format(getBase58Capitaliation(addressAtCurrentRow), addressAtCurrentRow)
-        clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(fullStringOfAddresses)
-
     def on_action_AddressBookSend(self):
         listOfSelectedRows = {}
         for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
@@ -2542,13 +2520,6 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 1).text()
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(str(addressAtCurrentRow))
-
-    def on_action_YourIdentitiesClipboardEmail(self):
-        currentRow = self.ui.tableWidgetYourIdentities.currentRow()
-        addressAtCurrentRow = str(self.ui.tableWidgetYourIdentities.item(
-            currentRow, 1).text())
-        clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText('{}@{}'.format(getBase58Capitaliation(addressAtCurrentRow), addressAtCurrentRow))
 
     def on_context_menuYourIdentities(self, point):
         self.popMenu.exec_(
@@ -2954,7 +2925,7 @@ class settingsDialog(QtGui.QDialog):
             self.ui.labelAccountStatus.setText('Account inaccessible via SMTP/POP3. Set a password to grant access.')
             self.ui.pushButtonClearPassword.setEnabled(False)
 
-        self.ui.lineEditEmailAddress.setText('{}@{}'.format(getBase58Capitaliation(address), address))
+        self.ui.lineEditEmailAddress.setText('{}@default'.format(address))
 
     def click_ClearPassword(self):
         comboBoxIndex = self.ui.comboBoxEmailIdentities.currentIndex()
