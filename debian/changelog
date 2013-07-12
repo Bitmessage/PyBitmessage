@@ -18,7 +18,7 @@ pybitmessage (0.3.3-1) raring; urgency=low
     via Portage (Gentoo)
   * Fix message authentication bug
 
- -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Sun, 30 June 2013 11:23:00 +0100
+ -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Sat, 29 June 2013 11:23:00 +0100
 
 pybitmessage (0.3.211-1) raring; urgency=low
 
@@ -26,7 +26,7 @@ pybitmessage (0.3.211-1) raring; urgency=low
     as the multiprocessing module does not work well with
     pyinstaller's --onefile option.
 
- -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Sun, 30 June 2013 11:23:00 +0100
+ -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Fri, 28 June 2013 11:23:00 +0100
 
 pybitmessage (0.3.2-1) raring; urgency=low
 
