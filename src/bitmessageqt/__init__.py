@@ -336,6 +336,10 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.ui.inboxSearchLineEdit, QtCore.SIGNAL(
             "returnPressed()"), self.inboxSearchLineEditPressed)
 
+        # Initialize the sent search
+        QtCore.QObject.connect(self.ui.sentSearchLineEdit, QtCore.SIGNAL(
+            "returnPressed()"), self.sentSearchLineEditPressed)
+
         # Initialize the Blacklist or Whitelist
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
             self.loadBlackWhiteList()
@@ -497,9 +501,29 @@ class MyForm(QtGui.QMainWindow):
 
     # Load Sent items from database
     def loadSent(self, where="", what=""):
+        what = "%" + what + "%"
+        if where == "To":
+            where = "toaddress"
+        elif where == "From":
+            where = "fromaddress"
+        elif where == "Subject":
+            where = "subject"
+        elif where == "Message":
+            where = "message"
+        else:
+            where = "toaddress || fromaddress || subject || message"
+
+        sqlQuery = '''
+            SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime 
+            FROM sent WHERE folder="sent" AND %s LIKE "%s" 
+            ORDER BY lastactiontime
+            ''' % (where, what)
+
+        while self.ui.tableWidgetSent.rowCount() > 0:
+            self.ui.tableWidgetSent.removeRow(0)
+
         shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
-            '''SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime FROM sent where folder = 'sent' ORDER BY lastactiontime''')
+        shared.sqlSubmitQueue.put(sqlQuery)
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
@@ -610,12 +634,10 @@ class MyForm(QtGui.QMainWindow):
             where = "fromaddress"
         elif where == "Subject":
             where = "subject"
-        elif where == "Received":
-            where = "received"
         elif where == "Message":
             where = "message"
         else:
-            where = "toaddress || fromaddress || subject || received || message"
+            where = "toaddress || fromaddress || subject || message"
 
         sqlQuery = '''
             SELECT msgid, toaddress, fromaddress, subject, received, message, read 
@@ -2547,6 +2569,13 @@ class MyForm(QtGui.QMainWindow):
         self.ui.inboxSearchLineEdit.setText(QString(""))
         self.ui.textEditInboxMessage.setPlainText(QString(""))
         self.loadInbox(searchOption, searchKeyword)
+
+    def sentSearchLineEditPressed(self):
+        searchKeyword = self.ui.sentSearchLineEdit.text().toUtf8().data()
+        searchOption = self.ui.sentSearchOptionCB.currentText().toUtf8().data()
+        self.ui.sentSearchLineEdit.setText(QString(""))
+        self.ui.textEditInboxMessage.setPlainText(QString(""))
+        self.loadSent(searchOption, searchKeyword)
 
     def tableWidgetInboxItemClicked(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
