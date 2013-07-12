@@ -19,7 +19,7 @@ install=
 changelog=
 source=($pkgname-$pkgver.tar.gz)
 noextract=()
-md5sums=(56a8a225463e96b435b2a5b438006983)
+md5sums=()
 build() {
   cd "$srcdir/$pkgname-$pkgver"
   ./configure --prefix=/usr
