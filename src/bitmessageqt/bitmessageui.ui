@@ -83,10 +83,10 @@
            <number>0</number>
           </property>
           <item>
-           <widget class="QLineEdit" name="searchLineEdit"/>
+           <widget class="QLineEdit" name="inboxSearchLineEdit"/>
           </item>
           <item>
-           <widget class="QComboBox" name="searchOptionCB">
+           <widget class="QComboBox" name="inboxSearchOptionCB">
             <item>
              <property name="text">
               <string>All</string>
@@ -109,7 +109,7 @@
             </item>
             <item>
              <property name="text">
-              <string>Received</string>
+              <string>Message</string>
              </property>
             </item>
            </widget>
