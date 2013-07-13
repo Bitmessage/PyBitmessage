@@ -29,6 +29,7 @@ import os
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
+import textwrap
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -2028,6 +2029,26 @@ class MyForm(QtGui.QMainWindow):
         content = content.replace('\n\n', '<br><br>')
         self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
 
+    # Helper for formatting quotes.
+    quoteWrapper = textwrap.TextWrapper(replace_whitespace = False,
+                                        initial_indent = '> ',
+                                        subsequent_indent = '> ',
+                                        break_long_words = False,
+                                        break_on_hyphens = False)
+
+    def quoted_text(self, message):
+        def quote_line(line):
+            # Do quote empty lines.
+            if line == '' or line.isspace():
+                return '> '
+            # Quote already quoted lines, but do not wrap them.
+            elif line[0:2] == '> ':
+                return '> ' + line
+            # Wrap and quote lines/paragraphs new to this message.
+            else:
+                return self.quoteWrapper.fill(line)
+        return '\n'.join([quote_line(l) for l in message.splitlines()])
+
     def on_action_InboxReply(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
@@ -2049,8 +2070,10 @@ class MyForm(QtGui.QMainWindow):
         self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
         # self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
-        self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + self.ui.tableWidgetInbox.item(
-            currentInboxRow, 2).data(Qt.UserRole).toPyObject())
+        originalMessage = self.ui.tableWidgetInbox.item(currentInboxRow, 2)
+        originalMessageText = originalMessage.data(Qt.UserRole).toPyObject()
+        quotedText = self.quoted_text(unicode(originalMessageText))
+        self.ui.textEditMessage.setText(quotedText + '\n\n')
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] == 'Re:':
             self.ui.lineEditSubject.setText(
                 self.ui.tableWidgetInbox.item(currentInboxRow, 2).text())
