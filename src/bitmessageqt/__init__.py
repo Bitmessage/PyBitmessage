@@ -642,6 +642,7 @@ class MyForm(QtGui.QMainWindow):
         ext = AFile.split(".")[-1]
         
         ext = ext.lower()
+        
                 
         with f:        
             data = f.read()
@@ -656,7 +657,7 @@ class MyForm(QtGui.QMainWindow):
         
         #encode base64 file
         dataenc = base64.b64encode(data)
-        content = "\nContent-Type: image/pjpeg;"
+        content = "\nContent-Type: "+t
         content+="name=\""+AFile+"\""
         content+="\nContent-Transfer-Encoding: base64\n"
         content+="Content-Disposition: attachment; filename=\""+AFile+"\"\n\n"
@@ -1329,9 +1330,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.textEditMessage.document().toPlainText().toUtf8())
         message+=str("\n".join(self.attach)+"\n")
         self.attach=[]
-        #self.ui.attachmentListSend
-            
-            
+        self.ui.attachmentListSend.clear()
             
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
@@ -2571,6 +2570,23 @@ class MyForm(QtGui.QMainWindow):
                 currentRow, 1).data(Qt.UserRole).toPyObject())
             # If we have received this message from either a broadcast address
             # or from someone in our address book, display as HTML
+            
+            mess=str(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject())
+            mess_list=mess.split("\n")
+            atachHtml=''
+            
+            for i in range( len(mess_list) ):
+                content=mess_list[i].split(':')
+                print len(content)
+                #if(len(content)>0 ):
+                    #value=content[1].split(';')
+                #    print content[0][1]
+                    
+                #if(value[0]=='Content-Type'):
+                #    print "jest zalacznik"
+                
+            
+            
             if decodeAddress(fromAddress)[3] in shared.broadcastSendersForWhichImWatching or shared.isAddressInMyAddressBook(fromAddress):
                 if len(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
                     self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(
