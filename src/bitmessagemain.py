@@ -32,7 +32,6 @@ from class_singleListener import *
 from class_addressGenerator import *
 
 # Helper Functions
-import helper_startup
 import helper_bootstrap
 
 import sys
@@ -719,11 +718,9 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, helper_generic.signal_handler)
     # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    helper_startup.loadConfig()
-
     helper_bootstrap.knownNodes()
     helper_bootstrap.dns()
-    
+
     # Start the address generation thread
     addressGeneratorThread = addressGenerator()
     addressGeneratorThread.daemon = True  # close the main program even if there are threads left
