@@ -22,7 +22,6 @@ import time
 
 # Project imports.
 from addresses import *
-from debug import logger
 import highlevelcrypto
 import shared
 import helper_startup
