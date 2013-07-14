@@ -18,6 +18,7 @@ Use: `from debug import logger` to import this facility into whatever module you
 '''
 import logging
 import logging.config
+import shared
 
 # TODO(xj9): Get from a config file.
 log_level = 'DEBUG'
@@ -40,9 +41,9 @@ logging.config.dictConfig({
             'class': 'logging.handlers.RotatingFileHandler',
             'formatter': 'default',
             'level': log_level,
-            'filename': 'bm.log',
-            'maxBytes': 1024,
-            'backupCount': 0,
+            'filename': shared.appdata + 'debug.log',
+            'maxBytes': 2097152, # 2 MiB
+            'backupCount': 1,
         }
     },
     'loggers': {
@@ -65,4 +66,5 @@ logging.config.dictConfig({
     },
 })
 # TODO (xj9): Get from a config file.
-logger = logging.getLogger('console_only')
+#logger = logging.getLogger('console_only')
+logger = logging.getLogger('both')
