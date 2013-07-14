@@ -28,7 +28,7 @@ install:
 	cp -rf src/* ${DESTDIR}/usr/share/${APP}
 	echo '#!/bin/sh' > ${DESTDIR}/usr/bin/${APP}
 	echo 'cd /usr/share/pybitmessage' >> ${DESTDIR}/usr/bin/${APP}
-	echo 'LD_LIBRARY_PATH="/opt/openssl-compat-bitcoin/lib/" exec python bitmessagemain.py' >> ${DESTDIR}/usr/bin/${APP}
+	echo 'LD_LIBRARY_PATH="/opt/openssl-compat-bitcoin/lib/" exec python2 bitmessagemain.py' >> ${DESTDIR}/usr/bin/${APP}
 	chmod +x ${DESTDIR}/usr/bin/${APP}
 uninstall:
 	rm -f /usr/share/man/man1/${APP}.1.gz
