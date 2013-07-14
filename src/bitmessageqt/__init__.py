@@ -657,10 +657,10 @@ class MyForm(QtGui.QMainWindow):
         
         #encode base64 file
         dataenc = base64.b64encode(data)
-        content = "\nContent-Type: "+t
+        content = "\rContent-Type: "+t
         content+="name=\""+AFile+"\""
-        content+="\nContent-Transfer-Encoding: base64\n"
-        content+="Content-Disposition: attachment; filename=\""+AFile+"\"\n\n"
+        content+="\rContent-Transfer-Encoding: base64\r"
+        content+="Content-Disposition: attachment; filename=\""+AFile+"\"\r\r"
         content+=dataenc
         self.ui.attachmentListSend.addItem(AFile)
         self.attach.append(content)
@@ -1328,7 +1328,7 @@ class MyForm(QtGui.QMainWindow):
         subject = str(self.ui.lineEditSubject.text().toUtf8())
         message = str(
         self.ui.textEditMessage.document().toPlainText().toUtf8())
-        message+=str("\n".join(self.attach)+"\n")
+        message+=str("\r".join(self.attach)+"\r")
         self.attach=[]
         self.ui.attachmentListSend.clear()
             
@@ -2571,20 +2571,43 @@ class MyForm(QtGui.QMainWindow):
             # If we have received this message from either a broadcast address
             # or from someone in our address book, display as HTML
             
-            mess=str(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject())
-            mess_list=mess.split("\n")
-            atachHtml=''
+            mess=str(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject().toUtf8() )
+
+            mess_list=mess.split("\r")
+            attachHtml=''
+            attachArray=[]
+            licznik=0
+            zal=False
+            dane=''
             
             for i in range( len(mess_list) ):
                 content=mess_list[i].split(':')
-                print len(content)
-                #if(len(content)>0 ):
-                    #value=content[1].split(';')
-                #    print content[0][1]
-                    
-                #if(value[0]=='Content-Type'):
-                #    print "jest zalacznik"
+                print content
+                if(len(content)>1 ):
+                    value=content[1].split(';')
+
+                    if(content[0].find('Content-Type')!=-1):
+                        print "jest zalacznik"
+                        attachArray.append({'Content-Type':value[0]})
+                        licznik+=1
+                        zal=True
+                        
+                        
+                if(mess_list[i]=="\n" and zal == True):
+                   print "jest zal"+str(i)
+                   for s in range( i+1,len(mess_list) ):
+                        print "jest spraw"+str(i)
+                        print len(mess_list[s+1])
+                        if(len(mess_list[s])>2):
+                           print "dodaje"
+                           dane+=mess_list[s]
+                        else:
+                            attachArray[licznik-1]['content']=dane
+                            dane=''
+                            zal=False
+                            break
                 
+            print attachArray
             
             
             if decodeAddress(fromAddress)[3] in shared.broadcastSendersForWhichImWatching or shared.isAddressInMyAddressBook(fromAddress):
