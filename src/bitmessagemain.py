@@ -14,7 +14,7 @@ try:
     from gevent import monkey
     monkey.patch_all()
 except ImportError as ex:
-    print "cannot find gevent"
+    print "Not using the gevent module as it was not found. No need to worry."
 
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API

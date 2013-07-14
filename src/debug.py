@@ -48,12 +48,15 @@ logging.config.dictConfig({
     'loggers': {
         'console_only': {
             'handlers': ['console'],
+            'propagate' : 0
         },
         'file_only': {
             'handlers': ['file'],
+            'propagate' : 0
         },
         'both': {
             'handlers': ['console', 'file'],
+            'propagate' : 0
         },
     },
     'root': {

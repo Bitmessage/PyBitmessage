@@ -2,8 +2,13 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
+<<<<<<< HEAD
 # Created: Fri Jul 12 22:39:30 2013
 #      by: PyQt4 UI code generator 4.9.3
+=======
+# Created: Sat Jul 13 20:23:44 2013
+#      by: PyQt4 UI code generator 4.10.2
+>>>>>>> d93d92336438bc165839c4089cfaa80c519db730
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -45,6 +50,21 @@ class Ui_MainWindow(object):
         self.inbox.setObjectName(_fromUtf8("inbox"))
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.inbox)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
+        self.horizontalLayoutSearch = QtGui.QHBoxLayout()
+        self.horizontalLayoutSearch.setContentsMargins(-1, 0, -1, -1)
+        self.horizontalLayoutSearch.setObjectName(_fromUtf8("horizontalLayoutSearch"))
+        self.inboxSearchLineEdit = QtGui.QLineEdit(self.inbox)
+        self.inboxSearchLineEdit.setObjectName(_fromUtf8("inboxSearchLineEdit"))
+        self.horizontalLayoutSearch.addWidget(self.inboxSearchLineEdit)
+        self.inboxSearchOptionCB = QtGui.QComboBox(self.inbox)
+        self.inboxSearchOptionCB.setObjectName(_fromUtf8("inboxSearchOptionCB"))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.horizontalLayoutSearch.addWidget(self.inboxSearchOptionCB)
+        self.verticalLayout_2.addLayout(self.horizontalLayoutSearch)
         self.tableWidgetInbox = QtGui.QTableWidget(self.inbox)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Minimum)
         sizePolicy.setHorizontalStretch(0)
@@ -166,6 +186,21 @@ class Ui_MainWindow(object):
         self.sent.setObjectName(_fromUtf8("sent"))
         self.verticalLayout = QtGui.QVBoxLayout(self.sent)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
+        self.horizontalLayout = QtGui.QHBoxLayout()
+        self.horizontalLayout.setContentsMargins(-1, 0, -1, -1)
+        self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
+        self.sentSearchLineEdit = QtGui.QLineEdit(self.sent)
+        self.sentSearchLineEdit.setObjectName(_fromUtf8("sentSearchLineEdit"))
+        self.horizontalLayout.addWidget(self.sentSearchLineEdit)
+        self.sentSearchOptionCB = QtGui.QComboBox(self.sent)
+        self.sentSearchOptionCB.setObjectName(_fromUtf8("sentSearchOptionCB"))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.horizontalLayout.addWidget(self.sentSearchOptionCB)
+        self.verticalLayout.addLayout(self.horizontalLayout)
         self.tableWidgetSent = QtGui.QTableWidget(self.sent)
         self.tableWidgetSent.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
         self.tableWidgetSent.setAlternatingRowColors(True)
@@ -475,7 +510,17 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.tableWidgetConnectionCount, self.pushButtonStatusIcon)
 
     def retranslateUi(self, MainWindow):
+<<<<<<< HEAD
         MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Bitmessage", None, QtGui.QApplication.UnicodeUTF8))
+=======
+        MainWindow.setWindowTitle(_translate("MainWindow", "Bitmessage", None))
+        self.inboxSearchLineEdit.setPlaceholderText(_translate("MainWindow", "Search", None))
+        self.inboxSearchOptionCB.setItemText(0, _translate("MainWindow", "All", None))
+        self.inboxSearchOptionCB.setItemText(1, _translate("MainWindow", "To", None))
+        self.inboxSearchOptionCB.setItemText(2, _translate("MainWindow", "From", None))
+        self.inboxSearchOptionCB.setItemText(3, _translate("MainWindow", "Subject", None))
+        self.inboxSearchOptionCB.setItemText(4, _translate("MainWindow", "Message", None))
+>>>>>>> d93d92336438bc165839c4089cfaa80c519db730
         self.tableWidgetInbox.setSortingEnabled(True)
         item = self.tableWidgetInbox.horizontalHeaderItem(0)
         item.setText(QtGui.QApplication.translate("MainWindow", "To", None, QtGui.QApplication.UnicodeUTF8))
@@ -492,6 +537,7 @@ class Ui_MainWindow(object):
         self.textEditMessage.setHtml(QtGui.QApplication.translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
+<<<<<<< HEAD
 "</style></head><body style=\" font-family:\'Sans\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
         self.radioButtonBroadcast.setText(QtGui.QApplication.translate("MainWindow", "Broadcast to everyone who is subscribed to your address", None, QtGui.QApplication.UnicodeUTF8))
@@ -503,6 +549,22 @@ class Ui_MainWindow(object):
         self.DelAttach.setText(QtGui.QApplication.translate("MainWindow", "Delete attach", None, QtGui.QApplication.UnicodeUTF8))
         self.AddAttach.setText(QtGui.QApplication.translate("MainWindow", "Add attach", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), QtGui.QApplication.translate("MainWindow", "Send", None, QtGui.QApplication.UnicodeUTF8))
+=======
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+        self.label.setText(_translate("MainWindow", "To:", None))
+        self.label_2.setText(_translate("MainWindow", "From:", None))
+        self.radioButtonBroadcast.setText(_translate("MainWindow", "Broadcast to everyone who is subscribed to your address", None))
+        self.pushButtonSend.setText(_translate("MainWindow", "Send", None))
+        self.labelSendBroadcastWarning.setText(_translate("MainWindow", "Be aware that broadcasts are only encrypted with your address. Anyone who knows your address can read them.", None))
+        self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send", None))
+        self.sentSearchLineEdit.setPlaceholderText(_translate("MainWindow", "Search", None))
+        self.sentSearchOptionCB.setItemText(0, _translate("MainWindow", "All", None))
+        self.sentSearchOptionCB.setItemText(1, _translate("MainWindow", "To", None))
+        self.sentSearchOptionCB.setItemText(2, _translate("MainWindow", "From", None))
+        self.sentSearchOptionCB.setItemText(3, _translate("MainWindow", "Subject", None))
+        self.sentSearchOptionCB.setItemText(4, _translate("MainWindow", "Message", None))
+>>>>>>> d93d92336438bc165839c4089cfaa80c519db730
         self.tableWidgetSent.setSortingEnabled(True)
         item = self.tableWidgetSent.horizontalHeaderItem(0)
         item.setText(QtGui.QApplication.translate("MainWindow", "To", None, QtGui.QApplication.UnicodeUTF8))
