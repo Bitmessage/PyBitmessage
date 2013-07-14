@@ -2,29 +2,8 @@
 Type=Application
 Name=PyBitmessage
 GenericName=PyBitmessage
-X-GNOME-FullName=PyBitmessage Secure Messaging
-Comment=Send encrypted messages to another person or to many subscribers
-Exec=pybitmessage %U
+Comment=Send encrypted messages
+Exec=pybitmessage %F
 Icon=pybitmessage
 Terminal=false
-Categories=Network;Email;Application;
-Keywords=Email;E-mail;Newsgroup;Messaging;
-X-MessagingMenu-UsesChatSection=true
-X-Ubuntu-Gettext-Domain=pybitmessage
-
-Actions=Send;Subscribe;AddressBook;
-
-[Desktop Action Send]
-Name=Send
-Exec=pybitmessage -s
-OnlyShowIn=Unity;
-
-[Desktop Action Subscribe]
-Name=Subscribe
-Exec=pybitmessage -b
-OnlyShowIn=Unity;
-
-[Desktop Action AddressBook]
-Name=Address Book
-Exec=pybitmessage -a
-OnlyShowIn=Unity;
+Categories=Office;Email;

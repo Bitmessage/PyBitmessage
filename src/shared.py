@@ -21,7 +21,8 @@ import socket
 import random
 import highlevelcrypto
 import shared
-from debug import logger
+import helper_startup
+
 
 config = ConfigParser.SafeConfigParser()
 myECCryptorObjects = {}
@@ -62,8 +63,6 @@ ackdataForWhichImWatching = {}
 #If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
 networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
-
-
 
 def isInSqlInventory(hash):
     t = (hash,)
@@ -306,3 +305,6 @@ def fixPotentiallyInvalidUTF8Data(text):
     except:
         output = 'Part of the message is corrupt. The message cannot be displayed the normal way.\n\n' + repr(text)
         return output
+
+helper_startup.loadConfig()
+from debug import logger
