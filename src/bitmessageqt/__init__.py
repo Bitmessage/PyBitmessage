@@ -2168,7 +2168,7 @@ class MyForm(QtGui.QMainWindow):
                 content += "<tr><td>"+self.attachArray[i]['filename']+"</td><td><a href='"+str(i)+"'>Download</a></td></tr>"
                 
             content +="</table>"
-            print content
+
             self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
 
 
@@ -2665,10 +2665,65 @@ class MyForm(QtGui.QMainWindow):
         self.ui.textEditInboxMessage.setPlainText(QString(""))
         self.loadSent(searchOption, searchKeyword)
 
+    
+    def findAttach(self, messagee):
+		
+        mess_list=messagee.split("\r")
+        attachHtml=''
+        self.attachArray=[]
+        licznik=0
+        zal=False
+        dane=''
+        attachs=False
+        
+        for i in range( len(mess_list) ):
+            content=mess_list[i].split(':')
+            if(len(content)>1 ):
+                value=content[1].split(';')
+
+                if(content[0].find('Content-Type')!=-1 and (value[0].find('image')>-1 or value[0].find('octet-stream')>-1 ) ):
+                    attachs=True
+                    print "jest zalacznik"
+                    self.attachArray.append({'Content-Type':value[0],'data': mess_list[0:i]})
+                    licznik+=1
+                    zal=True
+        
+                if(content[0].find('Content-Transfer-Encoding')>-1 and zal==True):
+                    print "encoding : "+value[0]
+                    self.attachArray[licznik-1]['encode']=value[0]
+                    
+                
+                if(content[0].find('Content-Disposition')>-1 and zal==True):
+                    print "filename : "+value[0]
+                    self.attachArray[licznik-1]['filename']=value[1].split('=')[-1]
+                    
+                print mess_list[i]
+                
+            if(mess_list[i]=='\n' and zal == True):
+                print "jest zal"+str(i)
+               
+                for s in range( i+1,len(mess_list) ):
+                    print "jest spraw"+str(i)
+                    
+                    if(len(mess_list[s])>2):
+                        print "dodaje"
+                        dane+=mess_list[s]
+                    else:
+                        self.attachArray[licznik-1]['content']=dane
+                        dane=''
+                        zal=False
+                        break
+                        
+        if(attachs):
+			return True
+        else:
+            return False
+        
+    
     def tableWidgetInboxItemClicked(self):
         self.attachArray=[]
         currentRow = self.ui.tableWidgetInbox.currentRow()
-        attachs=False
+
 
         if currentRow >= 0:
             fromAddress = str(self.ui.tableWidgetInbox.item(
@@ -2678,50 +2733,9 @@ class MyForm(QtGui.QMainWindow):
             
             mess=str(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject().toUtf8() )
 
-            mess_list=mess.split("\r")
-            attachHtml=''
-            attachArray=[]
-            licznik=0
-            zal=False
-            dane=''
-            
-            for i in range( len(mess_list) ):
-                content=mess_list[i].split(':')
-                if(len(content)>1 ):
-                    value=content[1].split(';')
-
-                    if(content[0].find('Content-Type')!=-1 and (value[0].find('image')>-1 or value[0].find('octet-stream')>-1 ) ):
-                        attachs=True
-                        print "jest zalacznik"
-                        self.attachArray.append({'Content-Type':value[0],'data': mess_list[0:i]})
-                        licznik+=1
-                        zal=True
-                        
-                    if(content[0].find('Content-Transfer-Encoding')>-1 and zal==True):
-                       print "encoding : "+value[0]
-                       self.attachArray[licznik-1]['encode']=value[0]
-                    
-                    if(content[0].find('Content-Disposition')>-1 and zal==True):
-                       print "filename : "+value[0]
-                       self.attachArray[licznik-1]['filename']=value[1].split('=')[-1]
-                    
-                if(mess_list[i]=="\n" and zal == True):
-                   print "jest zal"+str(i)
-                   for s in range( i+1,len(mess_list) ):
-                        print "jest spraw"+str(i)
-                       
-                        if(len(mess_list[s])>2):
-                           print "dodaje"
-                           dane+=mess_list[s]
-                        else:
-                            self.attachArray[licznik-1]['content']=dane
-                            dane=''
-                            zal=False
-                            break
-                
-            if(attachs==True):
-               self.on_action_InboxMessageForceHtml()
-               return
+            if(self.findAttach(mess) ):
+                self.on_action_InboxMessageForceHtml()
+                return
             
             
             if decodeAddress(fromAddress)[3] in shared.broadcastSendersForWhichImWatching or shared.isAddressInMyAddressBook(fromAddress):
@@ -2761,8 +2775,24 @@ class MyForm(QtGui.QMainWindow):
     def tableWidgetSentItemClicked(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         if currentRow >= 0:
-            self.ui.textEditSentMessage.setPlainText(self.ui.tableWidgetSent.item(
-                currentRow, 2).data(Qt.UserRole).toPyObject())
+            mess=self.ui.tableWidgetSent.item(currentRow, 2).data(Qt.UserRole).toPyObject()
+            content=''
+            if(self.findAttach( str(mess) ) ):
+               for i in range(len(self.attachArray) ):
+                   if(i==0):
+                      content += "<br>".join(self.attachArray[i]['data'])+"<br>"
+
+                   content += "<table><tr><th style='color:black'>Attachments</th></tr>"
+                
+                   content += "<tr><td>"+self.attachArray[i]['filename']+"</td><td><a href='"+str(i)+"'>Download</a></td></tr>"
+                
+                   content +="</table>"
+               
+                   self.ui.textEditSentMessage.setHtml(content)
+              
+            else:
+               self.ui.textEditSentMessage.setPlainText(mess)
+            
 
     def tableWidgetYourIdentitiesItemChanged(self):
         currentRow = self.ui.tableWidgetYourIdentities.currentRow()
