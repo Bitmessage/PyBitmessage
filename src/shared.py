@@ -118,8 +118,9 @@ def lookupAppdataFolder():
         if "HOME" in environ:
             dataFolder = path.join(os.environ["HOME"], "Library/Application Support/", APPNAME) + '/'
         else:
-            logger.critical('Could not find home folder, please report this message and your '
-                             'OS X version to the BitMessage Github.')
+            if 'logger' in globals():
+                logger.critical('Could not find home folder, please report this message and your '
+                                 'OS X version to the BitMessage Github.')
             sys.exit()
 
     elif 'win32' in sys.platform or 'win64' in sys.platform:
@@ -133,7 +134,8 @@ def lookupAppdataFolder():
 
         # Migrate existing data to the proper location if this is an existing install
         try:
-            logger.info("Moving data folder to %s" % (dataFolder))
+            if 'logger' in globals():
+                logger.info("Moving data folder to %s" % (dataFolder))
             move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
         except IOError:
             pass
