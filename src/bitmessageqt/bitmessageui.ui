@@ -14,7 +14,7 @@
    <string>Bitmessage</string>
   </property>
   <property name="windowIcon">
-   <iconset resource="bitmessage_icons.qrc">
+   <iconset>
     <normaloff>:/newPrefix/images/can-icon-24px.png</normaloff>:/newPrefix/images/can-icon-24px.png</iconset>
   </property>
   <property name="tabShape">
@@ -61,13 +61,56 @@
       </property>
       <widget class="QWidget" name="inbox">
        <attribute name="icon">
-        <iconset resource="bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/inbox.png</normaloff>:/newPrefix/images/inbox.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Inbox</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout_2">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayoutSearch">
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLineEdit" name="inboxSearchLineEdit">
+            <property name="placeholderText">
+             <string>Search</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="inboxSearchOptionCB">
+            <item>
+             <property name="text">
+              <string>All</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>To</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>From</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Subject</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Message</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
         <item>
          <widget class="QTableWidget" name="tableWidgetInbox">
           <property name="alternatingRowColors">
@@ -145,7 +188,7 @@
       </widget>
       <widget class="QWidget" name="send">
        <attribute name="icon">
-        <iconset resource="bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/send.png</normaloff>:/newPrefix/images/send.png</iconset>
        </attribute>
        <attribute name="title">
@@ -303,13 +346,56 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="sent">
        <attribute name="icon">
-        <iconset resource="bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/sent.png</normaloff>:/newPrefix/images/sent.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Sent</string>
        </attribute>
        <layout class="QVBoxLayout" name="verticalLayout">
+        <item>
+         <layout class="QHBoxLayout" name="horizontalLayout">
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <item>
+           <widget class="QLineEdit" name="sentSearchLineEdit">
+            <property name="placeholderText">
+             <string>Search</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QComboBox" name="sentSearchOptionCB">
+            <item>
+             <property name="text">
+              <string>All</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>To</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>From</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Subject</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>Message</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </item>
         <item>
          <widget class="QTableWidget" name="tableWidgetSent">
           <property name="dragDropMode">
@@ -380,7 +466,7 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="youridentities">
        <attribute name="icon">
-        <iconset resource="bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/identities.png</normaloff>:/newPrefix/images/identities.png</iconset>
        </attribute>
        <attribute name="title">
@@ -480,7 +566,7 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="subscriptions">
        <attribute name="icon">
-        <iconset resource="bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/subscriptions.png</normaloff>:/newPrefix/images/subscriptions.png</iconset>
        </attribute>
        <attribute name="title">
@@ -570,7 +656,7 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="addressbook">
        <attribute name="icon">
-        <iconset resource="bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/addressbook.png</normaloff>:/newPrefix/images/addressbook.png</iconset>
        </attribute>
        <attribute name="title">
@@ -652,7 +738,7 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="blackwhitelist">
        <attribute name="icon">
-        <iconset resource="bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/blacklist.png</normaloff>:/newPrefix/images/blacklist.png</iconset>
        </attribute>
        <attribute name="title">
@@ -744,7 +830,7 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="networkstatus">
        <attribute name="icon">
-        <iconset resource="bitmessage_icons.qrc">
+        <iconset>
          <normaloff>:/newPrefix/images/networkstatus.png</normaloff>:/newPrefix/images/networkstatus.png</iconset>
        </attribute>
        <attribute name="title">
@@ -763,7 +849,7 @@ p, li { white-space: pre-wrap; }
          <string/>
         </property>
         <property name="icon">
-         <iconset resource="bitmessage_icons.qrc">
+         <iconset>
           <normaloff>:/newPrefix/images/redicon.png</normaloff>:/newPrefix/images/redicon.png</iconset>
         </property>
         <property name="flat">

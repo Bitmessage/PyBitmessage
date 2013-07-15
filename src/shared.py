@@ -21,6 +21,8 @@ import socket
 import random
 import highlevelcrypto
 import shared
+import helper_startup
+
 
 config = ConfigParser.SafeConfigParser()
 myECCryptorObjects = {}
@@ -138,7 +140,8 @@ def lookupAppdataFolder():
         if "HOME" in environ:
             dataFolder = path.join(os.environ["HOME"], "Library/Application Support/", APPNAME) + '/'
         else:
-            print 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
+            logger.critical('Could not find home folder, please report this message and your '
+                             'OS X version to the BitMessage Github.')
             sys.exit()
 
     elif 'win32' in sys.platform or 'win64' in sys.platform:
@@ -149,13 +152,14 @@ def lookupAppdataFolder():
             dataFolder = path.join(environ["XDG_CONFIG_HOME"], APPNAME)
         except KeyError:
             dataFolder = path.join(environ["HOME"], ".config", APPNAME)
+
         # Migrate existing data to the proper location if this is an existing install
         try:
-            print "Moving data folder to ~/.config/%s" % APPNAME
+            logger.info("Moving data folder to %s" % (dataFolder))
             move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
-            dataFolder = dataFolder + '/'
         except IOError:
-            dataFolder = dataFolder + '/'
+            pass
+        dataFolder = dataFolder + '/'
     return dataFolder
 
 def isAddressInMyAddressBook(address):
@@ -220,9 +224,7 @@ def decodeWalletImportFormat(WIFstring):
 
 
 def reloadMyAddressHashes():
-    printLock.acquire()
-    print 'reloading keys from keys.dat file'
-    printLock.release()
+    logger.debug('reloading keys from keys.dat file')
     myECCryptorObjects.clear()
     myAddressesByHash.clear()
     #myPrivateKeys.clear()
@@ -241,9 +243,7 @@ def reloadMyAddressHashes():
                     sys.stderr.write('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2 or 3.\n')
 
 def reloadBroadcastSendersForWhichImWatching():
-    printLock.acquire()
-    print 'reloading subscriptions...'
-    printLock.release()
+    logger.debug('reloading subscriptions...')
     broadcastSendersForWhichImWatching.clear()
     MyECSubscriptionCryptorObjects.clear()
     sqlLock.acquire()
@@ -266,46 +266,44 @@ def doCleanShutdown():
     knownNodesLock.acquire()
     UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
     output = open(appdata + 'knownnodes.dat', 'wb')
-    print 'finished opening knownnodes.dat. Now pickle.dump'
+    logger.info('finished opening knownnodes.dat. Now pickle.dump')
     pickle.dump(knownNodes, output)
-    print 'Completed pickle.dump. Closing output...'
+    logger.info('Completed pickle.dump. Closing output...')
     output.close()
     knownNodesLock.release()
-    printLock.acquire()
-    print 'Finished closing knownnodes.dat output file.'
-    printLock.release()
+    logger.info('Finished closing knownnodes.dat output file.')
     UISignalQueue.put(('updateStatusBar','Done saving the knownNodes list of peers to disk.'))
 
     broadcastToSendDataQueues((0, 'shutdown', 'all'))
 
-    printLock.acquire()
-    print 'Flushing inventory in memory out to disk...'
-    printLock.release()
-    UISignalQueue.put(('updateStatusBar','Flushing inventory in memory out to disk. This should normally only take a second...'))
+    logger.info('Flushing inventory in memory out to disk...')
+    UISignalQueue.put((
+        'updateStatusBar',
+        'Flushing inventory in memory out to disk. This should normally only take a second...'))
     flushInventory()
 
-    #This one last useless query will guarantee that the previous flush committed before we close the program.
+    # This one last useless query will guarantee that the previous flush committed before we close
+    # the program.
     sqlLock.acquire()
     sqlSubmitQueue.put('SELECT address FROM subscriptions')
     sqlSubmitQueue.put('')
     sqlReturnQueue.get()
     sqlSubmitQueue.put('exit')
     sqlLock.release()
-    printLock.acquire()
-    print 'Finished flushing inventory.'
-    printLock.release()
-
-    time.sleep(.25) #Wait long enough to guarantee that any running proof of work worker threads will check the shutdown variable and exit. If the main thread closes before they do then they won't stop.
+    logger.info('Finished flushing inventory.')
+    # Wait long enough to guarantee that any running proof of work worker threads will check the
+    # shutdown variable and exit. If the main thread closes before they do then they won't stop.
+    time.sleep(.25) 
 
     if safeConfigGetBoolean('bitmessagesettings','daemon'):
-        printLock.acquire()
-        print 'Done.'
-        printLock.release()
+        logger.info('Clean shutdown complete.')
         os._exit(0)
 
-#When you want to command a sendDataThread to do something, like shutdown or send some data, this function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are responsible for putting their queue into (and out of) the sendDataQueues list.
+# When you want to command a sendDataThread to do something, like shutdown or send some data, this
+# function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are
+# responsible for putting their queue into (and out of) the sendDataQueues list.
 def broadcastToSendDataQueues(data):
-    #print 'running broadcastToSendDataQueues'
+    # logger.debug('running broadcastToSendDataQueues')
     for q in sendDataQueues:
         q.put((data))
         
@@ -329,3 +327,6 @@ def fixPotentiallyInvalidUTF8Data(text):
     except:
         output = 'Part of the message is corrupt. The message cannot be displayed the normal way.\n\n' + repr(text)
         return output
+
+helper_startup.loadConfig()
+from debug import logger
