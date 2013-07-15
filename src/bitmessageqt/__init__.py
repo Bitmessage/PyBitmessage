@@ -2780,7 +2780,7 @@ class settingsDialog(QtGui.QDialog):
             shared.config.get('bitmessagesettings', 'port')))
         self.ui.checkBoxAuthentication.setChecked(shared.config.getboolean(
             'bitmessagesettings', 'socksauthentication'))
-	self.ui.checkBoxSocksListen.setChecked(shared.config.getboolean(
+        self.ui.checkBoxSocksListen.setChecked(shared.config.getboolean(
             'bitmessagesettings', 'sockslisten'))
         if str(shared.config.get('bitmessagesettings', 'socksproxytype')) == 'none':
             self.ui.comboBoxProxyType.setCurrentIndex(0)
