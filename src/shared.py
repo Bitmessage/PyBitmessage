@@ -136,12 +136,12 @@ def lookupAppdataFolder():
 
         # Migrate existing data to the proper location if this is an existing install
         try:
+            move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
             stringToLog = "Moving data folder to %s" % (dataFolder)
             if 'logger' in globals():
                 logger.info(stringToLog)
             else:
                 print stringToLog
-            move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
         except IOError:
             pass
         dataFolder = dataFolder + '/'
