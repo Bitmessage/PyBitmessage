@@ -29,6 +29,7 @@ import os
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
+import subprocess
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -936,9 +937,9 @@ class MyForm(QtGui.QMainWindow):
                 if 'linux' in sys.platform:
                     # Note: QSound was a nice idea but it didn't work
                     if '.mp3' in soundFilename:
-                        os.popen('gst123 ' + soundFilename)
+                        subprocess.call(["gst123", soundFilename])
                     else:
-                        os.popen('aplay ' + soundFilename)
+                        subprocess.call(["aplay", soundFilename])
                 elif sys.platform[0:3] == 'win':
                     # use winsound on Windows
                     import winsound
