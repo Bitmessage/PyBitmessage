@@ -1,3 +1,33 @@
+pybitmessage (0.3.4-1) raring; urgency=low
+
+  * Switched addr, msg, broadcast, and getpubkey message types
+    to 8 byte time. Last remaining type is pubkey.
+  * Added tooltips to show the full subject of messages
+  * Added Maximum Acceptable Difficulty fields in the settings
+  * Send out pubkey immediately after generating deterministic
+    addresses rather than waiting for a request
+
+ -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Sun, 30 June 2013 11:23:00 +0100
+
+pybitmessage (0.3.3-1) raring; urgency=low
+
+  * Remove inbox item from GUI when using API command trashMessage
+  * Add missing trailing semicolons to pybitmessage.desktop
+  * Ensure $(DESTDIR)/usr/bin exists
+  * Update Makefile to correct sandbox violations when built
+    via Portage (Gentoo)
+  * Fix message authentication bug
+
+ -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Sat, 29 June 2013 11:23:00 +0100
+
+pybitmessage (0.3.211-1) raring; urgency=low
+
+  * Removed multi-core proof of work
+    as the multiprocessing module does not work well with
+    pyinstaller's --onefile option.
+
+ -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Fri, 28 June 2013 11:23:00 +0100
+
 pybitmessage (0.3.2-1) raring; urgency=low
 
   * Bugfix: Remove remaining references to the old myapp.trayIcon

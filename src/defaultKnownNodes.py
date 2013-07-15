@@ -59,7 +59,7 @@ if __name__ == "__main__":
     APPNAME = "PyBitmessage"
     from os import path, environ
     if sys.platform == 'darwin':
-        from AppKit import NSSearchPathForDirectoriesInDomains
+        from AppKit import NSSearchPathForDirectoriesInDomains  # @UnresolvedImport
         # http://developer.apple.com/DOCUMENTATION/Cocoa/Reference/Foundation/Miscellaneous/Foundation_Functions/Reference/reference.html#//apple_ref/c/func/NSSearchPathForDirectoriesInDomains
         # NSApplicationSupportDirectory = 14
         # NSUserDomainMask = 1

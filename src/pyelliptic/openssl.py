@@ -289,7 +289,12 @@ class _OpenSSL:
         self.HMAC.argtypes = [ctypes.c_void_p, ctypes.c_void_p, ctypes.c_int,
                               ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p, ctypes.c_void_p]
 
-        self.PKCS5_PBKDF2_HMAC = self._lib.PKCS5_PBKDF2_HMAC
+        try:
+            self.PKCS5_PBKDF2_HMAC = self._lib.PKCS5_PBKDF2_HMAC
+        except:
+            # The above is not compatible with all versions of OSX.
+            self.PKCS5_PBKDF2_HMAC = self._lib.PKCS5_PBKDF2_HMAC_SHA1
+            
         self.PKCS5_PBKDF2_HMAC.restype = ctypes.c_int
         self.PKCS5_PBKDF2_HMAC.argtypes = [ctypes.c_void_p, ctypes.c_int,
                                            ctypes.c_void_p, ctypes.c_int,
@@ -427,7 +432,7 @@ except:
                       lib_path = path.join(sys._MEIPASS, "libeay32.dll")
                       OpenSSL = _OpenSSL(lib_path)
                   except:
-                      if 'linux' in sys.platform or 'darwin' in sys.platform:
+                      if 'linux' in sys.platform or 'darwin' in sys.platform or 'freebsd' in sys.platform:
                           try:
                               from ctypes.util import find_library
                               OpenSSL = _OpenSSL(find_library('ssl'))
