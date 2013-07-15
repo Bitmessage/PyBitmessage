@@ -76,6 +76,8 @@ def loadConfig():
                 print 'Creating new config files in', shared.appdata
                 if not os.path.exists(shared.appdata):
                     os.makedirs(shared.appdata)
+            if not sys.platform.startswith('win'):
+                os.umask(0o077)
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
 
