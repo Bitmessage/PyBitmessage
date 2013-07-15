@@ -704,14 +704,11 @@ class receiveDataThread(threading.Thread):
 
             if messageEncodingType != 0:
                 t = (fromAddress,)
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put(
-                    '''SELECT receiving_identity FROM subscriptions WHERE address=?''')
-                shared.sqlSubmitQueue.put(t)
-                queryreturn = shared.sqlReturnQueue.get()
-                shared.sqlLock.release()
-
-                print('queryreturn: {}'.format(queryreturn))
+                with shared.sqlLock:
+                    shared.sqlSubmitQueue.put(
+                        '''SELECT receiving_identity FROM subscriptions WHERE address=?''')
+                    shared.sqlSubmitQueue.put(t)
+                    queryreturn = shared.sqlReturnQueue.get()
                 for row in queryreturn:
                     receivingIdentity, = row
 
