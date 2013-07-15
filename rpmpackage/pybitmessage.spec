@@ -8,7 +8,7 @@ Packager: Bob Mottram (4096 bits) <bob@robotics.uk.to>
 Source0: http://yourdomainname.com/src/%{name}_%{version}.orig.tar.gz
 Group: Office/Email
 
-Requires: python, PyQt4, openssl-compat-bitcoin-libs
+Requires: python, PyQt4, openssl-compat-bitcoin-libs, gst123
 
 
 %description
