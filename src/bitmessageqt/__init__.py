@@ -937,9 +937,13 @@ class MyForm(QtGui.QMainWindow):
                 if 'linux' in sys.platform:
                     # Note: QSound was a nice idea but it didn't work
                     if '.mp3' in soundFilename:
-                        subprocess.call(["gst123", soundFilename])
+                        subprocess.call(["gst123", soundFilename],
+                                        stdin=subprocess.PIPE, 
+                                        stdout=subprocess.PIPE)
                     else:
-                        subprocess.call(["aplay", soundFilename])
+                        subprocess.call(["aplay", soundFilename],
+                                        stdin=subprocess.PIPE, 
+                                        stdout=subprocess.PIPE)
                 elif sys.platform[0:3] == 'win':
                     # use winsound on Windows
                     import winsound
