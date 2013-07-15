@@ -448,6 +448,9 @@ class MyForm(QtGui.QMainWindow):
         filename=self.attachArray[int(link)]['filename']
         filename=filename.replace('"','')
         
+        if(os.path.isdir('Downloads')==False):
+            os.mkdir('Downloads')
+        
         f = open("Downloads/"+filename, 'w')
         data=self.attachArray[int(link)]['content'].replace('\n','')
         if(self.attachArray[int(link)]['encode'].find('base64')>-1):
