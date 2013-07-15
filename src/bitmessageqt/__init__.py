@@ -29,11 +29,13 @@ import os
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
+import subprocess
 
 try:
     from PyQt4 import QtCore, QtGui
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
+
 except Exception as err:
     print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
     print 'Error message:', err
@@ -49,6 +51,14 @@ def _translate(context, text):
 
 
 class MyForm(QtGui.QMainWindow):
+
+    # sound type constants
+    SOUND_NONE = 0
+    SOUND_KNOWN = 1
+    SOUND_UNKNOWN = 2
+    SOUND_CONNECTED = 3
+    SOUND_DISCONNECTED = 4
+    SOUND_CONNECTION_GREEN = 5
 
     str_broadcast_subscribers = '[Broadcast subscribers]'
 
@@ -952,6 +962,51 @@ class MyForm(QtGui.QMainWindow):
         # update the menu entries
         self.ubuntuMessagingMenuUnread(drawAttention)
 
+    # play a sound
+    def playSound(self, category, label):
+        soundFilename = None
+
+        if label is not None:
+            # does a sound file exist for this particular contact?
+            if (os.path.isfile(shared.appdata + 'sounds/' + label + '.wav') or
+                os.path.isfile(shared.appdata + 'sounds/' + label + '.mp3')):
+                soundFilename = shared.appdata + 'sounds/' + label
+
+        if soundFilename is None:
+            if category is self.SOUND_KNOWN:
+                soundFilename = shared.appdata + 'sounds/known'
+            elif category is self.SOUND_UNKNOWN:
+                soundFilename = shared.appdata + 'sounds/unknown'
+            elif category is self.SOUND_CONNECTED:
+                soundFilename = shared.appdata + 'sounds/connected'
+            elif category is self.SOUND_DISCONNECTED:
+                soundFilename = shared.appdata + 'sounds/disconnected'
+            elif category is self.SOUND_CONNECTION_GREEN:
+                soundFilename = shared.appdata + 'sounds/green'
+
+        if soundFilename is not None:
+            # if not wav then try mp3 format
+            if not os.path.isfile(soundFilename + '.wav'):
+                soundFilename = soundFilename + '.mp3'
+            else:
+                soundFilename = soundFilename + '.wav'
+
+            if os.path.isfile(soundFilename):
+                if 'linux' in sys.platform:
+                    # Note: QSound was a nice idea but it didn't work
+                    if '.mp3' in soundFilename:
+                        subprocess.call(["gst123", soundFilename],
+                                        stdin=subprocess.PIPE, 
+                                        stdout=subprocess.PIPE)
+                    else:
+                        subprocess.call(["aplay", soundFilename],
+                                        stdin=subprocess.PIPE, 
+                                        stdout=subprocess.PIPE)
+                elif sys.platform[0:3] == 'win':
+                    # use winsound on Windows
+                    import winsound
+                    winsound.PlaySound(soundFilename, winsound.SND_FILENAME)
+
     # initialise the message notifier
     def notifierInit(self):
         global withMessagingMenu
@@ -959,8 +1014,11 @@ class MyForm(QtGui.QMainWindow):
             Notify.init('pybitmessage')
 
     # shows a notification
-    def notifierShow(self, title, subtitle):
+    def notifierShow(self, title, subtitle, fromCategory, label):
         global withMessagingMenu
+
+        self.playSound(fromCategory, label);
+
         if withMessagingMenu:
             n = Notify.Notification.new(
                 title, subtitle, 'notification-message-email')
@@ -1133,7 +1191,8 @@ class MyForm(QtGui.QMainWindow):
             # if the connection is lost then show a notification
             if self.connected:
                 self.notifierShow('Bitmessage', unicode(_translate(
-                    "MainWindow", "Connection lost").toUtf8(),'utf-8'))
+                            "MainWindow", "Connection lost").toUtf8(),'utf-8'),
+                                  self.SOUND_DISCONNECTED, None)
             self.connected = False
 
             if self.actionStatus is not None:
@@ -1150,7 +1209,8 @@ class MyForm(QtGui.QMainWindow):
             # if a new connection has been established then show a notification
             if not self.connected:
                 self.notifierShow('Bitmessage', unicode(_translate(
-                    "MainWindow", "Connected").toUtf8(),'utf-8'))
+                            "MainWindow", "Connected").toUtf8(),'utf-8'),
+                                  self.SOUND_CONNECTED, None)
             self.connected = True
 
             if self.actionStatus is not None:
@@ -1166,7 +1226,8 @@ class MyForm(QtGui.QMainWindow):
             shared.statusIconColor = 'green'
             if not self.connected:
                 self.notifierShow('Bitmessage', unicode(_translate(
-                    "MainWindow", "Connected").toUtf8(),'utf-8'))
+                            "MainWindow", "Connected").toUtf8(),'utf-8'),
+                                  self.SOUND_CONNECTION_GREEN, None)
             self.connected = True
 
             if self.actionStatus is not None:
@@ -1638,12 +1699,12 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(unicode(fromAddress, 'utf-8'))
             newItem.setToolTip(unicode(fromAddress, 'utf-8'))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
-                self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(fromAddress, 'utf-8'))
+                self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(fromAddress, 'utf-8'), self.SOUND_UNKNOWN, None)
         else:
             newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
             newItem.setToolTip(unicode(unicode(fromLabel, 'utf-8')))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
-                self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(fromLabel, 'utf-8'))
+                self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(fromLabel, 'utf-8'), self.SOUND_KNOWN, unicode(fromLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0, 1, newItem)
