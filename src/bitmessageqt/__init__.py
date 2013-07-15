@@ -366,6 +366,9 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.ui.textEditInboxMessage,
              QtCore.SIGNAL("anchorClicked(const QUrl&)"), self.saveAttach)
         
+        QtCore.QObject.connect(self.ui.textEditSentMessage,
+             QtCore.SIGNAL("anchorClicked(const QUrl&)"), self.saveAttach)
+        
         QtCore.QObject.connect(self.ui.AddAttach, QtCore.SIGNAL("clicked()"), self.AddAttach)
         
         
@@ -2700,9 +2703,9 @@ class MyForm(QtGui.QMainWindow):
                     print "filename : "+value[0]
                     self.attachArray[licznik-1]['filename']=value[1].split('=')[-1]
                     
-                print mess_list[i]
+
                 
-            if(mess_list[i]=='\n' and zal == True):
+            if((mess_list[i]=='' or mess_list[i]=='\n') and zal == True):
                 print "jest zal"+str(i)
                
                 for s in range( i+1,len(mess_list) ):
@@ -2716,7 +2719,7 @@ class MyForm(QtGui.QMainWindow):
                         dane=''
                         zal=False
                         break
-                        
+        
         if(attachs):
 			return True
         else:
@@ -2726,7 +2729,6 @@ class MyForm(QtGui.QMainWindow):
     def tableWidgetInboxItemClicked(self):
         self.attachArray=[]
         currentRow = self.ui.tableWidgetInbox.currentRow()
-
 
         if currentRow >= 0:
             fromAddress = str(self.ui.tableWidgetInbox.item(
@@ -2739,7 +2741,6 @@ class MyForm(QtGui.QMainWindow):
             if(self.findAttach(mess) ):
                 self.on_action_InboxMessageForceHtml()
                 return
-            
             
             if decodeAddress(fromAddress)[3] in shared.broadcastSendersForWhichImWatching or shared.isAddressInMyAddressBook(fromAddress):
                 if len(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
