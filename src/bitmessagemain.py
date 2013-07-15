@@ -720,7 +720,6 @@ if __name__ == "__main__":
 
     helper_bootstrap.knownNodes()
     helper_bootstrap.dns()
-
     # Start the address generation thread
     addressGeneratorThread = addressGenerator()
     addressGeneratorThread.daemon = True  # close the main program even if there are threads left
