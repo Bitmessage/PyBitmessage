@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="2.0" language="ru_RU" sourcelanguage="">
+<!DOCTYPE TS>
+<TS version="2.0" language="ru_RU">
 <context>
     <name>MainWindow</name>
     <message>
@@ -40,12 +41,12 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="262"/>
         <source>Enable</source>
-        <translation>Разрешить</translation>
+        <translation>Включить</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="264"/>
         <source>Disable</source>
-        <translation>Запретить</translation>
+        <translation>Выключить</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="260"/>
@@ -650,7 +651,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="514"/>
         <source>Here you can subscribe to &apos;broadcast messages&apos; that are sent by other users. Messages will appear in your Inbox. Addresses here override those on the Blacklist tab.</source>
-        <translation>Здесь Вы можете подписаться на рассылки от других пользователей. Все рассылки будут появлять у Вас во Входящих. Вы будете следить за всеми адресами, указанными здесь, даже если они в черном списке.</translation>
+        <translation>Здесь Вы можете подписаться на рассылки от других пользователей. Все рассылки будут появляться у Вас во Входящих. Вы будете следить за всеми адресами, указанными здесь, даже если они в черном списке.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="515"/>
@@ -978,7 +979,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <source>version ?</source>
         <translation>версия ?</translation>
     </message>
-    <message encoding="UTF-8">
+    <message utf8="true">
         <location filename="../bitmessageqt/about.py" line="60"/>
         <source>Copyright © 2013 Jonathan Warren</source>
         <translation>Копирайт © 2013 Джонатан Уоррен</translation>
@@ -1009,7 +1010,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/help.py" line="47"/>
         <source>As Bitmessage is a collaborative project, help can be found online in the Bitmessage Wiki:</source>
-        <translation>Битмесседж - это общественный проект. Вы можете найти подсказки и советы на Wiki-страничке Битмесседж:</translation>
+        <translation>Bitmessage - общественный проект. Вы можете найти подсказки и советы на Wiki-страничке Bitmessage:</translation>
     </message>
 </context>
 <context>
@@ -1027,7 +1028,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/iconglossary.py" line="84"/>
         <source>You have made at least one connection to a peer using an outgoing connection but you have not yet received any incoming connections. Your firewall or home router probably isn&apos;t configured to forward incoming TCP connections to your computer. Bitmessage will work just fine but it would help the Bitmessage network if you allowed for incoming connections and will help you be a better-connected node.</source>
-        <translation>На текущий момент Вы установили по-крайней мере одно исходящее соединение, но пока ни одного входящего. Ваш файрвол или маршрутизатор скорее всего не настроен на переброс входящих TCP соединений к Вашему компьютеру. Битмесседж будет прекрасно работать и без этого, но Вы могли бы помочь сети если бы разрешили и входящие соединения тоже. Это помогло бы Вам стать более важным узлом сети.</translation>
+        <translation>На текущий момент Вы установили по-крайней мере одно исходящее соединение, но пока ни одного входящего. Ваш файрвол или маршрутизатор скорее всего не настроен на переброс входящих TCP соединений к Вашему компьютеру. Bitmessage будет прекрасно работать и без этого, но Вы могли бы помочь сети если бы разрешили и входящие соединения тоже. Это помогло бы Вам стать более важным узлом сети.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/iconglossary.py" line="85"/>
@@ -1108,12 +1109,12 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/settings.py" line="242"/>
         <source>Start Bitmessage on user login</source>
-        <translation>Запускать Битмесседж при входе в систему</translation>
+        <translation>Запускать Bitmessage при входе в систему</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="243"/>
         <source>Start Bitmessage in the tray (don&apos;t show main window)</source>
-        <translation>Запускать Битмесседж в свернутом виде (не показывать главное окно)</translation>
+        <translation>Запускать Bitmessage в свернутом виде (не показывать главное окно)</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="244"/>
@@ -1133,7 +1134,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/settings.py" line="247"/>
         <source>In Portable Mode, messages and config files are stored in the same directory as the program rather than the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.</source>
-        <translation>В переносном режиме, все сообщения и конфигурационные файлы сохраняются в той же самой папке что и сама программа. Это делает более удобным использование БитМесседж с USB-флэшки.</translation>
+        <translation>В переносном режиме, все сообщения и конфигурационные файлы сохраняются в той же самой папке что и сама программа. Это делает более удобным использование Bitmessage с USB-флэшки.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="248"/>
@@ -1153,7 +1154,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/settings.py" line="251"/>
         <source>Proxy server / Tor</source>
-        <translation>Прокси сервер / Тор</translation>
+        <translation>Прокси сервер / Tor</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="252"/>
@@ -1208,7 +1209,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/settings.py" line="262"/>
         <source>When someone sends you a message, their computer must first complete some work. The difficulty of this work, by default, is 1. You may raise this default for new addresses you create by changing the values here. Any new addresses you create will require senders to meet the higher difficulty. There is one exception: if you add a friend or acquaintance to your address book, Bitmessage will automatically notify them when you next send a message that they need only complete the minimum amount of work: difficulty 1. </source>
-        <translation>Когда кто-либо отправляет Вам сообщение, его компьютер должен сперва решить определенную вычислительную задачу. Сложность этой задачи по умолчанию равна 1. Вы можете повысить эту сложность для новых адресов, которые Вы создадите, здесь. Таким образом, любые новые адреса, которые Вы создадите, могут требовать от отправителей сложность большую чем 1. Однако, есть одно исключение: если Вы специально добавите Вашего собеседника в адресную книгу, то БитМесседж автоматически уведомит его о том, что для него минимальная сложность будет составлять всегда всего лишь 1.</translation>
+        <translation>Когда кто-либо отправляет Вам сообщение, его компьютер должен сперва решить определенную вычислительную задачу. Сложность этой задачи по умолчанию равна 1. Вы можете повысить эту сложность для новых адресов, которые Вы создадите, здесь. Таким образом, любые новые адреса, которые Вы создадите, могут требовать от отправителей сложность большую чем 1. Однако, есть одно исключение: если Вы специально добавите Вашего собеседника в адресную книгу, то Bitmessage автоматически уведомит его о том, что для него минимальная сложность будет составлять всегда всего лишь 1.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="263"/>
