@@ -240,11 +240,10 @@ def ensureNamecoinOptions ():
         shared.config.set (configSection, "namecoinrpctype", "namecoind")
     if not shared.config.has_option (configSection, "namecoinrpchost"):
         shared.config.set (configSection, "namecoinrpchost", "localhost")
-    if not shared.config.has_option (configSection, "namecoinrpcport"):
-        shared.config.set (configSection, "namecoinrpcport", "8336")
 
     hasUser = shared.config.has_option (configSection, "namecoinrpcuser")
     hasPass = shared.config.has_option (configSection, "namecoinrpcpassword")
+    hasPort = shared.config.has_option (configSection, "namecoinrpcport")
 
     # Try to read user/password from .namecoin configuration file.
     try:
@@ -269,6 +268,7 @@ def ensureNamecoinOptions ():
                                        "namecoinrpcpassword", val)
                 if key == "rpcport":
                     shared.namecoinDefaultRpcPort = val
+                    # Will be set in config below anyway.
                 
         nmc.close ()
 
@@ -278,3 +278,8 @@ def ensureNamecoinOptions ():
             shared.config.set (configSection, "namecoinrpcuser", "")
         if (not hasPass):
             shared.config.set (configSection, "namecoinrpcpassword", "")
+
+    # Set default port now, possibly to found value.
+    if (not hasPort):
+        shared.config.set (configSection, "namecoinrpcport",
+                           shared.namecoinDefaultRpcPort)
