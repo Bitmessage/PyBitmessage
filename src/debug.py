@@ -18,48 +18,64 @@ Use: `from debug import logger` to import this facility into whatever module you
 '''
 import logging
 import logging.config
+import shared
 
 # TODO(xj9): Get from a config file.
 log_level = 'DEBUG'
 
-logging.config.dictConfig({
-    'version': 1,
-    'formatters': {
-        'default': {
-            'format': '%(asctime)s - %(levelname)s - %(message)s',
+def configureLogging():
+    logging.config.dictConfig({
+        'version': 1,
+        'formatters': {
+            'default': {
+                'format': '%(asctime)s - %(levelname)s - %(message)s',
+            },
         },
-    },
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
-            'formatter': 'default',
-            'level': log_level,
-            'stream': 'ext://sys.stdout'
+        'handlers': {
+            'console': {
+                'class': 'logging.StreamHandler',
+                'formatter': 'default',
+                'level': log_level,
+                'stream': 'ext://sys.stdout'
+            },
+            'file': {
+                'class': 'logging.handlers.RotatingFileHandler',
+                'formatter': 'default',
+                'level': log_level,
+                'filename': shared.appdata + 'debug.log',
+                'maxBytes': 2097152, # 2 MiB
+                'backupCount': 1,
+            }
         },
-        'file': {
-            'class': 'logging.handlers.RotatingFileHandler',
-            'formatter': 'default',
+        'loggers': {
+            'console_only': {
+                'handlers': ['console'],
+                'propagate' : 0
+            },
+            'file_only': {
+                'handlers': ['file'],
+                'propagate' : 0
+            },
+            'both': {
+                'handlers': ['console', 'file'],
+                'propagate' : 0
+            },
+        },
+        'root': {
             'level': log_level,
-            'filename': 'bm.log',
-            'maxBytes': 1024,
-            'backupCount': 0,
-        }
-    },
-    'loggers': {
-        'console_only': {
             'handlers': ['console'],
         },
-        'file_only': {
-            'handlers': ['file'],
-        },
-        'both': {
-            'handlers': ['console', 'file'],
-        },
-    },
-    'root': {
-        'level': log_level,
-        'handlers': ['console'],
-    },
-})
+    })
 # TODO (xj9): Get from a config file.
-logger = logging.getLogger('console_only')
+#logger = logging.getLogger('console_only')
+configureLogging()
+logger = logging.getLogger('both')
+
+def restartLoggingInUpdatedAppdataLocation():
+    global logger
+    for i in list(logger.handlers):
+        logger.removeHandler(i)
+        i.flush()
+        i.close()
+    configureLogging()
+    logger = logging.getLogger('both')

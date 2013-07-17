@@ -1,20 +1,20 @@
 <RCC>
   <qresource prefix="newPrefix">
-    <file>images/can-icon-24px-yellow.png</file>
-    <file>images/can-icon-24px-red.png</file>
-    <file>images/can-icon-24px-green.png</file>
-    <file>images/can-icon-24px.png</file>
-    <file>images/can-icon-16px.png</file>
-    <file>images/greenicon.png</file>
-    <file>images/redicon.png</file>
-    <file>images/yellowicon.png</file>
-    <file>images/addressbook.png</file>
-    <file>images/blacklist.png</file>
-    <file>images/identities.png</file>
-    <file>images/networkstatus.png</file>
-    <file>images/sent.png</file>
-    <file>images/subscriptions.png</file>
-    <file>images/send.png</file>
-    <file>images/inbox.png</file>
+    <file>../images/can-icon-24px-yellow.png</file>
+    <file>../images/can-icon-24px-red.png</file>
+    <file>../images/can-icon-24px-green.png</file>
+    <file>../images/can-icon-24px.png</file>
+    <file>../images/can-icon-16px.png</file>
+    <file>../images/greenicon.png</file>
+    <file>../images/redicon.png</file>
+    <file>../images/yellowicon.png</file>
+    <file>../images/addressbook.png</file>
+    <file>../images/blacklist.png</file>
+    <file>../images/identities.png</file>
+    <file>../images/networkstatus.png</file>
+    <file>../images/sent.png</file>
+    <file>../images/subscriptions.png</file>
+    <file>../images/send.png</file>
+    <file>../images/inbox.png</file>
   </qresource>
 </RCC>
