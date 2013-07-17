@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Thu Jul  4 22:00:02 2013
+# Created: Wed Jul 17 18:15:14 2013
 #      by: PyQt4 UI code generator 4.9.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -45,6 +45,21 @@ class Ui_MainWindow(object):
         self.inbox.setObjectName(_fromUtf8("inbox"))
         self.verticalLayout_2 = QtGui.QVBoxLayout(self.inbox)
         self.verticalLayout_2.setObjectName(_fromUtf8("verticalLayout_2"))
+        self.horizontalLayoutSearch = QtGui.QHBoxLayout()
+        self.horizontalLayoutSearch.setContentsMargins(-1, 0, -1, -1)
+        self.horizontalLayoutSearch.setObjectName(_fromUtf8("horizontalLayoutSearch"))
+        self.inboxSearchLineEdit = QtGui.QLineEdit(self.inbox)
+        self.inboxSearchLineEdit.setObjectName(_fromUtf8("inboxSearchLineEdit"))
+        self.horizontalLayoutSearch.addWidget(self.inboxSearchLineEdit)
+        self.inboxSearchOptionCB = QtGui.QComboBox(self.inbox)
+        self.inboxSearchOptionCB.setObjectName(_fromUtf8("inboxSearchOptionCB"))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.inboxSearchOptionCB.addItem(_fromUtf8(""))
+        self.horizontalLayoutSearch.addWidget(self.inboxSearchOptionCB)
+        self.verticalLayout_2.addLayout(self.horizontalLayoutSearch)
         self.tableWidgetInbox = QtGui.QTableWidget(self.inbox)
         self.tableWidgetInbox.setAlternatingRowColors(True)
         self.tableWidgetInbox.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
@@ -154,6 +169,21 @@ class Ui_MainWindow(object):
         self.sent.setObjectName(_fromUtf8("sent"))
         self.verticalLayout = QtGui.QVBoxLayout(self.sent)
         self.verticalLayout.setObjectName(_fromUtf8("verticalLayout"))
+        self.horizontalLayout = QtGui.QHBoxLayout()
+        self.horizontalLayout.setContentsMargins(-1, 0, -1, -1)
+        self.horizontalLayout.setObjectName(_fromUtf8("horizontalLayout"))
+        self.sentSearchLineEdit = QtGui.QLineEdit(self.sent)
+        self.sentSearchLineEdit.setObjectName(_fromUtf8("sentSearchLineEdit"))
+        self.horizontalLayout.addWidget(self.sentSearchLineEdit)
+        self.sentSearchOptionCB = QtGui.QComboBox(self.sent)
+        self.sentSearchOptionCB.setObjectName(_fromUtf8("sentSearchOptionCB"))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.sentSearchOptionCB.addItem(_fromUtf8(""))
+        self.horizontalLayout.addWidget(self.sentSearchOptionCB)
+        self.verticalLayout.addLayout(self.horizontalLayout)
         self.tableWidgetSent = QtGui.QTableWidget(self.sent)
         self.tableWidgetSent.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
         self.tableWidgetSent.setAlternatingRowColors(True)
@@ -464,6 +494,12 @@ class Ui_MainWindow(object):
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(QtGui.QApplication.translate("MainWindow", "Bitmessage", None, QtGui.QApplication.UnicodeUTF8))
+        self.inboxSearchLineEdit.setPlaceholderText(QtGui.QApplication.translate("MainWindow", "Search", None, QtGui.QApplication.UnicodeUTF8))
+        self.inboxSearchOptionCB.setItemText(0, QtGui.QApplication.translate("MainWindow", "All", None, QtGui.QApplication.UnicodeUTF8))
+        self.inboxSearchOptionCB.setItemText(1, QtGui.QApplication.translate("MainWindow", "To", None, QtGui.QApplication.UnicodeUTF8))
+        self.inboxSearchOptionCB.setItemText(2, QtGui.QApplication.translate("MainWindow", "From", None, QtGui.QApplication.UnicodeUTF8))
+        self.inboxSearchOptionCB.setItemText(3, QtGui.QApplication.translate("MainWindow", "Subject", None, QtGui.QApplication.UnicodeUTF8))
+        self.inboxSearchOptionCB.setItemText(4, QtGui.QApplication.translate("MainWindow", "Message", None, QtGui.QApplication.UnicodeUTF8))
         self.tableWidgetInbox.setSortingEnabled(True)
         item = self.tableWidgetInbox.horizontalHeaderItem(0)
         item.setText(QtGui.QApplication.translate("MainWindow", "To", None, QtGui.QApplication.UnicodeUTF8))
@@ -490,6 +526,12 @@ class Ui_MainWindow(object):
         self.pushButtonSend.setText(QtGui.QApplication.translate("MainWindow", "Send", None, QtGui.QApplication.UnicodeUTF8))
         self.labelSendBroadcastWarning.setText(QtGui.QApplication.translate("MainWindow", "Be aware that broadcasts are only encrypted with your address. Anyone who knows your address can read them.", None, QtGui.QApplication.UnicodeUTF8))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), QtGui.QApplication.translate("MainWindow", "Send", None, QtGui.QApplication.UnicodeUTF8))
+        self.sentSearchLineEdit.setPlaceholderText(QtGui.QApplication.translate("MainWindow", "Search", None, QtGui.QApplication.UnicodeUTF8))
+        self.sentSearchOptionCB.setItemText(0, QtGui.QApplication.translate("MainWindow", "All", None, QtGui.QApplication.UnicodeUTF8))
+        self.sentSearchOptionCB.setItemText(1, QtGui.QApplication.translate("MainWindow", "To", None, QtGui.QApplication.UnicodeUTF8))
+        self.sentSearchOptionCB.setItemText(2, QtGui.QApplication.translate("MainWindow", "From", None, QtGui.QApplication.UnicodeUTF8))
+        self.sentSearchOptionCB.setItemText(3, QtGui.QApplication.translate("MainWindow", "Subject", None, QtGui.QApplication.UnicodeUTF8))
+        self.sentSearchOptionCB.setItemText(4, QtGui.QApplication.translate("MainWindow", "Message", None, QtGui.QApplication.UnicodeUTF8))
         self.tableWidgetSent.setSortingEnabled(True)
         item = self.tableWidgetSent.horizontalHeaderItem(0)
         item.setText(QtGui.QApplication.translate("MainWindow", "To", None, QtGui.QApplication.UnicodeUTF8))

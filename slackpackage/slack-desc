@@ -1,0 +1,19 @@
+# HOW TO EDIT THIS FILE:
+# The "handy ruler" below makes it easier to edit a package description.  Line
+# up the first '|' above the ':' following the base package name, and the '|' on
+# the right side marks the last column you can put a character in.  You must make
+# exactly 11 lines for the formatting to be correct.  It's also customary to
+# leave one space after the ':'.
+
+            |-----handy-ruler--------------------------------------------------|
+pybitmessage: pybitmessage (Send encrypted messages)
+pybitmessage:
+pybitmessage: Bitmessage is a P2P communications protocol used to send
+pybitmessage: encrypted messages to another person or to many subscribers. It
+pybitmessage: is decentralized and trustless, meaning that you need-not
+pybitmessage: inherently trust any entities like root certificate authorities.
+pybitmessage: It uses strong authentication which means that the sender of a
+pybitmessage: message cannot be spoofed, and it aims to hide "non-content"
+pybitmessage: data, like the sender and receiver of messages, from passive
+pybitmessage: eavesdroppers like those running warrantless wiretapping
+pybitmessage: programs.

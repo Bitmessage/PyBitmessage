@@ -52,6 +52,8 @@ def loadConfig():
             shared.config.set('bitmessagesettings', 'socksport', '9050')
             shared.config.set(
                 'bitmessagesettings', 'socksauthentication', 'false')
+            shared.config.set(
+                'bitmessagesettings', 'sockslisten', 'false')
             shared.config.set('bitmessagesettings', 'socksusername', '')
             shared.config.set('bitmessagesettings', 'sockspassword', '')
             shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
@@ -77,5 +79,13 @@ def loadConfig():
                 print 'Creating new config files in', shared.appdata
                 if not os.path.exists(shared.appdata):
                     os.makedirs(shared.appdata)
+            if not sys.platform.startswith('win'):
+                os.umask(0o077)
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
+
+        # Initialize settings that may be missing due to upgrades and could
+        # cause errors if missing.
+        if not shared.config.has_option('bitmessagesettings', 'sockslisten'):
+            shared.config.set('bitmessagesettings', 'sockslisten', 'false')
+

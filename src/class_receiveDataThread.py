@@ -528,13 +528,7 @@ class receiveDataThread(threading.Thread):
                     print 'fromAddress:', fromAddress
 
                 if messageEncodingType == 2:
-                    bodyPositionIndex = string.find(message, '\nBody:')
-                    if bodyPositionIndex > 1:
-                        subject = message[8:bodyPositionIndex]
-                        body = message[bodyPositionIndex + 6:]
-                    else:
-                        subject = ''
-                        body = message
+                    subject, body = self.decodeType2Message(message)
                 elif messageEncodingType == 1:
                     body = message
                     subject = ''
@@ -684,13 +678,7 @@ class receiveDataThread(threading.Thread):
                 print 'fromAddress:', fromAddress
 
             if messageEncodingType == 2:
-                bodyPositionIndex = string.find(message, '\nBody:')
-                if bodyPositionIndex > 1:
-                    subject = message[8:bodyPositionIndex]
-                    body = message[bodyPositionIndex + 6:]
-                else:
-                    subject = ''
-                    body = message
+                subject, body = self.decodeType2Message(message)
             elif messageEncodingType == 1:
                 body = message
                 subject = ''
@@ -1005,15 +993,7 @@ class receiveDataThread(threading.Thread):
                     toLabel = toAddress
 
                 if messageEncodingType == 2:
-                    bodyPositionIndex = string.find(message, '\nBody:')
-                    if bodyPositionIndex > 1:
-                        subject = message[8:bodyPositionIndex]
-                        subject = subject[
-                            :500]  # Only save and show the first 500 characters of the subject. Any more is probably an attak.
-                        body = message[bodyPositionIndex + 6:]
-                    else:
-                        subject = ''
-                        body = message
+                    subject, body = self.decodeType2Message(message)
                 elif messageEncodingType == 1:
                     body = message
                     subject = ''
@@ -1086,6 +1066,21 @@ class receiveDataThread(threading.Thread):
                 print 'Time to decrypt this message successfully:', timeRequiredToAttemptToDecryptMessage
                 print 'Average time for all message decryption successes since startup:', sum / len(shared.successfullyDecryptMessageTimings)
 
+    def decodeType2Message(self, message):
+        bodyPositionIndex = string.find(message, '\nBody:')
+        if bodyPositionIndex > 1:
+            subject = message[8:bodyPositionIndex]
+            # Only save and show the first 500 characters of the subject.
+            # Any more is probably an attack.
+            subject = subject[:500]
+            body = message[bodyPositionIndex + 6:]
+        else:
+            subject = ''
+            body = message
+        # Throw away any extra lines (headers) after the subject.
+        if subject:
+            subject = subject.splitlines()[0]
+        return subject, body
 
     def isAckDataValid(self, ackData):
         if len(ackData) < 24:

@@ -14,7 +14,7 @@ try:
     from gevent import monkey
     monkey.patch_all()
 except ImportError as ex:
-    print "cannot find gevent"
+    print "Not using the gevent module as it was not found. No need to worry."
 
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
@@ -32,7 +32,6 @@ from class_singleListener import *
 from class_addressGenerator import *
 
 # Helper Functions
-import helper_startup
 import helper_bootstrap
 
 import sys
@@ -719,11 +718,8 @@ if __name__ == "__main__":
     signal.signal(signal.SIGINT, helper_generic.signal_handler)
     # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    helper_startup.loadConfig()
-
     helper_bootstrap.knownNodes()
     helper_bootstrap.dns()
-    
     # Start the address generation thread
     addressGeneratorThread = addressGenerator()
     addressGeneratorThread.daemon = True  # close the main program even if there are threads left
