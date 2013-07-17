@@ -370,7 +370,7 @@ class MyForm(QtGui.QMainWindow):
              QtCore.SIGNAL("anchorClicked(const QUrl&)"), self.saveAttach)
         
         QtCore.QObject.connect(self.ui.AddAttach, QtCore.SIGNAL("clicked()"), self.AddAttach)
-        
+        QtCore.QObject.connect(self.ui.DelAttach, QtCore.SIGNAL("clicked()"), self.DelAttach)
         
         QtCore.QObject.connect(self.ui.tableWidgetSent, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.tableWidgetSentItemClicked)
@@ -443,6 +443,16 @@ class MyForm(QtGui.QMainWindow):
 
     # The most recent broadcast
     newBroadcastItem = None
+
+    def DelAttach(self):
+        
+        item=self.ui.attachmentListSend.currentItem()
+        for x in range(len(attachArray) ):
+            if(attachArray[x]==item.text):
+               del attachArray[x]
+               break
+
+        del item
 
 
     def saveAttach(self,link):
