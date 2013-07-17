@@ -247,33 +247,34 @@ def ensureNamecoinOptions ():
     hasPass = shared.config.has_option (configSection, "namecoinrpcpassword")
 
     # Try to read user/password from .namecoin configuration file.
-    if (not hasUser) or (not hasPass):
-        try:
-            nmcFolder = lookupNamecoinFolder ()
-            nmcConfig = nmcFolder + "namecoin.conf"
-            nmc = open (nmcConfig, "r")
+    try:
+        nmcFolder = lookupNamecoinFolder ()
+        nmcConfig = nmcFolder + "namecoin.conf"
+        nmc = open (nmcConfig, "r")
 
-            while True:
-                line = nmc.readline ()
-                if line == "":
-                    break
-                parts = line.split ("=")
-                if len (parts) == 2:
-                    key = parts[0]
-                    val = parts[1].rstrip ()
+        while True:
+            line = nmc.readline ()
+            if line == "":
+                break
+            parts = line.split ("=")
+            if len (parts) == 2:
+                key = parts[0]
+                val = parts[1].rstrip ()
 
-                    if key == "rpcuser" and not hasUser:
-                        shared.config.set (configSection,
-                                           "namecoinrpcuser", val)
-                    if key == "rpcpassword" and not hasPass:
-                        shared.config.set (configSection,
-                                           "namecoinrpcpassword", val)
-                    
-            nmc.close ()
+                if key == "rpcuser" and not hasUser:
+                    shared.config.set (configSection,
+                                       "namecoinrpcuser", val)
+                if key == "rpcpassword" and not hasPass:
+                    shared.config.set (configSection,
+                                       "namecoinrpcpassword", val)
+                if key == "rpcport":
+                    shared.namecoinDefaultRpcPort = val
+                
+        nmc.close ()
 
-        except Exception as exc:
-            print "Failure reading namecoin config file: %s" % str (exc)
-            if (not hasUser):
-                shared.config.set (configSection, "namecoinrpcuser", "")
-            if (not hasPass):
-                shared.config.set (configSection, "namecoinrpcpassword", "")
+    except Exception as exc:
+        print "Failure reading namecoin config file: %s" % str (exc)
+        if (not hasUser):
+            shared.config.set (configSection, "namecoinrpcuser", "")
+        if (not hasPass):
+            shared.config.set (configSection, "namecoinrpcpassword", "")

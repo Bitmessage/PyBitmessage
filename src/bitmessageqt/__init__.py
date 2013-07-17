@@ -2936,7 +2936,7 @@ class settingsDialog(QtGui.QDialog):
         self.ui.labelNamecoinPassword.setEnabled(isNamecoind)
 
         if isNamecoind:
-            self.ui.lineEditNamecoinPort.setText("8336")
+            self.ui.lineEditNamecoinPort.setText(shared.namecoinDefaultRpcPort)
         else:
             self.ui.lineEditNamecoinPort.setText("9000")
 
