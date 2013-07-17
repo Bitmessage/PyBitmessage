@@ -414,10 +414,10 @@ class singleWorker(threading.Thread):
                 # Update the status of the message in the 'sent' table to have
                 # a 'broadcastsent' status
                 shared.sqlLock.acquire()
-                t = ('broadcastsent', int(
+                t = (inventoryHash,'broadcastsent', int(
                     time.time()), fromaddress, subject, body, 'broadcastqueued')
                 shared.sqlSubmitQueue.put(
-                    'UPDATE sent SET status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
+                    'UPDATE sent SET msgid=?, status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
                 shared.sqlSubmitQueue.put(t)
                 queryreturn = shared.sqlReturnQueue.get()
                 shared.sqlSubmitQueue.put('commit')
@@ -774,8 +774,8 @@ class singleWorker(threading.Thread):
             # Update the status of the message in the 'sent' table to have a
             # 'msgsent' status
             shared.sqlLock.acquire()
-            t = (ackdata,)
-            shared.sqlSubmitQueue.put('''UPDATE sent SET status='msgsent' WHERE ackdata=?''')
+            t = (inventoryHash,ackdata,)
+            shared.sqlSubmitQueue.put('''UPDATE sent SET msgid=?, status='msgsent' WHERE ackdata=?''')
             shared.sqlSubmitQueue.put(t)
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')

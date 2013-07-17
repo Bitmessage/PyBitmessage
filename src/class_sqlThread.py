@@ -5,6 +5,7 @@ import time
 import shutil  # used for moving the messages.dat file
 import sys
 import os
+from debug import logger
 
 # This thread exists because SQLITE3 is so un-threadsafe that we must
 # submit queries to it and it puts results back in a different queue. They

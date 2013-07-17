@@ -29,8 +29,11 @@ import os
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
+
 import base64
 
+import debug
+from debug import logger
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -1961,7 +1964,14 @@ class MyForm(QtGui.QMainWindow):
                 shared.knownNodesLock.release()
                 os.remove(shared.appdata + 'keys.dat')
                 os.remove(shared.appdata + 'knownnodes.dat')
+                previousAppdataLocation = shared.appdata
                 shared.appdata = ''
+                debug.restartLoggingInUpdatedAppdataLocation()
+                try:
+                    os.remove(previousAppdataLocation + 'debug.log')
+                    os.remove(previousAppdataLocation + 'debug.log.1')
+                except:
+                    pass
 
             if shared.appdata == '' and not self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we ARE using portable mode now but the user selected that we shouldn't...
                 shared.appdata = shared.lookupAppdataFolder()
@@ -1981,6 +1991,12 @@ class MyForm(QtGui.QMainWindow):
                 shared.knownNodesLock.release()
                 os.remove('keys.dat')
                 os.remove('knownnodes.dat')
+                debug.restartLoggingInUpdatedAppdataLocation()
+                try:
+                    os.remove('debug.log')
+                    os.remove('debug.log.1')
+                except:
+                    pass
 
     def click_radioButtonBlacklist(self):
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
@@ -2945,7 +2961,7 @@ class settingsDialog(QtGui.QDialog):
             shared.config.get('bitmessagesettings', 'port')))
         self.ui.checkBoxAuthentication.setChecked(shared.config.getboolean(
             'bitmessagesettings', 'socksauthentication'))
-	self.ui.checkBoxSocksListen.setChecked(shared.config.getboolean(
+        self.ui.checkBoxSocksListen.setChecked(shared.config.getboolean(
             'bitmessagesettings', 'sockslisten'))
         if str(shared.config.get('bitmessagesettings', 'socksproxytype')) == 'none':
             self.ui.comboBoxProxyType.setCurrentIndex(0)
