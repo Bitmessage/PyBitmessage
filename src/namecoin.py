@@ -246,6 +246,8 @@ def ensureNamecoinOptions ():
     hasPort = shared.config.has_option (configSection, "namecoinrpcport")
 
     # Try to read user/password from .namecoin configuration file.
+    defaultUser = ""
+    defaultPass = ""
     try:
         nmcFolder = lookupNamecoinFolder ()
         nmcConfig = nmcFolder + "namecoin.conf"
@@ -261,23 +263,22 @@ def ensureNamecoinOptions ():
                 val = parts[1].rstrip ()
 
                 if key == "rpcuser" and not hasUser:
-                    shared.config.set (configSection,
-                                       "namecoinrpcuser", val)
+                    defaultUser = val
                 if key == "rpcpassword" and not hasPass:
-                    shared.config.set (configSection,
-                                       "namecoinrpcpassword", val)
+                    defaultPass = val
                 if key == "rpcport":
                     shared.namecoinDefaultRpcPort = val
-                    # Will be set in config below anyway.
                 
         nmc.close ()
 
     except Exception as exc:
         print "Failure reading namecoin config file: %s" % str (exc)
-        if (not hasUser):
-            shared.config.set (configSection, "namecoinrpcuser", "")
-        if (not hasPass):
-            shared.config.set (configSection, "namecoinrpcpassword", "")
+
+    # If still nothing found, set empty at least.
+    if (not hasUser):
+        shared.config.set (configSection, "namecoinrpcuser", defaultUser)
+    if (not hasPass):
+        shared.config.set (configSection, "namecoinrpcpassword", defaultPass)
 
     # Set default port now, possibly to found value.
     if (not hasPort):
