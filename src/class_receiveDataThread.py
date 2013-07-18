@@ -1,26 +1,28 @@
 doTimingAttackMitigation = True
 
+# Libraries.
+import hashlib
+import pickle
+from pyelliptic.openssl import OpenSSL
+import random
+import shared
+import socket
+import string
+from struct import unpack, pack
+from subprocess import call  # used when the API must execute an outside program
+import sys
 import time
 import threading
-import shared
-import hashlib
-import socket
-import pickle
-import random
-from struct import unpack, pack
-import sys
-import string
-from subprocess import call  # used when the API must execute an outside program
-from pyelliptic.openssl import OpenSSL
 
-import highlevelcrypto
+# Project imports.
 from addresses import *
-import helper_generic
+from debug import logger
 import helper_bitcoin
+import helper_generic
 import helper_inbox
 import helper_sent
+import highlevelcrypto
 import tr
-#from bitmessagemain import shared.lengthOfTimeToLeaveObjectsInInventory, shared.lengthOfTimeToHoldOnToAllPubkeys, shared.maximumAgeOfAnObjectThatIAmWillingToAccept, shared.maximumAgeOfObjectsThatIAdvertiseToOthers, shared.maximumAgeOfNodesThatIAdvertiseToOthers, shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer, shared.neededPubkeys
 
 # This thread is created either by the synSenderThread(for outgoing
 # connections) or the singleListenerThread(for incoming connectiosn).
@@ -61,8 +63,8 @@ class receiveDataThread(threading.Thread):
         self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware = someObjectsOfWhichThisRemoteNodeIsAlreadyAware
 
     def run(self):
-        with shared.printLock:
-            print 'ID of the receiveDataThread is', str(id(self)) + '. The size of the shared.connectedHostsList is now', len(shared.connectedHostsList)
+        logger.info('ID of the receiveDataThread is %s. The size of the shared.connectedHostsList '
+                    'is now %s' % (id(self), len(shared.connectedHostsList)))
 
         while True:
             dataLen = len(self.data)
@@ -70,7 +72,8 @@ class receiveDataThread(threading.Thread):
                 self.data += self.sock.recv(4096)
             except socket.timeout:
                 with shared.printLock:
-                    print 'Timeout occurred waiting for data from', self.HOST + '. Closing receiveData thread. (ID:', str(id(self)) + ')'
+                    logger.info('Timeout occurred waiting for data from %s. Closing receiveData '
+                                'thread. (ID: %s).' % (self.HOST, id(self)))
 
                 break
             except Exception as err:
@@ -78,18 +81,17 @@ class receiveDataThread(threading.Thread):
                     print 'sock.recv error. Closing receiveData thread (HOST:', self.HOST, 'ID:', str(id(self)) + ').', err
 
                 break
-            # print 'Received', repr(self.data)
+            # logger.debug('Received', repr(self.data))
             if len(self.data) == dataLen: # If self.sock.recv returned no data:
-                with shared.printLock:
-                    print 'Connection to', self.HOST, 'closed. Closing receiveData thread. (ID:', str(id(self)) + ')'
+                logger.debug('Connection to %s closed. Closing receiveData thread. (ID: %s)',
+                             self.HOST, id(self))
                 break
             else:
                 self.processData()
 
         try:
             del self.selfInitiatedConnections[self.streamNumber][self]
-            with shared.printLock:
-                print 'removed self (a receiveDataThread) from selfInitiatedConnections'
+            logger.info('removed self (a receiveDataThread) from selfInitiatedConnections')
 
         except:
             pass
@@ -97,8 +99,8 @@ class receiveDataThread(threading.Thread):
         try:
             del shared.connectedHostsList[self.HOST]
         except Exception as err:
-            with shared.printLock:
-                print 'Could not delete', self.HOST, 'from shared.connectedHostsList.', err
+            logger.info('Could not delete %s from shared.connectedHostsList. %s',
+                        self.HOST, err)
 
         try:
             del shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
@@ -106,21 +108,19 @@ class receiveDataThread(threading.Thread):
         except:
             pass
         shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
-        with shared.printLock:
-            print 'The size of the connectedHostsList is now:', len(shared.connectedHostsList)
+        logger.info('The size of the connectedHostsList is now: %s', len(shared.connectedHostsList))
 
 
     def processData(self):
         # if shared.verbose >= 3:
-            # with shared.printLock:
-            #   print 'self.data is currently ', repr(self.data)
+            # logger.debug('self.data is currently ', repr(self.data))
             #
         if len(self.data) < 20:  # if so little of the data has arrived that we can't even unpack the payload length
             return
         if self.data[0:4] != '\xe9\xbe\xb4\xd9':
             if shared.verbose >= 1:
-                with shared.printLock:
-                    print 'The magic bytes were not correct. First 40 bytes of data: ' + repr(self.data[0:40])
+                logger.info('The magic bytes were not correct. First 40 bytes of data: %s',
+                            repr(self.data[0:40]))
 
             self.data = ""
             return
@@ -128,7 +128,7 @@ class receiveDataThread(threading.Thread):
         if len(self.data) < self.payloadLength + 24:  # check if the whole message has arrived yet.
             return
         if self.data[20:24] != hashlib.sha512(self.data[24:self.payloadLength + 24]).digest()[0:4]:  # test the checksum in the message. If it is correct...
-            print 'Checksum incorrect. Clearing this message.'
+            logger.info('Checksum incorrect. Clearing this message.')
             self.data = self.data[self.payloadLength + 24:]
             self.processData()
             return
@@ -142,8 +142,8 @@ class receiveDataThread(threading.Thread):
             shared.knownNodesLock.release()
         if self.payloadLength <= 180000000:  # If the size of the message is greater than 180MB, ignore it. (I get memory errors when processing messages much larger than this though it is concievable that this value will have to be lowered if some systems are less tolarant of large messages.)
             remoteCommand = self.data[4:16]
-            with shared.printLock:
-                print 'remoteCommand', repr(remoteCommand.replace('\x00', '')), ' from', self.HOST
+            logger.info('remoteCommand %s from %s.', 
+                        repr(remoteCommand.replace('\x00', '')), self.HOST)
 
             if remoteCommand == 'version\x00\x00\x00\x00\x00':
                 self.recversion(self.data[24:self.payloadLength + 24])
@@ -178,15 +178,14 @@ class receiveDataThread(threading.Thread):
                 objectHash, = random.sample(
                     self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave, 1)
                 if objectHash in shared.inventory:
-                    with shared.printLock:
-                        print 'Inventory (in memory) already has object listed in inv message.'
+                    logger.debug('Inventory (in memory) already has object listed in inv message.')
 
                     del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[
                         objectHash]
                 elif shared.isInSqlInventory(objectHash):
                     if shared.verbose >= 3:
-                        with shared.printLock:
-                            print 'Inventory (SQL on disk) already has object listed in inv message.'
+                        logger.debug('Inventory (SQL on disk) already has object listed in inv '
+                                     'message.')
 
                     del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[
                         objectHash]
@@ -195,8 +194,11 @@ class receiveDataThread(threading.Thread):
                     del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[
                         objectHash]  # It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
                     if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) == 0:
-                        with shared.printLock:
-                            print '(concerning', self.HOST + ')', 'number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
+                        logger.debug('(concerning %s) number of '
+                                     'objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave '
+                                     'is now %s',
+                                     self.HOST,
+                                     len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave))
 
                         try:
                             del shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
@@ -205,8 +207,11 @@ class receiveDataThread(threading.Thread):
                             pass
                     break
                 if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) == 0:
-                    with shared.printLock:
-                        print '(concerning', self.HOST + ')', 'number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
+                    logger.debug('(concerning %s) number of '
+                                 'objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave '
+                                 'is now %s',
+                                 self.HOST,
+                                 len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave))
 
                     try:
                         del shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
@@ -214,8 +219,11 @@ class receiveDataThread(threading.Thread):
                     except:
                         pass
             if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) > 0:
-                with shared.printLock:
-                    print '(concerning', self.HOST + ')', 'number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
+                logger.debug('(concerning %s) number of '
+                             'objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave '
+                             'is now %s', 
+                             self.HOST,
+                             len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave))
 
                 shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[self.HOST] = len(
                     self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
@@ -234,22 +242,21 @@ class receiveDataThread(threading.Thread):
             payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
         POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
                       :8] + hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
-        # print 'POW:', POW
+        # logger.debug('POW: %s', POW)
         return POW <= 2 ** 64 / ((len(data) + payloadLengthExtraBytes) * (nonceTrialsPerByte))
 
     def sendpong(self):
-        print 'Sending pong'
+        logger.debug('Sending pong')
         try:
             self.sock.sendall(
                 '\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
         except Exception as err:
             # if not 'Bad file descriptor' in err:
-            with shared.printLock:
-                print 'sock.sendall error:', err
+            logger.info('sock.sendall error:', err)
 
 
     def recverack(self):
-        print 'verack received'
+        logger.info('verack received')
         self.verackReceived = True
         if self.verackSent:
             # We have thus both sent and received a verack.
@@ -264,18 +271,18 @@ class receiveDataThread(threading.Thread):
         shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         remoteNodeIncomingPort, remoteNodeSeenTime = shared.knownNodes[
             self.streamNumber][self.HOST]
-        with shared.printLock:
-            print 'Connection fully established with', self.HOST, remoteNodeIncomingPort
-            print 'The size of the connectedHostsList is now', len(shared.connectedHostsList)
-            print 'The length of sendDataQueues is now:', len(shared.sendDataQueues)
-            print 'broadcasting addr from within connectionFullyEstablished function.'
+        logger.info('Connection fully established with %s:%s. The size of the connectedHostList '
+                    'is now: %s. The length of sendDataQueues is now: %s. Broadcasting addr from '
+                    'within connectionFullyEstablished().',
+                    self.HOST, remoteNodeIncomingPort,
+                    len(shared.connectedHostsList),
+                    len(shared.sendDataQueues))
 
         self.broadcastaddr([(int(time.time()), self.streamNumber, 1, self.HOST,
                            remoteNodeIncomingPort)])  # This lets all of our peers know about this new node.
         self.sendaddr()  # This is one large addr message to this one peer.
         if not self.initiatedConnection and len(shared.connectedHostsList) > 200:
-            with shared.printLock:
-                print 'We are connected to too many people. Closing connection.'
+            logger.warning('We are connected to too many people. Closing connection.')
 
             shared.broadcastToSendDataQueues((0, 'shutdown', self.HOST))
             return
@@ -328,15 +335,14 @@ class receiveDataThread(threading.Thread):
         headerData += 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
         headerData += pack('>L', len(payload))
         headerData += hashlib.sha512(payload).digest()[:4]
-        with shared.printLock:
-            print 'Sending huge inv message with', numberOfObjects, 'objects to just this one peer'
+        logger.info('Sending huge inv message with %s objects to just this one peer',
+                    numberOfObjects)
 
         try:
             self.sock.sendall(headerData + payload)
         except Exception as err:
             # if not 'Bad file descriptor' in err:
-            with shared.printLock:
-                print 'sock.sendall error:', err
+            logger.debug('sock.sendall error: %s', err)
 
 
     # We have received a broadcast message
@@ -344,7 +350,7 @@ class receiveDataThread(threading.Thread):
         self.messageProcessingStartTime = time.time()
         # First we must check to make sure the proof of work is sufficient.
         if not self.isProofOfWorkSufficient(data):
-            print 'Proof of work in broadcast message insufficient.'
+            logger.info('Proof of work in broadcast message insufficient.')
             return
         readPosition = 8  # bypass the nonce
         embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
@@ -358,13 +364,16 @@ class receiveDataThread(threading.Thread):
             readPosition += 4
 
         if embeddedTime > (int(time.time()) + 10800):  # prevent funny business
-            print 'The embedded time in this broadcast message is more than three hours in the future. That doesn\'t make sense. Ignoring message.'
+            logger.info('The embedded time in this broadcast message is more than three hours in '
+                        'the future. Ignoring message.')
             return
         if embeddedTime < (int(time.time()) - shared.maximumAgeOfAnObjectThatIAmWillingToAccept):
-            print 'The embedded time in this broadcast message is too old. Ignoring message.'
+            logger.info('The embedded time in this broadcast message is too old. '
+                        'Ignoring message.')
             return
         if len(data) < 180:
-            print 'The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.'
+            logger.info('The payload length of this broadcast packet is unreasonably low. '
+                        'Someone is probably trying funny business. Ignoring message.')
             return
         # Let us check to make sure the stream number is correct (thus
         # preventing an individual from sending broadcasts out on the wrong
@@ -375,7 +384,9 @@ class receiveDataThread(threading.Thread):
             streamNumber, streamNumberLength = decodeVarint(data[
                                                             readPosition + broadcastVersionLength:readPosition + broadcastVersionLength + 10])
             if streamNumber != self.streamNumber:
-                print 'The stream number encoded in this broadcast message (' + str(streamNumber) + ') does not match the stream number on which it was received. Ignoring it.'
+                logger.debug('The stream number encoded in this broadcast message (%s) does not '
+                             'match the stream number on which it was received. Ignoring it.',
+                             streamNumber)
                 return
 
         shared.inventoryLock.acquire()
@@ -1598,228 +1609,87 @@ class receiveDataThread(threading.Thread):
 
     # We have received an addr message.
     def recaddr(self, data):
+
         listOfAddressDetailsToBroadcastToPeers = []
-        numberOfAddressesIncluded = 0
-        numberOfAddressesIncluded, lengthOfNumberOfAddresses = decodeVarint(
-            data[:10])
 
-        if shared.verbose >= 1:
-            with shared.printLock:
-                print 'addr message contains', numberOfAddressesIncluded, 'IP addresses.'
+        from message_parsers import AddressMessageParser
+        addrParser = AddressMessageParser(data, self.remoteProtocolVersion)
+        needToWriteKnownNodesToDisk = False
 
+        for hostDetails in addrParser.parse():
+            rec_timestamp, rec_stream, rec_services, rec_host, rec_port = hostDetails
 
-        if self.remoteProtocolVersion == 1:
-            if numberOfAddressesIncluded > 1000 or numberOfAddressesIncluded == 0:
-                return
-            if len(data) != lengthOfNumberOfAddresses + (34 * numberOfAddressesIncluded):
-                print 'addr message does not contain the correct amount of data. Ignoring.'
-                return
+            if not rec_host.startswith('::ffff:'):
+                logger.debug('Skipping IPv6 address %s.' % (rec_host))
+                continue
 
-            needToWriteKnownNodesToDisk = False
-            for i in range(0, numberOfAddressesIncluded):
-                try:
-                    if data[16 + lengthOfNumberOfAddresses + (34 * i):28 + lengthOfNumberOfAddresses + (34 * i)] != '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-                        with shared.printLock:
-                            print 'Skipping IPv6 address.', repr(data[16 + lengthOfNumberOfAddresses + (34 * i):28 + lengthOfNumberOfAddresses + (34 * i)])
+            # Trim off leading ::ffff: to make IPv4-compatible.
+            rec_host = rec_host[7:]
 
-                        continue
-                except Exception as err:
-                    with shared.printLock:
-                        sys.stderr.write(
-                         'ERROR TRYING TO UNPACK recaddr (to test for an IPv6 address). Message: %s\n' % str(err))
+            if helper_generic.isHostInPrivateIPRange(rec_host):
+                logger.debug('Skipping IP in private range: %s' % (rec_host))
+                continue
+            if helper_generic.isHostInLoopbackIPRange(rec_host):
+                logger.debug('Skipping IP in loopback range: %s' % (rec_host))
+                continue
 
-                    break  # giving up on unpacking any more. We should still be connected however.
-
-                try:
-                    recaddrStream, = unpack('>I', data[4 + lengthOfNumberOfAddresses + (
-                        34 * i):8 + lengthOfNumberOfAddresses + (34 * i)])
-                except Exception as err:
-                    with shared.printLock:
-                        sys.stderr.write(
-                          'ERROR TRYING TO UNPACK recaddr (recaddrStream). Message: %s\n' % str(err))
-
-                    break  # giving up on unpacking any more. We should still be connected however.
-                if recaddrStream == 0:
-                    continue
-                if recaddrStream != self.streamNumber and recaddrStream != (self.streamNumber * 2) and recaddrStream != ((self.streamNumber * 2) + 1):  # if the embedded stream number is not in my stream or either of my child streams then ignore it. Someone might be trying funny business.
-                    continue
-                try:
-                    recaddrServices, = unpack('>Q', data[8 + lengthOfNumberOfAddresses + (
-                        34 * i):16 + lengthOfNumberOfAddresses + (34 * i)])
-                except Exception as err:
-                    with shared.printLock:
-                        sys.stderr.write(
-                            'ERROR TRYING TO UNPACK recaddr (recaddrServices). Message: %s\n' % str(err))
-
-                    break  # giving up on unpacking any more. We should still be connected however.
-
-                try:
-                    recaddrPort, = unpack('>H', data[32 + lengthOfNumberOfAddresses + (
-                        34 * i):34 + lengthOfNumberOfAddresses + (34 * i)])
-                except Exception as err:
-                    with shared.printLock:
-                        sys.stderr.write(
-                            'ERROR TRYING TO UNPACK recaddr (recaddrPort). Message: %s\n' % str(err))
-
-                    break  # giving up on unpacking any more. We should still be connected however.
-                # print 'Within recaddr(): IP', recaddrIP, ', Port',
-                # recaddrPort, ', i', i
-                hostFromAddrMessage = socket.inet_ntoa(data[
-                                                       28 + lengthOfNumberOfAddresses + (34 * i):32 + lengthOfNumberOfAddresses + (34 * i)])
-                # print 'hostFromAddrMessage', hostFromAddrMessage
-                if data[28 + lengthOfNumberOfAddresses + (34 * i)] == '\x7F':
-                    print 'Ignoring IP address in loopback range:', hostFromAddrMessage
-                    continue
-                if helper_generic.isHostInPrivateIPRange(hostFromAddrMessage):
-                    print 'Ignoring IP address in private range:', hostFromAddrMessage
-                    continue
-                timeSomeoneElseReceivedMessageFromThisNode, = unpack('>I', data[lengthOfNumberOfAddresses + (
-                    34 * i):4 + lengthOfNumberOfAddresses + (34 * i)])  # This is the 'time' value in the received addr message.
-                if recaddrStream not in shared.knownNodes:  # knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
-                    shared.knownNodesLock.acquire()
-                    shared.knownNodes[recaddrStream] = {}
-                    shared.knownNodesLock.release()
-                if hostFromAddrMessage not in shared.knownNodes[recaddrStream]:
-                    if len(shared.knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time()) - 10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800):  # If we have more than 20000 nodes in our list already then just forget about adding more. Also, make sure that the time that someone else received a message from this node is within three hours from now.
-                        shared.knownNodesLock.acquire()
-                        shared.knownNodes[recaddrStream][hostFromAddrMessage] = (
-                            recaddrPort, timeSomeoneElseReceivedMessageFromThisNode)
-                        shared.knownNodesLock.release()
-                        needToWriteKnownNodesToDisk = True
-                        hostDetails = (
-                            timeSomeoneElseReceivedMessageFromThisNode,
-                            recaddrStream, recaddrServices, hostFromAddrMessage, recaddrPort)
-                        listOfAddressDetailsToBroadcastToPeers.append(
-                            hostDetails)
-                else:
-                    PORT, timeLastReceivedMessageFromThisNode = shared.knownNodes[recaddrStream][
-                        hostFromAddrMessage]  # PORT in this case is either the port we used to connect to the remote node, or the port that was specified by someone else in a past addr message.
-                    if (timeLastReceivedMessageFromThisNode < timeSomeoneElseReceivedMessageFromThisNode) and (timeSomeoneElseReceivedMessageFromThisNode < int(time.time())):
-                        shared.knownNodesLock.acquire()
-                        shared.knownNodes[recaddrStream][hostFromAddrMessage] = (
-                            PORT, timeSomeoneElseReceivedMessageFromThisNode)
-                        shared.knownNodesLock.release()
-                        if PORT != recaddrPort:
-                            print 'Strange occurance: The port specified in an addr message', str(recaddrPort), 'does not match the port', str(PORT), 'that this program (or some other peer) used to connect to it', str(hostFromAddrMessage), '. Perhaps they changed their port or are using a strange NAT configuration.'
-            if needToWriteKnownNodesToDisk:  # Runs if any nodes were new to us. Also, share those nodes with our peers.
+            # knownNodes is a dictionary of dictionaries with one outer dictionary for each stream.
+            # If the outer stream dictionary doesn't exist yet then we must make it.
+            if rec_stream not in shared.knownNodes:
                 shared.knownNodesLock.acquire()
-                output = open(shared.appdata + 'knownnodes.dat', 'wb')
-                pickle.dump(shared.knownNodes, output)
-                output.close()
+                shared.knownNodes[rec_stream] = {}
                 shared.knownNodesLock.release()
-                self.broadcastaddr(
-                    listOfAddressDetailsToBroadcastToPeers)  # no longer broadcast
-            with shared.printLock:
-                print 'knownNodes currently has', len(shared.knownNodes[self.streamNumber]), 'nodes for this stream.'
 
-        elif self.remoteProtocolVersion >= 2:  # The difference is that in protocol version 2, network addresses use 64 bit times rather than 32 bit times.
-            if numberOfAddressesIncluded > 1000 or numberOfAddressesIncluded == 0:
-                return
-            if len(data) != lengthOfNumberOfAddresses + (38 * numberOfAddressesIncluded):
-                print 'addr message does not contain the correct amount of data. Ignoring.'
-                return
-
-            needToWriteKnownNodesToDisk = False
-            for i in range(0, numberOfAddressesIncluded):
-                try:
-                    if data[20 + lengthOfNumberOfAddresses + (38 * i):32 + lengthOfNumberOfAddresses + (38 * i)] != '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-                        with shared.printLock:
-                           print 'Skipping IPv6 address.', repr(data[20 + lengthOfNumberOfAddresses + (38 * i):32 + lengthOfNumberOfAddresses + (38 * i)])
-
-                        continue
-                except Exception as err:
-                    with shared.printLock:
-                       sys.stderr.write(
-                           'ERROR TRYING TO UNPACK recaddr (to test for an IPv6 address). Message: %s\n' % str(err))
-
-                    break  # giving up on unpacking any more. We should still be connected however.
-
-                try:
-                    recaddrStream, = unpack('>I', data[8 + lengthOfNumberOfAddresses + (
-                        38 * i):12 + lengthOfNumberOfAddresses + (38 * i)])
-                except Exception as err:
-                    with shared.printLock:
-                       sys.stderr.write(
-                           'ERROR TRYING TO UNPACK recaddr (recaddrStream). Message: %s\n' % str(err))
-
-                    break  # giving up on unpacking any more. We should still be connected however.
-                if recaddrStream == 0:
-                    continue
-                if recaddrStream != self.streamNumber and recaddrStream != (self.streamNumber * 2) and recaddrStream != ((self.streamNumber * 2) + 1):  # if the embedded stream number is not in my stream or either of my child streams then ignore it. Someone might be trying funny business.
-                    continue
-                try:
-                    recaddrServices, = unpack('>Q', data[12 + lengthOfNumberOfAddresses + (
-                        38 * i):20 + lengthOfNumberOfAddresses + (38 * i)])
-                except Exception as err:
-                    with shared.printLock:
-                       sys.stderr.write(
-                            'ERROR TRYING TO UNPACK recaddr (recaddrServices). Message: %s\n' % str(err))
-
-                    break  # giving up on unpacking any more. We should still be connected however.
-
-                try:
-                    recaddrPort, = unpack('>H', data[36 + lengthOfNumberOfAddresses + (
-                        38 * i):38 + lengthOfNumberOfAddresses + (38 * i)])
-                except Exception as err:
-                    with shared.printLock:
-                        sys.stderr.write(
-                            'ERROR TRYING TO UNPACK recaddr (recaddrPort). Message: %s\n' % str(err))
-
-                    break  # giving up on unpacking any more. We should still be connected however.
-                # print 'Within recaddr(): IP', recaddrIP, ', Port',
-                # recaddrPort, ', i', i
-                hostFromAddrMessage = socket.inet_ntoa(data[
-                                                       32 + lengthOfNumberOfAddresses + (38 * i):36 + lengthOfNumberOfAddresses + (38 * i)])
-                # print 'hostFromAddrMessage', hostFromAddrMessage
-                if data[32 + lengthOfNumberOfAddresses + (38 * i)] == '\x7F':
-                    print 'Ignoring IP address in loopback range:', hostFromAddrMessage
-                    continue
-                if data[32 + lengthOfNumberOfAddresses + (38 * i)] == '\x0A':
-                    print 'Ignoring IP address in private range:', hostFromAddrMessage
-                    continue
-                if data[32 + lengthOfNumberOfAddresses + (38 * i):34 + lengthOfNumberOfAddresses + (38 * i)] == '\xC0A8':
-                    print 'Ignoring IP address in private range:', hostFromAddrMessage
-                    continue
-                timeSomeoneElseReceivedMessageFromThisNode, = unpack('>Q', data[lengthOfNumberOfAddresses + (
-                    38 * i):8 + lengthOfNumberOfAddresses + (38 * i)])  # This is the 'time' value in the received addr message. 64-bit.
-                if recaddrStream not in shared.knownNodes:  # knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
+            if rec_host not in shared.knownNodes[rec_stream]:
+                # If we have more than 20000 nodes in our list already then just forget about adding
+                # more. Also, make sure that the time that someone else received a message from this
+                # node is within three hours from now.
+                if      len(shared.knownNodes[rec_stream]) < 20000 \
+                        and rec_timestamp > (int(time.time()) - 10800) \
+                        and rec_timestamp < (int(time.time()) + 10800):
                     shared.knownNodesLock.acquire()
-                    shared.knownNodes[recaddrStream] = {}
+                    shared.knownNodes[rec_stream][rec_host] = (
+                        rec_port, rec_timestamp)
                     shared.knownNodesLock.release()
-                if hostFromAddrMessage not in shared.knownNodes[recaddrStream]:
-                    if len(shared.knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time()) - 10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800):  # If we have more than 20000 nodes in our list already then just forget about adding more. Also, make sure that the time that someone else received a message from this node is within three hours from now.
-                        shared.knownNodesLock.acquire()
-                        shared.knownNodes[recaddrStream][hostFromAddrMessage] = (
-                            recaddrPort, timeSomeoneElseReceivedMessageFromThisNode)
-                        shared.knownNodesLock.release()
-                        with shared.printLock:
-                            print 'added new node', hostFromAddrMessage, 'to knownNodes in stream', recaddrStream
 
-                        needToWriteKnownNodesToDisk = True
-                        hostDetails = (
-                            timeSomeoneElseReceivedMessageFromThisNode,
-                            recaddrStream, recaddrServices, hostFromAddrMessage, recaddrPort)
-                        listOfAddressDetailsToBroadcastToPeers.append(
-                            hostDetails)
-                else:
-                    PORT, timeLastReceivedMessageFromThisNode = shared.knownNodes[recaddrStream][
-                        hostFromAddrMessage]  # PORT in this case is either the port we used to connect to the remote node, or the port that was specified by someone else in a past addr message.
-                    if (timeLastReceivedMessageFromThisNode < timeSomeoneElseReceivedMessageFromThisNode) and (timeSomeoneElseReceivedMessageFromThisNode < int(time.time())):
-                        shared.knownNodesLock.acquire()
-                        shared.knownNodes[recaddrStream][hostFromAddrMessage] = (
-                            PORT, timeSomeoneElseReceivedMessageFromThisNode)
-                        shared.knownNodesLock.release()
-                        if PORT != recaddrPort:
-                            print 'Strange occurance: The port specified in an addr message', str(recaddrPort), 'does not match the port', str(PORT), 'that this program (or some other peer) used to connect to it', str(hostFromAddrMessage), '. Perhaps they changed their port or are using a strange NAT configuration.'
-            if needToWriteKnownNodesToDisk:  # Runs if any nodes were new to us. Also, share those nodes with our peers.
-                shared.knownNodesLock.acquire()
-                output = open(shared.appdata + 'knownnodes.dat', 'wb')
-                pickle.dump(shared.knownNodes, output)
-                output.close()
-                shared.knownNodesLock.release()
-                self.broadcastaddr(listOfAddressDetailsToBroadcastToPeers)
-            with shared.printLock:
-                print 'knownNodes currently has', len(shared.knownNodes[self.streamNumber]), 'nodes for this stream.'
+                    needToWriteKnownNodesToDisk = True
+
+                    listOfAddressDetailsToBroadcastToPeers.append(hostDetails)
+
+            else:
+                # Just makes things a little more readable below.
+                timeSomeoneElseReceivedMessageFromThisNode = rec_timestamp
+
+                # PORT in this case is either the port we used to connect to the remote node, or
+                # the port that was specified by someone else in a past addr message.
+                PORT, timeLastReceivedMessageFromThisNode = \
+                        shared.knownNodes[rec_stream][rec_host]
+                if (timeLastReceivedMessageFromThisNode < timeSomeoneElseReceivedMessageFromThisNode) \
+                        and (timeSomeoneElseReceivedMessageFromThisNode < int(time.time())):
+                    shared.knownNodesLock.acquire()
+                    shared.knownNodes[rec_stream][rec_host] = (
+                        PORT, timeSomeoneElseReceivedMessageFromThisNode)
+                    shared.knownNodesLock.release()
+                    if PORT != rec_port:
+                        logger.debug('Strange occurance: The port specified in an addr message '
+                                     '%s does not match the port %s that this program (or some '
+                                     'other peer) used to connect to the host %s. Perhaps they '
+                                     'changed their port of are using a strange NAT configuration.'
+                                     % (rec_port, PORT, rec_host))
+
+        # Runs if any nodes were new to us. Also, share those nodes with our peers.
+        if needToWriteKnownNodesToDisk:
+            shared.knownNodesLock.acquire()
+            output = open(shared.appdata + 'knownnodes.dat', 'wb')
+            pickle.dump(shared.knownNodes, output)
+            output.close()
+            shared.knownNodesLock.release()
+
+            self.broadcastaddr(
+                listOfAddressDetailsToBroadcastToPeers)  # no longer broadcast
+
+        logger.info('knownNodes currently has %s nodes for this stream.'
+                    % (len(shared.knownNodes[self.streamNumber])))
 
 
     # Function runs when we want to broadcast an addr message to all of our
@@ -1836,8 +1706,7 @@ class receiveDataThread(threading.Thread):
             payload += pack('>I', streamNumber)
             payload += pack(
                 '>q', services)  # service bit flags offered by this node
-            payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-                socket.inet_aton(host)
+            payload += shared.packNetworkAddress(host)
             payload += pack('>H', port)  # remote port
 
         payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
@@ -1903,8 +1772,7 @@ class receiveDataThread(threading.Thread):
                 payload += pack('>I', self.streamNumber)
                 payload += pack(
                     '>q', 1)  # service bit flags offered by this node
-                payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-                    socket.inet_aton(HOST)
+                payload += shared.packNetworkAddress(HOST)
                 payload += pack('>H', PORT)  # remote port
         for HOST, value in addrsInChildStreamLeft.items():
             PORT, timeLastReceivedMessageFromThisNode = value
@@ -1915,8 +1783,7 @@ class receiveDataThread(threading.Thread):
                 payload += pack('>I', self.streamNumber * 2)
                 payload += pack(
                     '>q', 1)  # service bit flags offered by this node
-                payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-                    socket.inet_aton(HOST)
+                payload += packNetworkAddress(HOST)
                 payload += pack('>H', PORT)  # remote port
         for HOST, value in addrsInChildStreamRight.items():
             PORT, timeLastReceivedMessageFromThisNode = value
@@ -1927,8 +1794,7 @@ class receiveDataThread(threading.Thread):
                 payload += pack('>I', (self.streamNumber * 2) + 1)
                 payload += pack(
                     '>q', 1)  # service bit flags offered by this node
-                payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-                    socket.inet_aton(HOST)
+                payload += shared.packNetworkAddress(HOST)
                 payload += pack('>H', PORT)  # remote port
 
         payload = encodeVarint(numberOfAddressesInAddrMessage) + payload

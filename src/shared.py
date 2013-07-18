@@ -77,6 +77,26 @@ def isInSqlInventory(hash):
     else:
         return True
 
+def packNetworkAddress(address):
+    try:
+        # Matches IPV4-style address.
+        if ':' not in address and address.count('.') == 3:
+            return socket.inet_pton(socket.AF_INET6, '::ffff:' + address)
+        # Matches IPV4-mapped IPV6 and plain IPV6.
+        else:
+            return socket.inet_pton(socket.AF_INET6, address)
+    except OSError:
+        logger.error('Failed to pack address "%s".' % (address))
+        raise
+
+def unpackNetworkAddress(packedAddress):
+    try:
+        address = socket.inet_ntop(socket.AF_INET6, packedAddress)
+        return address
+    except:
+        logger.error('Failed to unpack address %s.' % repr(packedAddress))
+        raise
+
 def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload = ''
     payload += pack('>L', 2)  # protocol version.
@@ -85,8 +105,8 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
 
     payload += pack(
         '>q', 1)  # boolservices of remote connection. How can I even know this for sure? This is probably ignored by the remote host.
-    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-        socket.inet_aton(remoteHost)
+
+    payload += packNetworkAddress(remoteHost)
     payload += pack('>H', remotePort)  # remote IPv6 and port
 
     payload += pack('>q', 1)  # bitflags of the services I offer.

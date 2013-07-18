@@ -32,3 +32,9 @@ def isHostInPrivateIPRange(host):
     if host[:8] == '192.168.':
         return True
     return False
+
+def isHostInLoopbackIPRange(host):
+    if host[:4] == '127.':
+        return True
+    else:
+        return False
