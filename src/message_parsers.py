@@ -107,7 +107,8 @@ class AddressMessageParser:
         return port
 
     # Consume one entry in the addr_list.
-    # Returns (timestamp, stream, services, host, port) tuple on success.
+    # Returns (timestamp, stream, services, host, port) tuple on success,
+    # and None on failure.
     def __consumeAddress(self):
         past_position = self.position
         try:
@@ -116,9 +117,13 @@ class AddressMessageParser:
             services = self.__consumeServices()
             host = self.__consumeHost()
             port = self.__consumePort()
+            addressDetails = (timestamp, stream, services, host, port)
+        except Exception as err:
+            logger.warning('Could not read address in addr message. Err: %s' % (err))
+            addressDetails = None
         finally:
             if self.remoteProtocolVersion == 1:
                 self.position = past_position + 34
             elif self.remoteProtocolVersion == 2:
                 self.position = past_position + 38
-        return (timestamp, stream, services, host, port)
+        return addressDetails

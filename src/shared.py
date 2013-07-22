@@ -77,6 +77,9 @@ def isInSqlInventory(hash):
     else:
         return True
 
+class IPv6NotSupportedException(Exception):
+    pass
+
 def packNetworkAddress(address):
     # For windows, we need to avoid socket.inet_pton()
     if sys.platform == 'win32':
@@ -89,7 +92,7 @@ def packNetworkAddress(address):
                 # Chop off the IPv4-mapped IPv6 prefix from the standard-form address.
                 address = address[7:]
             else:
-                raise Exception('IPv6 not supported by packNetworkAddress on Windows.')
+                raise IPv6NotSupportedException('IPv6 not supported by packNetworkAddress on Windows.')
 
             # Pack the standard-form IPv4 address and add prefix to make packed IPv4-mapped IPv6.
             return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
