@@ -31,7 +31,6 @@ class AddressMessageParser:
                 break
             if not hostDetails:
                 continue
-                break
 
             timestamp, stream, services, host, port = hostDetails
             yield hostDetails
