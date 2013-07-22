@@ -1089,6 +1089,7 @@ class MyForm(QtGui.QMainWindow):
                     QMessageBox.about(self, _translate("MainWindow", "Address already present"), _translate(
                         "MainWindow", "Could not add chan because it appears to already be one of your identities."))
                     return
+                createdAddress = addressGeneratorReturnValue[0]
                 self.addEntryToAddressBook(createdAddress, self.str_chan + ' ' + self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameJoin.text()))
                 QMessageBox.about(self, _translate("MainWindow", "Success"), _translate(
                     "MainWindow", "Successfully joined chan. "))
