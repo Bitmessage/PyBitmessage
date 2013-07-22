@@ -7,7 +7,6 @@ import socket
 import sys
 import tr
 
-#import bitmessagemain
 from class_sendDataThread import *
 from class_receiveDataThread import *
 

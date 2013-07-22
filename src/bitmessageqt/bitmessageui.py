@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Sat Jul 13 20:23:44 2013
+# Created: Sun Jul 21 17:50:02 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -453,9 +453,12 @@ class Ui_MainWindow(object):
         self.actionRegenerateDeterministicAddresses.setObjectName(_fromUtf8("actionRegenerateDeterministicAddresses"))
         self.actionDeleteAllTrashedMessages = QtGui.QAction(MainWindow)
         self.actionDeleteAllTrashedMessages.setObjectName(_fromUtf8("actionDeleteAllTrashedMessages"))
+        self.actionJoinChan = QtGui.QAction(MainWindow)
+        self.actionJoinChan.setObjectName(_fromUtf8("actionJoinChan"))
         self.menuFile.addAction(self.actionManageKeys)
         self.menuFile.addAction(self.actionDeleteAllTrashedMessages)
         self.menuFile.addAction(self.actionRegenerateDeterministicAddresses)
+        self.menuFile.addAction(self.actionJoinChan)
         self.menuFile.addAction(self.actionExit)
         self.menuSettings.addAction(self.actionSettings)
         self.menuHelp.addAction(self.actionHelp)
@@ -599,5 +602,6 @@ class Ui_MainWindow(object):
         self.actionSettings.setText(_translate("MainWindow", "Settings", None))
         self.actionRegenerateDeterministicAddresses.setText(_translate("MainWindow", "Regenerate deterministic addresses", None))
         self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
+        self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
 
 import bitmessage_icons_rc
