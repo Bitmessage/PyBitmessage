@@ -1078,7 +1078,7 @@ class MyForm(QtGui.QMainWindow):
                         "MainWindow", "That Bitmessage address is not valid."))
                     return
                 shared.apiAddressGeneratorReturnQueue.queue.clear()
-                shared.addressGeneratorQueue.put(('joinChan', addBMIfNotPresent(self.newChanDialogInstance.ui.lineEditChanBitmessageAddress.text()), self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameJoin.text()), self.newChanDialogInstance.ui.lineEditChanNameJoin.text().toUtf8()))
+                shared.addressGeneratorQueue.put(('joinChan', addBMIfNotPresent(self.newChanDialogInstance.ui.lineEditChanBitmessageAddress.text()), self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameJoin.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameJoin.text().toUtf8()))
                 addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
                 print 'addressGeneratorReturnValue', addressGeneratorReturnValue
                 if addressGeneratorReturnValue == 'chan name does not match address':
