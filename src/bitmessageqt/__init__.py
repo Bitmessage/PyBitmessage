@@ -1338,7 +1338,7 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.tableWidgetInbox.item(i, 0).setTextColor(QtGui.QColor(137, 04, 177))
             else:
                 self.ui.tableWidgetInbox.item(
-                    i, 0).setTextColor(QtGui.QColor(0, 0, 0))
+                    i, 0).setTextColor(QApplication.palette().text().color())
 
     def rerenderSentFromLabels(self):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -2074,7 +2074,8 @@ class MyForm(QtGui.QMainWindow):
                 # Set the color to either black or grey
                 if shared.config.getboolean(addressAtCurrentRow, 'enabled'):
                     self.ui.tableWidgetYourIdentities.item(
-                        currentRow, 1).setTextColor(QtGui.QColor(0, 0, 0))
+                        currentRow, 1).setTextColor(QApplication.palette()
+                        .text().color())
                 else:
                     self.ui.tableWidgetYourIdentities.item(
                         currentRow, 1).setTextColor(QtGui.QColor(128, 128, 128))
@@ -2464,9 +2465,9 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
         self.ui.tableWidgetSubscriptions.item(
-            currentRow, 0).setTextColor(QtGui.QColor(0, 0, 0))
+            currentRow, 0).setTextColor(QApplication.palette().text().color())
         self.ui.tableWidgetSubscriptions.item(
-            currentRow, 1).setTextColor(QtGui.QColor(0, 0, 0))
+            currentRow, 1).setTextColor(QApplication.palette().text().color())
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_action_SubscriptionsDisable(self):
@@ -2535,9 +2536,9 @@ class MyForm(QtGui.QMainWindow):
         addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(
             currentRow, 1).text()
         self.ui.tableWidgetBlacklist.item(
-            currentRow, 0).setTextColor(QtGui.QColor(0, 0, 0))
+            currentRow, 0).setTextColor(QApplication.palette().text().color())
         self.ui.tableWidgetBlacklist.item(
-            currentRow, 1).setTextColor(QtGui.QColor(0, 0, 0))
+            currentRow, 1).setTextColor(QApplication.palette().text().color())
         t = (str(addressAtCurrentRow),)
         shared.sqlLock.acquire()
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
@@ -2588,11 +2589,11 @@ class MyForm(QtGui.QMainWindow):
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
             shared.config.write(configfile)
         self.ui.tableWidgetYourIdentities.item(
-            currentRow, 0).setTextColor(QtGui.QColor(0, 0, 0))
+            currentRow, 0).setTextColor(QApplication.palette().text().color())
         self.ui.tableWidgetYourIdentities.item(
-            currentRow, 1).setTextColor(QtGui.QColor(0, 0, 0))
+            currentRow, 1).setTextColor(QApplication.palette().text().color())
         self.ui.tableWidgetYourIdentities.item(
-            currentRow, 2).setTextColor(QtGui.QColor(0, 0, 0))
+            currentRow, 2).setTextColor(QApplication.palette().text().color())
         if shared.safeConfigGetBoolean(addressAtCurrentRow, 'mailinglist'):
             self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(137, 04, 177))
         if shared.safeConfigGetBoolean(addressAtCurrentRow, 'chan'):
