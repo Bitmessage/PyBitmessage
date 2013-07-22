@@ -17,6 +17,7 @@ from bitmessageui import *
 from newaddressdialog import *
 from newsubscriptiondialog import *
 from regenerateaddresses import *
+from newchandialog import *
 from specialaddressbehavior import *
 from settings import *
 from about import *
@@ -53,6 +54,7 @@ def _translate(context, text):
 class MyForm(QtGui.QMainWindow):
 
     str_broadcast_subscribers = '[Broadcast subscribers]'
+    str_chan = '[chan]'
 
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -105,6 +107,8 @@ class MyForm(QtGui.QMainWindow):
             "triggered()"), self.click_actionDeleteAllTrashedMessages)
         QtCore.QObject.connect(self.ui.actionRegenerateDeterministicAddresses, QtCore.SIGNAL(
             "triggered()"), self.click_actionRegenerateDeterministicAddresses)
+        QtCore.QObject.connect(self.ui.actionJoinChan, QtCore.SIGNAL(
+            "triggered()"), self.click_actionJoinChan) # also used for creating chans.
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL(
             "clicked()"), self.click_NewAddressDialog)
         QtCore.QObject.connect(self.ui.comboBoxSendFrom, QtCore.SIGNAL(
@@ -293,6 +297,8 @@ class MyForm(QtGui.QMainWindow):
                 newItem = QtGui.QTableWidgetItem(addressInKeysFile)
                 newItem.setFlags(
                     QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+                if shared.safeConfigGetBoolean(addressInKeysFile, 'chan'):
+                    newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
                 if not isEnabled:
                     newItem.setTextColor(QtGui.QColor(128, 128, 128))
                 if shared.safeConfigGetBoolean(addressInKeysFile, 'mailinglist'):
@@ -594,6 +600,9 @@ class MyForm(QtGui.QMainWindow):
             elif status == 'msgsent':
                 statusText = _translate("MainWindow", "Message sent. Waiting on acknowledgement. Sent at %1").arg(
                     unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
+            elif status == 'msgsentnoackexpected':
+                statusText = _translate("MainWindow", "Message sent. Sent at %1").arg(
+                    unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
             elif status == 'doingmsgpow':
                 statusText = _translate(
                     "MainWindow", "Need to do work to send message. Work is queued.")
@@ -709,6 +718,8 @@ class MyForm(QtGui.QMainWindow):
             newItem.setData(Qt.UserRole, str(toAddress))
             if shared.safeConfigGetBoolean(toAddress, 'mailinglist'):
                 newItem.setTextColor(QtGui.QColor(137, 04, 177))
+            if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
+                newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
             self.ui.tableWidgetInbox.setItem(0, 0, newItem)
             if fromLabel == '':
                 newItem = QtGui.QTableWidgetItem(
@@ -1030,6 +1041,58 @@ class MyForm(QtGui.QMainWindow):
                 # self.addressGenerator.start()
                 shared.addressGeneratorQueue.put(('createDeterministicAddresses', addressVersionNumber, streamNumberForAddress, "regenerated deterministic address", self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(
                 ), self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(), self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked()))
+                self.ui.tabWidget.setCurrentIndex(3)
+
+    def click_actionJoinChan(self):
+        self.newChanDialogInstance = newChanDialog(self)
+        if self.newChanDialogInstance.exec_():
+            if self.newChanDialogInstance.ui.radioButtonCreateChan.isChecked():
+                if self.newChanDialogInstance.ui.lineEditChanNameCreate.text() == "":
+                    QMessageBox.about(self, _translate("MainWindow", "Chan name needed"), _translate(
+                        "MainWindow", "You didn't enter a chan name."))
+                    return
+                shared.apiAddressGeneratorReturnQueue.queue.clear()
+                shared.addressGeneratorQueue.put(('createChan', 3, 1, self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()))
+                addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
+                print 'addressGeneratorReturnValue', addressGeneratorReturnValue
+                if len(addressGeneratorReturnValue) == 0:
+                    QMessageBox.about(self, _translate("MainWindow", "Address already present"), _translate(
+                        "MainWindow", "Could not add chan because it appears to already be one of your identities."))
+                    return
+                createdAddress = addressGeneratorReturnValue[0]
+                self.addEntryToAddressBook(createdAddress, self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()))
+                QMessageBox.about(self, _translate("MainWindow", "Success"), _translate(
+                    "MainWindow", "Successfully created chan. To let others join your chan, give them the chan name and this Bitmessage address: %1. This address also appears in 'Your Identities'.").arg(createdAddress))
+                self.ui.tabWidget.setCurrentIndex(3)
+            elif self.newChanDialogInstance.ui.radioButtonJoinChan.isChecked():
+                if self.newChanDialogInstance.ui.lineEditChanNameJoin.text() == "":
+                    QMessageBox.about(self, _translate("MainWindow", "Chan name needed"), _translate(
+                        "MainWindow", "You didn't enter a chan name."))
+                    return
+                if decodeAddress(self.newChanDialogInstance.ui.lineEditChanBitmessageAddress.text())[0] == 'versiontoohigh':
+                    QMessageBox.about(self, _translate("MainWindow", "Address too new"), _translate(
+                        "MainWindow", "Although that Bitmessage address might be valid, its version number is too new for us to handle. Perhaps you need to upgrade Bitmessage."))
+                    return
+                if decodeAddress(self.newChanDialogInstance.ui.lineEditChanBitmessageAddress.text())[0] != 'success':
+                    QMessageBox.about(self, _translate("MainWindow", "Address invalid"), _translate(
+                        "MainWindow", "That Bitmessage address is not valid."))
+                    return
+                shared.apiAddressGeneratorReturnQueue.queue.clear()
+                shared.addressGeneratorQueue.put(('joinChan', addBMIfNotPresent(self.newChanDialogInstance.ui.lineEditChanBitmessageAddress.text()), self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameJoin.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameJoin.text().toUtf8()))
+                addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
+                print 'addressGeneratorReturnValue', addressGeneratorReturnValue
+                if addressGeneratorReturnValue == 'chan name does not match address':
+                    QMessageBox.about(self, _translate("MainWindow", "Address does not match chan name"), _translate(
+                        "MainWindow", "Although the Bitmessage address you entered was valid, it doesn\'t match the chan name."))
+                    return
+                if len(addressGeneratorReturnValue) == 0:
+                    QMessageBox.about(self, _translate("MainWindow", "Address already present"), _translate(
+                        "MainWindow", "Could not add chan because it appears to already be one of your identities."))
+                    return
+                createdAddress = addressGeneratorReturnValue[0]
+                self.addEntryToAddressBook(createdAddress, self.str_chan + ' ' + self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameJoin.text()))
+                QMessageBox.about(self, _translate("MainWindow", "Success"), _translate(
+                    "MainWindow", "Successfully joined chan. "))
                 self.ui.tabWidget.setCurrentIndex(3)
 
     def openKeysFile(self):
@@ -1379,12 +1442,11 @@ class MyForm(QtGui.QMainWindow):
                         toAddress = addBMIfNotPresent(toAddress)
                         try:
                             shared.config.get(toAddress, 'enabled')
-                            # The toAddress is one owned by me. We cannot send
-                            # messages to ourselves without significant changes
-                            # to the codebase.
-                            QMessageBox.about(self, _translate("MainWindow", "Sending to your address"), _translate(
-                                "MainWindow", "Error: One of the addresses to which you are sending a message, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.").arg(toAddress))
-                            continue
+                            # The toAddress is one owned by me.
+                            if not shared.safeConfigGetBoolean(toAddress, 'chan'):
+                                QMessageBox.about(self, _translate("MainWindow", "Sending to your address"), _translate(
+                                    "MainWindow", "Error: One of the addresses to which you are sending a message, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.").arg(toAddress))
+                                continue
                         except:
                             pass
                         if addressVersionNumber > 3 or addressVersionNumber <= 1:
@@ -1517,6 +1579,16 @@ class MyForm(QtGui.QMainWindow):
     def redrawLabelFrom(self, index):
         self.ui.labelFrom.setText(
             self.ui.comboBoxSendFrom.itemData(index).toPyObject())
+        self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(self.ui.comboBoxSendFrom.itemData(index).toPyObject())
+
+    def setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(self, address):
+        # If this is a chan then don't let people broadcast because no one
+        # should subscribe to chan addresses.
+        if shared.safeConfigGetBoolean(str(address), 'chan'):
+            self.ui.radioButtonSpecific.click()
+            self.ui.radioButtonBroadcast.setEnabled(False)
+        else:
+            self.ui.radioButtonBroadcast.setEnabled(True)
 
     def rerenderComboBoxSendFrom(self):
         self.ui.comboBoxSendFrom.clear()
@@ -1633,6 +1705,8 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(Qt.UserRole, str(toAddress))
         if shared.safeConfigGetBoolean(str(toAddress), 'mailinglist'):
             newItem.setTextColor(QtGui.QColor(137, 04, 177))
+        if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
+            newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
         self.ui.tableWidgetInbox.insertRow(0)
         self.ui.tableWidgetInbox.setItem(0, 0, newItem)
 
@@ -1672,45 +1746,47 @@ class MyForm(QtGui.QMainWindow):
                 # First we must check to see if the address is already in the
                 # address book. The user cannot add it again or else it will
                 # cause problems when updating and deleting the entry.
-                shared.sqlLock.acquire()
-                t = (addBMIfNotPresent(str(
-                    self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())),)
-                shared.sqlSubmitQueue.put(
-                    '''select * from addressbook where address=?''')
-                shared.sqlSubmitQueue.put(t)
-                queryreturn = shared.sqlReturnQueue.get()
-                shared.sqlLock.release()
-                if queryreturn == []:
-                    self.ui.tableWidgetAddressBook.setSortingEnabled(False)
-                    self.ui.tableWidgetAddressBook.insertRow(0)
-                    newItem = QtGui.QTableWidgetItem(unicode(
-                        self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8(), 'utf-8'))
-                    self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-                    newItem = QtGui.QTableWidgetItem(addBMIfNotPresent(
-                        self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
-                    newItem.setFlags(
-                        QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-                    self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
-                    self.ui.tableWidgetAddressBook.setSortingEnabled(True)
-                    t = (str(self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()), addBMIfNotPresent(
-                        str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text())))
-                    shared.sqlLock.acquire()
-                    shared.sqlSubmitQueue.put(
-                        '''INSERT INTO addressbook VALUES (?,?)''')
-                    shared.sqlSubmitQueue.put(t)
-                    queryreturn = shared.sqlReturnQueue.get()
-                    shared.sqlSubmitQueue.put('commit')
-                    shared.sqlLock.release()
-                    self.rerenderInboxFromLabels()
-                    self.rerenderSentToLabels()
-                else:
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
+                address = addBMIfNotPresent(str(
+                    self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
+                label = self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()
+                self.addEntryToAddressBook(address,label)
             else:
                 self.statusBar().showMessage(_translate(
                     "MainWindow", "The address you entered was invalid. Ignoring it."))
 
-    def addSubscription(self, label, address):
+    def addEntryToAddressBook(self,address,label):
+        shared.sqlLock.acquire()
+        t = (address,)
+        shared.sqlSubmitQueue.put(
+            '''select * from addressbook where address=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        if queryreturn == []:
+            self.ui.tableWidgetAddressBook.setSortingEnabled(False)
+            self.ui.tableWidgetAddressBook.insertRow(0)
+            newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+            self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
+            newItem = QtGui.QTableWidgetItem(address)
+            newItem.setFlags(
+                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
+            self.ui.tableWidgetAddressBook.setSortingEnabled(True)
+            t = (str(label), address)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put(
+                '''INSERT INTO addressbook VALUES (?,?)''')
+            shared.sqlSubmitQueue.put(t)
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+            self.rerenderInboxFromLabels()
+            self.rerenderSentToLabels()
+        else:
+            self.statusBar().showMessage(_translate(
+                        "MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
+
+    def addSubscription(self, address, label):
         address = addBMIfNotPresent(address)
         #This should be handled outside of this function, for error displaying and such, but it must also be checked here.
         if shared.isAddressInMySubscriptionsList(address):
@@ -1747,7 +1823,7 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage(_translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
                 return
             label = self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()
-            self.addSubscription(label, address)
+            self.addSubscription(address, label)
 
     def loadBlackWhiteList(self):
         # Initialize the Blacklist or Whitelist table
@@ -1990,6 +2066,8 @@ class MyForm(QtGui.QMainWindow):
             currentRow = self.ui.tableWidgetYourIdentities.currentRow()
             addressAtCurrentRow = str(
                 self.ui.tableWidgetYourIdentities.item(currentRow, 1).text())
+            if shared.safeConfigGetBoolean(addressAtCurrentRow, 'chan'):
+                return
             if self.dialog.ui.radioButtonBehaveNormalAddress.isChecked():
                 shared.config.set(str(
                     addressAtCurrentRow), 'mailinglist', 'false')
@@ -2023,12 +2101,6 @@ class MyForm(QtGui.QMainWindow):
                     # address.'
                     streamNumberForAddress = addressStream(
                         self.dialog.ui.comboBoxExisting.currentText())
-
-                # self.addressGenerator = addressGenerator()
-                # self.addressGenerator.setup(3,streamNumberForAddress,str(self.dialog.ui.newaddresslabel.text().toUtf8()),1,"",self.dialog.ui.checkBoxEighteenByteRipe.isChecked())
-                # QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
-                # QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-                # self.addressGenerator.start()
                 shared.addressGeneratorQueue.put(('createRandomAddress', 3, streamNumberForAddress, str(
                     self.dialog.ui.newaddresslabel.text().toUtf8()), 1, "", self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
             else:
@@ -2040,11 +2112,6 @@ class MyForm(QtGui.QMainWindow):
                         "MainWindow", "Choose a passphrase"), _translate("MainWindow", "You really do need a passphrase."))
                 else:
                     streamNumberForAddress = 1  # this will eventually have to be replaced by logic to determine the most available stream number.
-                    # self.addressGenerator = addressGenerator()
-                    # self.addressGenerator.setup(3,streamNumberForAddress,"unused address",self.dialog.ui.spinBoxNumberOfAddressesToMake.value(),self.dialog.ui.lineEditPassphrase.text().toUtf8(),self.dialog.ui.checkBoxEighteenByteRipe.isChecked())
-                    # QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
-                    # QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-                    # self.addressGenerator.start()
                     shared.addressGeneratorQueue.put(('createDeterministicAddresses', 3, streamNumberForAddress, "unused deterministic address", self.dialog.ui.spinBoxNumberOfAddressesToMake.value(
                     ), self.dialog.ui.lineEditPassphrase.text().toUtf8(), self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
         else:
@@ -2121,6 +2188,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.labelFrom.setText('')
         else:
             self.ui.labelFrom.setText(toAddressAtCurrentInboxRow)
+            self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(toAddressAtCurrentInboxRow)
         self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
         # self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
@@ -2344,7 +2412,7 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
                 continue
             labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
-            self.addSubscription(labelAtCurrentRow, addressAtCurrentRow)
+            self.addSubscription(addressAtCurrentRow, labelAtCurrentRow)
             self.ui.tabWidget.setCurrentIndex(4)
 
     def on_context_menuAddressBook(self, point):
@@ -2527,6 +2595,8 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 2).setTextColor(QtGui.QColor(0, 0, 0))
         if shared.safeConfigGetBoolean(addressAtCurrentRow, 'mailinglist'):
             self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(137, 04, 177))
+        if shared.safeConfigGetBoolean(addressAtCurrentRow, 'chan'):
+            self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(216, 119, 0)) # orange
         shared.reloadMyAddressHashes()
 
     def on_action_YourIdentitiesDisable(self):
@@ -2695,11 +2765,14 @@ class MyForm(QtGui.QMainWindow):
     def writeNewAddressToTable(self, label, address, streamNumber):
         self.ui.tableWidgetYourIdentities.setSortingEnabled(False)
         self.ui.tableWidgetYourIdentities.insertRow(0)
+        newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
         self.ui.tableWidgetYourIdentities.setItem(
-            0, 0, QtGui.QTableWidgetItem(unicode(label, 'utf-8')))
+            0, 0, newItem)
         newItem = QtGui.QTableWidgetItem(address)
         newItem.setFlags(
             QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        if shared.safeConfigGetBoolean(address, 'chan'):
+            newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
         self.ui.tableWidgetYourIdentities.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(streamNumber)
         newItem.setFlags(
@@ -2745,7 +2818,6 @@ class regenerateAddressesDialog(QtGui.QDialog):
         self.ui.setupUi(self)
         self.parent = parent
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
-
 
 class settingsDialog(QtGui.QDialog):
 
@@ -2869,17 +2941,23 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
         currentRow = parent.ui.tableWidgetYourIdentities.currentRow()
         addressAtCurrentRow = str(
             parent.ui.tableWidgetYourIdentities.item(currentRow, 1).text())
-        if shared.safeConfigGetBoolean(addressAtCurrentRow, 'mailinglist'):
-            self.ui.radioButtonBehaviorMailingList.click()
-        else:
-            self.ui.radioButtonBehaveNormalAddress.click()
-        try:
-            mailingListName = shared.config.get(
-                addressAtCurrentRow, 'mailinglistname')
-        except:
-            mailingListName = ''
-        self.ui.lineEditMailingListName.setText(
-            unicode(mailingListName, 'utf-8'))
+        if not shared.safeConfigGetBoolean(addressAtCurrentRow, 'chan'):
+            if shared.safeConfigGetBoolean(addressAtCurrentRow, 'mailinglist'):
+                self.ui.radioButtonBehaviorMailingList.click()
+            else:
+                self.ui.radioButtonBehaveNormalAddress.click()
+            try:
+                mailingListName = shared.config.get(
+                    addressAtCurrentRow, 'mailinglistname')
+            except:
+                mailingListName = ''
+            self.ui.lineEditMailingListName.setText(
+                unicode(mailingListName, 'utf-8'))
+        else: # if addressAtCurrentRow is a chan address
+            self.ui.radioButtonBehaviorMailingList.setDisabled(True)
+            self.ui.lineEditMailingListName.setText(_translate(
+                "MainWindow", "This is a chan address. You cannot use it as a pseudo-mailing list."))
+
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 
@@ -2938,11 +3016,11 @@ class NewAddressDialog(QtGui.QDialog):
         self.ui.groupBoxDeterministic.setHidden(True)
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
-class NewChanDialog(QtGui.QDialog):
+class newChanDialog(QtGui.QDialog):
 
     def __init__(self, parent):
         QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_NewChanDialog()
+        self.ui = Ui_newChanDialog()
         self.ui.setupUi(self)
         self.parent = parent
         self.ui.groupBoxCreateChan.setHidden(True)
