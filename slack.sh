@@ -28,7 +28,7 @@ mkdir -p ${PROJECTDIR}
 # Build the project
 make clean
 make
-make install -B DESTDIR=${PROJECTDIR}
+make install -B DESTDIR=${PROJECTDIR} PREFIX=/usr
 
 # Copy the slack-desc and doinst.sh files into the build install directory
 mkdir ${PROJECTDIR}/install

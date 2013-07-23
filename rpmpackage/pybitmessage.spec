@@ -48,7 +48,7 @@ mkdir -p %{buildroot}/usr/share/pixmaps
 mkdir -p %{buildroot}/usr/share/icons/hicolor/scalable
 mkdir -p %{buildroot}/usr/share/icons/hicolor/scalable/apps
 # Make install but to the RPM BUILDROOT directory
-make install -B DESTDIR=%{buildroot}
+make install -B DESTDIR=%{buildroot} PREFIX=/usr
 
 %files
 %doc README.md LICENSE
