@@ -30,12 +30,10 @@ import os
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
-<<<<<<< HEAD
 import debug
 from debug import logger
-=======
 import subprocess
->>>>>>> 2af86c8296e0c577f8ac48a56e9a3582ddd87473
+
 
 try:
     from PyQt4 import QtCore, QtGui
