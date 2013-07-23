@@ -1,5 +1,6 @@
 import hashlib
-from struct import *
+from struct import pack
+from struct import unpack
 from pyelliptic import arithmetic
 
 
