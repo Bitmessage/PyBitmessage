@@ -9,6 +9,7 @@ debug:
 source:
 	tar -cvzf ../${APP}_${VERSION}.orig.tar.gz ../${APP}-${VERSION} --exclude-vcs
 install:
+	mkdir -p ${DESTDIR}/usr
 	mkdir -p ${DESTDIR}${PREFIX}
 	mkdir -p ${DESTDIR}${PREFIX}/bin
 	mkdir -m 755 -p ${DESTDIR}${PREFIX}/share
@@ -37,7 +38,7 @@ uninstall:
 	rm -f ${PREFIX}/bin/${APP}
 	rm -f ${PREFIX}/share/applications/${APP}.desktop
 	rm -f ${PREFIX}/share/icons/hicolor/scalable/apps/${APP}.svg
-	rm -f ${PREFIX}/share/pixmaps/${APP}.svg
+	${PREFIX}/share/pixmaps/${APP}.svg
 clean:
 	rm -f ${APP} \#* \.#* gnuplot* *.png debian/*.substvars debian/*.log
 	rm -fr deb.* debian/${APP} rpmpackage/${ARCH_TYPE}
