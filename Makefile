@@ -36,7 +36,7 @@ uninstall:
 	rm -f /usr/bin/${APP}
 	rm -f /usr/share/applications/${APP}.desktop
 	rm -f /usr/share/icons/hicolor/scalable/apps/${APP}.svg
-	/usr/share/pixmaps/${APP}.svg
+	rm -f /usr/share/pixmaps/${APP}.svg
 clean:
 	rm -f ${APP} \#* \.#* gnuplot* *.png debian/*.substvars debian/*.log
 	rm -fr deb.* debian/${APP} rpmpackage/${ARCH_TYPE}
