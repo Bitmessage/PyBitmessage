@@ -1,6 +1,7 @@
 #!/usr/bin/make -f
 
 APP=pybitmessage
+PREFIX=/usr
 build: build-stamp
 	make
 build-arch: build-stamp
@@ -20,7 +21,7 @@ install: build clean
 		 dh_testroot
 		 dh_prep
 		 dh_installdirs
-		 ${MAKE} install -B DESTDIR=${CURDIR}/debian/${APP}
+		 ${MAKE} install -B DESTDIR=${CURDIR}/debian/${APP} PREFIX=/usr
 binary-indep: build install
 			  dh_testdir
 			  dh_testroot
