@@ -186,6 +186,9 @@ class sqlThread(threading.Thread):
         self.cur.execute(
             '''update sent set status='broadcastqueued' where status='broadcastpending'  ''')
         self.conn.commit()
+        
+        if not shared.config.has_option('bitmessagesettings', 'sockslisten'):
+            shared.config.set('bitmessagesettings', 'sockslisten', 'false')
 
         try:
             testpayload = '\x00\x00'
