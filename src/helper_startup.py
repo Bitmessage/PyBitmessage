@@ -66,6 +66,7 @@ def loadConfig():
                 'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
             shared.config.set(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
+            shared.config.set('bitmessagesettings', 'dontconnect', 'true')
 
             if storeConfigFilesInSameDirectoryAsProgramByDefault:
                 # Just use the same directory as the program and forget about
