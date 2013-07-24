@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'connect.ui'
 #
-# Created: Wed Jul 24 10:41:58 2013
+# Created: Wed Jul 24 12:42:01 2013
 #      by: PyQt4 UI code generator 4.10
 #
 # WARNING! All changes made in this file will be lost!
@@ -36,9 +36,9 @@ class Ui_connectDialog(object):
         self.radioButtonConnectNow.setChecked(True)
         self.radioButtonConnectNow.setObjectName(_fromUtf8("radioButtonConnectNow"))
         self.gridLayout.addWidget(self.radioButtonConnectNow, 1, 0, 1, 2)
-        self.radioButton = QtGui.QRadioButton(connectDialog)
-        self.radioButton.setObjectName(_fromUtf8("radioButton"))
-        self.gridLayout.addWidget(self.radioButton, 2, 0, 1, 2)
+        self.radioButtonConfigureNetwork = QtGui.QRadioButton(connectDialog)
+        self.radioButtonConfigureNetwork.setObjectName(_fromUtf8("radioButtonConfigureNetwork"))
+        self.gridLayout.addWidget(self.radioButtonConfigureNetwork, 2, 0, 1, 2)
         spacerItem = QtGui.QSpacerItem(185, 24, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.gridLayout.addItem(spacerItem, 3, 0, 1, 1)
         self.buttonBox = QtGui.QDialogButtonBox(connectDialog)
@@ -53,8 +53,8 @@ class Ui_connectDialog(object):
         QtCore.QMetaObject.connectSlotsByName(connectDialog)
 
     def retranslateUi(self, connectDialog):
-        connectDialog.setWindowTitle(_translate("connectDialog", "Dialog", None))
+        connectDialog.setWindowTitle(_translate("connectDialog", "Bitmessage", None))
         self.label.setText(_translate("connectDialog", "Bitmessage won\'t connect to anyone until you let it. ", None))
         self.radioButtonConnectNow.setText(_translate("connectDialog", "Connect now", None))
-        self.radioButton.setText(_translate("connectDialog", "Let me configure special network settings first", None))
+        self.radioButtonConfigureNetwork.setText(_translate("connectDialog", "Let me configure special network settings first", None))
 
