@@ -23,6 +23,7 @@ from settings import *
 from about import *
 from help import *
 from iconglossary import *
+from connect import *
 import sys
 from time import strftime, localtime, gmtime
 import time
@@ -423,6 +424,8 @@ class MyForm(QtGui.QMainWindow):
 # structures were initialized.
 
         self.rerenderComboBoxSendFrom()
+
+
 
     # Show or hide the application window after clicking an item within the
     # tray icon or, on Windows, the try icon itself.
@@ -1159,6 +1162,16 @@ class MyForm(QtGui.QMainWindow):
                 QMessageBox.about(self, _translate("MainWindow", "Success"), _translate(
                     "MainWindow", "Successfully joined chan. "))
                 self.ui.tabWidget.setCurrentIndex(3)
+
+    def showConnectDialog(self):
+        self.connectDialogInstance = connectDialog(self)
+        if self.connectDialogInstance.exec_():
+            if self.connectDialogInstance.ui.radioButtonConnectNow.isChecked():
+                shared.config.remove_option('bitmessagesettings', 'dontconnect')
+                with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                    shared.config.write(configfile)
+            else:
+                self.click_actionSettings()
 
     def openKeysFile(self):
         if 'linux' in sys.platform:
@@ -1946,8 +1959,9 @@ class MyForm(QtGui.QMainWindow):
             shared.config.set('bitmessagesettings', 'startintray', str(
                 self.settingsDialogInstance.ui.checkBoxStartInTray.isChecked()))
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
-                QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
-                    "MainWindow", "You must restart Bitmessage for the port number change to take effect."))
+                if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
+                    QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
+                        "MainWindow", "You must restart Bitmessage for the port number change to take effect."))
                 shared.config.set('bitmessagesettings', 'port', str(
                     self.settingsDialogInstance.ui.lineEditTCPPort.text()))
             if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText())[0:5] == 'SOCKS':
@@ -2867,7 +2881,15 @@ class helpDialog(QtGui.QDialog):
         self.parent = parent
         self.ui.labelHelpURI.setOpenExternalLinks(True)
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+        
+class connectDialog(QtGui.QDialog):
 
+    def __init__(self, parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_connectDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 class aboutDialog(QtGui.QDialog):
 
@@ -3211,6 +3233,8 @@ def run():
     myapp.appIndicatorInit(app)
     myapp.ubuntuMessagingMenuInit()
     myapp.notifierInit()
+    if shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
+        myapp.showConnectDialog() # ask the user if we may connect
     if gevent is None:
         sys.exit(app.exec_())
     else:

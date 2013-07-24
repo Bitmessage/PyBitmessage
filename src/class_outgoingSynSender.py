@@ -23,7 +23,8 @@ class outgoingSynSender(threading.Thread):
         self.selfInitiatedConnections = selfInitiatedConnections
 
     def run(self):
-        time.sleep(1)
+        while shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
+            time.sleep(2)
         while True:
             while len(self.selfInitiatedConnections[self.streamNumber]) >= 8:  # maximum number of outgoing connections = 8
                 time.sleep(10)
