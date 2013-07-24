@@ -9,7 +9,7 @@
 
 # The software version variable is now held in shared.py
 
-#import ctypes
+# import ctypes
 try:
     from gevent import monkey
     monkey.patch_all()
@@ -36,7 +36,7 @@ import helper_bootstrap
 
 import sys
 if sys.platform == 'darwin':
-    if float( "{1}.{2}".format(*sys.version_info) ) < 7.5:
+    if float("{1}.{2}".format(*sys.version_info)) < 7.5:
         print "You should use python 2.7.5 or greater."
         print "Your version: {0}.{1}.{2}".format(*sys.version_info)
         sys.exit(0)
@@ -56,8 +56,6 @@ def connectToStream(streamNumber):
 # This is one of several classes that constitute the API
 # This class was written by Vaibhav Bhatia. Modified by Jonathan Warren (Atheros).
 # http://code.activestate.com/recipes/501148-xmlrpc-serverclient-which-does-cookie-handling-and/
-
-
 class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
     def do_POST(self):
@@ -342,7 +340,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 msgid, toAddress, fromAddress, subject, received, message, encodingtype = row
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
-                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':encodingtype,'receivedTime':received},indent=4, separators=(',', ': '))
+                data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif method == 'getAllSentMessages':
@@ -358,7 +356,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
                 if len(data) > 25:
                     data += ','
-                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':encodingtype,'lastActionTime':lastactiontime,'status':status,'ackData':ackdata.encode('hex')},indent=4, separators=(',', ': '))
+                data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif method == 'getInboxMessagesByAddress':
@@ -373,12 +371,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.sqlLock.release()
             data = '{"inboxMessages":['
             for row in queryreturn:
-                msgid, toAddress, fromAddress, subject, received, message, encodingtype= row
+                msgid, toAddress, fromAddress, subject, received, message, encodingtype = row
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
                 if len(data) > 25:
                     data += ','
-                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':encodingtype,'receivedTime':received},indent=4, separators=(',', ': '))
+                data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif method == 'getSentMessageById':
@@ -396,7 +394,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
-                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':encodingtype,'lastActionTime':lastactiontime,'status':status,'ackData':ackdata.encode('hex')},indent=4, separators=(',', ': '))
+                data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif method == 'getSentMessagesByAddress':
@@ -416,7 +414,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
                 if len(data) > 25:
                     data += ','
-                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':encodingtype,'lastActionTime':lastactiontime,'status':status,'ackData':ackdata.encode('hex')},indent=4, separators=(',', ': '))
+                data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif method == 'getSentMessageByAckData':
@@ -434,7 +432,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
-                data += json.dumps({'msgid':msgid.encode('hex'),'toAddress':toAddress,'fromAddress':fromAddress,'subject':subject.encode('base64'),'message':message.encode('base64'),'encodingType':encodingtype,'lastActionTime':lastactiontime,'status':status,'ackData':ackdata.encode('hex')},indent=4, separators=(',', ': '))
+                data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif (method == 'trashMessage') or (method == 'trashInboxMessage'):
@@ -454,7 +452,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            #shared.UISignalQueue.put(('removeSentRowByMsgid',msgid)) This function doesn't exist yet.
+            # shared.UISignalQueue.put(('removeSentRowByMsgid',msgid)) This function doesn't exist yet.
             return 'Trashed sent message (assuming message existed).'
         elif method == 'sendMessage':
             if len(params) == 0:
@@ -513,7 +511,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 return 'API Error 0014: Your fromAddress is disabled. Cannot send.'
 
             ackdata = OpenSSL.rand(32)
-            
+
             t = ('', toAddress, toRipe, fromAddress, subject, message, ackdata, int(
                 time.time()), 'msgqueued', 1, 1, 'sent', 2)
             helper_sent.insert(t)
@@ -577,7 +575,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             toAddress = '[Broadcast subscribers]'
             ripe = ''
 
-            
+
             t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
                 time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
             helper_sent.insert(t)
@@ -719,7 +717,6 @@ if __name__ == "__main__":
     # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     helper_bootstrap.knownNodes()
-    helper_bootstrap.dns()
     # Start the address generation thread
     addressGeneratorThread = addressGenerator()
     addressGeneratorThread.daemon = True  # close the main program even if there are threads left
@@ -757,13 +754,6 @@ if __name__ == "__main__":
         singleAPIThread = singleAPI()
         singleAPIThread.daemon = True  # close the main program even if there are threads left
         singleAPIThread.start()
-        # self.singleAPISignalHandlerThread = singleAPISignalHandler()
-        # self.singleAPISignalHandlerThread.start()
-        # QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-        # QtCore.QObject.connect(self.singleAPISignalHandlerThread, QtCore.SIGNAL("passAddressGeneratorObjectThrough(PyQt_PyObject)"), self.connectObjectToAddressGeneratorSignals)
-        # QtCore.QObject.connect(self.singleAPISignalHandlerThread,
-        # QtCore.SIGNAL("displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
-        # self.displayNewSentMessage)
 
     connectToStream(1)
 
@@ -783,6 +773,7 @@ if __name__ == "__main__":
         import bitmessageqt
         bitmessageqt.run()
     else:
+        shared.config.remove_option('bitmessagesettings', 'dontconnect')
         with shared.printLock:
             print 'Running as a daemon. You can use Ctrl+C to exit.'
 

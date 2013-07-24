@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Bitmessage</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
    <item row="0" column="0" colspan="2">
@@ -32,7 +32,7 @@
     </widget>
    </item>
    <item row="2" column="0" colspan="2">
-    <widget class="QRadioButton" name="radioButton">
+    <widget class="QRadioButton" name="radioButtonConfigureNetwork">
      <property name="text">
       <string>Let me configure special network settings first</string>
      </property>
