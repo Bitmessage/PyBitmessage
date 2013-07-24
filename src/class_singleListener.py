@@ -26,7 +26,9 @@ class singleListener(threading.Thread):
         # proxy 'none' or configure SOCKS listening then this will start listening for
         # connections.
         while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not shared.config.getboolean('bitmessagesettings', 'sockslisten'):
-            time.sleep(300)
+            time.sleep(10)
+        while shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
+            time.sleep(1)
 
         with shared.printLock:
             print 'Listening for incoming connections.'
