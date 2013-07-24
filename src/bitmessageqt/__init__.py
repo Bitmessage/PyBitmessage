@@ -1885,7 +1885,7 @@ class MyForm(QtGui.QMainWindow):
             if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText())[0:5] == 'SOCKS':
                 if shared.statusIconColor != 'red':
                     QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
-                        "MainWindow", "Bitmessage will use your proxy from now on but you may want to manually restart Bitmessage now to close existing connections."))
+                        "MainWindow", "Bitmessage will use your proxy from now on but you may want to manually restart Bitmessage now to close existing connections (if any)."))
             if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText()) == 'none':
                 self.statusBar().showMessage('')
             shared.config.set('bitmessagesettings', 'socksproxytype', str(
