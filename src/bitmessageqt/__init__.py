@@ -2280,7 +2280,7 @@ class MyForm(QtGui.QMainWindow):
         # self.ui.tableWidgetInbox.selectRow(currentRow + 1) 
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
-	# Is there a way to deselect all rows? The Qt documentation does not indicate so.
+        # Is there a way to deselect all rows? The Qt documentation does not indicate so.
 
     def on_action_InboxReply(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
