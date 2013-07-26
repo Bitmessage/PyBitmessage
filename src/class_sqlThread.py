@@ -5,6 +5,7 @@ import time
 import shutil  # used for moving the messages.dat file
 import sys
 import os
+from debug import logger
 
 # This thread exists because SQLITE3 is so un-threadsafe that we must
 # submit queries to it and it puts results back in a different queue. They
@@ -80,6 +81,7 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'socksauthentication', 'false')
             shared.config.set('bitmessagesettings', 'socksusername', '')
             shared.config.set('bitmessagesettings', 'sockspassword', '')
+            shared.config.set('bitmessagesettings', 'sockslisten', 'false')
             shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
             shared.config.set('bitmessagesettings', 'messagesencrypted', 'false')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
@@ -184,6 +186,9 @@ class sqlThread(threading.Thread):
         self.cur.execute(
             '''update sent set status='broadcastqueued' where status='broadcastpending'  ''')
         self.conn.commit()
+        
+        if not shared.config.has_option('bitmessagesettings', 'sockslisten'):
+            shared.config.set('bitmessagesettings', 'sockslisten', 'false')
 
         try:
             testpayload = '\x00\x00'

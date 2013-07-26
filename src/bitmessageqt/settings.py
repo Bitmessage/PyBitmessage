@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Mon Jun 10 11:31:56 2013
-#      by: PyQt4 UI code generator 4.9.4
+# Created: Fri Jul 12 12:37:53 2013
+#      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,16 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
-    _fromUtf8 = lambda s: s
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_settingsDialog(object):
     def setupUi(self, settingsDialog):
@@ -122,6 +131,9 @@ class Ui_settingsDialog(object):
         self.lineEditSocksPassword.setEchoMode(QtGui.QLineEdit.Password)
         self.lineEditSocksPassword.setObjectName(_fromUtf8("lineEditSocksPassword"))
         self.gridLayout_2.addWidget(self.lineEditSocksPassword, 2, 5, 1, 1)
+        self.checkBoxSocksListen = QtGui.QCheckBox(self.groupBox_2)
+        self.checkBoxSocksListen.setObjectName(_fromUtf8("checkBoxSocksListen"))
+        self.gridLayout_2.addWidget(self.checkBoxSocksListen, 3, 1, 1, 4)
         self.gridLayout_4.addWidget(self.groupBox_2, 1, 0, 1, 1)
         spacerItem2 = QtGui.QSpacerItem(20, 70, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.gridLayout_4.addItem(spacerItem2, 2, 0, 1, 1)
@@ -235,38 +247,40 @@ class Ui_settingsDialog(object):
         settingsDialog.setTabOrder(self.lineEditSocksPort, self.checkBoxAuthentication)
         settingsDialog.setTabOrder(self.checkBoxAuthentication, self.lineEditSocksUsername)
         settingsDialog.setTabOrder(self.lineEditSocksUsername, self.lineEditSocksPassword)
-        settingsDialog.setTabOrder(self.lineEditSocksPassword, self.buttonBox)
+        settingsDialog.setTabOrder(self.lineEditSocksPassword, self.checkBoxSocksListen)
+        settingsDialog.setTabOrder(self.checkBoxSocksListen, self.buttonBox)
 
     def retranslateUi(self, settingsDialog):
-        settingsDialog.setWindowTitle(QtGui.QApplication.translate("settingsDialog", "Settings", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBoxStartOnLogon.setText(QtGui.QApplication.translate("settingsDialog", "Start Bitmessage on user login", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBoxStartInTray.setText(QtGui.QApplication.translate("settingsDialog", "Start Bitmessage in the tray (don\'t show main window)", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBoxMinimizeToTray.setText(QtGui.QApplication.translate("settingsDialog", "Minimize to tray", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBoxShowTrayNotifications.setText(QtGui.QApplication.translate("settingsDialog", "Show notification when message received", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBoxPortableMode.setText(QtGui.QApplication.translate("settingsDialog", "Run in Portable Mode", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_7.setText(QtGui.QApplication.translate("settingsDialog", "In Portable Mode, messages and config files are stored in the same directory as the program rather than the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabUserInterface), QtGui.QApplication.translate("settingsDialog", "User Interface", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox.setTitle(QtGui.QApplication.translate("settingsDialog", "Listening port", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("settingsDialog", "Listen for connections on port:", None, QtGui.QApplication.UnicodeUTF8))
-        self.groupBox_2.setTitle(QtGui.QApplication.translate("settingsDialog", "Proxy server / Tor", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_2.setText(QtGui.QApplication.translate("settingsDialog", "Type:", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBoxProxyType.setItemText(0, QtGui.QApplication.translate("settingsDialog", "none", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBoxProxyType.setItemText(1, QtGui.QApplication.translate("settingsDialog", "SOCKS4a", None, QtGui.QApplication.UnicodeUTF8))
-        self.comboBoxProxyType.setItemText(2, QtGui.QApplication.translate("settingsDialog", "SOCKS5", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_3.setText(QtGui.QApplication.translate("settingsDialog", "Server hostname:", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_4.setText(QtGui.QApplication.translate("settingsDialog", "Port:", None, QtGui.QApplication.UnicodeUTF8))
-        self.checkBoxAuthentication.setText(QtGui.QApplication.translate("settingsDialog", "Authentication", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_5.setText(QtGui.QApplication.translate("settingsDialog", "Username:", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_6.setText(QtGui.QApplication.translate("settingsDialog", "Pass:", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabNetworkSettings), QtGui.QApplication.translate("settingsDialog", "Network Settings", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_8.setText(QtGui.QApplication.translate("settingsDialog", "When someone sends you a message, their computer must first complete some work. The difficulty of this work, by default, is 1. You may raise this default for new addresses you create by changing the values here. Any new addresses you create will require senders to meet the higher difficulty. There is one exception: if you add a friend or acquaintance to your address book, Bitmessage will automatically notify them when you next send a message that they need only complete the minimum amount of work: difficulty 1. ", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_9.setText(QtGui.QApplication.translate("settingsDialog", "Total difficulty:", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_11.setText(QtGui.QApplication.translate("settingsDialog", "Small message difficulty:", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_12.setText(QtGui.QApplication.translate("settingsDialog", "The \'Small message difficulty\' mostly only affects the difficulty of sending small messages. Doubling this value makes it almost twice as difficult to send a small message but doesn\'t really affect large messages.", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_10.setText(QtGui.QApplication.translate("settingsDialog", "The \'Total difficulty\' affects the absolute amount of work the sender must complete. Doubling this value doubles the amount of work.", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab), QtGui.QApplication.translate("settingsDialog", "Demanded difficulty", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_15.setText(QtGui.QApplication.translate("settingsDialog", "Here you may set the maximum amount of work you are willing to do to send a message to another person. Setting these values to 0 means that any value is acceptable.", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_13.setText(QtGui.QApplication.translate("settingsDialog", "Maximum acceptable total difficulty:", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_14.setText(QtGui.QApplication.translate("settingsDialog", "Maximum acceptable small message difficulty:", None, QtGui.QApplication.UnicodeUTF8))
-        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab_2), QtGui.QApplication.translate("settingsDialog", "Max acceptable difficulty", None, QtGui.QApplication.UnicodeUTF8))
+        settingsDialog.setWindowTitle(_translate("settingsDialog", "Settings", None))
+        self.checkBoxStartOnLogon.setText(_translate("settingsDialog", "Start Bitmessage on user login", None))
+        self.checkBoxStartInTray.setText(_translate("settingsDialog", "Start Bitmessage in the tray (don\'t show main window)", None))
+        self.checkBoxMinimizeToTray.setText(_translate("settingsDialog", "Minimize to tray", None))
+        self.checkBoxShowTrayNotifications.setText(_translate("settingsDialog", "Show notification when message received", None))
+        self.checkBoxPortableMode.setText(_translate("settingsDialog", "Run in Portable Mode", None))
+        self.label_7.setText(_translate("settingsDialog", "In Portable Mode, messages and config files are stored in the same directory as the program rather than the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.", None))
+        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabUserInterface), _translate("settingsDialog", "User Interface", None))
+        self.groupBox.setTitle(_translate("settingsDialog", "Listening port", None))
+        self.label.setText(_translate("settingsDialog", "Listen for connections on port:", None))
+        self.groupBox_2.setTitle(_translate("settingsDialog", "Proxy server / Tor", None))
+        self.label_2.setText(_translate("settingsDialog", "Type:", None))
+        self.comboBoxProxyType.setItemText(0, _translate("settingsDialog", "none", None))
+        self.comboBoxProxyType.setItemText(1, _translate("settingsDialog", "SOCKS4a", None))
+        self.comboBoxProxyType.setItemText(2, _translate("settingsDialog", "SOCKS5", None))
+        self.label_3.setText(_translate("settingsDialog", "Server hostname:", None))
+        self.label_4.setText(_translate("settingsDialog", "Port:", None))
+        self.checkBoxAuthentication.setText(_translate("settingsDialog", "Authentication", None))
+        self.label_5.setText(_translate("settingsDialog", "Username:", None))
+        self.label_6.setText(_translate("settingsDialog", "Pass:", None))
+        self.checkBoxSocksListen.setText(_translate("settingsDialog", "Listen for incoming connections when using proxy", None))
+        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabNetworkSettings), _translate("settingsDialog", "Network Settings", None))
+        self.label_8.setText(_translate("settingsDialog", "When someone sends you a message, their computer must first complete some work. The difficulty of this work, by default, is 1. You may raise this default for new addresses you create by changing the values here. Any new addresses you create will require senders to meet the higher difficulty. There is one exception: if you add a friend or acquaintance to your address book, Bitmessage will automatically notify them when you next send a message that they need only complete the minimum amount of work: difficulty 1. ", None))
+        self.label_9.setText(_translate("settingsDialog", "Total difficulty:", None))
+        self.label_11.setText(_translate("settingsDialog", "Small message difficulty:", None))
+        self.label_12.setText(_translate("settingsDialog", "The \'Small message difficulty\' mostly only affects the difficulty of sending small messages. Doubling this value makes it almost twice as difficult to send a small message but doesn\'t really affect large messages.", None))
+        self.label_10.setText(_translate("settingsDialog", "The \'Total difficulty\' affects the absolute amount of work the sender must complete. Doubling this value doubles the amount of work.", None))
+        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab), _translate("settingsDialog", "Demanded difficulty", None))
+        self.label_15.setText(_translate("settingsDialog", "Here you may set the maximum amount of work you are willing to do to send a message to another person. Setting these values to 0 means that any value is acceptable.", None))
+        self.label_13.setText(_translate("settingsDialog", "Maximum acceptable total difficulty:", None))
+        self.label_14.setText(_translate("settingsDialog", "Maximum acceptable small message difficulty:", None))
+        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab_2), _translate("settingsDialog", "Max acceptable difficulty", None))
 

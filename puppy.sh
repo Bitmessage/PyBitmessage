@@ -27,7 +27,7 @@ mkdir -p ${PROJECTDIR}
 # Build the project
 make clean
 make
-make install -B DESTDIR=${PROJECTDIR}
+make install -B DESTDIR=${PROJECTDIR} PREFIX=/usr
 
 # Alter the desktop file categories
 sed -i "s/Categories=Office;Email;/Categories=Internet;mailnews;/g" ${PROJECTDIR}/usr/share/applications/${APP}.desktop
