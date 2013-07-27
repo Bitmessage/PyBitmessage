@@ -68,6 +68,7 @@ def loadConfig():
                 'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
             shared.config.set(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
+            shared.config.set('bitmessagesettings', 'dontconnect', 'true')
             ensureNamecoinOptions()
 
             if storeConfigFilesInSameDirectoryAsProgramByDefault:
@@ -83,9 +84,3 @@ def loadConfig():
                 os.umask(0o077)
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
-
-        # Initialize settings that may be missing due to upgrades and could
-        # cause errors if missing.
-        if not shared.config.has_option('bitmessagesettings', 'sockslisten'):
-            shared.config.set('bitmessagesettings', 'sockslisten', 'false')
-

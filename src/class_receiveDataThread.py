@@ -1412,34 +1412,39 @@ class receiveDataThread(threading.Thread):
         if len(requestedHash) != 20:
             print 'The length of the requested hash is not 20 bytes. Something is wrong. Ignoring.'
             return
-        print 'the hash requested in this getpubkey request is:', requestedHash.encode('hex')
+        with shared.printLock:
+            print 'the hash requested in this getpubkey request is:', requestedHash.encode('hex')
 
         if requestedHash in shared.myAddressesByHash:  # if this address hash is one of mine
             if decodeAddress(shared.myAddressesByHash[requestedHash])[1] != requestedAddressVersionNumber:
                 with shared.printLock:
                     sys.stderr.write(
-                     '(Within the recgetpubkey function) Someone requested one of my pubkeys but the requestedAddressVersionNumber doesn\'t match my actual address version number. That shouldn\'t have happened. Ignoring.\n')
-
+                     '(Within the recgetpubkey function) Someone requested one of my pubkeys but the requestedAddressVersionNumber doesn\'t match my actual address version number. They shouldn\'t have done that. Ignoring.\n')
                 return
+            if shared.safeConfigGetBoolean(shared.myAddressesByHash[requestedHash], 'chan'):
+                with shared.printLock:
+                    print 'Ignoring getpubkey request because it is for one of my chan addresses. The other party should already have the pubkey.'
+                    return
             try:
                 lastPubkeySendTime = int(shared.config.get(
                     shared.myAddressesByHash[requestedHash], 'lastpubkeysendtime'))
             except:
                 lastPubkeySendTime = 0
-            if lastPubkeySendTime < time.time() - shared.lengthOfTimeToHoldOnToAllPubkeys:  # If the last time we sent our pubkey was at least 28 days ago...
-                with shared.printLock:
-                    print 'Found getpubkey-requested-hash in my list of EC hashes. Telling Worker thread to do the POW for a pubkey message and send it out.'
-
-                if requestedAddressVersionNumber == 2:
-                    shared.workerQueue.put((
-                        'doPOWForMyV2Pubkey', requestedHash))
-                elif requestedAddressVersionNumber == 3:
-                    shared.workerQueue.put((
-                        'doPOWForMyV3Pubkey', requestedHash))
-            else:
+            if lastPubkeySendTime > time.time() - shared.lengthOfTimeToHoldOnToAllPubkeys:  # If the last time we sent our pubkey was more recent than 28 days ago...
                 with shared.printLock:
                     print 'Found getpubkey-requested-hash in my list of EC hashes BUT we already sent it recently. Ignoring request. The lastPubkeySendTime is:', lastPubkeySendTime
+                    return
 
+            with shared.printLock:
+                print 'Found getpubkey-requested-hash in my list of EC hashes. Telling Worker thread to do the POW for a pubkey message and send it out.'
+            if requestedAddressVersionNumber == 2:
+                shared.workerQueue.put((
+                    'doPOWForMyV2Pubkey', requestedHash))
+            elif requestedAddressVersionNumber == 3:
+                shared.workerQueue.put((
+                    'sendOutOrStoreMyV3Pubkey', requestedHash))
+         
+                
         else:
             with shared.printLock:
                 print 'This getpubkey request is not for any of my keys.'
