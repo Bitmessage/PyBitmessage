@@ -325,7 +325,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     'base64'), 'message': message.encode('base64'), 'encodingType': encodingtype, 'receivedTime': received, 'read': read}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
-        elif method == 'getInboxMessageById':
+        elif method == 'getInboxMessageById' or method == 'getInboxMessageByID':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
             msgid = params[0].decode('hex')
@@ -379,7 +379,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
-        elif method == 'getSentMessageById':
+        elif method == 'getSentMessageById' or method == 'getSentMessageByID':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
             msgid = params[0].decode('hex')
@@ -397,7 +397,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
-        elif method == 'getSentMessagesByAddress':
+        elif method == 'getSentMessagesByAddress' or method == 'getSentMessagesBySender':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
             fromAddress = params[0]
