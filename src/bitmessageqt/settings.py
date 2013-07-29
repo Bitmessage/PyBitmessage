@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Wed Jul 10 17:07:36 2013
+# Created: Mon Jul 29 14:53:58 2013
 #      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
@@ -131,6 +131,9 @@ class Ui_settingsDialog(object):
         self.lineEditSocksPassword.setEchoMode(QtGui.QLineEdit.Password)
         self.lineEditSocksPassword.setObjectName(_fromUtf8("lineEditSocksPassword"))
         self.gridLayout_2.addWidget(self.lineEditSocksPassword, 2, 5, 1, 1)
+        self.checkBoxSocksListen = QtGui.QCheckBox(self.groupBox_2)
+        self.checkBoxSocksListen.setObjectName(_fromUtf8("checkBoxSocksListen"))
+        self.gridLayout_2.addWidget(self.checkBoxSocksListen, 3, 1, 1, 4)
         self.gridLayout_4.addWidget(self.groupBox_2, 1, 0, 1, 1)
         spacerItem2 = QtGui.QSpacerItem(20, 70, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.gridLayout_4.addItem(spacerItem2, 2, 0, 1, 1)
@@ -388,7 +391,8 @@ class Ui_settingsDialog(object):
         settingsDialog.setTabOrder(self.lineEditSocksPort, self.checkBoxAuthentication)
         settingsDialog.setTabOrder(self.checkBoxAuthentication, self.lineEditSocksUsername)
         settingsDialog.setTabOrder(self.lineEditSocksUsername, self.lineEditSocksPassword)
-        settingsDialog.setTabOrder(self.lineEditSocksPassword, self.buttonBox)
+        settingsDialog.setTabOrder(self.lineEditSocksPassword, self.checkBoxSocksListen)
+        settingsDialog.setTabOrder(self.checkBoxSocksListen, self.buttonBox)
 
     def retranslateUi(self, settingsDialog):
         settingsDialog.setWindowTitle(_translate("settingsDialog", "Settings", None))
@@ -411,6 +415,7 @@ class Ui_settingsDialog(object):
         self.checkBoxAuthentication.setText(_translate("settingsDialog", "Authentication", None))
         self.label_5.setText(_translate("settingsDialog", "Username:", None))
         self.label_6.setText(_translate("settingsDialog", "Pass:", None))
+        self.checkBoxSocksListen.setText(_translate("settingsDialog", "Listen for incoming connections when using proxy", None))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabNetworkSettings), _translate("settingsDialog", "Network Settings", None))
         self.label_8.setText(_translate("settingsDialog", "When someone sends you a message, their computer must first complete some work. The difficulty of this work, by default, is 1. You may raise this default for new addresses you create by changing the values here. Any new addresses you create will require senders to meet the higher difficulty. There is one exception: if you add a friend or acquaintance to your address book, Bitmessage will automatically notify them when you next send a message that they need only complete the minimum amount of work: difficulty 1. ", None))
         self.label_9.setText(_translate("settingsDialog", "Total difficulty:", None))

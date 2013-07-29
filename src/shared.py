@@ -1,4 +1,4 @@
-softwareVersion = '0.3.4'
+softwareVersion = '0.3.5'
 verbose = 1
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600  # Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -8,20 +8,24 @@ maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
 useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
 
 
-import threading
-import sys
-from addresses import *
-import highlevelcrypto
-import Queue
-import pickle
-import os
-import time
+# Libraries.
 import ConfigParser
-import socket
+import os
+import pickle
+import Queue
 import random
+import socket
+import sys
+import stat
+import threading
+import time
+
+# Project imports.
+from addresses import *
 import highlevelcrypto
 import shared
 import helper_startup
+
 
 
 config = ConfigParser.SafeConfigParser()
@@ -140,8 +144,11 @@ def lookupAppdataFolder():
         if "HOME" in environ:
             dataFolder = path.join(os.environ["HOME"], "Library/Application Support/", APPNAME) + '/'
         else:
-            logger.critical('Could not find home folder, please report this message and your '
-                             'OS X version to the BitMessage Github.')
+            stringToLog = 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
+            if 'logger' in globals():
+                logger.critical(stringToLog)
+            else:
+                print stringToLog
             sys.exit()
 
     elif 'win32' in sys.platform or 'win64' in sys.platform:
@@ -155,9 +162,14 @@ def lookupAppdataFolder():
 
         # Migrate existing data to the proper location if this is an existing install
         try:
-            logger.info("Moving data folder to %s" % (dataFolder))
             move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
+            stringToLog = "Moving data folder to %s" % (dataFolder)
+            if 'logger' in globals():
+                logger.info(stringToLog)
+            else:
+                print stringToLog
         except IOError:
+            # Old directory may not exist.
             pass
         dataFolder = dataFolder + '/'
     return dataFolder
@@ -203,23 +215,26 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
     return False
 
 def safeConfigGetBoolean(section,field):
-        try:
-            return config.getboolean(section,field)
-        except:
-            return False
+    try:
+        return config.getboolean(section,field)
+    except Exception, err:
+        return False
 
 def decodeWalletImportFormat(WIFstring):
     fullString = arithmetic.changebase(WIFstring,58,256)
     privkey = fullString[:-4]
     if fullString[-4:] != hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
-        sys.stderr.write('Major problem! When trying to decode one of your private keys, the checksum failed. Here is the PRIVATE key: %s\n' % str(WIFstring))
+        logger.error('Major problem! When trying to decode one of your private keys, the checksum '
+                     'failed. Here is the PRIVATE key: %s\n' % str(WIFstring))
         return ""
     else:
         #checksum passed
         if privkey[0] == '\x80':
             return privkey[1:]
         else:
-            sys.stderr.write('Major problem! When trying to decode one of your private keys, the checksum passed but the key doesn\'t begin with hex 80. Here is the PRIVATE key: %s\n' % str(WIFstring))
+            logger.error('Major problem! When trying to decode one of your private keys, the '
+                         'checksum passed but the key doesn\'t begin with hex 80. Here is the '
+                         'PRIVATE key: %s\n' % str(WIFstring))
             return ""
 
 
@@ -228,19 +243,32 @@ def reloadMyAddressHashes():
     myECCryptorObjects.clear()
     myAddressesByHash.clear()
     #myPrivateKeys.clear()
+
+    keyfileSecure = checkSensitiveFilePermissions(appdata + 'keys.dat')
     configSections = config.sections()
+    hasEnabledKeys = False
     for addressInKeysFile in configSections:
         if addressInKeysFile <> 'bitmessagesettings':
             isEnabled = config.getboolean(addressInKeysFile, 'enabled')
             if isEnabled:
+                hasEnabledKeys = True
                 status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
                 if addressVersionNumber == 2 or addressVersionNumber == 3:
-                    privEncryptionKey = decodeWalletImportFormat(config.get(addressInKeysFile, 'privencryptionkey')).encode('hex') #returns a simple 32 bytes of information encoded in 64 Hex characters, or null if there was an error
+                    # Returns a simple 32 bytes of information encoded in 64 Hex characters,
+                    # or null if there was an error.
+                    privEncryptionKey = decodeWalletImportFormat(
+                            config.get(addressInKeysFile, 'privencryptionkey')).encode('hex')
+
                     if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
                         myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
                         myAddressesByHash[hash] = addressInKeysFile
+
                 else:
-                    sys.stderr.write('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2 or 3.\n')
+                    logger.error('Error in reloadMyAddressHashes: Can\'t handle address '
+                                 'versions other than 2 or 3.\n')
+
+    if not keyfileSecure:
+        fixSensitiveFilePermissions(appdata + 'keys.dat', hasEnabledKeys)
 
 def reloadBroadcastSendersForWhichImWatching():
     logger.debug('reloading subscriptions...')
@@ -291,6 +319,7 @@ def doCleanShutdown():
     sqlSubmitQueue.put('exit')
     sqlLock.release()
     logger.info('Finished flushing inventory.')
+
     # Wait long enough to guarantee that any running proof of work worker threads will check the
     # shutdown variable and exit. If the main thread closes before they do then they won't stop.
     time.sleep(.25) 
@@ -327,6 +356,41 @@ def fixPotentiallyInvalidUTF8Data(text):
     except:
         output = 'Part of the message is corrupt. The message cannot be displayed the normal way.\n\n' + repr(text)
         return output
+
+# Checks sensitive file permissions for inappropriate umask during keys.dat creation.
+# (Or unwise subsequent chmod.)
+#
+# Returns true iff file appears to have appropriate permissions.
+def checkSensitiveFilePermissions(filename):
+    if sys.platform == 'win32':
+        # TODO: This might deserve extra checks by someone familiar with
+        # Windows systems.
+        return True
+    else:
+        present_permissions = os.stat(filename)[0]
+        disallowed_permissions = stat.S_IRWXG | stat.S_IRWXO
+        return present_permissions & disallowed_permissions == 0
+
+# Fixes permissions on a sensitive file.
+def fixSensitiveFilePermissions(filename, hasEnabledKeys):
+    if hasEnabledKeys:
+        logger.warning('Keyfile had insecure permissions, and there were enabled keys. '
+                       'The truly paranoid should stop using them immediately.')
+    else:
+        logger.warning('Keyfile had insecure permissions, but there were no enabled keys.')
+    try:
+        present_permissions = os.stat(filename)[0]
+        disallowed_permissions = stat.S_IRWXG | stat.S_IRWXO
+        allowed_permissions = ((1<<32)-1) ^ disallowed_permissions
+        new_permissions = (
+            allowed_permissions & present_permissions)
+        os.chmod(filename, new_permissions)
+
+        logger.info('Keyfile permissions automatically fixed.')
+
+    except Exception, e:
+        logger.exception('Keyfile permissions could not be fixed.')
+        raise
 
 helper_startup.loadConfig()
 from debug import logger

@@ -14,14 +14,14 @@ from setuptools import setup  # @UnresolvedImport
 
 name = "Bitmessage"
 mainscript = 'bitmessagemain.py'
-version = "0.3.4"
+version = "0.3.5"
 
 if sys.platform == 'darwin':
     extra_options = dict(
         setup_requires=['py2app'],
         app=[mainscript],
         options=dict(py2app=dict(argv_emulation=True,
-                                 includes = ['PyQt4.QtCore','PyQt4.QtGui', 'sip'],
+                                 includes = ['PyQt4.QtCore','PyQt4.QtGui', 'sip', 'sqlite3'],
                                  packages = ['bitmessageqt'],
                                  frameworks = ['/usr/local/opt/openssl/lib/libcrypto.dylib'],
                                  iconfile='images/bitmessage.icns',

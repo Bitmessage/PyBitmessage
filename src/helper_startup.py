@@ -59,6 +59,8 @@ def loadConfig():
             shared.config.set('bitmessagesettings', 'socksport', '9050')
             shared.config.set(
                 'bitmessagesettings', 'socksauthentication', 'false')
+            shared.config.set(
+                'bitmessagesettings', 'sockslisten', 'false')
             shared.config.set('bitmessagesettings', 'socksusername', '')
             shared.config.set('bitmessagesettings', 'sockspassword', '')
             shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
@@ -73,6 +75,7 @@ def loadConfig():
                 'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
             shared.config.set(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
+            shared.config.set('bitmessagesettings', 'dontconnect', 'true')
 
             if storeConfigFilesInSameDirectoryAsProgramByDefault:
                 # Just use the same directory as the program and forget about
@@ -83,5 +86,7 @@ def loadConfig():
                 print 'Creating new config files in', shared.appdata
                 if not os.path.exists(shared.appdata):
                     os.makedirs(shared.appdata)
+            if not sys.platform.startswith('win'):
+                os.umask(0o077)
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)

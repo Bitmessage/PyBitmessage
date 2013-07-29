@@ -3,6 +3,7 @@ import shared
 import socket
 from class_sendDataThread import *
 from class_receiveDataThread import *
+import helper_bootstrap
 
 # Only one singleListener thread will ever exist. It creates the
 # receiveDataThread and sendDataThread for each incoming connection. Note
@@ -21,11 +22,15 @@ class singleListener(threading.Thread):
         self.selfInitiatedConnections = selfInitiatedConnections
 
     def run(self):
-        # We don't want to accept incoming connections if the user is using a
-        # SOCKS proxy. If they eventually select proxy 'none' then this will
-        # start listening for connections.
-        while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
-            time.sleep(300)
+        while shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
+            time.sleep(1)
+        helper_bootstrap.dns()
+        # We typically don't want to accept incoming connections if the user is using a
+        # SOCKS proxy, unless they have configured otherwise. If they eventually select
+        # proxy 'none' or configure SOCKS listening then this will start listening for
+        # connections.
+        while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not shared.config.getboolean('bitmessagesettings', 'sockslisten'):
+            time.sleep(5)
 
         with shared.printLock:
             print 'Listening for incoming connections.'
@@ -40,10 +45,11 @@ class singleListener(threading.Thread):
         sock.listen(2)
 
         while True:
-            # We don't want to accept incoming connections if the user is using
-            # a SOCKS proxy. If the user eventually select proxy 'none' then
-            # this will start listening for connections.
-            while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
+            # We typically don't want to accept incoming connections if the user is using a
+            # SOCKS proxy, unless they have configured otherwise. If they eventually select
+            # proxy 'none' or configure SOCKS listening then this will start listening for
+            # connections.
+            while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not shared.config.getboolean('bitmessagesettings', 'sockslisten'):
                 time.sleep(10)
             while len(shared.connectedHostsList) > 220:
                 with shared.printLock:
