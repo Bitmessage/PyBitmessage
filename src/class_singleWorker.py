@@ -72,8 +72,8 @@ class singleWorker(threading.Thread):
                 self.sendBroadcast()
             elif command == 'doPOWForMyV2Pubkey':
                 self.doPOWForMyV2Pubkey(data)
-            elif command == 'doPOWForMyV3Pubkey':
-                self.doPOWForMyV3Pubkey(data)
+            elif command == 'sendOutOrStoreMyV3Pubkey':
+                self.sendOutOrStoreMyV3Pubkey(data)
                 """elif command == 'newpubkey':
                     toAddressVersion,toStreamNumber,toRipe = data
                     if toRipe in shared.neededPubkeys:
@@ -173,7 +173,11 @@ class singleWorker(threading.Thread):
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
             shared.config.write(configfile)
 
-    def doPOWForMyV3Pubkey(self, hash):  # This function also broadcasts out the pubkey message once it is done with the POW
+    # If this isn't a chan address, this function assembles the pubkey data,
+    # does the necessary POW and sends it out. If it *is* a chan then it
+    # assembles the pubkey and stores is in the pubkey table so that we can
+    # send messages to "ourselves".
+    def sendOutOrStoreMyV3Pubkey(self, hash): 
         myAddress = shared.myAddressesByHash[hash]
         status, addressVersionNumber, streamNumber, hash = decodeAddress(
             myAddress)
@@ -192,7 +196,7 @@ class singleWorker(threading.Thread):
         except Exception as err:
             with shared.printLock:
                 sys.stderr.write(
-                    'Error within doPOWForMyV3Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
+                    'Error within sendOutOrStoreMyV3Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
 
             return
 
@@ -216,34 +220,40 @@ class singleWorker(threading.Thread):
         payload += encodeVarint(len(signature))
         payload += signature
 
-        # Do the POW for this pubkey message
-        target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
-                             8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
-        print '(For pubkey message) Doing proof of work...'
-        initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
-        print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
+        if not shared.safeConfigGetBoolean(myAddress, 'chan'):
+            # Do the POW for this pubkey message
+            target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
+                                 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+            print '(For pubkey message) Doing proof of work...'
+            initialHash = hashlib.sha512(payload).digest()
+            trialValue, nonce = proofofwork.run(target, initialHash)
+            print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
 
-        payload = pack('>Q', nonce) + payload
-        """t = (hash,payload,embeddedTime,'no')
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
-        shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()"""
+            payload = pack('>Q', nonce) + payload
+            inventoryHash = calculateInventoryHash(payload)
+            objectType = 'pubkey'
+            shared.inventory[inventoryHash] = (
+                objectType, streamNumber, payload, embeddedTime)
 
-        inventoryHash = calculateInventoryHash(payload)
-        objectType = 'pubkey'
-        shared.inventory[inventoryHash] = (
-            objectType, streamNumber, payload, embeddedTime)
+            with shared.printLock:
+                print 'broadcasting inv with hash:', inventoryHash.encode('hex')
 
-        with shared.printLock:
-            print 'broadcasting inv with hash:', inventoryHash.encode('hex')
-
-        shared.broadcastToSendDataQueues((
-            streamNumber, 'sendinv', inventoryHash))
-        shared.UISignalQueue.put(('updateStatusBar', ''))
+            shared.broadcastToSendDataQueues((
+                streamNumber, 'sendinv', inventoryHash))
+            shared.UISignalQueue.put(('updateStatusBar', ''))
+        # If this is a chan address then we won't send out the pubkey over the
+        # network but rather will only store it in our pubkeys table so that
+        # we can send messages to "ourselves".
+        if shared.safeConfigGetBoolean(myAddress, 'chan'):
+            payload = '\x00' * 8 + payload # Attach a fake nonce on the front
+                # just so that it is in the correct format.
+            t = (hash,payload,embeddedTime,'yes')
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
         shared.config.set(
             myAddress, 'lastpubkeysendtime', str(int(time.time())))
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
@@ -722,8 +732,13 @@ class singleWorker(threading.Thread):
                     subject + '\n' + 'Body:' + message
                 payload += encodeVarint(len(messageToTransmit))
                 payload += messageToTransmit
-                fullAckPayload = self.generateFullAckMessage(
-                    ackdata, toStreamNumber, embeddedTime)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
+                if shared.safeConfigGetBoolean(toaddress, 'chan'):
+                    with shared.printLock:
+                        print 'Not bothering to generate ackdata because we are sending to a chan.'
+                    fullAckPayload = ''
+                else:
+                    fullAckPayload = self.generateFullAckMessage(
+                        ackdata, toStreamNumber, embeddedTime)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
                 payload += encodeVarint(len(fullAckPayload))
                 payload += fullAckPayload
                 signature = highlevelcrypto.sign(payload, privSigningKeyHex)
@@ -765,17 +780,26 @@ class singleWorker(threading.Thread):
             objectType = 'msg'
             shared.inventory[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, int(time.time()))
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Message sent. Waiting on acknowledgement. Sent on %1").arg(unicode(
-                strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
+            if shared.safeConfigGetBoolean(toaddress, 'chan'):
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Message sent. Sent on %1").arg(unicode(
+                    strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
+            else:
+                # not sending to a chan
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Message sent. Waiting on acknowledgement. Sent on %1").arg(unicode(
+                    strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
             print 'Broadcasting inv for my msg(within sendmsg function):', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
                 streamNumber, 'sendinv', inventoryHash))
 
             # Update the status of the message in the 'sent' table to have a
-            # 'msgsent' status
+            # 'msgsent' status or 'msgsentnoackexpected' status.
+            if shared.safeConfigGetBoolean(toaddress, 'chan'):
+                newStatus = 'msgsentnoackexpected'
+            else:
+                newStatus = 'msgsent'
             shared.sqlLock.acquire()
-            t = (inventoryHash,ackdata,)
-            shared.sqlSubmitQueue.put('''UPDATE sent SET msgid=?, status='msgsent' WHERE ackdata=?''')
+            t = (inventoryHash,newStatus,ackdata,)
+            shared.sqlSubmitQueue.put('''UPDATE sent SET msgid=?, status=? WHERE ackdata=?''')
             shared.sqlSubmitQueue.put(t)
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')

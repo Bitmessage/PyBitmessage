@@ -195,8 +195,8 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
 def safeConfigGetBoolean(section,field):
     try:
         return config.getboolean(section,field)
-    except:
-          return False
+    except Exception, err:
+        return False
 
 def decodeWalletImportFormat(WIFstring):
     fullString = arithmetic.changebase(WIFstring,58,256)

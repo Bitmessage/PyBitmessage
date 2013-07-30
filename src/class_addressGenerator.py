@@ -28,6 +28,8 @@ class addressGenerator(threading.Thread):
             elif queueValue[0] == 'joinChan':
                 command, chanAddress, label, deterministicPassphrase = queueValue
                 eighteenByteRipe = False
+                addressVersionNumber = decodeAddress(chanAddress)[1]
+                streamNumber = decodeAddress(chanAddress)[2]
                 numberOfAddressesToMake = 1
             elif len(queueValue) == 7:
                 command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe = queueValue
@@ -35,7 +37,7 @@ class addressGenerator(threading.Thread):
                 command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes = queueValue
             else:
                 sys.stderr.write(
-                    'Programming error: A structure with the wrong number of values was passed into the addressGeneratorQueue. Here is the queueValue: %s\n' % queueValue)
+                    'Programming error: A structure with the wrong number of values was passed into the addressGeneratorQueue. Here is the queueValue: %s\n' % repr(queueValue))
             if addressVersionNumber < 3 or addressVersionNumber > 3:
                 sys.stderr.write(
                     'Program error: For some reason the address generator queue has been given a request to create at least one version %s address which it cannot do.\n' % addressVersionNumber)
@@ -117,9 +119,8 @@ class addressGenerator(threading.Thread):
                     with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                         shared.config.write(configfile)
 
-                    # It may be the case that this address is being generated
-                    # as a result of a call to the API. Let us put the result
-                    # in the necessary queue.
+                    # The API and the join and create Chan functionality
+                    # both need information back from the address generator.
                     shared.apiAddressGeneratorReturnQueue.put(address)
 
                     shared.UISignalQueue.put((
@@ -128,7 +129,7 @@ class addressGenerator(threading.Thread):
                         label, address, streamNumber)))
                     shared.reloadMyAddressHashes()
                     shared.workerQueue.put((
-                        'doPOWForMyV3Pubkey', ripe.digest()))
+                        'sendOutOrStoreMyV3Pubkey', ripe.digest()))
 
                 elif command == 'createDeterministicAddresses' or command == 'getDeterministicAddress' or command == 'createChan' or command == 'joinChan':
                     if len(deterministicPassphrase) == 0:
@@ -188,8 +189,7 @@ class addressGenerator(threading.Thread):
                         # If we are joining an existing chan, let us check to make sure it matches the provided Bitmessage address
                         if command == 'joinChan':
                             if address != chanAddress:
-                                #todo: show an error message in the UI
-                                shared.apiAddressGeneratorReturnQueue.put('API Error 0018: Chan name does not match address.')
+                                shared.apiAddressGeneratorReturnQueue.put('chan name does not match address')
                                 saveAddressToDisk = False
                         if command == 'getDeterministicAddress':
                             saveAddressToDisk = False
@@ -210,8 +210,13 @@ class addressGenerator(threading.Thread):
                             privEncryptionKeyWIF = arithmetic.changebase(
                                 privEncryptionKey + checksum, 256, 58)
 
+                            addressAlreadyExists = False
                             try:
                                 shared.config.add_section(address)
+                            except:
+                                print address, 'already exists. Not adding it again.'
+                                addressAlreadyExists = True
+                            if not addressAlreadyExists:
                                 print 'label:', label
                                 shared.config.set(address, 'label', label)
                                 shared.config.set(address, 'enabled', 'true')
@@ -237,17 +242,13 @@ class addressGenerator(threading.Thread):
                                     potentialPrivEncryptionKey.encode('hex'))
                                 shared.myAddressesByHash[
                                     ripe.digest()] = address
-                                #todo: don't send out pubkey if dealing with a chan; save in pubkeys table instead.
                                 shared.workerQueue.put((
-                                    'doPOWForMyV3Pubkey', ripe.digest()))
-                            except:
-                                print address, 'already exists. Not adding it again.'
+                                    'sendOutOrStoreMyV3Pubkey', ripe.digest())) # If this is a chan address,
+                                        # the worker thread won't send out the pubkey over the network.
+
 
                     # Done generating addresses.
-                    if command == 'createDeterministicAddresses':
-                        # It may be the case that this address is being
-                        # generated as a result of a call to the API. Let us
-                        # put the result in the necessary queue.
+                    if command == 'createDeterministicAddresses' or command == 'joinChan' or command == 'createChan':
                         shared.apiAddressGeneratorReturnQueue.put(
                             listOfNewAddressesToSendOutThroughTheAPI)
                         shared.UISignalQueue.put((

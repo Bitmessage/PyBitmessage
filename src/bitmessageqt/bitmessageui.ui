@@ -1044,6 +1044,7 @@ p, li { white-space: pre-wrap; }
     <addaction name="actionManageKeys"/>
     <addaction name="actionDeleteAllTrashedMessages"/>
     <addaction name="actionRegenerateDeterministicAddresses"/>
+    <addaction name="actionJoinChan"/>
     <addaction name="actionExit"/>
    </widget>
    <widget class="QMenu" name="menuSettings">
@@ -1115,6 +1116,11 @@ p, li { white-space: pre-wrap; }
   <action name="actionDeleteAllTrashedMessages">
    <property name="text">
     <string>Delete all trashed messages</string>
+   </property>
+  </action>
+  <action name="actionJoinChan">
+   <property name="text">
+    <string>Join / Create chan</string>
    </property>
   </action>
  </widget>
