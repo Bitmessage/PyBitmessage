@@ -14,7 +14,7 @@ from setuptools import setup  # @UnresolvedImport
 
 name = "Bitmessage"
 mainscript = 'bitmessagemain.py'
-version = "0.3.4"
+version = "0.3.5"
 
 if sys.platform == 'darwin':
     extra_options = dict(

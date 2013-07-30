@@ -168,12 +168,15 @@ class MyForm(QtGui.QMainWindow):
             "MainWindow", "View HTML code as formatted text"), self.on_action_InboxMessageForceHtml)
         self.actionSaveMessageAs = self.ui.inboxContextMenuToolbar.addAction(_translate(
             "MainWindow", "Save message as..."), self.on_action_InboxSaveMessageAs)
+        self.actionMarkUnread = self.ui.inboxContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Mark Unread"), self.on_action_InboxMarkUnread)
         self.ui.tableWidgetInbox.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
             'customContextMenuRequested(const QPoint&)'), self.on_context_menuInbox)
         self.popMenuInbox = QtGui.QMenu(self)
         self.popMenuInbox.addAction(self.actionForceHtml)
+        self.popMenuInbox.addAction(self.actionMarkUnread)
         self.popMenuInbox.addSeparator()
         self.popMenuInbox.addAction(self.actionReply)
         self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
@@ -2353,6 +2356,32 @@ class MyForm(QtGui.QMainWindow):
 
             self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
 
+
+    def on_action_InboxMarkUnread(self):
+        font = QFont()
+        font.setBold(True)
+        for row in self.ui.tableWidgetInbox.selectedIndexes():
+            currentRow = row.row()
+            inventoryHashToMarkUnread = str(self.ui.tableWidgetInbox.item(
+                currentRow, 3).data(Qt.UserRole).toPyObject())
+            t = (inventoryHashToMarkUnread,)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put(
+                '''UPDATE inbox SET read=0 WHERE msgid=?''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            self.ui.tableWidgetInbox.item(currentRow, 0).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow, 1).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow, 2).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow, 3).setFont(font)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('commit')
+        shared.sqlLock.release()
+        # self.ui.tableWidgetInbox.selectRow(currentRow + 1) 
+        # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
+        # We could also select upwards, but then our problem would be with the topmost message.
+        # self.ui.tableWidgetInbox.clearSelection() manages to mark the message as read again.
 
     def on_action_InboxReply(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
