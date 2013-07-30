@@ -677,6 +677,23 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
             shared.UISignalQueue.put(('rerenderSubscriptions', ''))
             return 'Deleted subscription if it existed.'
+        elif method == 'listSubscriptions':
+            if len(params) != 0:
+                return "API Error 0000: I don't accept parameters!"
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''SELECT label, address, enabled FROM subscriptions''')
+            shared.sqlSubmitQueue.put('')
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            data = '{"subscriptions":['
+            for row in queryreturn:
+                label, address, enabled = row
+                label = shared.fixPotentiallyInvalidUTF8Data(label)
+                if len(data) > 20:
+                    data += ','
+                data += json.dumps({'label':label.encode('base64'), 'address': address, 'enabled': enabled == 1}, indent=4, separators=(',',': '))
+            data += ']}'
+            return data
         elif method == 'clientStatus':
             return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
         else:
