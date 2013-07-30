@@ -678,8 +678,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.UISignalQueue.put(('rerenderSubscriptions', ''))
             return 'Deleted subscription if it existed.'
         elif method == 'listSubscriptions':
-            if len(params) != 0:
-                return "API Error 0000: I don't accept parameters!"
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put('''SELECT label, address, enabled FROM subscriptions''')
             shared.sqlSubmitQueue.put('')
