@@ -1,4 +1,5 @@
 doTimingAttackMitigation = True
+sendAckEvenIfMsgIgnored = False
 
 import time
 import threading
@@ -1050,10 +1051,16 @@ class receiveDataThread(threading.Thread):
                         toAddress, '[Broadcast subscribers]', fromAddress, subject, message, ackdata)))
                     shared.workerQueue.put(('sendbroadcast', ''))
 
-            if self.isAckDataValid(ackData):
-                print 'ackData is valid. Will process it.'
-                self.ackDataThatWeHaveYetToSend.append(
-                    ackData)  # When we have processed all data, the processData function will pop the ackData out and process it as if it is a message received from our peer.
+                if self.isAckDataValid(ackData):
+                    print 'ackData is valid. Will process it.'
+                    self.ackDataThatWeHaveYetToSend.append(
+                        ackData)  # When we have processed all data, the processData function will pop the ackData out and process it as if it is a message received from our peer.
+            else: # BlockMsg is true
+                if sendAckEvenIfMsgIgnored:
+                    if self.isAckDataValid(ackData):
+                        print 'ackData is valid. Will process it.'
+                        self.ackDataThatWeHaveYetToSend.append(
+                            ackData)  # When we have processed all data, the processData function will pop the ackData out and process it as if it is a message received from our peer.
             # Display timing data
             timeRequiredToAttemptToDecryptMessage = time.time(
             ) - self.messageProcessingStartTime
