@@ -74,8 +74,6 @@ class singleWorker(threading.Thread):
                 self.doPOWForMyV2Pubkey(data)
             elif command == 'sendOutOrStoreMyV3Pubkey':
                 self.sendOutOrStoreMyV3Pubkey(data)
-            elif command == 'checkChanPrivacy':
-                self.checkChanPrivacy(data)
                 """elif command == 'newpubkey':
                     toAddressVersion,toStreamNumber,toRipe = data
                     if toRipe in shared.neededPubkeys:
