@@ -31,6 +31,9 @@ import os
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
+
+import base64
+
 import debug
 from debug import logger
 import subprocess
@@ -72,6 +75,10 @@ class MyForm(QtGui.QMainWindow):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
+
+        #init attach array
+        self.attach=[] #send aattach array
+        self.attachArray=[] # receive attach array
 
         # Ask the user if we may delete their old version 1 addresses if they
         # have any.
@@ -379,6 +386,16 @@ class MyForm(QtGui.QMainWindow):
             "itemChanged(QTableWidgetItem *)"), self.tableWidgetSubscriptionsItemChanged)
         QtCore.QObject.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.tableWidgetInboxItemClicked)
+        
+        QtCore.QObject.connect(self.ui.textEditInboxMessage,
+             QtCore.SIGNAL("anchorClicked(const QUrl&)"), self.saveAttach)
+        
+        QtCore.QObject.connect(self.ui.textEditSentMessage,
+             QtCore.SIGNAL("anchorClicked(const QUrl&)"), self.saveAttach)
+        
+        QtCore.QObject.connect(self.ui.AddAttach, QtCore.SIGNAL("clicked()"), self.AddAttach)
+        QtCore.QObject.connect(self.ui.DelAttach, QtCore.SIGNAL("clicked()"), self.DelAttach)
+        
         QtCore.QObject.connect(self.ui.tableWidgetSent, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.tableWidgetSentItemClicked)
 
@@ -452,6 +469,71 @@ class MyForm(QtGui.QMainWindow):
 
     # The most recent broadcast
     newBroadcastItem = None
+
+    def DelAttach(self):
+        
+        item=self.ui.attachmentListSend.currentItem()
+        for x in range(len(attachArray) ):
+            if(attachArray[x]==item.text):
+               del attachArray[x]
+               break
+
+        del item
+
+
+    def saveAttach(self,link):
+        link=link.toString()
+        
+        filename=self.attachArray[int(link)]['filename']
+        filename=filename.replace('"','')
+        
+        if(os.path.isdir('Downloads')==False):
+            os.mkdir('Downloads')
+        
+        f = open("Downloads/"+filename, 'w')
+        data=self.attachArray[int(link)]['content'].replace('\n','')
+        if(self.attachArray[int(link)]['encode'].find('base64')>-1):
+            data=base64.b64decode(data)
+            
+        f.write(data)
+        f.close()
+        QtGui.QMessageBox.information(self, 'Save success', 'Attach file save success.',
+            QMessageBox.Ok)
+ 
+        
+    def AddAttach(self):
+        attachFile=QtGui.QFileDialog.getOpenFileName(self, 'Open file', '')
+        f = open(attachFile, 'r')
+        
+        
+        attachFile=str(attachFile)
+        AFile = attachFile.split("/")[-1]
+        
+        ext = AFile.split(".")[-1]
+        
+        ext = ext.lower()
+        
+                
+        with f:        
+            data = f.read()
+        
+        if ext == 'jpg' or ext == 'png' or ext == 'gif':
+            if ext == 'jpg' or ext == 'jpeg':
+                t='image/jpeg'
+            else:
+                t='image/'+ext
+        else:
+            t='application/octet-stream;'
+        
+        #encode base64 file
+        dataenc = base64.b64encode(data)
+        content = "\rContent-Type: "+t
+        content+="name=\""+AFile+"\""
+        content+="\rContent-Transfer-Encoding: base64\r"
+        content+="Content-Disposition: attachment; filename=\""+AFile+"\"\r\r"
+        content+=dataenc
+        self.ui.attachmentListSend.addItem(AFile)
+        self.attach.append(content)
 
     # show the application window
     def appIndicatorShow(self):
@@ -1484,7 +1566,11 @@ class MyForm(QtGui.QMainWindow):
         fromAddress = str(self.ui.labelFrom.text())
         subject = str(self.ui.lineEditSubject.text().toUtf8())
         message = str(
-            self.ui.textEditMessage.document().toPlainText().toUtf8())
+        self.ui.textEditMessage.document().toPlainText().toUtf8())
+        message+=str("\r".join(self.attach)+"\r")
+        self.attach=[]
+        self.ui.attachmentListSend.clear()
+            
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
                                for s in toAddresses.replace(',', ';').split(';')]
@@ -2250,11 +2336,26 @@ class MyForm(QtGui.QMainWindow):
                     lines[i])
             elif lines[i] == '------------------------------------------------------':
                 lines[i] = '<hr>'
+        
         content = ''
-        for i in xrange(len(lines)):
-            content += lines[i]
-        content = content.replace('\n\n', '<br><br>')
-        self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
+        if(len(self.attachArray)==0 ):
+            for i in xrange(len(lines)):
+                content += lines[i]
+                content = content.replace('\n\n', '<br><br>')
+                self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
+        else:
+            for i in range(len(self.attachArray) ):
+                if(i==0):
+                   
+                   content += "<br>".join(self.attachArray[i]['data'])+"<br>"
+                   content += "<table><tr><th style='color:black'>Attachments</th></tr>"
+                
+                content += "<tr><td>"+self.attachArray[i]['filename']+"</td><td><a href='"+str(i)+"'>Download</a></td></tr>"
+                
+            content +="</table>"
+
+            self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
+
 
     def on_action_InboxMarkUnread(self):
         font = QFont()
@@ -2778,13 +2879,77 @@ class MyForm(QtGui.QMainWindow):
         self.ui.textEditInboxMessage.setPlainText(QString(""))
         self.loadSent(searchOption, searchKeyword)
 
+    
+    def findAttach(self, messagee):
+		
+        mess_list=messagee.split("\r")
+        attachHtml=''
+        self.attachArray=[]
+        licznik=0
+        zal=False
+        dane=''
+        attachs=False
+        
+        for i in range( len(mess_list) ):
+            content=mess_list[i].split(':')
+            if(len(content)>1 ):
+                value=content[1].split(';')
+
+                if(content[0].find('Content-Type')!=-1 and (value[0].find('image')>-1 or value[0].find('octet-stream')>-1 ) ):
+                    attachs=True
+                    print "jest zalacznik"
+                    self.attachArray.append({'Content-Type':value[0],'data': mess_list[0:i]})
+                    licznik+=1
+                    zal=True
+        
+                if(content[0].find('Content-Transfer-Encoding')>-1 and zal==True):
+                    print "encoding : "+value[0]
+                    self.attachArray[licznik-1]['encode']=value[0]
+                    
+                
+                if(content[0].find('Content-Disposition')>-1 and zal==True):
+                    print "filename : "+value[0]
+                    self.attachArray[licznik-1]['filename']=value[1].split('=')[-1]
+                    
+
+                
+            if((mess_list[i]=='' or mess_list[i]=='\n') and zal == True):
+                print "jest zal"+str(i)
+               
+                for s in range( i+1,len(mess_list) ):
+                    print "jest spraw"+str(i)
+                    
+                    if(len(mess_list[s])>2):
+                        print "dodaje"
+                        dane+=mess_list[s]
+                    else:
+                        self.attachArray[licznik-1]['content']=dane
+                        dane=''
+                        zal=False
+                        break
+        
+        if(attachs):
+			return True
+        else:
+            return False
+        
+    
     def tableWidgetInboxItemClicked(self):
+        self.attachArray=[]
         currentRow = self.ui.tableWidgetInbox.currentRow()
+
         if currentRow >= 0:
             fromAddress = str(self.ui.tableWidgetInbox.item(
                 currentRow, 1).data(Qt.UserRole).toPyObject())
             # If we have received this message from either a broadcast address
             # or from someone in our address book, display as HTML
+            
+            mess=str(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject().toUtf8() )
+
+            if(self.findAttach(mess) ):
+                self.on_action_InboxMessageForceHtml()
+                return
+            
             if decodeAddress(fromAddress)[3] in shared.broadcastSendersForWhichImWatching or shared.isAddressInMyAddressBook(fromAddress):
                 if len(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
                     self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(
@@ -2822,8 +2987,24 @@ class MyForm(QtGui.QMainWindow):
     def tableWidgetSentItemClicked(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         if currentRow >= 0:
-            self.ui.textEditSentMessage.setPlainText(self.ui.tableWidgetSent.item(
-                currentRow, 2).data(Qt.UserRole).toPyObject())
+            mess=self.ui.tableWidgetSent.item(currentRow, 2).data(Qt.UserRole).toPyObject()
+            content=''
+            if(self.findAttach( str(mess) ) ):
+               for i in range(len(self.attachArray) ):
+                   if(i==0):
+                      content += "<br>".join(self.attachArray[i]['data'])+"<br>"
+
+                   content += "<table><tr><th style='color:black'>Attachments</th></tr>"
+                
+                   content += "<tr><td>"+self.attachArray[i]['filename']+"</td><td><a href='"+str(i)+"'>Download</a></td></tr>"
+                
+                   content +="</table>"
+               
+                   self.ui.textEditSentMessage.setHtml(content)
+              
+            else:
+               self.ui.textEditSentMessage.setPlainText(mess)
+            
 
     def tableWidgetYourIdentitiesItemChanged(self):
         currentRow = self.ui.tableWidgetYourIdentities.currentRow()
