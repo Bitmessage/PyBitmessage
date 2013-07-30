@@ -28,13 +28,13 @@ def dns():
             try:
                 for item in socket.getaddrinfo('bootstrap8080.bitmessage.org', 80):
                     print 'Adding', item[4][0], 'to knownNodes based on DNS boostrap method'
-                    shared.knownNodes[1][item[4][0]] = (8080, int(time.time()))
+                    shared.knownNodes[1][shared.Peer(item[4][0], 8080)] = int(time.time())
             except:
                 print 'bootstrap8080.bitmessage.org DNS bootstrapping failed.'
             try:
                 for item in socket.getaddrinfo('bootstrap8444.bitmessage.org', 80):
                     print 'Adding', item[4][0], 'to knownNodes based on DNS boostrap method'
-                    shared.knownNodes[1][item[4][0]] = (8444, int(time.time()))
+                    shared.knownNodes[1][shared.Peer(item[4][0], 8444)] = int(time.time())
             except:
                 print 'bootstrap8444.bitmessage.org DNS bootstrapping failed.'
         else:
