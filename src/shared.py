@@ -9,6 +9,7 @@ useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the
 
 
 # Libraries.
+import collections
 import ConfigParser
 import os
 import pickle
@@ -369,6 +370,8 @@ def fixSensitiveFilePermissions(filename, hasEnabledKeys):
     except Exception, e:
         logger.exception('Keyfile permissions could not be fixed.')
         raise
+
+Peer = collections.namedtuple('Peer', ['host', 'port'])
 
 helper_startup.loadConfig()
 from debug import logger
