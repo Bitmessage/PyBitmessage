@@ -325,6 +325,21 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     'base64'), 'message': message.encode('base64'), 'encodingType': encodingtype, 'receivedTime': received, 'read': read}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
+        elif method == 'getAllInboxMessageIds':
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put(
+                '''SELECT msgid FROM inbox where folder='inbox' ORDER BY received''')
+            shared.sqlSubmitQueue.put('')
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            data = '{"inboxMessageIds":['
+            for row in queryreturn:
+                msgid = row[0]
+                if len(data) > 25:
+                    data += ','
+                data += json.dumps({'msgid': msgid.encode('hex')}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
         elif method == 'getInboxMessageById' or method == 'getInboxMessageByID':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
@@ -357,6 +372,20 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 if len(data) > 25:
                     data += ','
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+        elif method == 'getAllSentMessageIds':
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''')
+            shared.sqlSubmitQueue.put('')
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            data = '{"sentMessageIds":['
+            for row in queryreturn:
+                msgid = row[0]
+                if len(data) > 25:
+                    data += ','
+                data += json.dumps({'msgid':msgid.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif method == 'getInboxMessagesByAddress':
