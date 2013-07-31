@@ -414,7 +414,8 @@ class singleWorker(threading.Thread):
                 objectType = 'broadcast'
                 shared.inventory[inventoryHash] = (
                     objectType, streamNumber, payload, int(time.time()))
-                print 'sending inv (within sendBroadcast function)'
+                with shared.printLock:
+                    print 'sending inv (within sendBroadcast function) for object:', inventoryHash.encode('hex')
                 shared.broadcastToSendDataQueues((
                     streamNumber, 'sendinv', inventoryHash))
 
