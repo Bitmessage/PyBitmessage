@@ -340,6 +340,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
+                if len(data) > 17:
+                    data += ","
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received, 'read': read}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
@@ -394,6 +396,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
+                if len(data) > 16:
+                    data += ","
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
