@@ -695,7 +695,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif method == 'clientStatus':
             return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
         else:
-            return 'Invalid Method: %s' % method
+            return 'API Error 0020: Invalid method: %s' % method
 
 # This thread, of which there is only one, runs the API.
 
