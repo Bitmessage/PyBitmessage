@@ -5,19 +5,20 @@ import time
 import random
 import sys
 from time import strftime, localtime
+import shared
 
 def createDefaultKnownNodes(appdata):
     ############## Stream 1 ################
     stream1 = {}
 
-    stream1['85.171.174.131'] = (8444,int(time.time()))
-    stream1['23.28.68.159'] = (8444,int(time.time()))
-    stream1['66.108.210.240'] = (8080,int(time.time()))
-    stream1['204.236.246.212'] = (8444,int(time.time()))
-    stream1['78.81.56.239'] = (8444,int(time.time()))
-    stream1['122.60.235.157'] = (8444,int(time.time()))
-    stream1['204.236.246.212'] = (8444,int(time.time()))
-    stream1['24.98.219.109'] = (8444,int(time.time()))
+    stream1[shared.Peer('85.171.174.131', 8444)] = int(time.time())
+    stream1[shared.Peer('23.28.68.159', 8444)] = int(time.time())
+    stream1[shared.Peer('66.108.210.240', 8444)] = int(time.time())
+    stream1[shared.Peer('204.236.246.212', 8444)] = int(time.time())
+    stream1[shared.Peer('78.81.56.239', 8444)] = int(time.time())
+    stream1[shared.Peer('122.60.235.157', 8444)] = int(time.time())
+    stream1[shared.Peer('204.236.246.212', 8444)] = int(time.time())
+    stream1[shared.Peer('24.98.219.109', 8444)] = int(time.time())
 
 
     ############# Stream 2 #################
@@ -48,10 +49,15 @@ def readDefaultKnownNodes(appdata):
     pickleFile = open(appdata + 'knownnodes.dat', 'rb')
     knownNodes = pickle.load(pickleFile)
     pickleFile.close()
-    knownNodes
     for stream, storedValue in knownNodes.items():
         for host,value in storedValue.items():
-            port, storedtime = storedValue[host]
+            try:
+                # Old knownNodes format.
+                port, storedtime = value
+            except:
+                # New knownNodes format.
+                host, port = host
+                storedtime = value
             print host, '\t', port, '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(storedtime)),'utf-8')
 
 if __name__ == "__main__":
