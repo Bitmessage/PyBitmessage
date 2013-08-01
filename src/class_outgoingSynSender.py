@@ -35,7 +35,7 @@ class outgoingSynSender(threading.Thread):
             peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
             shared.knownNodesLock.release()
             shared.alreadyAttemptedConnectionsListLock.acquire()
-            while peer in shared.alreadyAttemptedConnectionsList or peer in shared.connectedHostsList:
+            while peer in shared.alreadyAttemptedConnectionsList or peer.host in shared.connectedHostsList:
                 shared.alreadyAttemptedConnectionsListLock.release()
                 # print 'choosing new sample'
                 random.seed()
