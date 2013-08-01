@@ -341,8 +341,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received, 'read': read}, indent=4, separators=(',', ': '))
-            data += ']}'
-            return data
+                data += ']}'
+                return data
         elif method == 'getAllSentMessages':
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
@@ -395,8 +395,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
-            data += ']}'
-            return data
+                data += ']}'
+                return data
         elif method == 'getSentMessagesByAddress' or method == 'getSentMessagesBySender':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
@@ -677,10 +677,25 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
             shared.UISignalQueue.put(('rerenderSubscriptions', ''))
             return 'Deleted subscription if it existed.'
+        elif method == 'listSubscriptions':
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''SELECT label, address, enabled FROM subscriptions''')
+            shared.sqlSubmitQueue.put('')
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            data = '{"subscriptions":['
+            for row in queryreturn:
+                label, address, enabled = row
+                label = shared.fixPotentiallyInvalidUTF8Data(label)
+                if len(data) > 20:
+                    data += ','
+                data += json.dumps({'label':label.encode('base64'), 'address': address, 'enabled': enabled == 1}, indent=4, separators=(',',': '))
+            data += ']}'
+            return data
         elif method == 'clientStatus':
             return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
         else:
-            return 'Invalid Method: %s' % method
+            return 'API Error 0020: Invalid method: %s' % method
 
 # This thread, of which there is only one, runs the API.
 
