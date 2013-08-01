@@ -31,7 +31,7 @@ class sendDataThread(threading.Thread):
         streamNumber,
             someObjectsOfWhichThisRemoteNodeIsAlreadyAware):
         self.sock = sock
-	self.peer = shared.Peer(HOST, PORT)
+        self.peer = shared.Peer(HOST, PORT)
         self.streamNumber = streamNumber
         self.remoteProtocolVersion = - \
             1  # This must be set using setRemoteProtocolVersion command which is sent through the self.mailbox queue.
