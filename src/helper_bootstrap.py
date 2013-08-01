@@ -9,8 +9,20 @@ def knownNodes():
         # We shouldn't have to use the shared.knownNodesLock because this had
         # better be the only thread accessing knownNodes right now.
         pickleFile = open(shared.appdata + 'knownnodes.dat', 'rb')
-        shared.knownNodes = pickle.load(pickleFile)
+        loadedKnownNodes = pickle.load(pickleFile)
         pickleFile.close()
+        # The old format of storing knownNodes was as a 'host: (port, time)'
+        # mapping. The new format is as 'Peer: time' pairs. If we loaded
+        # data in the old format, transform it to the new style.
+        for stream, nodes in loadedKnownNodes.items():
+            shared.knownNodes[stream] = {}
+            for node_tuple in nodes.items():
+                try:
+                    host, (port, time) = node_tuple
+                    peer = shared.Peer(host, port)
+                except:
+                    peer, time = node_tuple
+                shared.knownNodes[stream][peer] = time
     except:
         shared.knownNodes = defaultKnownNodes.createDefaultKnownNodes(shared.appdata)
     if shared.config.getint('bitmessagesettings', 'settingsversion') > 6:

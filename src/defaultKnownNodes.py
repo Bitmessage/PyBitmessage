@@ -49,10 +49,15 @@ def readDefaultKnownNodes(appdata):
     pickleFile = open(appdata + 'knownnodes.dat', 'rb')
     knownNodes = pickle.load(pickleFile)
     pickleFile.close()
-    knownNodes
     for stream, storedValue in knownNodes.items():
         for host,value in storedValue.items():
-            port, storedtime = storedValue[host]
+            try:
+                # Old knownNodes format.
+                port, storedtime = value
+            except:
+                # New knownNodes format.
+                host, port = host
+                storedtime = value
             print host, '\t', port, '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(storedtime)),'utf-8')
 
 if __name__ == "__main__":
