@@ -325,7 +325,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     'base64'), 'message': message.encode('base64'), 'encodingType': encodingtype, 'receivedTime': received, 'read': read}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
-        elif method == 'getAllInboxMessageIds':
+        elif method == 'getAllInboxMessageIds' or method == 'getAllInboxMessageIDs':
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put(
                 '''SELECT msgid FROM inbox where folder='inbox' ORDER BY received''')
@@ -374,7 +374,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
-        elif method == 'getAllSentMessageIds':
+        elif method == 'getAllSentMessageIds' or method == 'getAllSentMessageIDs':
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put('''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''')
             shared.sqlSubmitQueue.put('')
