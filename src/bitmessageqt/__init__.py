@@ -3286,7 +3286,7 @@ def run():
     translator = QtCore.QTranslator()
 
     try:
-        translator.load("translations/bitmessage_" + str(locale.getlocale()[0]))
+        translator.load("translations/bitmessage_" + str(locale.getdefaultlocale()[0]))
     except:
         # The above is not compatible with all versions of OSX.
         translator.load("translations/bitmessage_en_US") # Default to english.
