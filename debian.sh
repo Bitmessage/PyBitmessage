@@ -2,7 +2,7 @@
 
 APP=pybitmessage
 PREV_VERSION=0.3.4
-VERSION=0.3.4
+VERSION=0.3.5
 RELEASE=1
 ARCH_TYPE=`uname -m`
 DIR=${APP}-${VERSION}

@@ -271,172 +271,99 @@ class singleWorker(threading.Thread):
             fromaddress, subject, body, ackdata = row
             status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                 fromaddress)
-            """if addressVersionNumber == 2 and int(time.time()) < shared.encryptedBroadcastSwitchoverTime:
-                # We need to convert our private keys to public keys in order
-                # to include them.
-                try:
-                    privSigningKeyBase58 = shared.config.get(
-                        fromaddress, 'privsigningkey')
-                    privEncryptionKeyBase58 = shared.config.get(
-                        fromaddress, 'privencryptionkey')
-                except:
-                    shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
-                    continue
-
-                privSigningKeyHex = shared.decodeWalletImportFormat(
-                    privSigningKeyBase58).encode('hex')
-                privEncryptionKeyHex = shared.decodeWalletImportFormat(
-                    privEncryptionKeyBase58).encode('hex')
-
-                pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode(
-                    'hex')  # At this time these pubkeys are 65 bytes long because they include the encoding byte which we won't be sending in the broadcast message.
-                pubEncryptionKey = highlevelcrypto.privToPub(
-                    privEncryptionKeyHex).decode('hex')
-
-                payload = pack('>Q', (int(time.time()) + random.randrange(
-                    -300, 300)))  # the current time plus or minus five minutes
-                payload += encodeVarint(1)  # broadcast version
-                payload += encodeVarint(addressVersionNumber)
-                payload += encodeVarint(streamNumber)
-                payload += '\x00\x00\x00\x01'  # behavior bitfield
-                payload += pubSigningKey[1:]
-                payload += pubEncryptionKey[1:]
-                payload += ripe
-                payload += '\x02'  # message encoding type
-                payload += encodeVarint(len(
-                    'Subject:' + subject + '\n' + 'Body:' + body))  # Type 2 is simple UTF-8 message encoding.
-                payload += 'Subject:' + subject + '\n' + 'Body:' + body
-
-                signature = highlevelcrypto.sign(payload, privSigningKeyHex)
-                payload += encodeVarint(len(signature))
-                payload += signature
-
-                target = 2 ** 64 / ((len(
-                    payload) + shared.networkDefaultPayloadLengthExtraBytes + 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
-                print '(For broadcast message) Doing proof of work...'
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                    ackdata, tr.translateText("MainWindow", "Doing work necessary to send broadcast..."))))
-                initialHash = hashlib.sha512(payload).digest()
-                trialValue, nonce = proofofwork.run(target, initialHash)
-                print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
-
-                payload = pack('>Q', nonce) + payload
-
-                inventoryHash = calculateInventoryHash(payload)
-                objectType = 'broadcast'
-                shared.inventory[inventoryHash] = (
-                    objectType, streamNumber, payload, int(time.time()))
-                print 'Broadcasting inv for my broadcast (within sendBroadcast function):', inventoryHash.encode('hex')
-                shared.broadcastToSendDataQueues((
-                    streamNumber, 'sendinv', inventoryHash))
-
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Broadcast sent on %1").arg(unicode(
-                    strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
-
-                # Update the status of the message in the 'sent' table to have
-                # a 'broadcastsent' status
-                shared.sqlLock.acquire()
-                t = ('broadcastsent', int(
-                    time.time()), fromaddress, subject, body, 'broadcastqueued')
-                shared.sqlSubmitQueue.put(
-                    'UPDATE sent SET status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
-                shared.sqlSubmitQueue.put(t)
-                queryreturn = shared.sqlReturnQueue.get()
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlLock.release()"""
-            if addressVersionNumber == 2 or addressVersionNumber == 3:
-                # We need to convert our private keys to public keys in order
-                # to include them.
-                try:
-                    privSigningKeyBase58 = shared.config.get(
-                        fromaddress, 'privsigningkey')
-                    privEncryptionKeyBase58 = shared.config.get(
-                        fromaddress, 'privencryptionkey')
-                except:
-                    shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
-                    continue
-
-                privSigningKeyHex = shared.decodeWalletImportFormat(
-                    privSigningKeyBase58).encode('hex')
-                privEncryptionKeyHex = shared.decodeWalletImportFormat(
-                    privEncryptionKeyBase58).encode('hex')
-
-                pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode(
-                    'hex')  # At this time these pubkeys are 65 bytes long because they include the encoding byte which we won't be sending in the broadcast message.
-                pubEncryptionKey = highlevelcrypto.privToPub(
-                    privEncryptionKeyHex).decode('hex')
-
-                payload = pack('>Q', (int(time.time()) + random.randrange(
-                    -300, 300)))  # the current time plus or minus five minutes
-                payload += encodeVarint(2)  # broadcast version
-                payload += encodeVarint(streamNumber)
-
-                dataToEncrypt = encodeVarint(2)  # broadcast version
-                dataToEncrypt += encodeVarint(addressVersionNumber)
-                dataToEncrypt += encodeVarint(streamNumber)
-                dataToEncrypt += '\x00\x00\x00\x01'  # behavior bitfield
-                dataToEncrypt += pubSigningKey[1:]
-                dataToEncrypt += pubEncryptionKey[1:]
-		if addressVersionNumber >= 3:
-                    dataToEncrypt += encodeVarint(shared.config.getint(fromaddress,'noncetrialsperbyte'))
-                    dataToEncrypt += encodeVarint(shared.config.getint(fromaddress,'payloadlengthextrabytes'))
-                dataToEncrypt += '\x02' # message encoding type
-                dataToEncrypt += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding per the documentation on the wiki.
-                dataToEncrypt += 'Subject:' + subject + '\n' + 'Body:' + body
-                signature = highlevelcrypto.sign(
-                    dataToEncrypt, privSigningKeyHex)
-                dataToEncrypt += encodeVarint(len(signature))
-                dataToEncrypt += signature
-
-                # Encrypt the broadcast with the information contained in the broadcaster's address. Anyone who knows the address can generate 
-                # the private encryption key to decrypt the broadcast. This provides virtually no privacy; its purpose is to keep questionable 
-                # and illegal content from flowing through the Internet connections and being stored on the disk of 3rd parties. 
-                privEncryptionKey = hashlib.sha512(encodeVarint(
-                    addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()[:32]
-                pubEncryptionKey = pointMult(privEncryptionKey)
-                payload += highlevelcrypto.encrypt(
-                    dataToEncrypt, pubEncryptionKey.encode('hex'))
-
-                target = 2 ** 64 / ((len(
-                    payload) + shared.networkDefaultPayloadLengthExtraBytes + 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
-                print '(For broadcast message) Doing proof of work...'
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                    ackdata, tr.translateText("MainWindow", "Doing work necessary to send broadcast..."))))
-                initialHash = hashlib.sha512(payload).digest()
-                trialValue, nonce = proofofwork.run(target, initialHash)
-                print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
-
-                payload = pack('>Q', nonce) + payload
-
-                inventoryHash = calculateInventoryHash(payload)
-                objectType = 'broadcast'
-                shared.inventory[inventoryHash] = (
-                    objectType, streamNumber, payload, int(time.time()))
-                print 'sending inv (within sendBroadcast function)'
-                shared.broadcastToSendDataQueues((
-                    streamNumber, 'sendinv', inventoryHash))
-
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Broadcast sent on %1").arg(unicode(
-                    strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
-
-                # Update the status of the message in the 'sent' table to have
-                # a 'broadcastsent' status
-                shared.sqlLock.acquire()
-                t = (inventoryHash,'broadcastsent', int(
-                    time.time()), fromaddress, subject, body, 'broadcastqueued')
-                shared.sqlSubmitQueue.put(
-                    'UPDATE sent SET msgid=?, status=?, lastactiontime=? WHERE fromaddress=? AND subject=? AND message=? AND status=?')
-                shared.sqlSubmitQueue.put(t)
-                queryreturn = shared.sqlReturnQueue.get()
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlLock.release()
-            else:
+            if addressVersionNumber <= 1:
                 with shared.printLock:
                     sys.stderr.write(
                         'Error: In the singleWorker thread, the sendBroadcast function doesn\'t understand the address version.\n')
+                return
+            # We need to convert our private keys to public keys in order
+            # to include them.
+            try:
+                privSigningKeyBase58 = shared.config.get(
+                    fromaddress, 'privsigningkey')
+                privEncryptionKeyBase58 = shared.config.get(
+                    fromaddress, 'privencryptionkey')
+            except:
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
+                    ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
+                continue
 
+            privSigningKeyHex = shared.decodeWalletImportFormat(
+                privSigningKeyBase58).encode('hex')
+            privEncryptionKeyHex = shared.decodeWalletImportFormat(
+                privEncryptionKeyBase58).encode('hex')
+
+            pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode(
+                'hex')  # At this time these pubkeys are 65 bytes long because they include the encoding byte which we won't be sending in the broadcast message.
+            pubEncryptionKey = highlevelcrypto.privToPub(
+                privEncryptionKeyHex).decode('hex')
+
+            payload = pack('>Q', (int(time.time()) + random.randrange(
+                -300, 300)))  # the current time plus or minus five minutes
+            payload += encodeVarint(2)  # broadcast version
+            payload += encodeVarint(streamNumber)
+
+            dataToEncrypt = encodeVarint(2)  # broadcast version
+            dataToEncrypt += encodeVarint(addressVersionNumber)
+            dataToEncrypt += encodeVarint(streamNumber)
+            dataToEncrypt += '\x00\x00\x00\x01'  # behavior bitfield
+            dataToEncrypt += pubSigningKey[1:]
+            dataToEncrypt += pubEncryptionKey[1:]
+            if addressVersionNumber >= 3:
+                dataToEncrypt += encodeVarint(shared.config.getint(fromaddress,'noncetrialsperbyte'))
+                dataToEncrypt += encodeVarint(shared.config.getint(fromaddress,'payloadlengthextrabytes'))
+            dataToEncrypt += '\x02' # message encoding type
+            dataToEncrypt += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding per the documentation on the wiki.
+            dataToEncrypt += 'Subject:' + subject + '\n' + 'Body:' + body
+            signature = highlevelcrypto.sign(
+                dataToEncrypt, privSigningKeyHex)
+            dataToEncrypt += encodeVarint(len(signature))
+            dataToEncrypt += signature
+
+            # Encrypt the broadcast with the information contained in the broadcaster's address. Anyone who knows the address can generate 
+            # the private encryption key to decrypt the broadcast. This provides virtually no privacy; its purpose is to keep questionable 
+            # and illegal content from flowing through the Internet connections and being stored on the disk of 3rd parties. 
+            privEncryptionKey = hashlib.sha512(encodeVarint(
+                addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()[:32]
+            pubEncryptionKey = pointMult(privEncryptionKey)
+            payload += highlevelcrypto.encrypt(
+                dataToEncrypt, pubEncryptionKey.encode('hex'))
+
+            target = 2 ** 64 / ((len(
+                payload) + shared.networkDefaultPayloadLengthExtraBytes + 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+            print '(For broadcast message) Doing proof of work...'
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
+                ackdata, tr.translateText("MainWindow", "Doing work necessary to send broadcast..."))))
+            initialHash = hashlib.sha512(payload).digest()
+            trialValue, nonce = proofofwork.run(target, initialHash)
+            print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
+
+            payload = pack('>Q', nonce) + payload
+
+            inventoryHash = calculateInventoryHash(payload)
+            objectType = 'broadcast'
+            shared.inventory[inventoryHash] = (
+                objectType, streamNumber, payload, int(time.time()))
+            with shared.printLock:
+                print 'sending inv (within sendBroadcast function) for object:', inventoryHash.encode('hex')
+            shared.broadcastToSendDataQueues((
+                streamNumber, 'sendinv', inventoryHash))
+
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Broadcast sent on %1").arg(unicode(
+                strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
+
+            # Update the status of the message in the 'sent' table to have
+            # a 'broadcastsent' status
+            shared.sqlLock.acquire()
+            t = (inventoryHash,'broadcastsent', int(
+                time.time()), ackdata)
+            shared.sqlSubmitQueue.put(
+                'UPDATE sent SET msgid=?, status=?, lastactiontime=? WHERE ackdata=?')
+            shared.sqlSubmitQueue.put(t)
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+        
 
     def sendMsg(self):
         # Check to see if there are any messages queued to be sent
