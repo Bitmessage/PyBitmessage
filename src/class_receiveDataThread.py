@@ -48,7 +48,7 @@ class receiveDataThread(threading.Thread):
         self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave = {}
         self.selfInitiatedConnections = selfInitiatedConnections
         shared.connectedHostsList[
-            self.peer] = 0  # The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
+            self.peer.host] = 0  # The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
         self.connectionIsOrWasFullyEstablished = False  # set to true after the remote node and I accept each other's version messages. This is needed to allow the user interface to accurately reflect the current number of connections.
         if self.streamNumber == -1:  # This was an incoming connection. Send out a version message if we accept the other node's version message.
             self.initiatedConnection = False
@@ -94,10 +94,10 @@ class receiveDataThread(threading.Thread):
             pass
         shared.broadcastToSendDataQueues((0, 'shutdown', self.peer))
         try:
-            del shared.connectedHostsList[self.peer]
+            del shared.connectedHostsList[self.peer.host]
         except Exception as err:
             with shared.printLock:
-                print 'Could not delete', self.peer, 'from shared.connectedHostsList.', err
+                print 'Could not delete', self.peer.host, 'from shared.connectedHostsList.', err
 
         try:
             del shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
@@ -1979,7 +1979,7 @@ class receiveDataThread(threading.Thread):
 
                 return
             shared.connectedHostsList[
-                self.peer] = 1  # We use this data structure to not only keep track of what hosts we are connected to so that we don't try to connect to them again, but also to list the connections count on the Network Status tab.
+                self.peer.host] = 1  # We use this data structure to not only keep track of what hosts we are connected to so that we don't try to connect to them again, but also to list the connections count on the Network Status tab.
             # If this was an incoming connection, then the sendData thread
             # doesn't know the stream. We have to set it.
             if not self.initiatedConnection:
