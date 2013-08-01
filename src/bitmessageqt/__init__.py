@@ -1006,7 +1006,6 @@ class MyForm(QtGui.QMainWindow):
             category is not self.SOUND_DISCONNECTED and
             category is not self.SOUND_CONNECTION_GREEN):
             dt = datetime.datetime.now() - self.lastSoundTime
-            self.lastSoundTime = datetime.datetime.now()
             if dt.total_seconds() < self.maxSoundFrequencySec:
                 play = False
 
@@ -1023,6 +1022,9 @@ class MyForm(QtGui.QMainWindow):
                 soundFilename = shared.appdata + 'sounds/green'            
 
         if soundFilename is not None and play is True:
+            # record the last time that a sound was played
+            self.lastSoundTime = datetime.datetime.now()
+
             # if not wav then try mp3 format
             if not os.path.isfile(soundFilename + '.wav'):
                 soundFilename = soundFilename + '.mp3'
