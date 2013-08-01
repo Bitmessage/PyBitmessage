@@ -34,7 +34,7 @@ import platform
 import debug
 from debug import logger
 import subprocess
-
+import datetime
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -64,6 +64,12 @@ class MyForm(QtGui.QMainWindow):
     SOUND_CONNECTED = 3
     SOUND_DISCONNECTED = 4
     SOUND_CONNECTION_GREEN = 5
+
+    # the last time that a message arrival sound was played
+    lastSoundTime = datetime.datetime.now() - datetime.timedelta(days=1)
+
+    # the maximum frequency of message sounds in seconds
+    maxSoundFrequencySec = 60
 
     str_broadcast_subscribers = '[Broadcast subscribers]'
     str_chan = '[chan]'
@@ -427,7 +433,6 @@ class MyForm(QtGui.QMainWindow):
 # structures were initialized.
 
         self.rerenderComboBoxSendFrom()
-
 
 
     # Show or hide the application window after clicking an item within the
@@ -982,29 +987,63 @@ class MyForm(QtGui.QMainWindow):
         # update the menu entries
         self.ubuntuMessagingMenuUnread(drawAttention)
 
+    # returns true if the given sound category is a connection sound
+    # rather than a received message sound
+    def isConnectionSound(self, category):
+        if (category is self.SOUND_CONNECTED or
+            category is self.SOUND_DISCONNECTED or
+            category is self.SOUND_CONNECTION_GREEN):
+            return True
+        return False
+
     # play a sound
     def playSound(self, category, label):
+        # filename of the sound to be played
         soundFilename = None
 
+        # whether to play a sound or not
+        play = True
+
+        # if the address had a known label in the address book
         if label is not None:
-            # does a sound file exist for this particular contact?
+            # Does a sound file exist for this particular contact?
             if (os.path.isfile(shared.appdata + 'sounds/' + label + '.wav') or
                 os.path.isfile(shared.appdata + 'sounds/' + label + '.mp3')):
                 soundFilename = shared.appdata + 'sounds/' + label
 
+        # Avoid making sounds more frequently than the threshold.
+        # This suppresses playing sounds repeatedly when there
+        # are many new messages
+        if (soundFilename is None and
+            not self.isConnectionSound(category)):
+            # elapsed time since the last sound was played
+            dt = datetime.datetime.now() - self.lastSoundTime
+            # suppress sounds which are more frequent than the threshold
+            if dt.total_seconds() < self.maxSoundFrequencySec:
+                play = False
+
         if soundFilename is None:
+            # the sound is for an address which exists in the address book
             if category is self.SOUND_KNOWN:
                 soundFilename = shared.appdata + 'sounds/known'
+            # the sound is for an unknown address
             elif category is self.SOUND_UNKNOWN:
                 soundFilename = shared.appdata + 'sounds/unknown'
+            # initial connection sound
             elif category is self.SOUND_CONNECTED:
                 soundFilename = shared.appdata + 'sounds/connected'
+            # disconnected sound
             elif category is self.SOUND_DISCONNECTED:
                 soundFilename = shared.appdata + 'sounds/disconnected'
+            # sound when the connection status becomes green
             elif category is self.SOUND_CONNECTION_GREEN:
-                soundFilename = shared.appdata + 'sounds/green'
+                soundFilename = shared.appdata + 'sounds/green'            
 
-        if soundFilename is not None:
+        if soundFilename is not None and play is True:
+            if not self.isConnectionSound(category):
+                # record the last time that a received message sound was played
+                self.lastSoundTime = datetime.datetime.now()
+
             # if not wav then try mp3 format
             if not os.path.isfile(soundFilename + '.wav'):
                 soundFilename = soundFilename + '.mp3'
