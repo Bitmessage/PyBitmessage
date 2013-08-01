@@ -388,7 +388,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'msgid':msgid.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
-        elif method == 'getInboxMessagesByAddress':
+        elif method == 'getInboxMessagesByReceiver' or method == 'getInboxMessagesByAddress': #after some time getInboxMessagesByAddress should be removed
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
             toAddress = params[0]
@@ -464,7 +464,24 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
-        elif (method == 'trashMessage') or (method == 'trashInboxMessage'):
+        elif method == 'trashMessage':
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
+            msgid = params[0].decode('hex')
+            
+            # Trash if in inbox table
+            helper_inbox.trash(msgid)
+            # Trash if in sent table
+            t = (msgid,)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE msgid=?''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+            # shared.UISignalQueue.put(('removeSentRowByMsgid',msgid)) This function doesn't exist yet.
+            return 'Trashed message (assuming message existed).'
+        elif method == 'trashInboxMessage':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
             msgid = params[0].decode('hex')
