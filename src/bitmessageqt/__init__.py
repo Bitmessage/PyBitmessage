@@ -2820,6 +2820,11 @@ class MyForm(QtGui.QMainWindow):
     def tableWidgetInboxItemClicked(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
         if currentRow >= 0:
+            
+            font = QFont()
+            font.setBold(False)
+            self.ui.textEditInboxMessage.setCurrentFont(font)
+            
             fromAddress = str(self.ui.tableWidgetInbox.item(
                 currentRow, 1).data(Qt.UserRole).toPyObject())
             # If we have received this message from either a broadcast address
@@ -2838,9 +2843,7 @@ class MyForm(QtGui.QMainWindow):
                 else:
                     self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()[
                                                               :30000] + '\n\nDisplay of the remainder of the message truncated because it is too long.')  # Only show the first 30K characters
-
-            font = QFont()
-            font.setBold(False)
+            
             self.ui.tableWidgetInbox.item(currentRow, 0).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 1).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 2).setFont(font)
