@@ -358,6 +358,21 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received, 'read': read}, indent=4, separators=(',', ': '))
                 data += ']}'
                 return data
+        elif method == 'setRead' or method == 'getInboxMessageByID':
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
+            msgid = params[0].decode('hex')
+            read = params[1]
+            v = (read,msgid,)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''UPDATE inbox set read = ? WHERE msgid=?''')
+            shared.sqlSubmitQueue.put(v)
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            data = '{"inboxMessage":['
+            data += json.dumps({'msgid':msgid.encode('hex'), 'read': read}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
         elif method == 'getAllSentMessages':
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
