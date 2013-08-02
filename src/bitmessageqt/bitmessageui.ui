@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>795</width>
-    <height>561</height>
+    <width>775</width>
+    <height>598</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -257,8 +257,8 @@
            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Ubuntu'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2';&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
          </widget>
         </item>
@@ -1010,8 +1010,8 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>795</width>
-     <height>18</height>
+     <width>775</width>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1061,41 +1061,87 @@ p, li { white-space: pre-wrap; }
    <property name="enabled">
     <bool>true</bool>
    </property>
+   <property name="icon">
+    <iconset theme="dialog-password">
+     <normaloff/>
+    </iconset>
+   </property>
    <property name="text">
     <string>Manage keys</string>
    </property>
   </action>
   <action name="actionExit">
+   <property name="icon">
+    <iconset theme="application-exit">
+     <normaloff/>
+    </iconset>
+   </property>
    <property name="text">
     <string>Quit</string>
    </property>
+   <property name="shortcut">
+    <string>Ctrl+Q</string>
+   </property>
   </action>
   <action name="actionHelp">
+   <property name="icon">
+    <iconset theme="help-contents">
+     <normaloff/>
+    </iconset>
+   </property>
    <property name="text">
     <string>Help</string>
    </property>
+   <property name="shortcut">
+    <string>F1</string>
+   </property>
   </action>
   <action name="actionAbout">
+   <property name="icon">
+    <iconset theme="help-about">
+     <normaloff/>
+    </iconset>
+   </property>
    <property name="text">
     <string>About</string>
    </property>
   </action>
   <action name="actionSettings">
+   <property name="icon">
+    <iconset theme="document-properties">
+     <normaloff/>
+    </iconset>
+   </property>
    <property name="text">
     <string>Settings</string>
    </property>
   </action>
   <action name="actionRegenerateDeterministicAddresses">
+   <property name="icon">
+    <iconset theme="view-refresh">
+     <normaloff/>
+    </iconset>
+   </property>
    <property name="text">
     <string>Regenerate deterministic addresses</string>
    </property>
   </action>
   <action name="actionDeleteAllTrashedMessages">
+   <property name="icon">
+    <iconset theme="user-trash">
+     <normaloff/>
+    </iconset>
+   </property>
    <property name="text">
     <string>Delete all trashed messages</string>
    </property>
   </action>
   <action name="actionJoinChan">
+   <property name="icon">
+    <iconset theme="contact-new">
+     <normaloff/>
+    </iconset>
+   </property>
    <property name="text">
     <string>Join / Create chan</string>
    </property>
