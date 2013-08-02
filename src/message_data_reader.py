@@ -5,19 +5,10 @@
 import sqlite3
 from time import strftime, localtime
 import sys
+import shared
+import string
 
-APPNAME = "PyBitmessage"
-from os import path, environ
-if sys.platform == 'darwin':
-    if "HOME" in environ:
-        appdata = path.join(environ["HOME"], "Library/Application support/", APPNAME) + '/'
-    else:
-        print 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
-        sys.exit()
-elif 'win' in sys.platform:
-    appdata = path.join(environ['APPDATA'], APPNAME) + '\\'
-else:
-    appdata = path.expanduser(path.join("~", "." + APPNAME + "/"))
+appdata = shared.lookupAppdataFolder()
 
 conn = sqlite3.connect( appdata + 'messages.dat' )
 conn.text_factory = str
@@ -71,6 +62,29 @@ def readInventory():
         hash, objecttype, streamnumber, payload, receivedtime = row
         print 'Hash:', hash.encode('hex'), objecttype, streamnumber, '\t', payload.encode('hex'), '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(receivedtime)),'utf-8')
 
+def readInventory2():
+    searchValue = '  '
+    
+    item = '''PRAGMA case_sensitive_like = true '''
+    parameters = ''
+    cur.execute(item, parameters)
+    
+    searchValue = string.replace(searchValue,'e','ee')
+    searchValue = string.replace(searchValue,'%','e%')
+    searchValue = string.replace(searchValue,'_','e_')
+    
+    print 'Printing subset of inventory table:'
+    item = '''SELECT * FROM inventory WHERE hash LIKE ? ESCAPE'e'; '''
+    parameters = ('%'+ searchValue + '%',)
+    print repr(parameters), len(parameters[0])
+    cur.execute(item, parameters)
+    output = cur.fetchall()
+    print 'Number of results:', len(output)
+    for row in output[:20]:
+        hash, objecttype, streamnumber, payload, receivedtime = row
+        print 'Hash:', hash.encode('hex'), objecttype, streamnumber, '\t', payload.encode('hex'), '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(receivedtime)),'utf-8')
+    print 'done'
+
 
 def takeInboxMessagesOutOfTrash():
     item = '''update inbox set folder='inbox' where folder='trash' '''
@@ -107,12 +121,13 @@ def vacuum():
 #takeInboxMessagesOutOfTrash()
 #takeSentMessagesOutOfTrash()
 #markAllInboxMessagesAsUnread()
-readInbox()
+#readInbox()
 #readSent()
 #readPubkeys()
 #readSubscriptions()
 #readInventory()
 #vacuum()  #will defragment and clean empty space from the messages.dat file.
+readInventory2()
 
 
 

@@ -189,7 +189,15 @@ class sqlThread(threading.Thread):
         
         if not shared.config.has_option('bitmessagesettings', 'sockslisten'):
             shared.config.set('bitmessagesettings', 'sockslisten', 'false')
-
+            
+        # Some prewritten code for future use whenever we need to modify the database
+        """item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        if self.cur.fetchall()[0][0] == 1:
+            do something
+            increment the version to 2"""
+        
         try:
             testpayload = '\x00\x00'
             t = ('1234', testpayload, '12345678', 'no')

@@ -738,6 +738,73 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'label':label.encode('base64'), 'address': address, 'enabled': enabled == 1}, indent=4, separators=(',',': '))
             data += ']}'
             return data
+        elif method == 'disseminatePreEncryptedMsg':
+            # The device issuing this command to PyBitmessage supplies a msg object that has
+            # already been encrypted and had the necessary proof of work done for it to be
+            # disseminated to the rest of the Bitmessage network. PyBitmessage accepts this msg
+            # object and sends it out to the rest of the Bitmessage network as if it had generated the
+            # message itself.
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            encryptedPayload, = params
+            inventoryHash = calculateInventoryHash(encryptedPayload)
+            objectType = 'msg'
+            shared.inventory[inventoryHash] = (
+                objectType, toStreamNumber, encryptedPayload, int(time.time()))
+            with shared.printLock:
+                print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', inventoryHash.encode('hex')
+            shared.broadcastToSendDataQueues((
+                streamNumber, 'sendinv', inventoryHash))
+        elif method == 'disseminatePubkey':
+            # The device issuing this command to PyBitmessage supplies a pubkey object that has
+            # already had the necessary proof of work done for it to be disseminated to the rest of the 
+            # Bitmessage network. PyBitmessage accepts this pubkey object and sends it out to the 
+            # rest of the Bitmessage network, as if it had generated the pubkey object itself.
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            payload, = params
+            inventoryHash = calculateInventoryHash(payload)
+            objectType = 'pubkey'
+            shared.inventory[inventoryHash] = (
+                objectType, streamNumber, payload, int(time.time()))
+            with shared.printLock:
+                print 'broadcasting inv within API command disseminatePubkey with hash:', inventoryHash.encode('hex')
+            shared.broadcastToSendDataQueues((
+                streamNumber, 'sendinv', inventoryHash))
+        elif method == 'getMessageDataByDestinationRIPEHash':
+            # Method will eventually be used by a particular Android app.
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            hash, = params
+            #if len(hash) != 40:
+            #    return 'API Error 0019: The length of hash should be 20 bytes (encoded in hex thus 40 characters).'
+            print repr(hash)
+            hash = hash.decode('hex')
+            print repr(hash)
+            with shared.sqlLock:
+                shared.sqlSubmitQueue.put('''PRAGMA case_sensitive_like = true''')
+                shared.sqlSubmitQueue.put('')
+                queryreturn = shared.sqlReturnQueue.get()
+            
+            hash = string.replace(hash,'e','ee')
+            hash = string.replace(hash,'%','e%')
+            hash = string.replace(hash,'_','e_')
+            print 'searching for hash:', repr(hash)
+            parameters = ('%'+ hash + '%',)
+            with shared.sqlLock:
+                shared.sqlSubmitQueue.put('''SELECT payload FROM inventory WHERE hash LIKE ? ESCAPE'e'; ''')
+                shared.sqlSubmitQueue.put(parameters)
+                queryreturn = shared.sqlReturnQueue.get()
+            
+            data = '{"receivedMessageDatas":['
+            for row in queryreturn:
+                payload, = row
+                if len(data) > 25:
+                    data += ','
+                data += json.dumps({'data':payload.encode('hex')}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+
         elif method == 'clientStatus':
             return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
         else:

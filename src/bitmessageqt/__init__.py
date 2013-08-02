@@ -3290,6 +3290,7 @@ def run():
 
     try:
         translator.load("translations/bitmessage_" + str(locale.getdefaultlocale()[0]))
+        #translator.load("translations/bitmessage_fr_BE") # test French
     except:
         # The above is not compatible with all versions of OSX.
         translator.load("translations/bitmessage_en_US") # Default to english.
