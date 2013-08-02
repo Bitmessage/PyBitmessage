@@ -740,6 +740,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return data
         elif method == 'clientStatus':
             return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
+        elif method == 'fullyConnected':
+            return '"%s"' % shared.definitelyFullyConnected
         else:
             return 'API Error 0020: Invalid method: %s' % method
 

@@ -47,6 +47,7 @@ inventory = {} #of objects (like msg payloads and pubkey payloads) Does not incl
 inventoryLock = threading.Lock() #Guarantees that two receiveDataThreads don't receive and process the same message concurrently (probably sent by a malicious individual)
 printLock = threading.Lock()
 appdata = '' #holds the location of the application data storage directory
+definitelyFullyConnected = False
 statusIconColor = 'red'
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
 shutdown = 0 #Set to 1 by the doCleanShutdown function. Used to tell the proof of work worker threads to exit.
