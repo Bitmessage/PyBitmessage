@@ -46,6 +46,17 @@ class receiveDataThread(threading.Thread):
         self.PORT = port
         self.streamNumber = streamNumber
         self.payloadLength = 0  # This is the protocol payload length thus it doesn't include the 24 byte message header
+        self.maxMessageLength = 180000000 # maximum length of a message in bytes, default 180MB
+
+        # get the maximum message length from the settings
+        try:
+            maxMsgLen = shared.config.getint(
+                'bitmessagesettings', 'maxmessagelength')
+            if maxMsgLen > 32768: # minimum of 32K
+                self.maxMessageLength = maxMsgLen
+        except Exception:
+            pass
+
         self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave = {}
         self.selfInitiatedConnections = selfInitiatedConnections
         shared.connectedHostsList[
@@ -140,7 +151,7 @@ class receiveDataThread(threading.Thread):
             shared.knownNodes[self.streamNumber][
                 self.HOST] = (self.PORT, int(time.time()))
             shared.knownNodesLock.release()
-        if self.payloadLength <= 180000000:  # If the size of the message is greater than 180MB, ignore it. (I get memory errors when processing messages much larger than this though it is concievable that this value will have to be lowered if some systems are less tolarant of large messages.)
+        if self.payloadLength <= self.maxMessageLength:  # If the size of the message is greater than the maximum, ignore it.
             remoteCommand = self.data[4:16]
             with shared.printLock:
                 print 'remoteCommand', repr(remoteCommand.replace('\x00', '')), ' from', self.HOST
