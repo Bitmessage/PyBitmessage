@@ -770,7 +770,7 @@ if shared.useVeryEasyProofOfWorkForTesting:
     shared.networkDefaultPayloadLengthExtraBytes = int(
         shared.networkDefaultPayloadLengthExtraBytes / 7000)
 
-if __name__ == "__main__":
+def main():
     # is the application already running?  If yes then exit.
     thisapp = singleton.singleinstance()
 
@@ -840,7 +840,9 @@ if __name__ == "__main__":
 
         while True:
             time.sleep(20)
-
+if __name__ == "__main__":
+    main()
+    
 # So far, the creation of and management of the Bitmessage protocol and this
 # client is a one-man operation. Bitcoin tips are quite appreciated.
 # 1H5XaDA6fYENLbknwZyjiYXYPQaFjjLX2u
