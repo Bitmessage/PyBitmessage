@@ -7,21 +7,23 @@ maximumAgeOfObjectsThatIAdvertiseToOthers = 216000  # Equals two days and 12 hou
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
 useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
 
-
-import threading
-import sys
-from addresses import *
-import highlevelcrypto
-import Queue
-import pickle
-import os
-import time
+# Libraries.
 import ConfigParser
-import socket
+import os
+import pickle
+import Queue
 import random
+import socket
+import sys
+import threading
+import time
+
+# Project imports.
+from addresses import *
+from debug import logger
 import highlevelcrypto
 import shared
-from debug import logger
+from netutil import packNetworkAddress
 
 config = ConfigParser.SafeConfigParser()
 myECCryptorObjects = {}
@@ -77,61 +79,6 @@ def isInSqlInventory(hash):
     else:
         return True
 
-class IPv6NotSupportedException(Exception):
-    pass
-
-def packNetworkAddress(address):
-    # For windows, we need to avoid socket.inet_pton()
-    if sys.platform == 'win32':
-        try:
-            # Matches IPV4-style address.
-            if ':' not in address and address.count('.') == 3:
-                # Already in IPv6 format; no address curtailing needed.
-                pass
-            elif address.lower().startswith('::ffff:'):
-                # Chop off the IPv4-mapped IPv6 prefix from the standard-form address.
-                address = address[7:]
-            else:
-                raise IPv6NotSupportedException('IPv6 not supported by packNetworkAddress on Windows.')
-
-            # Pack the standard-form IPv4 address and add prefix to make packed IPv4-mapped IPv6.
-            return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-                    socket.inet_aton(address)
-        except Exception as err:
-            logger.error('Failed to pack address "%s". Err: %s' % (address, err))
-            raise
-    # Works on most modern posix distros.
-    else:
-        try:
-            # Matches IPV4-style address.
-            if ':' not in address and address.count('.') == 3:
-                return socket.inet_pton(socket.AF_INET6, '::ffff:' + address)
-            # Matches IPV4-mapped IPV6 and plain IPV6.
-            else:
-                return socket.inet_pton(socket.AF_INET6, address)
-        except Exception as err:
-            logger.error('Failed to pack address "%s". Err: %s' % (address, err))
-            raise
-
-# Take packed IPv4-mapped IPv6 address and return unpacked IPv4-mapped IPv6 string in standard
-# notation (e.g. ::ffff:127.0.0.1).
-def unpackNetworkAddress(packedAddress):
-    # For windows, we need to avoid socket.inet_ntop()
-    if sys.platform == 'win32':
-        try:
-            if not packedAddress.startswith('\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF'):
-                raise Exception('IPv6 not supported by unpackNetworkAddress on Windows.')
-            return '::ffff:' + socket.inet_ntoa(packedAddress[12:])
-        except:
-            logger.error('Failed to unpack address %s.' % repr(packedAddress))
-            raise
-    # Works on most modern posix distros.
-    else:
-        try:
-            return socket.inet_ntop(socket.AF_INET6, packedAddress)
-        except:
-            logger.error('Failed to unpack address %s.' % repr(packedAddress))
-            raise
 
 def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload = ''

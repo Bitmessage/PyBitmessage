@@ -2,10 +2,12 @@
 #import time
 #from multiprocessing import Pool, cpu_count
 import hashlib
+#import os
 from struct import unpack, pack
 import sys
+
+from debug import logger
 from shared import config
-#import os
 
 def _set_idle():
     if 'linux' in sys.platform:

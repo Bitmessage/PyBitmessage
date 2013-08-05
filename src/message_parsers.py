@@ -2,7 +2,7 @@ from struct import unpack
 
 from addresses import decodeVarint
 from debug import logger
-from shared import unpackNetworkAddress
+from netutil import unpackNetworkAddress
 
 class AddressMessageParser:
     def __init__(self, data, remoteProtocolVersion):

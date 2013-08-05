@@ -22,6 +22,7 @@ import helper_generic
 import helper_inbox
 import helper_sent
 import highlevelcrypto
+from netutil import packNetworkAddress, unpackNetworkAddress
 import tr
 
 # This thread is created either by the synSenderThread(for outgoing
@@ -1706,7 +1707,7 @@ class receiveDataThread(threading.Thread):
             payload += pack('>I', streamNumber)
             payload += pack(
                 '>q', services)  # service bit flags offered by this node
-            payload += shared.packNetworkAddress(host)
+            payload += packNetworkAddress(host)
             payload += pack('>H', port)  # remote port
 
         payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
@@ -1772,7 +1773,7 @@ class receiveDataThread(threading.Thread):
                 payload += pack('>I', self.streamNumber)
                 payload += pack(
                     '>q', 1)  # service bit flags offered by this node
-                payload += shared.packNetworkAddress(HOST)
+                payload += packNetworkAddress(HOST)
                 payload += pack('>H', PORT)  # remote port
         for HOST, value in addrsInChildStreamLeft.items():
             PORT, timeLastReceivedMessageFromThisNode = value
@@ -1794,7 +1795,7 @@ class receiveDataThread(threading.Thread):
                 payload += pack('>I', (self.streamNumber * 2) + 1)
                 payload += pack(
                     '>q', 1)  # service bit flags offered by this node
-                payload += shared.packNetworkAddress(HOST)
+                payload += packNetworkAddress(HOST)
                 payload += pack('>H', PORT)  # remote port
 
         payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
@@ -1828,7 +1829,7 @@ class receiveDataThread(threading.Thread):
 
                 return
             # print 'remoteProtocolVersion', self.remoteProtocolVersion
-            self.myExternalIP = socket.inet_ntoa(data[40:44])
+            self.myExternalIP = unpackNetworkAddress(data[28:44])
             # print 'myExternalIP', self.myExternalIP
             self.remoteNodeIncomingPort, = unpack('>H', data[70:72])
             # print 'remoteNodeIncomingPort', self.remoteNodeIncomingPort

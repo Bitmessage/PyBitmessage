@@ -1,14 +1,12 @@
-import time
-import threading
-import shared
-import Queue
-from struct import unpack, pack
 import hashlib
+import Queue
 import random
-import sys
+import shared
 import socket
-
-#import bitmessagemain
+from struct import unpack, pack
+import sys
+import threading
+import time
 
 # Every connection to a peer has a sendDataThread (and also a
 # receiveDataThread).

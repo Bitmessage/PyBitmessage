@@ -1,15 +1,14 @@
-import threading
-import time
 import random
 import shared
-import socks
 import socket
+import socks
 import sys
+import threading
+import time
 import tr
 
-#import bitmessagemain
-from class_sendDataThread import *
-from class_receiveDataThread import *
+from class_sendDataThread import sendDataThread
+from class_receiveDataThread import receiveDataThread
 
 # For each stream to which we connect, several outgoingSynSender threads
 # will exist and will collectively create 8 connections with peers.
