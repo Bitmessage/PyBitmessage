@@ -747,6 +747,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) != 1:
                 return 'API Error 0000: I need 1 parameter!'
             encryptedPayload, = params
+            encryptedPayload = encryptedPayload.decode('hex')
             inventoryHash = calculateInventoryHash(encryptedPayload)
             objectType = 'msg'
             shared.inventory[inventoryHash] = (
@@ -754,15 +755,16 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             with shared.printLock:
                 print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
-                streamNumber, 'sendinv', inventoryHash))
+                toStreamNumber, 'sendinv', inventoryHash))
         elif method == 'disseminatePubkey':
             # The device issuing this command to PyBitmessage supplies a pubkey object that has
             # already had the necessary proof of work done for it to be disseminated to the rest of the 
             # Bitmessage network. PyBitmessage accepts this pubkey object and sends it out to the 
-            # rest of the Bitmessage network, as if it had generated the pubkey object itself.
+            # rest of the Bitmessage network as if it had generated the pubkey object itself.
             if len(params) != 1:
                 return 'API Error 0000: I need 1 parameter!'
             payload, = params
+            payload = payload.decode('hex')
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'pubkey'
             shared.inventory[inventoryHash] = (
@@ -772,30 +774,40 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.broadcastToSendDataQueues((
                 streamNumber, 'sendinv', inventoryHash))
         elif method == 'getMessageDataByDestinationRIPEHash':
-            # Method will eventually be used by a particular Android app.
+            # Method will eventually be used by a particular Android app to 
+            # select relevant messages. 
+            
             if len(params) != 1:
                 return 'API Error 0000: I need 1 parameter!'
-            hash, = params
-            #if len(hash) != 40:
-            #    return 'API Error 0019: The length of hash should be 20 bytes (encoded in hex thus 40 characters).'
-            print repr(hash)
-            hash = hash.decode('hex')
-            print repr(hash)
-            with shared.sqlLock:
-                shared.sqlSubmitQueue.put('''PRAGMA case_sensitive_like = true''')
-                shared.sqlSubmitQueue.put('')
-                queryreturn = shared.sqlReturnQueue.get()
+            requestedHash, = params
+            if len(requestedHash) != 40:
+                return 'API Error 0019: The length of hash should be 20 bytes (encoded in hex thus 40 characters).'
+            requestedHash = requestedHash.decode('hex')
             
-            hash = string.replace(hash,'e','ee')
-            hash = string.replace(hash,'%','e%')
-            hash = string.replace(hash,'_','e_')
-            print 'searching for hash:', repr(hash)
-            parameters = ('%'+ hash + '%',)
+            # This is not a particularly commonly used API function. Before we 
+            # use it we'll need to fill out a field in our inventory database 
+            # which is blank by default (first20bytesofencryptedmessage). 
+            parameters = ''
             with shared.sqlLock:
-                shared.sqlSubmitQueue.put('''SELECT payload FROM inventory WHERE hash LIKE ? ESCAPE'e'; ''')
+                shared.sqlSubmitQueue.put('''SELECT hash, payload FROM inventory WHERE first20bytesofencryptedmessage = '' and objecttype = 'msg' ; ''')
                 shared.sqlSubmitQueue.put(parameters)
                 queryreturn = shared.sqlReturnQueue.get()
             
+                for row in queryreturn:
+                    hash, payload = row
+                    readPosition = 16 # Nonce length + time length
+                    readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
+                    t = (payload[readPosition:readPosition+20],hash)
+                    shared.sqlSubmitQueue.put('''UPDATE inventory SET first20bytesofencryptedmessage=? WHERE hash=?; ''')
+                    shared.sqlSubmitQueue.put(t)
+                    shared.sqlReturnQueue.get()        
+                
+            parameters = (requestedHash,)
+            with shared.sqlLock:
+                shared.sqlSubmitQueue.put('commit')
+                shared.sqlSubmitQueue.put('''SELECT payload FROM inventory WHERE first20bytesofencryptedmessage = ?''')
+                shared.sqlSubmitQueue.put(parameters)
+                queryreturn = shared.sqlReturnQueue.get()
             data = '{"receivedMessageDatas":['
             for row in queryreturn:
                 payload, = row
@@ -824,11 +836,8 @@ class singleAPI(threading.Thread):
         se.register_introspection_functions()
         se.serve_forever()
 
+# This is a list of current connections (the thread pointers at least)
 selfInitiatedConnections = {}
-    # This is a list of current connections (the thread pointers at least)
-
-
-
 
 
 if shared.useVeryEasyProofOfWorkForTesting:

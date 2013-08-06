@@ -243,8 +243,7 @@ def reloadMyAddressHashes():
                         myAddressesByHash[hash] = addressInKeysFile
 
                 else:
-                    logger.error('Error in reloadMyAddressHashes: Can\'t handle address '
-                                 'versions other than 2 or 3.\n')
+                    logger.error('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2 or 3.\n')
 
     if not keyfileSecure:
         fixSensitiveFilePermissions(appdata + 'keys.dat', hasEnabledKeys)
@@ -320,8 +319,8 @@ def flushInventory():
     sqlLock.acquire()
     for hash, storedValue in inventory.items():
         objectType, streamNumber, payload, receivedTime = storedValue
-        t = (hash,objectType,streamNumber,payload,receivedTime)
-        sqlSubmitQueue.put('''INSERT INTO inventory VALUES (?,?,?,?,?)''')
+        t = (hash,objectType,streamNumber,payload,receivedTime,'')
+        sqlSubmitQueue.put('''INSERT INTO inventory VALUES (?,?,?,?,?,?)''')
         sqlSubmitQueue.put(t)
         sqlReturnQueue.get()
         del inventory[hash]

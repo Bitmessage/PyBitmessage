@@ -33,9 +33,9 @@ class singleCleaner(threading.Thread):
             for hash, storedValue in shared.inventory.items():
                 objectType, streamNumber, payload, receivedTime = storedValue
                 if int(time.time()) - 3600 > receivedTime:
-                    t = (hash, objectType, streamNumber, payload, receivedTime)
+                    t = (hash, objectType, streamNumber, payload, receivedTime,'')
                     shared.sqlSubmitQueue.put(
-                        '''INSERT INTO inventory VALUES (?,?,?,?,?)''')
+                        '''INSERT INTO inventory VALUES (?,?,?,?,?,?)''')
                     shared.sqlSubmitQueue.put(t)
                     shared.sqlReturnQueue.get()
                     del shared.inventory[hash]
