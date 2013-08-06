@@ -770,7 +770,7 @@ if shared.useVeryEasyProofOfWorkForTesting:
     shared.networkDefaultPayloadLengthExtraBytes = int(
         shared.networkDefaultPayloadLengthExtraBytes / 7000)
 
-def main():
+def main(deamon=False):
     # is the application already running?  If yes then exit.
     thisapp = singleton.singleinstance()
 
@@ -823,7 +823,7 @@ def main():
     singleListenerThread.daemon = True  # close the main program even if there are threads left
     singleListenerThread.start()
 
-    if not shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
+    if deamon == False and shared.safeConfigGetBoolean('bitmessagesettings', 'daemon') == False:
         try:
             from PyQt4 import QtCore, QtGui
         except Exception as err:
@@ -840,6 +840,7 @@ def main():
 
         while True:
             time.sleep(20)
+
 if __name__ == "__main__":
     main()
     
