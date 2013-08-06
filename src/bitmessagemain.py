@@ -740,8 +740,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return data
         elif method == 'clientStatus':
             return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
-        elif method == 'fullyConnected':
-            return '"%s"' % shared.definitelyFullyConnected
+        elif method == 'networkTabInfo':
+            data = '{\n    \"Total Connections\" : "%s"\n' % str(len(shared.connectedHostsList))
+            data += '    \"P2P Messages Processed\" : "%s"\n' % str(shared.messagesTotals)
+            data += '    \"Broadcast Messages Processed\" : "%s"\n' % str(shared.broadcastTotals)
+            data += '    \"Public Keys Processed\" : "%s"\n' % str(shared.pubkeysTotals)
+            if len(shared.connectedHostsList) == 0:
+                dataColor = 'red'
+            elif len(shared.connectedHostsList) > 0 and not shared.definitelyFullyConnected:
+                dataColor = 'yellow'
+            else:
+                dataColor = 'green'
+            data += '    \"Icon Status\" : "%s"\n}' % dataColor
+            return data
         else:
             return 'API Error 0020: Invalid method: %s' % method
 

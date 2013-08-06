@@ -47,7 +47,6 @@ inventory = {} #of objects (like msg payloads and pubkey payloads) Does not incl
 inventoryLock = threading.Lock() #Guarantees that two receiveDataThreads don't receive and process the same message concurrently (probably sent by a malicious individual)
 printLock = threading.Lock()
 appdata = '' #holds the location of the application data storage directory
-definitelyFullyConnected = False
 statusIconColor = 'red'
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
 shutdown = 0 #Set to 1 by the doCleanShutdown function. Used to tell the proof of work worker threads to exit.
@@ -65,6 +64,12 @@ successfullyDecryptMessageTimings = [
 apiAddressGeneratorReturnQueue = Queue.Queue(
     )  # The address generator thread uses this queue to get information back to the API thread.
 ackdataForWhichImWatching = {}
+
+# Network Tab information
+messagesTotals = 0
+broadcastTotals = 0
+pubkeysTotals = 0
+definitelyFullyConnected = False
 
 #If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
