@@ -101,10 +101,8 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
 
     random.seed()
     payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
-    userAgent = '/PyBitmessage:' + shared.softwareVersion + \
-        '/'  # Length of userAgent must be less than 253.
-    payload += pack('>B', len(
-        userAgent))  # user agent string length. If the user agent is more than 252 bytes long, this code isn't going to work.
+    userAgent = '/PyBitmessage:' + shared.softwareVersion + '/'
+    payload += encodeVarint(len(userAgent))
     payload += userAgent
     payload += encodeVarint(
         1)  # The number of streams about which I care. PyBitmessage currently only supports 1 per connection.
