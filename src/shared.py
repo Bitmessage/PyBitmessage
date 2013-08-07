@@ -346,6 +346,19 @@ def checkSensitiveFilePermissions(filename):
         # Windows systems.
         return True
     else:
+        try:
+            # Skip known problems for non-Win32 filesystems without POSIX permissions.
+            import subprocess
+            fstype = subprocess.check_output('stat -f -c "%%T" %s' % (filename),
+                                             shell=True,
+                                             stderr=subprocess.STDOUT)
+            if 'fuseblk' in fstype:
+                logger.info('Skipping file permissions check for %s. Filesystem fuseblk detected.',
+                            filename)
+                return True
+        except:
+            # Swallow exception here, but we might run into trouble later!
+            logger.error('Could not determine filesystem type.', filename)
         present_permissions = os.stat(filename)[0]
         disallowed_permissions = stat.S_IRWXG | stat.S_IRWXO
         return present_permissions & disallowed_permissions == 0
