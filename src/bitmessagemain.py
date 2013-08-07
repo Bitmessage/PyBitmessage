@@ -768,75 +768,101 @@ if shared.useVeryEasyProofOfWorkForTesting:
     shared.networkDefaultPayloadLengthExtraBytes = int(
         shared.networkDefaultPayloadLengthExtraBytes / 7000)
 
+class Main:
+    def start(self, deamon=False):
+        # is the application already running?  If yes then exit.
+        thisapp = singleton.singleinstance()
+
+        signal.signal(signal.SIGINT, helper_generic.signal_handler)
+        # signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+        helper_bootstrap.knownNodes()
+        # Start the address generation thread
+        addressGeneratorThread = addressGenerator()
+        addressGeneratorThread.daemon = True  # close the main program even if there are threads left
+        addressGeneratorThread.start()
+
+        # Start the thread that calculates POWs
+        singleWorkerThread = singleWorker()
+        singleWorkerThread.daemon = True  # close the main program even if there are threads left
+        singleWorkerThread.start()
+
+        # Start the SQL thread
+        sqlLookup = sqlThread()
+        sqlLookup.daemon = False  # DON'T close the main program even if there are threads left. The closeEvent should command this thread to exit gracefully.
+        sqlLookup.start()
+
+        # Start the cleanerThread
+        singleCleanerThread = singleCleaner()
+        singleCleanerThread.daemon = True  # close the main program even if there are threads left
+        singleCleanerThread.start()
+
+        shared.reloadMyAddressHashes()
+        shared.reloadBroadcastSendersForWhichImWatching()
+
+        if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+            try:
+                apiNotifyPath = shared.config.get(
+                    'bitmessagesettings', 'apinotifypath')
+            except:
+                apiNotifyPath = ''
+            if apiNotifyPath != '':
+                with shared.printLock:
+                    print 'Trying to call', apiNotifyPath
+
+                call([apiNotifyPath, "startingUp"])
+            singleAPIThread = singleAPI()
+            singleAPIThread.daemon = True  # close the main program even if there are threads left
+            singleAPIThread.start()
+
+        connectToStream(1)
+
+        singleListenerThread = singleListener()
+        singleListenerThread.setup(selfInitiatedConnections)
+        singleListenerThread.daemon = True  # close the main program even if there are threads left
+        singleListenerThread.start()
+
+        if deamon == False and shared.safeConfigGetBoolean('bitmessagesettings', 'daemon') == False:
+            try:
+                from PyQt4 import QtCore, QtGui
+            except Exception as err:
+                print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
+                print 'Error message:', err
+                os._exit(0)
+
+            import bitmessageqt
+            bitmessageqt.run()
+        else:
+            shared.config.remove_option('bitmessagesettings', 'dontconnect')
+
+            if deamon:
+                with shared.printLock:
+                    print 'Running as a daemon. The main program should exit this thread.'
+            else:
+                with shared.printLock:
+                    print 'Running as a daemon. You can use Ctrl+C to exit.'
+                while True:
+                    time.sleep(20)
+            
+    def stop(self):
+        with shared.printLock:
+            print 'Stopping Bitmessage Deamon.'
+        shared.doCleanShutdown()
+        
+        
+    def getApiAddress(self):
+        if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+            return None
+            
+        address = shared.config.get('bitmessagesettings', 'apiinterface')
+        port = shared.config.getint('bitmessagesettings', 'apiport')
+        return {'address':address,'port':port}
+            
 if __name__ == "__main__":
-    # is the application already running?  If yes then exit.
-    thisapp = singleton.singleinstance()
+    mainprogram = Main()
+    mainprogram.start()
 
-    signal.signal(signal.SIGINT, helper_generic.signal_handler)
-    # signal.signal(signal.SIGINT, signal.SIG_DFL)
-
-    helper_bootstrap.knownNodes()
-    # Start the address generation thread
-    addressGeneratorThread = addressGenerator()
-    addressGeneratorThread.daemon = True  # close the main program even if there are threads left
-    addressGeneratorThread.start()
-
-    # Start the thread that calculates POWs
-    singleWorkerThread = singleWorker()
-    singleWorkerThread.daemon = True  # close the main program even if there are threads left
-    singleWorkerThread.start()
-
-    # Start the SQL thread
-    sqlLookup = sqlThread()
-    sqlLookup.daemon = False  # DON'T close the main program even if there are threads left. The closeEvent should command this thread to exit gracefully.
-    sqlLookup.start()
-
-    # Start the cleanerThread
-    singleCleanerThread = singleCleaner()
-    singleCleanerThread.daemon = True  # close the main program even if there are threads left
-    singleCleanerThread.start()
-
-    shared.reloadMyAddressHashes()
-    shared.reloadBroadcastSendersForWhichImWatching()
-
-    if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
-        try:
-            apiNotifyPath = shared.config.get(
-                'bitmessagesettings', 'apinotifypath')
-        except:
-            apiNotifyPath = ''
-        if apiNotifyPath != '':
-            logger.debug('Trying to call %s', apiNotifyPath)
-
-            call([apiNotifyPath, "startingUp"])
-        singleAPIThread = singleAPI()
-        singleAPIThread.daemon = True  # close the main program even if there are threads left
-        singleAPIThread.start()
-
-    connectToStream(1)
-
-    singleListenerThread = singleListener()
-    singleListenerThread.setup(selfInitiatedConnections)
-    singleListenerThread.daemon = True  # close the main program even if there are threads left
-    singleListenerThread.start()
-
-    if not shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
-        try:
-            from PyQt4 import QtCore, QtGui
-        except Exception as err:
-            logger.error('PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon')
-            logger.error('Error message: %s', err)
-            os._exit(0)
-
-        import bitmessageqt
-        bitmessageqt.run()
-    else:
-        shared.config.remove_option('bitmessagesettings', 'dontconnect')
-        logger.info('Running as a daemon. You can use Ctrl+C to exit.')
-
-        while True:
-            time.sleep(20)
-
+    
 # So far, the creation of and management of the Bitmessage protocol and this
 # client is a one-man operation. Bitcoin tips are quite appreciated.
 # 1H5XaDA6fYENLbknwZyjiYXYPQaFjjLX2u
