@@ -762,8 +762,6 @@ selfInitiatedConnections = {}
 
 
 
-
-
 if shared.useVeryEasyProofOfWorkForTesting:
     shared.networkDefaultProofOfWorkNonceTrialsPerByte = int(
         shared.networkDefaultProofOfWorkNonceTrialsPerByte / 16)
@@ -850,8 +848,98 @@ class Main:
         with shared.printLock:
             print 'Stopping Bitmessage Deamon.'
         shared.doCleanShutdown()
+
+    def getAllInboxMessages(self):
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put(
+            '''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox where folder='inbox' ORDER BY received''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
         
+        messages = []
+        for row in queryreturn:
+            msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
+            
+            messages.append({'msgid': msgid.encode('hex'), 'toAddress': toAddress, 'fromAddress': fromAddress, 'subject': subject, 'message': message, 'encodingType': encodingtype, 'receivedTime': received, 'read': read})
         
+        return messages
+
+    def listAddresses(self):
+        addresses = []
+        configSections = shared.config.sections()
+        for addressInKeysFile in configSections:
+            if addressInKeysFile != 'bitmessagesettings':
+                status, addressVersionNumber, streamNumber, hash = decodeAddress(addressInKeysFile)
+
+                addresses.append({'label': shared.config.get(addressInKeysFile, 'label'), 'address': addressInKeysFile, 'stream':streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled')})
+        return addresses
+        
+    def createRandomAddress(self,label,eighteenByteRipe=False,totalDifficulty=1,smallMessageDifficulty=1):
+
+        nonceTrialsPerByte = int(shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+        payloadLengthExtraBytes = int(shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+        
+        unicode(label, 'utf-8')
+
+        shared.apiAddressGeneratorReturnQueue.queue.clear()
+        streamNumberForAddress = 1
+        shared.addressGeneratorQueue.put((
+            'createRandomAddress', 3, streamNumberForAddress, label, 1, "", eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
+        return shared.apiAddressGeneratorReturnQueue.get()
+
+    def sendMessage(self, toAddress, fromAddress, subject, message):
+        encodingType = 2
+        
+        status, addressVersionNumber, streamNumber, toRipe = decodeAddress(toAddress)
+        if status != 'success':
+            with shared.printLock:
+                print 'ToAddress Error: %s , %s'%(toAddress,status)
+            return (toAddress,status)
+
+        status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(fromAddress)
+        if status != 'success':
+            with shared.printLock:
+                print 'ToAddress Error: %s , %s'%(fromAddress,status)
+            return (fromAddress,status)
+            
+ 
+        toAddress = addBMIfNotPresent(toAddress)
+        fromAddress = addBMIfNotPresent(fromAddress)
+        try:
+            fromAddressEnabled = shared.config.getboolean(fromAddress, 'enabled')
+        except:
+            return (fromAddress,'fromAddressNotPresentError')
+        if not fromAddressEnabled:
+            return (fromAddress,'fromAddressDisabledError')
+
+        ackdata = OpenSSL.rand(32)
+
+        t = ('', toAddress, toRipe, fromAddress, subject, message, ackdata, int(
+            time.time()), 'msgqueued', 1, 1, 'sent', 2)
+        helper_sent.insert(t)
+
+        toLabel = ''
+        t = (toAddress,)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put(
+            '''select label from addressbook where address=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        if queryreturn != []:
+            for row in queryreturn:
+                toLabel, = row
+        # apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
+        shared.UISignalQueue.put(('displayNewSentMessage', (
+            toAddress, toLabel, fromAddress, subject, message, ackdata)))
+
+        shared.workerQueue.put(('sendmessage', toAddress))
+
+        return ackdata
+
     def getApiAddress(self):
         if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
             return None
@@ -863,6 +951,9 @@ class Main:
 if __name__ == "__main__":
     mainprogram = Main()
     mainprogram.start()
+
+    
+    
 
     
 # So far, the creation of and management of the Bitmessage protocol and this
