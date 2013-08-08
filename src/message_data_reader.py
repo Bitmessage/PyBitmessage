@@ -54,38 +54,13 @@ def readPubkeys():
 
 def readInventory():
     print 'Printing everything in inventory table:'
-    item = '''select hash, objecttype, streamnumber, payload, receivedtime, first20bytesofencryptedmessage from inventory where objecttype = 'msg' '''
+    item = '''select hash, objecttype, streamnumber, payload, receivedtime from inventory'''
     parameters = ''
     cur.execute(item, parameters)
     output = cur.fetchall()
-    for row in output[:50]:
-        hash, objecttype, streamnumber, payload, receivedtime, first20bytesofencryptedmessage = row
-        print 'Hash:', hash.encode('hex'), objecttype, streamnumber, '\t', 'first20bytesofencryptedmessage:', first20bytesofencryptedmessage.encode('hex'), '\t', payload.encode('hex'), '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(receivedtime)),'utf-8')
-
-def readInventory2():
-    searchValue = ' '
-    
-    item = '''PRAGMA case_sensitive_like = true '''
-    parameters = ''
-    cur.execute(item, parameters)
-    
-    searchValue = string.replace(searchValue,'e','ee')
-    searchValue = string.replace(searchValue,'%','e%')
-    searchValue = string.replace(searchValue,'_','e_')
-    
-    print 'Printing subset of inventory table:'
-    item = '''SELECT substr(payload,20) FROM inventory'''
-    #parameters = ('%'+ searchValue + '%',)
-    #print repr(parameters), len(parameters[0])
-    parameters = ''
-    cur.execute(item, parameters)
-    output = cur.fetchall()
-    print 'Number of results:', len(output)
-    for row in output[:100]:
-        print row
-        #hash, objecttype, streamnumber, payload, receivedtime = row
-        #print 'Hash:', hash.encode('hex'), objecttype, streamnumber, '\t', payload.encode('hex'), '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(receivedtime)),'utf-8')
-    print 'done'
+    for row in output:
+        hash, objecttype, streamnumber, payload, receivedtime = row
+        print 'Hash:', hash.encode('hex'), objecttype, streamnumber, '\t', payload.encode('hex'), '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(receivedtime)),'utf-8')
 
 
 def takeInboxMessagesOutOfTrash():
@@ -123,13 +98,12 @@ def vacuum():
 #takeInboxMessagesOutOfTrash()
 #takeSentMessagesOutOfTrash()
 #markAllInboxMessagesAsUnread()
-#readInbox()
+readInbox()
 #readSent()
 #readPubkeys()
 #readSubscriptions()
-readInventory()
+#readInventory()
 #vacuum()  #will defragment and clean empty space from the messages.dat file.
-#readInventory2()
 
 
 
