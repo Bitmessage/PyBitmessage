@@ -2000,6 +2000,8 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxShowTrayNotifications.isChecked()))
             shared.config.set('bitmessagesettings', 'startintray', str(
                 self.settingsDialogInstance.ui.checkBoxStartInTray.isChecked()))
+            shared.config.set('bitmessagesettings', 'willinglysendtomobile', str(
+                self.settingsDialogInstance.ui.checkBoxWillinglySendToMobile.isChecked()))
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
                     QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
@@ -2996,6 +2998,8 @@ class settingsDialog(QtGui.QDialog):
             shared.config.getboolean('bitmessagesettings', 'showtraynotifications'))
         self.ui.checkBoxStartInTray.setChecked(
             shared.config.getboolean('bitmessagesettings', 'startintray'))
+        self.ui.checkBoxWillinglySendToMobile.setChecked(
+            shared.safeConfigGetBoolean('bitmessagesettings', 'willinglysendtomobile'))
         if shared.appdata == '':
             self.ui.checkBoxPortableMode.setChecked(True)
         if 'darwin' in sys.platform:

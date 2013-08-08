@@ -201,17 +201,17 @@ def decodeWalletImportFormat(WIFstring):
     fullString = arithmetic.changebase(WIFstring,58,256)
     privkey = fullString[:-4]
     if fullString[-4:] != hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
-        logger.error('Major problem! When trying to decode one of your private keys, the checksum '
-                     'failed. Here is the PRIVATE key: %s\n' % str(WIFstring))
+        logger.critical('Major problem! When trying to decode one of your private keys, the checksum '
+                     'failed. Here is the PRIVATE key: %s' % str(WIFstring))
         return ""
     else:
         #checksum passed
         if privkey[0] == '\x80':
             return privkey[1:]
         else:
-            logger.error('Major problem! When trying to decode one of your private keys, the '
+            logger.critical('Major problem! When trying to decode one of your private keys, the '
                          'checksum passed but the key doesn\'t begin with hex 80. Here is the '
-                         'PRIVATE key: %s\n' % str(WIFstring))
+                         'PRIVATE key: %s' % str(WIFstring))
             return ""
 
 
@@ -367,6 +367,12 @@ def fixSensitiveFilePermissions(filename, hasEnabledKeys):
     except Exception, e:
         logger.exception('Keyfile permissions could not be fixed.')
         raise
+    
+def isBitSetWithinBitfield(fourByteString, n):
+    # Uses MSB 0 bit numbering across 4 bytes of data
+    n = 31 - n
+    x, = unpack('>L', fourByteString)
+    return x & 2**n != 0
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])
 
