@@ -933,7 +933,10 @@ class Main:
             'createRandomAddress', 3, streamNumberForAddress, label, 1, "", eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
         return shared.apiAddressGeneratorReturnQueue.get()
 
-    def createDeterministicAddresses(self,passphrase,numberOfAddresses=1,addressVersionNumber=0,streamNumber=0,eighteenByteRipe=False,totalDifficulty=1,smallMessageDifficulty=1):
+    def createDeterministicAddresses(self,passphrase,label=None,numberOfAddresses=1,addressVersionNumber=0,streamNumber=0,eighteenByteRipe=False,totalDifficulty=1,smallMessageDifficulty=1):
+        
+        if not label:
+            label = passphrase
         
         nonceTrialsPerByte = int(shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
         payloadLengthExtraBytes = int(shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
@@ -942,7 +945,7 @@ class Main:
 
         shared.addressGeneratorQueue.put(
             ('createDeterministicAddresses', addressVersionNumber, streamNumber,
-             'unused API address', numberOfAddresses, passphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
+             label, numberOfAddresses, passphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
 
         queueReturn = shared.apiAddressGeneratorReturnQueue.get()
 
@@ -1225,15 +1228,66 @@ class Main:
         for row in queryreturn:
             label, address, enabled = row
             label = shared.fixPotentiallyInvalidUTF8Data(label)
-            data.append({'label':label, 'address': address, 'enabled': enabled == 1})
+            data.append({'label':label, 'address': address, 'enabled': enabled})
         return data
         
     def clientStatus(self):
         return {"networkConnections" : len(shared.connectedHostsList)}
-            
+
+    def listContacts(self):
+        shared.sqlLock.acquire()
+
+        shared.sqlSubmitQueue.put('''select * from addressbook''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        
+        data = []
+        for row in queryreturn:
+            label, address = row
+            label = shared.fixPotentiallyInvalidUTF8Data(label)
+            data.append({'label':label, 'address': address})
+        return data
+        
+    def joinChannel(self, label, testaddress=None):
+        str_chan = '[chan]'
+
+        #Add Channel to Own Addresses
+        shared.apiAddressGeneratorReturnQueue.queue.clear()
+        shared.addressGeneratorQueue.put(('createChan', 3, 1, str_chan + ' ' + label ,label))
+        addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
+        print 'addressGeneratorReturnValue', addressGeneratorReturnValue
+        if len(addressGeneratorReturnValue) == 0:
+            return 'AddressAlreadyInsideError'
+    
+        address = addressGeneratorReturnValue[0]
+        
+        if address:
+            if str(address) != str(testaddress):
+                return 'ChannelNameDoesntMatchAddressError'
+
+        #Add Address to Address Book
+        shared.sqlLock.acquire()
+        t = (address,)
+        shared.sqlSubmitQueue.put('''select * from addressbook where address=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        if queryreturn != []:
+            return 'AddressAlreadyInsideError'
+
+        t = (str_chan + ' ' + label, address)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''INSERT INTO addressbook VALUES (?,?)''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
+        shared.sqlLock.release()
+        
 if __name__ == "__main__":
     mainprogram = Main()
     mainprogram.start()
+
 
 
     
