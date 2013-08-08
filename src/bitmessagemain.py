@@ -693,7 +693,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.sqlLock.release()
             if queryreturn != []:
                 return 'API Error 0016: You are already subscribed to that address.'
-            t = (label, address, True, '')
+            t = (label, address, True, '')#Added 4th value, got an error from sqlite
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put(
                 '''INSERT INTO subscriptions VALUES (?,?,?,?)''')
@@ -1193,8 +1193,8 @@ class Main:
         shared.sqlLock.release()
         if queryreturn != []:
             return (address,'AlreadySubscribedError')
-        print 'o'*1000
-        t = (label, address, True, '')
+
+        t = (label, address, True, '')#Added 4th value, got an error from sqlite
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''INSERT INTO subscriptions VALUES (?,?,?,?)''')
         shared.sqlSubmitQueue.put(t)
@@ -1208,8 +1208,7 @@ class Main:
         address = addBMIfNotPresent(address)
         t = (address,)
         shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
-            '''DELETE FROM subscriptions WHERE address=?''')
+        shared.sqlSubmitQueue.put('''DELETE FROM subscriptions WHERE address=?''')
         shared.sqlSubmitQueue.put(t)
         shared.sqlReturnQueue.get()
         shared.sqlSubmitQueue.put('commit')
