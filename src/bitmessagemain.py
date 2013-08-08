@@ -933,10 +933,7 @@ class Main:
             'createRandomAddress', 3, streamNumberForAddress, label, 1, "", eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
         return shared.apiAddressGeneratorReturnQueue.get()
 
-    def createDeterministicAddresses(self,passphrase,numberOfAddresses=1,addressVersionNumber=3,streamNumber=1,eighteenByteRipe=False,totalDifficulty=1,smallMessageDifficulty=1):
-        
-        addressVersionNumber = 3
-        streamNumber = 1
+    def createDeterministicAddresses(self,passphrase,numberOfAddresses=1,addressVersionNumber=0,streamNumber=0,eighteenByteRipe=False,totalDifficulty=1,smallMessageDifficulty=1):
         
         nonceTrialsPerByte = int(shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
         payloadLengthExtraBytes = int(shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
@@ -952,9 +949,10 @@ class Main:
         return queueReturn
 
     def getDeterministicAddress(self,passphrase, addressVersionNumber=3, streamNumber=1):
+        assert addressVersionNumber == 3, 'Only 3 is supported'
+        assert streamNumber == 1, 'only 1 is supported'
+        
         numberOfAddresses = 1
-        addressVersionNumber = 3
-        streamNumber = 1
         eighteenByteRipe = False
         shared.addressGeneratorQueue.put(
             ('getDeterministicAddress', addressVersionNumber,
@@ -962,8 +960,8 @@ class Main:
         return shared.apiAddressGeneratorReturnQueue.get()
 
 
-    def sendMessage(self, toAddress, fromAddress, subject, message):
-        encodingType = 2
+    def sendMessage(self, toAddress, fromAddress, subject, message, encodingType=2):
+        assert encodingType == 2, 'other values not supported jet'
         
         status, addressVersionNumber, streamNumber, toRipe = decodeAddress(toAddress)
         if status != 'success':
@@ -1134,6 +1132,7 @@ class Main:
         shared.sqlLock.release()
 
     def sendBroadcast(self,fromAddress,subject,message,encodingType=2):
+        assert encodingType == 2, 'Only 2 is supported jet'
 
         status, addressVersionNumber, streamNumber, toRipe = decodeAddress(fromAddress)
         fromAddress = addBMIfNotPresent(fromAddress)
@@ -1235,12 +1234,8 @@ class Main:
             
 if __name__ == "__main__":
     mainprogram = Main()
-    mainprogram.start(True)
+    mainprogram.start()
 
-    print 'x'*1000
-    print mainprogram.clientStatus()
-    print 'y'*1000
-    mainprogram.stop()
 
     
 # So far, the creation of and management of the Bitmessage protocol and this
