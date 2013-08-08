@@ -743,11 +743,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # already been encrypted and had the necessary proof of work done for it to be
             # disseminated to the rest of the Bitmessage network. PyBitmessage accepts this msg
             # object and sends it out to the rest of the Bitmessage network as if it had generated the
-            # message itself.
+            # message itself. Please do not yet add this to the api doc.
             if len(params) != 1:
                 return 'API Error 0000: I need 1 parameter!'
             encryptedPayload, = params
             encryptedPayload = encryptedPayload.decode('hex')
+            toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
             inventoryHash = calculateInventoryHash(encryptedPayload)
             objectType = 'msg'
             shared.inventory[inventoryHash] = (
@@ -760,22 +761,32 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # The device issuing this command to PyBitmessage supplies a pubkey object that has
             # already had the necessary proof of work done for it to be disseminated to the rest of the 
             # Bitmessage network. PyBitmessage accepts this pubkey object and sends it out to the 
-            # rest of the Bitmessage network as if it had generated the pubkey object itself.
+            # rest of the Bitmessage network as if it had generated the pubkey object itself. Please
+            # do not yet add this to the api doc.
             if len(params) != 1:
                 return 'API Error 0000: I need 1 parameter!'
             payload, = params
             payload = payload.decode('hex')
+            pubkeyReadPosition = 8 # bypass the nonce
+            if payload[pubkeyReadPosition:pubkeyReadPosition+4] == '\x00\x00\x00\x00': # if this pubkey uses 8 byte time
+                pubkeyReadPosition += 8
+            else:
+                pubkeyReadPosition += 4
+            addressVersion, addressVersionLength = decodeVarint(payload[pubkeyReadPosition:pubkeyReadPosition+10])
+            pubkeyReadPosition += addressVersionLength
+            pubkeyStreamNumber = decodeVarint(payload[pubkeyReadPosition:pubkeyReadPosition+10])[0]
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'pubkey'
             shared.inventory[inventoryHash] = (
-                objectType, streamNumber, payload, int(time.time()))
+                objectType, pubkeyStreamNumber, payload, int(time.time()))
             with shared.printLock:
                 print 'broadcasting inv within API command disseminatePubkey with hash:', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
                 streamNumber, 'sendinv', inventoryHash))
-        elif method == 'getMessageDataByDestinationRIPEHash':
+        elif method == 'getMessageDataByDestinationHash':
             # Method will eventually be used by a particular Android app to 
-            # select relevant messages. 
+            # select relevant messages. Do not yet add this to the api
+            # doc.
             
             if len(params) != 1:
                 return 'API Error 0000: I need 1 parameter!'
@@ -816,7 +827,26 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'data':payload.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
-
+        elif method == 'getPubkeyByHash':
+            # Method will eventually be used by a particular Android app to 
+            # retrieve pubkeys. Please do not yet add this to the api docs.
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            requestedHash, = params
+            if len(requestedHash) != 40:
+                return 'API Error 0019: The length of hash should be 20 bytes (encoded in hex thus 40 characters).'
+            requestedHash = requestedHash.decode('hex')
+            parameters = (requestedHash,)
+            with shared.sqlLock:
+                shared.sqlSubmitQueue.put('''SELECT transmitdata FROM pubkeys WHERE hash = ? ; ''')
+                shared.sqlSubmitQueue.put(parameters)
+                queryreturn = shared.sqlReturnQueue.get()
+            data = '{"pubkey":['
+            for row in queryreturn:
+                transmitdata, = row
+                data += json.dumps({'data':transmitdata.encode('hex')}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
         elif method == 'clientStatus':
             return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
         else:
