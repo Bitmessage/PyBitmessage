@@ -69,7 +69,7 @@ ackdataForWhichImWatching = {}
 messagesTotals = 0
 broadcastTotals = 0
 pubkeysTotals = 0
-definitelyFullyConnected = False
+incomingConnections = False
 
 #If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.

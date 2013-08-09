@@ -848,19 +848,17 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'clientStatus':
-            return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
-        elif method == 'networkTabInfo':
-            data = '{\n    \"Total Connections\" : "%s"\n' % str(len(shared.connectedHostsList))
-            data += '    \"P2P Messages Processed\" : "%s"\n' % str(shared.messagesTotals)
-            data += '    \"Broadcast Messages Processed\" : "%s"\n' % str(shared.broadcastTotals)
-            data += '    \"Public Keys Processed\" : "%s"\n' % str(shared.pubkeysTotals)
+            data = '{\n    "networkConnections" : "%s"\n' % str(len(shared.connectedHostsList))
+            data += '    "processedP2Pmessages" : "%s"\n' % str(shared.messagesTotals)
+            data += '    "processedBroadcastMessages" : "%s"\n' % str(shared.broadcastTotals)
+            data += '    "processedPublicKeys" : "%s"\n' % str(shared.pubkeysTotals)
             if len(shared.connectedHostsList) == 0:
-                dataColor = 'red'
-            elif len(shared.connectedHostsList) > 0 and not shared.definitelyFullyConnected:
-                dataColor = 'yellow'
+                networkStatus = 'notConnected'
+            elif len(shared.connectedHostsList) > 0 and not shared.incomingConnections:
+                networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
             else:
-                dataColor = 'green'
-            data += '    \"Icon Status\" : "%s"\n}' % dataColor
+                networkStatus = 'connectedAndReceivingIncomingConnections'
+            data += '    "networkStatus" : "%s"\n}' % networkStatus
             return data
         else:
             return 'API Error 0020: Invalid method: %s' % method

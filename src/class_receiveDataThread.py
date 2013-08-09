@@ -256,7 +256,7 @@ class receiveDataThread(threading.Thread):
     def connectionFullyEstablished(self):
         self.connectionIsOrWasFullyEstablished = True
         if not self.initiatedConnection:
-            shared.definitelyFullyConnected = True
+            shared.incomingConnections = True
             shared.UISignalQueue.put(('setStatusIcon', 'green'))
         self.sock.settimeout(
             600)  # We'll send out a pong every 5 minutes to make sure the connection stays alive if there has been no other traffic to send lately.
