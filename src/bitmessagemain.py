@@ -1292,7 +1292,39 @@ class Main:
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
+
+    def addContact(self,label,address):
+
+        #Add Address to Address Book
+        shared.sqlLock.acquire()
+        t = (address,)
+        shared.sqlSubmitQueue.put('''select * from addressbook where address=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
         
+        if queryreturn != []:
+            return 'AddressAlreadyInsideError'
+
+        t = (label, address)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''INSERT INTO addressbook VALUES (?,?)''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
+        shared.sqlLock.release()
+        
+    def delContact(self,address):
+        
+        shared.sqlLock.acquire()
+        t = (address,)
+        shared.sqlSubmitQueue.put('''delete from addressbook where address=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+    
+    
+    
 if __name__ == "__main__":
     mainprogram = Main()
     mainprogram.start()
