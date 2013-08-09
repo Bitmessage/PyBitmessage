@@ -34,8 +34,7 @@ from class_addressGenerator import *
 # Helper Functions
 import helper_bootstrap
 
-# Debug logger
-from debug import logger
+import shared
 
 import sys
 if sys.platform == 'darwin':
@@ -517,7 +516,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, toRipe = decodeAddress(
                 toAddress)
             if status != 'success':
-                logger.warn('API Error 0007: Could not decode address: %s', toAddress + ' : ' + status)
+                logger.warn('API Error 0007: Could not decode address: %s:%s.', toAddress, status)
 
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + toAddress
@@ -533,7 +532,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(
                 fromAddress)
             if status != 'success':
-                logger.warn('API Error 0007: Could not decode address: %s', fromAddress + ' : ' + status)
+                logger.warn('API Error 0007: Could not decode address: %s:%s.', fromAddress, status)
 
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + fromAddress
@@ -597,7 +596,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(
                 fromAddress)
             if status != 'success':
-                logger.warn('API Error 0007: Could not decode address: %s', fromAddress + ' : ' + status)
+                logger.warn('API Error 0007: Could not decode address: %s:%s.', fromAddress, status)
 
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + fromAddress
@@ -667,7 +666,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, toRipe = decodeAddress(
                 address)
             if status != 'success':
-                logger.warn('API Error 0007: Could not decode address: %s', address + ' : ' + status)
+                logger.warn('API Error 0007: Could not decode address: %s:%s.', address, status)
 
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + address
