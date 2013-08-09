@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>445</width>
+    <width>462</width>
     <height>343</height>
    </rect>
   </property>
@@ -37,17 +37,40 @@
        <string>User Interface</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_5">
-       <item row="0" column="0">
-        <widget class="QCheckBox" name="checkBoxStartOnLogon">
+       <item row="7" column="0">
+        <widget class="QLabel" name="labelSettingsNote">
          <property name="text">
-          <string>Start Bitmessage on user login</string>
+          <string/>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
          </property>
         </widget>
+       </item>
+       <item row="8" column="0">
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
        <item row="1" column="0">
         <widget class="QCheckBox" name="checkBoxStartInTray">
          <property name="text">
           <string>Start Bitmessage in the tray (don't show main window)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="3" column="0">
+        <widget class="QCheckBox" name="checkBoxShowTrayNotifications">
+         <property name="text">
+          <string>Show notification when message received</string>
          </property>
         </widget>
        </item>
@@ -61,20 +84,6 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0">
-        <widget class="QCheckBox" name="checkBoxShowTrayNotifications">
-         <property name="text">
-          <string>Show notification when message received</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QCheckBox" name="checkBoxPortableMode">
-         <property name="text">
-          <string>Run in Portable Mode</string>
-         </property>
-        </widget>
-       </item>
        <item row="5" column="0">
         <widget class="QLabel" name="label_7">
          <property name="text">
@@ -85,28 +94,26 @@
          </property>
         </widget>
        </item>
-       <item row="6" column="0">
-        <widget class="QLabel" name="labelSettingsNote">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="checkBoxStartOnLogon">
          <property name="text">
-          <string/>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
+          <string>Start Bitmessage on user login</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="0">
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
+       <item row="4" column="0">
+        <widget class="QCheckBox" name="checkBoxPortableMode">
+         <property name="text">
+          <string>Run in Portable Mode</string>
          </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
+        </widget>
+       </item>
+       <item row="6" column="0">
+        <widget class="QCheckBox" name="checkBoxWillinglySendToMobile">
+         <property name="text">
+          <string>Willingly include unencrypted destination address when sending to a mobile device</string>
          </property>
-        </spacer>
+        </widget>
        </item>
       </layout>
      </widget>
