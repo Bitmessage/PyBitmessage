@@ -34,7 +34,7 @@ from class_addressGenerator import *
 # Helper Functions
 import helper_bootstrap
 
-import shared
+from debug import logger
 
 import sys
 if sys.platform == 'darwin':
