@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'newchandialog.ui'
 #
-# Created: Mon Jul 22 01:05:35 2013
-#      by: PyQt4 UI code generator 4.10.2
+# Created: Wed Aug  7 16:51:29 2013
+#      by: PyQt4 UI code generator 4.10
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_newChanDialog(object):
     def setupUi(self, newChanDialog):
         newChanDialog.setObjectName(_fromUtf8("newChanDialog"))
-        newChanDialog.resize(530, 422)
+        newChanDialog.resize(553, 422)
         newChanDialog.setMinimumSize(QtCore.QSize(0, 0))
         self.formLayout = QtGui.QFormLayout(newChanDialog)
         self.formLayout.setObjectName(_fromUtf8("formLayout"))
@@ -87,13 +87,18 @@ class Ui_newChanDialog(object):
         QtCore.QObject.connect(self.radioButtonJoinChan, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.groupBoxJoinChan.setShown)
         QtCore.QObject.connect(self.radioButtonCreateChan, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.groupBoxCreateChan.setShown)
         QtCore.QMetaObject.connectSlotsByName(newChanDialog)
+        newChanDialog.setTabOrder(self.radioButtonJoinChan, self.radioButtonCreateChan)
+        newChanDialog.setTabOrder(self.radioButtonCreateChan, self.lineEditChanNameCreate)
+        newChanDialog.setTabOrder(self.lineEditChanNameCreate, self.lineEditChanNameJoin)
+        newChanDialog.setTabOrder(self.lineEditChanNameJoin, self.lineEditChanBitmessageAddress)
+        newChanDialog.setTabOrder(self.lineEditChanBitmessageAddress, self.buttonBox)
 
     def retranslateUi(self, newChanDialog):
         newChanDialog.setWindowTitle(_translate("newChanDialog", "Dialog", None))
         self.radioButtonCreateChan.setText(_translate("newChanDialog", "Create a new chan", None))
         self.radioButtonJoinChan.setText(_translate("newChanDialog", "Join a chan", None))
         self.groupBoxCreateChan.setTitle(_translate("newChanDialog", "Create a chan", None))
-        self.label_4.setText(_translate("newChanDialog", "Enter a name for your chan. If you choose a sufficiently complex chan name (like a strong and unique passphrase) and none of your friends share it publicly then the chan will be secure and private.", None))
+        self.label_4.setText(_translate("newChanDialog", "<html><head/><body><p>Enter a name for your chan. If you choose a sufficiently complex chan name (like a strong and unique passphrase) and none of your friends share it publicly then the chan will be secure and private. If you and someone else both create a chan with the same chan name then it is currently very likely that they will be the same chan.</p></body></html>", None))
         self.label_5.setText(_translate("newChanDialog", "Chan name:", None))
         self.groupBoxJoinChan.setTitle(_translate("newChanDialog", "Join a chan", None))
         self.label.setText(_translate("newChanDialog", "<html><head/><body><p>A chan exists when a group of people share the same decryption keys. The keys and bitmessage address used by a chan are generated from a human-friendly word or phrase (the chan name). To send a message to everyone in the chan, send a normal person-to-person message to the chan address.</p><p>Chans are experimental and completely unmoderatable.</p></body></html>", None))

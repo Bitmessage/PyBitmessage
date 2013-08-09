@@ -107,10 +107,8 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
 
     random.seed()
     payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
-    userAgent = '/PyBitmessage:' + shared.softwareVersion + \
-        '/'  # Length of userAgent must be less than 253.
-    payload += pack('>B', len(
-        userAgent))  # user agent string length. If the user agent is more than 252 bytes long, this code isn't going to work.
+    userAgent = '/PyBitmessage:' + shared.softwareVersion + '/'
+    payload += encodeVarint(len(userAgent))
     payload += userAgent
     payload += encodeVarint(
         1)  # The number of streams about which I care. PyBitmessage currently only supports 1 per connection.
@@ -209,17 +207,17 @@ def decodeWalletImportFormat(WIFstring):
     fullString = arithmetic.changebase(WIFstring,58,256)
     privkey = fullString[:-4]
     if fullString[-4:] != hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
-        logger.error('Major problem! When trying to decode one of your private keys, the checksum '
-                     'failed. Here is the PRIVATE key: %s\n' % str(WIFstring))
+        logger.critical('Major problem! When trying to decode one of your private keys, the checksum '
+                     'failed. Here is the PRIVATE key: %s' % str(WIFstring))
         return ""
     else:
         #checksum passed
         if privkey[0] == '\x80':
             return privkey[1:]
         else:
-            logger.error('Major problem! When trying to decode one of your private keys, the '
+            logger.critical('Major problem! When trying to decode one of your private keys, the '
                          'checksum passed but the key doesn\'t begin with hex 80. Here is the '
-                         'PRIVATE key: %s\n' % str(WIFstring))
+                         'PRIVATE key: %s' % str(WIFstring))
             return ""
 
 
@@ -249,8 +247,7 @@ def reloadMyAddressHashes():
                         myAddressesByHash[hash] = addressInKeysFile
 
                 else:
-                    logger.error('Error in reloadMyAddressHashes: Can\'t handle address '
-                                 'versions other than 2 or 3.\n')
+                    logger.error('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2 or 3.\n')
 
     if not keyfileSecure:
         fixSensitiveFilePermissions(appdata + 'keys.dat', hasEnabledKeys)
@@ -326,8 +323,8 @@ def flushInventory():
     sqlLock.acquire()
     for hash, storedValue in inventory.items():
         objectType, streamNumber, payload, receivedTime = storedValue
-        t = (hash,objectType,streamNumber,payload,receivedTime)
-        sqlSubmitQueue.put('''INSERT INTO inventory VALUES (?,?,?,?,?)''')
+        t = (hash,objectType,streamNumber,payload,receivedTime,'')
+        sqlSubmitQueue.put('''INSERT INTO inventory VALUES (?,?,?,?,?,?)''')
         sqlSubmitQueue.put(t)
         sqlReturnQueue.get()
         del inventory[hash]
@@ -389,6 +386,12 @@ def fixSensitiveFilePermissions(filename, hasEnabledKeys):
     except Exception, e:
         logger.exception('Keyfile permissions could not be fixed.')
         raise
+    
+def isBitSetWithinBitfield(fourByteString, n):
+    # Uses MSB 0 bit numbering across 4 bytes of data
+    n = 31 - n
+    x, = unpack('>L', fourByteString)
+    return x & 2**n != 0
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])
 
