@@ -35,6 +35,7 @@ from class_addressGenerator import *
 import helper_bootstrap
 
 import sys
+import StringIO
 if sys.platform == 'darwin':
     if float("{1}.{2}".format(*sys.version_info)) < 7.5:
         print "You should use python 2.7.5 or greater."
@@ -769,7 +770,13 @@ if shared.useVeryEasyProofOfWorkForTesting:
         shared.networkDefaultPayloadLengthExtraBytes / 7000)
 
 class Main:
-    def start(self, deamon=False):
+    def start(self, deamon=False, silent=False):
+        
+        if silent:
+            fobj = StringIO.StringIO()
+            sys.stdout = fobj            
+            sys.stderr = fobj
+        
         # is the application already running?  If yes then exit.
         thisapp = singleton.singleinstance()
 
@@ -1286,7 +1293,8 @@ class Main:
         
 if __name__ == "__main__":
     mainprogram = Main()
-    mainprogram.start()
+    mainprogram.start(True,True)
+    mainprogram.stop()
 
 
 
