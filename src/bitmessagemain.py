@@ -774,6 +774,8 @@ class Main:
         
         if silent:
             fobj = StringIO.StringIO()
+            self.stdout = sys.stdout
+            self.stderr = sys.stderr
             sys.stdout = fobj            
             sys.stderr = fobj
         
@@ -1293,8 +1295,7 @@ class Main:
         
 if __name__ == "__main__":
     mainprogram = Main()
-    mainprogram.start(True,True)
-    mainprogram.stop()
+    mainprogram.start()
 
 
 
