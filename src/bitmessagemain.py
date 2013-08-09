@@ -35,6 +35,7 @@ from class_addressGenerator import *
 import helper_bootstrap
 
 import sys
+import StringIO
 if sys.platform == 'darwin':
     if float("{1}.{2}".format(*sys.version_info)) < 7.5:
         print "You should use python 2.7.5 or greater."
@@ -693,10 +694,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.sqlLock.release()
             if queryreturn != []:
                 return 'API Error 0016: You are already subscribed to that address.'
-            t = (label, address, True)
+            t = (label, address, True, '')#Added 4th value, got an error from sqlite
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put(
-                '''INSERT INTO subscriptions VALUES (?,?,?)''')
+                '''INSERT INTO subscriptions VALUES (?,?,?,?)''')
             shared.sqlSubmitQueue.put(t)
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
@@ -762,8 +763,6 @@ selfInitiatedConnections = {}
 
 
 
-
-
 if shared.useVeryEasyProofOfWorkForTesting:
     shared.networkDefaultProofOfWorkNonceTrialsPerByte = int(
         shared.networkDefaultProofOfWorkNonceTrialsPerByte / 16)
@@ -771,7 +770,15 @@ if shared.useVeryEasyProofOfWorkForTesting:
         shared.networkDefaultPayloadLengthExtraBytes / 7000)
 
 class Main:
-    def start(self, deamon=False):
+    def start(self, deamon=False, silent=False):
+        
+        if silent:
+            fobj = StringIO.StringIO()
+            self.stdout = sys.stdout
+            self.stderr = sys.stderr
+            sys.stdout = fobj            
+            sys.stderr = fobj
+        
         # is the application already running?  If yes then exit.
         thisapp = singleton.singleinstance()
 
@@ -850,8 +857,171 @@ class Main:
         with shared.printLock:
             print 'Stopping Bitmessage Deamon.'
         shared.doCleanShutdown()
+
+    def getAllInboxMessages(self):
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put(
+            '''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox where folder='inbox' ORDER BY received''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
         
+        messages = []
+        for row in queryreturn:
+            msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
+            
+            messages.append({'msgid': msgid.encode('hex'), 'toAddress': toAddress, 'fromAddress': fromAddress, 'subject': subject, 'message': message, 'encodingType': encodingtype, 'receivedTime': received, 'read': read})
         
+        return messages
+    
+    
+    def getAllInboxMessageIDs(self):
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT msgid FROM inbox where folder='inbox' ORDER BY received''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        
+        data = []
+        for msgid in queryreturn:
+            data.append(msgid[0].encode('hex'))
+        return data
+
+    def getInboxMessageByID(self, msgid):
+
+        msgid = msgid.decode('hex')
+        v = (msgid,)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox WHERE msgid=?''')
+        shared.sqlSubmitQueue.put(v)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        
+        data = []
+        for row in queryreturn:
+            msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
+            data.append({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject, 'message':message, 'encodingType':encodingtype, 'receivedTime':received, 'read': read})
+
+        return data
+
+    def thrashMessage(self,msgid):
+
+        self.trashInboxMessage(msgid)
+        self.trashSentMessage(msgid)
+        
+    def trashInboxMessage(self,msgid):
+
+        msgid = msgid.decode('hex')
+        helper_inbox.trash(msgid)
+
+
+    def listAddresses(self):
+        addresses = []
+        configSections = shared.config.sections()
+        for addressInKeysFile in configSections:
+            if addressInKeysFile != 'bitmessagesettings':
+                status, addressVersionNumber, streamNumber, hash = decodeAddress(addressInKeysFile)
+
+                addresses.append({'label': shared.config.get(addressInKeysFile, 'label'), 'address': addressInKeysFile, 'stream':streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled')})
+        return addresses
+        
+    def createRandomAddress(self,label,eighteenByteRipe=False,totalDifficulty=1,smallMessageDifficulty=1):
+
+        nonceTrialsPerByte = int(shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+        payloadLengthExtraBytes = int(shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+        
+        unicode(label, 'utf-8')
+
+        shared.apiAddressGeneratorReturnQueue.queue.clear()
+        streamNumberForAddress = 1
+        shared.addressGeneratorQueue.put((
+            'createRandomAddress', 3, streamNumberForAddress, label, 1, "", eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
+        return shared.apiAddressGeneratorReturnQueue.get()
+
+    def createDeterministicAddresses(self,passphrase,label=None,numberOfAddresses=1,addressVersionNumber=0,streamNumber=0,eighteenByteRipe=False,totalDifficulty=1,smallMessageDifficulty=1):
+        
+        if not label:
+            label = passphrase
+        
+        nonceTrialsPerByte = int(shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+        payloadLengthExtraBytes = int(shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+
+        shared.apiAddressGeneratorReturnQueue.queue.clear()
+
+        shared.addressGeneratorQueue.put(
+            ('createDeterministicAddresses', addressVersionNumber, streamNumber,
+             label, numberOfAddresses, passphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
+
+        queueReturn = shared.apiAddressGeneratorReturnQueue.get()
+
+        return queueReturn
+
+    def getDeterministicAddress(self,passphrase, addressVersionNumber=3, streamNumber=1):
+        assert addressVersionNumber == 3, 'Only 3 is supported'
+        assert streamNumber == 1, 'only 1 is supported'
+        
+        numberOfAddresses = 1
+        eighteenByteRipe = False
+        shared.addressGeneratorQueue.put(
+            ('getDeterministicAddress', addressVersionNumber,
+             streamNumber, 'unused API address', numberOfAddresses, passphrase, eighteenByteRipe))
+        return shared.apiAddressGeneratorReturnQueue.get()
+
+
+    def sendMessage(self, toAddress, fromAddress, subject, message, encodingType=2):
+        assert encodingType == 2, 'other values not supported jet'
+        
+        status, addressVersionNumber, streamNumber, toRipe = decodeAddress(toAddress)
+        if status != 'success':
+            with shared.printLock:
+                print 'ToAddress Error: %s , %s'%(toAddress,status)
+            return (toAddress,status)
+
+        status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(fromAddress)
+        if status != 'success':
+            with shared.printLock:
+                print 'fromAddress Error: %s , %s'%(fromAddress,status)
+            return (fromAddress,status)
+            
+ 
+        toAddress = addBMIfNotPresent(toAddress)
+        fromAddress = addBMIfNotPresent(fromAddress)
+        try:
+            fromAddressEnabled = shared.config.getboolean(fromAddress, 'enabled')
+        except:
+            return (fromAddress,'fromAddressNotPresentError')
+        if not fromAddressEnabled:
+            return (fromAddress,'fromAddressDisabledError')
+
+        ackdata = OpenSSL.rand(32)
+
+        t = ('', toAddress, toRipe, fromAddress, subject, message, ackdata, int(
+            time.time()), 'msgqueued', 1, 1, 'sent', 2)
+        helper_sent.insert(t)
+
+        toLabel = ''
+        t = (toAddress,)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put(
+            '''select label from addressbook where address=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        if queryreturn != []:
+            for row in queryreturn:
+                toLabel, = row
+
+        shared.UISignalQueue.put(('displayNewSentMessage', (
+            toAddress, toLabel, fromAddress, subject, message, ackdata)))
+
+        shared.workerQueue.put(('sendmessage', toAddress))
+
+        return ackdata.encode('hex')
+
     def getApiAddress(self):
         if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
             return None
@@ -859,10 +1029,307 @@ class Main:
         address = shared.config.get('bitmessagesettings', 'apiinterface')
         port = shared.config.getint('bitmessagesettings', 'apiport')
         return {'address':address,'port':port}
+    
+    def getAllSentMessages(self):
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        data = []
+        for row in queryreturn:
+            msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
+
+            data.append({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject, 'message':message, 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')})
+
+        return data
+        
+    def getAllSentMessageIDs(self):
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+
+        data = []
+        for row in queryreturn:
+            msgid = row[0]
+            data.append(msgid.encode('hex'))
+
+        return data
+        
+    def getInboxMessagesByReceiver(self,toAddress):
+
+        v = (toAddress,)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype FROM inbox WHERE folder='inbox' AND toAddress=?''')
+        shared.sqlSubmitQueue.put(v)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+
+        data = []
+        for row in queryreturn:
+            msgid, toAddress, fromAddress, subject, received, message, encodingtype = row
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
+
+            data .append({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received})
+
+        return data
+        
+    def getSentMessageByID(self,msgid):
+
+        msgid = params[0].decode('hex')
+        v = (msgid,)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE msgid=?''')
+        shared.sqlSubmitQueue.put(v)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        data = []
+        for row in queryreturn:
+            msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
+            data.append({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')})
+        
+        return data
+        
+    def getSentMessagesBySender(self, fromAddress):
+        v = (fromAddress,)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime''')
+        shared.sqlSubmitQueue.put(v)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        
+        data = []
+        for row in queryreturn:
+            msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
+            data.append({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject, 'message':message, 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')})
+
+        return data
+    
+    def getSentMessageByAckData(self,ackData):
+
+        ackData = params[0].decode('hex')
+        v = (ackData,)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE ackdata=?''')
+        shared.sqlSubmitQueue.put(v)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        data = []
+        for row in queryreturn:
+            msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            message = shared.fixPotentiallyInvalidUTF8Data(message)
+            data.append({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject, 'message':message, 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')})
+
+        return data
+        
+    def trashSentMessage(self,msgid):
+
+        msgid = params[0].decode('hex')
+        t = (msgid,)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE msgid=?''')
+        shared.sqlSubmitQueue.put(t)
+        shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
+        shared.sqlLock.release()
+
+    def sendBroadcast(self,fromAddress,subject,message,encodingType=2):
+        assert encodingType == 2, 'Only 2 is supported jet'
+
+        status, addressVersionNumber, streamNumber, toRipe = decodeAddress(fromAddress)
+        fromAddress = addBMIfNotPresent(fromAddress)
+        
+        try:
+            fromAddressEnabled = shared.config.getboolean(fromAddress, 'enabled')
+        except:
+            return (fromAddress,'fromAddressNotPresentError')
+        if not fromAddressEnabled:
+            return (fromAddress,'fromAddressDisabledError')
             
+        ackdata = OpenSSL.rand(32)
+        toAddress = '[Broadcast subscribers]'
+        ripe = ''
+
+
+        t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
+            time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
+        helper_sent.insert(t)
+
+        toLabel = '[Broadcast subscribers]'
+        shared.workerQueue.put(('sendbroadcast', ''))
+
+        return ackdata.encode('hex')
+            
+    def getStatus(self,ackdata):
+
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT status FROM sent where ackdata=?''')
+        shared.sqlSubmitQueue.put((ackdata.decode('hex'),))
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        if queryreturn == []:
+            return 'notfound'
+        for row in queryreturn:
+            status, = row
+            return status
+            
+    def addSubscription(self,address,label = ''):
+
+        unicode(label, 'utf-8')
+
+        address = addBMIfNotPresent(address)
+        status, addressVersionNumber, streamNumber, toRipe = decodeAddress(address)
+        
+        if status != 'success':
+            with shared.printLock:
+                print 'Address Error: %s , %s'%(address,status)
+            return (address,status)
+
+        # First we must check to see if the address is already in the
+        # subscriptions list.
+        shared.sqlLock.acquire()
+        t = (address,)
+        shared.sqlSubmitQueue.put('''select * from subscriptions where address=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        if queryreturn != []:
+            return (address,'AlreadySubscribedError')
+
+        t = (label, address, True, '')#Added 4th value, got an error from sqlite
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''INSERT INTO subscriptions VALUES (?,?,?,?)''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
+        shared.sqlLock.release()
+        shared.reloadBroadcastSendersForWhichImWatching()
+
+    def deleteSubscription(self,address):
+
+        address = addBMIfNotPresent(address)
+        t = (address,)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''DELETE FROM subscriptions WHERE address=?''')
+        shared.sqlSubmitQueue.put(t)
+        shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
+        shared.sqlLock.release()
+        shared.reloadBroadcastSendersForWhichImWatching()
+
+    def listSubscriptions(self):
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''SELECT label, address, enabled FROM subscriptions''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        data = []
+        for row in queryreturn:
+            label, address, enabled = row
+            label = shared.fixPotentiallyInvalidUTF8Data(label)
+            data.append({'label':label, 'address': address, 'enabled': enabled})
+        return data
+        
+    def clientStatus(self):
+        return {"networkConnections" : len(shared.connectedHostsList)}
+
+    def listContacts(self):
+        shared.sqlLock.acquire()
+
+        shared.sqlSubmitQueue.put('''select * from addressbook''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        
+        data = []
+        for row in queryreturn:
+            label, address = row
+            label = shared.fixPotentiallyInvalidUTF8Data(label)
+            data.append({'label':label, 'address': address})
+        return data
+        
+    def joinChannel(self, label, testaddress=None):
+        str_chan = '[chan]'
+
+        #Add Channel to Own Addresses
+        shared.apiAddressGeneratorReturnQueue.queue.clear()
+        shared.addressGeneratorQueue.put(('createChan', 3, 1, str_chan + ' ' + label ,label))
+        addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
+        print 'addressGeneratorReturnValue', addressGeneratorReturnValue
+        if len(addressGeneratorReturnValue) == 0:
+            return 'AddressAlreadyInsideError'
+    
+        address = addressGeneratorReturnValue[0]
+        
+        if address:
+            if str(address) != str(testaddress):
+                return 'ChannelNameDoesntMatchAddressError'
+
+        #Add Address to Address Book
+        shared.sqlLock.acquire()
+        t = (address,)
+        shared.sqlSubmitQueue.put('''select * from addressbook where address=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        if queryreturn != []:
+            return 'AddressAlreadyInsideError'
+
+        t = (str_chan + ' ' + label, address)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''INSERT INTO addressbook VALUES (?,?)''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
+        shared.sqlLock.release()
+
+    def addContact(self,label,address):
+
+        #Add Address to Address Book
+        shared.sqlLock.acquire()
+        t = (address,)
+        shared.sqlSubmitQueue.put('''select * from addressbook where address=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        
+        if queryreturn != []:
+            return 'AddressAlreadyInsideError'
+
+        t = (label, address)
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''INSERT INTO addressbook VALUES (?,?)''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
+        shared.sqlLock.release()
+        
+    def delContact(self,address):
+        
+        shared.sqlLock.acquire()
+        t = (address,)
+        shared.sqlSubmitQueue.put('''delete from addressbook where address=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+    
+    
+    
 if __name__ == "__main__":
     mainprogram = Main()
     mainprogram.start()
+
+
 
     
 # So far, the creation of and management of the Bitmessage protocol and this
