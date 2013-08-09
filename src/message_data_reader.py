@@ -5,19 +5,10 @@
 import sqlite3
 from time import strftime, localtime
 import sys
+import shared
+import string
 
-APPNAME = "PyBitmessage"
-from os import path, environ
-if sys.platform == 'darwin':
-    if "HOME" in environ:
-        appdata = path.join(environ["HOME"], "Library/Application support/", APPNAME) + '/'
-    else:
-        print 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
-        sys.exit()
-elif 'win' in sys.platform:
-    appdata = path.join(environ['APPDATA'], APPNAME) + '\\'
-else:
-    appdata = path.expanduser(path.join("~", "." + APPNAME + "/"))
+appdata = shared.lookupAppdataFolder()
 
 conn = sqlite3.connect( appdata + 'messages.dat' )
 conn.text_factory = str

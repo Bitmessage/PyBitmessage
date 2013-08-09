@@ -738,6 +738,115 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'label':label.encode('base64'), 'address': address, 'enabled': enabled == 1}, indent=4, separators=(',',': '))
             data += ']}'
             return data
+        elif method == 'disseminatePreEncryptedMsg':
+            # The device issuing this command to PyBitmessage supplies a msg object that has
+            # already been encrypted and had the necessary proof of work done for it to be
+            # disseminated to the rest of the Bitmessage network. PyBitmessage accepts this msg
+            # object and sends it out to the rest of the Bitmessage network as if it had generated the
+            # message itself. Please do not yet add this to the api doc.
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            encryptedPayload, = params
+            encryptedPayload = encryptedPayload.decode('hex')
+            toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
+            inventoryHash = calculateInventoryHash(encryptedPayload)
+            objectType = 'msg'
+            shared.inventory[inventoryHash] = (
+                objectType, toStreamNumber, encryptedPayload, int(time.time()))
+            with shared.printLock:
+                print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', inventoryHash.encode('hex')
+            shared.broadcastToSendDataQueues((
+                toStreamNumber, 'sendinv', inventoryHash))
+        elif method == 'disseminatePubkey':
+            # The device issuing this command to PyBitmessage supplies a pubkey object that has
+            # already had the necessary proof of work done for it to be disseminated to the rest of the 
+            # Bitmessage network. PyBitmessage accepts this pubkey object and sends it out to the 
+            # rest of the Bitmessage network as if it had generated the pubkey object itself. Please
+            # do not yet add this to the api doc.
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            payload, = params
+            payload = payload.decode('hex')
+            pubkeyReadPosition = 8 # bypass the nonce
+            if payload[pubkeyReadPosition:pubkeyReadPosition+4] == '\x00\x00\x00\x00': # if this pubkey uses 8 byte time
+                pubkeyReadPosition += 8
+            else:
+                pubkeyReadPosition += 4
+            addressVersion, addressVersionLength = decodeVarint(payload[pubkeyReadPosition:pubkeyReadPosition+10])
+            pubkeyReadPosition += addressVersionLength
+            pubkeyStreamNumber = decodeVarint(payload[pubkeyReadPosition:pubkeyReadPosition+10])[0]
+            inventoryHash = calculateInventoryHash(payload)
+            objectType = 'pubkey'
+            shared.inventory[inventoryHash] = (
+                objectType, pubkeyStreamNumber, payload, int(time.time()))
+            with shared.printLock:
+                print 'broadcasting inv within API command disseminatePubkey with hash:', inventoryHash.encode('hex')
+            shared.broadcastToSendDataQueues((
+                streamNumber, 'sendinv', inventoryHash))
+        elif method == 'getMessageDataByDestinationHash':
+            # Method will eventually be used by a particular Android app to 
+            # select relevant messages. Do not yet add this to the api
+            # doc.
+            
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            requestedHash, = params
+            if len(requestedHash) != 40:
+                return 'API Error 0019: The length of hash should be 20 bytes (encoded in hex thus 40 characters).'
+            requestedHash = requestedHash.decode('hex')
+            
+            # This is not a particularly commonly used API function. Before we 
+            # use it we'll need to fill out a field in our inventory database 
+            # which is blank by default (first20bytesofencryptedmessage). 
+            parameters = ''
+            with shared.sqlLock:
+                shared.sqlSubmitQueue.put('''SELECT hash, payload FROM inventory WHERE first20bytesofencryptedmessage = '' and objecttype = 'msg' ; ''')
+                shared.sqlSubmitQueue.put(parameters)
+                queryreturn = shared.sqlReturnQueue.get()
+            
+                for row in queryreturn:
+                    hash, payload = row
+                    readPosition = 16 # Nonce length + time length
+                    readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
+                    t = (payload[readPosition:readPosition+20],hash)
+                    shared.sqlSubmitQueue.put('''UPDATE inventory SET first20bytesofencryptedmessage=? WHERE hash=?; ''')
+                    shared.sqlSubmitQueue.put(t)
+                    shared.sqlReturnQueue.get()        
+                
+            parameters = (requestedHash,)
+            with shared.sqlLock:
+                shared.sqlSubmitQueue.put('commit')
+                shared.sqlSubmitQueue.put('''SELECT payload FROM inventory WHERE first20bytesofencryptedmessage = ?''')
+                shared.sqlSubmitQueue.put(parameters)
+                queryreturn = shared.sqlReturnQueue.get()
+            data = '{"receivedMessageDatas":['
+            for row in queryreturn:
+                payload, = row
+                if len(data) > 25:
+                    data += ','
+                data += json.dumps({'data':payload.encode('hex')}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+        elif method == 'getPubkeyByHash':
+            # Method will eventually be used by a particular Android app to 
+            # retrieve pubkeys. Please do not yet add this to the api docs.
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            requestedHash, = params
+            if len(requestedHash) != 40:
+                return 'API Error 0019: The length of hash should be 20 bytes (encoded in hex thus 40 characters).'
+            requestedHash = requestedHash.decode('hex')
+            parameters = (requestedHash,)
+            with shared.sqlLock:
+                shared.sqlSubmitQueue.put('''SELECT transmitdata FROM pubkeys WHERE hash = ? ; ''')
+                shared.sqlSubmitQueue.put(parameters)
+                queryreturn = shared.sqlReturnQueue.get()
+            data = '{"pubkey":['
+            for row in queryreturn:
+                transmitdata, = row
+                data += json.dumps({'data':transmitdata.encode('hex')}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
         elif method == 'clientStatus':
             return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
         else:
@@ -757,11 +866,8 @@ class singleAPI(threading.Thread):
         se.register_introspection_functions()
         se.serve_forever()
 
+# This is a list of current connections (the thread pointers at least)
 selfInitiatedConnections = {}
-    # This is a list of current connections (the thread pointers at least)
-
-
-
 
 
 if shared.useVeryEasyProofOfWorkForTesting:
