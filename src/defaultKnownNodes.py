@@ -37,7 +37,7 @@ def createDefaultKnownNodes(appdata):
     #print stream1
     #print allKnownNodes
 
-    with open(appdata + 'knownnodes.dat', 'wb) as output:    
+    with open(appdata + 'knownnodes.dat', 'wb') as output:    
         # Pickle dictionary using protocol 0.
         pickle.dump(allKnownNodes, output)
 
