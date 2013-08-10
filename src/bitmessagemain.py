@@ -34,11 +34,12 @@ from class_addressGenerator import *
 # Helper Functions
 import helper_bootstrap
 
+from debug import logger
+
 import sys
 if sys.platform == 'darwin':
     if float("{1}.{2}".format(*sys.version_info)) < 7.5:
-        print "You should use python 2.7.5 or greater."
-        print "Your version: {0}.{1}.{2}".format(*sys.version_info)
+        logger.critical("You should use python 2.7.5 or greater. Your version: %s", "{0}.{1}.{2}".format(*sys.version_info))
         sys.exit(0)
 
 def connectToStream(streamNumber):
@@ -126,7 +127,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             else:
                 return False
         else:
-            print 'Authentication failed because header lacks Authentication field'
+            logger.warn('Authentication failed because header lacks Authentication field')
             time.sleep(2)
             return False
 
@@ -276,7 +277,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if numberOfAddresses > 999:
                 return 'API Error 0005: You have (accidentally?) specified too many addresses to make. Maximum 999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
             shared.apiAddressGeneratorReturnQueue.queue.clear()
-            print 'Requesting that the addressGenerator create', numberOfAddresses, 'addresses.'
+            logger.debug('Requesting that the addressGenerator create %s addresses.', numberOfAddresses)
             shared.addressGeneratorQueue.put(
                 ('createDeterministicAddresses', addressVersionNumber, streamNumber,
                  'unused API address', numberOfAddresses, passphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
@@ -302,7 +303,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if streamNumber != 1:
                 return 'API Error 0003: The stream number must be 1. Others aren\'t supported.'
             shared.apiAddressGeneratorReturnQueue.queue.clear()
-            print 'Requesting that the addressGenerator create', numberOfAddresses, 'addresses.'
+            logger.debug('Requesting that the addressGenerator create %s addresses.', numberOfAddresses)
             shared.addressGeneratorQueue.put(
                 ('getDeterministicAddress', addressVersionNumber,
                  streamNumber, 'unused API address', numberOfAddresses, passphrase, eighteenByteRipe))
@@ -515,8 +516,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, toRipe = decodeAddress(
                 toAddress)
             if status != 'success':
-                with shared.printLock:
-                    print 'API Error 0007: Could not decode address:', toAddress, ':', status
+                logger.warn('API Error 0007: Could not decode address %s. Status: %s.', toAddress, status)
 
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + toAddress
@@ -532,8 +532,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(
                 fromAddress)
             if status != 'success':
-                with shared.printLock:
-                    print 'API Error 0007: Could not decode address:', fromAddress, ':', status
+                logger.warn('API Error 0007: Could not decode address %s. Status: %s.', fromAddress, status)
 
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + fromAddress
@@ -597,8 +596,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(
                 fromAddress)
             if status != 'success':
-                with shared.printLock:
-                    print 'API Error 0007: Could not decode address:', fromAddress, ':', status
+                logger.warn('API Error 0007: Could not decode address %s. Status: %s.', fromAddress, status)
 
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + fromAddress
@@ -668,8 +666,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, toRipe = decodeAddress(
                 address)
             if status != 'success':
-                with shared.printLock:
-                    print 'API Error 0007: Could not decode address:', address, ':', status
+                logger.warn('API Error 0007: Could not decode address %s. Status: %s.', address, status)
 
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + address
