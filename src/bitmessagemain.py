@@ -532,7 +532,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(
                 fromAddress)
             if status != 'success':
-                logger.warn('API Error 0007: Could not decode address: %s:%s.', fromAddress, status)
+                logger.warn('API Error 0007: Could not decode address %s. Status: %s.', fromAddress, status)
 
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + fromAddress
@@ -596,7 +596,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(
                 fromAddress)
             if status != 'success':
-                logger.warn('API Error 0007: Could not decode address: %s:%s.', fromAddress, status)
+                logger.warn('API Error 0007: Could not decode address %s. Status: %s.', fromAddress, status)
 
                 if status == 'checksumfailed':
                     return 'API Error 0008: Checksum failed for address: ' + fromAddress
