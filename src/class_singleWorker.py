@@ -9,6 +9,7 @@ import proofofwork
 import sys
 from class_addressGenerator import pointMult
 import tr
+from debug import logger
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
@@ -517,6 +518,15 @@ class singleWorker(threading.Thread):
                 pubkeyPayload[readPosition:readPosition + 10])
             readPosition += streamNumberLength
             behaviorBitfield = pubkeyPayload[readPosition:readPosition + 4]
+            # Mobile users may ask us to include their address's RIPE hash on a message
+            # unencrypted. Before we actually do it the sending human must check a box
+            # in the settings menu to allow it.
+            if shared.isBitSetWithinBitfield(behaviorBitfield,30): # if receiver is a mobile device who expects that their address RIPE is included unencrypted on the front of the message..
+                if not shared.safeConfigGetBoolean('bitmessagesettings','willinglysendtomobile'): # if we are Not willing to include the receiver's RIPE hash on the message..
+                    logger.info('The receiver is a mobile user but the sender (you) has not selected that you are willing to send to mobiles. Aborting send.')
+                    shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,tr.translateText("MainWindow",'Problem: Destination is a mobile device who requests that the destination be included in the message but this is disallowed in your settings.  %1').arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8')))))
+                    # if the human changes their setting and then sends another message or restarts their client, this one will send at that time.
+                    continue
             readPosition += 4  # to bypass the bitfield of behaviors
             # pubSigningKeyBase256 =
             # pubkeyPayload[readPosition:readPosition+64] #We don't use this
@@ -663,6 +673,10 @@ class singleWorker(threading.Thread):
                     with shared.printLock:
                         print 'Not bothering to generate ackdata because we are sending to a chan.'
                     fullAckPayload = ''
+                elif not shared.isBitSetWithinBitfield(behaviorBitfield,31):
+                    with shared.printLock:
+                        print 'Not bothering to generate ackdata because the receiver said that they won\'t relay it anyway.'
+                    fullAckPayload = ''                    
                 else:
                     fullAckPayload = self.generateFullAckMessage(
                         ackdata, toStreamNumber, embeddedTime)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.

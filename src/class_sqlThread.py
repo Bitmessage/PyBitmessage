@@ -46,7 +46,7 @@ class sqlThread(threading.Thread):
             self.cur.execute(
                 '''CREATE TABLE pubkeys (hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute(
-                '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, first20bytesofencryptedmessage blob, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute(
                 '''CREATE TABLE knownnodes (timelastseen int, stream int, services blob, host blob, port blob, UNIQUE(host, stream, port) ON CONFLICT REPLACE)''' )
                              # This table isn't used in the program yet but I
@@ -55,7 +55,7 @@ class sqlThread(threading.Thread):
                 '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
                 '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','1')''')
+            self.cur.execute( '''INSERT INTO settings VALUES('version','2')''')
             self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             self.conn.commit()
@@ -188,7 +188,20 @@ class sqlThread(threading.Thread):
         
         if not shared.config.has_option('bitmessagesettings', 'sockslisten'):
             shared.config.set('bitmessagesettings', 'sockslisten', 'false')
-
+            
+        # Add a new column to the inventory table to store the first 20 bytes of encrypted messages to support Android app
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        if int(self.cur.fetchall()[0][0]) == 1:
+            print 'upgrading database'
+            item = '''ALTER TABLE inventory ADD first20bytesofencryptedmessage blob DEFAULT '' '''
+            parameters = ''
+            self.cur.execute(item, parameters)
+            item = '''update settings set value=? WHERE key='version';'''
+            parameters = (2,)
+            self.cur.execute(item, parameters)
+        
         try:
             testpayload = '\x00\x00'
             t = ('1234', testpayload, '12345678', 'no')
