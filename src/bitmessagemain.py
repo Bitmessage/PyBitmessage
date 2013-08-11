@@ -1314,7 +1314,7 @@ class Main:
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
         
-    def delContact(self,address):
+    def deleteContact(self,address):
         
         shared.sqlLock.acquire()
         t = (address,)
@@ -1323,11 +1323,86 @@ class Main:
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
     
+    def getBlackWhitelist(self):
+        return shared.config.get('bitmessagesettings', 'blackwhitelist')
+
+    def setBlackWhitelist(self, value):
+        
+        assert value == 'black' or value == 'white'
+        shared.config.set('bitmessagesettings', 'blackwhitelist', value)
+        
+    def addToBlacklist(self, label, address, enabled=True):
     
+        shared.sqlLock.acquire()
+        t = (label,address,enabled)
+        shared.sqlSubmitQueue.put('''INSERT INTO blacklist VALUES (?,?,?)''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        
+    def addToWhitelist(self, label, address, enabled=True):
+    
+        shared.sqlLock.acquire()
+        t = (label,address,enabled)
+        shared.sqlSubmitQueue.put('''INSERT INTO whitelist VALUES (?,?,?)''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        
+    def listBlacklist(self):
+        
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''select * from blacklist''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        
+        data = []
+        for row in queryreturn:
+            label, address, enabled = row
+            label = shared.fixPotentiallyInvalidUTF8Data(label)
+            data.append({'label':label, 'address': address, 'enabled': bool(enabled)})
+        return data
+        
+    def listWhitelist(self):
+        
+        shared.sqlLock.acquire()
+        shared.sqlSubmitQueue.put('''select * from whitelist''')
+        shared.sqlSubmitQueue.put('')
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        
+        data = []
+        for row in queryreturn:
+            label, address, enabled = row
+            label = shared.fixPotentiallyInvalidUTF8Data(label)
+            data.append({'label':label, 'address': address, 'enabled': bool(enabled)})
+        return data
+        
+    def deleteFromBlacklist(self,address):
+        
+        shared.sqlLock.acquire()
+        t = (address,)
+        shared.sqlSubmitQueue.put('''delete from blacklist where address=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        
+    def deleteFromWhitelist(self,address):
+        
+        shared.sqlLock.acquire()
+        t = (address,)
+        shared.sqlSubmitQueue.put('''delete from whitelist where address=?''')
+        shared.sqlSubmitQueue.put(t)
+        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlLock.release()
+        
     
 if __name__ == "__main__":
     mainprogram = Main()
     mainprogram.start()
+
+    
 
 
 
