@@ -9,19 +9,25 @@
 
 # The software version variable is now held in shared.py
 
-# import ctypes
-try:
-    from gevent import monkey
-    monkey.patch_all()
-except ImportError as ex:
-    print "Not using the gevent module as it was not found. No need to worry."
+# For pre-gevent handling.
+from sys import platform
+
+# Gevent impairs some multiprocessing used by PyBitmessage on POSIX.
+# TODO(fiatflux): reconcile multiprocessing needs with AIO needs.
+if platform == 'win32':
+    try:
+        from gevent import monkey
+        monkey.patch_all()
+    except ImportError as ex:
+        print "Not using the gevent module as it was not found. No need to worry."
 
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
-from SimpleXMLRPCServer import *
 import json
-import singleton
 import os
+from SimpleXMLRPCServer import *
+import singleton
+import sys
 
 # Classes
 from class_sqlThread import *
@@ -34,7 +40,6 @@ from class_addressGenerator import *
 # Helper Functions
 import helper_bootstrap
 
-import sys
 if sys.platform == 'darwin':
     if float("{1}.{2}".format(*sys.version_info)) < 7.5:
         print "You should use python 2.7.5 or greater."
