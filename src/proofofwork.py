@@ -2,10 +2,12 @@
 #import time
 #from multiprocessing import Pool, cpu_count
 import hashlib
+#import os
 from struct import unpack, pack
 import sys
+
+from debug import logger
 from shared import config
-#import os
 
 def _set_idle():
     if 'linux' in sys.platform:
@@ -52,7 +54,9 @@ def _doFastPoW(target, initialHash):
         maxCores = 99999
     if pool_size > maxCores:
         pool_size = maxCores
+    logger.debug('Creating POW pool with %s workers.' % (pool_size))
     pool = Pool(processes=pool_size)
+    logger.debug('Created POW pool.')
     result = []
     for i in range(pool_size):
         result.append(pool.apply_async(_pool_worker, args = (i, initialHash, target, pool_size)))
@@ -72,6 +76,8 @@ def _doFastPoW(target, initialHash):
 
 def run(target, initialHash):
     if 'linux' in sys.platform:
-        return _doFastPoW(target, initialHash)
+        logger.debug('calling _doSafePoW as a TEMPORARY fix.')
+        return _doSafePoW(target, initialHash)
+        #return _doFastPoW(target, initialHash)
     else:
         return _doSafePoW(target, initialHash)
