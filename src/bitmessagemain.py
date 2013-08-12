@@ -775,9 +775,7 @@ class Main:
         if silent:
             fobj = StringIO.StringIO()
             self.stdout = sys.stdout
-            self.stderr = sys.stderr
             sys.stdout = fobj            
-            sys.stderr = fobj
         
         # is the application already running?  If yes then exit.
         thisapp = singleton.singleinstance()
@@ -854,11 +852,13 @@ class Main:
                     time.sleep(20)
             
     def stop(self):
+        
         with shared.printLock:
             print 'Stopping Bitmessage Deamon.'
         shared.doCleanShutdown()
 
     def getAllInboxMessages(self):
+        
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(
             '''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox where folder='inbox' ORDER BY received''')
@@ -878,6 +878,7 @@ class Main:
     
     
     def getAllInboxMessageIDs(self):
+        
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''SELECT msgid FROM inbox where folder='inbox' ORDER BY received''')
         shared.sqlSubmitQueue.put('')
@@ -909,7 +910,7 @@ class Main:
         return data
 
     def thrashMessage(self,msgid):
-
+        #buggy, hangs if not present
         self.trashInboxMessage(msgid)
         self.trashSentMessage(msgid)
         
@@ -920,6 +921,7 @@ class Main:
 
 
     def listAddresses(self):
+        
         addresses = []
         configSections = shared.config.sections()
         for addressInKeysFile in configSections:
@@ -972,7 +974,8 @@ class Main:
         return shared.apiAddressGeneratorReturnQueue.get()
 
 
-    def sendMessage(self, toAddress, fromAddress, subject, message, encodingType=2):
+    def sendMessage(self, fromAddress, toAddress, subject, message, encodingType=2):
+        
         assert encodingType == 2, 'other values not supported jet'
         
         status, addressVersionNumber, streamNumber, toRipe = decodeAddress(toAddress)
@@ -1023,6 +1026,7 @@ class Main:
         return ackdata.encode('hex')
 
     def getApiAddress(self):
+        
         if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
             return None
             
@@ -1031,6 +1035,7 @@ class Main:
         return {'address':address,'port':port}
     
     def getAllSentMessages(self):
+        
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
         shared.sqlSubmitQueue.put('')
@@ -1047,6 +1052,7 @@ class Main:
         return data
         
     def getAllSentMessageIDs(self):
+        
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''')
         shared.sqlSubmitQueue.put('')
@@ -1144,6 +1150,7 @@ class Main:
         shared.sqlLock.release()
 
     def sendBroadcast(self,fromAddress,subject,message,encodingType=2):
+        
         assert encodingType == 2, 'Only 2 is supported jet'
 
         status, addressVersionNumber, streamNumber, toRipe = decodeAddress(fromAddress)
@@ -1228,6 +1235,7 @@ class Main:
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def listSubscriptions(self):
+        
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('''SELECT label, address, enabled FROM subscriptions''')
         shared.sqlSubmitQueue.put('')
@@ -1244,8 +1252,8 @@ class Main:
         return {"networkConnections" : len(shared.connectedHostsList)}
 
     def listContacts(self):
+        
         shared.sqlLock.acquire()
-
         shared.sqlSubmitQueue.put('''select * from addressbook''')
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
@@ -1300,9 +1308,10 @@ class Main:
         t = (address,)
         shared.sqlSubmitQueue.put('''select * from addressbook where address=?''')
         shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
-        
+
         if queryreturn != []:
             return 'AddressAlreadyInsideError'
 
@@ -1320,7 +1329,8 @@ class Main:
         t = (address,)
         shared.sqlSubmitQueue.put('''delete from addressbook where address=?''')
         shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
     
     def getBlackWhitelist(self):
@@ -1337,16 +1347,18 @@ class Main:
         t = (label,address,enabled)
         shared.sqlSubmitQueue.put('''INSERT INTO blacklist VALUES (?,?,?)''')
         shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
-        
+
     def addToWhitelist(self, label, address, enabled=True):
     
         shared.sqlLock.acquire()
         t = (label,address,enabled)
         shared.sqlSubmitQueue.put('''INSERT INTO whitelist VALUES (?,?,?)''')
         shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
+        shared.sqlReturnQueue.get()
+        shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
         
     def listBlacklist(self):
@@ -1401,10 +1413,6 @@ class Main:
 if __name__ == "__main__":
     mainprogram = Main()
     mainprogram.start()
-
-    
-
-
 
     
 # So far, the creation of and management of the Bitmessage protocol and this
