@@ -3,6 +3,8 @@ import ConfigParser
 import sys
 import os
 
+from namecoin import ensureNamecoinOptions
+
 storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may de-select Portable Mode in the settings if they want the config files to stay in the application data folder.
 
 def loadConfig():
@@ -67,6 +69,7 @@ def loadConfig():
             shared.config.set(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
             shared.config.set('bitmessagesettings', 'dontconnect', 'true')
+            ensureNamecoinOptions()
 
             if storeConfigFilesInSameDirectoryAsProgramByDefault:
                 # Just use the same directory as the program and forget about
