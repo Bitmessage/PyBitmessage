@@ -256,6 +256,7 @@ class receiveDataThread(threading.Thread):
     def connectionFullyEstablished(self):
         self.connectionIsOrWasFullyEstablished = True
         if not self.initiatedConnection:
+            shared.incomingConnections = True
             shared.UISignalQueue.put(('setStatusIcon', 'green'))
         self.sock.settimeout(
             600)  # We'll send out a pong every 5 minutes to make sure the connection stays alive if there has been no other traffic to send lately.
@@ -394,7 +395,7 @@ class receiveDataThread(threading.Thread):
         self.broadcastinv(self.inventoryHash)
         shared.UISignalQueue.put((
             'incrementNumberOfBroadcastsProcessed', 'no data'))
-
+        shared.broadcastTotals += 1 # Used specifically for API
         self.processbroadcast(
             readPosition, data)  # When this function returns, we will have either successfully processed this broadcast because we are interested in it, ignored it because we aren't interested in it, or found problem with the broadcast that warranted ignoring it.
 
@@ -762,7 +763,7 @@ class receiveDataThread(threading.Thread):
         self.broadcastinv(self.inventoryHash)
         shared.UISignalQueue.put((
             'incrementNumberOfMessagesProcessed', 'no data'))
-
+        shared.messagesTotals += 1 # Used specifically for API
         self.processmsg(
             readPosition, data)  # When this function returns, we will have either successfully processed the message bound for us, ignored it because it isn't bound for us, or found problem with the message that warranted ignoring it.
 
@@ -1180,7 +1181,7 @@ class receiveDataThread(threading.Thread):
         self.broadcastinv(inventoryHash)
         shared.UISignalQueue.put((
             'incrementNumberOfPubkeysProcessed', 'no data'))
-
+        shared.pubkeysTotals += 1 # Used specifically for API
         self.processpubkey(data)
 
         lengthOfTimeWeShouldUseToProcessThisMessage = .2

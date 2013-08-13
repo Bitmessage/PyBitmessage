@@ -848,7 +848,18 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'clientStatus':
-            return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
+            data = '{\n    "numConnectedPeers" : "%s"\n' % str(len(shared.connectedHostsList))
+            data += '    "numProcessedMessages" : "%s"\n' % str(shared.messagesTotals)
+            data += '    "numProcessedBroadcasts" : "%s"\n' % str(shared.broadcastTotals)
+            data += '    "numProcessedKeys" : "%s"\n' % str(shared.pubkeysTotals)
+            if len(shared.connectedHostsList) == 0:
+                networkStatus = 'notConnected'
+            elif len(shared.connectedHostsList) > 0 and not shared.incomingConnections:
+                networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
+            else:
+                networkStatus = 'connectedAndReceivingIncomingConnections'
+            data += '    "networkStatus" : "%s"\n}' % networkStatus
+            return data
         else:
             return 'API Error 0020: Invalid method: %s' % method
 
