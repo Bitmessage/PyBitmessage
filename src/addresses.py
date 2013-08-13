@@ -107,13 +107,8 @@ def encodeAddress(version,stream,ripe):
     elif version == 4:
         if len(ripe) != 20:
             raise Exception("Programming error in encodeAddress: The length of a given ripe hash was not 20.")
-        emptybitcounter = 0
-        while True:
-            if ripe[emptybitcounter] != '\x00':
-                break
-            emptybitcounter += 1
-        ripe = ripe[emptybitcounter:]  
-    
+        ripe = ripe.lstrip('\x00')
+
     a = encodeVarint(version) + encodeVarint(stream) + ripe
     sha = hashlib.new('sha512')
     sha.update(a)
@@ -207,9 +202,7 @@ def decodeAddress(address):
         elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) < 4:
             return 'ripetooshort',0,0,0
         else:
-            x00string = ''
-            for i in range(20 - len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4])):
-                x00string += '\x00'
+            x00string = '\x00' * (20 - len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]))
             return status,addressVersionNumber,streamNumber,x00string+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
         
 
