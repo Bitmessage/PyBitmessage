@@ -372,6 +372,7 @@ def fixSensitiveFilePermissions(filename, hasEnabledKeys):
         raise
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])
-
-helper_startup.loadConfig()
+def loadConfig():
+    helper_startup.loadConfig()
+    
 from debug import logger

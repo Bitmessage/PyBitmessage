@@ -10,6 +10,9 @@
 # The software version variable is now held in shared.py
 
 # import ctypes
+#~ global shared
+import shared
+
 try:
     from gevent import monkey
     monkey.patch_all()
@@ -25,6 +28,7 @@ import os
 
 # Classes
 from class_sqlThread import *
+
 from class_singleCleaner import *
 from class_singleWorker import *
 from class_outgoingSynSender import *
@@ -36,6 +40,8 @@ import helper_bootstrap
 
 import sys
 import StringIO
+
+
 if sys.platform == 'darwin':
     if float("{1}.{2}".format(*sys.version_info)) < 7.5:
         print "You should use python 2.7.5 or greater."
@@ -770,7 +776,16 @@ if shared.useVeryEasyProofOfWorkForTesting:
         shared.networkDefaultPayloadLengthExtraBytes / 7000)
 
 class Main:
-    def start(self, deamon=False, silent=False):
+    def start(self, deamon=False, silent=False, workingdir=None):
+        
+        #load Config Files
+        if workingdir:
+            if not workingdir.endswith('/'):
+                shared.appdata = workingdir + '/'
+            else:
+                shared.appdata = workingdir
+
+        shared.loadConfig()
         
         if silent:
             fobj = StringIO.StringIO()
@@ -1413,7 +1428,6 @@ class Main:
 if __name__ == "__main__":
     mainprogram = Main()
     mainprogram.start()
-
     
 # So far, the creation of and management of the Bitmessage protocol and this
 # client is a one-man operation. Bitcoin tips are quite appreciated.
