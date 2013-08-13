@@ -848,10 +848,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'clientStatus':
-            data = '{\n    "networkConnections" : "%s"\n' % str(len(shared.connectedHostsList))
-            data += '    "processedP2Pmessages" : "%s"\n' % str(shared.messagesTotals)
-            data += '    "processedBroadcastMessages" : "%s"\n' % str(shared.broadcastTotals)
-            data += '    "processedPublicKeys" : "%s"\n' % str(shared.pubkeysTotals)
+            data = '{\n    "numConnectedPeers" : "%s"\n' % str(len(shared.connectedHostsList))
+            data += '    "numProcessedMessages" : "%s"\n' % str(shared.messagesTotals)
+            data += '    "numProcessedBroadcasts" : "%s"\n' % str(shared.broadcastTotals)
+            data += '    "numProcessedKeys" : "%s"\n' % str(shared.pubkeysTotals)
             if len(shared.connectedHostsList) == 0:
                 networkStatus = 'notConnected'
             elif len(shared.connectedHostsList) > 0 and not shared.incomingConnections:
