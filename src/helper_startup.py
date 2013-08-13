@@ -10,7 +10,7 @@ def loadConfig():
     # directory
 
     if shared.appdata:
-        shared.config.read(os.path.join(shared.appdata,'\keys.dat'))
+        shared.config.read(os.path.join(shared.appdata,'keys.dat'))
         #shared.appdata is already correct
     else:
 
@@ -27,6 +27,7 @@ def loadConfig():
             shared.config.read(shared.appdata + 'keys.dat')
             
     try:
+        shared.config.read('keys.dat')
         shared.config.get('bitmessagesettings', 'settingsversion')
         print 'Loading existing config files from', shared.appdata
     except:
