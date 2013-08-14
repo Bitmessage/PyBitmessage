@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Sun Aug 11 22:12:58 2013
-#      by: PyQt4 UI code generator 4.10.2
+# Created: Wed Aug 14 18:31:34 2013
+#      by: PyQt4 UI code generator 4.10
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_settingsDialog(object):
     def setupUi(self, settingsDialog):
         settingsDialog.setObjectName(_fromUtf8("settingsDialog"))
-        settingsDialog.resize(462, 343)
+        settingsDialog.resize(567, 343)
         self.gridLayout = QtGui.QGridLayout(settingsDialog)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.buttonBox = QtGui.QDialogButtonBox(settingsDialog)
@@ -356,7 +356,7 @@ class Ui_settingsDialog(object):
         self.label_13.setText(_translate("settingsDialog", "Maximum acceptable total difficulty:", None))
         self.label_14.setText(_translate("settingsDialog", "Maximum acceptable small message difficulty:", None))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab_2), _translate("settingsDialog", "Max acceptable difficulty", None))
-        self.label_16.setText(_translate("settingsDialog", "Bitmessage addresses can be fetched automatically from Namecoin identities.  You can use either namecoind directly or a running nmcontrol instance.", None))
+        self.label_16.setText(_translate("settingsDialog", "<html><head/><body><p>Bitmessage can utilize a different Bitcoin-based program called Namecoin to make addresses human-friendly. For example, instead of having to tell your friend your long Bitmessage address, you can simply tell him to send a message to <span style=\" font-style:italic;\">test. </span></p><p>(Getting your own Bitmessage address into Namecoin is still rather difficult).</p><p>Bitmessage can use either namecoind directly or a running nmcontrol instance.</p></body></html>", None))
         self.label_17.setText(_translate("settingsDialog", "Host:", None))
         self.label_18.setText(_translate("settingsDialog", "Port:", None))
         self.labelNamecoinUser.setText(_translate("settingsDialog", "Username:", None))

@@ -432,10 +432,21 @@ class MyForm(QtGui.QMainWindow):
             "removeInboxRowByMsgid(PyQt_PyObject)"), self.removeInboxRowByMsgid)
         self.UISignalThread.start()
 
-# Below this point, it would be good if all of the necessary global data
-# structures were initialized.
+        # Below this point, it would be good if all of the necessary global data
+        # structures were initialized.
 
         self.rerenderComboBoxSendFrom()
+        
+        # Check to see whether we can connect to namecoin. Hide the 'Fetch Namecoin ID' button if we can't.
+        options = {}
+        options["type"] = shared.config.get('bitmessagesettings', 'namecoinrpctype')
+        options["host"] = shared.config.get('bitmessagesettings', 'namecoinrpchost')
+        options["port"] = shared.config.get('bitmessagesettings', 'namecoinrpcport')
+        options["user"] = shared.config.get('bitmessagesettings', 'namecoinrpcuser')
+        options["password"] = shared.config.get('bitmessagesettings', 'namecoinrpcpassword')
+        nc = namecoinConnection(options)
+        if nc.test()[0] == 'failed':
+            self.ui.pushButtonFetchNamecoinID.hide()
 
 
     # Show or hide the application window after clicking an item within the
@@ -3180,6 +3191,8 @@ class settingsDialog(QtGui.QDialog):
 
     # Test the namecoin settings specified in the settings dialog.
     def click_pushButtonNamecoinTest(self):
+        self.ui.labelNamecoinTestResult.setText(_translate(
+                "MainWindow", "Testing..."))
         options = {}
         options["type"] = self.getNamecoinType()
         options["host"] = self.ui.lineEditNamecoinHost.text()
@@ -3187,8 +3200,10 @@ class settingsDialog(QtGui.QDialog):
         options["user"] = self.ui.lineEditNamecoinUser.text()
         options["password"] = self.ui.lineEditNamecoinPassword.text()
         nc = namecoinConnection(options)
-        res = nc.test()
-        self.ui.labelNamecoinTestResult.setText(res)
+        responseStatus = nc.test()[1]
+        self.ui.labelNamecoinTestResult.setText(responseStatus)
+        if nc.test()[0]== 'success':
+            self.parent.ui.pushButtonFetchNamecoinID.show()
 
 
 class SpecialAddressBehaviorDialog(QtGui.QDialog):
