@@ -52,7 +52,6 @@ class namecoinConnection (object):
     # actually changing the values (yet).
     def __init__ (self, options = None):
         if options is None:
-          ensureNamecoinOptions ()
           self.nmctype = shared.config.get (configSection, "namecoinrpctype")
           self.host = shared.config.get (configSection, "namecoinrpchost")
           self.port = shared.config.get (configSection, "namecoinrpcport")
