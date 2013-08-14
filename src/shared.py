@@ -69,6 +69,11 @@ ackdataForWhichImWatching = {}
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
 networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
+# Remember here the RPC port read from namecoin.conf so we can restore to
+# it as default whenever the user changes the "method" selection for
+# namecoin integration to "namecoind".
+namecoinDefaultRpcPort = "8336"
+
 def isInSqlInventory(hash):
     t = (hash,)
     shared.sqlLock.acquire()
