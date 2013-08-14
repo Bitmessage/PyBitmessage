@@ -438,14 +438,18 @@ class MyForm(QtGui.QMainWindow):
         self.rerenderComboBoxSendFrom()
         
         # Check to see whether we can connect to namecoin. Hide the 'Fetch Namecoin ID' button if we can't.
-        options = {}
-        options["type"] = shared.config.get('bitmessagesettings', 'namecoinrpctype')
-        options["host"] = shared.config.get('bitmessagesettings', 'namecoinrpchost')
-        options["port"] = shared.config.get('bitmessagesettings', 'namecoinrpcport')
-        options["user"] = shared.config.get('bitmessagesettings', 'namecoinrpcuser')
-        options["password"] = shared.config.get('bitmessagesettings', 'namecoinrpcpassword')
-        nc = namecoinConnection(options)
-        if nc.test()[0] == 'failed':
+        try:
+            options = {}
+            options["type"] = shared.config.get('bitmessagesettings', 'namecoinrpctype')
+            options["host"] = shared.config.get('bitmessagesettings', 'namecoinrpchost')
+            options["port"] = shared.config.get('bitmessagesettings', 'namecoinrpcport')
+            options["user"] = shared.config.get('bitmessagesettings', 'namecoinrpcuser')
+            options["password"] = shared.config.get('bitmessagesettings', 'namecoinrpcpassword')
+            nc = namecoinConnection(options)
+            if nc.test()[0] == 'failed':
+                self.ui.pushButtonFetchNamecoinID.hide()
+        except:
+            print 'There was a problem testing for a Namecoin daemon. Hiding the Fetch Namecoin ID button'
             self.ui.pushButtonFetchNamecoinID.hide()
 
 
@@ -3095,8 +3099,6 @@ class settingsDialog(QtGui.QDialog):
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / shared.networkDefaultPayloadLengthExtraBytes)))
 
         # Namecoin integration tab
-
-        ensureNamecoinOptions()
         nmctype = shared.config.get('bitmessagesettings', 'namecoinrpctype')
         self.ui.lineEditNamecoinHost.setText(str(
             shared.config.get('bitmessagesettings', 'namecoinrpchost')))
@@ -3200,9 +3202,11 @@ class settingsDialog(QtGui.QDialog):
         options["user"] = self.ui.lineEditNamecoinUser.text()
         options["password"] = self.ui.lineEditNamecoinPassword.text()
         nc = namecoinConnection(options)
-        responseStatus = nc.test()[1]
-        self.ui.labelNamecoinTestResult.setText(responseStatus)
-        if nc.test()[0]== 'success':
+        response = nc.test()
+        responseStatus = response[0]
+        responseText = response[1]
+        self.ui.labelNamecoinTestResult.setText(responseText)
+        if responseStatus== 'success':
             self.parent.ui.pushButtonFetchNamecoinID.show()
 
 
