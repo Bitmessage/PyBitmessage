@@ -212,10 +212,18 @@ class bitmessagePOP3Connection(asyncore.dispatcher):
     
     def handleList(self, data):
         self.populateMessageIndex()
-        yield "+OK {} messages ({} octets)".format(len(self.messages), self.storage_size)
-        for i, msg in enumerate(self.messages):
-            yield "{} {}".format(i + 1, msg['size'])
-        yield "."
+        if len(data):
+            index = int(data.decode('ascii')) - 1
+            assert index >= 0
+            if index < len(self.messages):
+                yield "+OK {} {}".format(index, self.messages[index]['size'])
+            else:
+                yield "-ERR no such message"
+        else:
+            yield "+OK {} messages ({} octets)".format(len(self.messages), self.storage_size)
+            for i, msg in enumerate(self.messages):
+                yield "{} {}".format(i + 1, msg['size'])
+            yield "."
 
     #def handleTop(self, data):
     #    cmd, num, lines = data.split()
