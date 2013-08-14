@@ -1477,9 +1477,16 @@ class MyForm(QtGui.QMainWindow):
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetSubscriptions.setItem(0, 1, newItem)
-            newItem = QtGui.QTableWidgetItem(unicode(receivingIdentity, 'utf-8'))
+            try:
+                receivingIdentityLabel = shared.config.get(receivingIdentity, 'label').strip()
+                if len(receivingIdentityLabel) == 0:
+                    receivingIdentityLabel = receivingIdentity
+            except:
+                receivingIdentityLabel = receivingIdentity
+            newItem = QtGui.QTableWidgetItem(unicode(receivingIdentityLabel, 'utf-8'))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            newItem.setData(Qt.UserRole, str(receivingIdentity))
             self.ui.tableWidgetSubscriptions.setItem(0, 2, newItem)
 
     def click_pushButtonSend(self):
@@ -1887,8 +1894,15 @@ class MyForm(QtGui.QMainWindow):
         newItem =  QtGui.QTableWidgetItem(address)
         newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
         self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
-        newItem = QtGui.QTableWidgetItem(unicode(receivingIdentity, 'utf-8'))
+        try:
+            receivingIdentityLabel = shared.config.get(receivingIdentity, 'label').strip()
+            if len(receivingIdentityLabel) == 0:
+                receivingIdentityLabel = receivingIdentity
+        except:
+            receivingIdentityLabel = receivingIdentity
+        newItem = QtGui.QTableWidgetItem(unicode(receivingIdentityLabel, 'utf-8'))
         newItem.setFlags( QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled )
+        newItem.setData(Qt.UserRole, str(receivingIdentity))
         self.ui.tableWidgetSubscriptions.setItem(0,2,newItem)
         self.ui.tableWidgetSubscriptions.setSortingEnabled(True)
         #Add to database (perhaps this should be separated from the MyForm class)
@@ -2581,8 +2595,8 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 1).text()
-        receivingIdentity = self.ui.tableWidgetSubscriptions.item(
-            currentRow, 2).text()
+        receivingIdentity = str(self.ui.tableWidgetSubscriptions.item(
+            currentRow, 2).data(Qt.UserRole).toPyObject())
         t = (str(labelAtCurrentRow), str(addressAtCurrentRow), str(receivingIdentity))
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(
@@ -2608,8 +2622,8 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 1).text()
-        receivingIdentity = self.ui.tableWidgetSubscriptions.item(
-            currentRow, 2).text()
+        receivingIdentity = str(self.ui.tableWidgetSubscriptions.item(
+            currentRow, 2).data(Qt.UserRole).toPyObject())
         t = (str(labelAtCurrentRow), str(addressAtCurrentRow), str(receivingIdentity))
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(
@@ -2629,8 +2643,8 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 1).text()
-        receivingIdentity = self.ui.tableWidgetSubscriptions.item(
-            currentRow, 2).text()
+        receivingIdentity = str(self.ui.tableWidgetSubscriptions.item(
+            currentRow, 2).data(Qt.UserRole).toPyObject())
         t = (str(labelAtCurrentRow), str(addressAtCurrentRow), str(receivingIdentity))
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(
@@ -2906,8 +2920,8 @@ class MyForm(QtGui.QMainWindow):
         if currentRow >= 0:
             addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
                 currentRow, 1).text()
-            receivingIdentity = self.ui.tableWidgetSubscriptions.item(
-                currentRow, 2).text()
+            receivingIdentity = str(self.ui.tableWidgetSubscriptions.item(
+                currentRow, 2).data(Qt.UserRole).toPyObject())
             t = (str(self.ui.tableWidgetSubscriptions.item(
                 currentRow, 0).text().toUtf8()), str(addressAtCurrentRow), str(receivingIdentity))
             shared.sqlSubmitQueue.put(
