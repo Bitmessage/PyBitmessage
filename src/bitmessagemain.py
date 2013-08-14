@@ -329,6 +329,21 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     'base64'), 'message': message.encode('base64'), 'encodingType': encodingtype, 'receivedTime': received, 'read': read}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
+        elif method == 'getAllInboxMessageIds' or method == 'getAllInboxMessageIDs':
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put(
+                '''SELECT msgid FROM inbox where folder='inbox' ORDER BY received''')
+            shared.sqlSubmitQueue.put('')
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            data = '{"inboxMessageIds":['
+            for row in queryreturn:
+                msgid = row[0]
+                if len(data) > 25:
+                    data += ','
+                data += json.dumps({'msgid': msgid.encode('hex')}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
         elif method == 'getInboxMessageById' or method == 'getInboxMessageByID':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
@@ -345,8 +360,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received, 'read': read}, indent=4, separators=(',', ': '))
-            data += ']}'
-            return data
+                data += ']}'
+                return data
         elif method == 'getAllSentMessages':
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
@@ -363,7 +378,21 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
-        elif method == 'getInboxMessagesByAddress':
+        elif method == 'getAllSentMessageIds' or method == 'getAllSentMessageIDs':
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''')
+            shared.sqlSubmitQueue.put('')
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            data = '{"sentMessageIds":['
+            for row in queryreturn:
+                msgid = row[0]
+                if len(data) > 25:
+                    data += ','
+                data += json.dumps({'msgid':msgid.encode('hex')}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+        elif method == 'getInboxMessagesByReceiver' or method == 'getInboxMessagesByAddress': #after some time getInboxMessagesByAddress should be removed
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
             toAddress = params[0]
@@ -399,8 +428,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 subject = shared.fixPotentiallyInvalidUTF8Data(subject)
                 message = shared.fixPotentiallyInvalidUTF8Data(message)
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
-            data += ']}'
-            return data
+                data += ']}'
+                return data
         elif method == 'getSentMessagesByAddress' or method == 'getSentMessagesBySender':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
@@ -439,7 +468,24 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
-        elif (method == 'trashMessage') or (method == 'trashInboxMessage'):
+        elif method == 'trashMessage':
+            if len(params) == 0:
+                return 'API Error 0000: I need parameters!'
+            msgid = params[0].decode('hex')
+            
+            # Trash if in inbox table
+            helper_inbox.trash(msgid)
+            # Trash if in sent table
+            t = (msgid,)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE msgid=?''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+            # shared.UISignalQueue.put(('removeSentRowByMsgid',msgid)) This function doesn't exist yet.
+            return 'Trashed message (assuming message existed).'
+        elif method == 'trashInboxMessage':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
             msgid = params[0].decode('hex')
@@ -681,10 +727,134 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
             shared.UISignalQueue.put(('rerenderSubscriptions', ''))
             return 'Deleted subscription if it existed.'
+        elif method == 'listSubscriptions':
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''SELECT label, address, enabled FROM subscriptions''')
+            shared.sqlSubmitQueue.put('')
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            data = '{"subscriptions":['
+            for row in queryreturn:
+                label, address, enabled = row
+                label = shared.fixPotentiallyInvalidUTF8Data(label)
+                if len(data) > 20:
+                    data += ','
+                data += json.dumps({'label':label.encode('base64'), 'address': address, 'enabled': enabled == 1}, indent=4, separators=(',',': '))
+            data += ']}'
+            return data
+        elif method == 'disseminatePreEncryptedMsg':
+            # The device issuing this command to PyBitmessage supplies a msg object that has
+            # already been encrypted and had the necessary proof of work done for it to be
+            # disseminated to the rest of the Bitmessage network. PyBitmessage accepts this msg
+            # object and sends it out to the rest of the Bitmessage network as if it had generated the
+            # message itself. Please do not yet add this to the api doc.
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            encryptedPayload, = params
+            encryptedPayload = encryptedPayload.decode('hex')
+            toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
+            inventoryHash = calculateInventoryHash(encryptedPayload)
+            objectType = 'msg'
+            shared.inventory[inventoryHash] = (
+                objectType, toStreamNumber, encryptedPayload, int(time.time()))
+            with shared.printLock:
+                print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', inventoryHash.encode('hex')
+            shared.broadcastToSendDataQueues((
+                toStreamNumber, 'sendinv', inventoryHash))
+        elif method == 'disseminatePubkey':
+            # The device issuing this command to PyBitmessage supplies a pubkey object that has
+            # already had the necessary proof of work done for it to be disseminated to the rest of the 
+            # Bitmessage network. PyBitmessage accepts this pubkey object and sends it out to the 
+            # rest of the Bitmessage network as if it had generated the pubkey object itself. Please
+            # do not yet add this to the api doc.
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            payload, = params
+            payload = payload.decode('hex')
+            pubkeyReadPosition = 8 # bypass the nonce
+            if payload[pubkeyReadPosition:pubkeyReadPosition+4] == '\x00\x00\x00\x00': # if this pubkey uses 8 byte time
+                pubkeyReadPosition += 8
+            else:
+                pubkeyReadPosition += 4
+            addressVersion, addressVersionLength = decodeVarint(payload[pubkeyReadPosition:pubkeyReadPosition+10])
+            pubkeyReadPosition += addressVersionLength
+            pubkeyStreamNumber = decodeVarint(payload[pubkeyReadPosition:pubkeyReadPosition+10])[0]
+            inventoryHash = calculateInventoryHash(payload)
+            objectType = 'pubkey'
+            shared.inventory[inventoryHash] = (
+                objectType, pubkeyStreamNumber, payload, int(time.time()))
+            with shared.printLock:
+                print 'broadcasting inv within API command disseminatePubkey with hash:', inventoryHash.encode('hex')
+            shared.broadcastToSendDataQueues((
+                streamNumber, 'sendinv', inventoryHash))
+        elif method == 'getMessageDataByDestinationHash':
+            # Method will eventually be used by a particular Android app to 
+            # select relevant messages. Do not yet add this to the api
+            # doc.
+            
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            requestedHash, = params
+            if len(requestedHash) != 40:
+                return 'API Error 0019: The length of hash should be 20 bytes (encoded in hex thus 40 characters).'
+            requestedHash = requestedHash.decode('hex')
+            
+            # This is not a particularly commonly used API function. Before we 
+            # use it we'll need to fill out a field in our inventory database 
+            # which is blank by default (first20bytesofencryptedmessage). 
+            parameters = ''
+            with shared.sqlLock:
+                shared.sqlSubmitQueue.put('''SELECT hash, payload FROM inventory WHERE first20bytesofencryptedmessage = '' and objecttype = 'msg' ; ''')
+                shared.sqlSubmitQueue.put(parameters)
+                queryreturn = shared.sqlReturnQueue.get()
+            
+                for row in queryreturn:
+                    hash, payload = row
+                    readPosition = 16 # Nonce length + time length
+                    readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
+                    t = (payload[readPosition:readPosition+20],hash)
+                    shared.sqlSubmitQueue.put('''UPDATE inventory SET first20bytesofencryptedmessage=? WHERE hash=?; ''')
+                    shared.sqlSubmitQueue.put(t)
+                    shared.sqlReturnQueue.get()        
+                
+            parameters = (requestedHash,)
+            with shared.sqlLock:
+                shared.sqlSubmitQueue.put('commit')
+                shared.sqlSubmitQueue.put('''SELECT payload FROM inventory WHERE first20bytesofencryptedmessage = ?''')
+                shared.sqlSubmitQueue.put(parameters)
+                queryreturn = shared.sqlReturnQueue.get()
+            data = '{"receivedMessageDatas":['
+            for row in queryreturn:
+                payload, = row
+                if len(data) > 25:
+                    data += ','
+                data += json.dumps({'data':payload.encode('hex')}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+        elif method == 'getPubkeyByHash':
+            # Method will eventually be used by a particular Android app to 
+            # retrieve pubkeys. Please do not yet add this to the api docs.
+            if len(params) != 1:
+                return 'API Error 0000: I need 1 parameter!'
+            requestedHash, = params
+            if len(requestedHash) != 40:
+                return 'API Error 0019: The length of hash should be 20 bytes (encoded in hex thus 40 characters).'
+            requestedHash = requestedHash.decode('hex')
+            parameters = (requestedHash,)
+            with shared.sqlLock:
+                shared.sqlSubmitQueue.put('''SELECT transmitdata FROM pubkeys WHERE hash = ? ; ''')
+                shared.sqlSubmitQueue.put(parameters)
+                queryreturn = shared.sqlReturnQueue.get()
+            data = '{"pubkey":['
+            for row in queryreturn:
+                transmitdata, = row
+                data += json.dumps({'data':transmitdata.encode('hex')}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
         elif method == 'clientStatus':
             return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
         else:
-            return 'Invalid Method: %s' % method
+            return 'API Error 0020: Invalid method: %s' % method
 
 # This thread, of which there is only one, runs the API.
 
@@ -700,11 +870,8 @@ class singleAPI(threading.Thread):
         se.register_introspection_functions()
         se.serve_forever()
 
+# This is a list of current connections (the thread pointers at least)
 selfInitiatedConnections = {}
-    # This is a list of current connections (the thread pointers at least)
-
-
-
 
 
 if shared.useVeryEasyProofOfWorkForTesting:
@@ -713,89 +880,113 @@ if shared.useVeryEasyProofOfWorkForTesting:
     shared.networkDefaultPayloadLengthExtraBytes = int(
         shared.networkDefaultPayloadLengthExtraBytes / 7000)
 
-if __name__ == "__main__":
-    # is the application already running?  If yes then exit.
-    thisapp = singleton.singleinstance()
+class Main:
+    def start(self, deamon=False):
+        # is the application already running?  If yes then exit.
+        thisapp = singleton.singleinstance()
 
-    signal.signal(signal.SIGINT, helper_generic.signal_handler)
-    # signal.signal(signal.SIGINT, signal.SIG_DFL)
+        signal.signal(signal.SIGINT, helper_generic.signal_handler)
+        # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
-    helper_bootstrap.knownNodes()
-    # Start the address generation thread
-    addressGeneratorThread = addressGenerator()
-    addressGeneratorThread.daemon = True  # close the main program even if there are threads left
-    addressGeneratorThread.start()
+        helper_bootstrap.knownNodes()
+        # Start the address generation thread
+        addressGeneratorThread = addressGenerator()
+        addressGeneratorThread.daemon = True  # close the main program even if there are threads left
+        addressGeneratorThread.start()
 
-    # Start the thread that calculates POWs
-    singleWorkerThread = singleWorker()
-    singleWorkerThread.daemon = True  # close the main program even if there are threads left
-    singleWorkerThread.start()
+        # Start the thread that calculates POWs
+        singleWorkerThread = singleWorker()
+        singleWorkerThread.daemon = True  # close the main program even if there are threads left
+        singleWorkerThread.start()
 
-    # Start the SQL thread
-    sqlLookup = sqlThread()
-    sqlLookup.daemon = False  # DON'T close the main program even if there are threads left. The closeEvent should command this thread to exit gracefully.
-    sqlLookup.start()
+        # Start the SQL thread
+        sqlLookup = sqlThread()
+        sqlLookup.daemon = False  # DON'T close the main program even if there are threads left. The closeEvent should command this thread to exit gracefully.
+        sqlLookup.start()
 
-    # Start the cleanerThread
-    singleCleanerThread = singleCleaner()
-    singleCleanerThread.daemon = True  # close the main program even if there are threads left
-    singleCleanerThread.start()
+        # Start the cleanerThread
+        singleCleanerThread = singleCleaner()
+        singleCleanerThread.daemon = True  # close the main program even if there are threads left
+        singleCleanerThread.start()
 
-    # Start the SMTP and POP3 server if necessary
-    try:
-        if shared.config.getboolean('bitmessagesettings', 'smtppop3enable'):
-            shared.startSMTPPOP3Servers()
-    except NoOptionError:
-        pass
-
-    # And finally launch asyncore
-    asyncoreThread = asyncoreThread()
-    asyncoreThread.daemon = True
-    asyncoreThread.start()
-
-    shared.reloadMyAddressHashes()
-    shared.reloadBroadcastSendersForWhichImWatching()
-
-    if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+        # Start the SMTP and POP3 server if necessary
         try:
-            apiNotifyPath = shared.config.get(
-                'bitmessagesettings', 'apinotifypath')
-        except:
-            apiNotifyPath = ''
-        if apiNotifyPath != '':
-            with shared.printLock:
-                print 'Trying to call', apiNotifyPath
+            if shared.config.getboolean('bitmessagesettings', 'smtppop3enable'):
+                shared.startSMTPPOP3Servers()
+        except NoOptionError:
+            pass
 
-            call([apiNotifyPath, "startingUp"])
-        singleAPIThread = singleAPI()
-        singleAPIThread.daemon = True  # close the main program even if there are threads left
-        singleAPIThread.start()
+        # And finally launch asyncore
+        asyncoreThreadInstance = asyncoreThread()
+        asyncoreThreadInstance.daemon = True
+        asyncoreThreadInstance.start()
 
-    connectToStream(1)
+        shared.reloadMyAddressHashes()
+        shared.reloadBroadcastSendersForWhichImWatching()
 
-    singleListenerThread = singleListener()
-    singleListenerThread.setup(selfInitiatedConnections)
-    singleListenerThread.daemon = True  # close the main program even if there are threads left
-    singleListenerThread.start()
+        if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+            try:
+                apiNotifyPath = shared.config.get(
+                    'bitmessagesettings', 'apinotifypath')
+            except:
+                apiNotifyPath = ''
+            if apiNotifyPath != '':
+                with shared.printLock:
+                    print 'Trying to call', apiNotifyPath
 
-    if not shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
-        try:
-            from PyQt4 import QtCore, QtGui
-        except Exception as err:
-            print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
-            print 'Error message:', err
-            os._exit(0)
+                call([apiNotifyPath, "startingUp"])
+            singleAPIThread = singleAPI()
+            singleAPIThread.daemon = True  # close the main program even if there are threads left
+            singleAPIThread.start()
 
-        import bitmessageqt
-        bitmessageqt.run()
-    else:
-        shared.config.remove_option('bitmessagesettings', 'dontconnect')
+        connectToStream(1)
+
+        singleListenerThread = singleListener()
+        singleListenerThread.setup(selfInitiatedConnections)
+        singleListenerThread.daemon = True  # close the main program even if there are threads left
+        singleListenerThread.start()
+
+        if deamon == False and shared.safeConfigGetBoolean('bitmessagesettings', 'daemon') == False:
+            try:
+                from PyQt4 import QtCore, QtGui
+            except Exception as err:
+                print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
+                print 'Error message:', err
+                os._exit(0)
+
+            import bitmessageqt
+            bitmessageqt.run()
+        else:
+            shared.config.remove_option('bitmessagesettings', 'dontconnect')
+
+            if deamon:
+                with shared.printLock:
+                    print 'Running as a daemon. The main program should exit this thread.'
+            else:
+                with shared.printLock:
+                    print 'Running as a daemon. You can use Ctrl+C to exit.'
+                while True:
+                    time.sleep(20)
+            
+    def stop(self):
         with shared.printLock:
-            print 'Running as a daemon. You can use Ctrl+C to exit.'
+            print 'Stopping Bitmessage Deamon.'
+        shared.doCleanShutdown()
+        
+        
+    def getApiAddress(self):
+        if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+            return None
+            
+        address = shared.config.get('bitmessagesettings', 'apiinterface')
+        port = shared.config.getint('bitmessagesettings', 'apiport')
+        return {'address':address,'port':port}
+            
+if __name__ == "__main__":
+    mainprogram = Main()
+    mainprogram.start()
 
-        while True:
-            time.sleep(20)
-
+    
 # So far, the creation of and management of the Bitmessage protocol and this
 # client is a one-man operation. Bitcoin tips are quite appreciated.
 # 1H5XaDA6fYENLbknwZyjiYXYPQaFjjLX2u
