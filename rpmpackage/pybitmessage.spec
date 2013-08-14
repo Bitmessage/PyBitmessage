@@ -1,5 +1,5 @@
 Name: pybitmessage
-Version: 0.3.4
+Version: 0.3.5
 Release: 1%{?dist}
 Summary: Send encrypted messages
 License: MIT
@@ -68,6 +68,31 @@ make install -B DESTDIR=%{buildroot} PREFIX=/usr
 %attr(644,root,root) /usr/share/icons/hicolor/24x24/apps/%{name}.png
 
 %changelog
+* Mon Jul 29 2013 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.3.5-1
+- Inbox message retrieval API functions now also returns read status
+- Added right-click option to mark a message as unread
+- Prompt user to connect at first startup
+- Install into /usr/local by default
+- Add a missing rm -f to the uninstall task.
+- Use system text color for enabled addresses instead of black
+- Added support for Chans
+- Start storing msgid in sent table
+- Optionally play sounds on connection/disconnection or when messages arrive
+- Adding configuration option to listen for connections when using SOCKS
+- Added packaging for multiple distros (Arch, Puppy, Slack, etc.)
+- Added Russian translation
+- Added search support in the UI
+- Added 'make uninstall'
+- To improve OSX support, use PKCS5_PBKDF2_HMAC_SHA1 if PKCS5_PBKDF2_HMAC is unavailable
+- Added better warnings for OSX users who are using old versions of Python
+- Repaired debian packaging
+- Altered Makefile to avoid needing to chase changes
+- Added logger module
+- Added bgWorker class for background tasks
+- Added use of gevent module
+- On not-Windows: Fix insecure keyfile permissions
+- Fix 100% CPU usage issue
+
 * Sun Jun 30 2013 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.3.4-1
 - Switched addr, msg, broadcast, and getpubkey message types
   to 8 byte time. Last remaining type is pubkey.
