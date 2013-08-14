@@ -6,6 +6,7 @@ import shutil  # used for moving the messages.dat file
 import sys
 import os
 from debug import logger
+from namecoin import ensureNamecoinOptions
 
 # This thread exists because SQLITE3 is so un-threadsafe that we must
 # submit queries to it and it puts results back in a different queue. They
@@ -189,6 +190,8 @@ class sqlThread(threading.Thread):
         
         if not shared.config.has_option('bitmessagesettings', 'sockslisten'):
             shared.config.set('bitmessagesettings', 'sockslisten', 'false')
+            
+        ensureNamecoinOptions()
             
         # Add a new column to the inventory table to store the first 20 bytes of encrypted messages to support Android app
         item = '''SELECT value FROM settings WHERE key='version';'''
