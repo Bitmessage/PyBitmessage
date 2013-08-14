@@ -69,6 +69,28 @@ ackdataForWhichImWatching = {}
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
 networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
+#Global access to these running servers.
+smtpServer = None
+pop3Server = None
+
+def startSMTPPOP3Servers():
+    global smtpServer
+    global pop3Server
+    if smtpServer is None:
+        from class_smtpServer import bitmessageSMTPServer
+        from class_pop3Server import bitmessagePOP3Server
+        smtpServer = bitmessageSMTPServer()
+        pop3Server = bitmessagePOP3Server()
+
+def stopSMTPOP3Servers():
+    global smtpServer
+    global pop3Server
+    if smtpServer is not None:
+        smtpServer.close()
+        smtpServer = None
+        pop3Server.close()
+        pop3Server = None
+
 def isInSqlInventory(hash):
     t = (hash,)
     shared.sqlLock.acquire()

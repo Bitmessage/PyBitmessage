@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>386</width>
-    <height>172</height>
+    <height>186</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -31,7 +31,7 @@
      </property>
     </widget>
    </item>
-   <item row="2" column="0">
+   <item row="3" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
       <string>Mail received to a pseudo-mailing-list address will be automatically broadcast to subscribers (and thus will be public).</string>
@@ -41,21 +41,21 @@
      </property>
     </widget>
    </item>
-   <item row="3" column="0">
+   <item row="4" column="0">
     <widget class="QLabel" name="label_2">
      <property name="text">
       <string>Name of the pseudo-mailing-list:</string>
      </property>
     </widget>
    </item>
-   <item row="4" column="0">
+   <item row="5" column="0">
     <widget class="QLineEdit" name="lineEditMailingListName">
      <property name="enabled">
       <bool>false</bool>
      </property>
     </widget>
    </item>
-   <item row="5" column="0">
+   <item row="6" column="0">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="minimumSize">
       <size>
@@ -68,6 +68,13 @@
      </property>
      <property name="standardButtons">
       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="0">
+    <widget class="QCheckBox" name="checkBoxWrapMessagesWithEmailHeaders">
+     <property name="text">
+      <string>Ensure all incoming messages have standard E-mail headers</string>
      </property>
     </widget>
    </item>

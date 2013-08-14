@@ -20,6 +20,8 @@ import helper_bitcoin
 import helper_inbox
 import helper_sent
 import tr
+from class_pop3Server import bitmessagePOP3Server
+
 #from bitmessagemain import shared.lengthOfTimeToLeaveObjectsInInventory, shared.lengthOfTimeToHoldOnToAllPubkeys, shared.maximumAgeOfAnObjectThatIAmWillingToAccept, shared.maximumAgeOfObjectsThatIAdvertiseToOthers, shared.maximumAgeOfNodesThatIAdvertiseToOthers, shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer, shared.neededPubkeys
 
 # This thread is created either by the synSenderThread(for outgoing
@@ -686,27 +688,55 @@ class receiveDataThread(threading.Thread):
                 body = 'Unknown encoding type.\n\n' + repr(message)
                 subject = ''
 
-            toAddress = '[Broadcast subscribers]'
             if messageEncodingType != 0:
-                
-                t = (self.inventoryHash, toAddress, fromAddress, subject, int(
-                    time.time()), body, 'inbox', messageEncodingType, 0)
-                helper_inbox.insert(t)
-                
-                shared.UISignalQueue.put(('displayNewInboxMessage', (
-                    self.inventoryHash, toAddress, fromAddress, subject, body)))
+                t = (fromAddress,)
+                with shared.sqlLock:
+                    shared.sqlSubmitQueue.put(
+                        '''SELECT receiving_identity FROM subscriptions WHERE address=?''')
+                    shared.sqlSubmitQueue.put(t)
+                    queryreturn = shared.sqlReturnQueue.get()
+                for row in queryreturn:
+                    receivingIdentity, = row
 
-                # If we are behaving as an API then we might need to run an
-                # outside command to let some program know that a new message
-                # has arrived.
-                if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
-                    try:
-                        apiNotifyPath = shared.config.get(
-                            'bitmessagesettings', 'apinotifypath')
-                    except:
-                        apiNotifyPath = ''
-                    if apiNotifyPath != '':
-                        call([apiNotifyPath, "newBroadcast"])
+                    if receivingIdentity == '':
+                        toAddress = '[Broadcast subscribers]'
+                        formattedBody = body
+                        formattedSubject = subject
+                    elif not shared.safeConfigGetBoolean(receivingIdentity, 'enabled'):
+                        continue
+                    else:
+                        try:
+                            isEmailAddress = shared.config.getboolean(receivingIdentity, 'foremail')
+                        except:
+                            isEmailAddress = False
+
+                        # TODO - kinda stinks that the 'inbox' toAddress is used for both the recipient AND broadcast flag
+                        toAddress = receivingIdentity
+                    
+                        if isEmailAddress:
+                            formattedBody, formattedSubject = bitmessagePOP3Server.reformatMessageForReceipt(receivingIdentity, fromAddress, body, subject, broadcast=True)
+                        else:
+                            formattedBody = body
+                            formattedSubject = subject
+
+                    t = (self.inventoryHash, toAddress, fromAddress, formattedSubject, int(
+                        time.time()), formattedBody, 'inbox', messageEncodingType, 0)
+                    helper_inbox.insert(t)
+                    
+                    shared.UISignalQueue.put(('displayNewInboxMessage', (
+                        self.inventoryHash, toAddress, fromAddress, formattedSubject, formattedBody)))
+
+            # If we are behaving as an API then we might need to run an
+            # outside command to let some program know that a new message
+            # has arrived.
+            if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+                try:
+                    apiNotifyPath = shared.config.get(
+                        'bitmessagesettings', 'apinotifypath')
+                except:
+                    apiNotifyPath = ''
+                if apiNotifyPath != '':
+                    call([apiNotifyPath, "newBroadcast"])
 
             # Display timing data
             with shared.printLock:
@@ -983,7 +1013,13 @@ class receiveDataThread(threading.Thread):
                     print 'Message ignored because address not in whitelist.'
                     blockMessage = True
             if not blockMessage:
+                try:
+                    isEmailAddress = shared.config.getboolean(toAddress, 'foremail')
+                except:
+                    isEmailAddress = False
+
                 print 'fromAddress:', fromAddress
+                print 'toAddress is for E-mail:', isEmailAddress
                 print 'First 150 characters of message:', repr(message[:150])
 
                 toLabel = shared.config.get(toAddress, 'label')
@@ -1000,13 +1036,19 @@ class receiveDataThread(threading.Thread):
                 else:
                     body = 'Unknown encoding type.\n\n' + repr(message)
                     subject = ''
+
+                formattedBody, formattedSubject = body, subject
+                if isEmailAddress:
+                    # The above 'message/subject' formatting may give us weird values if messageEncodingType is bad
+                    formattedBody, formattedSubject = bitmessagePOP3Server.reformatMessageForReceipt(toAddress, fromAddress, body, subject)
+
                 if messageEncodingType != 0:
-                    t = (self.inventoryHash, toAddress, fromAddress, subject, int(
-                        time.time()), body, 'inbox', messageEncodingType, 0)
+                    t = (self.inventoryHash, toAddress, fromAddress, formattedSubject, int(
+                        time.time()), formattedBody, 'inbox', messageEncodingType, 0)
                     helper_inbox.insert(t)
                     
                     shared.UISignalQueue.put(('displayNewInboxMessage', (
-                        self.inventoryHash, toAddress, fromAddress, subject, body)))
+                        self.inventoryHash, toAddress, fromAddress, formattedSubject, formattedBody)))
 
                 # If we are behaving as an API then we might need to run an
                 # outside command to let some program know that a new message
@@ -1028,12 +1070,18 @@ class receiveDataThread(threading.Thread):
                             toAddress, 'mailinglistname')
                     except:
                         mailingListName = ''
-                    # Let us send out this message as a broadcast
-                    subject = self.addMailingListNameToSubject(
-                        subject, mailingListName)
-                    # Let us now send this message out as a broadcast
-                    message = time.strftime("%a, %Y-%m-%d %H:%M:%S UTC", time.gmtime(
-                    )) + '   Message ostensibly from ' + fromAddress + ':\n\n' + body
+
+                    if isEmailAddress:
+                        # The above 'message/subject' formatting may give us weird values if messageEncodingType is bad
+                        message, subject = bitmessagePOP3Server.reformatMessageForMailingList(toAddress, fromAddress, body, subject, mailingListName)
+                    else:
+                        # Let us send out this message as a broadcast
+                        subject = self.addMailingListNameToSubject(
+                            subject, mailingListName)
+                        # Let us now send this message out as a broadcast
+                        message = time.strftime("%a, %Y-%m-%d %H:%M:%S UTC", time.gmtime(
+                        )) + '   Message ostensibly from ' + fromAddress + ':\n\n' + body
+
                     fromAddress = toAddress  # The fromAddress for the broadcast that we are about to send is the toAddress (my address) for the msg message we are currently processing.
                     ackdata = OpenSSL.rand(
                         32)  # We don't actually need the ackdata for acknowledgement since this is a broadcast message but we can use it to update the user interface when the POW is done generating.

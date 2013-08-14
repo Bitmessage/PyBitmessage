@@ -1499,12 +1499,12 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSubscriptions.setRowCount(0)
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(
-            'SELECT label, address, enabled FROM subscriptions')
+            'SELECT label, address, receiving_identity, enabled FROM subscriptions')
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
         for row in queryreturn:
-            label, address, enabled = row
+            label, address, receivingIdentity, enabled = row
             self.ui.tableWidgetSubscriptions.insertRow(0)
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
             if not enabled:
@@ -1516,6 +1516,17 @@ class MyForm(QtGui.QMainWindow):
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetSubscriptions.setItem(0, 1, newItem)
+            try:
+                receivingIdentityLabel = shared.config.get(receivingIdentity, 'label').strip()
+                if len(receivingIdentityLabel) == 0:
+                    receivingIdentityLabel = receivingIdentity
+            except:
+                receivingIdentityLabel = receivingIdentity
+            newItem = QtGui.QTableWidgetItem(unicode(receivingIdentityLabel, 'utf-8'))
+            newItem.setFlags(
+                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            newItem.setData(Qt.UserRole, str(receivingIdentity))
+            self.ui.tableWidgetSubscriptions.setItem(0, 2, newItem)
 
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
@@ -1909,7 +1920,7 @@ class MyForm(QtGui.QMainWindow):
             self.statusBar().showMessage(_translate(
                         "MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
 
-    def addSubscription(self, address, label):
+    def addSubscription(self, address, label, receivingIdentity):
         address = addBMIfNotPresent(address)
         #This should be handled outside of this function, for error displaying and such, but it must also be checked here.
         if shared.isAddressInMySubscriptionsList(address):
@@ -1922,11 +1933,21 @@ class MyForm(QtGui.QMainWindow):
         newItem =  QtGui.QTableWidgetItem(address)
         newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
         self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
+        try:
+            receivingIdentityLabel = shared.config.get(receivingIdentity, 'label').strip()
+            if len(receivingIdentityLabel) == 0:
+                receivingIdentityLabel = receivingIdentity
+        except:
+            receivingIdentityLabel = receivingIdentity
+        newItem = QtGui.QTableWidgetItem(unicode(receivingIdentityLabel, 'utf-8'))
+        newItem.setFlags( QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled )
+        newItem.setData(Qt.UserRole, str(receivingIdentity))
+        self.ui.tableWidgetSubscriptions.setItem(0,2,newItem)
         self.ui.tableWidgetSubscriptions.setSortingEnabled(True)
         #Add to database (perhaps this should be separated from the MyForm class)
-        t = (str(label),address,True)
+        t = (str(label),address,receivingIdentity,True)
         shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('''INSERT INTO subscriptions VALUES (?,?,?)''')
+        shared.sqlSubmitQueue.put('''INSERT INTO subscriptions (label, address, receiving_identity, enabled) VALUES (?,?,?,?)''')
         shared.sqlSubmitQueue.put(t)
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlSubmitQueue.put('commit')
@@ -1935,7 +1956,7 @@ class MyForm(QtGui.QMainWindow):
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def click_pushButtonAddSubscription(self):
-        self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
+        self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self, True)
         if self.NewSubscriptionDialogInstance.exec_():
             if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() != _translate("MainWindow", "Address is valid."):
                 self.statusBar().showMessage(_translate("MainWindow", "The address you entered was invalid. Ignoring it."))
@@ -1946,7 +1967,9 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage(_translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
                 return
             label = self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()
-            self.addSubscription(address, label)
+            comboBoxIndex = self.NewSubscriptionDialogInstance.ui.comboBoxReceivingIdentity.currentIndex()
+            receivingIdentity = str(self.NewSubscriptionDialogInstance.ui.comboBoxReceivingIdentity.itemData(comboBoxIndex).toPyObject())
+            self.addSubscription(address, label, receivingIdentity)
 
     def loadBlackWhiteList(self):
         # Initialize the Blacklist or Whitelist table
@@ -2000,6 +2023,30 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxShowTrayNotifications.isChecked()))
             shared.config.set('bitmessagesettings', 'startintray', str(
                 self.settingsDialogInstance.ui.checkBoxStartInTray.isChecked()))
+            shared.config.set('bitmessagesettings', 'smtppop3enable', str(
+                self.settingsDialogInstance.ui.checkBoxEnableSMTPPOP3Servers.isChecked()))
+            shared.config.set('bitmessagesettings', 'smtpport', str(
+                self.settingsDialogInstance.ui.lineEditSMTPPort.text()))
+            shared.config.set('bitmessagesettings', 'smtpssl', str(
+                self.settingsDialogInstance.ui.checkBoxEnableSMTPSSL.isChecked()))
+            shared.config.set('bitmessagesettings', 'pop3port', str(
+                self.settingsDialogInstance.ui.lineEditPOP3Port.text()))
+            shared.config.set('bitmessagesettings', 'pop3ssl', str(
+                self.settingsDialogInstance.ui.checkBoxEnablePOP3SSL.isChecked()))
+            shared.config.set('bitmessagesettings', 'stripmessageheadersenable', str(
+                self.settingsDialogInstance.ui.checkBoxStripMessageHeaders.isChecked()))
+            shared.config.set('bitmessagesettings', 'stripmessageheaders', str(
+                self.settingsDialogInstance.ui.lineEditMessageHeadersToStrip.text()))
+            if self.settingsDialogInstance.sslCertFile is None:
+                shared.config.remove_option('bitmessagesettings', 'certfile')
+            else:
+                shared.config.set('bitmessagesettings', 'certfile', str(
+                    self.settingsDialogInstance.sslCertFile))
+            if self.settingsDialogInstance.sslKeyFile is None:
+                shared.config.remove_option('bitmessagesettings', 'keyfile')
+            else:
+                shared.config.set('bitmessagesettings', 'keyfile', str(
+                    self.settingsDialogInstance.sslKeyFile))
             shared.config.set('bitmessagesettings', 'willinglysendtomobile', str(
                 self.settingsDialogInstance.ui.checkBoxWillinglySendToMobile.isChecked()))
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
@@ -2114,6 +2161,11 @@ class MyForm(QtGui.QMainWindow):
                 except:
                     pass
 
+            # We'll always restart the servers just in case ports/keys/etc changed.
+            shared.stopSMTPOP3Servers()
+            if self.settingsDialogInstance.ui.checkBoxEnableSMTPPOP3Servers.isChecked():
+                shared.startSMTPPOP3Servers()
+
     def click_radioButtonBlacklist(self):
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
             shared.config.set('bitmessagesettings', 'blackwhitelist', 'black')
@@ -2211,6 +2263,7 @@ class MyForm(QtGui.QMainWindow):
                 shared.config.set(str(addressAtCurrentRow), 'mailinglistname', str(
                     self.dialog.ui.lineEditMailingListName.text().toUtf8()))
                 self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(137, 04, 177))
+            shared.config.set(str(addressAtCurrentRow), 'foremail', str(self.dialog.ui.checkBoxWrapMessagesWithEmailHeaders.isChecked()))
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
             self.rerenderInboxToLabels()
@@ -2565,7 +2618,7 @@ class MyForm(QtGui.QMainWindow):
                 self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
                 continue
             labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
-            self.addSubscription(addressAtCurrentRow, labelAtCurrentRow)
+            self.addSubscription(addressAtCurrentRow, labelAtCurrentRow, '') # TODO
             self.ui.tabWidget.setCurrentIndex(4)
 
     def on_context_menuAddressBook(self, point):
@@ -2583,10 +2636,12 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
+        receivingIdentity = str(self.ui.tableWidgetSubscriptions.item(
+            currentRow, 2).data(Qt.UserRole).toPyObject())
+        t = (str(labelAtCurrentRow), str(addressAtCurrentRow), str(receivingIdentity))
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(
-            '''DELETE FROM subscriptions WHERE label=? AND address=?''')
+            '''DELETE FROM subscriptions WHERE label=? AND address=? AND receiving_identity=?''')
         shared.sqlSubmitQueue.put(t)
         shared.sqlReturnQueue.get()
         shared.sqlSubmitQueue.put('commit')
@@ -2608,18 +2663,19 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
+        receivingIdentity = str(self.ui.tableWidgetSubscriptions.item(
+            currentRow, 2).data(Qt.UserRole).toPyObject())
+        t = (str(labelAtCurrentRow), str(addressAtCurrentRow), str(receivingIdentity))
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(
-            '''update subscriptions set enabled=1 WHERE label=? AND address=?''')
+            '''update subscriptions set enabled=1 WHERE label=? AND address=? AND receiving_identity=?''')
         shared.sqlSubmitQueue.put(t)
         shared.sqlReturnQueue.get()
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
-        self.ui.tableWidgetSubscriptions.item(
-            currentRow, 0).setTextColor(QApplication.palette().text().color())
-        self.ui.tableWidgetSubscriptions.item(
-            currentRow, 1).setTextColor(QApplication.palette().text().color())
+        for i in range(3):
+            self.ui.tableWidgetSubscriptions.item(
+                currentRow, i).setTextColor(QApplication.palette().text().color())
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_action_SubscriptionsDisable(self):
@@ -2628,18 +2684,19 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
+        receivingIdentity = str(self.ui.tableWidgetSubscriptions.item(
+            currentRow, 2).data(Qt.UserRole).toPyObject())
+        t = (str(labelAtCurrentRow), str(addressAtCurrentRow), str(receivingIdentity))
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put(
-            '''update subscriptions set enabled=0 WHERE label=? AND address=?''')
+            '''update subscriptions set enabled=0 WHERE label=? AND address=? AND receiving_identity=?''')
         shared.sqlSubmitQueue.put(t)
         shared.sqlReturnQueue.get()
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
-        self.ui.tableWidgetSubscriptions.item(
-            currentRow, 0).setTextColor(QtGui.QColor(128, 128, 128))
-        self.ui.tableWidgetSubscriptions.item(
-            currentRow, 1).setTextColor(QtGui.QColor(128, 128, 128))
+        for i in range(3):
+            self.ui.tableWidgetSubscriptions.item(
+                currentRow, i).setTextColor(QtGui.QColor(128, 128, 128))
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_context_menuSubscriptions(self, point):
@@ -2907,10 +2964,12 @@ class MyForm(QtGui.QMainWindow):
         if currentRow >= 0:
             addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
                 currentRow, 1).text()
+            receivingIdentity = str(self.ui.tableWidgetSubscriptions.item(
+                currentRow, 2).data(Qt.UserRole).toPyObject())
             t = (str(self.ui.tableWidgetSubscriptions.item(
-                currentRow, 0).text().toUtf8()), str(addressAtCurrentRow))
+                currentRow, 0).text().toUtf8()), str(addressAtCurrentRow), str(receivingIdentity))
             shared.sqlSubmitQueue.put(
-                '''UPDATE subscriptions set label=? WHERE address=?''')
+                '''UPDATE subscriptions set label=? WHERE address=? AND receiving_identity=?''')
             shared.sqlSubmitQueue.put(t)
             shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
@@ -2998,6 +3057,14 @@ class settingsDialog(QtGui.QDialog):
             shared.config.getboolean('bitmessagesettings', 'showtraynotifications'))
         self.ui.checkBoxStartInTray.setChecked(
             shared.config.getboolean('bitmessagesettings', 'startintray'))
+        try:
+            self.ui.checkBoxStripMessageHeaders.setChecked(
+                shared.config.getboolean('bitmessagesettings', 'stripmessageheadersenable'))
+            self.ui.lineEditMessageHeadersToStrip.setText(
+                shared.config.get('bitmessagesettings', 'stripmessageheaders'))
+        except:
+            self.ui.checkBoxStripMessageHeaders.setChecked(True)
+            self.ui.lineEditMessageHeadersToStrip.setText('User-Agent')
         self.ui.checkBoxWillinglySendToMobile.setChecked(
             shared.safeConfigGetBoolean('bitmessagesettings', 'willinglysendtomobile'))
         if shared.appdata == '':
@@ -3075,7 +3142,172 @@ class settingsDialog(QtGui.QDialog):
         else:
             self.ui.comboBoxMaxCores.setCurrentIndex(5)"""
 
+        # SMTP & POP3 tab
+        try:
+            self.ui.checkBoxEnableSMTPPOP3Servers.setChecked(
+                shared.config.getboolean('bitmessagesettings', 'smtppop3enable'))
+        except:
+            self.ui.checkBoxEnableSMTPPOP3Servers.setChecked(False)
+
+        try:
+            self.ui.lineEditSMTPAddress.setText(
+                str(shared.config.getint('bitmessagesettings', 'smtpaddress')))
+            self.ui.lineEditSMTPPort.setText(
+                str(shared.config.getint('bitmessagesettings', 'smtpport')))
+            self.ui.checkBoxEnableSMTPSSL.setChecked(
+                shared.config.getboolean('bitmessagesettings', 'smtpssl'))
+        except:
+            self.ui.lineEditSMTPPort.setText('10025')
+            self.ui.checkBoxEnableSMTPSSL.setChecked(False)
+        try:
+            self.ui.lineEditPOP3Address.setText(
+                str(shared.config.getint('bitmessagesettings', 'pop3address')))
+            self.ui.lineEditPOP3Port.setText(
+                str(shared.config.getint('bitmessagesettings', 'pop3port')))
+            self.ui.checkBoxEnablePOP3SSL.setChecked(
+                shared.config.getboolean('bitmessagesettings', 'pop3ssl'))
+        except:
+            self.ui.lineEditPOP3Port.setText('10110')
+            self.ui.checkBoxEnablePOP3SSL.setChecked(False)
+
+        try:
+            fn = shared.config.get('bitmessagesettings', 'certfile')
+            self.configurePushButtonFindSSLCerficiate(fn)
+        except:
+            self.configurePushButtonFindSSLCerficiate(None)
+
+        try:
+            fn = shared.config.get('bitmessagesettings', 'keyfile')
+            self.configurePushButtonFindSSLKeyfile(fn)
+        except:
+            self.configurePushButtonFindSSLKeyfile(None)
+
+        configSections = shared.config.sections()
+        for addressInKeysFile in configSections:
+            if addressInKeysFile != 'bitmessagesettings':
+                status, addressVersionNumber, streamNumber, hash = decodeAddress(
+                    addressInKeysFile)
+
+                if status != 'success':
+                    continue
+                isEnabled = shared.config.getboolean(
+                    addressInKeysFile, 'enabled')
+                if not isEnabled:
+                    continue
+
+                self.ui.comboBoxEmailIdentities.insertItem(0, unicode(shared.config.get(
+                    addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
+ 
+        self.ui.comboBoxEmailIdentities.setCurrentIndex(0)
+        self.comboBoxEmailIdentitiesChanged(0)
+        QtCore.QObject.connect(self.ui.comboBoxEmailIdentities, QtCore.SIGNAL(
+            "currentIndexChanged(int)"), self.comboBoxEmailIdentitiesChanged)
+
+        QtCore.QObject.connect(self.ui.pushButtonClearPassword, QtCore.SIGNAL(
+            "clicked()"), self.click_ClearPassword)
+        QtCore.QObject.connect(self.ui.pushButtonSetPassword, QtCore.SIGNAL(
+            "clicked()"), self.click_SetPassword)
+        QtCore.QObject.connect(self.ui.pushButtonFindSSLCertificate, QtCore.SIGNAL(
+            "clicked()"), self.click_FindSSLCertificate)
+        QtCore.QObject.connect(self.ui.pushButtonFindSSLKeyfile, QtCore.SIGNAL(
+            "clicked()"), self.click_FindSSLKeyfile)
+        QtCore.QObject.connect(self.ui.checkBoxStripMessageHeaders, QtCore.SIGNAL(
+            "clicked()"), self.click_StripMessageHeaders)
+        self.click_StripMessageHeaders()
+
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+
+    def accept(self):
+        if self.areSSLFilesOK():
+            QtGui.QDialog.accept(self)
+        else:
+            QtGui.QMessageBox.information(self, 'SSL Files', _translate(
+                    "Settings", "Because you have enabled SSL on either SMTP or POP3 servers, you must specify valid SSL Certificate and Key files before continuing."), QMessageBox.Ok)
+
+    def click_StripMessageHeaders(self):
+        self.ui.lineEditMessageHeadersToStrip.setEnabled(self.ui.checkBoxStripMessageHeaders.isChecked())
+
+    def configurePushButtonFindSSLCerficiate(self, fn):
+        self.ui.pushButtonFindSSLCertificate.setText('Find SSL Certificate...')
+        try:
+            self.sslCertFile = fn
+            if fn is not None and os.path.exists(fn):
+                self.ui.pushButtonFindSSLCertificate.setText('SSL Certificate: {} ...'.format(fn))
+        except:
+            pass
+
+    def configurePushButtonFindSSLKeyfile(self, fn):
+        self.ui.pushButtonFindSSLKeyfile.setText('Find SSL Keyfile...')
+        try:
+            self.sslKeyFile = fn
+            if fn is not None and os.path.exists(fn):
+                self.ui.pushButtonFindSSLKeyfile.setText('SSL Keyfile: {} ...'.format(fn))
+        except:
+            pass
+
+    def areSSLFilesOK(self):
+        if not self.ui.checkBoxEnableSMTPPOP3Servers.isChecked():
+            return True
+
+        if not self.ui.checkBoxEnablePOP3SSL.isChecked() and not self.ui.checkBoxEnableSMTPSSL.isChecked():
+            return True
+
+        if self.sslCertFile is not None and self.sslKeyFile is not None and os.path.exists(self.sslCertFile) and os.path.exists(self.sslKeyFile):
+            return True
+
+        return False
+
+    def comboBoxEmailIdentitiesChanged(self, comboBoxIndex):
+        address = str(self.ui.comboBoxEmailIdentities.itemData(comboBoxIndex).toPyObject())
+
+        try:
+            shared.config.get(address, 'smtppop3password')
+            self.ui.pushButtonClearPassword.setEnabled(True)
+            self.ui.labelAccountStatus.setText('Password set.')
+        except:
+            self.ui.labelAccountStatus.setText('Account inaccessible via SMTP/POP3. Set a password to grant access.')
+            self.ui.pushButtonClearPassword.setEnabled(False)
+
+        self.ui.lineEditEmailAddress.setText('{}@bm.addr'.format(address))
+
+    def click_ClearPassword(self):
+        comboBoxIndex = self.ui.comboBoxEmailIdentities.currentIndex()
+        address = str(self.ui.comboBoxEmailIdentities.itemData(comboBoxIndex).toPyObject())
+        try:
+            shared.config.remove_option(address, 'smtppop3password')
+        except:
+            pass
+        self.comboBoxEmailIdentitiesChanged(comboBoxIndex)
+
+    def click_SetPassword(self):
+        comboBoxIndex = self.ui.comboBoxEmailIdentities.currentIndex()
+        address = str(self.ui.comboBoxEmailIdentities.itemData(comboBoxIndex).toPyObject())
+
+        text, response = QtGui.QInputDialog.getText(self, "Set Password", "Enter password:", QtGui.QLineEdit.Password)
+        if response:
+            try:
+                shared.config.set(address, 'smtppop3password', str(text))
+            except:
+                import traceback
+                traceback.print_exc()
+                pass
+            self.comboBoxEmailIdentitiesChanged(comboBoxIndex)
+
+    def click_FindSSLCertificate(self):
+        text = QtGui.QFileDialog.getOpenFileName(self, "Open SSL Certificate", os.getcwd(), "Certificate files (*.crt *.pem)")
+        if os.path.exists(text):
+            text = os.path.normpath(str(text))
+        else:
+            text = None
+        self.configurePushButtonFindSSLCerficiate(text)
+
+    def click_FindSSLKeyfile(self):
+        text = QtGui.QFileDialog.getOpenFileName(self, "Open SSL Key file", os.getcwd(), "Key files (*.key *.pem)")
+        if os.path.exists(text):
+            text = os.path.normpath(str(text))
+        else:
+            text = None
+        self.configurePushButtonFindSSLKeyfile(text)
 
     def comboBoxProxyTypeChanged(self, comboBoxIndex):
         if comboBoxIndex == 0:
@@ -3124,18 +3356,44 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
             self.ui.lineEditMailingListName.setText(_translate(
                 "MainWindow", "This is a chan address. You cannot use it as a pseudo-mailing list."))
 
+        self.ui.checkBoxWrapMessagesWithEmailHeaders.setChecked(
+            shared.safeConfigGetBoolean(addressAtCurrentRow, 'foremail'))
+
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 
 class NewSubscriptionDialog(QtGui.QDialog):
 
-    def __init__(self, parent):
+    def __init__(self, parent, showReceivingIdentity=False):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_NewSubscriptionDialog()
         self.ui.setupUi(self)
         self.parent = parent
         QtCore.QObject.connect(self.ui.lineEditSubscriptionAddress, QtCore.SIGNAL(
             "textChanged(QString)"), self.subscriptionAddressChanged)
+
+        if showReceivingIdentity:
+            self.ui.label_3.setVisible(True)
+            self.ui.comboBoxReceivingIdentity.setVisible(True)
+
+            configSections = shared.config.sections()
+            for addressInKeysFile in configSections:
+                if addressInKeysFile != 'bitmessagesettings':
+                    status, addressVersionNumber, streamNumber, hash = decodeAddress(
+                        addressInKeysFile)
+
+                    if status != 'success':
+                        continue
+                    isEnabled = shared.config.getboolean(
+                        addressInKeysFile, 'enabled')
+                    if not isEnabled:
+                        continue
+
+                    self.ui.comboBoxReceivingIdentity.insertItem(0, unicode("{} - {}".format(shared.config.get(
+                        addressInKeysFile, 'label'), addressInKeysFile), 'utf-8'), addressInKeysFile)
+        else:
+            self.ui.label_3.setVisible(False)
+            self.ui.comboBoxReceivingIdentity.setVisible(False)
 
     def subscriptionAddressChanged(self, QString):
         status, a, b, c = decodeAddress(str(QString))

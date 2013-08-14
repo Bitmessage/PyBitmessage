@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Fri Aug  9 14:17:50 2013
-#      by: PyQt4 UI code generator 4.10
+# Created: Wed Aug 14 13:43:40 2013
+#      by: PyQt4 UI code generator 4.10.1
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -276,14 +276,16 @@ class Ui_MainWindow(object):
         self.tableWidgetSubscriptions.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.tableWidgetSubscriptions.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableWidgetSubscriptions.setObjectName(_fromUtf8("tableWidgetSubscriptions"))
-        self.tableWidgetSubscriptions.setColumnCount(2)
+        self.tableWidgetSubscriptions.setColumnCount(3)
         self.tableWidgetSubscriptions.setRowCount(0)
         item = QtGui.QTableWidgetItem()
         self.tableWidgetSubscriptions.setHorizontalHeaderItem(0, item)
         item = QtGui.QTableWidgetItem()
         self.tableWidgetSubscriptions.setHorizontalHeaderItem(1, item)
+        item = QtGui.QTableWidgetItem()
+        self.tableWidgetSubscriptions.setHorizontalHeaderItem(2, item)
         self.tableWidgetSubscriptions.horizontalHeader().setCascadingSectionResizes(True)
-        self.tableWidgetSubscriptions.horizontalHeader().setDefaultSectionSize(400)
+        self.tableWidgetSubscriptions.horizontalHeader().setDefaultSectionSize(245)
         self.tableWidgetSubscriptions.horizontalHeader().setHighlightSections(False)
         self.tableWidgetSubscriptions.horizontalHeader().setSortIndicatorShown(False)
         self.tableWidgetSubscriptions.horizontalHeader().setStretchLastSection(True)
@@ -579,6 +581,8 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Label", None))
         item = self.tableWidgetSubscriptions.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Address", None))
+        item = self.tableWidgetSubscriptions.horizontalHeaderItem(2)
+        item.setText(_translate("MainWindow", "Receiving Identity", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.subscriptions), _translate("MainWindow", "Subscriptions", None))
         self.label_6.setText(_translate("MainWindow", "The Address book is useful for adding names or labels to other people\'s Bitmessage addresses so that you can recognize them more easily in your inbox. You can add entries here using the \'Add\' button, or from your inbox by right-clicking on a message.", None))
         self.pushButtonAddAddressBook.setText(_translate("MainWindow", "Add new entry", None))

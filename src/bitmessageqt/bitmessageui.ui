@@ -621,7 +621,7 @@ p, li { white-space: pre-wrap; }
            <bool>true</bool>
           </attribute>
           <attribute name="horizontalHeaderDefaultSectionSize">
-           <number>400</number>
+           <number>245</number>
           </attribute>
           <attribute name="horizontalHeaderHighlightSections">
            <bool>false</bool>
@@ -643,6 +643,11 @@ p, li { white-space: pre-wrap; }
           <column>
            <property name="text">
             <string>Address</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Receiving Identity</string>
            </property>
           </column>
          </widget>
