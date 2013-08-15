@@ -1572,7 +1572,7 @@ class MyForm(QtGui.QMainWindow):
                                 continue
                         except:
                             pass
-                        if addressVersionNumber > 3 or addressVersionNumber <= 1:
+                        if addressVersionNumber > 4 or addressVersionNumber <= 1:
                             QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
                                 "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
                             continue

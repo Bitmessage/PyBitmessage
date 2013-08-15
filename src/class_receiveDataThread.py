@@ -1216,7 +1216,7 @@ class receiveDataThread(threading.Thread):
         if addressVersion == 0:
             print '(Within processpubkey) addressVersion of 0 doesn\'t make sense.'
             return
-        if addressVersion >= 4 or addressVersion == 1:
+        if addressVersion > 4 or addressVersion == 1:
             with shared.printLock:
                 print 'This version of Bitmessage cannot handle version', addressVersion, 'addresses.'
 
@@ -1273,7 +1273,7 @@ class receiveDataThread(threading.Thread):
             shared.sqlLock.release()
             # shared.workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
             self.possibleNewPubkey(ripe)
-        if addressVersion == 3:
+        if addressVersion == 3 or addressVersion == 4:
             if len(data) < 170:  # sanity check.
                 print '(within processpubkey) payloadLength less than 170. Sanity check failed.'
                 return
