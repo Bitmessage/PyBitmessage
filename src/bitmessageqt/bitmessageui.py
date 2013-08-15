@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Thu Aug 15 09:54:36 2013
+# Created: Thu Aug 15 14:19:52 2013
 #      by: PyQt4 UI code generator 4.10
 #
 # WARNING! All changes made in this file will be lost!
@@ -73,6 +73,7 @@ class Ui_MainWindow(object):
         self.splitter.setOrientation(QtCore.Qt.Vertical)
         self.splitter.setObjectName(_fromUtf8("splitter"))
         self.tableWidgetInbox = QtGui.QTableWidget(self.splitter)
+        self.tableWidgetInbox.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.tableWidgetInbox.setAlternatingRowColors(True)
         self.tableWidgetInbox.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.tableWidgetInbox.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
@@ -200,6 +201,7 @@ class Ui_MainWindow(object):
         self.splitter_2.setOrientation(QtCore.Qt.Vertical)
         self.splitter_2.setObjectName(_fromUtf8("splitter_2"))
         self.tableWidgetSent = QtGui.QTableWidget(self.splitter_2)
+        self.tableWidgetSent.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.tableWidgetSent.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
         self.tableWidgetSent.setAlternatingRowColors(True)
         self.tableWidgetSent.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
