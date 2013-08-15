@@ -2388,7 +2388,7 @@ class MyForm(QtGui.QMainWindow):
         # self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + self.ui.tableWidgetInbox.item(
             currentInboxRow, 2).data(Qt.UserRole).toPyObject())
-        if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] == 'Re:':
+        if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
             self.ui.lineEditSubject.setText(
                 self.ui.tableWidgetInbox.item(currentInboxRow, 2).text())
         else:
