@@ -193,6 +193,9 @@
              <height>500</height>
             </size>
            </property>
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
           </widget>
          </widget>
         </item>
@@ -486,7 +489,11 @@ p, li { white-space: pre-wrap; }
             </property>
            </column>
           </widget>
-          <widget class="QTextEdit" name="textEditSentMessage"/>
+          <widget class="QTextEdit" name="textEditSentMessage">
+           <property name="readOnly">
+            <bool>true</bool>
+           </property>
+          </widget>
          </widget>
         </item>
        </layout>
