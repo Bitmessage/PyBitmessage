@@ -126,6 +126,9 @@
            <enum>Qt::Vertical</enum>
           </property>
           <widget class="QTableWidget" name="tableWidgetInbox">
+           <property name="editTriggers">
+            <set>QAbstractItemView::NoEditTriggers</set>
+           </property>
            <property name="alternatingRowColors">
             <bool>true</bool>
            </property>
@@ -429,6 +432,9 @@ p, li { white-space: pre-wrap; }
            <enum>Qt::Vertical</enum>
           </property>
           <widget class="QTableWidget" name="tableWidgetSent">
+           <property name="editTriggers">
+            <set>QAbstractItemView::NoEditTriggers</set>
+           </property>
            <property name="dragDropMode">
             <enum>QAbstractItemView::DragDrop</enum>
            </property>
