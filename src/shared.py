@@ -230,7 +230,7 @@ def reloadMyAddressHashes():
             if isEnabled:
                 hasEnabledKeys = True
                 status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
-                if addressVersionNumber == 2 or addressVersionNumber == 3:
+                if addressVersionNumber == 2 or addressVersionNumber == 3 or addressVersionNumber == 4:
                     # Returns a simple 32 bytes of information encoded in 64 Hex characters,
                     # or null if there was an error.
                     privEncryptionKey = decodeWalletImportFormat(

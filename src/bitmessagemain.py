@@ -525,8 +525,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 if status == 'versiontoohigh':
                     return 'API Error 0010: Address version number too high (or zero) in address: ' + toAddress
                 return 'API Error 0007: Could not decode address: ' + toAddress + ' : ' + status
-            if addressVersionNumber < 2 or addressVersionNumber > 3:
-                return 'API Error 0011: The address version number currently must be 2 or 3. Others aren\'t supported. Check the toAddress.'
+            if addressVersionNumber < 2 or addressVersionNumber > 4:
+                return 'API Error 0011: The address version number currently must be 2, 3, or 4. Others aren\'t supported. Check the toAddress.'
             if streamNumber != 1:
                 return 'API Error 0012: The stream number must be 1. Others aren\'t supported. Check the toAddress.'
             status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(
@@ -542,8 +542,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 if status == 'versiontoohigh':
                     return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
                 return 'API Error 0007: Could not decode address: ' + fromAddress + ' : ' + status
-            if addressVersionNumber < 2 or addressVersionNumber > 3:
-                return 'API Error 0011: The address version number currently must be 2 or 3. Others aren\'t supported. Check the fromAddress.'
+            if addressVersionNumber < 2 or addressVersionNumber > 4:
+                return 'API Error 0011: The address version number currently must be 2, 3, or 4. Others aren\'t supported. Check the fromAddress.'
             if streamNumber != 1:
                 return 'API Error 0012: The stream number must be 1. Others aren\'t supported. Check the fromAddress.'
             toAddress = addBMIfNotPresent(toAddress)
@@ -607,8 +607,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 if status == 'versiontoohigh':
                     return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
                 return 'API Error 0007: Could not decode address: ' + fromAddress + ' : ' + status
-            if addressVersionNumber < 2 or addressVersionNumber > 3:
-                return 'API Error 0011: the address version number currently must be 2 or 3. Others aren\'t supported. Check the fromAddress.'
+            if addressVersionNumber < 2 or addressVersionNumber > 4:
+                return 'API Error 0011: the address version number currently must be 2, 3, or 4. Others aren\'t supported. Check the fromAddress.'
             if streamNumber != 1:
                 return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the fromAddress.'
             fromAddress = addBMIfNotPresent(fromAddress)
@@ -678,8 +678,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 if status == 'versiontoohigh':
                     return 'API Error 0010: Address version number too high (or zero) in address: ' + address
                 return 'API Error 0007: Could not decode address: ' + address + ' : ' + status
-            if addressVersionNumber < 2 or addressVersionNumber > 3:
-                return 'API Error 0011: The address version number currently must be 2 or 3. Others aren\'t supported.'
+            if addressVersionNumber < 2 or addressVersionNumber > 4:
+                return 'API Error 0011: The address version number currently must be 2, 3, or 4. Others aren\'t supported.'
             if streamNumber != 1:
                 return 'API Error 0012: The stream number must be 1. Others aren\'t supported.'
             # First we must check to see if the address is already in the
