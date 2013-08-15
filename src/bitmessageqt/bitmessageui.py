@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Wed Aug 14 23:19:43 2013
+# Created: Thu Aug 15 09:54:36 2013
 #      by: PyQt4 UI code generator 4.10
 #
 # WARNING! All changes made in this file will be lost!
@@ -98,6 +98,7 @@ class Ui_MainWindow(object):
         self.tableWidgetInbox.verticalHeader().setDefaultSectionSize(26)
         self.textEditInboxMessage = QtGui.QTextEdit(self.splitter)
         self.textEditInboxMessage.setBaseSize(QtCore.QSize(0, 500))
+        self.textEditInboxMessage.setReadOnly(True)
         self.textEditInboxMessage.setObjectName(_fromUtf8("textEditInboxMessage"))
         self.verticalLayout_2.addWidget(self.splitter)
         icon1 = QtGui.QIcon()
@@ -223,6 +224,7 @@ class Ui_MainWindow(object):
         self.tableWidgetSent.verticalHeader().setVisible(False)
         self.tableWidgetSent.verticalHeader().setStretchLastSection(False)
         self.textEditSentMessage = QtGui.QTextEdit(self.splitter_2)
+        self.textEditSentMessage.setReadOnly(True)
         self.textEditSentMessage.setObjectName(_fromUtf8("textEditSentMessage"))
         self.verticalLayout.addWidget(self.splitter_2)
         icon3 = QtGui.QIcon()
