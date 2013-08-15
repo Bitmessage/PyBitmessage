@@ -540,7 +540,7 @@ class singleWorker(threading.Thread):
                 requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                     ackdata, tr.translateText("MainWindow", "Doing work necessary to send message.\nThere is no required difficulty for version 2 addresses like this."))))
-            elif toAddressVersionNumber == 3:
+            elif toAddressVersionNumber == 3 or toAddressVersionNumber == 4:
                 requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(
                     pubkeyPayload[readPosition:readPosition + 10])
                 readPosition += varintLength
@@ -617,7 +617,7 @@ class singleWorker(threading.Thread):
                 payload += encodeVarint(len(signature))
                 payload += signature
 
-            if fromAddressVersionNumber == 3:
+            if fromAddressVersionNumber == 3 or fromAddressVersionNumber == 4:
                 payload = '\x01'  # Message version.
                 payload += encodeVarint(fromAddressVersionNumber)
                 payload += encodeVarint(fromStreamNumber)
