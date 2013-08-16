@@ -23,6 +23,7 @@ import base64
 import json
 import socket
 import sys
+import os
 
 import shared
 import tr # translate
