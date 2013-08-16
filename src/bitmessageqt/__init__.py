@@ -14,6 +14,7 @@ except ImportError:
 from addresses import *
 import shared
 from bitmessageui import *
+from namecoin import namecoinConnection, ensureNamecoinOptions
 from newaddressdialog import *
 from newsubscriptiondialog import *
 from regenerateaddresses import *
@@ -141,6 +142,8 @@ class MyForm(QtGui.QMainWindow):
             "clicked()"), self.click_pushButtonSend)
         QtCore.QObject.connect(self.ui.pushButtonLoadFromAddressBook, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonLoadFromAddressBook)
+        QtCore.QObject.connect(self.ui.pushButtonFetchNamecoinID, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonFetchNamecoinID)
         QtCore.QObject.connect(self.ui.radioButtonBlacklist, QtCore.SIGNAL(
             "clicked()"), self.click_radioButtonBlacklist)
         QtCore.QObject.connect(self.ui.radioButtonWhitelist, QtCore.SIGNAL(
@@ -429,10 +432,25 @@ class MyForm(QtGui.QMainWindow):
             "removeInboxRowByMsgid(PyQt_PyObject)"), self.removeInboxRowByMsgid)
         self.UISignalThread.start()
 
-# Below this point, it would be good if all of the necessary global data
-# structures were initialized.
+        # Below this point, it would be good if all of the necessary global data
+        # structures were initialized.
 
         self.rerenderComboBoxSendFrom()
+        
+        # Check to see whether we can connect to namecoin. Hide the 'Fetch Namecoin ID' button if we can't.
+        try:
+            options = {}
+            options["type"] = shared.config.get('bitmessagesettings', 'namecoinrpctype')
+            options["host"] = shared.config.get('bitmessagesettings', 'namecoinrpchost')
+            options["port"] = shared.config.get('bitmessagesettings', 'namecoinrpcport')
+            options["user"] = shared.config.get('bitmessagesettings', 'namecoinrpcuser')
+            options["password"] = shared.config.get('bitmessagesettings', 'namecoinrpcpassword')
+            nc = namecoinConnection(options)
+            if nc.test()[0] == 'failed':
+                self.ui.pushButtonFetchNamecoinID.hide()
+        except:
+            print 'There was a problem testing for a Namecoin daemon. Hiding the Fetch Namecoin ID button'
+            self.ui.pushButtonFetchNamecoinID.hide()
 
 
     # Show or hide the application window after clicking an item within the
@@ -1699,6 +1717,17 @@ class MyForm(QtGui.QMainWindow):
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Right click one or more entries in your address book and select \'Send message to this address\'."))
 
+    def click_pushButtonFetchNamecoinID(self):
+        nc = namecoinConnection()
+        err, addr = nc.query(str(self.ui.lineEditTo.text()))
+        if err is not None:
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: " + err))
+        else:
+            self.ui.lineEditTo.setText(addr)
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Fetched address from namecoin identity."))
+
     def redrawLabelFrom(self, index):
         self.ui.labelFrom.setText(
             self.ui.comboBoxSendFrom.itemData(index).toPyObject())
@@ -2028,6 +2057,18 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.lineEditSocksPassword.text()))
             shared.config.set('bitmessagesettings', 'sockslisten', str(
                 self.settingsDialogInstance.ui.checkBoxSocksListen.isChecked()))
+
+            shared.config.set('bitmessagesettings', 'namecoinrpctype',
+                self.settingsDialogInstance.getNamecoinType())
+            shared.config.set('bitmessagesettings', 'namecoinrpchost', str(
+                self.settingsDialogInstance.ui.lineEditNamecoinHost.text()))
+            shared.config.set('bitmessagesettings', 'namecoinrpcport', str(
+                self.settingsDialogInstance.ui.lineEditNamecoinPort.text()))
+            shared.config.set('bitmessagesettings', 'namecoinrpcuser', str(
+                self.settingsDialogInstance.ui.lineEditNamecoinUser.text()))
+            shared.config.set('bitmessagesettings', 'namecoinrpcpassword', str(
+                self.settingsDialogInstance.ui.lineEditNamecoinPassword.text()))
+
             if float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) >= 1:
                 shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(int(float(
                     self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
@@ -2347,7 +2388,7 @@ class MyForm(QtGui.QMainWindow):
         # self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + self.ui.tableWidgetInbox.item(
             currentInboxRow, 2).data(Qt.UserRole).toPyObject())
-        if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] == 'Re:':
+        if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
             self.ui.lineEditSubject.setText(
                 self.ui.tableWidgetInbox.item(currentInboxRow, 2).text())
         else:
@@ -3057,6 +3098,35 @@ class settingsDialog(QtGui.QDialog):
         self.ui.lineEditMaxAcceptableSmallMessageDifficulty.setText(str((float(shared.config.getint(
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / shared.networkDefaultPayloadLengthExtraBytes)))
 
+        # Namecoin integration tab
+        nmctype = shared.config.get('bitmessagesettings', 'namecoinrpctype')
+        self.ui.lineEditNamecoinHost.setText(str(
+            shared.config.get('bitmessagesettings', 'namecoinrpchost')))
+        self.ui.lineEditNamecoinPort.setText(str(
+            shared.config.get('bitmessagesettings', 'namecoinrpcport')))
+        self.ui.lineEditNamecoinUser.setText(str(
+            shared.config.get('bitmessagesettings', 'namecoinrpcuser')))
+        self.ui.lineEditNamecoinPassword.setText(str(
+            shared.config.get('bitmessagesettings', 'namecoinrpcpassword')))
+
+        if nmctype == "namecoind":
+            self.ui.radioButtonNamecoinNamecoind.setChecked(True)
+        elif nmctype == "nmcontrol":
+            self.ui.radioButtonNamecoinNmcontrol.setChecked(True)
+            self.ui.lineEditNamecoinUser.setEnabled(False)
+            self.ui.labelNamecoinUser.setEnabled(False)
+            self.ui.lineEditNamecoinPassword.setEnabled(False)
+            self.ui.labelNamecoinPassword.setEnabled(False)
+        else:
+            assert False
+
+        QtCore.QObject.connect(self.ui.radioButtonNamecoinNamecoind, QtCore.SIGNAL(
+            "toggled(bool)"), self.namecoinTypeChanged)
+        QtCore.QObject.connect(self.ui.radioButtonNamecoinNmcontrol, QtCore.SIGNAL(
+            "toggled(bool)"), self.namecoinTypeChanged)
+        QtCore.QObject.connect(self.ui.pushButtonNamecoinTest, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonNamecoinTest)
+
         #'System' tab removed for now.
         """try:
             maxCores = shared.config.getint('bitmessagesettings', 'maxcores')
@@ -3095,6 +3165,49 @@ class settingsDialog(QtGui.QDialog):
                 self.ui.lineEditSocksUsername.setEnabled(True)
                 self.ui.lineEditSocksPassword.setEnabled(True)
             self.ui.lineEditTCPPort.setEnabled(False)
+
+    # Check status of namecoin integration radio buttons and translate
+    # it to a string as in the options.
+    def getNamecoinType(self):
+        if self.ui.radioButtonNamecoinNamecoind.isChecked():
+            return "namecoind"
+        if self.ui.radioButtonNamecoinNmcontrol.isChecked():
+            return "nmcontrol"
+        assert False
+
+    # Namecoin connection type was changed.
+    def namecoinTypeChanged(self, checked):
+        nmctype = self.getNamecoinType()
+        assert nmctype == "namecoind" or nmctype == "nmcontrol"
+            
+        isNamecoind = (nmctype == "namecoind")
+        self.ui.lineEditNamecoinUser.setEnabled(isNamecoind)
+        self.ui.labelNamecoinUser.setEnabled(isNamecoind)
+        self.ui.lineEditNamecoinPassword.setEnabled(isNamecoind)
+        self.ui.labelNamecoinPassword.setEnabled(isNamecoind)
+
+        if isNamecoind:
+            self.ui.lineEditNamecoinPort.setText(shared.namecoinDefaultRpcPort)
+        else:
+            self.ui.lineEditNamecoinPort.setText("9000")
+
+    # Test the namecoin settings specified in the settings dialog.
+    def click_pushButtonNamecoinTest(self):
+        self.ui.labelNamecoinTestResult.setText(_translate(
+                "MainWindow", "Testing..."))
+        options = {}
+        options["type"] = self.getNamecoinType()
+        options["host"] = self.ui.lineEditNamecoinHost.text()
+        options["port"] = self.ui.lineEditNamecoinPort.text()
+        options["user"] = self.ui.lineEditNamecoinUser.text()
+        options["password"] = self.ui.lineEditNamecoinPassword.text()
+        nc = namecoinConnection(options)
+        response = nc.test()
+        responseStatus = response[0]
+        responseText = response[1]
+        self.ui.labelNamecoinTestResult.setText(responseText)
+        if responseStatus== 'success':
+            self.parent.ui.pushButtonFetchNamecoinID.show()
 
 
 class SpecialAddressBehaviorDialog(QtGui.QDialog):
