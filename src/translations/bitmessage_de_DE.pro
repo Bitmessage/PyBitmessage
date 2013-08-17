@@ -18,6 +18,7 @@ SOURCES	= 		../addresses.py\
 			../bitmessageqt/__init__.py\
 			../bitmessageqt/about.py\
 			../bitmessageqt/bitmessageui.py\
+			../bitmessageqt/connect.py\
 			../bitmessageqt/help.py\
 			../bitmessageqt/iconglossary.py\
 			../bitmessageqt/newaddressdialog.py\
@@ -25,9 +26,8 @@ SOURCES	= 		../addresses.py\
 			../bitmessageqt/newsubscriptiondialog.py\
 			../bitmessageqt/regenerateaddresses.py\
 			../bitmessageqt/settings.py\
-			../bitmessageqt/specialaddressbehavior.py\
-			../bitmessageqt/connect.py
-			
+			../bitmessageqt/specialaddressbehavior.py
+
 
 TRANSLATIONS	= bitmessage_de_DE.ts
 CODECFORTR	= UTF-8
