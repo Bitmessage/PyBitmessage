@@ -164,6 +164,34 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                                        streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
+        elif method == 'listSubscriptions':
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''SELECT label, address, enabled from subscriptions''')
+            shared.sqlSubmitQueue.put('')
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            data = '{"subscriptions":['
+            for row in queryreturn:
+                label, address, enabled = row
+                if len(data) > 20:
+                    data += ','
+                data += json.dumps({'label': label, 'address': address, 'enabled': enabled})
+            data += ']}'
+            return data
+        elif method == 'listAddressbook':
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''SELECT label, address from addressbook''')
+            shared.sqlSubmitQueue.put('')
+            queryreturn = shared.sqlReturnQueue.get()
+            shared.sqlLock.release()
+            data = '{"addresses":['
+            for row in queryreturn:
+                label, address = row
+                if len(data) > 20:
+                    data += ','
+                data += json.dumps({'label': label, 'address': address})
+            data += ']}'
+            return data
         elif method == 'createRandomAddress':
             if len(params) == 0:
                 return 'API Error 0000: I need parameters!'
