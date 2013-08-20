@@ -3405,8 +3405,20 @@ def run():
     app = QtGui.QApplication(sys.argv)
     translator = QtCore.QTranslator()
 
+    lang_countrycode = str(locale.getdefaultlocale()[0])
+    translation = "translations/bitmessage_" + lang_countrycode
+    
+    if not os.path.isfile(translation + ".pro"):
+        # Don't have fully localized translation, try language only
+        lang = lang_countrycode[0:2] 
+        translation = "translations/bitmessage_" + lang
+
+    if not os.path.isfile(translation + ".pro"):
+        # Don't have language either, default to 'Merica USA! USA!
+        translation = "translations/bitmessage_en_US"
+        
     try:
-        translator.load("translations/bitmessage_" + str(locale.getdefaultlocale()[0]))
+        translator.load(translation)
         #translator.load("translations/bitmessage_fr_BE") # test French
     except:
         # The above is not compatible with all versions of OSX.
