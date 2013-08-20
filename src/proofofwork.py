@@ -24,7 +24,7 @@ def _set_idle():
 
 def _pool_worker(nonce, initialHash, target, pool_size):
     _set_idle()
-    trialValue = 99999999999999999999
+    trialValue = float('inf')
     while trialValue > target:
         nonce += pool_size
         trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
@@ -32,7 +32,7 @@ def _pool_worker(nonce, initialHash, target, pool_size):
 
 def _doSafePoW(target, initialHash):
     nonce = 0
-    trialValue = 99999999999999999999
+    trialValue = float('inf')
     while trialValue > target:
         nonce += 1
         trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
