@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="2.0" language="de" sourcelanguage="en">
+<!DOCTYPE TS>
+<TS version="2.0" language="de" sourcelanguage="en">
 <context>
     <name>MainWindow</name>
     <message>
@@ -10,12 +11,13 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="163"/>
         <source>Reply</source>
+        <translatorcomment>.</translatorcomment>
         <translation>Antworten</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="165"/>
         <source>Add sender to your Address Book</source>
-        <translation>Absender zum Adressbuch hinzufügen</translation>
+        <translation>Absender zum Adressbuch hinzufügen.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="269"/>
@@ -918,7 +920,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="623"/>
         <source>Ctrl+Q</source>
-        <translation>Strg+Q</translation>
+        <translation type="unfinished">Strg+Q</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="625"/>
@@ -1089,7 +1091,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
         <source>version ?</source>
         <translation>Version ?</translation>
     </message>
-    <message encoding="UTF-8">
+    <message utf8="true">
         <location filename="../bitmessageqt/about.py" line="60"/>
         <source>Copyright © 2013 Jonathan Warren</source>
         <translation>Copyright © 2013 Jonathan Warren</translation>
