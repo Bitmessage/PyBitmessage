@@ -2031,6 +2031,10 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxStartInTray.isChecked()))
             shared.config.set('bitmessagesettings', 'willinglysendtomobile', str(
                 self.settingsDialogInstance.ui.checkBoxWillinglySendToMobile.isChecked()))
+            shared.config.set('bitmessagesettings', 'overridelocale', str(
+                self.settingsDialogInstance.ui.checkBoxOverrideLocale.isChecked()))
+            shared.config.set('bitmessagesettings', 'userlocale', str(
+                self.settingsDialogInstance.ui.lineEditUserLocale.text()))
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
                     QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
@@ -3041,6 +3045,10 @@ class settingsDialog(QtGui.QDialog):
             shared.config.getboolean('bitmessagesettings', 'startintray'))
         self.ui.checkBoxWillinglySendToMobile.setChecked(
             shared.safeConfigGetBoolean('bitmessagesettings', 'willinglysendtomobile'))
+        self.ui.checkBoxOverrideLocale.setChecked(
+            shared.safeConfigGetBoolean('bitmessagesettings', 'overridelocale'))
+        self.ui.lineEditUserLocale.setText(str(
+            shared.config.get('bitmessagesettings', 'userlocale')))
         if shared.appdata == '':
             self.ui.checkBoxPortableMode.setChecked(True)
         if 'darwin' in sys.platform:
@@ -3404,13 +3412,41 @@ else:
 def run():
     app = QtGui.QApplication(sys.argv)
     translator = QtCore.QTranslator()
-
-    try:
-        translator.load("translations/bitmessage_" + str(locale.getdefaultlocale()[0]))
-        #translator.load("translations/bitmessage_fr_BE") # test French
-    except:
-        # The above is not compatible with all versions of OSX.
-        translator.load("translations/bitmessage_en_US") # Default to english.
+    
+    local_countrycode = str(locale.getdefaultlocale()[0])
+    locale_lang = local_countrycode[0:2]
+    user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
+    user_lang = user_countrycode[0:2]
+    translation_path = "translations/bitmessage_"
+    
+    if shared.config.getboolean('bitmessagesettings', 'overridelocale') == True:
+        # try the userinput if "overwridelanguage" is checked
+        try:
+            # check if the user input is a valid translation file
+            # this would also capture weird "countrycodes" like "en_pirate" or just "pirate"
+            translator.load(translation_path + user_countrycode)
+        except:
+            try:
+                # check if the user lang is a valid translation file
+                # in some cases this won't make sense, e.g. trying "pi" from "pirate"
+                translator.load(translation_path + user_lang)
+            except:
+                # The above is not compatible with all versions of OSX.
+                # Don't have language either, default to 'Merica USA! USA!
+                translator.load("translations/bitmessage_en_US") # Default to english.
+    else:
+        # try the userinput if "overridelanguage" is checked
+        try:
+            # check if the user input is a valid translation file
+            translator.load(translation_path + local_countrycode)
+        except:
+            try:
+                # check if the user lang is a valid translation file
+                translator.load(translation_path + locale_lang)
+            except:
+                # The above is not compatible with all versions of OSX.
+                # Don't have language either, default to 'Merica USA! USA!
+                translator.load("translations/bitmessage_en_US") # Default to english.
 
     QtGui.QApplication.installTranslator(translator)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
