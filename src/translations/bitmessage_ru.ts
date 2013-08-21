@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="2.0" language="ru" sourcelanguage="">
+<!DOCTYPE TS>
+<TS version="2.0" language="ru">
 <context>
     <name>MainWindow</name>
     <message>
@@ -10,6 +11,7 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="163"/>
         <source>Reply</source>
+        <translatorcomment>.</translatorcomment>
         <translation>Ответить</translation>
     </message>
     <message>
@@ -875,7 +877,8 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/__init__.py" line="173"/>
         <source>Mark Unread</source>
-        <translation type="unfinished"></translation>
+        <translatorcomment>...</translatorcomment>
+        <translation type="unfinished">Mark Unread</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1728"/>
@@ -1108,7 +1111,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <source>version ?</source>
         <translation>версия ?</translation>
     </message>
-    <message encoding="UTF-8">
+    <message utf8="true">
         <location filename="../bitmessageqt/about.py" line="60"/>
         <source>Copyright © 2013 Jonathan Warren</source>
         <translation>Копирайт © 2013 Джонатан Уоррен</translation>

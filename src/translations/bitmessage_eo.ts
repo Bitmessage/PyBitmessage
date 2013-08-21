@@ -11,7 +11,7 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="163"/>
         <source>Reply</source>
-        <translatorcomment>Aŭ ĉu oni uzas u-formon ĉi tie? &quot;Respondu&quot;?! Ŝajnas al mi ke ne.</translatorcomment>
+        <translatorcomment>Aŭ ĉu oni uzas u-formon ĉi tie? &quot;Respondu&quot;?! Ŝajnas al mi ke ne..</translatorcomment>
         <translation>Respondi</translation>
     </message>
     <message>
@@ -952,7 +952,7 @@ p, li { white-space: pre-wrap; }
         <location filename="../bitmessageqt/bitmessageui.py" line="623"/>
         <source>Ctrl+Q</source>
         <translatorcomment>http://komputeko.net/index_en.php?vorto=ctrl</translatorcomment>
-        <translation type="unfinished">Stir + Q</translation>
+        <translation type="unfinished">Stir+Q</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="625"/>

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="2.0" language="fr" sourcelanguage="en">
+<!DOCTYPE TS>
+<TS version="2.0" language="fr" sourcelanguage="en">
 <context>
     <name>MainWindow</name>
     <message>
@@ -726,6 +727,7 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
     <message>
         <location filename="../bitmessageqt/__init__.py" line="163"/>
         <source>Reply</source>
+        <translatorcomment>.</translatorcomment>
         <translation>Répondre</translation>
     </message>
     <message>
@@ -970,7 +972,7 @@ Il n&apos;y a pas de difficulté requise pour ces adresses de version 2.</transl
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="623"/>
         <source>Ctrl+Q</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Ctrl+Q</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="625"/>
@@ -1154,7 +1156,7 @@ L&apos;option &apos;Nombre Aléatoire&apos; est sélectionnée par défaut mais 
         <source>About</source>
         <translation>À propos</translation>
     </message>
-    <message encoding="UTF-8">
+    <message utf8="true">
         <location filename="../bitmessageqt/about.py" line="60"/>
         <source>Copyright © 2013 Jonathan Warren</source>
         <translation>Copyright © 2013 Jonathan Warren</translation>
