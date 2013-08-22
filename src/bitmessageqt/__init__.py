@@ -3405,7 +3405,12 @@ def run():
     app = QtGui.QApplication(sys.argv)
     translator = QtCore.QTranslator()
 
-    lang_countrycode = str(locale.getdefaultlocale()[0])
+    try:
+        lang_countrycode = str(locale.getdefaultlocale()[0])
+    except:
+        # The above is not compatible with all versions of OSX.
+        lang_countrycode = "en_US" # Default to english.
+        
     translation = "translations/bitmessage_" + lang_countrycode
     
     if not os.path.isfile(translation + ".pro"):
