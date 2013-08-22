@@ -52,6 +52,10 @@ def _doFastPoW(target, initialHash):
         maxCores = 99999
     if pool_size > maxCores:
         pool_size = maxCores
+
+    if pool_size == 1: # Don't mess around with multiprocessing on a single core machine
+        return _doSafePoW(target, initialHash)
+
     pool = Pool(processes=pool_size)
     result = []
     for i in range(pool_size):
