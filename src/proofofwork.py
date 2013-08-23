@@ -71,7 +71,7 @@ def _doFastPoW(target, initialHash):
         time.sleep(0.2)
 
 def run(target, initialHash):
-    if not frozen:
+    if frozen == "macosx_app" or not frozen:
         return _doFastPoW(target, initialHash)
     else:
         return _doSafePoW(target, initialHash)
