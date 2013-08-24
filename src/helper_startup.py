@@ -70,15 +70,7 @@ def loadConfig():
             shared.config.set(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
             shared.config.set('bitmessagesettings', 'dontconnect', 'true')
-            shared.config.set('bitmessagesettings', 'overridelocale', 'false')
-            try:
-                # this should set the userdefined locale to the default locale
-                # like this, the user will know his default locale
-                shared.config.set('bitmessagesettings', 'userlocale', str(locale.getdefaultlocale()[0]))
-            except:
-                # if we cannot determine the default locale let's default to english
-                # they user might use this as an country code
-                shared.config.set('bitmessagesettings', 'userlocale', 'en_US')
+            shared.config.set('bitmessagesettings', 'userlocale', 'system')
             ensureNamecoinOptions()
 
             if storeConfigFilesInSameDirectoryAsProgramByDefault:

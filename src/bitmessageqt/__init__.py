@@ -2031,10 +2031,10 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxStartInTray.isChecked()))
             shared.config.set('bitmessagesettings', 'willinglysendtomobile', str(
                 self.settingsDialogInstance.ui.checkBoxWillinglySendToMobile.isChecked()))
-            shared.config.set('bitmessagesettings', 'overridelocale', str(
-                self.settingsDialogInstance.ui.checkBoxOverrideLocale.isChecked()))
-            shared.config.set('bitmessagesettings', 'userlocale', str(
-                self.settingsDialogInstance.ui.lineEditUserLocale.text()))
+            
+            lang_ind = int(self.settingsDialogInstance.ui.languageComboBox.currentIndex())
+            shared.config.set('bitmessagesettings', 'userlocale', languages[lang_ind])
+                
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
                     QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
@@ -3045,10 +3045,13 @@ class settingsDialog(QtGui.QDialog):
             shared.config.getboolean('bitmessagesettings', 'startintray'))
         self.ui.checkBoxWillinglySendToMobile.setChecked(
             shared.safeConfigGetBoolean('bitmessagesettings', 'willinglysendtomobile'))
-        self.ui.checkBoxOverrideLocale.setChecked(
-            shared.safeConfigGetBoolean('bitmessagesettings', 'overridelocale'))
-        self.ui.lineEditUserLocale.setText(str(
-            shared.config.get('bitmessagesettings', 'userlocale')))
+        
+        global languages 
+        languages = ['system','en','eo','fr','de','es','ru','en_pirate']
+        
+        user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
+        self.ui.languageComboBox.setCurrentIndex(languages.index(user_countrycode))
+        
         if shared.appdata == '':
             self.ui.checkBoxPortableMode.setChecked(True)
         if 'darwin' in sys.platform:
@@ -3413,40 +3416,45 @@ def run():
     app = QtGui.QApplication(sys.argv)
     translator = QtCore.QTranslator()
     
-    local_countrycode = str(locale.getdefaultlocale()[0])
-    locale_lang = local_countrycode[0:2]
+    locale_countrycode = str(locale.getdefaultlocale()[0])
+    locale_lang = locale_countrycode[0:2]
     user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
     user_lang = user_countrycode[0:2]
     translation_path = "translations/bitmessage_"
     
-    if shared.config.getboolean('bitmessagesettings', 'overridelocale') == True:
-        # try the userinput if "overwridelanguage" is checked
+    if shared.config.get('bitmessagesettings', 'userlocale') == 'system':
+        # try to detect the users locale otherwise fallback to English
         try:
-            # check if the user input is a valid translation file
-            # this would also capture weird "countrycodes" like "en_pirate" or just "pirate"
+            # try the users full locale, e.g. 'en_US':
+            # since we usually only provide languages, not localozations
+            # this will usually fail
+            translator.load(translation_path + locale_countrycode)
+        except:
+            try:
+                # try the users locale language, e.g. 'en':
+                # since we usually only provide languages, not localozations
+                # this will usually succeed
+                translator.load(translation_path + locale_lang)
+            except:
+                # as English is already the default language, we don't
+                # need to do anything. No need to translate.
+                pass
+    else:
+        try:
+            # check if the user input is a valid translation file:
+            # since user_countrycode will be usually set by the combobox
+            # it will usually just be a language code
             translator.load(translation_path + user_countrycode)
         except:
             try:
-                # check if the user lang is a valid translation file
-                # in some cases this won't make sense, e.g. trying "pi" from "pirate"
+                # check if the user lang is a valid translation file:
+                # this is only needed if the user manually set his 'userlocale'
+                # in the keys.dat to a countrycode (e.g. 'de_CH')
                 translator.load(translation_path + user_lang)
             except:
-                # The above is not compatible with all versions of OSX.
-                # Don't have language either, default to 'Merica USA! USA!
-                translator.load("translations/bitmessage_en_US") # Default to english.
-    else:
-        # try the userinput if "overridelanguage" is checked
-        try:
-            # check if the user input is a valid translation file
-            translator.load(translation_path + local_countrycode)
-        except:
-            try:
-                # check if the user lang is a valid translation file
-                translator.load(translation_path + locale_lang)
-            except:
-                # The above is not compatible with all versions of OSX.
-                # Don't have language either, default to 'Merica USA! USA!
-                translator.load("translations/bitmessage_en_US") # Default to english.
+                # as English is already the default language, we don't
+                # need to do anything. No need to translate.
+                pass
 
     QtGui.QApplication.installTranslator(translator)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
