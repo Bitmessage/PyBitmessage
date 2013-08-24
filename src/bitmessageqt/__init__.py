@@ -417,11 +417,11 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateNetworkStatusTab()"), self.updateNetworkStatusTab)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "incrementNumberOfMessagesProcessed()"), self.incrementNumberOfMessagesProcessed)
+            "updateNumberOfMessagesProcessed()"), self.updateNumberOfMessagesProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "incrementNumberOfPubkeysProcessed()"), self.incrementNumberOfPubkeysProcessed)
+            "updateNumberOfPubkeysProcessed()"), self.updateNumberOfPubkeysProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "incrementNumberOfBroadcastsProcessed()"), self.incrementNumberOfBroadcastsProcessed)
+            "updateNumberOfBroadcastsProcessed()"), self.updateNumberOfBroadcastsProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -1260,20 +1260,17 @@ class MyForm(QtGui.QMainWindow):
             self.actionShow.setChecked(not self.actionShow.isChecked())
             self.appIndicatorShowOrHideWindow()
 
-    def incrementNumberOfMessagesProcessed(self):
-        self.numberOfMessagesProcessed += 1
+    def updateNumberOfMessagesProcessed(self):
         self.ui.labelMessageCount.setText(_translate(
-            "MainWindow", "Processed %1 person-to-person messages.").arg(str(self.numberOfMessagesProcessed)))
+            "MainWindow", "Processed %1 person-to-person messages.").arg(str(shared.numberOfMessagesProcessed)))
 
-    def incrementNumberOfBroadcastsProcessed(self):
-        self.numberOfBroadcastsProcessed += 1
+    def updateNumberOfBroadcastsProcessed(self):
         self.ui.labelBroadcastCount.setText(_translate(
-            "MainWindow", "Processed %1 broadcast messages.").arg(str(self.numberOfBroadcastsProcessed)))
+            "MainWindow", "Processed %1 broadcast messages.").arg(str(shared.numberOfBroadcastsProcessed)))
 
-    def incrementNumberOfPubkeysProcessed(self):
-        self.numberOfPubkeysProcessed += 1
+    def updateNumberOfPubkeysProcessed(self):
         self.ui.labelPubkeyCount.setText(_translate(
-            "MainWindow", "Processed %1 public keys.").arg(str(self.numberOfPubkeysProcessed)))
+            "MainWindow", "Processed %1 public keys.").arg(str(shared.numberOfPubkeysProcessed)))
 
     def updateNetworkStatusTab(self):
         # print 'updating network status tab'
@@ -3363,12 +3360,12 @@ class UISignaler(Thread,QThread):
                         toAddress, fromLabel, fromAddress, subject, message, ackdata)
                 elif command == 'updateNetworkStatusTab':
                     self.emit(SIGNAL("updateNetworkStatusTab()"))
-                elif command == 'incrementNumberOfMessagesProcessed':
-                    self.emit(SIGNAL("incrementNumberOfMessagesProcessed()"))
-                elif command == 'incrementNumberOfPubkeysProcessed':
-                    self.emit(SIGNAL("incrementNumberOfPubkeysProcessed()"))
-                elif command == 'incrementNumberOfBroadcastsProcessed':
-                    self.emit(SIGNAL("incrementNumberOfBroadcastsProcessed()"))
+                elif command == 'updateNumberOfMessagesProcessed':
+                    self.emit(SIGNAL("updateNumberOfMessagesProcessed()"))
+                elif command == 'updateNumberOfPubkeysProcessed':
+                    self.emit(SIGNAL("updateNumberOfPubkeysProcessed()"))
+                elif command == 'updateNumberOfBroadcastsProcessed':
+                    self.emit(SIGNAL("updateNumberOfBroadcastsProcessed()"))
                 elif command == 'setStatusIcon':
                     self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"), data)
                 elif command == 'rerenderInboxFromLabels':
