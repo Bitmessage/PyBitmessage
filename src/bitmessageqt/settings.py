@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Sat Aug 24 08:28:46 2013
+# Created: Sat Aug 24 09:19:58 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -72,6 +72,7 @@ class Ui_settingsDialog(object):
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
         self.languageComboBox = QtGui.QComboBox(self.groupBox)
         self.languageComboBox.setObjectName(_fromUtf8("languageComboBox"))
+        self.languageComboBox.addItem(_fromUtf8(""))
         self.languageComboBox.addItem(_fromUtf8(""))
         self.languageComboBox.addItem(_fromUtf8(""))
         self.languageComboBox.addItem(_fromUtf8(""))
@@ -351,6 +352,7 @@ class Ui_settingsDialog(object):
         self.languageComboBox.setItemText(5, _translate("settingsDialog", "Spanish", "es"))
         self.languageComboBox.setItemText(6, _translate("settingsDialog", "Russian", "ru"))
         self.languageComboBox.setItemText(7, _translate("settingsDialog", "Pirate English", "en_pirate"))
+        self.languageComboBox.setItemText(8, _translate("settingsDialog", "Other (set in keys.dat)", "other"))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabUserInterface), _translate("settingsDialog", "User Interface", None))
         self.groupBox1.setTitle(_translate("settingsDialog", "Listening port", None))
         self.label.setText(_translate("settingsDialog", "Listen for connections on port:", None))

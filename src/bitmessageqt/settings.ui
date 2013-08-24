@@ -153,6 +153,11 @@
               <string comment="en_pirate">Pirate English</string>
              </property>
             </item>
+            <item>
+             <property name="text">
+              <string comment="other">Other (set in keys.dat)</string>
+             </property>
+            </item>
            </widget>
           </item>
          </layout>
