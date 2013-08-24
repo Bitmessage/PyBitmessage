@@ -2033,7 +2033,8 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxWillinglySendToMobile.isChecked()))
             
             lang_ind = int(self.settingsDialogInstance.ui.languageComboBox.currentIndex())
-            shared.config.set('bitmessagesettings', 'userlocale', languages[lang_ind])
+            if not languages[lang_ind] == 'other':
+                shared.config.set('bitmessagesettings', 'userlocale', languages[lang_ind])
                 
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
@@ -3047,10 +3048,13 @@ class settingsDialog(QtGui.QDialog):
             shared.safeConfigGetBoolean('bitmessagesettings', 'willinglysendtomobile'))
         
         global languages 
-        languages = ['system','en','eo','fr','de','es','ru','en_pirate']
-        
+        languages = ['system','en','eo','fr','de','es','ru','en_pirate','other']
         user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
-        self.ui.languageComboBox.setCurrentIndex(languages.index(user_countrycode))
+        if user_countrycode in languages:
+            curr_index = languages.index(user_countrycode)
+        else:
+            curr_index = languages.index('other')
+        self.ui.languageComboBox.setCurrentIndex(curr_index)
         
         if shared.appdata == '':
             self.ui.checkBoxPortableMode.setChecked(True)
