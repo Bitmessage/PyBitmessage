@@ -26,7 +26,7 @@ packagemonkey -n "PyBitmessage" --version "0.3.5" --dir "." -l "mit" \
     --dependspuppy "openssl, python-qt4, sqlite3, sqlite3-dev, " \
     "python-openssl, python-sip, gst123" \
     --dependsarch "python2, qt4, python2-pyqt4, sqlite, openssl, gst123" \
-    --suggestsarch "python2-gevent" --pythonversion 2 \
+    --suggestsarch "python2-gevent: Python network library that uses greenlet and libevent for easy and scalable concurrency" --pythonversion 2 \
     --dependsebuild "dev-libs/openssl, dev-python/PyQt4[${PYTHON_USEDEP}]" \
     --buildebuild "\${PYTHON_DEPS}" --pythonreq "sqlite" \
     --repository "https://github.com/Bitmessage/PyBitmessage.git"

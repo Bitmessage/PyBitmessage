@@ -3,13 +3,13 @@ pkgname=pybitmessage
 pkgver=0.3.5
 pkgrel=1
 pkgdesc="Bitmessage is a P2P communications protocol used to send encrypted messages to another person or to many subscribers. It is decentralized and trustless, meaning that you need-not inherently trust any entities like root certificate authorities. It uses strong authentication which means that the sender of a message cannot be spoofed, and it aims to hide "non-content" data, like the sender and receiver of messages, from passive eavesdroppers like those running warrantless wiretapping programs."
-arch=('i686' 'x86_64')
+arch=('any')
 url="https://github.com/Bitmessage/PyBitmessage"
 license=('MIT')
 groups=()
-depends=('python2' 'qt4' 'python2-pyqt4' 'sqlite' 'openssl' 'gst123')
+depends=('python2' 'qt4' 'python2-pyqt4' 'sqlite' 'openssl' 'mpg123')
 makedepends=()
-optdepends=('python2-gevent')
+optdepends=('python2-gevent: Python network library that uses greenlet and libevent for easy and scalable concurrency')
 provides=()
 conflicts=()
 replaces=()
@@ -19,7 +19,7 @@ install=
 changelog=
 source=($pkgname-$pkgver.tar.gz)
 noextract=()
-md5sums=()
+md5sums=(ebf89129571571198473559b4b2e552c)
 build() {
   cd "$srcdir/$pkgname-$pkgver"
   ./configure --prefix=/usr
