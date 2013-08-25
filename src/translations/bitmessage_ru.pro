@@ -27,4 +27,4 @@ SOURCES += ../bitmessageqt/regenerateaddresses.py
 SOURCES += ../bitmessageqt/settings.py
 SOURCES += ../bitmessageqt/specialaddressbehavior.py
 
-TRANSLATIONS	= bitmessage_ru_RU.ts
+TRANSLATIONS	= bitmessage_ru.ts

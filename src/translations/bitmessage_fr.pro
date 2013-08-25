@@ -28,6 +28,6 @@ SOURCES	= 	../addresses.py\
 			../bitmessageqt/specialaddressbehavior.py
 			
 
-TRANSLATIONS	= bitmessage_fr_BE.ts
+TRANSLATIONS	= bitmessage_fr.ts
 
 CODECFORTR		= UTF-8
