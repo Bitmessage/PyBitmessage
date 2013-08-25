@@ -38,13 +38,10 @@ from class_singleWorker import *
 from class_outgoingSynSender import *
 from class_singleListener import *
 from class_addressGenerator import *
+from debug import logger
 
 # Helper Functions
 import helper_bootstrap
-
-<<<<<<< HEAD
-=======
-from debug import logger
 
 import sys
 if sys.platform == 'darwin':
@@ -52,7 +49,6 @@ if sys.platform == 'darwin':
         logger.critical("You should use python 2.7.5 or greater. Your version: %s", "{0}.{1}.{2}".format(*sys.version_info))
         sys.exit(0)
 
->>>>>>> 53ca5b03ffb6b35ac03588107dc4a1d5cde7aad4
 def connectToStream(streamNumber):
     selfInitiatedConnections[streamNumber] = {}
     if sys.platform[0:3] == 'win':
