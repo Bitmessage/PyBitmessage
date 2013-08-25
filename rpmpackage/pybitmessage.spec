@@ -6,6 +6,7 @@ License: MIT
 URL: https://github.com/Bitmessage/PyBitmessage
 Packager: Bob Mottram (4096 bits) <bob@robotics.uk.to>
 Source0: http://yourdomainname.com/src/%{name}_%{version}.orig.tar.gz
+BuildArch: noarch
 Group: Office/Email
 
 Requires: python, PyQt4, openssl-compat-bitcoin-libs, gst123
@@ -83,7 +84,8 @@ make install -B DESTDIR=%{buildroot} PREFIX=/usr
 - Added Russian translation
 - Added search support in the UI
 - Added 'make uninstall'
-- To improve OSX support, use PKCS5_PBKDF2_HMAC_SHA1 if PKCS5_PBKDF2_HMAC is unavailable
+- To improve OSX support, use PKCS5_PBKDF2_HMAC_SHA1
+  if PKCS5_PBKDF2_HMAC is unavailable
 - Added better warnings for OSX users who are using old versions of Python
 - Repaired debian packaging
 - Altered Makefile to avoid needing to chase changes
