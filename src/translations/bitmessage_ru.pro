@@ -28,3 +28,6 @@ SOURCES += ../bitmessageqt/settings.py
 SOURCES += ../bitmessageqt/specialaddressbehavior.py
 
 TRANSLATIONS	= bitmessage_ru.ts
+
+CODECFORTR		= UTF-8
+
