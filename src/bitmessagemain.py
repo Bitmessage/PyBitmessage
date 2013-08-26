@@ -875,8 +875,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         except APIError as e:
             return str(e)
         except Exception as e:
-            logger.critical(e)
-            logger.critical(sys.exc_info()[0])
+            logger.exception(e)
             return "API Error 0021: Unexpected API Failure - %s" % str(e)
 
 # This thread, of which there is only one, runs the API.
