@@ -875,8 +875,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         except APIError as e:
             return str(e)
         except Exception as e:
-            print(e)
-            print(sys.exc_info()[0])
+            logger.critical(e)
+            logger.critical(sys.exc_info()[0])
             return "API Error 0021: Unexpected API Failure - %s" % str(e)
 
 # This thread, of which there is only one, runs the API.
@@ -988,7 +988,6 @@ class Main:
     def getApiAddress(self):
         if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
             return None
-            
         address = shared.config.get('bitmessagesettings', 'apiinterface')
         port = shared.config.getint('bitmessagesettings', 'apiport')
         return {'address':address,'port':port}
