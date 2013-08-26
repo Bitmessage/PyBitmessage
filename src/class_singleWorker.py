@@ -535,6 +535,8 @@ class singleWorker(threading.Thread):
             pubEncryptionKeyBase256 = pubkeyPayload[
                 readPosition:readPosition + 64]
             readPosition += 64
+            
+            # Let us fetch the amount of work required by the recipient.
             if toAddressVersionNumber == 2:
                 requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
                 requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
@@ -568,6 +570,7 @@ class singleWorker(threading.Thread):
                         shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do.").arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(
                             requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes)).arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
                         continue
+
 
             embeddedTime = pack('>Q', (int(time.time()) + random.randrange(
                 -300, 300)))  # the current time plus or minus five minutes. We will use this time both for our message and for the ackdata packed within our message.
