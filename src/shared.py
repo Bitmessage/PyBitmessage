@@ -126,7 +126,11 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
 def lookupAppdataFolder():
     APPNAME = "PyBitmessage"
     from os import path, environ
-    if sys.platform == 'darwin':
+    if "BITMESSAGE_HOME" in environ:
+        dataFolder = environ["BITMESSAGE_HOME"]
+        if dataFolder[-1] not in [os.path.sep, os.path.altsep]:
+            dataFolder += os.path.sep
+    elif sys.platform == 'darwin':
         if "HOME" in environ:
             dataFolder = path.join(os.environ["HOME"], "Library/Application Support/", APPNAME) + '/'
         else:
