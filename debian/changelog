@@ -14,7 +14,8 @@ pybitmessage (0.3.5-1) raring; urgency=low
   * Added Russian translation
   * Added search support in the UI
   * Added 'make uninstall'
-  * To improve OSX support, use PKCS5_PBKDF2_HMAC_SHA1 if PKCS5_PBKDF2_HMAC is unavailable
+  * To improve OSX support, use PKCS5_PBKDF2_HMAC_SHA1
+    if PKCS5_PBKDF2_HMAC is unavailable
   * Added better warnings for OSX users who are using old versions of Python
   * Repaired debian packaging
   * Altered Makefile to avoid needing to chase changes
