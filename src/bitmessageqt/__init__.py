@@ -47,6 +47,20 @@ except Exception as err:
     print 'Error message:', err
     sys.exit()
 
+# for the md5 hash (used for the identicons)
+import hashlib
+
+# load identicon code
+# :Author:Shin Adachi <shn@glucose.jp>
+# Licesensed under FreeBSD License.
+import identicon
+# usage: identicon.render_identicon(code, size)
+# requires PIL
+
+# load another identicon code
+# http://boottunes.googlecode.com/svn-history/r302/trunk/src/pydenticon.py
+from pydenticon import Pydenticon
+
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
 except AttributeError:
@@ -55,6 +69,34 @@ except AttributeError:
 def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
 
+def identiconize(address):
+    suffix = "" # here you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators
+    # instead, you could also use a pseudo-password to salt the generation of the identicons
+    # Attacks where someone creates an address to mimic someone else's identicon should be impossible then
+    # i think it should generate a random string by default
+    
+    # hash = hashlib.md5(addBMIfNotPresent(address)+suffix).hexdigest()[:8]
+    # print hash
+    ##japanese code
+    # idcon_render = identicon.render_identicon(int(hash, 16), 8)
+    # idcon_render.save('images/'+hash+'.png')
+    # im = idcon_render
+    # http://qt-project.org/forums/viewthread/5866
+    # from PIL import Image
+    # from PyQt4.QtGui import QImage, QImageReader, QLabel, QPixmap, QApplication
+    
+    # PHP-like code
+    idcon_render = Pydenticon(addBMIfNotPresent(address)+suffix)
+    image = idcon_render._render()
+    
+    # im = Image.open('images/'+hash+'.png')
+    # http://stackoverflow.com/questions/6756820/python-pil-image-tostring
+    data = image.convert("RGBA").tostring("raw", "RGBA")
+    image = QImage(data, image.size[0], image.size[1], QImage.Format_ARGB32)
+    pix = QPixmap.fromImage(image)
+    idcon = QtGui.QIcon()
+    idcon.addPixmap(pix, QtGui.QIcon.Normal, QtGui.QIcon.Off)
+    return idcon
 
 class MyForm(QtGui.QMainWindow):
 
@@ -327,6 +369,7 @@ class MyForm(QtGui.QMainWindow):
                     newItem.setTextColor(QtGui.QColor(128, 128, 128))
                 if shared.safeConfigGetBoolean(addressInKeysFile, 'mailinglist'):
                     newItem.setTextColor(QtGui.QColor(137, 04, 177))  # magenta
+                newItem.setIcon(identiconize(addressInKeysFile))
                 self.ui.tableWidgetYourIdentities.setItem(0, 1, newItem)
                 newItem = QtGui.QTableWidgetItem(str(
                     addressStream(addressInKeysFile)))
@@ -354,9 +397,11 @@ class MyForm(QtGui.QMainWindow):
         for row in queryreturn:
             label, address = row
             self.ui.tableWidgetAddressBook.insertRow(0)
+            # address book item
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(address)
+            newItem.setIcon(identiconize(address))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
@@ -401,6 +446,16 @@ class MyForm(QtGui.QMainWindow):
         self.numberOfBroadcastsProcessed = 0
         self.numberOfPubkeysProcessed = 0
 
+        # Set the icon sizes for the identicons
+        identicon_size = 3*7
+        self.ui.tableWidgetInbox.setIconSize(QtCore.QSize(identicon_size, identicon_size))
+        self.ui.tableWidgetSent.setIconSize(QtCore.QSize(identicon_size, identicon_size))
+        self.ui.tableWidgetYourIdentities.setIconSize(QtCore.QSize(identicon_size, identicon_size))
+        self.ui.tableWidgetSubscriptions.setIconSize(QtCore.QSize(identicon_size, identicon_size))
+        self.ui.tableWidgetAddressBook.setIconSize(QtCore.QSize(identicon_size, identicon_size))
+        self.ui.tableWidgetWhitelist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
+        self.ui.tableWidgetBlacklist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
+        
         self.UISignalThread = UISignaler()
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
@@ -607,6 +662,7 @@ class MyForm(QtGui.QMainWindow):
             else:
                 newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
                 newItem.setToolTip(unicode(toLabel, 'utf-8'))
+            newItem.setIcon(identiconize(toAddress))
             newItem.setData(Qt.UserRole, str(toAddress))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
@@ -618,6 +674,7 @@ class MyForm(QtGui.QMainWindow):
             else:
                 newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
                 newItem.setToolTip(unicode(fromLabel, 'utf-8'))
+            newItem.setIcon(identiconize(fromAddress))
             newItem.setData(Qt.UserRole, str(fromAddress))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
@@ -747,10 +804,12 @@ class MyForm(QtGui.QMainWindow):
                 if queryreturn != []:
                     for row in queryreturn:
                         fromLabel, = row
-
+            
+            # message row
             self.ui.tableWidgetInbox.insertRow(0)
             newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
             newItem.setToolTip(unicode(toLabel, 'utf-8'))
+            # to
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
@@ -760,7 +819,9 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setTextColor(QtGui.QColor(137, 04, 177))
             if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
                 newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
+            newItem.setIcon(identiconize(toAddress))
             self.ui.tableWidgetInbox.setItem(0, 0, newItem)
+            # from
             if fromLabel == '':
                 newItem = QtGui.QTableWidgetItem(
                     unicode(fromAddress, 'utf-8'))
@@ -773,8 +834,9 @@ class MyForm(QtGui.QMainWindow):
             if not read:
                 newItem.setFont(font)
             newItem.setData(Qt.UserRole, str(fromAddress))
-
+            newItem.setIcon(identiconize(fromAddress))
             self.ui.tableWidgetInbox.setItem(0, 1, newItem)
+            # subject
             newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
             newItem.setToolTip(unicode(subject, 'utf-8'))
             newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
@@ -783,6 +845,7 @@ class MyForm(QtGui.QMainWindow):
             if not read:
                 newItem.setFont(font)
             self.ui.tableWidgetInbox.setItem(0, 2, newItem)
+            # time received
             newItem = myTableWidgetItem(unicode(strftime(shared.config.get(
                 'bitmessagesettings', 'timeformat'), localtime(int(received))), 'utf-8'))
             newItem.setToolTip(unicode(strftime(shared.config.get(
@@ -1473,6 +1536,8 @@ class MyForm(QtGui.QMainWindow):
                 toLabel = toAddress
             self.ui.tableWidgetInbox.item(
                 i, 0).setText(unicode(toLabel, 'utf-8'))
+            self.ui.tableWidgetInbox.item(
+                i, 0).setIcon(identiconize(toAddress))
             # Set the color according to whether it is the address of a mailing
             # list or not.
             if shared.safeConfigGetBoolean(toAddress, 'mailinglist'):
@@ -1493,6 +1558,8 @@ class MyForm(QtGui.QMainWindow):
                 fromLabel = fromAddress
             self.ui.tableWidgetSent.item(
                 i, 1).setText(unicode(fromLabel, 'utf-8'))
+            self.ui.tableWidgetSent.item(
+                i, 0).setIcon(identiconize(fromAddress))
 
     def rerenderSentToLabels(self):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -1512,7 +1579,7 @@ class MyForm(QtGui.QMainWindow):
                     toLabel, = row
                     self.ui.tableWidgetSent.item(
                         i, 0).setText(unicode(toLabel, 'utf-8'))
-
+                        
     def rerenderSubscriptions(self):
         self.ui.tableWidgetSubscriptions.setRowCount(0)
         shared.sqlLock.acquire()
@@ -1529,6 +1596,7 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetSubscriptions.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(address)
+            newItem.setIcon(identiconize(address))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not enabled:
@@ -1791,6 +1859,7 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
             newItem.setToolTip(unicode(fromLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(fromAddress))
+        newItem.setIcon(identiconize(address))
         self.ui.tableWidgetSent.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
         newItem.setToolTip(unicode(subject, 'utf-8)'))
@@ -1920,6 +1989,7 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(address)
+            newItem.setIcon(identiconize(address))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
@@ -1949,6 +2019,7 @@ class MyForm(QtGui.QMainWindow):
         newItem =  QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
         self.ui.tableWidgetSubscriptions.setItem(0,0,newItem)
         newItem =  QtGui.QTableWidgetItem(address)
+        newItem.setIcon(identiconize(address))
         newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
         self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
         self.ui.tableWidgetSubscriptions.setSortingEnabled(True)
@@ -1998,6 +2069,7 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetBlacklist.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(address)
+            newItem.setIcon(identiconize(address))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not enabled:
@@ -2971,6 +3043,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetYourIdentities.setItem(
             0, 0, newItem)
         newItem = QtGui.QTableWidgetItem(address)
+        newItem.setIcon(identiconize(address))
         newItem.setFlags(
             QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
         if shared.safeConfigGetBoolean(address, 'chan'):
