@@ -507,6 +507,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.sqlLock.release()
             # shared.UISignalQueue.put(('removeSentRowByMsgid',msgid)) This function doesn't exist yet.
             return 'Trashed sent message (assuming message existed).'
+        elif method == 'trashSentMessageByAckData':
+            # This API method should only be used when msgid is not available
+            if len(params) == 0:
+                raise APIError(0, 'I need parameters!')
+            ackdata = self._decode(params[0], "hex")
+            t = (ackdata,)
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE ackdata=?''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+            return 'Trashed sent message (assuming message existed).'
         elif method == 'sendMessage':
             if len(params) == 0:
                 raise APIError(0, 'I need parameters!')
