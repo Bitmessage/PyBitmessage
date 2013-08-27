@@ -417,11 +417,11 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateNetworkStatusTab()"), self.updateNetworkStatusTab)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "incrementNumberOfMessagesProcessed()"), self.incrementNumberOfMessagesProcessed)
+            "updateNumberOfMessagesProcessed()"), self.updateNumberOfMessagesProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "incrementNumberOfPubkeysProcessed()"), self.incrementNumberOfPubkeysProcessed)
+            "updateNumberOfPubkeysProcessed()"), self.updateNumberOfPubkeysProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "incrementNumberOfBroadcastsProcessed()"), self.incrementNumberOfBroadcastsProcessed)
+            "updateNumberOfBroadcastsProcessed()"), self.updateNumberOfBroadcastsProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -1072,12 +1072,22 @@ class MyForm(QtGui.QMainWindow):
                 if 'linux' in sys.platform:
                     # Note: QSound was a nice idea but it didn't work
                     if '.mp3' in soundFilename:
+                        gst_available=False
                         try:
                             subprocess.call(["gst123", soundFilename],
                                             stdin=subprocess.PIPE, 
                                             stdout=subprocess.PIPE)
+                            gst_available=True
                         except:
                             print "WARNING: gst123 must be installed in order to play mp3 sounds"
+                        if not gst_available:
+                            try:
+                                subprocess.call(["mpg123", soundFilename],
+                                                stdin=subprocess.PIPE, 
+                                                stdout=subprocess.PIPE)
+                                gst_available=True
+                            except:
+                                print "WARNING: mpg123 must be installed in order to play mp3 sounds"
                     else:
                         try:
                             subprocess.call(["aplay", soundFilename],
@@ -1260,20 +1270,17 @@ class MyForm(QtGui.QMainWindow):
             self.actionShow.setChecked(not self.actionShow.isChecked())
             self.appIndicatorShowOrHideWindow()
 
-    def incrementNumberOfMessagesProcessed(self):
-        self.numberOfMessagesProcessed += 1
+    def updateNumberOfMessagesProcessed(self):
         self.ui.labelMessageCount.setText(_translate(
-            "MainWindow", "Processed %1 person-to-person messages.").arg(str(self.numberOfMessagesProcessed)))
+            "MainWindow", "Processed %1 person-to-person messages.").arg(str(shared.numberOfMessagesProcessed)))
 
-    def incrementNumberOfBroadcastsProcessed(self):
-        self.numberOfBroadcastsProcessed += 1
+    def updateNumberOfBroadcastsProcessed(self):
         self.ui.labelBroadcastCount.setText(_translate(
-            "MainWindow", "Processed %1 broadcast messages.").arg(str(self.numberOfBroadcastsProcessed)))
+            "MainWindow", "Processed %1 broadcast messages.").arg(str(shared.numberOfBroadcastsProcessed)))
 
-    def incrementNumberOfPubkeysProcessed(self):
-        self.numberOfPubkeysProcessed += 1
+    def updateNumberOfPubkeysProcessed(self):
         self.ui.labelPubkeyCount.setText(_translate(
-            "MainWindow", "Processed %1 public keys.").arg(str(self.numberOfPubkeysProcessed)))
+            "MainWindow", "Processed %1 public keys.").arg(str(shared.numberOfPubkeysProcessed)))
 
     def updateNetworkStatusTab(self):
         # print 'updating network status tab'
@@ -3341,80 +3348,57 @@ class myTableWidgetItem(QTableWidgetItem):
     def __lt__(self, other):
         return int(self.data(33).toPyObject()) < int(other.data(33).toPyObject())
 
-from threading import Thread
-class UISignaler(Thread,QThread):
+class UISignaler(QThread):
 
     def __init__(self, parent=None):
-        Thread.__init__(self, parent)
         QThread.__init__(self, parent)
 
     def run(self):
         while True:
-            try:
-                command, data = shared.UISignalQueue.get()
-                if command == 'writeNewAddressToTable':
-                    label, address, streamNumber = data
-                    self.emit(SIGNAL(
-                        "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), label, address, str(streamNumber))
-                elif command == 'updateStatusBar':
-                    self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
-                elif command == 'updateSentItemStatusByHash':
-                    hash, message = data
-                    self.emit(SIGNAL(
-                        "updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), hash, message)
-                elif command == 'updateSentItemStatusByAckdata':
-                    ackData, message = data
-                    self.emit(SIGNAL(
-                        "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), ackData, message)
-                elif command == 'displayNewInboxMessage':
-                    inventoryHash, toAddress, fromAddress, subject, body = data
-                    self.emit(SIGNAL(
-                        "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
-                        inventoryHash, toAddress, fromAddress, subject, body)
-                elif command == 'displayNewSentMessage':
-                    toAddress, fromLabel, fromAddress, subject, message, ackdata = data
-                    self.emit(SIGNAL(
-                        "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
-                        toAddress, fromLabel, fromAddress, subject, message, ackdata)
-                elif command == 'updateNetworkStatusTab':
-                    self.emit(SIGNAL("updateNetworkStatusTab()"))
-                elif command == 'incrementNumberOfMessagesProcessed':
-                    self.emit(SIGNAL("incrementNumberOfMessagesProcessed()"))
-                elif command == 'incrementNumberOfPubkeysProcessed':
-                    self.emit(SIGNAL("incrementNumberOfPubkeysProcessed()"))
-                elif command == 'incrementNumberOfBroadcastsProcessed':
-                    self.emit(SIGNAL("incrementNumberOfBroadcastsProcessed()"))
-                elif command == 'setStatusIcon':
-                    self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"), data)
-                elif command == 'rerenderInboxFromLabels':
-                    self.emit(SIGNAL("rerenderInboxFromLabels()"))
-                elif command == 'rerenderSubscriptions':
-                    self.emit(SIGNAL("rerenderSubscriptions()"))
-                elif command == 'removeInboxRowByMsgid':
-                    self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), data)
-                else:
-                    sys.stderr.write(
-                        'Command sent to UISignaler not recognized: %s\n' % command)
-            except Exception,ex:
-                # uncaught exception will block gevent
-                import traceback
-                traceback.print_exc()
-                traceback.print_stack()
-                print ex
-                pass
-
-try:
-    import gevent
-except ImportError as ex:
-    gevent = None
-else:
-    def mainloop(app):
-        while True:
-            app.processEvents()
-            gevent.sleep(0.01)
-    def testprint():
-        #print 'this is running'
-        gevent.spawn_later(1, testprint)
+            command, data = shared.UISignalQueue.get()
+            if command == 'writeNewAddressToTable':
+                label, address, streamNumber = data
+                self.emit(SIGNAL(
+                    "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), label, address, str(streamNumber))
+            elif command == 'updateStatusBar':
+                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
+            elif command == 'updateSentItemStatusByHash':
+                hash, message = data
+                self.emit(SIGNAL(
+                    "updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), hash, message)
+            elif command == 'updateSentItemStatusByAckdata':
+                ackData, message = data
+                self.emit(SIGNAL(
+                    "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), ackData, message)
+            elif command == 'displayNewInboxMessage':
+                inventoryHash, toAddress, fromAddress, subject, body = data
+                self.emit(SIGNAL(
+                    "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
+                    inventoryHash, toAddress, fromAddress, subject, body)
+            elif command == 'displayNewSentMessage':
+                toAddress, fromLabel, fromAddress, subject, message, ackdata = data
+                self.emit(SIGNAL(
+                    "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
+                    toAddress, fromLabel, fromAddress, subject, message, ackdata)
+            elif command == 'updateNetworkStatusTab':
+                self.emit(SIGNAL("updateNetworkStatusTab()"))
+            elif command == 'updateNumberOfMessagesProcessed':
+                self.emit(SIGNAL("updateNumberOfMessagesProcessed()"))
+            elif command == 'updateNumberOfPubkeysProcessed':
+                self.emit(SIGNAL("updateNumberOfPubkeysProcessed()"))
+            elif command == 'updateNumberOfBroadcastsProcessed':
+                self.emit(SIGNAL("updateNumberOfBroadcastsProcessed()"))
+            elif command == 'setStatusIcon':
+                self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"), data)
+            elif command == 'rerenderInboxFromLabels':
+                self.emit(SIGNAL("rerenderInboxFromLabels()"))
+            elif command == 'rerenderSubscriptions':
+                self.emit(SIGNAL("rerenderSubscriptions()"))
+            elif command == 'removeInboxRowByMsgid':
+                self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), data)
+            else:
+                sys.stderr.write(
+                    'Command sent to UISignaler not recognized: %s\n' % command)
 
 def run():
     app = QtGui.QApplication(sys.argv)
@@ -3472,8 +3456,4 @@ def run():
     myapp.notifierInit()
     if shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
         myapp.showConnectDialog() # ask the user if we may connect
-    if gevent is None:
-        sys.exit(app.exec_())
-    else:
-        gevent.joinall([gevent.spawn(testprint), gevent.spawn(mainloop, app), gevent.spawn(mainloop, app), gevent.spawn(mainloop, app), gevent.spawn(mainloop, app), gevent.spawn(mainloop, app)])
-        print 'done'
+    sys.exit(app.exec_())
