@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS>
-<TS version="2.0" language="ru_RU" sourcelanguage="en">
+<!DOCTYPE TS><TS version="2.0" language="ru" sourcelanguage="en">
 <context>
     <name>MainWindow</name>
     <message>
@@ -1122,7 +1121,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <source>version ?</source>
         <translation>версия ?</translation>
     </message>
-    <message utf8="true">
+    <message encoding="UTF-8">
         <location filename="../bitmessageqt/about.py" line="60"/>
         <source>Copyright © 2013 Jonathan Warren</source>
         <translation>Копирайт © 2013 Джонатан Уоррен</translation>
@@ -1545,7 +1544,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="351"/>
-        <source>FranÃ§ais</source>
+        <source>Fran&#xc3;&#xa7;ais</source>
         <comment>fr</comment>
         <translation>Francais</translation>
     </message>
@@ -1557,13 +1556,13 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="353"/>
-        <source>EspaÃ±ol</source>
+        <source>Espa&#xc3;&#xb1;ol</source>
         <comment>es</comment>
         <translation>Espanol</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="354"/>
-        <source>Ð ÑÑÑÐºÐ¸Ð¹</source>
+        <source>&#xd0;&#xa0;&#xd1;&#x83;&#xd1;&#x81;&#xd1;&#x81;&#xd0;&#xba;&#xd0;&#xb8;&#xd0;&#xb9;</source>
         <comment>ru</comment>
         <translation>Русский</translation>
     </message>
