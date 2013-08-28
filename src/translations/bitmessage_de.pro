@@ -1,8 +1,8 @@
-SOURCES	= 		../addresses.py\
+SOURCES	= 	../addresses.py\
 			../bitmessagemain.py\
 			../class_addressGenerator.py\
 			../class_outgoingSynSender.py\
-			../class_receiveDataThread.py\	
+			../class_receiveDataThread.py\
 			../class_sendDataThread.py\
 			../class_singleCleaner.py\
 			../class_singleListener.py\
@@ -14,7 +14,7 @@ SOURCES	= 		../addresses.py\
 			../helper_inbox.py\
 			../helper_sent.py\
 			../helper_startup.py\
-			../shared.py
+			../shared.py\
 			../bitmessageqt/__init__.py\
 			../bitmessageqt/about.py\
 			../bitmessageqt/bitmessageui.py\
@@ -28,6 +28,6 @@ SOURCES	= 		../addresses.py\
 			../bitmessageqt/settings.py\
 			../bitmessageqt/specialaddressbehavior.py
 
-
-TRANSLATIONS	= bitmessage_de_DE.ts
-CODECFORTR	= UTF-8
+			
+TRANSLATIONS	= bitmessage_de.ts
+CODECFORTR      = UTF-8
