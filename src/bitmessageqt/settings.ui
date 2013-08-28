@@ -113,6 +113,12 @@
          <layout class="QHBoxLayout" name="horizontalLayout_2">
           <item>
            <widget class="QComboBox" name="languageComboBox">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
             <item>
              <property name="text">
               <string comment="system">System Settings</string>
@@ -130,22 +136,22 @@
             </item>
             <item>
              <property name="text">
-              <string comment="fr">French</string>
+              <string comment="fr">Français</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="de">German</string>
+              <string comment="de">Deutsch</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="es">Spanish</string>
+              <string comment="es">Español</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="ru">Russian</string>
+              <string comment="ru">Русский</string>
              </property>
             </item>
             <item>

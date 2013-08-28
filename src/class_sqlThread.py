@@ -204,6 +204,14 @@ class sqlThread(threading.Thread):
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (2,)
             self.cur.execute(item, parameters)
+
+        if not shared.config.has_option('bitmessagesettings', 'userlocale'):
+            shared.config.set('bitmessagesettings', 'userlocale', 'system')
+        if not shared.config.has_option('bitmessagesettings', 'sendoutgoingconnections'):
+            shared.config.set('bitmessagesettings', 'sendoutgoingconnections', 'True')
+
+        # Are you hoping to add a new option to the keys.dat file of existing
+        # Bitmessage users? Add it right above this line!
         
         try:
             testpayload = '\x00\x00'
