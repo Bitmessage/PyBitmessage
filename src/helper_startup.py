@@ -84,6 +84,13 @@ def loadConfig():
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
         shared.config.set('bitmessagesettings', 'dontconnect', 'true')
         shared.config.set('bitmessagesettings', 'userlocale', 'system')
+
+        # Are you hoping to add a new option to the keys.dat file? You're in
+        # the right place for adding it to users who install the software for
+        # the first time. But you must also add it to the keys.dat file of
+        # existing users. To do that, search the class_sqlThread.py file for the
+        # text: "right above this line!"
+
         ensureNamecoinOptions()
 
         if storeConfigFilesInSameDirectoryAsProgramByDefault:

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Sat Aug 24 09:19:58 2013
+# Created: Tue Aug 27 22:23:38 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -71,6 +71,7 @@ class Ui_settingsDialog(object):
         self.horizontalLayout_2 = QtGui.QHBoxLayout(self.groupBox)
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
         self.languageComboBox = QtGui.QComboBox(self.groupBox)
+        self.languageComboBox.setMinimumSize(QtCore.QSize(100, 0))
         self.languageComboBox.setObjectName(_fromUtf8("languageComboBox"))
         self.languageComboBox.addItem(_fromUtf8(""))
         self.languageComboBox.addItem(_fromUtf8(""))
@@ -347,10 +348,10 @@ class Ui_settingsDialog(object):
         self.languageComboBox.setItemText(0, _translate("settingsDialog", "System Settings", "system"))
         self.languageComboBox.setItemText(1, _translate("settingsDialog", "English", "en"))
         self.languageComboBox.setItemText(2, _translate("settingsDialog", "Esperanto", "eo"))
-        self.languageComboBox.setItemText(3, _translate("settingsDialog", "French", "fr"))
-        self.languageComboBox.setItemText(4, _translate("settingsDialog", "German", "de"))
-        self.languageComboBox.setItemText(5, _translate("settingsDialog", "Spanish", "es"))
-        self.languageComboBox.setItemText(6, _translate("settingsDialog", "Russian", "ru"))
+        self.languageComboBox.setItemText(3, _translate("settingsDialog", "Français", "fr"))
+        self.languageComboBox.setItemText(4, _translate("settingsDialog", "Deutsch", "de"))
+        self.languageComboBox.setItemText(5, _translate("settingsDialog", "Español", "es"))
+        self.languageComboBox.setItemText(6, _translate("settingsDialog", "Русский", "ru"))
         self.languageComboBox.setItemText(7, _translate("settingsDialog", "Pirate English", "en_pirate"))
         self.languageComboBox.setItemText(8, _translate("settingsDialog", "Other (set in keys.dat)", "other"))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabUserInterface), _translate("settingsDialog", "User Interface", None))
@@ -388,14 +389,4 @@ class Ui_settingsDialog(object):
         self.radioButtonNamecoinNamecoind.setText(_translate("settingsDialog", "Namecoind", None))
         self.radioButtonNamecoinNmcontrol.setText(_translate("settingsDialog", "NMControl", None))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabNamecoin), _translate("settingsDialog", "Namecoin integration", None))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtGui.QApplication(sys.argv)
-    settingsDialog = QtGui.QDialog()
-    ui = Ui_settingsDialog()
-    ui.setupUi(settingsDialog)
-    settingsDialog.show()
-    sys.exit(app.exec_())
 
