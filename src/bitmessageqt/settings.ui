@@ -37,17 +37,17 @@
        <string>User Interface</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_5">
-       <item row="7" column="0">
-        <widget class="QLabel" name="labelSettingsNote">
+       <item row="2" column="0">
+        <widget class="QCheckBox" name="checkBoxMinimizeToTray">
          <property name="text">
-          <string/>
+          <string>Minimize to tray</string>
          </property>
-         <property name="wordWrap">
+         <property name="checked">
           <bool>true</bool>
          </property>
         </widget>
        </item>
-       <item row="8" column="0">
+       <item row="10" column="0">
         <spacer name="verticalSpacer_2">
          <property name="orientation">
           <enum>Qt::Vertical</enum>
@@ -60,10 +60,10 @@
          </property>
         </spacer>
        </item>
-       <item row="1" column="0">
-        <widget class="QCheckBox" name="checkBoxStartInTray">
+       <item row="0" column="0">
+        <widget class="QCheckBox" name="checkBoxStartOnLogon">
          <property name="text">
-          <string>Start Bitmessage in the tray (don't show main window)</string>
+          <string>Start Bitmessage on user login</string>
          </property>
         </widget>
        </item>
@@ -74,18 +74,22 @@
          </property>
         </widget>
        </item>
-       <item row="2" column="0">
-        <widget class="QCheckBox" name="checkBoxMinimizeToTray">
+       <item row="4" column="0">
+        <widget class="QCheckBox" name="checkBoxPortableMode">
          <property name="text">
-          <string>Minimize to tray</string>
-         </property>
-         <property name="checked">
-          <bool>true</bool>
+          <string>Run in Portable Mode</string>
          </property>
         </widget>
        </item>
-       <item row="5" column="0">
-        <widget class="QLabel" name="label_7">
+       <item row="1" column="0">
+        <widget class="QCheckBox" name="checkBoxStartInTray">
+         <property name="text">
+          <string>Start Bitmessage in the tray (don't show main window)</string>
+         </property>
+        </widget>
+       </item>
+       <item row="5" column="0" colspan="2">
+        <widget class="QLabel" name="PortableModeDescription">
          <property name="text">
           <string>In Portable Mode, messages and config files are stored in the same directory as the program rather than the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.</string>
          </property>
@@ -94,25 +98,75 @@
          </property>
         </widget>
        </item>
-       <item row="0" column="0">
-        <widget class="QCheckBox" name="checkBoxStartOnLogon">
-         <property name="text">
-          <string>Start Bitmessage on user login</string>
-         </property>
-        </widget>
-       </item>
-       <item row="4" column="0">
-        <widget class="QCheckBox" name="checkBoxPortableMode">
-         <property name="text">
-          <string>Run in Portable Mode</string>
-         </property>
-        </widget>
-       </item>
-       <item row="6" column="0">
+       <item row="6" column="0" colspan="2">
         <widget class="QCheckBox" name="checkBoxWillinglySendToMobile">
          <property name="text">
           <string>Willingly include unencrypted destination address when sending to a mobile device</string>
          </property>
+        </widget>
+       </item>
+       <item row="10" column="1">
+        <widget class="QGroupBox" name="groupBox">
+         <property name="title">
+          <string>Interface Language</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QComboBox" name="languageComboBox">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <item>
+             <property name="text">
+              <string comment="system">System Settings</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="en">English</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="eo">Esperanto</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="fr">Français</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="de">Deutsch</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="es">Español</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="ru">Русский</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="en_pirate">Pirate English</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="other">Other (set in keys.dat)</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
         </widget>
        </item>
       </layout>

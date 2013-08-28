@@ -1943,20 +1943,30 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxStartInTray.isChecked()))
             shared.config.set('bitmessagesettings', 'willinglysendtomobile', str(
                 self.settingsDialogInstance.ui.checkBoxWillinglySendToMobile.isChecked()))
+            
+            lang_ind = int(self.settingsDialogInstance.ui.languageComboBox.currentIndex())
+            if not languages[lang_ind] == 'other':
+                shared.config.set('bitmessagesettings', 'userlocale', languages[lang_ind])
+                
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
                     QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
                         "MainWindow", "You must restart Bitmessage for the port number change to take effect."))
                 shared.config.set('bitmessagesettings', 'port', str(
                     self.settingsDialogInstance.ui.lineEditTCPPort.text()))
-            if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText())[0:5] == 'SOCKS':
+            #print 'self.settingsDialogInstance.ui.comboBoxProxyType.currentText()', self.settingsDialogInstance.ui.comboBoxProxyType.currentText()
+            #print 'self.settingsDialogInstance.ui.comboBoxProxyType.currentText())[0:5]', self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5]
+            if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] == 'SOCKS':
                 if shared.statusIconColor != 'red':
                     QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
                         "MainWindow", "Bitmessage will use your proxy from now on but you may want to manually restart Bitmessage now to close existing connections (if any)."))
-            if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText()) == 'none':
+            if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] != 'SOCKS':
                 self.statusBar().showMessage('')
-            shared.config.set('bitmessagesettings', 'socksproxytype', str(
-                self.settingsDialogInstance.ui.comboBoxProxyType.currentText()))
+            if self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] == 'SOCKS':
+                shared.config.set('bitmessagesettings', 'socksproxytype', str(
+                    self.settingsDialogInstance.ui.comboBoxProxyType.currentText()))
+            else:
+                shared.config.set('bitmessagesettings', 'socksproxytype', 'none')
             shared.config.set('bitmessagesettings', 'socksauthentication', str(
                 self.settingsDialogInstance.ui.checkBoxAuthentication.isChecked()))
             shared.config.set('bitmessagesettings', 'sockshostname', str(
@@ -2827,6 +2837,16 @@ class settingsDialog(QtGui.QDialog):
             shared.config.getboolean('bitmessagesettings', 'startintray'))
         self.ui.checkBoxWillinglySendToMobile.setChecked(
             shared.safeConfigGetBoolean('bitmessagesettings', 'willinglysendtomobile'))
+        
+        global languages 
+        languages = ['system','en','eo','fr','de','es','ru','en_pirate','other']
+        user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
+        if user_countrycode in languages:
+            curr_index = languages.index(user_countrycode)
+        else:
+            curr_index = languages.index('other')
+        self.ui.languageComboBox.setCurrentIndex(curr_index)
+        
         if shared.appdata == '':
             self.ui.checkBoxPortableMode.setChecked(True)
         if 'darwin' in sys.platform:
@@ -3167,25 +3187,50 @@ class UISignaler(QThread):
 def run():
     app = QtGui.QApplication(sys.argv)
     translator = QtCore.QTranslator()
-
-    lang_countrycode = str(locale.getdefaultlocale()[0])
-    translation = "translations/bitmessage_" + lang_countrycode
     
-    if not os.path.isfile(translation + ".pro"):
-        # Don't have fully localized translation, try language only
-        lang = lang_countrycode[0:2] 
-        translation = "translations/bitmessage_" + lang
-
-    if not os.path.isfile(translation + ".pro"):
-        # Don't have language either, default to 'Merica USA! USA!
-        translation = "translations/bitmessage_en_US"
-        
     try:
-        translator.load(translation)
-        #translator.load("translations/bitmessage_fr_BE") # test French
+        locale_countrycode = str(locale.getdefaultlocale()[0])
     except:
         # The above is not compatible with all versions of OSX.
-        translator.load("translations/bitmessage_en_US") # Default to english.
+        locale_countrycode = "en_US" # Default to english.
+    locale_lang = locale_countrycode[0:2]
+    user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
+    user_lang = user_countrycode[0:2]
+    translation_path = "translations/bitmessage_"
+    
+    if shared.config.get('bitmessagesettings', 'userlocale') == 'system':
+        # try to detect the users locale otherwise fallback to English
+        try:
+            # try the users full locale, e.g. 'en_US':
+            # since we usually only provide languages, not localozations
+            # this will usually fail
+            translator.load(translation_path + locale_countrycode)
+        except:
+            try:
+                # try the users locale language, e.g. 'en':
+                # since we usually only provide languages, not localozations
+                # this will usually succeed
+                translator.load(translation_path + locale_lang)
+            except:
+                # as English is already the default language, we don't
+                # need to do anything. No need to translate.
+                pass
+    else:
+        try:
+            # check if the user input is a valid translation file:
+            # since user_countrycode will be usually set by the combobox
+            # it will usually just be a language code
+            translator.load(translation_path + user_countrycode)
+        except:
+            try:
+                # check if the user lang is a valid translation file:
+                # this is only needed if the user manually set his 'userlocale'
+                # in the keys.dat to a countrycode (e.g. 'de_CH')
+                translator.load(translation_path + user_lang)
+            except:
+                # as English is already the default language, we don't
+                # need to do anything. No need to translate.
+                pass
 
     QtGui.QApplication.installTranslator(translator)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
