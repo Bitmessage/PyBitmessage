@@ -3409,7 +3409,11 @@ def run():
     app = QtGui.QApplication(sys.argv)
     translator = QtCore.QTranslator()
     
-    locale_countrycode = str(locale.getdefaultlocale()[0])
+    try:
+        locale_countrycode = str(locale.getdefaultlocale()[0])
+    except:
+        # The above is not compatible with all versions of OSX.
+        locale_countrycode = "en_US" # Default to english.
     locale_lang = locale_countrycode[0:2]
     user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
     user_lang = user_countrycode[0:2]
