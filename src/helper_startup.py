@@ -2,6 +2,7 @@ import shared
 import ConfigParser
 import sys
 import os
+import locale
 
 from namecoin import ensureNamecoinOptions
 
@@ -82,6 +83,7 @@ def loadConfig():
         shared.config.set(
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
         shared.config.set('bitmessagesettings', 'dontconnect', 'true')
+        shared.config.set('bitmessagesettings', 'userlocale', 'system')
         ensureNamecoinOptions()
 
         if storeConfigFilesInSameDirectoryAsProgramByDefault:
