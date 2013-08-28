@@ -70,6 +70,11 @@ def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
 
 def identiconize(address):
+    youdontwantidenticons = False
+    if youdontwantidenticons == True:
+        idcon = QtGui.QIcon()
+        return idcon
+
     suffix = "" # here you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators
     # instead, you could also use a pseudo-password to salt the generation of the identicons
     # Attacks where someone creates an address to mimic someone else's identicon should be impossible then
@@ -84,6 +89,11 @@ def identiconize(address):
     # http://qt-project.org/forums/viewthread/5866
     # from PIL import Image
     # from PyQt4.QtGui import QImage, QImageReader, QLabel, QPixmap, QApplication
+    
+    str_broadcast_subscribers = '[Broadcast subscribers]'
+    if address == str_broadcast_subscribers:
+        idcon = QtGui.QIcon(":/newPrefix/images/can-icon-24px.png")
+        return idcon
     
     # PHP-like code
     idcon_render = Pydenticon(addBMIfNotPresent(address)+suffix)
@@ -453,7 +463,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetYourIdentities.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.tableWidgetSubscriptions.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.tableWidgetAddressBook.setIconSize(QtCore.QSize(identicon_size, identicon_size))
-        self.ui.tableWidgetWhitelist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
+        #self.ui.tableWidgetWhitelist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.tableWidgetBlacklist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         
         self.UISignalThread = UISignaler()
@@ -1819,7 +1829,7 @@ class MyForm(QtGui.QMainWindow):
                 isEnabled = shared.config.getboolean(
                     addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
                 if isEnabled:
-                    self.ui.comboBoxSendFrom.insertItem(0, unicode(shared.config.get(
+                    self.ui.comboBoxSendFrom.insertItem(0, identiconize(addressInKeysFile), unicode(shared.config.get(
                         addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
         self.ui.comboBoxSendFrom.insertItem(0, '', '')
         if(self.ui.comboBoxSendFrom.count() == 2):
@@ -1851,6 +1861,7 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
             newItem.setToolTip(unicode(toLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(toAddress))
+        newItem.setIcon(identiconize(toAddress))
         self.ui.tableWidgetSent.setItem(0, 0, newItem)
         if fromLabel == '':
             newItem = QtGui.QTableWidgetItem(unicode(fromAddress, 'utf-8'))
@@ -1859,7 +1870,7 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
             newItem.setToolTip(unicode(fromLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(fromAddress))
-        newItem.setIcon(identiconize(address))
+        newItem.setIcon(identiconize(fromAddress))
         self.ui.tableWidgetSent.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
         newItem.setToolTip(unicode(subject, 'utf-8)'))
@@ -1929,6 +1940,7 @@ class MyForm(QtGui.QMainWindow):
         if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
             newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
         self.ui.tableWidgetInbox.insertRow(0)
+        newItem.setIcon(identiconize(toAddress))
         self.ui.tableWidgetInbox.setItem(0, 0, newItem)
 
         if fromLabel == '':
@@ -1943,6 +1955,7 @@ class MyForm(QtGui.QMainWindow):
                 self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(fromLabel, 'utf-8'), self.SOUND_KNOWN, unicode(fromLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setFont(font)
+        newItem.setIcon(identiconize(fromAddress))
         self.ui.tableWidgetInbox.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
         newItem.setToolTip(unicode(subject, 'utf-8)'))
