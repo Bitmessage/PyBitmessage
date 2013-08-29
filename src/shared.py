@@ -160,7 +160,7 @@ def isAddressInMyAddressBook(address):
 
 #At this point we should really just have a isAddressInMy(book, address)...
 def isAddressInMySubscriptionsList(address):
-    queryreturn = (
+    queryreturn = sqlQuery(
         '''select * from subscriptions where address=?''',
         str(address))
     return queryreturn != []
@@ -173,7 +173,7 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
     if queryreturn <> []:
         return True
 
-    queryreturn = (
+    queryreturn = sqlQuery(
         '''select address from subscriptions where address=? and enabled = '1' ''',
         address)
     if queryreturn <> []:
