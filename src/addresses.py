@@ -97,13 +97,18 @@ def calculateInventoryHash(data):
     return sha2.digest()[0:32]
 
 def encodeAddress(version,stream,ripe):
-    if version >= 2:
+    if version >= 2 and version < 4:
         if len(ripe) != 20:
             raise Exception("Programming error in encodeAddress: The length of a given ripe hash was not 20.")
         if ripe[:2] == '\x00\x00':
             ripe = ripe[2:]
         elif ripe[:1] == '\x00':
             ripe = ripe[1:]
+    elif version == 4:
+        if len(ripe) != 20:
+            raise Exception("Programming error in encodeAddress: The length of a given ripe hash was not 20.")
+        ripe = ripe.lstrip('\x00')
+
     a = encodeVarint(version) + encodeVarint(stream) + ripe
     sha = hashlib.new('sha512')
     sha.update(a)
@@ -164,7 +169,7 @@ def decodeAddress(address):
     #print 'addressVersionNumber', addressVersionNumber
     #print 'bytesUsedByVersionNumber', bytesUsedByVersionNumber
 
-    if addressVersionNumber > 3:
+    if addressVersionNumber > 4:
         print 'cannot decode address version numbers this high'
         status = 'versiontoohigh'
         return status,0,0,0
@@ -191,6 +196,15 @@ def decodeAddress(address):
             return 'ripetoolong',0,0,0
         else:
             return 'otherproblem',0,0,0
+    elif addressVersionNumber == 4:
+        if len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) > 20:
+            return 'ripetoolong',0,0,0
+        elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) < 4:
+            return 'ripetooshort',0,0,0
+        else:
+            x00string = '\x00' * (20 - len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]))
+            return status,addressVersionNumber,streamNumber,x00string+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
+        
 
 def addBMIfNotPresent(address):
     address = str(address).strip()

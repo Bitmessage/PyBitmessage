@@ -417,11 +417,11 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateNetworkStatusTab()"), self.updateNetworkStatusTab)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "incrementNumberOfMessagesProcessed()"), self.incrementNumberOfMessagesProcessed)
+            "updateNumberOfMessagesProcessed()"), self.updateNumberOfMessagesProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "incrementNumberOfPubkeysProcessed()"), self.incrementNumberOfPubkeysProcessed)
+            "updateNumberOfPubkeysProcessed()"), self.updateNumberOfPubkeysProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "incrementNumberOfBroadcastsProcessed()"), self.incrementNumberOfBroadcastsProcessed)
+            "updateNumberOfBroadcastsProcessed()"), self.updateNumberOfBroadcastsProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -1072,12 +1072,22 @@ class MyForm(QtGui.QMainWindow):
                 if 'linux' in sys.platform:
                     # Note: QSound was a nice idea but it didn't work
                     if '.mp3' in soundFilename:
+                        gst_available=False
                         try:
                             subprocess.call(["gst123", soundFilename],
                                             stdin=subprocess.PIPE, 
                                             stdout=subprocess.PIPE)
+                            gst_available=True
                         except:
                             print "WARNING: gst123 must be installed in order to play mp3 sounds"
+                        if not gst_available:
+                            try:
+                                subprocess.call(["mpg123", soundFilename],
+                                                stdin=subprocess.PIPE, 
+                                                stdout=subprocess.PIPE)
+                                gst_available=True
+                            except:
+                                print "WARNING: mpg123 must be installed in order to play mp3 sounds"
                     else:
                         try:
                             subprocess.call(["aplay", soundFilename],
@@ -1260,20 +1270,17 @@ class MyForm(QtGui.QMainWindow):
             self.actionShow.setChecked(not self.actionShow.isChecked())
             self.appIndicatorShowOrHideWindow()
 
-    def incrementNumberOfMessagesProcessed(self):
-        self.numberOfMessagesProcessed += 1
+    def updateNumberOfMessagesProcessed(self):
         self.ui.labelMessageCount.setText(_translate(
-            "MainWindow", "Processed %1 person-to-person messages.").arg(str(self.numberOfMessagesProcessed)))
+            "MainWindow", "Processed %1 person-to-person messages.").arg(str(shared.numberOfMessagesProcessed)))
 
-    def incrementNumberOfBroadcastsProcessed(self):
-        self.numberOfBroadcastsProcessed += 1
+    def updateNumberOfBroadcastsProcessed(self):
         self.ui.labelBroadcastCount.setText(_translate(
-            "MainWindow", "Processed %1 broadcast messages.").arg(str(self.numberOfBroadcastsProcessed)))
+            "MainWindow", "Processed %1 broadcast messages.").arg(str(shared.numberOfBroadcastsProcessed)))
 
-    def incrementNumberOfPubkeysProcessed(self):
-        self.numberOfPubkeysProcessed += 1
+    def updateNumberOfPubkeysProcessed(self):
         self.ui.labelPubkeyCount.setText(_translate(
-            "MainWindow", "Processed %1 public keys.").arg(str(self.numberOfPubkeysProcessed)))
+            "MainWindow", "Processed %1 public keys.").arg(str(shared.numberOfPubkeysProcessed)))
 
     def updateNetworkStatusTab(self):
         # print 'updating network status tab'
@@ -2031,20 +2038,30 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxStartInTray.isChecked()))
             shared.config.set('bitmessagesettings', 'willinglysendtomobile', str(
                 self.settingsDialogInstance.ui.checkBoxWillinglySendToMobile.isChecked()))
+            
+            lang_ind = int(self.settingsDialogInstance.ui.languageComboBox.currentIndex())
+            if not languages[lang_ind] == 'other':
+                shared.config.set('bitmessagesettings', 'userlocale', languages[lang_ind])
+                
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
                     QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
                         "MainWindow", "You must restart Bitmessage for the port number change to take effect."))
                 shared.config.set('bitmessagesettings', 'port', str(
                     self.settingsDialogInstance.ui.lineEditTCPPort.text()))
-            if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText())[0:5] == 'SOCKS':
+            #print 'self.settingsDialogInstance.ui.comboBoxProxyType.currentText()', self.settingsDialogInstance.ui.comboBoxProxyType.currentText()
+            #print 'self.settingsDialogInstance.ui.comboBoxProxyType.currentText())[0:5]', self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5]
+            if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] == 'SOCKS':
                 if shared.statusIconColor != 'red':
                     QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
                         "MainWindow", "Bitmessage will use your proxy from now on but you may want to manually restart Bitmessage now to close existing connections (if any)."))
-            if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and str(self.settingsDialogInstance.ui.comboBoxProxyType.currentText()) == 'none':
+            if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] != 'SOCKS':
                 self.statusBar().showMessage('')
-            shared.config.set('bitmessagesettings', 'socksproxytype', str(
-                self.settingsDialogInstance.ui.comboBoxProxyType.currentText()))
+            if self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] == 'SOCKS':
+                shared.config.set('bitmessagesettings', 'socksproxytype', str(
+                    self.settingsDialogInstance.ui.comboBoxProxyType.currentText()))
+            else:
+                shared.config.set('bitmessagesettings', 'socksproxytype', 'none')
             shared.config.set('bitmessagesettings', 'socksauthentication', str(
                 self.settingsDialogInstance.ui.checkBoxAuthentication.isChecked()))
             shared.config.set('bitmessagesettings', 'sockshostname', str(
@@ -3041,6 +3058,16 @@ class settingsDialog(QtGui.QDialog):
             shared.config.getboolean('bitmessagesettings', 'startintray'))
         self.ui.checkBoxWillinglySendToMobile.setChecked(
             shared.safeConfigGetBoolean('bitmessagesettings', 'willinglysendtomobile'))
+        
+        global languages 
+        languages = ['system','en','eo','fr','de','es','ru','en_pirate','other']
+        user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
+        if user_countrycode in languages:
+            curr_index = languages.index(user_countrycode)
+        else:
+            curr_index = languages.index('other')
+        self.ui.languageComboBox.setCurrentIndex(curr_index)
+        
         if shared.appdata == '':
             self.ui.checkBoxPortableMode.setChecked(True)
         if 'darwin' in sys.platform:
@@ -3326,103 +3353,105 @@ class myTableWidgetItem(QTableWidgetItem):
     def __lt__(self, other):
         return int(self.data(33).toPyObject()) < int(other.data(33).toPyObject())
 
-from threading import Thread
-class UISignaler(Thread,QThread):
+class UISignaler(QThread):
 
     def __init__(self, parent=None):
-        Thread.__init__(self, parent)
         QThread.__init__(self, parent)
 
     def run(self):
         while True:
-            try:
-                command, data = shared.UISignalQueue.get()
-                if command == 'writeNewAddressToTable':
-                    label, address, streamNumber = data
-                    self.emit(SIGNAL(
-                        "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), label, address, str(streamNumber))
-                elif command == 'updateStatusBar':
-                    self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
-                elif command == 'updateSentItemStatusByHash':
-                    hash, message = data
-                    self.emit(SIGNAL(
-                        "updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), hash, message)
-                elif command == 'updateSentItemStatusByAckdata':
-                    ackData, message = data
-                    self.emit(SIGNAL(
-                        "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), ackData, message)
-                elif command == 'displayNewInboxMessage':
-                    inventoryHash, toAddress, fromAddress, subject, body = data
-                    self.emit(SIGNAL(
-                        "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
-                        inventoryHash, toAddress, fromAddress, subject, body)
-                elif command == 'displayNewSentMessage':
-                    toAddress, fromLabel, fromAddress, subject, message, ackdata = data
-                    self.emit(SIGNAL(
-                        "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
-                        toAddress, fromLabel, fromAddress, subject, message, ackdata)
-                elif command == 'updateNetworkStatusTab':
-                    self.emit(SIGNAL("updateNetworkStatusTab()"))
-                elif command == 'incrementNumberOfMessagesProcessed':
-                    self.emit(SIGNAL("incrementNumberOfMessagesProcessed()"))
-                elif command == 'incrementNumberOfPubkeysProcessed':
-                    self.emit(SIGNAL("incrementNumberOfPubkeysProcessed()"))
-                elif command == 'incrementNumberOfBroadcastsProcessed':
-                    self.emit(SIGNAL("incrementNumberOfBroadcastsProcessed()"))
-                elif command == 'setStatusIcon':
-                    self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"), data)
-                elif command == 'rerenderInboxFromLabels':
-                    self.emit(SIGNAL("rerenderInboxFromLabels()"))
-                elif command == 'rerenderSubscriptions':
-                    self.emit(SIGNAL("rerenderSubscriptions()"))
-                elif command == 'removeInboxRowByMsgid':
-                    self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), data)
-                else:
-                    sys.stderr.write(
-                        'Command sent to UISignaler not recognized: %s\n' % command)
-            except Exception,ex:
-                # uncaught exception will block gevent
-                import traceback
-                traceback.print_exc()
-                traceback.print_stack()
-                print ex
-                pass
-
-try:
-    import gevent
-except ImportError as ex:
-    gevent = None
-else:
-    def mainloop(app):
-        while True:
-            app.processEvents()
-            gevent.sleep(0.01)
-    def testprint():
-        #print 'this is running'
-        gevent.spawn_later(1, testprint)
+            command, data = shared.UISignalQueue.get()
+            if command == 'writeNewAddressToTable':
+                label, address, streamNumber = data
+                self.emit(SIGNAL(
+                    "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), label, address, str(streamNumber))
+            elif command == 'updateStatusBar':
+                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
+            elif command == 'updateSentItemStatusByHash':
+                hash, message = data
+                self.emit(SIGNAL(
+                    "updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), hash, message)
+            elif command == 'updateSentItemStatusByAckdata':
+                ackData, message = data
+                self.emit(SIGNAL(
+                    "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), ackData, message)
+            elif command == 'displayNewInboxMessage':
+                inventoryHash, toAddress, fromAddress, subject, body = data
+                self.emit(SIGNAL(
+                    "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
+                    inventoryHash, toAddress, fromAddress, subject, body)
+            elif command == 'displayNewSentMessage':
+                toAddress, fromLabel, fromAddress, subject, message, ackdata = data
+                self.emit(SIGNAL(
+                    "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
+                    toAddress, fromLabel, fromAddress, subject, message, ackdata)
+            elif command == 'updateNetworkStatusTab':
+                self.emit(SIGNAL("updateNetworkStatusTab()"))
+            elif command == 'updateNumberOfMessagesProcessed':
+                self.emit(SIGNAL("updateNumberOfMessagesProcessed()"))
+            elif command == 'updateNumberOfPubkeysProcessed':
+                self.emit(SIGNAL("updateNumberOfPubkeysProcessed()"))
+            elif command == 'updateNumberOfBroadcastsProcessed':
+                self.emit(SIGNAL("updateNumberOfBroadcastsProcessed()"))
+            elif command == 'setStatusIcon':
+                self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"), data)
+            elif command == 'rerenderInboxFromLabels':
+                self.emit(SIGNAL("rerenderInboxFromLabels()"))
+            elif command == 'rerenderSubscriptions':
+                self.emit(SIGNAL("rerenderSubscriptions()"))
+            elif command == 'removeInboxRowByMsgid':
+                self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), data)
+            else:
+                sys.stderr.write(
+                    'Command sent to UISignaler not recognized: %s\n' % command)
 
 def run():
     app = QtGui.QApplication(sys.argv)
     translator = QtCore.QTranslator()
-
-    lang_countrycode = str(locale.getdefaultlocale()[0])
-    translation = "translations/bitmessage_" + lang_countrycode
     
-    if not os.path.isfile(translation + ".pro"):
-        # Don't have fully localized translation, try language only
-        lang = lang_countrycode[0:2] 
-        translation = "translations/bitmessage_" + lang
-
-    if not os.path.isfile(translation + ".pro"):
-        # Don't have language either, default to 'Merica USA! USA!
-        translation = "translations/bitmessage_en_US"
-        
     try:
-        translator.load(translation)
-        #translator.load("translations/bitmessage_fr_BE") # test French
+        locale_countrycode = str(locale.getdefaultlocale()[0])
     except:
         # The above is not compatible with all versions of OSX.
-        translator.load("translations/bitmessage_en_US") # Default to english.
+        locale_countrycode = "en_US" # Default to english.
+    locale_lang = locale_countrycode[0:2]
+    user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
+    user_lang = user_countrycode[0:2]
+    translation_path = "translations/bitmessage_"
+    
+    if shared.config.get('bitmessagesettings', 'userlocale') == 'system':
+        # try to detect the users locale otherwise fallback to English
+        try:
+            # try the users full locale, e.g. 'en_US':
+            # since we usually only provide languages, not localozations
+            # this will usually fail
+            translator.load(translation_path + locale_countrycode)
+        except:
+            try:
+                # try the users locale language, e.g. 'en':
+                # since we usually only provide languages, not localozations
+                # this will usually succeed
+                translator.load(translation_path + locale_lang)
+            except:
+                # as English is already the default language, we don't
+                # need to do anything. No need to translate.
+                pass
+    else:
+        try:
+            # check if the user input is a valid translation file:
+            # since user_countrycode will be usually set by the combobox
+            # it will usually just be a language code
+            translator.load(translation_path + user_countrycode)
+        except:
+            try:
+                # check if the user lang is a valid translation file:
+                # this is only needed if the user manually set his 'userlocale'
+                # in the keys.dat to a countrycode (e.g. 'de_CH')
+                translator.load(translation_path + user_lang)
+            except:
+                # as English is already the default language, we don't
+                # need to do anything. No need to translate.
+                pass
 
     QtGui.QApplication.installTranslator(translator)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
@@ -3436,8 +3465,4 @@ def run():
     myapp.notifierInit()
     if shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
         myapp.showConnectDialog() # ask the user if we may connect
-    if gevent is None:
-        sys.exit(app.exec_())
-    else:
-        gevent.joinall([gevent.spawn(testprint), gevent.spawn(mainloop, app), gevent.spawn(mainloop, app), gevent.spawn(mainloop, app), gevent.spawn(mainloop, app), gevent.spawn(mainloop, app)])
-        print 'done'
+    sys.exit(app.exec_())

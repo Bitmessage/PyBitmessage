@@ -256,6 +256,7 @@ class receiveDataThread(threading.Thread):
     def connectionFullyEstablished(self):
         self.connectionIsOrWasFullyEstablished = True
         if not self.initiatedConnection:
+            shared.clientHasReceivedIncomingConnections = True
             shared.UISignalQueue.put(('setStatusIcon', 'green'))
         self.sock.settimeout(
             600)  # We'll send out a pong every 5 minutes to make sure the connection stays alive if there has been no other traffic to send lately.
@@ -392,8 +393,9 @@ class receiveDataThread(threading.Thread):
             objectType, self.streamNumber, data, embeddedTime)
         shared.inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
+        shared.numberOfBroadcastsProcessed += 1
         shared.UISignalQueue.put((
-            'incrementNumberOfBroadcastsProcessed', 'no data'))
+            'updateNumberOfBroadcastsProcessed', 'no data'))
 
         self.processbroadcast(
             readPosition, data)  # When this function returns, we will have either successfully processed this broadcast because we are interested in it, ignored it because we aren't interested in it, or found problem with the broadcast that warranted ignoring it.
@@ -760,8 +762,9 @@ class receiveDataThread(threading.Thread):
             objectType, self.streamNumber, data, embeddedTime)
         shared.inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
+        shared.numberOfMessagesProcessed += 1
         shared.UISignalQueue.put((
-            'incrementNumberOfMessagesProcessed', 'no data'))
+            'updateNumberOfMessagesProcessed', 'no data'))
 
         self.processmsg(
             readPosition, data)  # When this function returns, we will have either successfully processed the message bound for us, ignored it because it isn't bound for us, or found problem with the message that warranted ignoring it.
@@ -1178,8 +1181,9 @@ class receiveDataThread(threading.Thread):
             objectType, self.streamNumber, data, embeddedTime)
         shared.inventoryLock.release()
         self.broadcastinv(inventoryHash)
+        shared.numberOfPubkeysProcessed += 1
         shared.UISignalQueue.put((
-            'incrementNumberOfPubkeysProcessed', 'no data'))
+            'updateNumberOfPubkeysProcessed', 'no data'))
 
         self.processpubkey(data)
 
@@ -1216,7 +1220,7 @@ class receiveDataThread(threading.Thread):
         if addressVersion == 0:
             print '(Within processpubkey) addressVersion of 0 doesn\'t make sense.'
             return
-        if addressVersion >= 4 or addressVersion == 1:
+        if addressVersion > 3 or addressVersion == 1:
             with shared.printLock:
                 print 'This version of Bitmessage cannot handle version', addressVersion, 'addresses.'
 

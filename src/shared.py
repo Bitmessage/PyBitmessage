@@ -20,6 +20,7 @@ import sys
 import stat
 import threading
 import time
+from os import path, environ
 
 # Project imports.
 from addresses import *
@@ -64,6 +65,10 @@ successfullyDecryptMessageTimings = [
 apiAddressGeneratorReturnQueue = Queue.Queue(
     )  # The address generator thread uses this queue to get information back to the API thread.
 ackdataForWhichImWatching = {}
+clientHasReceivedIncomingConnections = False #used by API command clientStatus
+numberOfMessagesProcessed = 0
+numberOfBroadcastsProcessed = 0
+numberOfPubkeysProcessed = 0
 
 #If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
@@ -126,7 +131,6 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
 
 def lookupAppdataFolder():
     APPNAME = "PyBitmessage"
-    from os import path, environ
     if sys.platform == 'darwin':
         if "HOME" in environ:
             dataFolder = path.join(os.environ["HOME"], "Library/Application Support/", APPNAME) + '/'
@@ -240,7 +244,7 @@ def reloadMyAddressHashes():
             if isEnabled:
                 hasEnabledKeys = True
                 status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
-                if addressVersionNumber == 2 or addressVersionNumber == 3:
+                if addressVersionNumber == 2 or addressVersionNumber == 3 or addressVersionNumber == 4:
                     # Returns a simple 32 bytes of information encoded in 64 Hex characters,
                     # or null if there was an error.
                     privEncryptionKey = decodeWalletImportFormat(
@@ -251,7 +255,7 @@ def reloadMyAddressHashes():
                         myAddressesByHash[hash] = addressInKeysFile
 
                 else:
-                    logger.error('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2 or 3.\n')
+                    logger.error('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2, 3, or 4.\n')
 
     if not keyfileSecure:
         fixSensitiveFilePermissions(appdata + 'keys.dat', hasEnabledKeys)
