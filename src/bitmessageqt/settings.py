@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Thu Aug 29 14:40:14 2013
+# Created: Thu Aug 29 15:35:40 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -71,6 +71,7 @@ class Ui_settingsDialog(object):
         self.horizontalLayout_2 = QtGui.QHBoxLayout(self.groupBox)
         self.horizontalLayout_2.setObjectName(_fromUtf8("horizontalLayout_2"))
         self.languageComboBox = QtGui.QComboBox(self.groupBox)
+        self.languageComboBox.setMinimumSize(QtCore.QSize(100, 0))
         self.languageComboBox.setObjectName(_fromUtf8("languageComboBox"))
         self.languageComboBox.addItem(_fromUtf8(""))
         self.languageComboBox.addItem(_fromUtf8(""))
@@ -350,10 +351,10 @@ class Ui_settingsDialog(object):
         self.languageComboBox.setItemText(0, _translate("settingsDialog", "System Settings", "system"))
         self.languageComboBox.setItemText(1, _translate("settingsDialog", "English", "en"))
         self.languageComboBox.setItemText(2, _translate("settingsDialog", "Esperanto", "eo"))
-        self.languageComboBox.setItemText(3, _translate("settingsDialog", "French", "fr"))
-        self.languageComboBox.setItemText(4, _translate("settingsDialog", "German", "de"))
-        self.languageComboBox.setItemText(5, _translate("settingsDialog", "Spanish", "es"))
-        self.languageComboBox.setItemText(6, _translate("settingsDialog", "Russian", "ru"))
+        self.languageComboBox.setItemText(3, _translate("settingsDialog", "Français", "fr"))
+        self.languageComboBox.setItemText(4, _translate("settingsDialog", "Deutsch", "de"))
+        self.languageComboBox.setItemText(5, _translate("settingsDialog", "Español", "es"))
+        self.languageComboBox.setItemText(6, _translate("settingsDialog", "Русский", "ru"))
         self.languageComboBox.setItemText(7, _translate("settingsDialog", "Pirate English", "en_pirate"))
         self.languageComboBox.setItemText(8, _translate("settingsDialog", "Other (set in keys.dat)", "other"))
         self.checkBoxRemoveBeforeSendSetting.setText(_translate("settingsDialog", "Add safety badge that needs to be removed before sending messages", None))

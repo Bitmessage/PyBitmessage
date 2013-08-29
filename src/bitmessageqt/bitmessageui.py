@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Thu Aug 29 14:14:15 2013
+# Created: Thu Aug 29 15:35:38 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(810, 580)
+        MainWindow.resize(795, 580)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
@@ -69,7 +69,11 @@ class Ui_MainWindow(object):
         self.inboxSearchOptionCB.addItem(_fromUtf8(""))
         self.horizontalLayoutSearch.addWidget(self.inboxSearchOptionCB)
         self.verticalLayout_2.addLayout(self.horizontalLayoutSearch)
-        self.tableWidgetInbox = QtGui.QTableWidget(self.inbox)
+        self.splitter = QtGui.QSplitter(self.inbox)
+        self.splitter.setOrientation(QtCore.Qt.Vertical)
+        self.splitter.setObjectName(_fromUtf8("splitter"))
+        self.tableWidgetInbox = QtGui.QTableWidget(self.splitter)
+        self.tableWidgetInbox.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.tableWidgetInbox.setAlternatingRowColors(True)
         self.tableWidgetInbox.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.tableWidgetInbox.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
@@ -93,11 +97,11 @@ class Ui_MainWindow(object):
         self.tableWidgetInbox.horizontalHeader().setStretchLastSection(True)
         self.tableWidgetInbox.verticalHeader().setVisible(False)
         self.tableWidgetInbox.verticalHeader().setDefaultSectionSize(26)
-        self.verticalLayout_2.addWidget(self.tableWidgetInbox)
-        self.textEditInboxMessage = QtGui.QTextEdit(self.inbox)
+        self.textEditInboxMessage = QtGui.QTextEdit(self.splitter)
         self.textEditInboxMessage.setBaseSize(QtCore.QSize(0, 500))
+        self.textEditInboxMessage.setReadOnly(True)
         self.textEditInboxMessage.setObjectName(_fromUtf8("textEditInboxMessage"))
-        self.verticalLayout_2.addWidget(self.textEditInboxMessage)
+        self.verticalLayout_2.addWidget(self.splitter)
         icon1 = QtGui.QIcon()
         icon1.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/inbox.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.inbox, icon1, _fromUtf8(""))
@@ -159,7 +163,7 @@ class Ui_MainWindow(object):
         spacerItem1 = QtGui.QSpacerItem(20, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.gridLayout_2.addItem(spacerItem1, 3, 4, 1, 1)
         self.pushButtonSend = QtGui.QPushButton(self.send)
-        self.pushButtonSend.setEnabled(False)
+        self.pushButtonSend.setEnabled(True)
         self.pushButtonSend.setObjectName(_fromUtf8("pushButtonSend"))
         self.gridLayout_2.addWidget(self.pushButtonSend, 7, 6, 1, 1)
         self.labelSendBroadcastWarning = QtGui.QLabel(self.send)
@@ -199,7 +203,11 @@ class Ui_MainWindow(object):
         self.sentSearchOptionCB.addItem(_fromUtf8(""))
         self.horizontalLayout.addWidget(self.sentSearchOptionCB)
         self.verticalLayout.addLayout(self.horizontalLayout)
-        self.tableWidgetSent = QtGui.QTableWidget(self.sent)
+        self.splitter_2 = QtGui.QSplitter(self.sent)
+        self.splitter_2.setOrientation(QtCore.Qt.Vertical)
+        self.splitter_2.setObjectName(_fromUtf8("splitter_2"))
+        self.tableWidgetSent = QtGui.QTableWidget(self.splitter_2)
+        self.tableWidgetSent.setEditTriggers(QtGui.QAbstractItemView.NoEditTriggers)
         self.tableWidgetSent.setDragDropMode(QtGui.QAbstractItemView.DragDrop)
         self.tableWidgetSent.setAlternatingRowColors(True)
         self.tableWidgetSent.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
@@ -223,10 +231,10 @@ class Ui_MainWindow(object):
         self.tableWidgetSent.horizontalHeader().setStretchLastSection(True)
         self.tableWidgetSent.verticalHeader().setVisible(False)
         self.tableWidgetSent.verticalHeader().setStretchLastSection(False)
-        self.verticalLayout.addWidget(self.tableWidgetSent)
-        self.textEditSentMessage = QtGui.QTextEdit(self.sent)
+        self.textEditSentMessage = QtGui.QTextEdit(self.splitter_2)
+        self.textEditSentMessage.setReadOnly(True)
         self.textEditSentMessage.setObjectName(_fromUtf8("textEditSentMessage"))
-        self.verticalLayout.addWidget(self.textEditSentMessage)
+        self.verticalLayout.addWidget(self.splitter_2)
         icon3 = QtGui.QIcon()
         icon3.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/sent.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.sent, icon3, _fromUtf8(""))
@@ -434,7 +442,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 810, 18))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 23))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -552,8 +560,8 @@ class Ui_MainWindow(object):
         self.textEditMessage.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+"</style></head><body style=\" font-family:\'Sans\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>", None))
         self.label.setText(_translate("MainWindow", "To:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.radioButtonBroadcast.setText(_translate("MainWindow", "Broadcast to everyone who is subscribed to your address", None))
