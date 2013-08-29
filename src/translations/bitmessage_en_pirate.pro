@@ -29,5 +29,5 @@ SOURCES	= 	../addresses.py\
 			../bitmessageqt/specialaddressbehavior.py
 
 			
-TRANSLATIONS	= bitmessage_ru.ts
-CODECFORTR      = UTF-8
+TRANSLATIONS	= bitmessage_en_pirate.ts
+CODECFORTR		= UTF-8

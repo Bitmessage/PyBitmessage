@@ -1,10 +1,10 @@
 #!/bin/bash
 
 APP=pybitmessage
-PREV_VERSION=0.3.4
+PREV_VERSION=0.3.5
 VERSION=0.3.5
 RELEASE=1
-ARCH_TYPE=`uname -m`
+ARCH_TYPE=all
 DIR=${APP}-${VERSION}
 
 if [ $ARCH_TYPE == "x86_64" ]; then
