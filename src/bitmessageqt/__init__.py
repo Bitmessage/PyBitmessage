@@ -117,9 +117,9 @@ class MyForm(QtGui.QMainWindow):
 
         self.ui.labelSendBroadcastWarning.setVisible(False)
         self.ui.removeBeforeSend.setChecked(shared.config.getboolean('bitmessagesettings',
-                            'removebeforesend'))
+            'removebeforesend'))
         self.ui.pushButtonSend.setEnabled(not shared.config.getboolean('bitmessagesettings',
-                            'removebeforesend'))
+            'removebeforesend'))
 
         # FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(

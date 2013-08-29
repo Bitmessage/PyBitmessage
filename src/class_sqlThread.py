@@ -207,8 +207,8 @@ class sqlThread(threading.Thread):
 
         if not shared.config.has_option('bitmessagesettings', 'userlocale'):
             shared.config.set('bitmessagesettings', 'userlocale', 'system')
-        if not shared.config.has_option('bitmessagesettings', 'removebeforesending'):
-            shared.config.set('bitmessagesettings', 'removebeforesending', 'false')
+        if not shared.config.has_option('bitmessagesettings', 'removebeforesend'):
+            shared.config.set('bitmessagesettings', 'removebeforesend', 'false')
         if not shared.config.has_option('bitmessagesettings', 'sendoutgoingconnections'):
             shared.config.set('bitmessagesettings', 'sendoutgoingconnections', 'True')
 
