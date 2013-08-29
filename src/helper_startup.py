@@ -71,6 +71,7 @@ def loadConfig():
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
             shared.config.set('bitmessagesettings', 'dontconnect', 'true')
             shared.config.set('bitmessagesettings', 'userlocale', 'system')
+            shared.config.set('bitmessagesettings', 'removebeforesend', 'false')
             ensureNamecoinOptions()
 
             if storeConfigFilesInSameDirectoryAsProgramByDefault:

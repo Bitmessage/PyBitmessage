@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>795</width>
+    <width>810</width>
     <height>580</height>
    </rect>
   </property>
@@ -57,7 +57,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="inbox">
        <attribute name="icon">
@@ -263,7 +263,7 @@
         <item row="3" column="1">
          <widget class="QLineEdit" name="lineEditTo"/>
         </item>
-        <item row="5" column="1" rowspan="2" colspan="5">
+        <item row="5" column="1" rowspan="2" colspan="6">
          <widget class="QTextEdit" name="textEditMessage">
           <property name="html">
            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -308,7 +308,7 @@ p, li { white-space: pre-wrap; }
           </property>
          </widget>
         </item>
-        <item row="4" column="1" colspan="5">
+        <item row="4" column="1" colspan="6">
          <widget class="QLineEdit" name="lineEditSubject">
           <property name="text">
            <string/>
@@ -328,8 +328,11 @@ p, li { white-space: pre-wrap; }
           </property>
          </spacer>
         </item>
-        <item row="7" column="5">
+        <item row="7" column="6">
          <widget class="QPushButton" name="pushButtonSend">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
           <property name="text">
            <string>Send</string>
           </property>
@@ -351,6 +354,19 @@ p, li { white-space: pre-wrap; }
           </property>
           <property name="indent">
            <number>-1</number>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="6">
+         <widget class="QCheckBox" name="removeBeforeSend">
+          <property name="enabled">
+           <bool>true</bool>
+          </property>
+          <property name="text">
+           <string>Remove before Sending</string>
+          </property>
+          <property name="checked">
+           <bool>true</bool>
           </property>
          </widget>
         </item>
@@ -1022,7 +1038,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>795</width>
+     <width>810</width>
      <height>18</height>
     </rect>
    </property>

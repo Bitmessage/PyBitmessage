@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Sat Aug 24 09:19:58 2013
+# Created: Thu Aug 29 14:40:14 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_settingsDialog(object):
     def setupUi(self, settingsDialog):
         settingsDialog.setObjectName(_fromUtf8("settingsDialog"))
-        settingsDialog.resize(567, 343)
+        settingsDialog.resize(572, 343)
         self.gridLayout = QtGui.QGridLayout(settingsDialog)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.buttonBox = QtGui.QDialogButtonBox(settingsDialog)
@@ -83,6 +83,9 @@ class Ui_settingsDialog(object):
         self.languageComboBox.addItem(_fromUtf8(""))
         self.horizontalLayout_2.addWidget(self.languageComboBox)
         self.gridLayout_5.addWidget(self.groupBox, 10, 1, 1, 1)
+        self.checkBoxRemoveBeforeSendSetting = QtGui.QCheckBox(self.tabUserInterface)
+        self.checkBoxRemoveBeforeSendSetting.setObjectName(_fromUtf8("checkBoxRemoveBeforeSendSetting"))
+        self.gridLayout_5.addWidget(self.checkBoxRemoveBeforeSendSetting, 7, 0, 1, 1)
         self.tabWidgetSettings.addTab(self.tabUserInterface, _fromUtf8(""))
         self.tabNetworkSettings = QtGui.QWidget()
         self.tabNetworkSettings.setObjectName(_fromUtf8("tabNetworkSettings"))
@@ -353,6 +356,7 @@ class Ui_settingsDialog(object):
         self.languageComboBox.setItemText(6, _translate("settingsDialog", "Russian", "ru"))
         self.languageComboBox.setItemText(7, _translate("settingsDialog", "Pirate English", "en_pirate"))
         self.languageComboBox.setItemText(8, _translate("settingsDialog", "Other (set in keys.dat)", "other"))
+        self.checkBoxRemoveBeforeSendSetting.setText(_translate("settingsDialog", "Add safety badge that needs to be removed before sending messages", None))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabUserInterface), _translate("settingsDialog", "User Interface", None))
         self.groupBox1.setTitle(_translate("settingsDialog", "Listening port", None))
         self.label.setText(_translate("settingsDialog", "Listen for connections on port:", None))
