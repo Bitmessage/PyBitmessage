@@ -1,33 +1,38 @@
-import shared
+import threading
+import Queue
+
+sqlSubmitQueue = Queue.Queue() #SQLITE3 is so thread-unsafe that they won't even let you call it from different threads using your own locks. SQL objects can only be called from one thread.
+sqlReturnQueue = Queue.Queue()
+sqlLock = threading.Lock()
 
 def sqlQuery(sqlStatement, *args):
-    shared.sqlLock.acquire()
-    shared.sqlSubmitQueue.put(sqlStatement)
+    sqlLock.acquire()
+    sqlSubmitQueue.put(sqlStatement)
 
     if args == ():
-        shared.sqlSubmitQueue.put('')
+        sqlSubmitQueue.put('')
     else:
-        shared.sqlSubmitQueue.put(args)
+        sqlSubmitQueue.put(args)
     
-    queryreturn = shared.sqlReturnQueue.get()
-    shared.sqlLock.release()
+    queryreturn = sqlReturnQueue.get()
+    sqlLock.release()
 
     return queryreturn
 
 def sqlExecute(sqlStatement, *args):
-    shared.sqlLock.acquire()
-    shared.sqlSubmitQueue.put(sqlStatement)
+    sqlLock.acquire()
+    sqlSubmitQueue.put(sqlStatement)
 
     if args == ():
-        shared.sqlSubmitQueue.put('')
+        sqlSubmitQueue.put('')
     else:
-        shared.sqlSubmitQueue.put(args)
+        sqlSubmitQueue.put(args)
     
-    shared.sqlReturnQueue.get()
-    shared.sqlSubmitQueue.put('commit')
-    shared.sqlLock.release()
+    sqlReturnQueue.get()
+    sqlSubmitQueue.put('commit')
+    sqlLock.release()
 
 def sqlStoredProcedure(procName):
-    shared.sqlLock.acquire()
-    shared.sqlSubmitQueue.put(procName)
-    shared.sqlLock.release()
+    sqlLock.acquire()
+    sqlSubmitQueue.put(procName)
+    sqlLock.release()
