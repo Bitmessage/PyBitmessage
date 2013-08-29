@@ -73,5 +73,7 @@ def _doFastPoW(target, initialHash):
 def run(target, initialHash):
     if 'linux' in sys.platform:
         return _doFastPoW(target, initialHash)
+    elif sys.platform == 'darwin':
+        return _doFastPoW(target, initialHash)
     else:
         return _doSafePoW(target, initialHash)
