@@ -1844,7 +1844,7 @@ class MyForm(QtGui.QMainWindow):
                     "MainWindow", "The address you entered was invalid. Ignoring it."))
 
     def addEntryToAddressBook(self,address,label):
-        sqlQuery('''select * from addressbook where address=?''', address)
+        queryreturn = sqlQuery('''select * from addressbook where address=?''', address)
         if queryreturn == []:
             self.ui.tableWidgetAddressBook.setSortingEnabled(False)
             self.ui.tableWidgetAddressBook.insertRow(0)
