@@ -116,6 +116,10 @@ class MyForm(QtGui.QMainWindow):
             pass
 
         self.ui.labelSendBroadcastWarning.setVisible(False)
+        self.ui.removeBeforeSend.setChecked(shared.config.getboolean('bitmessagesettings',
+            'removebeforesend'))
+        self.ui.pushButtonSend.setEnabled(not shared.config.getboolean('bitmessagesettings',
+            'removebeforesend'))
 
         # FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
@@ -156,7 +160,9 @@ class MyForm(QtGui.QMainWindow):
             "triggered()"), self.click_actionAbout)
         QtCore.QObject.connect(self.ui.actionHelp, QtCore.SIGNAL(
             "triggered()"), self.click_actionHelp)
-
+        QtCore.QObject.connect(self.ui.removeBeforeSend, QtCore.SIGNAL(
+            "toggled(bool)"), self.enableSendButton)
+            
         # Popup menu for the Inbox tab
         self.ui.inboxContextMenuToolbar = QtGui.QToolBar()
           # Actions
@@ -1173,7 +1179,7 @@ class MyForm(QtGui.QMainWindow):
                 addressVersionNumber = int(
                     self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
                 # self.addressGenerator = addressGenerator()
-                # self.addressGenerator.setup(addressVersionNumber,streamNumberForAddress,"unused address",self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(),self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(),self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked())
+                # self.addressGenerator.setup(addressVersionNumber,streamNumberForAddress,"unused address",self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(),self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(),self.regenerateAddressesDialogInstance.ui.EighteenByteRipe.isChecked())
                 # QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
                 # QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
                 # self.addressGenerator.start()
@@ -1542,6 +1548,9 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetSubscriptions.setItem(0, 1, newItem)
 
+    def enableSendButton(self):
+        self.ui.pushButtonSend.setEnabled(not self.ui.removeBeforeSend.isChecked())
+            
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
         toAddresses = str(self.ui.lineEditTo.text())
@@ -1641,6 +1650,8 @@ class MyForm(QtGui.QMainWindow):
                         self.ui.lineEditTo.setText('')
                         self.ui.lineEditSubject.setText('')
                         self.ui.textEditMessage.setText('')
+                        self.ui.removeBeforeSend.setChecked(shared.config.getboolean('bitmessagesettings',
+                            'removebeforesend'))
                         self.ui.tabWidget.setCurrentIndex(2)
                         self.ui.tableWidgetSent.setCurrentCell(0, 0)
                 else:
@@ -2038,11 +2049,11 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxStartInTray.isChecked()))
             shared.config.set('bitmessagesettings', 'willinglysendtomobile', str(
                 self.settingsDialogInstance.ui.checkBoxWillinglySendToMobile.isChecked()))
-            
+            shared.config.set('bitmessagesettings', 'removebeforesend', str(
+                self.settingsDialogInstance.ui.checkBoxRemoveBeforeSendSetting.isChecked()))
             lang_ind = int(self.settingsDialogInstance.ui.languageComboBox.currentIndex())
             if not languages[lang_ind] == 'other':
                 shared.config.set('bitmessagesettings', 'userlocale', languages[lang_ind])
-                
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
                     QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
@@ -3058,7 +3069,9 @@ class settingsDialog(QtGui.QDialog):
             shared.config.getboolean('bitmessagesettings', 'startintray'))
         self.ui.checkBoxWillinglySendToMobile.setChecked(
             shared.safeConfigGetBoolean('bitmessagesettings', 'willinglysendtomobile'))
-        
+        self.ui.checkBoxRemoveBeforeSendSetting.setChecked(
+            shared.safeConfigGetBoolean('bitmessagesettings', 'removebeforesend'))
+            
         global languages 
         languages = ['system','en','eo','fr','de','es','ru','en_pirate','other']
         user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
