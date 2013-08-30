@@ -76,6 +76,11 @@ networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a 
 # namecoin integration to "namecoind".
 namecoinDefaultRpcPort = "8336"
 
+# When using py2exe or py2app, the variable frozen is added to the sys
+# namespace.  This can be used to setup a different code path for 
+# binary distributions vs source distributions.
+frozen = getattr(sys,'frozen', None)
+
 def isInSqlInventory(hash):
     queryreturn = sqlQuery('''select hash from inventory where hash=?''', hash)
     if queryreturn == []:
@@ -118,7 +123,12 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
 
 def lookupAppdataFolder():
     APPNAME = "PyBitmessage"
-    if sys.platform == 'darwin':
+    from os import path, environ
+    if "BITMESSAGE_HOME" in environ:
+        dataFolder = environ["BITMESSAGE_HOME"]
+        if dataFolder[-1] not in [os.path.sep, os.path.altsep]:
+            dataFolder += os.path.sep
+    elif sys.platform == 'darwin':
         if "HOME" in environ:
             dataFolder = path.join(os.environ["HOME"], "Library/Application Support/", APPNAME) + '/'
         else:
