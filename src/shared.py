@@ -79,6 +79,11 @@ networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a 
 # namecoin integration to "namecoind".
 namecoinDefaultRpcPort = "8336"
 
+# When using py2exe or py2app, the variable frozen is added to the sys
+# namespace.  This can be used to setup a different code path for 
+# binary distributions vs source distributions.
+frozen = getattr(sys,'frozen', None)
+
 def isInSqlInventory(hash):
     t = (hash,)
     shared.sqlLock.acquire()
