@@ -18,7 +18,17 @@ def loadConfig():
             needToCreateKeysFile = False
         except:
             needToCreateKeysFile = True
-
+    elif "BITMESSAGE_HOME" in os.environ:
+        shared.appdata = os.environ["BITMESSAGE_HOME"]
+        if shared.appdata[-1] not in [os.path.sep, os.path.altsep]:
+            shared.appdata += os.path.sep
+        shared.config.read(shared.appdata + 'keys.dat')
+        try:
+            shared.config.get('bitmessagesettings', 'settingsversion')
+            print 'Loading config files from directory specified in environmental variable: ' + shared.appdata
+            needToCreateKeysFile = False
+        except:
+            needToCreateKeysFile = True
     else:
         shared.config.read('keys.dat')
         try:
