@@ -4,7 +4,7 @@
 import hashlib
 from struct import unpack, pack
 import sys
-from shared import config
+from shared import config, frozen
 #import os
 
 def _set_idle():
@@ -71,7 +71,7 @@ def _doFastPoW(target, initialHash):
         time.sleep(0.2)
 
 def run(target, initialHash):
-    if 'linux' in sys.platform:
+    if frozen == "macosx_app" or not frozen:
         return _doFastPoW(target, initialHash)
     else:
         return _doSafePoW(target, initialHash)
