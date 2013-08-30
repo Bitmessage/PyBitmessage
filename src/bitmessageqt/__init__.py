@@ -53,7 +53,7 @@ import hashlib
 # load identicon code
 # :Author:Shin Adachi <shn@glucose.jp>
 # Licesensed under FreeBSD License.
-import identicon
+# import identicon
 # usage: identicon.render_identicon(code, size)
 # requires PIL
 
