@@ -305,12 +305,12 @@ def broadcastToSendDataQueues(data):
         
 def flushInventory():
     #Note that the singleCleanerThread clears out the inventory dictionary from time to time, although it only clears things that have been in the dictionary for a long time. This clears the inventory dictionary Now.
-    for hash, storedValue in inventory.items():
-        objectType, streamNumber, payload, receivedTime = storedValue
-        t = ()
-        sqlExecute('''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
-                   hash,objectType,streamNumber,payload,receivedTime,'')
-        del inventory[hash]
+    with SqlBulkExecute() as sql:
+        for hash, storedValue in inventory.items():
+            objectType, streamNumber, payload, receivedTime = storedValue
+            sql.execute('''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
+                       hash,objectType,streamNumber,payload,receivedTime,'')
+            del inventory[hash]
 
 def fixPotentiallyInvalidUTF8Data(text):
     try:
