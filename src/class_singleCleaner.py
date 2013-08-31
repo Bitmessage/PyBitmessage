@@ -30,18 +30,20 @@ class singleCleaner(threading.Thread):
         while True:
             shared.UISignalQueue.put((
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
-            for hash, storedValue in shared.inventory.items():
-                objectType, streamNumber, payload, receivedTime = storedValue
-                if int(time.time()) - 3600 > receivedTime:
-                    sqlExecute(
-                        '''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
-                        hash,
-                        objectType,
-                        streamNumber,
-                        payload,
-                        receivedTime,
-                        '')
-                    del shared.inventory[hash]
+            
+            with SqlBulkExecute() as sql:
+                for hash, storedValue in shared.inventory.items():
+                    objectType, streamNumber, payload, receivedTime = storedValue
+                    if int(time.time()) - 3600 > receivedTime:
+                        sql.execute(
+                            '''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
+                            hash,
+                            objectType,
+                            streamNumber,
+                            payload,
+                            receivedTime,
+                            '')
+                        del shared.inventory[hash]
             shared.UISignalQueue.put(('updateStatusBar', ''))
             shared.broadcastToSendDataQueues((
                 0, 'pong', 'no data'))  # commands the sendData threads to send out a pong message if they haven't sent anything else in the last five minutes. The socket timeout-time is 10 minutes.

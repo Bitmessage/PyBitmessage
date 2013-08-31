@@ -36,3 +36,31 @@ def sqlStoredProcedure(procName):
     sqlLock.acquire()
     sqlSubmitQueue.put(procName)
     sqlLock.release()
+
+class SqlBulkExecute:
+    def __enter__(self):
+        sqlLock.acquire()
+        return self
+
+    def __exit__(self, type, value, traceback):
+        sqlSubmitQueue.put('commit')
+        sqlLock.release()
+
+    def execute(self, sqlStatement, *args):
+        sqlSubmitQueue.put(sqlStatement)
+        
+        if args == ():
+            sqlSubmitQueue.put('')
+        else:
+            sqlSubmitQueue.put(args)
+        sqlReturnQueue.get()
+
+    def query(self, sqlStatement, *args):
+        sqlSubmitQueue.put(sqlStatement)
+
+        if args == ():
+            sqlSubmitQueue.put('')
+        else:
+            sqlSubmitQueue.put(args)
+        return sqlReturnQueue.get()
+
