@@ -15,7 +15,27 @@ def getAPI(workingdir=None,silent=False):
         
     import bitmessagemain
     class MainAPI(bitmessagemain.Main):
-
+        
+        def markInboxMessageAsRead(self,msgid):
+            msgid = msgid.decode('hex')
+            t = (msgid,)
+            bitmessagemain.shared.sqlLock.acquire()
+            bitmessagemain.shared.sqlSubmitQueue.put('''UPDATE inbox SET read='1' WHERE msgid=?''')
+            bitmessagemain.shared.sqlSubmitQueue.put(t)
+            bitmessagemain.shared.sqlReturnQueue.get()
+            bitmessagemain.shared.sqlSubmitQueue.put('commit')
+            bitmessagemain.shared.sqlLock.release()
+            
+        def markInboxMessageAsUnread(self,msgid):
+            msgid = msgid.decode('hex')
+            t = (msgid,)
+            bitmessagemain.shared.sqlLock.acquire()
+            bitmessagemain.shared.sqlSubmitQueue.put('''UPDATE inbox SET read='0' WHERE msgid=?''')
+            bitmessagemain.shared.sqlSubmitQueue.put(t)
+            bitmessagemain.shared.sqlReturnQueue.get()
+            bitmessagemain.shared.sqlSubmitQueue.put('commit')
+            bitmessagemain.shared.sqlLock.release()
+        
         def getAllInboxMessages(self):
             bitmessagemain.shared.sqlLock.acquire()
             bitmessagemain.shared.sqlSubmitQueue.put(
