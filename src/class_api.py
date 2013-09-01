@@ -411,7 +411,20 @@ def getAPI(workingdir=None,silent=False):
             return data
             
         def clientStatus(self):
-            return {"networkConnections" : len(bitmessagemain.shared.connectedHostsList)}
+            if len(bitmessagemain.shared.connectedHostsList) == 0:
+                networkStatus = 'notConnected'
+            elif len(bitmessagemain.shared.connectedHostsList) > 0 and not bitmessagemain.shared.clientHasReceivedIncomingConnections:
+                networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
+            else:
+                networkStatus = 'connectedAndReceivingIncomingConnections'
+            
+            info = {}
+            info['networkConnections'] = len(bitmessagemain.shared.connectedHostsList)
+            info['numberOfMessagesProcessed'] = bitmessagemain.shared.numberOfMessagesProcessed
+            info['numberOfBroadcastsProcessed'] = bitmessagemain.shared.numberOfBroadcastsProcessed
+            info['numberOfPubkeysProcessed'] = bitmessagemain.shared.numberOfPubkeysProcessed
+            info['networkStatus'] = networkStatus
+            return info
 
         def listContacts(self):
             
