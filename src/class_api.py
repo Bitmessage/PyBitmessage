@@ -419,6 +419,7 @@ def getAPI(workingdir=None,silent=False):
                 networkStatus = 'connectedAndReceivingIncomingConnections'
             
             info = {}
+            info['externalIPAddress'] = bitmessagemain.shared.myExternalIP
             info['networkConnections'] = len(bitmessagemain.shared.connectedHostsList)
             info['numberOfMessagesProcessed'] = bitmessagemain.shared.numberOfMessagesProcessed
             info['numberOfBroadcastsProcessed'] = bitmessagemain.shared.numberOfBroadcastsProcessed
