@@ -25,6 +25,7 @@ if sys.platform == 'darwin':
         sys.exit(0)
 
 # Classes
+from helper_sql import *
 from class_sqlThread import *
 from class_singleCleaner import *
 from class_singleWorker import *
@@ -315,12 +316,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                  streamNumber, 'unused API address', numberOfAddresses, passphrase, eighteenByteRipe))
             return shared.apiAddressGeneratorReturnQueue.get()
         elif method == 'getAllInboxMessages':
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
+            queryreturn = sqlQuery(
                 '''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox where folder='inbox' ORDER BY received''')
-            shared.sqlSubmitQueue.put('')
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
             data = '{"inboxMessages":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
@@ -333,12 +330,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'getAllInboxMessageIds' or method == 'getAllInboxMessageIDs':
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
+            queryreturn = sqlQuery(
                 '''SELECT msgid FROM inbox where folder='inbox' ORDER BY received''')
-            shared.sqlSubmitQueue.put('')
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
             data = '{"inboxMessageIds":['
             for row in queryreturn:
                 msgid = row[0]
@@ -351,12 +344,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) == 0:
                 raise APIError(0, 'I need parameters!')
             msgid = self._decode(params[0], "hex")
-            v = (msgid,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(v)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox WHERE msgid=?''', msgid)
             data = '{"inboxMessage":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
@@ -366,11 +354,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += ']}'
                 return data
         elif method == 'getAllSentMessages':
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
-            shared.sqlSubmitQueue.put('')
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
             data = '{"sentMessages":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
@@ -382,11 +366,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'getAllSentMessageIds' or method == 'getAllSentMessageIDs':
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''')
-            shared.sqlSubmitQueue.put('')
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''')
             data = '{"sentMessageIds":['
             for row in queryreturn:
                 msgid = row[0]
@@ -399,12 +379,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) == 0:
                 raise APIError(0, 'I need parameters!')
             toAddress = params[0]
-            v = (toAddress,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype FROM inbox WHERE folder='inbox' AND toAddress=?''')
-            shared.sqlSubmitQueue.put(v)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryReturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype FROM inbox WHERE folder='inbox' AND toAddress=?''', toAddress)
             data = '{"inboxMessages":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, received, message, encodingtype = row
@@ -419,12 +394,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) == 0:
                 raise APIError(0, 'I need parameters!')
             msgid = self._decode(params[0], "hex")
-            v = (msgid,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(v)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE msgid=?''', msgid)
             data = '{"sentMessage":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
@@ -437,12 +407,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) == 0:
                 raise APIError(0, 'I need parameters!')
             fromAddress = params[0]
-            v = (fromAddress,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime''')
-            shared.sqlSubmitQueue.put(v)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime''',
+                                   fromAddress)
             data = '{"sentMessages":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
@@ -457,12 +423,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) == 0:
                 raise APIError(0, 'I need parameters!')
             ackData = self._decode(params[0], "hex")
-            v = (ackData,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE ackdata=?''')
-            shared.sqlSubmitQueue.put(v)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE ackdata=?''',
+                                   ackData)
             data = '{"sentMessage":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
@@ -480,13 +442,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             helper_inbox.trash(msgid)
             # Trash if in sent table
             t = (msgid,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
-            # shared.UISignalQueue.put(('removeSentRowByMsgid',msgid)) This function doesn't exist yet.
+            sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', t)
             return 'Trashed message (assuming message existed).'
         elif method == 'trashInboxMessage':
             if len(params) == 0:
@@ -499,26 +455,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(0, 'I need parameters!')
             msgid = self._decode(params[0], "hex")
             t = (msgid,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
-            # shared.UISignalQueue.put(('removeSentRowByMsgid',msgid)) This function doesn't exist yet.
+            sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', t)
             return 'Trashed sent message (assuming message existed).'
         elif method == 'trashSentMessageByAckData':
             # This API method should only be used when msgid is not available
             if len(params) == 0:
                 raise APIError(0, 'I need parameters!')
             ackdata = self._decode(params[0], "hex")
-            t = (ackdata,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE ackdata=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute('''UPDATE sent SET folder='trash' WHERE ackdata=?''',
+                       ackdata)
             return 'Trashed sent message (assuming message existed).'
         elif method == 'sendMessage':
             if len(params) == 0:
@@ -581,13 +526,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             helper_sent.insert(t)
 
             toLabel = ''
-            t = (toAddress,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''select label from addressbook where address=?''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''select label from addressbook where address=?''', toAddress)
             if queryreturn != []:
                 for row in queryreturn:
                     toLabel, = row
@@ -656,12 +595,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(ackdata) != 64:
                 raise APIError(15, 'The length of ackData should be 32 bytes (encoded in hex thus 64 characters).')
             ackdata = self._decode(ackdata, "hex")
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''SELECT status FROM sent where ackdata=?''')
-            shared.sqlSubmitQueue.put((ackdata,))
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery(
+                '''SELECT status FROM sent where ackdata=?''',
+                ackdata)
             if queryreturn == []:
                 return 'notfound'
             for row in queryreturn:
@@ -701,23 +637,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(12, 'The stream number must be 1. Others aren\'t supported.')
             # First we must check to see if the address is already in the
             # subscriptions list.
-            shared.sqlLock.acquire()
-            t = (address,)
-            shared.sqlSubmitQueue.put(
-                '''select * from subscriptions where address=?''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''select * from subscriptions where address=?''', address)
             if queryreturn != []:
                 raise APIError(16, 'You are already subscribed to that address.')
-            t = (label, address, True)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''INSERT INTO subscriptions VALUES (?,?,?)''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute('''INSERT INTO subscriptions VALUES (?,?,?)''',label, address, True)
             shared.reloadBroadcastSendersForWhichImWatching()
             shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
             shared.UISignalQueue.put(('rerenderSubscriptions', ''))
@@ -728,24 +651,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(0, 'I need 1 parameter!')
             address, = params
             address = addBMIfNotPresent(address)
-            t = (address,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''DELETE FROM subscriptions WHERE address=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute('''DELETE FROM subscriptions WHERE address=?''', address)
             shared.reloadBroadcastSendersForWhichImWatching()
             shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
             shared.UISignalQueue.put(('rerenderSubscriptions', ''))
             return 'Deleted subscription if it existed.'
         elif method == 'listSubscriptions':
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT label, address, enabled FROM subscriptions''')
-            shared.sqlSubmitQueue.put('')
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT label, address, enabled FROM subscriptions''')
             data = '{"subscriptions":['
             for row in queryreturn:
                 label, address, enabled = row
@@ -816,26 +728,18 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # use it we'll need to fill out a field in our inventory database 
             # which is blank by default (first20bytesofencryptedmessage). 
             parameters = ''
-            with shared.sqlLock:
-                shared.sqlSubmitQueue.put('''SELECT hash, payload FROM inventory WHERE first20bytesofencryptedmessage = '' and objecttype = 'msg' ; ''')
-                shared.sqlSubmitQueue.put(parameters)
-                queryreturn = shared.sqlReturnQueue.get()
-            
-                for row in queryreturn:
-                    hash, payload = row
-                    readPosition = 16 # Nonce length + time length
-                    readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
-                    t = (payload[readPosition:readPosition+20],hash)
-                    shared.sqlSubmitQueue.put('''UPDATE inventory SET first20bytesofencryptedmessage=? WHERE hash=?; ''')
-                    shared.sqlSubmitQueue.put(t)
-                    shared.sqlReturnQueue.get()        
+            queryreturn = sqlQuery(
+                '''SELECT hash, payload FROM inventory WHERE first20bytesofencryptedmessage = '' and objecttype = 'msg' ; ''')
+                                   
+            for row in queryreturn:
+                hash, payload = row
+                readPosition = 16 # Nonce length + time length
+                readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
+                t = (payload[readPosition:readPosition+20],hash)
+                sqlExecute('''UPDATE inventory SET first20bytesofencryptedmessage=? WHERE hash=?; ''', t)
                 
-            parameters = (requestedHash,)
-            with shared.sqlLock:
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlSubmitQueue.put('''SELECT payload FROM inventory WHERE first20bytesofencryptedmessage = ?''')
-                shared.sqlSubmitQueue.put(parameters)
-                queryreturn = shared.sqlReturnQueue.get()
+            queryreturn = sqlQuery('''SELECT payload FROM inventory WHERE first20bytesofencryptedmessage = ?''',
+                                   requestedHash)
             data = '{"receivedMessageDatas":['
             for row in queryreturn:
                 payload, = row
@@ -853,11 +757,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(requestedHash) != 40:
                 raise APIError(19, 'The length of hash should be 20 bytes (encoded in hex thus 40 characters).')
             requestedHash = self._decode(requestedHash, "hex")
-            parameters = (requestedHash,)
-            with shared.sqlLock:
-                shared.sqlSubmitQueue.put('''SELECT transmitdata FROM pubkeys WHERE hash = ? ; ''')
-                shared.sqlSubmitQueue.put(parameters)
-                queryreturn = shared.sqlReturnQueue.get()
+            queryreturn = sqlQuery('''SELECT transmitdata FROM pubkeys WHERE hash = ? ; ''', requestedHash)
             data = '{"pubkey":['
             for row in queryreturn:
                 transmitdata, = row

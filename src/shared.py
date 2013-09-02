@@ -27,7 +27,7 @@ from addresses import *
 import highlevelcrypto
 import shared
 import helper_startup
-
+from helper_sql import *
 
 
 config = ConfigParser.SafeConfigParser()
@@ -36,9 +36,6 @@ MyECSubscriptionCryptorObjects = {}
 myAddressesByHash = {} #The key in this dictionary is the RIPE hash which is encoded in an address and value is the address itself.
 broadcastSendersForWhichImWatching = {}
 workerQueue = Queue.Queue()
-sqlSubmitQueue = Queue.Queue() #SQLITE3 is so thread-unsafe that they won't even let you call it from different threads using your own locks. SQL objects can only be called from one thread.
-sqlReturnQueue = Queue.Queue()
-sqlLock = threading.Lock()
 UISignalQueue = Queue.Queue()
 addressGeneratorQueue = Queue.Queue()
 knownNodesLock = threading.Lock()
@@ -85,12 +82,7 @@ namecoinDefaultRpcPort = "8336"
 frozen = getattr(sys,'frozen', None)
 
 def isInSqlInventory(hash):
-    t = (hash,)
-    shared.sqlLock.acquire()
-    shared.sqlSubmitQueue.put('''select hash from inventory where hash=?''')
-    shared.sqlSubmitQueue.put(t)
-    queryreturn = shared.sqlReturnQueue.get()
-    shared.sqlLock.release()
+    queryreturn = sqlQuery('''select hash from inventory where hash=?''', hash)
     if queryreturn == []:
         return False
     else:
@@ -171,41 +163,29 @@ def lookupAppdataFolder():
     return dataFolder
 
 def isAddressInMyAddressBook(address):
-    t = (address,)
-    sqlLock.acquire()
-    sqlSubmitQueue.put('''select address from addressbook where address=?''')
-    sqlSubmitQueue.put(t)
-    queryreturn = sqlReturnQueue.get()
-    sqlLock.release()
+    queryreturn = sqlQuery(
+        '''select address from addressbook where address=?''',
+        address)
     return queryreturn != []
 
 #At this point we should really just have a isAddressInMy(book, address)...
 def isAddressInMySubscriptionsList(address):
-    t = (str(address),) # As opposed to Qt str
-    sqlLock.acquire()
-    sqlSubmitQueue.put('''select * from subscriptions where address=?''')
-    sqlSubmitQueue.put(t)
-    queryreturn = sqlReturnQueue.get()
-    sqlLock.release()
+    queryreturn = sqlQuery(
+        '''select * from subscriptions where address=?''',
+        str(address))
     return queryreturn != []
 
 def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
     if isAddressInMyAddressBook(address):
         return True
 
-    sqlLock.acquire()
-    sqlSubmitQueue.put('''SELECT address FROM whitelist where address=? and enabled = '1' ''')
-    sqlSubmitQueue.put((address,))
-    queryreturn = sqlReturnQueue.get()
-    sqlLock.release()
+    queryreturn = sqlQuery('''SELECT address FROM whitelist where address=? and enabled = '1' ''', address)
     if queryreturn <> []:
         return True
 
-    sqlLock.acquire()
-    sqlSubmitQueue.put('''select address from subscriptions where address=? and enabled = '1' ''')
-    sqlSubmitQueue.put((address,))
-    queryreturn = sqlReturnQueue.get()
-    sqlLock.release()
+    queryreturn = sqlQuery(
+        '''select address from subscriptions where address=? and enabled = '1' ''',
+        address)
     if queryreturn <> []:
         return True
     return False
@@ -269,11 +249,7 @@ def reloadBroadcastSendersForWhichImWatching():
     logger.debug('reloading subscriptions...')
     broadcastSendersForWhichImWatching.clear()
     MyECSubscriptionCryptorObjects.clear()
-    sqlLock.acquire()
-    sqlSubmitQueue.put('SELECT address FROM subscriptions where enabled=1')
-    sqlSubmitQueue.put('')
-    queryreturn = sqlReturnQueue.get()
-    sqlLock.release()
+    queryreturn = sqlQuery('SELECT address FROM subscriptions where enabled=1')
     for row in queryreturn:
         address, = row
         status,addressVersionNumber,streamNumber,hash = decodeAddress(address)
@@ -307,12 +283,8 @@ def doCleanShutdown():
 
     # This one last useless query will guarantee that the previous flush committed before we close
     # the program.
-    sqlLock.acquire()
-    sqlSubmitQueue.put('SELECT address FROM subscriptions')
-    sqlSubmitQueue.put('')
-    sqlReturnQueue.get()
-    sqlSubmitQueue.put('exit')
-    sqlLock.release()
+    sqlQuery('SELECT address FROM subscriptions')
+    sqlStoredProcedure('exit')
     logger.info('Finished flushing inventory.')
 
     # Wait long enough to guarantee that any running proof of work worker threads will check the
@@ -333,16 +305,12 @@ def broadcastToSendDataQueues(data):
         
 def flushInventory():
     #Note that the singleCleanerThread clears out the inventory dictionary from time to time, although it only clears things that have been in the dictionary for a long time. This clears the inventory dictionary Now.
-    sqlLock.acquire()
-    for hash, storedValue in inventory.items():
-        objectType, streamNumber, payload, receivedTime = storedValue
-        t = (hash,objectType,streamNumber,payload,receivedTime,'')
-        sqlSubmitQueue.put('''INSERT INTO inventory VALUES (?,?,?,?,?,?)''')
-        sqlSubmitQueue.put(t)
-        sqlReturnQueue.get()
-        del inventory[hash]
-    sqlSubmitQueue.put('commit')
-    sqlLock.release()
+    with SqlBulkExecute() as sql:
+        for hash, storedValue in inventory.items():
+            objectType, streamNumber, payload, receivedTime = storedValue
+            sql.execute('''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
+                       hash,objectType,streamNumber,payload,receivedTime,'')
+            del inventory[hash]
 
 def fixPotentiallyInvalidUTF8Data(text):
     try:
