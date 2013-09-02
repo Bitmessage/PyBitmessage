@@ -36,6 +36,7 @@ import debug
 from debug import logger
 import subprocess
 import datetime
+from helper_sql import *
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -346,11 +347,7 @@ class MyForm(QtGui.QMainWindow):
         self.loadSent()
 
         # Initialize the address book
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('SELECT * FROM addressbook')
-        shared.sqlSubmitQueue.put('')
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
+        queryreturn = sqlQuery('SELECT * FROM addressbook')
         for row in queryreturn:
             label, address = row
             self.ui.tableWidgetAddressBook.insertRow(0)
@@ -561,7 +558,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             where = "toaddress || fromaddress || subject || message"
 
-        sqlQuery = '''
+        sql = '''
             SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime 
             FROM sent WHERE folder="sent" AND %s LIKE ? 
             ORDER BY lastactiontime
@@ -570,12 +567,7 @@ class MyForm(QtGui.QMainWindow):
         while self.ui.tableWidgetSent.rowCount() > 0:
             self.ui.tableWidgetSent.removeRow(0)
 
-        t = (what,)
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(sqlQuery)
-        shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
+        queryreturn = sqlQuery(sql, what)
         for row in queryreturn:
             toAddress, fromAddress, subject, message, status, ackdata, lastactiontime = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
@@ -588,13 +580,8 @@ class MyForm(QtGui.QMainWindow):
                 fromLabel = fromAddress
 
             toLabel = ''
-            t = (toAddress,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''select label from addressbook where address=?''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery(
+                '''select label from addressbook where address=?''', toAddress)
 
             if queryreturn != []:
                 for row in queryreturn:
@@ -691,7 +678,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             where = "toaddress || fromaddress || subject || message"
 
-        sqlQuery = '''
+        sql = '''
             SELECT msgid, toaddress, fromaddress, subject, received, message, read 
             FROM inbox WHERE folder="inbox" AND %s LIKE ? 
             ORDER BY received
@@ -702,12 +689,7 @@ class MyForm(QtGui.QMainWindow):
 
         font = QFont()
         font.setBold(True)
-        t = (what,)
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(sqlQuery)
-        shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
+        queryreturn = sqlQuery(sql, what)
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, received, message, read = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
@@ -723,26 +705,16 @@ class MyForm(QtGui.QMainWindow):
                 toLabel = toAddress
 
             fromLabel = ''
-            t = (fromAddress,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''select label from addressbook where address=?''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery(
+                '''select label from addressbook where address=?''', fromAddress)
 
             if queryreturn != []:
                 for row in queryreturn:
                     fromLabel, = row
 
             if fromLabel == '':  # If this address wasn't in our address book...
-                t = (fromAddress,)
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put(
-                    '''select label from subscriptions where address=?''')
-                shared.sqlSubmitQueue.put(t)
-                queryreturn = shared.sqlReturnQueue.get()
-                shared.sqlLock.release()
+                queryReturn = sqlQuery(
+                    '''select label from subscriptions where address=?''', fromAddress)
 
                 if queryreturn != []:
                     for row in queryreturn:
@@ -883,12 +855,8 @@ class MyForm(QtGui.QMainWindow):
         if not (self.mmapp.has_source("Subscriptions") or self.mmapp.has_source("Messages")):
             return
 
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
-            '''SELECT toaddress, read FROM inbox WHERE msgid=?''')
-        shared.sqlSubmitQueue.put(inventoryHash)
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
+        queryreturn = sqlQuery(
+            '''SELECT toaddress, read FROM inbox WHERE msgid=?''', inventoryHash)
         for row in queryreturn:
             toAddress, read = row
             if not read:
@@ -904,12 +872,8 @@ class MyForm(QtGui.QMainWindow):
         unreadMessages = 0
         unreadSubscriptions = 0
 
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
+        queryreturn = sqlQuery(
             '''SELECT msgid, toaddress, read FROM inbox where folder='inbox' ''')
-        shared.sqlSubmitQueue.put('')
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
         for row in queryreturn:
             msgid, toAddress, read = row
 
@@ -1156,9 +1120,7 @@ class MyForm(QtGui.QMainWindow):
     def click_actionDeleteAllTrashedMessages(self):
         if QtGui.QMessageBox.question(self, _translate("MainWindow", "Delete trash?"), _translate("MainWindow", "Are you sure you want to delete all trashed messages?"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
             return
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('deleteandvacuume')
-        shared.sqlLock.release()
+        sqlStoredProcedure('deleteandvacuume')
 
     def click_actionRegenerateDeterministicAddresses(self):
         self.regenerateAddressesDialogInstance = regenerateAddressesDialog(
@@ -1439,13 +1401,8 @@ class MyForm(QtGui.QMainWindow):
             addressToLookup = str(self.ui.tableWidgetInbox.item(
                 i, 1).data(Qt.UserRole).toPyObject())
             fromLabel = ''
-            t = (addressToLookup,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''select label from addressbook where address=?''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery(
+                '''select label from addressbook where address=?''', addressToLookup)
 
             if queryreturn != []:
                 for row in queryreturn:
@@ -1455,12 +1412,8 @@ class MyForm(QtGui.QMainWindow):
             else:
                 # It might be a broadcast message. We should check for that
                 # label.
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put(
-                    '''select label from subscriptions where address=?''')
-                shared.sqlSubmitQueue.put(t)
-                queryreturn = shared.sqlReturnQueue.get()
-                shared.sqlLock.release()
+                queryreturn = sqlQuery(
+                    '''select label from subscriptions where address=?''', addressToLookup)
 
                 if queryreturn != []:
                     for row in queryreturn:
@@ -1506,13 +1459,8 @@ class MyForm(QtGui.QMainWindow):
             addressToLookup = str(self.ui.tableWidgetSent.item(
                 i, 0).data(Qt.UserRole).toPyObject())
             toLabel = ''
-            t = (addressToLookup,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''select label from addressbook where address=?''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery(
+                '''select label from addressbook where address=?''', addressToLookup)
 
             if queryreturn != []:
                 for row in queryreturn:
@@ -1522,12 +1470,7 @@ class MyForm(QtGui.QMainWindow):
 
     def rerenderSubscriptions(self):
         self.ui.tableWidgetSubscriptions.setRowCount(0)
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
-            'SELECT label, address, enabled FROM subscriptions')
-        shared.sqlSubmitQueue.put('')
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
+        queryreturn = sqlQuery('SELECT label, address, enabled FROM subscriptions')
         for row in queryreturn:
             label, address, enabled = row
             self.ui.tableWidgetSubscriptions.insertRow(0)
@@ -1610,24 +1553,26 @@ class MyForm(QtGui.QMainWindow):
                             self.statusBar().showMessage(_translate(
                                 "MainWindow", "Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect."))
                         ackdata = OpenSSL.rand(32)
-                        shared.sqlLock.acquire()
-                        t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
-                            time.time()), 'msgqueued', 1, 1, 'sent', 2)
-                        shared.sqlSubmitQueue.put(
-                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
-                        shared.sqlSubmitQueue.put(t)
-                        shared.sqlReturnQueue.get()
-                        shared.sqlSubmitQueue.put('commit')
-                        shared.sqlLock.release()
+                        t = ()
+                        sqlExecute(
+                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                            '',
+                            toAddress,
+                            ripe,
+                            fromAddress,
+                            subject,
+                            message,
+                            ackdata,
+                            int(time.time()),
+                            'msgqueued',
+                            1,
+                            1,
+                            'sent',
+                            2)
 
                         toLabel = ''
-                        t = (toAddress,)
-                        shared.sqlLock.acquire()
-                        shared.sqlSubmitQueue.put(
-                            '''select label from addressbook where address=?''')
-                        shared.sqlSubmitQueue.put(t)
-                        queryreturn = shared.sqlReturnQueue.get()
-                        shared.sqlLock.release()
+                        queryreturn = sqlQuery('''select label from addressbook where address=?''',
+                                               toAddress)
                         if queryreturn != []:
                             for row in queryreturn:
                                 toLabel, = row
@@ -1658,15 +1603,10 @@ class MyForm(QtGui.QMainWindow):
                 ackdata = OpenSSL.rand(32)
                 toAddress = self.str_broadcast_subscribers
                 ripe = ''
-                shared.sqlLock.acquire()
                 t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
                     time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
-                shared.sqlSubmitQueue.put(
-                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
-                shared.sqlSubmitQueue.put(t)
-                shared.sqlReturnQueue.get()
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlLock.release()
+                sqlExecute(
+                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', t)
 
                 shared.workerQueue.put(('sendbroadcast', ''))
 
@@ -1822,25 +1762,15 @@ class MyForm(QtGui.QMainWindow):
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         message = shared.fixPotentiallyInvalidUTF8Data(message)
         fromLabel = ''
-        shared.sqlLock.acquire()
-        t = (fromAddress,)
-        shared.sqlSubmitQueue.put(
-            '''select label from addressbook where address=?''')
-        shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
+        queryreturn = sqlQuery(
+            '''select label from addressbook where address=?''', fromAddress)
         if queryreturn != []:
             for row in queryreturn:
                 fromLabel, = row
         else:
             # There might be a label in the subscriptions table
-            shared.sqlLock.acquire()
-            t = (fromAddress,)
-            shared.sqlSubmitQueue.put(
-                '''select label from subscriptions where address=?''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery(
+                '''select label from subscriptions where address=?''', fromAddress)
             if queryreturn != []:
                 for row in queryreturn:
                     fromLabel, = row
@@ -1914,13 +1844,7 @@ class MyForm(QtGui.QMainWindow):
                     "MainWindow", "The address you entered was invalid. Ignoring it."))
 
     def addEntryToAddressBook(self,address,label):
-        shared.sqlLock.acquire()
-        t = (address,)
-        shared.sqlSubmitQueue.put(
-            '''select * from addressbook where address=?''')
-        shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
+        queryreturn = sqlQuery('''select * from addressbook where address=?''', address)
         if queryreturn == []:
             self.ui.tableWidgetAddressBook.setSortingEnabled(False)
             self.ui.tableWidgetAddressBook.insertRow(0)
@@ -1931,14 +1855,7 @@ class MyForm(QtGui.QMainWindow):
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
             self.ui.tableWidgetAddressBook.setSortingEnabled(True)
-            t = (str(label), address)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''INSERT INTO addressbook VALUES (?,?)''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(label), address)
             self.rerenderInboxFromLabels()
             self.rerenderSentToLabels()
         else:
@@ -1960,13 +1877,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
         self.ui.tableWidgetSubscriptions.setSortingEnabled(True)
         #Add to database (perhaps this should be separated from the MyForm class)
-        t = (str(label),address,True)
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('''INSERT INTO subscriptions VALUES (?,?,?)''')
-        shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
+        sqlExecute('''INSERT INTO subscriptions VALUES (?,?,?)''',str(label),address,True)
         self.rerenderInboxFromLabels()
         shared.reloadBroadcastSendersForWhichImWatching()
 
@@ -1987,16 +1898,10 @@ class MyForm(QtGui.QMainWindow):
     def loadBlackWhiteList(self):
         # Initialize the Blacklist or Whitelist table
         listType = shared.config.get('bitmessagesettings', 'blackwhitelist')
-        shared.sqlLock.acquire()
         if listType == 'black':
-            shared.sqlSubmitQueue.put(
-                '''SELECT label, address, enabled FROM blacklist''')
+            queryreturn = sqlQuery('''SELECT label, address, enabled FROM blacklist''')
         else:
-            shared.sqlSubmitQueue.put(
-                '''SELECT label, address, enabled FROM whitelist''')
-        shared.sqlSubmitQueue.put('')
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT label, address, enabled FROM whitelist''')
         for row in queryreturn:
             label, address, enabled = row
             self.ui.tableWidgetBlacklist.insertRow(0)
@@ -2125,9 +2030,7 @@ class MyForm(QtGui.QMainWindow):
 
             if shared.appdata != '' and self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we are NOT using portable mode now but the user selected that we should...
                 # Write the keys.dat file to disk in the new location
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put('movemessagstoprog')
-                shared.sqlLock.release()
+                sqlStoredProcedure('movemessagstoprog')
                 with open('keys.dat', 'wb') as configfile:
                     shared.config.write(configfile)
                 # Write the knownnodes.dat file to disk in the new location
@@ -2151,9 +2054,7 @@ class MyForm(QtGui.QMainWindow):
                 shared.appdata = shared.lookupAppdataFolder()
                 if not os.path.exists(shared.appdata):
                     os.makedirs(shared.appdata)
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put('movemessagstoappdata')
-                shared.sqlLock.release()
+                sqlStoredProcedure('movemessagstoappdata')
                 # Write the keys.dat file to disk in the new location
                 with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                     shared.config.write(configfile)
@@ -2199,18 +2100,13 @@ class MyForm(QtGui.QMainWindow):
                 # First we must check to see if the address is already in the
                 # address book. The user cannot add it again or else it will
                 # cause problems when updating and deleting the entry.
-                shared.sqlLock.acquire()
                 t = (addBMIfNotPresent(str(
                     self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text())),)
                 if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-                    shared.sqlSubmitQueue.put(
-                        '''select * from blacklist where address=?''')
+                    sql = '''select * from blacklist where address=?'''
                 else:
-                    shared.sqlSubmitQueue.put(
-                        '''select * from whitelist where address=?''')
-                shared.sqlSubmitQueue.put(t)
-                queryreturn = shared.sqlReturnQueue.get()
-                shared.sqlLock.release()
+                    sql = '''select * from whitelist where address=?'''
+                queryreturn = sqlQuery(sql,*t)
                 if queryreturn == []:
                     self.ui.tableWidgetBlacklist.setSortingEnabled(False)
                     self.ui.tableWidgetBlacklist.insertRow(0)
@@ -2225,17 +2121,11 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetBlacklist.setSortingEnabled(True)
                     t = (str(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8()), addBMIfNotPresent(
                         str(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text())), True)
-                    shared.sqlLock.acquire()
                     if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-                        shared.sqlSubmitQueue.put(
-                            '''INSERT INTO blacklist VALUES (?,?,?)''')
+                        sql = '''INSERT INTO blacklist VALUES (?,?,?)'''
                     else:
-                        shared.sqlSubmitQueue.put(
-                            '''INSERT INTO whitelist VALUES (?,?,?)''')
-                    shared.sqlSubmitQueue.put(t)
-                    queryreturn = shared.sqlReturnQueue.get()
-                    shared.sqlSubmitQueue.put('commit')
-                    shared.sqlLock.release()
+                        sql = '''INSERT INTO whitelist VALUES (?,?,?)'''
+                    sqlExecute(sql, *t)
                 else:
                     self.statusBar().showMessage(_translate(
                         "MainWindow", "Error: You cannot add the same address to your list twice. Perhaps rename the existing one if you want."))
@@ -2362,20 +2252,11 @@ class MyForm(QtGui.QMainWindow):
             currentRow = row.row()
             inventoryHashToMarkUnread = str(self.ui.tableWidgetInbox.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
-            t = (inventoryHashToMarkUnread,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''UPDATE inbox SET read=0 WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            sqlExecute('''UPDATE inbox SET read=0 WHERE msgid=?''', inventoryHashToMarkUnread)
             self.ui.tableWidgetInbox.item(currentRow, 0).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 1).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 2).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 3).setFont(font)
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
         # self.ui.tableWidgetInbox.selectRow(currentRow + 1) 
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
@@ -2420,13 +2301,8 @@ class MyForm(QtGui.QMainWindow):
         addressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
             currentInboxRow, 1).data(Qt.UserRole).toPyObject())
         # Let's make sure that it isn't already in the address book
-        shared.sqlLock.acquire()
-        t = (addressAtCurrentInboxRow,)
-        shared.sqlSubmitQueue.put(
-            '''select * from addressbook where address=?''')
-        shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
+        queryreturn = sqlQuery('''select * from addressbook where address=?''',
+                               addressAtCurrentInboxRow)
         if queryreturn == []:
             self.ui.tableWidgetAddressBook.insertRow(0)
             newItem = QtGui.QTableWidgetItem(
@@ -2436,15 +2312,9 @@ class MyForm(QtGui.QMainWindow):
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
-            t = ('--New entry. Change label in Address Book.--',
-                 addressAtCurrentInboxRow)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''INSERT INTO addressbook VALUES (?,?)''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute('''INSERT INTO addressbook VALUES (?,?)''',
+                       '--New entry. Change label in Address Book.--',
+                       addressAtCurrentInboxRow)
             self.ui.tabWidget.setCurrentIndex(5)
             self.ui.tableWidgetAddressBook.setCurrentCell(0, 0)
             self.statusBar().showMessage(_translate(
@@ -2459,20 +2329,11 @@ class MyForm(QtGui.QMainWindow):
             currentRow = self.ui.tableWidgetInbox.selectedIndexes()[0].row()
             inventoryHashToTrash = str(self.ui.tableWidgetInbox.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
-            t = (inventoryHashToTrash,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''UPDATE inbox SET folder='trash' WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', inventoryHashToTrash)
             self.ui.textEditInboxMessage.setText("")
             self.ui.tableWidgetInbox.removeRow(currentRow)
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back."))
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
         if currentRow == 0:
             self.ui.tableWidgetInbox.selectRow(currentRow)
         else:
@@ -2503,20 +2364,11 @@ class MyForm(QtGui.QMainWindow):
             currentRow = self.ui.tableWidgetSent.selectedIndexes()[0].row()
             ackdataToTrash = str(self.ui.tableWidgetSent.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
-            t = (ackdataToTrash,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''UPDATE sent SET folder='trash' WHERE ackdata=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            sqlExecute('''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdataToTrash)
             self.ui.textEditSentMessage.setPlainText("")
             self.ui.tableWidgetSent.removeRow(currentRow)
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back."))
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
         if currentRow == 0:
             self.ui.tableWidgetSent.selectRow(currentRow)
         else:
@@ -2527,18 +2379,10 @@ class MyForm(QtGui.QMainWindow):
         addressAtCurrentRow = str(self.ui.tableWidgetSent.item(
             currentRow, 0).data(Qt.UserRole).toPyObject())
         toRipe = decodeAddress(addressAtCurrentRow)[3]
-        t = (toRipe,)
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
-            '''UPDATE sent SET status='forcepow' WHERE toripe=? AND status='toodifficult' and folder='sent' ''')
-        shared.sqlSubmitQueue.put(t)
-        shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlSubmitQueue.put(
-            '''select ackdata FROM sent WHERE status='forcepow' ''')
-        shared.sqlSubmitQueue.put('')
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
+        sqlExecute(
+            '''UPDATE sent SET status='forcepow' WHERE toripe=? AND status='toodifficult' and folder='sent' ''',
+            toRipe)
+        queryreturn = sqlQuery('''select ackdata FROM sent WHERE status='forcepow' ''')
         for row in queryreturn:
             ackdata, = row
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
@@ -2564,14 +2408,8 @@ class MyForm(QtGui.QMainWindow):
                 currentRow, 0).text().toUtf8()
             addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
                 currentRow, 1).text()
-            t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''DELETE FROM addressbook WHERE label=? AND address=?''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute('''DELETE FROM addressbook WHERE label=? AND address=?''',
+                       str(labelAtCurrentRow), str(addressAtCurrentRow))
             self.ui.tableWidgetAddressBook.removeRow(currentRow)
             self.rerenderInboxFromLabels()
             self.rerenderSentToLabels()
@@ -2641,14 +2479,8 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
-            '''DELETE FROM subscriptions WHERE label=? AND address=?''')
-        shared.sqlSubmitQueue.put(t)
-        shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
+        sqlExecute('''DELETE FROM subscriptions WHERE label=? AND address=?''',
+                   str(labelAtCurrentRow), str(addressAtCurrentRow))
         self.ui.tableWidgetSubscriptions.removeRow(currentRow)
         self.rerenderInboxFromLabels()
         shared.reloadBroadcastSendersForWhichImWatching()
@@ -2666,14 +2498,9 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
-            '''update subscriptions set enabled=1 WHERE label=? AND address=?''')
-        shared.sqlSubmitQueue.put(t)
-        shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
+        sqlExecute(
+            '''update subscriptions set enabled=1 WHERE label=? AND address=?''',
+            str(labelAtCurrentRow), str(addressAtCurrentRow))
         self.ui.tableWidgetSubscriptions.item(
             currentRow, 0).setTextColor(QApplication.palette().text().color())
         self.ui.tableWidgetSubscriptions.item(
@@ -2686,14 +2513,9 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
-            '''update subscriptions set enabled=0 WHERE label=? AND address=?''')
-        shared.sqlSubmitQueue.put(t)
-        shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
+        sqlExecute(
+            '''update subscriptions set enabled=0 WHERE label=? AND address=?''',
+            str(labelAtCurrentRow), str(addressAtCurrentRow))
         self.ui.tableWidgetSubscriptions.item(
             currentRow, 0).setTextColor(QtGui.QColor(128, 128, 128))
         self.ui.tableWidgetSubscriptions.item(
@@ -2714,20 +2536,14 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).text().toUtf8()
         addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(
             currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
-        shared.sqlLock.acquire()
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-            shared.sqlSubmitQueue.put(
-                '''DELETE FROM blacklist WHERE label=? AND address=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
+            sqlExecute(
+                '''DELETE FROM blacklist WHERE label=? AND address=?''',
+                str(labelAtCurrentRow), str(addressAtCurrentRow))
         else:
-            shared.sqlSubmitQueue.put(
-                '''DELETE FROM whitelist WHERE label=? AND address=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
+            sqlExecute(
+                '''DELETE FROM whitelist WHERE label=? AND address=?''',
+                str(labelAtCurrentRow), str(addressAtCurrentRow))
         self.ui.tableWidgetBlacklist.removeRow(currentRow)
 
     def on_action_BlacklistClipboard(self):
@@ -2749,20 +2565,14 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).setTextColor(QApplication.palette().text().color())
         self.ui.tableWidgetBlacklist.item(
             currentRow, 1).setTextColor(QApplication.palette().text().color())
-        t = (str(addressAtCurrentRow),)
-        shared.sqlLock.acquire()
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-            shared.sqlSubmitQueue.put(
-                '''UPDATE blacklist SET enabled=1 WHERE address=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
+            sqlExecute(
+                '''UPDATE blacklist SET enabled=1 WHERE address=?''',
+                str(addressAtCurrentRow))
         else:
-            shared.sqlSubmitQueue.put(
-                '''UPDATE whitelist SET enabled=1 WHERE address=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
+            sqlExecute(
+                '''UPDATE whitelist SET enabled=1 WHERE address=?''',
+                str(addressAtCurrentRow))
 
     def on_action_BlacklistDisable(self):
         currentRow = self.ui.tableWidgetBlacklist.currentRow()
@@ -2772,20 +2582,12 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 0).setTextColor(QtGui.QColor(128, 128, 128))
         self.ui.tableWidgetBlacklist.item(
             currentRow, 1).setTextColor(QtGui.QColor(128, 128, 128))
-        t = (str(addressAtCurrentRow),)
-        shared.sqlLock.acquire()
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-            shared.sqlSubmitQueue.put(
-                '''UPDATE blacklist SET enabled=0 WHERE address=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
+            sqlExecute(
+                '''UPDATE blacklist SET enabled=0 WHERE address=?''', str(addressAtCurrentRow))
         else:
-            shared.sqlSubmitQueue.put(
-                '''UPDATE whitelist SET enabled=0 WHERE address=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
+            sqlExecute(
+                '''UPDATE whitelist SET enabled=0 WHERE address=?''', str(addressAtCurrentRow))
 
     # Group of functions for the Your Identities dialog box
     def on_action_YourIdentitiesNew(self):
@@ -2851,12 +2653,7 @@ class MyForm(QtGui.QMainWindow):
         currentRow = self.ui.tableWidgetSent.currentRow()
         ackData = str(self.ui.tableWidgetSent.item(
             currentRow, 3).data(Qt.UserRole).toPyObject())
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
-            '''SELECT status FROM sent where ackdata=?''')
-        shared.sqlSubmitQueue.put((ackData,))
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
+        queryreturn = sqlQuery('''SELECT status FROM sent where ackdata=?''', ackData)
         for row in queryreturn:
             status, = row
         if status == 'toodifficult':
@@ -2913,13 +2710,7 @@ class MyForm(QtGui.QMainWindow):
                 currentRow, 3).data(Qt.UserRole).toPyObject())
             t = (inventoryHash,)
             self.ubuntuMessagingMenuClear(t)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''update inbox set read=1 WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute('''update inbox set read=1 WHERE msgid=?''', *t)
 
     def tableWidgetSentItemClicked(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
@@ -2944,35 +2735,23 @@ class MyForm(QtGui.QMainWindow):
 
     def tableWidgetAddressBookItemChanged(self):
         currentRow = self.ui.tableWidgetAddressBook.currentRow()
-        shared.sqlLock.acquire()
         if currentRow >= 0:
             addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
                 currentRow, 1).text()
-            t = (str(self.ui.tableWidgetAddressBook.item(
-                currentRow, 0).text().toUtf8()), str(addressAtCurrentRow))
-            shared.sqlSubmitQueue.put(
-                '''UPDATE addressbook set label=? WHERE address=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
+            sqlExecute('''UPDATE addressbook set label=? WHERE address=?''',
+                       str(self.ui.tableWidgetAddressBook.item(currentRow, 0).text().toUtf8()),
+                       str(addressAtCurrentRow))
         self.rerenderInboxFromLabels()
         self.rerenderSentToLabels()
 
     def tableWidgetSubscriptionsItemChanged(self):
         currentRow = self.ui.tableWidgetSubscriptions.currentRow()
-        shared.sqlLock.acquire()
         if currentRow >= 0:
             addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
                 currentRow, 1).text()
-            t = (str(self.ui.tableWidgetSubscriptions.item(
-                currentRow, 0).text().toUtf8()), str(addressAtCurrentRow))
-            shared.sqlSubmitQueue.put(
-                '''UPDATE subscriptions set label=? WHERE address=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
+            sqlExecute('''UPDATE subscriptions set label=? WHERE address=?''',
+                       str(self.ui.tableWidgetSubscriptions.item(currentRow, 0).text().toUtf8()),
+                       str(addressAtCurrentRow))
         self.rerenderInboxFromLabels()
         self.rerenderSentToLabels()
 
