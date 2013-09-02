@@ -727,16 +727,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # This is not a particularly commonly used API function. Before we 
             # use it we'll need to fill out a field in our inventory database 
             # which is blank by default (first20bytesofencryptedmessage). 
-            parameters = ''
             queryreturn = sqlQuery(
                 '''SELECT hash, payload FROM inventory WHERE first20bytesofencryptedmessage = '' and objecttype = 'msg' ; ''')
-                                   
-            for row in queryreturn:
-                hash, payload = row
-                readPosition = 16 # Nonce length + time length
-                readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
-                t = (payload[readPosition:readPosition+20],hash)
-                sqlExecute('''UPDATE inventory SET first20bytesofencryptedmessage=? WHERE hash=?; ''', t)
+            with SqlBulkExecute() as sql:
+                for row in queryreturn:
+                    hash, payload = row
+                    readPosition = 16 # Nonce length + time length
+                    readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
+                    t = (payload[readPosition:readPosition+20],hash)
+                    sql.execute('''UPDATE inventory SET first20bytesofencryptedmessage=? WHERE hash=?; ''', t)
                 
             queryreturn = sqlQuery('''SELECT payload FROM inventory WHERE first20bytesofencryptedmessage = ?''',
                                    requestedHash)

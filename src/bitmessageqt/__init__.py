@@ -558,7 +558,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             where = "toaddress || fromaddress || subject || message"
 
-        sql = '''
+        sqlStatement = '''
             SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime 
             FROM sent WHERE folder="sent" AND %s LIKE ? 
             ORDER BY lastactiontime
@@ -567,7 +567,7 @@ class MyForm(QtGui.QMainWindow):
         while self.ui.tableWidgetSent.rowCount() > 0:
             self.ui.tableWidgetSent.removeRow(0)
 
-        queryreturn = sqlQuery(sql, what)
+        queryreturn = sqlQuery(sqlStatement, what)
         for row in queryreturn:
             toAddress, fromAddress, subject, message, status, ackdata, lastactiontime = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
@@ -678,7 +678,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             where = "toaddress || fromaddress || subject || message"
 
-        sql = '''
+        sqlStatement = '''
             SELECT msgid, toaddress, fromaddress, subject, received, message, read 
             FROM inbox WHERE folder="inbox" AND %s LIKE ? 
             ORDER BY received
@@ -689,7 +689,7 @@ class MyForm(QtGui.QMainWindow):
 
         font = QFont()
         font.setBold(True)
-        queryreturn = sqlQuery(sql, what)
+        queryreturn = sqlQuery(sqlStatement, what)
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, received, message, read = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
