@@ -270,6 +270,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(0, 'Too many parameters!')
             if len(passphrase) == 0:
                 raise APIError(1, 'The specified passphrase is blank.')
+            if not isinstance(eighteenByteRipe, bool):
+                raise APIError(23, 'Bool expected in eighteenByteRipe, saw %s instead' % type(eighteenByteRipe))
             passphrase = self._decode(passphrase, "base64")
             if addressVersionNumber == 0:  # 0 means "just use the proper addressVersionNumber"
                 addressVersionNumber = 3
@@ -343,7 +345,14 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif method == 'getInboxMessageById' or method == 'getInboxMessageByID':
             if len(params) == 0:
                 raise APIError(0, 'I need parameters!')
-            msgid = self._decode(params[0], "hex")
+            elif len(params) == 1:
+                msgid = self._decode(params[0], "hex")
+            elif len(params) >= 2:
+                msgid = self._decode(params[0], "hex")
+                readStatus = params[1]
+                if not isinstance(readStatus, bool):
+                    raise APIError(23, 'Bool expected in readStatus, saw %s instead.' % type(readStatus))
+                sqlExecute('''UPDATE inbox set read = ? WHERE msgid=?''', readStatus, msgid)
             queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox WHERE msgid=?''', msgid)
             data = '{"inboxMessage":['
             for row in queryreturn:
