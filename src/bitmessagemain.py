@@ -441,8 +441,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # Trash if in inbox table
             helper_inbox.trash(msgid)
             # Trash if in sent table
-            t = (msgid,)
-            sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', t)
+            sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
             return 'Trashed message (assuming message existed).'
         elif method == 'trashInboxMessage':
             if len(params) == 0:
@@ -454,8 +453,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) == 0:
                 raise APIError(0, 'I need parameters!')
             msgid = self._decode(params[0], "hex")
-            t = (msgid,)
-            sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', t)
+            sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
             return 'Trashed sent message (assuming message existed).'
         elif method == 'trashSentMessageByAckData':
             # This API method should only be used when msgid is not available
@@ -735,7 +733,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     readPosition = 16 # Nonce length + time length
                     readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
                     t = (payload[readPosition:readPosition+20],hash)
-                    sql.execute('''UPDATE inventory SET first20bytesofencryptedmessage=? WHERE hash=?; ''', t)
+                    sql.execute('''UPDATE inventory SET first20bytesofencryptedmessage=? WHERE hash=?; ''', *t)
                 
             queryreturn = sqlQuery('''SELECT payload FROM inventory WHERE first20bytesofencryptedmessage = ?''',
                                    requestedHash)
