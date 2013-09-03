@@ -1606,7 +1606,7 @@ class MyForm(QtGui.QMainWindow):
                 t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
                     time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
                 sqlExecute(
-                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', t)
+                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
 
                 shared.workerQueue.put(('sendbroadcast', ''))
 

@@ -7,7 +7,6 @@ sqlLock = threading.Lock()
 
 def sqlQuery(sqlStatement, *args):
     sqlLock.acquire()
-    print 'sqlQuery args are:', args
     sqlSubmitQueue.put(sqlStatement)
 
     if args == ():
@@ -22,7 +21,6 @@ def sqlQuery(sqlStatement, *args):
 
 def sqlExecute(sqlStatement, *args):
     sqlLock.acquire()
-    print 'sqlExecute args are:', args
     sqlSubmitQueue.put(sqlStatement)
 
     if args == ():
