@@ -171,6 +171,17 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                                        streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
+        elif method == 'listAddressBook' or method == 'listAddressbook':
+            queryreturn = sqlQuery('''SELECT label, address from addressbook''')
+            data = '{"addresses":['
+            for row in queryreturn:
+                label, address = row
+                label = shared.fixPotentiallyInvalidUTF8Data(label)
+                if len(data) > 20:
+                    data += ','
+                data += json.dumps({'label':label.encode('base64'), 'address': address}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
         elif method == 'createRandomAddress':
             if len(params) == 0:
                 raise APIError(0, 'I need parameters!')
