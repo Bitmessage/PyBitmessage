@@ -173,6 +173,7 @@ class receiveDataThread(threading.Thread):
             self.payloadLength + 24:]  # take this message out and then process the next message
         if self.data == '':
             while len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) > 0:
+                shared.numberOfInventoryLookupsPerformed += 1
                 random.seed()
                 objectHash, = random.sample(
                     self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave, 1)
@@ -375,6 +376,7 @@ class receiveDataThread(threading.Thread):
                 print 'The stream number encoded in this broadcast message (' + str(streamNumber) + ') does not match the stream number on which it was received. Ignoring it.'
                 return
 
+        shared.numberOfInventoryLookupsPerformed += 1
         shared.inventoryLock.acquire()
         self.inventoryHash = calculateInventoryHash(data)
         if self.inventoryHash in shared.inventory:
@@ -738,6 +740,7 @@ class receiveDataThread(threading.Thread):
             return
         readPosition += streamNumberAsClaimedByMsgLength
         self.inventoryHash = calculateInventoryHash(data)
+        shared.numberOfInventoryLookupsPerformed += 1
         shared.inventoryLock.acquire()
         if self.inventoryHash in shared.inventory:
             print 'We have already received this msg message. Ignoring.'
@@ -1135,6 +1138,7 @@ class receiveDataThread(threading.Thread):
             print 'stream number embedded in this pubkey doesn\'t match our stream number. Ignoring.'
             return
 
+        shared.numberOfInventoryLookupsPerformed += 1
         inventoryHash = calculateInventoryHash(data)
         shared.inventoryLock.acquire()
         if inventoryHash in shared.inventory:
@@ -1328,6 +1332,7 @@ class receiveDataThread(threading.Thread):
             return
         readPosition += streamNumberLength
 
+        shared.numberOfInventoryLookupsPerformed += 1
         inventoryHash = calculateInventoryHash(data)
         shared.inventoryLock.acquire()
         if inventoryHash in shared.inventory:
@@ -1423,6 +1428,7 @@ class receiveDataThread(threading.Thread):
                 return
             self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[
                 data[lengthOfVarint:32 + lengthOfVarint]] = 0
+            shared.numberOfInventoryLookupsPerformed += 1
             if data[lengthOfVarint:32 + lengthOfVarint] in shared.inventory:
                 with shared.printLock:
                     print 'Inventory (in memory) has inventory item already.'
@@ -1480,7 +1486,7 @@ class receiveDataThread(threading.Thread):
             with shared.printLock:
                 print 'received getdata request for item:', hash.encode('hex')
 
-            # print 'inventory is', shared.inventory
+            shared.numberOfInventoryLookupsPerformed += 1
             if hash in shared.inventory:
                 objectType, streamNumber, payload, receivedTime = shared.inventory[
                     hash]
