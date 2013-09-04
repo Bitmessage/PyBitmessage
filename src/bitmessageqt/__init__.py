@@ -2291,7 +2291,15 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.labelFrom.setText(toAddressAtCurrentInboxRow)
             self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(toAddressAtCurrentInboxRow)
+
         self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
+        
+        # If the previous message was to a chan then we should send our reply to the chan rather than to the particular person who sent the message.
+        if shared.config.has_section(toAddressAtCurrentInboxRow):
+            if shared.safeConfigGetBoolean(toAddressAtCurrentInboxRow, 'chan'):
+                print 'original sent to a chan. Setting the to address in the reply to the chan address.'
+                self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
+
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
         # self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + self.ui.tableWidgetInbox.item(
