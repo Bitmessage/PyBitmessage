@@ -53,7 +53,7 @@ alreadyAttemptedConnectionsList = {
 alreadyAttemptedConnectionsListLock = threading.Lock()
 alreadyAttemptedConnectionsListResetTime = int(
     time.time())  # used to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
-numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer = {}
+numberOfObjectsThatWeHaveYetToGetPerPeer = {}
 neededPubkeys = {}
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
     '>Q', random.randrange(1, 18446744073709551615))
