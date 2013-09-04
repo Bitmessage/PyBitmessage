@@ -53,7 +53,7 @@ import hashlib
 # load identicon code
 # :Author:Shin Adachi <shn@glucose.jp>
 # Licesensed under FreeBSD License.
-# import identicon
+import identicon
 # usage: identicon.render_identicon(code, size)
 # requires PIL
 
@@ -75,29 +75,27 @@ def identiconize(address):
         idcon = QtGui.QIcon()
         return idcon
 
-    suffix = "" # here you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators
-    # instead, you could also use a pseudo-password to salt the generation of the identicons
-    # Attacks where someone creates an address to mimic someone else's identicon should be impossible then
-    # i think it should generate a random string by default
-    
-    # hash = hashlib.md5(addBMIfNotPresent(address)+suffix).hexdigest()[:8]
-    # print hash
-    ##japanese code
-    # idcon_render = identicon.render_identicon(int(hash, 16), 8)
-    # idcon_render.save('images/'+hash+'.png')
-    # im = idcon_render
-    # http://qt-project.org/forums/viewthread/5866
-    # from PIL import Image
-    # from PyQt4.QtGui import QImage, QImageReader, QLabel, QPixmap, QApplication
-    
     str_broadcast_subscribers = '[Broadcast subscribers]'
     if address == str_broadcast_subscribers:
         idcon = QtGui.QIcon(":/newPrefix/images/can-icon-24px.png")
         return idcon
+        
+    suffix = "asdf"
+    # here you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators
+    # instead, you could also use a pseudo-password to salt the generation of the identicons
+    # Attacks where someone creates an address to mimic someone else's identicon should be impossible then
+    # i think it should generate a random string by default
     
-    # PHP-like code
-    idcon_render = Pydenticon(addBMIfNotPresent(address)+suffix)
-    image = idcon_render._render()
+    if True: # identicon.py
+        hash = hashlib.md5(addBMIfNotPresent(address)+suffix).hexdigest()
+        idcon_render = identicon.render_identicon(int(hash, 16), 48)
+        image = idcon_render
+        # http://qt-project.org/forums/viewthread/5866
+        # from PIL import Image
+        # from PyQt4.QtGui import QImage, QImageReader, QLabel, QPixmap, QApplication
+    else: # pydenticon.py
+        idcon_render = Pydenticon(addBMIfNotPresent(address)+suffix)
+        image = idcon_render._render()
     
     # im = Image.open('images/'+hash+'.png')
     # http://stackoverflow.com/questions/6756820/python-pil-image-tostring
