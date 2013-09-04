@@ -36,6 +36,7 @@ from debug import logger
 
 # Helper Functions
 import helper_bootstrap
+import proofofwork
 
 import sys
 if sys.platform == 'darwin':
@@ -687,14 +688,28 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return data
         elif method == 'disseminatePreEncryptedMsg':
             # The device issuing this command to PyBitmessage supplies a msg object that has
-            # already been encrypted and had the necessary proof of work done for it to be
-            # disseminated to the rest of the Bitmessage network. PyBitmessage accepts this msg
-            # object and sends it out to the rest of the Bitmessage network as if it had generated the
-            # message itself. Please do not yet add this to the api doc.
-            if len(params) != 1:
-                raise APIError(0, 'I need 1 parameter!')
-            encryptedPayload, = params
+            # already been encrypted but which still needs the POW to be done. PyBitmessage
+            # accepts this msg object and sends it out to the rest of the Bitmessage network
+            # as if it had generated the message itself. Please do not yet add this to the
+            # api doc.
+            if len(params) != 3:
+                raise APIError(0, 'I need 3 parameter!')
+            encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte, requiredPayloadLengthExtraBytes = params
             encryptedPayload = self._decode(encryptedPayload, "hex")
+            # Let us do the POW and attach it to the front
+            target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
+            with shared.printLock:
+                print '(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes
+            powStartTime = time.time()
+            initialHash = hashlib.sha512(encryptedPayload).digest()
+            trialValue, nonce = proofofwork.run(target, initialHash)
+            with shared.printLock:
+                print '(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce
+                try:
+                    print 'POW took', int(time.time() - powStartTime), 'seconds.', nonce / (time.time() - powStartTime), 'nonce trials per second.'
+                except:
+                    pass
+            encryptedPayload = pack('>Q', nonce) + encryptedPayload
             toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
             inventoryHash = calculateInventoryHash(encryptedPayload)
             objectType = 'msg'
@@ -705,15 +720,25 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.broadcastToSendDataQueues((
                 toStreamNumber, 'sendinv', inventoryHash))
         elif method == 'disseminatePubkey':
-            # The device issuing this command to PyBitmessage supplies a pubkey object that has
-            # already had the necessary proof of work done for it to be disseminated to the rest of the 
-            # Bitmessage network. PyBitmessage accepts this pubkey object and sends it out to the 
-            # rest of the Bitmessage network as if it had generated the pubkey object itself. Please
-            # do not yet add this to the api doc.
+            # The device issuing this command to PyBitmessage supplies a pubkey object to be
+            # disseminated to the rest of the Bitmessage network. PyBitmessage accepts this
+            # pubkey object and sends it out to the rest of the Bitmessage network as if it
+            # had generated the pubkey object itself. Please do not yet add this to the api
+            # doc.
             if len(params) != 1:
                 raise APIError(0, 'I need 1 parameter!')
             payload, = params
             payload = self._decode(payload, "hex")
+
+            # Let us do the POW
+            target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
+                                 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+            print '(For pubkey message via API) Doing proof of work...'
+            initialHash = hashlib.sha512(payload).digest()
+            trialValue, nonce = proofofwork.run(target, initialHash)
+            print '(For pubkey message via API) Found proof of work', trialValue, 'Nonce:', nonce
+            payload = pack('>Q', nonce) + payload
+            
             pubkeyReadPosition = 8 # bypass the nonce
             if payload[pubkeyReadPosition:pubkeyReadPosition+4] == '\x00\x00\x00\x00': # if this pubkey uses 8 byte time
                 pubkeyReadPosition += 8
