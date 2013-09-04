@@ -1,7 +1,7 @@
 from setuptools import setup
 
 name = "Bitmessage"
-version = "0.3.4"
+version = "0.3.5"
 mainscript = ["bitmessagemain.py"]
 
 setup(
