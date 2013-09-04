@@ -860,7 +860,7 @@ class MyForm(QtGui.QMainWindow):
             return
 
         queryreturn = sqlQuery(
-            '''SELECT toaddress, read FROM inbox WHERE msgid=?''', inventoryHash)
+            '''SELECT toaddress, read FROM inbox WHERE msgid=?''', *inventoryHash)
         for row in queryreturn:
             toAddress, read = row
             if not read:
