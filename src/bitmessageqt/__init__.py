@@ -118,6 +118,10 @@ class MyForm(QtGui.QMainWindow):
 
         self.ui.labelSendBroadcastWarning.setVisible(False)
 
+        self.timer = QtCore.QTimer()
+        self.timer.start(2000) # milliseconds
+        QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
+
         # FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
             "triggered()"), self.quit)
@@ -1291,6 +1295,12 @@ class MyForm(QtGui.QMainWindow):
             self.setStatusIcon('yellow')
         elif len(shared.connectedHostsList) == 0:
             self.setStatusIcon('red')
+
+    # timer driven
+    def runEveryTwoSeconds(self):
+        self.ui.labelLookupsPerSecond.setText(_translate(
+            "MainWindow", "Inventory lookups per second: %1").arg(str(shared.numberOfInventoryLookupsPerformed/2)))
+        shared.numberOfInventoryLookupsPerformed = 0
 
     # Indicates whether or not there is a connection to the Bitmessage network
     connected = False
