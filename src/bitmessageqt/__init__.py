@@ -197,6 +197,8 @@ class MyForm(QtGui.QMainWindow):
             "MainWindow", "Disable"), self.on_action_YourIdentitiesDisable)
         self.actionClipboard = self.ui.addressContextMenuToolbar.addAction(_translate(
             "MainWindow", "Copy address to clipboard"), self.on_action_YourIdentitiesClipboard)
+        self.actionSendToChan = self.ui.addressContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Send message to this chan"), self.on_action_YourIdentitiesSendToChan)
         self.actionSpecialAddressBehavior = self.ui.addressContextMenuToolbar.addAction(_translate(
             "MainWindow", "Special address behavior..."), self.on_action_SpecialAddressBehaviorDialog)
         self.ui.tableWidgetYourIdentities.setContextMenuPolicy(
@@ -207,6 +209,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenu.addAction(self.actionNew)
         self.popMenu.addSeparator()
         self.popMenu.addAction(self.actionClipboard)
+        self.popMenu.addAction(self.actionSendToChan)
         self.popMenu.addSeparator()
         self.popMenu.addAction(self.actionEnable)
         self.popMenu.addAction(self.actionDisable)
@@ -2780,37 +2783,47 @@ class MyForm(QtGui.QMainWindow):
         self.click_NewAddressDialog()
 
     def on_action_YourIdentitiesEnable(self):
-        currentRow = self.ui.tableWidgetYourIdentities.currentRow()
-        addressAtCurrentRow = str(
-            self.ui.tableWidgetYourIdentities.item(currentRow, 1).text())
-        shared.config.set(addressAtCurrentRow, 'enabled', 'true')
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetYourIdentities.selectedIndexes())):
+            listOfSelectedRows[
+                self.ui.tableWidgetYourIdentities.selectedIndexes()[i].row()] = 0
+        for currentRow in listOfSelectedRows:
+            addressAtCurrentRow = str(
+                self.ui.tableWidgetYourIdentities.item(currentRow, 1).text())
+            shared.config.set(addressAtCurrentRow, 'enabled', 'true')
+            self.ui.tableWidgetYourIdentities.item(
+                currentRow, 0).setTextColor(QApplication.palette().text().color())
+            self.ui.tableWidgetYourIdentities.item(
+                currentRow, 1).setTextColor(QApplication.palette().text().color())
+            self.ui.tableWidgetYourIdentities.item(
+                currentRow, 2).setTextColor(QApplication.palette().text().color())
+            if shared.safeConfigGetBoolean(addressAtCurrentRow, 'mailinglist'):
+                self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(137, 04, 177)) # purple
+            if shared.safeConfigGetBoolean(addressAtCurrentRow, 'chan'):
+                self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(216, 119,  0)) # orange
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
             shared.config.write(configfile)
-        self.ui.tableWidgetYourIdentities.item(
-            currentRow, 0).setTextColor(QApplication.palette().text().color())
-        self.ui.tableWidgetYourIdentities.item(
-            currentRow, 1).setTextColor(QApplication.palette().text().color())
-        self.ui.tableWidgetYourIdentities.item(
-            currentRow, 2).setTextColor(QApplication.palette().text().color())
-        if shared.safeConfigGetBoolean(addressAtCurrentRow, 'mailinglist'):
-            self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(137, 04, 177))
-        if shared.safeConfigGetBoolean(addressAtCurrentRow, 'chan'):
-            self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(216, 119, 0)) # orange
         shared.reloadMyAddressHashes()
 
     def on_action_YourIdentitiesDisable(self):
-        currentRow = self.ui.tableWidgetYourIdentities.currentRow()
-        addressAtCurrentRow = str(
-            self.ui.tableWidgetYourIdentities.item(currentRow, 1).text())
-        shared.config.set(str(addressAtCurrentRow), 'enabled', 'false')
-        self.ui.tableWidgetYourIdentities.item(
-            currentRow, 0).setTextColor(QtGui.QColor(128, 128, 128))
-        self.ui.tableWidgetYourIdentities.item(
-            currentRow, 1).setTextColor(QtGui.QColor(128, 128, 128))
-        self.ui.tableWidgetYourIdentities.item(
-            currentRow, 2).setTextColor(QtGui.QColor(128, 128, 128))
-        if shared.safeConfigGetBoolean(addressAtCurrentRow, 'mailinglist'):
-            self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(137, 04, 177))
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetYourIdentities.selectedIndexes())):
+            listOfSelectedRows[
+                self.ui.tableWidgetYourIdentities.selectedIndexes()[i].row()] = 0
+        for currentRow in listOfSelectedRows:
+            addressAtCurrentRow = str(
+                self.ui.tableWidgetYourIdentities.item(currentRow, 1).text())
+            shared.config.set(str(addressAtCurrentRow), 'enabled', 'false')
+            self.ui.tableWidgetYourIdentities.item(
+                currentRow, 0).setTextColor(QtGui.QColor(128, 128, 128))
+            self.ui.tableWidgetYourIdentities.item(
+                currentRow, 1).setTextColor(QtGui.QColor(128, 128, 128))
+            self.ui.tableWidgetYourIdentities.item(
+                currentRow, 2).setTextColor(QtGui.QColor(128, 128, 128))
+            if shared.safeConfigGetBoolean(addressAtCurrentRow, 'mailinglist'):
+                self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(137, 04, 177)) # purple
+            if shared.safeConfigGetBoolean(addressAtCurrentRow, 'chan'):
+                self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(216, 119,  0)) # orange
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
             shared.config.write(configfile)
         shared.reloadMyAddressHashes()
@@ -2821,6 +2834,38 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 1).text()
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(str(addressAtCurrentRow))
+
+    def on_action_YourIdentitiesSendToChan(self):
+    ###
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetYourIdentities.selectedIndexes())):
+            listOfSelectedRows[
+                self.ui.tableWidgetYourIdentities.selectedIndexes()[i].row()] = 0
+        count = 0
+        for currentRow in listOfSelectedRows:
+            addressAtCurrentRow = self.ui.tableWidgetYourIdentities.item(
+                currentRow, 1).text()
+            if shared.safeConfigGetBoolean(str(addressAtCurrentRow), 'chan'):
+                if self.ui.lineEditTo.text() == '':
+                    self.ui.lineEditTo.setText(str(addressAtCurrentRow))
+                else:
+                    self.ui.lineEditTo.setText(str(
+                        self.ui.lineEditTo.text()) + '; ' + str(addressAtCurrentRow))
+            else:
+                count += 1
+        if listOfSelectedRows == {}:
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "No addresses selected."))
+        elif count == len(listOfSelectedRows):
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "%1 addresses were no chans and therefore not added as recipient, because the client cannot handle messages to yourself.").arg(str(count)))
+        else:
+            if count > 0:
+                self.statusBar().showMessage(_translate(
+                    "MainWindow", "%1 addresses were no chans and therefore not added as recipient, because the client cannot handle messages to yourself.").arg(str(count)))
+            else:
+                self.statusBar().showMessage('')
+            self.ui.tabWidget.setCurrentIndex(1)
 
     def on_context_menuYourIdentities(self, point):
         self.popMenu.exec_(

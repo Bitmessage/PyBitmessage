@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Mon Aug 12 00:08:20 2013
+# Created: Wed Sep 04 14:20:25 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -237,7 +237,7 @@ class Ui_MainWindow(object):
         self.tableWidgetYourIdentities.setFrameShadow(QtGui.QFrame.Sunken)
         self.tableWidgetYourIdentities.setLineWidth(1)
         self.tableWidgetYourIdentities.setAlternatingRowColors(True)
-        self.tableWidgetYourIdentities.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.tableWidgetYourIdentities.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.tableWidgetYourIdentities.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableWidgetYourIdentities.setObjectName(_fromUtf8("tableWidgetYourIdentities"))
         self.tableWidgetYourIdentities.setColumnCount(3)
@@ -490,7 +490,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(3)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.lineEditTo.setEnabled)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("clicked(bool)")), self.labelSendBroadcastWarning.hide)
         QtCore.QObject.connect(self.radioButtonBroadcast, QtCore.SIGNAL(_fromUtf8("clicked()")), self.labelSendBroadcastWarning.show)
@@ -630,3 +630,13 @@ class Ui_MainWindow(object):
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
 
 import bitmessage_icons_rc
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    MainWindow = QtGui.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
+
