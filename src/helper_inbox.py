@@ -1,4 +1,5 @@
 from helper_sql import *
+import shared
 
 def insert(t):
     sqlExecute('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?)''', *t)
