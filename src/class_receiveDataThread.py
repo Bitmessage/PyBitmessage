@@ -195,7 +195,6 @@ class receiveDataThread(threading.Thread):
                     self.sendgetdata(objectHash)
                     del self.objectsThatWeHaveYetToGetFromThisPeer[
                         objectHash]  # It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
-                    print 'concerning', self.peer.host, ', len(self.objectsThatWeHaveYetToGetFromThisPeer) is', len(self.objectsThatWeHaveYetToGetFromThisPeer)
                     if len(self.objectsThatWeHaveYetToGetFromThisPeer) == 0:
                         with shared.printLock:
                             print '(concerning', str(self.peer) + ')', 'number of objectsThatWeHaveYetToGetFromThisPeer is now', len(self.objectsThatWeHaveYetToGetFromThisPeer)

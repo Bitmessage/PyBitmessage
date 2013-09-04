@@ -2718,9 +2718,8 @@ class MyForm(QtGui.QMainWindow):
 
             inventoryHash = str(self.ui.tableWidgetInbox.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
-            t = (inventoryHash,)
-            self.ubuntuMessagingMenuClear(t)
-            sqlExecute('''update inbox set read=1 WHERE msgid=?''', *t)
+            self.ubuntuMessagingMenuClear(inventoryHash)
+            sqlExecute('''update inbox set read=1 WHERE msgid=?''', inventoryHash)
 
     def tableWidgetSentItemClicked(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
