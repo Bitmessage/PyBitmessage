@@ -53,7 +53,7 @@ alreadyAttemptedConnectionsList = {
 alreadyAttemptedConnectionsListLock = threading.Lock()
 alreadyAttemptedConnectionsListResetTime = int(
     time.time())  # used to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
-numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer = {}
+numberOfObjectsThatWeHaveYetToGetPerPeer = {}
 neededPubkeys = {}
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
     '>Q', random.randrange(1, 18446744073709551615))
@@ -66,6 +66,7 @@ clientHasReceivedIncomingConnections = False #used by API command clientStatus
 numberOfMessagesProcessed = 0
 numberOfBroadcastsProcessed = 0
 numberOfPubkeysProcessed = 0
+numberOfInventoryLookupsPerformed = 0
 
 #If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.

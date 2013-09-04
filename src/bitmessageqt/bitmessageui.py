@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Thu Aug 15 14:19:52 2013
-#      by: PyQt4 UI code generator 4.10
+# Created: Tue Sep 03 15:17:26 2013
+#      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -430,13 +430,16 @@ class Ui_MainWindow(object):
         self.labelBroadcastCount = QtGui.QLabel(self.networkstatus)
         self.labelBroadcastCount.setGeometry(QtCore.QRect(350, 150, 351, 16))
         self.labelBroadcastCount.setObjectName(_fromUtf8("labelBroadcastCount"))
+        self.labelLookupsPerSecond = QtGui.QLabel(self.networkstatus)
+        self.labelLookupsPerSecond.setGeometry(QtCore.QRect(320, 210, 291, 16))
+        self.labelLookupsPerSecond.setObjectName(_fromUtf8("labelLookupsPerSecond"))
         icon9 = QtGui.QIcon()
         icon9.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/networkstatus.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.networkstatus, icon9, _fromUtf8(""))
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 23))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 18))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -554,8 +557,8 @@ class Ui_MainWindow(object):
         self.textEditMessage.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Sans\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>", None))
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
         self.label.setText(_translate("MainWindow", "To:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.radioButtonBroadcast.setText(_translate("MainWindow", "Broadcast to everyone who is subscribed to your address", None))
@@ -621,6 +624,7 @@ class Ui_MainWindow(object):
         self.labelMessageCount.setText(_translate("MainWindow", "Processed 0 person-to-person message.", None))
         self.labelPubkeyCount.setText(_translate("MainWindow", "Processed 0 public key.", None))
         self.labelBroadcastCount.setText(_translate("MainWindow", "Processed 0 broadcast.", None))
+        self.labelLookupsPerSecond.setText(_translate("MainWindow", "Inventory lookups per second: 0", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus), _translate("MainWindow", "Network Status", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.menuSettings.setTitle(_translate("MainWindow", "Settings", None))
