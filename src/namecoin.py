@@ -139,7 +139,7 @@ class namecoinConnection (object):
                 assert False
 
         except Exception as exc:
-            print "Exception testing the namecoin connection:\n%s" % str (exc)
+            print "Namecoin connection test: %s" % str (exc)
             return ('failed', "The connection to namecoin failed.")
 
     # Helper routine that actually performs an JSON RPC call.
