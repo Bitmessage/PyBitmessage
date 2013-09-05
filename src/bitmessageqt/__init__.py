@@ -240,7 +240,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuAddressBook = QtGui.QMenu(self)
         self.popMenuAddressBook.addAction(self.actionAddressBookSend)
         self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
-        self.popMenuAddressBook.addAction( self.actionAddressBookSubscribe )
+        self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
         self.popMenuAddressBook.addSeparator()
         self.popMenuAddressBook.addAction(self.actionAddressBookNew)
         self.popMenuAddressBook.addAction(self.actionAddressBookDelete)
@@ -249,7 +249,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.subscriptionsContextMenuToolbar = QtGui.QToolBar()
           # Actions
         self.actionsubscriptionsNew = self.ui.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "New"), self.on_action_SubscriptionsNew)
+            _translate("MainWindow", "Add new subscription"), self.on_action_SubscriptionsNew)
         self.actionsubscriptionsDelete = self.ui.subscriptionsContextMenuToolbar.addAction(
             _translate("MainWindow", "Delete"), self.on_action_SubscriptionsDelete)
         self.actionsubscriptionsClipboard = self.ui.subscriptionsContextMenuToolbar.addAction(
@@ -2664,46 +2664,60 @@ class MyForm(QtGui.QMainWindow):
         clipboard.setText('; '.join(addressesArray))
 
     def on_action_SubscriptionsEnable(self):
-        currentRow = self.ui.tableWidgetSubscriptions.currentRow()
-        labelAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
-            currentRow, 0).text().toUtf8()
-        addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
-            currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
-            '''update subscriptions set enabled=1 WHERE label=? AND address=?''')
-        shared.sqlSubmitQueue.put(t)
-        shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
-        self.ui.tableWidgetSubscriptions.item(
-            currentRow, 0).setTextColor(QApplication.palette().text().color())
-        self.ui.tableWidgetSubscriptions.item(
-            currentRow, 1).setTextColor(QApplication.palette().text().color())
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetSubscriptions.selectedIndexes())):
+            listOfSelectedRows[
+                self.ui.tableWidgetSubscriptions.selectedIndexes()[i].row()] = 0
+        for currentRow in listOfSelectedRows:
+            labelAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
+                currentRow, 0).text().toUtf8()
+            addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
+                currentRow, 1).text()
+            t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put(
+                '''update subscriptions set enabled=1 WHERE label=? AND address=?''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+
+            self.ui.tableWidgetSubscriptions.item(
+                currentRow, 0).setTextColor(QApplication.palette().text().color())
+            self.ui.tableWidgetSubscriptions.item(
+                currentRow, 1).setTextColor(QApplication.palette().text().color())
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_action_SubscriptionsDisable(self):
-        currentRow = self.ui.tableWidgetSubscriptions.currentRow()
-        labelAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
-            currentRow, 0).text().toUtf8()
-        addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
-            currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
-            '''update subscriptions set enabled=0 WHERE label=? AND address=?''')
-        shared.sqlSubmitQueue.put(t)
-        shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
-        self.ui.tableWidgetSubscriptions.item(
-            currentRow, 0).setTextColor(QtGui.QColor(128, 128, 128))
-        self.ui.tableWidgetSubscriptions.item(
-            currentRow, 1).setTextColor(QtGui.QColor(128, 128, 128))
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetSubscriptions.selectedIndexes())):
+            listOfSelectedRows[
+                self.ui.tableWidgetSubscriptions.selectedIndexes()[i].row()] = 0
+        for currentRow in listOfSelectedRows:
+            labelAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
+                currentRow, 0).text().toUtf8()
+            addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
+                currentRow, 1).text()
+            t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
+            shared.sqlLock.acquire()
+            shared.sqlSubmitQueue.put(
+                '''update subscriptions set enabled=0 WHERE label=? AND address=?''')
+            shared.sqlSubmitQueue.put(t)
+            shared.sqlReturnQueue.get()
+            shared.sqlSubmitQueue.put('commit')
+            shared.sqlLock.release()
+
+            self.ui.tableWidgetSubscriptions.item(
+                currentRow, 0).setTextColor(QtGui.QColor(128, 128, 128))
+            self.ui.tableWidgetSubscriptions.item(
+                currentRow, 1).setTextColor(QtGui.QColor(128, 128, 128))
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_context_menuSubscriptions(self, point):
+        # disable certain context menu items for multiselection
+        is_singleselection = len(self.ui.tableWidgetSubscriptions.selectedIndexes())/2 <= 1 # divide by two because there are two columns
+        self.actionsubscriptionsDelete.setEnabled(is_singleselection)
+        self.actionsubscriptionsNew.setEnabled(is_singleselection)
         self.popMenuSubscriptions.exec_(
             self.ui.tableWidgetSubscriptions.mapToGlobal(point))
 
@@ -2803,6 +2817,7 @@ class MyForm(QtGui.QMainWindow):
         self.click_actionJoinChan()
 
     def on_action_YourIdentitiesEnable(self):
+    ###
         listOfSelectedRows = {}
         for i in range(len(self.ui.tableWidgetYourIdentities.selectedIndexes())):
             listOfSelectedRows[
@@ -2861,8 +2876,6 @@ class MyForm(QtGui.QMainWindow):
         clipboard.setText('; '.join(addressesArray))
 
     def on_action_YourIdentitiesSendToAddress(self):
-    ###
-        # already preparing this for use with multiple selected items
         listOfSelectedRows = {}
         for i in range(len(self.ui.tableWidgetYourIdentities.selectedIndexes())):
             listOfSelectedRows[
@@ -2904,7 +2917,7 @@ class MyForm(QtGui.QMainWindow):
 
     def on_context_menuYourIdentities(self, point):
         # disable certain context menu items for multiselection
-        is_singleselection = len(self.ui.tableWidgetYourIdentities.selectedIndexes())/3 <= 1
+        is_singleselection = len(self.ui.tableWidgetYourIdentities.selectedIndexes())/3 <= 1 # divide by three because there are three columns
         self.actionNewAddress.setEnabled(is_singleselection)
         self.actionNewChan.setEnabled(is_singleselection)
         self.actionSpecialAddressBehavior.setEnabled(is_singleselection)
