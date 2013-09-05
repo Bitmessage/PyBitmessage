@@ -128,6 +128,8 @@ class MyForm(QtGui.QMainWindow):
             "triggered()"), self.click_actionRegenerateDeterministicAddresses)
         QtCore.QObject.connect(self.ui.actionJoinChan, QtCore.SIGNAL(
             "triggered()"), self.click_actionJoinChan) # also used for creating chans.
+        QtCore.QObject.connect(self.ui.pushButtonJoinCreateChan, QtCore.SIGNAL(
+            "clicked()"), self.click_actionJoinChan)
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL(
             "clicked()"), self.click_NewAddressDialog)
         QtCore.QObject.connect(self.ui.comboBoxSendFrom, QtCore.SIGNAL(
@@ -189,31 +191,34 @@ class MyForm(QtGui.QMainWindow):
         # Popup menu for the Your Identities tab
         self.ui.addressContextMenuToolbar = QtGui.QToolBar()
           # Actions
-        self.actionNew = self.ui.addressContextMenuToolbar.addAction(_translate(
-            "MainWindow", "New"), self.on_action_YourIdentitiesNew)
+        self.actionNewAddress = self.ui.addressContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Create new Address"), self.on_action_YourIdentitiesNewAddress)
+        self.actionNewChan = self.ui.addressContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Join / Create Chan"), self.on_action_YourIdentitiesNewChan)
         self.actionEnable = self.ui.addressContextMenuToolbar.addAction(_translate(
             "MainWindow", "Enable"), self.on_action_YourIdentitiesEnable)
         self.actionDisable = self.ui.addressContextMenuToolbar.addAction(_translate(
             "MainWindow", "Disable"), self.on_action_YourIdentitiesDisable)
         self.actionClipboard = self.ui.addressContextMenuToolbar.addAction(_translate(
             "MainWindow", "Copy address to clipboard"), self.on_action_YourIdentitiesClipboard)
-        self.actionSendToChan = self.ui.addressContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Send message to this chan"), self.on_action_YourIdentitiesSendToChan)
+        self.actionYourIdentitiesSendToAddress = self.ui.addressContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Send message to this address"), self.on_action_YourIdentitiesSendToAddress)
         self.actionSpecialAddressBehavior = self.ui.addressContextMenuToolbar.addAction(_translate(
             "MainWindow", "Special address behavior..."), self.on_action_SpecialAddressBehaviorDialog)
         self.ui.tableWidgetYourIdentities.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
         self.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL(
             'customContextMenuRequested(const QPoint&)'), self.on_context_menuYourIdentities)
-        self.popMenu = QtGui.QMenu(self)
-        self.popMenu.addAction(self.actionNew)
-        self.popMenu.addSeparator()
-        self.popMenu.addAction(self.actionClipboard)
-        self.popMenu.addAction(self.actionSendToChan)
-        self.popMenu.addSeparator()
-        self.popMenu.addAction(self.actionEnable)
-        self.popMenu.addAction(self.actionDisable)
-        self.popMenu.addAction(self.actionSpecialAddressBehavior)
+        self.popMenuIdentities = QtGui.QMenu(self)
+        self.popMenuIdentities.addAction(self.actionNewAddress)
+        self.popMenuIdentities.addAction(self.actionNewChan)
+        self.popMenuIdentities.addSeparator()
+        self.popMenuIdentities.addAction(self.actionClipboard)
+        self.popMenuIdentities.addAction(self.actionYourIdentitiesSendToAddress)
+        self.popMenuIdentities.addSeparator()
+        self.popMenuIdentities.addAction(self.actionEnable)###
+        self.popMenuIdentities.addAction(self.actionDisable)
+        self.popMenuIdentities.addAction(self.actionSpecialAddressBehavior)
 
         # Popup menu for the Address Book page
         self.ui.addressBookContextMenuToolbar = QtGui.QToolBar()
@@ -326,6 +331,7 @@ class MyForm(QtGui.QMainWindow):
                     QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
                 if shared.safeConfigGetBoolean(addressInKeysFile, 'chan'):
                     newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
+                    
                 if not isEnabled:
                     newItem.setTextColor(QtGui.QColor(128, 128, 128))
                 if shared.safeConfigGetBoolean(addressInKeysFile, 'mailinglist'):
@@ -2537,11 +2543,16 @@ class MyForm(QtGui.QMainWindow):
         shared.workerQueue.put(('sendmessage', ''))
 
     def on_action_SentClipboard(self):
-        currentRow = self.ui.tableWidgetSent.currentRow()
-        addressAtCurrentRow = str(self.ui.tableWidgetSent.item(
-            currentRow, 0).data(Qt.UserRole).toPyObject())
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetSent.selectedIndexes())):
+            listOfSelectedRows[
+                self.ui.tableWidgetSent.selectedIndexes()[i].row()] = 0
+        addressesArray = []
+        for currentRow in listOfSelectedRows:
+            addressesArray += [str(self.ui.tableWidgetSent.item(
+                currentRow, 0).text())]
         clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(str(addressAtCurrentRow))
+        clipboard.setText('; '.join(addressesArray))
 
     # Group of functions for the Address Book dialog box
     def on_action_AddressBookNew(self):
@@ -2568,20 +2579,16 @@ class MyForm(QtGui.QMainWindow):
             self.rerenderSentToLabels()
 
     def on_action_AddressBookClipboard(self):
-        fullStringOfAddresses = ''
         listOfSelectedRows = {}
         for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
             listOfSelectedRows[
                 self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
+        addressesArray = []
         for currentRow in listOfSelectedRows:
-            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
-                currentRow, 1).text()
-            if fullStringOfAddresses == '':
-                fullStringOfAddresses = addressAtCurrentRow
-            else:
-                fullStringOfAddresses += ', ' + str(addressAtCurrentRow)
+            addressesArray += [str(self.ui.tableWidgetAddressBook.item(
+                currentRow, 1).text())]
         clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(fullStringOfAddresses)
+        clipboard.setText('; '.join(addressesArray))
 
     def on_action_AddressBookSend(self):
         listOfSelectedRows = {}
@@ -2645,11 +2652,16 @@ class MyForm(QtGui.QMainWindow):
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_action_SubscriptionsClipboard(self):
-        currentRow = self.ui.tableWidgetSubscriptions.currentRow()
-        addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
-            currentRow, 1).text()
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetSubscriptions.selectedIndexes())):
+            listOfSelectedRows[
+                self.ui.tableWidgetSubscriptions.selectedIndexes()[i].row()] = 0
+        addressesArray = []
+        for currentRow in listOfSelectedRows:
+            addressesArray += [str(self.ui.tableWidgetSubscriptions.item(
+                currentRow, 1).text())]
         clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(str(addressAtCurrentRow))
+        clipboard.setText('; '.join(addressesArray))
 
     def on_action_SubscriptionsEnable(self):
         currentRow = self.ui.tableWidgetSubscriptions.currentRow()
@@ -2722,11 +2734,16 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetBlacklist.removeRow(currentRow)
 
     def on_action_BlacklistClipboard(self):
-        currentRow = self.ui.tableWidgetBlacklist.currentRow()
-        addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(
-            currentRow, 1).text()
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetBlacklist.selectedIndexes())):
+            listOfSelectedRows[
+                self.ui.tableWidgetBlacklist.selectedIndexes()[i].row()] = 0
+        addressesArray = []
+        for currentRow in listOfSelectedRows:
+            addressesArray += [str(self.ui.tableWidgetBlacklist.item(
+                currentRow, 1).text())]
         clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(str(addressAtCurrentRow))
+        clipboard.setText('; '.join(addressesArray))
 
     def on_context_menuBlacklist(self, point):
         self.popMenuBlacklist.exec_(
@@ -2779,8 +2796,11 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlLock.release()
 
     # Group of functions for the Your Identities dialog box
-    def on_action_YourIdentitiesNew(self):
+    def on_action_YourIdentitiesNewAddress(self):
         self.click_NewAddressDialog()
+        
+    def on_action_YourIdentitiesNewChan(self):
+        self.click_actionJoinChan()
 
     def on_action_YourIdentitiesEnable(self):
         listOfSelectedRows = {}
@@ -2829,46 +2849,66 @@ class MyForm(QtGui.QMainWindow):
         shared.reloadMyAddressHashes()
 
     def on_action_YourIdentitiesClipboard(self):
-        currentRow = self.ui.tableWidgetYourIdentities.currentRow()
-        addressAtCurrentRow = self.ui.tableWidgetYourIdentities.item(
-            currentRow, 1).text()
-        clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(str(addressAtCurrentRow))
-
-    def on_action_YourIdentitiesSendToChan(self):
-    ###
         listOfSelectedRows = {}
         for i in range(len(self.ui.tableWidgetYourIdentities.selectedIndexes())):
             listOfSelectedRows[
                 self.ui.tableWidgetYourIdentities.selectedIndexes()[i].row()] = 0
-        count = 0
+        addressesArray = []
+        for currentRow in listOfSelectedRows:
+            addressesArray += [str(self.ui.tableWidgetYourIdentities.item(
+                currentRow, 1).text())]
+        clipboard = QtGui.QApplication.clipboard()
+        clipboard.setText('; '.join(addressesArray))
+
+    def on_action_YourIdentitiesSendToAddress(self):
+    ###
+        # already preparing this for use with multiple selected items
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetYourIdentities.selectedIndexes())):
+            listOfSelectedRows[
+                self.ui.tableWidgetYourIdentities.selectedIndexes()[i].row()] = 0
+        chans = []
+        nonchans = []
         for currentRow in listOfSelectedRows:
             addressAtCurrentRow = self.ui.tableWidgetYourIdentities.item(
                 currentRow, 1).text()
             if shared.safeConfigGetBoolean(str(addressAtCurrentRow), 'chan'):
-                if self.ui.lineEditTo.text() == '':
-                    self.ui.lineEditTo.setText(str(addressAtCurrentRow))
-                else:
-                    self.ui.lineEditTo.setText(str(
-                        self.ui.lineEditTo.text()) + '; ' + str(addressAtCurrentRow))
+                chans += [str(addressAtCurrentRow)]
             else:
-                count += 1
+                nonchans += [str(addressAtCurrentRow)]
+        
+        old_recipients = str(self.ui.lineEditTo.text()).split(';')
+        old_recipients = [x.strip(' ') for x in old_recipients]
+        # filter out empty elements, like possibly the current lineEditTo.text()
+        old_recipients = filter(None, old_recipients)
+        recipients = old_recipients + chans
+        # filter out duplicate recipients
+        from collections import OrderedDict
+        recipients = list(OrderedDict.fromkeys(recipients))
+        # alternatively, if we don't need them sorted
+        # recipients = set(old_recipients + chans)
+        added = set(recipients) ^ set(old_recipients) # xor
+        already_recipient = set(recipients) & set(old_recipients) # and
+        
+        message = _translate(
+                "MainWindow", "%1 address(es) added to recipients. %2 address(es) already in recipients. %3 own address(es) ignored.").arg(len(added)).arg(len(already_recipient)).arg(len(nonchans))
+        self.ui.lineEditTo.setText(
+            '; '.join(recipients))
         if listOfSelectedRows == {}:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "No addresses selected."))
-        elif count == len(listOfSelectedRows):
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "%1 addresses were no chans and therefore not added as recipient, because the client cannot handle messages to yourself.").arg(str(count)))
         else:
-            if count > 0:
-                self.statusBar().showMessage(_translate(
-                    "MainWindow", "%1 addresses were no chans and therefore not added as recipient, because the client cannot handle messages to yourself.").arg(str(count)))
-            else:
-                self.statusBar().showMessage('')
+            self.statusBar().showMessage(message)
+        if len(added) > 0:
             self.ui.tabWidget.setCurrentIndex(1)
 
     def on_context_menuYourIdentities(self, point):
-        self.popMenu.exec_(
+        # disable certain context menu items for multiselection
+        is_singleselection = len(self.ui.tableWidgetYourIdentities.selectedIndexes())/3 <= 1
+        self.actionNewAddress.setEnabled(is_singleselection)
+        self.actionNewChan.setEnabled(is_singleselection)
+        self.actionSpecialAddressBehavior.setEnabled(is_singleselection)
+        self.popMenuIdentities.exec_(
             self.ui.tableWidgetYourIdentities.mapToGlobal(point))
 
     def on_context_menuInbox(self, point):
