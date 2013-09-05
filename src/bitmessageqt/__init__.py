@@ -351,16 +351,7 @@ class MyForm(QtGui.QMainWindow):
         self.loadSent()
 
         # Initialize the address book
-        queryreturn = sqlQuery('SELECT * FROM addressbook')
-        for row in queryreturn:
-            label, address = row
-            self.ui.tableWidgetAddressBook.insertRow(0)
-            newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
-            self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem = QtGui.QTableWidgetItem(address)
-            newItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
+        self.rerenderAddressBook()
 
         # Initialize the Subscriptions
         self.rerenderSubscriptions()
@@ -427,6 +418,10 @@ class MyForm(QtGui.QMainWindow):
             "setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "rerenderInboxFromLabels()"), self.rerenderInboxFromLabels)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
+            "rerenderSentToLabels()"), self.rerenderSentToLabels)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
+            "rerenderAddressBook()"), self.rerenderAddressBook)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "rerenderSubscriptions()"), self.rerenderSubscriptions)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -1485,6 +1480,19 @@ class MyForm(QtGui.QMainWindow):
                     toLabel, = row
                     self.ui.tableWidgetSent.item(
                         i, 0).setText(unicode(toLabel, 'utf-8'))
+
+    def rerenderAddressBook(self):
+        self.ui.tableWidgetAddressBook.setRowCount(0)
+        queryreturn = sqlQuery('SELECT * FROM addressbook')
+        for row in queryreturn:
+            label, address = row
+            self.ui.tableWidgetAddressBook.insertRow(0)
+            newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+            self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
+            newItem = QtGui.QTableWidgetItem(address)
+            newItem.setFlags(
+                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
 
     def rerenderSubscriptions(self):
         self.ui.tableWidgetSubscriptions.setRowCount(0)
@@ -3201,6 +3209,10 @@ class UISignaler(QThread):
                 self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"), data)
             elif command == 'rerenderInboxFromLabels':
                 self.emit(SIGNAL("rerenderInboxFromLabels()"))
+            elif command == 'rerenderSentToLabels':
+                self.emit(SIGNAL("rerenderSentToLabels()"))
+            elif command == 'rerenderAddressBook':
+                self.emit(SIGNAL("rerenderAddressBook()"))
             elif command == 'rerenderSubscriptions':
                 self.emit(SIGNAL("rerenderSubscriptions()"))
             elif command == 'removeInboxRowByMsgid':
