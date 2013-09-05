@@ -431,6 +431,8 @@ class MyForm(QtGui.QMainWindow):
             "rerenderSubscriptions()"), self.rerenderSubscriptions)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "removeInboxRowByMsgid(PyQt_PyObject)"), self.removeInboxRowByMsgid)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
+            "displayAlert(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayAlert)
         self.UISignalThread.start()
 
         # Below this point, it would be good if all of the necessary global data
@@ -1406,6 +1408,12 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.tableWidgetInbox.removeRow(i)
                 break
 
+    def displayAlert(self, title, text, exitAfterUserClicksOk):
+        self.statusBar().showMessage(text)
+        QtGui.QMessageBox.critical(self, title, text, QMessageBox.Ok)
+        if exitAfterUserClicksOk:
+            os._exit(0)
+
     def rerenderInboxFromLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
             addressToLookup = str(self.ui.tableWidgetInbox.item(
@@ -2291,7 +2299,15 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.labelFrom.setText(toAddressAtCurrentInboxRow)
             self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(toAddressAtCurrentInboxRow)
+
         self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
+        
+        # If the previous message was to a chan then we should send our reply to the chan rather than to the particular person who sent the message.
+        if shared.config.has_section(toAddressAtCurrentInboxRow):
+            if shared.safeConfigGetBoolean(toAddressAtCurrentInboxRow, 'chan'):
+                print 'original sent to a chan. Setting the to address in the reply to the chan address.'
+                self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
+
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
         # self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + self.ui.tableWidgetInbox.item(
@@ -3189,6 +3205,9 @@ class UISignaler(QThread):
                 self.emit(SIGNAL("rerenderSubscriptions()"))
             elif command == 'removeInboxRowByMsgid':
                 self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), data)
+            elif command == 'alert':
+                title, text, exitAfterUserClicksOk = data
+                self.emit(SIGNAL("displayAlert(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), title, text, exitAfterUserClicksOk)
             else:
                 sys.stderr.write(
                     'Command sent to UISignaler not recognized: %s\n' % command)
