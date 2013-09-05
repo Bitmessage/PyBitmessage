@@ -168,8 +168,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     data
                     if len(data) > 20:
                         data += ','
+                    if shared.config.has_option(addressInKeysFile, 'chan'):
+                        chan = shared.config.getboolean(addressInKeysFile, 'chan')
+                    else:
+                        chan = False
                     data += json.dumps({'label': shared.config.get(addressInKeysFile, 'label'), 'address': addressInKeysFile, 'stream':
-                                       streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled')}, indent=4, separators=(',', ': '))
+                                       streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled'), 'chan': chan}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif method == 'listAddressBook' or method == 'listAddressbook':
