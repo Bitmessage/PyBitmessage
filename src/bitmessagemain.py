@@ -859,6 +859,7 @@ if shared.useVeryEasyProofOfWorkForTesting:
 
 class Main:
     def start(self, daemon=False):
+        shared.daemon = daemon
         # is the application already running?  If yes then exit.
         thisapp = singleton.singleinstance()
 
