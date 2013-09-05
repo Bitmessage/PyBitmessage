@@ -431,6 +431,8 @@ class MyForm(QtGui.QMainWindow):
             "rerenderSubscriptions()"), self.rerenderSubscriptions)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "removeInboxRowByMsgid(PyQt_PyObject)"), self.removeInboxRowByMsgid)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
+            "displayAlert(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayAlert)
         self.UISignalThread.start()
 
         # Below this point, it would be good if all of the necessary global data
@@ -1405,6 +1407,12 @@ class MyForm(QtGui.QMainWindow):
                     "MainWindow", "Message trashed"))
                 self.ui.tableWidgetInbox.removeRow(i)
                 break
+
+    def displayAlert(self, title, text, exitAfterUserClicksOk):
+        self.statusBar().showMessage(text)
+        QtGui.QMessageBox.critical(self, title, text, QMessageBox.Ok)
+        if exitAfterUserClicksOk:
+            os._exit(0)
 
     def rerenderInboxFromLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
@@ -3197,6 +3205,9 @@ class UISignaler(QThread):
                 self.emit(SIGNAL("rerenderSubscriptions()"))
             elif command == 'removeInboxRowByMsgid':
                 self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), data)
+            elif command == 'alert':
+                title, text, exitAfterUserClicksOk = data
+                self.emit(SIGNAL("displayAlert(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), title, text, exitAfterUserClicksOk)
             else:
                 sys.stderr.write(
                     'Command sent to UISignaler not recognized: %s\n' % command)
