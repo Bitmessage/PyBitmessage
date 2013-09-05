@@ -205,7 +205,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif method == 'addAddressBook' or method == 'addAddressbook':
             if len(params) != 2:
                 raise APIError(0, "I need label and address")
-            label, address = params
+            address, label = params
             label = self._decode(label, "base64")
             address = addBMIfNotPresent(address)
             self._verifyAddress(address)
