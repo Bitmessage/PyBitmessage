@@ -7,6 +7,7 @@ import sys
 import os
 from debug import logger
 from namecoin import ensureNamecoinOptions
+import tr#anslate
 
 # This thread exists because SQLITE3 is so un-threadsafe that we must
 # submit queries to it and it puts results back in a different queue. They
@@ -18,7 +19,7 @@ class sqlThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
 
-    def run(self):
+    def run(self):        
         self.conn = sqlite3.connect(shared.appdata + 'messages.dat')
         self.conn.text_factory = str
         self.cur = self.conn.cursor()
@@ -230,7 +231,15 @@ class sqlThread(threading.Thread):
                 logger.fatal('PyBitmessage will now exit very abruptly. You may now see threading errors related to this abrupt exit but the problem you need to solve is related to SQLite.\n\n')
                 os._exit(0)
         except Exception as err:
-            logger.error(err)
+            if str(err) == 'database or disk is full':
+                logger.fatal('(While null value test) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                if shared.daemon:
+                    os._exit(0)
+                else:
+                    return
+            else:
+                logger.error(err)
 
         # Let us check to see the last time we vaccumed the messages.dat file.
         # If it has been more than a month let's do it now.
@@ -242,7 +251,16 @@ class sqlThread(threading.Thread):
             value, = row
             if int(value) < int(time.time()) - 2592000:
                 logger.info('It has been a long time since the messages.dat file has been vacuumed. Vacuuming now...')
-                self.cur.execute( ''' VACUUM ''')
+                try:
+                    self.cur.execute( ''' VACUUM ''')
+                except Exception as err:
+                    if str(err) == 'database or disk is full':
+                        logger.fatal('(While VACUUM) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                        else:
+                            return
                 item = '''update settings set value=? WHERE key='lastvacuumtime';'''
                 parameters = (int(time.time()),)
                 self.cur.execute(item, parameters)
@@ -250,7 +268,16 @@ class sqlThread(threading.Thread):
         while True:
             item = shared.sqlSubmitQueue.get()
             if item == 'commit':
-                self.conn.commit()
+                try:
+                    self.conn.commit()
+                except Exception as err:
+                    if str(err) == 'database or disk is full':
+                        logger.fatal('(While committing) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                        else:
+                            return
             elif item == 'exit':
                 self.conn.close()
                 logger.info('sqlThread exiting gracefully.')
@@ -259,7 +286,16 @@ class sqlThread(threading.Thread):
             elif item == 'movemessagstoprog':
                 logger.debug('the sqlThread is moving the messages.dat file to the local program directory.')
 
-                self.conn.commit()
+                try:
+                    self.conn.commit()
+                except Exception as err:
+                    if str(err) == 'database or disk is full':
+                        logger.fatal('(while movemessagstoprog) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                        else:
+                            return
                 self.conn.close()
                 shutil.move(
                     shared.lookupAppdataFolder() + 'messages.dat', 'messages.dat')
@@ -269,7 +305,16 @@ class sqlThread(threading.Thread):
             elif item == 'movemessagstoappdata':
                 logger.debug('the sqlThread is moving the messages.dat file to the Appdata folder.')
 
-                self.conn.commit()
+                try:
+                    self.conn.commit()
+                except Exception as err:
+                    if str(err) == 'database or disk is full':
+                        logger.fatal('(while movemessagstoappdata) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                        else:
+                            return
                 self.conn.close()
                 shutil.move(
                     'messages.dat', shared.lookupAppdataFolder() + 'messages.dat')
@@ -280,7 +325,16 @@ class sqlThread(threading.Thread):
                 self.cur.execute('''delete from inbox where folder='trash' ''')
                 self.cur.execute('''delete from sent where folder='trash' ''')
                 self.conn.commit()
-                self.cur.execute( ''' VACUUM ''')
+                try:
+                    self.cur.execute( ''' VACUUM ''')
+                except Exception as err:
+                    if str(err) == 'database or disk is full':
+                        logger.fatal('(while deleteandvacuume) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                        else:
+                            return
             else:
                 parameters = shared.sqlSubmitQueue.get()
                 # print 'item', item
@@ -288,8 +342,16 @@ class sqlThread(threading.Thread):
                 try:
                     self.cur.execute(item, parameters)
                 except Exception as err:
-                    logger.fatal('Major error occurred when trying to execute a SQL statement within the sqlThread. Please tell Atheros about this error message or post it in the forum! Error occurred while trying to execute statement: "%s"  Here are the parameters; you might want to censor this data with asterisks (***) as it can contain private information: %s. Here is the actual error message thrown by the sqlThread: %s', str(item), str(repr(parameters)),  str(err))
-                    logger.fatal('This program shall now abruptly exit!')
+                    if str(err) == 'database or disk is full':
+                        logger.fatal('(while cur.execute) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                        else:
+                            return
+                    else:
+                        logger.fatal('Major error occurred when trying to execute a SQL statement within the sqlThread. Please tell Atheros about this error message or post it in the forum! Error occurred while trying to execute statement: "%s"  Here are the parameters; you might want to censor this data with asterisks (***) as it can contain private information: %s. Here is the actual error message thrown by the sqlThread: %s', str(item), str(repr(parameters)),  str(err))
+                        logger.fatal('This program shall now abruptly exit!')
 
                     os._exit(0)
 

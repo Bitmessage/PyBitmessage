@@ -1772,8 +1772,15 @@ class receiveDataThread(threading.Thread):
             if needToWriteKnownNodesToDisk:  # Runs if any nodes were new to us. Also, share those nodes with our peers.
                 shared.knownNodesLock.acquire()
                 output = open(shared.appdata + 'knownnodes.dat', 'wb')
-                pickle.dump(shared.knownNodes, output)
-                output.close()
+                try:
+                    pickle.dump(shared.knownNodes, output)
+                    output.close()
+                except Exception as err:
+                    if "Errno 28" in str(err):
+                        logger.fatal('(while receiveDataThread needToWriteKnownNodesToDisk) Alert: Your disk or data storage volume is full. ')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
                 shared.knownNodesLock.release()
                 self.broadcastaddr(listOfAddressDetailsToBroadcastToPeers)
             with shared.printLock:
