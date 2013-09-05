@@ -3,8 +3,7 @@ import sys
 import time
 
 class APIError(Exception):
-    def __init__(self, error_number, error_message):
-        self.error_number = error_number
+    def __init__(self, error_message):
         self.error_message = error_message
     def __str__(self):
         return "API Error: %s" % self.error_message
