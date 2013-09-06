@@ -189,20 +189,31 @@ class MyForm(QtGui.QMainWindow):
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
             'customContextMenuRequested(const QPoint&)'), self.on_context_menuInbox)
         self.popMenuInbox = QtGui.QMenu(self)
+
+        self.subMenuInboxSender = QtGui.QMenu(self)
+        self.subMenuInboxSender.setTitle(_translate(
+            "MainWindow", "Sender"))
+        self.subMenuInboxSender.addAction(self.actionSendtoSender)
+        self.subMenuInboxSender.addAction(self.actionInboxClipboardSender)
+        self.subMenuInboxSender.addAction(self.actionAddSenderToAddressBook)
+
+        self.subMenuInboxRecipient = QtGui.QMenu(self)
+        self.subMenuInboxRecipient.setTitle(_translate(
+            "MainWindow", "Recipient"))
+        self.subMenuInboxRecipient.addAction(self.actionSendtoRecipient)
+        self.subMenuInboxRecipient.addAction(self.actionInboxClipboardRecipient)
+        
         self.popMenuInbox.addAction(self.actionForceHtml)
         self.popMenuInbox.addAction(self.actionMarkUnread)
         self.popMenuInbox.addSeparator()
         self.popMenuInbox.addAction(self.actionReply)
         self.popMenuInbox.addAction(self.actionReplyChan)
         self.popMenuInbox.addSeparator()
-        self.popMenuInbox.addAction(self.actionSendtoSender)
-        self.popMenuInbox.addAction(self.actionSendtoRecipient)
-        self.popMenuInbox.addAction(self.actionInboxClipboardSender)
-        self.popMenuInbox.addAction(self.actionInboxClipboardRecipient)
-        self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
+        self.popMenuInbox.addMenu(self.subMenuInboxSender)
+        self.popMenuInbox.addMenu(self.subMenuInboxRecipient)
         self.popMenuInbox.addSeparator()
-        self.popMenuInbox.addAction( self.actionSaveMessageAs )
-        self.popMenuInbox.addAction( self.actionTrashInboxMessage )
+        self.popMenuInbox.addAction(self.actionSaveMessageAs)
+        self.popMenuInbox.addAction(self.actionTrashInboxMessage)
 
         # Popup menu for the Your Identities tab
         self.ui.addressContextMenuToolbar = QtGui.QToolBar()
@@ -2747,7 +2758,7 @@ class MyForm(QtGui.QMainWindow):
         useData = True
         self.on_action_SendToAddress(here,address_column,useData)
         
-    # Sent to Address
+    # Send to Address context menu items
     
     def on_action_SentSendtoRecipient(self):
         here = self.ui.tableWidgetSent
@@ -2828,7 +2839,7 @@ class MyForm(QtGui.QMainWindow):
         recipients = list(OrderedDict.fromkeys(recipients))
         # alternatively, if we don't need them sorted:
         # recipients = set(old_recipients + not_own)
-        added = set(not_own) ^ set(old_recipients) # xor
+        added = set(not_own) - set(old_recipients)
         already_recipient = set(not_own) & set(old_recipients) # and
         own_ignored = set(addressList) - set(not_own)
         message = _translate(
