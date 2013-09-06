@@ -2582,9 +2582,9 @@ class MyForm(QtGui.QMainWindow):
 
     def on_action_InboxClipboardRecipient(self):
         here = self.ui.tableWidgetInbox
-        address_here = 0
+        address_column = 0
         useData = True
-        self.on_action_Clipboard(here,address_here,useData)
+        self.on_action_Clipboard(here,address_column,useData)
     
         # listOfSelectedRows = {}
         # for i in range(len(self.ui.tableWidgetInbox.selectedIndexes())):
@@ -2600,9 +2600,9 @@ class MyForm(QtGui.QMainWindow):
 
     def on_action_AddressBookClipboard(self):
         here = self.ui.tableWidgetAddressBook
-        address_here = 1
+        address_column = 1
         useData = False
-        self.on_action_Clipboard(here,address_here,useData)
+        self.on_action_Clipboard(here,address_column,useData)
         # listOfSelectedRows = {}
         # for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
             # listOfSelectedRows[
@@ -2616,9 +2616,9 @@ class MyForm(QtGui.QMainWindow):
         
     def on_action_SubscriptionsClipboard(self):
         here = self.ui.tableWidgetSubscriptions
-        address_here = 1
+        address_column = 1
         useData = False
-        self.on_action_Clipboard(here,address_here,useData)
+        self.on_action_Clipboard(here,address_column,useData)
         # listOfSelectedRows = {}
         # for i in range(len(self.ui.tableWidgetSubscriptions.selectedIndexes())):
             # listOfSelectedRows[
@@ -2632,9 +2632,9 @@ class MyForm(QtGui.QMainWindow):
         
     def on_action_BlacklistClipboard(self):
         here = self.ui.tableWidgetBlacklist
-        address_here = 1
+        address_column = 1
         useData = False
-        self.on_action_Clipboard(here,address_here,useData)
+        self.on_action_Clipboard(here,address_column,useData)
         # listOfSelectedRows = {}
         # for i in range(len(self.ui.tableWidgetBlacklist.selectedIndexes())):
             # listOfSelectedRows[
@@ -2648,9 +2648,9 @@ class MyForm(QtGui.QMainWindow):
         
     def on_action_YourIdentitiesClipboard(self):
         here = self.ui.tableWidgetYourIdentities
-        address_here = 1
+        address_column = 1
         useData = False
-        self.on_action_Clipboard(here,address_here,useData)
+        self.on_action_Clipboard(here,address_column,useData)
         # listOfSelectedRows = {}
         # for i in range(len(self.ui.tableWidgetYourIdentities.selectedIndexes())):
             # listOfSelectedRows[
@@ -2663,7 +2663,7 @@ class MyForm(QtGui.QMainWindow):
         # clipboard.setText('; '.join(addressesArray))
 
         
-    def on_action_Clipboard(self, here,address_here,useData):
+    def on_action_Clipboard(self, here,address_column,useData):
         listOfSelectedRows = {}
         for i in range(len(here.selectedIndexes())):
             listOfSelectedRows[
@@ -2671,11 +2671,11 @@ class MyForm(QtGui.QMainWindow):
         addressesArray = []
         for currentRow in listOfSelectedRows:
             if useData:
-                addressesArray += [str(here.item(currentRow, address_here
+                addressesArray += [str(here.item(currentRow, address_column
                     ).data(Qt.UserRole).toPyObject())]
             else:
                 addressesArray += [str(here.item(
-                    currentRow, address_here).text())]
+                    currentRow, address_column).text())]
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText('; '.join(addressesArray))
         
@@ -2691,9 +2691,9 @@ class MyForm(QtGui.QMainWindow):
         # clipboard = QtGui.QApplication.clipboard()
         # clipboard.setText('; '.join(addressesArray))
         here = self.ui.tableWidgetInbox
-        address_here = 1
+        address_column = 1
         useData = True
-        self.on_action_Clipboard(here,address_here,useData)
+        self.on_action_Clipboard(here,address_column,useData)
         
     def on_action_SentClipboard(self):
         # listOfSelectedRows = {}
@@ -2707,9 +2707,9 @@ class MyForm(QtGui.QMainWindow):
         # clipboard = QtGui.QApplication.clipboard()
         # clipboard.setText('; '.join(addressesArray))
         here = self.ui.tableWidgetSent
-        address_here = 0
+        address_column = 0
         useData = False
-        self.on_action_Clipboard(here,address_here,useData)
+        self.on_action_Clipboard(here,address_column,useData)
 
     # Group of functions for the Address Book dialog box
     def on_action_AddressBookNew(self):
@@ -2737,53 +2737,55 @@ class MyForm(QtGui.QMainWindow):
         
     def on_action_InboxSendtoRecipient(self):
         here = self.ui.tableWidgetInbox
-        address_here = 0
+        address_column = 0
         useData = True
-        self.on_action_SendToAddress(here,address_here,useData)
+        self.on_action_SendToAddress(here,address_column,useData)
 
     def on_action_InboxSendtoSender(self):
         here = self.ui.tableWidgetInbox
-        address_here = 1
+        address_column = 1
         useData = True
-        self.on_action_SendToAddress(here,address_here,useData)
+        self.on_action_SendToAddress(here,address_column,useData)
         
+    # Sent to Address
+    
     def on_action_SentSendtoRecipient(self):
         here = self.ui.tableWidgetSent
-        address_here = 0
+        address_column = 0
         useData = True
-        self.on_action_SendToAddress(here,address_here,useData)
+        self.on_action_SendToAddress(here,address_column,useData)
 
     def on_action_SentSendtoSender(self):
         here = self.ui.tableWidgetSent
-        address_here = 1
+        address_column = 1
         useData = True
-        self.on_action_SendToAddress(here,address_here,useData)
+        self.on_action_SendToAddress(here,address_column,useData)
         
     def on_action_YourIdentitiesSendToAddress(self):
         here = self.ui.tableWidgetYourIdentities
-        address_here = 1
+        address_column = 1
         useData = False
-        self.on_action_SendToAddress(here,address_here,useData)
+        self.on_action_SendToAddress(here,address_column,useData)
             
     def on_action_SubscriptionsSend(self):
         here = self.ui.tableWidgetSubscriptions
-        address_here = 1
+        address_column = 1
         useData = False
-        self.on_action_SendToAddress(here,address_here,useData)
+        self.on_action_SendToAddress(here,address_column,useData)
         
     def on_action_AddressBookSend(self):
         here = self.ui.tableWidgetAddressBook
-        address_here = 1
+        address_column = 1
         useData = False
-        self.on_action_SendToAddress(here,address_here,useData)
+        self.on_action_SendToAddress(here,address_column,useData)
         
     def on_action_BlacklistSend(self):
         here = self.ui.tableWidgetBlacklist
-        address_here = 1
+        address_column = 1
         useData = False
-        self.on_action_SendToAddress(here,address_here,useData)
+        self.on_action_SendToAddress(here,address_column,useData)
         
-    def on_action_SendToAddress(self, here, address_here, use_data):
+    def on_action_SendToAddress(self, here, address_column, use_data):
         # i dont know where to put this if i want this to be global
         # in the mean time i will put it inside here:
         def filter_own_addresses(addressList):
@@ -2809,11 +2811,11 @@ class MyForm(QtGui.QMainWindow):
         addressList = []
         for currentRow in listOfSelectedRows:
             if use_data:
-                addressAtCurrentRow = here.item(currentRow, address_here
+                addressAtCurrentRow = here.item(currentRow, address_column
                     ).data(Qt.UserRole).toPyObject()
             else:
                 addressAtCurrentRow = here.item(
-                    currentRow, address_here).text()
+                    currentRow, address_column).text()
             addressList += [str(addressAtCurrentRow)]
         not_own = filter_own_addresses(addressList)
         old_recipients = str(self.ui.lineEditTo.text()).split(';')
