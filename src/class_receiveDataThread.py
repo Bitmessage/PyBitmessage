@@ -392,6 +392,7 @@ class receiveDataThread(threading.Thread):
         objectType = 'broadcast'
         shared.inventory[self.inventoryHash] = (
             objectType, self.streamNumber, data, embeddedTime)
+        shared.inventorySets[self.streamNumber].add(self.inventoryHash)
         shared.inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
         shared.numberOfBroadcastsProcessed += 1
@@ -755,6 +756,7 @@ class receiveDataThread(threading.Thread):
         objectType = 'msg'
         shared.inventory[self.inventoryHash] = (
             objectType, self.streamNumber, data, embeddedTime)
+        shared.inventorySets[self.streamNumber].add(self.inventoryHash)
         shared.inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
         shared.numberOfMessagesProcessed += 1
@@ -1153,6 +1155,7 @@ class receiveDataThread(threading.Thread):
         objectType = 'pubkey'
         shared.inventory[inventoryHash] = (
             objectType, self.streamNumber, data, embeddedTime)
+        shared.inventorySets[self.streamNumber].add(inventoryHash)
         shared.inventoryLock.release()
         self.broadcastinv(inventoryHash)
         shared.numberOfPubkeysProcessed += 1
@@ -1348,6 +1351,7 @@ class receiveDataThread(threading.Thread):
         objectType = 'getpubkey'
         shared.inventory[inventoryHash] = (
             objectType, self.streamNumber, data, embeddedTime)
+        shared.inventorySets[self.streamNumber].add(inventoryHash)
         shared.inventoryLock.release()
         # This getpubkey request is valid so far. Forward to peers.
         self.broadcastinv(inventoryHash)
@@ -1442,18 +1446,10 @@ class receiveDataThread(threading.Thread):
             # 'set' of objects we are aware of and a set of objects in this inv
             # message so that we can diff one from the other cheaply.
             startTime = time.time()
-            currentInventoryList = set()
-            queryData = sqlQuery('''SELECT hash FROM inventory WHERE streamnumber=?''',
-            self.streamNumber)
-            for row in queryData:
-                currentInventoryList.add(row[0])
-            with shared.inventoryLock:
-                for objectHash, value in shared.inventory.items():
-                    currentInventoryList.add(objectHash)
             advertisedSet = set()
             for i in range(numberOfItemsInInv):
                 advertisedSet.add(data[lengthOfVarint + (32 * i):32 + lengthOfVarint + (32 * i)])
-            objectsNewToMe = advertisedSet - currentInventoryList
+            objectsNewToMe = advertisedSet - shared.inventorySets[self.streamNumber]
             logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
             for item in objectsNewToMe:  
                 if totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers > 200000 and len(self.objectsThatWeHaveYetToGetFromThisPeer) > 1000:  # inv flooding attack mitigation
@@ -1552,12 +1548,12 @@ class receiveDataThread(threading.Thread):
                 print 'sock.sendall error:', err
 
 
-    # Send an inv message with just one hash to all of our peers
+    # Advertise this object to all of our peers
     def broadcastinv(self, hash):
         with shared.printLock:
             print 'broadcasting inv with hash:', hash.encode('hex')
 
-        shared.broadcastToSendDataQueues((self.streamNumber, 'sendinv', hash))
+        shared.broadcastToSendDataQueues((self.streamNumber, 'advertiseobject', hash))
 
     # We have received an addr message.
     def recaddr(self, data):

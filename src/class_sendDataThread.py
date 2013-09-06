@@ -8,7 +8,8 @@ import random
 import sys
 import socket
 
-#import bitmessagemain
+from class_objectHashHolder import *
+from addresses import *
 
 # Every connection to a peer has a sendDataThread (and also a
 # receiveDataThread).
@@ -22,6 +23,9 @@ class sendDataThread(threading.Thread):
             print 'The length of sendDataQueues at sendDataThread init is:', len(shared.sendDataQueues)
 
         self.data = ''
+        self.objectHashHolderInstance = objectHashHolder(self.mailbox)
+        self.objectHashHolderInstance.start()
+
 
     def setup(
         self,
@@ -118,17 +122,20 @@ class sendDataThread(threading.Thread):
                         shared.sendDataQueues.remove(self.mailbox)
                         print 'sendDataThread thread (ID:', str(id(self)) + ') ending now. Was connected to', self.peer
                         break
+                elif command == 'advertiseobject':
+                    self.objectHashHolderInstance.holdHash(data)
                 elif command == 'sendinv':
-                    if data not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
-                        payload = '\x01' + data
+                    payload = ''
+                    for hash in data:
+                        if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
+                            payload += hash
+                    if payload != '':
+                        print 'within sendinv, payload contains', len(payload)/32, 'hashes.'
+                        payload = encodeVarint(len(payload)/32) + payload
                         headerData = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
                         headerData += 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
                         headerData += pack('>L', len(payload))
                         headerData += hashlib.sha512(payload).digest()[:4]
-                        # To prevent some network analysis, 'leak' the data out
-                        # to our peer after waiting a random amount of time
-                        random.seed()
-                        time.sleep(random.randrange(0, 10))
                         try:
                             self.sock.sendall(headerData + payload)
                             self.lastTimeISentData = int(time.time())
@@ -142,6 +149,8 @@ class sendDataThread(threading.Thread):
                             shared.sendDataQueues.remove(self.mailbox)
                             print 'sendDataThread thread (ID:', str(id(self)) + ') ending now. Was connected to', self.peer
                             break
+                    else:
+                        print '(within sendinv) payload was empty. Not sending anything' #testing.
                 elif command == 'pong':
                     self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware.clear() # To save memory, let us clear this data structure from time to time. As its function is to help us keep from sending inv messages to peers which sent us the same inv message mere seconds earlier, it will be fine to clear this data structure from time to time.
                     if self.lastTimeISentData < (int(time.time()) - 298):
@@ -167,4 +176,4 @@ class sendDataThread(threading.Thread):
                 with shared.printLock:
                     print 'sendDataThread ID:', id(self), 'ignoring command', command, 'because the thread is not in stream', deststream
 
-
+        self.objectHashHolderInstance.close()
