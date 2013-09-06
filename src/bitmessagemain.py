@@ -195,7 +195,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                                        streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled'), 'chan': chan}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
-        elif method == 'listAddressBook' or method == 'listAddressbook':
+        elif method == 'listAddressBookEntries' or method == 'listAddressbook': # the listAddressbook alias should be removed eventually.
             queryreturn = sqlQuery('''SELECT label, address from addressbook''')
             data = '{"addresses":['
             for row in queryreturn:
@@ -206,7 +206,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'label':label.encode('base64'), 'address': address}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
-        elif method == 'addAddressBook' or method == 'addAddressbook':
+        elif method == 'addAddressBookEntry' or method == 'addAddressbook': # the addAddressbook alias should be deleted eventually.
             if len(params) != 2:
                 raise APIError(0, "I need label and address")
             address, label = params
@@ -222,7 +222,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.UISignalQueue.put(('rerenderSentToLabels',''))
             shared.UISignalQueue.put(('rerenderAddressBook',''))
             return "Added address %s to address book" % address
-        elif method == 'deleteAddressBook' or method == 'deleteAddressbook':
+        elif method == 'deleteAddressBookEntry' or method == 'deleteAddressbook': # The deleteAddressbook alias should be deleted eventually.
             if len(params) != 1:
                 raise APIError(0, "I need an address")
             address, = params
