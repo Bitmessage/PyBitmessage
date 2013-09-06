@@ -162,6 +162,12 @@ class MyForm(QtGui.QMainWindow):
         # Popup menu for the Inbox tab
         self.ui.inboxContextMenuToolbar = QtGui.QToolBar()
           # Actions
+        self.actionInboxMessageForceHtml = self.ui.inboxContextMenuToolbar.addAction(_translate(
+            "MainWindow", "View HTML code as formatted text"), self.on_action_InboxMessageForceHtml)
+        self.actionInboxMarkUnread = self.ui.inboxContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Mark Unread"), self.on_action_InboxMarkUnread)
+        self.actionInboxMarkRead = self.ui.inboxContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Mark Read"), self.on_action_InboxMarkRead)
         self.actionReply = self.ui.inboxContextMenuToolbar.addAction(_translate(
             "MainWindow", "Reply"), self.on_action_InboxReply)
         self.actionReplyChan = self.ui.inboxContextMenuToolbar.addAction(_translate(
@@ -169,7 +175,7 @@ class MyForm(QtGui.QMainWindow):
         self.actionSendtoSender = self.ui.inboxContextMenuToolbar.addAction(_translate(
             "MainWindow", "Send message to senders"), self.on_action_InboxSendtoSender)
         self.actionSendtoRecipient = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Send message to Chans"), self.on_action_InboxSendtoRecipient)
+            "MainWindow", "Send message to recipients"), self.on_action_InboxSendtoRecipient)
         self.actionInboxClipboardSender = self.ui.inboxContextMenuToolbar.addAction(_translate(
             "MainWindow", "Copy sender to clipboard"), self.on_action_InboxClipboardSender)
         self.actionInboxClipboardRecipient = self.ui.inboxContextMenuToolbar.addAction(_translate(
@@ -178,43 +184,82 @@ class MyForm(QtGui.QMainWindow):
             "MainWindow", "Add sender to your Address Book"), self.on_action_InboxAddSenderToAddressBook)
         self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction(
             _translate("MainWindow", "Move to Trash"), self.on_action_InboxTrash)
-        self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "View HTML code as formatted text"), self.on_action_InboxMessageForceHtml)
         self.actionSaveMessageAs = self.ui.inboxContextMenuToolbar.addAction(_translate(
             "MainWindow", "Save message as..."), self.on_action_InboxSaveMessageAs)
-        self.actionMarkUnread = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Mark Unread"), self.on_action_InboxMarkUnread)
         self.ui.tableWidgetInbox.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
             'customContextMenuRequested(const QPoint&)'), self.on_context_menuInbox)
-        self.popMenuInbox = QtGui.QMenu(self)
-
+          # Sender submenu
         self.subMenuInboxSender = QtGui.QMenu(self)
-        self.subMenuInboxSender.setTitle(_translate(
-            "MainWindow", "Sender"))
+        self.subMenuInboxSender.setTitle(_translate("MainWindow", "Sender"))
         self.subMenuInboxSender.addAction(self.actionSendtoSender)
         self.subMenuInboxSender.addAction(self.actionInboxClipboardSender)
         self.subMenuInboxSender.addAction(self.actionAddSenderToAddressBook)
-
+          # Recipient submenu
         self.subMenuInboxRecipient = QtGui.QMenu(self)
-        self.subMenuInboxRecipient.setTitle(_translate(
-            "MainWindow", "Recipient"))
+        self.subMenuInboxRecipient.setTitle(_translate("MainWindow", "Recipient"))
         self.subMenuInboxRecipient.addAction(self.actionSendtoRecipient)
         self.subMenuInboxRecipient.addAction(self.actionInboxClipboardRecipient)
-        
-        self.popMenuInbox.addAction(self.actionForceHtml)
-        self.popMenuInbox.addAction(self.actionMarkUnread)
+          # Popup menu
+        self.popMenuInbox = QtGui.QMenu(self)
+        self.popMenuInbox.addAction(self.actionInboxMessageForceHtml)
+        self.popMenuInbox.addAction(self.actionInboxMarkUnread)
+        self.popMenuInbox.addAction(self.actionInboxMarkRead)
         self.popMenuInbox.addSeparator()
         self.popMenuInbox.addAction(self.actionReply)
         self.popMenuInbox.addAction(self.actionReplyChan)
-        self.popMenuInbox.addSeparator()
         self.popMenuInbox.addMenu(self.subMenuInboxSender)
         self.popMenuInbox.addMenu(self.subMenuInboxRecipient)
         self.popMenuInbox.addSeparator()
         self.popMenuInbox.addAction(self.actionSaveMessageAs)
         self.popMenuInbox.addAction(self.actionTrashInboxMessage)
 
+        # Popup menu for the Sent page
+        self.ui.sentContextMenuToolbar = QtGui.QToolBar()
+          # Actions
+        self.actionSentMessageForceHtml = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "View HTML code as formatted text"), self.on_action_SentMessageForceHtml)
+        self.actionSentSendtoRecipient = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Send message to recipient(s)"), self.on_action_SentSendtoRecipient)
+        self.actionSentSendtoSender = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Send message to sender(s)"), self.on_action_SentSendtoSender)
+        self.actionSentClipboardRecipient = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Copy recipient address(es) to clipboard"), self.on_action_SentClipboardRecipient)
+        self.actionSentClipboardSender = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Copy sender address(es) to clipboard"), self.on_action_SentClipboardSender)
+        self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Move to Trash"), self.on_action_SentTrash)
+        self.actionForceSend = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Force send"), self.on_action_ForceSend)
+        self.ui.tableWidgetSent.setContextMenuPolicy(
+            QtCore.Qt.CustomContextMenu)
+        self.connect(self.ui.tableWidgetSent, QtCore.SIGNAL(
+            'customContextMenuRequested(const QPoint&)'), self.on_context_menuSent)
+          # Sender submenu
+        self.subMenuSentSender = QtGui.QMenu(self)
+        self.subMenuSentSender.setTitle(_translate("MainWindow", "Sender"))
+        self.subMenuSentSender.addAction(self.actionSentSendtoSender)
+        self.subMenuSentSender.addAction(self.actionSentClipboardSender)
+        # self.subMenuSentSender.addAction(self.actionAddSenderToAddressBook)
+          # Recipient submenu
+        self.subMenuSentRecipient = QtGui.QMenu(self)
+        self.subMenuSentRecipient.setTitle(_translate("MainWindow", "Recipient"))
+        self.subMenuSentRecipient.addAction(self.actionSentSendtoRecipient)
+        self.subMenuSentRecipient.addAction(self.actionSentClipboardRecipient)
+        #self.subMenuSentRecipient.addAction(self.actionSentAddRecipientToAddressBook)
+          # Popup menu
+        self.popMenuSent = QtGui.QMenu(self)
+        self.popMenuSent.addAction(self.actionSentMessageForceHtml)
+        self.popMenuSent.addSeparator()
+        ### => Send another message
+        self.popMenuSent.addMenu(self.subMenuSentSender)
+        self.popMenuSent.addMenu(self.subMenuSentRecipient)
+        self.popMenuSent.addSeparator()
+        ### => Save as goes here
+        self.popMenuSent.addAction(self.actionTrashSentMessage)
+
+        
         # Popup menu for the Your Identities tab
         self.ui.addressContextMenuToolbar = QtGui.QToolBar()
           # Actions
@@ -301,28 +346,6 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuSubscriptions.addAction(self.actionsubscriptionsSend)
         self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
 
-        # Popup menu for the Sent page
-        self.ui.sentContextMenuToolbar = QtGui.QToolBar()
-          # Actions
-        self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Move to Trash"), self.on_action_SentTrash)
-        self.actionSentClipboard = self.ui.sentContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Copy destination address to clipboard"), self.on_action_SentClipboard)
-        ###
-        self.actionSentSendtoRecipient = self.ui.sentContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Send message to recipient"), self.on_action_SentSendtoRecipient)
-        self.actionSentSendtoSender = self.ui.sentContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Send message to sender"), self.on_action_SentSendtoSender)
-        self.actionForceSend = self.ui.sentContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Force send"), self.on_action_ForceSend)
-        self.ui.tableWidgetSent.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetSent, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'), self.on_context_menuSent)
-        # self.popMenuSent = QtGui.QMenu( self )
-        # self.popMenuSent.addAction( self.actionSentClipboard )
-        # self.popMenuSent.addAction( self.actionTrashSentMessage )
-        
         # Popup menu for the Blacklist page
         self.ui.blacklistContextMenuToolbar = QtGui.QToolBar()
           # Actions
@@ -2375,8 +2398,18 @@ class MyForm(QtGui.QMainWindow):
             self.quit()
 
     def on_action_InboxMessageForceHtml(self):
-        currentInboxRow = self.ui.tableWidgetInbox.currentRow()
-        lines = self.ui.tableWidgetInbox.item(
+        here = self.ui.tableWidgetInbox
+        there = self.ui.textEditInboxMessage
+        self.on_action_MessageForceHtml(here, there)
+        
+    def on_action_SentMessageForceHtml(self):
+        here = self.ui.tableWidgetSent
+        there = self.ui.textEditSentMessage
+        self.on_action_MessageForceHtml(here, there)
+            
+    def on_action_MessageForceHtml(self, here, there):
+        currentInboxRow = here.currentRow()
+        lines = here.item(
             currentInboxRow, 2).data(Qt.UserRole).toPyObject().split('\n')
         for i in xrange(len(lines)):
             if lines[i].contains('Message ostensibly from '):
@@ -2388,33 +2421,44 @@ class MyForm(QtGui.QMainWindow):
         for i in xrange(len(lines)):
             content += lines[i]
         content = content.replace('\n\n', '<br><br>')
-        self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
+        there.setHtml(QtCore.QString(content))
 
     def on_action_InboxMarkUnread(self):
+        here = self.ui.tableWidgetInbox
+        read = False
+        self.on_action_InboxMarkReadUnread(here, read)
+        
+    def on_action_InboxMarkRead(self):
+        here = self.ui.tableWidgetInbox
+        read = True
+        self.on_action_InboxMarkReadUnread(here, read)
+        
+    def on_action_InboxMarkReadUnread(self, here, read):
+        here = self.ui.tableWidgetInbox
         font = QFont()
-        font.setBold(True)
-        for row in self.ui.tableWidgetInbox.selectedIndexes():
+        font.setBold(read==False)
+        for row in here.selectedIndexes():
             currentRow = row.row()
-            inventoryHashToMarkUnread = str(self.ui.tableWidgetInbox.item(
+            inventoryHashToMarkUnread = str(here.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
             t = (inventoryHashToMarkUnread,)
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put(
-                '''UPDATE inbox SET read=0 WHERE msgid=?''')
+                '''UPDATE inbox SET read='''+ str(int(read)) +''' WHERE msgid=?''')
             shared.sqlSubmitQueue.put(t)
             shared.sqlReturnQueue.get()
             shared.sqlLock.release()
-            self.ui.tableWidgetInbox.item(currentRow, 0).setFont(font)
-            self.ui.tableWidgetInbox.item(currentRow, 1).setFont(font)
-            self.ui.tableWidgetInbox.item(currentRow, 2).setFont(font)
-            self.ui.tableWidgetInbox.item(currentRow, 3).setFont(font)
+            here.item(currentRow, 0).setFont(font)
+            here.item(currentRow, 1).setFont(font)
+            here.item(currentRow, 2).setFont(font)
+            here.item(currentRow, 3).setFont(font)
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
-        # self.ui.tableWidgetInbox.selectRow(currentRow + 1) 
+        # here.selectRow(currentRow + 1)
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
-        # self.ui.tableWidgetInbox.clearSelection() manages to mark the message as read again.
+        # here.clearSelection() manages to mark the message as read again.
 
     def on_action_InboxReplyChan(self):
         replyToChan = True
@@ -2591,88 +2635,55 @@ class MyForm(QtGui.QMainWindow):
                 ackdata, 'Overriding maximum-difficulty setting. Work queued.')))
         shared.workerQueue.put(('sendmessage', ''))
 
+    # Copy address to clipboard
+        
     def on_action_InboxClipboardRecipient(self):
         here = self.ui.tableWidgetInbox
         address_column = 0
         useData = True
         self.on_action_Clipboard(here,address_column,useData)
-    
-        # listOfSelectedRows = {}
-        # for i in range(len(self.ui.tableWidgetInbox.selectedIndexes())):
-            # listOfSelectedRows[
-                # self.ui.tableWidgetInbox.selectedIndexes()[i].row()] = 0
-        # addressesArray = []
-        # for currentRow in listOfSelectedRows:
-            # addressesArray += [str(self.ui.tableWidgetInbox.item(
-                # currentRow, 0).text())]
-        # clipboard = QtGui.QApplication.clipboard()
-        # clipboard.setText('; '.join(addressesArray))
         
-
-    def on_action_AddressBookClipboard(self):
-        here = self.ui.tableWidgetAddressBook
+    def on_action_InboxClipboardSender(self):
+        here = self.ui.tableWidgetInbox
+        address_column = 1
+        useData = True
+        self.on_action_Clipboard(here,address_column,useData)
+        
+    def on_action_SentClipboardRecipient(self):
+        here = self.ui.tableWidgetSent
+        address_column = 0
+        useData = False
+        self.on_action_Clipboard(here,address_column,useData)
+        
+    def on_action_SentClipboardSender(self):
+        here = self.ui.tableWidgetSent
         address_column = 1
         useData = False
         self.on_action_Clipboard(here,address_column,useData)
-        # listOfSelectedRows = {}
-        # for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
-            # listOfSelectedRows[
-                # self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
-        # addressesArray = []
-        # for currentRow in listOfSelectedRows:
-            # addressesArray += [str(self.ui.tableWidgetAddressBook.item(
-                # currentRow, 1).text())]
-        # clipboard = QtGui.QApplication.clipboard()
-        # clipboard.setText('; '.join(addressesArray))
-        
-    def on_action_SubscriptionsClipboard(self):
-        here = self.ui.tableWidgetSubscriptions
-        address_column = 1
-        useData = False
-        self.on_action_Clipboard(here,address_column,useData)
-        # listOfSelectedRows = {}
-        # for i in range(len(self.ui.tableWidgetSubscriptions.selectedIndexes())):
-            # listOfSelectedRows[
-                # self.ui.tableWidgetSubscriptions.selectedIndexes()[i].row()] = 0
-        # addressesArray = []
-        # for currentRow in listOfSelectedRows:
-            # addressesArray += [str(self.ui.tableWidgetSubscriptions.item(
-                # currentRow, 1).text())]
-        # clipboard = QtGui.QApplication.clipboard()
-        # clipboard.setText('; '.join(addressesArray))
-        
-    def on_action_BlacklistClipboard(self):
-        here = self.ui.tableWidgetBlacklist
-        address_column = 1
-        useData = False
-        self.on_action_Clipboard(here,address_column,useData)
-        # listOfSelectedRows = {}
-        # for i in range(len(self.ui.tableWidgetBlacklist.selectedIndexes())):
-            # listOfSelectedRows[
-                # self.ui.tableWidgetBlacklist.selectedIndexes()[i].row()] = 0
-        # addressesArray = []
-        # for currentRow in listOfSelectedRows:
-            # addressesArray += [str(self.ui.tableWidgetBlacklist.item(
-                # currentRow, 1).text())]
-        # clipboard = QtGui.QApplication.clipboard()
-        # clipboard.setText('; '.join(addressesArray))
         
     def on_action_YourIdentitiesClipboard(self):
         here = self.ui.tableWidgetYourIdentities
         address_column = 1
         useData = False
         self.on_action_Clipboard(here,address_column,useData)
-        # listOfSelectedRows = {}
-        # for i in range(len(self.ui.tableWidgetYourIdentities.selectedIndexes())):
-            # listOfSelectedRows[
-                # self.ui.tableWidgetYourIdentities.selectedIndexes()[i].row()] = 0
-        # addressesArray = []
-        # for currentRow in listOfSelectedRows:
-            # addressesArray += [str(self.ui.tableWidgetYourIdentities.item(
-                # currentRow, 1).text())]
-        # clipboard = QtGui.QApplication.clipboard()
-        # clipboard.setText('; '.join(addressesArray))
-
+        
+    def on_action_SubscriptionsClipboard(self):
+        here = self.ui.tableWidgetSubscriptions
+        address_column = 1
+        useData = False
+        self.on_action_Clipboard(here,address_column,useData)
+        
+    def on_action_AddressBookClipboard(self):
+        here = self.ui.tableWidgetAddressBook
+        address_column = 1
+        useData = False
+        self.on_action_Clipboard(here,address_column,useData)
+        
+    def on_action_BlacklistClipboard(self):
+        here = self.ui.tableWidgetBlacklist
+        address_column = 1
+        useData = False
+        self.on_action_Clipboard(here,address_column,useData)
         
     def on_action_Clipboard(self, here,address_column,useData):
         listOfSelectedRows = {}
@@ -2690,38 +2701,6 @@ class MyForm(QtGui.QMainWindow):
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText('; '.join(addressesArray))
         
-    def on_action_InboxClipboardSender(self):
-        # listOfSelectedRows = {}
-        # for i in range(len(self.ui.tableWidgetInbox.selectedIndexes())):
-            # listOfSelectedRows[
-                # self.ui.tableWidgetInbox.selectedIndexes()[i].row()] = 0
-        # addressesArray = []
-        # for currentRow in listOfSelectedRows:
-            # addressesArray += [str(self.ui.tableWidgetInbox.item(
-                # currentRow, 1).text())]
-        # clipboard = QtGui.QApplication.clipboard()
-        # clipboard.setText('; '.join(addressesArray))
-        here = self.ui.tableWidgetInbox
-        address_column = 1
-        useData = True
-        self.on_action_Clipboard(here,address_column,useData)
-        
-    def on_action_SentClipboard(self):
-        # listOfSelectedRows = {}
-        # for i in range(len(self.ui.tableWidgetSent.selectedIndexes())):
-            # listOfSelectedRows[
-                # self.ui.tableWidgetSent.selectedIndexes()[i].row()] = 0
-        # addressesArray = []
-        # for currentRow in listOfSelectedRows:
-            # addressesArray += [str(self.ui.tableWidgetSent.item(
-                # currentRow, 0).text())]
-        # clipboard = QtGui.QApplication.clipboard()
-        # clipboard.setText('; '.join(addressesArray))
-        here = self.ui.tableWidgetSent
-        address_column = 0
-        useData = False
-        self.on_action_Clipboard(here,address_column,useData)
-
     # Group of functions for the Address Book dialog box
     def on_action_AddressBookNew(self):
         self.click_pushButtonAddAddressBook()
@@ -2746,6 +2725,8 @@ class MyForm(QtGui.QMainWindow):
             self.rerenderInboxFromLabels()
             self.rerenderSentToLabels()
         
+    # Send to Address context menu items
+        
     def on_action_InboxSendtoRecipient(self):
         here = self.ui.tableWidgetInbox
         address_column = 0
@@ -2757,8 +2738,6 @@ class MyForm(QtGui.QMainWindow):
         address_column = 1
         useData = True
         self.on_action_SendToAddress(here,address_column,useData)
-        
-    # Send to Address context menu items
     
     def on_action_SentSendtoRecipient(self):
         here = self.ui.tableWidgetSent
@@ -2796,24 +2775,25 @@ class MyForm(QtGui.QMainWindow):
         useData = False
         self.on_action_SendToAddress(here,address_column,useData)
         
+    def filter_own_addresses(self, addressList):
+        outputList = []
+        for address in addressList:
+            if address == self.str_broadcast_subscribers:
+                continue
+            address = addBMIfNotPresent(address)
+            try:
+                shared.config.get(address, 'enabled')
+                # The address is one owned by me.
+                if not shared.safeConfigGetBoolean(address, 'chan'):
+                    continue
+            except:
+                pass
+            outputList += [address]
+        return outputList
+        
     def on_action_SendToAddress(self, here, address_column, use_data):
         # i dont know where to put this if i want this to be global
         # in the mean time i will put it inside here:
-        def filter_own_addresses(addressList):
-            outputList = []
-            for address in addressList:
-                if address == self.str_broadcast_subscribers:
-                    continue
-                address = addBMIfNotPresent(address)
-                try:
-                    shared.config.get(address, 'enabled')
-                    # The address is one owned by me.
-                    if not shared.safeConfigGetBoolean(address, 'chan'):
-                        continue
-                except:
-                    pass
-                outputList += [address]
-            return outputList
 
         listOfSelectedRows = {}
         for i in range(len(here.selectedIndexes())):
@@ -2828,7 +2808,7 @@ class MyForm(QtGui.QMainWindow):
                 addressAtCurrentRow = here.item(
                     currentRow, address_column).text()
             addressList += [str(addressAtCurrentRow)]
-        not_own = filter_own_addresses(addressList)
+        not_own = self.filter_own_addresses(addressList)
         old_recipients = str(self.ui.lineEditTo.text()).split(';')
         old_recipients = [x.strip(' ') for x in old_recipients]
         # filter out empty elements, like possibly the current lineEditTo.text()
@@ -3100,11 +3080,11 @@ class MyForm(QtGui.QMainWindow):
         # disable certain context menu items for multiselection
         self.actionReply.setEnabled(is_singleselection==True)
         self.actionReplyChan.setEnabled(is_singleselection==True)
+        self.actionAddSenderToAddressBook.setEnabled(is_singleselection==True) # cannot handle multiselection yet
+        self.actionSaveMessageAs.setEnabled(is_singleselection==True) # cannot handle multiselection yet
         # disable certain context menu items for single selction
-        self.actionSendtoSender.setEnabled(is_singleselection!=True)
-        self.actionSendtoRecipient.setEnabled(is_singleselection!=True)
-        self.actionAddSenderToAddressBook.setEnabled(is_singleselection!=True) # cannot handle multiselection yet
-        self.actionSaveMessageAs.setEnabled(is_singleselection!=True) # cannot handle multiselection yet
+        self.actionSendtoSender.setEnabled(is_singleselection==False)
+        self.actionSendtoRecipient.setEnabled(is_singleselection==False)
         if is_singleselection:
             currentRow = self.ui.tableWidgetInbox.selectedIndexes()[0].row()
             possibleChanAddress = str(self.ui.tableWidgetInbox.item(
@@ -3114,14 +3094,6 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuInbox.exec_(self.ui.tableWidgetInbox.mapToGlobal(point))
 
     def on_context_menuSent(self, point):
-        self.popMenuSent = QtGui.QMenu(self)
-        self.popMenuSent.addAction(self.actionSentClipboard)
-        self.popMenuSent.addAction(self.actionTrashSentMessage)
-        self.popMenuSent.addSeparator()
-        self.popMenuSent.addAction(self.actionSentSendtoRecipient)
-        self.popMenuSent.addAction(self.actionSentSendtoSender)
-
-        
         # Check to see if this item is toodifficult and display an additional
         # menu option (Force Send) if it is.
         currentRow = self.ui.tableWidgetSent.currentRow()
