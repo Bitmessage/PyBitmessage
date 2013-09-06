@@ -46,6 +46,11 @@ if sys.platform == 'darwin':
 
 def connectToStream(streamNumber):
     selfInitiatedConnections[streamNumber] = {}
+    shared.inventorySets[streamNumber] = set()
+    queryData = sqlQuery('''SELECT hash FROM inventory WHERE streamnumber=?''', streamNumber)
+    for row in queryData:
+        shared.inventorySets[streamNumber].add(row[0])
+
     if sys.platform[0:3] == 'win':
         maximumNumberOfHalfOpenConnections = 9
     else:
@@ -705,10 +710,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType = 'msg'
             shared.inventory[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, int(time.time()))
+            shared.inventorySets[toStreamNumber].add(inventoryHash)
             with shared.printLock:
                 print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
-                toStreamNumber, 'sendinv', inventoryHash))
+                toStreamNumber, 'advertiseobject', inventoryHash))
         elif method == 'disseminatePubkey':
             # The device issuing this command to PyBitmessage supplies a pubkey object to be
             # disseminated to the rest of the Bitmessage network. PyBitmessage accepts this
@@ -741,10 +747,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType = 'pubkey'
             shared.inventory[inventoryHash] = (
                 objectType, pubkeyStreamNumber, payload, int(time.time()))
+            shared.inventorySets[pubkeyStreamNumber].add(inventoryHash)
             with shared.printLock:
                 print 'broadcasting inv within API command disseminatePubkey with hash:', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
-                streamNumber, 'sendinv', inventoryHash))
+                streamNumber, 'advertiseobject', inventoryHash))
         elif method == 'getMessageDataByDestinationHash':
             # Method will eventually be used by a particular Android app to 
             # select relevant messages. Do not yet add this to the api
