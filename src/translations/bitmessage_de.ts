@@ -17,7 +17,7 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="165"/>
         <source>Add sender to your Address Book</source>
-        <translation>Absender zum Adressbuch hinzufügen.</translation>
+        <translation>Absender zum Adressbuch hinzufügen</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="269"/>
@@ -920,7 +920,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="623"/>
         <source>Ctrl+Q</source>
-        <translation type="unfinished">Strg+Q</translation>
+        <translation>Strg+Q</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="625"/>
@@ -1487,7 +1487,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="343"/>
         <source>Override automatic language localization (use countycode or language code, e.g. &apos;en_US&apos; or &apos;en&apos;):</source>
-        <translation type="unfinished"></translation>
+        <translation>Automatische Sprachauswahl überschreiben (verwenden Sie den Landescode oder Sprachcode, z.B. &quot;de_DE&quot; oder &quot;de&quot;):</translation>
     </message>
 </context>
 </TS>
