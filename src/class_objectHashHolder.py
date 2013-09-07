@@ -1,5 +1,5 @@
 # objectHashHolder is a timer-driven thread. One objectHashHolder thread is used
-# by each sendDataThread. It uses it whenever a sendDataThread needs to
+# by each sendDataThread. The sendDataThread uses it whenever it needs to
 # advertise an object to peers. Instead of sending it out immediately, it must
 # wait a random number of seconds for each connection so that different peers
 # get different objects at different times. Thus an attacker who is
