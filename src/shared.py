@@ -304,7 +304,7 @@ def doCleanShutdown():
 def broadcastToSendDataQueues(data):
     # logger.debug('running broadcastToSendDataQueues')
     for q in sendDataQueues:
-        q.put((data))
+        q.put(data)
         
 def flushInventory():
     #Note that the singleCleanerThread clears out the inventory dictionary from time to time, although it only clears things that have been in the dictionary for a long time. This clears the inventory dictionary Now.
