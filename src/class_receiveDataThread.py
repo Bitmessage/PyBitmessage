@@ -298,11 +298,12 @@ class receiveDataThread(threading.Thread):
                 bigInvList[hash] = 0
         # We also have messages in our inventory in memory (which is a python
         # dictionary). Let's fetch those too.
-        for hash, storedValue in shared.inventory.items():
-            if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
-                objectType, streamNumber, payload, receivedTime = storedValue
-                if streamNumber == self.streamNumber and receivedTime > int(time.time()) - shared.maximumAgeOfObjectsThatIAdvertiseToOthers:
-                    bigInvList[hash] = 0
+        with shared.inventoryLock:
+            for hash, storedValue in shared.inventory.items():
+                if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
+                    objectType, streamNumber, payload, receivedTime = storedValue
+                    if streamNumber == self.streamNumber and receivedTime > int(time.time()) - shared.maximumAgeOfObjectsThatIAdvertiseToOthers:
+                        bigInvList[hash] = 0
         numberOfObjectsInInvMessage = 0
         payload = ''
         # Now let us start appending all of these hashes together. They will be
@@ -1496,11 +1497,14 @@ class receiveDataThread(threading.Thread):
                 print 'received getdata request for item:', hash.encode('hex')
 
             shared.numberOfInventoryLookupsPerformed += 1
+            shared.inventoryLock.acquire()
             if hash in shared.inventory:
                 objectType, streamNumber, payload, receivedTime = shared.inventory[
                     hash]
+                shared.inventoryLock.release()
                 self.sendData(objectType, payload)
             else:
+                shared.inventoryLock.release()
                 queryreturn = sqlQuery(
                     '''select objecttype, payload from inventory where hash=?''',
                     hash)
