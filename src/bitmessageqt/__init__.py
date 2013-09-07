@@ -173,15 +173,17 @@ class MyForm(QtGui.QMainWindow):
         self.actionReplyChan = self.ui.inboxContextMenuToolbar.addAction(_translate(
             "MainWindow", "Reply to Chan"), self.on_action_InboxReplyChan)
         self.actionSendtoSender = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Send message to sender"), self.on_action_InboxSendtoSender)
+            "MainWindow", "Send message to address"), self.on_action_InboxSendtoSender)
         self.actionSendtoRecipient = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Send message to recipient"), self.on_action_InboxSendtoRecipient)
+            "MainWindow", "Send message to address"), self.on_action_InboxSendtoRecipient)
         self.actionInboxClipboardSender = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Copy sender to clipboard"), self.on_action_InboxClipboardSender)
+            "MainWindow", "Copy address to clipboard"), self.on_action_InboxClipboardSender)
         self.actionInboxClipboardRecipient = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Copy recipient to clipboard"), self.on_action_InboxClipboardRecipient)
+            "MainWindow", "Copy address to clipboard"), self.on_action_InboxClipboardRecipient)
+        self.actionInboxSenderSubscribe = self.ui.inboxContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Subscribe to this address"), self.on_action_InboxSenderSubscribe)
         self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Add sender to your Address Book"), self.on_action_InboxAddSenderToAddressBook)
+            "MainWindow", "Add address to Address Book"), self.on_action_InboxAddSenderToAddressBook)
         self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction(
             _translate("MainWindow", "Move to Trash"), self.on_action_InboxTrash)
         self.actionSaveMessageAs = self.ui.inboxContextMenuToolbar.addAction(_translate(
@@ -201,6 +203,7 @@ class MyForm(QtGui.QMainWindow):
         self.subMenuInboxSender.addAction(self.actionSendtoSender)
         self.subMenuInboxSender.addAction(self.actionInboxClipboardSender)
         self.subMenuInboxSender.addAction(self.actionAddSenderToAddressBook)
+        self.subMenuInboxSender.addAction(self.actionInboxSenderSubscribe)
           # Popup menu
         self.popMenuInbox = QtGui.QMenu(self)
         self.popMenuInbox.addAction(self.actionInboxMessageForceHtml)
@@ -231,7 +234,9 @@ class MyForm(QtGui.QMainWindow):
         self.actionSentClipboardSender = self.ui.sentContextMenuToolbar.addAction(_translate(
             "MainWindow", "Copy sender address to clipboard"), self.on_action_SentClipboardSender)
         self.actionSentAddRecipientToAddressBook = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Add recipient to your Address Book"), self.on_action_SentAddRecipientToAddressBook)
+            "MainWindow", "Add address to Address Book"), self.on_action_SentAddRecipientToAddressBook)
+        self.actionSentRecipientSubscribe = self.ui.inboxContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Subscribe to this address"), self.on_action_SentRecipientSubscribe)
         self.actionSentSaveMessageAs = self.ui.inboxContextMenuToolbar.addAction(_translate(
             "MainWindow", "Save message as..."), self.on_action_SentSaveMessageAs)
         self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(_translate(
@@ -248,6 +253,7 @@ class MyForm(QtGui.QMainWindow):
         self.subMenuSentRecipient.addAction(self.actionSentSendtoRecipient)
         self.subMenuSentRecipient.addAction(self.actionSentClipboardRecipient)
         self.subMenuSentRecipient.addAction(self.actionSentAddRecipientToAddressBook)
+        self.subMenuSentRecipient.addAction(self.actionSentRecipientSubscribe)
           # Sender submenu
         self.subMenuSentSender = QtGui.QMenu(self)
         self.subMenuSentSender.setTitle(_translate("MainWindow", "Sender"))
@@ -2801,26 +2807,65 @@ class MyForm(QtGui.QMainWindow):
     # Group of functions for the Address Book dialog box
     def on_action_AddressBookNew(self):
         self.click_pushButtonAddAddressBook()
-
+        
     def on_action_AddressBookDelete(self):
-        while self.ui.tableWidgetAddressBook.selectedIndexes() != []:
-            currentRow = self.ui.tableWidgetAddressBook.selectedIndexes()[
+        thisTableWidget = self.ui.tableWidgetAddressBook
+        self.on_action_AddressesDelete(thisTableWidget)
+        
+    def on_action_SubscriptionsDelete(self):
+        thisTableWidget = self.ui.tableWidgetSubscriptions
+        self.on_action_AddressesDelete(thisTableWidget)
+        
+    def on_action_BlacklistDelete(self):
+        thisTableWidget = self.ui.tableWidgetBlacklist
+        self.on_action_AddressesDelete(thisTableWidget)
+    
+    def on_action_AddressesDelete(self, thisTableWidget):
+        countAddresses = len(thisTableWidget.selectedIndexes())/2
+        if thisTableWidget == self.ui.tableWidgetAddressBook:
+            name = _translate("MainWindow",'Address Book')
+            sql_where = '''addressbook'''
+        elif thisTableWidget == self.ui.tableWidgetSubscriptions:
+            name = _translate("MainWindow",'Subscriptions')
+            sql_where = '''subscriptions'''
+        elif thisTableWidget == self.ui.tableWidgetBlacklist:
+            if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
+                name = _translate("MainWindow",'Blacklist')
+                sql_where = '''blacklist'''
+            else:
+                name = _translate("MainWindow",'Whitelist')
+                sql_where = '''whitelist'''
+        else:
+            # probably there is a better way to throw an exception
+            print 'wtf are you trying to do?!'
+            return
+        if countAddresses > 1:
+            # more than one deletion
+            displayMsg = _translate("MainWindow", "Do you really want to delete %1 addresses from %2?").arg(countAddresses).arg(name)
+            reply = QtGui.QMessageBox.question(
+                self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+            if reply == QtGui.QMessageBox.No:
+                return
+        while thisTableWidget.selectedIndexes() != []:
+            currentRow = thisTableWidget.selectedIndexes()[
                 0].row()
-            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(
+            labelAtCurrentRow = thisTableWidget.item(
                 currentRow, 0).text().toUtf8()
-            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
+            addressAtCurrentRow = thisTableWidget.item(
                 currentRow, 1).text()
             t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put(
-                '''DELETE FROM addressbook WHERE label=? AND address=?''')
+                '''DELETE FROM '''+sql_where+''' WHERE label=? AND address=?''')
             shared.sqlSubmitQueue.put(t)
             queryreturn = shared.sqlReturnQueue.get()
             shared.sqlSubmitQueue.put('commit')
             shared.sqlLock.release()
-            self.ui.tableWidgetAddressBook.removeRow(currentRow)
-            self.rerenderInboxFromLabels()
-            self.rerenderSentToLabels()
+            thisTableWidget.removeRow(currentRow)
+        # probably more efficient not to do this every time:
+        self.rerenderInboxFromLabels()
+        self.rerenderSentToLabels()
+        shared.reloadBroadcastSendersForWhichImWatching()
         
     # Send to Address context menu items
         
@@ -2935,19 +2980,52 @@ class MyForm(QtGui.QMainWindow):
         newFromAddress = str(thisTableWidget.item(
             currentRow, newFromAddressColumn).text())
         self.on_action_NewDraft(newFromAddress, [False], False, False)
+    
+    # Subscribe
+    
+    def on_action_InboxSenderSubscribe(self):
+        thisTableWidget = self.ui.tableWidgetInbox
+        thisColumn = 1
+        self.on_action_Subscribe(thisTableWidget,thisColumn)
         
+    def on_action_SentRecipientSubscribe(self):
+        thisTableWidget = self.ui.tableWidgetSent
+        thisColumn = 0
+        self.on_action_Subscribe(thisTableWidget,thisColumn)
+        
+    def on_action_BlacklistSubscribe(self):
+        thisTableWidget = self.ui.tableWidgetBlacklist
+        thisColumn = 1
+        self.on_action_Subscribe(thisTableWidget,thisColumn)
+    
     def on_action_AddressBookSubscribe(self):
+        thisTableWidget = self.ui.tableWidgetAddressBook
+        thisColumn = 1
+        self.on_action_Subscribe(thisTableWidget,thisColumn)
+        
+    def on_action_BlacklistSubscribe(self):
+        thisTableWidget = self.ui.tableWidgetBlacklist
+        thisColumn = 1
+        self.on_action_Subscribe(thisTableWidget,thisColumn)
+        
+    # there's no on_action_YourIdentitiesSubscribe, on_action_InboxRecipientSubscribe, and on_action_SentSenderSubscribe, because you wouldn't want to subscribe to yourself or to a chan
+    
+    def on_action_Subscribe(self,thisTableWidget,thisColumn):
         listOfSelectedRows = {}
-        for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
-            listOfSelectedRows[self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
+        for i in range(len(thisTableWidget.selectedIndexes())):
+            listOfSelectedRows[thisTableWidget.selectedIndexes()[i].row()] = 0
         for currentRow in listOfSelectedRows:
-            addressAtCurrentRow = str(self.ui.tableWidgetAddressBook.item(currentRow,1).text())
+            addressAtCurrentRow = str(thisTableWidget.item(currentRow,thisColumn).text())
             # Then subscribe to it... provided it's not already in the address book
             if shared.isAddressInMySubscriptionsList(addressAtCurrentRow):
                 self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
                 continue
-            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
+            ###
+            if (thisTableWidget == self.ui.tableWidgetAddressBook) | (thisTableWidget == self.ui.tableWidgetBlacklist):
+                # if subscribing from an address list, copy the label
+                labelAtCurrentRow = thisTableWidget.item(currentRow,0).text().toUtf8()
             self.addSubscription(addressAtCurrentRow, labelAtCurrentRow)
+            # switch to the Subscriptions tab
             self.ui.tabWidget.setCurrentIndex(4)
 
     def on_context_menuAddressBook(self, point):
@@ -2958,25 +3036,6 @@ class MyForm(QtGui.QMainWindow):
     def on_action_SubscriptionsNew(self):
         self.click_pushButtonAddSubscription()
         
-    def on_action_SubscriptionsDelete(self):
-        print 'clicked Delete'
-        currentRow = self.ui.tableWidgetSubscriptions.currentRow()
-        labelAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
-            currentRow, 0).text().toUtf8()
-        addressAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
-            currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put(
-            '''DELETE FROM subscriptions WHERE label=? AND address=?''')
-        shared.sqlSubmitQueue.put(t)
-        shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
-        self.ui.tableWidgetSubscriptions.removeRow(currentRow)
-        self.rerenderInboxFromLabels()
-        shared.reloadBroadcastSendersForWhichImWatching()
-
     def on_action_SubscriptionsEnable(self):
         listOfSelectedRows = {}
         for i in range(len(self.ui.tableWidgetSubscriptions.selectedIndexes())):
@@ -3030,7 +3089,6 @@ class MyForm(QtGui.QMainWindow):
     def on_context_menuSubscriptions(self, point):
         # disable certain context menu items for multiselection
         is_singleselection = len(self.ui.tableWidgetSubscriptions.selectedIndexes())/2 <= 1 # divide by two because there are two columns
-        self.actionsubscriptionsDelete.setEnabled(is_singleselection)
         self.actionsubscriptionsNew.setEnabled(is_singleselection)
         self.popMenuSubscriptions.exec_(
             self.ui.tableWidgetSubscriptions.mapToGlobal(point))
@@ -3038,29 +3096,6 @@ class MyForm(QtGui.QMainWindow):
     # Group of functions for the Blacklist dialog box
     def on_action_BlacklistNew(self):
         self.click_pushButtonAddBlacklist()
-
-    def on_action_BlacklistDelete(self):
-        currentRow = self.ui.tableWidgetBlacklist.currentRow()
-        labelAtCurrentRow = self.ui.tableWidgetBlacklist.item(
-            currentRow, 0).text().toUtf8()
-        addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(
-            currentRow, 1).text()
-        t = (str(labelAtCurrentRow), str(addressAtCurrentRow))
-        shared.sqlLock.acquire()
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-            shared.sqlSubmitQueue.put(
-                '''DELETE FROM blacklist WHERE label=? AND address=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-        else:
-            shared.sqlSubmitQueue.put(
-                '''DELETE FROM whitelist WHERE label=? AND address=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()
-        self.ui.tableWidgetBlacklist.removeRow(currentRow)
-
 
     def on_context_menuBlacklist(self, point):
         self.popMenuBlacklist.exec_(
@@ -3166,24 +3201,31 @@ class MyForm(QtGui.QMainWindow):
         shared.reloadMyAddressHashes()
         
     def on_context_menuInbox(self, point):
-        # single or multi selction
+          # single or multi selction
         is_singleselection = len(self.ui.tableWidgetInbox.selectedIndexes())/4 <= 1 # divide by four because there are four columns
-        # disable certain context menu items for multiselection
+          # disable certain context menu items for multiselection
         self.actionReply.setEnabled(is_singleselection==True)
         self.actionReplyChan.setEnabled(is_singleselection==True)
-        self.actionAddSenderToAddressBook.setEnabled(is_singleselection==True) # cannot handle multiselection yet
+        self.actionInboxSenderSubscribe.setEnabled(is_singleselection==True) # cannot handle multiselection yet ###
+        self.actionAddSenderToAddressBook.setEnabled(is_singleselection==True) # cannot handle multiselection yet ###
         self.actionSaveMessageAs.setEnabled(is_singleselection==True) # cannot handle multiselection yet
         # disable certain context menu items for single selction
-        self.actionSendtoSender.setEnabled(is_singleselection==False)
-        self.actionSendtoRecipient.setEnabled(is_singleselection==False)
-        # check whether recipient is a chan for "reply to chan"
-        if is_singleselection:
+        # check whether among the recipients there is a chan for "reply to chan" and "send to recipient"
+        chanInRecipients = False
+        listOfSelectedRows = {}
+        for i in range(len(self.ui.tableWidgetInbox.selectedIndexes())):
+            listOfSelectedRows[
+                self.ui.tableWidgetInbox.selectedIndexes()[i].row()] = 0
+        for currentRow in listOfSelectedRows:
+            ###
             currentRow = self.ui.tableWidgetInbox.selectedIndexes()[0].row()
             possibleChanAddress = str(self.ui.tableWidgetInbox.item(
                 currentRow, 0).data(Qt.UserRole).toPyObject())
-            isChan = shared.safeConfigGetBoolean(addBMIfNotPresent(possibleChanAddress), 'chan')
-            self.actionReplyChan.setEnabled(isChan)
-        # pop up
+            if shared.safeConfigGetBoolean(addBMIfNotPresent(possibleChanAddress), 'chan'):
+                chanInRecipients = True
+        self.actionSendtoRecipient.setEnabled(chanInRecipients)
+        self.actionReplyChan.setEnabled(is_singleselection & chanInRecipients)
+          # pop up
         self.popMenuInbox.exec_(self.ui.tableWidgetInbox.mapToGlobal(point))
 
     def on_context_menuSent(self, point):
@@ -3202,13 +3244,15 @@ class MyForm(QtGui.QMainWindow):
             status, = row
         if status == 'toodifficult':
             self.popMenuSent.addAction(self.actionForceSend)
-        # single or multi selction
+          # single or multi selction
         is_singleselection = len(self.ui.tableWidgetSent.selectedIndexes())/4 <= 1 # divide by four because there are four columns
-        # disable certain context menu items for multiselection
+          # disable certain context menu items for multiselection
         self.actionSendAnother.setEnabled(is_singleselection==True)
         self.actionSentSaveMessageAs.setEnabled(is_singleselection==True)
         self.actionSentAddRecipientToAddressBook.setEnabled(is_singleselection==True) # cannot handle multiselection yet
-        # pop up
+        self.actionSentRecipientSubscribe.setEnabled(is_singleselection==True) # cannot handle multiselection yet ###
+        self.actionSaveMessageAs.setEnabled(is_singleselection==True) # cannot handle multiselection yet
+          # pop up
         self.popMenuSent.exec_(self.ui.tableWidgetSent.mapToGlobal(point))
 
     def on_context_menuYourIdentities(self, point):
