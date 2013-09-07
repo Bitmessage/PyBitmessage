@@ -2500,8 +2500,30 @@ class MyForm(QtGui.QMainWindow):
             newSubject = 'Re: ' + newSubject
         self.on_action_NewDraft(newFromAddress, [newToAddress], newSubject, newContent)
         
-    def on_action_NewDraft(self, newFromAddress=False,newToAddressList=[False],newSubject=False,newContent=False, switch=True):
+    # def set_comboBoxSendFrom_to_address(self, newFromAddress):
+        # self.ui.comboBoxSendFrom.setCurrentIndex(0)
+        # self.ui.labelFrom.setText('')
+        # self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(False)
+        # if newFromAddress != False:
+            # for index in range(self.ui.comboBoxSendFrom.count()):
+                # if self.ui.comboBoxSendFrom.itemData(index).toPyObject() == newFromAddress:
+                    # self.ui.comboBoxSendFrom.setCurrentIndex(index)
+                    # self.ui.labelFrom.setText(newFromAddress)
+                    # self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(newFromAddress)
+                    # return
+    
+    def set_comboBoxSendFrom_to_address(self, newFromAddress):
+        self.redrawLabelFrom(0)
+        if newFromAddress != False:
+            for index in range(self.ui.comboBoxSendFrom.count()):
+                if self.ui.comboBoxSendFrom.itemData(index).toPyObject() == newFromAddress:
+                    self.ui.comboBoxSendFrom.setCurrentIndex(index)
+                    self.redrawLabelFrom(index)
+                    return
+        
+    def on_action_NewDraft(self, newFromAddress=False,newToAddressList=[False],newSubject=False,newContent=False):
         if newContent != False:
+            # only ask if message body would be overwritten
             current_text = str(
                 self.ui.textEditMessage.document().toPlainText().toUtf8())
             if len(current_text) > 0:
@@ -2517,29 +2539,24 @@ class MyForm(QtGui.QMainWindow):
                     # switch back to where you were
                     self.ui.tabWidget.setCurrentIndex(current_index)
                     return
-        ###
           # check from address
         if newFromAddress==False:
             # keep the current from address
             pass
         elif newFromAddress == self.str_broadcast_subscribers:
-            self.ui.labelFrom.setText('')
+            self.set_comboBoxSendFrom_to_address(False)
         elif not shared.config.has_section(newFromAddress):
             QtGui.QMessageBox.information(self, _translate("MainWindow", "Address is gone"), _translate(
                 "MainWindow", "Bitmessage cannot find your address %1. Perhaps you removed it?").arg(newFromAddress), QMessageBox.Ok)
-            self.ui.labelFrom.setText('')
-            switch = False
+            self.set_comboBoxSendFrom_to_address(False)
         elif not shared.config.getboolean(newFromAddress, 'enabled'):
             QtGui.QMessageBox.information(self, _translate("MainWindow", "Address disabled"), _translate(
                 "MainWindow", "Error: The address from which you are trying to send is disabled. You\'ll have to enable it on the \'Your Identities\' tab before using it."), QMessageBox.Ok)
-            self.ui.labelFrom.setText('')
-            switch = False
+            self.set_comboBoxSendFrom_to_address(False)
         else:
             self.ui.labelFrom.setText(newFromAddress)
-            self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(newFromAddress)
-        self.ui.comboBoxSendFrom.setCurrentIndex(0)
-        # self.ui.comboBoxSendFrom.setEditText(str(here.item(currentRow,0).text))
-        
+            self.set_comboBoxSendFrom_to_address(newFromAddress)
+            # self.ui.comboBoxSendFrom.setEditText(str(here.item(currentRow,0).text))
           # check recipient addresses
         if False in newToAddressList:
             newToAddressList.remove(False)
@@ -2577,8 +2594,7 @@ class MyForm(QtGui.QMainWindow):
         # check radio button "Send to one or more specific people"
         self.ui.radioButtonSpecific.setChecked(True)
         # switch to "Send" Tab
-        if switch:
-            self.ui.tabWidget.setCurrentIndex(1)
+        self.ui.tabWidget.setCurrentIndex(1)
         
     def on_action_SentAddRecipientToAddressBook(self):
         thisTableWidget = self.ui.tableWidgetSent
@@ -2925,7 +2941,6 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tabWidget.setCurrentIndex(1)
 
     def on_action_YourIdentitiesSendFromAddress(self):
-        ###
         here = self.ui.tableWidgetYourIdentities
         newFromAddressColumn = 1
         currentRow = here.currentRow()
