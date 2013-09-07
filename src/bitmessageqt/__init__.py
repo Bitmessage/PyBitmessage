@@ -2407,18 +2407,18 @@ class MyForm(QtGui.QMainWindow):
             self.quit()
 
     def on_action_InboxMessageForceHtml(self):
-        here = self.ui.tableWidgetInbox
-        there = self.ui.textEditInboxMessage
-        self.on_action_MessageForceHtml(here, there)
+        thisTableWidget = self.ui.tableWidgetInbox
+        thisTextEdit = self.ui.textEditInboxMessage
+        self.on_action_MessageForceHtml(thisTableWidget, thisTextEdit)
         
     def on_action_SentMessageForceHtml(self):
-        here = self.ui.tableWidgetSent
-        there = self.ui.textEditSentMessage
-        self.on_action_MessageForceHtml(here, there)
+        thisTableWidget = self.ui.tableWidgetSent
+        thisTextEdit = self.ui.textEditSentMessage
+        self.on_action_MessageForceHtml(thisTableWidget, thisTextEdit)
             
-    def on_action_MessageForceHtml(self, here, there):
-        currentInboxRow = here.currentRow()
-        lines = here.item(
+    def on_action_MessageForceHtml(self, thisTableWidget, thisTextEdit):
+        currentInboxRow = thisTableWidget.currentRow()
+        lines = thisTableWidget.item(
             currentInboxRow, 2).data(Qt.UserRole).toPyObject().split('\n')
         for i in xrange(len(lines)):
             if lines[i].contains('Message ostensibly from '):
@@ -2430,72 +2430,72 @@ class MyForm(QtGui.QMainWindow):
         for i in xrange(len(lines)):
             content += lines[i]
         content = content.replace('\n\n', '<br><br>')
-        there.setHtml(QtCore.QString(content))
+        thisTextEdit.setHtml(QtCore.QString(content))
 
     def on_action_InboxMarkUnread(self):
-        here = self.ui.tableWidgetInbox
+        thisTableWidget = self.ui.tableWidgetInbox
         read = False
-        self.on_action_InboxMarkReadUnread(here, read)
+        self.on_action_InboxMarkReadUnread(thisTableWidget, read)
         
     def on_action_InboxMarkRead(self):
-        here = self.ui.tableWidgetInbox
+        thisTableWidget = self.ui.tableWidgetInbox
         read = True
-        self.on_action_InboxMarkReadUnread(here, read)
+        self.on_action_InboxMarkReadUnread(thisTableWidget, read)
         
-    def on_action_InboxMarkReadUnread(self, here, read):
-        here = self.ui.tableWidgetInbox
+    def on_action_InboxMarkReadUnread(self, thisTableWidget, read):
+        thisTableWidget = self.ui.tableWidgetInbox
         font = QFont()
         font.setBold(read==False)
-        for row in here.selectedIndexes():
+        for row in thisTableWidget.selectedIndexes():
             currentRow = row.row()
-            inventoryHashToMarkUnread = str(here.item(
+            inventoryHashToMarkUnread = str(thisTableWidget.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
             t = (inventoryHashToMarkUnread,)
             shared.sqlLock.acquire()
             shared.sqlSubmitQueue.put(
-                '''UPDATE inbox SET read='''+ str(int(read)) +''' WHERE msgid=?''')
+                '''UPDATE inbox SET read='''+ str(int(read)) +''' WthisTableWidget msgid=?''')
             shared.sqlSubmitQueue.put(t)
             shared.sqlReturnQueue.get()
             shared.sqlLock.release()
-            here.item(currentRow, 0).setFont(font)
-            here.item(currentRow, 1).setFont(font)
-            here.item(currentRow, 2).setFont(font)
-            here.item(currentRow, 3).setFont(font)
+            thisTableWidget.item(currentRow, 0).setFont(font)
+            thisTableWidget.item(currentRow, 1).setFont(font)
+            thisTableWidget.item(currentRow, 2).setFont(font)
+            thisTableWidget.item(currentRow, 3).setFont(font)
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
-        # here.selectRow(currentRow + 1)
+        # thisTableWidget.selectRow(currentRow + 1)
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
-        # here.clearSelection() manages to mark the message as read again.
+        # thisTableWidget.clearSelection() manages to mark the message as read again.
 
     def on_action_InboxReply(self):
-        here = self.ui.tableWidgetInbox
+        thisTableWidget = self.ui.tableWidgetInbox
         newFromAddressColumn = 0
         newToAddressColumn = 1
-        self.on_action_ReplyGeneric(here, newFromAddressColumn, newToAddressColumn)
+        self.on_action_ReplyGeneric(thisTableWidget, newFromAddressColumn, newToAddressColumn)
         
     def on_action_InboxReplyChan(self):
-        here = self.ui.tableWidgetInbox
+        thisTableWidget = self.ui.tableWidgetInbox
         newFromAddressColumn = 0
         newToAddressColumn = 0
-        self.on_action_ReplyGeneric(here, newFromAddressColumn, newToAddressColumn)
+        self.on_action_ReplyGeneric(thisTableWidget, newFromAddressColumn, newToAddressColumn)
         
     def on_action_SentSendAnother(self):
-        here = self.ui.tableWidgetSent
+        thisTableWidget = self.ui.tableWidgetSent
         newFromAddressColumn = 1
         newToAddressColumn = 0
-        self.on_action_ReplyGeneric(here, newFromAddressColumn, newToAddressColumn)
+        self.on_action_ReplyGeneric(thisTableWidget, newFromAddressColumn, newToAddressColumn)
         
-    def on_action_ReplyGeneric(self, here, newFromAddressColumn, newToAddressColumn):
-        currentRow = here.currentRow()
-        newFromAddress = str(here.item(
+    def on_action_ReplyGeneric(self, thisTableWidget, newFromAddressColumn, newToAddressColumn):
+        currentRow = thisTableWidget.currentRow()
+        newFromAddress = str(thisTableWidget.item(
             currentRow, newFromAddressColumn).data(Qt.UserRole).toPyObject())
-        newToAddress = str(here.item(
+        newToAddress = str(thisTableWidget.item(
             currentRow, newToAddressColumn).data(Qt.UserRole).toPyObject())
-        newContent = ('\n\n------------------------------------------------------\n' + here.item(
+        newContent = ('\n\n------------------------------------------------------\n' + thisTableWidget.item(
             currentRow, 2).data(Qt.UserRole).toPyObject())
-        newSubject = here.item(currentRow, 2).text()
+        newSubject = thisTableWidget.item(currentRow, 2).text()
         if not newSubject[0:3] in ['Re:', 'RE:']:
             newSubject = 'Re: ' + newSubject
         self.on_action_NewDraft(newFromAddress, [newToAddress], newSubject, newContent)
@@ -2526,7 +2526,7 @@ class MyForm(QtGui.QMainWindow):
             # only ask if message body would be overwritten
             current_text = str(
                 self.ui.textEditMessage.document().toPlainText().toUtf8())
-            if len(current_text) > 0:
+            if (len(current_text) > 0) & (newContent != current_text):
                 # switch to Send Tab to see the message
                 # so you can check if you want to overwrite
                 current_index = self.ui.tabWidget.currentIndex()
@@ -2541,7 +2541,7 @@ class MyForm(QtGui.QMainWindow):
                     return
           # check from address
         if newFromAddress==False:
-            # keep the current from address
+            # keep the current FROM address
             pass
         elif newFromAddress == self.str_broadcast_subscribers:
             self.set_comboBoxSendFrom_to_address(False)
@@ -2837,52 +2837,52 @@ class MyForm(QtGui.QMainWindow):
     # Send to Address context menu items
         
     def on_action_InboxSendtoRecipient(self):
-        here = self.ui.tableWidgetInbox
+        thisTableWidget = self.ui.tableWidgetInbox
         address_column = 0
         useData = True
-        self.on_action_SendToAddress(here,address_column,useData)
+        self.on_action_SendToAddress(thisTableWidget,address_column,useData)
 
     def on_action_InboxSendtoSender(self):
-        here = self.ui.tableWidgetInbox
+        thisTableWidget = self.ui.tableWidgetInbox
         address_column = 1
         useData = True
-        self.on_action_SendToAddress(here,address_column,useData)
+        self.on_action_SendToAddress(thisTableWidget,address_column,useData)
     
     def on_action_SentSendtoRecipient(self):
-        here = self.ui.tableWidgetSent
+        thisTableWidget = self.ui.tableWidgetSent
         address_column = 0
         useData = True
-        self.on_action_SendToAddress(here,address_column,useData)
+        self.on_action_SendToAddress(thisTableWidget,address_column,useData)
 
     def on_action_SentSendtoSender(self):
-        here = self.ui.tableWidgetSent
+        thisTableWidget = self.ui.tableWidgetSent
         address_column = 1
         useData = True
-        self.on_action_SendToAddress(here,address_column,useData)
+        self.on_action_SendToAddress(thisTableWidget,address_column,useData)
         
     def on_action_YourIdentitiesSendToChan(self):
-        here = self.ui.tableWidgetYourIdentities
+        thisTableWidget = self.ui.tableWidgetYourIdentities
         address_column = 1
         useData = False
-        self.on_action_SendToAddress(here,address_column,useData)
+        self.on_action_SendToAddress(thisTableWidget,address_column,useData)
             
     def on_action_SubscriptionsSend(self):
-        here = self.ui.tableWidgetSubscriptions
+        thisTableWidget = self.ui.tableWidgetSubscriptions
         address_column = 1
         useData = False
-        self.on_action_SendToAddress(here,address_column,useData)
+        self.on_action_SendToAddress(thisTableWidget,address_column,useData)
         
     def on_action_AddressBookSend(self):
-        here = self.ui.tableWidgetAddressBook
+        thisTableWidget = self.ui.tableWidgetAddressBook
         address_column = 1
         useData = False
-        self.on_action_SendToAddress(here,address_column,useData)
+        self.on_action_SendToAddress(thisTableWidget,address_column,useData)
         
     def on_action_BlacklistSend(self):
-        here = self.ui.tableWidgetBlacklist
+        thisTableWidget = self.ui.tableWidgetBlacklist
         address_column = 1
         useData = False
-        self.on_action_SendToAddress(here,address_column,useData)
+        self.on_action_SendToAddress(thisTableWidget,address_column,useData)
         
     def filter_own_addresses(self, addressList):
         outputList = []
@@ -2900,18 +2900,18 @@ class MyForm(QtGui.QMainWindow):
             outputList += [address]
         return outputList
         
-    def on_action_SendToAddress(self, here, address_column, use_data):
+    def on_action_SendToAddress(self, thisTableWidget, address_column, use_data):
         listOfSelectedRows = {}
-        for i in range(len(here.selectedIndexes())):
+        for i in range(len(thisTableWidget.selectedIndexes())):
             listOfSelectedRows[
-                here.selectedIndexes()[i].row()] = 0
+                thisTableWidget.selectedIndexes()[i].row()] = 0
         addressList = []
         for currentRow in listOfSelectedRows:
             if use_data:
-                addressAtCurrentRow = here.item(currentRow, address_column
+                addressAtCurrentRow = thisTableWidget.item(currentRow, address_column
                     ).data(Qt.UserRole).toPyObject()
             else:
-                addressAtCurrentRow = here.item(
+                addressAtCurrentRow = thisTableWidget.item(
                     currentRow, address_column).text()
             addressList += [str(addressAtCurrentRow)]
         not_own = self.filter_own_addresses(addressList)
@@ -2941,10 +2941,10 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tabWidget.setCurrentIndex(1)
 
     def on_action_YourIdentitiesSendFromAddress(self):
-        here = self.ui.tableWidgetYourIdentities
+        thisTableWidget = self.ui.tableWidgetYourIdentities
         newFromAddressColumn = 1
-        currentRow = here.currentRow()
-        newFromAddress = str(here.item(
+        currentRow = thisTableWidget.currentRow()
+        newFromAddress = str(thisTableWidget.item(
             currentRow, newFromAddressColumn).text())
         self.on_action_NewDraft(newFromAddress, [False], False, False)
         
