@@ -2538,25 +2538,33 @@ class MyForm(QtGui.QMainWindow):
         self.on_action_InboxMarkReadUnread(thisTableWidget, read)
         
     def on_action_InboxMarkReadUnread(self, thisTableWidget, read):
-        thisTableWidget = self.ui.tableWidgetInbox
         font = QFont()
         font.setBold(read==False)
         for row in thisTableWidget.selectedIndexes():
             currentRow = row.row()
             inventoryHashToMarkUnread = str(thisTableWidget.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
-            t = (inventoryHashToMarkUnread,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''UPDATE inbox SET read='''+ str(int(read)) +''' WthisTableWidget msgid=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
-            thisTableWidget.item(currentRow, 0).setFont(font)
-            thisTableWidget.item(currentRow, 1).setFont(font)
-            thisTableWidget.item(currentRow, 2).setFont(font)
-            thisTableWidget.item(currentRow, 3).setFont(font)
+            sqlExecute('''UPDATE inbox SET read=0 WHERE msgid=?''', inventoryHashToMarkUnread)
+            self.ui.tableWidgetInbox.item(currentRow, 0).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow, 1).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow, 2).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow, 3).setFont(font)
+        
+            # currentRow = row.row()
+            # inventoryHashToMarkUnread = str(thisTableWidget.item(
+                # currentRow, 3).data(Qt.UserRole).toPyObject())
+            # t = (inventoryHashToMarkUnread,)
+            # shared.sqlLock.acquire()
+            # shared.sqlSubmitQueue.put(
+                # '''UPDATE inbox SET read='''+ str(int(read)) +''' WHERE msgid=?''')
+            # shared.sqlSubmitQueue.put(t)
+            # shared.sqlReturnQueue.get()
+            # thisTableWidget.item(currentRow, 0).setFont(font)
+            # thisTableWidget.item(currentRow, 1).setFont(font)
+            # thisTableWidget.item(currentRow, 2).setFont(font)
+            # thisTableWidget.item(currentRow, 3).setFont(font)
+        # shared.sqlSubmitQueue.put('commit')
+        # shared.sqlLock.release()
         # thisTableWidget.selectRow(currentRow + 1)
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
