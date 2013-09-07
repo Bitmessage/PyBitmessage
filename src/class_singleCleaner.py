@@ -7,6 +7,7 @@ from helper_sql import *
 '''The singleCleaner class is a timer-driven thread that cleans data structures to free memory, resends messages when a remote node doesn't respond, and sends pong messages to keep connections alive if the network isn't busy.
 It cleans these data structures in memory:
     inventory (moves data to the on-disk sql database)
+    inventorySets (clears then reloads data out of sql database)
 
 It cleans these tables on the disk:
     inventory (clears data more than 2 days and 12 hours old)
@@ -109,4 +110,12 @@ class singleCleaner(threading.Thread):
                             shared.workerQueue.put(('sendmessage', ''))
                             shared.UISignalQueue.put((
                                 'updateStatusBar', 'Doing work necessary to again attempt to deliver a message...'))
+                
+                # Let's also clear and reload shared.inventorySets to keep it from
+                # taking up an unnecessary amount of memory.
+                for streamNumber in shared.inventorySets:
+                    shared.inventorySets[streamNumber] = set()
+                    queryData = sqlQuery('''SELECT hash FROM inventory WHERE streamnumber=?''', streamNumber)
+                    for row in queryData:
+                        shared.inventorySets[streamNumber].add(row[0])
             time.sleep(300)

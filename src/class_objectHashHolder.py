@@ -20,17 +20,14 @@ class objectHashHolder(threading.Thread):
             self.collectionOfLists[i] = []
 
     def run(self):
-        print 'objectHashHolder running.'
         iterator = 0
         while not self.shutdown:
             if len(self.collectionOfLists[iterator]) > 0:
-                print 'objectHashHolder is submitting', len(self.collectionOfLists[iterator]), 'items to the queue.'
                 self.sendDataThreadMailbox.put((0, 'sendinv', self.collectionOfLists[iterator]))
                 self.collectionOfLists[iterator] = []
             iterator += 1
             iterator %= 10
             time.sleep(1)
-        print 'objectHashHolder shutting down.'
 
     def holdHash(self,hash):
         self.collectionOfLists[random.randrange(0, 10)].append(hash)

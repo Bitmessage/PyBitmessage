@@ -108,7 +108,6 @@ class sendDataThread(threading.Thread):
                         # to our peer after waiting a random amount of time
                         # unless we have a long list of messages in our queue
                         # to send.
-                        random.seed()
                         time.sleep(random.randrange(0, 10))
                         self.sock.sendall(data)
                         self.lastTimeISentData = int(time.time())
@@ -130,7 +129,6 @@ class sendDataThread(threading.Thread):
                         if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
                             payload += hash
                     if payload != '':
-                        print 'within sendinv, payload contains', len(payload)/32, 'hashes.'
                         payload = encodeVarint(len(payload)/32) + payload
                         headerData = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
                         headerData += 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
@@ -149,8 +147,6 @@ class sendDataThread(threading.Thread):
                             shared.sendDataQueues.remove(self.mailbox)
                             print 'sendDataThread thread (ID:', str(id(self)) + ') ending now. Was connected to', self.peer
                             break
-                    else:
-                        print '(within sendinv) payload was empty. Not sending anything' #testing.
                 elif command == 'pong':
                     self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware.clear() # To save memory, let us clear this data structure from time to time. As its function is to help us keep from sending inv messages to peers which sent us the same inv message mere seconds earlier, it will be fine to clear this data structure from time to time.
                     if self.lastTimeISentData < (int(time.time()) - 298):
