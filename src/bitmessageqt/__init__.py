@@ -2473,52 +2473,112 @@ class MyForm(QtGui.QMainWindow):
         here = self.ui.tableWidgetInbox
         newFromAddressColumn = 0
         newToAddressColumn = 1
-        self.on_action_InboxReplyGeneric(here, newFromAddressColumn, newToAddressColumn)
+        self.on_action_ReplyGeneric(here, newFromAddressColumn, newToAddressColumn)
         
     def on_action_InboxReplyChan(self):
         here = self.ui.tableWidgetInbox
         newFromAddressColumn = 0
         newToAddressColumn = 0
-        self.on_action_InboxReplyGeneric(here, newFromAddressColumn, newToAddressColumn)
+        self.on_action_ReplyGeneric(here, newFromAddressColumn, newToAddressColumn)
         
     def on_action_SentSendAnother(self):
         here = self.ui.tableWidgetSent
         newFromAddressColumn = 1
         newToAddressColumn = 0
-        self.on_action_InboxReplyGeneric(here, newFromAddressColumn, newToAddressColumn)
+        self.on_action_ReplyGeneric(here, newFromAddressColumn, newToAddressColumn)
         
-    def on_action_InboxReplyGeneric(self, here, newFromAddressColumn, newToAddressColumn):
-        currentInboxRow = here.currentRow()
+    def on_action_ReplyGeneric(self, here, newFromAddressColumn, newToAddressColumn):
+        currentRow = here.currentRow()
         newFromAddress = str(here.item(
-            currentInboxRow, newFromAddressColumn).data(Qt.UserRole).toPyObject())
+            currentRow, newFromAddressColumn).data(Qt.UserRole).toPyObject())
         newToAddress = str(here.item(
-            currentInboxRow, newToAddressColumn).data(Qt.UserRole).toPyObject())
-        if newFromAddress == self.str_broadcast_subscribers:
+            currentRow, newToAddressColumn).data(Qt.UserRole).toPyObject())
+        newContent = ('\n\n------------------------------------------------------\n' + here.item(
+            currentRow, 2).data(Qt.UserRole).toPyObject())
+        newSubject = here.item(currentRow, 2).text()
+        if not newSubject[0:3] in ['Re:', 'RE:']:
+            newSubject = 'Re: ' + newSubject
+        self.on_action_NewDraft(newFromAddress, [newToAddress], newSubject, newContent)
+        
+    def on_action_NewDraft(self, newFromAddress=False,newToAddressList=[False],newSubject=False,newContent=False, switch=True):
+        if newContent != False:
+            current_text = str(
+                self.ui.textEditMessage.document().toPlainText().toUtf8())
+            if len(current_text) > 0:
+                # switch to Send Tab to see the message
+                # so you can check if you want to overwrite
+                current_index = self.ui.tabWidget.currentIndex()
+                self.ui.tabWidget.setCurrentIndex(1)
+                # ask whether to overwrite current draft
+                displayMsg = _translate("MainWindow", "Do you really want to overwrite your current draft?")
+                reply = QtGui.QMessageBox.question(
+                    self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                if reply == QtGui.QMessageBox.No:
+                    # switch back to where you were
+                    self.ui.tabWidget.setCurrentIndex(current_index)
+                    return
+        ###
+          # check from address
+        if newFromAddress==False:
+            # keep the current from address
+            pass
+        elif newFromAddress == self.str_broadcast_subscribers:
             self.ui.labelFrom.setText('')
         elif not shared.config.has_section(newFromAddress):
             QtGui.QMessageBox.information(self, _translate("MainWindow", "Address is gone"), _translate(
                 "MainWindow", "Bitmessage cannot find your address %1. Perhaps you removed it?").arg(newFromAddress), QMessageBox.Ok)
             self.ui.labelFrom.setText('')
+            switch = False
         elif not shared.config.getboolean(newFromAddress, 'enabled'):
             QtGui.QMessageBox.information(self, _translate("MainWindow", "Address disabled"), _translate(
                 "MainWindow", "Error: The address from which you are trying to send is disabled. You\'ll have to enable it on the \'Your Identities\' tab before using it."), QMessageBox.Ok)
             self.ui.labelFrom.setText('')
+            switch = False
         else:
             self.ui.labelFrom.setText(newFromAddress)
             self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(newFromAddress)
-        self.ui.lineEditTo.setText(str(newToAddress))
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
-        # self.ui.comboBoxSendFrom.setEditText(str(here.item(currentInboxRow,0).text))
-        self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + here.item(
-            currentInboxRow, 2).data(Qt.UserRole).toPyObject())
-        if here.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
-            self.ui.lineEditSubject.setText(
-                here.item(currentInboxRow, 2).text())
+        # self.ui.comboBoxSendFrom.setEditText(str(here.item(currentRow,0).text))
+        
+          # check recipient addresses
+        if False in newToAddressList:
+            newToAddressList.remove(False)
+            old_recipients = str(self.ui.lineEditTo.text()).split(';')
+            old_recipients = [x.strip(' ') for x in old_recipients]
+            # filter out empty elements, like possibly the current lineEditTo.text()
+            old_recipients = filter(None, old_recipients)
         else:
-            self.ui.lineEditSubject.setText(
-                'Re: ' + here.item(currentInboxRow, 2).text())
+            # dont keep recipients
+            old_recipients = []
+        not_own = self.filter_own_addresses(newToAddressList)
+        # always act as if there were old recipients
+        recipients = old_recipients + not_own
+        # filter out duplicate recipients
+        from collections import OrderedDict
+        recipients = list(OrderedDict.fromkeys(recipients))
+        # alternatively, if we don't need them sorted:
+        # recipients = set(old_recipients + not_own)
+        added = set(not_own) - set(old_recipients)
+        already_recipient = set(not_own) & set(old_recipients) # and
+        own_ignored = set(newToAddressList) - set(not_own)
+        message = _translate(
+                "MainWindow", "%1 address(es) added to recipients. %2 address(es) already in recipients. %3 own address(es) ignored.").arg(len(added)).arg(len(already_recipient)).arg(len(own_ignored))
+        self.ui.lineEditTo.setText(
+            '; '.join(recipients))
+        self.statusBar().showMessage(message)
+          # check body
+        if newContent:
+            # only change content if not False
+            self.ui.textEditMessage.setText(newContent)
+          # check subject
+        if newSubject:
+            # only change content if not False
+            self.ui.lineEditSubject.setText(newSubject)
+        # check radio button "Send to one or more specific people"
         self.ui.radioButtonSpecific.setChecked(True)
-        self.ui.tabWidget.setCurrentIndex(1)
+        # switch to "Send" Tab
+        if switch:
+            self.ui.tabWidget.setCurrentIndex(1)
         
     def on_action_SentAddRecipientToAddressBook(self):
         thisTableWidget = self.ui.tableWidgetSent
@@ -2825,9 +2885,6 @@ class MyForm(QtGui.QMainWindow):
         return outputList
         
     def on_action_SendToAddress(self, here, address_column, use_data):
-        # i dont know where to put this if i want this to be global
-        # in the mean time i will put it inside here:
-
         listOfSelectedRows = {}
         for i in range(len(here.selectedIndexes())):
             listOfSelectedRows[
@@ -2869,7 +2926,12 @@ class MyForm(QtGui.QMainWindow):
 
     def on_action_YourIdentitiesSendFromAddress(self):
         ###
-        pass
+        here = self.ui.tableWidgetYourIdentities
+        newFromAddressColumn = 1
+        currentRow = here.currentRow()
+        newFromAddress = str(here.item(
+            currentRow, newFromAddressColumn).text())
+        self.on_action_NewDraft(newFromAddress, [False], False, False)
         
     def on_action_AddressBookSubscribe(self):
         listOfSelectedRows = {}
