@@ -375,7 +375,7 @@ class MyForm(QtGui.QMainWindow):
         self.connect(self.ui.tableWidgetBlacklist, QtCore.SIGNAL(
             'customContextMenuRequested(const QPoint&)'), self.on_context_menuBlacklist)
         self.popMenuBlacklist = QtGui.QMenu(self)
-        # self.popMenuBlacklist.addAction( self.actionBlacklistNew )
+        self.popMenuBlacklist.addAction(self.actionBlacklistNew)
         self.popMenuBlacklist.addAction(self.actionBlacklistDelete)
         self.popMenuBlacklist.addSeparator()
         self.popMenuBlacklist.addAction(self.actionBlacklistSend)
@@ -2500,18 +2500,6 @@ class MyForm(QtGui.QMainWindow):
             newSubject = 'Re: ' + newSubject
         self.on_action_NewDraft(newFromAddress, [newToAddress], newSubject, newContent)
         
-    # def set_comboBoxSendFrom_to_address(self, newFromAddress):
-        # self.ui.comboBoxSendFrom.setCurrentIndex(0)
-        # self.ui.labelFrom.setText('')
-        # self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(False)
-        # if newFromAddress != False:
-            # for index in range(self.ui.comboBoxSendFrom.count()):
-                # if self.ui.comboBoxSendFrom.itemData(index).toPyObject() == newFromAddress:
-                    # self.ui.comboBoxSendFrom.setCurrentIndex(index)
-                    # self.ui.labelFrom.setText(newFromAddress)
-                    # self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(newFromAddress)
-                    # return
-    
     def set_comboBoxSendFrom_to_address(self, newFromAddress):
         self.redrawLabelFrom(0)
         if newFromAddress != False:
