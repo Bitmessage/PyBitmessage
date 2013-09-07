@@ -414,7 +414,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 readStatus = params[1]
                 if not isinstance(readStatus, bool):
                     raise APIError(23, 'Bool expected in readStatus, saw %s instead.' % type(readStatus))
-                sqlExecute('''UPDATE inbox set read = ? WHERE msgid=?''', readStatus, msgid)
+                queryreturn = sqlQuery('''SELECT read FROM inbox WHERE msgid=?''', msgid)
+                # UPDATE is slow, only update if status is different
+                if queryreturn != [] and (queryreturn[0][0] == 1) != readStatus:
+                    sqlExecute('''UPDATE inbox set read = ? WHERE msgid=?''', readStatus, msgid)
             queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox WHERE msgid=?''', msgid)
             data = '{"inboxMessage":['
             for row in queryreturn:
