@@ -19,8 +19,10 @@ import helper_generic
 import helper_bitcoin
 import helper_inbox
 import helper_sent
+from helper_sql import *
 import tr
-#from bitmessagemain import shared.lengthOfTimeToLeaveObjectsInInventory, shared.lengthOfTimeToHoldOnToAllPubkeys, shared.maximumAgeOfAnObjectThatIAmWillingToAccept, shared.maximumAgeOfObjectsThatIAdvertiseToOthers, shared.maximumAgeOfNodesThatIAdvertiseToOthers, shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer, shared.neededPubkeys
+from debug import logger
+#from bitmessagemain import shared.lengthOfTimeToLeaveObjectsInInventory, shared.lengthOfTimeToHoldOnToAllPubkeys, shared.maximumAgeOfAnObjectThatIAmWillingToAccept, shared.maximumAgeOfObjectsThatIAdvertiseToOthers, shared.maximumAgeOfNodesThatIAdvertiseToOthers, shared.numberOfObjectsThatWeHaveYetToGetPerPeer, shared.neededPubkeys
 
 # This thread is created either by the synSenderThread(for outgoing
 # connections) or the singleListenerThread(for incoming connectiosn).
@@ -45,7 +47,7 @@ class receiveDataThread(threading.Thread):
         self.peer = shared.Peer(HOST, port)
         self.streamNumber = streamNumber
         self.payloadLength = 0  # This is the protocol payload length thus it doesn't include the 24 byte message header
-        self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave = {}
+        self.objectsThatWeHaveYetToGetFromThisPeer = {}
         self.selfInitiatedConnections = selfInitiatedConnections
         shared.connectedHostsList[
             self.peer.host] = 0  # The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
@@ -100,7 +102,7 @@ class receiveDataThread(threading.Thread):
                 print 'Could not delete', self.peer.host, 'from shared.connectedHostsList.', err
 
         try:
-            del shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
+            del shared.numberOfObjectsThatWeHaveYetToGetPerPeer[
                 self.peer]
         except:
             pass
@@ -171,52 +173,53 @@ class receiveDataThread(threading.Thread):
         self.data = self.data[
             self.payloadLength + 24:]  # take this message out and then process the next message
         if self.data == '':
-            while len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) > 0:
+            while len(self.objectsThatWeHaveYetToGetFromThisPeer) > 0:
+                shared.numberOfInventoryLookupsPerformed += 1
                 random.seed()
                 objectHash, = random.sample(
-                    self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave, 1)
+                    self.objectsThatWeHaveYetToGetFromThisPeer, 1)
                 if objectHash in shared.inventory:
                     with shared.printLock:
                         print 'Inventory (in memory) already has object listed in inv message.'
 
-                    del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[
+                    del self.objectsThatWeHaveYetToGetFromThisPeer[
                         objectHash]
                 elif shared.isInSqlInventory(objectHash):
                     if shared.verbose >= 3:
                         with shared.printLock:
                             print 'Inventory (SQL on disk) already has object listed in inv message.'
 
-                    del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[
+                    del self.objectsThatWeHaveYetToGetFromThisPeer[
                         objectHash]
                 else:
                     self.sendgetdata(objectHash)
-                    del self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[
+                    del self.objectsThatWeHaveYetToGetFromThisPeer[
                         objectHash]  # It is possible that the remote node doesn't respond with the object. In that case, we'll very likely get it from someone else anyway.
-                    if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) == 0:
+                    if len(self.objectsThatWeHaveYetToGetFromThisPeer) == 0:
                         with shared.printLock:
-                            print '(concerning', str(self.peer) + ')', 'number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
+                            print '(concerning', str(self.peer) + ')', 'number of objectsThatWeHaveYetToGetFromThisPeer is now', len(self.objectsThatWeHaveYetToGetFromThisPeer)
 
                         try:
-                            del shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
+                            del shared.numberOfObjectsThatWeHaveYetToGetPerPeer[
                                 self.peer]  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
                         except:
                             pass
                     break
-                if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) == 0:
+                if len(self.objectsThatWeHaveYetToGetFromThisPeer) == 0:
                     with shared.printLock:
-                        print '(concerning', str(self.peer) + ')', 'number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
+                        print '(concerning', str(self.peer) + ')', 'number of objectsThatWeHaveYetToGetFromThisPeer is now', len(self.objectsThatWeHaveYetToGetFromThisPeer)
 
                     try:
-                        del shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
+                        del shared.numberOfObjectsThatWeHaveYetToGetPerPeer[
                             self.peer]  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
                     except:
                         pass
-            if len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) > 0:
+            if len(self.objectsThatWeHaveYetToGetFromThisPeer) > 0:
                 with shared.printLock:
-                    print '(concerning', str(self.peer) + ')', 'number of objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave is now', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
+                    print '(concerning', str(self.peer) + ')', 'number of objectsThatWeHaveYetToGetFromThisPeer is now', len(self.objectsThatWeHaveYetToGetFromThisPeer)
 
-                shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[self.peer] = len(
-                    self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
+                shared.numberOfObjectsThatWeHaveYetToGetPerPeer[self.peer] = len(
+                    self.objectsThatWeHaveYetToGetFromThisPeer)  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
             if len(self.ackDataThatWeHaveYetToSend) > 0:
                 self.data = self.ackDataThatWeHaveYetToSend.pop()
         self.processData()
@@ -256,6 +259,7 @@ class receiveDataThread(threading.Thread):
     def connectionFullyEstablished(self):
         self.connectionIsOrWasFullyEstablished = True
         if not self.initiatedConnection:
+            shared.clientHasReceivedIncomingConnections = True
             shared.UISignalQueue.put(('setStatusIcon', 'green'))
         self.sock.settimeout(
             600)  # We'll send out a pong every 5 minutes to make sure the connection stays alive if there has been no other traffic to send lately.
@@ -280,16 +284,13 @@ class receiveDataThread(threading.Thread):
         self.sendBigInv()
 
     def sendBigInv(self):
-        shared.sqlLock.acquire()
         # Select all hashes which are younger than two days old and in this
         # stream.
-        t = (int(time.time()) - shared.maximumAgeOfObjectsThatIAdvertiseToOthers, int(
-            time.time()) - shared.lengthOfTimeToHoldOnToAllPubkeys, self.streamNumber)
-        shared.sqlSubmitQueue.put(
-            '''SELECT hash FROM inventory WHERE ((receivedtime>? and objecttype<>'pubkey') or (receivedtime>? and objecttype='pubkey')) and streamnumber=?''')
-        shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlLock.release()
+        queryreturn = sqlQuery(
+            '''SELECT hash FROM inventory WHERE ((receivedtime>? and objecttype<>'pubkey') or (receivedtime>? and objecttype='pubkey')) and streamnumber=?''',
+            int(time.time()) - shared.maximumAgeOfObjectsThatIAdvertiseToOthers,
+            int(time.time()) - shared.lengthOfTimeToHoldOnToAllPubkeys,
+            self.streamNumber)
         bigInvList = {}
         for row in queryreturn:
             hash, = row
@@ -376,6 +377,7 @@ class receiveDataThread(threading.Thread):
                 print 'The stream number encoded in this broadcast message (' + str(streamNumber) + ') does not match the stream number on which it was received. Ignoring it.'
                 return
 
+        shared.numberOfInventoryLookupsPerformed += 1
         shared.inventoryLock.acquire()
         self.inventoryHash = calculateInventoryHash(data)
         if self.inventoryHash in shared.inventory:
@@ -392,8 +394,9 @@ class receiveDataThread(threading.Thread):
             objectType, self.streamNumber, data, embeddedTime)
         shared.inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
+        shared.numberOfBroadcastsProcessed += 1
         shared.UISignalQueue.put((
-            'incrementNumberOfBroadcastsProcessed', 'no data'))
+            'updateNumberOfBroadcastsProcessed', 'no data'))
 
         self.processbroadcast(
             readPosition, data)  # When this function returns, we will have either successfully processed this broadcast because we are interested in it, ignored it because we aren't interested in it, or found problem with the broadcast that warranted ignoring it.
@@ -505,15 +508,12 @@ class receiveDataThread(threading.Thread):
                 # won't be able to send this pubkey to others (without doing
                 # the proof of work ourselves, which this program is programmed
                 # to not do.)
-                t = (ripe.digest(), '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + data[
-                     beginningOfPubkeyPosition:endOfPubkeyPosition], int(time.time()), 'yes')
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put(
-                    '''INSERT INTO pubkeys VALUES (?,?,?,?)''')
-                shared.sqlSubmitQueue.put(t)
-                shared.sqlReturnQueue.get()
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlLock.release()
+                sqlExecute(
+                    '''INSERT INTO pubkeys VALUES (?,?,?,?)''',
+                    ripe.digest(),
+                    '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + data[beginningOfPubkeyPosition:endOfPubkeyPosition],
+                    int(time.time()),
+                    'yes')
                 # shared.workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest())))
                 # This will check to see whether we happen to be awaiting this
                 # pubkey in order to send a message. If we are, it will do the
@@ -655,15 +655,11 @@ class receiveDataThread(threading.Thread):
 
             # Let's store the public key in case we want to reply to this
             # person.
-            t = (ripe.digest(), '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + decryptedData[
-                 beginningOfPubkeyPosition:endOfPubkeyPosition], int(time.time()), 'yes')
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''INSERT INTO pubkeys VALUES (?,?,?,?)''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''',
+                       ripe.digest(),
+                       '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + decryptedData[beginningOfPubkeyPosition:endOfPubkeyPosition],
+                       int(time.time()),
+                       'yes')
             # shared.workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest())))
             # This will check to see whether we happen to be awaiting this
             # pubkey in order to send a message. If we are, it will do the POW
@@ -745,6 +741,7 @@ class receiveDataThread(threading.Thread):
             return
         readPosition += streamNumberAsClaimedByMsgLength
         self.inventoryHash = calculateInventoryHash(data)
+        shared.numberOfInventoryLookupsPerformed += 1
         shared.inventoryLock.acquire()
         if self.inventoryHash in shared.inventory:
             print 'We have already received this msg message. Ignoring.'
@@ -760,8 +757,9 @@ class receiveDataThread(threading.Thread):
             objectType, self.streamNumber, data, embeddedTime)
         shared.inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
+        shared.numberOfMessagesProcessed += 1
         shared.UISignalQueue.put((
-            'incrementNumberOfMessagesProcessed', 'no data'))
+            'updateNumberOfMessagesProcessed', 'no data'))
 
         self.processmsg(
             readPosition, data)  # When this function returns, we will have either successfully processed the message bound for us, ignored it because it isn't bound for us, or found problem with the message that warranted ignoring it.
@@ -799,14 +797,8 @@ class receiveDataThread(threading.Thread):
                 print 'This msg IS an acknowledgement bound for me.'
 
             del shared.ackdataForWhichImWatching[encryptedData[readPosition:]]
-            t = ('ackreceived', encryptedData[readPosition:])
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                'UPDATE sent SET status=? WHERE ackdata=?')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute('UPDATE sent SET status=? WHERE ackdata=?',
+                       'ackreceived', encryptedData[readPosition:])
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (encryptedData[readPosition:], tr.translateText("MainWindow",'Acknowledgement of the message received. %1').arg(unicode(
                 time.strftime(shared.config.get('bitmessagesettings', 'timeformat'), time.localtime(int(time.time()))), 'utf-8')))))
             return
@@ -929,15 +921,12 @@ class receiveDataThread(threading.Thread):
             ripe.update(sha.digest())
             # Let's store the public key in case we want to reply to this
             # person.
-            t = (ripe.digest(), '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + decryptedData[
-                 messageVersionLength:endOfThePublicKeyPosition], int(time.time()), 'yes')
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''INSERT INTO pubkeys VALUES (?,?,?,?)''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute(
+                '''INSERT INTO pubkeys VALUES (?,?,?,?)''',
+                ripe.digest(),
+                '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + decryptedData[messageVersionLength:endOfThePublicKeyPosition],
+                int(time.time()),
+                'yes')
             # shared.workerQueue.put(('newpubkey',(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest())))
             # This will check to see whether we happen to be awaiting this
             # pubkey in order to send a message. If we are, it will do the POW
@@ -959,26 +948,18 @@ class receiveDataThread(threading.Thread):
                         return
             blockMessage = False  # Gets set to True if the user shouldn't see the message according to black or white lists.
             if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':  # If we are using a blacklist
-                t = (fromAddress,)
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put(
-                    '''SELECT label FROM blacklist where address=? and enabled='1' ''')
-                shared.sqlSubmitQueue.put(t)
-                queryreturn = shared.sqlReturnQueue.get()
-                shared.sqlLock.release()
+                queryreturn = sqlQuery(
+                    '''SELECT label FROM blacklist where address=? and enabled='1' ''',
+                    fromAddress)
                 if queryreturn != []:
                     with shared.printLock:
                         print 'Message ignored because address is in blacklist.'
 
                     blockMessage = True
             else:  # We're using a whitelist
-                t = (fromAddress,)
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put(
-                    '''SELECT label FROM whitelist where address=? and enabled='1' ''')
-                shared.sqlSubmitQueue.put(t)
-                queryreturn = shared.sqlReturnQueue.get()
-                shared.sqlLock.release()
+                queryreturn = sqlQuery(
+                    '''SELECT label FROM whitelist where address=? and enabled='1' ''',
+                    toAddress)
                 if queryreturn == []:
                     print 'Message ignored because address not in whitelist.'
                     blockMessage = True
@@ -1108,14 +1089,9 @@ class receiveDataThread(threading.Thread):
         if toRipe in shared.neededPubkeys:
             print 'We have been awaiting the arrival of this pubkey.'
             del shared.neededPubkeys[toRipe]
-            t = (toRipe,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND (status='awaitingpubkey' or status='doingpubkeypow') and folder='sent' ''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute(
+                '''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND (status='awaitingpubkey' or status='doingpubkeypow') and folder='sent' ''',
+                toRipe)
             shared.workerQueue.put(('sendmessage', ''))
         else:
             with shared.printLock:
@@ -1163,6 +1139,7 @@ class receiveDataThread(threading.Thread):
             print 'stream number embedded in this pubkey doesn\'t match our stream number. Ignoring.'
             return
 
+        shared.numberOfInventoryLookupsPerformed += 1
         inventoryHash = calculateInventoryHash(data)
         shared.inventoryLock.acquire()
         if inventoryHash in shared.inventory:
@@ -1178,8 +1155,9 @@ class receiveDataThread(threading.Thread):
             objectType, self.streamNumber, data, embeddedTime)
         shared.inventoryLock.release()
         self.broadcastinv(inventoryHash)
+        shared.numberOfPubkeysProcessed += 1
         shared.UISignalQueue.put((
-            'incrementNumberOfPubkeysProcessed', 'no data'))
+            'updateNumberOfPubkeysProcessed', 'no data'))
 
         self.processpubkey(data)
 
@@ -1216,7 +1194,7 @@ class receiveDataThread(threading.Thread):
         if addressVersion == 0:
             print '(Within processpubkey) addressVersion of 0 doesn\'t make sense.'
             return
-        if addressVersion >= 4 or addressVersion == 1:
+        if addressVersion > 3 or addressVersion == 1:
             with shared.printLock:
                 print 'This version of Bitmessage cannot handle version', addressVersion, 'addresses.'
 
@@ -1250,13 +1228,8 @@ class receiveDataThread(threading.Thread):
                 print 'publicEncryptionKey in hex:', publicEncryptionKey.encode('hex')
 
 
-            t = (ripe,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''SELECT usedpersonally FROM pubkeys WHERE hash=? AND usedpersonally='yes' ''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery(
+                '''SELECT usedpersonally FROM pubkeys WHERE hash=? AND usedpersonally='yes' ''', ripe)
             if queryreturn != []:  # if this pubkey is already in our database and if we have used it personally:
                 print 'We HAVE used this pubkey personally. Updating time.'
                 t = (ripe, data, embeddedTime, 'yes')
@@ -1264,13 +1237,7 @@ class receiveDataThread(threading.Thread):
                 print 'We have NOT used this pubkey personally. Inserting in database.'
                 t = (ripe, data, embeddedTime, 'no')
                      # This will also update the embeddedTime.
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''INSERT INTO pubkeys VALUES (?,?,?,?)''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
             # shared.workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
             self.possibleNewPubkey(ripe)
         if addressVersion == 3:
@@ -1319,13 +1286,7 @@ class receiveDataThread(threading.Thread):
                 print 'publicEncryptionKey in hex:', publicEncryptionKey.encode('hex')
 
 
-            t = (ripe,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''SELECT usedpersonally FROM pubkeys WHERE hash=? AND usedpersonally='yes' ''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT usedpersonally FROM pubkeys WHERE hash=? AND usedpersonally='yes' ''', ripe)
             if queryreturn != []:  # if this pubkey is already in our database and if we have used it personally:
                 print 'We HAVE used this pubkey personally. Updating time.'
                 t = (ripe, data, embeddedTime, 'yes')
@@ -1333,13 +1294,7 @@ class receiveDataThread(threading.Thread):
                 print 'We have NOT used this pubkey personally. Inserting in database.'
                 t = (ripe, data, embeddedTime, 'no')
                      # This will also update the embeddedTime.
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''INSERT INTO pubkeys VALUES (?,?,?,?)''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
             # shared.workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
             self.possibleNewPubkey(ripe)
 
@@ -1378,6 +1333,7 @@ class receiveDataThread(threading.Thread):
             return
         readPosition += streamNumberLength
 
+        shared.numberOfInventoryLookupsPerformed += 1
         inventoryHash = calculateInventoryHash(data)
         shared.inventoryLock.acquire()
         if inventoryHash in shared.inventory:
@@ -1450,13 +1406,13 @@ class receiveDataThread(threading.Thread):
 
     # We have received an inv message
     def recinv(self, data):
-        totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave = 0  # ..from all peers, counting duplicates seperately (because they take up memory)
-        if len(shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer) > 0:
-            for key, value in shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer.items():
-                totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave += value
+        totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers = 0  # this counts duplicates seperately because they take up memory
+        if len(shared.numberOfObjectsThatWeHaveYetToGetPerPeer) > 0:
+            for key, value in shared.numberOfObjectsThatWeHaveYetToGetPerPeer.items():
+                totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers += value
             with shared.printLock:
-                print 'number of keys(hosts) in shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer:', len(shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer)
-                print 'totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave = ', totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave
+                print 'number of keys(hosts) in shared.numberOfObjectsThatWeHaveYetToGetPerPeer:', len(shared.numberOfObjectsThatWeHaveYetToGetPerPeer)
+                print 'totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers = ', totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers
 
         numberOfItemsInInv, lengthOfVarint = decodeVarint(data[:10])
         if numberOfItemsInInv > 50000:
@@ -1466,36 +1422,49 @@ class receiveDataThread(threading.Thread):
             print 'inv message doesn\'t contain enough data. Ignoring.'
             return
         if numberOfItemsInInv == 1:  # we'll just request this data from the person who advertised the object.
-            if totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave > 200000 and len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) > 1000:  # inv flooding attack mitigation
+            if totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers > 200000 and len(self.objectsThatWeHaveYetToGetFromThisPeer) > 1000:  # inv flooding attack mitigation
                 with shared.printLock:
-                    print 'We already have', totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave, 'items yet to retrieve from peers and over 1000 from this node in particular. Ignoring this inv message.'
+                    print 'We already have', totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers, 'items yet to retrieve from peers and over 1000 from this node in particular. Ignoring this inv message.'
 
                 return
             self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[
                 data[lengthOfVarint:32 + lengthOfVarint]] = 0
+            shared.numberOfInventoryLookupsPerformed += 1
             if data[lengthOfVarint:32 + lengthOfVarint] in shared.inventory:
                 with shared.printLock:
                     print 'Inventory (in memory) has inventory item already.'
-
             elif shared.isInSqlInventory(data[lengthOfVarint:32 + lengthOfVarint]):
                 print 'Inventory (SQL on disk) has inventory item already.'
             else:
                 self.sendgetdata(data[lengthOfVarint:32 + lengthOfVarint])
         else:
-            print 'inv message lists', numberOfItemsInInv, 'objects.'
-            for i in range(numberOfItemsInInv):  # upon finishing dealing with an incoming message, the receiveDataThread will request a random object from the peer. This way if we get multiple inv messages from multiple peers which list mostly the same objects, we will make getdata requests for different random objects from the various peers.
-                if len(data[lengthOfVarint + (32 * i):32 + lengthOfVarint + (32 * i)]) == 32:  # The length of an inventory hash should be 32. If it isn't 32 then the remote node is either badly programmed or behaving nefariously.
-                    if totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave > 200000 and len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave) > 1000:  # inv flooding attack mitigation
-                        with shared.printLock:
-                            print 'We already have', totalNumberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave, 'items yet to retrieve from peers and over', len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave), 'from this node in particular. Ignoring the rest of this inv message.'
-
-                        break
-                    self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[data[
-                        lengthOfVarint + (32 * i):32 + lengthOfVarint + (32 * i)]] = 0
-                    self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave[
-                        data[lengthOfVarint + (32 * i):32 + lengthOfVarint + (32 * i)]] = 0
-            shared.numberOfObjectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHavePerPeer[
-                self.peer] = len(self.objectsThatWeHaveYetToCheckAndSeeWhetherWeAlreadyHave)
+            # There are many items listed in this inv message. Let us create a
+            # 'set' of objects we are aware of and a set of objects in this inv
+            # message so that we can diff one from the other cheaply.
+            startTime = time.time()
+            currentInventoryList = set()
+            queryData = sqlQuery('''SELECT hash FROM inventory WHERE streamnumber=?''',
+            self.streamNumber)
+            for row in queryData:
+                currentInventoryList.add(row[0])
+            with shared.inventoryLock:
+                for objectHash, value in shared.inventory.items():
+                    currentInventoryList.add(objectHash)
+            advertisedSet = set()
+            for i in range(numberOfItemsInInv):
+                advertisedSet.add(data[lengthOfVarint + (32 * i):32 + lengthOfVarint + (32 * i)])
+            objectsNewToMe = advertisedSet - currentInventoryList
+            logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
+            for item in objectsNewToMe:  
+                if totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers > 200000 and len(self.objectsThatWeHaveYetToGetFromThisPeer) > 1000:  # inv flooding attack mitigation
+                    with shared.printLock:
+                        print 'We already have', totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers, 'items yet to retrieve from peers and over', len(self.objectsThatWeHaveYetToGetFromThisPeer), 'from this node in particular. Ignoring the rest of this inv message.'
+                    break
+                self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[item] = 0 # helps us keep from sending inv messages to peers that already know about the objects listed therein
+                self.objectsThatWeHaveYetToGetFromThisPeer[item] = 0 # upon finishing dealing with an incoming message, the receiveDataThread will request a random object of from peer out of this data structure. This way if we get multiple inv messages from multiple peers which list mostly the same objects, we will make getdata requests for different random objects from the various peers.
+            if len(self.objectsThatWeHaveYetToGetFromThisPeer) > 0:
+                shared.numberOfObjectsThatWeHaveYetToGetPerPeer[
+                    self.peer] = len(self.objectsThatWeHaveYetToGetFromThisPeer)
 
     # Send a getdata message to our peer to request the object with the given
     # hash
@@ -1530,19 +1499,15 @@ class receiveDataThread(threading.Thread):
             with shared.printLock:
                 print 'received getdata request for item:', hash.encode('hex')
 
-            # print 'inventory is', shared.inventory
+            shared.numberOfInventoryLookupsPerformed += 1
             if hash in shared.inventory:
                 objectType, streamNumber, payload, receivedTime = shared.inventory[
                     hash]
                 self.sendData(objectType, payload)
             else:
-                t = (hash,)
-                shared.sqlLock.acquire()
-                shared.sqlSubmitQueue.put(
-                    '''select objecttype, payload from inventory where hash=?''')
-                shared.sqlSubmitQueue.put(t)
-                queryreturn = shared.sqlReturnQueue.get()
-                shared.sqlLock.release()
+                queryreturn = sqlQuery(
+                    '''select objecttype, payload from inventory where hash=?''',
+                    hash)
                 if queryreturn != []:
                     for row in queryreturn:
                         objectType, payload = row
@@ -1807,8 +1772,15 @@ class receiveDataThread(threading.Thread):
             if needToWriteKnownNodesToDisk:  # Runs if any nodes were new to us. Also, share those nodes with our peers.
                 shared.knownNodesLock.acquire()
                 output = open(shared.appdata + 'knownnodes.dat', 'wb')
-                pickle.dump(shared.knownNodes, output)
-                output.close()
+                try:
+                    pickle.dump(shared.knownNodes, output)
+                    output.close()
+                except Exception as err:
+                    if "Errno 28" in str(err):
+                        logger.fatal('(while receiveDataThread needToWriteKnownNodesToDisk) Alert: Your disk or data storage volume is full. ')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
                 shared.knownNodesLock.release()
                 self.broadcastaddr(listOfAddressDetailsToBroadcastToPeers)
             with shared.printLock:

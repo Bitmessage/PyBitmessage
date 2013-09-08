@@ -1,10 +1,11 @@
 #!/bin/bash
 
+GIT_APP=PyBitmessage
 APP=pybitmessage
 PREV_VERSION=0.3.5
 VERSION=0.3.5
 RELEASE=1
-ARCH_TYPE=`uname -m`
+ARCH_TYPE=any
 CURRDIR=`pwd`
 SOURCE=archpackage/${APP}-${VERSION}.tar.gz
 
@@ -25,24 +26,12 @@ make clean
 rm -f archpackage/*.gz
 
 # having the root directory called name-version seems essential
-mv ../${APP} ../${APP}-${VERSION}
+mv ../${GIT_APP} ../${APP}-${VERSION}
 tar -cvzf ${SOURCE} ../${APP}-${VERSION} --exclude-vcs
 
 # rename the root directory without the version number
-mv ../${APP}-${VERSION} ../${APP}
+mv ../${APP}-${VERSION} ../${GIT_APP}
 
 # calculate the MD5 checksum
 CHECKSM=$(md5sum ${SOURCE})
 sed -i "s/md5sums[^)]*)/md5sums=(${CHECKSM%% *})/g" archpackage/PKGBUILD
-
-cd archpackage
-
-# Create the package
-tar -c -f ${APP}-${VERSION}.pkg.tar .
-sync
-xz ${APP}-${VERSION}.pkg.tar
-sync
-
-# Move back to the original directory
-cd ${CURRDIR}
-
