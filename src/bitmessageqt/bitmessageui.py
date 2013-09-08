@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Tue Sep 03 15:17:26 2013
+# Created: Sun Sep 08 08:30:26 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(795, 580)
+        MainWindow.resize(795, 579)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
@@ -238,14 +238,15 @@ class Ui_MainWindow(object):
         self.gridLayout_3.setObjectName(_fromUtf8("gridLayout_3"))
         self.pushButtonNewAddress = QtGui.QPushButton(self.youridentities)
         self.pushButtonNewAddress.setObjectName(_fromUtf8("pushButtonNewAddress"))
-        self.gridLayout_3.addWidget(self.pushButtonNewAddress, 0, 0, 1, 1)
+        self.gridLayout_3.addWidget(self.pushButtonNewAddress, 0, 1, 1, 1)
         spacerItem2 = QtGui.QSpacerItem(689, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.gridLayout_3.addItem(spacerItem2, 0, 1, 1, 1)
+        self.gridLayout_3.addItem(spacerItem2, 0, 3, 1, 1)
         self.tableWidgetYourIdentities = QtGui.QTableWidget(self.youridentities)
+        self.tableWidgetYourIdentities.setStyleSheet(_fromUtf8(""))
         self.tableWidgetYourIdentities.setFrameShadow(QtGui.QFrame.Sunken)
         self.tableWidgetYourIdentities.setLineWidth(1)
         self.tableWidgetYourIdentities.setAlternatingRowColors(True)
-        self.tableWidgetYourIdentities.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.tableWidgetYourIdentities.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.tableWidgetYourIdentities.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableWidgetYourIdentities.setObjectName(_fromUtf8("tableWidgetYourIdentities"))
         self.tableWidgetYourIdentities.setColumnCount(3)
@@ -268,7 +269,10 @@ class Ui_MainWindow(object):
         self.tableWidgetYourIdentities.verticalHeader().setDefaultSectionSize(26)
         self.tableWidgetYourIdentities.verticalHeader().setSortIndicatorShown(False)
         self.tableWidgetYourIdentities.verticalHeader().setStretchLastSection(False)
-        self.gridLayout_3.addWidget(self.tableWidgetYourIdentities, 1, 0, 1, 2)
+        self.gridLayout_3.addWidget(self.tableWidgetYourIdentities, 1, 0, 1, 4)
+        self.pushButtonJoinCreateChan = QtGui.QPushButton(self.youridentities)
+        self.pushButtonJoinCreateChan.setObjectName(_fromUtf8("pushButtonJoinCreateChan"))
+        self.gridLayout_3.addWidget(self.pushButtonJoinCreateChan, 0, 2, 1, 1)
         icon4 = QtGui.QIcon()
         icon4.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/identities.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.youridentities, icon4, _fromUtf8(""))
@@ -287,7 +291,7 @@ class Ui_MainWindow(object):
         self.gridLayout_4.addItem(spacerItem3, 1, 1, 1, 1)
         self.tableWidgetSubscriptions = QtGui.QTableWidget(self.subscriptions)
         self.tableWidgetSubscriptions.setAlternatingRowColors(True)
-        self.tableWidgetSubscriptions.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.tableWidgetSubscriptions.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.tableWidgetSubscriptions.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableWidgetSubscriptions.setObjectName(_fromUtf8("tableWidgetSubscriptions"))
         self.tableWidgetSubscriptions.setColumnCount(2)
@@ -357,7 +361,7 @@ class Ui_MainWindow(object):
         self.gridLayout_6.addItem(spacerItem5, 2, 1, 1, 1)
         self.tableWidgetBlacklist = QtGui.QTableWidget(self.blackwhitelist)
         self.tableWidgetBlacklist.setAlternatingRowColors(True)
-        self.tableWidgetBlacklist.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
+        self.tableWidgetBlacklist.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.tableWidgetBlacklist.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableWidgetBlacklist.setObjectName(_fromUtf8("tableWidgetBlacklist"))
         self.tableWidgetBlacklist.setColumnCount(2)
@@ -501,7 +505,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(6)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.lineEditTo.setEnabled)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("clicked(bool)")), self.labelSendBroadcastWarning.hide)
         QtCore.QObject.connect(self.radioButtonBroadcast, QtCore.SIGNAL(_fromUtf8("clicked()")), self.labelSendBroadcastWarning.show)
@@ -518,8 +522,7 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.textEditMessage, self.pushButtonSend)
         MainWindow.setTabOrder(self.pushButtonSend, self.tableWidgetSent)
         MainWindow.setTabOrder(self.tableWidgetSent, self.textEditSentMessage)
-        MainWindow.setTabOrder(self.textEditSentMessage, self.pushButtonNewAddress)
-        MainWindow.setTabOrder(self.pushButtonNewAddress, self.tableWidgetYourIdentities)
+        MainWindow.setTabOrder(self.textEditSentMessage, self.tableWidgetYourIdentities)
         MainWindow.setTabOrder(self.tableWidgetYourIdentities, self.pushButtonAddSubscription)
         MainWindow.setTabOrder(self.pushButtonAddSubscription, self.tableWidgetSubscriptions)
         MainWindow.setTabOrder(self.tableWidgetSubscriptions, self.pushButtonAddAddressBook)
@@ -581,7 +584,7 @@ class Ui_MainWindow(object):
         item = self.tableWidgetSent.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Status", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.sent), _translate("MainWindow", "Sent", None))
-        self.pushButtonNewAddress.setText(_translate("MainWindow", "New", None))
+        self.pushButtonNewAddress.setText(_translate("MainWindow", "Create new Address", None))
         self.tableWidgetYourIdentities.setSortingEnabled(True)
         item = self.tableWidgetYourIdentities.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Label (not shown to anyone)", None))
@@ -589,6 +592,7 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Address", None))
         item = self.tableWidgetYourIdentities.horizontalHeaderItem(2)
         item.setText(_translate("MainWindow", "Stream", None))
+        self.pushButtonJoinCreateChan.setText(_translate("MainWindow", "Join / Create Chan", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.youridentities), _translate("MainWindow", "Your Identities", None))
         self.label_5.setText(_translate("MainWindow", "Here you can subscribe to \'broadcast messages\' that are sent by other users. Messages will appear in your Inbox. Addresses here override those on the Blacklist tab.", None))
         self.pushButtonAddSubscription.setText(_translate("MainWindow", "Add new Subscription", None))

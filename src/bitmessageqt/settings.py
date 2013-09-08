@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Mon Sep 02 16:49:54 2013
+# Created: Sun Sep 08 08:30:28 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -356,7 +356,7 @@ class Ui_settingsDialog(object):
         self.languageComboBox.setItemText(3, _translate("settingsDialog", "Français", "fr"))
         self.languageComboBox.setItemText(4, _translate("settingsDialog", "Deutsch", "de"))
         self.languageComboBox.setItemText(5, _translate("settingsDialog", "Español", "es"))
-        self.languageComboBox.setItemText(6, _translate("settingsDialog", "Русский", "ru"))
+        self.languageComboBox.setItemText(6, _translate("settingsDialog", "Ру�?�?кий", "ru"))
         self.languageComboBox.setItemText(7, _translate("settingsDialog", "Pirate English", "en_pirate"))
         self.languageComboBox.setItemText(8, _translate("settingsDialog", "Other (set in keys.dat)", "other"))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabUserInterface), _translate("settingsDialog", "User Interface", None))
