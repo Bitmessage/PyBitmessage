@@ -57,7 +57,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="inbox">
        <attribute name="icon">
@@ -195,31 +195,7 @@
         <string>Send</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="3" column="2">
-         <widget class="QPushButton" name="pushButtonLoadFromAddressBook">
-          <property name="font">
-           <font>
-            <pointsize>7</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Load from Address book</string>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="3">
-         <widget class="QPushButton" name="pushButtonFetchNamecoinID">
-          <property name="font">
-           <font>
-            <pointsize>7</pointsize>
-           </font>
-          </property>
-          <property name="text">
-           <string>Fetch Namecoin ID</string>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="0">
+        <item row="8" column="0">
          <widget class="QLabel" name="label_4">
           <property name="text">
            <string>Message:</string>
@@ -236,17 +212,10 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="0">
+        <item row="7" column="0">
          <widget class="QLabel" name="label_3">
           <property name="text">
            <string>Subject:</string>
-          </property>
-         </widget>
-        </item>
-        <item row="2" column="2" colspan="3">
-         <widget class="QLabel" name="labelFrom">
-          <property name="text">
-           <string/>
           </property>
          </widget>
         </item>
@@ -263,7 +232,7 @@
         <item row="3" column="1">
          <widget class="QLineEdit" name="lineEditTo"/>
         </item>
-        <item row="5" column="1" rowspan="2" colspan="5">
+        <item row="8" column="1" rowspan="2" colspan="5">
          <widget class="QTextEdit" name="textEditMessage">
           <property name="html">
            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
@@ -288,7 +257,7 @@ p, li { white-space: pre-wrap; }
           </property>
          </widget>
         </item>
-        <item row="6" column="0">
+        <item row="9" column="0">
          <spacer name="verticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -301,41 +270,21 @@ p, li { white-space: pre-wrap; }
           </property>
          </spacer>
         </item>
-        <item row="1" column="1" colspan="3">
-         <widget class="QRadioButton" name="radioButtonBroadcast">
-          <property name="text">
-           <string>Broadcast to everyone who is subscribed to your address</string>
-          </property>
-         </widget>
-        </item>
-        <item row="4" column="1" colspan="5">
+        <item row="7" column="1" colspan="5">
          <widget class="QLineEdit" name="lineEditSubject">
           <property name="text">
            <string/>
           </property>
          </widget>
         </item>
-        <item row="3" column="4">
-         <spacer name="horizontalSpacer_6">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="7" column="5">
+        <item row="10" column="5">
          <widget class="QPushButton" name="pushButtonSend">
           <property name="text">
            <string>Send</string>
           </property>
          </widget>
         </item>
-        <item row="7" column="1" colspan="4">
+        <item row="10" column="1" colspan="4">
          <widget class="QLabel" name="labelSendBroadcastWarning">
           <property name="enabled">
            <bool>true</bool>
@@ -353,6 +302,86 @@ p, li { white-space: pre-wrap; }
            <number>-1</number>
           </property>
          </widget>
+        </item>
+        <item row="1" column="1">
+         <widget class="QRadioButton" name="radioButtonBroadcast">
+          <property name="text">
+           <string>Broadcast to everyone who is subscribed to your address</string>
+          </property>
+         </widget>
+        </item>
+        <item row="6" column="4">
+         <widget class="QPushButton" name="pushButtonFetchNamecoinID">
+          <property name="font">
+           <font>
+            <pointsize>7</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Fetch Namecoin ID</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="4">
+         <widget class="QPushButton" name="pushButtonLoadFromAddressBook">
+          <property name="font">
+           <font>
+            <pointsize>7</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string>Load from Address book</string>
+          </property>
+         </widget>
+        </item>
+        <item row="5" column="1" rowspan="2">
+         <widget class="QTableWidget" name="tableWidget">
+          <property name="sortingEnabled">
+           <bool>true</bool>
+          </property>
+          <attribute name="horizontalHeaderCascadingSectionResizes">
+           <bool>true</bool>
+          </attribute>
+          <attribute name="horizontalHeaderDefaultSectionSize">
+           <number>252</number>
+          </attribute>
+          <attribute name="horizontalHeaderHighlightSections">
+           <bool>false</bool>
+          </attribute>
+          <attribute name="horizontalHeaderStretchLastSection">
+           <bool>true</bool>
+          </attribute>
+          <column>
+           <property name="text">
+            <string>Name or Label</string>
+           </property>
+          </column>
+          <column>
+           <property name="text">
+            <string>Address</string>
+           </property>
+          </column>
+         </widget>
+        </item>
+        <item row="2" column="2" colspan="4">
+         <widget class="QLabel" name="labelFrom">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="2" colspan="4">
+         <spacer name="horizontalSpacer_6">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
         </item>
        </layout>
       </widget>
@@ -530,6 +559,9 @@ p, li { white-space: pre-wrap; }
           </attribute>
           <attribute name="horizontalHeaderDefaultSectionSize">
            <number>346</number>
+          </attribute>
+          <attribute name="horizontalHeaderHighlightSections">
+           <bool>false</bool>
           </attribute>
           <attribute name="horizontalHeaderMinimumSectionSize">
            <number>52</number>
@@ -1160,14 +1192,12 @@ p, li { white-space: pre-wrap; }
   </action>
  </widget>
  <tabstops>
-  <tabstop>tabWidget</tabstop>
   <tabstop>tableWidgetInbox</tabstop>
   <tabstop>textEditInboxMessage</tabstop>
   <tabstop>radioButtonSpecific</tabstop>
   <tabstop>radioButtonBroadcast</tabstop>
   <tabstop>comboBoxSendFrom</tabstop>
   <tabstop>lineEditTo</tabstop>
-  <tabstop>pushButtonLoadFromAddressBook</tabstop>
   <tabstop>lineEditSubject</tabstop>
   <tabstop>textEditMessage</tabstop>
   <tabstop>pushButtonSend</tabstop>
