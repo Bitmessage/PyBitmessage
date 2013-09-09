@@ -306,6 +306,28 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuBlacklist.addAction(self.actionBlacklistEnable)
         self.popMenuBlacklist.addAction(self.actionBlacklistDisable)
 
+        
+        # Initialize the "new recipient"
+        
+        # add a "new recipient" row ###
+        self.ui.tableWidgetRecipients.insertRow(0)
+        self.ui.comboboxFindLabel = QtGui.QComboBox()
+        self.ui.comboboxFindLabel.addItem('')
+        self.ui.comboboxFindLabel.setFrame(False)
+        self.ui.comboboxFindLabel.setEditable(True)
+        self.ui.tableWidgetRecipients.setCellWidget(0, 0, self.ui.comboboxFindLabel)
+        self.ui.comboboxFindAddress = QtGui.QComboBox()
+        self.ui.comboboxFindAddress.addItem('BM-2D')
+        self.ui.comboboxFindAddress.setFrame(False)
+        self.ui.comboboxFindAddress.setEditable(True)
+        self.ui.tableWidgetRecipients.setCellWidget(0, 1, self.ui.comboboxFindAddress)
+        
+        QtCore.QObject.connect(self.ui.comboboxFindLabel, QtCore.SIGNAL(
+            "currentIndexChanged(int)"), self.on_comboboxFindLabel_change)
+        QtCore.QObject.connect(self.ui.comboboxFindAddress, QtCore.SIGNAL(
+            "currentIndexChanged(int)"), self.on_comboboxFindAddress_change)
+            
+
         # Initialize the user's list of addresses on the 'Your Identities' tab.
         configSections = shared.config.sections()
         for addressInKeysFile in configSections:
@@ -346,13 +368,16 @@ class MyForm(QtGui.QMainWindow):
         self.loadSent()
 
         # Initialize the address book
+        # and the tableWidgetRecipients
         shared.sqlLock.acquire()
         shared.sqlSubmitQueue.put('SELECT * FROM addressbook')
         shared.sqlSubmitQueue.put('')
         queryreturn = shared.sqlReturnQueue.get()
         shared.sqlLock.release()
+
         for row in queryreturn:
             label, address = row
+            # address book
             self.ui.tableWidgetAddressBook.insertRow(0)
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
@@ -360,6 +385,10 @@ class MyForm(QtGui.QMainWindow):
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
+            # tableWidgetRecipients ###
+            self.ui.comboboxFindLabel.addItem(label)
+            self.ui.comboboxFindAddress.addItem(address)
+            
 
         # Initialize the Subscriptions
         self.rerenderSubscriptions()
@@ -2540,6 +2569,14 @@ class MyForm(QtGui.QMainWindow):
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(str(addressAtCurrentRow))
 
+    # "new recipient" combobox change ###
+        
+    def on_comboboxFindLabel_change(self, int):
+        self.ui.comboboxFindAddress.setCurrentIndex(int)
+        
+    def on_comboboxFindAddress_change(self, int):
+        self.ui.comboboxFindLabel.setCurrentIndex(int)
+        
     # Group of functions for the Address Book dialog box
     def on_action_AddressBookNew(self):
         self.click_pushButtonAddAddressBook()
@@ -2579,7 +2616,7 @@ class MyForm(QtGui.QMainWindow):
                 fullStringOfAddresses += ', ' + str(addressAtCurrentRow)
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(fullStringOfAddresses)
-
+        
     def on_action_AddressBookSend(self):
         listOfSelectedRows = {}
         for i in range(len(self.ui.tableWidgetAddressBook.selectedIndexes())):
@@ -2595,11 +2632,15 @@ class MyForm(QtGui.QMainWindow):
             else:
                 self.ui.lineEditTo.setText(str(
                     self.ui.lineEditTo.text()) + '; ' + str(addressAtCurrentRow))
-            # add the addresses to the To-Tableview
+            # add the addresses to the To-Tableview ###
             self.ui.tableWidgetRecipients.insertRow(0)
             newItem = QtGui.QTableWidgetItem(unicode(labelAtCurrentRow, 'utf-8'))
+            newItem.setFlags(
+                    QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetRecipients.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(unicode(addressAtCurrentRow, 'utf-8'))
+            newItem.setFlags(
+                    QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetRecipients.setItem(0, 1, newItem)
             
         if listOfSelectedRows == {}:
