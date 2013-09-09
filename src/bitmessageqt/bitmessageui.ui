@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>795</width>
-    <height>580</height>
+    <height>579</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,7 +57,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>6</number>
       </property>
       <widget class="QWidget" name="inbox">
        <attribute name="icon">
@@ -504,14 +504,14 @@ p, li { white-space: pre-wrap; }
         <string>Your Identities</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_3">
-        <item row="0" column="0">
+        <item row="0" column="1">
          <widget class="QPushButton" name="pushButtonNewAddress">
           <property name="text">
-           <string>New</string>
+           <string>Create new Address</string>
           </property>
          </widget>
         </item>
-        <item row="0" column="1">
+        <item row="0" column="3">
          <spacer name="horizontalSpacer">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -524,8 +524,11 @@ p, li { white-space: pre-wrap; }
           </property>
          </spacer>
         </item>
-        <item row="1" column="0" colspan="2">
+        <item row="1" column="0" colspan="4">
          <widget class="QTableWidget" name="tableWidgetYourIdentities">
+          <property name="styleSheet">
+           <string notr="true"/>
+          </property>
           <property name="frameShadow">
            <enum>QFrame::Sunken</enum>
           </property>
@@ -536,7 +539,7 @@ p, li { white-space: pre-wrap; }
            <bool>true</bool>
           </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::SingleSelection</enum>
+           <enum>QAbstractItemView::ExtendedSelection</enum>
           </property>
           <property name="selectionBehavior">
            <enum>QAbstractItemView::SelectRows</enum>
@@ -593,6 +596,13 @@ p, li { white-space: pre-wrap; }
           </column>
          </widget>
         </item>
+        <item row="0" column="2">
+         <widget class="QPushButton" name="pushButtonJoinCreateChan">
+          <property name="text">
+           <string>Join / Create Chan</string>
+          </property>
+         </widget>
+        </item>
        </layout>
       </widget>
       <widget class="QWidget" name="subscriptions">
@@ -640,7 +650,7 @@ p, li { white-space: pre-wrap; }
            <bool>true</bool>
           </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::SingleSelection</enum>
+           <enum>QAbstractItemView::ExtendedSelection</enum>
           </property>
           <property name="selectionBehavior">
            <enum>QAbstractItemView::SelectRows</enum>
@@ -814,7 +824,7 @@ p, li { white-space: pre-wrap; }
            <bool>true</bool>
           </property>
           <property name="selectionMode">
-           <enum>QAbstractItemView::SingleSelection</enum>
+           <enum>QAbstractItemView::ExtendedSelection</enum>
           </property>
           <property name="selectionBehavior">
            <enum>QAbstractItemView::SelectRows</enum>
@@ -1205,7 +1215,6 @@ p, li { white-space: pre-wrap; }
   <tabstop>pushButtonSend</tabstop>
   <tabstop>tableWidgetSent</tabstop>
   <tabstop>textEditSentMessage</tabstop>
-  <tabstop>pushButtonNewAddress</tabstop>
   <tabstop>tableWidgetYourIdentities</tabstop>
   <tabstop>pushButtonAddSubscription</tabstop>
   <tabstop>tableWidgetSubscriptions</tabstop>
@@ -1229,12 +1238,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>121</x>
-     <y>60</y>
+     <x>37</x>
+     <y>50</y>
     </hint>
     <hint type="destinationlabel">
-     <x>175</x>
-     <y>147</y>
+     <x>37</x>
+     <y>58</y>
     </hint>
    </hints>
   </connection>
@@ -1245,12 +1254,12 @@ p, li { white-space: pre-wrap; }
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>95</x>
-     <y>59</y>
+     <x>37</x>
+     <y>50</y>
     </hint>
     <hint type="destinationlabel">
-     <x>129</x>
-     <y>528</y>
+     <x>76</x>
+     <y>69</y>
     </hint>
    </hints>
   </connection>
@@ -1261,12 +1270,12 @@ p, li { white-space: pre-wrap; }
    <slot>show()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>108</x>
-     <y>84</y>
+     <x>70</x>
+     <y>53</y>
     </hint>
     <hint type="destinationlabel">
-     <x>177</x>
-     <y>519</y>
+     <x>76</x>
+     <y>69</y>
     </hint>
    </hints>
   </connection>
