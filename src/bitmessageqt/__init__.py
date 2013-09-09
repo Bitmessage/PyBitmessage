@@ -2586,6 +2586,8 @@ class MyForm(QtGui.QMainWindow):
             listOfSelectedRows[
                 self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
         for currentRow in listOfSelectedRows:
+            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(
+                currentRow, 0).text()
             addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
                 currentRow, 1).text()
             if self.ui.lineEditTo.text() == '':
@@ -2593,6 +2595,13 @@ class MyForm(QtGui.QMainWindow):
             else:
                 self.ui.lineEditTo.setText(str(
                     self.ui.lineEditTo.text()) + '; ' + str(addressAtCurrentRow))
+            # add the addresses to the To-Tableview
+            self.ui.tableWidgetRecipients.insertRow(0)
+            newItem = QtGui.QTableWidgetItem(unicode(labelAtCurrentRow, 'utf-8'))
+            self.ui.tableWidgetRecipients.setItem(0, 0, newItem)
+            newItem = QtGui.QTableWidgetItem(unicode(addressAtCurrentRow, 'utf-8'))
+            self.ui.tableWidgetRecipients.setItem(0, 1, newItem)
+            
         if listOfSelectedRows == {}:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "No addresses selected."))
