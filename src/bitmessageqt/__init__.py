@@ -311,31 +311,6 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuIdentities.addAction(self.actionDisable)
         self.popMenuIdentities.addAction(self.actionSpecialAddressBehavior)
 
-        # Popup menu for the Address Book page
-        self.ui.addressBookContextMenuToolbar = QtGui.QToolBar()
-          # Actions
-        self.actionAddressBookSend = self.ui.addressBookContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Send message to this address"), self.on_action_AddressBookSend)
-        self.actionAddressBookClipboard = self.ui.addressBookContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Copy address to clipboard"), self.on_action_AddressBookClipboard)
-        self.actionAddressBookSubscribe = self.ui.addressBookContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Subscribe to this address"), self.on_action_AddressBookSubscribe)
-        self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Add New Address"), self.on_action_AddressBookNew)
-        self.actionAddressBookDelete = self.ui.addressBookContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Delete"), self.on_action_AddressBookDelete)
-        self.ui.tableWidgetAddressBook.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'), self.on_context_menuAddressBook)
-        self.popMenuAddressBook = QtGui.QMenu(self)
-        self.popMenuAddressBook.addAction(self.actionAddressBookSend)
-        self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
-        self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
-        self.popMenuAddressBook.addSeparator()
-        self.popMenuAddressBook.addAction(self.actionAddressBookNew)
-        self.popMenuAddressBook.addAction(self.actionAddressBookDelete)
-
         # Popup menu for the Subscriptions page
         self.ui.subscriptionsContextMenuToolbar = QtGui.QToolBar()
           # Actions
@@ -357,14 +332,41 @@ class MyForm(QtGui.QMainWindow):
             'customContextMenuRequested(const QPoint&)'), self.on_context_menuSubscriptions)
         self.popMenuSubscriptions = QtGui.QMenu(self)
         self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
+        self.popMenuSubscriptions.addSeparator()
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsSend)
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
         self.popMenuSubscriptions.addSeparator()
         self.popMenuSubscriptions.addAction(self.actionsubscriptionsEnable)
         self.popMenuSubscriptions.addAction(self.actionsubscriptionsDisable)
         self.popMenuSubscriptions.addSeparator()
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsSend)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
-
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
+        
+        # Popup menu for the Address Book page
+        self.ui.addressBookContextMenuToolbar = QtGui.QToolBar()
+          # Actions
+        self.actionAddressBookSend = self.ui.addressBookContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Send message to this address"), self.on_action_AddressBookSend)
+        self.actionAddressBookClipboard = self.ui.addressBookContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Copy address to clipboard"), self.on_action_AddressBookClipboard)
+        self.actionAddressBookSubscribe = self.ui.addressBookContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Subscribe to this address"), self.on_action_AddressBookSubscribe)
+        self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Add New Address"), self.on_action_AddressBookNew)
+        self.actionAddressBookDelete = self.ui.addressBookContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Delete"), self.on_action_AddressBookDelete)
+        self.ui.tableWidgetAddressBook.setContextMenuPolicy(
+            QtCore.Qt.CustomContextMenu)
+        self.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL(
+            'customContextMenuRequested(const QPoint&)'), self.on_context_menuAddressBook)
+        self.popMenuAddressBook = QtGui.QMenu(self)
+        self.popMenuAddressBook.addAction(self.actionAddressBookNew)
+        self.popMenuAddressBook.addSeparator()
+        self.popMenuAddressBook.addAction(self.actionAddressBookSend)
+        self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
+        self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
+        self.popMenuAddressBook.addSeparator()
+        self.popMenuAddressBook.addAction(self.actionAddressBookDelete)
+        
         # Popup menu for the Blacklist page
         self.ui.blacklistContextMenuToolbar = QtGui.QToolBar()
           # Actions
@@ -376,6 +378,8 @@ class MyForm(QtGui.QMainWindow):
             "MainWindow", "Send message to this address"), self.on_action_BlacklistSend)
         self.actionBlacklistClipboard = self.ui.blacklistContextMenuToolbar.addAction(_translate(
             "MainWindow", "Copy address to clipboard"), self.on_action_BlacklistClipboard)
+        self.actionBlacklistSubscribe = self.ui.addressBookContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Subscribe to this address"), self.on_action_BlacklistSubscribe)
         self.actionBlacklistEnable = self.ui.blacklistContextMenuToolbar.addAction(_translate(
             "MainWindow", "Enable"), self.on_action_BlacklistEnable)
         self.actionBlacklistDisable = self.ui.blacklistContextMenuToolbar.addAction(_translate(
@@ -386,13 +390,15 @@ class MyForm(QtGui.QMainWindow):
             'customContextMenuRequested(const QPoint&)'), self.on_context_menuBlacklist)
         self.popMenuBlacklist = QtGui.QMenu(self)
         self.popMenuBlacklist.addAction(self.actionBlacklistNew)
-        self.popMenuBlacklist.addAction(self.actionBlacklistDelete)
         self.popMenuBlacklist.addSeparator()
         self.popMenuBlacklist.addAction(self.actionBlacklistSend)
         self.popMenuBlacklist.addAction(self.actionBlacklistClipboard)
+        self.popMenuBlacklist.addAction(self.actionBlacklistSubscribe)
         self.popMenuBlacklist.addSeparator()
         self.popMenuBlacklist.addAction(self.actionBlacklistEnable)
         self.popMenuBlacklist.addAction(self.actionBlacklistDisable)
+        self.popMenuBlacklist.addSeparator()
+        self.popMenuBlacklist.addAction(self.actionBlacklistDelete)
 
         # Initialize the user's list of addresses on the 'Your Identities' tab.
         configSections = shared.config.sections()
@@ -2796,7 +2802,7 @@ class MyForm(QtGui.QMainWindow):
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText('; '.join(addressesArray))
     
-    # Add new item ###
+    # Add new item
         
     def on_action_YourIdentitiesNewAddress(self):
         self.click_NewAddressDialog()
@@ -3013,6 +3019,7 @@ class MyForm(QtGui.QMainWindow):
             if shared.isAddressInMySubscriptionsList(addressAtCurrentRow):
                 self.statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Error: You cannot add the same address to your subsciptions twice. Perhaps rename the existing one if you want."))
                 continue
+            labelAtCurrentRow = ''
             if (thisTableWidget == self.ui.tableWidgetAddressBook) | (thisTableWidget == self.ui.tableWidgetBlacklist):
                 # if subscribing from an address list, copy the label
                 labelAtCurrentRow = thisTableWidget.item(currentRow,0).text().toUtf8()
@@ -3075,14 +3082,13 @@ class MyForm(QtGui.QMainWindow):
                 currentRow, 1).text()
             print currentRow, labelAtCurrentRow, addressAtCurrentRow
             if thisTableWidget == self.ui.tableWidgetBlacklist:
-   
-				sqlExecute(
-        	    '''update '''+sql_where+''' set enabled='''+str(int(thisEnable))+''' WHERE address=?''',
-    	        str(labelAtCurrentRow))
+                sqlExecute(
+                '''update '''+sql_where+''' set enabled='''+str(int(thisEnable))+''' WHERE address=?''',
+                str(labelAtCurrentRow))
             else:
-				sqlExecute(
-            	'''update '''+sql_where+''' set enabled='''+str(int(thisEnable))+''' WHERE label=? AND address=?''',
-            	str(labelAtCurrentRow), str(addressAtCurrentRow))
+                sqlExecute(
+                '''update '''+sql_where+''' set enabled='''+str(int(thisEnable))+''' WHERE label=? AND address=?''',
+                str(labelAtCurrentRow), str(addressAtCurrentRow))
             thisTableWidget.item(
                 currentRow, 0).setTextColor(color)
             thisTableWidget.item(
@@ -3108,7 +3114,7 @@ class MyForm(QtGui.QMainWindow):
         for currentRow in listOfSelectedRows:
             addressAtCurrentRow = str(
                 self.ui.tableWidgetYourIdentities.item(currentRow, 1).text())
-            shared.config.set(str(addressAtCurrentRow), 'enabled', 'false')
+            shared.config.set(str(addressAtCurrentRow), 'enabled', str(thisEnable))
             self.ui.tableWidgetYourIdentities.item(
                 currentRow, 0).setTextColor(color)
             self.ui.tableWidgetYourIdentities.item(
