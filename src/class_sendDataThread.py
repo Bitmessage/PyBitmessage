@@ -102,14 +102,31 @@ class sendDataThread(threading.Thread):
                             print 'setting the remote node\'s protocol version in the sendData thread (ID:', id(self), ') to', specifiedRemoteProtocolVersion
 
                         self.remoteProtocolVersion = specifiedRemoteProtocolVersion
+                elif command == 'advertisepeer':
+                    self.objectHashHolderInstance.holdPeer(data)
                 elif command == 'sendaddr':
+                    numberOfAddressesInAddrMessage = len(
+                        data)
+                    payload = ''
+                    for hostDetails in data:
+                        timeLastReceivedMessageFromThisNode, streamNumber, services, host, port = hostDetails
+                        payload += pack(
+                            '>Q', timeLastReceivedMessageFromThisNode)  # now uses 64-bit time
+                        payload += pack('>I', streamNumber)
+                        payload += pack(
+                            '>q', services)  # service bit flags offered by this node
+                        payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
+                            socket.inet_aton(host)
+                        payload += pack('>H', port)
+
+                    payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
+                    datatosend = '\xE9\xBE\xB4\xD9addr\x00\x00\x00\x00\x00\x00\x00\x00'
+                    datatosend = datatosend + pack('>L', len(payload))  # payload length
+                    datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
+                    datatosend = datatosend + payload
+
                     try:
-                        # To prevent some network analysis, 'leak' the data out
-                        # to our peer after waiting a random amount of time
-                        # unless we have a long list of messages in our queue
-                        # to send.
-                        time.sleep(random.randrange(0, 10))
-                        self.sock.sendall(data)
+                        self.sock.sendall(datatosend)
                         self.lastTimeISentData = int(time.time())
                     except:
                         print 'sendaddr: self.sock.sendall failed'

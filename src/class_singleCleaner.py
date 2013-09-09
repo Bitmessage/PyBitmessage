@@ -2,7 +2,11 @@ import threading
 import shared
 import time
 import sys
+import pickle
+
+import tr#anslate
 from helper_sql import *
+from debug import logger
 
 '''The singleCleaner class is a timer-driven thread that cleans data structures to free memory, resends messages when a remote node doesn't respond, and sends pong messages to keep connections alive if the network isn't busy.
 It cleans these data structures in memory:
@@ -124,4 +128,20 @@ class singleCleaner(threading.Thread):
                         objectType, streamNumber, payload, receivedTime = storedValue
                         if streamNumber in shared.inventorySets:
                             shared.inventorySets[streamNumber].add(hash)
+
+            # Let us write out the knowNodes to disk if there is anything new to write out.
+            if shared.needToWriteKnownNodesToDisk:
+                shared.knownNodesLock.acquire()
+                output = open(shared.appdata + 'knownnodes.dat', 'wb')
+                try:
+                    pickle.dump(shared.knownNodes, output)
+                    output.close()
+                except Exception as err:
+                    if "Errno 28" in str(err):
+                        logger.fatal('(while receiveDataThread shared.needToWriteKnownNodesToDisk) Alert: Your disk or data storage volume is full. ')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                shared.knownNodesLock.release()
+                shared.needToWriteKnownNodesToDisk = False
             time.sleep(300)
