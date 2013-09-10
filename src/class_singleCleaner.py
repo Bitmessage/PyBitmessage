@@ -2,11 +2,16 @@ import threading
 import shared
 import time
 import sys
+import pickle
+
+import tr#anslate
 from helper_sql import *
+from debug import logger
 
 '''The singleCleaner class is a timer-driven thread that cleans data structures to free memory, resends messages when a remote node doesn't respond, and sends pong messages to keep connections alive if the network isn't busy.
 It cleans these data structures in memory:
     inventory (moves data to the on-disk sql database)
+    inventorySets (clears then reloads data out of sql database)
 
 It cleans these tables on the disk:
     inventory (clears data more than 2 days and 12 hours old)
@@ -31,19 +36,20 @@ class singleCleaner(threading.Thread):
             shared.UISignalQueue.put((
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
             
-            with SqlBulkExecute() as sql:
-                for hash, storedValue in shared.inventory.items():
-                    objectType, streamNumber, payload, receivedTime = storedValue
-                    if int(time.time()) - 3600 > receivedTime:
-                        sql.execute(
-                            '''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
-                            hash,
-                            objectType,
-                            streamNumber,
-                            payload,
-                            receivedTime,
-                            '')
-                        del shared.inventory[hash]
+            with shared.inventoryLock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
+                with SqlBulkExecute() as sql:
+                    for hash, storedValue in shared.inventory.items():
+                        objectType, streamNumber, payload, receivedTime = storedValue
+                        if int(time.time()) - 3600 > receivedTime:
+                            sql.execute(
+                                '''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
+                                hash,
+                                objectType,
+                                streamNumber,
+                                payload,
+                                receivedTime,
+                                '')
+                            del shared.inventory[hash]
             shared.UISignalQueue.put(('updateStatusBar', ''))
             shared.broadcastToSendDataQueues((
                 0, 'pong', 'no data'))  # commands the sendData threads to send out a pong message if they haven't sent anything else in the last five minutes. The socket timeout-time is 10 minutes.
@@ -109,4 +115,33 @@ class singleCleaner(threading.Thread):
                             shared.workerQueue.put(('sendmessage', ''))
                             shared.UISignalQueue.put((
                                 'updateStatusBar', 'Doing work necessary to again attempt to deliver a message...'))
+                
+                # Let's also clear and reload shared.inventorySets to keep it from
+                # taking up an unnecessary amount of memory.
+                for streamNumber in shared.inventorySets:
+                    shared.inventorySets[streamNumber] = set()
+                    queryData = sqlQuery('''SELECT hash FROM inventory WHERE streamnumber=?''', streamNumber)
+                    for row in queryData:
+                        shared.inventorySets[streamNumber].add(row[0])
+                with shared.inventoryLock:
+                    for hash, storedValue in shared.inventory.items():
+                        objectType, streamNumber, payload, receivedTime = storedValue
+                        if streamNumber in shared.inventorySets:
+                            shared.inventorySets[streamNumber].add(hash)
+
+            # Let us write out the knowNodes to disk if there is anything new to write out.
+            if shared.needToWriteKnownNodesToDisk:
+                shared.knownNodesLock.acquire()
+                output = open(shared.appdata + 'knownnodes.dat', 'wb')
+                try:
+                    pickle.dump(shared.knownNodes, output)
+                    output.close()
+                except Exception as err:
+                    if "Errno 28" in str(err):
+                        logger.fatal('(while receiveDataThread shared.needToWriteKnownNodesToDisk) Alert: Your disk or data storage volume is full. ')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                shared.knownNodesLock.release()
+                shared.needToWriteKnownNodesToDisk = False
             time.sleep(300)
