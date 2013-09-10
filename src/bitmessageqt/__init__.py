@@ -2583,7 +2583,7 @@ class MyForm(QtGui.QMainWindow):
 
     def on_comboboxFindLabel_enter(self, event):
         if (event.key() == QtCore.Qt.Key_Enter) | (event.key() == QtCore.Qt.Key_Return):
-            index = text = self.ui.comboboxFindLabel.currentIndex()
+            index = self.ui.comboboxFindLabel.currentIndex()
             text = self.ui.comboboxFindLabel.currentText()
             found = self.ui.comboboxFindLabel.findText(text)
             if found > 0:
@@ -2592,42 +2592,60 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.comboboxFindLabel.setCurrentIndex(found)
                 # so we have chosen a proper address
                 if index == found:
-                    # check whether that address is already in the list
-                    # ...
-                    addToBottom = False
-                    rowIndex = self.ui.tableWidgetRecipients.rowCount()-1 if addToBottom else 1
                     # add the address to the list on second "enter"
-                    label = self.ui.comboboxFindLabel.currentText()
-                    self.ui.comboboxFindAddress.setCurrentIndex(found)
-                    address = self.ui.comboboxFindAddress.currentText()
-                    self.ui.tableWidgetRecipients.insertRow(rowIndex)
-                    newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
-                    newItem.setFlags(
-                            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-                    self.ui.tableWidgetRecipients.setItem(rowIndex, 0, newItem)
-                    newItem = QtGui.QTableWidgetItem(unicode(address, 'utf-8'))
-                    newItem.setFlags(
-                            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-                    self.ui.tableWidgetRecipients.setItem(rowIndex, 1, newItem)
-                    # clean up so we won't add it again
-                    self.ui.comboboxFindAddress.removeItem(found)
-                    self.ui.comboboxFindLabel.removeItem(found)
-                    self.ui.comboboxFindAddress.setCurrentIndex(0)
-                    self.ui.comboboxFindLabel.setCurrentIndex(0)
+                    self.on_addRecipient_submit()
             else:
-                self.ui.comboboxFindAddress.setCurrentIndex(0) # there you have the "BM-2D"
+                # no matching contact
+                self.ui.comboboxFindAddress.setCurrentIndex(0) # set the Address to "BM-2D"
                 self.ui.comboboxFindLabel.setEditText(text) # otherwise you will lose the text on enter
         return QtGui.QComboBox.keyPressEvent(self.ui.comboboxFindLabel, event)
         
     def on_comboboxFindAddress_enter(self, event):
         if (event.key() == QtCore.Qt.Key_Enter) | (event.key() == QtCore.Qt.Key_Return):
             index = self.ui.comboboxFindAddress.currentIndex()
-            print self.ui.comboboxFindAddress.currentText()
+            text = self.ui.comboboxFindAddress.currentText()
+            found = self.ui.comboboxFindAddress.findText(text)
+            if found > 0:
+                # adjust both comboboxes on first "enter"
+                self.ui.comboboxFindLabel.setCurrentIndex(found)
+                self.ui.comboboxFindAddress.setCurrentIndex(found)
+                # so we have chosen a proper address
+                if index == found:
+                    # add the address to the list on second "enter"
+                    self.on_addRecipient_submit()
+            else:
+                # no matching contact
+                self.ui.comboboxFindLabel.setCurrentIndex(0) # set the label to ""
+                self.ui.comboboxFindAddress.setEditText(text) # otherwise you will lose the text on enter
         return QtGui.QComboBox.keyPressEvent(self.ui.comboboxFindAddress, event)
 
-    def on_combobox_submit(self):
+    def on_addRecipient_submit(self):
         # sanity check frist
-        
+        index = labelIndex = self.ui.comboboxFindLabel.currentIndex()
+        labelText = self.ui.comboboxFindLabel.currentText()
+        addressIndex = self.ui.comboboxFindAddress.currentIndex()
+        addressText = self.ui.comboboxFindAddress.currentText()
+        if (labelIndex == addressIndex) & (self.ui.comboboxFindLabel.itemText(index) == labelText) & (self.ui.comboboxFindAddress.itemText(index) == addressText):
+            addToBottom = False
+            rowIndex = self.ui.tableWidgetRecipients.rowCount()-1 if addToBottom else 1
+            self.ui.tableWidgetRecipients.insertRow(rowIndex)
+            newItem = QtGui.QTableWidgetItem(unicode(labelText, 'utf-8'))
+            newItem.setFlags(
+                    QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidgetRecipients.setItem(rowIndex, 0, newItem)
+            newItem = QtGui.QTableWidgetItem(unicode(addressText, 'utf-8'))
+            newItem.setFlags(
+                    QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidgetRecipients.setItem(rowIndex, 1, newItem)
+            # clean up so we won't add it again
+            self.ui.comboboxFindAddress.removeItem(index)
+            self.ui.comboboxFindLabel.removeItem(index)
+            # jump to the first item
+            self.ui.comboboxFindAddress.setCurrentIndex(0)
+            self.ui.comboboxFindLabel.setCurrentIndex(0)
+        else:
+            print 'how did you get here?!'
+            return
         
     # Group of functions for the Address Book dialog box
     def on_action_AddressBookNew(self):
