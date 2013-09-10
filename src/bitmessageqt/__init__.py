@@ -2615,6 +2615,7 @@ class MyForm(QtGui.QMainWindow):
     def on_comboboxFindLabel_change(self, int):
         address = str(self.ui.comboboxFindLabel.itemData(int).toString())
         found = self.ui.comboboxFindAddress.findText(address)
+        print address, found
         # synchronize the other combobox
         self.ui.comboboxFindAddress.blockSignals(True)
         self.ui.comboboxFindAddress.setCurrentIndex(found if found > 0 else 0)
@@ -2623,6 +2624,7 @@ class MyForm(QtGui.QMainWindow):
     def on_comboboxFindAddress_change(self, int):
         address = str(self.ui.comboboxFindAddress.itemText(int))
         found = self.ui.comboboxFindLabel.findData(address)
+        print address, found
         # synchronize the other combobox
         self.ui.comboboxFindLabel.blockSignals(True)
         self.ui.comboboxFindLabel.setCurrentIndex(found if found > 0 else 0)
@@ -2637,7 +2639,7 @@ class MyForm(QtGui.QMainWindow):
             found = self.ui.comboboxFindLabel.findText(label)
             if (found > 0) & (index == found):
                 address = self.ui.comboboxFindLabel.itemData(found).toString()
-                self.on_addRecipient_submit(label, address)
+                self.on_addRecipient_submit(address)
         return QtGui.QComboBox.keyPressEvent(self.ui.comboboxFindLabel, event)
         
     def on_comboboxFindAddress_enter(self, event):
@@ -2646,20 +2648,19 @@ class MyForm(QtGui.QMainWindow):
             address = str(addBMIfNotPresent(self.ui.comboboxFindAddress.currentText()))
             found = self.ui.comboboxFindAddress.findText(address)
             if (found > 0) & (index == found):
-                label = self.ui.comboboxFindAddress.itemData(found).toString()
-                self.on_addRecipient_submit(label, address)
+                address = str(self.ui.comboboxFindAddress.itemText(found))
+                self.on_addRecipient_submit(address)
             else:
                 # no matching contact
                 self.ui.comboboxFindLabel.setCurrentIndex(0)
-                label = False
                 self.ui.comboboxFindAddress.setEditText(address) # otherwise you will lose the text on enter
                 # but maybe the address is valid?
                 # random address for testing: BM-2DAArASbJckBdn3HvTt7kHAbPA5tGxc2R1
-                self.on_addRecipient_submit(label, address)
+                self.on_addRecipient_submit(address)
 
         return QtGui.QComboBox.keyPressEvent(self.ui.comboboxFindAddress, event)
         
-    def on_addRecipient_submit(self, label, address):
+    def on_addRecipient_submit(self, address):
         # check whether address already in TO list
         address = addBMIfNotPresent(address)
         recipients = []
@@ -2746,6 +2747,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetAddressBook.removeRow(currentRow)
             self.rerenderInboxFromLabels()
             self.rerenderSentToLabels()
+            self.loadPossibleRecipients()
 
     def on_action_AddressBookClipboard(self):
         fullStringOfAddresses = ''
@@ -2827,6 +2829,7 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlLock.release()
         self.ui.tableWidgetSubscriptions.removeRow(currentRow)
         self.rerenderInboxFromLabels()
+        self.loadPossibleRecipients()
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_action_SubscriptionsClipboard(self):
