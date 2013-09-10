@@ -151,12 +151,13 @@ class singleWorker(threading.Thread):
         objectType = 'pubkey'
         shared.inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime)
+        shared.inventorySets[streamNumber].add(inventoryHash)
 
         with shared.printLock:
             print 'broadcasting inv with hash:', inventoryHash.encode('hex')
 
         shared.broadcastToSendDataQueues((
-            streamNumber, 'sendinv', inventoryHash))
+            streamNumber, 'advertiseobject', inventoryHash))
         shared.UISignalQueue.put(('updateStatusBar', ''))
         shared.config.set(
             myAddress, 'lastpubkeysendtime', str(int(time.time())))
@@ -224,12 +225,13 @@ class singleWorker(threading.Thread):
             objectType = 'pubkey'
             shared.inventory[inventoryHash] = (
                 objectType, streamNumber, payload, embeddedTime)
+            shared.inventorySets[streamNumber].add(inventoryHash)
 
             with shared.printLock:
                 print 'broadcasting inv with hash:', inventoryHash.encode('hex')
 
             shared.broadcastToSendDataQueues((
-                streamNumber, 'sendinv', inventoryHash))
+                streamNumber, 'advertiseobject', inventoryHash))
             shared.UISignalQueue.put(('updateStatusBar', ''))
         # If this is a chan address then we won't send out the pubkey over the
         # network but rather will only store it in our pubkeys table so that
@@ -327,10 +329,11 @@ class singleWorker(threading.Thread):
             objectType = 'broadcast'
             shared.inventory[inventoryHash] = (
                 objectType, streamNumber, payload, int(time.time()))
+            shared.inventorySets[streamNumber].add(inventoryHash)
             with shared.printLock:
                 print 'sending inv (within sendBroadcast function) for object:', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
-                streamNumber, 'sendinv', inventoryHash))
+                streamNumber, 'advertiseobject', inventoryHash))
 
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Broadcast sent on %1").arg(unicode(
                 strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
@@ -650,6 +653,7 @@ class singleWorker(threading.Thread):
             objectType = 'msg'
             shared.inventory[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, int(time.time()))
+            shared.inventorySets[toStreamNumber].add(inventoryHash)
             if shared.safeConfigGetBoolean(toaddress, 'chan'):
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Message sent. Sent on %1").arg(unicode(
                     strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
@@ -659,7 +663,7 @@ class singleWorker(threading.Thread):
                     strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
             print 'Broadcasting inv for my msg(within sendmsg function):', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
-                streamNumber, 'sendinv', inventoryHash))
+                streamNumber, 'advertiseobject', inventoryHash))
 
             # Update the status of the message in the 'sent' table to have a
             # 'msgsent' status or 'msgsentnoackexpected' status.
@@ -706,9 +710,10 @@ class singleWorker(threading.Thread):
         objectType = 'getpubkey'
         shared.inventory[inventoryHash] = (
             objectType, streamNumber, payload, int(time.time()))
+        shared.inventorySets[streamNumber].add(inventoryHash)
         print 'sending inv (for the getpubkey message)'
         shared.broadcastToSendDataQueues((
-            streamNumber, 'sendinv', inventoryHash))
+            streamNumber, 'advertiseobject', inventoryHash))
 
         sqlExecute(
             '''UPDATE sent SET status='awaitingpubkey' WHERE toaddress=? AND status='doingpubkeypow' ''',
