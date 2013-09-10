@@ -6,7 +6,7 @@ lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make thi
 maximumAgeOfObjectsThatIAdvertiseToOthers = 216000  # Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
 useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
-
+myExternalIP = None
 
 # Libraries.
 import collections

@@ -1810,6 +1810,7 @@ class receiveDataThread(threading.Thread):
                 return
             # print 'remoteProtocolVersion', self.remoteProtocolVersion
             self.myExternalIP = socket.inet_ntoa(data[40:44])
+            shared.myExternalIP = self.myExternalIP
             # print 'myExternalIP', self.myExternalIP
             self.remoteNodeIncomingPort, = unpack('>H', data[70:72])
             # print 'remoteNodeIncomingPort', self.remoteNodeIncomingPort
