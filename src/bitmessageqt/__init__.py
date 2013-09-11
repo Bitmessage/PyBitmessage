@@ -2718,23 +2718,26 @@ class MyForm(QtGui.QMainWindow):
             
             fromAddress = str(self.ui.tableWidgetInbox.item(
                 currentRow, 1).data(Qt.UserRole).toPyObject())
+            messageItem = self.ui.tableWidgetInbox.item(currentRow, 2)
+            messageText = messageItem.data(Qt.UserRole).toPyObject()
+            if len(messageText) > 30000:
+                messageText = (
+                        messageText[:30000] + '\n' +
+                        '--- Display of the remainder of the message ' +
+                        'truncated because it is too long.\n' +
+                        '--- To see the full message, right-click in the ' +
+                        'Inbox view and select "View HTML code as formatted ' +
+                        'text",\n' +
+                        '--- or select "Save message as..." to save it to a ' +
+                        'file, or select "Reply" and ' +
+                        'view the full message in the quote.')
             # If we have received this message from either a broadcast address
             # or from someone in our address book, display as HTML
             if decodeAddress(fromAddress)[3] in shared.broadcastSendersForWhichImWatching or shared.isAddressInMyAddressBook(fromAddress):
-                if len(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
-                    self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(
-                        currentRow, 2).data(Qt.UserRole).toPyObject())  # Only show the first 30K characters
-                else:
-                    self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()[
-                                                         :30000] + '\n\nDisplay of the remainder of the message truncated because it is too long.')  # Only show the first 30K characters
+                self.ui.textEditInboxMessage.setText(messageText)
             else:
-                if len(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
-                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(
-                        currentRow, 2).data(Qt.UserRole).toPyObject())  # Only show the first 30K characters
-                else:
-                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()[
-                                                              :30000] + '\n\nDisplay of the remainder of the message truncated because it is too long.')  # Only show the first 30K characters
-            
+                self.ui.textEditInboxMessage.setPlainText(messageText)
+
             self.ui.tableWidgetInbox.item(currentRow, 0).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 1).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 2).setFont(font)
