@@ -312,13 +312,14 @@ class MyForm(QtGui.QMainWindow):
         # Add the New Recipient row
         self.ui.tableWidgetRecipients.insertRow(0)
         self.ui.comboboxFindLabel = QtGui.QComboBox()
-        self.ui.comboboxFindLabel.addItem('', 'BM-2D')
+        self.ui.comboboxFindLabel.addItem('', 'BM-')
         self.ui.comboboxFindLabel.setFrame(False)
         self.ui.comboboxFindLabel.setEditable(True)
         self.ui.comboboxFindLabel.setInsertPolicy(0)
         self.ui.tableWidgetRecipients.setCellWidget(0, 0, self.ui.comboboxFindLabel)
         self.ui.comboboxFindAddress = QtGui.QComboBox()
-        self.ui.comboboxFindAddress.addItem('BM-2D', '')
+        self.ui.comboboxFindAddress.addItem('BM-', '')
+        self.ui.comboboxFindAddress.setAutoCompletionCaseSensitivity(Qt.CaseSensitive)
         self.ui.comboboxFindAddress.setFrame(False)
         self.ui.comboboxFindAddress.setEditable(True)
         self.ui.comboboxFindAddress.setInsertPolicy(0)
@@ -2614,8 +2615,8 @@ class MyForm(QtGui.QMainWindow):
         
     def on_comboboxFindLabel_change(self, int):
         address = str(self.ui.comboboxFindLabel.itemData(int).toString())
-        found = self.ui.comboboxFindAddress.findText(address)
-        print address, found
+        found = self.ui.comboboxFindAddress.findText(address, Qt.MatchCaseSensitive)
+        # print address, found
         # synchronize the other combobox
         self.ui.comboboxFindAddress.blockSignals(True)
         self.ui.comboboxFindAddress.setCurrentIndex(found if found > 0 else 0)
@@ -2623,8 +2624,8 @@ class MyForm(QtGui.QMainWindow):
         
     def on_comboboxFindAddress_change(self, int):
         address = str(self.ui.comboboxFindAddress.itemText(int))
-        found = self.ui.comboboxFindLabel.findData(address)
-        print address, found
+        found = self.ui.comboboxFindLabel.findData(address, Qt.UserRole, Qt.MatchCaseSensitive)
+        # print address, found
         # synchronize the other combobox
         self.ui.comboboxFindLabel.blockSignals(True)
         self.ui.comboboxFindLabel.setCurrentIndex(found if found > 0 else 0)
@@ -2635,29 +2636,51 @@ class MyForm(QtGui.QMainWindow):
     def on_comboboxFindLabel_enter(self, event):
         if (event.key() == QtCore.Qt.Key_Enter) | (event.key() == QtCore.Qt.Key_Return):
             index = self.ui.comboboxFindLabel.currentIndex()
-            label = str(self.ui.comboboxFindLabel.currentText())
-            found = self.ui.comboboxFindLabel.findText(label)
-            if (found > 0) & (index == found):
+            print index
+            currentText = str(self.ui.comboboxFindLabel.currentText())
+            found = self.ui.comboboxFindLabel.findText(currentText, Qt.MatchCaseSensitive)
+            if (currentText=='') & (str(self.ui.comboboxFindLabel.itemText(index))==''):
+                # workaround for empty labels
+                
+                address = str(self.ui.comboboxFindLabel.itemData(index).toString())
+                # print 'empty label', address
+                self.on_addRecipient_submit(address)
+            elif (found > 0) & (index == found):
                 address = self.ui.comboboxFindLabel.itemData(found).toString()
                 self.on_addRecipient_submit(address)
+            else:
+                status, a, b, c = decodeAddress(str(currentText))
+                # check if the text is a BM-Address
+                if status == 'success':
+                    # try to find it in the list
+                    found = self.ui.comboboxFindLabel.findData(currentText, Qt.UserRole, Qt.MatchCaseSensitive)
+                    if found > 0:
+                        # found the element in the list
+                        self.ui.comboboxFindLabel.setCurrentIndex(found if found > 0 else 0)
+                    else:
+                        # reset the currentText
+                        self.ui.comboboxFindLabel.setCurrentIndex(0)
+                        # copy the BM-address to the address field
+                        self.ui.comboboxFindAddress.setEditText(currentText)
+                    self.statusBar().showMessage(_translate(
+                        "MainWindow", "You typed the address in the wrong field. It was copied to the correct field."))
         return QtGui.QComboBox.keyPressEvent(self.ui.comboboxFindLabel, event)
         
     def on_comboboxFindAddress_enter(self, event):
         if (event.key() == QtCore.Qt.Key_Enter) | (event.key() == QtCore.Qt.Key_Return):
             index = self.ui.comboboxFindAddress.currentIndex()
             address = str(addBMIfNotPresent(self.ui.comboboxFindAddress.currentText()))
-            found = self.ui.comboboxFindAddress.findText(address)
+            found = self.ui.comboboxFindAddress.findText(address, Qt.MatchCaseSensitive)
             if (found > 0) & (index == found):
                 address = str(self.ui.comboboxFindAddress.itemText(found))
                 self.on_addRecipient_submit(address)
             else:
-                # no matching contact
+                # print 'no matching contact'
                 self.ui.comboboxFindLabel.setCurrentIndex(0)
                 self.ui.comboboxFindAddress.setEditText(address) # otherwise you will lose the text on enter
                 # but maybe the address is valid?
                 # random address for testing: BM-2DAArASbJckBdn3HvTt7kHAbPA5tGxc2R1
                 self.on_addRecipient_submit(address)
-
         return QtGui.QComboBox.keyPressEvent(self.ui.comboboxFindAddress, event)
         
     def on_addRecipient_submit(self, address):
@@ -2671,6 +2694,66 @@ class MyForm(QtGui.QMainWindow):
             self.statusBar().showMessage(_translate(
                     "MainWindow", "Address already in Recipients."))
         else:
+            status, a, b, c = decodeAddress(str(address))
+            if status == 'success':
+                print 'success'
+                found_address_index = self.ui.comboboxFindAddress.findText(address, Qt.MatchCaseSensitive)
+                # get the label string
+                label = str(self.ui.comboboxFindAddress.itemData(found_address_index).toString())
+                print found_address_index, label
+                if found_address_index == -1:
+                    label = _translate("MainWindow", "--unknown Address--")
+                # add the label and address as a row
+                addToBottom = False
+                rowIndex = self.ui.tableWidgetRecipients.rowCount()-1 if addToBottom else 1
+                self.ui.tableWidgetRecipients.insertRow(rowIndex)
+                newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+                newItem.setFlags(
+                        QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+                self.ui.tableWidgetRecipients.setItem(rowIndex, 0, newItem)
+                newItem = QtGui.QTableWidgetItem(unicode(address, 'utf-8'))
+                newItem.setFlags(
+                        QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+                self.ui.tableWidgetRecipients.setItem(rowIndex, 1, newItem)# remove them so we won't add them again
+                found_label_index = self.ui.comboboxFindLabel.findData(address, Qt.UserRole, Qt.MatchCaseSensitive)
+                self.ui.comboboxFindLabel.removeItem(found_label_index)
+                self.ui.comboboxFindAddress.removeItem(found_address_index)
+                # jump to the first item
+                self.ui.comboboxFindLabel.setCurrentIndex(0)
+                self.ui.comboboxFindAddress.setCurrentIndex(0)
+            else:
+                with shared.printLock:
+                    print 'Error: Could not decode', address, ':', status
+                
+                if address == 'BM-':
+                    for i in range(4):
+                        time.sleep(0.1)
+                        self.statusBar().showMessage('')
+                        time.sleep(0.1)
+                        self.statusBar().showMessage(_translate(
+                        "MainWindow", "Start typing a label or address from your Address Book, Identities or Subscriptions to find it in the list."))
+                elif status == 'missingbm':
+                    self.statusBar().showMessage(_translate(
+                        "MainWindow", "Error: Bitmessage addresses start with BM-   Please check %1").arg(address))
+                elif status == 'checksumfailed':
+                    self.statusBar().showMessage(_translate(
+                        "MainWindow", "Error: The address %1 is not typed or copied correctly. Please check it.").arg(address))
+                elif status == 'invalidcharacters':
+                    self.statusBar().showMessage(_translate(
+                        "MainWindow", "Error: The address %1 contains invalid characters. Please check it.").arg(address))
+                elif status == 'versiontoohigh':
+                    self.statusBar().showMessage(_translate(
+                        "MainWindow", "Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.").arg(address))
+                elif status == 'ripetooshort':
+                    self.statusBar().showMessage(_translate(
+                        "MainWindow", "Error: Some data encoded in the address %1 is too short. There might be something wrong with the software of your acquaintance.").arg(address))
+                elif status == 'ripetoolong':
+                    self.statusBar().showMessage(_translate(
+                        "MainWindow", "Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.").arg(address))
+                else:
+                    self.statusBar().showMessage(_translate(
+                        "MainWindow", "Error: Something is wrong with the address %1.").arg(address))
+        if False:
             remove_label = True
             status, a, b, c = decodeAddress(str(address))
             if status == 'success':
