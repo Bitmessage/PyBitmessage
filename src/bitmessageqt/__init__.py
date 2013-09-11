@@ -1611,102 +1611,154 @@ class MyForm(QtGui.QMainWindow):
         message = str(
             self.ui.textEditMessage.document().toPlainText().toUtf8())
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
-            toAddressesList = [s.strip()
-                               for s in toAddresses.replace(',', ';').split(';')]
-            toAddressesList = list(set(
-                toAddressesList))  # remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice.
-            for toAddress in toAddressesList:
-                if toAddress != '':
-                    status, addressVersionNumber, streamNumber, ripe = decodeAddress(
-                        toAddress)
-                    if status != 'success':
-                        with shared.printLock:
-                            print 'Error: Could not decode', toAddress, ':', status
-
-                        if status == 'missingbm':
+            use_tableWidgetRecipients = True # this is just to keep the old To-Field until finally tested
+            if use_tableWidgetRecipients:
+                toAddressesList = self.get_recipient_addresses()
+                toAddressesList = list(set(
+                    toAddressesList)) # remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice. However, the tableWidgetRecipients should have already caught them.
+                for toAddress in toAddressesList:
+                    if toAddress != '':
+                        status, addressVersionNumber, streamNumber, ripe = decodeAddress(
+                            toAddress)
+                        if status != 'success':
+                            self.throw_address_error(toAddress, status, addressVersionNumber, streamNumber, ripe)
+                        elif fromAddress == '':
                             self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: Bitmessage addresses start with BM-   Please check %1").arg(toAddress))
-                        elif status == 'checksumfailed':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: The address %1 is not typed or copied correctly. Please check it.").arg(toAddress))
-                        elif status == 'invalidcharacters':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: The address %1 contains invalid characters. Please check it.").arg(toAddress))
-                        elif status == 'versiontoohigh':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.").arg(toAddress))
-                        elif status == 'ripetooshort':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: Some data encoded in the address %1 is too short. There might be something wrong with the software of your acquaintance.").arg(toAddress))
-                        elif status == 'ripetoolong':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.").arg(toAddress))
+                                "MainWindow", "Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab."))
                         else:
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: Something is wrong with the address %1.").arg(toAddress))
-                    elif fromAddress == '':
-                        self.statusBar().showMessage(_translate(
-                            "MainWindow", "Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab."))
-                    else:
-                        toAddress = addBMIfNotPresent(toAddress)
-                        try:
-                            shared.config.get(toAddress, 'enabled')
-                            # The toAddress is one owned by me.
-                            if not shared.safeConfigGetBoolean(toAddress, 'chan'):
-                                QMessageBox.about(self, _translate("MainWindow", "Sending to your address"), _translate(
-                                    "MainWindow", "Error: One of the addresses to which you are sending a message, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.").arg(toAddress))
+                            toAddress = addBMIfNotPresent(toAddress)
+                            try:
+                                shared.config.get(toAddress, 'enabled')
+                                # The toAddress is one owned by me.
+                                if not shared.safeConfigGetBoolean(toAddress, 'chan'):
+                                    QMessageBox.about(self, _translate("MainWindow", "Sending to your address"), _translate(
+                                        "MainWindow", "Error: One of the addresses to which you are sending a message, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.").arg(toAddress))
+                                    continue
+                            except:
+                                pass
+                            if addressVersionNumber > 3 or addressVersionNumber <= 1:
+                                QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
+                                    "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
                                 continue
-                        except:
-                            pass
-                        if addressVersionNumber > 3 or addressVersionNumber <= 1:
-                            QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
-                                "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
-                            continue
-                        if streamNumber > 1 or streamNumber == 0:
-                            QMessageBox.about(self, _translate("MainWindow", "Stream number"), _translate(
-                                "MainWindow", "Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(streamNumber)))
-                            continue
-                        self.statusBar().showMessage('')
-                        if shared.statusIconColor == 'red':
+                            if streamNumber > 1 or streamNumber == 0:
+                                QMessageBox.about(self, _translate("MainWindow", "Stream number"), _translate(
+                                    "MainWindow", "Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(streamNumber)))
+                                continue
+                            self.statusBar().showMessage('')
+                            if shared.statusIconColor == 'red':
+                                self.statusBar().showMessage(_translate(
+                                    "MainWindow", "Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect."))
+                            ackdata = OpenSSL.rand(32)
+                            shared.sqlLock.acquire()
+                            t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
+                                time.time()), 'msgqueued', 1, 1, 'sent', 2)
+                            shared.sqlSubmitQueue.put(
+                                '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
+                            shared.sqlSubmitQueue.put(t)
+                            shared.sqlReturnQueue.get()
+                            shared.sqlSubmitQueue.put('commit')
+                            shared.sqlLock.release()
+
+                            toLabel = ''
+                            t = (toAddress,)
+                            shared.sqlLock.acquire()
+                            shared.sqlSubmitQueue.put(
+                                '''select label from addressbook where address=?''')
+                            shared.sqlSubmitQueue.put(t)
+                            queryreturn = shared.sqlReturnQueue.get()
+                            shared.sqlLock.release()
+                            if queryreturn != []:
+                                for row in queryreturn:
+                                    toLabel, = row
+
+                            self.displayNewSentMessage(
+                                toAddress, toLabel, fromAddress, subject, message, ackdata)
+                            shared.workerQueue.put(('sendmessage', toAddress))
+
+                            self.ui.comboBoxSendFrom.setCurrentIndex(0)
+                            self.ui.labelFrom.setText('')
+                            self.ui.lineEditTo.setText('')
+                            self.ui.lineEditSubject.setText('')
+                            self.ui.textEditMessage.setText('')
+                            self.ui.tabWidget.setCurrentIndex(2)
+                            self.ui.tableWidgetSent.setCurrentCell(0, 0)
+                    else:
+                        self.statusBar().showMessage(_translate(
+                            "MainWindow", "Your \'To\' field is empty."))
+            else:
+                toAddressesList = [s.strip()
+                               for s in toAddresses.replace(',', ';').split(';')]
+                toAddressesList = list(set(
+                    toAddressesList))  # remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice.
+                for toAddress in toAddressesList:
+                    if toAddress != '':
+                        status, addressVersionNumber, streamNumber, ripe = decodeAddress(
+                            toAddress)
+                        if status != 'success':
+                            self.throw_address_error(toAddress, status, addressVersionNumber, streamNumber, ripe)
+                        elif fromAddress == '':
                             self.statusBar().showMessage(_translate(
-                                "MainWindow", "Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect."))
-                        ackdata = OpenSSL.rand(32)
-                        shared.sqlLock.acquire()
-                        t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
-                            time.time()), 'msgqueued', 1, 1, 'sent', 2)
-                        shared.sqlSubmitQueue.put(
-                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
-                        shared.sqlSubmitQueue.put(t)
-                        shared.sqlReturnQueue.get()
-                        shared.sqlSubmitQueue.put('commit')
-                        shared.sqlLock.release()
+                                "MainWindow", "Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab."))
+                        else:
+                            toAddress = addBMIfNotPresent(toAddress)
+                            try:
+                                shared.config.get(toAddress, 'enabled')
+                                # The toAddress is one owned by me.
+                                if not shared.safeConfigGetBoolean(toAddress, 'chan'):
+                                    QMessageBox.about(self, _translate("MainWindow", "Sending to your address"), _translate(
+                                        "MainWindow", "Error: One of the addresses to which you are sending a message, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.").arg(toAddress))
+                                    continue
+                            except:
+                                pass
+                            if addressVersionNumber > 3 or addressVersionNumber <= 1:
+                                QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
+                                    "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
+                                continue
+                            if streamNumber > 1 or streamNumber == 0:
+                                QMessageBox.about(self, _translate("MainWindow", "Stream number"), _translate(
+                                    "MainWindow", "Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(streamNumber)))
+                                continue
+                            self.statusBar().showMessage('')
+                            if shared.statusIconColor == 'red':
+                                self.statusBar().showMessage(_translate(
+                                    "MainWindow", "Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect."))
+                            ackdata = OpenSSL.rand(32)
+                            shared.sqlLock.acquire()
+                            t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
+                                time.time()), 'msgqueued', 1, 1, 'sent', 2)
+                            shared.sqlSubmitQueue.put(
+                                '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
+                            shared.sqlSubmitQueue.put(t)
+                            shared.sqlReturnQueue.get()
+                            shared.sqlSubmitQueue.put('commit')
+                            shared.sqlLock.release()
 
-                        toLabel = ''
-                        t = (toAddress,)
-                        shared.sqlLock.acquire()
-                        shared.sqlSubmitQueue.put(
-                            '''select label from addressbook where address=?''')
-                        shared.sqlSubmitQueue.put(t)
-                        queryreturn = shared.sqlReturnQueue.get()
-                        shared.sqlLock.release()
-                        if queryreturn != []:
-                            for row in queryreturn:
-                                toLabel, = row
+                            toLabel = ''
+                            t = (toAddress,)
+                            shared.sqlLock.acquire()
+                            shared.sqlSubmitQueue.put(
+                                '''select label from addressbook where address=?''')
+                            shared.sqlSubmitQueue.put(t)
+                            queryreturn = shared.sqlReturnQueue.get()
+                            shared.sqlLock.release()
+                            if queryreturn != []:
+                                for row in queryreturn:
+                                    toLabel, = row
 
-                        self.displayNewSentMessage(
-                            toAddress, toLabel, fromAddress, subject, message, ackdata)
-                        shared.workerQueue.put(('sendmessage', toAddress))
+                            self.displayNewSentMessage(
+                                toAddress, toLabel, fromAddress, subject, message, ackdata)
+                            shared.workerQueue.put(('sendmessage', toAddress))
 
-                        self.ui.comboBoxSendFrom.setCurrentIndex(0)
-                        self.ui.labelFrom.setText('')
-                        self.ui.lineEditTo.setText('')
-                        self.ui.lineEditSubject.setText('')
-                        self.ui.textEditMessage.setText('')
-                        self.ui.tabWidget.setCurrentIndex(2)
-                        self.ui.tableWidgetSent.setCurrentCell(0, 0)
-                else:
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Your \'To\' field is empty."))
+                            self.ui.comboBoxSendFrom.setCurrentIndex(0)
+                            self.ui.labelFrom.setText('')
+                            self.ui.lineEditTo.setText('')
+                            self.ui.lineEditSubject.setText('')
+                            self.ui.textEditMessage.setText('')
+                            self.ui.tabWidget.setCurrentIndex(2)
+                            self.ui.tableWidgetSent.setCurrentCell(0, 0)
+                    else:
+                        self.statusBar().showMessage(_translate(
+                            "MainWindow", "Your \'To\' field is empty."))
         else:  # User selected 'Broadcast'
             if fromAddress == '':
                 self.statusBar().showMessage(_translate(
@@ -2683,18 +2735,47 @@ class MyForm(QtGui.QMainWindow):
                 self.on_addRecipient_submit(address)
         return QtGui.QComboBox.keyPressEvent(self.ui.comboboxFindAddress, event)
         
-    def on_addRecipient_submit(self, address):
-        # check whether address already in TO list
-        address = addBMIfNotPresent(address)
+    def get_recipient_addresses(self):
         recipients = []
         for row in range(1,self.ui.tableWidgetRecipients.rowCount()):
             recipients += [str(self.ui.tableWidgetRecipients.item(
             row, 1).text())]
+        return recipients
+        
+    def throw_address_error(self, address, status, addressVersionNumber, streamNumber, ripe):
+        with shared.printLock:
+            print 'Error: Could not decode', address, ':', status
+        if status == 'missingbm':
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: Bitmessage addresses start with BM-   Please check %1").arg(address))
+        elif status == 'checksumfailed':
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: The address %1 is not typed or copied correctly. Please check it.").arg(address))
+        elif status == 'invalidcharacters':
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: The address %1 contains invalid characters. Please check it.").arg(address))
+        elif status == 'versiontoohigh':
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.").arg(address))
+        elif status == 'ripetooshort':
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: Some data encoded in the address %1 is too short. There might be something wrong with the software of your acquaintance.").arg(address))
+        elif status == 'ripetoolong':
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.").arg(address))
+        else:
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: Something is wrong with the address %1.").arg(address))
+        
+    def on_addRecipient_submit(self, address):
+        # check whether address already in TO list
+        address = addBMIfNotPresent(address)
+        recipients = self.get_recipient_addresses()
         if address in recipients:
             self.statusBar().showMessage(_translate(
                     "MainWindow", "Address already in Recipients."))
         else:
-            status, a, b, c = decodeAddress(str(address))
+            status, addressVersionNumber, streamNumber, ripe = decodeAddress(str(address))
             if status == 'success':
                 print 'success'
                 found_address_index = self.ui.comboboxFindAddress.findText(address, Qt.MatchCaseSensitive)
@@ -2722,9 +2803,6 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.comboboxFindLabel.setCurrentIndex(0)
                 self.ui.comboboxFindAddress.setCurrentIndex(0)
             else:
-                with shared.printLock:
-                    print 'Error: Could not decode', address, ':', status
-                
                 if address == 'BM-':
                     for i in range(4):
                         time.sleep(0.1)
@@ -2732,81 +2810,9 @@ class MyForm(QtGui.QMainWindow):
                         time.sleep(0.1)
                         self.statusBar().showMessage(_translate(
                         "MainWindow", "Start typing a label or address from your Address Book, Identities or Subscriptions to find it in the list."))
-                elif status == 'missingbm':
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: Bitmessage addresses start with BM-   Please check %1").arg(address))
-                elif status == 'checksumfailed':
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: The address %1 is not typed or copied correctly. Please check it.").arg(address))
-                elif status == 'invalidcharacters':
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: The address %1 contains invalid characters. Please check it.").arg(address))
-                elif status == 'versiontoohigh':
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.").arg(address))
-                elif status == 'ripetooshort':
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: Some data encoded in the address %1 is too short. There might be something wrong with the software of your acquaintance.").arg(address))
-                elif status == 'ripetoolong':
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.").arg(address))
                 else:
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: Something is wrong with the address %1.").arg(address))
-        if False:
-            remove_label = True
-            status, a, b, c = decodeAddress(str(address))
-            if status == 'success':
-                # remove them so we won't add them again
-                if label:
-                    found = self.ui.comboboxFindLabel.findText(label)
-                    self.ui.comboboxFindLabel.removeItem(found)
-                found = self.ui.comboboxFindAddress.findText(address)
-                self.ui.comboboxFindAddress.removeItem(found)
-                # jump to the first item
-                self.ui.comboboxFindAddress.setCurrentIndex(0)
-                self.ui.comboboxFindLabel.setCurrentIndex(0)
-                # find a label name
-                if label == False:
-                    label = _translate("MainWindow", "--unknown Address--")
-                # add the label and address as a row
-                addToBottom = False
-                rowIndex = self.ui.tableWidgetRecipients.rowCount()-1 if addToBottom else 1
-                self.ui.tableWidgetRecipients.insertRow(rowIndex)
-                newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
-                newItem.setFlags(
-                        QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-                self.ui.tableWidgetRecipients.setItem(rowIndex, 0, newItem)
-                newItem = QtGui.QTableWidgetItem(unicode(address, 'utf-8'))
-                newItem.setFlags(
-                        QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-                self.ui.tableWidgetRecipients.setItem(rowIndex, 1, newItem)
-            else:
-                with shared.printLock:
-                    print 'Error: Could not decode', address, ':', status
-
-                if status == 'missingbm':
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: Bitmessage addresses start with BM-   Please check %1").arg(address))
-                elif status == 'checksumfailed':
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: The address %1 is not typed or copied correctly. Please check it.").arg(address))
-                elif status == 'invalidcharacters':
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: The address %1 contains invalid characters. Please check it.").arg(address))
-                elif status == 'versiontoohigh':
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.").arg(address))
-                elif status == 'ripetooshort':
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: Some data encoded in the address %1 is too short. There might be something wrong with the software of your acquaintance.").arg(address))
-                elif status == 'ripetoolong':
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.").arg(address))
-                else:
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: Something is wrong with the address %1.").arg(address))
-        
+                    self.throw_address_error(address, status, addressVersionNumber, streamNumber, ripe)
+      
     # Group of functions for the Address Book dialog box
     def on_action_AddressBookNew(self):
         self.click_pushButtonAddAddressBook()
