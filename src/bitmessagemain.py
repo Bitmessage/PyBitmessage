@@ -384,6 +384,70 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 ('getDeterministicAddress', addressVersionNumber,
                  streamNumber, 'unused API address', numberOfAddresses, passphrase, eighteenByteRipe))
             return shared.apiAddressGeneratorReturnQueue.get()
+        elif method == 'addChan':
+            #get passphrase, addressVersionNumber, and streamNumber
+            if len(params) == 0:
+                raise APIError(0, 'I need parameters.')
+            elif len(params) == 1:
+                passphrase, = params
+                address = ''
+                addressVersionNumber = 0
+                streamNumber = 0
+                label = ''
+            elif len(params) == 2:
+                passphrase, address = params
+                status, addressVersionNumber, streamNumber, ripe = decodeAddress(address)
+                label = ''
+            elif len(params) == 3:
+                passphrase, addressVersionNumber, streamNumber = params
+                address = ''
+                label = ''
+            elif len(params) == 4:
+                passphrase, addressVersionNumber, streamNumber, label = params
+                address = ''
+                label = self._decode(label, "base64")
+            else:
+                raise APIError(0, 'Too many parameters!')
+
+            if len(passphrase) == 0:
+                raise APIError(1, 'The specified passphrase is blank.')
+            passphrase = self._decode(passphrase, "base64")
+            if label == '':
+                label = '[chan] ' + passphrase
+            if addressVersionNumber == 0:  # 0 means "just use the proper addressVersionNumber"
+                addressVersionNumber = 3
+            if addressVersionNumber != 3:
+                raise APIError(2,'The address version number currently must be 3 (or 0 which means auto-select). ' + addressVersionNumber + ' isn\'t supported.')
+            if streamNumber == 0:  # 0 means "just use the most available stream"
+                streamNumber = 1
+            if streamNumber != 1:
+                raise APIError(3,'The stream number must be 1 (or 0 which means auto-select). Others aren\'t supported.')
+
+            #create identity
+            shared.apiAddressGeneratorReturnQueue.queue.clear()
+            logger.debug('Requesting that the addressGenerator create chan %s.', passphrase)
+            shared.addressGeneratorQueue.put(('createChan', addressVersionNumber, streamNumber, label, passphrase))
+            queueReturn = shared.apiAddressGeneratorReturnQueue.get()
+            if len(queueReturn) == 0:
+                raise APIError(24, 'Chan address already present.')
+            createdAddress = queueReturn[0]
+            if address == '':
+                address = createdAddress
+            elif createdAddress != address:
+                raise APIError(18, 'Chan name does not match address.')
+
+            #add address to addressbook
+            address = addBMIfNotPresent(address)
+            self._verifyAddress(address)
+            queryreturn = sqlQuery("SELECT address FROM addressbook WHERE address=?", address)
+            if queryreturn != []:
+                raise APIError(16, 'You already have this address in your address book.')
+
+            sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
+            shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
+            shared.UISignalQueue.put(('rerenderSentToLabels',''))
+            shared.UISignalQueue.put(('rerenderAddressBook',''))
+            return "Added chan %s with address %s and label %s." %(passphrase, address, label)
         elif method == 'getAllInboxMessages':
             queryreturn = sqlQuery(
                 '''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox where folder='inbox' ORDER BY received''')
