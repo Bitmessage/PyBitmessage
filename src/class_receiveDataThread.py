@@ -300,7 +300,7 @@ class receiveDataThread(threading.Thread):
         with shared.inventoryLock:
             for hash, storedValue in shared.inventory.items():
                 if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
-                    objectType, streamNumber, payload, receivedTime = storedValue
+                    objectType, streamNumber, payload, receivedTime, tag = storedValue
                     if streamNumber == self.streamNumber and receivedTime > int(time.time()) - shared.maximumAgeOfObjectsThatIAdvertiseToOthers:
                         bigInvList[hash] = 0
         numberOfObjectsInInvMessage = 0
@@ -391,7 +391,7 @@ class receiveDataThread(threading.Thread):
         # It is valid so far. Let's let our peers know about it.
         objectType = 'broadcast'
         shared.inventory[self.inventoryHash] = (
-            objectType, self.streamNumber, data, embeddedTime)
+            objectType, self.streamNumber, data, embeddedTime,'')
         shared.inventorySets[self.streamNumber].add(self.inventoryHash)
         shared.inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
@@ -755,7 +755,7 @@ class receiveDataThread(threading.Thread):
         # This msg message is valid. Let's let our peers know about it.
         objectType = 'msg'
         shared.inventory[self.inventoryHash] = (
-            objectType, self.streamNumber, data, embeddedTime)
+            objectType, self.streamNumber, data, embeddedTime,'')
         shared.inventorySets[self.streamNumber].add(self.inventoryHash)
         shared.inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
@@ -1103,7 +1103,7 @@ class receiveDataThread(threading.Thread):
     # We have received a pubkey
     def recpubkey(self, data):
         self.pubkeyProcessingStartTime = time.time()
-        if len(data) < 146 or len(data) > 600:  # sanity check
+        if len(data) < 146 or len(data) > 420:  # sanity check
             return
         # We must check to make sure the proof of work is sufficient.
         if not self.isProofOfWorkSufficient(data):
@@ -1140,6 +1140,10 @@ class receiveDataThread(threading.Thread):
         if self.streamNumber != streamNumber:
             print 'stream number embedded in this pubkey doesn\'t match our stream number. Ignoring.'
             return
+        if addressVersion >= 4:
+            tag = data[readPosition:readPosition + 32]
+        else:
+            tag = ''
 
         shared.numberOfInventoryLookupsPerformed += 1
         inventoryHash = calculateInventoryHash(data)
@@ -1154,7 +1158,7 @@ class receiveDataThread(threading.Thread):
             return
         objectType = 'pubkey'
         shared.inventory[inventoryHash] = (
-            objectType, self.streamNumber, data, embeddedTime)
+            objectType, self.streamNumber, data, embeddedTime, tag)
         shared.inventorySets[self.streamNumber].add(inventoryHash)
         shared.inventoryLock.release()
         self.broadcastinv(inventoryHash)
@@ -1194,10 +1198,11 @@ class receiveDataThread(threading.Thread):
         streamNumber, varintLength = decodeVarint(
             data[readPosition:readPosition + 10])
         readPosition += varintLength
+        signedData = data[8:readPosition] # Used only for v4 or higher pubkeys
         if addressVersion == 0:
             print '(Within processpubkey) addressVersion of 0 doesn\'t make sense.'
             return
-        if addressVersion > 3 or addressVersion == 1:
+        if addressVersion > 4 or addressVersion == 1:
             with shared.printLock:
                 print 'This version of Bitmessage cannot handle version', addressVersion, 'addresses.'
 
@@ -1298,8 +1303,94 @@ class receiveDataThread(threading.Thread):
                 t = (ripe, data, embeddedTime, 'no')
                      # This will also update the embeddedTime.
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
-            # shared.workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
             self.possibleNewPubkey(ripe)
+
+        if addressVersion == 4:
+            print 'length of v4 pubkey:', len(data)
+            if len(data) < 350:  # sanity check.
+                print '(within processpubkey) payloadLength less than 350. Sanity check failed.'
+                return
+            tag = data[readPosition:readPosition + 32]
+            readPosition += 32
+            encryptedData = data[readPosition:]
+            if tag not in shared.neededPubkeys:
+                with shared.printLock:
+                    print 'We don\'t need this v4 pubkey. We didn\'t ask for it.'
+                return
+
+            with shared.printLock:
+                print 'We have been awaiting the arrival of this pubkey.'
+
+            # Let us try to decrypt the pubkey
+            cryptorObject = shared.neededPubkeys[tag]
+            try:
+                decryptedData = cryptorObject.decrypt(encryptedData)
+            except:
+                # Someone must have encrypted some data with a different key
+                # but tagged it with a tag for which we are watching.
+                with shared.printLock:
+                    print 'Pubkey decryption was unsuccessful.'
+                return
+
+
+            readPosition = 0
+            bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
+            readPosition += 4
+            publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+            # Is it possible for a public key to be invalid such that trying to
+            # encrypt or sign with it will cause an error? If it is, we should
+            # probably test these keys here.
+            readPosition += 64
+            publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+            readPosition += 64
+            specifiedNonceTrialsPerByte, specifiedNonceTrialsPerByteLength = decodeVarint(
+                decryptedData[readPosition:readPosition + 10])
+            readPosition += specifiedNonceTrialsPerByteLength
+            specifiedPayloadLengthExtraBytes, specifiedPayloadLengthExtraBytesLength = decodeVarint(
+                decryptedData[readPosition:readPosition + 10])
+            readPosition += specifiedPayloadLengthExtraBytesLength
+            signedData += decryptedData[:readPosition]
+            signatureLength, signatureLengthLength = decodeVarint(
+                decryptedData[readPosition:readPosition + 10])
+            readPosition += signatureLengthLength
+            signature = decryptedData[readPosition:readPosition + signatureLength]
+            try:
+                if not highlevelcrypto.verify(signedData, signature, publicSigningKey.encode('hex')):
+                    print 'ECDSA verify failed (within processpubkey)'
+                    return
+                print 'ECDSA verify passed (within processpubkey)'
+            except Exception as err:
+                print 'ECDSA verify failed (within processpubkey)', err
+                return
+
+            sha = hashlib.new('sha512')
+            sha.update(publicSigningKey + publicEncryptionKey)
+            ripeHasher = hashlib.new('ripemd160')
+            ripeHasher.update(sha.digest())
+            ripe = ripeHasher.digest()
+
+            # We need to make sure that the tag on the outside of the encryption
+            # is the one generated from hashing these particular keys.
+            if tag != hashlib.sha512(hashlib.sha512(encodeVarint(addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()[32:]:
+                with shared.printLock:
+                    print 'Someone was trying to act malicious: tag doesn\'t match the keys in this pubkey message. Ignoring it.'
+                return
+            else:
+                print 'Tag successfully matches keys in pubkey message' # testing. Will remove soon.
+
+            with shared.printLock:
+                print 'within recpubkey, addressVersion:', addressVersion, ', streamNumber:', streamNumber
+                print 'ripe', ripe.encode('hex')
+                print 'publicSigningKey in hex:', publicSigningKey.encode('hex')
+                print 'publicEncryptionKey in hex:', publicEncryptionKey.encode('hex')
+
+            t = (ripe, signedData, embeddedTime, 'yes')
+            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
+
+            sqlExecute(
+                '''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND (status='awaitingpubkey' or status='doingpubkeypow') and folder='sent' ''',
+                toRipe)
+            shared.workerQueue.put(('sendmessage', ''))
 
     # We have received a getpubkey message
     def recgetpubkey(self, data):
@@ -1350,7 +1441,7 @@ class receiveDataThread(threading.Thread):
 
         objectType = 'getpubkey'
         shared.inventory[inventoryHash] = (
-            objectType, self.streamNumber, data, embeddedTime)
+            objectType, self.streamNumber, data, embeddedTime,'')
         shared.inventorySets[self.streamNumber].add(inventoryHash)
         shared.inventoryLock.release()
         # This getpubkey request is valid so far. Forward to peers.
@@ -1362,50 +1453,65 @@ class receiveDataThread(threading.Thread):
         elif requestedAddressVersionNumber == 1:
             print 'The requestedAddressVersionNumber of the pubkey request is 1 which isn\'t supported anymore. Ignoring it.'
             return
-        elif requestedAddressVersionNumber > 3:
+        elif requestedAddressVersionNumber > 4:
             print 'The requestedAddressVersionNumber of the pubkey request is too high. Can\'t understand. Ignoring it.'
             return
 
-        requestedHash = data[readPosition:readPosition + 20]
-        if len(requestedHash) != 20:
-            print 'The length of the requested hash is not 20 bytes. Something is wrong. Ignoring.'
-            return
-        with shared.printLock:
-            print 'the hash requested in this getpubkey request is:', requestedHash.encode('hex')
-
-        if requestedHash in shared.myAddressesByHash:  # if this address hash is one of mine
-            if decodeAddress(shared.myAddressesByHash[requestedHash])[1] != requestedAddressVersionNumber:
-                with shared.printLock:
-                    sys.stderr.write(
-                     '(Within the recgetpubkey function) Someone requested one of my pubkeys but the requestedAddressVersionNumber doesn\'t match my actual address version number. They shouldn\'t have done that. Ignoring.\n')
+        myAddress = ''
+        if requestedAddressVersionNumber <= 3 :
+            requestedHash = data[readPosition:readPosition + 20]
+            if len(requestedHash) != 20:
+                print 'The length of the requested hash is not 20 bytes. Something is wrong. Ignoring.'
                 return
-            if shared.safeConfigGetBoolean(shared.myAddressesByHash[requestedHash], 'chan'):
-                with shared.printLock:
-                    print 'Ignoring getpubkey request because it is for one of my chan addresses. The other party should already have the pubkey.'
-                    return
-            try:
-                lastPubkeySendTime = int(shared.config.get(
-                    shared.myAddressesByHash[requestedHash], 'lastpubkeysendtime'))
-            except:
-                lastPubkeySendTime = 0
-            if lastPubkeySendTime > time.time() - shared.lengthOfTimeToHoldOnToAllPubkeys:  # If the last time we sent our pubkey was more recent than 28 days ago...
-                with shared.printLock:
-                    print 'Found getpubkey-requested-hash in my list of EC hashes BUT we already sent it recently. Ignoring request. The lastPubkeySendTime is:', lastPubkeySendTime
-                    return
-
             with shared.printLock:
-                print 'Found getpubkey-requested-hash in my list of EC hashes. Telling Worker thread to do the POW for a pubkey message and send it out.'
-            if requestedAddressVersionNumber == 2:
-                shared.workerQueue.put((
-                    'doPOWForMyV2Pubkey', requestedHash))
-            elif requestedAddressVersionNumber == 3:
-                shared.workerQueue.put((
-                    'sendOutOrStoreMyV3Pubkey', requestedHash))
-         
-                
-        else:
+                print 'the hash requested in this getpubkey request is:', requestedHash.encode('hex')
+            if requestedHash in shared.myAddressesByHash:  # if this address hash is one of mine
+                myAddress = shared.myAddressesByHash[requestedHash]
+        elif requestedAddressVersionNumber >= 4:
+            requestedTag = data[readPosition:readPosition + 32]
+            if len(requestedTag) != 32:
+                print 'The length of the requested tag is not 32 bytes. Something is wrong. Ignoring.'
+                return
+            with shared.printLock:
+                print 'the tag requested in this getpubkey request is:', requestedTag.encode('hex')
+            if requestedTag in shared.myAddressesByTag[requestedTag]:
+                myAddress = shared.myAddressesByTag[requestedTag]
+
+        if myAddress == '':
             with shared.printLock:
                 print 'This getpubkey request is not for any of my keys.'
+            return
+
+        if decodeAddress(myAddress)[1] != requestedAddressVersionNumber:
+            with shared.printLock:
+                sys.stderr.write(
+                 '(Within the recgetpubkey function) Someone requested one of my pubkeys but the requestedAddressVersionNumber doesn\'t match my actual address version number. They shouldn\'t have done that. Ignoring.\n')
+            return
+        if shared.safeConfigGetBoolean(myAddress, 'chan'):
+            with shared.printLock:
+                print 'Ignoring getpubkey request because it is for one of my chan addresses. The other party should already have the pubkey.'
+                return
+        try:
+            lastPubkeySendTime = int(shared.config.get(
+                myAddress, 'lastpubkeysendtime'))
+        except:
+            lastPubkeySendTime = 0
+        if lastPubkeySendTime > time.time() - shared.lengthOfTimeToHoldOnToAllPubkeys:  # If the last time we sent our pubkey was more recent than 28 days ago...
+            with shared.printLock:
+                print 'Found getpubkey-requested-item in my list of EC hashes BUT we already sent it recently. Ignoring request. The lastPubkeySendTime is:', lastPubkeySendTime
+                return
+
+        with shared.printLock:
+            print 'Found getpubkey-requested-hash in my list of EC hashes. Telling Worker thread to do the POW for a pubkey message and send it out.'
+        if requestedAddressVersionNumber == 2:
+            shared.workerQueue.put((
+                'doPOWForMyV2Pubkey', requestedHash))
+        elif requestedAddressVersionNumber == 3:
+            shared.workerQueue.put((
+                'sendOutOrStoreMyV3Pubkey', requestedHash))
+        elif requestedAddressVersionNumber == 4:
+            shared.workerQueue.put((
+                'sendOutOrStoreMyV4Pubkey', myAddress))
 
 
     # We have received an inv message
@@ -1498,7 +1604,7 @@ class receiveDataThread(threading.Thread):
             shared.numberOfInventoryLookupsPerformed += 1
             shared.inventoryLock.acquire()
             if hash in shared.inventory:
-                objectType, streamNumber, payload, receivedTime = shared.inventory[
+                objectType, streamNumber, payload, receivedTime, tag = shared.inventory[
                     hash]
                 shared.inventoryLock.release()
                 self.sendData(objectType, payload)

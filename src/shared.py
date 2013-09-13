@@ -5,7 +5,7 @@ lengthOfTimeToLeaveObjectsInInventory = 237600  # Equals two days and 18 hours. 
 lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
 maximumAgeOfObjectsThatIAdvertiseToOthers = 216000  # Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
-useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
+useVeryEasyProofOfWorkForTesting = True  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
 
 
 # Libraries.
@@ -311,9 +311,9 @@ def flushInventory():
     #Note that the singleCleanerThread clears out the inventory dictionary from time to time, although it only clears things that have been in the dictionary for a long time. This clears the inventory dictionary Now.
     with SqlBulkExecute() as sql:
         for hash, storedValue in inventory.items():
-            objectType, streamNumber, payload, receivedTime = storedValue
-            sql.execute('''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
-                       hash,objectType,streamNumber,payload,receivedTime,'')
+            objectType, streamNumber, payload, receivedTime, tag = storedValue
+            sql.execute('''INSERT INTO inventory VALUES (?,?,?,?,?,?,?)''',
+                       hash,objectType,streamNumber,payload,receivedTime,'',tag)
             del inventory[hash]
 
 def fixPotentiallyInvalidUTF8Data(text):
