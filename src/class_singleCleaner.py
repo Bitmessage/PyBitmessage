@@ -39,7 +39,7 @@ class singleCleaner(threading.Thread):
             with shared.inventoryLock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
                 with SqlBulkExecute() as sql:
                     for hash, storedValue in shared.inventory.items():
-                        objectType, streamNumber, payload, receivedTime = storedValue
+                        objectType, streamNumber, payload, receivedTime, tag = storedValue
                         if int(time.time()) - 3600 > receivedTime:
                             sql.execute(
                                 '''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
@@ -48,7 +48,7 @@ class singleCleaner(threading.Thread):
                                 streamNumber,
                                 payload,
                                 receivedTime,
-                                '')
+                                tag)
                             del shared.inventory[hash]
             shared.UISignalQueue.put(('updateStatusBar', ''))
             shared.broadcastToSendDataQueues((

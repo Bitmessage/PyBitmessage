@@ -334,7 +334,7 @@ class MyForm(QtGui.QMainWindow):
                     newItem.setTextColor(QtGui.QColor(137, 04, 177))  # magenta
                 self.ui.tableWidgetYourIdentities.setItem(0, 1, newItem)
                 newItem = QtGui.QTableWidgetItem(str(
-                    addressStream(addressInKeysFile)))
+                    decodeAddress(addressInKeysFile)[2]))
                 newItem.setFlags(
                     QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
                 if not isEnabled:
@@ -1566,7 +1566,7 @@ class MyForm(QtGui.QMainWindow):
                                 continue
                         except:
                             pass
-                        if addressVersionNumber > 3 or addressVersionNumber <= 1:
+                        if addressVersionNumber > 4 or addressVersionNumber <= 1:
                             QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
                                 "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
                             continue
@@ -2200,9 +2200,9 @@ class MyForm(QtGui.QMainWindow):
                 else:
                     # User selected 'Use the same stream as an existing
                     # address.'
-                    streamNumberForAddress = addressStream(
-                        self.dialog.ui.comboBoxExisting.currentText())
-                shared.addressGeneratorQueue.put(('createRandomAddress', 3, streamNumberForAddress, str(
+                    streamNumberForAddress = decodeAddress(
+                        self.dialog.ui.comboBoxExisting.currentText())[2]
+                shared.addressGeneratorQueue.put(('createRandomAddress', 4, streamNumberForAddress, str(
                     self.dialog.ui.newaddresslabel.text().toUtf8()), 1, "", self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
             else:
                 if self.dialog.ui.lineEditPassphrase.text() != self.dialog.ui.lineEditPassphraseAgain.text():
@@ -2213,7 +2213,7 @@ class MyForm(QtGui.QMainWindow):
                         "MainWindow", "Choose a passphrase"), _translate("MainWindow", "You really do need a passphrase."))
                 else:
                     streamNumberForAddress = 1  # this will eventually have to be replaced by logic to determine the most available stream number.
-                    shared.addressGeneratorQueue.put(('createDeterministicAddresses', 3, streamNumberForAddress, "unused deterministic address", self.dialog.ui.spinBoxNumberOfAddressesToMake.value(
+                    shared.addressGeneratorQueue.put(('createDeterministicAddresses', 4, streamNumberForAddress, "unused deterministic address", self.dialog.ui.spinBoxNumberOfAddressesToMake.value(
                     ), self.dialog.ui.lineEditPassphrase.text().toUtf8(), self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
         else:
             print 'new address dialog box rejected'

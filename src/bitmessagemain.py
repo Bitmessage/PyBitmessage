@@ -712,7 +712,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             inventoryHash = calculateInventoryHash(encryptedPayload)
             objectType = 'msg'
             shared.inventory[inventoryHash] = (
-                objectType, toStreamNumber, encryptedPayload, int(time.time()))
+                objectType, toStreamNumber, encryptedPayload, int(time.time()),'')
             shared.inventorySets[toStreamNumber].add(inventoryHash)
             with shared.printLock:
                 print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', inventoryHash.encode('hex')
@@ -748,8 +748,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             pubkeyStreamNumber = decodeVarint(payload[pubkeyReadPosition:pubkeyReadPosition+10])[0]
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'pubkey'
+			#todo: support v4 pubkeys
             shared.inventory[inventoryHash] = (
-                objectType, pubkeyStreamNumber, payload, int(time.time()))
+                objectType, pubkeyStreamNumber, payload, int(time.time()),'')
             shared.inventorySets[pubkeyStreamNumber].add(inventoryHash)
             with shared.printLock:
                 print 'broadcasting inv within API command disseminatePubkey with hash:', inventoryHash.encode('hex')
@@ -861,7 +862,7 @@ class Main:
     def start(self, daemon=False):
         shared.daemon = daemon
         # is the application already running?  If yes then exit.
-        thisapp = singleton.singleinstance()
+        #thisapp = singleton.singleinstance() #todo: renable after testing.
 
         signal.signal(signal.SIGINT, helper_generic.signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
