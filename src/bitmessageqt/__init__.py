@@ -389,12 +389,12 @@ class MyForm(QtGui.QMainWindow):
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
-        
-        # Initialize the Recipients
-        self.loadPossibleRecipients()
             
         # Initialize the Subscriptions
         self.rerenderSubscriptions()
+        
+        # Initialize the Recipients
+        self.renderPossibleRecipients()
 
         # Initialize the inbox search
         QtCore.QObject.connect(self.ui.inboxSearchLineEdit, QtCore.SIGNAL(
@@ -829,41 +829,38 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetInbox.sortItems(3, Qt.DescendingOrder)
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
 
-    def loadPossibleRecipients(self):
-        ###
-        # create a dictionary of addresses
-        # overwrite labels
-        listAddresses = {}
-        # fetch addresses from Subscriptions
-        for currentRow in range(self.ui.tableWidgetSubscriptions.rowCount()):
-            label = str(self.ui.tableWidgetSubscriptions.item(currentRow,0).text())
-            address = str(self.ui.tableWidgetSubscriptions.item(currentRow,1).text())
-            listAddresses[address] = label
-        # fetch addresses from AddressBook
-        for currentRow in range(self.ui.tableWidgetAddressBook.rowCount()):
-            label = str(self.ui.tableWidgetAddressBook.item(currentRow,0).text())
-            address = str(self.ui.tableWidgetAddressBook.item(currentRow,1).text())
-            # overwrite Subscriptions
-            listAddresses[address] = label
-        # fetch addresses from YourIdentities
-        for currentRow in range(self.ui.tableWidgetYourIdentities.rowCount()):
-            label = str(self.ui.tableWidgetYourIdentities.item(currentRow,0).text())
-            address = str(self.ui.tableWidgetYourIdentities.item(currentRow,1).text())
-            # overwrite Subscriptions and AddressBook
-            listAddresses[address] = label
-        
-        listAddresses_by_label = [(label, address) for address, label in listAddresses.iteritems()]
-        listAddresses_by_address = [(address, label) for address, label in listAddresses.iteritems()]
-        listAddresses_by_label.sort()
-        listAddresses_by_address.sort()
-        # put the labels and addresses into the comboboxes
-        for element in listAddresses_by_label:
-            label, address = element
-            self.ui.comboboxFindLabel.addItem(label, address)
-        for element in listAddresses_by_address:
-            address, label = element
-            self.ui.comboboxFindAddress.addItem(address,label)
-
+    def renderPossibleRecipients(self):
+        # reset the comboboxes
+        self.ui.comboboxFindLabel.clear()
+        self.ui.comboboxFindAddress.clear()
+        self.ui.comboboxFindLabel.addItem('', 'BM-')
+        self.ui.comboboxFindAddress.addItem('BM-', '')
+        for (tableWidget,widgetName) in [(self.ui.tableWidgetYourIdentities, _translate("MainWindow", "Your Identities")), (self.ui.tableWidgetAddressBook,_translate("MainWindow", "Address Book")), (self.ui.tableWidgetSubscriptions,_translate("MainWindow", "Subscriptions"))]:
+            # separator + label + separator
+            self.ui.comboboxFindLabel.insertSeparator(self.ui.comboboxFindLabel.count())
+            self.ui.comboboxFindLabel.addItem(widgetName)
+            self.ui.comboboxFindLabel.insertSeparator(self.ui.comboboxFindLabel.count())
+            # separator + address + separator
+            self.ui.comboboxFindAddress.insertSeparator(self.ui.comboboxFindAddress.count())
+            self.ui.comboboxFindAddress.addItem(widgetName)
+            self.ui.comboboxFindAddress.insertSeparator(self.ui.comboboxFindAddress.count())
+            # fetch addresses from the respective tableWidget
+            for currentRow in range(tableWidget.rowCount()):
+                label = str(tableWidget.item(currentRow,0).text())
+                address = str(tableWidget.item(currentRow,1).text())
+                if address in shared.config.sections():
+                    # this is one of your addresses
+                    if shared.safeConfigGetBoolean(address, 'enabled'):
+                        self.ui.comboboxFindLabel.addItem(label, address)
+                        self.ui.comboboxFindAddress.addItem(address,label)
+                    else:
+                        pass
+                        #print label, address, 'is disabled'
+                else:
+                    # print label, address, 'is a foreign address'
+                    self.ui.comboboxFindLabel.addItem(label, address)
+                    self.ui.comboboxFindAddress.addItem(address,label)
+        self.ui.tableWidgetRecipients.keyPressEvent = self.tableWidgetRecipientsKeyPressEvent
         
     # create application indicator
     def appIndicatorInit(self, app):
@@ -1188,6 +1185,11 @@ class MyForm(QtGui.QMainWindow):
             self.on_action_SentTrash()
         return QtGui.QTableWidget.keyPressEvent(self.ui.tableWidgetSent, event)
 
+    def tableWidgetRecipientsKeyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Delete:
+            self.on_action_RecipientsDelte()
+        return QtGui.QTableWidget.keyPressEvent(self.ui.tableWidgetInbox, event)
+        
     def click_actionManageKeys(self):
         if 'darwin' in sys.platform or 'linux' in sys.platform:
             if shared.appdata == '':
@@ -1605,160 +1607,84 @@ class MyForm(QtGui.QMainWindow):
 
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
-        toAddresses = str(self.ui.lineEditTo.text())
         fromAddress = str(self.ui.labelFrom.text())
         subject = str(self.ui.lineEditSubject.text().toUtf8())
         message = str(
             self.ui.textEditMessage.document().toPlainText().toUtf8())
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
-            use_tableWidgetRecipients = True # this is just to keep the old To-Field until finally tested
-            if use_tableWidgetRecipients:
-                toAddressesList = self.get_recipient_addresses()
-                toAddressesList = list(set(
-                    toAddressesList)) # remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice. However, the tableWidgetRecipients should have already caught them.
-                for toAddress in toAddressesList:
-                    if toAddress != '':
-                        status, addressVersionNumber, streamNumber, ripe = decodeAddress(
-                            toAddress)
-                        if status != 'success':
-                            self.throw_address_error(toAddress, status, addressVersionNumber, streamNumber, ripe)
-                        elif fromAddress == '':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab."))
-                        else:
-                            toAddress = addBMIfNotPresent(toAddress)
-                            try:
-                                shared.config.get(toAddress, 'enabled')
-                                # The toAddress is one owned by me.
-                                if not shared.safeConfigGetBoolean(toAddress, 'chan'):
-                                    QMessageBox.about(self, _translate("MainWindow", "Sending to your address"), _translate(
-                                        "MainWindow", "Error: One of the addresses to which you are sending a message, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.").arg(toAddress))
-                                    continue
-                            except:
-                                pass
-                            if addressVersionNumber > 3 or addressVersionNumber <= 1:
-                                QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
-                                    "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
-                                continue
-                            if streamNumber > 1 or streamNumber == 0:
-                                QMessageBox.about(self, _translate("MainWindow", "Stream number"), _translate(
-                                    "MainWindow", "Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(streamNumber)))
-                                continue
-                            self.statusBar().showMessage('')
-                            if shared.statusIconColor == 'red':
-                                self.statusBar().showMessage(_translate(
-                                    "MainWindow", "Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect."))
-                            ackdata = OpenSSL.rand(32)
-                            shared.sqlLock.acquire()
-                            t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
-                                time.time()), 'msgqueued', 1, 1, 'sent', 2)
-                            shared.sqlSubmitQueue.put(
-                                '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
-                            shared.sqlSubmitQueue.put(t)
-                            shared.sqlReturnQueue.get()
-                            shared.sqlSubmitQueue.put('commit')
-                            shared.sqlLock.release()
-
-                            toLabel = ''
-                            t = (toAddress,)
-                            shared.sqlLock.acquire()
-                            shared.sqlSubmitQueue.put(
-                                '''select label from addressbook where address=?''')
-                            shared.sqlSubmitQueue.put(t)
-                            queryreturn = shared.sqlReturnQueue.get()
-                            shared.sqlLock.release()
-                            if queryreturn != []:
-                                for row in queryreturn:
-                                    toLabel, = row
-
-                            self.displayNewSentMessage(
-                                toAddress, toLabel, fromAddress, subject, message, ackdata)
-                            shared.workerQueue.put(('sendmessage', toAddress))
-
-                            self.ui.comboBoxSendFrom.setCurrentIndex(0)
-                            self.ui.labelFrom.setText('')
-                            self.ui.lineEditTo.setText('')
-                            self.ui.lineEditSubject.setText('')
-                            self.ui.textEditMessage.setText('')
-                            self.ui.tabWidget.setCurrentIndex(2)
-                            self.ui.tableWidgetSent.setCurrentCell(0, 0)
-                    else:
+            toAddressesList = self.get_recipient_addresses()
+            toAddressesList = list(set(
+                toAddressesList)) # remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice. However, the tableWidgetRecipients should have already caught them.
+            for toAddress in toAddressesList:
+                if toAddress != '':
+                    status, addressVersionNumber, streamNumber, ripe = decodeAddress(
+                        toAddress)
+                    if status != 'success':
+                        self.throw_address_error(toAddress, status, addressVersionNumber, streamNumber, ripe)
+                    elif fromAddress == '':
                         self.statusBar().showMessage(_translate(
-                            "MainWindow", "Your \'To\' field is empty."))
-            else:
-                toAddressesList = [s.strip()
-                               for s in toAddresses.replace(',', ';').split(';')]
-                toAddressesList = list(set(
-                    toAddressesList))  # remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice.
-                for toAddress in toAddressesList:
-                    if toAddress != '':
-                        status, addressVersionNumber, streamNumber, ripe = decodeAddress(
-                            toAddress)
-                        if status != 'success':
-                            self.throw_address_error(toAddress, status, addressVersionNumber, streamNumber, ripe)
-                        elif fromAddress == '':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab."))
-                        else:
-                            toAddress = addBMIfNotPresent(toAddress)
-                            try:
-                                shared.config.get(toAddress, 'enabled')
-                                # The toAddress is one owned by me.
-                                if not shared.safeConfigGetBoolean(toAddress, 'chan'):
-                                    QMessageBox.about(self, _translate("MainWindow", "Sending to your address"), _translate(
-                                        "MainWindow", "Error: One of the addresses to which you are sending a message, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.").arg(toAddress))
-                                    continue
-                            except:
-                                pass
-                            if addressVersionNumber > 3 or addressVersionNumber <= 1:
-                                QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
-                                    "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
-                                continue
-                            if streamNumber > 1 or streamNumber == 0:
-                                QMessageBox.about(self, _translate("MainWindow", "Stream number"), _translate(
-                                    "MainWindow", "Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(streamNumber)))
-                                continue
-                            self.statusBar().showMessage('')
-                            if shared.statusIconColor == 'red':
-                                self.statusBar().showMessage(_translate(
-                                    "MainWindow", "Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect."))
-                            ackdata = OpenSSL.rand(32)
-                            shared.sqlLock.acquire()
-                            t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
-                                time.time()), 'msgqueued', 1, 1, 'sent', 2)
-                            shared.sqlSubmitQueue.put(
-                                '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
-                            shared.sqlSubmitQueue.put(t)
-                            shared.sqlReturnQueue.get()
-                            shared.sqlSubmitQueue.put('commit')
-                            shared.sqlLock.release()
-
-                            toLabel = ''
-                            t = (toAddress,)
-                            shared.sqlLock.acquire()
-                            shared.sqlSubmitQueue.put(
-                                '''select label from addressbook where address=?''')
-                            shared.sqlSubmitQueue.put(t)
-                            queryreturn = shared.sqlReturnQueue.get()
-                            shared.sqlLock.release()
-                            if queryreturn != []:
-                                for row in queryreturn:
-                                    toLabel, = row
-
-                            self.displayNewSentMessage(
-                                toAddress, toLabel, fromAddress, subject, message, ackdata)
-                            shared.workerQueue.put(('sendmessage', toAddress))
-
-                            self.ui.comboBoxSendFrom.setCurrentIndex(0)
-                            self.ui.labelFrom.setText('')
-                            self.ui.lineEditTo.setText('')
-                            self.ui.lineEditSubject.setText('')
-                            self.ui.textEditMessage.setText('')
-                            self.ui.tabWidget.setCurrentIndex(2)
-                            self.ui.tableWidgetSent.setCurrentCell(0, 0)
+                            "MainWindow", "Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab."))
                     else:
-                        self.statusBar().showMessage(_translate(
-                            "MainWindow", "Your \'To\' field is empty."))
+                        toAddress = addBMIfNotPresent(toAddress)
+                        try:
+                            shared.config.get(toAddress, 'enabled')
+                            # The toAddress is one owned by me.
+                            if not shared.safeConfigGetBoolean(toAddress, 'chan'):
+                                QMessageBox.about(self, _translate("MainWindow", "Sending to your address"), _translate(
+                                    "MainWindow", "Error: One of the addresses to which you are sending a message, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.").arg(toAddress))
+                                continue
+                        except:
+                            pass
+                        if addressVersionNumber > 3 or addressVersionNumber <= 1:
+                            QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
+                                "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
+                            continue
+                        if streamNumber > 1 or streamNumber == 0:
+                            QMessageBox.about(self, _translate("MainWindow", "Stream number"), _translate(
+                                "MainWindow", "Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(streamNumber)))
+                            continue
+                        self.statusBar().showMessage('')
+                        if shared.statusIconColor == 'red':
+                            self.statusBar().showMessage(_translate(
+                                "MainWindow", "Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect."))
+                        ackdata = OpenSSL.rand(32)
+                        shared.sqlLock.acquire()
+                        t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
+                            time.time()), 'msgqueued', 1, 1, 'sent', 2)
+                        shared.sqlSubmitQueue.put(
+                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
+                        shared.sqlSubmitQueue.put(t)
+                        shared.sqlReturnQueue.get()
+                        shared.sqlSubmitQueue.put('commit')
+                        shared.sqlLock.release()
+
+                        toLabel = ''
+                        t = (toAddress,)
+                        shared.sqlLock.acquire()
+                        shared.sqlSubmitQueue.put(
+                            '''select label from addressbook where address=?''')
+                        shared.sqlSubmitQueue.put(t)
+                        queryreturn = shared.sqlReturnQueue.get()
+                        shared.sqlLock.release()
+                        if queryreturn != []:
+                            for row in queryreturn:
+                                toLabel, = row
+
+                        self.displayNewSentMessage(
+                            toAddress, toLabel, fromAddress, subject, message, ackdata)
+                        shared.workerQueue.put(('sendmessage', toAddress))
+
+                        self.ui.comboBoxSendFrom.setCurrentIndex(0)
+                        self.ui.labelFrom.setText('')
+                        while self.ui.tableWidgetRecipients.rowCount() > 1:
+                            self.ui.tableWidgetRecipients.removeRow(int(not self.addToBottom))
+                        self.ui.lineEditSubject.setText('')
+                        self.ui.textEditMessage.setText('')
+                        self.ui.tabWidget.setCurrentIndex(2)
+                        self.ui.tableWidgetSent.setCurrentCell(0, 0)
+                else:
+                    self.statusBar().showMessage(_translate(
+                        "MainWindow", "Your \'To\' field is empty."))
         else:  # User selected 'Broadcast'
             if fromAddress == '':
                 self.statusBar().showMessage(_translate(
@@ -1822,7 +1748,8 @@ class MyForm(QtGui.QMainWindow):
 
                 self.ui.comboBoxSendFrom.setCurrentIndex(0)
                 self.ui.labelFrom.setText('')
-                self.ui.lineEditTo.setText('')
+                while self.ui.tableWidgetRecipients.rowCount() > 1:
+                            self.ui.tableWidgetRecipients.removeRow(int(not self.addToBottom))
                 self.ui.lineEditSubject.setText('')
                 self.ui.textEditMessage.setText('')
                 self.ui.tabWidget.setCurrentIndex(2)
@@ -1838,13 +1765,23 @@ class MyForm(QtGui.QMainWindow):
                 "MainWindow", "Right click one or more entries in your address book and select \'Send message to this address\'."))
 
     def click_pushButtonFetchNamecoinID(self):
+        currentText = str(self.ui.comboboxFindAddress.currentText())
+        addressList = currentText.replace(',',';').split(';')
+        address = str(addressList[0])
+        otherAddresses = str(';'.join(addressList[1:]))
+        if address[:3] == 'id/':
+            address = address[3:]
+        self.statusBar().showMessage(_translate(
+                "MainWindow", "Namecoin querry..."))
         nc = namecoinConnection()
-        err, addr = nc.query(str(self.ui.lineEditTo.text()))
+        err, addr = nc.query(address)
         if err is not None:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Error: " + err))
         else:
-            self.ui.lineEditTo.setText(addr)
+            self.on_addRecipient_submit(addr, address)
+            self.ui.comboboxFindAddress.setEditText(otherAddresses)
+            # self.ui.comboboxFindAddress.setEditText(addr) 
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Fetched address from namecoin identity."))
 
@@ -2054,6 +1991,7 @@ class MyForm(QtGui.QMainWindow):
             shared.sqlLock.release()
             self.rerenderInboxFromLabels()
             self.rerenderSentToLabels()
+            self.renderPossibleRecipients()
         else:
             self.statusBar().showMessage(_translate(
                         "MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
@@ -2081,6 +2019,7 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlSubmitQueue.put('commit')
         shared.sqlLock.release()
         self.rerenderInboxFromLabels()
+        self.renderPossibleRecipients()
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def click_pushButtonAddSubscription(self):
@@ -2499,21 +2438,25 @@ class MyForm(QtGui.QMainWindow):
             currentInboxRow, 1).data(Qt.UserRole).toPyObject())
         if toAddressAtCurrentInboxRow == self.str_broadcast_subscribers:
             self.ui.labelFrom.setText('')
+            self.ui.comboBoxSendFrom.setCurrentIndex(0)
         elif not shared.config.has_section(toAddressAtCurrentInboxRow):
             QtGui.QMessageBox.information(self, _translate("MainWindow", "Address is gone"), _translate(
                 "MainWindow", "Bitmessage cannot find your address %1. Perhaps you removed it?").arg(toAddressAtCurrentInboxRow), QMessageBox.Ok)
             self.ui.labelFrom.setText('')
+            self.ui.comboBoxSendFrom.setCurrentIndex(0)
         elif not shared.config.getboolean(toAddressAtCurrentInboxRow, 'enabled'):
             QtGui.QMessageBox.information(self, _translate("MainWindow", "Address disabled"), _translate(
                 "MainWindow", "Error: The address from which you are trying to send is disabled. You\'ll have to enable it on the \'Your Identities\' tab before using it."), QMessageBox.Ok)
             self.ui.labelFrom.setText('')
+            self.ui.comboBoxSendFrom.setCurrentIndex(0)
         else:
             self.ui.labelFrom.setText(toAddressAtCurrentInboxRow)
+            self.ui.comboBoxSendFrom.setEditText(fromLabelAtCurrentInboxRow)
             self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(toAddressAtCurrentInboxRow)
-        self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
-        self.on_addRecipient_submit(fromLabelAtCurrentInboxRow, fromAddressAtCurrentInboxRow)
-        self.ui.comboBoxSendFrom.setCurrentIndex(0)
-        # self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
+        # remove all recipients
+        while self.ui.tableWidgetRecipients.rowCount() > 1:
+            self.ui.tableWidgetRecipients.removeRow(int(not self.addToBottom))
+        self.on_addRecipient_submit(fromAddressAtCurrentInboxRow)
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + self.ui.tableWidgetInbox.item(
             currentInboxRow, 2).data(Qt.UserRole).toPyObject())
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
@@ -2633,6 +2576,16 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.tableWidgetSent.selectRow(currentRow - 1)
 
+    # Remove Recipient row from the list
+    def on_action_RecipientsDelte(self):
+        while self.ui.tableWidgetRecipients.selectedIndexes() != []:
+            currentRow = self.ui.tableWidgetRecipients.selectedIndexes()[0].row()
+            self.ui.tableWidgetRecipients.removeRow(currentRow)
+        if currentRow == 0:
+            self.ui.tableWidgetSent.selectRow(currentRow)
+        else:
+            self.ui.tableWidgetSent.selectRow(currentRow - 1)
+            
     def on_action_ForceSend(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         addressAtCurrentRow = str(self.ui.tableWidgetSent.item(
@@ -2673,7 +2626,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.comboboxFindAddress.blockSignals(True)
         self.ui.comboboxFindAddress.setCurrentIndex(found if found > 0 else 0)
         self.ui.comboboxFindAddress.blockSignals(False)
-        
+            
     def on_comboboxFindAddress_change(self, int):
         address = str(self.ui.comboboxFindAddress.itemText(int))
         found = self.ui.comboboxFindLabel.findData(address, Qt.UserRole, Qt.MatchCaseSensitive)
@@ -2688,24 +2641,31 @@ class MyForm(QtGui.QMainWindow):
     def on_comboboxFindLabel_enter(self, event):
         if (event.key() == QtCore.Qt.Key_Enter) | (event.key() == QtCore.Qt.Key_Return):
             index = self.ui.comboboxFindLabel.currentIndex()
-            print index
             currentText = str(self.ui.comboboxFindLabel.currentText())
-            found = self.ui.comboboxFindLabel.findText(currentText, Qt.MatchCaseSensitive)
+            labelList = currentText.replace(',',';').split(';')
+            label = str(labelList[0])
+            otherLabels = str(';'.join(labelList[1:]))
+            found = self.ui.comboboxFindLabel.findText(label, Qt.MatchCaseSensitive)
             if (currentText=='') & (str(self.ui.comboboxFindLabel.itemText(index))==''):
-                # workaround for empty labels
-                
+                print 'workaround for empty labels'
                 address = str(self.ui.comboboxFindLabel.itemData(index).toString())
                 # print 'empty label', address
                 self.on_addRecipient_submit(address)
             elif (found > 0) & (index == found):
-                address = self.ui.comboboxFindLabel.itemData(found).toString()
+                print 'label found'
+                address = str(self.ui.comboboxFindLabel.itemData(found).toString())
                 self.on_addRecipient_submit(address)
+            elif found > 0:
+                print 'label found for the first item'
+                address = str(self.ui.comboboxFindLabel.itemData(found).toString())
+                self.on_addRecipient_submit(address)
+                self.ui.comboboxFindLabel.setEditText(otherLabels)
             else:
                 status, a, b, c = decodeAddress(str(currentText))
                 # check if the text is a BM-Address
                 if status == 'success':
                     # try to find it in the list
-                    found = self.ui.comboboxFindLabel.findData(currentText, Qt.UserRole, Qt.MatchCaseSensitive)
+                    found = self.ui.comboboxFindLabel.findData(label, Qt.UserRole, Qt.MatchCaseSensitive)
                     if found > 0:
                         # found the element in the list
                         self.ui.comboboxFindLabel.setCurrentIndex(found if found > 0 else 0)
@@ -2714,32 +2674,38 @@ class MyForm(QtGui.QMainWindow):
                         self.ui.comboboxFindLabel.setCurrentIndex(0)
                         # copy the BM-address to the address field
                         self.ui.comboboxFindAddress.setEditText(currentText)
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "You typed the address in the wrong field. It was copied to the correct field."))
         return QtGui.QComboBox.keyPressEvent(self.ui.comboboxFindLabel, event)
         
     def on_comboboxFindAddress_enter(self, event):
         if (event.key() == QtCore.Qt.Key_Enter) | (event.key() == QtCore.Qt.Key_Return):
             index = self.ui.comboboxFindAddress.currentIndex()
-            address = str(addBMIfNotPresent(self.ui.comboboxFindAddress.currentText()))
-            found = self.ui.comboboxFindAddress.findText(address, Qt.MatchCaseSensitive)
+            currentText = str(self.ui.comboboxFindAddress.currentText())
+            addressList = currentText.replace(',',';').split(';')
+            address = str(addressList[0])
+            otherAddresses = str(';'.join(addressList[1:]))
+            found = self.ui.comboboxFindAddress.findText(addBMIfNotPresent(address), Qt.MatchCaseSensitive)
             if (found > 0) & (index == found):
                 address = str(self.ui.comboboxFindAddress.itemText(found))
                 self.on_addRecipient_submit(address)
-            else:
-                # print 'no matching contact'
-                self.ui.comboboxFindLabel.setCurrentIndex(0)
-                self.ui.comboboxFindAddress.setEditText(address) # otherwise you will lose the text on enter
-                # but maybe the address is valid?
-                # random address for testing: BM-2DAArASbJckBdn3HvTt7kHAbPA5tGxc2R1
+            elif found > 0:
+                address = str(self.ui.comboboxFindAddress.itemText(found))
                 self.on_addRecipient_submit(address)
+                self.ui.comboboxFindAddress.setEditText(otherAddresses)
+            elif address[:3] == 'id/':
+                self.click_pushButtonFetchNamecoinID()
+            else:
+                print 'no matching contact'
+                self.ui.comboboxFindLabel.setCurrentIndex(0)
+                # but maybe the address is valid?
+                self.ui.comboboxFindAddress.setEditText(currentText) # otherwise you will lose the text on enter
+                # random address for testing: BM-2DAArASbJckBdn3HvTt7kHAbPA5tGxc2R1
+                self.on_addRecipient_submit(addBMIfNotPresent(address))
         return QtGui.QComboBox.keyPressEvent(self.ui.comboboxFindAddress, event)
         
     def get_recipient_addresses(self):
         recipients = []
-        for row in range(1,self.ui.tableWidgetRecipients.rowCount()):
-            recipients += [str(self.ui.tableWidgetRecipients.item(
-            row, 1).text())]
+        for row in range(1-int(self.addToBottom),self.ui.tableWidgetRecipients.rowCount()-int(self.addToBottom)):
+            recipients += [str(self.ui.tableWidgetRecipients.item(row, 1).text())]
         return recipients
         
     def throw_address_error(self, address, status, addressVersionNumber, streamNumber, ripe):
@@ -2766,27 +2732,42 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Error: Something is wrong with the address %1.").arg(address))
-        
-    def on_addRecipient_submit(self, address):
+    
+    addToBottom = False # determines whether the recipient addresses get added on top or on the bottom of the list. Default should imho be on top.
+    
+    def on_addRecipient_submit(self, address, overwriteLabel = False):
         # check whether address already in TO list
         address = addBMIfNotPresent(address)
         recipients = self.get_recipient_addresses()
         if address in recipients:
-            self.statusBar().showMessage(_translate(
+            for i in range(4):
+                time.sleep(0.1)
+                self.statusBar().showMessage('')
+                time.sleep(0.1)
+                self.statusBar().showMessage(_translate(
                     "MainWindow", "Address already in Recipients."))
         else:
             status, addressVersionNumber, streamNumber, ripe = decodeAddress(str(address))
             if status == 'success':
-                print 'success'
+                if (address in shared.config.sections()) & (not shared.safeConfigGetBoolean(address, 'chan')):
+                    for i in range(4):
+                        time.sleep(0.1)
+                        self.statusBar().showMessage('')
+                        time.sleep(0.1)
+                        self.statusBar().showMessage(
+                        _translate(
+                            "MainWindow", "Error: The address you are trying to add, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. ").arg(address))
+                    return
                 found_address_index = self.ui.comboboxFindAddress.findText(address, Qt.MatchCaseSensitive)
                 # get the label string
-                label = str(self.ui.comboboxFindAddress.itemData(found_address_index).toString())
-                print found_address_index, label
-                if found_address_index == -1:
+                if overwriteLabel:
+                    label = str(overwriteLabel)
+                elif found_address_index == -1:
                     label = _translate("MainWindow", "--unknown Address--")
+                else:
+                    label = str(self.ui.comboboxFindAddress.itemData(found_address_index).toString())
                 # add the label and address as a row
-                addToBottom = False
-                rowIndex = self.ui.tableWidgetRecipients.rowCount()-1 if addToBottom else 1
+                rowIndex = self.ui.tableWidgetRecipients.rowCount()-1 if self.addToBottom else 1
                 self.ui.tableWidgetRecipients.insertRow(rowIndex)
                 newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
                 newItem.setFlags(
@@ -2795,10 +2776,11 @@ class MyForm(QtGui.QMainWindow):
                 newItem = QtGui.QTableWidgetItem(unicode(address, 'utf-8'))
                 newItem.setFlags(
                         QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-                self.ui.tableWidgetRecipients.setItem(rowIndex, 1, newItem)# remove them so we won't add them again
+                self.ui.tableWidgetRecipients.setItem(rowIndex, 1, newItem)
+                if shared.safeConfigGetBoolean(address, 'chan'):
+                    newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
                 found_label_index = self.ui.comboboxFindLabel.findData(address, Qt.UserRole, Qt.MatchCaseSensitive)
-                self.ui.comboboxFindLabel.removeItem(found_label_index)
-                self.ui.comboboxFindAddress.removeItem(found_address_index)
+                # we could remove them (so we don't add them again), but i prefer to keep them so the user knows then name of the address if he or she pastes the same BM-address again
                 # jump to the first item
                 self.ui.comboboxFindLabel.setCurrentIndex(0)
                 self.ui.comboboxFindAddress.setCurrentIndex(0)
@@ -2836,7 +2818,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetAddressBook.removeRow(currentRow)
             self.rerenderInboxFromLabels()
             self.rerenderSentToLabels()
-            self.loadPossibleRecipients()
+            self.renderPossibleRecipients()
 
     def on_action_AddressBookClipboard(self):
         fullStringOfAddresses = ''
@@ -2864,14 +2846,7 @@ class MyForm(QtGui.QMainWindow):
                 currentRow, 0).text()
             addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
                 currentRow, 1).text()
-            if self.ui.lineEditTo.text() == '':
-                self.ui.lineEditTo.setText(str(addressAtCurrentRow))
-            else:
-                self.ui.lineEditTo.setText(str(
-                    self.ui.lineEditTo.text()) + '; ' + str(addressAtCurrentRow))
-            # add the addresses to the To-Tableview ###
-            self.on_addRecipient_submit(labelAtCurrentRow, addressAtCurrentRow)
-            
+            self.on_addRecipient_submit(addressAtCurrentRow)
         if listOfSelectedRows == {}:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "No addresses selected."))
@@ -2918,7 +2893,7 @@ class MyForm(QtGui.QMainWindow):
         shared.sqlLock.release()
         self.ui.tableWidgetSubscriptions.removeRow(currentRow)
         self.rerenderInboxFromLabels()
-        self.loadPossibleRecipients()
+        self.renderPossibleRecipients()
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_action_SubscriptionsClipboard(self):
@@ -3582,8 +3557,6 @@ class NewAddressDialog(QtGui.QDialog):
         # the 'Your Identities' tab.
         while self.parent.ui.tableWidgetYourIdentities.item(row - 1, 1):
             self.ui.radioButtonExisting.click()
-            # print
-            # self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text()
             self.ui.comboBoxExisting.addItem(
                 self.parent.ui.tableWidgetYourIdentities.item(row - 1, 1).text())
             row += 1

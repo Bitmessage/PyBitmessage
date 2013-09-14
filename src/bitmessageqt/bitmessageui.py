@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Tue Sep 10 09:45:02 2013
+# Created: Wed Sep 11 21:08:23 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -122,18 +122,12 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addWidget(self.label_4, 15, 0, 1, 1)
         spacerItem = QtGui.QSpacerItem(20, 297, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.gridLayout_2.addItem(spacerItem, 16, 0, 1, 1)
-        self.label = QtGui.QLabel(self.send)
-        self.label.setObjectName(_fromUtf8("label"))
-        self.gridLayout_2.addWidget(self.label, 5, 0, 1, 1)
         self.label_2 = QtGui.QLabel(self.send)
         self.label_2.setObjectName(_fromUtf8("label_2"))
         self.gridLayout_2.addWidget(self.label_2, 2, 0, 1, 1)
         self.label_3 = QtGui.QLabel(self.send)
         self.label_3.setObjectName(_fromUtf8("label_3"))
         self.gridLayout_2.addWidget(self.label_3, 14, 0, 1, 1)
-        self.lineEditTo = QtGui.QLineEdit(self.send)
-        self.lineEditTo.setObjectName(_fromUtf8("lineEditTo"))
-        self.gridLayout_2.addWidget(self.lineEditTo, 5, 2, 1, 1)
         self.lineEditSubject = QtGui.QLineEdit(self.send)
         self.lineEditSubject.setText(_fromUtf8(""))
         self.lineEditSubject.setObjectName(_fromUtf8("lineEditSubject"))
@@ -206,6 +200,9 @@ class Ui_MainWindow(object):
         self.labelFrom = QtGui.QLabel(self.send)
         self.labelFrom.setObjectName(_fromUtf8("labelFrom"))
         self.gridLayout_2.addWidget(self.labelFrom, 2, 4, 1, 1)
+        self.label = QtGui.QLabel(self.send)
+        self.label.setObjectName(_fromUtf8("label"))
+        self.gridLayout_2.addWidget(self.label, 11, 0, 1, 1)
         icon2 = QtGui.QIcon()
         icon2.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/send.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.send, icon2, _fromUtf8(""))
@@ -527,7 +524,6 @@ class Ui_MainWindow(object):
 
         self.retranslateUi(MainWindow)
         self.tabWidget.setCurrentIndex(1)
-        QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.lineEditTo.setEnabled)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("clicked(bool)")), self.labelSendBroadcastWarning.hide)
         QtCore.QObject.connect(self.radioButtonBroadcast, QtCore.SIGNAL(_fromUtf8("clicked()")), self.labelSendBroadcastWarning.show)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
@@ -572,7 +568,6 @@ class Ui_MainWindow(object):
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.inbox), _translate("MainWindow", "Inbox", None))
         self.pushButtonFetchNamecoinID.setText(_translate("MainWindow", "Fetch Namecoin ID", None))
         self.label_4.setText(_translate("MainWindow", "Message:", None))
-        self.label.setText(_translate("MainWindow", "To:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.label_3.setText(_translate("MainWindow", "Subject:", None))
         self.radioButtonSpecific.setText(_translate("MainWindow", "Send to one or more specific people", None))
@@ -591,6 +586,7 @@ class Ui_MainWindow(object):
 "<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
         self.pushButtonSend.setText(_translate("MainWindow", "Send", None))
         self.labelFrom.setText(_translate("MainWindow", "BM-…", None))
+        self.label.setText(_translate("MainWindow", "To:", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send", None))
         self.sentSearchLineEdit.setPlaceholderText(_translate("MainWindow", "Search", None))
         self.sentSearchOptionCB.setItemText(0, _translate("MainWindow", "All", None))
