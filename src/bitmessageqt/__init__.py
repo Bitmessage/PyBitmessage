@@ -142,6 +142,10 @@ class MyForm(QtGui.QMainWindow):
             "clicked()"), self.click_pushButtonSend)
         QtCore.QObject.connect(self.ui.pushButtonLoadFromAddressBook, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonLoadFromAddressBook)
+        QtCore.QObject.connect(self.ui.pushButtonChanonymous, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonChanonymous)
+        QtCore.QObject.connect(self.ui.pushButtonSendToChan, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonSendToChan)
         QtCore.QObject.connect(self.ui.pushButtonFetchNamecoinID, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonFetchNamecoinID)
         QtCore.QObject.connect(self.ui.radioButtonBlacklist, QtCore.SIGNAL(
@@ -850,18 +854,8 @@ class MyForm(QtGui.QMainWindow):
             for currentRow in range(tableWidget.rowCount()):
                 label = str(tableWidget.item(currentRow,0).text())
                 address = str(tableWidget.item(currentRow,1).text())
-                if address in shared.config.sections():
-                    # this is one of your addresses
-                    if shared.safeConfigGetBoolean(address, 'enabled'):
-                        self.ui.comboboxFindLabel.addItem(label, address)
-                        self.ui.comboboxFindAddress.addItem(address,label)
-                    else:
-                        pass
-                        #print label, address, 'is disabled'
-                else:
-                    # print label, address, 'is a foreign address'
-                    self.ui.comboboxFindLabel.addItem(label, address)
-                    self.ui.comboboxFindAddress.addItem(address,label)
+                self.ui.comboboxFindLabel.addItem(label, address)
+                self.ui.comboboxFindAddress.addItem(address,label)
         self.ui.tableWidgetRecipients.keyPressEvent = self.tableWidgetRecipientsKeyPressEvent
         
     # create application indicator
@@ -1777,7 +1771,29 @@ class MyForm(QtGui.QMainWindow):
             time.sleep(0.1)
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Right click one or more entries in your address book and select \'Send message to this address\'."))
-
+            
+    def click_pushButtonChanonymous(self):
+        currentRecipientsRow = self.ui.tableWidgetRecipients.currentRow()
+        addressAtCurrentRecipientsRow = str(self.ui.tableWidgetRecipients.item(currentRecipientsRow,1).text())
+        found = self.ui.comboBoxSendFrom.findData(addressAtCurrentRecipientsRow, Qt.UserRole, Qt.MatchCaseSensitive)
+        if (found > 0) & shared.safeConfigGetBoolean(str(addressAtCurrentRecipientsRow), 'chan'):
+            self.ui.comboBoxSendFrom.setCurrentIndex(found)
+            self.redrawLabelFrom(found)
+        elif (addressAtCurrentRecipientsRow in shared.config.sections()) & (not shared.safeConfigGetBoolean(str(addressAtCurrentRecipientsRow), 'enabled')):
+            for i in range(4):
+                time.sleep(0.1)
+                self.statusBar().showMessage('')
+                time.sleep(0.1)
+                self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: The address from which you are trying to send is disabled. You\'ll have to enable it on the \'Your Identities\' tab before using it."))
+        else:
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: Cannot send message from this address because you don't have this address in Your Identities."))
+        
+    def click_pushButtonSendToChan(self):
+        index = self.ui.comboBoxSendFrom.currentIndex()
+        self.on_addRecipient_submit(str(self.ui.comboBoxSendFrom.itemData(index).toString()))
+        
     def click_pushButtonFetchNamecoinID(self):
         currentText = str(self.ui.comboboxFindAddress.currentText())
         addressList = currentText.replace(',',';').split(';')
@@ -1810,8 +1826,10 @@ class MyForm(QtGui.QMainWindow):
         if shared.safeConfigGetBoolean(str(address), 'chan'):
             self.ui.radioButtonSpecific.click()
             self.ui.radioButtonBroadcast.setEnabled(False)
+            self.ui.pushButtonSendToChan.setEnabled(True)
         else:
             self.ui.radioButtonBroadcast.setEnabled(True)
+            self.ui.pushButtonSendToChan.setEnabled(False)
 
     def rerenderComboBoxSendFrom(self):
         self.ui.comboBoxSendFrom.clear()
