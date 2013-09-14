@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Sun Sep 15 00:29:16 2013
+# Created: Sun Sep 15 01:10:07 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -638,7 +638,7 @@ class Ui_MainWindow(object):
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.label_3.setText(_translate("MainWindow", "Subject:", None))
         self.radioButtonBroadcast.setText(_translate("MainWindow", "Broadcast to everyone who is subscribed to your address", None))
-        self.tableWidgetRecipients.setSortingEnabled(True)
+        self.tableWidgetRecipients.setSortingEnabled(False)
         item = self.tableWidgetRecipients.horizontalHeaderItem(0)
         item.setText(_translate("MainWindow", "Name or Label", None))
         item = self.tableWidgetRecipients.horizontalHeaderItem(1)
