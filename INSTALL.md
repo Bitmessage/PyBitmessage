@@ -57,8 +57,8 @@ ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
 
 Now, install the required dependencies
 ```
-sudo port install python27 py27-pyqt4 openssl
-sudo port install git-core +svn +doc +bash_completion +gitweb
+brew install python pyqt
+brew install git
 ```
 
 Download and run PyBitmessage:

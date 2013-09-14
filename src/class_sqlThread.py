@@ -7,6 +7,7 @@ import sys
 import os
 from debug import logger
 from namecoin import ensureNamecoinOptions
+import tr#anslate
 
 # This thread exists because SQLITE3 is so un-threadsafe that we must
 # submit queries to it and it puts results back in a different queue. They
@@ -18,7 +19,7 @@ class sqlThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
 
-    def run(self):
+    def run(self):        
         self.conn = sqlite3.connect(shared.appdata + 'messages.dat')
         self.conn.text_factory = str
         self.cur = self.conn.cursor()
@@ -60,11 +61,10 @@ class sqlThread(threading.Thread):
             self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             self.conn.commit()
-            print 'Created messages database file'
+            logger.info('Created messages database file')
         except Exception as err:
             if str(err) == 'table inbox already exists':
-                with shared.printLock:
-                    print 'Database file already exists.'
+                logger.debug('Database file already exists.')
 
             else:
                 sys.stderr.write(
@@ -146,13 +146,13 @@ class sqlThread(threading.Thread):
         self.cur.execute(item, parameters)
         if self.cur.fetchall() == []:
             # The settings table doesn't exist. We need to make it.
-            print 'In messages.dat database, creating new \'settings\' table.'
+            logger.debug('In messages.dat database, creating new \'settings\' table.')
             self.cur.execute(
                 '''CREATE TABLE settings (key text, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
             self.cur.execute( '''INSERT INTO settings VALUES('version','1')''')
             self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
-            print 'In messages.dat database, removing an obsolete field from the pubkeys table.'
+            logger.debug('In messages.dat database, removing an obsolete field from the pubkeys table.')
             self.cur.execute(
                 '''CREATE TEMPORARY TABLE pubkeys_backup(hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE);''')
             self.cur.execute(
@@ -163,17 +163,17 @@ class sqlThread(threading.Thread):
             self.cur.execute(
                 '''INSERT INTO pubkeys SELECT hash, transmitdata, time, usedpersonally FROM pubkeys_backup;''')
             self.cur.execute( '''DROP TABLE pubkeys_backup;''')
-            print 'Deleting all pubkeys from inventory. They will be redownloaded and then saved with the correct times.'
+            logger.debug('Deleting all pubkeys from inventory. They will be redownloaded and then saved with the correct times.')
             self.cur.execute(
                 '''delete from inventory where objecttype = 'pubkey';''')
-            print 'replacing Bitmessage announcements mailing list with a new one.'
+            logger.debug('replacing Bitmessage announcements mailing list with a new one.')
             self.cur.execute(
                 '''delete from subscriptions where address='BM-BbkPSZbzPwpVcYZpU4yHwf9ZPEapN5Zx' ''')
             self.cur.execute(
                 '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
-            print 'Commiting.'
+            logger.debug('Commiting.')
             self.conn.commit()
-            print 'Vacuuming message.dat. You might notice that the file size gets much smaller.'
+            logger.debug('Vacuuming message.dat. You might notice that the file size gets much smaller.')
             self.cur.execute( ''' VACUUM ''')
 
         # After code refactoring, the possible status values for sent messages
@@ -205,6 +205,14 @@ class sqlThread(threading.Thread):
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (2,)
             self.cur.execute(item, parameters)
+
+        if not shared.config.has_option('bitmessagesettings', 'userlocale'):
+            shared.config.set('bitmessagesettings', 'userlocale', 'system')
+        if not shared.config.has_option('bitmessagesettings', 'sendoutgoingconnections'):
+            shared.config.set('bitmessagesettings', 'sendoutgoingconnections', 'True')
+
+        # Are you hoping to add a new option to the keys.dat file of existing
+        # Bitmessage users? Add it right above this line!
         
         try:
             testpayload = '\x00\x00'
@@ -219,11 +227,19 @@ class sqlThread(threading.Thread):
             self.cur.execute('''DELETE FROM pubkeys WHERE hash='1234' ''')
             self.conn.commit()
             if transmitdata == '':
-                sys.stderr.write('Problem: The version of SQLite you have cannot store Null values. Please download and install the latest revision of your version of Python (for example, the latest Python 2.7 revision) and try again.\n')
-                sys.stderr.write('PyBitmessage will now exit very abruptly. You may now see threading errors related to this abrupt exit but the problem you need to solve is related to SQLite.\n\n')
+                logger.fatal('Problem: The version of SQLite you have cannot store Null values. Please download and install the latest revision of your version of Python (for example, the latest Python 2.7 revision) and try again.\n')
+                logger.fatal('PyBitmessage will now exit very abruptly. You may now see threading errors related to this abrupt exit but the problem you need to solve is related to SQLite.\n\n')
                 os._exit(0)
         except Exception as err:
-            print err
+            if str(err) == 'database or disk is full':
+                logger.fatal('(While null value test) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                if shared.daemon:
+                    os._exit(0)
+                else:
+                    return
+            else:
+                logger.error(err)
 
         # Let us check to see the last time we vaccumed the messages.dat file.
         # If it has been more than a month let's do it now.
@@ -234,8 +250,17 @@ class sqlThread(threading.Thread):
         for row in queryreturn:
             value, = row
             if int(value) < int(time.time()) - 2592000:
-                print 'It has been a long time since the messages.dat file has been vacuumed. Vacuuming now...'
-                self.cur.execute( ''' VACUUM ''')
+                logger.info('It has been a long time since the messages.dat file has been vacuumed. Vacuuming now...')
+                try:
+                    self.cur.execute( ''' VACUUM ''')
+                except Exception as err:
+                    if str(err) == 'database or disk is full':
+                        logger.fatal('(While VACUUM) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                        else:
+                            return
                 item = '''update settings set value=? WHERE key='lastvacuumtime';'''
                 parameters = (int(time.time()),)
                 self.cur.execute(item, parameters)
@@ -243,18 +268,34 @@ class sqlThread(threading.Thread):
         while True:
             item = shared.sqlSubmitQueue.get()
             if item == 'commit':
-                self.conn.commit()
+                try:
+                    self.conn.commit()
+                except Exception as err:
+                    if str(err) == 'database or disk is full':
+                        logger.fatal('(While committing) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                        else:
+                            return
             elif item == 'exit':
                 self.conn.close()
-                with shared.printLock:
-                    print 'sqlThread exiting gracefully.'
+                logger.info('sqlThread exiting gracefully.')
 
                 return
             elif item == 'movemessagstoprog':
-                with shared.printLock:
-                    print 'the sqlThread is moving the messages.dat file to the local program directory.'
+                logger.debug('the sqlThread is moving the messages.dat file to the local program directory.')
 
-                self.conn.commit()
+                try:
+                    self.conn.commit()
+                except Exception as err:
+                    if str(err) == 'database or disk is full':
+                        logger.fatal('(while movemessagstoprog) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                        else:
+                            return
                 self.conn.close()
                 shutil.move(
                     shared.lookupAppdataFolder() + 'messages.dat', 'messages.dat')
@@ -262,10 +303,18 @@ class sqlThread(threading.Thread):
                 self.conn.text_factory = str
                 self.cur = self.conn.cursor()
             elif item == 'movemessagstoappdata':
-                with shared.printLock:
-                    print 'the sqlThread is moving the messages.dat file to the Appdata folder.'
+                logger.debug('the sqlThread is moving the messages.dat file to the Appdata folder.')
 
-                self.conn.commit()
+                try:
+                    self.conn.commit()
+                except Exception as err:
+                    if str(err) == 'database or disk is full':
+                        logger.fatal('(while movemessagstoappdata) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                        else:
+                            return
                 self.conn.close()
                 shutil.move(
                     'messages.dat', shared.lookupAppdataFolder() + 'messages.dat')
@@ -276,7 +325,16 @@ class sqlThread(threading.Thread):
                 self.cur.execute('''delete from inbox where folder='trash' ''')
                 self.cur.execute('''delete from sent where folder='trash' ''')
                 self.conn.commit()
-                self.cur.execute( ''' VACUUM ''')
+                try:
+                    self.cur.execute( ''' VACUUM ''')
+                except Exception as err:
+                    if str(err) == 'database or disk is full':
+                        logger.fatal('(while deleteandvacuume) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                        else:
+                            return
             else:
                 parameters = shared.sqlSubmitQueue.get()
                 # print 'item', item
@@ -284,10 +342,16 @@ class sqlThread(threading.Thread):
                 try:
                     self.cur.execute(item, parameters)
                 except Exception as err:
-                    with shared.printLock:
-                        sys.stderr.write('\nMajor error occurred when trying to execute a SQL statement within the sqlThread. Please tell Atheros about this error message or post it in the forum! Error occurred while trying to execute statement: "' + str(
-                            item) + '"  Here are the parameters; you might want to censor this data with asterisks (***) as it can contain private information: ' + str(repr(parameters)) + '\nHere is the actual error message thrown by the sqlThread: ' + str(err) + '\n')
-                        sys.stderr.write('This program shall now abruptly exit!\n')
+                    if str(err) == 'database or disk is full':
+                        logger.fatal('(while cur.execute) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
+                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        if shared.daemon:
+                            os._exit(0)
+                        else:
+                            return
+                    else:
+                        logger.fatal('Major error occurred when trying to execute a SQL statement within the sqlThread. Please tell Atheros about this error message or post it in the forum! Error occurred while trying to execute statement: "%s"  Here are the parameters; you might want to censor this data with asterisks (***) as it can contain private information: %s. Here is the actual error message thrown by the sqlThread: %s', str(item), str(repr(parameters)),  str(err))
+                        logger.fatal('This program shall now abruptly exit!')
 
                     os._exit(0)
 
