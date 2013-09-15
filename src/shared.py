@@ -34,6 +34,7 @@ config = ConfigParser.SafeConfigParser()
 myECCryptorObjects = {}
 MyECSubscriptionCryptorObjects = {}
 myAddressesByHash = {} #The key in this dictionary is the RIPE hash which is encoded in an address and value is the address itself.
+myAddressesByTag = {} # The key in this dictionary is the tag generated from the address.
 broadcastSendersForWhichImWatching = {}
 workerQueue = Queue.Queue()
 UISignalQueue = Queue.Queue()
@@ -222,6 +223,7 @@ def reloadMyAddressHashes():
     logger.debug('reloading keys from keys.dat file')
     myECCryptorObjects.clear()
     myAddressesByHash.clear()
+    myAddressesByTag.clear()
     #myPrivateKeys.clear()
 
     keyfileSecure = checkSensitiveFilePermissions(appdata + 'keys.dat')
@@ -242,6 +244,9 @@ def reloadMyAddressHashes():
                     if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
                         myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
                         myAddressesByHash[hash] = addressInKeysFile
+                        tag = hashlib.sha512(hashlib.sha512(encodeVarint(
+                            addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()[32:]
+                        myAddressesByTag[tag] = addressInKeysFile
 
                 else:
                     logger.error('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2, 3, or 4.\n')
@@ -250,18 +255,26 @@ def reloadMyAddressHashes():
         fixSensitiveFilePermissions(appdata + 'keys.dat', hasEnabledKeys)
 
 def reloadBroadcastSendersForWhichImWatching():
-    logger.debug('reloading subscriptions...')
     broadcastSendersForWhichImWatching.clear()
     MyECSubscriptionCryptorObjects.clear()
     queryreturn = sqlQuery('SELECT address FROM subscriptions where enabled=1')
+    logger.debug('reloading subscriptions...')
     for row in queryreturn:
         address, = row
         status,addressVersionNumber,streamNumber,hash = decodeAddress(address)
         if addressVersionNumber == 2:
             broadcastSendersForWhichImWatching[hash] = 0
         #Now, for all addresses, even version 2 addresses, we should create Cryptor objects in a dictionary which we will use to attempt to decrypt encrypted broadcast messages.
-        privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).digest()[:32]
-        MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
+        
+        if addressVersionNumber <= 3:
+            privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).digest()[:32]
+            MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
+        else:
+            doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
+                addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()
+            tag = doubleHashOfAddressData[32:]
+            privEncryptionKey = doubleHashOfAddressData[:32]
+            MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
 
 def doCleanShutdown():
     global shutdown
@@ -312,8 +325,8 @@ def flushInventory():
     with SqlBulkExecute() as sql:
         for hash, storedValue in inventory.items():
             objectType, streamNumber, payload, receivedTime, tag = storedValue
-            sql.execute('''INSERT INTO inventory VALUES (?,?,?,?,?,?,?)''',
-                       hash,objectType,streamNumber,payload,receivedTime,'',tag)
+            sql.execute('''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
+                       hash,objectType,streamNumber,payload,receivedTime,tag)
             del inventory[hash]
 
 def fixPotentiallyInvalidUTF8Data(text):
