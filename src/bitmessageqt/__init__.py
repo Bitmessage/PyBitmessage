@@ -2590,8 +2590,11 @@ class MyForm(QtGui.QMainWindow):
                 if self.on_addRecipient_submit(address):
                     # leave the other labels for another try
                     self.ui.comboboxFindLabel.setEditText(otherLabels)
-                    # simulate "enter" to display the matching address of the next input item
-                    self.on_comboboxFindLabel_enter()
+                    if len(otherLabels) > 0:
+                        # simulate "enter" to display the matching address of the next input item
+                        self.on_comboboxFindLabel_enter()
+                    else:
+                        self.ui.comboboxFindLabel.setCurrentIndex(0)
         elif foundAddress > 0:
             # for mixed content, e.g. "BM-...;Frank" we also accept addresses in the label field
             # print 'this address is in your list'
@@ -2604,8 +2607,11 @@ class MyForm(QtGui.QMainWindow):
                 if self.on_addRecipient_submit(address):
                     # leave the other labels for another try
                     self.ui.comboboxFindLabel.setEditText(otherLabels)
-                    # simulate "enter" to display the matching address of the next input item
-                    self.on_comboboxFindLabel_enter()
+                    if len(otherLabels) > 0:
+                        # simulate "enter" to display the matching address of the next input item
+                        self.on_comboboxFindLabel_enter()
+                    else:
+                        self.ui.comboboxFindLabel.setCurrentIndex(0)
         else:
             # print 'no matching contact. Let's act as if someone put an unknown address in the label field.'
             address = label
@@ -2617,9 +2623,15 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.comboboxFindAddress.setEditText('')
                     self.throw_address_error(address, status, addressVersionNumber, streamNumber, ripe)
             else:
+                # print 'this must be the second "enter": accept it!'
                 if self.on_addRecipient_submit(label):
+                    # leave the other labels for another try
                     self.ui.comboboxFindLabel.setEditText(otherLabels)
-                    self.on_comboboxFindLabel_enter()
+                    if len(otherLabels) > 0:
+                        # simulate "enter" to display the matching address of the next input item
+                        self.on_comboboxFindLabel_enter()
+                    else:
+                        self.ui.comboboxFindLabel.setCurrentIndex(0)
         
     def on_comboboxFindAddress_event(self,event):
         if (event.key() == QtCore.Qt.Key_Enter) | (event.key() == QtCore.Qt.Key_Return):
@@ -2648,8 +2660,11 @@ class MyForm(QtGui.QMainWindow):
                 if self.on_addRecipient_submit(address):
                     # leave the other addresses for another try
                     self.ui.comboboxFindAddress.setEditText(otherAddresses)
-                    # simulate "enter" to display the matching label of the next input item
-                    self.on_comboboxFindAddress_enter()
+                    if len(otherAddresses) > 0:
+                        # simulate "enter" to display the matching label of the next input item
+                        self.on_comboboxFindAddress_enter()
+                    else:
+                        self.ui.comboboxFindLabel.setCurrentIndex(0)
         elif address[:3] == 'id/':
             self.click_pushButtonFetchNamecoinID()
         else:
@@ -2668,8 +2683,11 @@ class MyForm(QtGui.QMainWindow):
                 if self.on_addRecipient_submit(address):
                     # leave the other labels for another try
                     self.ui.comboboxFindAddress.setEditText(otherAddresses)
-                    # simulate "enter" to display the matching label of the next input item
-                    self.on_comboboxFindAddress_enter()
+                    if len(otherAddresses) > 0:
+                        # simulate "enter" to display the matching label of the next input item
+                        self.on_comboboxFindAddress_enter()
+                    else:
+                        self.ui.comboboxFindLabel.setCurrentIndex(0)
         
     def get_recipient_addresses(self):
         recipients = []
