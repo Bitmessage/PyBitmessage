@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Mon Sep 02 16:49:54 2013
+# Created: Sun Sep 15 02:01:09 2013
 #      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
@@ -394,4 +394,14 @@ class Ui_settingsDialog(object):
         self.radioButtonNamecoinNamecoind.setText(_translate("settingsDialog", "Namecoind", None))
         self.radioButtonNamecoinNmcontrol.setText(_translate("settingsDialog", "NMControl", None))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabNamecoin), _translate("settingsDialog", "Namecoin integration", None))
+
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    settingsDialog = QtGui.QDialog()
+    ui = Ui_settingsDialog()
+    ui.setupUi(settingsDialog)
+    settingsDialog.show()
+    sys.exit(app.exec_())
 
