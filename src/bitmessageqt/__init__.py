@@ -1663,7 +1663,6 @@ class MyForm(QtGui.QMainWindow):
 
                             self.ui.comboBoxSendFrom.setCurrentIndex(0)
                             self.ui.labelFrom.setText('')
-                            self.ui.lineEditTo.setText('')
                             self.ui.lineEditSubject.setText('')
                             self.ui.textEditMessage.setText('')
                             self.ui.tabWidget.setCurrentIndex(2)
