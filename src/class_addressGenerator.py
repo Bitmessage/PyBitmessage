@@ -243,8 +243,10 @@ class addressGenerator(threading.Thread):
                                 address)
                             shared.myECCryptorObjects[ripe.digest()] = highlevelcrypto.makeCryptor(
                                 potentialPrivEncryptionKey.encode('hex'))
-                            shared.myAddressesByHash[
-                                ripe.digest()] = address
+                            shared.myAddressesByHash[ripe.digest()] = address
+                            tag = hashlib.sha512(hashlib.sha512(encodeVarint(
+                                addressVersionNumber) + encodeVarint(streamNumber) + ripe.digest()).digest()).digest()[32:]
+                            shared.myAddressesByTag[tag] = address
                             if addressVersionNumber == 3:
                                 shared.workerQueue.put((
                                     'sendOutOrStoreMyV3Pubkey', ripe.digest())) # If this is a chan address,

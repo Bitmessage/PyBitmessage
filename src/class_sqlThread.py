@@ -48,7 +48,7 @@ class sqlThread(threading.Thread):
             self.cur.execute(
                 '''CREATE TABLE pubkeys (hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute(
-                '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, first20bytesofencryptedmessage blob, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute(
                 '''CREATE TABLE knownnodes (timelastseen int, stream int, services blob, host blob, port blob, UNIQUE(host, stream, port) ON CONFLICT REPLACE)''' )
                              # This table isn't used in the program yet but I
@@ -57,7 +57,7 @@ class sqlThread(threading.Thread):
                 '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
                 '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','3')''')
+            self.cur.execute( '''INSERT INTO settings VALUES('version','4')''')
             self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             self.conn.commit()
@@ -193,7 +193,7 @@ class sqlThread(threading.Thread):
             
         ensureNamecoinOptions()
             
-        # Add a new column to the inventory table to store the first 20 bytes of encrypted messages to support Android app
+        """# Add a new column to the inventory table to store the first 20 bytes of encrypted messages to support Android app
         item = '''SELECT value FROM settings WHERE key='version';'''
         parameters = ''
         self.cur.execute(item, parameters)
@@ -204,19 +204,40 @@ class sqlThread(threading.Thread):
             self.cur.execute(item, parameters)
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (2,)
-            self.cur.execute(item, parameters)
+            self.cur.execute(item, parameters)"""
 
-        # Add a new column to the inventory table to store pubkeys' tags.
+        # Let's get rid of the first20bytesofencryptedmessage field in the inventory table.
         item = '''SELECT value FROM settings WHERE key='version';'''
         parameters = ''
         self.cur.execute(item, parameters)
         if int(self.cur.fetchall()[0][0]) == 2:
-            print 'upgrading database'
+            logger.debug('In messages.dat database, removing an obsolete field from the inventory table.')
+            self.cur.execute(
+                '''CREATE TEMPORARY TABLE inventory_backup(hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE);''')
+            self.cur.execute(
+                '''INSERT INTO inventory_backup SELECT hash, objecttype, streamnumber, payload, receivedtime FROM inventory;''')
+            self.cur.execute( '''DROP TABLE inventory''')
+            self.cur.execute(
+                '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, UNIQUE(hash) ON CONFLICT REPLACE)''' )
+            self.cur.execute(
+                '''INSERT INTO inventory SELECT hash, objecttype, streamnumber, payload, receivedtime FROM inventory_backup;''')
+            self.cur.execute( '''DROP TABLE inventory_backup;''')
+            item = '''update settings set value=? WHERE key='version';'''
+            parameters = (3,)
+            self.cur.execute(item, parameters)
+
+        # Add a new column to the inventory table to store tags.
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        currentVersion = int(self.cur.fetchall()[0][0])
+        if currentVersion == 1 or currentVersion == 3:
+            logger.debug('In messages.dat database, adding tag field to the inventory table.')
             item = '''ALTER TABLE inventory ADD tag blob DEFAULT '' '''
             parameters = ''
             self.cur.execute(item, parameters)
             item = '''update settings set value=? WHERE key='version';'''
-            parameters = (3,)
+            parameters = (4,)
             self.cur.execute(item, parameters)
 
         if not shared.config.has_option('bitmessagesettings', 'userlocale'):

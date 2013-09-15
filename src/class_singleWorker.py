@@ -27,12 +27,17 @@ class singleWorker(threading.Thread):
             '''SELECT toripe, toaddress FROM sent WHERE ((status='awaitingpubkey' OR status='doingpubkeypow') AND folder='sent')''')
         for row in queryreturn:
             toripe, toaddress = row
-            toStatus, toAddressVersionNumber, toStreamNumber, toRipe = decodeAddress(toaddress)[1]
+            toStatus, toAddressVersionNumber, toStreamNumber, toRipe = decodeAddress(toaddress)
             if toAddressVersionNumber <= 3 :
                 shared.neededPubkeys[toripe] = 0
             elif toAddressVersionNumber >= 4:
-                privEncryptionKey = hashlib.sha512(hashlib.sha512(encodeVarint(toAddressVersionNumber)+encodeVarint(toStreamNumber)+toRipe).digest()).digest()[:32] # Note that this is the first half of the sha512 hash.
-                shared.neededPubkeys[toripe] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex')) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
+                with shared.printLock:
+                    print 'Loading our list of needed pubkeys...'
+                doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
+                    toAddressVersionNumber) + encodeVarint(toStreamNumber) + toRipe).digest()).digest()
+                privEncryptionKey = doubleHashOfAddressData[:32] # Note that this is the first half of the sha512 hash.
+                tag = doubleHashOfAddressData[32:]
+                shared.neededPubkeys[tag] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex')) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
 
         # Initialize the shared.ackdataForWhichImWatching data structure using data
         # from the sql database.
@@ -252,7 +257,6 @@ class singleWorker(threading.Thread):
         payload += encodeVarint(addressVersionNumber)  # Address version number
         payload += encodeVarint(streamNumber)
 
-
         dataToEncrypt = '\x00\x00\x00\x01'  # bitfield of features supported by me (see the wiki).
 
         try:
@@ -264,7 +268,6 @@ class singleWorker(threading.Thread):
             with shared.printLock:
                 sys.stderr.write(
                     'Error within sendOutOrStoreMyV4Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
-
             return
 
         privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -294,15 +297,12 @@ class singleWorker(threading.Thread):
         # so that nodes know which pubkey object to try to decrypt when they
         # want to send a message.
         doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
-                addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()
+            addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()
+        payload += doubleHashOfAddressData[32:] # the tag
         privEncryptionKey = doubleHashOfAddressData[:32]
         pubEncryptionKey = pointMult(privEncryptionKey)
-        payload += doubleHashOfAddressData[32:] # the tag
         payload += highlevelcrypto.encrypt(
             dataToEncrypt, pubEncryptionKey.encode('hex'))
-
-        ####################
-
 
         if not shared.safeConfigGetBoolean(myAddress, 'chan'):
             # Do the POW for this pubkey message
@@ -378,8 +378,15 @@ class singleWorker(threading.Thread):
                 -300, 300)))  # the current time plus or minus five minutes
             payload += encodeVarint(2)  # broadcast version
             payload += encodeVarint(streamNumber)
+            if addressVersionNumber >= 4:
+                doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
+                    addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()).digest()
+                payload += doubleHashOfAddressData[32:]  # the tag
 
-            dataToEncrypt = encodeVarint(2)  # broadcast version
+            if addressVersionNumber <= 3:
+                dataToEncrypt = encodeVarint(2)  # broadcast version
+            else:
+                dataToEncrypt = encodeVarint(3)  # broadcast version
             dataToEncrypt += encodeVarint(addressVersionNumber)
             dataToEncrypt += encodeVarint(streamNumber)
             dataToEncrypt += '\x00\x00\x00\x01'  # behavior bitfield
@@ -399,8 +406,11 @@ class singleWorker(threading.Thread):
             # Encrypt the broadcast with the information contained in the broadcaster's address. Anyone who knows the address can generate 
             # the private encryption key to decrypt the broadcast. This provides virtually no privacy; its purpose is to keep questionable 
             # and illegal content from flowing through the Internet connections and being stored on the disk of 3rd parties. 
-            privEncryptionKey = hashlib.sha512(encodeVarint(
-                addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()[:32]
+            if addressVersionNumber <= 3:
+                privEncryptionKey = hashlib.sha512(encodeVarint(
+                    addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()[:32]
+            else:
+                privEncryptionKey = doubleHashOfAddressData[:32]
             pubEncryptionKey = pointMult(privEncryptionKey)
             payload += highlevelcrypto.encrypt(
                 dataToEncrypt, pubEncryptionKey.encode('hex'))
@@ -445,28 +455,108 @@ class singleWorker(threading.Thread):
             '''SELECT DISTINCT toaddress FROM sent WHERE (status='msgqueued' AND folder='sent')''')
         for row in queryreturn:  # For each address to which we need to send a message, check to see if we have its pubkey already.
             toaddress, = row
-            toripe = decodeAddress(toaddress)[3]
+            status, toAddressVersion, toStreamNumber, toRipe = decodeAddress(toaddress)
             queryreturn = sqlQuery(
-                '''SELECT hash FROM pubkeys WHERE hash=? ''', toripe)
-            if queryreturn != []:  # If we have the needed pubkey, set the status to doingmsgpow (we'll do it further down)
+                '''SELECT hash FROM pubkeys WHERE hash=? ''', toRipe)
+            if queryreturn != []:  # If we have the needed pubkey in the pubkey table already, set the status to doingmsgpow (we'll do it further down)
                 sqlExecute(
                     '''UPDATE sent SET status='doingmsgpow' WHERE toaddress=? AND status='msgqueued' ''',
                     toaddress)
-            else:  # We don't have the needed pubkey. Set the status to 'awaitingpubkey' and request it if we haven't already
-                if toripe in shared.neededPubkeys:
+            else:  # We don't have the needed pubkey in the pubkey table already.
+                if toAddressVersion <= 3:
+                    toTag = ''
+                else:
+                    toTag = hashlib.sha512(hashlib.sha512(encodeVarint(toAddressVersion)+encodeVarint(toStreamNumber)+toRipe).digest()).digest()[32:]
+                if toRipe in shared.neededPubkeys or toTag in shared.neededPubkeys:
                     # We already sent a request for the pubkey
                     sqlExecute(
                         '''UPDATE sent SET status='awaitingpubkey' WHERE toaddress=? AND status='msgqueued' ''', toaddress)
                     shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-                        toripe, tr.translateText("MainWindow",'Encryption key was requested earlier.'))))
+                        toRipe, tr.translateText("MainWindow",'Encryption key was requested earlier.'))))
                 else:
                     # We have not yet sent a request for the pubkey
-                    sqlExecute(
-                        '''UPDATE sent SET status='doingpubkeypow' WHERE toaddress=? AND status='msgqueued' ''',
-                        toaddress)
-                    shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-                        toripe, tr.translateText("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
-                    self.requestPubKey(toaddress)
+                    needToRequestPubkey = True
+                    if toAddressVersion >= 4:
+                        # We might have the pubkey in the inventory and need to decrypt it and put it in the pubkeys table.
+                        queryreturn = sqlQuery(
+                            '''SELECT payload FROM inventory WHERE objecttype='pubkey' and tag=? ''', toTag)
+                        if queryreturn != []: # if there was a pubkey in our inventory with the correct tag, we need to try to decrypt it.
+                            for row in queryreturn:
+                                data, = row
+                                readPosition = 8  # for the nonce
+                                readPosition += 8 # for the time
+                                readPosition += 1 # for the address version number
+                                streamNumber, varintLength = decodeVarint(
+                                    data[readPosition:readPosition + 10])
+                                readPosition += varintLength
+                                signedData = data[8:readPosition] # Some of the signed data is not encrypted so let's keep it for now.
+                                readPosition += 32 #for the tag
+                                encryptedData = data[readPosition:]
+                                # Let us try to decrypt the pubkey
+                                privEncryptionKey = hashlib.sha512(hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()).digest()[:32]
+                                cryptorObject = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
+                                try:
+                                    decryptedData = cryptorObject.decrypt(encryptedData)
+                                except:
+                                    # Someone must have encrypted some data with a different key
+                                    # but tagged it with a tag for which we are watching.
+                                    with shared.printLock:
+                                        print 'Pubkey decryption was UNsuccessful.'
+                                    continue
+                                print 'Pubkey decryption successful'
+                                readPosition = 4 # bypass the behavior bitfield
+                                publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+                                # Is it possible for a public key to be invalid such that trying to
+                                # encrypt or sign with it will cause an error? If it is, we should
+                                # probably test these keys here.
+                                readPosition += 64
+                                publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+                                readPosition += 64
+                                specifiedNonceTrialsPerByte, specifiedNonceTrialsPerByteLength = decodeVarint(
+                                    decryptedData[readPosition:readPosition + 10])
+                                readPosition += specifiedNonceTrialsPerByteLength
+                                specifiedPayloadLengthExtraBytes, specifiedPayloadLengthExtraBytesLength = decodeVarint(
+                                    decryptedData[readPosition:readPosition + 10])
+                                readPosition += specifiedPayloadLengthExtraBytesLength
+                                signedData += decryptedData[:readPosition]
+                                signatureLength, signatureLengthLength = decodeVarint(
+                                    decryptedData[readPosition:readPosition + 10])
+                                readPosition += signatureLengthLength
+                                signature = decryptedData[readPosition:readPosition + signatureLength]
+                                try:
+                                    if not highlevelcrypto.verify(signedData, signature, publicSigningKey.encode('hex')):
+                                        print 'ECDSA verify failed (within processpubkey)'
+                                        continue
+                                    print 'ECDSA verify passed (within processpubkey)'
+                                except Exception as err:
+                                    print 'ECDSA verify failed (within processpubkey)', err
+                                    continue
+
+                                sha = hashlib.new('sha512')
+                                sha.update(publicSigningKey + publicEncryptionKey)
+                                ripeHasher = hashlib.new('ripemd160')
+                                ripeHasher.update(sha.digest())
+                                ripe = ripeHasher.digest()
+
+                                # We need to make sure that the tag on the outside of the encryption
+                                # is the one generated from hashing these particular keys.
+                                if toTag != hashlib.sha512(hashlib.sha512(encodeVarint(addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()[32:]:
+                                    with shared.printLock:
+                                        print 'Someone was trying to act malicious: tag doesn\'t match the keys in this pubkey message. Ignoring it.'
+                                    continue
+                                else:
+                                    print 'Tag successfully matches keys in pubkey message' # testing. Will remove soon.
+
+                                t = (ripe, signedData, embeddedTime, 'yes')
+                                sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
+                                needToRequestPubkey == False
+                    if needToRequestPubkey:
+                        sqlExecute(
+                            '''UPDATE sent SET status='doingpubkeypow' WHERE toaddress=? AND status='msgqueued' ''',
+                            toaddress)
+                        shared.UISignalQueue.put(('updateSentItemStatusByHash', (
+                            toRipe, tr.translateText("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
+                        self.requestPubKey(toaddress)
         # Get all messages that are ready to be sent, and also all messages
         # which we have sent in the last 28 days which were previously marked
         # as 'toodifficult'. If the user as raised the maximum acceptable
@@ -530,7 +620,7 @@ class singleWorker(threading.Thread):
             for row in queryreturn:
                 pubkeyPayload, = row
 
-            # The v3 pubkey message is stored the way we originally received it
+            # The pubkey message is stored the way we originally received it
             # which means that we need to read beyond things like the nonce and
             # time to get to the actual public keys.
             if toAddressVersionNumber <= 3:
@@ -649,7 +739,7 @@ class singleWorker(threading.Thread):
                 payload += encodeVarint(len(signature))
                 payload += signature
 
-            if fromAddressVersionNumber == 3:
+            if fromAddressVersionNumber >= 3:
                 payload = '\x01'  # Message version.
                 payload += encodeVarint(fromAddressVersionNumber)
                 payload += encodeVarint(fromStreamNumber)
@@ -781,7 +871,8 @@ class singleWorker(threading.Thread):
             shared.neededPubkeys[ripe] = 0
         elif addressVersionNumber >= 4:
             privEncryptionKey = hashlib.sha512(hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()).digest()[:32] # Note that this is the first half of the sha512 hash.
-            shared.neededPubkeys[ripe] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex')) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
+            tag = hashlib.sha512(hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()).digest()[32:] # Note that this is the second half of the sha512 hash.
+            shared.neededPubkeys[tag] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex')) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
         payload = pack('>Q', (int(time.time()) + random.randrange(
             -300, 300)))  # the current time plus or minus five minutes.
         payload += encodeVarint(addressVersionNumber)
@@ -791,9 +882,9 @@ class singleWorker(threading.Thread):
             with shared.printLock:
                 print 'making request for pubkey with ripe:', ripe.encode('hex')
         else:
-            payload += hashlib.sha512(hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()).digest()[32:] # Note that this is the second half of the sha512 hash.
+            payload += tag
             with shared.printLock:
-                print 'making request for v4 pubkey with ripe:', ripe.encode('hex')
+                print 'making request for v4 pubkey with tag:', tag.encode('hex')
 
         # print 'trial value', trialValue
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
