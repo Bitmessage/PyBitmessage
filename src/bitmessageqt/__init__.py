@@ -47,20 +47,6 @@ except Exception as err:
     print 'Error message:', err
     sys.exit()
 
-# for the md5 hash (used for the identicons)
-import hashlib
-
-# load identicon code
-# :Author:Shin Adachi <shn@glucose.jp>
-# Licesensed under FreeBSD License.
-import identicon
-# usage: identicon.render_identicon(code, size)
-# requires PIL
-
-# load another identicon code
-# http://boottunes.googlecode.com/svn-history/r302/trunk/src/pydenticon.py
-from pydenticon import Pydenticon
-
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
 except AttributeError:
@@ -74,7 +60,8 @@ def identiconize(address):
     if youdontwantidenticons == True:
         idcon = QtGui.QIcon()
         return idcon
-
+    size = 3
+    
     str_broadcast_subscribers = '[Broadcast subscribers]'
     if address == str_broadcast_subscribers:
         idcon = QtGui.QIcon(":/newPrefix/images/can-icon-24px.png")
@@ -86,25 +73,37 @@ def identiconize(address):
     # Attacks where someone creates an address to mimic someone else's identicon should be impossible then
     # i think it should generate a random string by default
     
-    if True: # identicon.py
+    identicon_lib = 'qidenticon'
+    if identicon_lib == 'qidenticon':
+        # originally by:
+        # :Author:Shin Adachi <shn@glucose.jp>
+        # Licesensed under FreeBSD License.
+        # stripped from PIL and uses QT instead
+        import qidenticon 
+    
+        import hashlib
         hash = hashlib.md5(addBMIfNotPresent(address)+suffix).hexdigest()
-        idcon_render = identicon.render_identicon(int(hash, 16), 48)
-        image = idcon_render
-        # http://qt-project.org/forums/viewthread/5866
-        # from PIL import Image
-        # from PyQt4.QtGui import QImage, QImageReader, QLabel, QPixmap, QApplication
-    else: # pydenticon.py
+        image = qidenticon.render_identicon(int(hash, 16), 48)
+        idcon = QtGui.QIcon()
+        idcon.addPixmap(image, QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        return idcon
+
+    elif identicon_lib == 'pydenticon': # pydenticon.py
+        # print identicon_lib
+        # load another identicon code
+        # http://boottunes.googlecode.com/svn-history/r302/trunk/src/pydenticon.py
+        from pydenticon import Pydenticon
+        # GPLv3 !!!
         idcon_render = Pydenticon(addBMIfNotPresent(address)+suffix)
         image = idcon_render._render()
-    
-    # im = Image.open('images/'+hash+'.png')
-    # http://stackoverflow.com/questions/6756820/python-pil-image-tostring
-    data = image.convert("RGBA").tostring("raw", "RGBA")
-    image = QImage(data, image.size[0], image.size[1], QImage.Format_ARGB32)
-    pix = QPixmap.fromImage(image)
-    idcon = QtGui.QIcon()
-    idcon.addPixmap(pix, QtGui.QIcon.Normal, QtGui.QIcon.Off)
-    return idcon
+        # im = Image.open('images/'+hash+'.png')
+        # http://stackoverflow.com/questions/6756820/python-pil-image-tostring
+        data = image.convert("RGBA").tostring("raw", "RGBA")
+        image = QImage(data, image.size[0], image.size[1], QImage.Format_ARGB32)
+        pix = QPixmap.fromImage(image)
+        idcon = QtGui.QIcon()
+        idcon.addPixmap(pix, QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        return idcon
 
 class MyForm(QtGui.QMainWindow):
 

@@ -1,6 +1,40 @@
 #!/usr/bin/env python
 # -*- coding:utf-8 -*-
+
+###
+# qidenticon.py is Licesensed under FreeBSD License.
+# (http://www.freebsd.org/copyright/freebsd-license.html)
+#
+# Copyright 2013 "Sendiulo". All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#    1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#    2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+###
+
+###
+# identicon.py is Licesensed under FreeBSD License.
+# (http://www.freebsd.org/copyright/freebsd-license.html)
+#
+# Copyright 1994-2009 Shin Adachi. All rights reserved.
+#
+# Redistribution and use in source and binary forms, with or without modification, are permitted provided that the following conditions are met:
+#
+#    1. Redistributions of source code must retain the above copyright notice, this list of conditions and the following disclaimer.
+#    2. Redistributions in binary form must reproduce the above copyright notice, this list of conditions and the following disclaimer in the documentation and/or other materials provided with the distribution.
+#
+# THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDER ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT HOLDER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+###
+
 """
+qidenticon.py
+identicon python implementation with QPixmap output
+by sendiulo <sendiulo@gmx.net>
+
+based on
 identicon.py
 identicon python implementation.
 by Shin Adachi <shn@glucose.jp>
@@ -11,19 +45,17 @@ by Shin Adachi <shn@glucose.jp>
 >>> python identicon.py [code]
 
 == python ==
->>> import identicon
->>> identicon.render_identicon(code, size)
+>>> import qtidenticon
+>>> qtidenticon.render_identicon(code, size)
 
 Return a PIL Image class instance which have generated identicon image.
 ```size``` specifies `patch size`. Generated image size is 3 * ```size```.
 """
-# g
-# PIL Modules
-import Image
-import ImageDraw
-import ImagePath
-import ImageColor
 
+# we probably don't need all of them, but i don't want to check now
+from PyQt4 import QtCore, QtGui
+from PyQt4.QtCore import *
+from PyQt4.QtGui import *
 
 __all__ = ['render_identicon', 'IdenticonRendererBase']
 
@@ -114,45 +146,46 @@ class IdenticonRendererBase(object):
     
     def render(self, size):
         """
-        render identicon to PIL.Image
+        render identicon to QPixmap
         
         @param size identicon patchsize. (image size is 3 * [size])
-        @return PIL.Image
+        @return QPixmap
         """
         
         # decode the code
         middle, corner, side, foreColor, backColor = self.decode(self.code)
 
-        # make image        
-        image = Image.new("RGB", (size * 3, size * 3))
-        draw = ImageDraw.Draw(image)
+        # make image
+        image = QPixmap(QSize(size * 3, size * 3))
         
         # fill background
-        draw.rectangle((0, 0, image.size[0], image.size[1]), fill=0)
+        image.fill(QtGui.QColor(0,0,0))
         
         kwds = {
-            'draw': draw,
+            'image': image,
             'size': size,
             'foreColor': foreColor,
             'backColor': backColor}
+            
         # middle patch
-        self.drawPatch((1, 1), middle[2], middle[1], middle[0], **kwds)
-
+        image = self.drawPatchQt((1, 1), middle[2], middle[1], middle[0], **kwds)
+            
         # side patch
         kwds['type'] = side[0]
         for i in xrange(4):
             pos = [(1, 0), (2, 1), (1, 2), (0, 1)][i]
-            self.drawPatch(pos, side[2] + 1 + i, side[1], **kwds)
-        
+            image = self.drawPatchQt(pos, side[2] + 1 + i, side[1], **kwds)
+            
         # corner patch
         kwds['type'] = corner[0]
         for i in xrange(4):
             pos = [(0, 0), (2, 0), (2, 2), (0, 2)][i]
-            self.drawPatch(pos, corner[2] + 1 + i, corner[1], **kwds)
+            image = self.drawPatchQt(pos, corner[2] + 1 + i, corner[1], **kwds)
         
         return image
                 
-    def drawPatch(self, pos, turn, invert, type, draw, size, foreColor,
+
+    def drawPatchQt(self, pos, turn, invert, type, image, size, foreColor,
             backColor):
         """
         @param size patch size
@@ -162,24 +195,43 @@ class IdenticonRendererBase(object):
             # blank patch
             invert = not invert
             path = [(0., 0.), (1., 0.), (1., 1.), (0., 1.), (0., 0.)]
-        patch = ImagePath.Path(path)
+
+        
+        polygon = QPolygonF([QPointF(x*size,y*size) for x,y in path])
+        
+        rot = turn % 4
+        rot_trans = [QPointF(0.,0.), QPointF(size, 0.), QPointF(size, size), QPointF(0., size)]
+        rotation = [0,90,180,270]
+        # print rotation[rot], rot_trans[rot], turn
+        pen_color = QtGui.QColor(255, 255, 255, 0)
+        pen = QtGui.QPen(pen_color, Qt.SolidPattern)
+        foreBrush = QtGui.QBrush(foreColor, Qt.SolidPattern)
+        backBrush = QtGui.QBrush(backColor, Qt.SolidPattern)
         if invert:
-            foreColor, backColor = backColor, foreColor
+            foreBrush, backBrush = backBrush, foreBrush
         
-        mat = Matrix2D.rotateSquare(turn, pivot=(0.5, 0.5)) *\
-              Matrix2D.translate(*pos) *\
-              Matrix2D.scale(size, size)
+        painter = QPainter()
+        painter.begin(image)
+        painter.setPen(pen)
         
-        patch.transform(mat.for_PIL())
-        draw.rectangle((pos[0] * size, pos[1] * size, (pos[0] + 1) * size,
-            (pos[1] + 1) * size), fill=backColor)
-        draw.polygon(patch, fill=foreColor, outline=foreColor)
+        painter.translate(pos[0]*size, pos[1]*size)
+        painter.translate(rot_trans[rot])
+        painter.rotate(rotation[rot])
+        
+        painter.setBrush(backBrush)
+        painter.drawRect(0,0, size, size)
+        
+        painter.setBrush(foreBrush)
+        painter.drawPolygon(polygon, Qt.WindingFill)
+        
+        painter.end()
+        
+        return image
 
     ### virtual functions
     def decode(self, code):
         raise NotImplementedError
-
-
+        
 class DonRenderer(IdenticonRendererBase):
     """
     Don Park's implementation of identicon
@@ -230,11 +282,14 @@ class DonRenderer(IdenticonRendererBase):
         red         = (code >> 27) & 0x1F
         
         foreColor = (red << 3, green << 3, blue << 3)
+        foreColor = QtGui.QColor(*foreColor)
+        
+        bgcolor = QtGui.QColor(255,255,255)
         
         return (middleType, middleInvert, 0),\
                (cornerType, cornerInvert, cornerTurn),\
                (sideType, sideInvert, sideTurn),\
-               foreColor, ImageColor.getrgb('white')
+               foreColor, bgcolor
 
 
 def render_identicon(code, size, renderer=None):
@@ -258,5 +313,6 @@ if __name__ == '__main__':
         else:
             code = int(code)
         
+        app = Qt.QApplication(sys.argv)
         icon = render_identicon(code, 24)
         icon.save('%08x.png' % code, 'PNG')
