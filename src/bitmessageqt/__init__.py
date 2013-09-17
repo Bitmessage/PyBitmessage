@@ -56,53 +56,67 @@ def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
 
 def identiconize(address):
-    youdontwantidenticons = False
-    if youdontwantidenticons == True:
-        idcon = QtGui.QIcon()
-        return idcon
-    size = 3
+    size = 1
     
     str_broadcast_subscribers = '[Broadcast subscribers]'
     if address == str_broadcast_subscribers:
         idcon = QtGui.QIcon(":/newPrefix/images/can-icon-24px.png")
         return idcon
-        
-    suffix = "asdf"
+    try:
+        identiconsuffix = shared.config.get('bitmessagesettings', 'identiconsuffix')
+    except:
+        identiconsuffix = ''
     # here you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators
     # instead, you could also use a pseudo-password to salt the generation of the identicons
     # Attacks where someone creates an address to mimic someone else's identicon should be impossible then
     # i think it should generate a random string by default
     
-    identicon_lib = 'qidenticon'
-    if identicon_lib == 'qidenticon':
+    try:
+        identicon_lib = shared.config.get('bitmessagesettings', 'identicon')
+    except:
+        identicon_lib = 'qidenticon'
+    
+    
+    if (identicon_lib[:len('qidenticon')] == 'qidenticon'):
+        # print identicon_lib
         # originally by:
         # :Author:Shin Adachi <shn@glucose.jp>
         # Licesensed under FreeBSD License.
         # stripped from PIL and uses QT instead
         import qidenticon 
-    
         import hashlib
-        hash = hashlib.md5(addBMIfNotPresent(address)+suffix).hexdigest()
-        image = qidenticon.render_identicon(int(hash, 16), 48)
+        hash = hashlib.md5(addBMIfNotPresent(address)+identiconsuffix).hexdigest()
+        use_two_colors = (identicon_lib[:len('qidenticon_two')] == 'qidenticon_two')
+        transparent = (identicon_lib == 'qidenticon_x') | (identicon_lib == 'qidenticon_two_x')
+        penwidth = 0
+        pixmap = qidenticon.render_identicon(int(hash, 16), 48, use_two_colors, transparent, penwidth)
         idcon = QtGui.QIcon()
-        idcon.addPixmap(image, QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        idcon.addPixmap(pixmap, QtGui.QIcon.Normal, QtGui.QIcon.Off)
         return idcon
-
-    elif identicon_lib == 'pydenticon': # pydenticon.py
+    elif identicon_lib == 'pydenticon':
         # print identicon_lib
-        # load another identicon code
-        # http://boottunes.googlecode.com/svn-history/r302/trunk/src/pydenticon.py
+        # Here you could load pydenticon.py (just put it in the "src" folder of your Bitmessage source)
         from pydenticon import Pydenticon
-        # GPLv3 !!!
-        idcon_render = Pydenticon(addBMIfNotPresent(address)+suffix)
-        image = idcon_render._render()
-        # im = Image.open('images/'+hash+'.png')
-        # http://stackoverflow.com/questions/6756820/python-pil-image-tostring
-        data = image.convert("RGBA").tostring("raw", "RGBA")
-        image = QImage(data, image.size[0], image.size[1], QImage.Format_ARGB32)
-        pix = QPixmap.fromImage(image)
+        # It is not included in the source, because it is licensed under GPLv3
+        # GPLv3 is a copyleft license that would influence our licensing
+        # Find the source here: http://boottunes.googlecode.com/svn-history/r302/trunk/src/pydenticon.py
+        # note that it requires PIL to be installed: http://www.pythonware.com/products/pil/
+        idcon_render = Pydenticon(addBMIfNotPresent(address)+identiconsuffix, size)
+        rendering = idcon_render._render()
+        data = rendering.convert("RGBA").tostring("raw", "RGBA")
+        qim = QImage(data, size, size, QImage.Format_ARGB32)
+        pix = QPixmap.fromImage(qim)
         idcon = QtGui.QIcon()
         idcon.addPixmap(pix, QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        return idcon
+    elif identicon_lib == False:
+        idcon = QtGui.QIcon()
+        return idcon
+    else:
+        if identicon_lib & len(identicon_lib) > 0:
+            print 'Error: couldn\'t find this identicon library: ', identicon_lib
+            print 'Control for typos!'
+        idcon = QtGui.QIcon()
         return idcon
 
 class MyForm(QtGui.QMainWindow):
