@@ -1133,8 +1133,15 @@ class MyForm(QtGui.QMainWindow):
             else:
                 streamNumberForAddress = int(
                     self.regenerateAddressesDialogInstance.ui.lineEditStreamNumber.text())
-                addressVersionNumber = int(
-                    self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
+                try:
+                    addressVersionNumber = int(
+                        self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
+                except:
+                    QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
+                        "MainWindow", "Your address version number must be a number: either 3 or 4."))
+                if addressVersionNumber < 3 or addressVersionNumber > 4:
+                    QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
+                        "MainWindow", "Your address version number must be either 3 or 4."))
                 # self.addressGenerator = addressGenerator()
                 # self.addressGenerator.setup(addressVersionNumber,streamNumberForAddress,"unused address",self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(),self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(),self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked())
                 # QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
@@ -1153,7 +1160,7 @@ class MyForm(QtGui.QMainWindow):
                         "MainWindow", "You didn't enter a chan name."))
                     return
                 shared.apiAddressGeneratorReturnQueue.queue.clear()
-                shared.addressGeneratorQueue.put(('createChan', 3, 1, self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()))
+                shared.addressGeneratorQueue.put(('createChan', 4, 1, self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()))
                 addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
                 print 'addressGeneratorReturnValue', addressGeneratorReturnValue
                 if len(addressGeneratorReturnValue) == 0:
