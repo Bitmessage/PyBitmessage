@@ -47,19 +47,6 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="0">
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
-       </item>
        <item row="0" column="0">
         <widget class="QCheckBox" name="checkBoxStartOnLogon">
          <property name="text">
@@ -105,7 +92,7 @@
          </property>
         </widget>
        </item>
-       <item row="10" column="1">
+       <item row="7" column="1" rowspan="4">
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
           <string>Interface Language</string>
@@ -161,6 +148,100 @@
            </widget>
           </item>
          </layout>
+        </widget>
+       </item>
+       <item row="7" column="0" rowspan="4">
+        <widget class="QGroupBox" name="groupBox_3">
+         <property name="title">
+          <string>Identicons (with example image)</string>
+         </property>
+         <widget class="QComboBox" name="comboBox">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>20</y>
+            <width>251</width>
+            <height>31</height>
+           </rect>
+          </property>
+          <property name="iconSize">
+           <size>
+            <width>24</width>
+            <height>24</height>
+           </size>
+          </property>
+          <item>
+           <property name="text">
+            <string>no identicons</string>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/no_identicons.png</normaloff>:/newPrefix/images/no_identicons.png</iconset>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>qidenticon</string>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/qidenticon.png</normaloff>:/newPrefix/images/qidenticon.png</iconset>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>qidenticon_x</string>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/qidenticon_x.png</normaloff>:/newPrefix/images/qidenticon_x.png</iconset>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>qidenticon_two</string>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/qidenticon_two.png</normaloff>:/newPrefix/images/qidenticon_two.png</iconset>
+           </property>
+          </item>
+          <item>
+           <property name="text">
+            <string>qidenticon_two_x</string>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/qidenticon_two_x.png</normaloff>:/newPrefix/images/qidenticon_two_x.png</iconset>
+           </property>
+          </item>
+         </widget>
+         <widget class="QCheckBox" name="checkBoxLoadAvatars">
+          <property name="geometry">
+           <rect>
+            <x>20</x>
+            <y>50</y>
+            <width>121</width>
+            <height>18</height>
+           </rect>
+          </property>
+          <property name="text">
+           <string>Load avatar images</string>
+          </property>
+         </widget>
+         <widget class="QLineEdit" name="lineEdit">
+          <property name="geometry">
+           <rect>
+            <x>140</x>
+            <y>50</y>
+            <width>131</width>
+            <height>16</height>
+           </rect>
+          </property>
+          <property name="toolTip">
+           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The content of this text field will be appended to the BM-address before creating the hash for the identicons. By default it is filled with a random string to make the identicons in your client unique, otherwise the identicon could be an attack vector if an adversary creates an address resulting in a similar identicon. If you keep this string (or any other random or non-random string) you will be able to keep the same identicons.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
         </widget>
        </item>
       </layout>
@@ -756,7 +837,9 @@
   <tabstop>checkBoxSocksListen</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="bitmessage_icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

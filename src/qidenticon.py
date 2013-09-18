@@ -67,12 +67,12 @@ class IdenticonRendererBase(object):
             code = int(code)
         self.code = code
     
-    def render(self, size, twoColor, transparent, penwidth):
+    def render(self, size, twoColor, opacity, penwidth):
         """
-        render identicon to QPixmap
+        render identicon to QPicture
         
         @param size identicon patchsize. (image size is 3 * [size])
-        @return QPixmap
+        @return QPicture
         """
         
         # decode the code
@@ -82,7 +82,7 @@ class IdenticonRendererBase(object):
         image = QPixmap(QSize(size * 3 +penwidth, size * 3 +penwidth))
         
         # fill background
-        backColor = QtGui.QColor(255,255,255,(not transparent) * 255)
+        backColor = QtGui.QColor(255,255,255,opacity)
         image.fill(backColor)
         
         kwds = {
@@ -133,7 +133,7 @@ class IdenticonRendererBase(object):
         nopen = QtGui.QPen(foreColor, Qt.NoPen)
         foreBrush = QtGui.QBrush(foreColor, Qt.SolidPattern)
         if penwidth > 0:
-            pen_color = QtGui.QColor(223, 223, 223)
+            pen_color = QtGui.QColor(255, 255, 255)
             pen = QtGui.QPen(pen_color, Qt.SolidPattern)
             pen.setWidth(penwidth)
         
@@ -147,8 +147,8 @@ class IdenticonRendererBase(object):
         
         if invert:
             # subtract the actual polygon from a rectangle to invert it
-            rect_polygon = QPolygonF(rect)
-            polygon = rect_polygon.subtracted(polygon)
+            poly_rect = QPolygonF(rect)
+            polygon = poly_rect.subtracted(polygon)
         painter.setBrush(foreBrush)
         if penwidth > 0:
             # draw the borders
@@ -157,7 +157,7 @@ class IdenticonRendererBase(object):
         # draw the fill
         painter.setPen(nopen)
         painter.drawPolygon(polygon, Qt.WindingFill)
-    
+        
         painter.end()
         
         return image
@@ -173,22 +173,39 @@ class DonRenderer(IdenticonRendererBase):
     """
     
     PATH_SET = [
-        [(0, 0), (4, 0), (4, 4), (0, 4)],   # 0
+        #[0] full square:
+        [(0, 0), (4, 0), (4, 4), (0, 4)],
+        #[1] right-angled triangle pointing top-left:
         [(0, 0), (4, 0), (0, 4)],
+        #[2] upwardy triangle:
         [(2, 0), (4, 4), (0, 4)],
+        #[3] left half of square, standing rectangle:
         [(0, 0), (2, 0), (2, 4), (0, 4)],
-        [(2, 0), (4, 2), (2, 4), (0, 2)],   # 4
+        #[4] square standing on diagonale:
+        [(2, 0), (4, 2), (2, 4), (0, 2)],
+        #[5] kite pointing topleft:
         [(0, 0), (4, 2), (4, 4), (2, 4)],
+        #[6] Sierpinski triangle, fractal triangles:
         [(2, 0), (4, 4), (2, 4), (3, 2), (1, 2), (2, 4), (0, 4)],
+        #[7] sharp angled lefttop pointing triangle:
         [(0, 0), (4, 2), (2, 4)],
-        [(1, 1), (3, 1), (3, 3), (1, 3)],   # 8   
+        #[8] small centered square:
+        [(1, 1), (3, 1), (3, 3), (1, 3)],
+        #[9] two small triangles:
         [(2, 0), (4, 0), (0, 4), (0, 2), (2, 2)],
+        #[10] small topleft square:
         [(0, 0), (2, 0), (2, 2), (0, 2)],
+        #[11] downpointing right-angled triangle on bottom:
         [(0, 2), (4, 2), (2, 4)],
+        #[12] uppointing right-angled triangle on bottom:
         [(2, 2), (4, 4), (0, 4)],
+        #[13] small rightbottom pointing right-angled triangle on topleft:
         [(2, 0), (2, 2), (0, 2)],
+        #[14] small lefttop pointing right-angled triangle on topleft:
         [(0, 0), (2, 0), (0, 2)],
-        []]                                 # 15
+        #[15] empty:
+        []]
+    # get the [0] full square, [4] square standing on diagonale, [8] small centered square, or [15] empty tile:
     MIDDLE_PATCH_SET = [0, 4, 8, 15]
     
     # modify path set
@@ -232,7 +249,7 @@ class DonRenderer(IdenticonRendererBase):
                foreColor, secondColor, swap_cross
 
 
-def render_identicon(code, size, twoColor=False, transparent=False, penwidth=0, renderer=None):
+def render_identicon(code, size, twoColor=False, opacity=255, penwidth=0, renderer=None):
     if not renderer:
         renderer = DonRenderer
-    return renderer(code).render(size, twoColor, transparent, penwidth)
+    return renderer(code).render(size, twoColor, opacity, penwidth)

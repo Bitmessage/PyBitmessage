@@ -56,7 +56,7 @@ def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
 
 def identiconize(address):
-    size = 1
+    size = 48
     
     str_broadcast_subscribers = '[Broadcast subscribers]'
     if address == str_broadcast_subscribers:
@@ -71,11 +71,15 @@ def identiconize(address):
     # Attacks where someone creates an address to mimic someone else's identicon should be impossible then
     # i think it should generate a random string by default
     
+    # If you include another identicon library, please generate an 
+    # example identicon with the following md5 hash:
+    # 3fd4bf901b9d4ea1394f0fb358725b28
+    
     try:
         identicon_lib = shared.config.get('bitmessagesettings', 'identicon')
     except:
-        identicon_lib = 'qidenticon'
-    
+        # default to no identicons
+        identicon_lib = False
     
     if (identicon_lib[:len('qidenticon')] == 'qidenticon'):
         # print identicon_lib
@@ -87,11 +91,13 @@ def identiconize(address):
         import hashlib
         hash = hashlib.md5(addBMIfNotPresent(address)+identiconsuffix).hexdigest()
         use_two_colors = (identicon_lib[:len('qidenticon_two')] == 'qidenticon_two')
-        transparent = (identicon_lib == 'qidenticon_x') | (identicon_lib == 'qidenticon_two_x')
+        opacity = int(not((identicon_lib == 'qidenticon_x') | (identicon_lib == 'qidenticon_two_x') | (identicon_lib == 'qidenticon_b') | (identicon_lib == 'qidenticon_two_b')))*255
         penwidth = 0
-        pixmap = qidenticon.render_identicon(int(hash, 16), 48, use_two_colors, transparent, penwidth)
-        idcon = QtGui.QIcon()
-        idcon.addPixmap(pixmap, QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        image = qidenticon.render_identicon(int(hash, 16), size, use_two_colors, opacity, penwidth)
+        # filename = './images/identicons/'+hash+'.png'
+        # image.save(filename)
+        idcon = QIcon()
+        idcon.addPixmap(image, QtGui.QIcon.Normal, QtGui.QIcon.Off)
         return idcon
     elif identicon_lib == 'pydenticon':
         # print identicon_lib
@@ -101,7 +107,7 @@ def identiconize(address):
         # GPLv3 is a copyleft license that would influence our licensing
         # Find the source here: http://boottunes.googlecode.com/svn-history/r302/trunk/src/pydenticon.py
         # note that it requires PIL to be installed: http://www.pythonware.com/products/pil/
-        idcon_render = Pydenticon(addBMIfNotPresent(address)+identiconsuffix, size)
+        idcon_render = Pydenticon(addBMIfNotPresent(address)+identiconsuffix, size*3)
         rendering = idcon_render._render()
         data = rendering.convert("RGBA").tostring("raw", "RGBA")
         qim = QImage(data, size, size, QImage.Format_ARGB32)
@@ -116,6 +122,7 @@ def identiconize(address):
         if identicon_lib & len(identicon_lib) > 0:
             print 'Error: couldn\'t find this identicon library: ', identicon_lib
             print 'Control for typos!'
+        # default to no identicons
         idcon = QtGui.QIcon()
         return idcon
 
