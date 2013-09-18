@@ -21,16 +21,23 @@ class addressGenerator(threading.Thread):
             queueValue = shared.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0
             payloadLengthExtraBytes = 0
+            try:
+                numberOfNullBytesDemandedOnFrontOfRipeHash = shared.config.getint(
+                    'bitmessagesettings', 'numberofnullbytesonaddress')
+            except:
+                numberOfNullBytesDemandedOnFrontOfRipeHash = 1 # the default
             if queueValue[0] == 'createChan':
                 command, addressVersionNumber, streamNumber, label, deterministicPassphrase = queueValue
                 eighteenByteRipe = False
                 numberOfAddressesToMake = 1
+                numberOfNullBytesDemandedOnFrontOfRipeHash = 1
             elif queueValue[0] == 'joinChan':
                 command, chanAddress, label, deterministicPassphrase = queueValue
                 eighteenByteRipe = False
                 addressVersionNumber = decodeAddress(chanAddress)[1]
                 streamNumber = decodeAddress(chanAddress)[2]
                 numberOfAddressesToMake = 1
+                numberOfNullBytesDemandedOnFrontOfRipeHash = 1
             elif len(queueValue) == 7:
                 command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe = queueValue
             elif len(queueValue) == 9:
@@ -51,6 +58,8 @@ class addressGenerator(threading.Thread):
                     'bitmessagesettings', 'defaultpayloadlengthextrabytes')
             if payloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
                 payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
+            if eighteenByteRipe:
+                numberOfNullBytesDemandedOnFrontOfRipeHash = 2
             if command == 'createRandomAddress':
                 shared.UISignalQueue.put((
                     'updateStatusBar', tr.translateText("MainWindow", "Generating one new address")))
@@ -77,12 +86,8 @@ class addressGenerator(threading.Thread):
                     ripe.update(sha.digest())
                     # print 'potential ripe.digest',
                     # ripe.digest().encode('hex')
-                    if eighteenByteRipe:
-                        if ripe.digest()[:2] == '\x00\x00':
-                            break
-                    else:
-                        if ripe.digest()[:1] == '\x00':
-                            break
+                    if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
+                        break
                 print 'Generated address with ripe digest:', ripe.digest().encode('hex')
                 print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime), 'addresses per second before finding one with the correct ripe-prefix.'
                 address = encodeAddress(addressVersionNumber, streamNumber, ripe.digest())
@@ -177,12 +182,8 @@ class addressGenerator(threading.Thread):
                         ripe.update(sha.digest())
                         # print 'potential ripe.digest',
                         # ripe.digest().encode('hex')
-                        if eighteenByteRipe:
-                            if ripe.digest()[:2] == '\x00\x00':
-                                break
-                        else:
-                            if ripe.digest()[:1] == '\x00':
-                                break
+                        if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
+                            break
 
                     print 'ripe.digest', ripe.digest().encode('hex')
                     print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime), 'keys per second.'

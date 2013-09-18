@@ -502,6 +502,10 @@ class receiveDataThread(threading.Thread):
                     print 'ECDSA verify failed', err
                     return
                 # verify passed
+                fromAddress = encodeAddress(
+                    sendersAddressVersion, sendersStream, ripe.digest())
+                with shared.printLock:
+                    print 'fromAddress:', fromAddress
 
                 # Let's store the public key in case we want to reply to this person.
                 # We don't have the correct nonce or time (which would let us
@@ -515,16 +519,11 @@ class receiveDataThread(threading.Thread):
                     '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + data[beginningOfPubkeyPosition:endOfPubkeyPosition],
                     int(time.time()),
                     'yes')
-                # shared.workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest())))
                 # This will check to see whether we happen to be awaiting this
                 # pubkey in order to send a message. If we are, it will do the
                 # POW and send it.
-                self.possibleNewPubkey(ripe.digest())
+                self.possibleNewPubkey(ripe=ripe.digest())
 
-                fromAddress = encodeAddress(
-                    sendersAddressVersion, sendersStream, ripe.digest())
-                with shared.printLock:
-                    print 'fromAddress:', fromAddress
 
                 if messageEncodingType == 2:
                     subject, body = self.decodeType2Message(message)
@@ -665,7 +664,7 @@ class receiveDataThread(threading.Thread):
             # This will check to see whether we happen to be awaiting this
             # pubkey in order to send a message. If we are, it will do the POW
             # and send it.
-            self.possibleNewPubkey(ripe.digest())
+            self.possibleNewPubkey(ripe=ripe.digest())
 
             fromAddress = encodeAddress(
                 sendersAddressVersion, sendersStream, ripe.digest())
@@ -713,38 +712,29 @@ class receiveDataThread(threading.Thread):
             cleartextStreamNumber, cleartextStreamNumberLength = decodeVarint(
                 data[readPosition:readPosition + 10])
             readPosition += cleartextStreamNumberLength
-            tag = data[readPostion:readPosition+32]
+            embeddedTag = data[readPosition:readPosition+32]
             readPosition += 32
-            if tag not in shared.MyECSubscriptionCryptorObjects.items():
+            if embeddedTag not in shared.MyECSubscriptionCryptorObjects:
                 with shared.printLock:
                     print 'We\'re not interested in this broadcast.'
                 return
-            initialDecryptionSuccessful = False
-            for key, cryptorObject in shared.MyECSubscriptionCryptorObjects.items():
-                try:
-                    decryptedData = cryptorObject.decrypt(data[readPosition:])
-                    toRipe = key  # This is the RIPE hash of the sender's pubkey. We need this below to compare to the RIPE hash of the sender's address to verify that it was encrypted by with their key rather than some other key.
-                    initialDecryptionSuccessful = True
-                    print 'EC decryption successful using key associated with ripe hash:', key.encode('hex')
-                    break
-                except Exception as err:
-                    pass
-                    # print 'cryptorObject.decrypt Exception:', err
-            if not initialDecryptionSuccessful:
-                # This is not a broadcast I am interested in.
+            # We are interested in this broadcast because of its tag.
+            cryptorObject = shared.MyECSubscriptionCryptorObjects[embeddedTag]
+            try:
+                decryptedData = cryptorObject.decrypt(data[readPosition:])
+                print 'EC decryption successful'
+            except Exception as err:
                 with shared.printLock:
-                    print 'Length of time program spent failing to decrypt this v2 broadcast:', time.time() - self.messageProcessingStartTime, 'seconds.'
-
+                    print 'Broadcast version 3 decryption Unsuccessful.'
                 return
-            # At this point this is a broadcast I have decrypted and thus am
-            # interested in.
+
             signedBroadcastVersion, readPosition = decodeVarint(
                 decryptedData[:10])
             beginningOfPubkeyPosition = readPosition  # used when we add the pubkey to our pubkey table
             sendersAddressVersion, sendersAddressVersionLength = decodeVarint(
                 decryptedData[readPosition:readPosition + 9])
-            if sendersAddressVersion < 2 or sendersAddressVersion > 3:
-                print 'Cannot decode senderAddressVersion other than 2 or 3. Assuming the sender isn\'t being silly, you should upgrade Bitmessage because this message shall be ignored.'
+            if sendersAddressVersion < 4:
+                print 'Cannot decode senderAddressVersion less than 4 for broadcast version number 3. Assuming the sender isn\'t being silly, you should upgrade Bitmessage because this message shall be ignored.'
                 return
             readPosition += sendersAddressVersionLength
             sendersStream, sendersStreamLength = decodeVarint(
@@ -774,11 +764,14 @@ class receiveDataThread(threading.Thread):
 
             sha = hashlib.new('sha512')
             sha.update(sendersPubSigningKey + sendersPubEncryptionKey)
-            ripe = hashlib.new('ripemd160')
-            ripe.update(sha.digest())
+            ripeHasher = hashlib.new('ripemd160')
+            ripeHasher.update(sha.digest())
+            calculatedRipe = ripeHasher.digest()
 
-            if toRipe != ripe.digest():
-                print 'The encryption key used to encrypt this message doesn\'t match the keys inbedded in the message itself. Ignoring message.'
+            calculatedTag = hashlib.sha512(hashlib.sha512(encodeVarint(
+                sendersAddressVersion) + encodeVarint(sendersStream) + calculatedRipe).digest()).digest()[32:]
+            if calculatedTag != embeddedTag:
+                print 'The tag and encryption key used to encrypt this message doesn\'t match the keys inbedded in the message itself. Ignoring message.'
                 return
             messageEncodingType, messageEncodingTypeLength = decodeVarint(
                 decryptedData[readPosition:readPosition + 9])
@@ -806,23 +799,22 @@ class receiveDataThread(threading.Thread):
                 return
             # verify passed
 
-            # Let's store the public key in case we want to reply to this
-            # person.
-            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''',
-                       ripe.digest(),
-                       '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + decryptedData[beginningOfPubkeyPosition:endOfPubkeyPosition],
-                       int(time.time()),
-                       'yes')
-            # shared.workerQueue.put(('newpubkey',(sendersAddressVersion,sendersStream,ripe.digest())))
-            # This will check to see whether we happen to be awaiting this
-            # pubkey in order to send a message. If we are, it will do the POW
-            # and send it.
-            self.possibleNewPubkey(ripe.digest())
-
             fromAddress = encodeAddress(
-                sendersAddressVersion, sendersStream, ripe.digest())
+                sendersAddressVersion, sendersStream, calculatedRipe)
             with shared.printLock:
                 print 'fromAddress:', fromAddress
+
+            # Let's store the public key in case we want to reply to this person.
+            sqlExecute(
+                '''INSERT INTO pubkeys VALUES (?,?,?,?)''',
+                calculatedRipe,
+                '\x00\x00\x00\x00\x00\x00\x00\x01' + decryptedData[beginningOfPubkeyPosition:endOfPubkeyPosition],
+                int(time.time()),
+                'yes')
+            # This will check to see whether we happen to be awaiting this
+            # pubkey in order to send a message. If we are, it will do the
+            # POW and send it.
+            self.possibleNewPubkey(address = fromAddress)
 
             if messageEncodingType == 2:
                 subject, body = self.decodeType2Message(message)
@@ -860,8 +852,6 @@ class receiveDataThread(threading.Thread):
             # Display timing data
             with shared.printLock:
                 print 'Time spent processing this interesting broadcast:', time.time() - self.messageProcessingStartTime
-
-
 
     # We have received a msg message.
     def recmsg(self, data):
@@ -999,7 +989,7 @@ class receiveDataThread(threading.Thread):
             if sendersAddressVersionNumber == 0:
                 print 'Cannot understand sendersAddressVersionNumber = 0. Ignoring message.'
                 return
-            if sendersAddressVersionNumber >= 4:
+            if sendersAddressVersionNumber > 4:
                 print 'Sender\'s address version number', sendersAddressVersionNumber, 'not yet supported. Ignoring message.'
                 return
             if len(decryptedData) < 170:
@@ -1074,21 +1064,32 @@ class receiveDataThread(threading.Thread):
             sha.update(pubSigningKey + pubEncryptionKey)
             ripe = hashlib.new('ripemd160')
             ripe.update(sha.digest())
-            # Let's store the public key in case we want to reply to this
-            # person.
-            sqlExecute(
-                '''INSERT INTO pubkeys VALUES (?,?,?,?)''',
-                ripe.digest(),
-                '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + decryptedData[messageVersionLength:endOfThePublicKeyPosition],
-                int(time.time()),
-                'yes')
-            # shared.workerQueue.put(('newpubkey',(sendersAddressVersionNumber,sendersStreamNumber,ripe.digest())))
-            # This will check to see whether we happen to be awaiting this
-            # pubkey in order to send a message. If we are, it will do the POW
-            # and send it.
-            self.possibleNewPubkey(ripe.digest())
             fromAddress = encodeAddress(
                 sendersAddressVersionNumber, sendersStreamNumber, ripe.digest())
+            # Let's store the public key in case we want to reply to this
+            # person.
+            if sendersAddressVersionNumber <= 3:
+                sqlExecute(
+                    '''INSERT INTO pubkeys VALUES (?,?,?,?)''',
+                    ripe.digest(),
+                    '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + decryptedData[messageVersionLength:endOfThePublicKeyPosition],
+                    int(time.time()),
+                    'yes')
+                # This will check to see whether we happen to be awaiting this
+                # pubkey in order to send a message. If we are, it will do the POW
+                # and send it.
+                self.possibleNewPubkey(ripe=ripe.digest())
+            elif sendersAddressVersionNumber >= 4:
+                sqlExecute(
+                    '''INSERT INTO pubkeys VALUES (?,?,?,?)''',
+                    ripe.digest(),
+                    '\x00\x00\x00\x00\x00\x00\x00\x01' + decryptedData[messageVersionLength:endOfThePublicKeyPosition],
+                    int(time.time()),
+                    'yes')
+                # This will check to see whether we happen to be awaiting this
+                # pubkey in order to send a message. If we are, it will do the POW
+                # and send it.
+                self.possibleNewPubkey(address = fromAddress)
             # If this message is bound for one of my version 3 addresses (or
             # higher), then we must check to make sure it meets our demanded
             # proof of work requirement.
@@ -1240,18 +1241,36 @@ class receiveDataThread(threading.Thread):
         else:
             return '[' + mailingListName + '] ' + subject
 
-    def possibleNewPubkey(self, toRipe):
-        if toRipe in shared.neededPubkeys:
-            print 'We have been awaiting the arrival of this pubkey.'
-            del shared.neededPubkeys[toRipe]
-            sqlExecute(
-                '''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND (status='awaitingpubkey' or status='doingpubkeypow') and folder='sent' ''',
-                toRipe)
-            shared.workerQueue.put(('sendmessage', ''))
-        else:
-            with shared.printLock:
-                print 'We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:', toRipe.encode('hex')
-
+    # We have inserted a pubkey into our pubkey table which we received from a 
+    # pubkey, msg, or broadcast message. It might be one that we have been
+    # waiting for. Let's check.
+    def possibleNewPubkey(self, ripe=None, address=None):
+        # For address versions <= 3, we wait on a key with the correct ripe hash
+        if ripe != None:
+            if ripe in shared.neededPubkeys:
+                print 'We have been awaiting the arrival of this pubkey.'
+                del shared.neededPubkeys[ripe]
+                sqlExecute(
+                    '''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND (status='awaitingpubkey' or status='doingpubkeypow') and folder='sent' ''',
+                    ripe)
+                shared.workerQueue.put(('sendmessage', ''))
+            else:
+                with shared.printLock:
+                    print 'We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:', ripe.encode('hex')
+        # For address versions >= 4, we wait on a pubkey with the correct tag.
+        # Let us create the tag from the address and see if we were waiting
+        # for it.
+        elif address != None:
+            status, addressVersion, streamNumber, ripe = decodeAddress(address)
+            tag = hashlib.sha512(hashlib.sha512(encodeVarint(
+                addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()[32:]
+            if tag in shared.neededPubkeys:
+                print 'We have been awaiting the arrival of this pubkey.'
+                del shared.neededPubkeys[tag]
+                sqlExecute(
+                    '''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND (status='awaitingpubkey' or status='doingpubkeypow') and folder='sent' ''',
+                    ripe)
+                shared.workerQueue.put(('sendmessage', ''))
 
     # We have received a pubkey
     def recpubkey(self, data):
@@ -1322,7 +1341,7 @@ class receiveDataThread(threading.Thread):
 
         self.processpubkey(data)
 
-        lengthOfTimeWeShouldUseToProcessThisMessage = .2
+        lengthOfTimeWeShouldUseToProcessThisMessage = .1
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
             (time.time() - self.pubkeyProcessingStartTime)
         if sleepTime > 0 and doTimingAttackMitigation:
@@ -1400,7 +1419,7 @@ class receiveDataThread(threading.Thread):
                      # This will also update the embeddedTime.
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
             # shared.workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
-            self.possibleNewPubkey(ripe)
+            self.possibleNewPubkey(ripe = ripe)
         if addressVersion == 3:
             if len(data) < 170:  # sanity check.
                 print '(within processpubkey) payloadLength less than 170. Sanity check failed.'
@@ -1456,7 +1475,7 @@ class receiveDataThread(threading.Thread):
                 t = (ripe, data, embeddedTime, 'no')
                      # This will also update the embeddedTime.
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
-            self.possibleNewPubkey(ripe)
+            self.possibleNewPubkey(ripe = ripe)
 
         if addressVersion == 4:
             print 'length of v4 pubkey:', len(data)
@@ -1470,12 +1489,7 @@ class receiveDataThread(threading.Thread):
             if tag not in shared.neededPubkeys:
                 with shared.printLock:
                     print 'We don\'t need this v4 pubkey. We didn\'t ask for it.'
-                    print 'tag is', repr(tag)
-                    print 'shared.neededPubkeys is', repr(shared.neededPubkeys)
                 return
-
-            with shared.printLock:
-                print 'We have been awaiting the arrival of this pubkey.'
 
             # Let us try to decrypt the pubkey
             cryptorObject = shared.neededPubkeys[tag]
@@ -1542,11 +1556,13 @@ class receiveDataThread(threading.Thread):
 
             t = (ripe, signedData, embeddedTime, 'yes')
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
-
-            sqlExecute(
-                '''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND (status='awaitingpubkey' or status='doingpubkeypow') and folder='sent' ''',
-                ripe)
-            shared.workerQueue.put(('sendmessage', ''))
+            
+            fromAddress = encodeAddress(addressVersion, streamNumber, ripe)
+            # That this point we know that we have been waiting on this pubkey.
+            # This function will command the workerThread to start work on
+            # the messages that require it.
+            self.possibleNewPubkey(address = fromAddress)
+            
 
     # We have received a getpubkey message
     def recgetpubkey(self, data):

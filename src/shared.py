@@ -5,7 +5,7 @@ lengthOfTimeToLeaveObjectsInInventory = 237600  # Equals two days and 18 hours. 
 lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
 maximumAgeOfObjectsThatIAdvertiseToOthers = 216000  # Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
-useVeryEasyProofOfWorkForTesting = True  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
+useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
 
 
 # Libraries.
@@ -390,6 +390,88 @@ def isBitSetWithinBitfield(fourByteString, n):
     n = 31 - n
     x, = unpack('>L', fourByteString)
     return x & 2**n != 0
+
+def decryptAndCheckPubkeyPayload(payload, address):
+    status, addressVersion, streamNumber, ripe = decodeAddress(address)
+    doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
+        addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
+    # this function expects that the nonce is Not included in payload.
+    readPosition = 8  # for the time
+    embeddedVersionNumber, varintLength = decodeVarint(
+        payload[readPosition:readPosition + 10])
+    if embeddedVersionNumber != addressVersion:
+        with shared.printLock:
+            print 'Pubkey decryption was UNsuccessful due to address version mismatch. This shouldn\'t have happened.'
+        return 'failed'
+    readPosition += varintLength
+    embeddedStreamNumber, varintLength = decodeVarint(
+        payload[readPosition:readPosition + 10])
+    if embeddedStreamNumber != streamNumber:
+        with shared.printLock:
+            print 'Pubkey decryption was UNsuccessful due to stream number mismatch. This shouldn\'t have happened.'
+        return 'failed'
+    readPosition += varintLength
+    signedData = payload[:readPosition] # Some of the signed data is not encrypted so let's keep it for now.
+    toTag = payload[readPosition:readPosition+32]
+    readPosition += 32 #for the tag
+    encryptedData = payload[readPosition:]
+    # Let us try to decrypt the pubkey
+    privEncryptionKey = doubleHashOfAddressData[:32]
+    cryptorObject = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
+    try:
+        decryptedData = cryptorObject.decrypt(encryptedData)
+    except:
+        # Someone must have encrypted some data with a different key
+        # but tagged it with a tag for which we are watching.
+        with shared.printLock:
+            print 'Pubkey decryption was UNsuccessful. This shouldn\'t have happened.'
+        return 'failed'
+    print 'Pubkey decryption successful'
+    readPosition = 4 # bypass the behavior bitfield
+    publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+    # Is it possible for a public key to be invalid such that trying to
+    # encrypt or sign with it will cause an error? If it is, we should
+    # probably test these keys here.
+    readPosition += 64
+    publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+    readPosition += 64
+    specifiedNonceTrialsPerByte, specifiedNonceTrialsPerByteLength = decodeVarint(
+        decryptedData[readPosition:readPosition + 10])
+    readPosition += specifiedNonceTrialsPerByteLength
+    specifiedPayloadLengthExtraBytes, specifiedPayloadLengthExtraBytesLength = decodeVarint(
+        decryptedData[readPosition:readPosition + 10])
+    readPosition += specifiedPayloadLengthExtraBytesLength
+    signedData += decryptedData[:readPosition]
+    signatureLength, signatureLengthLength = decodeVarint(
+        decryptedData[readPosition:readPosition + 10])
+    readPosition += signatureLengthLength
+    signature = decryptedData[readPosition:readPosition + signatureLength]
+    try:
+        if not highlevelcrypto.verify(signedData, signature, publicSigningKey.encode('hex')):
+            print 'ECDSA verify failed (within decryptAndCheckPubkeyPayload).'
+            return 'failed'
+        print 'ECDSA verify passed (within decryptAndCheckPubkeyPayload)'
+    except Exception as err:
+        print 'ECDSA verify failed (within decryptAndCheckPubkeyPayload)', err
+        return 'failed'
+
+    sha = hashlib.new('sha512')
+    sha.update(publicSigningKey + publicEncryptionKey)
+    ripeHasher = hashlib.new('ripemd160')
+    ripeHasher.update(sha.digest())
+    embeddedRipe = ripeHasher.digest()
+
+    if embeddedRipe != ripe:
+        # Although this pubkey object had the tag were were looking for and was
+        # encrypted with the correct encryption key, it doesn't contain the
+        # correct keys. Someone is either being malicious or using buggy software.
+        with shared.printLock:
+            print 'Pubkey decryption was UNsuccessful due to RIPE mismatch. This shouldn\'t have happened.'
+        return 'failed'
+    
+    t = (ripe, signedData, int(time.time()), 'yes')
+    sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
+    return 'successful'
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])
 

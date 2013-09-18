@@ -24,7 +24,7 @@ class singleListener(threading.Thread):
     def run(self):
         while shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
             time.sleep(1)
-        #helper_bootstrap.dns()
+        helper_bootstrap.dns()
         # We typically don't want to accept incoming connections if the user is using a
         # SOCKS proxy, unless they have configured otherwise. If they eventually select
         # proxy 'none' or configure SOCKS listening then this will start listening for

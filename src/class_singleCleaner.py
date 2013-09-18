@@ -125,7 +125,7 @@ class singleCleaner(threading.Thread):
                         shared.inventorySets[streamNumber].add(row[0])
                 with shared.inventoryLock:
                     for hash, storedValue in shared.inventory.items():
-                        objectType, streamNumber, payload, receivedTime = storedValue
+                        objectType, streamNumber, payload, receivedTime, tag = storedValue
                         if streamNumber in shared.inventorySets:
                             shared.inventorySets[streamNumber].add(hash)
 

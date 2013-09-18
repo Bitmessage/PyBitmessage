@@ -182,7 +182,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif method == 'statusBar':
             message, = params
             shared.UISignalQueue.put(('updateStatusBar', message))
-        elif method == 'listAddresses':
+        elif method == 'listAddresses' or method == 'listAddresses2':
             data = '{"addresses":['
             configSections = shared.config.sections()
             for addressInKeysFile in configSections:
@@ -196,7 +196,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                         chan = shared.config.getboolean(addressInKeysFile, 'chan')
                     else:
                         chan = False
-                    data += json.dumps({'label': shared.config.get(addressInKeysFile, 'label'), 'address': addressInKeysFile, 'stream':
+                    label = shared.config.get(addressInKeysFile, 'label')
+                    if method == listAddresses2:
+                        label = label.encode('base64')
+                    data += json.dumps({'label': label, 'address': addressInKeysFile, 'stream':
                                        streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled'), 'chan': chan}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
@@ -276,7 +279,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.apiAddressGeneratorReturnQueue.queue.clear()
             streamNumberForAddress = 1
             shared.addressGeneratorQueue.put((
-                'createRandomAddress', 3, streamNumberForAddress, label, 1, "", eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
+                'createRandomAddress', 4, streamNumberForAddress, label, 1, "", eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
             return shared.apiAddressGeneratorReturnQueue.get()
         elif method == 'createDeterministicAddresses':
             if len(params) == 0:
@@ -341,9 +344,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(23, 'Bool expected in eighteenByteRipe, saw %s instead' % type(eighteenByteRipe))
             passphrase = self._decode(passphrase, "base64")
             if addressVersionNumber == 0:  # 0 means "just use the proper addressVersionNumber"
-                addressVersionNumber = 3
-            if addressVersionNumber != 3:
-                raise APIError(2,'The address version number currently must be 3 (or 0 which means auto-select). ' + addressVersionNumber + ' isn\'t supported.')
+                addressVersionNumber = 4
+            if addressVersionNumber != 3 and addressVersionNumber != 4:
+                raise APIError(2,'The address version number currently must be 3, 4, or 0 (which means auto-select). ' + addressVersionNumber + ' isn\'t supported.')
             if streamNumber == 0:  # 0 means "just use the most available stream"
                 streamNumber = 1
             if streamNumber != 1:
@@ -374,8 +377,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(passphrase) == 0:
                 raise APIError(1, 'The specified passphrase is blank.')
             passphrase = self._decode(passphrase, "base64")
-            if addressVersionNumber != 3:
-                raise APIError(2, 'The address version number currently must be 3. ' + addressVersionNumber + ' isn\'t supported.')
+            if addressVersionNumber != 3 and addressVersionNumber != 4:
+                raise APIError(2, 'The address version number currently must be 3 or 4. ' + addressVersionNumber + ' isn\'t supported.')
             if streamNumber != 1:
                 raise APIError(3, ' The stream number must be 1. Others aren\'t supported.')
             shared.apiAddressGeneratorReturnQueue.queue.clear()
@@ -756,7 +759,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 print 'broadcasting inv within API command disseminatePubkey with hash:', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
                 streamNumber, 'advertiseobject', inventoryHash))
-        elif method == 'getMessageDataByDestinationHash':
+        elif method == 'getMessageDataByDestinationHash' or method == 'getMessageDataByDestinationTag':
             # Method will eventually be used by a particular Android app to 
             # select relevant messages. Do not yet add this to the api
             # doc.
@@ -764,24 +767,24 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) != 1:
                 raise APIError(0, 'I need 1 parameter!')
             requestedHash, = params
-            if len(requestedHash) != 40:
-                raise APIError(19, 'The length of hash should be 20 bytes (encoded in hex thus 40 characters).')
+            if len(requestedHash) != 32:
+                raise APIError(19, 'The length of hash should be 32 bytes (encoded in hex thus 64 characters).')
             requestedHash = self._decode(requestedHash, "hex")
             
             # This is not a particularly commonly used API function. Before we 
             # use it we'll need to fill out a field in our inventory database 
             # which is blank by default (first20bytesofencryptedmessage). 
             queryreturn = sqlQuery(
-                '''SELECT hash, payload FROM inventory WHERE first20bytesofencryptedmessage = '' and objecttype = 'msg' ; ''')
+                '''SELECT hash, payload FROM inventory WHERE tag = '' and objecttype = 'msg' ; ''')
             with SqlBulkExecute() as sql:
                 for row in queryreturn:
                     hash, payload = row
                     readPosition = 16 # Nonce length + time length
                     readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
-                    t = (payload[readPosition:readPosition+20],hash)
-                    sql.execute('''UPDATE inventory SET first20bytesofencryptedmessage=? WHERE hash=?; ''', *t)
+                    t = (payload[readPosition:readPosition+32],hash)
+                    sql.execute('''UPDATE inventory SET tag=? WHERE hash=?; ''', *t)
                 
-            queryreturn = sqlQuery('''SELECT payload FROM inventory WHERE first20bytesofencryptedmessage = ?''',
+            queryreturn = sqlQuery('''SELECT payload FROM inventory WHERE tag = ?''',
                                    requestedHash)
             data = '{"receivedMessageDatas":['
             for row in queryreturn:
@@ -814,7 +817,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
             else:
                 networkStatus = 'connectedAndReceivingIncomingConnections'
-            return json.dumps({'networkConnections':len(shared.connectedHostsList),'numberOfMessagesProcessed':shared.numberOfMessagesProcessed, 'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed, 'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed, 'networkStatus':networkStatus}, indent=4, separators=(',', ': '))
+            return json.dumps({'networkConnections':len(shared.connectedHostsList),'numberOfMessagesProcessed':shared.numberOfMessagesProcessed, 'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed, 'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed, 'networkStatus':networkStatus, 'softwareName':'PyBitmessage','softwareVersion':shared.softwareVersion}, indent=4, separators=(',', ': '))
         else:
             raise APIError(20, 'Invalid method: %s' % method)
 
@@ -862,7 +865,7 @@ class Main:
     def start(self, daemon=False):
         shared.daemon = daemon
         # is the application already running?  If yes then exit.
-        #thisapp = singleton.singleinstance() #todo: renable after testing.
+        thisapp = singleton.singleinstance()
 
         signal.signal(signal.SIGINT, helper_generic.signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
