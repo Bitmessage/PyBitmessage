@@ -58,14 +58,6 @@ def _translate(context, text):
 def identiconize(address):
     size = 48
     
-    str_broadcast_subscribers = '[Broadcast subscribers]'
-    if address == str_broadcast_subscribers:
-        idcon = QtGui.QIcon(":/newPrefix/images/can-icon-24px.png")
-        return idcon
-    try:
-        identiconsuffix = shared.config.get('bitmessagesettings', 'identiconsuffix')
-    except:
-        identiconsuffix = ''
     # here you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators
     # instead, you could also use a pseudo-password to salt the generation of the identicons
     # Attacks where someone creates an address to mimic someone else's identicon should be impossible then
@@ -81,13 +73,18 @@ def identiconize(address):
         # default to no identicons
         identicon_lib = False
     
+    try:
+        identiconsuffix = shared.config.get('bitmessagesettings', 'identiconsuffix')
+    except:
+        identiconsuffix = ''
+    
     if (identicon_lib[:len('qidenticon')] == 'qidenticon'):
         # print identicon_lib
         # originally by:
         # :Author:Shin Adachi <shn@glucose.jp>
         # Licesensed under FreeBSD License.
-        # stripped from PIL and uses QT instead
-        import qidenticon 
+        # stripped from PIL and uses QT instead (by sendiulo, same license)
+        import qidenticon
         import hashlib
         hash = hashlib.md5(addBMIfNotPresent(address)+identiconsuffix).hexdigest()
         use_two_colors = (identicon_lib[:len('qidenticon_two')] == 'qidenticon_two')
@@ -125,6 +122,36 @@ def identiconize(address):
         # default to no identicons
         idcon = QtGui.QIcon()
         return idcon
+        
+def avatarize(address, fallBackToIdenticon = False):
+    str_broadcast_subscribers = '[Broadcast subscribers]'
+    # don't add the suffix for [Broadcast subscribers]
+    import hashlib
+    hash = hashlib.md5(addBMIfNotPresent(address)).hexdigest()
+    if address == str_broadcast_subscribers:
+        hash = address
+    print address, ' => ', hash
+    idcon = QtGui.QIcon()
+    # http://pyqt.sourceforge.net/Docs/PyQt4/qimagereader.html#supportedImageFormats
+    # print QImageReader.supportedImageFormats ()
+    # QImageReader.supportedImageFormats ()
+    extensions = ['PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM', 'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
+    for ext in extensions:
+        upper = shared.appdata + 'avatars/' + hash + '.' + ext.upper()
+        lower = shared.appdata + 'avatars/' + hash + '.' + ext.lower()
+        if os.path.isfile(lower):
+            print 'found avatar of ', address
+            idcon.addFile(upper)
+            return idcon
+        elif os.path.isfile(upper):
+            print 'found avatar of ', address
+            idcon.addFile(upper)
+            return idcon
+    if fallBackToIdenticon:
+        return identiconize(address)
+    else:
+        return idcon
+    #identiconize(address)
 
 class MyForm(QtGui.QMainWindow):
 
@@ -387,6 +414,7 @@ class MyForm(QtGui.QMainWindow):
                 if not isEnabled:
                     newItem.setTextColor(QtGui.QColor(128, 128, 128))
                 self.ui.tableWidgetYourIdentities.insertRow(0)
+                newItem.setIcon(avatarize(addressInKeysFile))
                 self.ui.tableWidgetYourIdentities.setItem(0, 0, newItem)
                 newItem = QtGui.QTableWidgetItem(addressInKeysFile)
                 newItem.setFlags(
@@ -427,6 +455,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetAddressBook.insertRow(0)
             # address book item
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+            newItem.setIcon(avatarize(addressInKeysFile))
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(address)
             newItem.setIcon(identiconize(address))
@@ -690,7 +719,7 @@ class MyForm(QtGui.QMainWindow):
             else:
                 newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
                 newItem.setToolTip(unicode(toLabel, 'utf-8'))
-            newItem.setIcon(identiconize(toAddress))
+            newItem.setIcon(avatarize(toAddress, True))
             newItem.setData(Qt.UserRole, str(toAddress))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
@@ -702,7 +731,7 @@ class MyForm(QtGui.QMainWindow):
             else:
                 newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
                 newItem.setToolTip(unicode(fromLabel, 'utf-8'))
-            newItem.setIcon(identiconize(fromAddress))
+            newItem.setIcon(avatarize(fromAddress, True))
             newItem.setData(Qt.UserRole, str(fromAddress))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
@@ -847,7 +876,7 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setTextColor(QtGui.QColor(137, 04, 177))
             if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
                 newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
-            newItem.setIcon(identiconize(toAddress))
+            newItem.setIcon(avatarize(toAddress, True))
             self.ui.tableWidgetInbox.setItem(0, 0, newItem)
             # from
             if fromLabel == '':
@@ -862,7 +891,7 @@ class MyForm(QtGui.QMainWindow):
             if not read:
                 newItem.setFont(font)
             newItem.setData(Qt.UserRole, str(fromAddress))
-            newItem.setIcon(identiconize(fromAddress))
+            newItem.setIcon(avatarize(fromAddress, True))
             self.ui.tableWidgetInbox.setItem(0, 1, newItem)
             # subject
             newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
@@ -1565,7 +1594,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.item(
                 i, 0).setText(unicode(toLabel, 'utf-8'))
             self.ui.tableWidgetInbox.item(
-                i, 0).setIcon(identiconize(toAddress))
+                i, 0).setIcon(avatarize(toAddress, True))
             # Set the color according to whether it is the address of a mailing
             # list or not.
             if shared.safeConfigGetBoolean(toAddress, 'mailinglist'):
@@ -1587,7 +1616,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetSent.item(
                 i, 1).setText(unicode(fromLabel, 'utf-8'))
             self.ui.tableWidgetSent.item(
-                i, 0).setIcon(identiconize(fromAddress))
+                i, 0).setIcon(avatarize(fromAddress, True))
 
     def rerenderSentToLabels(self):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -1622,13 +1651,14 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
+            newItem.setIcon(avatarize(address))
             self.ui.tableWidgetSubscriptions.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(address)
-            newItem.setIcon(identiconize(address))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
+            newItem.setIcon(identiconize(address))
             self.ui.tableWidgetSubscriptions.setItem(0, 1, newItem)
 
     def click_pushButtonSend(self):
