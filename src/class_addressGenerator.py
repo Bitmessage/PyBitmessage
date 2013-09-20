@@ -25,7 +25,10 @@ class addressGenerator(threading.Thread):
                 numberOfNullBytesDemandedOnFrontOfRipeHash = shared.config.getint(
                     'bitmessagesettings', 'numberofnullbytesonaddress')
             except:
-                numberOfNullBytesDemandedOnFrontOfRipeHash = 1 # the default
+                if eighteenByteRipe:
+                    numberOfNullBytesDemandedOnFrontOfRipeHash = 2
+                else:
+                    numberOfNullBytesDemandedOnFrontOfRipeHash = 1 # the default
             if queueValue[0] == 'createChan':
                 command, addressVersionNumber, streamNumber, label, deterministicPassphrase = queueValue
                 eighteenByteRipe = False
@@ -58,8 +61,6 @@ class addressGenerator(threading.Thread):
                     'bitmessagesettings', 'defaultpayloadlengthextrabytes')
             if payloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
                 payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
-            if eighteenByteRipe:
-                numberOfNullBytesDemandedOnFrontOfRipeHash = 2
             if command == 'createRandomAddress':
                 shared.UISignalQueue.put((
                     'updateStatusBar', tr.translateText("MainWindow", "Generating one new address")))
