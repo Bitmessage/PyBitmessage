@@ -124,13 +124,13 @@ def identiconize(address):
         return idcon
         
 def avatarize(address, fallBackToIdenticon = False):
-    str_broadcast_subscribers = '[Broadcast subscribers]'
-    # don't add the suffix for [Broadcast subscribers]
     import hashlib
     hash = hashlib.md5(addBMIfNotPresent(address)).hexdigest()
+    str_broadcast_subscribers = '[Broadcast subscribers]'
     if address == str_broadcast_subscribers:
+        # don't hash [Broadcast subscribers]
         hash = address
-    print address, ' => ', hash
+    # print address, ' => ', hash
     idcon = QtGui.QIcon()
     # http://pyqt.sourceforge.net/Docs/PyQt4/qimagereader.html#supportedImageFormats
     # print QImageReader.supportedImageFormats ()
@@ -140,11 +140,11 @@ def avatarize(address, fallBackToIdenticon = False):
         upper = shared.appdata + 'avatars/' + hash + '.' + ext.upper()
         lower = shared.appdata + 'avatars/' + hash + '.' + ext.lower()
         if os.path.isfile(lower):
-            print 'found avatar of ', address
+            # print 'found avatar of ', address
             idcon.addFile(upper)
             return idcon
         elif os.path.isfile(upper):
-            print 'found avatar of ', address
+            # print 'found avatar of ', address
             idcon.addFile(upper)
             return idcon
     if fallBackToIdenticon:
@@ -292,6 +292,8 @@ class MyForm(QtGui.QMainWindow):
             "MainWindow", "Enable"), self.on_action_YourIdentitiesEnable)
         self.actionDisable = self.ui.addressContextMenuToolbar.addAction(_translate(
             "MainWindow", "Disable"), self.on_action_YourIdentitiesDisable)
+        self.actionSetAvatar = self.ui.addressContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Set avatar..."), self.on_action_YourIdentitiesSetAvatar)
         self.actionClipboard = self.ui.addressContextMenuToolbar.addAction(_translate(
             "MainWindow", "Copy address to clipboard"), self.on_action_YourIdentitiesClipboard)
         self.actionSpecialAddressBehavior = self.ui.addressContextMenuToolbar.addAction(_translate(
@@ -307,6 +309,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenu.addSeparator()
         self.popMenu.addAction(self.actionEnable)
         self.popMenu.addAction(self.actionDisable)
+        self.popMenu.addAction(self.actionSetAvatar)
         self.popMenu.addAction(self.actionSpecialAddressBehavior)
 
         # Popup menu for the Address Book page
@@ -455,7 +458,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetAddressBook.insertRow(0)
             # address book item
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
-            newItem.setIcon(avatarize(addressInKeysFile))
+            newItem.setIcon(avatarize(address))
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(address)
             newItem.setIcon(identiconize(address))
@@ -1877,7 +1880,7 @@ class MyForm(QtGui.QMainWindow):
                 isEnabled = shared.config.getboolean(
                     addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
                 if isEnabled:
-                    self.ui.comboBoxSendFrom.insertItem(0, identiconize(addressInKeysFile), unicode(shared.config.get(
+                    self.ui.comboBoxSendFrom.insertItem(0, avatarize(addressInKeysFile, True), unicode(shared.config.get(
                         addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
         self.ui.comboBoxSendFrom.insertItem(0, '', '')
         if(self.ui.comboBoxSendFrom.count() == 2):
@@ -1909,7 +1912,7 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
             newItem.setToolTip(unicode(toLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(toAddress))
-        newItem.setIcon(identiconize(toAddress))
+        newItem.setIcon(avatarize(toAddress, True))
         self.ui.tableWidgetSent.setItem(0, 0, newItem)
         if fromLabel == '':
             newItem = QtGui.QTableWidgetItem(unicode(fromAddress, 'utf-8'))
@@ -1918,7 +1921,7 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
             newItem.setToolTip(unicode(fromLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(fromAddress))
-        newItem.setIcon(identiconize(fromAddress))
+        newItem.setIcon(avatarize(fromAddress, True))
         self.ui.tableWidgetSent.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
         newItem.setToolTip(unicode(subject, 'utf-8)'))
@@ -1988,7 +1991,7 @@ class MyForm(QtGui.QMainWindow):
         if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
             newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
         self.ui.tableWidgetInbox.insertRow(0)
-        newItem.setIcon(identiconize(toAddress))
+        newItem.setIcon(avatarize(toAddress, True))
         self.ui.tableWidgetInbox.setItem(0, 0, newItem)
 
         if fromLabel == '':
@@ -2003,7 +2006,7 @@ class MyForm(QtGui.QMainWindow):
                 self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(fromLabel, 'utf-8'), self.SOUND_KNOWN, unicode(fromLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setFont(font)
-        newItem.setIcon(identiconize(fromAddress))
+        newItem.setIcon(avatarize(fromAddress, True))
         self.ui.tableWidgetInbox.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
         newItem.setToolTip(unicode(subject, 'utf-8)'))
@@ -2048,6 +2051,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetAddressBook.setSortingEnabled(False)
             self.ui.tableWidgetAddressBook.insertRow(0)
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+            newItem.setIcon(avatarize(address))
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(address)
             newItem.setIcon(identiconize(address))
@@ -2078,6 +2082,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSubscriptions.setSortingEnabled(False)
         self.ui.tableWidgetSubscriptions.insertRow(0)
         newItem =  QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+        newItem.setIcon(avatarize(address))
         self.ui.tableWidgetSubscriptions.setItem(0,0,newItem)
         newItem =  QtGui.QTableWidgetItem(address)
         newItem.setIcon(identiconize(address))
@@ -2128,6 +2133,7 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
+            newItem.setIcon(avatarize(address))
             self.ui.tableWidgetBlacklist.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(address)
             newItem.setIcon(identiconize(address))
@@ -2955,6 +2961,43 @@ class MyForm(QtGui.QMainWindow):
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(str(addressAtCurrentRow))
 
+    def on_action_YourIdentitiesSetAvatar(self):
+        currentRow = self.ui.tableWidgetYourIdentities.currentRow()
+        addressAtCurrentRow = self.ui.tableWidgetYourIdentities.item(
+            currentRow, 1).text()
+        import hashlib
+        hash = hashlib.md5(addBMIfNotPresent(addressAtCurrentRow)).hexdigest()
+        extensions = ['PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM', 'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
+        # http://pyqt.sourceforge.net/Docs/PyQt4/qimagereader.html#supportedImageFormats
+        names = {'BMP':'Windows Bitmap', 'GIF':'Graphic Interchange Format', 'JPG':'Joint Photographic Experts Group', 'JPEG':'Joint Photographic Experts Group', 'MNG':'Multiple-image Network Graphics', 'PNG':'Portable Network Graphics', 'PBM':'Portable Bitmap', 'PGM':'Portable Graymap', 'PPM':'Portable Pixmap', 'TIFF':'Tagged Image File Format', 'XBM':'X11 Bitmap', 'XPM':'X11 Pixmap', 'SVG':'Scalable Vector Graphics', 'TGA':'Targa Image Format'}
+        filters = []
+        all_images_filter = []
+        for ext in extensions:
+            filters += [ names[ext] + ' (*.' + ext.lower() + ')' ]
+            all_images_filter += [ '*.' + ext.lower() ]
+        filters[0:0] = ['Image files (' + ' '.join(all_images_filter) + ')']
+        filters[1:1] = ['All files (*.*)']
+        sourcefile = QFileDialog.getOpenFileName(self, _translate("MainWindow","Set avatar..."), filter = ';;'.join(filters))
+        # determine the correct filename (note that avatars don't use the suffix)
+        destination = shared.appdata + 'avatars/' + hash + '.' + sourcefile.split('.')[-1]
+        # copy the image file to the appdata folder
+        exists = QtCore.QFile.exists(destination)
+        overwrite = QtGui.QMessageBox.No
+        if exists:
+            displayMsg = _translate("MainWindow", "You have already set an avatar for this address. Do you really want to overwrite it?")
+            overwrite = QtGui.QMessageBox.question(
+                        self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+        if (not exists) | (overwrite == QtGui.QMessageBox.Yes):
+            if overwrite == QtGui.QMessageBox.Yes:
+                QtCore.QFile.remove(destination)
+            copied = QtCore.QFile.copy(sourcefile, destination)
+            if not copied:
+                print 'couldn\'t copy :('
+                return False
+            # set the icon
+            self.ui.tableWidgetYourIdentities.item(
+                currentRow, 0).setIcon(avatarize(addressAtCurrentRow))
+        
     def on_context_menuYourIdentities(self, point):
         self.popMenu.exec_(
             self.ui.tableWidgetYourIdentities.mapToGlobal(point))
@@ -3101,6 +3144,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetYourIdentities.setSortingEnabled(False)
         self.ui.tableWidgetYourIdentities.insertRow(0)
         newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+        newItem.setIcon(avatarize(address))
         self.ui.tableWidgetYourIdentities.setItem(
             0, 0, newItem)
         newItem = QtGui.QTableWidgetItem(address)
