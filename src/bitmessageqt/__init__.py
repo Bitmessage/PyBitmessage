@@ -112,9 +112,6 @@ def identiconize(address):
         idcon = QtGui.QIcon()
         idcon.addPixmap(pix, QtGui.QIcon.Normal, QtGui.QIcon.Off)
         return idcon
-    elif identicon_lib == 'empty':
-        idcon = QtGui.QIcon(":/newPrefix/images/no_identicons.png")
-        return idcon
     elif identicon_lib in ['False', 'false', 'None', 'none']:
         idcon = QtGui.QIcon()
         return idcon
@@ -174,9 +171,6 @@ def avatarize(address, fallBackToIdenticon = False):
         except:
             # default to no identicons
             identicon_lib = False
-        if identicon_lib == 'empty':
-            idcon = QtGui.QIcon(":/newPrefix/images/no_identicons.png")
-            return idcon
         return idcon
 
 class MyForm(QtGui.QMainWindow):
@@ -1690,7 +1684,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetSent.item(
                 i, 1).setText(unicode(fromLabel, 'utf-8'))
             self.ui.tableWidgetSent.item(
-                i, 0).setIcon(avatarize(fromAddress, True))
+                i, 1).setIcon(avatarize(fromAddress, True))
 
     def rerenderSentToLabels(self):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -3358,8 +3352,7 @@ class settingsDialog(QtGui.QDialog):
             curr_index = languages.index('other')
         self.ui.languageComboBox.setCurrentIndex(curr_index)
         
-        ###
-        self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/no_identicons.png"), _translate("settingsDialog", "None"), "none")
+        self.ui.comboBoxIdenticonStyle.addItem(_translate("settingsDialog", "None"), "none")
         self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/qidenticon.png"), _translate("settingsDialog", "QIdenticon"), "qidenticon")
         self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/qidenticon_x.png"), _translate("settingsDialog", "QIdenticon (transparent)"), "qidenticon_x")
         self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/qidenticon_two.png"), _translate("settingsDialog", "QIdenticon two"), "qidenticon_two")
