@@ -197,7 +197,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     else:
                         chan = False
                     label = shared.config.get(addressInKeysFile, 'label')
-                    if method == listAddresses2:
+                    if method == 'listAddresses2':
                         label = label.encode('base64')
                     data += json.dumps({'label': label, 'address': addressInKeysFile, 'stream':
                                        streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled'), 'chan': chan}, indent=4, separators=(',', ': '))

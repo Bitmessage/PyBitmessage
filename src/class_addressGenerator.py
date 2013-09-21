@@ -21,14 +21,6 @@ class addressGenerator(threading.Thread):
             queueValue = shared.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0
             payloadLengthExtraBytes = 0
-            try:
-                numberOfNullBytesDemandedOnFrontOfRipeHash = shared.config.getint(
-                    'bitmessagesettings', 'numberofnullbytesonaddress')
-            except:
-                if eighteenByteRipe:
-                    numberOfNullBytesDemandedOnFrontOfRipeHash = 2
-                else:
-                    numberOfNullBytesDemandedOnFrontOfRipeHash = 1 # the default
             if queueValue[0] == 'createChan':
                 command, addressVersionNumber, streamNumber, label, deterministicPassphrase = queueValue
                 eighteenByteRipe = False
@@ -43,8 +35,24 @@ class addressGenerator(threading.Thread):
                 numberOfNullBytesDemandedOnFrontOfRipeHash = 1
             elif len(queueValue) == 7:
                 command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe = queueValue
+                try:
+                    numberOfNullBytesDemandedOnFrontOfRipeHash = shared.config.getint(
+                        'bitmessagesettings', 'numberofnullbytesonaddress')
+                except:
+                    if eighteenByteRipe:
+                        numberOfNullBytesDemandedOnFrontOfRipeHash = 2
+                    else:
+                        numberOfNullBytesDemandedOnFrontOfRipeHash = 1 # the default
             elif len(queueValue) == 9:
                 command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes = queueValue
+                try:
+                    numberOfNullBytesDemandedOnFrontOfRipeHash = shared.config.getint(
+                        'bitmessagesettings', 'numberofnullbytesonaddress')
+                except:
+                    if eighteenByteRipe:
+                        numberOfNullBytesDemandedOnFrontOfRipeHash = 2
+                    else:
+                        numberOfNullBytesDemandedOnFrontOfRipeHash = 1 # the default
             else:
                 sys.stderr.write(
                     'Programming error: A structure with the wrong number of values was passed into the addressGeneratorQueue. Here is the queueValue: %s\n' % repr(queueValue))
