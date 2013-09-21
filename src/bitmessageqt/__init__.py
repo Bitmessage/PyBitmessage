@@ -58,11 +58,6 @@ def _translate(context, text):
 def identiconize(address):
     size = 48
     
-    # here you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators
-    # instead, you could also use a pseudo-password to salt the generation of the identicons
-    # Attacks where someone creates an address to mimic someone else's identicon should be impossible then
-    # i think it should generate a random string by default
-    
     # If you include another identicon library, please generate an 
     # example identicon with the following md5 hash:
     # 3fd4bf901b9d4ea1394f0fb358725b28
@@ -74,6 +69,11 @@ def identiconize(address):
         identicon_lib = False
     
     try:
+        # As an 'identiconsuffix' you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators. (Note however, that E-Mail programs might convert the BM-address to lowercase first.)
+        # It can be used as a pseudo-password to salt the generation of the identicons to decrease the risk
+        # of attacks where someone creates an address to mimic someone else's identicon.
+        # If not set yet it will be filled by a random string.
+        # Another good idea would be to fill it with the private key of one of your addresses (because you don't need to memorize it then).
         identiconsuffix = shared.config.get('bitmessagesettings', 'identiconsuffix')
     except:
         identiconsuffix = ''
@@ -93,7 +93,7 @@ def identiconize(address):
         image = qidenticon.render_identicon(int(hash, 16), size, use_two_colors, opacity, penwidth)
         # filename = './images/identicons/'+hash+'.png'
         # image.save(filename)
-        idcon = QIcon()
+        idcon = QtGui.QIcon()
         idcon.addPixmap(image, QtGui.QIcon.Normal, QtGui.QIcon.Off)
         return idcon
     elif identicon_lib == 'pydenticon':
@@ -112,46 +112,72 @@ def identiconize(address):
         idcon = QtGui.QIcon()
         idcon.addPixmap(pix, QtGui.QIcon.Normal, QtGui.QIcon.Off)
         return idcon
-    elif identicon_lib == False:
+    elif identicon_lib == 'empty':
+        idcon = QtGui.QIcon(":/newPrefix/images/no_identicons.png")
+        return idcon
+    elif identicon_lib in ['False', 'false', 'None', 'none']:
         idcon = QtGui.QIcon()
         return idcon
     else:
-        if identicon_lib & len(identicon_lib) > 0:
-            print 'Error: couldn\'t find this identicon library: ', identicon_lib
-            print 'Control for typos!'
         # default to no identicons
         idcon = QtGui.QIcon()
         return idcon
         
 def avatarize(address, fallBackToIdenticon = False):
-    import hashlib
-    hash = hashlib.md5(addBMIfNotPresent(address)).hexdigest()
-    str_broadcast_subscribers = '[Broadcast subscribers]'
-    if address == str_broadcast_subscribers:
-        # don't hash [Broadcast subscribers]
-        hash = address
-    # print address, ' => ', hash
+    """
+        loads a supported image for the given address' hash form 'avatars' folder
+        falls back to default avatar if 'default.*' file exists
+        falls back to identiconize(address) if second argument fallBackToIdenticon == True
+    """
     idcon = QtGui.QIcon()
-    # http://pyqt.sourceforge.net/Docs/PyQt4/qimagereader.html#supportedImageFormats
-    # print QImageReader.supportedImageFormats ()
-    # QImageReader.supportedImageFormats ()
-    extensions = ['PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM', 'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
-    for ext in extensions:
-        upper = shared.appdata + 'avatars/' + hash + '.' + ext.upper()
-        lower = shared.appdata + 'avatars/' + hash + '.' + ext.lower()
-        if os.path.isfile(lower):
-            # print 'found avatar of ', address
-            idcon.addFile(upper)
-            return idcon
-        elif os.path.isfile(upper):
-            # print 'found avatar of ', address
-            idcon.addFile(upper)
-            return idcon
+    if shared.safeConfigGetBoolean('bitmessagesettings', 'avatars'):
+        import hashlib
+        hash = hashlib.md5(addBMIfNotPresent(address)).hexdigest()
+        str_broadcast_subscribers = '[Broadcast subscribers]'
+        if address == str_broadcast_subscribers:
+            # don't hash [Broadcast subscribers]
+            hash = address
+        # http://pyqt.sourceforge.net/Docs/PyQt4/qimagereader.html#supportedImageFormats
+        # print QImageReader.supportedImageFormats ()
+        # QImageReader.supportedImageFormats ()
+        extensions = ['PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM', 'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
+        # try to find a specific avatar
+        for ext in extensions:
+            lower_hash = shared.appdata + 'avatars/' + hash + '.' + ext.lower()
+            upper_hash = shared.appdata + 'avatars/' + hash + '.' + ext.upper()
+            if os.path.isfile(lower_hash):
+                # print 'found avatar of ', address
+                idcon.addFile(lower_hash)
+                return idcon
+            elif os.path.isfile(upper_hash):
+                # print 'found avatar of ', address
+                idcon.addFile(upper_hash)
+                return idcon
+        # if we haven't found any, try to find a default avatar
+        for ext in extensions:
+            lower_default = shared.appdata + 'avatars/' + 'default.' + ext.lower()
+            upper_default = shared.appdata + 'avatars/' + 'default.' + ext.upper()
+            if os.path.isfile(lower_default):
+                default = lower_default
+                idcon.addFile(lower_default)
+                return idcon
+            elif os.path.isfile(upper_default):
+                default = upper_default
+                idcon.addFile(upper_default)
+                return idcon
+    # if avatars are deactivated or none found
     if fallBackToIdenticon:
         return identiconize(address)
     else:
+        try:
+            identicon_lib = shared.config.get('bitmessagesettings', 'identicon')
+        except:
+            # default to no identicons
+            identicon_lib = False
+        if identicon_lib == 'empty':
+            idcon = QtGui.QIcon(":/newPrefix/images/no_identicons.png")
+            return idcon
         return idcon
-    #identiconize(address)
 
 class MyForm(QtGui.QMainWindow):
 
