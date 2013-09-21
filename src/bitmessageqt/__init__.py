@@ -2171,12 +2171,10 @@ class MyForm(QtGui.QMainWindow):
             shared.config.set('bitmessagesettings', 'willinglysendtomobile', str(
                 self.settingsDialogInstance.ui.checkBoxWillinglySendToMobile.isChecked()))
                 
-            
             lang_ind = int(self.settingsDialogInstance.ui.languageComboBox.currentIndex())
             if not languages[lang_ind] == 'other':
                 shared.config.set('bitmessagesettings', 'userlocale', languages[lang_ind])
-            
-            ###
+                
             curr_index = self.settingsDialogInstance.ui.comboBoxIdenticonStyle.currentIndex()
             shared.config.set('bitmessagesettings', 'identicon', str(self.settingsDialogInstance.ui.comboBoxIdenticonStyle.itemData(
                     curr_index , Qt.UserRole).toString()))
