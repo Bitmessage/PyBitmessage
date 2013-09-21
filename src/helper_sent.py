@@ -1,11 +1,4 @@
-import shared
+from helper_sql import *
 
 def insert(t):
-    shared.sqlLock.acquire()
-    shared.sqlSubmitQueue.put(
-        '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''')
-    shared.sqlSubmitQueue.put(t)
-    shared.sqlReturnQueue.get()
-    shared.sqlSubmitQueue.put('commit')
-    shared.sqlLock.release()
-    
+    sqlExecute('''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
