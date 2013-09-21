@@ -139,7 +139,7 @@ class namecoinConnection (object):
                 assert False
 
         except Exception as exc:
-            print "Exception testing the namecoin connection:\n%s" % str (exc)
+            print "Namecoin connection test: %s" % str (exc)
             return ('failed', "The connection to namecoin failed.")
 
     # Helper routine that actually performs an JSON RPC call.
@@ -270,7 +270,7 @@ def ensureNamecoinOptions ():
         nmc.close ()
 
     except Exception as exc:
-        print "Failure reading namecoin config file: %s" % str (exc)
+        print "Could not read the Namecoin config file probably because you don't have Namecoin installed. That's ok; we don't really need it. Detailed error message: %s" % str (exc)
 
     # If still nothing found, set empty at least.
     if (not hasUser):

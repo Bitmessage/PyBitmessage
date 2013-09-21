@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>567</width>
-    <height>343</height>
+    <width>600</width>
+    <height>407</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -37,6 +37,70 @@
        <string>User Interface</string>
       </attribute>
       <layout class="QGridLayout" name="gridLayout_5">
+       <item row="7" column="1" rowspan="4">
+        <widget class="QGroupBox" name="groupBox">
+         <property name="title">
+          <string>Interface Language</string>
+         </property>
+         <layout class="QHBoxLayout" name="horizontalLayout_2">
+          <item>
+           <widget class="QComboBox" name="languageComboBox">
+            <property name="minimumSize">
+             <size>
+              <width>100</width>
+              <height>0</height>
+             </size>
+            </property>
+            <item>
+             <property name="text">
+              <string comment="system">System Settings</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="en">English</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="eo">Esperanto</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="fr">Français</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="de">Deutsch</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="es">Españl</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="ru">русский язык</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="en_pirate">Pirate English</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="other">Other (set in keys.dat)</string>
+             </property>
+            </item>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </item>
        <item row="2" column="0">
         <widget class="QCheckBox" name="checkBoxMinimizeToTray">
          <property name="text">
@@ -77,6 +141,12 @@
        </item>
        <item row="5" column="0" colspan="2">
         <widget class="QLabel" name="PortableModeDescription">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>In Portable Mode, messages and config files are stored in the same directory as the program rather than the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.</string>
          </property>
@@ -92,112 +162,79 @@
          </property>
         </widget>
        </item>
-       <item row="7" column="1" rowspan="4">
-        <widget class="QGroupBox" name="groupBox">
+       <item row="7" column="0" rowspan="5">
+        <widget class="QGroupBox" name="groupBox_3">
          <property name="title">
-          <string>Interface Language</string>
+          <string>Identicons (with example image)</string>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <item>
-           <widget class="QComboBox" name="languageComboBox">
-            <item>
-             <property name="text">
-              <string comment="system">System Settings</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string comment="en">English</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string comment="eo">Esperanto</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string comment="fr">French</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string comment="de">German</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string comment="es">Spanish</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string comment="ru">Russian</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string comment="en_pirate">Pirate English</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string comment="other">Other (set in keys.dat)</string>
-             </property>
-            </item>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+         <property name="flat">
+          <bool>false</bool>
+         </property>
+         <property name="checkable">
+          <bool>false</bool>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_9">
+          <item row="1" column="0">
+           <widget class="QCheckBox" name="checkBoxLoadAvatars">
+            <property name="text">
+             <string>Load avatar images</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLineEdit" name="lineEditIdenticonSuffix">
+            <property name="toolTip">
+             <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The content of this text field will be appended to the BM-address before creating the hash for the identicons. By default it is filled with a random string to make the identicons in your client unique, otherwise the identicon could be an attack vector if an adversary creates an address resulting in a similar identicon. If you keep this string (or any other random or non-random string) you will be able to keep the same identicons.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="2">
+           <widget class="QComboBox" name="comboBoxIdenticonStyle">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+            <property name="iconSize">
+             <size>
+              <width>24</width>
+              <height>24</height>
+             </size>
+            </property>
            </widget>
           </item>
          </layout>
         </widget>
        </item>
-       <item row="7" column="0" rowspan="4">
-        <widget class="QGroupBox" name="groupBox_3">
-         <property name="title">
-          <string>Identicons (with example image)</string>
+       <item row="12" column="0">
+        <spacer name="verticalSpacer_5">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
          </property>
-         <widget class="QComboBox" name="comboBoxIdenticonStyle">
-          <property name="geometry">
-           <rect>
-            <x>20</x>
-            <y>20</y>
-            <width>251</width>
-            <height>31</height>
-           </rect>
-          </property>
-          <property name="iconSize">
-           <size>
-            <width>24</width>
-            <height>24</height>
-           </size>
-          </property>
-         </widget>
-         <widget class="QCheckBox" name="checkBoxLoadAvatars">
-          <property name="geometry">
-           <rect>
-            <x>20</x>
-            <y>50</y>
-            <width>121</width>
-            <height>18</height>
-           </rect>
-          </property>
-          <property name="text">
-           <string>Load avatar images</string>
-          </property>
-         </widget>
-         <widget class="QLineEdit" name="lineEditIdenticonSuffix">
-          <property name="geometry">
-           <rect>
-            <x>140</x>
-            <y>50</y>
-            <width>131</width>
-            <height>16</height>
-           </rect>
-          </property>
-          <property name="toolTip">
-           <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The content of this text field will be appended to the BM-address before creating the hash for the identicons. By default it is filled with a random string to make the identicons in your client unique, otherwise the identicon could be an attack vector if an adversary creates an address resulting in a similar identicon. If you keep this string (or any other random or non-random string) you will be able to keep the same identicons.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-         </widget>
-        </widget>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
+       </item>
+       <item row="11" column="1" rowspan="2">
+        <spacer name="verticalSpacer_2">
+         <property name="orientation">
+          <enum>Qt::Vertical</enum>
+         </property>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>40</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
@@ -256,25 +293,6 @@
             <property name="text">
              <string>Type:</string>
             </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="comboBoxProxyType">
-            <item>
-             <property name="text">
-              <string>none</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>SOCKS4a</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>SOCKS5</string>
-             </property>
-            </item>
            </widget>
           </item>
           <item row="1" column="1">
@@ -343,6 +361,25 @@
             <property name="text">
              <string>Listen for incoming connections when using proxy</string>
             </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="comboBoxProxyType">
+            <item>
+             <property name="text">
+              <string>none</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>SOCKS4a</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>SOCKS5</string>
+             </property>
+            </item>
            </widget>
           </item>
          </layout>

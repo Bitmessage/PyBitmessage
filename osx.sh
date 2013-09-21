@@ -12,12 +12,12 @@ if [[ -z "$1" ]]; then
   exit
 fi
 
-echo "Creating OS X packages for Bitmessage. This script will ask for sudo to create the dmg volume"
+echo "Creating OS X packages for Bitmessage."
 
 cd src && python build_osx.py py2app
 
 if [[ $? = "0" ]]; then
-  sudo hdiutil create -fs HFS+ -volname "Bitmessage" -srcfolder dist/Bitmessage.app dist/bitmessage-v$1.dmg
+  hdiutil create -fs HFS+ -volname "Bitmessage" -srcfolder dist/Bitmessage.app dist/bitmessage-v$1.dmg
 else
   echo "Problem creating Bitmessage.app, stopping."
   exit

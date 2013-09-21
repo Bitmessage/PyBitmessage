@@ -9,13 +9,6 @@
 
 # The software version variable is now held in shared.py
 
-# import ctypes
-try:
-    from gevent import monkey
-    monkey.patch_all()
-except ImportError as ex:
-    print "Not using the gevent module as it was not found. No need to worry."
-
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
 from SimpleXMLRPCServer import *
@@ -32,18 +25,32 @@ if sys.platform == 'darwin':
         sys.exit(0)
 
 # Classes
+from helper_sql import *
 from class_sqlThread import *
 from class_singleCleaner import *
 from class_singleWorker import *
 from class_outgoingSynSender import *
 from class_singleListener import *
 from class_addressGenerator import *
+from debug import logger
 
 # Helper Functions
 import helper_bootstrap
+import proofofwork
+
+import sys
+if sys.platform == 'darwin':
+    if float("{1}.{2}".format(*sys.version_info)) < 7.5:
+        logger.critical("You should use python 2.7.5 or greater. Your version: %s", "{0}.{1}.{2}".format(*sys.version_info))
+        sys.exit(0)
 
 def connectToStream(streamNumber):
     selfInitiatedConnections[streamNumber] = {}
+    shared.inventorySets[streamNumber] = set()
+    queryData = sqlQuery('''SELECT hash FROM inventory WHERE streamnumber=?''', streamNumber)
+    for row in queryData:
+        shared.inventorySets[streamNumber].add(row[0])
+
     if sys.platform[0:3] == 'win':
         maximumNumberOfHalfOpenConnections = 9
     else:
@@ -53,6 +60,13 @@ def connectToStream(streamNumber):
         a.setup(streamNumber, selfInitiatedConnections)
         a.start()
 
+
+class APIError(Exception):
+    def __init__(self, error_number, error_message):
+        self.error_number = error_number
+        self.error_message = error_message
+    def __str__(self):
+        return "API Error %04i: %s" % (self.error_number, self.error_message)
 
 # This is one of several classes that constitute the API
 # This class was written by Vaibhav Bhatia. Modified by Jonathan Warren (Atheros).
@@ -127,20 +141,38 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             else:
                 return False
         else:
-            print 'Authentication failed because header lacks Authentication field'
+            logger.warn('Authentication failed because header lacks Authentication field')
             time.sleep(2)
             return False
 
         return False
 
-    def _dispatch(self, method, params):
-        self.cookies = []
+    def _decode(self, text, decode_type):
+        try:
+            return text.decode(decode_type)
+        except TypeError as e:
+            raise APIError(22, "Decode error - " + str(e))
+        
+    def _verifyAddress(self, address):
+        status, addressVersionNumber, streamNumber, ripe = decodeAddress(address)
+        if status != 'success':
+            logger.warn('API Error 0007: Could not decode address %s. Status: %s.', address, status)
 
-        validuser = self.APIAuthenticateClient()
-        if not validuser:
-            time.sleep(2)
-            return "RPC Username or password incorrect or HTTP header lacks authentication at all."
-        # handle request
+            if status == 'checksumfailed':
+                raise APIError(8, 'Checksum failed for address: ' + address)
+            if status == 'invalidcharacters':
+                raise APIError(9, 'Invalid characters in address: ' + address)
+            if status == 'versiontoohigh':
+                raise APIError(10, 'Address version number too high (or zero) in address: ' + address)
+            raise APIError(7, 'Could not decode address: ' + address + ' : ' + status)
+        if addressVersionNumber < 2 or addressVersionNumber > 3:
+            raise APIError(11, 'The address version number currently must be 2 or 3. Others aren\'t supported. Check the address.')
+        if streamNumber != 1:
+            raise APIError(12, 'The stream number must be 1. Others aren\'t supported. Check the address.')
+
+        return (status, addressVersionNumber, streamNumber, ripe)
+
+    def _handle_request(self, method, params):
         if method == 'helloWorld':
             (a, b) = params
             return a + '-' + b
@@ -160,13 +192,55 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     data
                     if len(data) > 20:
                         data += ','
+                    if shared.config.has_option(addressInKeysFile, 'chan'):
+                        chan = shared.config.getboolean(addressInKeysFile, 'chan')
+                    else:
+                        chan = False
                     data += json.dumps({'label': shared.config.get(addressInKeysFile, 'label'), 'address': addressInKeysFile, 'stream':
-                                       streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled')}, indent=4, separators=(',', ': '))
+                                       streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled'), 'chan': chan}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
+        elif method == 'listAddressBookEntries' or method == 'listAddressbook': # the listAddressbook alias should be removed eventually.
+            queryreturn = sqlQuery('''SELECT label, address from addressbook''')
+            data = '{"addresses":['
+            for row in queryreturn:
+                label, address = row
+                label = shared.fixPotentiallyInvalidUTF8Data(label)
+                if len(data) > 20:
+                    data += ','
+                data += json.dumps({'label':label.encode('base64'), 'address': address}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+        elif method == 'addAddressBookEntry' or method == 'addAddressbook': # the addAddressbook alias should be deleted eventually.
+            if len(params) != 2:
+                raise APIError(0, "I need label and address")
+            address, label = params
+            label = self._decode(label, "base64")
+            address = addBMIfNotPresent(address)
+            self._verifyAddress(address)
+            queryreturn = sqlQuery("SELECT address FROM addressbook WHERE address=?", address)
+            if queryreturn != []:
+                raise APIError(16, 'You already have this address in your address book.')
+
+            sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
+            shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
+            shared.UISignalQueue.put(('rerenderSentToLabels',''))
+            shared.UISignalQueue.put(('rerenderAddressBook',''))
+            return "Added address %s to address book" % address
+        elif method == 'deleteAddressBookEntry' or method == 'deleteAddressbook': # The deleteAddressbook alias should be deleted eventually.
+            if len(params) != 1:
+                raise APIError(0, "I need an address")
+            address, = params
+            address = addBMIfNotPresent(address)
+            self._verifyAddress(address)
+            sqlExecute('DELETE FROM addressbook WHERE address=?', address)
+            shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
+            shared.UISignalQueue.put(('rerenderSentToLabels',''))
+            shared.UISignalQueue.put(('rerenderAddressBook',''))
+            return "Deleted address book entry for %s if it existed" % address
         elif method == 'createRandomAddress':
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
+                raise APIError(0, 'I need parameters!')
             elif len(params) == 1:
                 label, = params
                 eighteenByteRipe = False
@@ -193,12 +267,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 payloadLengthExtraBytes = int(
                     shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
             else:
-                return 'API Error 0000: Too many parameters!'
-            label = label.decode('base64')
+                raise APIError(0, 'Too many parameters!')
+            label = self._decode(label, "base64")
             try:
                 unicode(label, 'utf-8')
             except:
-                return 'API Error 0017: Label is not valid UTF-8 data.'
+                raise APIError(17, 'Label is not valid UTF-8 data.')
             shared.apiAddressGeneratorReturnQueue.queue.clear()
             streamNumberForAddress = 1
             shared.addressGeneratorQueue.put((
@@ -206,7 +280,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return shared.apiAddressGeneratorReturnQueue.get()
         elif method == 'createDeterministicAddresses':
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
+                raise APIError(0, 'I need parameters!')
             elif len(params) == 1:
                 passphrase, = params
                 numberOfAddresses = 1
@@ -260,24 +334,26 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 payloadLengthExtraBytes = int(
                     shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
             else:
-                return 'API Error 0000: Too many parameters!'
+                raise APIError(0, 'Too many parameters!')
             if len(passphrase) == 0:
-                return 'API Error 0001: The specified passphrase is blank.'
-            passphrase = passphrase.decode('base64')
+                raise APIError(1, 'The specified passphrase is blank.')
+            if not isinstance(eighteenByteRipe, bool):
+                raise APIError(23, 'Bool expected in eighteenByteRipe, saw %s instead' % type(eighteenByteRipe))
+            passphrase = self._decode(passphrase, "base64")
             if addressVersionNumber == 0:  # 0 means "just use the proper addressVersionNumber"
                 addressVersionNumber = 3
             if addressVersionNumber != 3:
-                return 'API Error 0002: The address version number currently must be 3 (or 0 which means auto-select). ' + addressVersionNumber + ' isn\'t supported.'
+                raise APIError(2,'The address version number currently must be 3 (or 0 which means auto-select). ' + addressVersionNumber + ' isn\'t supported.')
             if streamNumber == 0:  # 0 means "just use the most available stream"
                 streamNumber = 1
             if streamNumber != 1:
-                return 'API Error 0003: The stream number must be 1 (or 0 which means auto-select). Others aren\'t supported.'
+                raise APIError(3,'The stream number must be 1 (or 0 which means auto-select). Others aren\'t supported.')
             if numberOfAddresses == 0:
-                return 'API Error 0004: Why would you ask me to generate 0 addresses for you?'
+                raise APIError(4, 'Why would you ask me to generate 0 addresses for you?')
             if numberOfAddresses > 999:
-                return 'API Error 0005: You have (accidentally?) specified too many addresses to make. Maximum 999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
+                raise APIError(5, 'You have (accidentally?) specified too many addresses to make. Maximum 999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.')
             shared.apiAddressGeneratorReturnQueue.queue.clear()
-            print 'Requesting that the addressGenerator create', numberOfAddresses, 'addresses.'
+            logger.debug('Requesting that the addressGenerator create %s addresses.', numberOfAddresses)
             shared.addressGeneratorQueue.put(
                 ('createDeterministicAddresses', addressVersionNumber, streamNumber,
                  'unused API address', numberOfAddresses, passphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
@@ -291,30 +367,26 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return data
         elif method == 'getDeterministicAddress':
             if len(params) != 3:
-                return 'API Error 0000: I need exactly 3 parameters.'
+                raise APIError(0, 'I need exactly 3 parameters.')
             passphrase, addressVersionNumber, streamNumber = params
             numberOfAddresses = 1
             eighteenByteRipe = False
             if len(passphrase) == 0:
-                return 'API Error 0001: The specified passphrase is blank.'
-            passphrase = passphrase.decode('base64')
+                raise APIError(1, 'The specified passphrase is blank.')
+            passphrase = self._decode(passphrase, "base64")
             if addressVersionNumber != 3:
-                return 'API Error 0002: The address version number currently must be 3. ' + addressVersionNumber + ' isn\'t supported.'
+                raise APIError(2, 'The address version number currently must be 3. ' + addressVersionNumber + ' isn\'t supported.')
             if streamNumber != 1:
-                return 'API Error 0003: The stream number must be 1. Others aren\'t supported.'
+                raise APIError(3, ' The stream number must be 1. Others aren\'t supported.')
             shared.apiAddressGeneratorReturnQueue.queue.clear()
-            print 'Requesting that the addressGenerator create', numberOfAddresses, 'addresses.'
+            logger.debug('Requesting that the addressGenerator create %s addresses.', numberOfAddresses)
             shared.addressGeneratorQueue.put(
                 ('getDeterministicAddress', addressVersionNumber,
                  streamNumber, 'unused API address', numberOfAddresses, passphrase, eighteenByteRipe))
             return shared.apiAddressGeneratorReturnQueue.get()
         elif method == 'getAllInboxMessages':
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
+            queryreturn = sqlQuery(
                 '''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox where folder='inbox' ORDER BY received''')
-            shared.sqlSubmitQueue.put('')
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
             data = '{"inboxMessages":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
@@ -327,12 +399,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'getAllInboxMessageIds' or method == 'getAllInboxMessageIDs':
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
+            queryreturn = sqlQuery(
                 '''SELECT msgid FROM inbox where folder='inbox' ORDER BY received''')
-            shared.sqlSubmitQueue.put('')
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
             data = '{"inboxMessageIds":['
             for row in queryreturn:
                 msgid = row[0]
@@ -343,14 +411,19 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return data
         elif method == 'getInboxMessageById' or method == 'getInboxMessageByID':
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
-            msgid = params[0].decode('hex')
-            v = (msgid,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(v)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+                raise APIError(0, 'I need parameters!')
+            elif len(params) == 1:
+                msgid = self._decode(params[0], "hex")
+            elif len(params) >= 2:
+                msgid = self._decode(params[0], "hex")
+                readStatus = params[1]
+                if not isinstance(readStatus, bool):
+                    raise APIError(23, 'Bool expected in readStatus, saw %s instead.' % type(readStatus))
+                queryreturn = sqlQuery('''SELECT read FROM inbox WHERE msgid=?''', msgid)
+                # UPDATE is slow, only update if status is different
+                if queryreturn != [] and (queryreturn[0][0] == 1) != readStatus:
+                    sqlExecute('''UPDATE inbox set read = ? WHERE msgid=?''', readStatus, msgid)
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox WHERE msgid=?''', msgid)
             data = '{"inboxMessage":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
@@ -360,11 +433,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += ']}'
                 return data
         elif method == 'getAllSentMessages':
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
-            shared.sqlSubmitQueue.put('')
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
             data = '{"sentMessages":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
@@ -376,11 +445,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'getAllSentMessageIds' or method == 'getAllSentMessageIDs':
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''')
-            shared.sqlSubmitQueue.put('')
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''')
             data = '{"sentMessageIds":['
             for row in queryreturn:
                 msgid = row[0]
@@ -391,14 +456,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return data
         elif method == 'getInboxMessagesByReceiver' or method == 'getInboxMessagesByAddress': #after some time getInboxMessagesByAddress should be removed
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
+                raise APIError(0, 'I need parameters!')
             toAddress = params[0]
-            v = (toAddress,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype FROM inbox WHERE folder='inbox' AND toAddress=?''')
-            shared.sqlSubmitQueue.put(v)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryReturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype FROM inbox WHERE folder='inbox' AND toAddress=?''', toAddress)
             data = '{"inboxMessages":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, received, message, encodingtype = row
@@ -411,14 +471,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return data
         elif method == 'getSentMessageById' or method == 'getSentMessageByID':
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
-            msgid = params[0].decode('hex')
-            v = (msgid,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(v)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+                raise APIError(0, 'I need parameters!')
+            msgid = self._decode(params[0], "hex")
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE msgid=?''', msgid)
             data = '{"sentMessage":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
@@ -429,14 +484,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 return data
         elif method == 'getSentMessagesByAddress' or method == 'getSentMessagesBySender':
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
+                raise APIError(0, 'I need parameters!')
             fromAddress = params[0]
-            v = (fromAddress,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime''')
-            shared.sqlSubmitQueue.put(v)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime''',
+                                   fromAddress)
             data = '{"sentMessages":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
@@ -449,14 +500,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return data
         elif method == 'getSentMessageByAckData':
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
-            ackData = params[0].decode('hex')
-            v = (ackData,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE ackdata=?''')
-            shared.sqlSubmitQueue.put(v)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+                raise APIError(0, 'I need parameters!')
+            ackData = self._decode(params[0], "hex")
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE ackdata=?''',
+                                   ackData)
             data = '{"sentMessage":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
@@ -467,95 +514,57 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return data
         elif method == 'trashMessage':
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
-            msgid = params[0].decode('hex')
+                raise APIError(0, 'I need parameters!')
+            msgid = self._decode(params[0], "hex")
             
             # Trash if in inbox table
             helper_inbox.trash(msgid)
             # Trash if in sent table
-            t = (msgid,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
-            # shared.UISignalQueue.put(('removeSentRowByMsgid',msgid)) This function doesn't exist yet.
+            sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
             return 'Trashed message (assuming message existed).'
         elif method == 'trashInboxMessage':
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
-            msgid = params[0].decode('hex')
+                raise APIError(0, 'I need parameters!')
+            msgid = self._decode(params[0], "hex")
             helper_inbox.trash(msgid)
             return 'Trashed inbox message (assuming message existed).'
         elif method == 'trashSentMessage':
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
-            msgid = params[0].decode('hex')
-            t = (msgid,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''UPDATE sent SET folder='trash' WHERE msgid=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
-            # shared.UISignalQueue.put(('removeSentRowByMsgid',msgid)) This function doesn't exist yet.
+                raise APIError(0, 'I need parameters!')
+            msgid = self._decode(params[0], "hex")
+            sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
+            return 'Trashed sent message (assuming message existed).'
+        elif method == 'trashSentMessageByAckData':
+            # This API method should only be used when msgid is not available
+            if len(params) == 0:
+                raise APIError(0, 'I need parameters!')
+            ackdata = self._decode(params[0], "hex")
+            sqlExecute('''UPDATE sent SET folder='trash' WHERE ackdata=?''',
+                       ackdata)
             return 'Trashed sent message (assuming message existed).'
         elif method == 'sendMessage':
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
+                raise APIError(0, 'I need parameters!')
             elif len(params) == 4:
                 toAddress, fromAddress, subject, message = params
                 encodingType = 2
             elif len(params) == 5:
                 toAddress, fromAddress, subject, message, encodingType = params
             if encodingType != 2:
-                return 'API Error 0006: The encoding type must be 2 because that is the only one this program currently supports.'
-            subject = subject.decode('base64')
-            message = message.decode('base64')
-            status, addressVersionNumber, streamNumber, toRipe = decodeAddress(
-                toAddress)
-            if status != 'success':
-                with shared.printLock:
-                    print 'API Error 0007: Could not decode address:', toAddress, ':', status
-
-                if status == 'checksumfailed':
-                    return 'API Error 0008: Checksum failed for address: ' + toAddress
-                if status == 'invalidcharacters':
-                    return 'API Error 0009: Invalid characters in address: ' + toAddress
-                if status == 'versiontoohigh':
-                    return 'API Error 0010: Address version number too high (or zero) in address: ' + toAddress
-                return 'API Error 0007: Could not decode address: ' + toAddress + ' : ' + status
-            if addressVersionNumber < 2 or addressVersionNumber > 3:
-                return 'API Error 0011: The address version number currently must be 2 or 3. Others aren\'t supported. Check the toAddress.'
-            if streamNumber != 1:
-                return 'API Error 0012: The stream number must be 1. Others aren\'t supported. Check the toAddress.'
-            status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(
-                fromAddress)
-            if status != 'success':
-                with shared.printLock:
-                    print 'API Error 0007: Could not decode address:', fromAddress, ':', status
-
-                if status == 'checksumfailed':
-                    return 'API Error 0008: Checksum failed for address: ' + fromAddress
-                if status == 'invalidcharacters':
-                    return 'API Error 0009: Invalid characters in address: ' + fromAddress
-                if status == 'versiontoohigh':
-                    return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
-                return 'API Error 0007: Could not decode address: ' + fromAddress + ' : ' + status
-            if addressVersionNumber < 2 or addressVersionNumber > 3:
-                return 'API Error 0011: The address version number currently must be 2 or 3. Others aren\'t supported. Check the fromAddress.'
-            if streamNumber != 1:
-                return 'API Error 0012: The stream number must be 1. Others aren\'t supported. Check the fromAddress.'
+                raise APIError(6, 'The encoding type must be 2 because that is the only one this program currently supports.')
+            subject = self._decode(subject, "base64")
+            message = self._decode(message, "base64")
             toAddress = addBMIfNotPresent(toAddress)
             fromAddress = addBMIfNotPresent(fromAddress)
+            status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(toAddress)
+            self._verifyAddress(fromAddress)
             try:
                 fromAddressEnabled = shared.config.getboolean(
                     fromAddress, 'enabled')
             except:
-                return 'API Error 0013: Could not find your fromAddress in the keys.dat file.'
+                raise APIError(13, 'Could not find your fromAddress in the keys.dat file.')
             if not fromAddressEnabled:
-                return 'API Error 0014: Your fromAddress is disabled. Cannot send.'
+                raise APIError(14, 'Your fromAddress is disabled. Cannot send.')
 
             ackdata = OpenSSL.rand(32)
 
@@ -564,13 +573,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             helper_sent.insert(t)
 
             toLabel = ''
-            t = (toAddress,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''select label from addressbook where address=?''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''select label from addressbook where address=?''', toAddress)
             if queryreturn != []:
                 for row in queryreturn:
                     toLabel, = row
@@ -584,40 +587,24 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
         elif method == 'sendBroadcast':
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
+                raise APIError(0, 'I need parameters!')
             if len(params) == 3:
                 fromAddress, subject, message = params
                 encodingType = 2
             elif len(params) == 4:
                 fromAddress, subject, message, encodingType = params
             if encodingType != 2:
-                return 'API Error 0006: The encoding type must be 2 because that is the only one this program currently supports.'
-            subject = subject.decode('base64')
-            message = message.decode('base64')
+                raise APIError(6, 'The encoding type must be 2 because that is the only one this program currently supports.')
+            subject = self._decode(subject, "base64")
+            message = self._decode(message, "base64")
 
-            status, addressVersionNumber, streamNumber, fromRipe = decodeAddress(
-                fromAddress)
-            if status != 'success':
-                with shared.printLock:
-                    print 'API Error 0007: Could not decode address:', fromAddress, ':', status
-
-                if status == 'checksumfailed':
-                    return 'API Error 0008: Checksum failed for address: ' + fromAddress
-                if status == 'invalidcharacters':
-                    return 'API Error 0009: Invalid characters in address: ' + fromAddress
-                if status == 'versiontoohigh':
-                    return 'API Error 0010: Address version number too high (or zero) in address: ' + fromAddress
-                return 'API Error 0007: Could not decode address: ' + fromAddress + ' : ' + status
-            if addressVersionNumber < 2 or addressVersionNumber > 3:
-                return 'API Error 0011: the address version number currently must be 2 or 3. Others aren\'t supported. Check the fromAddress.'
-            if streamNumber != 1:
-                return 'API Error 0012: the stream number must be 1. Others aren\'t supported. Check the fromAddress.'
             fromAddress = addBMIfNotPresent(fromAddress)
+            self._verifyAddress(fromAddress)
             try:
                 fromAddressEnabled = shared.config.getboolean(
                     fromAddress, 'enabled')
             except:
-                return 'API Error 0013: could not find your fromAddress in the keys.dat file.'
+                raise APIError(13, 'could not find your fromAddress in the keys.dat file.')
             ackdata = OpenSSL.rand(32)
             toAddress = '[Broadcast subscribers]'
             ripe = ''
@@ -635,16 +622,14 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return ackdata.encode('hex')
         elif method == 'getStatus':
             if len(params) != 1:
-                return 'API Error 0000: I need one parameter!'
+                raise APIError(0, 'I need one parameter!')
             ackdata, = params
             if len(ackdata) != 64:
-                return 'API Error 0015: The length of ackData should be 32 bytes (encoded in hex thus 64 characters).'
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''SELECT status FROM sent where ackdata=?''')
-            shared.sqlSubmitQueue.put((ackdata.decode('hex'),))
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+                raise APIError(15, 'The length of ackData should be 32 bytes (encoded in hex thus 64 characters).')
+            ackdata = self._decode(ackdata, "hex")
+            queryreturn = sqlQuery(
+                '''SELECT status FROM sent where ackdata=?''',
+                ackdata)
             if queryreturn == []:
                 return 'notfound'
             for row in queryreturn:
@@ -652,56 +637,27 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 return status
         elif method == 'addSubscription':
             if len(params) == 0:
-                return 'API Error 0000: I need parameters!'
+                raise APIError(0, 'I need parameters!')
             if len(params) == 1:
                 address, = params
                 label == ''
             if len(params) == 2:
                 address, label = params
-                label = label.decode('base64')
+                label = self._decode(label, "base64")
                 try:
                     unicode(label, 'utf-8')
                 except:
-                    return 'API Error 0017: Label is not valid UTF-8 data.'
+                    raise APIError(17, 'Label is not valid UTF-8 data.')
             if len(params) > 2:
-                return 'API Error 0000: I need either 1 or 2 parameters!'
+                raise APIError(0, 'I need either 1 or 2 parameters!')
             address = addBMIfNotPresent(address)
-            status, addressVersionNumber, streamNumber, toRipe = decodeAddress(
-                address)
-            if status != 'success':
-                with shared.printLock:
-                    print 'API Error 0007: Could not decode address:', address, ':', status
-
-                if status == 'checksumfailed':
-                    return 'API Error 0008: Checksum failed for address: ' + address
-                if status == 'invalidcharacters':
-                    return 'API Error 0009: Invalid characters in address: ' + address
-                if status == 'versiontoohigh':
-                    return 'API Error 0010: Address version number too high (or zero) in address: ' + address
-                return 'API Error 0007: Could not decode address: ' + address + ' : ' + status
-            if addressVersionNumber < 2 or addressVersionNumber > 3:
-                return 'API Error 0011: The address version number currently must be 2 or 3. Others aren\'t supported.'
-            if streamNumber != 1:
-                return 'API Error 0012: The stream number must be 1. Others aren\'t supported.'
+            self._verifyAddress(address)
             # First we must check to see if the address is already in the
             # subscriptions list.
-            shared.sqlLock.acquire()
-            t = (address,)
-            shared.sqlSubmitQueue.put(
-                '''select * from subscriptions where address=?''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''select * from subscriptions where address=?''', address)
             if queryreturn != []:
-                return 'API Error 0016: You are already subscribed to that address.'
-            t = (label, address, True)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''INSERT INTO subscriptions VALUES (?,?,?)''')
-            shared.sqlSubmitQueue.put(t)
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+                raise APIError(16, 'You are already subscribed to that address.')
+            sqlExecute('''INSERT INTO subscriptions VALUES (?,?,?)''',label, address, True)
             shared.reloadBroadcastSendersForWhichImWatching()
             shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
             shared.UISignalQueue.put(('rerenderSubscriptions', ''))
@@ -709,27 +665,16 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
         elif method == 'deleteSubscription':
             if len(params) != 1:
-                return 'API Error 0000: I need 1 parameter!'
+                raise APIError(0, 'I need 1 parameter!')
             address, = params
             address = addBMIfNotPresent(address)
-            t = (address,)
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put(
-                '''DELETE FROM subscriptions WHERE address=?''')
-            shared.sqlSubmitQueue.put(t)
-            shared.sqlReturnQueue.get()
-            shared.sqlSubmitQueue.put('commit')
-            shared.sqlLock.release()
+            sqlExecute('''DELETE FROM subscriptions WHERE address=?''', address)
             shared.reloadBroadcastSendersForWhichImWatching()
             shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
             shared.UISignalQueue.put(('rerenderSubscriptions', ''))
             return 'Deleted subscription if it existed.'
         elif method == 'listSubscriptions':
-            shared.sqlLock.acquire()
-            shared.sqlSubmitQueue.put('''SELECT label, address, enabled FROM subscriptions''')
-            shared.sqlSubmitQueue.put('')
-            queryreturn = shared.sqlReturnQueue.get()
-            shared.sqlLock.release()
+            queryreturn = sqlQuery('''SELECT label, address, enabled FROM subscriptions''')
             data = '{"subscriptions":['
             for row in queryreturn:
                 label, address, enabled = row
@@ -741,33 +686,58 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return data
         elif method == 'disseminatePreEncryptedMsg':
             # The device issuing this command to PyBitmessage supplies a msg object that has
-            # already been encrypted and had the necessary proof of work done for it to be
-            # disseminated to the rest of the Bitmessage network. PyBitmessage accepts this msg
-            # object and sends it out to the rest of the Bitmessage network as if it had generated the
-            # message itself. Please do not yet add this to the api doc.
-            if len(params) != 1:
-                return 'API Error 0000: I need 1 parameter!'
-            encryptedPayload, = params
-            encryptedPayload = encryptedPayload.decode('hex')
+            # already been encrypted but which still needs the POW to be done. PyBitmessage
+            # accepts this msg object and sends it out to the rest of the Bitmessage network
+            # as if it had generated the message itself. Please do not yet add this to the
+            # api doc.
+            if len(params) != 3:
+                raise APIError(0, 'I need 3 parameter!')
+            encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte, requiredPayloadLengthExtraBytes = params
+            encryptedPayload = self._decode(encryptedPayload, "hex")
+            # Let us do the POW and attach it to the front
+            target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
+            with shared.printLock:
+                print '(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes
+            powStartTime = time.time()
+            initialHash = hashlib.sha512(encryptedPayload).digest()
+            trialValue, nonce = proofofwork.run(target, initialHash)
+            with shared.printLock:
+                print '(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce
+                try:
+                    print 'POW took', int(time.time() - powStartTime), 'seconds.', nonce / (time.time() - powStartTime), 'nonce trials per second.'
+                except:
+                    pass
+            encryptedPayload = pack('>Q', nonce) + encryptedPayload
             toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
             inventoryHash = calculateInventoryHash(encryptedPayload)
             objectType = 'msg'
             shared.inventory[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, int(time.time()))
+            shared.inventorySets[toStreamNumber].add(inventoryHash)
             with shared.printLock:
                 print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
-                toStreamNumber, 'sendinv', inventoryHash))
+                toStreamNumber, 'advertiseobject', inventoryHash))
         elif method == 'disseminatePubkey':
-            # The device issuing this command to PyBitmessage supplies a pubkey object that has
-            # already had the necessary proof of work done for it to be disseminated to the rest of the 
-            # Bitmessage network. PyBitmessage accepts this pubkey object and sends it out to the 
-            # rest of the Bitmessage network as if it had generated the pubkey object itself. Please
-            # do not yet add this to the api doc.
+            # The device issuing this command to PyBitmessage supplies a pubkey object to be
+            # disseminated to the rest of the Bitmessage network. PyBitmessage accepts this
+            # pubkey object and sends it out to the rest of the Bitmessage network as if it
+            # had generated the pubkey object itself. Please do not yet add this to the api
+            # doc.
             if len(params) != 1:
-                return 'API Error 0000: I need 1 parameter!'
+                raise APIError(0, 'I need 1 parameter!')
             payload, = params
-            payload = payload.decode('hex')
+            payload = self._decode(payload, "hex")
+
+            # Let us do the POW
+            target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
+                                 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+            print '(For pubkey message via API) Doing proof of work...'
+            initialHash = hashlib.sha512(payload).digest()
+            trialValue, nonce = proofofwork.run(target, initialHash)
+            print '(For pubkey message via API) Found proof of work', trialValue, 'Nonce:', nonce
+            payload = pack('>Q', nonce) + payload
+            
             pubkeyReadPosition = 8 # bypass the nonce
             if payload[pubkeyReadPosition:pubkeyReadPosition+4] == '\x00\x00\x00\x00': # if this pubkey uses 8 byte time
                 pubkeyReadPosition += 8
@@ -780,46 +750,38 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType = 'pubkey'
             shared.inventory[inventoryHash] = (
                 objectType, pubkeyStreamNumber, payload, int(time.time()))
+            shared.inventorySets[pubkeyStreamNumber].add(inventoryHash)
             with shared.printLock:
                 print 'broadcasting inv within API command disseminatePubkey with hash:', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
-                streamNumber, 'sendinv', inventoryHash))
+                streamNumber, 'advertiseobject', inventoryHash))
         elif method == 'getMessageDataByDestinationHash':
             # Method will eventually be used by a particular Android app to 
             # select relevant messages. Do not yet add this to the api
             # doc.
             
             if len(params) != 1:
-                return 'API Error 0000: I need 1 parameter!'
+                raise APIError(0, 'I need 1 parameter!')
             requestedHash, = params
             if len(requestedHash) != 40:
-                return 'API Error 0019: The length of hash should be 20 bytes (encoded in hex thus 40 characters).'
-            requestedHash = requestedHash.decode('hex')
+                raise APIError(19, 'The length of hash should be 20 bytes (encoded in hex thus 40 characters).')
+            requestedHash = self._decode(requestedHash, "hex")
             
             # This is not a particularly commonly used API function. Before we 
             # use it we'll need to fill out a field in our inventory database 
             # which is blank by default (first20bytesofencryptedmessage). 
-            parameters = ''
-            with shared.sqlLock:
-                shared.sqlSubmitQueue.put('''SELECT hash, payload FROM inventory WHERE first20bytesofencryptedmessage = '' and objecttype = 'msg' ; ''')
-                shared.sqlSubmitQueue.put(parameters)
-                queryreturn = shared.sqlReturnQueue.get()
-            
+            queryreturn = sqlQuery(
+                '''SELECT hash, payload FROM inventory WHERE first20bytesofencryptedmessage = '' and objecttype = 'msg' ; ''')
+            with SqlBulkExecute() as sql:
                 for row in queryreturn:
                     hash, payload = row
                     readPosition = 16 # Nonce length + time length
                     readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
                     t = (payload[readPosition:readPosition+20],hash)
-                    shared.sqlSubmitQueue.put('''UPDATE inventory SET first20bytesofencryptedmessage=? WHERE hash=?; ''')
-                    shared.sqlSubmitQueue.put(t)
-                    shared.sqlReturnQueue.get()        
+                    sql.execute('''UPDATE inventory SET first20bytesofencryptedmessage=? WHERE hash=?; ''', *t)
                 
-            parameters = (requestedHash,)
-            with shared.sqlLock:
-                shared.sqlSubmitQueue.put('commit')
-                shared.sqlSubmitQueue.put('''SELECT payload FROM inventory WHERE first20bytesofencryptedmessage = ?''')
-                shared.sqlSubmitQueue.put(parameters)
-                queryreturn = shared.sqlReturnQueue.get()
+            queryreturn = sqlQuery('''SELECT payload FROM inventory WHERE first20bytesofencryptedmessage = ?''',
+                                   requestedHash)
             data = '{"receivedMessageDatas":['
             for row in queryreturn:
                 payload, = row
@@ -832,16 +794,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # Method will eventually be used by a particular Android app to 
             # retrieve pubkeys. Please do not yet add this to the api docs.
             if len(params) != 1:
-                return 'API Error 0000: I need 1 parameter!'
+                raise APIError(0, 'I need 1 parameter!')
             requestedHash, = params
             if len(requestedHash) != 40:
-                return 'API Error 0019: The length of hash should be 20 bytes (encoded in hex thus 40 characters).'
-            requestedHash = requestedHash.decode('hex')
-            parameters = (requestedHash,)
-            with shared.sqlLock:
-                shared.sqlSubmitQueue.put('''SELECT transmitdata FROM pubkeys WHERE hash = ? ; ''')
-                shared.sqlSubmitQueue.put(parameters)
-                queryreturn = shared.sqlReturnQueue.get()
+                raise APIError(19, 'The length of hash should be 20 bytes (encoded in hex thus 40 characters).')
+            requestedHash = self._decode(requestedHash, "hex")
+            queryreturn = sqlQuery('''SELECT transmitdata FROM pubkeys WHERE hash = ? ; ''', requestedHash)
             data = '{"pubkey":['
             for row in queryreturn:
                 transmitdata, = row
@@ -849,9 +807,31 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'clientStatus':
-            return '{ "networkConnections" : "%s" }' % str(len(shared.connectedHostsList))
+            if len(shared.connectedHostsList) == 0:
+                networkStatus = 'notConnected'
+            elif len(shared.connectedHostsList) > 0 and not shared.clientHasReceivedIncomingConnections:
+                networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
+            else:
+                networkStatus = 'connectedAndReceivingIncomingConnections'
+            return json.dumps({'networkConnections':len(shared.connectedHostsList),'numberOfMessagesProcessed':shared.numberOfMessagesProcessed, 'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed, 'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed, 'networkStatus':networkStatus}, indent=4, separators=(',', ': '))
         else:
-            return 'API Error 0020: Invalid method: %s' % method
+            raise APIError(20, 'Invalid method: %s' % method)
+
+    def _dispatch(self, method, params):
+        self.cookies = []
+
+        validuser = self.APIAuthenticateClient()
+        if not validuser:
+            time.sleep(2)
+            return "RPC Username or password incorrect or HTTP header lacks authentication at all."
+
+        try:
+            return self._handle_request(method, params)
+        except APIError as e:
+            return str(e)
+        except Exception as e:
+            logger.exception(e)
+            return "API Error 0021: Unexpected API Failure - %s" % str(e)
 
 # This thread, of which there is only one, runs the API.
 
@@ -878,7 +858,8 @@ if shared.useVeryEasyProofOfWorkForTesting:
         shared.networkDefaultPayloadLengthExtraBytes / 7000)
 
 class Main:
-    def start(self, deamon=False):
+    def start(self, daemon=False):
+        shared.daemon = daemon
         # is the application already running?  If yes then exit.
         thisapp = singleton.singleinstance()
 
@@ -931,7 +912,7 @@ class Main:
         singleListenerThread.daemon = True  # close the main program even if there are threads left
         singleListenerThread.start()
 
-        if deamon == False and shared.safeConfigGetBoolean('bitmessagesettings', 'daemon') == False:
+        if daemon == False and shared.safeConfigGetBoolean('bitmessagesettings', 'daemon') == False:
             try:
                 from PyQt4 import QtCore, QtGui
             except Exception as err:
@@ -944,7 +925,7 @@ class Main:
         else:
             shared.config.remove_option('bitmessagesettings', 'dontconnect')
 
-            if deamon:
+            if daemon:
                 with shared.printLock:
                     print 'Running as a daemon. The main program should exit this thread.'
             else:
@@ -962,7 +943,6 @@ class Main:
     def getApiAddress(self):
         if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
             return None
-            
         address = shared.config.get('bitmessagesettings', 'apiinterface')
         port = shared.config.getint('bitmessagesettings', 'apiport')
         return {'address':address,'port':port}
