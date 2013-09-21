@@ -2241,10 +2241,20 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxStartInTray.isChecked()))
             shared.config.set('bitmessagesettings', 'willinglysendtomobile', str(
                 self.settingsDialogInstance.ui.checkBoxWillinglySendToMobile.isChecked()))
+                
             
             lang_ind = int(self.settingsDialogInstance.ui.languageComboBox.currentIndex())
             if not languages[lang_ind] == 'other':
                 shared.config.set('bitmessagesettings', 'userlocale', languages[lang_ind])
+            
+            ###
+            curr_index = self.settingsDialogInstance.ui.comboBoxIdenticonStyle.currentIndex()
+            shared.config.set('bitmessagesettings', 'identicon', str(self.settingsDialogInstance.ui.comboBoxIdenticonStyle.itemData(
+                    curr_index , Qt.UserRole).toString()))
+            shared.config.set('bitmessagesettings', 'identiconsuffix', str(
+                 self.settingsDialogInstance.ui.lineEditIdenticonSuffix.text()))
+            shared.config.set('bitmessagesettings', 'avatars', str(
+                self.settingsDialogInstance.ui.checkBoxLoadAvatars.isChecked()))
                 
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
@@ -3104,7 +3114,6 @@ class MyForm(QtGui.QMainWindow):
             # set the icon
             thisTableWidget.item(
                 currentRow, 0).setIcon(avatarize(addressAtCurrentRow))
-            ###
             shared.reloadBroadcastSendersForWhichImWatching()
             self.rerenderSubscriptions()
             self.rerenderComboBoxSendFrom()
@@ -3348,6 +3357,19 @@ class settingsDialog(QtGui.QDialog):
         else:
             curr_index = languages.index('other')
         self.ui.languageComboBox.setCurrentIndex(curr_index)
+        
+        ###
+        self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/no_identicons.png"), _translate("settingsDialog", "None"), "none")
+        self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/qidenticon.png"), _translate("settingsDialog", "QIdenticon"), "qidenticon")
+        self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/qidenticon_x.png"), _translate("settingsDialog", "QIdenticon (transparent)"), "qidenticon_x")
+        self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/qidenticon_two.png"), _translate("settingsDialog", "QIdenticon two"), "qidenticon_two")
+        self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/qidenticon_two_x.png"), _translate("settingsDialog", "QIdenticon two (transparent)"), "qidenticon_two_x")
+        curr_index = self.ui.comboBoxIdenticonStyle.findData(str(shared.config.get('bitmessagesettings', 'identicon')), Qt.UserRole)
+        self.ui.comboBoxIdenticonStyle.setCurrentIndex(curr_index)
+        self.ui.lineEditIdenticonSuffix.setText(
+            str(shared.config.get('bitmessagesettings', 'identiconsuffix')))
+        self.ui.checkBoxLoadAvatars.setChecked(
+            shared.safeConfigGetBoolean('bitmessagesettings', 'avatars'))
         
         if shared.appdata == '':
             self.ui.checkBoxPortableMode.setChecked(True)

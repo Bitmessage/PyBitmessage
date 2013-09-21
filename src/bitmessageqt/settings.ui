@@ -155,7 +155,7 @@
          <property name="title">
           <string>Identicons (with example image)</string>
          </property>
-         <widget class="QComboBox" name="comboBox">
+         <widget class="QComboBox" name="comboBoxIdenticonStyle">
           <property name="geometry">
            <rect>
             <x>20</x>
@@ -170,51 +170,6 @@
             <height>24</height>
            </size>
           </property>
-          <item>
-           <property name="text">
-            <string>no identicons</string>
-           </property>
-           <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
-             <normaloff>:/newPrefix/images/no_identicons.png</normaloff>:/newPrefix/images/no_identicons.png</iconset>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>qidenticon</string>
-           </property>
-           <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
-             <normaloff>:/newPrefix/images/qidenticon.png</normaloff>:/newPrefix/images/qidenticon.png</iconset>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>qidenticon_x</string>
-           </property>
-           <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
-             <normaloff>:/newPrefix/images/qidenticon_x.png</normaloff>:/newPrefix/images/qidenticon_x.png</iconset>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>qidenticon_two</string>
-           </property>
-           <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
-             <normaloff>:/newPrefix/images/qidenticon_two.png</normaloff>:/newPrefix/images/qidenticon_two.png</iconset>
-           </property>
-          </item>
-          <item>
-           <property name="text">
-            <string>qidenticon_two_x</string>
-           </property>
-           <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
-             <normaloff>:/newPrefix/images/qidenticon_two_x.png</normaloff>:/newPrefix/images/qidenticon_two_x.png</iconset>
-           </property>
-          </item>
          </widget>
          <widget class="QCheckBox" name="checkBoxLoadAvatars">
           <property name="geometry">
@@ -229,7 +184,7 @@
            <string>Load avatar images</string>
           </property>
          </widget>
-         <widget class="QLineEdit" name="lineEdit">
+         <widget class="QLineEdit" name="lineEditIdenticonSuffix">
           <property name="geometry">
            <rect>
             <x>140</x>
