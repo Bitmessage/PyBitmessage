@@ -204,7 +204,6 @@ def decodeAddress(address):
         else:
             x00string = '\x00' * (20 - len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]))
             return status,addressVersionNumber,streamNumber,x00string+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
-        
 
 def addBMIfNotPresent(address):
     address = str(address).strip()
@@ -212,56 +211,6 @@ def addBMIfNotPresent(address):
         return 'BM-'+address
     else:
         return address
-
-def addressStream(address):
-    #returns the stream number of an address or False if there is a problem with the address.
-
-    #check for the BM- at the front of the address. If it isn't there, this address might be for a different version of Bitmessage
-    if address[:3] != 'BM-':
-        status = 'missingbm'
-        return False
-    #here we take off the BM-
-    integer = decodeBase58(address[3:])
-    #after converting to hex, the string will be prepended with a 0x and appended with a L
-    hexdata = hex(integer)[2:-1]
-
-    if len(hexdata) % 2 != 0:
-        hexdata = '0' + hexdata
-
-    #print 'hexdata', hexdata
-
-    data = hexdata.decode('hex')
-    checksum = data[-4:]
-
-    sha = hashlib.new('sha512')
-    sha.update(data[:-4])
-    currentHash = sha.digest()
-    #print 'sha after first hashing: ', sha.hexdigest()
-    sha = hashlib.new('sha512')
-    sha.update(currentHash)
-    #print 'sha after second hashing: ', sha.hexdigest()
-
-    if checksum != sha.digest()[0:4]:
-        print 'checksum failed'
-        status = 'checksumfailed'
-        return False
-    #else:
-    #    print 'checksum PASSED'
-
-    addressVersionNumber, bytesUsedByVersionNumber = decodeVarint(data[:9])
-    #print 'addressVersionNumber', addressVersionNumber
-    #print 'bytesUsedByVersionNumber', bytesUsedByVersionNumber
-
-    if addressVersionNumber < 1:
-        print 'cannot decode version address version numbers this high'
-        status = 'versiontoohigh'
-        return False
-
-    streamNumber, bytesUsedByStreamNumber = decodeVarint(data[bytesUsedByVersionNumber:9+bytesUsedByVersionNumber])
-    #print streamNumber
-    status = 'success'
-    return streamNumber
-
 
 if __name__ == "__main__":
     print 'Let us make an address from scratch. Suppose we generate two random 32 byte values and call the first one the signing key and the second one the encryption key:'

@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'newaddressdialog.ui'
 #
-# Created: Thu Jun 13 20:12:21 2013
-#      by: PyQt4 UI code generator 4.10.1
+# Created: Sun Sep 15 23:53:31 2013
+#      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -178,7 +178,7 @@ class Ui_NewAddressDialog(object):
         self.radioButtonDeterministicAddress.setText(_translate("NewAddressDialog", "Use a passphrase to make addresses", None))
         self.checkBoxEighteenByteRipe.setText(_translate("NewAddressDialog", "Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter", None))
         self.groupBoxDeterministic.setTitle(_translate("NewAddressDialog", "Make deterministic addresses", None))
-        self.label_9.setText(_translate("NewAddressDialog", "Address version number: 3", None))
+        self.label_9.setText(_translate("NewAddressDialog", "Address version number: 4", None))
         self.label_8.setText(_translate("NewAddressDialog", "In addition to your passphrase, you must remember these numbers:", None))
         self.label_6.setText(_translate("NewAddressDialog", "Passphrase", None))
         self.label_11.setText(_translate("NewAddressDialog", "Number of addresses to make based on your passphrase:", None))
@@ -190,14 +190,4 @@ class Ui_NewAddressDialog(object):
         self.label_3.setText(_translate("NewAddressDialog", " (best if this is the first of many addresses you will create)", None))
         self.radioButtonExisting.setText(_translate("NewAddressDialog", "Use the same stream as an existing address", None))
         self.label_4.setText(_translate("NewAddressDialog", "(saves you some bandwidth and processing power)", None))
-
-
-if __name__ == "__main__":
-    import sys
-    app = QtGui.QApplication(sys.argv)
-    NewAddressDialog = QtGui.QDialog()
-    ui = Ui_NewAddressDialog()
-    ui.setupUi(NewAddressDialog)
-    NewAddressDialog.show()
-    sys.exit(app.exec_())
 
