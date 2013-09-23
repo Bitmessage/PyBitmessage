@@ -1,4 +1,4 @@
-softwareVersion = '0.3.5'
+softwareVersion = '0.4.0'
 verbose = 1
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600  # Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
