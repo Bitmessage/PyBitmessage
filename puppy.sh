@@ -1,8 +1,8 @@
 #!/bin/bash
 
 APP=pybitmessage
-PREV_VERSION=0.3.5
-VERSION=0.3.5
+PREV_VERSION=0.4.0
+VERSION=0.4.0
 RELEASE=1
 BUILDDIR=~/petbuild
 CURRDIR=`pwd`
