@@ -245,6 +245,14 @@ class sqlThread(threading.Thread):
         if not shared.config.has_option('bitmessagesettings', 'sendoutgoingconnections'):
             shared.config.set('bitmessagesettings', 'sendoutgoingconnections', 'True')
 
+        # Raise the default required difficulty from 1 to 2
+        if shared.config.getint('bitmessagesettings', 'settingsversion') == 6:
+            if int(shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')) == shared.networkDefaultProofOfWorkNonceTrialsPerByte:
+                shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(shared.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
+            shared.config.set('bitmessagesettings', 'settingsversion', '7')
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
+
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users? Add it right above this line!
         
