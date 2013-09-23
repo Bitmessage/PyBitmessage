@@ -1,4 +1,4 @@
-softwareVersion = '0.3.5'
+softwareVersion = '0.4.0'
 verbose = 1
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600  # Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -34,6 +34,7 @@ config = ConfigParser.SafeConfigParser()
 myECCryptorObjects = {}
 MyECSubscriptionCryptorObjects = {}
 myAddressesByHash = {} #The key in this dictionary is the RIPE hash which is encoded in an address and value is the address itself.
+myAddressesByTag = {} # The key in this dictionary is the tag generated from the address.
 broadcastSendersForWhichImWatching = {}
 workerQueue = Queue.Queue()
 UISignalQueue = Queue.Queue()
@@ -222,6 +223,7 @@ def reloadMyAddressHashes():
     logger.debug('reloading keys from keys.dat file')
     myECCryptorObjects.clear()
     myAddressesByHash.clear()
+    myAddressesByTag.clear()
     #myPrivateKeys.clear()
 
     keyfileSecure = checkSensitiveFilePermissions(appdata + 'keys.dat')
@@ -242,6 +244,9 @@ def reloadMyAddressHashes():
                     if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
                         myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
                         myAddressesByHash[hash] = addressInKeysFile
+                        tag = hashlib.sha512(hashlib.sha512(encodeVarint(
+                            addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()[32:]
+                        myAddressesByTag[tag] = addressInKeysFile
 
                 else:
                     logger.error('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2, 3, or 4.\n')
@@ -250,18 +255,26 @@ def reloadMyAddressHashes():
         fixSensitiveFilePermissions(appdata + 'keys.dat', hasEnabledKeys)
 
 def reloadBroadcastSendersForWhichImWatching():
-    logger.debug('reloading subscriptions...')
     broadcastSendersForWhichImWatching.clear()
     MyECSubscriptionCryptorObjects.clear()
     queryreturn = sqlQuery('SELECT address FROM subscriptions where enabled=1')
+    logger.debug('reloading subscriptions...')
     for row in queryreturn:
         address, = row
         status,addressVersionNumber,streamNumber,hash = decodeAddress(address)
         if addressVersionNumber == 2:
             broadcastSendersForWhichImWatching[hash] = 0
         #Now, for all addresses, even version 2 addresses, we should create Cryptor objects in a dictionary which we will use to attempt to decrypt encrypted broadcast messages.
-        privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).digest()[:32]
-        MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
+        
+        if addressVersionNumber <= 3:
+            privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).digest()[:32]
+            MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
+        else:
+            doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
+                addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()
+            tag = doubleHashOfAddressData[32:]
+            privEncryptionKey = doubleHashOfAddressData[:32]
+            MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
 
 def doCleanShutdown():
     global shutdown
@@ -311,9 +324,9 @@ def flushInventory():
     #Note that the singleCleanerThread clears out the inventory dictionary from time to time, although it only clears things that have been in the dictionary for a long time. This clears the inventory dictionary Now.
     with SqlBulkExecute() as sql:
         for hash, storedValue in inventory.items():
-            objectType, streamNumber, payload, receivedTime = storedValue
+            objectType, streamNumber, payload, receivedTime, tag = storedValue
             sql.execute('''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
-                       hash,objectType,streamNumber,payload,receivedTime,'')
+                       hash,objectType,streamNumber,payload,receivedTime,tag)
             del inventory[hash]
 
 def fixPotentiallyInvalidUTF8Data(text):
@@ -377,6 +390,88 @@ def isBitSetWithinBitfield(fourByteString, n):
     n = 31 - n
     x, = unpack('>L', fourByteString)
     return x & 2**n != 0
+
+def decryptAndCheckPubkeyPayload(payload, address):
+    status, addressVersion, streamNumber, ripe = decodeAddress(address)
+    doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
+        addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
+    # this function expects that the nonce is Not included in payload.
+    readPosition = 8  # for the time
+    embeddedVersionNumber, varintLength = decodeVarint(
+        payload[readPosition:readPosition + 10])
+    if embeddedVersionNumber != addressVersion:
+        with shared.printLock:
+            print 'Pubkey decryption was UNsuccessful due to address version mismatch. This shouldn\'t have happened.'
+        return 'failed'
+    readPosition += varintLength
+    embeddedStreamNumber, varintLength = decodeVarint(
+        payload[readPosition:readPosition + 10])
+    if embeddedStreamNumber != streamNumber:
+        with shared.printLock:
+            print 'Pubkey decryption was UNsuccessful due to stream number mismatch. This shouldn\'t have happened.'
+        return 'failed'
+    readPosition += varintLength
+    signedData = payload[:readPosition] # Some of the signed data is not encrypted so let's keep it for now.
+    toTag = payload[readPosition:readPosition+32]
+    readPosition += 32 #for the tag
+    encryptedData = payload[readPosition:]
+    # Let us try to decrypt the pubkey
+    privEncryptionKey = doubleHashOfAddressData[:32]
+    cryptorObject = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
+    try:
+        decryptedData = cryptorObject.decrypt(encryptedData)
+    except:
+        # Someone must have encrypted some data with a different key
+        # but tagged it with a tag for which we are watching.
+        with shared.printLock:
+            print 'Pubkey decryption was UNsuccessful. This shouldn\'t have happened.'
+        return 'failed'
+    print 'Pubkey decryption successful'
+    readPosition = 4 # bypass the behavior bitfield
+    publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+    # Is it possible for a public key to be invalid such that trying to
+    # encrypt or sign with it will cause an error? If it is, we should
+    # probably test these keys here.
+    readPosition += 64
+    publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+    readPosition += 64
+    specifiedNonceTrialsPerByte, specifiedNonceTrialsPerByteLength = decodeVarint(
+        decryptedData[readPosition:readPosition + 10])
+    readPosition += specifiedNonceTrialsPerByteLength
+    specifiedPayloadLengthExtraBytes, specifiedPayloadLengthExtraBytesLength = decodeVarint(
+        decryptedData[readPosition:readPosition + 10])
+    readPosition += specifiedPayloadLengthExtraBytesLength
+    signedData += decryptedData[:readPosition]
+    signatureLength, signatureLengthLength = decodeVarint(
+        decryptedData[readPosition:readPosition + 10])
+    readPosition += signatureLengthLength
+    signature = decryptedData[readPosition:readPosition + signatureLength]
+    try:
+        if not highlevelcrypto.verify(signedData, signature, publicSigningKey.encode('hex')):
+            print 'ECDSA verify failed (within decryptAndCheckPubkeyPayload).'
+            return 'failed'
+        print 'ECDSA verify passed (within decryptAndCheckPubkeyPayload)'
+    except Exception as err:
+        print 'ECDSA verify failed (within decryptAndCheckPubkeyPayload)', err
+        return 'failed'
+
+    sha = hashlib.new('sha512')
+    sha.update(publicSigningKey + publicEncryptionKey)
+    ripeHasher = hashlib.new('ripemd160')
+    ripeHasher.update(sha.digest())
+    embeddedRipe = ripeHasher.digest()
+
+    if embeddedRipe != ripe:
+        # Although this pubkey object had the tag were were looking for and was
+        # encrypted with the correct encryption key, it doesn't contain the
+        # correct keys. Someone is either being malicious or using buggy software.
+        with shared.printLock:
+            print 'Pubkey decryption was UNsuccessful due to RIPE mismatch. This shouldn\'t have happened.'
+        return 'failed'
+    
+    t = (ripe, signedData, int(time.time()), 'yes')
+    sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
+    return 'successful'
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])
 
