@@ -165,7 +165,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if status == 'versiontoohigh':
                 raise APIError(10, 'Address version number too high (or zero) in address: ' + address)
             raise APIError(7, 'Could not decode address: ' + address + ' : ' + status)
-        if addressVersionNumber < 2 or addressVersionNumber > 3:
+        if addressVersionNumber < 2 or addressVersionNumber > 4:
             raise APIError(11, 'The address version number currently must be 2, 3 or 4. Others aren\'t supported. Check the address.')
         if streamNumber != 1:
             raise APIError(12, 'The stream number must be 1. Others aren\'t supported. Check the address.')
@@ -882,6 +882,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             else:
                 networkStatus = 'connectedAndReceivingIncomingConnections'
             return json.dumps({'networkConnections':len(shared.connectedHostsList),'numberOfMessagesProcessed':shared.numberOfMessagesProcessed, 'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed, 'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed, 'networkStatus':networkStatus, 'softwareName':'PyBitmessage','softwareVersion':shared.softwareVersion}, indent=4, separators=(',', ': '))
+        elif method == 'decodeAddress':
+            #decode an address
+            if len(params) != 1:
+                raise APIError(0, 'I need 1 parameter!')
+            address, = params
+            status, addressVersion, streamNumber, ripe = decodeAddress(address)
+            return json.dumps({'status':status, 'addressVersion':addressVersion,
+                               'streamNumber':streamNumber, 'ripe':ripe.encode('base64')}, indent=4,
+                               separators=(',', ': '))
         else:
             raise APIError(20, 'Invalid method: %s' % method)
 
