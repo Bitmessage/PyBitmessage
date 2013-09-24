@@ -418,9 +418,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if label == '':
                 label = '[chan] ' + passphrase
             if addressVersionNumber == 0:  # 0 means "just use the proper addressVersionNumber"
-                addressVersionNumber = 3
-            if addressVersionNumber != 3:
-                raise APIError(2,'The address version number currently must be 3 (or 0 which means auto-select). ' + addressVersionNumber + ' isn\'t supported.')
+                addressVersionNumber = 4
+            if addressVersionNumber != 3 and addressVersionNumber != 4:
+                raise APIError(2,'The address version number currently must be 3 or 4 (or 0 which means auto-select). ' + addressVersionNumber + ' isn\'t supported.')
             if streamNumber == 0:  # 0 means "just use the most available stream"
                 streamNumber = 1
             if streamNumber != 1:
