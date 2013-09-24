@@ -4,7 +4,7 @@
 
 rm -f Makefile rpmpackage/*.spec
 
-packagemonkey -n "PyBitmessage" --version "0.3.5" --dir "." -l "mit" \
+packagemonkey -n "PyBitmessage" --version "0.4.0" --dir "." -l "mit" \
     -e "Bob Mottram (4096 bits) <bob@robotics.uk.to>" \
     --brief "Send encrypted messages" \
     --desc "Bitmessage is a P2P communications protocol used to send " \

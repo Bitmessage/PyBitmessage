@@ -86,14 +86,14 @@
       <item row="4" column="0">
        <widget class="QLabel" name="label_2">
         <property name="text">
-         <string>Address version Number:</string>
+         <string>Address version number:</string>
         </property>
        </widget>
       </item>
       <item row="4" column="1">
        <widget class="QLineEdit" name="lineEditAddressVersionNumber">
         <property name="enabled">
-         <bool>false</bool>
+         <bool>true</bool>
         </property>
         <property name="sizePolicy">
          <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
@@ -108,7 +108,7 @@
          </size>
         </property>
         <property name="text">
-         <string>3</string>
+         <string/>
         </property>
        </widget>
       </item>

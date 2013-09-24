@@ -1,5 +1,5 @@
 APP=pybitmessage
-VERSION=0.3.5
+VERSION=0.4.0
 RELEASE=1
 ARCH_TYPE=`uname -m`
 PREFIX?=/usr/local
