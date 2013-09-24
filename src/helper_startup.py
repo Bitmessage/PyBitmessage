@@ -42,7 +42,7 @@ def loadConfig():
         # This appears to be the first time running the program; there is
         # no config file (or it cannot be accessed). Create config file.
         shared.config.add_section('bitmessagesettings')
-        shared.config.set('bitmessagesettings', 'settingsversion', '6')
+        shared.config.set('bitmessagesettings', 'settingsversion', '7')
         shared.config.set('bitmessagesettings', 'port', '8444')
         shared.config.set(
             'bitmessagesettings', 'timeformat', '%%a, %%d %%b %%Y  %%I:%%M %%p')
@@ -74,7 +74,7 @@ def loadConfig():
         shared.config.set(
             'bitmessagesettings', 'messagesencrypted', 'false')
         shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
-            shared.networkDefaultProofOfWorkNonceTrialsPerByte))
+            shared.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
         shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
             shared.networkDefaultPayloadLengthExtraBytes))
         shared.config.set('bitmessagesettings', 'minimizeonclose', 'false')

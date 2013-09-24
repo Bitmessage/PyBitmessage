@@ -334,7 +334,7 @@ class MyForm(QtGui.QMainWindow):
                     newItem.setTextColor(QtGui.QColor(137, 04, 177))  # magenta
                 self.ui.tableWidgetYourIdentities.setItem(0, 1, newItem)
                 newItem = QtGui.QTableWidgetItem(str(
-                    addressStream(addressInKeysFile)))
+                    decodeAddress(addressInKeysFile)[2]))
                 newItem.setFlags(
                     QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
                 if not isEnabled:
@@ -1133,8 +1133,15 @@ class MyForm(QtGui.QMainWindow):
             else:
                 streamNumberForAddress = int(
                     self.regenerateAddressesDialogInstance.ui.lineEditStreamNumber.text())
-                addressVersionNumber = int(
-                    self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
+                try:
+                    addressVersionNumber = int(
+                        self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
+                except:
+                    QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
+                        "MainWindow", "Your address version number must be a number: either 3 or 4."))
+                if addressVersionNumber < 3 or addressVersionNumber > 4:
+                    QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
+                        "MainWindow", "Your address version number must be either 3 or 4."))
                 # self.addressGenerator = addressGenerator()
                 # self.addressGenerator.setup(addressVersionNumber,streamNumberForAddress,"unused address",self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(),self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(),self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked())
                 # QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
@@ -1153,7 +1160,7 @@ class MyForm(QtGui.QMainWindow):
                         "MainWindow", "You didn't enter a chan name."))
                     return
                 shared.apiAddressGeneratorReturnQueue.queue.clear()
-                shared.addressGeneratorQueue.put(('createChan', 3, 1, self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()))
+                shared.addressGeneratorQueue.put(('createChan', 4, 1, self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()))
                 addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
                 print 'addressGeneratorReturnValue', addressGeneratorReturnValue
                 if len(addressGeneratorReturnValue) == 0:
@@ -1566,7 +1573,7 @@ class MyForm(QtGui.QMainWindow):
                                 continue
                         except:
                             pass
-                        if addressVersionNumber > 3 or addressVersionNumber <= 1:
+                        if addressVersionNumber > 4 or addressVersionNumber <= 1:
                             QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
                                 "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
                             continue
@@ -2200,9 +2207,9 @@ class MyForm(QtGui.QMainWindow):
                 else:
                     # User selected 'Use the same stream as an existing
                     # address.'
-                    streamNumberForAddress = addressStream(
-                        self.dialog.ui.comboBoxExisting.currentText())
-                shared.addressGeneratorQueue.put(('createRandomAddress', 3, streamNumberForAddress, str(
+                    streamNumberForAddress = decodeAddress(
+                        self.dialog.ui.comboBoxExisting.currentText())[2]
+                shared.addressGeneratorQueue.put(('createRandomAddress', 4, streamNumberForAddress, str(
                     self.dialog.ui.newaddresslabel.text().toUtf8()), 1, "", self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
             else:
                 if self.dialog.ui.lineEditPassphrase.text() != self.dialog.ui.lineEditPassphraseAgain.text():
@@ -2213,7 +2220,7 @@ class MyForm(QtGui.QMainWindow):
                         "MainWindow", "Choose a passphrase"), _translate("MainWindow", "You really do need a passphrase."))
                 else:
                     streamNumberForAddress = 1  # this will eventually have to be replaced by logic to determine the most available stream number.
-                    shared.addressGeneratorQueue.put(('createDeterministicAddresses', 3, streamNumberForAddress, "unused deterministic address", self.dialog.ui.spinBoxNumberOfAddressesToMake.value(
+                    shared.addressGeneratorQueue.put(('createDeterministicAddresses', 4, streamNumberForAddress, "unused deterministic address", self.dialog.ui.spinBoxNumberOfAddressesToMake.value(
                     ), self.dialog.ui.lineEditPassphrase.text().toUtf8(), self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
         else:
             print 'new address dialog box rejected'

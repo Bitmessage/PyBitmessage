@@ -31,12 +31,12 @@ print 'Uncomment the next two lines to create a new random address with a slight
 
 print 'Uncomment these next four lines to create new deterministic addresses.'
 #passphrase = 'asdfasdfqwser'.encode('base64')
-#jsonDeterministicAddresses = api.createDeterministicAddresses(passphrase, 2, 3, 1, False)
+#jsonDeterministicAddresses = api.createDeterministicAddresses(passphrase, 2, 4, 1, False)
 #print jsonDeterministicAddresses
 #print json.loads(jsonDeterministicAddresses)
 
 #print 'Uncomment this next line to print the first deterministic address that would be generated with the given passphrase. This will Not add it to the Bitmessage interface or the keys.dat file.'
-#print api.getDeterministicAddress('asdfasdfqwser'.encode('base64'),3,1)
+#print api.getDeterministicAddress('asdfasdfqwser'.encode('base64'),4,1)
 
 #print 'Uncomment this line to subscribe to an address. (You must use your own address, this one is invalid).'
 #print api.addSubscription('2D94G5d8yp237GGqAheoecBYpdehdT3dha','test sub'.encode('base64'))

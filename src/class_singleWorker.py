@@ -24,10 +24,18 @@ class singleWorker(threading.Thread):
 
     def run(self):
         queryreturn = sqlQuery(
-            '''SELECT toripe FROM sent WHERE ((status='awaitingpubkey' OR status='doingpubkeypow') AND folder='sent')''')
+            '''SELECT toripe, toaddress FROM sent WHERE ((status='awaitingpubkey' OR status='doingpubkeypow') AND folder='sent')''')
         for row in queryreturn:
-            toripe, = row
-            shared.neededPubkeys[toripe] = 0
+            toripe, toaddress = row
+            toStatus, toAddressVersionNumber, toStreamNumber, toRipe = decodeAddress(toaddress)
+            if toAddressVersionNumber <= 3 :
+                shared.neededPubkeys[toripe] = 0
+            elif toAddressVersionNumber >= 4:
+                doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
+                    toAddressVersionNumber) + encodeVarint(toStreamNumber) + toRipe).digest()).digest()
+                privEncryptionKey = doubleHashOfAddressData[:32] # Note that this is the first half of the sha512 hash.
+                tag = doubleHashOfAddressData[32:]
+                shared.neededPubkeys[tag] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex')) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
 
         # Initialize the shared.ackdataForWhichImWatching data structure using data
         # from the sql database.
@@ -64,23 +72,8 @@ class singleWorker(threading.Thread):
                 self.doPOWForMyV2Pubkey(data)
             elif command == 'sendOutOrStoreMyV3Pubkey':
                 self.sendOutOrStoreMyV3Pubkey(data)
-                """elif command == 'newpubkey':
-                    toAddressVersion,toStreamNumber,toRipe = data
-                    if toRipe in shared.neededPubkeys:
-                        print 'We have been awaiting the arrival of this pubkey.'
-                        del shared.neededPubkeys[toRipe]
-                        t = (toRipe,)
-                        shared.sqlLock.acquire()
-                        shared.sqlSubmitQueue.put('''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND status='awaitingpubkey' and folder='sent' ''')
-                        shared.sqlSubmitQueue.put(t)
-                        shared.sqlReturnQueue.get()
-                        shared.sqlSubmitQueue.put('commit')
-                        shared.sqlLock.release()
-                        self.sendMsg()
-                    else:
-                        with shared.printLock:
-                            print 'We don\'t need this pub key. We didn\'t ask for it. Pubkey hash:', toRipe.encode('hex')
-                        """
+            elif command == 'sendOutOrStoreMyV4Pubkey':
+                self.sendOutOrStoreMyV4Pubkey(data)
             else:
                 with shared.printLock:
                     sys.stderr.write(
@@ -139,18 +132,11 @@ class singleWorker(threading.Thread):
         trialValue, nonce = proofofwork.run(target, initialHash)
         print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
         payload = pack('>Q', nonce) + payload
-        """t = (hash,payload,embeddedTime,'no')
-        shared.sqlLock.acquire()
-        shared.sqlSubmitQueue.put('''INSERT INTO pubkeys VALUES (?,?,?,?)''')
-        shared.sqlSubmitQueue.put(t)
-        queryreturn = shared.sqlReturnQueue.get()
-        shared.sqlSubmitQueue.put('commit')
-        shared.sqlLock.release()"""
 
         inventoryHash = calculateInventoryHash(payload)
         objectType = 'pubkey'
         shared.inventory[inventoryHash] = (
-            objectType, streamNumber, payload, embeddedTime)
+            objectType, streamNumber, payload, embeddedTime,'')
         shared.inventorySets[streamNumber].add(inventoryHash)
 
         with shared.printLock:
@@ -224,7 +210,7 @@ class singleWorker(threading.Thread):
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'pubkey'
             shared.inventory[inventoryHash] = (
-                objectType, streamNumber, payload, embeddedTime)
+                objectType, streamNumber, payload, embeddedTime,'')
             shared.inventorySets[streamNumber].add(inventoryHash)
 
             with shared.printLock:
@@ -242,6 +228,106 @@ class singleWorker(threading.Thread):
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''',
                        hash,
                        payload,
+                       embeddedTime,
+                       'yes')
+        shared.config.set(
+            myAddress, 'lastpubkeysendtime', str(int(time.time())))
+        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+            shared.config.write(configfile)
+
+    # If this isn't a chan address, this function assembles the pubkey data,
+    # does the necessary POW and sends it out. If it *is* a chan then it
+    # assembles the pubkey and stores is in the pubkey table so that we can
+    # send messages to "ourselves".
+    def sendOutOrStoreMyV4Pubkey(self, myAddress):
+        status, addressVersionNumber, streamNumber, hash = decodeAddress(
+            myAddress)
+        embeddedTime = int(time.time() + random.randrange(
+            -300, 300))  # the current time plus or minus five minutes
+        payload = pack('>Q', (embeddedTime))
+        payload += encodeVarint(addressVersionNumber)  # Address version number
+        payload += encodeVarint(streamNumber)
+        dataToStoreInOurPubkeysTable = payload # used if this is a chan. We'll add more data further down.
+
+        dataToEncrypt = '\x00\x00\x00\x01'  # bitfield of features supported by me (see the wiki).
+
+        try:
+            privSigningKeyBase58 = shared.config.get(
+                myAddress, 'privsigningkey')
+            privEncryptionKeyBase58 = shared.config.get(
+                myAddress, 'privencryptionkey')
+        except Exception as err:
+            with shared.printLock:
+                sys.stderr.write(
+                    'Error within sendOutOrStoreMyV4Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
+            return
+
+        privSigningKeyHex = shared.decodeWalletImportFormat(
+            privSigningKeyBase58).encode('hex')
+        privEncryptionKeyHex = shared.decodeWalletImportFormat(
+            privEncryptionKeyBase58).encode('hex')
+        pubSigningKey = highlevelcrypto.privToPub(
+            privSigningKeyHex).decode('hex')
+        pubEncryptionKey = highlevelcrypto.privToPub(
+            privEncryptionKeyHex).decode('hex')
+        dataToEncrypt += pubSigningKey[1:]
+        dataToEncrypt += pubEncryptionKey[1:]
+
+        dataToEncrypt += encodeVarint(shared.config.getint(
+            myAddress, 'noncetrialsperbyte'))
+        dataToEncrypt += encodeVarint(shared.config.getint(
+            myAddress, 'payloadlengthextrabytes'))
+
+        dataToStoreInOurPubkeysTable += dataToEncrypt # dataToStoreInOurPubkeysTable is used if this is a chan
+
+        signature = highlevelcrypto.sign(payload + dataToEncrypt, privSigningKeyHex)
+        dataToEncrypt += encodeVarint(len(signature))
+        dataToEncrypt += signature
+
+        if not shared.safeConfigGetBoolean(myAddress, 'chan'):
+            # Let us encrypt the necessary data. We will use a hash of the data
+            # contained in an address as a decryption key. This way in order to
+            # read the public keys in a pubkey message, a node must know the address
+            # first. We'll also tag, unencrypted, the pubkey with part of the hash
+            # so that nodes know which pubkey object to try to decrypt when they
+            # want to send a message.
+            doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
+                addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()
+            payload += doubleHashOfAddressData[32:] # the tag
+            privEncryptionKey = doubleHashOfAddressData[:32]
+            pubEncryptionKey = pointMult(privEncryptionKey)
+            payload += highlevelcrypto.encrypt(
+                dataToEncrypt, pubEncryptionKey.encode('hex'))
+
+            # Do the POW for this pubkey message
+            target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
+                                 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+            print '(For pubkey message) Doing proof of work...'
+            initialHash = hashlib.sha512(payload).digest()
+            trialValue, nonce = proofofwork.run(target, initialHash)
+            print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
+
+            payload = pack('>Q', nonce) + payload
+            inventoryHash = calculateInventoryHash(payload)
+            objectType = 'pubkey'
+            shared.inventory[inventoryHash] = (
+                objectType, streamNumber, payload, embeddedTime, doubleHashOfAddressData[32:])
+            shared.inventorySets[streamNumber].add(inventoryHash)
+
+            with shared.printLock:
+                print 'broadcasting inv with hash:', inventoryHash.encode('hex')
+
+            shared.broadcastToSendDataQueues((
+                streamNumber, 'advertiseobject', inventoryHash))
+            shared.UISignalQueue.put(('updateStatusBar', ''))
+        # If this is a chan address then we won't send out the pubkey over the
+        # network but rather will only store it in our pubkeys table so that
+        # we can send messages to "ourselves".
+        if shared.safeConfigGetBoolean(myAddress, 'chan'):
+
+            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''',
+                       hash,
+                       dataToStoreInOurPubkeysTable,
                        embeddedTime,
                        'yes')
         shared.config.set(
@@ -283,12 +369,26 @@ class singleWorker(threading.Thread):
             pubEncryptionKey = highlevelcrypto.privToPub(
                 privEncryptionKeyHex).decode('hex')
 
+            print 'embedding pubEncryptionKey:', pubEncryptionKey.encode('hex')
+
             payload = pack('>Q', (int(time.time()) + random.randrange(
                 -300, 300)))  # the current time plus or minus five minutes
-            payload += encodeVarint(2)  # broadcast version
+            if addressVersionNumber <= 3:
+                payload += encodeVarint(2)  # broadcast version
+            else:
+                payload += encodeVarint(3)  # broadcast version
             payload += encodeVarint(streamNumber)
+            if addressVersionNumber >= 4:
+                doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
+                    addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()).digest()
+                payload += doubleHashOfAddressData[32:]  # the tag
+                print 'embeddedTag is', doubleHashOfAddressData[32:].encode('hex')
+                print 'embeddedTag is', repr(doubleHashOfAddressData[32:])
 
-            dataToEncrypt = encodeVarint(2)  # broadcast version
+            if addressVersionNumber <= 3:
+                dataToEncrypt = encodeVarint(2)  # broadcast version
+            else:
+                dataToEncrypt = encodeVarint(3)  # broadcast version
             dataToEncrypt += encodeVarint(addressVersionNumber)
             dataToEncrypt += encodeVarint(streamNumber)
             dataToEncrypt += '\x00\x00\x00\x01'  # behavior bitfield
@@ -308,8 +408,11 @@ class singleWorker(threading.Thread):
             # Encrypt the broadcast with the information contained in the broadcaster's address. Anyone who knows the address can generate 
             # the private encryption key to decrypt the broadcast. This provides virtually no privacy; its purpose is to keep questionable 
             # and illegal content from flowing through the Internet connections and being stored on the disk of 3rd parties. 
-            privEncryptionKey = hashlib.sha512(encodeVarint(
-                addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()[:32]
+            if addressVersionNumber <= 3:
+                privEncryptionKey = hashlib.sha512(encodeVarint(
+                    addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()[:32]
+            else:
+                privEncryptionKey = doubleHashOfAddressData[:32]
             pubEncryptionKey = pointMult(privEncryptionKey)
             payload += highlevelcrypto.encrypt(
                 dataToEncrypt, pubEncryptionKey.encode('hex'))
@@ -328,7 +431,7 @@ class singleWorker(threading.Thread):
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'broadcast'
             shared.inventory[inventoryHash] = (
-                objectType, streamNumber, payload, int(time.time()))
+                objectType, streamNumber, payload, int(time.time()),'')
             shared.inventorySets[streamNumber].add(inventoryHash)
             with shared.printLock:
                 print 'sending inv (within sendBroadcast function) for object:', inventoryHash.encode('hex')
@@ -354,28 +457,63 @@ class singleWorker(threading.Thread):
             '''SELECT DISTINCT toaddress FROM sent WHERE (status='msgqueued' AND folder='sent')''')
         for row in queryreturn:  # For each address to which we need to send a message, check to see if we have its pubkey already.
             toaddress, = row
-            toripe = decodeAddress(toaddress)[3]
+            status, toAddressVersion, toStreamNumber, toRipe = decodeAddress(toaddress)
             queryreturn = sqlQuery(
-                '''SELECT hash FROM pubkeys WHERE hash=? ''', toripe)
-            if queryreturn != []:  # If we have the needed pubkey, set the status to doingmsgpow (we'll do it further down)
+                '''SELECT hash FROM pubkeys WHERE hash=? ''', toRipe)
+            if queryreturn != []:  # If we have the needed pubkey in the pubkey table already, set the status to doingmsgpow (we'll do it further down)
                 sqlExecute(
                     '''UPDATE sent SET status='doingmsgpow' WHERE toaddress=? AND status='msgqueued' ''',
                     toaddress)
-            else:  # We don't have the needed pubkey. Set the status to 'awaitingpubkey' and request it if we haven't already
-                if toripe in shared.neededPubkeys:
+            else:  # We don't have the needed pubkey in the pubkey table already.
+                if toAddressVersion <= 3:
+                    toTag = ''
+                else:
+                    toTag = hashlib.sha512(hashlib.sha512(encodeVarint(toAddressVersion)+encodeVarint(toStreamNumber)+toRipe).digest()).digest()[32:]
+                if toRipe in shared.neededPubkeys or toTag in shared.neededPubkeys:
                     # We already sent a request for the pubkey
                     sqlExecute(
                         '''UPDATE sent SET status='awaitingpubkey' WHERE toaddress=? AND status='msgqueued' ''', toaddress)
                     shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-                        toripe, tr.translateText("MainWindow",'Encryption key was requested earlier.'))))
+                        toRipe, tr.translateText("MainWindow",'Encryption key was requested earlier.'))))
                 else:
                     # We have not yet sent a request for the pubkey
-                    sqlExecute(
-                        '''UPDATE sent SET status='doingpubkeypow' WHERE toaddress=? AND status='msgqueued' ''',
-                        toaddress)
-                    shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-                        toripe, tr.translateText("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
-                    self.requestPubKey(toaddress)
+                    needToRequestPubkey = True
+                    if toAddressVersion >= 4: # If we are trying to send to address version >= 4 then the needed pubkey might be encrypted in the inventory.
+                        # If we have it we'll need to decrypt it and put it in the pubkeys table.
+                        queryreturn = sqlQuery(
+                            '''SELECT payload FROM inventory WHERE objecttype='pubkey' and tag=? ''', toTag)
+                        if queryreturn != []: # if there was a pubkey in our inventory with the correct tag, we need to try to decrypt it.
+                            for row in queryreturn:
+                                data, = row
+                                if shared.decryptAndCheckPubkeyPayload(data[8:], toaddress) == 'successful':
+                                    needToRequestPubkey = False
+                                    print 'debug. successfully decrypted and checked pubkey from sql inventory.' #testing
+                                    sqlExecute(
+                                        '''UPDATE sent SET status='doingmsgpow' WHERE toaddress=? AND status='msgqueued' ''',
+                                        toaddress)
+                                    break
+                                else: # There was something wrong with this pubkey even though it had the correct tag- almost certainly because of malicious behavior or a badly programmed client.
+                                    continue
+                        if needToRequestPubkey: # Obviously we had no success looking in the sql inventory. Let's look through the memory inventory.
+                            with shared.inventoryLock:
+                                for hash, storedValue in shared.inventory.items():
+                                    objectType, streamNumber, payload, receivedTime, tag = storedValue
+                                    if objectType == 'pubkey' and tag == toTag:
+                                        result = shared.decryptAndCheckPubkeyPayload(payload[8:], toaddress) #if valid, this function also puts it in the pubkeys table.
+                                        if result == 'successful':
+                                            print 'debug. successfully decrypted and checked pubkey from memory inventory.'
+                                            needToRequestPubkey = False
+                                            sqlExecute(
+                                                '''UPDATE sent SET status='doingmsgpow' WHERE toaddress=? AND status='msgqueued' ''',
+                                                toaddress)
+                                            break
+                    if needToRequestPubkey:
+                        sqlExecute(
+                            '''UPDATE sent SET status='doingpubkeypow' WHERE toaddress=? AND status='msgqueued' ''',
+                            toaddress)
+                        shared.UISignalQueue.put(('updateSentItemStatusByHash', (
+                            toRipe, tr.translateText("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
+                        self.requestPubKey(toaddress)
         # Get all messages that are ready to be sent, and also all messages
         # which we have sent in the last 28 days which were previously marked
         # as 'toodifficult'. If the user as raised the maximum acceptable
@@ -442,7 +580,10 @@ class singleWorker(threading.Thread):
             # The pubkey message is stored the way we originally received it
             # which means that we need to read beyond things like the nonce and
             # time to get to the actual public keys.
-            readPosition = 8  # to bypass the nonce
+            if toAddressVersionNumber <= 3:
+                readPosition = 8  # to bypass the nonce
+            elif toAddressVersionNumber >= 4:
+                readPosition = 0 # the nonce is not included here so we don't need to skip over it.
             pubkeyEmbeddedTime, = unpack(
                 '>I', pubkeyPayload[readPosition:readPosition + 4])
             # This section is used for the transition from 32 bit time to 64
@@ -482,7 +623,7 @@ class singleWorker(threading.Thread):
                 requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                     ackdata, tr.translateText("MainWindow", "Doing work necessary to send message.\nThere is no required difficulty for version 2 addresses like this."))))
-            elif toAddressVersionNumber == 3:
+            elif toAddressVersionNumber >= 3:
                 requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(
                     pubkeyPayload[readPosition:readPosition + 10])
                 readPosition += varintLength
@@ -555,7 +696,7 @@ class singleWorker(threading.Thread):
                 payload += encodeVarint(len(signature))
                 payload += signature
 
-            if fromAddressVersionNumber == 3:
+            if fromAddressVersionNumber >= 3:
                 payload = '\x01'  # Message version.
                 payload += encodeVarint(fromAddressVersionNumber)
                 payload += encodeVarint(fromStreamNumber)
@@ -624,7 +765,7 @@ class singleWorker(threading.Thread):
                 payload += encodeVarint(len(signature))
                 payload += signature
 
-
+            print 'using pubEncryptionKey:', pubEncryptionKeyBase256.encode('hex')
             # We have assembled the data that will be encrypted.
             try:
                 encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
@@ -652,7 +793,7 @@ class singleWorker(threading.Thread):
             inventoryHash = calculateInventoryHash(encryptedPayload)
             objectType = 'msg'
             shared.inventory[inventoryHash] = (
-                objectType, toStreamNumber, encryptedPayload, int(time.time()))
+                objectType, toStreamNumber, encryptedPayload, int(time.time()),'')
             shared.inventorySets[toStreamNumber].add(inventoryHash)
             if shared.safeConfigGetBoolean(toaddress, 'chan'):
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Message sent. Sent on %1").arg(unicode(
@@ -683,14 +824,24 @@ class singleWorker(threading.Thread):
                     toAddress) + '. Please report this error to Atheros.')
 
             return
-        shared.neededPubkeys[ripe] = 0
+        if addressVersionNumber <= 3:
+            shared.neededPubkeys[ripe] = 0
+        elif addressVersionNumber >= 4:
+            privEncryptionKey = hashlib.sha512(hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()).digest()[:32] # Note that this is the first half of the sha512 hash.
+            tag = hashlib.sha512(hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()).digest()[32:] # Note that this is the second half of the sha512 hash.
+            shared.neededPubkeys[tag] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex')) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
         payload = pack('>Q', (int(time.time()) + random.randrange(
             -300, 300)))  # the current time plus or minus five minutes.
         payload += encodeVarint(addressVersionNumber)
         payload += encodeVarint(streamNumber)
-        payload += ripe
-        with shared.printLock:
-            print 'making request for pubkey with ripe:', ripe.encode('hex')
+        if addressVersionNumber <= 3:
+            payload += ripe
+            with shared.printLock:
+                print 'making request for pubkey with ripe:', ripe.encode('hex')
+        else:
+            payload += tag
+            with shared.printLock:
+                print 'making request for v4 pubkey with tag:', tag.encode('hex')
 
         # print 'trial value', trialValue
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
@@ -709,7 +860,7 @@ class singleWorker(threading.Thread):
         inventoryHash = calculateInventoryHash(payload)
         objectType = 'getpubkey'
         shared.inventory[inventoryHash] = (
-            objectType, streamNumber, payload, int(time.time()))
+            objectType, streamNumber, payload, int(time.time()),'')
         shared.inventorySets[streamNumber].add(inventoryHash)
         print 'sending inv (for the getpubkey message)'
         shared.broadcastToSendDataQueues((
