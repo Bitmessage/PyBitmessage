@@ -165,8 +165,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if status == 'versiontoohigh':
                 raise APIError(10, 'Address version number too high (or zero) in address: ' + address)
             raise APIError(7, 'Could not decode address: ' + address + ' : ' + status)
-        if addressVersionNumber < 2 or addressVersionNumber > 3:
-            raise APIError(11, 'The address version number currently must be 2 or 3. Others aren\'t supported. Check the address.')
+        if addressVersionNumber < 2 or addressVersionNumber > 4:
+            raise APIError(11, 'The address version number currently must be 2, 3 or 4. Others aren\'t supported. Check the address.')
         if streamNumber != 1:
             raise APIError(12, 'The stream number must be 1. Others aren\'t supported. Check the address.')
 
