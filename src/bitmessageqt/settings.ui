@@ -756,7 +756,6 @@
    </item>
   </layout>
  </widget>
- 
  <widget class="QWidget" name="tabResendingMessagesAdjustment">
       <attribute name="title">
        <string>Adjusting time period for resending messages</string>
@@ -860,7 +859,7 @@
   </connection>
   <connection>
    <sender>buttonBox</sender>
-   <signal>rejected)</signal>
+   <signal>rejected()</signal>
    <receiver>settingsDialog</receiver>
    <slot>reject()</slot>
    <hints>
