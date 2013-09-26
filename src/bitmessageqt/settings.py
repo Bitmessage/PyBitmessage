@@ -395,3 +395,4 @@ class Ui_settingsDialog(object):
         self.radioButtonNamecoinNmcontrol.setText(_translate("settingsDialog", "NMControl", None))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabNamecoin), _translate("settingsDialog", "Namecoin integration", None))
 
+#just test
