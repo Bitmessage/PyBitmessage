@@ -1063,6 +1063,7 @@ p, li { white-space: pre-wrap; }
      <string>File</string>
     </property>
     <addaction name="actionManageKeys"/>
+    <addaction name="actionBackup"/>
     <addaction name="actionDeleteAllTrashedMessages"/>
     <addaction name="actionRegenerateDeterministicAddresses"/>
     <addaction name="actionJoinChan"/>
@@ -1114,6 +1115,24 @@ p, li { white-space: pre-wrap; }
     <string>Manage keys</string>
    </property>
   </action>
+  
+   <action name="actionBackup">
+   <property name="checkable">
+    <bool>false</bool>
+   </property>
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="icon">
+    <iconset theme="dialog-password">
+     <normaloff/>
+    </iconset>
+   </property>
+   <property name="text">
+    <string>Manage keys</string>
+   </property>
+  </action>
+  
   <action name="actionExit">
    <property name="icon">
     <iconset theme="application-exit">

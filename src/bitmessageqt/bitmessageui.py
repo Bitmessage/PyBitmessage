@@ -457,9 +457,20 @@ class Ui_MainWindow(object):
         self.actionManageKeys = QtGui.QAction(MainWindow)
         self.actionManageKeys.setCheckable(False)
         self.actionManageKeys.setEnabled(True)
+        #mj 
+        self.actionBackup = QtGui.QAction(MainWindow)
+        self.actionBackup.setCheckable(False)
+        self.actionBackup.setEnabled(True)
+        #mj end
         icon = QtGui.QIcon.fromTheme(_fromUtf8("dialog-password"))
         self.actionManageKeys.setIcon(icon)
         self.actionManageKeys.setObjectName(_fromUtf8("actionManageKeys"))
+        #mj
+        icon = QtGui.QIcon.fromTheme(_fromUtf8("dialog-password"))
+        self.actionBackup.setIcon(icon)
+        self.actionBackup.setObjectName(_fromUtf8("actionBackup"))
+        self.actionExit = QtGui.QAction(MainWindow)
+        #mj end
         self.actionExit = QtGui.QAction(MainWindow)
         icon = QtGui.QIcon.fromTheme(_fromUtf8("application-exit"))
         self.actionExit.setIcon(icon)
@@ -488,6 +499,9 @@ class Ui_MainWindow(object):
         icon = QtGui.QIcon.fromTheme(_fromUtf8("contact-new"))
         self.actionJoinChan.setIcon(icon)
         self.actionJoinChan.setObjectName(_fromUtf8("actionJoinChan"))
+         #mj
+        self.menuFile.addAction(self.actionBackup)
+        #mj
         self.menuFile.addAction(self.actionManageKeys)
         self.menuFile.addAction(self.actionDeleteAllTrashedMessages)
         self.menuFile.addAction(self.actionRegenerateDeterministicAddresses)
@@ -631,6 +645,9 @@ class Ui_MainWindow(object):
         self.menuHelp.setTitle(_translate("MainWindow", "Help", None))
         self.actionImport_keys.setText(_translate("MainWindow", "Import keys", None))
         self.actionManageKeys.setText(_translate("MainWindow", "Manage keys", None))
+        #mj
+        self.actionBackup.setText(_translate("MainWindow", "Backup/Restore", None))
+        #mj
         self.actionExit.setText(_translate("MainWindow", "Quit", None))
         self.actionExit.setShortcut(_translate("MainWindow", "Ctrl+Q", None))
         self.actionHelp.setText(_translate("MainWindow", "Help", None))

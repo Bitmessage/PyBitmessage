@@ -26,6 +26,7 @@ from help import *
 from iconglossary import *
 from connect import *
 import sys
+import  shutil
 from time import strftime, localtime, gmtime
 import time
 import os
@@ -125,6 +126,10 @@ class MyForm(QtGui.QMainWindow):
         # FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
             "triggered()"), self.quit)
+        #mj
+        QtCore.QObject.connect(self.ui.actionBackup, QtCore.SIGNAL(
+            "triggered()"), self.click_actionBackup)
+        #mj
         QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL(
             "triggered()"), self.click_actionManageKeys)
         QtCore.QObject.connect(self.ui.actionDeleteAllTrashedMessages, QtCore.SIGNAL(
@@ -1122,7 +1127,17 @@ class MyForm(QtGui.QMainWindow):
         if QtGui.QMessageBox.question(self, _translate("MainWindow", "Delete trash?"), _translate("MainWindow", "Are you sure you want to delete all trashed messages?"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
             return
         sqlStoredProcedure('deleteandvacuume')
-
+    
+    def click_actionBackup(self):
+        #mj
+        #d = os.path.dirname(f)
+        if not os.path.exists('./Backup'):
+            os.makedirs('./Backup')
+         
+        shutil.copyfile('C:\\Users\\mjha\\Dropbox\\semester Three\\software_engineering\\paper\\1988Hare.pdf','./Backup/1988.pdf')   
+        return
+    
+    
     def click_actionRegenerateDeterministicAddresses(self):
         self.regenerateAddressesDialogInstance = regenerateAddressesDialog(
             self)
