@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
 # Copyright (c) 2012 Jonathan Warren
 # Copyright (c) 2012 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying
@@ -152,7 +152,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return text.decode(decode_type)
         except TypeError as e:
             raise APIError(22, "Decode error - " + str(e))
-        
+
     def _verifyAddress(self, address):
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(address)
         if status != 'success':
@@ -519,7 +519,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) == 0:
                 raise APIError(0, 'I need parameters!')
             msgid = self._decode(params[0], "hex")
-            
+
             # Trash if in inbox table
             helper_inbox.trash(msgid)
             # Trash if in sent table
@@ -740,7 +740,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             trialValue, nonce = proofofwork.run(target, initialHash)
             print '(For pubkey message via API) Found proof of work', trialValue, 'Nonce:', nonce
             payload = pack('>Q', nonce) + payload
-            
+
             pubkeyReadPosition = 8 # bypass the nonce
             if payload[pubkeyReadPosition:pubkeyReadPosition+4] == '\x00\x00\x00\x00': # if this pubkey uses 8 byte time
                 pubkeyReadPosition += 8
@@ -760,20 +760,20 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.broadcastToSendDataQueues((
                 streamNumber, 'advertiseobject', inventoryHash))
         elif method == 'getMessageDataByDestinationHash' or method == 'getMessageDataByDestinationTag':
-            # Method will eventually be used by a particular Android app to 
+            # Method will eventually be used by a particular Android app to
             # select relevant messages. Do not yet add this to the api
             # doc.
-            
+
             if len(params) != 1:
                 raise APIError(0, 'I need 1 parameter!')
             requestedHash, = params
             if len(requestedHash) != 32:
                 raise APIError(19, 'The length of hash should be 32 bytes (encoded in hex thus 64 characters).')
             requestedHash = self._decode(requestedHash, "hex")
-            
-            # This is not a particularly commonly used API function. Before we 
-            # use it we'll need to fill out a field in our inventory database 
-            # which is blank by default (first20bytesofencryptedmessage). 
+
+            # This is not a particularly commonly used API function. Before we
+            # use it we'll need to fill out a field in our inventory database
+            # which is blank by default (first20bytesofencryptedmessage).
             queryreturn = sqlQuery(
                 '''SELECT hash, payload FROM inventory WHERE tag = '' and objecttype = 'msg' ; ''')
             with SqlBulkExecute() as sql:
@@ -783,7 +783,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                     readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
                     t = (payload[readPosition:readPosition+32],hash)
                     sql.execute('''UPDATE inventory SET tag=? WHERE hash=?; ''', *t)
-                
+
             queryreturn = sqlQuery('''SELECT payload FROM inventory WHERE tag = ?''',
                                    requestedHash)
             data = '{"receivedMessageDatas":['
@@ -795,7 +795,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'getPubkeyByHash':
-            # Method will eventually be used by a particular Android app to 
+            # Method will eventually be used by a particular Android app to
             # retrieve pubkeys. Please do not yet add this to the api docs.
             if len(params) != 1:
                 raise APIError(0, 'I need 1 parameter!')
@@ -937,25 +937,25 @@ class Main:
                     print 'Running as a daemon. You can use Ctrl+C to exit.'
                 while True:
                     time.sleep(20)
-            
+
     def stop(self):
         with shared.printLock:
             print 'Stopping Bitmessage Deamon.'
         shared.doCleanShutdown()
-        
-        
+
+
     def getApiAddress(self):
         if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
             return None
         address = shared.config.get('bitmessagesettings', 'apiinterface')
         port = shared.config.getint('bitmessagesettings', 'apiport')
         return {'address':address,'port':port}
-            
+
 if __name__ == "__main__":
     mainprogram = Main()
     mainprogram.start()
 
-    
+
 # So far, the creation of and management of the Bitmessage protocol and this
 # client is a one-man operation. Bitcoin tips are quite appreciated.
 # 1H5XaDA6fYENLbknwZyjiYXYPQaFjjLX2u
