@@ -256,6 +256,19 @@ class sqlThread(threading.Thread):
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users? Add it right above this line!
         
+        #my new implementation starts here
+        if shared.config.getint('bitmessagesettings', 'settingsversion') == 6:
+            shared.config.set(
+                'bitmessagesettings', 'hours', '0')
+            shared.config.set(
+                'bitmessagesettings', 'days', '5')
+            shared.config.set(
+                'bitmessagesettings', 'months', '0')
+            shared.config.set('bitmessagesettings', 'settingsversion', '7')
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
+        #my new implementation stops here
+        
         try:
             testpayload = '\x00\x00'
             t = ('1234', testpayload, '12345678', 'no')

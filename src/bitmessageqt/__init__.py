@@ -2036,6 +2036,23 @@ class MyForm(QtGui.QMainWindow):
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0:
                 shared.config.set('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
+            #my implementation starts here,it was a line here          
+            time_period = (int(str(self.settingsDialogInstance.ui.lineEditHours.text())) * 60 * 60 + int(str(self.settingsDialogInstance.ui.lineEditDays.text())) * 24 * 60 * 60 +
+                            int(str(self.settingsDialogInstance.ui.lineEditMonths.text())) * (60 * 60 * 24 *365)/12)  
+            if time_period < shared.maximumAgeOfAnObjectThatIAmWillingToAccept * 2:
+                 QMessageBox.about(self, _translate("MainWindow", "Error"), _translate(
+                         "MainWindow", "You must insert a time period longer than 5 days."))
+                 shared.config.set('bitmessagesettings', 'hours', '0')
+                 shared.config.set('bitmessagesettings', 'days', '5')
+                 shared.config.set('bitmessagesettings', 'months', '0')
+            else:
+                shared.config.set('bitmessagesettings', 'hours', str(
+                    self.settingsDialogInstance.ui.lineEditHours.text()))
+                shared.config.set('bitmessagesettings', 'days', str(
+                    self.settingsDialogInstance.ui.lineEditDays.text()))
+                shared.config.set('bitmessagesettings', 'months', str(
+                    self.settingsDialogInstance.ui.lineEditMonths.text()))
+            #my implementation stops here, there is a line
 
             # if str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()) == 'All':
             #    shared.config.set('bitmessagesettings', 'maxcores', '99999')
@@ -2964,7 +2981,7 @@ class settingsDialog(QtGui.QDialog):
             self.ui.lineEditNamecoinPassword.setEnabled(False)
             self.ui.labelNamecoinPassword.setEnabled(False)
         else:
-            assert False
+            assert False     
 
         QtCore.QObject.connect(self.ui.radioButtonNamecoinNamecoind, QtCore.SIGNAL(
             "toggled(bool)"), self.namecoinTypeChanged)
@@ -2973,6 +2990,15 @@ class settingsDialog(QtGui.QDialog):
         QtCore.QObject.connect(self.ui.pushButtonNamecoinTest, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonNamecoinTest)
 
+        #Adjust tab
+        self.ui.lineEditHours.setText(str(
+            shared.config.get('bitmessagesettings', 'hours')))
+        self.ui.lineEditDays.setText(str(
+            shared.config.get('bitmessagesettings', 'days')))
+        self.ui.lineEditMonths.setText(str(
+            shared.config.get('bitmessagesettings', 'months')))
+        
+        
         #'System' tab removed for now.
         """try:
             maxCores = shared.config.getint('bitmessagesettings', 'maxcores')
