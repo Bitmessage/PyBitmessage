@@ -9,7 +9,7 @@ Vcs-Git: https://github.com/Bitmessage/PyBitmessage.git
 
 Package: pybitmessage
 Architecture: all
-Depends: ${shlibs:Depends}, ${misc:Depends}, python (>= 2.7.0), openssl, python-qt4, libqt4-dev (>= 4.8.0), python-qt4-dev, sqlite3, libsqlite3-dev, gst123
+Depends: ${shlibs:Depends}, ${misc:Depends}, ${python:Depends}, python (>= 2.7), openssl, python-qt4, libqt4-dev (>= 4.8.0), python-qt4-dev, sqlite3, libsqlite3-dev, gst123
 Suggests: libmessaging-menu-dev
 Description: Send encrypted messages
  Bitmessage is a P2P communications protocol used to send encrypted

@@ -7,7 +7,7 @@ arch=('any')
 url="https://github.com/Bitmessage/PyBitmessage"
 license=('MIT')
 groups=()
-depends=('python2' 'qt4' 'python2-pyqt4' 'sqlite' 'openssl' 'mpg123')
+depends=('python2' 'qt4' 'python2-pyqt4' 'sqlite' 'openssl' 'gst123')
 makedepends=()
 optdepends=('python2-gevent: Python network library that uses greenlet and libevent for easy and scalable concurrency')
 provides=()
@@ -19,7 +19,7 @@ install=
 changelog=
 source=($pkgname-$pkgver.tar.gz)
 noextract=()
-md5sums=(ebf89129571571198473559b4b2e552c)
+md5sums=()
 build() {
   cd "$srcdir/$pkgname-$pkgver"
   ./configure --prefix=/usr
