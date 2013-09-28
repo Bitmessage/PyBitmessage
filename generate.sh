@@ -16,7 +16,7 @@ packagemonkey -n "PyBitmessage" --version "0.4.0" --dir "." -l "mit" \
     --librarypath "/opt/openssl-compat-bitcoin/lib/" \
     --suggestsdeb "libmessaging-menu-dev" \
     --dependspuppy "openssl, python-qt4, sqlite3, sqlite3-dev, python-openssl, python-sip, gst123" \
-    --dependsarch "python2, qt4, python2-pyqt4, sqlite, openssl, gst123" \
+    --dependsarch "python2, qt4, python2-pyqt4, sqlite, openssl, mpg123" \
     --suggestsarch "python2-gevent: Python network library that uses greenlet and libevent for easy and scalable concurrency" --pythonversion 2 \
     --dependsebuild "dev-libs/openssl, dev-python/PyQt4[${PYTHON_USEDEP}]" \
     --buildebuild "\${PYTHON_DEPS}" --pythonreq "sqlite" \
