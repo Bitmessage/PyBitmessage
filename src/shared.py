@@ -469,8 +469,8 @@ def decryptAndCheckPubkeyPayload(payload, address):
             print 'Pubkey decryption was UNsuccessful due to RIPE mismatch. This shouldn\'t have happened.'
         return 'failed'
     
-    t = (ripe, signedData, int(time.time()), 'yes')
-    sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
+    t = (ripe, addressVersion, signedData, int(time.time()), 'yes')
+    sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
     return 'successful'
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])
