@@ -46,7 +46,7 @@ class sqlThread(threading.Thread):
             # because we may need more flexability in the future and it doesn't
             # take up much more space anyway.
             self.cur.execute(
-                '''CREATE TABLE pubkeys (hash blob, transmitdata blob, time int, usedpersonally text, UNIQUE(hash) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE pubkeys (hash blob, addressversion int, transmitdata blob, time int, usedpersonally text, UNIQUE(hash, addressversion) ON CONFLICT REPLACE)''' )
             self.cur.execute(
                 '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute(
@@ -57,7 +57,7 @@ class sqlThread(threading.Thread):
                 '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
                 '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','4')''')
+            self.cur.execute( '''INSERT INTO settings VALUES('version','5')''')
             self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             self.conn.commit()
@@ -253,13 +253,29 @@ class sqlThread(threading.Thread):
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
 
+        # Add a new column to the pubkeys table to store the address version.
+        # We're going to trash all of our pubkeys and let them be redownloaded.
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        currentVersion = int(self.cur.fetchall()[0][0])
+        if currentVersion == 4:
+            self.cur.execute( '''DROP TABLE pubkeys''')
+            self.cur.execute(
+                '''CREATE TABLE pubkeys (hash blob, addressversion int, transmitdata blob, time int, usedpersonally text, UNIQUE(hash, addressversion) ON CONFLICT REPLACE)''' )
+            self.cur.execute(
+                '''delete from inventory where objecttype = 'pubkey';''')
+            item = '''update settings set value=? WHERE key='version';'''
+            parameters = (5,)
+            self.cur.execute(item, parameters)
+
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users? Add it right above this line!
         
         try:
             testpayload = '\x00\x00'
-            t = ('1234', testpayload, '12345678', 'no')
-            self.cur.execute( '''INSERT INTO pubkeys VALUES(?,?,?,?)''', t)
+            t = ('1234', 1, testpayload, '12345678', 'no')
+            self.cur.execute( '''INSERT INTO pubkeys VALUES(?,?,?,?,?)''', t)
             self.conn.commit()
             self.cur.execute(
                 '''SELECT transmitdata FROM pubkeys WHERE hash='1234' ''')
