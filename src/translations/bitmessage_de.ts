@@ -1417,7 +1417,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="365"/>
         <source>Here you may set the maximum amount of work you are willing to do to send a message to another person. Setting these values to 0 means that any value is acceptable.</source>
-        <translation>hier setzen Sie die maximale Arbeit die Sie bereit sind zu verrichten um eine Nachricht an eine andere Person zu verwenden. Ein Wert von 0 bedeutet, dass Sie jede Arbeit akzeptieren.</translation>
+        <translation>Hier setzen Sie die maximale Arbeit, die Sie bereit sind zu verrichten, um eine Nachricht an eine andere Person zu versenden. Ein Wert von 0 bedeutet, dass Sie jede Arbeit akzeptieren.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="366"/>
