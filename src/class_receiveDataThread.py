@@ -514,8 +514,9 @@ class receiveDataThread(threading.Thread):
                 # the proof of work ourselves, which this program is programmed
                 # to not do.)
                 sqlExecute(
-                    '''INSERT INTO pubkeys VALUES (?,?,?,?)''',
+                    '''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
                     ripe.digest(),
+                    sendersAddressVersion,
                     '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + data[beginningOfPubkeyPosition:endOfPubkeyPosition],
                     int(time.time()),
                     'yes')
@@ -655,8 +656,9 @@ class receiveDataThread(threading.Thread):
 
             # Let's store the public key in case we want to reply to this
             # person.
-            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''',
+            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
                        ripe.digest(),
+                       sendersAddressVersion,
                        '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + decryptedData[beginningOfPubkeyPosition:endOfPubkeyPosition],
                        int(time.time()),
                        'yes')
@@ -806,8 +808,9 @@ class receiveDataThread(threading.Thread):
 
             # Let's store the public key in case we want to reply to this person.
             sqlExecute(
-                '''INSERT INTO pubkeys VALUES (?,?,?,?)''',
+                '''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
                 calculatedRipe,
+                sendersAddressVersion,
                 '\x00\x00\x00\x00\x00\x00\x00\x01' + decryptedData[beginningOfPubkeyPosition:endOfPubkeyPosition],
                 int(time.time()),
                 'yes')
@@ -1070,8 +1073,9 @@ class receiveDataThread(threading.Thread):
             # person.
             if sendersAddressVersionNumber <= 3:
                 sqlExecute(
-                    '''INSERT INTO pubkeys VALUES (?,?,?,?)''',
+                    '''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
                     ripe.digest(),
+                    sendersAddressVersionNumber,
                     '\xFF\xFF\xFF\xFF\xFF\xFF\xFF\xFF' + '\xFF\xFF\xFF\xFF' + decryptedData[messageVersionLength:endOfThePublicKeyPosition],
                     int(time.time()),
                     'yes')
@@ -1081,8 +1085,9 @@ class receiveDataThread(threading.Thread):
                 self.possibleNewPubkey(ripe=ripe.digest())
             elif sendersAddressVersionNumber >= 4:
                 sqlExecute(
-                    '''INSERT INTO pubkeys VALUES (?,?,?,?)''',
+                    '''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
                     ripe.digest(),
+                    sendersAddressVersionNumber,
                     '\x00\x00\x00\x00\x00\x00\x00\x01' + decryptedData[messageVersionLength:endOfThePublicKeyPosition],
                     int(time.time()),
                     'yes')
@@ -1409,15 +1414,15 @@ class receiveDataThread(threading.Thread):
 
 
             queryreturn = sqlQuery(
-                '''SELECT usedpersonally FROM pubkeys WHERE hash=? AND usedpersonally='yes' ''', ripe)
+                '''SELECT usedpersonally FROM pubkeys WHERE hash=? AND addressversion=? AND usedpersonally='yes' ''', ripe, addressVersion)
             if queryreturn != []:  # if this pubkey is already in our database and if we have used it personally:
                 print 'We HAVE used this pubkey personally. Updating time.'
-                t = (ripe, data, embeddedTime, 'yes')
+                t = (ripe, addressVersion, data, embeddedTime, 'yes')
             else:
                 print 'We have NOT used this pubkey personally. Inserting in database.'
-                t = (ripe, data, embeddedTime, 'no')
+                t = (ripe, addressVersion, data, embeddedTime, 'no')
                      # This will also update the embeddedTime.
-            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
+            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
             # shared.workerQueue.put(('newpubkey',(addressVersion,streamNumber,ripe)))
             self.possibleNewPubkey(ripe = ripe)
         if addressVersion == 3:
@@ -1466,19 +1471,18 @@ class receiveDataThread(threading.Thread):
                 print 'publicEncryptionKey in hex:', publicEncryptionKey.encode('hex')
 
 
-            queryreturn = sqlQuery('''SELECT usedpersonally FROM pubkeys WHERE hash=? AND usedpersonally='yes' ''', ripe)
+            queryreturn = sqlQuery('''SELECT usedpersonally FROM pubkeys WHERE hash=? AND addressversion=? AND usedpersonally='yes' ''', ripe, addressVersion)
             if queryreturn != []:  # if this pubkey is already in our database and if we have used it personally:
                 print 'We HAVE used this pubkey personally. Updating time.'
-                t = (ripe, data, embeddedTime, 'yes')
+                t = (ripe, addressVersion, data, embeddedTime, 'yes')
             else:
                 print 'We have NOT used this pubkey personally. Inserting in database.'
-                t = (ripe, data, embeddedTime, 'no')
+                t = (ripe, addressVersion, data, embeddedTime, 'no')
                      # This will also update the embeddedTime.
-            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
+            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
             self.possibleNewPubkey(ripe = ripe)
 
         if addressVersion == 4:
-            print 'length of v4 pubkey:', len(data)
             if len(data) < 350:  # sanity check.
                 print '(within processpubkey) payloadLength less than 350. Sanity check failed.'
                 return
@@ -1554,8 +1558,8 @@ class receiveDataThread(threading.Thread):
                 print 'publicSigningKey in hex:', publicSigningKey.encode('hex')
                 print 'publicEncryptionKey in hex:', publicEncryptionKey.encode('hex')
 
-            t = (ripe, signedData, embeddedTime, 'yes')
-            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
+            t = (ripe, addressVersion, signedData, embeddedTime, 'yes')
+            sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
             
             fromAddress = encodeAddress(addressVersion, streamNumber, ripe)
             # That this point we know that we have been waiting on this pubkey.
