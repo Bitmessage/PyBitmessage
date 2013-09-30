@@ -1564,15 +1564,6 @@ class MyForm(QtGui.QMainWindow):
                             "MainWindow", "Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab."))
                     else:
                         toAddress = addBMIfNotPresent(toAddress)
-                        try:
-                            shared.config.get(toAddress, 'enabled')
-                            # The toAddress is one owned by me.
-                            if not shared.safeConfigGetBoolean(toAddress, 'chan'):
-                                QMessageBox.about(self, _translate("MainWindow", "Sending to your address"), _translate(
-                                    "MainWindow", "Error: One of the addresses to which you are sending a message, %1, is yours. Unfortunately the Bitmessage client cannot process its own messages. Please try running a second client on a different computer or within a VM.").arg(toAddress))
-                                continue
-                        except:
-                            pass
                         if addressVersionNumber > 4 or addressVersionNumber <= 1:
                             QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
                                 "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
