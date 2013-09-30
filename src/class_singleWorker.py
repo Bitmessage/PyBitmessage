@@ -3,6 +3,7 @@ import shared
 import time
 from time import strftime, localtime, gmtime
 import random
+from subprocess import call  # used when the API must execute an outside program
 from addresses import *
 import highlevelcrypto
 import proofofwork
@@ -11,6 +12,7 @@ from class_addressGenerator import pointMult
 import tr
 from debug import logger
 from helper_sql import *
+import helper_inbox
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
@@ -439,6 +441,9 @@ class singleWorker(threading.Thread):
             status, toAddressVersion, toStreamNumber, toRipe = decodeAddress(toaddress)
             # If we are sending a message to ourselves or a chan then we won't need an entry in the pubkeys table; we can calculate the needed pubkey using the private keys in our keys.dat file.
             if shared.config.has_section(toaddress):
+                sqlExecute(
+                    '''UPDATE sent SET status='doingmsgpow' WHERE toaddress=? AND status='msgqueued' ''',
+                    toaddress)
                 continue
             queryreturn = sqlQuery(
                 '''SELECT hash FROM pubkeys WHERE hash=? AND addressversion=?''', toRipe, toAddressVersion)
@@ -528,7 +533,7 @@ class singleWorker(threading.Thread):
                         sys.stderr.write(
                             'For some reason, the status of a message in our outbox is \'doingmsgpow\' even though we lack the pubkey. Here is the RIPE hash of the needed pubkey: %s\n' % toripe.encode('hex'))
                     sqlExecute(
-                        '''UPDATE sent SET status='msgqueued' WHERE toaddress=? AND status='doingmsgpow' ''', toaddress)
+                        '''UPDATE sent SET status='doingpubkeypow' WHERE toaddress=? AND status='doingmsgpow' ''', toaddress)
                     shared.UISignalQueue.put(('updateSentItemStatusByHash', (
                         toripe, tr.translateText("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
                     self.requestPubKey(toaddress)
@@ -754,9 +759,9 @@ class singleWorker(threading.Thread):
                     subject + '\n' + 'Body:' + message
                 payload += encodeVarint(len(messageToTransmit))
                 payload += messageToTransmit
-                if shared.safeConfigGetBoolean(toaddress, 'chan'):
+                if shared.config.has_section(toaddress):
                     with shared.printLock:
-                        print 'Not bothering to include ackdata because we are sending to a chan.'
+                        print 'Not bothering to include ackdata because we are sending to ourselves or a chan.'
                     fullAckPayload = ''
                 elif not shared.isBitSetWithinBitfield(behaviorBitfield,31):
                     with shared.printLock:
@@ -810,7 +815,7 @@ class singleWorker(threading.Thread):
                     strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
             print 'Broadcasting inv for my msg(within sendmsg function):', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
-                streamNumber, 'advertiseobject', inventoryHash))
+                toStreamNumber, 'advertiseobject', inventoryHash))
 
             # Update the status of the message in the 'sent' table to have a
             # 'msgsent' status or 'msgsentnoackexpected' status.
@@ -820,6 +825,28 @@ class singleWorker(threading.Thread):
                 newStatus = 'msgsent'
             sqlExecute('''UPDATE sent SET msgid=?, status=? WHERE ackdata=?''',
                        inventoryHash,newStatus,ackdata)
+
+            # If we are sending to ourselves or a chan, let's put the message in
+            # our own inbox.
+            if shared.config.has_section(toaddress):
+                t = (inventoryHash, toaddress, fromaddress, subject, int(
+                    time.time()), message, 'inbox', 2, 0)
+                helper_inbox.insert(t)
+
+                shared.UISignalQueue.put(('displayNewInboxMessage', (
+                    inventoryHash, toaddress, fromaddress, subject, message)))
+
+                # If we are behaving as an API then we might need to run an
+                # outside command to let some program know that a new message
+                # has arrived.
+                if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+                    try:
+                        apiNotifyPath = shared.config.get(
+                            'bitmessagesettings', 'apinotifypath')
+                    except:
+                        apiNotifyPath = ''
+                    if apiNotifyPath != '':
+                        call([apiNotifyPath, "newMessage"])
 
     def requestPubKey(self, toAddress):
         toStatus, addressVersionNumber, streamNumber, ripe = decodeAddress(
