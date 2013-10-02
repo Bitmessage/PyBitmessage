@@ -1,9 +1,9 @@
 softwareVersion = '0.4.0'
 verbose = 1
-maximumAgeOfAnObjectThatIAmWillingToAccept = 1800  # Equals two days and 12 hours.
+maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 # Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
 lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
-maximumAgeOfObjectsThatIAdvertiseToOthers = 1800  # Equals two days and 12 hours
+maximumAgeOfObjectsThatIAdvertiseToOthers = 216000  # Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
 useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
 
