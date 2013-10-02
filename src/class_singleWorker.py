@@ -819,7 +819,7 @@ class singleWorker(threading.Thread):
 
             # Update the status of the message in the 'sent' table to have a
             # 'msgsent' status or 'msgsentnoackexpected' status.
-            if not shared.config.has_section(toaddress):
+            if shared.config.has_section(toaddress):
                 newStatus = 'msgsentnoackexpected'
             else:
                 newStatus = 'msgsent'
