@@ -91,12 +91,16 @@ def loadConfig():
         # existing users. To do that, search the class_sqlThread.py file for the
         # text: "right above this line!"
         
+        #my implementation starts here. JOHN
         shared.config.set(
-            'bitmessagesettings', 'hours', '0')
+            'bitmessagesettings', 'hours', '')#here I am adding the new default settings. The first time that the program is going to run these values will be loaded(UI and keys.dat also :) ).JOHN
         shared.config.set(
-            'bitmessagesettings', 'days', '5')
+            'bitmessagesettings', 'days', '')
         shared.config.set(
-            'bitmessagesettings', 'months', '0')
+            'bitmessagesettings', 'months', '')
+        shared.config.set(
+            'bitmessagesettings', 'timeperiod', '-1')
+        #my implementation in this file stops here.JOHN
 
         ensureNamecoinOptions()
 
