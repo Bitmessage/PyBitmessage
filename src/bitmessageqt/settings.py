@@ -320,8 +320,8 @@ class Ui_settingsDialog(object):
         self.gridLayout.addWidget(self.tabWidgetSettings, 0, 0, 1, 1)
 #this line existed before
 #my new implementation starts here
-        self.tabResendingMessagesAdjustment=QtGui.QWidget()
-        self.tabResendingMessagesAdjustment.setObjectName(_fromUtf8("tabResendingMessagesAdjustment"))
+        self.tabResendingMessagesAdjustment=QtGui.QWidget()#all these lines are for the UI implementation, I dont think that you need special explanation about them.JOHN
+        self.tabResendingMessagesAdjustment.setObjectName(_fromUtf8("tabResendingMessagesAdjustment"))#Please note that approximately 58 line codes added to setting.ui also responsible for the UI.JOHN
         self.gridLayout_9 = QtGui.QGridLayout(self.tabResendingMessagesAdjustment)
         self.gridLayout_9.setObjectName(_fromUtf8("gridLayout_9"))
         self.label_19 = QtGui.QLabel(self.tabResendingMessagesAdjustment)
@@ -335,11 +335,11 @@ class Ui_settingsDialog(object):
         self.label_20 = QtGui.QLabel(self.tabResendingMessagesAdjustment)
         self.label_20.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.label_20.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
-        self.label_20.setObjectName(_fromUtf8("label_20"))
+        self.label_20.setObjectName(_fromUtf8("label_20"))#This are Qt code..I just add a label to my tab.JOHN
         self.gridLayout_9.addWidget(self.label_20, 2, 0, 1, 1)
         self.lineEditHours = QtGui.QLineEdit(self.tabResendingMessagesAdjustment)
         self.lineEditHours.setMaximumSize(QtCore.QSize(33, 16777))
-        self.lineEditHours.setObjectName(_fromUtf8("lineEditHours"))
+        self.lineEditHours.setObjectName(_fromUtf8("lineEditHours"))##This are Qt code..I just add a edit box to my tab.JOHN
         self.gridLayout_9.addWidget(self.lineEditHours, 2, 1, 1, 1)
         self.label_22 = QtGui.QLabel(self.tabResendingMessagesAdjustment)
         self.label_22.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
@@ -424,9 +424,9 @@ class Ui_settingsDialog(object):
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab), _translate("settingsDialog", "Demanded difficulty", None))
         self.label_15.setText(_translate("settingsDialog", "Here you may set the maximum amount of work you are willing to do to send a message to another person. Setting these values to 0 means that any value is acceptable.", None))
         self.label_13.setText(_translate("settingsDialog", "Maximum acceptable total difficulty:", None))
-        #my new implementation starts here,it wasn't line here
+        #my new implementation starts here,it wasn't line here.Too simple to explain :D..JOHN
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabResendingMessagesAdjustment), _translate("settingsDialog", "Adjusting time period for resending messages", None))
-        self.label_19.setText(_translate("settingsDialog", "<html><head/><body><p>If you send a message to someone and he is offline for more than two days, Bitmessage  will send the message again after an additional two days. This will be continued with exponential backoff forever. Messages  will continue to be sent after 4, 8,16 days and so on until the receiver get them. </p><p> Here you can adjust Bitmessage to stop trying to send messages after X hours/days/months. This time period needs to be longer than 5 days.</p></body></html>", None))
+        self.label_19.setText(_translate("settingsDialog", "<html><head/><body><p>If you send a message to someone and he is offline for more than two days, Bitmessage  will send the message again after an additional two days. This will be continued with exponential backoff forever. Messages  will continue to be sent after 4, 8,16 days and so on until the receiver get them. </p><p> Here you can adjust Bitmessage to stop trying to send messages after X hours/days/months.</p></body></html>", None))
         self.label_20.setText(_translate("settingsDialog", "Time in hours/days/months:", None))
         self.label_22.setText(_translate("settingsDialog", "/", None))
         self.label_23.setText(_translate("settingsDialog", "/", None))
