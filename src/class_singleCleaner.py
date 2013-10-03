@@ -86,67 +86,19 @@ class singleCleaner(threading.Thread):
                         break
                     toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber = row
                     if status == 'awaitingpubkey':
-                        if int(shared.config.get('bitmessagesettings', 'timeperiod'))> -1:#My implemenentation starts here.In this file I just added 4 lines.Two here and other two above.The default value of timeperiod is -1.This means that bitmessage resends messages every 5 days(they say 4 but actually is 5)for ever. If user changes the time period, timeperiod variable will have a specific value so the next if will be executed.JOHN
-                            if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))) and ((int(time.time()) - lastactiontime) < int(shared.config.get('bitmessagesettings', 'timeperiod'))):#This line does the magic.This if checks if the time that the public key was sent is longer than 5 days. Then it sends the it again. But with this extra AND it will not send it if this time is shorter than timeperiod.JOHN
-                                print 'It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.'
-                                try:
-                                    del shared.neededPubkeys[
-                                        toripe] # We need to take this entry out of the shared.neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
-                                except:
-                                    pass
-    
-                                shared.UISignalQueue.put((
-                                    'updateStatusBar', 'Doing work necessary to again attempt to request a public key...'))
-                                t = ()
-                                sqlExecute(
-                                    '''UPDATE sent SET lastactiontime=?, pubkeyretrynumber=?, status='msgqueued' WHERE toripe=?''',
-                                    int(time.time()),
-                                    pubkeyretrynumber + 1,
-                                    toripe)
-                                shared.workerQueue.put(('sendmessage', ''))
-                        else:#first it wasn't an else statement here, I put it for this setting. I just copy-paste the code again. If someone has any suggestion how we can do this without this if-else just say it.JOHN
+                        if int(shared.config.get('bitmessagesettings', 'timeperiod'))> -1:#My implemenentation starts here.This if statement would become very big with my new code,so I created two function(see at the end of this file) to reduce code.I did.The default value of timeperiod is -1.This means that bitmessage resends messages every 5 days(they say 4 but actually is 5)for ever. If user changes the time period, timeperiod variable will have a specific value so the next if will be executed.AQWA
+                            if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))) and ((int(time.time()) - lastactiontime) < int(shared.config.get('bitmessagesettings', 'timeperiod'))):#This line does the magic.This if checks if the time that the public key was sent is longer than 5 days. Then it sends the it again. But with this extra AND it will not send it if this time is shorter than timeperiod.AQWA
+                                resendPubkey(pubkeyretrynumber,toripe)
+                        else:#first it wasn't an else statement here, I put it for this setting. I just copy-paste the code again. If someone has any suggestion how we can do this without this if-else just say it.AQWA
                             if int(time.time()) - lastactiontime > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
-                                print 'It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.'
-                                try:
-                                    del shared.neededPubkeys[
-                                        toripe] # We need to take this entry out of the shared.neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
-                                except:
-                                    pass
-    
-                                shared.UISignalQueue.put((
-                                    'updateStatusBar', 'Doing work necessary to again attempt to request a public key...'))
-                                t = ()
-                                sqlExecute(
-                                    '''UPDATE sent SET lastactiontime=?, pubkeyretrynumber=?, status='msgqueued' WHERE toripe=?''',
-                                    int(time.time()),
-                                    pubkeyretrynumber + 1,
-                                    toripe)
-                                shared.workerQueue.put(('sendmessage', ''))
+                                resendPubkey(pubkeyretrynumber,toripe)
                     else: # status == msgsent
-                        if int(shared.config.get('bitmessagesettings', 'timeperiod'))> -1:#same thing here but for the message.Actually this is the most important thing in the whole feature!.JOHN
-                            if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))) and ((int(time.time()) - lastactiontime) < int(shared.config.get('bitmessagesettings', 'timeperiod'))):#same thing here.My implementation in this file stops here.JOHN
-                                print 'It has been a long time and we haven\'t heard an acknowledgement to our msg. Sending again.'
-                                sqlExecute(
-                                '''UPDATE sent SET lastactiontime=?, msgretrynumber=?, status=? WHERE ackdata=?''',
-                                int(time.time()),
-                                msgretrynumber + 1,
-                                'msgqueued',
-                                ackdata)
-                                shared.workerQueue.put(('sendmessage', ''))
-                                shared.UISignalQueue.put((
-                                'updateStatusBar', 'Doing work necessary to again attempt to deliver a message...'))
+                        if int(shared.config.get('bitmessagesettings', 'timeperiod'))> -1:#same thing here but for the message.Actually this is the most important thing in the whole feature!.AQWA
+                            if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))) and ((int(time.time()) - lastactiontime) < int(shared.config.get('bitmessagesettings', 'timeperiod'))):#same thing here.My implementation in this file stops here.AQWA
+                                resendMsg(msgretrynumber,ackdata)
                         else:
-                            if int(time.time()) - lastactiontime > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
-                                print 'It has been a long time and we haven\'t heard an acknowledgement to our msg. Sending again.'
-                                sqlExecute(
-                                '''UPDATE sent SET lastactiontime=?, msgretrynumber=?, status=? WHERE ackdata=?''',
-                                int(time.time()),
-                                msgretrynumber + 1,
-                                'msgqueued',
-                                ackdata)
-                                shared.workerQueue.put(('sendmessage', ''))
-                                shared.UISignalQueue.put((
-                                'updateStatusBar', 'Doing work necessary to again attempt to deliver a message...'))
+                            if int(time.time()) - lastactiontime > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
+                                resendMsg(msgretrynumber,ackdata)
                                    
                 
                 # Let's also clear and reload shared.inventorySets to keep it from
@@ -178,3 +130,36 @@ class singleCleaner(threading.Thread):
                 shared.knownNodesLock.release()
                 shared.needToWriteKnownNodesToDisk = False
             time.sleep(300)
+    
+def resendPubkey(pubkeyretrynumber,toripe):#I just structured the code with these two functions. The code inside existed.It is not mine.AQWA
+    print 'It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.'
+    try:
+        del shared.neededPubkeys[
+            toripe] # We need to take this entry out of the shared.neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
+    except:
+        pass
+    
+    shared.UISignalQueue.put((
+         'updateStatusBar', 'Doing work necessary to again attempt to request a public key...'))
+    t = ()
+    sqlExecute(
+        '''UPDATE sent SET lastactiontime=?, pubkeyretrynumber=?, status='msgqueued' WHERE toripe=?''',
+        int(time.time()),
+        pubkeyretrynumber + 1,
+        toripe)
+    shared.workerQueue.put(('sendmessage', ''))
+
+def resendMsg(msgretrynumber,ackdata):
+    print 'It has been a long time and we haven\'t heard an acknowledgement to our msg. Sending again.'
+    sqlExecute(
+    '''UPDATE sent SET lastactiontime=?, msgretrynumber=?, status=? WHERE ackdata=?''',
+    int(time.time()),
+    msgretrynumber + 1,
+    'msgqueued',
+    ackdata)
+    shared.workerQueue.put(('sendmessage', ''))
+    shared.UISignalQueue.put((
+    'updateStatusBar', 'Doing work necessary to again attempt to deliver a message...'))
+                               
+
+                               

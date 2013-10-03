@@ -257,16 +257,16 @@ class sqlThread(threading.Thread):
         # Bitmessage users? Add it right above this line!
         
         #my new implementation starts here, the most of these comment will be deleted, they are just for documentation
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 7:#this is the version that all we have,if you see your keys.dat file this is your version.JOHN
-            shared.config.set(#in order to not have to change your keys.dat file I update it with the new lines. I add to your keys.dat three new default fields.JOHN
-                'bitmessagesettings', 'hours', '')# hours, days, months have no value.This means that bitmessage works as before. It re-sends mails every 4,8,16 days..forever.JOHN
+        if shared.config.getint('bitmessagesettings', 'settingsversion') == 7:#this is the version that all we have,if you see your keys.dat file this is your version.AQWA
+            shared.config.set(#in order to not have to change your keys.dat file I update it with the new lines. I add to your keys.dat three new default fields.AQWA
+                'bitmessagesettings', 'hours', '')# hours, days, months have no value.This means that bitmessage works as before. It re-sends mails every 4,8,16 days..forever.AQWA
             shared.config.set(
                 'bitmessagesettings', 'days', '')
             shared.config.set(
                 'bitmessagesettings', 'months', '')
             shared.config.set(
-                'bitmessagesettings', 'timeperiod', '-1')#time period has default value -1. This is used for checking in class_singleCleaner. If you leave default the time period or after you change it(f.i 1/0/0), again you set it with its default value(-/-/-) this variable will be -1.JOHN
-            shared.config.set('bitmessagesettings', 'settingsversion', '8') #We update the version.If I leave it 7 every time that Bitmessage starts your setting will be lost.The default values(-/-/-) will be loaded all the time ;).That was juicy.JOHN
+                'bitmessagesettings', 'timeperiod', '-1')#time period has default value -1. This is used for checking in class_singleCleaner. If you leave default the time period or after you change it(f.i 1/0/0), again you set it with its default value(-/-/-) this variable will be -1.AQWA
+            shared.config.set('bitmessagesettings', 'settingsversion', '8') #We update the version.If I leave it 7 every time that Bitmessage starts your setting will be lost.The default values(-/-/-) will be loaded all the time ;).That was juicy.AQWA
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
         #my new implementation in this file stops here

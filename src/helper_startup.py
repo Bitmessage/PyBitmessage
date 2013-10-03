@@ -91,16 +91,16 @@ def loadConfig():
         # existing users. To do that, search the class_sqlThread.py file for the
         # text: "right above this line!"
         
-        #my implementation starts here. JOHN
+        #my implementation starts here. AQWA
         shared.config.set(
-            'bitmessagesettings', 'hours', '')#here I am adding the new default settings. The first time that the program is going to run these values will be loaded(UI and keys.dat also :) ).JOHN
+            'bitmessagesettings', 'hours', '')#here I am adding the new default settings. The first time that the program is going to run these values will be loaded(UI and keys.dat also :) ).AQWA
         shared.config.set(
             'bitmessagesettings', 'days', '')
         shared.config.set(
             'bitmessagesettings', 'months', '')
         shared.config.set(
             'bitmessagesettings', 'timeperiod', '-1')
-        #my implementation in this file stops here.JOHN
+        #my implementation in this file stops here.AQWA
 
         ensureNamecoinOptions()
 
