@@ -643,7 +643,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(0, 'I need parameters!')
             if len(params) == 1:
                 address, = params
-                label == ''
+                label = ''
             if len(params) == 2:
                 address, label = params
                 label = self._decode(label, "base64")
