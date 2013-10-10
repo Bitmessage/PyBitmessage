@@ -3284,7 +3284,10 @@ def run():
     locale_lang = locale_countrycode[0:2]
     user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
     user_lang = user_countrycode[0:2]
-    translation_path = "translations/bitmessage_"
+    try:
+        translation_path = os.path.join(sys._MEIPASS, "translations/bitmessage_")
+    except Exception, e:
+        translation_path = "translations/bitmessage_"
     
     if shared.config.get('bitmessagesettings', 'userlocale') == 'system':
         # try to detect the users locale otherwise fallback to English
