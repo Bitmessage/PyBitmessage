@@ -758,13 +758,13 @@
  </widget>
  <widget class="QWidget" name="tabResendingMessagesAdjustment">
       <attribute name="title">
-       <string>Adjusting time period for resending messages</string>
+       <string>Adjusting time period to stop sending messages</string>
       </attribute>
      <layout class="QGridLayout" name="gridLayout_9">
       <item row="0" column="0" colspan="5">
         <widget class="QLabel" name="label_19">
          <property name="text">
-          <string> If you send a message to someone and he is offline for more than two days, Bitmessage  will send the message again after an additional two days. This will be continued with exponential backoff forever. Μessages will continue to be sent after 4, 8,16 days etc. until the receiver get them. Here you can adjust Bitmessage to stop trying to send messages after X hours/days/months. This time period needs to be longer than 5 days./p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string> If you send a message to someone and he is offline for more than two and a half days, Bitmessage will send the message again after an additional two and a half days. This will be continued with exponential backoff forever. Μessages will continue to be sent after 5, 10, 20 days etc. until the receiver gets them. Leaving all the input fields blank means the default behavior which will continue the resending with exponential backoff. Setting these values to 0/0/0 or less than 5 days mean that the client will not resend any messages. Here you can adjust Bitmessage to stop trying to send messages after X hours/days/months./p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>
