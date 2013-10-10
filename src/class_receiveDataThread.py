@@ -1120,7 +1120,7 @@ class receiveDataThread(threading.Thread):
             else:  # We're using a whitelist
                 queryreturn = sqlQuery(
                     '''SELECT label FROM whitelist where address=? and enabled='1' ''',
-                    toAddress)
+                    fromAddress)
                 if queryreturn == []:
                     print 'Message ignored because address not in whitelist.'
                     blockMessage = True
