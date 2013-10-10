@@ -318,10 +318,9 @@ class Ui_settingsDialog(object):
         self.gridLayout_8.addLayout(self.horizontalLayout, 1, 0, 1, 3)
         self.tabWidgetSettings.addTab(self.tabNamecoin, _fromUtf8(""))
         self.gridLayout.addWidget(self.tabWidgetSettings, 0, 0, 1, 1)
-#this line existed before
-#my new implementation starts here
-        self.tabResendingMessagesAdjustment=QtGui.QWidget()#all these lines are for the UI implementation, I dont think that you need special explanation about them.AQWA
-        self.tabResendingMessagesAdjustment.setObjectName(_fromUtf8("tabResendingMessagesAdjustment"))#Please note that approximately 58 line codes added to setting.ui also responsible for the UI.AQWA
+        #start:UI setting to stop trying to send messages after X hours/days/months
+        self.tabResendingMessagesAdjustment=QtGui.QWidget()
+        self.tabResendingMessagesAdjustment.setObjectName(_fromUtf8("tabResendingMessagesAdjustment"))
         self.gridLayout_9 = QtGui.QGridLayout(self.tabResendingMessagesAdjustment)
         self.gridLayout_9.setObjectName(_fromUtf8("gridLayout_9"))
         self.label_19 = QtGui.QLabel(self.tabResendingMessagesAdjustment)
@@ -335,11 +334,11 @@ class Ui_settingsDialog(object):
         self.label_20 = QtGui.QLabel(self.tabResendingMessagesAdjustment)
         self.label_20.setLayoutDirection(QtCore.Qt.LeftToRight)
         self.label_20.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
-        self.label_20.setObjectName(_fromUtf8("label_20"))#This are Qt code..I just add a label to my tab.AQWA
+        self.label_20.setObjectName(_fromUtf8("label_20"))
         self.gridLayout_9.addWidget(self.label_20, 2, 0, 1, 1)
         self.lineEditHours = QtGui.QLineEdit(self.tabResendingMessagesAdjustment)
         self.lineEditHours.setMaximumSize(QtCore.QSize(33, 16777))
-        self.lineEditHours.setObjectName(_fromUtf8("lineEditHours"))##This are Qt code..I just add a edit box to my tab.AQWA
+        self.lineEditHours.setObjectName(_fromUtf8("lineEditHours"))
         self.gridLayout_9.addWidget(self.lineEditHours, 2, 1, 1, 1)
         self.label_22 = QtGui.QLabel(self.tabResendingMessagesAdjustment)
         self.label_22.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
@@ -360,7 +359,7 @@ class Ui_settingsDialog(object):
         spacerItem15 = QtGui.QSpacerItem(20, 147, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.gridLayout_9.addItem(spacerItem15, 3, 1, 1, 1)
         self.tabWidgetSettings.addTab(self.tabResendingMessagesAdjustment, _fromUtf8(""))
-        #my new implementation stops here, it wasn't line here 
+        #end
         self.retranslateUi(settingsDialog)
         self.tabWidgetSettings.setCurrentIndex(0)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), settingsDialog.accept)
@@ -424,13 +423,13 @@ class Ui_settingsDialog(object):
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab), _translate("settingsDialog", "Demanded difficulty", None))
         self.label_15.setText(_translate("settingsDialog", "Here you may set the maximum amount of work you are willing to do to send a message to another person. Setting these values to 0 means that any value is acceptable.", None))
         self.label_13.setText(_translate("settingsDialog", "Maximum acceptable total difficulty:", None))
-        #my new implementation starts here,it wasn't line here.Too simple to explain :D..AQWA
-        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabResendingMessagesAdjustment), _translate("settingsDialog", "Adjusting time period for resending messages", None))
-        self.label_19.setText(_translate("settingsDialog", "<html><head/><body><p>If you send a message to someone and he is offline for more than two days, Bitmessage  will send the message again after an additional two days. This will be continued with exponential backoff forever. Messages  will continue to be sent after 4, 8,16 days and so on until the receiver get them. </p><p> Here you can adjust Bitmessage to stop trying to send messages after X hours/days/months.</p></body></html>", None))
+        #start:UI setting to stop trying to send messages after X hours/days/months
+        self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabResendingMessagesAdjustment), _translate("settingsDialog", "Adjusting time period to stop sending messages", None))
+        self.label_19.setText(_translate("settingsDialog", "<html><head/><body><p>If you send a message to someone and he is offline for more than two and a half days, Bitmessage will send the message again after an additional two and a half days. This will be continued with exponential backoff forever. Μessages will continue to be sent after 5, 10, 20 days etc. until the receiver gets them.</p><p> Leaving all the input fields blank means the default behavior which will continue the resending with exponential backoff.</p><p> Setting these values to 0/0/0 or less than 5 days mean that the client will not resend any messages.</p><p> Here you can adjust Bitmessage to stop trying to send messages after X hours/days/months.</p></body></html>", None))
         self.label_20.setText(_translate("settingsDialog", "Time in hours/days/months:", None))
         self.label_22.setText(_translate("settingsDialog", "/", None))
         self.label_23.setText(_translate("settingsDialog", "/", None))
-        #my new implementation stops here, it wasn't line here
+        #end
         self.label_14.setText(_translate("settingsDialog", "Maximum acceptable small message difficulty:", None))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tab_2), _translate("settingsDialog", "Max acceptable difficulty", None))
         self.label_16.setText(_translate("settingsDialog", "<html><head/><body><p>Bitmessage can utilize a different Bitcoin-based program called Namecoin to make addresses human-friendly. For example, instead of having to tell your friend your long Bitmessage address, you can simply tell him to send a message to <span style=\" font-style:italic;\">test. </span></p><p>(Getting your own Bitmessage address into Namecoin is still rather difficult).</p><p>Bitmessage can use either namecoind directly or a running nmcontrol instance.</p></body></html>", None))
