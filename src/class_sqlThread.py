@@ -268,24 +268,23 @@ class sqlThread(threading.Thread):
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (5,)
             self.cur.execute(item, parameters)
-
-        # Are you hoping to add a new option to the keys.dat file of existing
-        # Bitmessage users? Add it right above this line!
-        
-        #my new implementation starts here, the most of these comment will be deleted, they are just for documentation
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 7:#this is the version that all we have,if you see your keys.dat file this is your version.AQWA
-            shared.config.set(#in order to not have to change your keys.dat file I update it with the new lines. I add to your keys.dat three new default fields.AQWA
-                'bitmessagesettings', 'hours', '')# hours, days, months have no value.This means that bitmessage works as before. It re-sends mails every 4,8,16 days..forever.AQWA
+            
+        #Adjusting time period to stop sending messages
+        if shared.config.getint('bitmessagesettings', 'settingsversion') == 7:
+            shared.config.set(
+                'bitmessagesettings', 'hours', '')
             shared.config.set(
                 'bitmessagesettings', 'days', '')
             shared.config.set(
                 'bitmessagesettings', 'months', '')
             shared.config.set(
-                'bitmessagesettings', 'timeperiod', '-1')#time period has default value -1. This is used for checking in class_singleCleaner. If you leave default the time period or after you change it(f.i 1/0/0), again you set it with its default value(-/-/-) this variable will be -1.AQWA
-            shared.config.set('bitmessagesettings', 'settingsversion', '8') #We update the version.If I leave it 7 every time that Bitmessage starts your setting will be lost.The default values(-/-/-) will be loaded all the time ;).That was juicy.AQWA
+                'bitmessagesettings', 'timeperiod', '-1')
+            shared.config.set('bitmessagesettings', 'settingsversion', '8') 
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
-        #my new implementation in this file stops here
+        
+        # Are you hoping to add a new option to the keys.dat file of existing
+        # Bitmessage users? Add it right above this line!
         
         try:
             testpayload = '\x00\x00'
