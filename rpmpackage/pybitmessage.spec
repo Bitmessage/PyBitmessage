@@ -1,5 +1,5 @@
 Name: pybitmessage
-Version: 0.4.0
+Version: 0.4.1
 Release: 1%{?dist}
 Summary: Send encrypted messages
 License: MIT
@@ -69,6 +69,58 @@ make install -B DESTDIR=%{buildroot} PREFIX=/usr
 %attr(644,root,root) /usr/share/icons/hicolor/24x24/apps/%{name}.png
 
 %changelog
+* Sat Sep 28 2013 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.4.0-1
+- Raised default demanded difficulty from 1 to 2 for new addresses
+- Added v4 addresses:
+  pubkeys are now encrypted and tagged in the inventory
+- Use locks when accessing dictionary inventory
+- Refactored the way inv and addr messages are shared
+- Give user feedback when disk is full
+- Added chan true/false to listAddresses results
+- When replying using chan address, send to whole chan not just sender
+- Refactored of the way PyBitmessage looks for interesting new objects
+  in large inv messages from peers
+- Show inventory lookup rate on Network Status tab
+- Added SqlBulkExecute class
+  so we can update inventory with only one commit
+- Updated Russian translations
+- Move duplicated SQL code into helper
+- Allow specification of alternate settings dir
+  via BITMESSAGE_HOME environment variable
+- Removed use of gevent. Removed class_bgWorker.py
+- Added Sip and PyQt to includes in build_osx.py
+- Show number of each message type processed
+  in the API command clientStatus
+- Use fast PoW
+  unless we're explicitly a frozen (binary) version of the code
+- Enable user-set localization in settings
+- Fix Archlinux package creation
+- Fallback to language only localization when region doesn't match
+- Fixed brew install instructions
+- Added German translation
+- Made inbox and sent messages table panels read-only
+- Allow inbox and sent preview panels to resize
+- Count RE: as a reply header, just like Re: so we don't chain Re: RE:
+- Fix for traceback on OSX
+- Added backend ability to understand shorter addresses
+- Convert 'API Error' to raise APIError()
+- Added option in settings to allow sending to a mobile device
+  (app not yet done)
+- Added ability to start daemon mode when using Bitmessage as a module
+- Improved the way client detects locale
+- Added API commands:
+  getInboxMessageIds, getSentMessageIds, listAddressBookEntries,
+  trashSentMessageByAckData, addAddressBookEntry,
+  deleteAddressBookEntry, listAddresses2, listSubscriptions
+- Set a maximum frequency for playing sounds
+- Show Invalid Method error in same format as other API errors
+- Update status of separate broadcasts separately
+  even if the sent data is identical
+- Added Namecoin integration
+- Internally distinguish peers by IP and port
+- Inbox message retrieval API
+  functions now also returns read status
+
 * Mon Jul 29 2013 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.3.5-1
 - Inbox message retrieval API functions now also returns read status
 - Added right-click option to mark a message as unread

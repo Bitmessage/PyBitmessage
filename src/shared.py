@@ -1,7 +1,7 @@
-softwareVersion = '0.4.0'
+softwareVersion = '0.4.1'
 verbose = 1
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # Equals two days and 12 hours.
-lengthOfTimeToLeaveObjectsInInventory = 237600  # Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
+lengthOfTimeToLeaveObjectsInInventory = 237600 # Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
 lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
 maximumAgeOfObjectsThatIAdvertiseToOthers = 216000  # Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
@@ -469,8 +469,8 @@ def decryptAndCheckPubkeyPayload(payload, address):
             print 'Pubkey decryption was UNsuccessful due to RIPE mismatch. This shouldn\'t have happened.'
         return 'failed'
     
-    t = (ripe, signedData, int(time.time()), 'yes')
-    sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?)''', *t)
+    t = (ripe, addressVersion, signedData, int(time.time()), 'yes')
+    sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
     return 'successful'
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])

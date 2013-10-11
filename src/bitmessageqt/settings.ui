@@ -756,6 +756,73 @@
    </item>
   </layout>
  </widget>
+ <widget class="QWidget" name="tabResendingMessagesAdjustment">
+      <attribute name="title">
+       <string>Adjusting time period for resending messages</string>
+      </attribute>
+     <layout class="QGridLayout" name="gridLayout_9">
+      <item row="0" column="0" colspan="5">
+        <widget class="QLabel" name="label_19">
+         <property name="text">
+          <string> If you send a message to someone and he is offline for more than two days, Bitmessage  will send the message again after an additional two days. This will be continued with exponential backoff forever. Μessages will continue to be sent after 4, 8,16 days etc. until the receiver get them. Here you can adjust Bitmessage to stop trying to send messages after X hours/days/months. This time period needs to be longer than 5 days./p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+         </property>
+         <property name="wordWrap">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="0">
+        <widget class="QLabel" name="label_20">
+         <property name="layoutDirection">
+          <enum>Qt::LeftToRight</enum>
+         </property>
+         <property name="text">
+          <string>Time in hours/days/months:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+         </property>
+        </widget>
+       </item>
+        <item row="1" column="1">
+        <widget class="QLineEdit" name="lineEditHours">
+         <property name="maximumSize">
+          <size>
+           <width>33</width>
+           <height>16777215</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       <item row="1" column="2">
+         <widget class="QLabel" name="label_22">
+            <property name="text">
+             <string>/</string>
+            </property>
+           </widget>
+            <item row="1" column="3">
+           <widget class="QLineEdit" name="lineEditDays"/>
+         </item>
+         <item row="1" column="4">
+           <widget class="QLabel" name="label_23">
+            <property name="text">
+             <string>/</string>
+            </property>
+           </widget>
+           <item row="1" column="5">
+           <widget class="QLineEdit" name="lineEditMonths"/>
+         </item>
+         <property name="maximumSize">
+          <size>
+           <width>33</width>
+           <height>16777215</height>
+          </size>
+         </property>
+        </widget>
+       </item>
+       </item>
+      </layout>
+     </widget>
  <tabstops>
   <tabstop>tabWidgetSettings</tabstop>
   <tabstop>checkBoxStartOnLogon</tabstop>
