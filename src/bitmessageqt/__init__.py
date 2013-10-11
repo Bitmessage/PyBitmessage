@@ -26,7 +26,6 @@ from help import *
 from iconglossary import *
 from connect import *
 import sys
-import  shutil
 from time import strftime, localtime, gmtime
 import time
 import os
@@ -38,6 +37,8 @@ from debug import logger
 import subprocess
 import datetime
 from helper_sql import *
+from backuprestore import *
+import shutil
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -126,10 +127,8 @@ class MyForm(QtGui.QMainWindow):
         # FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
             "triggered()"), self.quit)
-        #mj
         QtCore.QObject.connect(self.ui.actionBackup, QtCore.SIGNAL(
             "triggered()"), self.click_actionBackup)
-        #mj
         QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL(
             "triggered()"), self.click_actionManageKeys)
         QtCore.QObject.connect(self.ui.actionDeleteAllTrashedMessages, QtCore.SIGNAL(
@@ -1129,14 +1128,13 @@ class MyForm(QtGui.QMainWindow):
         sqlStoredProcedure('deleteandvacuume')
     
     def click_actionBackup(self):
-        #mj
-        #d = os.path.dirname(f)
-        if not os.path.exists('./Backup'):
-            os.makedirs('./Backup')
-         
-        shutil.copyfile('C:\\Users\\mjha\\Dropbox\\semester Three\\software_engineering\\paper\\1988Hare.pdf','./Backup/1988.pdf')   
-        return
-    
+        self.backuprestoreDilaugeInstance = NewBackupRestoreDialog(self)
+        if self.backuprestoreDilaugeInstance.exec_():
+            pass 
+        #queryreturn = sqlQuery('''DETACH BackupDB;''')
+        #load the inbox and sendbox after restoring data    
+        #self.loadInbox()
+        #self.loadSent()    
     
     def click_actionRegenerateDeterministicAddresses(self):
         self.regenerateAddressesDialogInstance = regenerateAddressesDialog(
@@ -1388,7 +1386,7 @@ class MyForm(QtGui.QMainWindow):
             if ripe == toRipe:
                 self.ui.tableWidgetSent.item(i, 3).setToolTip(textToDisplay)
                 try:
-                    newlinePosition = textToDisplay.indexOf('\n')
+                    newlinePosition = textToDisplay.indexOf('\n') 
                 except: # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
                     newlinePosition = 0
                 if newlinePosition > 1:
@@ -2316,6 +2314,9 @@ class MyForm(QtGui.QMainWindow):
             currentInboxRow, 0).data(Qt.UserRole).toPyObject())
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
             currentInboxRow, 1).data(Qt.UserRole).toPyObject())
+        Date = self.ui.tableWidgetInbox.item(
+            currentInboxRow, 3).data(Qt.UserRole).toPyObject()
+        
         if toAddressAtCurrentInboxRow == self.str_broadcast_subscribers:
             self.ui.labelFrom.setText('')
         elif not shared.config.has_section(toAddressAtCurrentInboxRow):
@@ -3166,7 +3167,6 @@ class newChanDialog(QtGui.QDialog):
         self.ui.groupBoxCreateChan.setHidden(True)
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))     
 
-
 class iconGlossaryDialog(QtGui.QDialog):
 
     def __init__(self, parent):
@@ -3307,3 +3307,165 @@ def run():
     if shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
         myapp.showConnectDialog() # ask the user if we may connect
     sys.exit(app.exec_())
+
+class NewBackupRestoreDialog(QtGui.QDialog):
+    
+    def __init__(self, parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_BackupRestore()
+        self.ui.setupUi(self)
+        self.parent = parent
+        self.RestorePath = 'None' 
+        QtCore.QObject.connect(self.ui.BackupRestorebuttonBox, QtCore.SIGNAL("accepted()"), self.BackupRestoreaccepted)
+        QtCore.QObject.connect(self.ui.pushButton_browse, QtCore.SIGNAL("clicked()"), self.selectDirectory)
+
+    def verify_form(self):
+        if not self.ui.checkBox_Default_directory.isChecked() and str(self.ui.lineEdit_directory_name.text())== '' :
+                QtGui.QMessageBox.information(
+                        self, 'Message', 'Please Select the default direcotry checkbox or provide the directory of your choice', QtGui.QMessageBox.Ok) 
+                self.parent.click_actionBackup() #call the backup function again
+                return False
+        elif (self.ui.radioButton_Backup.isChecked() or self.ui.radioButton_Restore.isChecked()):
+            if not (self.ui.checkBox_inbox_only.isChecked() or self.ui.checkBox_messages.isChecked() or self.ui.checkBox_keys.isChecked()):
+                QtGui.QMessageBox.information(
+                            self, 'Message', 'Please select at least one of the files to backup/restore', QtGui.QMessageBox.Ok) 
+                self.parent.click_actionBackup() #call the backup function again
+                return False
+            else:
+                return True
+        elif self.ui.radioButton_DeleteBackup.isChecked():
+            return True
+
+            
+    def checkPermission(self): #check permission to execute in directory
+        if self.ui.radioButton_Backup or self.ui.radioButton_DeleteBackup:
+            #check for permission to execute in directory 
+            try:
+                if not os.access(self.RestorePath, os.X_OK):
+                    QtGui.QMessageBox.information(
+                                        self, 'Message', 'No Execute Permission for ' + self.RestorePath + 'directory. Please check your permissions of your direcotry', QtGui.QMessageBox.Ok)
+            except ValueError, e:
+                QtGui.QMessageBox.information(self, 'Message', 'Error : ' + e, QtGui.QMessageBox.Ok)
+            return True
+        elif self.ui.radioButton_Restore:
+            #check for Read permission of the directory where user has specified 
+            try:
+                if not os.access(self.RestorePath, os.R_OK):
+                    QtGui.QMessageBox.information(
+                                        self, 'Message', 'No Execute Permission for ' + self.RestorePath + 'directory. Please check your permissions of your direcotry', QtGui.QMessageBox.Ok)
+            except ValueError, e:
+                QtGui.QMessageBox.information(self, 'Message', 'Error : ' + e, QtGui.QMessageBox.Ok)
+        #if none of the previous condition satisfy just return false
+        return False
+
+    def BackupRestoreaccepted(self):
+        if self.verify_form(): #verify if the form was correctly filled by the user or not
+            #get the valid path:
+            if self.ui.checkBox_Default_directory.isChecked():
+                #self.RestorePath = shared.lookupAppdataFolder() + 'backup' + os.altsep
+                self.RestorePath = '.'+ os.altsep + 'backup' + os.altsep
+            else:
+                if not os.path.exists(str(self.ui.lineEdit_directory_name.text())):
+                        QtGui.QMessageBox.information(self, 'Message', 'The Given Directory Does not Exist', QtGui.QMessageBox.Ok)
+                        return
+                else:
+                    self.RestorePath = str(self.ui.lineEdit_directory_name.text())+ os.altsep
+                    if self.RestorePath == shared.appdata:
+                        QtGui.QMessageBox.information(self, 'Message', 'You provided the directory which is currently being used for live *.dat files. Please provide other directory', QtGui.QMessageBox.Ok)
+                        #self.parent.click_actionBackup() #call the backup function again           
+                        return
+#           if self.checkPermission(): can be implemented in future to check the permissions as the number of data-files grow
+            # Creating Backup
+            if self.ui.radioButton_Backup.isChecked():            
+                if not os.path.exists(self.RestorePath):
+                    try:
+                        reply = QtGui.QMessageBox.question(self, 'Message', 'Provided directory does not exist. Do you want Pybitmessage to create it? ', QtGui.QMessageBox.Yes , QtGui.QMessageBox.No)
+                        if reply == QtGui.QMessageBox.Yes: 
+                            os.makedirs(self.RestorePath)
+                        else:
+                            return
+                    except ValueError, e:
+                        QtGui.QMessageBox.information(self, 'Info Message', 'Unable to create backup directory. Error: ' + e ,QMessageBox.Ok)
+                if self.ui.checkBox_keys.isChecked():
+                    try:
+                        shutil.copyfile(shared.appdata + 'keys.dat' , self.RestorePath + 'keys.dat',)
+                    except IOError, e:
+                        QtGui.QMessageBox.information(self, 'Message', 'Unable to Backup keys.dat Error' + e, QtGui.QMessageBox.Ok)
+                if self.ui.checkBox_messages.isChecked():
+                    try:
+                        shutil.copyfile(shared.appdata + 'messages.dat', self.RestorePath + 'messages.dat')
+                    except IOError, e:
+                        QtGui.QMessageBox.information(self, 'Message', 'Unable to backup messages.dat' + e, QtGui.QMessageBox.Ok)                                    
+            
+            #Restoring files
+            elif self.ui.radioButton_Restore.isChecked():
+                if not os.path.exists(self.RestorePath):
+                        QtGui.QMessageBox.information(self, 'Message', 'No backup exists to be restored.', QtGui.QMessageBox.Ok)
+                else:
+                    try:
+                        if self.ui.checkBox_keys.isChecked():
+                            if not os.path.exists(self.RestorePath + 'keys.dat'):
+                                QtGui.QMessageBox.information(self, 'Message', 'No Keys.dat exists to be restored.', QtGui.QMessageBox.Ok)
+                            else:
+                                try:
+                                    shutil.copyfile(self.RestorePath + 'keys.dat', shared.appdata + 'keys.dat')
+                                except IOError, e:
+                                    QtGui.QMessageBox.information(self, 'Message', 'Unable to restore keys.dat Error: ' + e, QtGui.QMessageBox.Ok)
+                        
+                        if self.ui.checkBox_messages.isChecked() and self.ui.checkBox_messages.isEnabled():  # need to provide functionality to restore the inbox only or sent only                            
+                            if not os.path.exists(self.RestorePath + 'keys.dat'):
+                                QtGui.QMessageBox.information(self, 'Message', 'No messages.dat exists to be restored.', QtGui.QMessageBox.Ok)
+                            else:                                
+                                try:                                
+                                    shutil.copyfile(self.RestorePath + 'messages.dat', shared.appdata + 'messages.dat')
+                                except IOError, e:
+                                    QtGui.QMessageBox.information(self, 'Message', 'Unable to restore message.dat Error' + e, QtGui.QMessageBox.Ok)
+                                # load the inbox and sent after loading the data
+                                self.parent.loadInbox();
+                                self.parent.loadSent();
+                        
+                        elif self.ui.checkBox_inbox_only.isChecked() and self.ui.checkBox_inbox_only.isEnabled():  # checkbox_messages and checkBox_inbox_only are mutually exclusive restoration                       
+                            try:
+                                if not os.path.exists(self.RestorePath + 'messages.dat'):
+                                    QtGui.QMessageBox.information(self, 'Message', 'No messages.dat exists to be restored.', QtGui.QMessageBox.Ok)
+                                else:                                
+                                    queryreturn1 = sqlQuery('''ATTACH DATABASE ? AS BackupDB;''', self.RestorePath + 'messages.dat')
+                                    queryreturn2 = sqlExecute('''delete from inbox;''')                        
+                                    queryreturn3 = sqlQuery('''INSERT INTO inbox SELECT * FROM BackupDB.inbox;''') 
+                                    queryreturn4 = sqlQuery('''DETACH BackupDB;''')
+                            except ValueError, e:
+                                QtGui.QMessageBox.information(self, 'Message', 'Unable to restore inbox. Error : ' + e, QtGui.QMessageBox.Ok)
+                            # load only inbox and not the sent
+                            self.parent.loadInbox();
+                             
+                    except Exception, e:
+                        sys.stderr.write('Write error: ' + e)
+                        self.statusBar().showMessage(_translate("MainWindow", "Write error."))
+                        QtGui.QMessageBox.information(self, 'Message', 'Restore Error: ' + e, QtGui.QMessageBox.Ok)
+            
+            #Deleting Backup
+            elif self.ui.radioButton_DeleteBackup.isChecked():
+                    if not os.path.exists(self.RestorePath):
+                        QtGui.QMessageBox.information(self, 'Message', 'No backup exists to be Deleted.', QtGui.QMessageBox.Ok)
+                    else:
+                        try:
+                            if  os.path.isfile(self.RestorePath + 'messages.dat'):
+                                os.remove(self.RestorePath + 'messages.dat')
+                            else:
+                                QtGui.QMessageBox.information(self, 'Message', 'Keys.dat does not exists in the given folder', QtGui.QMessageBox.Ok)
+                            if  os.path.isfile(self.RestorePath + 'keys.dat'):
+                                os.remove(self.RestorePath + 'keys.dat')
+                            else:
+                                QtGui.QMessageBox.information(self, 'Message', 'messages.dat does not exists in the given folder.', QtGui.QMessageBox.Ok)
+                        except OSError, e:  # # if failed, report it back to the user ##
+                            sys.stderr.write('Write error: ' + e)
+                            self.statusBar().showMessage(_translate("MainWindow", "Write error."))
+                            QtGui.QMessageBox.information(self, 'Message', 'Delete Backup Error: ' + e, QtGui.QMessageBox.Ok)
+                    # shutil.rmtree('./backup')
+                
+    def selectDirectory(self):
+        dialog = QFileDialog(self)
+        dialog.setFileMode(QFileDialog.DirectoryOnly)
+        if dialog.exec_():
+            fileNames = dialog.selectedFiles()
+            self.ui.lineEdit_directory_name.setText(fileNames[0])

@@ -1,0 +1,500 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>BackupRestore</class>
+ <widget class="QDialog" name="BackupRestore">
+  <property name="enabled">
+   <bool>true</bool>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>359</width>
+    <height>250</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Dialog</string>
+  </property>
+  <widget class="QDialogButtonBox" name="BackupRestorebuttonBox">
+   <property name="geometry">
+    <rect>
+     <x>-90</x>
+     <y>210</y>
+     <width>341</width>
+     <height>32</height>
+    </rect>
+   </property>
+   <property name="orientation">
+    <enum>Qt::Horizontal</enum>
+   </property>
+   <property name="standardButtons">
+    <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="radioButton_Restore">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>20</y>
+     <width>82</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Restore Files</string>
+   </property>
+   <property name="checked">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="radioButton_Backup">
+   <property name="geometry">
+    <rect>
+     <x>130</x>
+     <y>20</y>
+     <width>82</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Backup Files</string>
+   </property>
+   <property name="checked">
+    <bool>false</bool>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBox_keys">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>140</y>
+     <width>70</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Keys.dat</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBox_messages">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>160</y>
+     <width>171</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Complete messages.dat</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>120</y>
+     <width>111</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Please select the files</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBox_inbox_only">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>180</y>
+     <width>167</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Restore Only Inbox Messages</string>
+   </property>
+   <property name="checkable">
+    <bool>true</bool>
+   </property>
+  </widget>
+  <widget class="QRadioButton" name="radioButton_DeleteBackup">
+   <property name="geometry">
+    <rect>
+     <x>240</x>
+     <y>20</y>
+     <width>101</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Delete Backup</string>
+   </property>
+  </widget>
+  <widget class="QLabel" name="label_2">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>50</y>
+     <width>321</width>
+     <height>20</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Provide Directory Location to Restore/Backup/Delete </string>
+   </property>
+  </widget>
+  <widget class="QLineEdit" name="lineEdit_directory_name">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>90</y>
+     <width>211</width>
+     <height>20</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="pushButton_browse">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>270</x>
+     <y>90</y>
+     <width>75</width>
+     <height>23</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>Browse</string>
+   </property>
+  </widget>
+  <widget class="QCheckBox" name="checkBox_Default_directory">
+   <property name="enabled">
+    <bool>true</bool>
+   </property>
+   <property name="geometry">
+    <rect>
+     <x>40</x>
+     <y>70</y>
+     <width>221</width>
+     <height>17</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>use default directory location &quot;.\backup&quot;</string>
+   </property>
+  </widget>
+ </widget>
+ <resources/>
+ <connections>
+  <connection>
+   <sender>radioButton_Restore</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_keys</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>154</x>
+     <y>28</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>82</x>
+     <y>172</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_Restore</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_messages</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>132</x>
+     <y>27</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>46</x>
+     <y>191</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_Backup</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_keys</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>60</x>
+     <y>25</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>102</x>
+     <y>168</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_Backup</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_messages</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>106</x>
+     <y>28</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>121</x>
+     <y>193</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_Backup</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_inbox_only</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>58</x>
+     <y>28</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>152</x>
+     <y>212</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_Restore</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_inbox_only</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>150</x>
+     <y>27</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>62</x>
+     <y>208</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_Backup</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_inbox_only</receiver>
+   <slot>setEnabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>58</x>
+     <y>22</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>206</x>
+     <y>204</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_messages</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_inbox_only</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>168</x>
+     <y>189</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>168</x>
+     <y>201</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_inbox_only</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_messages</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>44</x>
+     <y>210</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>45</x>
+     <y>186</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_DeleteBackup</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_keys</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>240</x>
+     <y>36</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>106</x>
+     <y>176</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_DeleteBackup</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_messages</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>262</x>
+     <y>34</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>210</x>
+     <y>194</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_DeleteBackup</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_inbox_only</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>286</x>
+     <y>30</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>203</x>
+     <y>213</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_Backup</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_inbox_only</receiver>
+   <slot>setHidden(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>91</x>
+     <y>33</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>109</x>
+     <y>208</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButton_Restore</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>checkBox_inbox_only</receiver>
+   <slot>setVisible(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>136</x>
+     <y>32</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>81</x>
+     <y>213</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_Default_directory</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>lineEdit_directory_name</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>204</x>
+     <y>75</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>246</x>
+     <y>102</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>BackupRestorebuttonBox</sender>
+   <signal>accepted()</signal>
+   <receiver>BackupRestore</receiver>
+   <slot>accept()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>118</x>
+     <y>230</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>157</x>
+     <y>138</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>BackupRestorebuttonBox</sender>
+   <signal>rejected()</signal>
+   <receiver>BackupRestore</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>186</x>
+     <y>230</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>272</x>
+     <y>138</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>checkBox_Default_directory</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>pushButton_browse</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>214</x>
+     <y>82</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>325</x>
+     <y>92</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

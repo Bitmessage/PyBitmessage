@@ -1055,7 +1055,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>795</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1112,11 +1112,10 @@ p, li { white-space: pre-wrap; }
     </iconset>
    </property>
    <property name="text">
-    <string>Manage keys</string>
+    <string>Manage Keys</string>
    </property>
   </action>
-  
-   <action name="actionBackup">
+  <action name="actionBackup">
    <property name="checkable">
     <bool>false</bool>
    </property>
@@ -1129,10 +1128,9 @@ p, li { white-space: pre-wrap; }
     </iconset>
    </property>
    <property name="text">
-    <string>Manage keys</string>
+    <string>Backup / Restore</string>
    </property>
   </action>
-  
   <action name="actionExit">
    <property name="icon">
     <iconset theme="application-exit">

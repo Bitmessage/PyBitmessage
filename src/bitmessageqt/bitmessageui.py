@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Tue Sep 03 15:17:26 2013
-#      by: PyQt4 UI code generator 4.10.2
+# Created: Tue Oct 01 16:47:57 2013
+#      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(885, 580)
+        MainWindow.resize(795, 580)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
@@ -439,7 +439,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 18))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 21))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -457,20 +457,15 @@ class Ui_MainWindow(object):
         self.actionManageKeys = QtGui.QAction(MainWindow)
         self.actionManageKeys.setCheckable(False)
         self.actionManageKeys.setEnabled(True)
-        #mj 
-        self.actionBackup = QtGui.QAction(MainWindow)
-        self.actionBackup.setCheckable(False)
-        self.actionBackup.setEnabled(True)
-        #mj end
         icon = QtGui.QIcon.fromTheme(_fromUtf8("dialog-password"))
         self.actionManageKeys.setIcon(icon)
         self.actionManageKeys.setObjectName(_fromUtf8("actionManageKeys"))
-        #mj
+        self.actionBackup = QtGui.QAction(MainWindow)
+        self.actionBackup.setCheckable(False)
+        self.actionBackup.setEnabled(True)
         icon = QtGui.QIcon.fromTheme(_fromUtf8("dialog-password"))
         self.actionBackup.setIcon(icon)
         self.actionBackup.setObjectName(_fromUtf8("actionBackup"))
-        self.actionExit = QtGui.QAction(MainWindow)
-        #mj end
         self.actionExit = QtGui.QAction(MainWindow)
         icon = QtGui.QIcon.fromTheme(_fromUtf8("application-exit"))
         self.actionExit.setIcon(icon)
@@ -499,10 +494,8 @@ class Ui_MainWindow(object):
         icon = QtGui.QIcon.fromTheme(_fromUtf8("contact-new"))
         self.actionJoinChan.setIcon(icon)
         self.actionJoinChan.setObjectName(_fromUtf8("actionJoinChan"))
-         #mj
-        self.menuFile.addAction(self.actionBackup)
-        #mj
         self.menuFile.addAction(self.actionManageKeys)
+        self.menuFile.addAction(self.actionBackup)
         self.menuFile.addAction(self.actionDeleteAllTrashedMessages)
         self.menuFile.addAction(self.actionRegenerateDeterministicAddresses)
         self.menuFile.addAction(self.actionJoinChan)
@@ -644,10 +637,8 @@ class Ui_MainWindow(object):
         self.menuSettings.setTitle(_translate("MainWindow", "Settings", None))
         self.menuHelp.setTitle(_translate("MainWindow", "Help", None))
         self.actionImport_keys.setText(_translate("MainWindow", "Import keys", None))
-        self.actionManageKeys.setText(_translate("MainWindow", "Manage keys", None))
-        #mj
-        self.actionBackup.setText(_translate("MainWindow", "Backup/Restore", None))
-        #mj
+        self.actionManageKeys.setText(_translate("MainWindow", "Manage Keys", None))
+        self.actionBackup.setText(_translate("MainWindow", "Backup / Restore", None))
         self.actionExit.setText(_translate("MainWindow", "Quit", None))
         self.actionExit.setShortcut(_translate("MainWindow", "Ctrl+Q", None))
         self.actionHelp.setText(_translate("MainWindow", "Help", None))
