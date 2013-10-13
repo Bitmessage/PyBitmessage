@@ -560,7 +560,7 @@ class MyForm(QtGui.QMainWindow):
             where = "toaddress || fromaddress || subject || message"
 
         sqlStatement = '''
-            SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime 
+            SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime 
             FROM sent WHERE folder="sent" AND %s LIKE ? 
             ORDER BY lastactiontime
             ''' % (where,)
@@ -570,9 +570,9 @@ class MyForm(QtGui.QMainWindow):
 
         queryreturn = sqlQuery(sqlStatement, what)
         for row in queryreturn:
-            toAddress, fromAddress, subject, message, status, ackdata, lastactiontime = row
+            toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            message = shared.fixPotentiallyInvalidUTF8Data(message)
+            #message = shared.fixPotentiallyInvalidUTF8Data(message)
             try:
                 fromLabel = shared.config.get(fromAddress, 'label')
             except:
@@ -612,7 +612,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetSent.setItem(0, 1, newItem)
             newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
             newItem.setToolTip(unicode(subject, 'utf-8'))
-            newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
+            #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetSent.setItem(0, 2, newItem)
@@ -680,7 +680,7 @@ class MyForm(QtGui.QMainWindow):
             where = "toaddress || fromaddress || subject || message"
 
         sqlStatement = '''
-            SELECT msgid, toaddress, fromaddress, subject, received, message, read 
+            SELECT msgid, toaddress, fromaddress, subject, received, read 
             FROM inbox WHERE folder="inbox" AND %s LIKE ? 
             ORDER BY received
             ''' % (where,)
@@ -692,9 +692,9 @@ class MyForm(QtGui.QMainWindow):
         font.setBold(True)
         queryreturn = sqlQuery(sqlStatement, what)
         for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, received, message, read = row
+            msgid, toAddress, fromAddress, subject, received, read = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            message = shared.fixPotentiallyInvalidUTF8Data(message)
+            #message = shared.fixPotentiallyInvalidUTF8Data(message)
             try:
                 if toAddress == self.str_broadcast_subscribers:
                     toLabel = self.str_broadcast_subscribers
@@ -750,7 +750,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.setItem(0, 1, newItem)
             newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
             newItem.setToolTip(unicode(subject, 'utf-8'))
-            newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
+            #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table (and thus in memory); we'll use a SQL query when we need to display it.
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
@@ -1765,7 +1765,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSent.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
         newItem.setToolTip(unicode(subject, 'utf-8)'))
-        newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
+        #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
         self.ui.tableWidgetSent.setItem(0, 2, newItem)
         # newItem =  QtGui.QTableWidgetItem('Doing work necessary to send
         # broadcast...'+
@@ -1778,13 +1778,12 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(Qt.UserRole, QByteArray(ackdata))
         newItem.setData(33, int(time.time()))
         self.ui.tableWidgetSent.setItem(0, 3, newItem)
-        self.ui.textEditSentMessage.setPlainText(
-            self.ui.tableWidgetSent.item(0, 2).data(Qt.UserRole).toPyObject())
+        self.ui.textEditSentMessage.setPlainText(message)
         self.ui.tableWidgetSent.setSortingEnabled(True)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-        message = shared.fixPotentiallyInvalidUTF8Data(message)
+        #message = shared.fixPotentiallyInvalidUTF8Data(message)
         fromLabel = ''
         queryreturn = sqlQuery(
             '''select label from addressbook where address=?''', fromAddress)
@@ -1838,7 +1837,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetInbox.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
         newItem.setToolTip(unicode(subject, 'utf-8)'))
-        newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
+        #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0, 2, newItem)
         newItem = myTableWidgetItem(unicode(strftime(shared.config.get(
@@ -2292,6 +2291,13 @@ class MyForm(QtGui.QMainWindow):
             currentInboxRow, 0).data(Qt.UserRole).toPyObject())
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
             currentInboxRow, 1).data(Qt.UserRole).toPyObject())
+        msgid = str(self.ui.tableWidgetInbox.item(
+            currentInboxRow, 3).data(Qt.UserRole).toPyObject())
+        queryreturn = sqlQuery(
+            '''select message from inbox where msgid=?''', msgid)
+        if queryreturn != []:
+            for row in queryreturn:
+                messageAtCurrentInboxRow, = row
         if toAddressAtCurrentInboxRow == self.str_broadcast_subscribers:
             self.ui.labelFrom.setText('')
         elif not shared.config.has_section(toAddressAtCurrentInboxRow):
@@ -2315,9 +2321,7 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
 
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
-        # self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
-        self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + self.ui.tableWidgetInbox.item(
-            currentInboxRow, 2).data(Qt.UserRole).toPyObject())
+        self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
             self.ui.lineEditSubject.setText(
                 self.ui.tableWidgetInbox.item(currentInboxRow, 2).text())
@@ -2716,21 +2720,27 @@ class MyForm(QtGui.QMainWindow):
             
             fromAddress = str(self.ui.tableWidgetInbox.item(
                 currentRow, 1).data(Qt.UserRole).toPyObject())
+            msgid = str(self.ui.tableWidgetInbox.item(
+                currentRow, 3).data(Qt.UserRole).toPyObject())
+            queryreturn = sqlQuery(
+                '''select message from inbox where msgid=?''', msgid)
+            if queryreturn != []:
+                for row in queryreturn:
+                    message, = row
+            message = unicode(message, 'utf-8)')
             # If we have received this message from either a broadcast address
             # or from someone in our address book, display as HTML
             if decodeAddress(fromAddress)[3] in shared.broadcastSendersForWhichImWatching or shared.isAddressInMyAddressBook(fromAddress):
-                if len(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
-                    self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(
-                        currentRow, 2).data(Qt.UserRole).toPyObject())  # Only show the first 30K characters
+                if len(message) < 30000:
+                    self.ui.textEditInboxMessage.setText(message)  # Only show the first 30K characters
                 else:
-                    self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()[
+                    self.ui.textEditInboxMessage.setText(message[
                                                          :30000] + '\n\nDisplay of the remainder of the message truncated because it is too long.')  # Only show the first 30K characters
             else:
-                if len(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
-                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(
-                        currentRow, 2).data(Qt.UserRole).toPyObject())  # Only show the first 30K characters
+                if len(message) < 30000:
+                    self.ui.textEditInboxMessage.setPlainText(message)  # Only show the first 30K characters
                 else:
-                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()[
+                    self.ui.textEditInboxMessage.setPlainText(message[
                                                               :30000] + '\n\nDisplay of the remainder of the message truncated because it is too long.')  # Only show the first 30K characters
             
             self.ui.tableWidgetInbox.item(currentRow, 0).setFont(font)
@@ -2746,8 +2756,17 @@ class MyForm(QtGui.QMainWindow):
     def tableWidgetSentItemClicked(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         if currentRow >= 0:
-            self.ui.textEditSentMessage.setPlainText(self.ui.tableWidgetSent.item(
-                currentRow, 2).data(Qt.UserRole).toPyObject())
+            ackdata = str(self.ui.tableWidgetSent.item(
+                currentRow, 3).data(Qt.UserRole).toPyObject())
+            queryreturn = sqlQuery(
+                '''select message from sent where ackdata=?''', ackdata)
+            if queryreturn != []:
+                for row in queryreturn:
+                    message, = row
+            else:
+                message = "Error occurred: could not load message from disk."
+            message = unicode(message, 'utf-8)')
+            self.ui.textEditSentMessage.setPlainText(message)
 
     def tableWidgetYourIdentitiesItemChanged(self):
         currentRow = self.ui.tableWidgetYourIdentities.currentRow()
