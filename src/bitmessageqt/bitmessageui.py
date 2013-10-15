@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Tue Sep 03 15:17:26 2013
-#      by: PyQt4 UI code generator 4.10.2
+# Created: Thu Oct 10 15:44:10 2013
+#      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(885, 580)
+        MainWindow.resize(795, 580)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
@@ -343,19 +343,23 @@ class Ui_MainWindow(object):
         self.blackwhitelist.setObjectName(_fromUtf8("blackwhitelist"))
         self.gridLayout_6 = QtGui.QGridLayout(self.blackwhitelist)
         self.gridLayout_6.setObjectName(_fromUtf8("gridLayout_6"))
+        self.radioButtonMoodlist = QtGui.QRadioButton(self.blackwhitelist)
+        self.radioButtonMoodlist.setObjectName(_fromUtf8("radioButtonMoodlist"))
+        self.gridLayout_6.addWidget(self.radioButtonMoodlist, 4, 0, 1, 2)
         self.radioButtonBlacklist = QtGui.QRadioButton(self.blackwhitelist)
         self.radioButtonBlacklist.setChecked(True)
         self.radioButtonBlacklist.setObjectName(_fromUtf8("radioButtonBlacklist"))
         self.gridLayout_6.addWidget(self.radioButtonBlacklist, 0, 0, 1, 2)
         self.radioButtonWhitelist = QtGui.QRadioButton(self.blackwhitelist)
         self.radioButtonWhitelist.setObjectName(_fromUtf8("radioButtonWhitelist"))
-        self.gridLayout_6.addWidget(self.radioButtonWhitelist, 1, 0, 1, 2)
+        self.gridLayout_6.addWidget(self.radioButtonWhitelist, 3, 0, 1, 2)
         self.pushButtonAddBlacklist = QtGui.QPushButton(self.blackwhitelist)
         self.pushButtonAddBlacklist.setObjectName(_fromUtf8("pushButtonAddBlacklist"))
-        self.gridLayout_6.addWidget(self.pushButtonAddBlacklist, 2, 0, 1, 1)
-        spacerItem5 = QtGui.QSpacerItem(689, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.gridLayout_6.addItem(spacerItem5, 2, 1, 1, 1)
+        self.gridLayout_6.addWidget(self.pushButtonAddBlacklist, 6, 0, 1, 1)
+        spacerItem5 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
+        self.gridLayout_6.addItem(spacerItem5, 6, 1, 1, 1)
         self.tableWidgetBlacklist = QtGui.QTableWidget(self.blackwhitelist)
+        self.tableWidgetBlacklist.setMaximumSize(QtCore.QSize(16777215, 14777193))
         self.tableWidgetBlacklist.setAlternatingRowColors(True)
         self.tableWidgetBlacklist.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
         self.tableWidgetBlacklist.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
@@ -372,9 +376,9 @@ class Ui_MainWindow(object):
         self.tableWidgetBlacklist.horizontalHeader().setSortIndicatorShown(False)
         self.tableWidgetBlacklist.horizontalHeader().setStretchLastSection(True)
         self.tableWidgetBlacklist.verticalHeader().setVisible(False)
-        self.gridLayout_6.addWidget(self.tableWidgetBlacklist, 3, 0, 1, 2)
+        self.gridLayout_6.addWidget(self.tableWidgetBlacklist, 8, 0, 1, 2)
         icon7 = QtGui.QIcon()
-        icon7.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/blacklist.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon7.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/tag-red-icon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.blackwhitelist, icon7, _fromUtf8(""))
         self.networkstatus = QtGui.QWidget()
         self.networkstatus.setObjectName(_fromUtf8("networkstatus"))
@@ -439,7 +443,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 18))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 22))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -505,6 +509,8 @@ class Ui_MainWindow(object):
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.lineEditTo.setEnabled)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("clicked(bool)")), self.labelSendBroadcastWarning.hide)
         QtCore.QObject.connect(self.radioButtonBroadcast, QtCore.SIGNAL(_fromUtf8("clicked()")), self.labelSendBroadcastWarning.show)
+        QtCore.QObject.connect(self.radioButtonMoodlist, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.pushButtonAddBlacklist.setDisabled)
+        QtCore.QObject.connect(self.radioButtonMoodlist, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.tableWidgetBlacklist.setDisabled)
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         MainWindow.setTabOrder(self.tabWidget, self.tableWidgetInbox)
         MainWindow.setTabOrder(self.tableWidgetInbox, self.textEditInboxMessage)
@@ -525,10 +531,7 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.tableWidgetSubscriptions, self.pushButtonAddAddressBook)
         MainWindow.setTabOrder(self.pushButtonAddAddressBook, self.tableWidgetAddressBook)
         MainWindow.setTabOrder(self.tableWidgetAddressBook, self.radioButtonBlacklist)
-        MainWindow.setTabOrder(self.radioButtonBlacklist, self.radioButtonWhitelist)
-        MainWindow.setTabOrder(self.radioButtonWhitelist, self.pushButtonAddBlacklist)
-        MainWindow.setTabOrder(self.pushButtonAddBlacklist, self.tableWidgetBlacklist)
-        MainWindow.setTabOrder(self.tableWidgetBlacklist, self.tableWidgetConnectionCount)
+        MainWindow.setTabOrder(self.radioButtonBlacklist, self.tableWidgetConnectionCount)
         MainWindow.setTabOrder(self.tableWidgetConnectionCount, self.pushButtonStatusIcon)
 
     def retranslateUi(self, MainWindow):
@@ -557,8 +560,8 @@ class Ui_MainWindow(object):
         self.textEditMessage.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
+"</style></head><body style=\" font-family:\'Lucida Grande\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>", None))
         self.label.setText(_translate("MainWindow", "To:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.radioButtonBroadcast.setText(_translate("MainWindow", "Broadcast to everyone who is subscribed to your address", None))
@@ -606,6 +609,7 @@ class Ui_MainWindow(object):
         item = self.tableWidgetAddressBook.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Address", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.addressbook), _translate("MainWindow", "Address Book", None))
+        self.radioButtonMoodlist.setText(_translate("MainWindow", "Use a Moodlist (Use neither a Blacklist nor a Whitelist)", None))
         self.radioButtonBlacklist.setText(_translate("MainWindow", "Use a Blacklist (Allow all incoming messages except those on the Blacklist)", None))
         self.radioButtonWhitelist.setText(_translate("MainWindow", "Use a Whitelist (Block all incoming messages except those on the Whitelist)", None))
         self.pushButtonAddBlacklist.setText(_translate("MainWindow", "Add new entry", None))
@@ -642,3 +646,4 @@ class Ui_MainWindow(object):
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
 
 import bitmessage_icons_rc
+
