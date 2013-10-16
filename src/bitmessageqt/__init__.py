@@ -1632,44 +1632,12 @@ class MyForm(QtGui.QMainWindow):
                 sqlExecute(
                     '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
 
-                shared.workerQueue.put(('sendbroadcast', ''))
-
-                try:
-                    fromLabel = shared.config.get(fromAddress, 'label')
-                except:
-                    fromLabel = ''
-                if fromLabel == '':
-                    fromLabel = fromAddress
-
                 toLabel = self.str_broadcast_subscribers
+                
+                self.displayNewSentMessage(
+                    toAddress, toLabel, fromAddress, subject, message, ackdata)
 
-                self.ui.tableWidgetSent.insertRow(0)
-                newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
-                newItem.setData(Qt.UserRole, str(toAddress))
-                self.ui.tableWidgetSent.setItem(0, 0, newItem)
-
-                if fromLabel == '':
-                    newItem = QtGui.QTableWidgetItem(
-                        unicode(fromAddress, 'utf-8'))
-                else:
-                    newItem = QtGui.QTableWidgetItem(
-                        unicode(fromLabel, 'utf-8'))
-                newItem.setData(Qt.UserRole, str(fromAddress))
-                self.ui.tableWidgetSent.setItem(0, 1, newItem)
-                newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
-                newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
-                self.ui.tableWidgetSent.setItem(0, 2, newItem)
-                # newItem =  QtGui.QTableWidgetItem('Doing work necessary to
-                # send broadcast...'+
-                # unicode(strftime(config.get('bitmessagesettings',
-                # 'timeformat'),localtime(int(time.time()))),'utf-8'))
-                newItem = myTableWidgetItem(_translate("MainWindow", "Work is queued."))
-                newItem.setData(Qt.UserRole, QByteArray(ackdata))
-                newItem.setData(33, int(time.time()))
-                self.ui.tableWidgetSent.setItem(0, 3, newItem)
-
-                self.ui.textEditSentMessage.setPlainText(
-                    self.ui.tableWidgetSent.item(0, 2).data(Qt.UserRole).toPyObject())
+                shared.workerQueue.put(('sendbroadcast', ''))
 
                 self.ui.comboBoxSendFrom.setCurrentIndex(0)
                 self.ui.labelFrom.setText('')
@@ -1778,7 +1746,7 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(Qt.UserRole, QByteArray(ackdata))
         newItem.setData(33, int(time.time()))
         self.ui.tableWidgetSent.setItem(0, 3, newItem)
-        self.ui.textEditSentMessage.setPlainText(message)
+        self.ui.textEditSentMessage.setPlainText(unicode(message, 'utf-8)'))
         self.ui.tableWidgetSent.setSortingEnabled(True)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
@@ -2254,10 +2222,18 @@ class MyForm(QtGui.QMainWindow):
 
     def on_action_InboxMessageForceHtml(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
-        lines = self.ui.tableWidgetInbox.item(
-            currentInboxRow, 2).data(Qt.UserRole).toPyObject().split('\n')
+
+        msgid = str(self.ui.tableWidgetInbox.item(
+            currentInboxRow, 3).data(Qt.UserRole).toPyObject())
+        queryreturn = sqlQuery(
+            '''select message from inbox where msgid=?''', msgid)
+        if queryreturn != []:
+            for row in queryreturn:
+                messageAtCurrentInboxRow, = row 
+
+        lines = messageAtCurrentInboxRow.split('\n')
         for i in xrange(len(lines)):
-            if lines[i].contains('Message ostensibly from '):
+            if 'Message ostensibly from ' in lines[i]:
                 lines[i] = '<p style="font-size: 12px; color: grey;">%s</span></p>' % (
                     lines[i])
             elif lines[i] == '------------------------------------------------------':
@@ -2381,14 +2357,23 @@ class MyForm(QtGui.QMainWindow):
             subjectAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text())
         except:
             subjectAtCurrentInboxRow = ''
+
+        # Retrieve the message data out of the SQL database
+        msgid = str(self.ui.tableWidgetInbox.item(
+            currentInboxRow, 3).data(Qt.UserRole).toPyObject())
+        queryreturn = sqlQuery(
+            '''select message from inbox where msgid=?''', msgid)
+        if queryreturn != []:
+            for row in queryreturn:
+                message, = row
+
         defaultFilename = "".join(x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
-        data = self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject()
         filename = QFileDialog.getSaveFileName(self, _translate("MainWindow","Save As..."), defaultFilename, "Text files (*.txt);;All files (*.*)")
         if filename == '':
             return
         try:
             f = open(filename, 'w')
-            f.write( self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject() )
+            f.write(message)
             f.close()
         except Exception, e:
             sys.stderr.write('Write error: '+ e)
