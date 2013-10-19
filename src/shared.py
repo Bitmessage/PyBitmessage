@@ -279,6 +279,8 @@ def reloadBroadcastSendersForWhichImWatching():
 def doCleanShutdown():
     global shutdown
     shutdown = 1 #Used to tell proof of work worker threads to exit.    
+    broadcastToSendDataQueues((0, 'shutdown', 'all'))
+    
     knownNodesLock.acquire()
     UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
     output = open(appdata + 'knownnodes.dat', 'wb')
@@ -289,8 +291,6 @@ def doCleanShutdown():
     knownNodesLock.release()
     logger.info('Finished closing knownnodes.dat output file.')
     UISignalQueue.put(('updateStatusBar','Done saving the knownNodes list of peers to disk.'))
-
-    broadcastToSendDataQueues((0, 'shutdown', 'all'))
 
     logger.info('Flushing inventory in memory out to disk...')
     UISignalQueue.put((
