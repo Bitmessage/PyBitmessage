@@ -268,7 +268,7 @@ class _OpenSSL:
         self.EVP_MD_CTX_destroy.argtypes = [ctypes.c_void_p]
 
         self.RAND_bytes = self._lib.RAND_bytes
-        self.RAND_bytes.restype = None
+        self.RAND_bytes.restype = ctypes.c_int
         self.RAND_bytes.argtypes = [ctypes.c_void_p, ctypes.c_int]
 
 
@@ -394,7 +394,15 @@ class _OpenSSL:
         OpenSSL random function
         """
         buffer = self.malloc(0, size)
-        self.RAND_bytes(buffer, size)
+        # This pyelliptic library, by default, didn't check the return value of RAND_bytes. It is 
+        # evidently possible that it returned an error and not-actually-random data. However, in
+        # tests on various operating systems, while generating hundreds of gigabytes of random 
+        # strings of various sizes I could not get an error to occur. Also Bitcoin doesn't check
+        # the return value of RAND_bytes either. 
+        # Fixed in Bitmessage version 0.4.2 (in source code on 2013-10-13)
+        while self.RAND_bytes(buffer, size) != 1:
+            import time
+            time.sleep(1)
         return buffer.raw
 
     def malloc(self, data, size):
