@@ -84,7 +84,18 @@ def loadConfig():
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
         shared.config.set('bitmessagesettings', 'dontconnect', 'true')
         shared.config.set('bitmessagesettings', 'userlocale', 'system')
-
+        
+         #start:UI setting to stop trying to send messages after X hours/days/months
+        shared.config.set(
+            'bitmessagesettings', 'hours', '')
+        shared.config.set(
+            'bitmessagesettings', 'days', '')
+        shared.config.set(
+            'bitmessagesettings', 'months', '')
+        shared.config.set(
+            'bitmessagesettings', 'timeperiod', '-1')
+        #end
+        
         # Are you hoping to add a new option to the keys.dat file? You're in
         # the right place for adding it to users who install the software for
         # the first time. But you must also add it to the keys.dat file of

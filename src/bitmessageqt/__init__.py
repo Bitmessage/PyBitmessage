@@ -1994,6 +1994,47 @@ class MyForm(QtGui.QMainWindow):
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0:
                 shared.config.set('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
+            #start:UI setting to stop trying to send messages after X hours/days/months
+            if ((self.settingsDialogInstance.ui.lineEditHours.text()=='')  and  (self.settingsDialogInstance.ui.lineEditDays.text()=='') and (self.settingsDialogInstance.ui.lineEditMonths.text()=='')):#We need to handle this special case. Bitmessage has its default behavior. The input is blank/blank/blank
+                if (((shared.config.get('bitmessagesettings', 'hours')) != str(self.settingsDialogInstance.ui.lineEditHours.text())) or #the user updated the input, restart is needed
+                      ((shared.config.get('bitmessagesettings', 'days')) != str(self.settingsDialogInstance.ui.lineEditDays.text())) or
+                        ((shared.config.get('bitmessagesettings', 'months')) != str(self.settingsDialogInstance.ui.lineEditMonths.text()))):
+                        QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
+                          "MainWindow", "You must restart Bitmessage for the time period change to take effect."))
+                shared.config.set('bitmessagesettings', 'hours', '')
+                shared.config.set('bitmessagesettings', 'days', '')
+                shared.config.set('bitmessagesettings', 'months', '')
+                shared.config.set('bitmessagesettings', 'timeperiod', '-1')#when bitmessage has its default resending behavior, we set timeperiod to -1.
+            else:#So,if all time period's variables (hours,days,months) have valid values, we calculate the time period
+                if (int(self.settingsDialogInstance.ui.lineEditHours.text()) >=0 and int(self.settingsDialogInstance.ui.lineEditDays.text()) >=0 and
+                   int(self.settingsDialogInstance.ui.lineEditMonths.text()) >=0):
+                    shared.config.set('bitmessagesettings', 'timeperiod', str(int(str(self.settingsDialogInstance.ui.lineEditHours.text())) * 60 * 60 + int(str(self.settingsDialogInstance.ui.lineEditDays.text())) * 24 * 60 * 60 +
+                            int(str(self.settingsDialogInstance.ui.lineEditMonths.text())) * (60 * 60 * 24 *365)/12))
+                    if int(shared.config.get('bitmessagesettings', 'timeperiod')) < 432000:#if the time period is less than 5 hours, we give zero values to all fields. No message will be sent again.
+                        if ((shared.config.get('bitmessagesettings', 'hours')) != str(int(self.settingsDialogInstance.ui.lineEditHours.text())) or #if the user has given an input bigger than 5 days and he tries now to give an input less than 5 days, restart is needed
+                                shared.config.get('bitmessagesettings', 'days') != str(int(self.settingsDialogInstance.ui.lineEditDays.text())) or
+                                shared.config.get('bitmessagesettings', 'months') != str(int(self.settingsDialogInstance.ui.lineEditMonths.text()))):
+                            if((shared.config.get('bitmessagesettings', 'hours')) != '0' or (shared.config.get('bitmessagesettings', 'days')) != '0' or#if the user has already given an input less than 5 days and he tries now to give again an input less than 5 days, there is no need for restart. Input values will remain zero
+                               (shared.config.get('bitmessagesettings', 'months')) != '0'):
+                                QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
+                                "MainWindow", "You must restart Bitmessage for the time period change to take effect."))
+                        shared.config.set('bitmessagesettings', 'hours', '0')
+                        shared.config.set('bitmessagesettings', 'days', '0')
+                        shared.config.set('bitmessagesettings', 'months', '0')
+                        shared.config.set('bitmessagesettings', 'timeperiod', '0')
+                    else:
+                        if ((shared.config.get('bitmessagesettings', 'hours')) != str(int(self.settingsDialogInstance.ui.lineEditHours.text())) or 
+                           shared.config.get('bitmessagesettings', 'days') != str(int(self.settingsDialogInstance.ui.lineEditDays.text())) or
+                           shared.config.get('bitmessagesettings', 'months') != str(int(self.settingsDialogInstance.ui.lineEditMonths.text()))):
+                            QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(#the user updated the input, restart is needed
+                            "MainWindow", "You must restart Bitmessage for the time period change to take effect."))
+                        shared.config.set('bitmessagesettings', 'hours', str(int(
+                        self.settingsDialogInstance.ui.lineEditHours.text())))
+                        shared.config.set('bitmessagesettings', 'days', str(int(
+                        self.settingsDialogInstance.ui.lineEditDays.text())))
+                        shared.config.set('bitmessagesettings', 'months', str(int(
+                        self.settingsDialogInstance.ui.lineEditMonths.text())))
+            #end
 
             # if str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()) == 'All':
             #    shared.config.set('bitmessagesettings', 'maxcores', '99999')
@@ -2959,7 +3000,7 @@ class settingsDialog(QtGui.QDialog):
             self.ui.lineEditNamecoinPassword.setEnabled(False)
             self.ui.labelNamecoinPassword.setEnabled(False)
         else:
-            assert False
+            assert False     
 
         QtCore.QObject.connect(self.ui.radioButtonNamecoinNamecoind, QtCore.SIGNAL(
             "toggled(bool)"), self.namecoinTypeChanged)
@@ -2968,6 +3009,15 @@ class settingsDialog(QtGui.QDialog):
         QtCore.QObject.connect(self.ui.pushButtonNamecoinTest, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonNamecoinTest)
 
+        #Adjusting time period to stop sending messages tab
+        self.ui.lineEditHours.setText(str(
+            shared.config.get('bitmessagesettings', 'hours')))
+        self.ui.lineEditDays.setText(str(
+            shared.config.get('bitmessagesettings', 'days')))
+        self.ui.lineEditMonths.setText(str(
+            shared.config.get('bitmessagesettings', 'months')))
+        
+        
         #'System' tab removed for now.
         """try:
             maxCores = shared.config.getint('bitmessagesettings', 'maxcores')
