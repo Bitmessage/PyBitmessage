@@ -16,5 +16,8 @@
     <file>../images/subscriptions.png</file>
     <file>../images/send.png</file>
     <file>../images/inbox.png</file>
+    <file>../images/tag-green-icon.png</file>
+    <file>../images/tag-red-icon.png</file>
+    <file>../images/tag-yellow-icon.png</file>
   </qresource>
 </RCC>

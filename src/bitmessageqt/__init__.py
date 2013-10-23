@@ -151,6 +151,8 @@ class MyForm(QtGui.QMainWindow):
             "clicked()"), self.click_pushButtonFetchNamecoinID)
         QtCore.QObject.connect(self.ui.radioButtonBlacklist, QtCore.SIGNAL(
             "clicked()"), self.click_radioButtonBlacklist)
+        QtCore.QObject.connect(self.ui.radioButtonMoodlist, QtCore.SIGNAL(
+            "clicked()"), self.click_radioButtonMoodlist)
         QtCore.QObject.connect(self.ui.radioButtonWhitelist, QtCore.SIGNAL(
             "clicked()"), self.click_radioButtonWhitelist)
         QtCore.QObject.connect(self.ui.pushButtonStatusIcon, QtCore.SIGNAL(
@@ -364,13 +366,20 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.ui.sentSearchLineEdit, QtCore.SIGNAL(
             "returnPressed()"), self.sentSearchLineEditPressed)
 
-        # Initialize the Blacklist or Whitelist
+        # Initialize the Blacklist/Whitelist/Moodlist
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
             self.loadBlackWhiteList()
-        else:
-            self.ui.tabWidget.setTabText(6, 'Whitelist')
+            self.ui.tabWidget.setTabIcon(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), QIcon(":/newPrefix/images/tag-red-icon.png"))
+        elif shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
+            self.ui.tabWidget.setTabText(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), 'Whitelist')
             self.ui.radioButtonWhitelist.click()
             self.loadBlackWhiteList()
+            self.ui.tabWidget.setTabIcon(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), QIcon(":/newPrefix/images/tag-yellow-icon.png"))
+        else:
+            self.ui.tabWidget.setTabText(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), 'Moodlist')
+            self.ui.radioButtonMoodlist.click()
+            self.ui.tabWidget.setTabIcon(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), QIcon(":/newPrefix/images/tag-green-icon.png"))
+
 
         QtCore.QObject.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL(
             "itemChanged(QTableWidgetItem *)"), self.tableWidgetYourIdentitiesItemChanged)
@@ -2065,24 +2074,35 @@ class MyForm(QtGui.QMainWindow):
                     pass
 
     def click_radioButtonBlacklist(self):
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
+        if shared.config.get('bitmessagesettings', 'blackwhitelist') != 'black':
             shared.config.set('bitmessagesettings', 'blackwhitelist', 'black')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
             # self.ui.tableWidgetBlacklist.clearContents()
             self.ui.tableWidgetBlacklist.setRowCount(0)
             self.loadBlackWhiteList()
-            self.ui.tabWidget.setTabText(6, 'Blacklist')
+            self.ui.tabWidget.setTabText(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), 'Blacklist')
+            self.ui.tabWidget.setTabIcon(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), QIcon(":/newPrefix/images/tag-red-icon.png"))
 
     def click_radioButtonWhitelist(self):
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
+        if shared.config.get('bitmessagesettings', 'blackwhitelist') != 'white':
             shared.config.set('bitmessagesettings', 'blackwhitelist', 'white')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
             # self.ui.tableWidgetBlacklist.clearContents()
             self.ui.tableWidgetBlacklist.setRowCount(0)
             self.loadBlackWhiteList()
-            self.ui.tabWidget.setTabText(6, 'Whitelist')
+            self.ui.tabWidget.setTabText(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), 'Whitelist')
+            self.ui.tabWidget.setTabIcon(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), QIcon(":/newPrefix/images/tag-yellow-icon.png"))
+
+    def click_radioButtonMoodlist(self):
+        if shared.config.get('bitmessagesettings', 'blackwhitelist') != 'mood':
+            shared.config.set('bitmessagesettings', 'blackwhitelist', 'mood')
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
+            self.ui.tableWidgetBlacklist.setRowCount(0)
+            self.ui.tabWidget.setTabText(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), 'Moodlist')
+            self.ui.tabWidget.setTabIcon(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), QIcon(":/newPrefix/images/tag-green-icon.png"))
 
     def click_pushButtonAddBlacklist(self):
         self.NewBlacklistDialogInstance = NewSubscriptionDialog(self)
@@ -2959,7 +2979,7 @@ class settingsDialog(QtGui.QDialog):
             self.ui.lineEditNamecoinPassword.setEnabled(False)
             self.ui.labelNamecoinPassword.setEnabled(False)
         else:
-            assert False
+            assert False     
 
         QtCore.QObject.connect(self.ui.radioButtonNamecoinNamecoind, QtCore.SIGNAL(
             "toggled(bool)"), self.namecoinTypeChanged)
