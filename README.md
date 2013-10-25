@@ -10,6 +10,14 @@ sender and receiver of messages, from passive eavesdroppers like those running
 warrantless wiretapping programs.
 
 
+Development
+----------
+If you plan to put a non-trivial amount of work into coding new features, it
+is recommended that you first solicit feedback on the DevTalk pseudo-mailing
+list:
+BM-2D9QKN4teYRvoq2fyzpiftPh9WP9qggtzh
+
+
 references
 ----------
 * [project website](https://bitmessage.org)
