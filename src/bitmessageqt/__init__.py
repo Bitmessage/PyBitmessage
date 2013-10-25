@@ -2711,23 +2711,26 @@ class MyForm(QtGui.QMainWindow):
                 '''select message from inbox where msgid=?''', msgid)
             if queryreturn != []:
                 for row in queryreturn:
-                    message, = row
-            message = unicode(message, 'utf-8)')
+                    messageText, = row
+            messageText = unicode(messageText, 'utf-8)')
+            if len(messageText) > 30000:
+                messageText = (
+                        messageText[:30000] + '\n' +
+                        '--- Display of the remainder of the message ' +
+                        'truncated because it is too long.\n' +
+                        '--- To see the full message, right-click in the ' +
+                        'Inbox view and select "View HTML code as formatted ' +
+                        'text",\n' +
+                        '--- or select "Save message as..." to save it to a ' +
+                        'file, or select "Reply" and ' +
+                        'view the full message in the quote.')
             # If we have received this message from either a broadcast address
             # or from someone in our address book, display as HTML
             if decodeAddress(fromAddress)[3] in shared.broadcastSendersForWhichImWatching or shared.isAddressInMyAddressBook(fromAddress):
-                if len(message) < 30000:
-                    self.ui.textEditInboxMessage.setText(message)  # Only show the first 30K characters
-                else:
-                    self.ui.textEditInboxMessage.setText(message[
-                                                         :30000] + '\n\nDisplay of the remainder of the message truncated because it is too long.')  # Only show the first 30K characters
+                self.ui.textEditInboxMessage.setText(messageText)
             else:
-                if len(message) < 30000:
-                    self.ui.textEditInboxMessage.setPlainText(message)  # Only show the first 30K characters
-                else:
-                    self.ui.textEditInboxMessage.setPlainText(message[
-                                                              :30000] + '\n\nDisplay of the remainder of the message truncated because it is too long.')  # Only show the first 30K characters
-            
+                self.ui.textEditInboxMessage.setPlainText(messageText)
+
             self.ui.tableWidgetInbox.item(currentRow, 0).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 1).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 2).setFont(font)
