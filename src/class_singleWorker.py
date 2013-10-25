@@ -315,10 +315,15 @@ class singleWorker(threading.Thread):
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
         shared.UISignalQueue.put(('updateStatusBar', ''))
-        shared.config.set(
-            myAddress, 'lastpubkeysendtime', str(int(time.time())))
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
+        try:
+            shared.config.set(
+                myAddress, 'lastpubkeysendtime', str(int(time.time())))
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
+        except:
+            # The user deleted the address out of the keys.dat file before this
+            # finished.
+            pass
 
     def sendBroadcast(self):
         queryreturn = sqlQuery(
