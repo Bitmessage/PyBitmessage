@@ -38,6 +38,8 @@ from debug import logger
 import helper_bootstrap
 import proofofwork
 
+str_chan = '[chan]'
+
 import sys
 if sys.platform == 'darwin':
     if float("{1}.{2}".format(*sys.version_info)) < 7.5:
@@ -150,8 +152,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     def _decode(self, text, decode_type):
         try:
             return text.decode(decode_type)
-        except TypeError as e:
-            raise APIError(22, "Decode error - " + str(e))
+        except Exception as e:
+            raise APIError(22, "Decode error - " + str(e) + ". Had trouble while decoding string: " + repr(text))
 
     def _verifyAddress(self, address):
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(address)
@@ -387,70 +389,113 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 ('getDeterministicAddress', addressVersionNumber,
                  streamNumber, 'unused API address', numberOfAddresses, passphrase, eighteenByteRipe))
             return shared.apiAddressGeneratorReturnQueue.get()
-        elif method == 'addChan':
-            #get passphrase, addressVersionNumber, and streamNumber
+        
+        elif method == 'createChan':
             if len(params) == 0:
                 raise APIError(0, 'I need parameters.')
             elif len(params) == 1:
                 passphrase, = params
-                address = ''
-                addressVersionNumber = 0
-                streamNumber = 0
-                label = ''
-            elif len(params) == 2:
-                passphrase, address = params
-                status, addressVersionNumber, streamNumber, ripe = decodeAddress(address)
-                label = ''
-            elif len(params) == 3:
-                passphrase, addressVersionNumber, streamNumber = params
-                address = ''
-                label = ''
-            elif len(params) == 4:
-                passphrase, addressVersionNumber, streamNumber, label = params
-                address = ''
-                label = self._decode(label, "base64")
-            else:
-                raise APIError(0, 'Too many parameters!')
-
+            passphrase = self._decode(passphrase, "base64")
             if len(passphrase) == 0:
                 raise APIError(1, 'The specified passphrase is blank.')
-            passphrase = self._decode(passphrase, "base64")
-            if label == '':
-                label = '[chan] ' + passphrase
-            if addressVersionNumber == 0:  # 0 means "just use the proper addressVersionNumber"
-                addressVersionNumber = 4
-            if addressVersionNumber != 3 and addressVersionNumber != 4:
-                raise APIError(2,'The address version number currently must be 3 or 4 (or 0 which means auto-select). ' + addressVersionNumber + ' isn\'t supported.')
-            if streamNumber == 0:  # 0 means "just use the most available stream"
-                streamNumber = 1
-            if streamNumber != 1:
-                raise APIError(3,'The stream number must be 1 (or 0 which means auto-select). Others aren\'t supported.')
+            # It would be nice to make the label the passphrase but it is
+            # possible that the passphrase contains non-utf-8 characters.
+            try:
+                unicode(passphrase, 'utf-8')
+                label = str_chan + ' ' + passphrase
+            except:
+                label = str_chan + ' ' + repr(passphrase)
 
-            #create identity
+            addressVersionNumber = 4
+            streamNumber = 1
             shared.apiAddressGeneratorReturnQueue.queue.clear()
             logger.debug('Requesting that the addressGenerator create chan %s.', passphrase)
             shared.addressGeneratorQueue.put(('createChan', addressVersionNumber, streamNumber, label, passphrase))
             queueReturn = shared.apiAddressGeneratorReturnQueue.get()
             if len(queueReturn) == 0:
-                raise APIError(24, 'Chan address already present.')
-            createdAddress = queueReturn[0]
-            if address == '':
-                address = createdAddress
-            elif createdAddress != address:
-                raise APIError(18, 'Chan name does not match address.')
+                raise APIError(24, 'Chan address is already present.')
+            address = queueReturn[0]
 
             #add address to addressbook
-            address = addBMIfNotPresent(address)
-            self._verifyAddress(address)
             queryreturn = sqlQuery("SELECT address FROM addressbook WHERE address=?", address)
-            if queryreturn != []:
-                raise APIError(16, 'You already have this address in your address book.')
+            if queryreturn == []:
+                sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
+                shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
+                shared.UISignalQueue.put(('rerenderSentToLabels',''))
+                shared.UISignalQueue.put(('rerenderAddressBook',''))
+            return address
+        elif method == 'joinChan':
+            if len(params) < 2:
+                raise APIError(0, 'I need two parameters.')
+            elif len(params) == 2:
+                passphrase, suppliedAddress= params
+            passphrase = self._decode(passphrase, "base64")
+            if len(passphrase) == 0:
+                raise APIError(1, 'The specified passphrase is blank.')
+            # It would be nice to make the label the passphrase but it is
+            # possible that the passphrase contains non-utf-8 characters.
+            try:
+                unicode(passphrase, 'utf-8')
+                label = str_chan + ' ' + passphrase
+            except:
+                label = str_chan + ' ' + repr(passphrase)
 
-            sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
+            status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(suppliedAddress)
+            suppliedAddress = addBMIfNotPresent(suppliedAddress)
+            shared.apiAddressGeneratorReturnQueue.queue.clear()
+            shared.addressGeneratorQueue.put(('joinChan', suppliedAddress, label, passphrase))
+            addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
+
+            if addressGeneratorReturnValue == 'chan name does not match address':
+                raise APIError(18, 'Chan name does not match address.')
+            if len(addressGeneratorReturnValue) == 0:
+                raise APIError(24, 'Chan address is already present.')
+            createdAddress = addressGeneratorReturnValue[0]
+            #add address to addressbook
+            queryreturn = sqlQuery("SELECT address FROM addressbook WHERE address=?", createdAddress)
+            if queryreturn == []:
+                sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, createdAddress)
+                shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
+                shared.UISignalQueue.put(('rerenderSentToLabels',''))
+                shared.UISignalQueue.put(('rerenderAddressBook',''))
+            return "success"
+        elif method == 'leaveChan':
+            if len(params) == 0:
+                raise APIError(0, 'I need parameters.')
+            elif len(params) == 1:
+                address, = params
+            status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(address)
+            address = addBMIfNotPresent(address)
+            if not shared.config.has_section(address):
+                raise APIError(13, 'Could not find this address in your keys.dat file.')
+            if not shared.safeConfigGetBoolean(address, 'chan'):
+                raise APIError(25, 'Specified address is not a chan address. Use deleteAddress API call instead.')
+            shared.config.remove_section(address)
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
+            sqlExecute('''DELETE FROM addressbook WHERE address=?''', address)
             shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
             shared.UISignalQueue.put(('rerenderSentToLabels',''))
             shared.UISignalQueue.put(('rerenderAddressBook',''))
-            return "Added chan %s with address %s and label %s." %(passphrase, address, label)
+            return 'success'
+
+        elif method == 'deleteAddress':
+            if len(params) == 0:
+                raise APIError(0, 'I need parameters.')
+            elif len(params) == 1:
+                address, = params
+            status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(address)
+            address = addBMIfNotPresent(address)
+            if not shared.config.has_section(address):
+                raise APIError(13, 'Could not find this address in your keys.dat file.')
+            shared.config.remove_section(address)
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
+            shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
+            shared.UISignalQueue.put(('rerenderSentToLabels',''))
+            shared.reloadMyAddressHashes()
+            return 'success'
+
         elif method == 'getAllInboxMessages':
             queryreturn = sqlQuery(
                 '''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox where folder='inbox' ORDER BY received''')
