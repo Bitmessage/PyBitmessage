@@ -928,7 +928,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 networkStatus = 'connectedAndReceivingIncomingConnections'
             return json.dumps({'networkConnections':len(shared.connectedHostsList),'numberOfMessagesProcessed':shared.numberOfMessagesProcessed, 'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed, 'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed, 'networkStatus':networkStatus, 'softwareName':'PyBitmessage','softwareVersion':shared.softwareVersion}, indent=4, separators=(',', ': '))
         elif method == 'decodeAddress':
-            #decode an address
+            # Return a meaningful decoding of an address.
             if len(params) != 1:
                 raise APIError(0, 'I need 1 parameter!')
             address, = params
