@@ -32,8 +32,10 @@ import os
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
-import debug
-from debug import logger
+#~ import debug
+#~ from debug import logger
+import logging
+logger = logging.getLogger('bitmessageqt_init')
 import subprocess
 import datetime
 from helper_sql import *
@@ -1535,8 +1537,7 @@ class MyForm(QtGui.QMainWindow):
                     status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                         toAddress)
                     if status != 'success':
-                        with shared.printLock:
-                            print 'Error: Could not decode', toAddress, ':', status
+                        logger.error('Error: Could not decode %s: %s'%(toAddress, status))
 
                         if status == 'missingbm':
                             self.statusBar().showMessage(_translate(
@@ -1908,7 +1909,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetBlacklist.setItem(0, 1, newItem)
 
     def click_pushButtonStatusIcon(self):
-        print 'click_pushButtonStatusIcon'
+        logger.info('click_pushButtonStatusIcon')
         self.iconGlossaryInstance = iconGlossaryDialog(self)
         if self.iconGlossaryInstance.exec_():
             pass
@@ -2181,7 +2182,7 @@ class MyForm(QtGui.QMainWindow):
                     shared.addressGeneratorQueue.put(('createDeterministicAddresses', 4, streamNumberForAddress, "unused deterministic address", self.dialog.ui.spinBoxNumberOfAddressesToMake.value(
                     ), self.dialog.ui.lineEditPassphrase.text().toUtf8(), self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
         else:
-            print 'new address dialog box rejected'
+            logger.info('new address dialog box rejected')
 
     # Quit selected from menu or application indicator
     def quit(self):
@@ -2293,7 +2294,7 @@ class MyForm(QtGui.QMainWindow):
         # If the previous message was to a chan then we should send our reply to the chan rather than to the particular person who sent the message.
         if shared.config.has_section(toAddressAtCurrentInboxRow):
             if shared.safeConfigGetBoolean(toAddressAtCurrentInboxRow, 'chan'):
-                print 'original sent to a chan. Setting the to address in the reply to the chan address.'
+                logger.info('original sent to a chan. Setting the to address in the reply to the chan address.')
                 self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
 
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
@@ -2494,7 +2495,7 @@ class MyForm(QtGui.QMainWindow):
         self.click_pushButtonAddSubscription()
         
     def on_action_SubscriptionsDelete(self):
-        print 'clicked Delete'
+        logger.info('clicked Delete')
         currentRow = self.ui.tableWidgetSubscriptions.currentRow()
         labelAtCurrentRow = self.ui.tableWidgetSubscriptions.item(
             currentRow, 0).text().toUtf8()
@@ -2814,8 +2815,7 @@ class MyForm(QtGui.QMainWindow):
 
     def updateStatusBar(self, data):
         if data != "":
-            with shared.printLock:
-                print 'Status bar:', data
+            logger.info('Status bar: %s'%data)
 
         self.statusBar().showMessage(data)
 

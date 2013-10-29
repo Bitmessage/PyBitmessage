@@ -21,6 +21,8 @@ import stat
 import threading
 import time
 from os import path, environ
+import logging
+logger = logging.getLogger('shared')
 
 # Project imports.
 from addresses import *
@@ -400,15 +402,13 @@ def decryptAndCheckPubkeyPayload(payload, address):
     embeddedVersionNumber, varintLength = decodeVarint(
         payload[readPosition:readPosition + 10])
     if embeddedVersionNumber != addressVersion:
-        with shared.printLock:
-            print 'Pubkey decryption was UNsuccessful due to address version mismatch. This shouldn\'t have happened.'
+        logger.info('Pubkey decryption was UNsuccessful due to address version mismatch. This shouldn\'t have happened.')
         return 'failed'
     readPosition += varintLength
     embeddedStreamNumber, varintLength = decodeVarint(
         payload[readPosition:readPosition + 10])
     if embeddedStreamNumber != streamNumber:
-        with shared.printLock:
-            print 'Pubkey decryption was UNsuccessful due to stream number mismatch. This shouldn\'t have happened.'
+        logger.info('Pubkey decryption was UNsuccessful due to stream number mismatch. This shouldn\'t have happened.')
         return 'failed'
     readPosition += varintLength
     signedData = payload[:readPosition] # Some of the signed data is not encrypted so let's keep it for now.
@@ -423,8 +423,7 @@ def decryptAndCheckPubkeyPayload(payload, address):
     except:
         # Someone must have encrypted some data with a different key
         # but tagged it with a tag for which we are watching.
-        with shared.printLock:
-            print 'Pubkey decryption was UNsuccessful. This shouldn\'t have happened.'
+        logger.info('Pubkey decryption was UNsuccessful. This shouldn\'t have happened.')
         return 'failed'
     print 'Pubkey decryption successful'
     readPosition = 4 # bypass the behavior bitfield
@@ -465,8 +464,7 @@ def decryptAndCheckPubkeyPayload(payload, address):
         # Although this pubkey object had the tag were were looking for and was
         # encrypted with the correct encryption key, it doesn't contain the
         # correct keys. Someone is either being malicious or using buggy software.
-        with shared.printLock:
-            print 'Pubkey decryption was UNsuccessful due to RIPE mismatch. This shouldn\'t have happened.'
+        logger.info('Pubkey decryption was UNsuccessful due to RIPE mismatch. This shouldn\'t have happened.')
         return 'failed'
     
     t = (ripe, addressVersion, signedData, int(time.time()), 'yes')
@@ -476,4 +474,4 @@ def decryptAndCheckPubkeyPayload(payload, address):
 Peer = collections.namedtuple('Peer', ['host', 'port'])
 
 helper_startup.loadConfig()
-from debug import logger
+#~ from debug import logger

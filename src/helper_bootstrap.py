@@ -3,6 +3,8 @@ import socket
 import defaultKnownNodes
 import pickle
 import time
+import logging
+logger = logging.getLogger('helper_bootstrap')
 
 def knownNodes():
     try:
@@ -26,7 +28,7 @@ def knownNodes():
     except:
         shared.knownNodes = defaultKnownNodes.createDefaultKnownNodes(shared.appdata)
     if shared.config.getint('bitmessagesettings', 'settingsversion') > 7:
-        print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
+        logger.info('Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.')
         raise SystemExit
 
 def dns():
@@ -39,16 +41,16 @@ def dns():
         if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none':
             try:
                 for item in socket.getaddrinfo('bootstrap8080.bitmessage.org', 80):
-                    print 'Adding', item[4][0], 'to knownNodes based on DNS boostrap method'
+                    logger.info('Adding %s to knownNodes based on DNS boostrap method'%item[4][0])
                     shared.knownNodes[1][shared.Peer(item[4][0], 8080)] = int(time.time())
             except:
-                print 'bootstrap8080.bitmessage.org DNS bootstrapping failed.'
+                logger.info('bootstrap8080.bitmessage.org DNS bootstrapping failed.')
             try:
                 for item in socket.getaddrinfo('bootstrap8444.bitmessage.org', 80):
-                    print 'Adding', item[4][0], 'to knownNodes based on DNS boostrap method'
+                    logger.info('Adding %s to knownNodes based on DNS boostrap method'%item[4][0])
                     shared.knownNodes[1][shared.Peer(item[4][0], 8444)] = int(time.time())
             except:
-                print 'bootstrap8444.bitmessage.org DNS bootstrapping failed.'
+                logger.info('bootstrap8444.bitmessage.org DNS bootstrapping failed.')
         else:
-            print 'DNS bootstrap skipped because SOCKS is used.'
+            logger.info('DNS bootstrap skipped because SOCKS is used.')
 

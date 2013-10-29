@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger('class_singleWorker')
+
 import threading
 import shared
 import time
@@ -10,7 +13,7 @@ import proofofwork
 import sys
 from class_addressGenerator import pointMult
 import tr
-from debug import logger
+#~ from debug import logger
 from helper_sql import *
 import helper_inbox
 
@@ -45,7 +48,7 @@ class singleWorker(threading.Thread):
             '''SELECT ackdata FROM sent where (status='msgsent' OR status='doingmsgpow')''')
         for row in queryreturn:
             ackdata, = row
-            print 'Watching for ackdata', ackdata.encode('hex')
+            logger.info('Watching for ackdata %s'%ackdata.encode('hex'))
             shared.ackdataForWhichImWatching[ackdata] = 0
 
         queryreturn = sqlQuery(
@@ -77,9 +80,7 @@ class singleWorker(threading.Thread):
             elif command == 'sendOutOrStoreMyV4Pubkey':
                 self.sendOutOrStoreMyV4Pubkey(data)
             else:
-                with shared.printLock:
-                    sys.stderr.write(
-                        'Probable programming error: The command sent to the workerThread is weird. It is: %s\n' % command)
+                logger.info('Probable programming error: The command sent to the workerThread is weird. It is: %s\n' % command)
 
             shared.workerQueue.task_done()
 
@@ -108,9 +109,7 @@ class singleWorker(threading.Thread):
             privEncryptionKeyBase58 = shared.config.get(
                 myAddress, 'privencryptionkey')
         except Exception as err:
-            with shared.printLock:
-                sys.stderr.write(
-                    'Error within doPOWForMyV2Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
+            logger.info('Error within doPOWForMyV2Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
 
             return
 
@@ -129,10 +128,10 @@ class singleWorker(threading.Thread):
         # Do the POW for this pubkey message
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
-        print '(For pubkey message) Doing proof of work...'
+        logger.info('(For pubkey message) Doing proof of work...')
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
+        logger.info('(For pubkey message) Found proof of work %s Nonce: %s'%(trialValue, nonce))
         payload = pack('>Q', nonce) + payload
 
         inventoryHash = calculateInventoryHash(payload)
@@ -141,8 +140,7 @@ class singleWorker(threading.Thread):
             objectType, streamNumber, payload, embeddedTime,'')
         shared.inventorySets[streamNumber].add(inventoryHash)
 
-        with shared.printLock:
-            print 'broadcasting inv with hash:', inventoryHash.encode('hex')
+        logger.info('broadcasting inv with hash: %s'%inventoryHash.encode('hex'))
 
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
@@ -159,8 +157,7 @@ class singleWorker(threading.Thread):
     def sendOutOrStoreMyV3Pubkey(self, hash): 
         myAddress = shared.myAddressesByHash[hash]
         if shared.safeConfigGetBoolean(myAddress, 'chan'):
-            with shared.printLock:
-                print 'This is a chan address. Not sending pubkey.'
+            logger.info('This is a chan address. Not sending pubkey.')
             return
         status, addressVersionNumber, streamNumber, hash = decodeAddress(
             myAddress)
@@ -177,10 +174,7 @@ class singleWorker(threading.Thread):
             privEncryptionKeyBase58 = shared.config.get(
                 myAddress, 'privencryptionkey')
         except Exception as err:
-            with shared.printLock:
-                sys.stderr.write(
-                    'Error within sendOutOrStoreMyV3Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
-
+            logger.info('Error within sendOutOrStoreMyV3Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n'%err)
             return
 
         privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -206,10 +200,10 @@ class singleWorker(threading.Thread):
         # Do the POW for this pubkey message
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
-        print '(For pubkey message) Doing proof of work...'
+        logger.info('(For pubkey message) Doing proof of work...')
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
+        logger.info('(For pubkey message) Found proof of work %s Nonce: %s'%(trialValue, nonce))
 
         payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
@@ -218,8 +212,7 @@ class singleWorker(threading.Thread):
             objectType, streamNumber, payload, embeddedTime,'')
         shared.inventorySets[streamNumber].add(inventoryHash)
 
-        with shared.printLock:
-            print 'broadcasting inv with hash:', inventoryHash.encode('hex')
+        logger.info('broadcasting inv with hash: %s'%inventoryHash.encode('hex'))
 
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
@@ -233,8 +226,7 @@ class singleWorker(threading.Thread):
     # does the necessary POW and sends it out. 
     def sendOutOrStoreMyV4Pubkey(self, myAddress):
         if shared.safeConfigGetBoolean(myAddress, 'chan'):
-            with shared.printLock:
-                print 'This is a chan address. Not sending pubkey.'
+            logger.info('This is a chan address. Not sending pubkey.')
             return
         status, addressVersionNumber, streamNumber, hash = decodeAddress(
             myAddress)
@@ -253,9 +245,7 @@ class singleWorker(threading.Thread):
             privEncryptionKeyBase58 = shared.config.get(
                 myAddress, 'privencryptionkey')
         except Exception as err:
-            with shared.printLock:
-                sys.stderr.write(
-                    'Error within sendOutOrStoreMyV4Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
+            logger.info('Error within sendOutOrStoreMyV4Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
             return
 
         privSigningKeyHex = shared.decodeWalletImportFormat(
@@ -297,10 +287,10 @@ class singleWorker(threading.Thread):
         # Do the POW for this pubkey message
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
-        print '(For pubkey message) Doing proof of work...'
+        logger.info('(For pubkey message) Doing proof of work...')
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
+        logger.info('(For pubkey message) Found proof of work %s Nonce: %s'%(trialValue, nonce))
 
         payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
@@ -309,8 +299,7 @@ class singleWorker(threading.Thread):
             objectType, streamNumber, payload, embeddedTime, doubleHashOfAddressData[32:])
         shared.inventorySets[streamNumber].add(inventoryHash)
 
-        with shared.printLock:
-            print 'broadcasting inv with hash:', inventoryHash.encode('hex')
+        logger.info('broadcasting inv with hash: %s'%inventoryHash.encode('hex'))
 
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
@@ -333,9 +322,7 @@ class singleWorker(threading.Thread):
             status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                 fromaddress)
             if addressVersionNumber <= 1:
-                with shared.printLock:
-                    sys.stderr.write(
-                        'Error: In the singleWorker thread, the sendBroadcast function doesn\'t understand the address version.\n')
+                logger.info('Error: In the singleWorker thread, the sendBroadcast function doesn\'t understand the address version.\n')
                 return
             # We need to convert our private keys to public keys in order
             # to include them.
@@ -405,12 +392,12 @@ class singleWorker(threading.Thread):
 
             target = 2 ** 64 / ((len(
                 payload) + shared.networkDefaultPayloadLengthExtraBytes + 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
-            print '(For broadcast message) Doing proof of work...'
+            logger.info('(For broadcast message) Doing proof of work...')
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                 ackdata, tr.translateText("MainWindow", "Doing work necessary to send broadcast..."))))
             initialHash = hashlib.sha512(payload).digest()
             trialValue, nonce = proofofwork.run(target, initialHash)
-            print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
+            logger.info('(For broadcast message) Found proof of work %s Nonce: %s'%(trialValue, nonce))
 
             payload = pack('>Q', nonce) + payload
 
@@ -419,8 +406,7 @@ class singleWorker(threading.Thread):
             shared.inventory[inventoryHash] = (
                 objectType, streamNumber, payload, int(time.time()),'')
             shared.inventorySets[streamNumber].add(inventoryHash)
-            with shared.printLock:
-                print 'sending inv (within sendBroadcast function) for object:', inventoryHash.encode('hex')
+            logger.info('sending inv (within sendBroadcast function) for object: %s'%inventoryHash.encode('hex'))
             shared.broadcastToSendDataQueues((
                 streamNumber, 'advertiseobject', inventoryHash))
 
@@ -479,7 +465,7 @@ class singleWorker(threading.Thread):
                                 data, = row
                                 if shared.decryptAndCheckPubkeyPayload(data[8:], toaddress) == 'successful':
                                     needToRequestPubkey = False
-                                    print 'debug. successfully decrypted and checked pubkey from sql inventory.' #testing
+                                    logger.debug('debug. successfully decrypted and checked pubkey from sql inventory.') #testing
                                     sqlExecute(
                                         '''UPDATE sent SET status='doingmsgpow' WHERE toaddress=? AND status='msgqueued' ''',
                                         toaddress)
@@ -493,7 +479,7 @@ class singleWorker(threading.Thread):
                                     if objectType == 'pubkey' and tag == toTag:
                                         result = shared.decryptAndCheckPubkeyPayload(payload[8:], toaddress) #if valid, this function also puts it in the pubkeys table.
                                         if result == 'successful':
-                                            print 'debug. successfully decrypted and checked pubkey from memory inventory.'
+                                            logger.info('debug. successfully decrypted and checked pubkey from memory inventory.')
                                             needToRequestPubkey = False
                                             sqlExecute(
                                                 '''UPDATE sent SET status='doingmsgpow' WHERE toaddress=? AND status='msgqueued' ''',
@@ -534,9 +520,7 @@ class singleWorker(threading.Thread):
                 if queryreturn == [] and toripe not in shared.neededPubkeys:
                     # We no longer have the needed pubkey and we haven't requested
                     # it.
-                    with shared.printLock:
-                        sys.stderr.write(
-                            'For some reason, the status of a message in our outbox is \'doingmsgpow\' even though we lack the pubkey. Here is the RIPE hash of the needed pubkey: %s\n' % toripe.encode('hex'))
+                    logger.info('For some reason, the status of a message in our outbox is \'doingmsgpow\' even though we lack the pubkey. Here is the RIPE hash of the needed pubkey: %s\n' % toripe.encode('hex'))
                     sqlExecute(
                         '''UPDATE sent SET status='doingpubkeypow' WHERE toaddress=? AND status='doingmsgpow' ''', toaddress)
                     shared.UISignalQueue.put(('updateSentItemStatusByHash', (
@@ -546,8 +530,7 @@ class singleWorker(threading.Thread):
                 shared.ackdataForWhichImWatching[ackdata] = 0
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                     ackdata, tr.translateText("MainWindow", "Looking up the receiver\'s public key"))))
-                with shared.printLock:
-                    print 'Sending a message. First 150 characters of message:', repr(message[:150])
+                logger.info('Sending a message. First 150 characters of message: %s'%repr(message[:150]))
 
 
                 # mark the pubkey as 'usedpersonally' so that we don't ever delete
@@ -564,9 +547,7 @@ class singleWorker(threading.Thread):
                     toripe,
                     toAddressVersionNumber)
                 if queryreturn == []:
-                    with shared.printLock:
-                        sys.stderr.write(
-                            '(within sendMsg) The needed pubkey was not found. This should never happen. Aborting send.\n')
+                    logger.info('(within sendMsg) The needed pubkey was not found. This should never happen. Aborting send.\n')
 
                     return
                 for row in queryreturn:
@@ -642,8 +623,7 @@ class singleWorker(threading.Thread):
                                 requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes)).arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
                             continue
             else: # if we are sending a message to ourselves or a chan..
-                with shared.printLock:
-                    print 'Sending a message. First 150 characters of message:', repr(message[:150])
+                logger.info('Sending a message. First 150 characters of message: %s'%repr(message[:150]))
                 behaviorBitfield = '\x00\x00\x00\x01'
 
                 try:
@@ -651,9 +631,7 @@ class singleWorker(threading.Thread):
                         toaddress, 'privencryptionkey')
                 except Exception as err:
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,tr.translateText("MainWindow",'Problem: You are trying to send a message to yourself or a chan but your encryption key could not be found in the keys.dat file. Could not encrypt message. %1').arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'),localtime(int(time.time()))),'utf-8')))))
-                    with shared.printLock:
-                        sys.stderr.write(
-                            'Error within sendMsg. Could not read the keys from the keys.dat file for our own address. %s\n' % err)
+                    logger.info('Error within sendMsg. Could not read the keys from the keys.dat file for our own address. %s\n' % err)
                     continue
                 privEncryptionKeyHex = shared.decodeWalletImportFormat(
                     privEncryptionKeyBase58).encode('hex')
@@ -765,12 +743,10 @@ class singleWorker(threading.Thread):
                 payload += encodeVarint(len(messageToTransmit))
                 payload += messageToTransmit
                 if shared.config.has_section(toaddress):
-                    with shared.printLock:
-                        print 'Not bothering to include ackdata because we are sending to ourselves or a chan.'
+                    logger.info('Not bothering to include ackdata because we are sending to ourselves or a chan.')
                     fullAckPayload = ''
                 elif not shared.isBitSetWithinBitfield(behaviorBitfield,31):
-                    with shared.printLock:
-                        print 'Not bothering to include ackdata because the receiver said that they won\'t relay it anyway.'
+                    logger.info('Not bothering to include ackdata because the receiver said that they won\'t relay it anyway.')
                     fullAckPayload = ''                    
                 else:
                     fullAckPayload = self.generateFullAckMessage(
@@ -781,7 +757,7 @@ class singleWorker(threading.Thread):
                 payload += encodeVarint(len(signature))
                 payload += signature
 
-            print 'using pubEncryptionKey:', pubEncryptionKeyBase256.encode('hex')
+            logger.info('using pubEncryptionKey: %s'%pubEncryptionKeyBase256.encode('hex'))
             # We have assembled the data that will be encrypted.
             try:
                 encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
@@ -791,18 +767,16 @@ class singleWorker(threading.Thread):
                 continue
             encryptedPayload = embeddedTime + encodeVarint(toStreamNumber) + encrypted
             target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
-            with shared.printLock:
-                print '(For msg message) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes
+            logger.info('(For msg message) Doing proof of work. Total required difficulty: %s Required small message difficulty: %s'%(float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte, float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes))
 
             powStartTime = time.time()
             initialHash = hashlib.sha512(encryptedPayload).digest()
             trialValue, nonce = proofofwork.run(target, initialHash)
-            with shared.printLock:
-                print '(For msg message) Found proof of work', trialValue, 'Nonce:', nonce
-                try:
-                    print 'POW took', int(time.time() - powStartTime), 'seconds.', nonce / (time.time() - powStartTime), 'nonce trials per second.'
-                except:
-                    pass
+            logger.info('(For msg message) Found proof of work %s Nonce: %s'%(trialValue, nonce))
+            try:
+                logger.info('POW took %s seconds. %s nonce trials per second.'%(int(time.time() - powStartTime),nonce / (time.time() - powStartTime)))
+            except:
+                pass
 
             encryptedPayload = pack('>Q', nonce) + encryptedPayload
 
@@ -818,7 +792,7 @@ class singleWorker(threading.Thread):
                 # not sending to a chan or one of my addresses
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Message sent. Waiting on acknowledgement. Sent on %1").arg(unicode(
                     strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
-            print 'Broadcasting inv for my msg(within sendmsg function):', inventoryHash.encode('hex')
+            logger.info('Broadcasting inv for my msg(within sendmsg function): %s'%inventoryHash.encode('hex'))
             shared.broadcastToSendDataQueues((
                 toStreamNumber, 'advertiseobject', inventoryHash))
 
@@ -857,8 +831,7 @@ class singleWorker(threading.Thread):
         toStatus, addressVersionNumber, streamNumber, ripe = decodeAddress(
             toAddress)
         if toStatus != 'success':
-            with shared.printLock:
-                sys.stderr.write('Very abnormal error occurred in requestPubKey. toAddress is: ' + repr(
+            logger.info('Very abnormal error occurred in requestPubKey. toAddress is: ' + repr(
                     toAddress) + '. Please report this error to Atheros.')
 
             return
@@ -874,12 +847,10 @@ class singleWorker(threading.Thread):
         payload += encodeVarint(streamNumber)
         if addressVersionNumber <= 3:
             payload += ripe
-            with shared.printLock:
-                print 'making request for pubkey with ripe:', ripe.encode('hex')
+            logger.info('making request for pubkey with ripe: %s'%ripe.encode('hex'))
         else:
             payload += tag
-            with shared.printLock:
-                print 'making request for v4 pubkey with tag:', tag.encode('hex')
+            logger.info('making request for v4 pubkey with tag: %s'%tag.encode('hex'))
 
         # print 'trial value', trialValue
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
@@ -890,8 +861,7 @@ class singleWorker(threading.Thread):
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        with shared.printLock:
-            print 'Found proof of work', trialValue, 'Nonce:', nonce
+        logger.info('Found proof of work %s Nonce: %s'%(trialValue, nonce))
 
 
         payload = pack('>Q', nonce) + payload
@@ -900,7 +870,7 @@ class singleWorker(threading.Thread):
         shared.inventory[inventoryHash] = (
             objectType, streamNumber, payload, int(time.time()),'')
         shared.inventorySets[streamNumber].add(inventoryHash)
-        print 'sending inv (for the getpubkey message)'
+        logger.info('sending inv (for the getpubkey message)')
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
 
@@ -917,18 +887,16 @@ class singleWorker(threading.Thread):
         payload = embeddedTime + encodeVarint(toStreamNumber) + ackdata
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
-        with shared.printLock:
-            print '(For ack message) Doing proof of work...'
+        logger.info('(For ack message) Doing proof of work...')
 
         powStartTime = time.time()
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        with shared.printLock:
-            print '(For ack message) Found proof of work', trialValue, 'Nonce:', nonce
-            try:
-                print 'POW took', int(time.time() - powStartTime), 'seconds.', nonce / (time.time() - powStartTime), 'nonce trials per second.'
-            except:
-                pass
+        logger.info('(For ack message) Found proof of work %s Nonce %s'%(trialValue, nonce))
+        try:
+            logger.info('POW took %s seconds. %s nonce trials per second.'%(int(time.time() - powStartTime),nonce / (time.time() - powStartTime)))
+        except:
+            pass
 
         payload = pack('>Q', nonce) + payload
         headerData = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
