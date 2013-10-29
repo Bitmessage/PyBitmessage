@@ -1075,7 +1075,7 @@ if __name__ == "__main__":
     handler = logging.StreamHandler(sys.stdout)
     handler.setFormatter(logging.Formatter(fmt_string, "%H:%M:%S"))
     logger.addHandler(handler)
-    logger.setLevel(logging.ERROR)
+    logger.setLevel(logging.INFO)
 
     
     mainprogram = Main()
