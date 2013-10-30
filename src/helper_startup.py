@@ -84,6 +84,10 @@ def loadConfig():
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
         shared.config.set('bitmessagesettings', 'dontconnect', 'true')
         shared.config.set('bitmessagesettings', 'userlocale', 'system')
+     	shared.config.set('bitmessagesettings', 'identicon', 'None')
+        import random, string
+        shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
+        shared.config.set('bitmessagesettings', 'avatars', 'false')
 
         # Are you hoping to add a new option to the keys.dat file? You're in
         # the right place for adding it to users who install the software for
