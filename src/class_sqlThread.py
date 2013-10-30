@@ -242,6 +242,13 @@ class sqlThread(threading.Thread):
 
         if not shared.config.has_option('bitmessagesettings', 'userlocale'):
             shared.config.set('bitmessagesettings', 'userlocale', 'system')
+        if not shared.config.has_option('bitmessagesettings', 'identicon'):
+            shared.config.set('bitmessagesettings', 'identicon', 'None')
+        if not shared.config.has_option('bitmessagesettings', 'identiconsuffix'):
+            import random, string
+            shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
+        if not shared.config.has_option('bitmessagesettings', 'avatars'):
+            shared.config.set('bitmessagesettings', 'avatars', 'false')
         if not shared.config.has_option('bitmessagesettings', 'sendoutgoingconnections'):
             shared.config.set('bitmessagesettings', 'sendoutgoingconnections', 'True')
 
