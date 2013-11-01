@@ -29,6 +29,7 @@ import sys
 from time import strftime, localtime, gmtime
 import time
 import os
+import hashlib
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
@@ -64,20 +65,19 @@ def identiconize(address):
     # 3fd4bf901b9d4ea1394f0fb358725b28
     
     try:
-        identicon_lib = shared.config.get('bitmessagesettings', 'identicon')
+        identicon_lib = shared.config.get('bitmessagesettings', 'identiconlib')
     except:
-        # default to no identicons
-        identicon_lib = False
+        # default to qidenticon_two_x
+        identicon_lib = 'qidenticon_two_x'
+
+    # As an 'identiconsuffix' you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators. (Note however, that E-Mail programs might convert the BM-address to lowercase first.)
+    # It can be used as a pseudo-password to salt the generation of the identicons to decrease the risk
+    # of attacks where someone creates an address to mimic someone else's identicon.
+    identiconsuffix = shared.config.get('bitmessagesettings', 'identiconsuffix')
     
-    try:
-        # As an 'identiconsuffix' you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators. (Note however, that E-Mail programs might convert the BM-address to lowercase first.)
-        # It can be used as a pseudo-password to salt the generation of the identicons to decrease the risk
-        # of attacks where someone creates an address to mimic someone else's identicon.
-        # If not set yet it will be filled by a random string.
-        # Another good idea would be to fill it with the private key of one of your addresses (because you don't need to memorize it then).
-        identiconsuffix = shared.config.get('bitmessagesettings', 'identiconsuffix')
-    except:
-        identiconsuffix = ''
+    if not shared.config.getboolean('bitmessagesettings', 'useidenticons'):
+        idcon = QtGui.QIcon()
+        return idcon
     
     if (identicon_lib[:len('qidenticon')] == 'qidenticon'):
         # print identicon_lib
@@ -86,7 +86,6 @@ def identiconize(address):
         # Licesensed under FreeBSD License.
         # stripped from PIL and uses QT instead (by sendiulo, same license)
         import qidenticon
-        import hashlib
         hash = hashlib.md5(addBMIfNotPresent(address)+identiconsuffix).hexdigest()
         use_two_colors = (identicon_lib[:len('qidenticon_two')] == 'qidenticon_two')
         opacity = int(not((identicon_lib == 'qidenticon_x') | (identicon_lib == 'qidenticon_two_x') | (identicon_lib == 'qidenticon_b') | (identicon_lib == 'qidenticon_two_b')))*255
@@ -113,66 +112,50 @@ def identiconize(address):
         idcon = QtGui.QIcon()
         idcon.addPixmap(pix, QtGui.QIcon.Normal, QtGui.QIcon.Off)
         return idcon
-    elif identicon_lib in ['False', 'false', 'None', 'none']:
-        idcon = QtGui.QIcon()
-        return idcon
-    else:
-        # default to no identicons
-        idcon = QtGui.QIcon()
-        return idcon
         
-def avatarize(address, fallBackToIdenticon = False):
+def avatarize(address):
     """
         loads a supported image for the given address' hash form 'avatars' folder
         falls back to default avatar if 'default.*' file exists
-        falls back to identiconize(address) if second argument fallBackToIdenticon == True
+        falls back to identiconize(address)
     """
     idcon = QtGui.QIcon()
-    if shared.safeConfigGetBoolean('bitmessagesettings', 'avatars'):
-        import hashlib
-        hash = hashlib.md5(addBMIfNotPresent(address)).hexdigest()
-        str_broadcast_subscribers = '[Broadcast subscribers]'
-        if address == str_broadcast_subscribers:
-            # don't hash [Broadcast subscribers]
-            hash = address
-        # http://pyqt.sourceforge.net/Docs/PyQt4/qimagereader.html#supportedImageFormats
-        # print QImageReader.supportedImageFormats ()
-        # QImageReader.supportedImageFormats ()
-        extensions = ['PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM', 'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
-        # try to find a specific avatar
-        for ext in extensions:
-            lower_hash = shared.appdata + 'avatars/' + hash + '.' + ext.lower()
-            upper_hash = shared.appdata + 'avatars/' + hash + '.' + ext.upper()
-            if os.path.isfile(lower_hash):
-                # print 'found avatar of ', address
-                idcon.addFile(lower_hash)
-                return idcon
-            elif os.path.isfile(upper_hash):
-                # print 'found avatar of ', address
-                idcon.addFile(upper_hash)
-                return idcon
-        # if we haven't found any, try to find a default avatar
-        for ext in extensions:
-            lower_default = shared.appdata + 'avatars/' + 'default.' + ext.lower()
-            upper_default = shared.appdata + 'avatars/' + 'default.' + ext.upper()
-            if os.path.isfile(lower_default):
-                default = lower_default
-                idcon.addFile(lower_default)
-                return idcon
-            elif os.path.isfile(upper_default):
-                default = upper_default
-                idcon.addFile(upper_default)
-                return idcon
-    # if avatars are deactivated or none found
-    if fallBackToIdenticon:
-        return identiconize(address)
-    else:
-        try:
-            identicon_lib = shared.config.get('bitmessagesettings', 'identicon')
-        except:
-            # default to no identicons
-            identicon_lib = False
-        return idcon
+    hash = hashlib.md5(addBMIfNotPresent(address)).hexdigest()
+    str_broadcast_subscribers = '[Broadcast subscribers]'
+    if address == str_broadcast_subscribers:
+        # don't hash [Broadcast subscribers]
+        hash = address
+    # http://pyqt.sourceforge.net/Docs/PyQt4/qimagereader.html#supportedImageFormats
+    # print QImageReader.supportedImageFormats ()
+    # QImageReader.supportedImageFormats ()
+    extensions = ['PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM', 'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
+    # try to find a specific avatar
+    for ext in extensions:
+        lower_hash = shared.appdata + 'avatars/' + hash + '.' + ext.lower()
+        upper_hash = shared.appdata + 'avatars/' + hash + '.' + ext.upper()
+        if os.path.isfile(lower_hash):
+            # print 'found avatar of ', address
+            idcon.addFile(lower_hash)
+            return idcon
+        elif os.path.isfile(upper_hash):
+            # print 'found avatar of ', address
+            idcon.addFile(upper_hash)
+            return idcon
+    # if we haven't found any, try to find a default avatar
+    for ext in extensions:
+        lower_default = shared.appdata + 'avatars/' + 'default.' + ext.lower()
+        upper_default = shared.appdata + 'avatars/' + 'default.' + ext.upper()
+        if os.path.isfile(lower_default):
+            default = lower_default
+            idcon.addFile(lower_default)
+            return idcon
+        elif os.path.isfile(upper_default):
+            default = upper_default
+            idcon.addFile(upper_default)
+            return idcon
+    # If no avatar is found
+    return identiconize(address)
+
 
 class MyForm(QtGui.QMainWindow):
 
@@ -462,7 +445,6 @@ class MyForm(QtGui.QMainWindow):
                     newItem.setTextColor(QtGui.QColor(128, 128, 128))
                 if shared.safeConfigGetBoolean(addressInKeysFile, 'mailinglist'):
                     newItem.setTextColor(QtGui.QColor(137, 04, 177)) # magenta
-                newItem.setIcon(identiconize(addressInKeysFile))
                 self.ui.tableWidgetYourIdentities.setItem(0, 1, newItem)
                 newItem = QtGui.QTableWidgetItem(str(
                     decodeAddress(addressInKeysFile)[2]))
@@ -531,7 +513,6 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetYourIdentities.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.tableWidgetSubscriptions.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.tableWidgetAddressBook.setIconSize(QtCore.QSize(identicon_size, identicon_size))
-        #self.ui.tableWidgetWhitelist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.tableWidgetBlacklist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         
         self.UISignalThread = UISignaler()
@@ -713,30 +694,29 @@ class MyForm(QtGui.QMainWindow):
         for row in queryreturn:
             toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            #message = shared.fixPotentiallyInvalidUTF8Data(message)
-            try:
+
+            if shared.config.has_section(fromAddress):
                 fromLabel = shared.config.get(fromAddress, 'label')
-            except:
-                fromLabel = ''
             if fromLabel == '':
                 fromLabel = fromAddress
 
             toLabel = ''
             queryreturn = sqlQuery(
                 '''select label from addressbook where address=?''', toAddress)
-
             if queryreturn != []:
                 for row in queryreturn:
                     toLabel, = row
+            
+            if toLabel == '':
+                if shared.config.has_section(toAddress):
+                    toLabel = shared.config.get(toAddress, 'label')
+            if toLabel == '':
+                toLabel = toAddress
 
             self.ui.tableWidgetSent.insertRow(0)
-            if toLabel == '':
-                newItem = QtGui.QTableWidgetItem(unicode(toAddress, 'utf-8'))
-                newItem.setToolTip(unicode(toAddress, 'utf-8'))
-            else:
-                newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
-                newItem.setToolTip(unicode(toLabel, 'utf-8'))
-            newItem.setIcon(avatarize(toAddress, True))
+            newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
+            newItem.setToolTip(unicode(toLabel, 'utf-8'))
+            newItem.setIcon(avatarize(toAddress))
             newItem.setData(Qt.UserRole, str(toAddress))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
@@ -748,7 +728,7 @@ class MyForm(QtGui.QMainWindow):
             else:
                 newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
                 newItem.setToolTip(unicode(fromLabel, 'utf-8'))
-            newItem.setIcon(avatarize(fromAddress, True))
+            newItem.setIcon(avatarize(fromAddress))
             newItem.setData(Qt.UserRole, str(fromAddress))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
@@ -837,7 +817,6 @@ class MyForm(QtGui.QMainWindow):
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, received, read = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            #message = shared.fixPotentiallyInvalidUTF8Data(message)
             try:
                 if toAddress == self.str_broadcast_subscribers:
                     toLabel = self.str_broadcast_subscribers
@@ -848,17 +827,13 @@ class MyForm(QtGui.QMainWindow):
             if toLabel == '':
                 toLabel = toAddress
 
-            try: # try to get the from label fom YourIdentites (for chan messages)
+            fromLabel = ''
+            if shared.config.has_section(fromAddress):
                 fromLabel = shared.config.get(fromAddress, 'label')
-                checkIfChan = True
-            except:
-                fromLabel = ''
-                checkIfChan = False
             
-            if fromLabel == '':  # If this address wasn't in our address book...
+            if fromLabel == '':  # If the fromAddress isn't one of our addresses
                 queryreturn = sqlQuery(
                     '''select label from addressbook where address=?''', fromAddress)
-
                 if queryreturn != []:
                     for row in queryreturn:
                         fromLabel, = row
@@ -866,16 +841,17 @@ class MyForm(QtGui.QMainWindow):
             if fromLabel == '':  # If this address wasn't in our address book...
                 queryReturn = sqlQuery(
                     '''select label from subscriptions where address=?''', fromAddress)
-
                 if queryreturn != []:
                     for row in queryreturn:
                         fromLabel, = row
+            if fromLabel == '':
+                fromLabel = fromAddress
             
             # message row
             self.ui.tableWidgetInbox.insertRow(0)
+            # to
             newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
             newItem.setToolTip(unicode(toLabel, 'utf-8'))
-            # to
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
@@ -885,24 +861,19 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setTextColor(QtGui.QColor(137, 04, 177)) # magenta
             if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
                 newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
-            newItem.setIcon(avatarize(toAddress, True))
+            newItem.setIcon(avatarize(toAddress))
             self.ui.tableWidgetInbox.setItem(0, 0, newItem)
             # from
-            if fromLabel == '':
-                newItem = QtGui.QTableWidgetItem(
-                    unicode(fromAddress, 'utf-8'))
-                newItem.setToolTip(unicode(fromAddress, 'utf-8'))
-            else:
-                newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
-                newItem.setToolTip(unicode(fromLabel, 'utf-8'))
+            newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
+            newItem.setToolTip(unicode(fromLabel, 'utf-8'))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
                 newItem.setFont(font)
             newItem.setData(Qt.UserRole, str(fromAddress))
-            if checkIfChan & shared.safeConfigGetBoolean(str(toAddress), 'chan'):
+            if shared.safeConfigGetBoolean(str(fromAddress), 'chan'):
                 newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
-            newItem.setIcon(avatarize(fromAddress, True))
+            newItem.setIcon(avatarize(fromAddress))
             self.ui.tableWidgetInbox.setItem(0, 1, newItem)
             # subject
             newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
@@ -1585,11 +1556,8 @@ class MyForm(QtGui.QMainWindow):
             if queryreturn != []:
                 for row in queryreturn:
                     fromLabel, = row
-                    self.ui.tableWidgetInbox.item(
-                        i, 1).setText(unicode(fromLabel, 'utf-8'))
-                    self.ui.tableWidgetInbox.item(
-                        i, 1).setIcon(avatarize(addressToLookup, True))
-            else:
+            
+            if fromLabel == '':
                 # It might be a broadcast message. We should check for that
                 # label.
                 queryreturn = sqlQuery(
@@ -1598,46 +1566,38 @@ class MyForm(QtGui.QMainWindow):
                 if queryreturn != []:
                     for row in queryreturn:
                         fromLabel, = row
-                        self.ui.tableWidgetInbox.item(
-                            i, 1).setText(unicode(fromLabel, 'utf-8'))
-                        self.ui.tableWidgetInbox.item(
-                            i, 1).setIcon(avatarize(addressToLookup, True))
-                else:
-                    # It might be a chan message. We should check for that
-                    # label.
-                    try:
-                        fromLabel = shared.config.get(addressToLookup, 'label')
-                    except:
-                        fromLabel = ''
-                    if fromLabel == '':
-                        fromLabel = addressToLookup
-                    self.ui.tableWidgetInbox.item(
-                        i, 1).setText(unicode(fromLabel, 'utf-8'))
-                    self.ui.tableWidgetInbox.item(
-                        i, 1).setIcon(avatarize(addressToLookup, True))
-                    # Set the color according to whether it is the address of a mailing
-                    # list or not.
-                    if shared.safeConfigGetBoolean(addressToLookup, 'chan'):
-                        self.ui.tableWidgetInbox.item(i, 1).setTextColor(QtGui.QColor(216, 119, 0)) # orange
-                    else:
-                        self.ui.tableWidgetInbox.item(
-                            i, 1).setTextColor(QApplication.palette().text().color())
+            if fromLabel == '':
+                # Message might be from an address we own like a chan address. Let's look for that label.
+                if shared.config.has_section(addressToLookup):
+                    fromLabel = shared.config.get(addressToLookup, 'label')
+            if fromLabel == '':
+                fromLabel = addressToLookup
+            self.ui.tableWidgetInbox.item(
+                i, 1).setText(unicode(fromLabel, 'utf-8'))
+            self.ui.tableWidgetInbox.item(
+                i, 1).setIcon(avatarize(addressToLookup))
+            # Set the color according to whether it is the address of a mailing
+            # list or not.
+            if shared.safeConfigGetBoolean(addressToLookup, 'chan'):
+                self.ui.tableWidgetInbox.item(i, 1).setTextColor(QtGui.QColor(216, 119, 0)) # orange
+            else:
+                self.ui.tableWidgetInbox.item(
+                    i, 1).setTextColor(QApplication.palette().text().color())
                     
 
     def rerenderInboxToLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
             toAddress = str(self.ui.tableWidgetInbox.item(
                 i, 0).data(Qt.UserRole).toPyObject())
-            try:
+            # Message might be to an address we own like a chan address. Let's look for that label.
+            if shared.config.has_section(toAddress):
                 toLabel = shared.config.get(toAddress, 'label')
-            except:
-                toLabel = ''
-            if toLabel == '':
+            else:
                 toLabel = toAddress
             self.ui.tableWidgetInbox.item(
                 i, 0).setText(unicode(toLabel, 'utf-8'))
             self.ui.tableWidgetInbox.item(
-                i, 0).setIcon(avatarize(toAddress, True))
+                i, 0).setIcon(avatarize(toAddress))
             # Set the color according to whether it is the address of a mailing
             # list, a chan or neither.
             if shared.safeConfigGetBoolean(toAddress, 'chan'):
@@ -1652,16 +1612,15 @@ class MyForm(QtGui.QMainWindow):
         for i in range(self.ui.tableWidgetSent.rowCount()):
             fromAddress = str(self.ui.tableWidgetSent.item(
                 i, 1).data(Qt.UserRole).toPyObject())
-            try:
+            # Message might be from an address we own like a chan address. Let's look for that label.
+            if shared.config.has_section(fromAddress):
                 fromLabel = shared.config.get(fromAddress, 'label')
-            except:
-                fromLabel = ''
-            if fromLabel == '':
+            else:
                 fromLabel = fromAddress
             self.ui.tableWidgetSent.item(
                 i, 1).setText(unicode(fromLabel, 'utf-8'))
             self.ui.tableWidgetSent.item(
-                i, 1).setIcon(avatarize(fromAddress, True))
+                i, 1).setIcon(avatarize(fromAddress))
 
     def rerenderSentToLabels(self):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -1670,12 +1629,17 @@ class MyForm(QtGui.QMainWindow):
             toLabel = ''
             queryreturn = sqlQuery(
                 '''select label from addressbook where address=?''', addressToLookup)
-
             if queryreturn != []:
                 for row in queryreturn:
                     toLabel, = row
-                    self.ui.tableWidgetSent.item(
-                        i, 0).setText(unicode(toLabel, 'utf-8'))
+            
+            if toLabel == '':
+                # Message might be to an address we own like a chan address. Let's look for that label.
+                if shared.config.has_section(addressToLookup):
+                    toLabel = shared.config.get(addressToLookup, 'label')
+            toLabel = addressToLookup
+            self.ui.tableWidgetSent.item(
+                i, 0).setText(unicode(toLabel, 'utf-8'))
 
     def rerenderAddressBook(self):
         self.ui.tableWidgetAddressBook.setRowCount(0)
@@ -1684,6 +1648,7 @@ class MyForm(QtGui.QMainWindow):
             label, address = row
             self.ui.tableWidgetAddressBook.insertRow(0)
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+            newItem.setIcon(avatarize(address))
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(address)
             newItem.setFlags(
@@ -1706,7 +1671,6 @@ class MyForm(QtGui.QMainWindow):
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
-            newItem.setIcon(identiconize(address))
             self.ui.tableWidgetSubscriptions.setItem(0, 1, newItem)
 
     def click_pushButtonSend(self):
@@ -1881,7 +1845,7 @@ class MyForm(QtGui.QMainWindow):
                 isEnabled = shared.config.getboolean(
                     addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
                 if isEnabled:
-                    self.ui.comboBoxSendFrom.insertItem(0, avatarize(addressInKeysFile, True), unicode(shared.config.get(
+                    self.ui.comboBoxSendFrom.insertItem(0, avatarize(addressInKeysFile), unicode(shared.config.get(
                         addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
         self.ui.comboBoxSendFrom.insertItem(0, '', '')
         if(self.ui.comboBoxSendFrom.count() == 2):
@@ -1913,7 +1877,7 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
             newItem.setToolTip(unicode(toLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(toAddress))
-        newItem.setIcon(avatarize(toAddress, True))
+        newItem.setIcon(avatarize(toAddress))
         self.ui.tableWidgetSent.setItem(0, 0, newItem)
         if fromLabel == '':
             newItem = QtGui.QTableWidgetItem(unicode(fromAddress, 'utf-8'))
@@ -1922,7 +1886,7 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
             newItem.setToolTip(unicode(fromLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(fromAddress))
-        newItem.setIcon(avatarize(fromAddress, True))
+        newItem.setIcon(avatarize(fromAddress))
         self.ui.tableWidgetSent.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
         newItem.setToolTip(unicode(subject, 'utf-8)'))
@@ -1944,7 +1908,6 @@ class MyForm(QtGui.QMainWindow):
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-        #message = shared.fixPotentiallyInvalidUTF8Data(message)
         fromLabel = ''
         queryreturn = sqlQuery(
             '''select label from addressbook where address=?''', fromAddress)
@@ -1981,7 +1944,7 @@ class MyForm(QtGui.QMainWindow):
         if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
             newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
         self.ui.tableWidgetInbox.insertRow(0)
-        newItem.setIcon(avatarize(toAddress, True))
+        newItem.setIcon(avatarize(toAddress))
         self.ui.tableWidgetInbox.setItem(0, 0, newItem)
 
         if fromLabel == '':
@@ -1996,7 +1959,7 @@ class MyForm(QtGui.QMainWindow):
                 self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(fromLabel, 'utf-8'), self.SOUND_KNOWN, unicode(fromLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setFont(font)
-        newItem.setIcon(avatarize(fromAddress, True))
+        newItem.setIcon(avatarize(fromAddress))
         self.ui.tableWidgetInbox.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
         newItem.setToolTip(unicode(subject, 'utf-8)'))
@@ -2038,7 +2001,6 @@ class MyForm(QtGui.QMainWindow):
             newItem.setIcon(avatarize(address))
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(address)
-            newItem.setIcon(identiconize(address))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
@@ -2062,7 +2024,6 @@ class MyForm(QtGui.QMainWindow):
         newItem.setIcon(avatarize(address))
         self.ui.tableWidgetSubscriptions.setItem(0,0,newItem)
         newItem =  QtGui.QTableWidgetItem(address)
-        newItem.setIcon(identiconize(address))
         newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
         self.ui.tableWidgetSubscriptions.setItem(0,1,newItem)
         self.ui.tableWidgetSubscriptions.setSortingEnabled(True)
@@ -2101,7 +2062,6 @@ class MyForm(QtGui.QMainWindow):
             newItem.setIcon(avatarize(address))
             self.ui.tableWidgetBlacklist.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(address)
-            newItem.setIcon(identiconize(address))
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not enabled:
@@ -2135,19 +2095,13 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxStartInTray.isChecked()))
             shared.config.set('bitmessagesettings', 'willinglysendtomobile', str(
                 self.settingsDialogInstance.ui.checkBoxWillinglySendToMobile.isChecked()))
+            shared.config.set('bitmessagesettings', 'useidenticons', str(
+                self.settingsDialogInstance.ui.checkBoxUseIdenticons.isChecked()))
                 
             lang_ind = int(self.settingsDialogInstance.ui.languageComboBox.currentIndex())
             if not languages[lang_ind] == 'other':
                 shared.config.set('bitmessagesettings', 'userlocale', languages[lang_ind])
-                
-            curr_index = self.settingsDialogInstance.ui.comboBoxIdenticonStyle.currentIndex()
-            shared.config.set('bitmessagesettings', 'identicon', str(self.settingsDialogInstance.ui.comboBoxIdenticonStyle.itemData(
-                    curr_index , Qt.UserRole).toString()))
-            shared.config.set('bitmessagesettings', 'identiconsuffix', str(
-                 self.settingsDialogInstance.ui.lineEditIdenticonSuffix.text()))
-            shared.config.set('bitmessagesettings', 'avatars', str(
-                self.settingsDialogInstance.ui.checkBoxLoadAvatars.isChecked()))
-                
+            
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
                     QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
@@ -2297,11 +2251,12 @@ class MyForm(QtGui.QMainWindow):
         self.NewBlacklistDialogInstance = NewSubscriptionDialog(self)
         if self.NewBlacklistDialogInstance.exec_():
             if self.NewBlacklistDialogInstance.ui.labelSubscriptionAddressCheck.text() == _translate("MainWindow", "Address is valid."):
+                address = addBMIfNotPresent(str(
+                    self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text()))
                 # First we must check to see if the address is already in the
                 # address book. The user cannot add it again or else it will
                 # cause problems when updating and deleting the entry.
-                t = (addBMIfNotPresent(str(
-                    self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text())),)
+                t = (address,)
                 if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
                     sql = '''select * from blacklist where address=?'''
                 else:
@@ -2312,15 +2267,14 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetBlacklist.insertRow(0)
                     newItem = QtGui.QTableWidgetItem(unicode(
                         self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8(), 'utf-8'))
+                    newItem.setIcon(avatarize(address))
                     self.ui.tableWidgetBlacklist.setItem(0, 0, newItem)
-                    newItem = QtGui.QTableWidgetItem(addBMIfNotPresent(
-                        self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text()))
+                    newItem = QtGui.QTableWidgetItem(address)
                     newItem.setFlags(
                         QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
                     self.ui.tableWidgetBlacklist.setItem(0, 1, newItem)
                     self.ui.tableWidgetBlacklist.setSortingEnabled(True)
-                    t = (str(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8()), addBMIfNotPresent(
-                        str(self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text())), True)
+                    t = (str(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8()), address, True)
                     if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
                         sql = '''INSERT INTO blacklist VALUES (?,?,?)'''
                     else:
@@ -2529,6 +2483,7 @@ class MyForm(QtGui.QMainWindow):
             newItem = QtGui.QTableWidgetItem(
                 '--New entry. Change label in Address Book.--')
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
+            newItem.setIcon(avatarize(addressAtCurrentInboxRow))
             newItem = QtGui.QTableWidgetItem(addressAtCurrentInboxRow)
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
@@ -2880,10 +2835,11 @@ class MyForm(QtGui.QMainWindow):
         
     def on_action_SetAvatar(self, thisTableWidget):
         # thisTableWidget =  self.ui.tableWidgetYourIdentities
+        if not os.path.exists(shared.appdata + 'avatars/'):
+            os.makedirs(shared.appdata + 'avatars/')
         currentRow = thisTableWidget.currentRow()
         addressAtCurrentRow = thisTableWidget.item(
             currentRow, 1).text()
-        import hashlib
         hash = hashlib.md5(addBMIfNotPresent(addressAtCurrentRow)).hexdigest()
         extensions = ['PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM', 'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
         # http://pyqt.sourceforge.net/Docs/PyQt4/qimagereader.html#supportedImageFormats
@@ -2938,7 +2894,6 @@ class MyForm(QtGui.QMainWindow):
             # set the icon
             thisTableWidget.item(
                 currentRow, 0).setIcon(avatarize(addressAtCurrentRow))
-            shared.reloadBroadcastSendersForWhichImWatching()
             self.rerenderSubscriptions()
             self.rerenderComboBoxSendFrom()
             self.rerenderInboxFromLabels()
@@ -3001,6 +2956,7 @@ class MyForm(QtGui.QMainWindow):
             if queryreturn != []:
                 for row in queryreturn:
                     messageText, = row
+            messageText = shared.fixPotentiallyInvalidUTF8Data(messageText)
             messageText = unicode(messageText, 'utf-8)')
             if len(messageText) > 30000:
                 messageText = (
@@ -3090,7 +3046,6 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetYourIdentities.setItem(
             0, 0, newItem)
         newItem = QtGui.QTableWidgetItem(address)
-        newItem.setIcon(identiconize(address))
         newItem.setFlags(
             QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
         if shared.safeConfigGetBoolean(address, 'chan'):
@@ -3166,6 +3121,8 @@ class settingsDialog(QtGui.QDialog):
             shared.config.getboolean('bitmessagesettings', 'startintray'))
         self.ui.checkBoxWillinglySendToMobile.setChecked(
             shared.safeConfigGetBoolean('bitmessagesettings', 'willinglysendtomobile'))
+        self.ui.checkBoxUseIdenticons.setChecked(
+            shared.safeConfigGetBoolean('bitmessagesettings', 'useidenticons'))
         
         global languages 
         languages = ['system','en','eo','fr','de','es','ru','en_pirate','other']
@@ -3175,18 +3132,6 @@ class settingsDialog(QtGui.QDialog):
         else:
             curr_index = languages.index('other')
         self.ui.languageComboBox.setCurrentIndex(curr_index)
-        
-        self.ui.comboBoxIdenticonStyle.addItem(_translate("settingsDialog", "None"), "none")
-        self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/qidenticon.png"), _translate("settingsDialog", "QIdenticon"), "qidenticon")
-        self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/qidenticon_x.png"), _translate("settingsDialog", "QIdenticon (transparent)"), "qidenticon_x")
-        self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/qidenticon_two.png"), _translate("settingsDialog", "QIdenticon bicolored"), "qidenticon_two")
-        self.ui.comboBoxIdenticonStyle.addItem(QIcon(":/newPrefix/images/qidenticon_two_x.png"), _translate("settingsDialog", "QIdenticon bicolored (transparent)"), "qidenticon_two_x")
-        curr_index = self.ui.comboBoxIdenticonStyle.findData(str(shared.config.get('bitmessagesettings', 'identicon')), Qt.UserRole)
-        self.ui.comboBoxIdenticonStyle.setCurrentIndex(curr_index)
-        self.ui.lineEditIdenticonSuffix.setText(
-            str(shared.config.get('bitmessagesettings', 'identiconsuffix')))
-        self.ui.checkBoxLoadAvatars.setChecked(
-            shared.safeConfigGetBoolean('bitmessagesettings', 'avatars'))
         
         if shared.appdata == '':
             self.ui.checkBoxPortableMode.setChecked(True)
@@ -3199,8 +3144,6 @@ class settingsDialog(QtGui.QDialog):
         elif 'linux' in sys.platform:
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
-            self.ui.labelSettingsNote.setText(_translate(
-                "MainWindow", "Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implemented for your operating system."))
         # On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(
             shared.config.get('bitmessagesettings', 'port')))
