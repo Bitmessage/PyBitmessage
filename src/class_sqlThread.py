@@ -7,6 +7,8 @@ import sys
 import os
 from debug import logger
 from namecoin import ensureNamecoinOptions
+import random
+import string
 import tr#anslate
 
 # This thread exists because SQLITE3 is so un-threadsafe that we must
@@ -242,13 +244,6 @@ class sqlThread(threading.Thread):
 
         if not shared.config.has_option('bitmessagesettings', 'userlocale'):
             shared.config.set('bitmessagesettings', 'userlocale', 'system')
-        if not shared.config.has_option('bitmessagesettings', 'identicon'):
-            shared.config.set('bitmessagesettings', 'identicon', 'None')
-        if not shared.config.has_option('bitmessagesettings', 'identiconsuffix'):
-            import random, string
-            shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
-        if not shared.config.has_option('bitmessagesettings', 'avatars'):
-            shared.config.set('bitmessagesettings', 'avatars', 'false')
         if not shared.config.has_option('bitmessagesettings', 'sendoutgoingconnections'):
             shared.config.set('bitmessagesettings', 'sendoutgoingconnections', 'True')
 
@@ -275,6 +270,13 @@ class sqlThread(threading.Thread):
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (5,)
             self.cur.execute(item, parameters)
+            
+        if not shared.config.has_option('bitmessagesettings', 'useidenticons'):
+            shared.config.set('bitmessagesettings', 'useidenticons', 'True')
+        if not shared.config.has_option('bitmessagesettings', 'identiconsuffix'): # acts as a salt
+            shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
 
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users? Add it right above this line!
