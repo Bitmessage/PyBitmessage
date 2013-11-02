@@ -1,5 +1,10 @@
 <RCC>
   <qresource prefix="newPrefix">
+    <file>../images/no_identicons.png</file>
+    <file>../images/qidenticon_x.png</file>
+    <file>../images/qidenticon.png</file>
+    <file>../images/qidenticon_two.png</file>
+    <file>../images/qidenticon_two_x.png</file>
     <file>../images/can-icon-24px-yellow.png</file>
     <file>../images/can-icon-24px-red.png</file>
     <file>../images/can-icon-24px-green.png</file>

@@ -7,6 +7,8 @@ import sys
 import os
 from debug import logger
 from namecoin import ensureNamecoinOptions
+import random
+import string
 import tr#anslate
 
 # This thread exists because SQLITE3 is so un-threadsafe that we must
@@ -268,6 +270,14 @@ class sqlThread(threading.Thread):
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (5,)
             self.cur.execute(item, parameters)
+            
+        if not shared.config.has_option('bitmessagesettings', 'useidenticons'):
+            shared.config.set('bitmessagesettings', 'useidenticons', 'True')
+        if not shared.config.has_option('bitmessagesettings', 'identiconsuffix'): # acts as a salt
+            shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
+            # Since we've added a new config entry, let's write keys.dat to disk.
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
 
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users? Add it right above this line!
