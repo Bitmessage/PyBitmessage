@@ -37,20 +37,20 @@ def dns():
     # defaultKnownNodes.py. Hopefully either they are up to date or the user
     # has run Bitmessage recently without SOCKS turned on and received good
     # bootstrap nodes using that method.
-    with shared.printLock:
-        if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none':
-            try:
-                for item in socket.getaddrinfo('bootstrap8080.bitmessage.org', 80):
-                    logger.info('Adding %s to knownNodes based on DNS boostrap method'%item[4][0])
-                    shared.knownNodes[1][shared.Peer(item[4][0], 8080)] = int(time.time())
-            except:
-                logger.info('bootstrap8080.bitmessage.org DNS bootstrapping failed.')
-            try:
-                for item in socket.getaddrinfo('bootstrap8444.bitmessage.org', 80):
-                    logger.info('Adding %s to knownNodes based on DNS boostrap method'%item[4][0])
-                    shared.knownNodes[1][shared.Peer(item[4][0], 8444)] = int(time.time())
-            except:
-                logger.info('bootstrap8444.bitmessage.org DNS bootstrapping failed.')
-        else:
-            logger.info('DNS bootstrap skipped because SOCKS is used.')
+
+    if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none':
+        try:
+            for item in socket.getaddrinfo('bootstrap8080.bitmessage.org', 80):
+                logger.debug('Adding %s to knownNodes based on DNS boostrap method'%item[4][0])
+                shared.knownNodes[1][shared.Peer(item[4][0], 8080)] = int(time.time())
+        except:
+            logger.info('bootstrap8080.bitmessage.org DNS bootstrapping failed.')
+        try:
+            for item in socket.getaddrinfo('bootstrap8444.bitmessage.org', 80):
+                logger.debug('Adding %s to knownNodes based on DNS boostrap method'%item[4][0])
+                shared.knownNodes[1][shared.Peer(item[4][0], 8444)] = int(time.time())
+        except:
+            logger.info('bootstrap8444.bitmessage.org DNS bootstrapping failed.')
+    else:
+        logger.info('DNS bootstrap skipped because SOCKS is used.')
 

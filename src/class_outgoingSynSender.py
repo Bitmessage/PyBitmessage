@@ -63,12 +63,12 @@ class outgoingSynSender(threading.Thread):
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.settimeout(20)
             if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and shared.verbose >= 2:
-                logger.info('Trying an outgoing connection to %s'%peer)
+                logger.debug('Trying an outgoing connection to %s'%peer)
 
                 # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS4a':
                 if shared.verbose >= 2:
-                    logger.info('(Using SOCKS4a) Trying an outgoing connection to %s'%peer)
+                    logger.debug('(Using SOCKS4a) Trying an outgoing connection to %s'%peer)
 
                 proxytype = socks.PROXY_TYPE_SOCKS4
                 sockshostname = shared.config.get(
@@ -88,7 +88,7 @@ class outgoingSynSender(threading.Thread):
                         proxytype, sockshostname, socksport, rdns)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
                 if shared.verbose >= 2:
-                    logger.info('(Using SOCKS5) Trying an outgoing connection to %s'%peer)
+                    logger.debug('(Using SOCKS5) Trying an outgoing connection to %s'%peer)
 
                 proxytype = socks.PROXY_TYPE_SOCKS5
                 sockshostname = shared.config.get(
@@ -115,7 +115,7 @@ class outgoingSynSender(threading.Thread):
                 rd.setup(sock, peer.host, peer.port, self.streamNumber,
                          someObjectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections)
                 rd.start()
-                logger.info('%s connected to %s during an outgoing attempt.'%(self,peer))
+                logger.debug('%s connected to %s during an outgoing attempt.'%(self,peer))
 
 
                 sd = sendDataThread()
@@ -126,7 +126,7 @@ class outgoingSynSender(threading.Thread):
 
             except socks.GeneralProxyError as err:
                 if shared.verbose >= 2:
-                    logger.info('Could NOT connect to %s during outgoing attempt. %s'%(peer,err))
+                    logger.debug('Could NOT connect to %s during outgoing attempt. %s'%(peer,err))
 
                 timeLastSeen = shared.knownNodes[
                     self.streamNumber][peer]
@@ -134,7 +134,7 @@ class outgoingSynSender(threading.Thread):
                     shared.knownNodesLock.acquire()
                     del shared.knownNodes[self.streamNumber][peer]
                     shared.knownNodesLock.release()
-                    logger.info('deleting %s from shared.knownNodes because it is more than 48 hours old and we could not connect to it.'%peer)
+                    logger.debug('deleting %s from shared.knownNodes because it is more than 48 hours old and we could not connect to it.'%peer)
 
             except socks.Socks5AuthError as err:
                 shared.UISignalQueue.put((
@@ -142,15 +142,15 @@ class outgoingSynSender(threading.Thread):
                     "MainWindow", "SOCKS5 Authentication problem: %1").arg(str(err))))
             except socks.Socks5Error as err:
                 pass
-                logger.info('SOCKS5 error. (It is possible that the server wants authentication).) %s'%str(err))
+                logger.debug('SOCKS5 error. (It is possible that the server wants authentication).) %s'%str(err))
             except socks.Socks4Error as err:
-                logger.info('Socks4Error: %s'%err)
+                logger.debug('Socks4Error: %s'%err)
             except socket.error as err:
                 if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
-                    logger.info('Bitmessage MIGHT be having trouble connecting to the SOCKS server. %s'%str(err))
+                    logger.debug('Bitmessage MIGHT be having trouble connecting to the SOCKS server. %s'%str(err))
                 else:
                     if shared.verbose >= 1:
-                        logger.info('Could NOT connect to %s during outgoing attempt. %s'%(peer, err))
+                        logger.debug('Could NOT connect to %s during outgoing attempt. %s'%(peer, err))
 
                     timeLastSeen = shared.knownNodes[
                         self.streamNumber][peer]
@@ -158,7 +158,7 @@ class outgoingSynSender(threading.Thread):
                         shared.knownNodesLock.acquire()
                         del shared.knownNodes[self.streamNumber][peer]
                         shared.knownNodesLock.release()
-                        logger.info('deleting %s from knownNodes because it is more than 48 hours old and we could not connect to it.'%str(peer))
+                        logger.debug('deleting %s from knownNodes because it is more than 48 hours old and we could not connect to it.'%str(peer))
 
             except Exception as err:
                 sys.stderr.write(

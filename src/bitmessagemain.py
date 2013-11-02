@@ -1060,7 +1060,6 @@ class Main:
             print 'Stopping Bitmessage Deamon.'
         shared.doCleanShutdown()
 
-
     def getApiAddress(self):
         if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
             return None
@@ -1077,7 +1076,6 @@ if __name__ == "__main__":
     logger.addHandler(handler)
     logger.setLevel(logging.INFO)
 
-    
     mainprogram = Main()
     mainprogram.start()
 

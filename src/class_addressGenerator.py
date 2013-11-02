@@ -9,6 +9,8 @@ import highlevelcrypto
 from addresses import *
 from pyelliptic import arithmetic
 import tr
+import logging
+logger = logging.getLogger('class_addressGenerator')
 
 class addressGenerator(threading.Thread):
 
@@ -97,8 +99,9 @@ class addressGenerator(threading.Thread):
                     # ripe.digest().encode('hex')
                     if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
                         break
-                print 'Generated address with ripe digest:', ripe.digest().encode('hex')
-                print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime), 'addresses per second before finding one with the correct ripe-prefix.'
+                logger.info('Generated address with ripe digest: %s'%ripe.digest().encode('hex'))
+                logger.info('Address generator calculated %s addresses at %s addresses per second before finding one with the correct ripe-prefix.'%(numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime)))
+             
                 address = encodeAddress(addressVersionNumber, streamNumber, ripe.digest())
 
                 # An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
@@ -194,8 +197,9 @@ class addressGenerator(threading.Thread):
                         if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
                             break
 
-                    print 'ripe.digest', ripe.digest().encode('hex')
-                    print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime), 'keys per second.'
+                    logger.info('ripe.digest %s'%ripe.digest().encode('hex'))
+                    logger.info('Address generator calculated %s addresses at %s keys per second.'%(numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime)))
+                    
                     address = encodeAddress(addressVersionNumber, streamNumber, ripe.digest())
 
                     saveAddressToDisk = True
@@ -230,7 +234,7 @@ class addressGenerator(threading.Thread):
                             print address, 'already exists. Not adding it again.'
                             addressAlreadyExists = True
                         if not addressAlreadyExists:
-                            print 'label:', label
+                            logger.info('label: %s'%label)
                             shared.config.set(address, 'label', label)
                             shared.config.set(address, 'enabled', 'true')
                             shared.config.set(address, 'decoy', 'false')
