@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Fri Nov  1 19:14:45 2013
+# Created: Sat Nov  2 18:03:44 2013
 #      by: PyQt4 UI code generator 4.10
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_settingsDialog(object):
     def setupUi(self, settingsDialog):
         settingsDialog.setObjectName(_fromUtf8("settingsDialog"))
-        settingsDialog.resize(646, 473)
+        settingsDialog.resize(585, 437)
         self.gridLayout = QtGui.QGridLayout(settingsDialog)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.buttonBox = QtGui.QDialogButtonBox(settingsDialog)
