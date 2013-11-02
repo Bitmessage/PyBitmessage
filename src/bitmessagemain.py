@@ -415,14 +415,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(queueReturn) == 0:
                 raise APIError(24, 'Chan address is already present.')
             address = queueReturn[0]
-
-            #add address to addressbook
-            queryreturn = sqlQuery("SELECT address FROM addressbook WHERE address=?", address)
-            if queryreturn == []:
-                sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
-                shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-                shared.UISignalQueue.put(('rerenderSentToLabels',''))
-                shared.UISignalQueue.put(('rerenderAddressBook',''))
             return address
         elif method == 'joinChan':
             if len(params) < 2:
@@ -450,14 +442,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(18, 'Chan name does not match address.')
             if len(addressGeneratorReturnValue) == 0:
                 raise APIError(24, 'Chan address is already present.')
-            createdAddress = addressGeneratorReturnValue[0]
-            #add address to addressbook
-            queryreturn = sqlQuery("SELECT address FROM addressbook WHERE address=?", createdAddress)
-            if queryreturn == []:
-                sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, createdAddress)
-                shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-                shared.UISignalQueue.put(('rerenderSentToLabels',''))
-                shared.UISignalQueue.put(('rerenderAddressBook',''))
+            createdAddress = addressGeneratorReturnValue[0] # in case we ever want it for anything.
             return "success"
         elif method == 'leaveChan':
             if len(params) == 0:
@@ -473,10 +458,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             shared.config.remove_section(address)
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
-            sqlExecute('''DELETE FROM addressbook WHERE address=?''', address)
-            shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-            shared.UISignalQueue.put(('rerenderSentToLabels',''))
-            shared.UISignalQueue.put(('rerenderAddressBook',''))
             return 'success'
 
         elif method == 'deleteAddress':

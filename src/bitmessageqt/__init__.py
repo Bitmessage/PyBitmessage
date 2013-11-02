@@ -1297,7 +1297,6 @@ class MyForm(QtGui.QMainWindow):
                         "MainWindow", "Could not add chan because it appears to already be one of your identities."))
                     return
                 createdAddress = addressGeneratorReturnValue[0]
-                self.addEntryToAddressBook(createdAddress, self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()))
                 QMessageBox.about(self, _translate("MainWindow", "Success"), _translate(
                     "MainWindow", "Successfully created chan. To let others join your chan, give them the chan name and this Bitmessage address: %1. This address also appears in 'Your Identities'.").arg(createdAddress))
                 self.ui.tabWidget.setCurrentIndex(3)
@@ -1327,7 +1326,6 @@ class MyForm(QtGui.QMainWindow):
                         "MainWindow", "Could not add chan because it appears to already be one of your identities."))
                     return
                 createdAddress = addressGeneratorReturnValue[0]
-                self.addEntryToAddressBook(createdAddress, self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameJoin.text()))
                 QMessageBox.about(self, _translate("MainWindow", "Success"), _translate(
                     "MainWindow", "Successfully joined chan. "))
                 self.ui.tabWidget.setCurrentIndex(3)
@@ -1637,7 +1635,8 @@ class MyForm(QtGui.QMainWindow):
                 # Message might be to an address we own like a chan address. Let's look for that label.
                 if shared.config.has_section(addressToLookup):
                     toLabel = shared.config.get(addressToLookup, 'label')
-            toLabel = addressToLookup
+            if toLabel == '':
+                toLabel = addressToLookup
             self.ui.tableWidgetSent.item(
                 i, 0).setText(unicode(toLabel, 'utf-8'))
 
