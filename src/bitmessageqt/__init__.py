@@ -3145,13 +3145,21 @@ class settingsDialog(QtGui.QDialog):
             self.ui.checkBoxPortableMode.setChecked(True)
         if 'darwin' in sys.platform:
             self.ui.checkBoxStartOnLogon.setDisabled(True)
+            self.ui.checkBoxStartOnLogon.setText(_translate(
+                "MainWindow", "Start-on-login not yet supported on your OS."))
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
+            self.ui.checkBoxMinimizeToTray.setText(_translate(
+                "MainWindow", "Minimize-to-tray not yet supported on your OS."))
             self.ui.checkBoxShowTrayNotifications.setDisabled(True)
-            self.ui.labelSettingsNote.setText(_translate(
-                "MainWindow", "Options have been disabled because they either aren\'t applicable or because they haven\'t yet been implemented for your operating system."))
+            self.ui.checkBoxShowTrayNotifications.setText(_translate(
+                "MainWindow", "Tray notifications not yet supported on your OS."))
         elif 'linux' in sys.platform:
             self.ui.checkBoxStartOnLogon.setDisabled(True)
+            self.ui.checkBoxStartOnLogon.setText(_translate(
+                "MainWindow", "Start-on-login not yet supported on your OS."))
             self.ui.checkBoxMinimizeToTray.setDisabled(True)
+            self.ui.checkBoxMinimizeToTray.setText(_translate(
+                "MainWindow", "Minimize-to-tray not yet supported on your OS."))
         # On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(
             shared.config.get('bitmessagesettings', 'port')))
