@@ -706,6 +706,15 @@ class MyForm(QtGui.QMainWindow):
             if queryreturn != []:
                 for row in queryreturn:
                     toLabel, = row
+            if toLabel == '':
+                # It might be a broadcast message. We should check for that
+                # label.
+                queryreturn = sqlQuery(
+                    '''select label from subscriptions where address=?''', toAddress)
+
+                if queryreturn != []:
+                    for row in queryreturn:
+                        toLabel, = row
             
             if toLabel == '':
                 if shared.config.has_section(toAddress):
@@ -831,7 +840,7 @@ class MyForm(QtGui.QMainWindow):
             if shared.config.has_section(fromAddress):
                 fromLabel = shared.config.get(fromAddress, 'label')
             
-            if fromLabel == '':  # If the fromAddress isn't one of our addresses
+            if fromLabel == '':  # If the fromAddress isn't one of our addresses and isn't a chan
                 queryreturn = sqlQuery(
                     '''select label from addressbook where address=?''', fromAddress)
                 if queryreturn != []:
@@ -839,7 +848,7 @@ class MyForm(QtGui.QMainWindow):
                         fromLabel, = row
 
             if fromLabel == '':  # If this address wasn't in our address book...
-                queryReturn = sqlQuery(
+                queryreturn = sqlQuery(
                     '''select label from subscriptions where address=?''', fromAddress)
                 if queryreturn != []:
                     for row in queryreturn:
