@@ -275,6 +275,7 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'useidenticons', 'True')
         if not shared.config.has_option('bitmessagesettings', 'identiconsuffix'): # acts as a salt
             shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
+            # Since we've added a new config entry, let's write keys.dat to disk.
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
 
