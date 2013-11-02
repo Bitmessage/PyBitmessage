@@ -27,6 +27,8 @@ import os
 
 import shared
 import tr # translate
+import logging
+logger = logging.getLogger('namecoin')
 
 configSection = "bitmessagesettings"
 
@@ -94,7 +96,7 @@ class namecoinConnection (object):
             else:
                 return (tr.translateText("MainWindow",'The namecoin query failed (%1)').arg(unicode(exc.error["message"])), None)
         except Exception as exc:
-            print "Namecoin query exception: %s" % str (exc)
+            logger.info( "Namecoin query exception: %s" % str (exc))
             return (tr.translateText("MainWindow",'The namecoin query failed.'), None)
 
         try:
@@ -132,14 +134,14 @@ class namecoinConnection (object):
                 if ("reply" in res) and res["reply"][:len(prefix)] == prefix:
                     return ('success', tr.translateText("MainWindow",'Success!  NMControll is up and running.'))
 
-                print "Unexpected nmcontrol reply: %s" % res
+                logger.info("Unexpected nmcontrol reply: %s" % res)
                 return ('failed',  tr.translateText("MainWindow",'Couldn\'t understand NMControl.'))
 
             else:
                 assert False
 
         except Exception as exc:
-            print "Namecoin connection test: %s" % str (exc)
+            logger.info("Namecoin connection test: %s" % str (exc))
             return ('failed', "The connection to namecoin failed.")
 
     # Helper routine that actually performs an JSON RPC call.
@@ -220,7 +222,7 @@ def lookupNamecoinFolder ():
             dataFolder = path.join (os.environ["HOME"],
                                     "Library/Application Support/", app) + '/'
         else:
-            print ("Could not find home folder, please report this message"
+            logger.info("Could not find home folder, please report this message"
                     + " and your OS X version to the BitMessage Github.")
             sys.exit()
 
@@ -270,7 +272,7 @@ def ensureNamecoinOptions ():
         nmc.close ()
 
     except Exception as exc:
-        print "Could not read the Namecoin config file probably because you don't have Namecoin installed. That's ok; we don't really need it. Detailed error message: %s" % str (exc)
+        logger.info("Could not read the Namecoin config file probably because you don't have Namecoin installed. That's ok; we don't really need it. Detailed error message: %s" % str (exc))
 
     # If still nothing found, set empty at least.
     if (not hasUser):

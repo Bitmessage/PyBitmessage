@@ -1,3 +1,6 @@
+import logging
+logger = logging.getLogger('class_singleLister')
+
 import threading
 import shared
 import socket
@@ -32,8 +35,7 @@ class singleListener(threading.Thread):
         while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not shared.config.getboolean('bitmessagesettings', 'sockslisten'):
             time.sleep(5)
 
-        with shared.printLock:
-            print 'Listening for incoming connections.'
+        logger.info('Listening for incoming connections.')
 
         HOST = ''  # Symbolic name meaning all available interfaces
         PORT = shared.config.getint('bitmessagesettings', 'port')
@@ -52,8 +54,7 @@ class singleListener(threading.Thread):
             while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not shared.config.getboolean('bitmessagesettings', 'sockslisten'):
                 time.sleep(10)
             while len(shared.connectedHostsList) > 220:
-                with shared.printLock:
-                    print 'We are connected to too many people. Not accepting further incoming connections for ten seconds.'
+                logger.info('We are connected to too many people. Not accepting further incoming connections for ten seconds.')
 
                 time.sleep(10)
             a, (HOST, PORT) = sock.accept()
@@ -63,8 +64,7 @@ class singleListener(threading.Thread):
             # because the two computers will share the same external IP. This
             # is here to prevent connection flooding.
             while HOST in shared.connectedHostsList:
-                with shared.printLock:
-                    print 'We are already connected to', HOST + '. Ignoring connection.'
+                logger.info('We are already connected to %s . Ignoring connection.'%HOST)
 
                 a.close()
                 a, (HOST, PORT) = sock.accept()
@@ -82,6 +82,5 @@ class singleListener(threading.Thread):
                 a, HOST, PORT, -1, someObjectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections)
             rd.start()
 
-            with shared.printLock:
-                print self, 'connected to', HOST, 'during INCOMING request.'
+            logger.info('%s connected to %s during INCOMING request.'%(self,HOST))
 

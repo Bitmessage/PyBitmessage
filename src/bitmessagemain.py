@@ -8,7 +8,6 @@
 # yet contain logic to expand into further streams.
 
 # The software version variable is now held in shared.py
-
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
 from SimpleXMLRPCServer import *
@@ -32,7 +31,7 @@ from class_singleWorker import *
 from class_outgoingSynSender import *
 from class_singleListener import *
 from class_addressGenerator import *
-from debug import logger
+#~ from debug import logger
 
 # Helper Functions
 import helper_bootstrap
@@ -1061,7 +1060,6 @@ class Main:
             print 'Stopping Bitmessage Deamon.'
         shared.doCleanShutdown()
 
-
     def getApiAddress(self):
         if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
             return None
@@ -1070,8 +1068,17 @@ class Main:
         return {'address':address,'port':port}
 
 if __name__ == "__main__":
+    logger = logging.getLogger()
+    fmt_string = "[%(levelname)-7s]%(asctime)s.%(msecs)-3d\
+    %(module)s[%(lineno)-3d]/%(funcName)-10s  %(message)-8s "
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(logging.Formatter(fmt_string, "%H:%M:%S"))
+    logger.addHandler(handler)
+    logger.setLevel(logging.INFO)
+
     mainprogram = Main()
     mainprogram.start()
+
 
 
 # So far, the creation of and management of the Bitmessage protocol and this

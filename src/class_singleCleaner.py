@@ -6,7 +6,8 @@ import pickle
 
 import tr#anslate
 from helper_sql import *
-from debug import logger
+import logging
+logger = logging.getLogger('singlecleaner')
 
 '''The singleCleaner class is a timer-driven thread that cleans data structures to free memory, resends messages when a remote node doesn't respond, and sends pong messages to keep connections alive if the network isn't busy.
 It cleans these data structures in memory:
@@ -78,8 +79,7 @@ class singleCleaner(threading.Thread):
                     '''select toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber FROM sent WHERE ((status='awaitingpubkey' OR status='msgsent') AND folder='sent') ''')  # If the message's folder='trash' then we'll ignore it.
                 for row in queryreturn:
                     if len(row) < 5:
-                        with shared.printLock:
-                            sys.stderr.write(
+                        logger.info(
                                 'Something went wrong in the singleCleaner thread: a query did not return the requested fields. ' + repr(row))
                         time.sleep(3)
 
@@ -87,7 +87,7 @@ class singleCleaner(threading.Thread):
                     toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber = row
                     if status == 'awaitingpubkey':
                         if int(time.time()) - lastactiontime > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
-                            print 'It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.'
+                            logger.info('It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.')
                             try:
                                 del shared.neededPubkeys[
                                     toripe]  # We need to take this entry out of the shared.neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.

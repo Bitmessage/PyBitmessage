@@ -6,7 +6,9 @@ import socks
 import socket
 import sys
 import tr
+import logging
 
+logger = logging.getLogger('OutgoingSynSender')
 from class_sendDataThread import *
 from class_receiveDataThread import *
 
@@ -61,14 +63,12 @@ class outgoingSynSender(threading.Thread):
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.settimeout(20)
             if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and shared.verbose >= 2:
-                with shared.printLock:
-                    print 'Trying an outgoing connection to', peer
+                logger.debug('Trying an outgoing connection to %s'%peer)
 
                 # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS4a':
                 if shared.verbose >= 2:
-                    with shared.printLock:
-                        print '(Using SOCKS4a) Trying an outgoing connection to', peer
+                    logger.debug('(Using SOCKS4a) Trying an outgoing connection to %s'%peer)
 
                 proxytype = socks.PROXY_TYPE_SOCKS4
                 sockshostname = shared.config.get(
@@ -88,8 +88,7 @@ class outgoingSynSender(threading.Thread):
                         proxytype, sockshostname, socksport, rdns)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
                 if shared.verbose >= 2:
-                    with shared.printLock:
-                        print '(Using SOCKS5) Trying an outgoing connection to', peer
+                    logger.debug('(Using SOCKS5) Trying an outgoing connection to %s'%peer)
 
                 proxytype = socks.PROXY_TYPE_SOCKS5
                 sockshostname = shared.config.get(
@@ -116,8 +115,7 @@ class outgoingSynSender(threading.Thread):
                 rd.setup(sock, peer.host, peer.port, self.streamNumber,
                          someObjectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections)
                 rd.start()
-                with shared.printLock:
-                    print self, 'connected to', peer, 'during an outgoing attempt.'
+                logger.debug('%s connected to %s during an outgoing attempt.'%(self,peer))
 
 
                 sd = sendDataThread()
@@ -128,8 +126,7 @@ class outgoingSynSender(threading.Thread):
 
             except socks.GeneralProxyError as err:
                 if shared.verbose >= 2:
-                    with shared.printLock:
-                        print 'Could NOT connect to', peer, 'during outgoing attempt.', err
+                    logger.debug('Could NOT connect to %s during outgoing attempt. %s'%(peer,err))
 
                 timeLastSeen = shared.knownNodes[
                     self.streamNumber][peer]
@@ -137,8 +134,7 @@ class outgoingSynSender(threading.Thread):
                     shared.knownNodesLock.acquire()
                     del shared.knownNodes[self.streamNumber][peer]
                     shared.knownNodesLock.release()
-                    with shared.printLock:
-                        print 'deleting ', peer, 'from shared.knownNodes because it is more than 48 hours old and we could not connect to it.'
+                    logger.debug('deleting %s from shared.knownNodes because it is more than 48 hours old and we could not connect to it.'%peer)
 
             except socks.Socks5AuthError as err:
                 shared.UISignalQueue.put((
@@ -146,16 +142,15 @@ class outgoingSynSender(threading.Thread):
                     "MainWindow", "SOCKS5 Authentication problem: %1").arg(str(err))))
             except socks.Socks5Error as err:
                 pass
-                print 'SOCKS5 error. (It is possible that the server wants authentication).)', str(err)
+                logger.debug('SOCKS5 error. (It is possible that the server wants authentication).) %s'%str(err))
             except socks.Socks4Error as err:
-                print 'Socks4Error:', err
+                logger.debug('Socks4Error: %s'%err)
             except socket.error as err:
                 if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
-                    print 'Bitmessage MIGHT be having trouble connecting to the SOCKS server. ' + str(err)
+                    logger.debug('Bitmessage MIGHT be having trouble connecting to the SOCKS server. %s'%str(err))
                 else:
                     if shared.verbose >= 1:
-                        with shared.printLock:
-                            print 'Could NOT connect to', peer, 'during outgoing attempt.', err
+                        logger.debug('Could NOT connect to %s during outgoing attempt. %s'%(peer, err))
 
                     timeLastSeen = shared.knownNodes[
                         self.streamNumber][peer]
@@ -163,8 +158,7 @@ class outgoingSynSender(threading.Thread):
                         shared.knownNodesLock.acquire()
                         del shared.knownNodes[self.streamNumber][peer]
                         shared.knownNodesLock.release()
-                        with shared.printLock:
-                            print 'deleting ', peer, 'from knownNodes because it is more than 48 hours old and we could not connect to it.'
+                        logger.debug('deleting %s from knownNodes because it is more than 48 hours old and we could not connect to it.'%str(peer))
 
             except Exception as err:
                 sys.stderr.write(

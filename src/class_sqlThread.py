@@ -5,7 +5,10 @@ import time
 import shutil  # used for moving the messages.dat file
 import sys
 import os
-from debug import logger
+
+import logging
+logger = logging.getLogger()
+
 from namecoin import ensureNamecoinOptions
 import tr#anslate
 
