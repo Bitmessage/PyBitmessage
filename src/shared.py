@@ -1,7 +1,7 @@
 softwareVersion = '0.4.1'
 verbose = 1
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # Equals two days and 12 hours.
-lengthOfTimeToLeaveObjectsInInventory = 237600  # Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
+lengthOfTimeToLeaveObjectsInInventory = 237600 # Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
 lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
 maximumAgeOfObjectsThatIAdvertiseToOthers = 216000  # Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
@@ -279,6 +279,8 @@ def reloadBroadcastSendersForWhichImWatching():
 def doCleanShutdown():
     global shutdown
     shutdown = 1 #Used to tell proof of work worker threads to exit.    
+    broadcastToSendDataQueues((0, 'shutdown', 'all'))
+    
     knownNodesLock.acquire()
     UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
     output = open(appdata + 'knownnodes.dat', 'wb')
@@ -289,8 +291,6 @@ def doCleanShutdown():
     knownNodesLock.release()
     logger.info('Finished closing knownnodes.dat output file.')
     UISignalQueue.put(('updateStatusBar','Done saving the knownNodes list of peers to disk.'))
-
-    broadcastToSendDataQueues((0, 'shutdown', 'all'))
 
     logger.info('Flushing inventory in memory out to disk...')
     UISignalQueue.put((

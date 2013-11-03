@@ -560,7 +560,7 @@ class MyForm(QtGui.QMainWindow):
             where = "toaddress || fromaddress || subject || message"
 
         sqlStatement = '''
-            SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime 
+            SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime 
             FROM sent WHERE folder="sent" AND %s LIKE ? 
             ORDER BY lastactiontime
             ''' % (where,)
@@ -570,9 +570,9 @@ class MyForm(QtGui.QMainWindow):
 
         queryreturn = sqlQuery(sqlStatement, what)
         for row in queryreturn:
-            toAddress, fromAddress, subject, message, status, ackdata, lastactiontime = row
+            toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            message = shared.fixPotentiallyInvalidUTF8Data(message)
+            #message = shared.fixPotentiallyInvalidUTF8Data(message)
             try:
                 fromLabel = shared.config.get(fromAddress, 'label')
             except:
@@ -612,7 +612,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetSent.setItem(0, 1, newItem)
             newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
             newItem.setToolTip(unicode(subject, 'utf-8'))
-            newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
+            #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetSent.setItem(0, 2, newItem)
@@ -680,7 +680,7 @@ class MyForm(QtGui.QMainWindow):
             where = "toaddress || fromaddress || subject || message"
 
         sqlStatement = '''
-            SELECT msgid, toaddress, fromaddress, subject, received, message, read 
+            SELECT msgid, toaddress, fromaddress, subject, received, read 
             FROM inbox WHERE folder="inbox" AND %s LIKE ? 
             ORDER BY received
             ''' % (where,)
@@ -692,9 +692,9 @@ class MyForm(QtGui.QMainWindow):
         font.setBold(True)
         queryreturn = sqlQuery(sqlStatement, what)
         for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, received, message, read = row
+            msgid, toAddress, fromAddress, subject, received, read = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            message = shared.fixPotentiallyInvalidUTF8Data(message)
+            #message = shared.fixPotentiallyInvalidUTF8Data(message)
             try:
                 if toAddress == self.str_broadcast_subscribers:
                     toLabel = self.str_broadcast_subscribers
@@ -750,7 +750,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.setItem(0, 1, newItem)
             newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
             newItem.setToolTip(unicode(subject, 'utf-8'))
-            newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
+            #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table (and thus in memory); we'll use a SQL query when we need to display it.
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
@@ -1632,44 +1632,12 @@ class MyForm(QtGui.QMainWindow):
                 sqlExecute(
                     '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
 
-                shared.workerQueue.put(('sendbroadcast', ''))
-
-                try:
-                    fromLabel = shared.config.get(fromAddress, 'label')
-                except:
-                    fromLabel = ''
-                if fromLabel == '':
-                    fromLabel = fromAddress
-
                 toLabel = self.str_broadcast_subscribers
+                
+                self.displayNewSentMessage(
+                    toAddress, toLabel, fromAddress, subject, message, ackdata)
 
-                self.ui.tableWidgetSent.insertRow(0)
-                newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
-                newItem.setData(Qt.UserRole, str(toAddress))
-                self.ui.tableWidgetSent.setItem(0, 0, newItem)
-
-                if fromLabel == '':
-                    newItem = QtGui.QTableWidgetItem(
-                        unicode(fromAddress, 'utf-8'))
-                else:
-                    newItem = QtGui.QTableWidgetItem(
-                        unicode(fromLabel, 'utf-8'))
-                newItem.setData(Qt.UserRole, str(fromAddress))
-                self.ui.tableWidgetSent.setItem(0, 1, newItem)
-                newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
-                newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
-                self.ui.tableWidgetSent.setItem(0, 2, newItem)
-                # newItem =  QtGui.QTableWidgetItem('Doing work necessary to
-                # send broadcast...'+
-                # unicode(strftime(config.get('bitmessagesettings',
-                # 'timeformat'),localtime(int(time.time()))),'utf-8'))
-                newItem = myTableWidgetItem(_translate("MainWindow", "Work is queued."))
-                newItem.setData(Qt.UserRole, QByteArray(ackdata))
-                newItem.setData(33, int(time.time()))
-                self.ui.tableWidgetSent.setItem(0, 3, newItem)
-
-                self.ui.textEditSentMessage.setPlainText(
-                    self.ui.tableWidgetSent.item(0, 2).data(Qt.UserRole).toPyObject())
+                shared.workerQueue.put(('sendbroadcast', ''))
 
                 self.ui.comboBoxSendFrom.setCurrentIndex(0)
                 self.ui.labelFrom.setText('')
@@ -1765,7 +1733,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSent.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
         newItem.setToolTip(unicode(subject, 'utf-8)'))
-        newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
+        #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
         self.ui.tableWidgetSent.setItem(0, 2, newItem)
         # newItem =  QtGui.QTableWidgetItem('Doing work necessary to send
         # broadcast...'+
@@ -1778,13 +1746,12 @@ class MyForm(QtGui.QMainWindow):
         newItem.setData(Qt.UserRole, QByteArray(ackdata))
         newItem.setData(33, int(time.time()))
         self.ui.tableWidgetSent.setItem(0, 3, newItem)
-        self.ui.textEditSentMessage.setPlainText(
-            self.ui.tableWidgetSent.item(0, 2).data(Qt.UserRole).toPyObject())
+        self.ui.textEditSentMessage.setPlainText(unicode(message, 'utf-8)'))
         self.ui.tableWidgetSent.setSortingEnabled(True)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-        message = shared.fixPotentiallyInvalidUTF8Data(message)
+        #message = shared.fixPotentiallyInvalidUTF8Data(message)
         fromLabel = ''
         queryreturn = sqlQuery(
             '''select label from addressbook where address=?''', fromAddress)
@@ -1838,7 +1805,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetInbox.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
         newItem.setToolTip(unicode(subject, 'utf-8)'))
-        newItem.setData(Qt.UserRole, unicode(message, 'utf-8)'))
+        #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0, 2, newItem)
         newItem = myTableWidgetItem(unicode(strftime(shared.config.get(
@@ -2027,6 +1994,47 @@ class MyForm(QtGui.QMainWindow):
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0:
                 shared.config.set('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
+            #start:UI setting to stop trying to send messages after X hours/days/months
+            if ((self.settingsDialogInstance.ui.lineEditHours.text()=='')  and  (self.settingsDialogInstance.ui.lineEditDays.text()=='') and (self.settingsDialogInstance.ui.lineEditMonths.text()=='')):#We need to handle this special case. Bitmessage has its default behavior. The input is blank/blank/blank
+                if (((shared.config.get('bitmessagesettings', 'hours')) != str(self.settingsDialogInstance.ui.lineEditHours.text())) or #the user updated the input, restart is needed
+                      ((shared.config.get('bitmessagesettings', 'days')) != str(self.settingsDialogInstance.ui.lineEditDays.text())) or
+                        ((shared.config.get('bitmessagesettings', 'months')) != str(self.settingsDialogInstance.ui.lineEditMonths.text()))):
+                        QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
+                          "MainWindow", "You must restart Bitmessage for the time period change to take effect."))
+                shared.config.set('bitmessagesettings', 'hours', '')
+                shared.config.set('bitmessagesettings', 'days', '')
+                shared.config.set('bitmessagesettings', 'months', '')
+                shared.config.set('bitmessagesettings', 'timeperiod', '-1')#when bitmessage has its default resending behavior, we set timeperiod to -1.
+            else:#So,if all time period's variables (hours,days,months) have valid values, we calculate the time period
+                if (int(self.settingsDialogInstance.ui.lineEditHours.text()) >=0 and int(self.settingsDialogInstance.ui.lineEditDays.text()) >=0 and
+                   int(self.settingsDialogInstance.ui.lineEditMonths.text()) >=0):
+                    shared.config.set('bitmessagesettings', 'timeperiod', str(int(str(self.settingsDialogInstance.ui.lineEditHours.text())) * 60 * 60 + int(str(self.settingsDialogInstance.ui.lineEditDays.text())) * 24 * 60 * 60 +
+                            int(str(self.settingsDialogInstance.ui.lineEditMonths.text())) * (60 * 60 * 24 *365)/12))
+                    if int(shared.config.get('bitmessagesettings', 'timeperiod')) < 432000:#if the time period is less than 5 hours, we give zero values to all fields. No message will be sent again.
+                        if ((shared.config.get('bitmessagesettings', 'hours')) != str(int(self.settingsDialogInstance.ui.lineEditHours.text())) or #if the user has given an input bigger than 5 days and he tries now to give an input less than 5 days, restart is needed
+                                shared.config.get('bitmessagesettings', 'days') != str(int(self.settingsDialogInstance.ui.lineEditDays.text())) or
+                                shared.config.get('bitmessagesettings', 'months') != str(int(self.settingsDialogInstance.ui.lineEditMonths.text()))):
+                            if((shared.config.get('bitmessagesettings', 'hours')) != '0' or (shared.config.get('bitmessagesettings', 'days')) != '0' or#if the user has already given an input less than 5 days and he tries now to give again an input less than 5 days, there is no need for restart. Input values will remain zero
+                               (shared.config.get('bitmessagesettings', 'months')) != '0'):
+                                QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
+                                "MainWindow", "You must restart Bitmessage for the time period change to take effect."))
+                        shared.config.set('bitmessagesettings', 'hours', '0')
+                        shared.config.set('bitmessagesettings', 'days', '0')
+                        shared.config.set('bitmessagesettings', 'months', '0')
+                        shared.config.set('bitmessagesettings', 'timeperiod', '0')
+                    else:
+                        if ((shared.config.get('bitmessagesettings', 'hours')) != str(int(self.settingsDialogInstance.ui.lineEditHours.text())) or 
+                           shared.config.get('bitmessagesettings', 'days') != str(int(self.settingsDialogInstance.ui.lineEditDays.text())) or
+                           shared.config.get('bitmessagesettings', 'months') != str(int(self.settingsDialogInstance.ui.lineEditMonths.text()))):
+                            QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(#the user updated the input, restart is needed
+                            "MainWindow", "You must restart Bitmessage for the time period change to take effect."))
+                        shared.config.set('bitmessagesettings', 'hours', str(int(
+                        self.settingsDialogInstance.ui.lineEditHours.text())))
+                        shared.config.set('bitmessagesettings', 'days', str(int(
+                        self.settingsDialogInstance.ui.lineEditDays.text())))
+                        shared.config.set('bitmessagesettings', 'months', str(int(
+                        self.settingsDialogInstance.ui.lineEditMonths.text())))
+            #end
 
             # if str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()) == 'All':
             #    shared.config.set('bitmessagesettings', 'maxcores', '99999')
@@ -2255,10 +2263,18 @@ class MyForm(QtGui.QMainWindow):
 
     def on_action_InboxMessageForceHtml(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
-        lines = self.ui.tableWidgetInbox.item(
-            currentInboxRow, 2).data(Qt.UserRole).toPyObject().split('\n')
+
+        msgid = str(self.ui.tableWidgetInbox.item(
+            currentInboxRow, 3).data(Qt.UserRole).toPyObject())
+        queryreturn = sqlQuery(
+            '''select message from inbox where msgid=?''', msgid)
+        if queryreturn != []:
+            for row in queryreturn:
+                messageAtCurrentInboxRow, = row 
+
+        lines = messageAtCurrentInboxRow.split('\n')
         for i in xrange(len(lines)):
-            if lines[i].contains('Message ostensibly from '):
+            if 'Message ostensibly from ' in lines[i]:
                 lines[i] = '<p style="font-size: 12px; color: grey;">%s</span></p>' % (
                     lines[i])
             elif lines[i] == '------------------------------------------------------':
@@ -2292,6 +2308,13 @@ class MyForm(QtGui.QMainWindow):
             currentInboxRow, 0).data(Qt.UserRole).toPyObject())
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
             currentInboxRow, 1).data(Qt.UserRole).toPyObject())
+        msgid = str(self.ui.tableWidgetInbox.item(
+            currentInboxRow, 3).data(Qt.UserRole).toPyObject())
+        queryreturn = sqlQuery(
+            '''select message from inbox where msgid=?''', msgid)
+        if queryreturn != []:
+            for row in queryreturn:
+                messageAtCurrentInboxRow, = row
         if toAddressAtCurrentInboxRow == self.str_broadcast_subscribers:
             self.ui.labelFrom.setText('')
         elif not shared.config.has_section(toAddressAtCurrentInboxRow):
@@ -2315,9 +2338,7 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
 
         self.ui.comboBoxSendFrom.setCurrentIndex(0)
-        # self.ui.comboBoxSendFrom.setEditText(str(self.ui.tableWidgetInbox.item(currentInboxRow,0).text))
-        self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + self.ui.tableWidgetInbox.item(
-            currentInboxRow, 2).data(Qt.UserRole).toPyObject())
+        self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
             self.ui.lineEditSubject.setText(
                 self.ui.tableWidgetInbox.item(currentInboxRow, 2).text())
@@ -2377,14 +2398,23 @@ class MyForm(QtGui.QMainWindow):
             subjectAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(currentInboxRow,2).text())
         except:
             subjectAtCurrentInboxRow = ''
+
+        # Retrieve the message data out of the SQL database
+        msgid = str(self.ui.tableWidgetInbox.item(
+            currentInboxRow, 3).data(Qt.UserRole).toPyObject())
+        queryreturn = sqlQuery(
+            '''select message from inbox where msgid=?''', msgid)
+        if queryreturn != []:
+            for row in queryreturn:
+                message, = row
+
         defaultFilename = "".join(x for x in subjectAtCurrentInboxRow if x.isalnum()) + '.txt'
-        data = self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject()
         filename = QFileDialog.getSaveFileName(self, _translate("MainWindow","Save As..."), defaultFilename, "Text files (*.txt);;All files (*.*)")
         if filename == '':
             return
         try:
             f = open(filename, 'w')
-            f.write( self.ui.tableWidgetInbox.item(currentInboxRow,2).data(Qt.UserRole).toPyObject() )
+            f.write(message)
             f.close()
         except Exception, e:
             sys.stderr.write('Write error: '+ e)
@@ -2716,21 +2746,27 @@ class MyForm(QtGui.QMainWindow):
             
             fromAddress = str(self.ui.tableWidgetInbox.item(
                 currentRow, 1).data(Qt.UserRole).toPyObject())
+            msgid = str(self.ui.tableWidgetInbox.item(
+                currentRow, 3).data(Qt.UserRole).toPyObject())
+            queryreturn = sqlQuery(
+                '''select message from inbox where msgid=?''', msgid)
+            if queryreturn != []:
+                for row in queryreturn:
+                    message, = row
+            message = unicode(message, 'utf-8)')
             # If we have received this message from either a broadcast address
             # or from someone in our address book, display as HTML
             if decodeAddress(fromAddress)[3] in shared.broadcastSendersForWhichImWatching or shared.isAddressInMyAddressBook(fromAddress):
-                if len(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
-                    self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(
-                        currentRow, 2).data(Qt.UserRole).toPyObject())  # Only show the first 30K characters
+                if len(message) < 30000:
+                    self.ui.textEditInboxMessage.setText(message)  # Only show the first 30K characters
                 else:
-                    self.ui.textEditInboxMessage.setText(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()[
+                    self.ui.textEditInboxMessage.setText(message[
                                                          :30000] + '\n\nDisplay of the remainder of the message truncated because it is too long.')  # Only show the first 30K characters
             else:
-                if len(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()) < 30000:
-                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(
-                        currentRow, 2).data(Qt.UserRole).toPyObject())  # Only show the first 30K characters
+                if len(message) < 30000:
+                    self.ui.textEditInboxMessage.setPlainText(message)  # Only show the first 30K characters
                 else:
-                    self.ui.textEditInboxMessage.setPlainText(self.ui.tableWidgetInbox.item(currentRow, 2).data(Qt.UserRole).toPyObject()[
+                    self.ui.textEditInboxMessage.setPlainText(message[
                                                               :30000] + '\n\nDisplay of the remainder of the message truncated because it is too long.')  # Only show the first 30K characters
             
             self.ui.tableWidgetInbox.item(currentRow, 0).setFont(font)
@@ -2746,8 +2782,17 @@ class MyForm(QtGui.QMainWindow):
     def tableWidgetSentItemClicked(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         if currentRow >= 0:
-            self.ui.textEditSentMessage.setPlainText(self.ui.tableWidgetSent.item(
-                currentRow, 2).data(Qt.UserRole).toPyObject())
+            ackdata = str(self.ui.tableWidgetSent.item(
+                currentRow, 3).data(Qt.UserRole).toPyObject())
+            queryreturn = sqlQuery(
+                '''select message from sent where ackdata=?''', ackdata)
+            if queryreturn != []:
+                for row in queryreturn:
+                    message, = row
+            else:
+                message = "Error occurred: could not load message from disk."
+            message = unicode(message, 'utf-8)')
+            self.ui.textEditSentMessage.setPlainText(message)
 
     def tableWidgetYourIdentitiesItemChanged(self):
         currentRow = self.ui.tableWidgetYourIdentities.currentRow()
@@ -2955,7 +3000,7 @@ class settingsDialog(QtGui.QDialog):
             self.ui.lineEditNamecoinPassword.setEnabled(False)
             self.ui.labelNamecoinPassword.setEnabled(False)
         else:
-            assert False
+            assert False     
 
         QtCore.QObject.connect(self.ui.radioButtonNamecoinNamecoind, QtCore.SIGNAL(
             "toggled(bool)"), self.namecoinTypeChanged)
@@ -2964,6 +3009,15 @@ class settingsDialog(QtGui.QDialog):
         QtCore.QObject.connect(self.ui.pushButtonNamecoinTest, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonNamecoinTest)
 
+        #Adjusting time period to stop sending messages tab
+        self.ui.lineEditHours.setText(str(
+            shared.config.get('bitmessagesettings', 'hours')))
+        self.ui.lineEditDays.setText(str(
+            shared.config.get('bitmessagesettings', 'days')))
+        self.ui.lineEditMonths.setText(str(
+            shared.config.get('bitmessagesettings', 'months')))
+        
+        
         #'System' tab removed for now.
         """try:
             maxCores = shared.config.getint('bitmessagesettings', 'maxcores')
