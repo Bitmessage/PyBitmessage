@@ -252,7 +252,8 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'settingsversion', '7')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
-                
+<<<<<<< HEAD
+
         # Add a new column to the pubkeys table to store the address version.
         # We're going to trash all of our pubkeys and let them be redownloaded.
         item = '''SELECT value FROM settings WHERE key='version';'''
@@ -269,6 +270,9 @@ class sqlThread(threading.Thread):
             parameters = (5,)
             self.cur.execute(item, parameters)
 
+=======
+                
+>>>>>>> c16d9787d289b1f6ae05358e55ad46cd4b8d2a30
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users? Add it right above this line!
         

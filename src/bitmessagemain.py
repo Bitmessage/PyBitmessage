@@ -461,7 +461,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) == 0:
                 raise APIError(0, 'I need parameters!')
             toAddress = params[0]
-            queryReturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype FROM inbox WHERE folder='inbox' AND toAddress=?''', toAddress)
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype FROM inbox WHERE folder='inbox' AND toAddress=?''', toAddress)
             data = '{"inboxMessages":['
             for row in queryreturn:
                 msgid, toAddress, fromAddress, subject, received, message, encodingtype = row
@@ -643,7 +643,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(0, 'I need parameters!')
             if len(params) == 1:
                 address, = params
-                label == ''
+                label = ''
             if len(params) == 2:
                 address, label = params
                 label = self._decode(label, "base64")
