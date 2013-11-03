@@ -1716,7 +1716,7 @@ class MyForm(QtGui.QMainWindow):
         fromAddress = str(self.ui.labelFrom.text())
         subject = str(self.ui.lineEditSubject.text().toUtf8())
         message = str(
-            self.ui.textEditMessage.document().toPlainText().toUtf8())
+            self.ui.textEditMessage.document().toHtml().toUtf8())
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
                                for s in toAddresses.replace(',', ';').split(';')]
@@ -3050,9 +3050,11 @@ class MyForm(QtGui.QMainWindow):
             # If we have received this message from either a broadcast address
             # or from someone in our address book, display as HTML
             if decodeAddress(fromAddress)[3] in shared.broadcastSendersForWhichImWatching or shared.isAddressInMyAddressBook(fromAddress):
-                self.ui.textEditInboxMessage.setText(messageText)
+                self.ui.textEditInboxMessage.setHtml(messageText)
+                #self.ui.textEditInboxMessage.setText(messageText)
             else:
-                self.ui.textEditInboxMessage.setPlainText(messageText)
+                self.ui.textEditInboxMessage.setHtml(messageText)
+                #self.ui.textEditInboxMessage.setPlainText(messageText)
 
             self.ui.tableWidgetInbox.item(currentRow, 0).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 1).setFont(font)
