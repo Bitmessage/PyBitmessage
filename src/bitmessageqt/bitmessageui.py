@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Sat Nov  2 18:01:09 2013
-#      by: PyQt4 UI code generator 4.10
+# Created: Sun Nov 03 20:19:23 2013
+#      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -123,7 +123,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addWidget(self.pushButtonFetchNamecoinID, 3, 3, 1, 1)
         self.label_4 = QtGui.QLabel(self.send)
         self.label_4.setObjectName(_fromUtf8("label_4"))
-        self.gridLayout_2.addWidget(self.label_4, 5, 0, 1, 1)
+        self.gridLayout_2.addWidget(self.label_4, 6, 0, 1, 1)
         self.comboBoxSendFrom = QtGui.QComboBox(self.send)
         self.comboBoxSendFrom.setMinimumSize(QtCore.QSize(300, 0))
         self.comboBoxSendFrom.setObjectName(_fromUtf8("comboBoxSendFrom"))
@@ -144,7 +144,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addWidget(self.lineEditTo, 3, 1, 1, 1)
         self.textEditMessage = QtGui.QTextEdit(self.send)
         self.textEditMessage.setObjectName(_fromUtf8("textEditMessage"))
-        self.gridLayout_2.addWidget(self.textEditMessage, 5, 1, 2, 5)
+        self.gridLayout_2.addWidget(self.textEditMessage, 6, 1, 2, 5)
         self.label = QtGui.QLabel(self.send)
         self.label.setObjectName(_fromUtf8("label"))
         self.gridLayout_2.addWidget(self.label, 3, 0, 1, 1)
@@ -152,7 +152,7 @@ class Ui_MainWindow(object):
         self.label_2.setObjectName(_fromUtf8("label_2"))
         self.gridLayout_2.addWidget(self.label_2, 2, 0, 1, 1)
         spacerItem = QtGui.QSpacerItem(20, 297, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        self.gridLayout_2.addItem(spacerItem, 6, 0, 1, 1)
+        self.gridLayout_2.addItem(spacerItem, 7, 0, 1, 1)
         self.radioButtonBroadcast = QtGui.QRadioButton(self.send)
         self.radioButtonBroadcast.setObjectName(_fromUtf8("radioButtonBroadcast"))
         self.gridLayout_2.addWidget(self.radioButtonBroadcast, 1, 1, 1, 3)
@@ -164,7 +164,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addItem(spacerItem1, 3, 4, 1, 1)
         self.pushButtonSend = QtGui.QPushButton(self.send)
         self.pushButtonSend.setObjectName(_fromUtf8("pushButtonSend"))
-        self.gridLayout_2.addWidget(self.pushButtonSend, 7, 5, 1, 1)
+        self.gridLayout_2.addWidget(self.pushButtonSend, 8, 5, 1, 1)
         self.labelSendBroadcastWarning = QtGui.QLabel(self.send)
         self.labelSendBroadcastWarning.setEnabled(True)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Preferred)
@@ -174,7 +174,10 @@ class Ui_MainWindow(object):
         self.labelSendBroadcastWarning.setSizePolicy(sizePolicy)
         self.labelSendBroadcastWarning.setIndent(-1)
         self.labelSendBroadcastWarning.setObjectName(_fromUtf8("labelSendBroadcastWarning"))
-        self.gridLayout_2.addWidget(self.labelSendBroadcastWarning, 7, 1, 1, 4)
+        self.gridLayout_2.addWidget(self.labelSendBroadcastWarning, 8, 1, 1, 4)
+        self.pushButtonBold = QtGui.QPushButton(self.send)
+        self.pushButtonBold.setObjectName(_fromUtf8("pushButtonBold"))
+        self.gridLayout_2.addWidget(self.pushButtonBold, 5, 1, 1, 1)
         icon2 = QtGui.QIcon()
         icon2.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/send.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.send, icon2, _fromUtf8(""))
@@ -439,7 +442,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 885, 27))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 885, 21))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -501,7 +504,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.lineEditTo.setEnabled)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("clicked(bool)")), self.labelSendBroadcastWarning.hide)
         QtCore.QObject.connect(self.radioButtonBroadcast, QtCore.SIGNAL(_fromUtf8("clicked()")), self.labelSendBroadcastWarning.show)
@@ -557,13 +560,14 @@ class Ui_MainWindow(object):
         self.textEditMessage.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Sans\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>", None))
+"</style></head><body style=\" font-family:\'MS Shell Dlg 2\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;\"><br /></p></body></html>", None))
         self.label.setText(_translate("MainWindow", "To:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.radioButtonBroadcast.setText(_translate("MainWindow", "Broadcast to everyone who is subscribed to your address", None))
         self.pushButtonSend.setText(_translate("MainWindow", "Send", None))
         self.labelSendBroadcastWarning.setText(_translate("MainWindow", "Be aware that broadcasts are only encrypted with your address. Anyone who knows your address can read them.", None))
+        self.pushButtonBold.setText(_translate("MainWindow", "Bold", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send", None))
         self.sentSearchLineEdit.setPlaceholderText(_translate("MainWindow", "Search", None))
         self.sentSearchOptionCB.setItemText(0, _translate("MainWindow", "All", None))
@@ -642,3 +646,13 @@ class Ui_MainWindow(object):
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
 
 import bitmessage_icons_rc
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    MainWindow = QtGui.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
+

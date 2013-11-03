@@ -235,6 +235,8 @@ class MyForm(QtGui.QMainWindow):
             "triggered()"), self.click_actionJoinChan) # also used for creating chans.
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL(
             "clicked()"), self.click_NewAddressDialog)
+        QtCore.QObject.connect(self.ui.pushButtonBold, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonBold)
         QtCore.QObject.connect(self.ui.comboBoxSendFrom, QtCore.SIGNAL(
             "activated(int)"), self.redrawLabelFrom)
         QtCore.QObject.connect(self.ui.pushButtonAddAddressBook, QtCore.SIGNAL(
@@ -1681,13 +1683,40 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetSubscriptions.setItem(0, 1, newItem)
 
+    def click_pushButtonBold(self):
+        messagecontainer = self.ui.textEditMessage
+        mycursor = messagecontainer.textCursor()
+        if mycursor.hasSelection():
+            myformat = mycursor.charFormat()
+            if myformat.fontItalic():
+                myformat.setFontItalic(False)
+                mycursor.setCharFormat(myformat)
+            else:
+                myformat.setFontItalic(True)
+                mycursor.setCharFormat(myformat)
+            #mycursor.setPosition(mycursor.selectionStart())
+            #mycursor.charFormat().setFontWeight(600)
+            #mycursor.charFormat().setFontItalic(True)
+            #mycursor.insertHtml("<b>werwrwerw</b>")
+            #mycursor.setPosition(mycursor.selectionEnd())
+            #mycursor.insertHtml("</b>")
+           #print mycursor.selectionStart()
+            #print mycursor.selectionEnd()
+        elif mycursor.position() != 0:
+            print mycursor.position()
+        else:
+            return False
+
+
+
+
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
         toAddresses = str(self.ui.lineEditTo.text())
         fromAddress = str(self.ui.labelFrom.text())
         subject = str(self.ui.lineEditSubject.text().toUtf8())
         message = str(
-            self.ui.textEditMessage.document().toPlainText().toUtf8())
+            self.ui.textEditMessage.document().toHtml().toUtf8())
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
                                for s in toAddresses.replace(',', ';').split(';')]
