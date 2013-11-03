@@ -3,6 +3,8 @@ import ConfigParser
 import sys
 import os
 import locale
+import random
+import string
 
 from namecoin import ensureNamecoinOptions
 
@@ -84,18 +86,9 @@ def loadConfig():
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
         shared.config.set('bitmessagesettings', 'dontconnect', 'true')
         shared.config.set('bitmessagesettings', 'userlocale', 'system')
-        
-         #start:UI setting to stop trying to send messages after X hours/days/months
-        shared.config.set(
-            'bitmessagesettings', 'hours', '')
-        shared.config.set(
-            'bitmessagesettings', 'days', '')
-        shared.config.set(
-            'bitmessagesettings', 'months', '')
-        shared.config.set(
-            'bitmessagesettings', 'timeperiod', '-1')
-        #end
-        
+        shared.config.set('bitmessagesettings', 'useidenticons', 'True')
+        shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
+
         # Are you hoping to add a new option to the keys.dat file? You're in
         # the right place for adding it to users who install the software for
         # the first time. But you must also add it to the keys.dat file of

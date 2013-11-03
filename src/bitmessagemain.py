@@ -38,6 +38,8 @@ from debug import logger
 import helper_bootstrap
 import proofofwork
 
+str_chan = '[chan]'
+
 import sys
 if sys.platform == 'darwin':
     if float("{1}.{2}".format(*sys.version_info)) < 7.5:
@@ -150,8 +152,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     def _decode(self, text, decode_type):
         try:
             return text.decode(decode_type)
-        except TypeError as e:
-            raise APIError(22, "Decode error - " + str(e))
+        except Exception as e:
+            raise APIError(22, "Decode error - " + str(e) + ". Had trouble while decoding string: " + repr(text))
 
     def _verifyAddress(self, address):
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(address)
@@ -387,6 +389,94 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 ('getDeterministicAddress', addressVersionNumber,
                  streamNumber, 'unused API address', numberOfAddresses, passphrase, eighteenByteRipe))
             return shared.apiAddressGeneratorReturnQueue.get()
+        
+        elif method == 'createChan':
+            if len(params) == 0:
+                raise APIError(0, 'I need parameters.')
+            elif len(params) == 1:
+                passphrase, = params
+            passphrase = self._decode(passphrase, "base64")
+            if len(passphrase) == 0:
+                raise APIError(1, 'The specified passphrase is blank.')
+            # It would be nice to make the label the passphrase but it is
+            # possible that the passphrase contains non-utf-8 characters.
+            try:
+                unicode(passphrase, 'utf-8')
+                label = str_chan + ' ' + passphrase
+            except:
+                label = str_chan + ' ' + repr(passphrase)
+
+            addressVersionNumber = 4
+            streamNumber = 1
+            shared.apiAddressGeneratorReturnQueue.queue.clear()
+            logger.debug('Requesting that the addressGenerator create chan %s.', passphrase)
+            shared.addressGeneratorQueue.put(('createChan', addressVersionNumber, streamNumber, label, passphrase))
+            queueReturn = shared.apiAddressGeneratorReturnQueue.get()
+            if len(queueReturn) == 0:
+                raise APIError(24, 'Chan address is already present.')
+            address = queueReturn[0]
+            return address
+        elif method == 'joinChan':
+            if len(params) < 2:
+                raise APIError(0, 'I need two parameters.')
+            elif len(params) == 2:
+                passphrase, suppliedAddress= params
+            passphrase = self._decode(passphrase, "base64")
+            if len(passphrase) == 0:
+                raise APIError(1, 'The specified passphrase is blank.')
+            # It would be nice to make the label the passphrase but it is
+            # possible that the passphrase contains non-utf-8 characters.
+            try:
+                unicode(passphrase, 'utf-8')
+                label = str_chan + ' ' + passphrase
+            except:
+                label = str_chan + ' ' + repr(passphrase)
+
+            status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(suppliedAddress)
+            suppliedAddress = addBMIfNotPresent(suppliedAddress)
+            shared.apiAddressGeneratorReturnQueue.queue.clear()
+            shared.addressGeneratorQueue.put(('joinChan', suppliedAddress, label, passphrase))
+            addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
+
+            if addressGeneratorReturnValue == 'chan name does not match address':
+                raise APIError(18, 'Chan name does not match address.')
+            if len(addressGeneratorReturnValue) == 0:
+                raise APIError(24, 'Chan address is already present.')
+            createdAddress = addressGeneratorReturnValue[0] # in case we ever want it for anything.
+            return "success"
+        elif method == 'leaveChan':
+            if len(params) == 0:
+                raise APIError(0, 'I need parameters.')
+            elif len(params) == 1:
+                address, = params
+            status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(address)
+            address = addBMIfNotPresent(address)
+            if not shared.config.has_section(address):
+                raise APIError(13, 'Could not find this address in your keys.dat file.')
+            if not shared.safeConfigGetBoolean(address, 'chan'):
+                raise APIError(25, 'Specified address is not a chan address. Use deleteAddress API call instead.')
+            shared.config.remove_section(address)
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
+            return 'success'
+
+        elif method == 'deleteAddress':
+            if len(params) == 0:
+                raise APIError(0, 'I need parameters.')
+            elif len(params) == 1:
+                address, = params
+            status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(address)
+            address = addBMIfNotPresent(address)
+            if not shared.config.has_section(address):
+                raise APIError(13, 'Could not find this address in your keys.dat file.')
+            shared.config.remove_section(address)
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
+            shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
+            shared.UISignalQueue.put(('rerenderSentToLabels',''))
+            shared.reloadMyAddressHashes()
+            return 'success'
+
         elif method == 'getAllInboxMessages':
             queryreturn = sqlQuery(
                 '''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox where folder='inbox' ORDER BY received''')
@@ -818,6 +908,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             else:
                 networkStatus = 'connectedAndReceivingIncomingConnections'
             return json.dumps({'networkConnections':len(shared.connectedHostsList),'numberOfMessagesProcessed':shared.numberOfMessagesProcessed, 'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed, 'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed, 'networkStatus':networkStatus, 'softwareName':'PyBitmessage','softwareVersion':shared.softwareVersion}, indent=4, separators=(',', ': '))
+        elif method == 'decodeAddress':
+            # Return a meaningful decoding of an address.
+            if len(params) != 1:
+                raise APIError(0, 'I need 1 parameter!')
+            address, = params
+            status, addressVersion, streamNumber, ripe = decodeAddress(address)
+            return json.dumps({'status':status, 'addressVersion':addressVersion,
+                               'streamNumber':streamNumber, 'ripe':ripe.encode('base64')}, indent=4,
+                               separators=(',', ': '))
         else:
             raise APIError(20, 'Invalid method: %s' % method)
 
