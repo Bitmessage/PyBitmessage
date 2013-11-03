@@ -151,8 +151,6 @@ class MyForm(QtGui.QMainWindow):
             "clicked()"), self.click_pushButtonFetchNamecoinID)
         QtCore.QObject.connect(self.ui.radioButtonBlacklist, QtCore.SIGNAL(
             "clicked()"), self.click_radioButtonBlacklist)
-        QtCore.QObject.connect(self.ui.radioButtonMoodlist, QtCore.SIGNAL(
-            "clicked()"), self.click_radioButtonMoodlist)
         QtCore.QObject.connect(self.ui.radioButtonWhitelist, QtCore.SIGNAL(
             "clicked()"), self.click_radioButtonWhitelist)
         QtCore.QObject.connect(self.ui.pushButtonStatusIcon, QtCore.SIGNAL(
@@ -366,20 +364,13 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.ui.sentSearchLineEdit, QtCore.SIGNAL(
             "returnPressed()"), self.sentSearchLineEditPressed)
 
-        # Initialize the Blacklist/Whitelist/Moodlist
+        # Initialize the Blacklist or Whitelist
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
             self.loadBlackWhiteList()
-            self.ui.tabWidget.setTabIcon(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), QIcon(":/newPrefix/images/tag-red-icon.png"))
-        elif shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
-            self.ui.tabWidget.setTabText(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), 'Whitelist')
+        else:
+            self.ui.tabWidget.setTabText(6, 'Whitelist')
             self.ui.radioButtonWhitelist.click()
             self.loadBlackWhiteList()
-            self.ui.tabWidget.setTabIcon(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), QIcon(":/newPrefix/images/tag-yellow-icon.png"))
-        else:
-            self.ui.tabWidget.setTabText(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), 'Moodlist')
-            self.ui.radioButtonMoodlist.click()
-            self.ui.tabWidget.setTabIcon(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), QIcon(":/newPrefix/images/tag-green-icon.png"))
-
 
         QtCore.QObject.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL(
             "itemChanged(QTableWidgetItem *)"), self.tableWidgetYourIdentitiesItemChanged)
@@ -2036,34 +2027,6 @@ class MyForm(QtGui.QMainWindow):
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0:
                 shared.config.set('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
-            #my implementation starts here,it was a line here.AQWA
-            if ((self.settingsDialogInstance.ui.lineEditHours.text()=='')  and  (self.settingsDialogInstance.ui.lineEditDays.text()=='') and (self.settingsDialogInstance.ui.lineEditMonths.text()=='')):
-                if (((shared.config.get('bitmessagesettings', 'hours')) != str(self.settingsDialogInstance.ui.lineEditHours.text())) or #if we update the time period from one time period(f.e 1/0/0) to default -/-/,inform the user that restart is needed in order his changes to take effect.AQWA
-                     ((shared.config.get('bitmessagesettings', 'days')) != str(self.settingsDialogInstance.ui.lineEditDays.text())) or
-                       ((shared.config.get('bitmessagesettings', 'months')) != str(self.settingsDialogInstance.ui.lineEditMonths.text()))) :
-                   QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
-                        "MainWindow", "You must restart Bitmessage for the time period change to take effect."))
-                   
-                shared.config.set('bitmessagesettings', 'hours', '')#give default values to fields..this default situation is special and thats why its needs special treatment ;).AQWA
-                shared.config.set('bitmessagesettings', 'days', '')#these commands update each field in the keys.dat file.AQWA
-                shared.config.set('bitmessagesettings', 'months', '')
-                shared.config.set('bitmessagesettings', 'timeperiod', '-1')
-            else:#So,if all time period fields(hours,months,days) have valid values(valid values---> 0/0/0, 0/3/2, -/-/-, no valid--> -/0/5, 5/-/-), you can calculate the time period
-                    shared.config.set('bitmessagesettings', 'timeperiod', str(int(str(self.settingsDialogInstance.ui.lineEditHours.text())) * 60 * 60 + int(str(self.settingsDialogInstance.ui.lineEditDays.text())) * 24 * 60 * 60 +
-                            int(str(self.settingsDialogInstance.ui.lineEditMonths.text())) * (60 * 60 * 24 *365)/12))
-                    
-            if (((shared.config.get('bitmessagesettings', 'hours')) != str(self.settingsDialogInstance.ui.lineEditHours.text())) or#inform user tha he needs to restart bitmessage in order his changes to take effect.AQWA
-                 ((shared.config.get('bitmessagesettings', 'days')) != str(self.settingsDialogInstance.ui.lineEditDays.text())) or
-                   ((shared.config.get('bitmessagesettings', 'months')) != str(self.settingsDialogInstance.ui.lineEditMonths.text()))) :
-              QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
-                        "MainWindow", "You must restart Bitmessage for the time period change to take effect."))
-            shared.config.set('bitmessagesettings', 'hours', str(#this three commands update the fields of this new setting in keys.dat file.AQWA
-                    self.settingsDialogInstance.ui.lineEditHours.text()))
-            shared.config.set('bitmessagesettings', 'days', str(
-                    self.settingsDialogInstance.ui.lineEditDays.text()))
-            shared.config.set('bitmessagesettings', 'months', str(
-                    self.settingsDialogInstance.ui.lineEditMonths.text()))
-            #my implementation stops here, there is a line.AQWA
 
             # if str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()) == 'All':
             #    shared.config.set('bitmessagesettings', 'maxcores', '99999')
@@ -2135,35 +2098,24 @@ class MyForm(QtGui.QMainWindow):
                     pass
 
     def click_radioButtonBlacklist(self):
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') != 'black':
+        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
             shared.config.set('bitmessagesettings', 'blackwhitelist', 'black')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
             # self.ui.tableWidgetBlacklist.clearContents()
             self.ui.tableWidgetBlacklist.setRowCount(0)
             self.loadBlackWhiteList()
-            self.ui.tabWidget.setTabText(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), 'Blacklist')
-            self.ui.tabWidget.setTabIcon(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), QIcon(":/newPrefix/images/tag-red-icon.png"))
+            self.ui.tabWidget.setTabText(6, 'Blacklist')
 
     def click_radioButtonWhitelist(self):
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') != 'white':
+        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
             shared.config.set('bitmessagesettings', 'blackwhitelist', 'white')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
             # self.ui.tableWidgetBlacklist.clearContents()
             self.ui.tableWidgetBlacklist.setRowCount(0)
             self.loadBlackWhiteList()
-            self.ui.tabWidget.setTabText(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), 'Whitelist')
-            self.ui.tabWidget.setTabIcon(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), QIcon(":/newPrefix/images/tag-yellow-icon.png"))
-
-    def click_radioButtonMoodlist(self):
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') != 'mood':
-            shared.config.set('bitmessagesettings', 'blackwhitelist', 'mood')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
-            self.ui.tableWidgetBlacklist.setRowCount(0)
-            self.ui.tabWidget.setTabText(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), 'Moodlist')
-            self.ui.tabWidget.setTabIcon(self.ui.tabWidget.indexOf(self.ui.blackwhitelist), QIcon(":/newPrefix/images/tag-green-icon.png"))
+            self.ui.tabWidget.setTabText(6, 'Whitelist')
 
     def click_pushButtonAddBlacklist(self):
         self.NewBlacklistDialogInstance = NewSubscriptionDialog(self)
@@ -3003,7 +2955,7 @@ class settingsDialog(QtGui.QDialog):
             self.ui.lineEditNamecoinPassword.setEnabled(False)
             self.ui.labelNamecoinPassword.setEnabled(False)
         else:
-            assert False     
+            assert False
 
         QtCore.QObject.connect(self.ui.radioButtonNamecoinNamecoind, QtCore.SIGNAL(
             "toggled(bool)"), self.namecoinTypeChanged)
@@ -3012,15 +2964,6 @@ class settingsDialog(QtGui.QDialog):
         QtCore.QObject.connect(self.ui.pushButtonNamecoinTest, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonNamecoinTest)
 
-        #Adjusting time period for resending messages tab.AQWA
-        self.ui.lineEditHours.setText(str(#Giving values to edit boxes in the UI.AQWA
-            shared.config.get('bitmessagesettings', 'hours')))
-        self.ui.lineEditDays.setText(str(
-            shared.config.get('bitmessagesettings', 'days')))
-        self.ui.lineEditMonths.setText(str(
-            shared.config.get('bitmessagesettings', 'months')))#AQWA.
-        
-        
         #'System' tab removed for now.
         """try:
             maxCores = shared.config.getint('bitmessagesettings', 'maxcores')

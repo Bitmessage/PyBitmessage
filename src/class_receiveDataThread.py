@@ -1117,16 +1117,13 @@ class receiveDataThread(threading.Thread):
                         print 'Message ignored because address is in blacklist.'
 
                     blockMessage = True
-            elif shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':  # We're using a whitelist
+            else:  # We're using a whitelist
                 queryreturn = sqlQuery(
                     '''SELECT label FROM whitelist where address=? and enabled='1' ''',
                     fromAddress)
                 if queryreturn == []:
                     print 'Message ignored because address not in whitelist.'
                     blockMessage = True
-            else:  # We're using a moodlist
-                blockMessage = False
-
             if not blockMessage:
                 print 'fromAddress:', fromAddress
                 print 'First 150 characters of message:', repr(message[:150])

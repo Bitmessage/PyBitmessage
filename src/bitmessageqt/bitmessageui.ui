@@ -278,8 +278,8 @@
            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'Lucida Grande'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2';&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
          </widget>
         </item>
@@ -764,20 +764,13 @@ p, li { white-space: pre-wrap; }
       </widget>
       <widget class="QWidget" name="blackwhitelist">
        <attribute name="icon">
-        <iconset>
-         <normaloff>../images/tag-red-icon.png</normaloff>../images/tag-red-icon.png</iconset>
+        <iconset resource="bitmessage_icons.qrc">
+         <normaloff>:/newPrefix/images/blacklist.png</normaloff>:/newPrefix/images/blacklist.png</iconset>
        </attribute>
        <attribute name="title">
         <string>Blacklist</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_6">
-        <item row="4" column="0" colspan="2">
-         <widget class="QRadioButton" name="radioButtonMoodlist">
-          <property name="text">
-           <string>Use a Moodlist (Use neither a Blacklist nor a Whitelist)</string>
-          </property>
-         </widget>
-        </item>
         <item row="0" column="0" colspan="2">
          <widget class="QRadioButton" name="radioButtonBlacklist">
           <property name="text">
@@ -788,41 +781,35 @@ p, li { white-space: pre-wrap; }
           </property>
          </widget>
         </item>
-        <item row="3" column="0" colspan="2">
+        <item row="1" column="0" colspan="2">
          <widget class="QRadioButton" name="radioButtonWhitelist">
           <property name="text">
            <string>Use a Whitelist (Block all incoming messages except those on the Whitelist)</string>
           </property>
          </widget>
         </item>
-        <item row="6" column="0">
+        <item row="2" column="0">
          <widget class="QPushButton" name="pushButtonAddBlacklist">
           <property name="text">
            <string>Add new entry</string>
           </property>
          </widget>
         </item>
-        <item row="6" column="1">
-         <spacer name="horizontalSpacer_3">
+        <item row="2" column="1">
+         <spacer name="horizontalSpacer_8">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
           <property name="sizeHint" stdset="0">
            <size>
-            <width>40</width>
+            <width>689</width>
             <height>20</height>
            </size>
           </property>
          </spacer>
         </item>
-        <item row="8" column="0" colspan="2">
+        <item row="3" column="0" colspan="2">
          <widget class="QTableWidget" name="tableWidgetBlacklist">
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>14777193</height>
-           </size>
-          </property>
           <property name="alternatingRowColors">
            <bool>true</bool>
           </property>
@@ -1068,7 +1055,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>795</width>
-     <height>22</height>
+     <height>18</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1225,6 +1212,9 @@ p, li { white-space: pre-wrap; }
   <tabstop>pushButtonAddAddressBook</tabstop>
   <tabstop>tableWidgetAddressBook</tabstop>
   <tabstop>radioButtonBlacklist</tabstop>
+  <tabstop>radioButtonWhitelist</tabstop>
+  <tabstop>pushButtonAddBlacklist</tabstop>
+  <tabstop>tableWidgetBlacklist</tabstop>
   <tabstop>tableWidgetConnectionCount</tabstop>
   <tabstop>pushButtonStatusIcon</tabstop>
  </tabstops>
@@ -1239,12 +1229,12 @@ p, li { white-space: pre-wrap; }
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>87</x>
-     <y>58</y>
+     <x>121</x>
+     <y>60</y>
     </hint>
     <hint type="destinationlabel">
-     <x>87</x>
-     <y>138</y>
+     <x>175</x>
+     <y>147</y>
     </hint>
    </hints>
   </connection>
@@ -1255,12 +1245,12 @@ p, li { white-space: pre-wrap; }
    <slot>hide()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>87</x>
-     <y>58</y>
+     <x>95</x>
+     <y>59</y>
     </hint>
     <hint type="destinationlabel">
-     <x>130</x>
-     <y>524</y>
+     <x>129</x>
+     <y>528</y>
     </hint>
    </hints>
   </connection>
@@ -1271,44 +1261,12 @@ p, li { white-space: pre-wrap; }
    <slot>show()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>116</x>
-     <y>80</y>
+     <x>108</x>
+     <y>84</y>
     </hint>
     <hint type="destinationlabel">
-     <x>130</x>
-     <y>524</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>radioButtonMoodlist</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>pushButtonAddBlacklist</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>213</x>
-     <y>107</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>139</x>
-     <y>131</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>radioButtonMoodlist</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>tableWidgetBlacklist</receiver>
-   <slot>setDisabled(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>338</x>
-     <y>101</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>364</x>
-     <y>182</y>
+     <x>177</x>
+     <y>519</y>
     </hint>
    </hints>
   </connection>
