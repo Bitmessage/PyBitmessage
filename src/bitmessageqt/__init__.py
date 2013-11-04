@@ -2346,17 +2346,18 @@ class MyForm(QtGui.QMainWindow):
 
     def on_action_SentAddStar(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
-        inventoryHashToAddStar = str(self.ui.tableWidgetSent.item(
-                currentRow, 2).data(Qt.UserRole).toPyObject())
-        sqlExecute('''UPDATE sent SET starred=1 WHERE msgid=?''', inventoryHashToAddStar)
+
+        ackdataToAddStar = str(self.ui.tableWidgetSent.item(
+            currentRow, 3).data(Qt.UserRole).toPyObject())
+        sqlExecute('''UPDATE sent SET starred=1 WHERE ackdata=?''', ackdataToAddStar)
 
         self.loadSent()
 
     def on_action_SentRemoveStar(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
-        inventoryHashToRemoveStar = str(self.ui.tableWidgetSent.item(
-                currentRow, 3).data(Qt.UserRole).toPyObject())
-        sqlExecute('''UPDATE sent SET starred=0 WHERE msgid=?''', inventoryHashToRemoveStar)
+        ackdataToRemoveStar = str(self.ui.tableWidgetSent.item(
+            currentRow, 3).data(Qt.UserRole).toPyObject())
+        sqlExecute('''UPDATE sent SET starred=0 WHERE ackdata=?''', ackdataToRemoveStar)
 
         self.loadSent()
 
