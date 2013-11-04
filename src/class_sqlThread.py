@@ -100,6 +100,34 @@ class sqlThread(threading.Thread):
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
 
+        # Since starred column is a newly added one to the inbox and sent tables,
+        # it doesn't exist in most versions of the Bitmessage application
+        # So, we have to add it if it is not existing in the tables.
+
+        # Retrieves all columns information from the inbox and sent tables
+        # and stores them in inbox_columns and sent_columns.
+        # It then stores the starred column information in inbox_starred and sent_starred
+
+        # 1. For inbox table
+        inbox_columns = self.cur.execute("PRAGMA table_info(inbox)")
+        inbox_starred = [(a, b, c, d, e, f) for a, b, c, d, e, f in inbox_columns if b == 'starred' ]
+
+        # 2. For sent table
+        sent_columns = self.cur.execute("PRAGMA table_info(sent)")
+        sent_starred = [(a, b, c, d, e, f) for a, b, c, d, e, f in sent_columns if b == 'starred']
+
+        #If the column is not already added to the inbox table, ALTER TABLE command is called.
+        if inbox_starred.__len__() == 0:
+            item = '''ALTER TABLE inbox ADD starred bool DEFAULT '0' '''
+            parameters = ''
+            self.cur.execute(item, parameters)
+
+        #If the column is not already added to the sent table, ALTER TABLE command is called.
+        if sent_starred.__len__() == 0:
+            item = '''ALTER TABLE sent ADD starred bool DEFAULT '0' '''
+            parameters = ''
+            self.cur.execute(item, parameters)
+
         # People running earlier versions of PyBitmessage do not have the
         # encodingtype field in their inbox and sent tables or the read field
         # in the inbox table. Let's add them.

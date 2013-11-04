@@ -177,6 +177,11 @@ class MyForm(QtGui.QMainWindow):
             "MainWindow", "Save message as..."), self.on_action_InboxSaveMessageAs)
         self.actionMarkUnread = self.ui.inboxContextMenuToolbar.addAction(_translate(
             "MainWindow", "Mark Unread"), self.on_action_InboxMarkUnread)
+        self.actionAddStar = self.ui.inboxContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Add Star"), self.on_action_InboxAddStar)
+        self.actionRemoveStar = self.ui.inboxContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Remove Star"), self.on_action_InboxRemoveStar)
+
         self.ui.tableWidgetInbox.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
         self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
@@ -184,6 +189,8 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuInbox = QtGui.QMenu(self)
         self.popMenuInbox.addAction(self.actionForceHtml)
         self.popMenuInbox.addAction(self.actionMarkUnread)
+        self.popMenuInbox.addAction(self.actionAddStar)
+        self.popMenuInbox.addAction(self.actionRemoveStar)
         self.popMenuInbox.addSeparator()
         self.popMenuInbox.addAction(self.actionReply)
         self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
@@ -281,6 +288,12 @@ class MyForm(QtGui.QMainWindow):
             QtCore.Qt.CustomContextMenu)
         self.connect(self.ui.tableWidgetSent, QtCore.SIGNAL(
             'customContextMenuRequested(const QPoint&)'), self.on_context_menuSent)
+
+        self.actionSentAddStar = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Add Star"), self.on_action_SentAddStar)
+        self.actionSentRemoveStar = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Remove Star"), self.on_action_SentRemoveStar)
+
         # self.popMenuSent = QtGui.QMenu( self )
         # self.popMenuSent.addAction( self.actionSentClipboard )
         # self.popMenuSent.addAction( self.actionTrashSentMessage )
@@ -556,11 +569,14 @@ class MyForm(QtGui.QMainWindow):
             where = "subject"
         elif where == "Message":
             where = "message"
+        elif where == "Starred":
+            where = "starred"
+
         else:
-            where = "toaddress || fromaddress || subject || message"
+            where = "toaddress || fromaddress || subject || message || starred"
 
         sqlStatement = '''
-            SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime 
+            SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime, starred
             FROM sent WHERE folder="sent" AND %s LIKE ? 
             ORDER BY lastactiontime
             ''' % (where,)
@@ -570,7 +586,7 @@ class MyForm(QtGui.QMainWindow):
 
         queryreturn = sqlQuery(sqlStatement, what)
         for row in queryreturn:
-            toAddress, fromAddress, subject, message, status, ackdata, lastactiontime = row
+            toAddress, fromAddress, subject, message, status, ackdata, lastactiontime, starred = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
             try:
@@ -662,6 +678,13 @@ class MyForm(QtGui.QMainWindow):
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetSent.setItem(0, 3, newItem)
+
+            newItem = QtGui.QTableWidgetItem(str(starred))
+            #if not read:
+            #    newItem.setFont(font)
+            self.ui.tableWidgetSent.setItem(0, 4, newItem)
+
+
         self.ui.tableWidgetSent.sortItems(3, Qt.DescendingOrder)
         self.ui.tableWidgetSent.keyPressEvent = self.tableWidgetSentKeyPressEvent
 
@@ -676,11 +699,13 @@ class MyForm(QtGui.QMainWindow):
             where = "subject"
         elif where == "Message":
             where = "message"
+        elif where == "Starred":
+            where = "starred"
         else:
-            where = "toaddress || fromaddress || subject || message"
+            where = "toaddress || fromaddress || subject || message || starred"
 
         sqlStatement = '''
-            SELECT msgid, toaddress, fromaddress, subject, received, message, read 
+            SELECT msgid, toaddress, fromaddress, subject, received, message, read, starred
             FROM inbox WHERE folder="inbox" AND %s LIKE ? 
             ORDER BY received
             ''' % (where,)
@@ -692,7 +717,7 @@ class MyForm(QtGui.QMainWindow):
         font.setBold(True)
         queryreturn = sqlQuery(sqlStatement, what)
         for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, received, message, read = row
+            msgid, toAddress, fromAddress, subject, received, message, read, starred = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
             try:
@@ -767,6 +792,12 @@ class MyForm(QtGui.QMainWindow):
             if not read:
                 newItem.setFont(font)
             self.ui.tableWidgetInbox.setItem(0, 3, newItem)
+
+            newItem = QtGui.QTableWidgetItem(str(starred))
+            if not read:
+                newItem.setFont(font)
+            self.ui.tableWidgetInbox.setItem(0, 4, newItem)
+
         self.ui.tableWidgetInbox.sortItems(3, Qt.DescendingOrder)
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
 
@@ -2297,6 +2328,38 @@ class MyForm(QtGui.QMainWindow):
         content = content.replace('\n\n', '<br><br>')
         self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
 
+    def on_action_InboxAddStar(self):
+        currentRow = self.ui.tableWidgetInbox.currentRow()
+        inventoryHashToAddStar = str(self.ui.tableWidgetInbox.item(
+                currentRow, 3).data(Qt.UserRole).toPyObject())
+        sqlExecute('''UPDATE inbox SET starred=1 WHERE msgid=?''', inventoryHashToAddStar)
+
+        self.loadInbox()
+
+    def on_action_InboxRemoveStar(self):
+        currentRow = self.ui.tableWidgetInbox.currentRow()
+        inventoryHashToRemoveStar = str(self.ui.tableWidgetInbox.item(
+                currentRow, 3).data(Qt.UserRole).toPyObject())
+        sqlExecute('''UPDATE inbox SET starred=0 WHERE msgid=?''', inventoryHashToRemoveStar)
+
+        self.loadInbox()
+
+    def on_action_SentAddStar(self):
+        currentRow = self.ui.tableWidgetSent.currentRow()
+        inventoryHashToAddStar = str(self.ui.tableWidgetSent.item(
+                currentRow, 2).data(Qt.UserRole).toPyObject())
+        sqlExecute('''UPDATE sent SET starred=1 WHERE msgid=?''', inventoryHashToAddStar)
+
+        self.loadSent()
+
+    def on_action_SentRemoveStar(self):
+        currentRow = self.ui.tableWidgetSent.currentRow()
+        inventoryHashToRemoveStar = str(self.ui.tableWidgetSent.item(
+                currentRow, 3).data(Qt.UserRole).toPyObject())
+        sqlExecute('''UPDATE sent SET starred=0 WHERE msgid=?''', inventoryHashToRemoveStar)
+
+        self.loadSent()
+
     def on_action_InboxMarkUnread(self):
         font = QFont()
         font.setBold(True)
@@ -2309,6 +2372,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.item(currentRow, 1).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 2).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 3).setFont(font)
+            self.ui.tableWidgetInbox.item(currentRow, 4).setFont(font)
         # self.ui.tableWidgetInbox.selectRow(currentRow + 1) 
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
@@ -2707,6 +2771,9 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuSent = QtGui.QMenu(self)
         self.popMenuSent.addAction(self.actionSentClipboard)
         self.popMenuSent.addAction(self.actionTrashSentMessage)
+
+        self.popMenuSent.addAction(self.actionSentAddStar)
+        self.popMenuSent.addAction(self.actionSentRemoveStar)
 
         # Check to see if this item is toodifficult and display an additional
         # menu option (Force Send) if it is.

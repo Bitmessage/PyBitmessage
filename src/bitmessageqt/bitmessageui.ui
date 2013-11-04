@@ -135,17 +135,23 @@
            <property name="wordWrap">
             <bool>false</bool>
            </property>
+           <property name="rowCount">
+            <number>0</number>
+           </property>
+           <property name="columnCount">
+            <number>5</number>
+           </property>
            <attribute name="horizontalHeaderCascadingSectionResizes">
             <bool>true</bool>
            </attribute>
            <attribute name="horizontalHeaderDefaultSectionSize">
-            <number>200</number>
+            <number>170</number>
            </attribute>
            <attribute name="horizontalHeaderHighlightSections">
             <bool>false</bool>
            </attribute>
            <attribute name="horizontalHeaderMinimumSectionSize">
-            <number>27</number>
+            <number>50</number>
            </attribute>
            <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
             <bool>false</bool>
@@ -157,7 +163,10 @@
             <bool>false</bool>
            </attribute>
            <attribute name="verticalHeaderDefaultSectionSize">
-            <number>26</number>
+            <number>30</number>
+           </attribute>
+           <attribute name="verticalHeaderMinimumSectionSize">
+            <number>19</number>
            </attribute>
            <column>
             <property name="text">
@@ -177,6 +186,14 @@
            <column>
             <property name="text">
              <string>Received</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Starred</string>
+            </property>
+            <property name="textAlignment">
+             <set>AlignLeft|AlignVCenter</set>
             </property>
            </column>
           </widget>
@@ -448,10 +465,13 @@ p, li { white-space: pre-wrap; }
             <bool>true</bool>
            </attribute>
            <attribute name="horizontalHeaderDefaultSectionSize">
-            <number>130</number>
+            <number>170</number>
            </attribute>
            <attribute name="horizontalHeaderHighlightSections">
             <bool>false</bool>
+           </attribute>
+           <attribute name="horizontalHeaderMinimumSectionSize">
+            <number>50</number>
            </attribute>
            <attribute name="horizontalHeaderShowSortIndicator" stdset="0">
             <bool>false</bool>
@@ -483,6 +503,11 @@ p, li { white-space: pre-wrap; }
            <column>
             <property name="text">
              <string>Status</string>
+            </property>
+           </column>
+           <column>
+            <property name="text">
+             <string>Starred</string>
             </property>
            </column>
           </widget>
@@ -1055,7 +1080,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>795</width>
-     <height>18</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1265,8 +1290,8 @@ p, li { white-space: pre-wrap; }
      <y>84</y>
     </hint>
     <hint type="destinationlabel">
-     <x>177</x>
-     <y>519</y>
+     <x>218</x>
+     <y>546</y>
     </hint>
    </hints>
   </connection>

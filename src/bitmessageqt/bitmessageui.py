@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Tue Sep 03 15:17:26 2013
-#      by: PyQt4 UI code generator 4.10.2
+# Created: Mon Nov 04 01:47:29 2013
+#      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
         MainWindow.setObjectName(_fromUtf8("MainWindow"))
-        MainWindow.resize(885, 580)
+        MainWindow.resize(795, 580)
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-24px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         MainWindow.setWindowIcon(icon)
@@ -78,9 +78,9 @@ class Ui_MainWindow(object):
         self.tableWidgetInbox.setSelectionMode(QtGui.QAbstractItemView.ExtendedSelection)
         self.tableWidgetInbox.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableWidgetInbox.setWordWrap(False)
-        self.tableWidgetInbox.setObjectName(_fromUtf8("tableWidgetInbox"))
-        self.tableWidgetInbox.setColumnCount(4)
         self.tableWidgetInbox.setRowCount(0)
+        self.tableWidgetInbox.setColumnCount(5)
+        self.tableWidgetInbox.setObjectName(_fromUtf8("tableWidgetInbox"))
         item = QtGui.QTableWidgetItem()
         self.tableWidgetInbox.setHorizontalHeaderItem(0, item)
         item = QtGui.QTableWidgetItem()
@@ -89,14 +89,18 @@ class Ui_MainWindow(object):
         self.tableWidgetInbox.setHorizontalHeaderItem(2, item)
         item = QtGui.QTableWidgetItem()
         self.tableWidgetInbox.setHorizontalHeaderItem(3, item)
+        item = QtGui.QTableWidgetItem()
+        item.setTextAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
+        self.tableWidgetInbox.setHorizontalHeaderItem(4, item)
         self.tableWidgetInbox.horizontalHeader().setCascadingSectionResizes(True)
-        self.tableWidgetInbox.horizontalHeader().setDefaultSectionSize(200)
+        self.tableWidgetInbox.horizontalHeader().setDefaultSectionSize(170)
         self.tableWidgetInbox.horizontalHeader().setHighlightSections(False)
-        self.tableWidgetInbox.horizontalHeader().setMinimumSectionSize(27)
+        self.tableWidgetInbox.horizontalHeader().setMinimumSectionSize(50)
         self.tableWidgetInbox.horizontalHeader().setSortIndicatorShown(False)
         self.tableWidgetInbox.horizontalHeader().setStretchLastSection(True)
         self.tableWidgetInbox.verticalHeader().setVisible(False)
-        self.tableWidgetInbox.verticalHeader().setDefaultSectionSize(26)
+        self.tableWidgetInbox.verticalHeader().setDefaultSectionSize(30)
+        self.tableWidgetInbox.verticalHeader().setMinimumSectionSize(19)
         self.textEditInboxMessage = QtGui.QTextEdit(self.splitter)
         self.textEditInboxMessage.setBaseSize(QtCore.QSize(0, 500))
         self.textEditInboxMessage.setReadOnly(True)
@@ -208,7 +212,7 @@ class Ui_MainWindow(object):
         self.tableWidgetSent.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
         self.tableWidgetSent.setWordWrap(False)
         self.tableWidgetSent.setObjectName(_fromUtf8("tableWidgetSent"))
-        self.tableWidgetSent.setColumnCount(4)
+        self.tableWidgetSent.setColumnCount(5)
         self.tableWidgetSent.setRowCount(0)
         item = QtGui.QTableWidgetItem()
         self.tableWidgetSent.setHorizontalHeaderItem(0, item)
@@ -218,9 +222,12 @@ class Ui_MainWindow(object):
         self.tableWidgetSent.setHorizontalHeaderItem(2, item)
         item = QtGui.QTableWidgetItem()
         self.tableWidgetSent.setHorizontalHeaderItem(3, item)
+        item = QtGui.QTableWidgetItem()
+        self.tableWidgetSent.setHorizontalHeaderItem(4, item)
         self.tableWidgetSent.horizontalHeader().setCascadingSectionResizes(True)
-        self.tableWidgetSent.horizontalHeader().setDefaultSectionSize(130)
+        self.tableWidgetSent.horizontalHeader().setDefaultSectionSize(170)
         self.tableWidgetSent.horizontalHeader().setHighlightSections(False)
+        self.tableWidgetSent.horizontalHeader().setMinimumSectionSize(50)
         self.tableWidgetSent.horizontalHeader().setSortIndicatorShown(False)
         self.tableWidgetSent.horizontalHeader().setStretchLastSection(True)
         self.tableWidgetSent.verticalHeader().setVisible(False)
@@ -439,7 +446,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 18))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 795, 21))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -548,6 +555,8 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Subject", None))
         item = self.tableWidgetInbox.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Received", None))
+        item = self.tableWidgetInbox.horizontalHeaderItem(4)
+        item.setText(_translate("MainWindow", "Starred", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.inbox), _translate("MainWindow", "Inbox", None))
         self.pushButtonLoadFromAddressBook.setText(_translate("MainWindow", "Load from Address book", None))
         self.pushButtonFetchNamecoinID.setText(_translate("MainWindow", "Fetch Namecoin ID", None))
@@ -580,6 +589,8 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Subject", None))
         item = self.tableWidgetSent.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Status", None))
+        item = self.tableWidgetSent.horizontalHeaderItem(4)
+        item.setText(_translate("MainWindow", "Starred", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.sent), _translate("MainWindow", "Sent", None))
         self.pushButtonNewAddress.setText(_translate("MainWindow", "New", None))
         self.tableWidgetYourIdentities.setSortingEnabled(True)
@@ -642,3 +653,13 @@ class Ui_MainWindow(object):
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
 
 import bitmessage_icons_rc
+
+if __name__ == "__main__":
+    import sys
+    app = QtGui.QApplication(sys.argv)
+    MainWindow = QtGui.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())
+
