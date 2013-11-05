@@ -204,7 +204,14 @@
         <string>Send</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="3" column="2">
+        <item row="4" column="1" colspan="5">
+         <widget class="QLineEdit" name="lineEditSubject">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="4">
          <widget class="QPushButton" name="pushButtonLoadFromAddressBook">
           <property name="font">
            <font>
@@ -216,7 +223,7 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="3">
+        <item row="3" column="5">
          <widget class="QPushButton" name="pushButtonFetchNamecoinID">
           <property name="font">
            <font>
@@ -225,13 +232,6 @@
           </property>
           <property name="text">
            <string>Fetch Namecoin ID</string>
-          </property>
-         </widget>
-        </item>
-        <item row="6" column="0">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Message:</string>
           </property>
          </widget>
         </item>
@@ -252,7 +252,7 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="2" colspan="3">
+        <item row="2" column="4" colspan="4">
          <widget class="QLabel" name="labelFrom">
           <property name="text">
            <string/>
@@ -272,17 +272,6 @@
         <item row="3" column="1">
          <widget class="QLineEdit" name="lineEditTo"/>
         </item>
-        <item row="6" column="1" rowspan="2" colspan="5">
-         <widget class="QTextEdit" name="textEditMessage">
-          <property name="html">
-           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-          </property>
-         </widget>
-        </item>
         <item row="3" column="0">
          <widget class="QLabel" name="label">
           <property name="text">
@@ -297,54 +286,21 @@ p, li { white-space: pre-wrap; }
           </property>
          </widget>
         </item>
-        <item row="7" column="0">
-         <spacer name="verticalSpacer">
-          <property name="orientation">
-           <enum>Qt::Vertical</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>297</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="1" column="1" colspan="3">
+        <item row="1" column="1" colspan="5">
          <widget class="QRadioButton" name="radioButtonBroadcast">
           <property name="text">
            <string>Broadcast to everyone who is subscribed to your address</string>
           </property>
          </widget>
         </item>
-        <item row="4" column="1" colspan="5">
-         <widget class="QLineEdit" name="lineEditSubject">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="4">
-         <spacer name="horizontalSpacer_6">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
-        <item row="8" column="5">
+        <item row="12" column="8">
          <widget class="QPushButton" name="pushButtonSend">
           <property name="text">
            <string>Send</string>
           </property>
          </widget>
         </item>
-        <item row="8" column="1" colspan="4">
+        <item row="12" column="1" colspan="7">
          <widget class="QLabel" name="labelSendBroadcastWarning">
           <property name="enabled">
            <bool>true</bool>
@@ -363,11 +319,585 @@ p, li { white-space: pre-wrap; }
           </property>
          </widget>
         </item>
-        <item row="5" column="1">
-         <widget class="QPushButton" name="pushButtonBold">
+        <item row="11" column="0">
+         <widget class="QLabel" name="label_4">
           <property name="text">
-           <string>Bold</string>
+           <string>Message:</string>
           </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="6" colspan="3">
+         <spacer name="horizontalSpacer_6">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="4" column="7" colspan="2">
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="9" column="0">
+         <spacer name="verticalSpacer">
+          <property name="orientation">
+           <enum>Qt::Vertical</enum>
+          </property>
+          <property name="sizeType">
+           <enum>QSizePolicy::Minimum</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>20</width>
+            <height>40</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="11" column="1" colspan="8">
+         <widget class="QTextEdit" name="textEditMessage">
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="html">
+           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:12pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1" rowspan="3" colspan="8">
+         <widget class="QGroupBox" name="groupBox">
+          <property name="title">
+           <string/>
+          </property>
+          <widget class="QPushButton" name="pushButtonBold">
+           <property name="geometry">
+            <rect>
+             <x>223</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="baseSize">
+            <size>
+             <width>30</width>
+             <height>30</height>
+            </size>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/bold.png</normaloff>:/newPrefix/images/bold.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonClear">
+           <property name="geometry">
+            <rect>
+             <x>760</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/remove_format.png</normaloff>:/newPrefix/images/remove_format.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonUndo">
+           <property name="geometry">
+            <rect>
+             <x>680</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/undo.png</normaloff>:/newPrefix/images/undo.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonCopy">
+           <property name="geometry">
+            <rect>
+             <x>420</x>
+             <y>20</y>
+             <width>41</width>
+             <height>23</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Copy</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonPaste">
+           <property name="geometry">
+            <rect>
+             <x>470</x>
+             <y>20</y>
+             <width>41</width>
+             <height>23</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string>Paste</string>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonRedo">
+           <property name="geometry">
+            <rect>
+             <x>720</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/redo.png</normaloff>:/newPrefix/images/redo.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonTextColor">
+           <property name="geometry">
+            <rect>
+             <x>343</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/select_color_text.png</normaloff>:/newPrefix/images/select_color_text.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonAlignmentLeft">
+           <property name="geometry">
+            <rect>
+             <x>520</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/align_left.png</normaloff>:/newPrefix/images/align_left.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+           <property name="checked">
+            <bool>true</bool>
+           </property>
+           <property name="default">
+            <bool>false</bool>
+           </property>
+           <property name="flat">
+            <bool>false</bool>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonHighlight">
+           <property name="geometry">
+            <rect>
+             <x>383</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/select_background_color.png</normaloff>:/newPrefix/images/select_background_color.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonAlignmentCenter">
+           <property name="geometry">
+            <rect>
+             <x>560</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/align_center.png</normaloff>:/newPrefix/images/align_center.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonAlignmentRight">
+           <property name="geometry">
+            <rect>
+             <x>600</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/align_right.png</normaloff>:/newPrefix/images/align_right.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonAlignmentJustify">
+           <property name="geometry">
+            <rect>
+             <x>640</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/align_justify.png</normaloff>:/newPrefix/images/align_justify.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+          <widget class="QComboBox" name="comboBoxFontSize">
+           <property name="geometry">
+            <rect>
+             <x>15</x>
+             <y>10</y>
+             <width>91</width>
+             <height>22</height>
+            </rect>
+           </property>
+           <property name="currentIndex">
+            <number>6</number>
+           </property>
+           <item>
+            <property name="text">
+             <string>6</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>7</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>8</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>9</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>10</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>11</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>12</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>14</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>16</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>18</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>20</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>22</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>24</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>26</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>28</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>36</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>48</string>
+            </property>
+           </item>
+           <item>
+            <property name="text">
+             <string>72</string>
+            </property>
+           </item>
+          </widget>
+          <widget class="QPushButton" name="pushButtonUnderline">
+           <property name="geometry">
+            <rect>
+             <x>303</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/underline.png</normaloff>:/newPrefix/images/underline.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonItalic">
+           <property name="geometry">
+            <rect>
+             <x>263</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/italic.png</normaloff>:/newPrefix/images/italic.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+           <property name="checkable">
+            <bool>true</bool>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonFontDecrease">
+           <property name="geometry">
+            <rect>
+             <x>113</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/decrease_font.png</normaloff>:/newPrefix/images/decrease_font.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>18</width>
+             <height>18</height>
+            </size>
+           </property>
+          </widget>
+          <widget class="QPushButton" name="pushButtonFontIncrease">
+           <property name="geometry">
+            <rect>
+             <x>153</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
+            </rect>
+           </property>
+           <property name="text">
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/increase_font.png</normaloff>:/newPrefix/images/increase_font.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
+           </property>
+          </widget>
+          <zorder>pushButtonBold</zorder>
+          <zorder>textEditMessage</zorder>
+          <zorder>pushButtonClear</zorder>
+          <zorder>pushButtonUndo</zorder>
+          <zorder>pushButtonCopy</zorder>
+          <zorder>pushButtonPaste</zorder>
+          <zorder>pushButtonRedo</zorder>
+          <zorder>textEditMessage</zorder>
+          <zorder>pushButtonTextColor</zorder>
+          <zorder>pushButtonAlignmentLeft</zorder>
+          <zorder>pushButtonHighlight</zorder>
+          <zorder>pushButtonAlignmentCenter</zorder>
+          <zorder>pushButtonAlignmentRight</zorder>
+          <zorder>pushButtonAlignmentJustify</zorder>
+          <zorder>comboBoxFontSize</zorder>
+          <zorder>pushButtonUnderline</zorder>
+          <zorder>pushButtonItalic</zorder>
+          <zorder>pushButtonFontDecrease</zorder>
+          <zorder>pushButtonFontIncrease</zorder>
          </widget>
         </item>
        </layout>
@@ -1199,7 +1729,6 @@ p, li { white-space: pre-wrap; }
   </action>
  </widget>
  <tabstops>
-  <tabstop>tabWidget</tabstop>
   <tabstop>tableWidgetInbox</tabstop>
   <tabstop>textEditInboxMessage</tabstop>
   <tabstop>radioButtonSpecific</tabstop>
@@ -1272,8 +1801,8 @@ p, li { white-space: pre-wrap; }
      <y>84</y>
     </hint>
     <hint type="destinationlabel">
-     <x>177</x>
-     <y>519</y>
+     <x>218</x>
+     <y>546</y>
     </hint>
    </hints>
   </connection>

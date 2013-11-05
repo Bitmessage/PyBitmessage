@@ -1,5 +1,28 @@
 <RCC>
   <qresource prefix="newPrefix">
+    <file>../images/align_justify.png</file>
+    <file>../images/align_left.png</file>
+    <file>../images/align_right.png</file>
+    <file>../images/background_color.png</file>
+    <file>../images/bold.png</file>
+    <file>../images/increase_font.png</file>
+    <file>../images/decrease_font.png</file>
+    <file>../images/bold.png</file>
+    <file>../images/copy.png</file>
+    <file>../images/cut.png</file>
+    <file>../images/italic.png</file>
+    <file>../images/paste.png</file>
+    <file>../images/paste_as_plain_text.png</file>
+    <file>../images/redo.png</file>
+    <file>../images/remove_format.png</file>
+    <file>../images/select_background_color.png</file>
+    <file>../images/select_color_text.png</file>
+    <file>../images/strike_trough.png</file>
+    <file>../images/subscript.png</file>
+    <file>../images/superscript.png</file>
+    <file>../images/underline.png</file>
+    <file>../images/undo.png</file>
+    <file>../images/align_center.png</file>
     <file>../images/no_identicons.png</file>
     <file>../images/qidenticon_x.png</file>
     <file>../images/qidenticon.png</file>
