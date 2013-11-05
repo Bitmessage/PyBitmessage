@@ -243,8 +243,16 @@ class MyForm(QtGui.QMainWindow):
             "clicked()"), self.click_pushButtonHighlight)
         QtCore.QObject.connect(self.ui.pushButtonBold, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonBold)
+        QtCore.QObject.connect(self.ui.pushButtonStrike, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonStrike)
         QtCore.QObject.connect(self.ui.pushButtonClear, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonClear)
+        QtCore.QObject.connect(self.ui.pushButtonUnderline, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonUnderline)
+        QtCore.QObject.connect(self.ui.pushButtonFontDecrease, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonFontDecrease)
+        QtCore.QObject.connect(self.ui.pushButtonFontIncrease, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonFontIncrease)
         QtCore.QObject.connect(self.ui.pushButtonAlignmentCenter, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonAlignmentCenter)
         QtCore.QObject.connect(self.ui.pushButtonAlignmentLeft, QtCore.SIGNAL(
@@ -1731,6 +1739,54 @@ class MyForm(QtGui.QMainWindow):
         else:
             return False
 
+    def click_pushButtonUnderline(self):
+        messagecontainer = self.ui.textEditMessage
+        mycursor = messagecontainer.textCursor()
+        myformat = mycursor.charFormat()
+        if mycursor.hasSelection():
+            mycursor.beginEditBlock()
+            if self.ui.pushButtonUnderline.isChecked():
+                myformat.setFontUnderline(True)
+            else:
+                myformat.setFontUnderline(False)
+            mycursor.setCharFormat(myformat)
+            mycursor.endEditBlock()
+        elif mycursor.position() >= 0:
+            mycursor.beginEditBlock()
+            if self.ui.pushButtonUnderline.isChecked():
+                messagecontainer.setFontUnderline(True)
+            else:
+                messagecontainer.setFontUnderline(False)
+            mycursor.endEditBlock()
+        else:
+            return False
+
+    def click_pushButtonStrike(self):
+        messagecontainer = self.ui.textEditMessage
+        mycursor = messagecontainer.textCursor()
+        myformat = mycursor.charFormat()
+        if mycursor.hasSelection():
+            mycursor.beginEditBlock()
+            if self.ui.pushButtonStrike.isChecked():
+                myformat.setFontStrikeOut(True)
+            else:
+                myformat.setFontStrikeOut(False)
+            mycursor.setCharFormat(myformat)
+            mycursor.endEditBlock()
+        elif mycursor.position() >= 0:
+            mycursor.beginEditBlock()
+            if self.ui.pushButtonStrike.isChecked():
+                striked = QFont()
+                striked.setStrikeOut(True)
+                messagecontainer.setCurrentFont(striked)
+            else:
+                striked = QFont()
+                striked.setStrikeOut(False)
+                messagecontainer.setCurrentFont(striked)
+            mycursor.endEditBlock()
+        else:
+            return False
+
     def click_pushButtonHighlight(self):
         col = QtGui.QColor(0, 0, 0)
         col = QtGui.QColorDialog.getColor()
@@ -1797,6 +1853,50 @@ class MyForm(QtGui.QMainWindow):
             to_uncheck1.setChecked(False)
             to_uncheck2.setChecked(False)
             to_uncheck3.setChecked(False)
+
+    def click_pushButtonFontIncrease(self):
+        messagecontainer = self.ui.textEditMessage
+        mycursor = messagecontainer.textCursor()
+        myformat = mycursor.charFormat()
+        if mycursor.hasSelection():
+            mycursor.beginEditBlock()
+            curfontsize = messagecontainer.currentFont().pointSize()
+            if curfontsize <= 70:
+                curfontsize += 2
+                myformat.setFontPointSize(float(curfontsize))
+                mycursor.setCharFormat(myformat)
+            mycursor.endEditBlock()
+        elif mycursor.position() >= 0:
+            mycursor.beginEditBlock()
+            curfontsize = messagecontainer.currentFont().pointSize()
+            if curfontsize <= 70:
+                curfontsize += 2
+                messagecontainer.setFontPointSize(float(curfontsize))
+            mycursor.endEditBlock()
+        else:
+            return False
+
+    def click_pushButtonFontDecrease(self):
+        messagecontainer = self.ui.textEditMessage
+        mycursor = messagecontainer.textCursor()
+        myformat = mycursor.charFormat()
+        if mycursor.hasSelection():
+            mycursor.beginEditBlock()
+            curfontsize = messagecontainer.currentFont().pointSize()
+            if curfontsize >= 8:
+                curfontsize -= 2
+                myformat.setFontPointSize(float(curfontsize))
+                mycursor.setCharFormat(myformat)
+            mycursor.endEditBlock()
+        elif mycursor.position() >= 0:
+            mycursor.beginEditBlock()
+            curfontsize = messagecontainer.currentFont().pointSize()
+            if curfontsize >= 8:
+                curfontsize -= 2
+                messagecontainer.setFontPointSize(float(curfontsize))
+            mycursor.endEditBlock()
+        else:
+            return False
 
     def click_pushButtonAlignmentCenter(self):
         self.Alignment_Buttons_Checked_Status(self.ui.pushButtonAlignmentCenter, self.ui.pushButtonAlignmentRight, self.ui.pushButtonAlignmentLeft, self.ui.pushButtonAlignmentJustify)
