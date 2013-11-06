@@ -34,13 +34,13 @@ class singleCleaner(threading.Thread):
         try:
             shared.maximumLengthOfTimeToBotherResendingMessages = (float(shared.config.get('bitmessagesettings', 'stopresendingafterxdays')) * 24 * 60 * 60) + (float(shared.config.get('bitmessagesettings', 'stopresendingafterxmonths')) * (60 * 60 * 24 *365)/12)
         except:
+            # Either the user hasn't set stopresendingafterxdays and stopresendingafterxmonths yet or the options are missing from the config file.
             shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
-            print 'problem calculating maximumLengthOfTimeToBotherResendingMessages '
 
         while True:
             shared.UISignalQueue.put((
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
-            
+
             with shared.inventoryLock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
                 with SqlBulkExecute() as sql:
                     for hash, storedValue in shared.inventory.items():
@@ -96,8 +96,8 @@ class singleCleaner(threading.Thread):
                             resendPubkey(pubkeyretrynumber,toripe)
                     else: # status == msgsent
                         if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
-                            resendMsg(msgretrynumber,ackdata)    
-                
+                            resendMsg(msgretrynumber,ackdata)
+
                 # Let's also clear and reload shared.inventorySets to keep it from
                 # taking up an unnecessary amount of memory.
                 for streamNumber in shared.inventorySets:
@@ -136,7 +136,7 @@ def resendPubkey(pubkeyretrynumber,toripe):
             toripe] # We need to take this entry out of the shared.neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
     except:
         pass
-    
+
     shared.UISignalQueue.put((
          'updateStatusBar', 'Doing work necessary to again attempt to request a public key...'))
     t = ()
