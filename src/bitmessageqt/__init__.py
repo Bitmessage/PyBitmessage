@@ -2165,6 +2165,41 @@ class MyForm(QtGui.QMainWindow):
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0:
                 shared.config.set('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
+            #start:UI setting to stop trying to send messages after X days/months
+            # I'm open to changing this UI to something else if someone has a better idea.
+            if ((self.settingsDialogInstance.ui.lineEditDays.text()=='') and (self.settingsDialogInstance.ui.lineEditMonths.text()=='')):#We need to handle this special case. Bitmessage has its default behavior. The input is blank/blank
+                shared.config.set('bitmessagesettings', 'stopresendingafterxdays', '')
+                shared.config.set('bitmessagesettings', 'stopresendingafterxmonths', '')
+                shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
+            try:
+                float(self.settingsDialogInstance.ui.lineEditDays.text())
+                lineEditDaysIsValidFloat = True
+            except:
+                lineEditDaysIsValidFloat = False
+            try:
+                float(self.settingsDialogInstance.ui.lineEditMonths.text())
+                lineEditMonthsIsValidFloat = True
+            except:
+                lineEditMonthsIsValidFloat = False
+            if lineEditDaysIsValidFloat and not lineEditMonthsIsValidFloat:
+                self.settingsDialogInstance.ui.lineEditMonths.setText("0")
+            if lineEditMonthsIsValidFloat and not lineEditDaysIsValidFloat:
+                self.settingsDialogInstance.ui.lineEditDays.setText("0")
+            if lineEditDaysIsValidFloat or lineEditMonthsIsValidFloat:
+                if (float(self.settingsDialogInstance.ui.lineEditDays.text()) >=0 and float(self.settingsDialogInstance.ui.lineEditMonths.text()) >=0):
+                    shared.maximumLengthOfTimeToBotherResendingMessages = (float(str(self.settingsDialogInstance.ui.lineEditDays.text())) * 24 * 60 * 60) + (float(str(self.settingsDialogInstance.ui.lineEditMonths.text())) * (60 * 60 * 24 *365)/12)
+                    if shared.maximumLengthOfTimeToBotherResendingMessages < 432000: # If the time period is less than 5 hours, we give zero values to all fields. No message will be sent again.
+                        QMessageBox.about(self, _translate("MainWindow", "Will not resend ever"), _translate(
+                            "MainWindow", "Note that the time limit you entered is less than the amount of time Bitmessage waits for the first resend attempt therefore your messages will never be resent."))
+                        shared.config.set('bitmessagesettings', 'stopresendingafterxdays', '0')
+                        shared.config.set('bitmessagesettings', 'stopresendingafterxmonths', '0')
+                        shared.maximumLengthOfTimeToBotherResendingMessages = 0
+                    else:
+                        shared.config.set('bitmessagesettings', 'stopresendingafterxdays', str(float(
+                        self.settingsDialogInstance.ui.lineEditDays.text())))
+                        shared.config.set('bitmessagesettings', 'stopresendingafterxmonths', str(float(
+                        self.settingsDialogInstance.ui.lineEditMonths.text())))
+            #end
 
             # if str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()) == 'All':
             #    shared.config.set('bitmessagesettings', 'maxcores', '99999')
@@ -3233,6 +3268,13 @@ class settingsDialog(QtGui.QDialog):
         QtCore.QObject.connect(self.ui.pushButtonNamecoinTest, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonNamecoinTest)
 
+        #Message Resend tab
+        self.ui.lineEditDays.setText(str(
+            shared.config.get('bitmessagesettings', 'stopresendingafterxdays')))
+        self.ui.lineEditMonths.setText(str(
+            shared.config.get('bitmessagesettings', 'stopresendingafterxmonths')))
+        
+        
         #'System' tab removed for now.
         """try:
             maxCores = shared.config.getint('bitmessagesettings', 'maxcores')
