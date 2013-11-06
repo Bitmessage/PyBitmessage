@@ -18,8 +18,8 @@ inventory (clears data more than 2 days and 12 hours old)
 pubkeys (clears pubkeys older than 4 weeks old which we have not used personally)
 
 It resends messages when there has been no response:
-resends getpubkey messages in 4 days (then 8 days, then 16 days, etc...)
-resends msg messages in 4 days (then 8 days, then 16 days, etc...)
+resends getpubkey messages in 5 days (then 10 days, then 20 days, etc...)
+resends msg messages in 5 days (then 10 days, then 20 days, etc...)
 
 '''
 
@@ -31,11 +31,16 @@ class singleCleaner(threading.Thread):
 
     def run(self):
         timeWeLastClearedInventoryAndPubkeysTables = 0
+        try:
+            shared.maximumLengthOfTimeToBotherResendingMessages = (float(shared.config.get('bitmessagesettings', 'stopresendingafterxdays')) * 24 * 60 * 60) + (float(shared.config.get('bitmessagesettings', 'stopresendingafterxmonths')) * (60 * 60 * 24 *365)/12)
+        except:
+            # Either the user hasn't set stopresendingafterxdays and stopresendingafterxmonths yet or the options are missing from the config file.
+            shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
 
         while True:
             shared.UISignalQueue.put((
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
-            
+
             with shared.inventoryLock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
                 with SqlBulkExecute() as sql:
                     for hash, storedValue in shared.inventory.items():
@@ -75,7 +80,8 @@ class singleCleaner(threading.Thread):
                     int(time.time()) - shared.lengthOfTimeToHoldOnToAllPubkeys)
 
                 queryreturn = sqlQuery(
-                    '''select toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber FROM sent WHERE ((status='awaitingpubkey' OR status='msgsent') AND folder='sent') ''') # If the message's folder='trash' then we'll ignore it.
+                    '''select toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber FROM sent WHERE ((status='awaitingpubkey' OR status='msgsent') AND folder='sent' AND lastactiontime>?) ''',
+                    int(time.time()) - shared.maximumLengthOfTimeToBotherResendingMessages) # If the message's folder='trash' then we'll ignore it.
                 for row in queryreturn:
                     if len(row) < 5:
                         with shared.printLock:
@@ -85,22 +91,13 @@ class singleCleaner(threading.Thread):
 
                         break
                     toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber = row
-                    if status == 'awaitingpubkey':#start:UI setting to stop trying to send messages after X hours/days/months
-                        if int(shared.config.get('bitmessagesettings', 'timeperiod'))> -1:#The default value of timeperiod is -1.
-                            if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))) and ((int(time.time()) - lastactiontime) < int(shared.config.get('bitmessagesettings', 'timeperiod'))):
-                                resendPubkey(pubkeyretrynumber,toripe)#This will be executed if the user has adjusted the time period with some value
-                        else:
-                            if int(time.time()) - lastactiontime > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
-                                resendPubkey(pubkeyretrynumber,toripe)#This will be executed if the time period has its default value -1. Input (blank/blank/blank)
+                    if status == 'awaitingpubkey':
+                        if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
+                            resendPubkey(pubkeyretrynumber,toripe)
                     else: # status == msgsent
-                        if int(shared.config.get('bitmessagesettings', 'timeperiod'))> -1:
-                            if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))) and ((int(time.time()) - lastactiontime) < int(shared.config.get('bitmessagesettings', 'timeperiod'))):
-                                resendMsg(msgretrynumber,ackdata)
-                        else:
-                            if int(time.time()) - lastactiontime > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
-                                resendMsg(msgretrynumber,ackdata)
-                             #end      
-                
+                        if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
+                            resendMsg(msgretrynumber,ackdata)
+
                 # Let's also clear and reload shared.inventorySets to keep it from
                 # taking up an unnecessary amount of memory.
                 for streamNumber in shared.inventorySets:
@@ -130,15 +127,16 @@ class singleCleaner(threading.Thread):
                 shared.knownNodesLock.release()
                 shared.needToWriteKnownNodesToDisk = False
             time.sleep(300)
-    #start:UI setting to stop trying to send messages after X hours/days/months
-def resendPubkey(pubkeyretrynumber,toripe):#We just structured the code with these two functions to reduce code redundancy
+
+
+def resendPubkey(pubkeyretrynumber,toripe):
     print 'It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.'
     try:
         del shared.neededPubkeys[
             toripe] # We need to take this entry out of the shared.neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
     except:
         pass
-    
+
     shared.UISignalQueue.put((
          'updateStatusBar', 'Doing work necessary to again attempt to request a public key...'))
     t = ()
@@ -160,7 +158,3 @@ def resendMsg(msgretrynumber,ackdata):
     shared.workerQueue.put(('sendmessage', ''))
     shared.UISignalQueue.put((
     'updateStatusBar', 'Doing work necessary to again attempt to deliver a message...'))
-    #end
-                               
-
-                               

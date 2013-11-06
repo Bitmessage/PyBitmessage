@@ -279,6 +279,17 @@ class sqlThread(threading.Thread):
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
 
+        #Adjusting time period to stop sending messages
+        if shared.config.getint('bitmessagesettings', 'settingsversion') == 7:
+            shared.config.set(
+                'bitmessagesettings', 'stopresendingafterxdays', '')
+            shared.config.set(
+                'bitmessagesettings', 'stopresendingafterxmonths', '')
+            #shared.config.set(
+            shared.config.set('bitmessagesettings', 'settingsversion', '8') 
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
+
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users? Add it right above this line!
         
