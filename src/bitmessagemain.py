@@ -14,6 +14,7 @@ from SimpleXMLRPCServer import *
 import json
 import singleton
 import os
+import debug
 
 # OSX python version check
 import sys
@@ -1068,14 +1069,8 @@ class Main:
         return {'address':address,'port':port}
 
 if __name__ == "__main__":
-    logger = logging.getLogger()
-    fmt_string = "[%(levelname)-7s]%(asctime)s.%(msecs)-3d\
-    %(module)s[%(lineno)-3d]/%(funcName)-10s  %(message)-8s "
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setFormatter(logging.Formatter(fmt_string, "%H:%M:%S"))
-    logger.addHandler(handler)
-    logger.setLevel(logging.INFO)
-
+    shared.doLogging = True
+    
     mainprogram = Main()
     mainprogram.start()
 
