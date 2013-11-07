@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'about.ui'
 #
-# Created: Mon Mar 11 11:19:35 2013
-#      by: PyQt4 UI code generator 4.9.4
+# Created: Wed Nov 06 23:01:43 2013
+#      by: PyQt4 UI code generator 4.10.2
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -12,7 +12,16 @@ from PyQt4 import QtCore, QtGui
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
 except AttributeError:
-    _fromUtf8 = lambda s: s
+    def _fromUtf8(s):
+        return s
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+except AttributeError:
+    def _translate(context, text, disambig):
+        return QtGui.QApplication.translate(context, text, disambig)
 
 class Ui_aboutDialog(object):
     def setupUi(self, aboutDialog):
@@ -35,7 +44,7 @@ class Ui_aboutDialog(object):
         self.labelVersion.setGeometry(QtCore.QRect(190, 126, 161, 20))
         self.labelVersion.setObjectName(_fromUtf8("labelVersion"))
         self.label_2 = QtGui.QLabel(aboutDialog)
-        self.label_2.setGeometry(QtCore.QRect(10, 150, 341, 20))
+        self.label_2.setGeometry(QtCore.QRect(10, 150, 341, 41))
         self.label_2.setAlignment(QtCore.Qt.AlignCenter)
         self.label_2.setObjectName(_fromUtf8("label_2"))
         self.label_3 = QtGui.QLabel(aboutDialog)
@@ -44,7 +53,7 @@ class Ui_aboutDialog(object):
         self.label_3.setOpenExternalLinks(True)
         self.label_3.setObjectName(_fromUtf8("label_3"))
         self.label_5 = QtGui.QLabel(aboutDialog)
-        self.label_5.setGeometry(QtCore.QRect(10, 180, 341, 20))
+        self.label_5.setGeometry(QtCore.QRect(10, 190, 341, 20))
         self.label_5.setAlignment(QtCore.Qt.AlignCenter)
         self.label_5.setObjectName(_fromUtf8("label_5"))
 
@@ -54,10 +63,10 @@ class Ui_aboutDialog(object):
         QtCore.QMetaObject.connectSlotsByName(aboutDialog)
 
     def retranslateUi(self, aboutDialog):
-        aboutDialog.setWindowTitle(QtGui.QApplication.translate("aboutDialog", "About", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("aboutDialog", "PyBitmessage", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelVersion.setText(QtGui.QApplication.translate("aboutDialog", "version ?", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_2.setText(QtGui.QApplication.translate("aboutDialog", "Copyright © 2013 Jonathan Warren", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_3.setText(QtGui.QApplication.translate("aboutDialog", "<html><head/><body><p>Distributed under the MIT/X11 software license; see <a href=\"http://www.opensource.org/licenses/mit-license.php\"><span style=\" text-decoration: underline; color:#0000ff;\">http://www.opensource.org/licenses/mit-license.php</span></a></p></body></html>", None, QtGui.QApplication.UnicodeUTF8))
-        self.label_5.setText(QtGui.QApplication.translate("aboutDialog", "This is Beta software.", None, QtGui.QApplication.UnicodeUTF8))
+        aboutDialog.setWindowTitle(_translate("aboutDialog", "About", None))
+        self.label.setText(_translate("aboutDialog", "PyBitmessage", None))
+        self.labelVersion.setText(_translate("aboutDialog", "version ?", None))
+        self.label_2.setText(_translate("aboutDialog", "<html><head/><body><p>Copyright © 2012-2013 Jonathan Warren<br/>Copyright © 2013 The Bitmessage Developers</p></body></html>", None))
+        self.label_3.setText(_translate("aboutDialog", "<html><head/><body><p>Distributed under the MIT/X11 software license; see <a href=\"http://www.opensource.org/licenses/mit-license.php\"><span style=\" text-decoration: underline; color:#0000ff;\">http://www.opensource.org/licenses/mit-license.php</span></a></p></body></html>", None))
+        self.label_5.setText(_translate("aboutDialog", "This is Beta software.", None))
 
