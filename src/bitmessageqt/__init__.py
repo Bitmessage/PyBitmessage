@@ -723,31 +723,30 @@ class MyForm(QtGui.QMainWindow):
                 toLabel = toAddress
 
             self.ui.tableWidgetSent.insertRow(0)
-            newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
-            newItem.setToolTip(unicode(toLabel, 'utf-8'))
-            newItem.setIcon(avatarize(toAddress))
-            newItem.setData(Qt.UserRole, str(toAddress))
-            newItem.setFlags(
+            toAddressItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
+            toAddressItem.setToolTip(unicode(toLabel, 'utf-8'))
+            toAddressItem.setIcon(avatarize(toAddress))
+            toAddressItem.setData(Qt.UserRole, str(toAddress))
+            toAddressItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidgetSent.setItem(0, 0, newItem)
+            self.ui.tableWidgetSent.setItem(0, 0, toAddressItem)
+
             if fromLabel == '':
-                newItem = QtGui.QTableWidgetItem(
-                    unicode(fromAddress, 'utf-8'))
-                newItem.setToolTip(unicode(fromAddress, 'utf-8'))
-            else:
-                newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
-                newItem.setToolTip(unicode(fromLabel, 'utf-8'))
-            newItem.setIcon(avatarize(fromAddress))
-            newItem.setData(Qt.UserRole, str(fromAddress))
-            newItem.setFlags(
+                fromLabel = fromAddress
+            fromAddressItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
+            fromAddressItem.setToolTip(unicode(fromLabel, 'utf-8'))
+            fromAddressItem.setIcon(avatarize(fromAddress))
+            fromAddressItem.setData(Qt.UserRole, str(fromAddress))
+            fromAddressItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidgetSent.setItem(0, 1, newItem)
-            newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
-            newItem.setToolTip(unicode(subject, 'utf-8'))
-            #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
-            newItem.setFlags(
+            self.ui.tableWidgetSent.setItem(0, 1, fromAddressItem)
+
+            subjectItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
+            subjectItem.setToolTip(unicode(subject, 'utf-8'))
+            subjectItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidgetSent.setItem(0, 2, newItem)
+            self.ui.tableWidgetSent.setItem(0, 2, subjectItem)
+
             if status == 'awaitingpubkey':
                 statusText = _translate(
                     "MainWindow", "Waiting on their encryption key. Will request it again soon.")
