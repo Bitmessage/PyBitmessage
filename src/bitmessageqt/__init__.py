@@ -1218,7 +1218,14 @@ class MyForm(QtGui.QMainWindow):
         if withMessagingMenu:
             n = Notify.Notification.new(
                 title, subtitle, 'notification-message-email')
-            n.show()
+            try:
+                n.show()
+            except:
+                # n.show() has been known to throw this exception:
+                # gi._glib.GError: GDBus.Error:org.freedesktop.Notifications.
+                # MaxNotificationsExceeded: Exceeded maximum number of
+                # notifications
+                pass
             return
         else:
             self.tray.showMessage(title, subtitle, 1, 2000)
