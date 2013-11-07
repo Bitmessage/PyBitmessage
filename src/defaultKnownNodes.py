@@ -11,19 +11,16 @@ def createDefaultKnownNodes(appdata):
     ############## Stream 1 ################
     stream1 = {}
 
-    stream1[shared.Peer('98.233.84.134', 8444)] = int(time.time())
-    stream1[shared.Peer('76.24.18.44', 8444)] = int(time.time())
     stream1[shared.Peer('176.31.246.114', 8444)] = int(time.time())
-    stream1[shared.Peer('66.108.210.240', 8080)] = int(time.time())
-    stream1[shared.Peer('76.22.240.163', 8445)] = int(time.time())
-    stream1[shared.Peer('46.21.99.29', 20982)] = int(time.time())
-    stream1[shared.Peer('109.227.72.36', 8444)] = int(time.time())
-    stream1[shared.Peer('176.31.246.114', 8444)] = int(time.time())
-    stream1[shared.Peer('188.110.3.133', 8444)] = int(time.time())
-    stream1[shared.Peer('174.0.45.163', 8444)] = int(time.time())
-    stream1[shared.Peer('134.2.182.92', 8444)] = int(time.time())
-    stream1[shared.Peer('24.143.60.183', 8444)] = int(time.time())
-
+    stream1[shared.Peer('109.229.197.133', 8444)] = int(time.time())
+    stream1[shared.Peer('174.3.101.111', 8444)] = int(time.time())
+    stream1[shared.Peer('90.188.238.79', 7829)] = int(time.time())
+    stream1[shared.Peer('184.75.69.2', 8444)] = int(time.time())
+    stream1[shared.Peer('60.225.209.243', 8444)] = int(time.time())
+    stream1[shared.Peer('5.145.140.218', 8444)] = int(time.time())
+    stream1[shared.Peer('5.19.255.216', 8444)] = int(time.time())
+    stream1[shared.Peer('193.159.162.189', 8444)] = int(time.time())
+    stream1[shared.Peer('86.26.15.171', 8444)] = int(time.time())
 
     ############# Stream 2 #################
     stream2 = {}
