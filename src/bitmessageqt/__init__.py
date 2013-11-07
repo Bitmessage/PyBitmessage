@@ -54,20 +54,6 @@ try:
 except AttributeError:
     print 'QtGui.QApplication.UnicodeUTF8 error:', err
 
-FIELD_COLUMNS = {
-    'To': 'toaddress',
-    'From': 'fromaddress',
-    'Subject': 'subject',
-    'Message': 'message,'
-}
-
-SELECT_INBOX_QUERY = '''
-            SELECT msgid, toaddress, fromaddress, subject, received, read
-            FROM inbox WHERE folder="inbox" AND %s LIKE ?
-            ORDER BY received
-            '''
-
-
 def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
 
@@ -884,12 +870,22 @@ class MyForm(QtGui.QMainWindow):
     # Load inbox from messages database file
     def loadInbox(self, where="", what=""):
         what = "%" + what + "%"
-        if where in FIELD_COLUMNS:
-            where = FIELD_COLUMNS[where]
+        if where == "To":
+            where = "toaddress"
+        elif where == "From":
+            where = "fromaddress"
+        elif where == "Subject":
+            where = "subject"
+        elif where == "Message":
+            where = "message"
         else:
             where = "toaddress || fromaddress || subject || message"
 
-        sqlStatement = SELECT_INBOX_QUERY % (where,)
+        sqlStatement = '''
+            SELECT msgid, toaddress, fromaddress, subject, received, read
+            FROM inbox WHERE folder="inbox" AND %s LIKE ?
+            ORDER BY received
+            ''' % (where,)
 
         while self.ui.tableWidgetInbox.rowCount() > 0:
             self.ui.tableWidgetInbox.removeRow(0)
