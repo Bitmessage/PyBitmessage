@@ -57,6 +57,7 @@ except AttributeError:
 def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
 
+
 def identiconize(address):
     size = 48
     
@@ -176,6 +177,269 @@ class MyForm(QtGui.QMainWindow):
     str_broadcast_subscribers = '[Broadcast subscribers]'
     str_chan = '[chan]'
 
+    def init_file_menu(self):
+        QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
+            "triggered()"), self.quit)
+        QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL(
+            "triggered()"), self.click_actionManageKeys)
+        QtCore.QObject.connect(self.ui.actionDeleteAllTrashedMessages,
+                               QtCore.SIGNAL(
+                                   "triggered()"),
+                               self.click_actionDeleteAllTrashedMessages)
+        QtCore.QObject.connect(self.ui.actionRegenerateDeterministicAddresses,
+                               QtCore.SIGNAL(
+                                   "triggered()"),
+                               self.click_actionRegenerateDeterministicAddresses)
+        QtCore.QObject.connect(self.ui.actionJoinChan, QtCore.SIGNAL(
+            "triggered()"),
+                               self.click_actionJoinChan) # also used for creating chans.
+        QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL(
+            "clicked()"), self.click_NewAddressDialog)
+        QtCore.QObject.connect(self.ui.comboBoxSendFrom, QtCore.SIGNAL(
+            "activated(int)"), self.redrawLabelFrom)
+        QtCore.QObject.connect(self.ui.pushButtonAddAddressBook, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonAddAddressBook)
+        QtCore.QObject.connect(self.ui.pushButtonAddSubscription, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonAddSubscription)
+        QtCore.QObject.connect(self.ui.pushButtonAddBlacklist, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonAddBlacklist)
+        QtCore.QObject.connect(self.ui.pushButtonSend, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonSend)
+        QtCore.QObject.connect(self.ui.pushButtonLoadFromAddressBook,
+                               QtCore.SIGNAL(
+                                   "clicked()"),
+                               self.click_pushButtonLoadFromAddressBook)
+        QtCore.QObject.connect(self.ui.pushButtonFetchNamecoinID, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonFetchNamecoinID)
+        QtCore.QObject.connect(self.ui.radioButtonBlacklist, QtCore.SIGNAL(
+            "clicked()"), self.click_radioButtonBlacklist)
+        QtCore.QObject.connect(self.ui.radioButtonWhitelist, QtCore.SIGNAL(
+            "clicked()"), self.click_radioButtonWhitelist)
+        QtCore.QObject.connect(self.ui.pushButtonStatusIcon, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonStatusIcon)
+        QtCore.QObject.connect(self.ui.actionSettings, QtCore.SIGNAL(
+            "triggered()"), self.click_actionSettings)
+        QtCore.QObject.connect(self.ui.actionAbout, QtCore.SIGNAL(
+            "triggered()"), self.click_actionAbout)
+        QtCore.QObject.connect(self.ui.actionHelp, QtCore.SIGNAL(
+            "triggered()"), self.click_actionHelp)
+
+    def init_inbox_popup_menu(self):
+        # Popup menu for the Inbox tab
+        self.ui.inboxContextMenuToolbar = QtGui.QToolBar()
+        # Actions
+        self.actionReply = self.ui.inboxContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Reply"), self.on_action_InboxReply)
+        self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Add sender to your Address Book"),
+            self.on_action_InboxAddSenderToAddressBook)
+        self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction(
+            _translate("MainWindow", "Move to Trash"),
+            self.on_action_InboxTrash)
+        self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "View HTML code as formatted text"),
+            self.on_action_InboxMessageForceHtml)
+        self.actionSaveMessageAs = self.ui.inboxContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Save message as..."),
+            self.on_action_InboxSaveMessageAs)
+        self.actionMarkUnread = self.ui.inboxContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Mark Unread"), self.on_action_InboxMarkUnread)
+        self.ui.tableWidgetInbox.setContextMenuPolicy(
+            QtCore.Qt.CustomContextMenu)
+        self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
+            'customContextMenuRequested(const QPoint&)'),
+                     self.on_context_menuInbox)
+        self.popMenuInbox = QtGui.QMenu(self)
+        self.popMenuInbox.addAction(self.actionForceHtml)
+        self.popMenuInbox.addAction(self.actionMarkUnread)
+        self.popMenuInbox.addSeparator()
+        self.popMenuInbox.addAction(self.actionReply)
+        self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
+        self.popMenuInbox.addSeparator()
+        self.popMenuInbox.addAction(self.actionSaveMessageAs)
+        self.popMenuInbox.addAction(self.actionTrashInboxMessage)
+
+    def init_identities_popup_menu(self):
+        # Popup menu for the Your Identities tab
+        self.ui.addressContextMenuToolbar = QtGui.QToolBar()
+        # Actions
+        self.actionNew = self.ui.addressContextMenuToolbar.addAction(_translate(
+            "MainWindow", "New"), self.on_action_YourIdentitiesNew)
+        self.actionEnable = self.ui.addressContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Enable"), self.on_action_YourIdentitiesEnable)
+        self.actionDisable = self.ui.addressContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Disable"), self.on_action_YourIdentitiesDisable)
+        self.actionSetAvatar = self.ui.addressContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Set avatar..."),
+            self.on_action_YourIdentitiesSetAvatar)
+        self.actionClipboard = self.ui.addressContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Copy address to clipboard"),
+            self.on_action_YourIdentitiesClipboard)
+        self.actionSpecialAddressBehavior = self.ui.addressContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Special address behavior..."),
+            self.on_action_SpecialAddressBehaviorDialog)
+        self.ui.tableWidgetYourIdentities.setContextMenuPolicy(
+            QtCore.Qt.CustomContextMenu)
+        self.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL(
+            'customContextMenuRequested(const QPoint&)'),
+                     self.on_context_menuYourIdentities)
+        self.popMenu = QtGui.QMenu(self)
+        self.popMenu.addAction(self.actionNew)
+        self.popMenu.addSeparator()
+        self.popMenu.addAction(self.actionClipboard)
+        self.popMenu.addSeparator()
+        self.popMenu.addAction(self.actionEnable)
+        self.popMenu.addAction(self.actionDisable)
+        self.popMenu.addAction(self.actionSetAvatar)
+        self.popMenu.addAction(self.actionSpecialAddressBehavior)
+
+    def init_addressbook_popup_menu(self):
+        # Popup menu for the Address Book page
+        self.ui.addressBookContextMenuToolbar = QtGui.QToolBar()
+        # Actions
+        self.actionAddressBookSend = self.ui.addressBookContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Send message to this address"),
+            self.on_action_AddressBookSend)
+        self.actionAddressBookClipboard = self.ui.addressBookContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Copy address to clipboard"),
+            self.on_action_AddressBookClipboard)
+        self.actionAddressBookSubscribe = self.ui.addressBookContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Subscribe to this address"),
+            self.on_action_AddressBookSubscribe)
+        self.actionAddressBookSetAvatar = self.ui.addressBookContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Set avatar..."),
+            self.on_action_AddressBookSetAvatar)
+        self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Add New Address"), self.on_action_AddressBookNew)
+        self.actionAddressBookDelete = self.ui.addressBookContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Delete"), self.on_action_AddressBookDelete)
+        self.ui.tableWidgetAddressBook.setContextMenuPolicy(
+            QtCore.Qt.CustomContextMenu)
+        self.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL(
+            'customContextMenuRequested(const QPoint&)'),
+                     self.on_context_menuAddressBook)
+        self.popMenuAddressBook = QtGui.QMenu(self)
+        self.popMenuAddressBook.addAction(self.actionAddressBookSend)
+        self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
+        self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
+        self.popMenuAddressBook.addAction(self.actionAddressBookSetAvatar)
+        self.popMenuAddressBook.addSeparator()
+        self.popMenuAddressBook.addAction(self.actionAddressBookNew)
+        self.popMenuAddressBook.addAction(self.actionAddressBookDelete)
+
+    def init_subscriptions_popup_menu(self):
+        # Popup menu for the Subscriptions page
+        self.ui.subscriptionsContextMenuToolbar = QtGui.QToolBar()
+        # Actions
+        self.actionsubscriptionsNew = self.ui.subscriptionsContextMenuToolbar.addAction(
+            _translate("MainWindow", "New"), self.on_action_SubscriptionsNew)
+        self.actionsubscriptionsDelete = self.ui.subscriptionsContextMenuToolbar.addAction(
+            _translate("MainWindow", "Delete"),
+            self.on_action_SubscriptionsDelete)
+        self.actionsubscriptionsClipboard = self.ui.subscriptionsContextMenuToolbar.addAction(
+            _translate("MainWindow", "Copy address to clipboard"),
+            self.on_action_SubscriptionsClipboard)
+        self.actionsubscriptionsEnable = self.ui.subscriptionsContextMenuToolbar.addAction(
+            _translate("MainWindow", "Enable"),
+            self.on_action_SubscriptionsEnable)
+        self.actionsubscriptionsDisable = self.ui.subscriptionsContextMenuToolbar.addAction(
+            _translate("MainWindow", "Disable"),
+            self.on_action_SubscriptionsDisable)
+        self.actionsubscriptionsSetAvatar = self.ui.subscriptionsContextMenuToolbar.addAction(
+            _translate("MainWindow", "Set avatar..."),
+            self.on_action_SubscriptionsSetAvatar)
+        self.ui.tableWidgetSubscriptions.setContextMenuPolicy(
+            QtCore.Qt.CustomContextMenu)
+        self.connect(self.ui.tableWidgetSubscriptions, QtCore.SIGNAL(
+            'customContextMenuRequested(const QPoint&)'),
+                     self.on_context_menuSubscriptions)
+        self.popMenuSubscriptions = QtGui.QMenu(self)
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
+        self.popMenuSubscriptions.addSeparator()
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsEnable)
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsDisable)
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsSetAvatar)
+        self.popMenuSubscriptions.addSeparator()
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
+
+    def init_sent_popup_menu(self):
+        # Popup menu for the Sent page
+        self.ui.sentContextMenuToolbar = QtGui.QToolBar()
+        # Actions
+        self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Move to Trash"), self.on_action_SentTrash)
+        self.actionSentClipboard = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Copy destination address to clipboard"),
+            self.on_action_SentClipboard)
+        self.actionForceSend = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Force send"), self.on_action_ForceSend)
+        self.ui.tableWidgetSent.setContextMenuPolicy(
+            QtCore.Qt.CustomContextMenu)
+        self.connect(self.ui.tableWidgetSent, QtCore.SIGNAL(
+            'customContextMenuRequested(const QPoint&)'),
+                     self.on_context_menuSent)
+        # self.popMenuSent = QtGui.QMenu( self )
+        # self.popMenuSent.addAction( self.actionSentClipboard )
+        # self.popMenuSent.addAction( self.actionTrashSentMessage )
+
+    def init_blacklist_popup_menu(self):
+        # Popup menu for the Blacklist page
+        self.ui.blacklistContextMenuToolbar = QtGui.QToolBar()
+        # Actions
+        self.actionBlacklistNew = self.ui.blacklistContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Add new entry"), self.on_action_BlacklistNew)
+        self.actionBlacklistDelete = self.ui.blacklistContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Delete"), self.on_action_BlacklistDelete)
+        self.actionBlacklistClipboard = self.ui.blacklistContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Copy address to clipboard"),
+            self.on_action_BlacklistClipboard)
+        self.actionBlacklistEnable = self.ui.blacklistContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Enable"), self.on_action_BlacklistEnable)
+        self.actionBlacklistDisable = self.ui.blacklistContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Disable"), self.on_action_BlacklistDisable)
+        self.actionBlacklistSetAvatar = self.ui.blacklistContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Set avatar..."),
+            self.on_action_BlacklistSetAvatar)
+        self.ui.tableWidgetBlacklist.setContextMenuPolicy(
+            QtCore.Qt.CustomContextMenu)
+        self.connect(self.ui.tableWidgetBlacklist, QtCore.SIGNAL(
+            'customContextMenuRequested(const QPoint&)'),
+                     self.on_context_menuBlacklist)
+        self.popMenuBlacklist = QtGui.QMenu(self)
+        # self.popMenuBlacklist.addAction( self.actionBlacklistNew )
+        self.popMenuBlacklist.addAction(self.actionBlacklistDelete)
+        self.popMenuBlacklist.addSeparator()
+        self.popMenuBlacklist.addAction(self.actionBlacklistClipboard)
+        self.popMenuBlacklist.addSeparator()
+        self.popMenuBlacklist.addAction(self.actionBlacklistEnable)
+        self.popMenuBlacklist.addAction(self.actionBlacklistDisable)
+        self.popMenuBlacklist.addAction(self.actionBlacklistSetAvatar)
+
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_MainWindow()
@@ -222,206 +486,13 @@ class MyForm(QtGui.QMainWindow):
         self.timer.start(2000) # milliseconds
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
-        # FILE MENU and other buttons
-        QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
-            "triggered()"), self.quit)
-        QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL(
-            "triggered()"), self.click_actionManageKeys)
-        QtCore.QObject.connect(self.ui.actionDeleteAllTrashedMessages, QtCore.SIGNAL(
-            "triggered()"), self.click_actionDeleteAllTrashedMessages)
-        QtCore.QObject.connect(self.ui.actionRegenerateDeterministicAddresses, QtCore.SIGNAL(
-            "triggered()"), self.click_actionRegenerateDeterministicAddresses)
-        QtCore.QObject.connect(self.ui.actionJoinChan, QtCore.SIGNAL(
-            "triggered()"), self.click_actionJoinChan) # also used for creating chans.
-        QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL(
-            "clicked()"), self.click_NewAddressDialog)
-        QtCore.QObject.connect(self.ui.comboBoxSendFrom, QtCore.SIGNAL(
-            "activated(int)"), self.redrawLabelFrom)
-        QtCore.QObject.connect(self.ui.pushButtonAddAddressBook, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonAddAddressBook)
-        QtCore.QObject.connect(self.ui.pushButtonAddSubscription, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonAddSubscription)
-        QtCore.QObject.connect(self.ui.pushButtonAddBlacklist, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonAddBlacklist)
-        QtCore.QObject.connect(self.ui.pushButtonSend, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonSend)
-        QtCore.QObject.connect(self.ui.pushButtonLoadFromAddressBook, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonLoadFromAddressBook)
-        QtCore.QObject.connect(self.ui.pushButtonFetchNamecoinID, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonFetchNamecoinID)
-        QtCore.QObject.connect(self.ui.radioButtonBlacklist, QtCore.SIGNAL(
-            "clicked()"), self.click_radioButtonBlacklist)
-        QtCore.QObject.connect(self.ui.radioButtonWhitelist, QtCore.SIGNAL(
-            "clicked()"), self.click_radioButtonWhitelist)
-        QtCore.QObject.connect(self.ui.pushButtonStatusIcon, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonStatusIcon)
-        QtCore.QObject.connect(self.ui.actionSettings, QtCore.SIGNAL(
-            "triggered()"), self.click_actionSettings)
-        QtCore.QObject.connect(self.ui.actionAbout, QtCore.SIGNAL(
-            "triggered()"), self.click_actionAbout)
-        QtCore.QObject.connect(self.ui.actionHelp, QtCore.SIGNAL(
-            "triggered()"), self.click_actionHelp)
-
-        # Popup menu for the Inbox tab
-        self.ui.inboxContextMenuToolbar = QtGui.QToolBar()
-          # Actions
-        self.actionReply = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Reply"), self.on_action_InboxReply)
-        self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Add sender to your Address Book"), self.on_action_InboxAddSenderToAddressBook)
-        self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction(
-            _translate("MainWindow", "Move to Trash"), self.on_action_InboxTrash)
-        self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "View HTML code as formatted text"), self.on_action_InboxMessageForceHtml)
-        self.actionSaveMessageAs = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Save message as..."), self.on_action_InboxSaveMessageAs)
-        self.actionMarkUnread = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Mark Unread"), self.on_action_InboxMarkUnread)
-        self.ui.tableWidgetInbox.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'), self.on_context_menuInbox)
-        self.popMenuInbox = QtGui.QMenu(self)
-        self.popMenuInbox.addAction(self.actionForceHtml)
-        self.popMenuInbox.addAction(self.actionMarkUnread)
-        self.popMenuInbox.addSeparator()
-        self.popMenuInbox.addAction(self.actionReply)
-        self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
-        self.popMenuInbox.addSeparator()
-        self.popMenuInbox.addAction( self.actionSaveMessageAs )
-        self.popMenuInbox.addAction( self.actionTrashInboxMessage )
-
-        # Popup menu for the Your Identities tab
-        self.ui.addressContextMenuToolbar = QtGui.QToolBar()
-          # Actions
-        self.actionNew = self.ui.addressContextMenuToolbar.addAction(_translate(
-            "MainWindow", "New"), self.on_action_YourIdentitiesNew)
-        self.actionEnable = self.ui.addressContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Enable"), self.on_action_YourIdentitiesEnable)
-        self.actionDisable = self.ui.addressContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Disable"), self.on_action_YourIdentitiesDisable)
-        self.actionSetAvatar = self.ui.addressContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Set avatar..."), self.on_action_YourIdentitiesSetAvatar)
-        self.actionClipboard = self.ui.addressContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Copy address to clipboard"), self.on_action_YourIdentitiesClipboard)
-        self.actionSpecialAddressBehavior = self.ui.addressContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Special address behavior..."), self.on_action_SpecialAddressBehaviorDialog)
-        self.ui.tableWidgetYourIdentities.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'), self.on_context_menuYourIdentities)
-        self.popMenu = QtGui.QMenu(self)
-        self.popMenu.addAction(self.actionNew)
-        self.popMenu.addSeparator()
-        self.popMenu.addAction(self.actionClipboard)
-        self.popMenu.addSeparator()
-        self.popMenu.addAction(self.actionEnable)
-        self.popMenu.addAction(self.actionDisable)
-        self.popMenu.addAction(self.actionSetAvatar)
-        self.popMenu.addAction(self.actionSpecialAddressBehavior)
-
-        # Popup menu for the Address Book page
-        self.ui.addressBookContextMenuToolbar = QtGui.QToolBar()
-          # Actions
-        self.actionAddressBookSend = self.ui.addressBookContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Send message to this address"), self.on_action_AddressBookSend)
-        self.actionAddressBookClipboard = self.ui.addressBookContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Copy address to clipboard"), self.on_action_AddressBookClipboard)
-        self.actionAddressBookSubscribe = self.ui.addressBookContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Subscribe to this address"), self.on_action_AddressBookSubscribe)
-        self.actionAddressBookSetAvatar = self.ui.addressBookContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Set avatar..."), self.on_action_AddressBookSetAvatar)
-        self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Add New Address"), self.on_action_AddressBookNew)
-        self.actionAddressBookDelete = self.ui.addressBookContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Delete"), self.on_action_AddressBookDelete)
-        self.ui.tableWidgetAddressBook.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'), self.on_context_menuAddressBook)
-        self.popMenuAddressBook = QtGui.QMenu(self)
-        self.popMenuAddressBook.addAction(self.actionAddressBookSend)
-        self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
-        self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
-        self.popMenuAddressBook.addAction(self.actionAddressBookSetAvatar)
-        self.popMenuAddressBook.addSeparator()
-        self.popMenuAddressBook.addAction(self.actionAddressBookNew)
-        self.popMenuAddressBook.addAction(self.actionAddressBookDelete)
-
-        # Popup menu for the Subscriptions page
-        self.ui.subscriptionsContextMenuToolbar = QtGui.QToolBar()
-          # Actions
-        self.actionsubscriptionsNew = self.ui.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "New"), self.on_action_SubscriptionsNew)
-        self.actionsubscriptionsDelete = self.ui.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "Delete"), self.on_action_SubscriptionsDelete)
-        self.actionsubscriptionsClipboard = self.ui.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "Copy address to clipboard"), self.on_action_SubscriptionsClipboard)
-        self.actionsubscriptionsEnable = self.ui.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "Enable"), self.on_action_SubscriptionsEnable)
-        self.actionsubscriptionsDisable = self.ui.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "Disable"), self.on_action_SubscriptionsDisable)
-        self.actionsubscriptionsSetAvatar = self.ui.subscriptionsContextMenuToolbar.addAction(
-            _translate("MainWindow", "Set avatar..."), self.on_action_SubscriptionsSetAvatar)
-        self.ui.tableWidgetSubscriptions.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetSubscriptions, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'), self.on_context_menuSubscriptions)
-        self.popMenuSubscriptions = QtGui.QMenu(self)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
-        self.popMenuSubscriptions.addSeparator()
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsEnable)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsDisable)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsSetAvatar)
-        self.popMenuSubscriptions.addSeparator()
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
-
-        # Popup menu for the Sent page
-        self.ui.sentContextMenuToolbar = QtGui.QToolBar()
-          # Actions
-        self.actionTrashSentMessage = self.ui.sentContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Move to Trash"), self.on_action_SentTrash)
-        self.actionSentClipboard = self.ui.sentContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Copy destination address to clipboard"), self.on_action_SentClipboard)
-        self.actionForceSend = self.ui.sentContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Force send"), self.on_action_ForceSend)
-        self.ui.tableWidgetSent.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetSent, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'), self.on_context_menuSent)
-        # self.popMenuSent = QtGui.QMenu( self )
-        # self.popMenuSent.addAction( self.actionSentClipboard )
-        # self.popMenuSent.addAction( self.actionTrashSentMessage )
-
-        # Popup menu for the Blacklist page
-        self.ui.blacklistContextMenuToolbar = QtGui.QToolBar()
-          # Actions
-        self.actionBlacklistNew = self.ui.blacklistContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Add new entry"), self.on_action_BlacklistNew)
-        self.actionBlacklistDelete = self.ui.blacklistContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Delete"), self.on_action_BlacklistDelete)
-        self.actionBlacklistClipboard = self.ui.blacklistContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Copy address to clipboard"), self.on_action_BlacklistClipboard)
-        self.actionBlacklistEnable = self.ui.blacklistContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Enable"), self.on_action_BlacklistEnable)
-        self.actionBlacklistDisable = self.ui.blacklistContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Disable"), self.on_action_BlacklistDisable)
-        self.actionBlacklistSetAvatar = self.ui.blacklistContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Set avatar..."), self.on_action_BlacklistSetAvatar)
-        self.ui.tableWidgetBlacklist.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetBlacklist, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'), self.on_context_menuBlacklist)
-        self.popMenuBlacklist = QtGui.QMenu(self)
-        # self.popMenuBlacklist.addAction( self.actionBlacklistNew )
-        self.popMenuBlacklist.addAction(self.actionBlacklistDelete)
-        self.popMenuBlacklist.addSeparator()
-        self.popMenuBlacklist.addAction(self.actionBlacklistClipboard)
-        self.popMenuBlacklist.addSeparator()
-        self.popMenuBlacklist.addAction(self.actionBlacklistEnable)
-        self.popMenuBlacklist.addAction(self.actionBlacklistDisable)
-        self.popMenuBlacklist.addAction(self.actionBlacklistSetAvatar)
+        self.init_file_menu()
+        self.init_inbox_popup_menu()
+        self.init_identities_popup_menu()
+        self.init_addressbook_popup_menu()
+        self.init_subscriptions_popup_menu()
+        self.init_sent_popup_menu()
+        self.init_blacklist_popup_menu()
 
         # Initialize the user's list of addresses on the 'Your Identities' tab.
         configSections = shared.config.sections()
@@ -811,8 +882,8 @@ class MyForm(QtGui.QMainWindow):
             where = "toaddress || fromaddress || subject || message"
 
         sqlStatement = '''
-            SELECT msgid, toaddress, fromaddress, subject, received, read 
-            FROM inbox WHERE folder="inbox" AND %s LIKE ? 
+            SELECT msgid, toaddress, fromaddress, subject, received, read
+            FROM inbox WHERE folder="inbox" AND %s LIKE ?
             ORDER BY received
             ''' % (where,)
 
@@ -858,52 +929,52 @@ class MyForm(QtGui.QMainWindow):
             # message row
             self.ui.tableWidgetInbox.insertRow(0)
             # to
-            newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
-            newItem.setToolTip(unicode(toLabel, 'utf-8'))
-            newItem.setFlags(
+            to_item = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
+            to_item.setToolTip(unicode(toLabel, 'utf-8'))
+            to_item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
-                newItem.setFont(font)
-            newItem.setData(Qt.UserRole, str(toAddress))
+                to_item.setFont(font)
+            to_item.setData(Qt.UserRole, str(toAddress))
             if shared.safeConfigGetBoolean(toAddress, 'mailinglist'):
-                newItem.setTextColor(QtGui.QColor(137, 04, 177)) # magenta
+                to_item.setTextColor(QtGui.QColor(137, 04, 177)) # magenta
             if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
-                newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
-            newItem.setIcon(avatarize(toAddress))
-            self.ui.tableWidgetInbox.setItem(0, 0, newItem)
+                to_item.setTextColor(QtGui.QColor(216, 119, 0)) # orange
+            to_item.setIcon(avatarize(toAddress))
+            self.ui.tableWidgetInbox.setItem(0, 0, to_item)
             # from
-            newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
-            newItem.setToolTip(unicode(fromLabel, 'utf-8'))
-            newItem.setFlags(
+            from_item = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
+            from_item.setToolTip(unicode(fromLabel, 'utf-8'))
+            from_item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
-                newItem.setFont(font)
-            newItem.setData(Qt.UserRole, str(fromAddress))
+                from_item.setFont(font)
+            from_item.setData(Qt.UserRole, str(fromAddress))
             if shared.safeConfigGetBoolean(str(fromAddress), 'chan'):
-                newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
-            newItem.setIcon(avatarize(fromAddress))
-            self.ui.tableWidgetInbox.setItem(0, 1, newItem)
+                from_item.setTextColor(QtGui.QColor(216, 119, 0)) # orange
+            from_item.setIcon(avatarize(fromAddress))
+            self.ui.tableWidgetInbox.setItem(0, 1, from_item)
             # subject
-            newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
-            newItem.setToolTip(unicode(subject, 'utf-8'))
-            #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table (and thus in memory); we'll use a SQL query when we need to display it.
-            newItem.setFlags(
+            subject_item = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
+            subject_item.setToolTip(unicode(subject, 'utf-8'))
+            subject_item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
-                newItem.setFont(font)
-            self.ui.tableWidgetInbox.setItem(0, 2, newItem)
+                subject_item.setFont(font)
+            self.ui.tableWidgetInbox.setItem(0, 2, subject_item)
             # time received
-            newItem = myTableWidgetItem(unicode(strftime(shared.config.get(
+            time_item = myTableWidgetItem(unicode(strftime(shared.config.get(
                 'bitmessagesettings', 'timeformat'), localtime(int(received))), 'utf-8'))
-            newItem.setToolTip(unicode(strftime(shared.config.get(
+            time_item.setToolTip(unicode(strftime(shared.config.get(
                 'bitmessagesettings', 'timeformat'), localtime(int(received))), 'utf-8'))
-            newItem.setData(Qt.UserRole, QByteArray(msgid))
-            newItem.setData(33, int(received))
-            newItem.setFlags(
+            time_item.setData(Qt.UserRole, QByteArray(msgid))
+            time_item.setData(33, int(received))
+            time_item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
-                newItem.setFont(font)
-            self.ui.tableWidgetInbox.setItem(0, 3, newItem)
+                time_item.setFont(font)
+            self.ui.tableWidgetInbox.setItem(0, 3, time_item)
+
         self.ui.tableWidgetInbox.sortItems(3, Qt.DescendingOrder)
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
 
