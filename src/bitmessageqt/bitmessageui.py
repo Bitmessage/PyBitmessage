@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Tue Oct 01 16:47:57 2013
-#      by: PyQt4 UI code generator 4.10.3
+# Created: Sat Nov  2 18:01:09 2013
+#      by: PyQt4 UI code generator 4.10
 #
 # WARNING! All changes made in this file will be lost!
 
