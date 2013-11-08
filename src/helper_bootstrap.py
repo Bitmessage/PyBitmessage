@@ -13,6 +13,7 @@ def knownNodes():
         pickleFile = open(shared.appdata + 'knownnodes.dat', 'rb')
         loadedKnownNodes = pickle.load(pickleFile)
         pickleFile.close()
+        
         # The old format of storing knownNodes was as a 'host: (port, time)'
         # mapping. The new format is as 'Peer: time' pairs. If we loaded
         # data in the old format, transform it to the new style.
@@ -28,7 +29,7 @@ def knownNodes():
     except:
         shared.knownNodes = defaultKnownNodes.createDefaultKnownNodes(shared.appdata)
     if shared.config.getint('bitmessagesettings', 'settingsversion') > 7:
-        logger.info('Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.')
+        logging.error('Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.')
         raise SystemExit
 
 def dns():

@@ -981,14 +981,16 @@ if shared.useVeryEasyProofOfWorkForTesting:
 
 class Main:
     def start(self, daemon=False):
+        
         shared.daemon = daemon
         # is the application already running?  If yes then exit.
         thisapp = singleton.singleinstance()
 
         signal.signal(signal.SIGINT, helper_generic.signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
-
+        
         helper_bootstrap.knownNodes()
+
         # Start the address generation thread
         addressGeneratorThread = addressGenerator()
         addressGeneratorThread.daemon = True  # close the main program even if there are threads left
@@ -1069,7 +1071,7 @@ class Main:
         return {'address':address,'port':port}
 
 if __name__ == "__main__":
-    shared.doLogging = True
+    debug.startLogger('both')# options: console, file, both
     
     mainprogram = Main()
     mainprogram.start()
