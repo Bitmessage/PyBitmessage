@@ -18,8 +18,8 @@ inventory (clears data more than 2 days and 12 hours old)
 pubkeys (clears pubkeys older than 4 weeks old which we have not used personally)
 
 It resends messages when there has been no response:
-resends getpubkey messages in 4 days (then 8 days, then 16 days, etc...)
-resends msg messages in 4 days (then 8 days, then 16 days, etc...)
+resends getpubkey messages in 5 days (then 10 days, then 20 days, etc...)
+resends msg messages in 5 days (then 10 days, then 20 days, etc...)
 
 '''
 
@@ -31,11 +31,16 @@ class singleCleaner(threading.Thread):
 
     def run(self):
         timeWeLastClearedInventoryAndPubkeysTables = 0
+        try:
+            shared.maximumLengthOfTimeToBotherResendingMessages = (float(shared.config.get('bitmessagesettings', 'stopresendingafterxdays')) * 24 * 60 * 60) + (float(shared.config.get('bitmessagesettings', 'stopresendingafterxmonths')) * (60 * 60 * 24 *365)/12)
+        except:
+            # Either the user hasn't set stopresendingafterxdays and stopresendingafterxmonths yet or the options are missing from the config file.
+            shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
 
         while True:
             shared.UISignalQueue.put((
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
-            
+
             with shared.inventoryLock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
                 with SqlBulkExecute() as sql:
                     for hash, storedValue in shared.inventory.items():
@@ -75,7 +80,8 @@ class singleCleaner(threading.Thread):
                     int(time.time()) - shared.lengthOfTimeToHoldOnToAllPubkeys)
 
                 queryreturn = sqlQuery(
-                    '''select toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber FROM sent WHERE ((status='awaitingpubkey' OR status='msgsent') AND folder='sent') ''') # If the message's folder='trash' then we'll ignore it.
+                    '''select toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber FROM sent WHERE ((status='awaitingpubkey' OR status='msgsent') AND folder='sent' AND lastactiontime>?) ''',
+                    int(time.time()) - shared.maximumLengthOfTimeToBotherResendingMessages) # If the message's folder='trash' then we'll ignore it.
                 for row in queryreturn:
                     if len(row) < 5:
                         with shared.printLock:
@@ -86,21 +92,12 @@ class singleCleaner(threading.Thread):
                         break
                     toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber = row
                     if status == 'awaitingpubkey':
-                        if int(shared.config.get('bitmessagesettings', 'timeperiod'))> -1:#My implemenentation starts here.This if statement would become very big with my new code,so I created two function(see at the end of this file) to reduce code.I did.The default value of timeperiod is -1.This means that bitmessage resends messages every 5 days(they say 4 but actually is 5)for ever. If user changes the time period, timeperiod variable will have a specific value so the next if will be executed.AQWA
-                            if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))) and ((int(time.time()) - lastactiontime) < int(shared.config.get('bitmessagesettings', 'timeperiod'))):#This line does the magic.This if checks if the time that the public key was sent is longer than 5 days. Then it sends the it again. But with this extra AND it will not send it if this time is shorter than timeperiod.AQWA
-                                resendPubkey(pubkeyretrynumber,toripe)
-                        else:#first it wasn't an else statement here, I put it for this setting. I just copy-paste the code again. If someone has any suggestion how we can do this without this if-else just say it.AQWA
-                            if int(time.time()) - lastactiontime > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
-                                resendPubkey(pubkeyretrynumber,toripe)
+                        if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
+                            resendPubkey(pubkeyretrynumber,toripe)
                     else: # status == msgsent
-                        if int(shared.config.get('bitmessagesettings', 'timeperiod'))> -1:#same thing here but for the message.Actually this is the most important thing in the whole feature!.AQWA
-                            if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))) and ((int(time.time()) - lastactiontime) < int(shared.config.get('bitmessagesettings', 'timeperiod'))):#same thing here.My implementation in this file stops here.AQWA
-                                resendMsg(msgretrynumber,ackdata)
-                        else:
-                            if int(time.time()) - lastactiontime > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
-                                resendMsg(msgretrynumber,ackdata)
-                                   
-                
+                        if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
+                            resendMsg(msgretrynumber,ackdata)
+
                 # Let's also clear and reload shared.inventorySets to keep it from
                 # taking up an unnecessary amount of memory.
                 for streamNumber in shared.inventorySets:
@@ -130,15 +127,16 @@ class singleCleaner(threading.Thread):
                 shared.knownNodesLock.release()
                 shared.needToWriteKnownNodesToDisk = False
             time.sleep(300)
-    
-def resendPubkey(pubkeyretrynumber,toripe):#I just structured the code with these two functions. The code inside existed.It is not mine.AQWA
+
+
+def resendPubkey(pubkeyretrynumber,toripe):
     print 'It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.'
     try:
         del shared.neededPubkeys[
             toripe] # We need to take this entry out of the shared.neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
     except:
         pass
-    
+
     shared.UISignalQueue.put((
          'updateStatusBar', 'Doing work necessary to again attempt to request a public key...'))
     t = ()
@@ -160,6 +158,3 @@ def resendMsg(msgretrynumber,ackdata):
     shared.workerQueue.put(('sendmessage', ''))
     shared.UISignalQueue.put((
     'updateStatusBar', 'Doing work necessary to again attempt to deliver a message...'))
-                               
-
-                               
