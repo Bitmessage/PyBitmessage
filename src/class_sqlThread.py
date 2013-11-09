@@ -108,13 +108,13 @@ class sqlThread(threading.Thread):
         # and stores them in inbox_columns and sent_columns.
         # It then stores the starred column information in inbox_starred and sent_starred
 
-        # 1. For inbox table
+        # 1. For inbox table, check if starred column is already created.
         inbox_columns = self.cur.execute("PRAGMA table_info(inbox)")
-        inbox_starred = [(a, b, c, d, e, f) for a, b, c, d, e, f in inbox_columns if b == 'starred' ]
+        inbox_starred = [(col_num, col_name, c, d, e, f) for col_num, col_name, c, d, e, f in inbox_columns if col_name == 'starred' ]
 
-        # 2. For sent table
+        # 2. For sent table, check if starred column is already created.
         sent_columns = self.cur.execute("PRAGMA table_info(sent)")
-        sent_starred = [(a, b, c, d, e, f) for a, b, c, d, e, f in sent_columns if b == 'starred']
+        sent_starred = [(col_num, col_name, c, d, e, f) for col_num, col_name, c, d, e, f in sent_columns if col_name == 'starred']
 
         #If the column is not already added to the inbox table, ALTER TABLE command is called.
         if inbox_starred.__len__() == 0:
