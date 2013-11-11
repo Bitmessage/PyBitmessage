@@ -23,6 +23,7 @@ from specialaddressbehavior import *
 from settings import *
 from about import *
 from help import *
+from hashtag import *
 from iconglossary import *
 from connect import *
 import sys
@@ -56,6 +57,64 @@ except AttributeError:
 
 def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
+
+class hashtag(object):
+	
+    _instance = None
+    class Singleton:
+        def __init__(self):
+			#define class variables here 
+            self.string = ""
+            self.dic = {}
+            self.array = []
+			
+    def __init__(self):
+        if hashtag._instance is None:
+            # Create and remember instanc
+			hashtag._instance = hashtag.Singleton()
+        self._EventHandler_instance = hashtag._instance
+		
+    def __getattr__(self, aAttr):
+        return getattr(self._instance, aAttr)
+
+    def __setattr__(self, aAttr, aValue):
+        return setattr(self._instance, aAttr, aValue)
+    
+    def update_array(self):
+        for w in sorted(self.dic, key=self.dic.get, reverse=True):
+            self.array.append(w)
+
+    def extract (self,sentence):
+        array = []
+        pattern='#'
+        count = 0
+        for word in sentence.split(' '):
+            for word2 in word.split('\\n'):
+                if word2.startswith(pattern):
+                    for word3 in word2.split('#'):
+                        if(word3 != ''):
+                            array.append('#'+word3.lower())
+                            print " "+word3+"\n"
+                            count+=1
+        self.update_dic(array)
+        return count
+		#return array
+		
+    def update_dic (self, array):
+        for item in array:
+            if (self.dic.get(item)==None):
+                self.dic[item]=1
+            else:
+                self.dic[item]=self.dic[item]+1
+                
+    def get_color(self, value , sum):
+        x = value/float(sum)
+        if(x==0.5):
+            return 0xffff
+        elif(x>0.5):
+            return int(x * 255)
+        else: 
+            return int(255*x)+0xff00
 
 
 def identiconize(address):
@@ -223,6 +282,8 @@ class MyForm(QtGui.QMainWindow):
             "triggered()"), self.click_actionAbout)
         QtCore.QObject.connect(self.ui.actionHelp, QtCore.SIGNAL(
             "triggered()"), self.click_actionHelp)
+        QtCore.QObject.connect(self.ui.actionHashtag, QtCore.SIGNAL(
+            "triggered()"), self.click_actionHashtag)
 
     def init_inbox_popup_menu(self):
         # Popup menu for the Inbox tab
@@ -2166,6 +2227,10 @@ class MyForm(QtGui.QMainWindow):
     def click_actionAbout(self):
         self.aboutDialogInstance = aboutDialog(self)
         self.aboutDialogInstance.exec_()
+        
+    def click_actionHashtag(self):
+        self.hashtagDialogInstance = hashtagDialog(self)
+        self.hashtagDialogInstance.exec_()
 
     def click_actionSettings(self):
         self.settingsDialogInstance = settingsDialog(self)
@@ -3213,6 +3278,53 @@ class aboutDialog(QtGui.QDialog):
         self.ui.setupUi(self)
         self.parent = parent
         self.ui.labelVersion.setText('version ' + shared.softwareVersion)
+        
+class hashtagDialog(QtGui.QDialog):
+    
+    def __init__(self, parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_hashtagDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        
+        self.h1 = hashtag()
+        self.h1.dic.clear()
+        self.h1.array = []
+        self.size= 7
+        self.sum = 0
+        
+        day = 86400
+        week = 604800
+        month = 1814400 #assume a month is 30 days
+        
+        self.ui.tableWidgetHashtag.setRowCount(self.size)
+        
+        queryreturn = sqlQuery('''SELECT message FROM inbox WHERE folder='inbox' AND received > ? ''', time.time()-day)
+        self.ExtractAndUpdateUI(queryreturn,0,self.size)
+            
+        queryreturn = sqlQuery('''SELECT message FROM inbox WHERE folder='inbox' AND received BETWEEN ? AND ?''', time.time()-week,time.time()-day)
+        self.ExtractAndUpdateUI(queryreturn,1,self.size)
+        
+        
+        queryreturn = sqlQuery('''SELECT message FROM inbox WHERE folder='inbox' AND received BETWEEN ? AND ?''', time.time()-month,time.time()-week)
+        self.ExtractAndUpdateUI(queryreturn,2,self.size)
+        
+        queryreturn = sqlQuery('''SELECT message FROM inbox WHERE folder='inbox' AND received < ?''', time.time()-month)
+        self.ExtractAndUpdateUI(queryreturn,3,self.size)
+        
+    def ExtractAndUpdateUI(self,queryreturn,column,size):
+        for row in queryreturn:
+            self.sum+=self.h1.extract(str(row)[2:-3])
+        self.h1.update_array()
+        
+        for i in range(0,size):
+            if len(self.h1.array) > i:
+                newItem = QtGui.QTableWidgetItem(unicode(self.h1.array[i], 'utf-8'))
+                ##the following two lines show the hashtags in colors varying from green to red
+                #color = self.h1.get_color(self.h1.dic[self.h1.array[i]],self.sum)
+                #newItem.setTextColor(QtGui.QColor((color>>8)&0xff, color&0xff, 0))
+                self.ui.tableWidgetHashtag.setItem(i, column, newItem)
+        self.h1.array = []
 
 
 class regenerateAddressesDialog(QtGui.QDialog):

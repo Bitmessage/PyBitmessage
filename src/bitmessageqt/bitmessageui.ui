@@ -1055,7 +1055,7 @@ p, li { white-space: pre-wrap; }
      <x>0</x>
      <y>0</y>
      <width>885</width>
-     <height>27</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
@@ -1081,8 +1081,15 @@ p, li { white-space: pre-wrap; }
     <addaction name="actionHelp"/>
     <addaction name="actionAbout"/>
    </widget>
+   <widget class="QMenu" name="menuView">
+    <property name="title">
+     <string>View</string>
+    </property>
+    <addaction name="actionHashtag"/>
+   </widget>
    <addaction name="menuFile"/>
    <addaction name="menuSettings"/>
+   <addaction name="menuView"/>
    <addaction name="menuHelp"/>
   </widget>
   <widget class="QStatusBar" name="statusbar">
@@ -1188,6 +1195,11 @@ p, li { white-space: pre-wrap; }
    </property>
    <property name="text">
     <string>Join / Create chan</string>
+   </property>
+  </action>
+  <action name="actionHashtag">
+   <property name="text">
+    <string>Hashtags</string>
    </property>
   </action>
  </widget>
