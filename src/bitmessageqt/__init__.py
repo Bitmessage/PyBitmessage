@@ -1763,17 +1763,24 @@ class MyForm(QtGui.QMainWindow):
 
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
-        toAddresses = str(self.ui.lineEditTo.text())
+        toLabels = str(self.ui.lineEditTo.text())
         fromAddress = str(self.ui.labelFrom.text())
         subject = str(self.ui.lineEditSubject.text().toUtf8())
         message = str(
             self.ui.textEditMessage.document().toPlainText().toUtf8())
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
-            toAddressesList = [s.strip()
-                               for s in toAddresses.replace(',', ';').split(';')]
-            toAddressesList = list(set(
-                toAddressesList))  # remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice.
-            for toAddress in toAddressesList:
+            toLabelsList = [s.strip()
+                    for s in toLabels.replace(',', ';').split(';')]
+            toLabelsList = list(set(
+                    toLabelsList))  # remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice.
+            for toLabel in toLabelsList:
+                toAddress = ''
+                queryreturn = sqlQuery('''select address from addressbook where label=?''', toLabel)
+                if queryreturn != []:
+                    for row in queryreturn:
+                        toAddress, = row
+                else:
+                    toAddress = toLabel
                 if toAddress != '':
                     status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                         toAddress)
@@ -2083,19 +2090,28 @@ class MyForm(QtGui.QMainWindow):
     def addEntryToAddressBook(self,address,label):
         queryreturn = sqlQuery('''select * from addressbook where address=?''', address)
         if queryreturn == []:
-            self.ui.tableWidgetAddressBook.setSortingEnabled(False)
-            self.ui.tableWidgetAddressBook.insertRow(0)
-            newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
-            newItem.setIcon(avatarize(address))
-            self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem = QtGui.QTableWidgetItem(address)
-            newItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
-            self.ui.tableWidgetAddressBook.setSortingEnabled(True)
-            sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(label), address)
-            self.rerenderInboxFromLabels()
-            self.rerenderSentToLabels()
+            queryreturn = sqlQuery('''select * from addressbook where label=?''', str(label))
+            if queryreturn == []:
+                if (str(label) == '' or str(label).isspace()):
+                    self.statusBar().showMessage(_translate(
+                            "MainWindow", "Error: Please enter label for this address that contains at least one non-space character."))
+                else:
+                    self.ui.tableWidgetAddressBook.setSortingEnabled(False)
+                    self.ui.tableWidgetAddressBook.insertRow(0)
+                    newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+                    self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
+                    newItem = QtGui.QTableWidgetItem(address)
+                    newItem.setFlags(
+                        QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+                    self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
+                    self.ui.tableWidgetAddressBook.setSortingEnabled(True)
+                    sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(label), address)
+                    self.rerenderAddressBook()
+                    self.rerenderInboxFromLabels()
+                    self.rerenderSentToLabels()
+            else:
+                self.statusBar().showMessage(_translate(
+                    "MainWindow", "Error: You cannot add the same label to your address book twice. Try renaming the new one if you want."))
         else:
             self.statusBar().showMessage(_translate(
                         "MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
@@ -2577,9 +2593,13 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.labelFrom.setText(toAddressAtCurrentInboxRow)
             self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(toAddressAtCurrentInboxRow)
-
-        self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
-        
+        queryreturn = sqlQuery('''select label from addressbook where address=?''', str(fromAddressAtCurrentInboxRow))
+        if queryreturn == []:
+            self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
+        else:
+            for row in queryreturn:
+                fromLabelAtCurrentInboxRow, = row
+            self.ui.lineEditTo.setText(str(fromLabelAtCurrentInboxRow))            
         # If the previous message was to a chan then we should send our reply to the chan rather than to the particular person who sent the message.
         if shared.config.has_section(toAddressAtCurrentInboxRow):
             if shared.safeConfigGetBoolean(toAddressAtCurrentInboxRow, 'chan'):
@@ -2606,22 +2626,35 @@ class MyForm(QtGui.QMainWindow):
         queryreturn = sqlQuery('''select * from addressbook where address=?''',
                                addressAtCurrentInboxRow)
         if queryreturn == []:
+            index = 1
+            newLabel = 'Contact' + str(index)
+            flag = 1
+            while flag:
+                newLabel = 'Contact' + str(index)
+                queryreturn = sqlQuery('''select * from addressbook where label=?''', newLabel)
+                if queryreturn == []:
+                    flag = 0
+                else:
+                    index += 1
+            
             self.ui.tableWidgetAddressBook.insertRow(0)
             newItem = QtGui.QTableWidgetItem(
-                '--New entry. Change label in Address Book.--')
+                newLabel)
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem.setIcon(avatarize(addressAtCurrentInboxRow))
             newItem = QtGui.QTableWidgetItem(addressAtCurrentInboxRow)
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
             sqlExecute('''INSERT INTO addressbook VALUES (?,?)''',
-                       '--New entry. Change label in Address Book.--',
+                       newLabel,
                        addressAtCurrentInboxRow)
             self.ui.tabWidget.setCurrentIndex(5)
             self.ui.tableWidgetAddressBook.setCurrentCell(0, 0)
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Entry added to the Address Book. Edit the label to your liking."))
+            self.rerenderAddressBook()
+            self.rerenderInboxFromLabels()
+            self.rerenderSentToLabels()
         else:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
@@ -2748,13 +2781,13 @@ class MyForm(QtGui.QMainWindow):
             listOfSelectedRows[
                 self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
         for currentRow in listOfSelectedRows:
-            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
-                currentRow, 1).text()
+            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(
+                currentRow, 0).text().toUtf8()            
             if self.ui.lineEditTo.text() == '':
-                self.ui.lineEditTo.setText(str(addressAtCurrentRow))
+                self.ui.lineEditTo.setText(str(labelAtCurrentRow))
             else:
                 self.ui.lineEditTo.setText(str(
-                    self.ui.lineEditTo.text()) + '; ' + str(addressAtCurrentRow))
+                    self.ui.lineEditTo.text()) + '; ' + str(labelAtCurrentRow))
         if listOfSelectedRows == {}:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "No addresses selected."))
@@ -3148,11 +3181,22 @@ class MyForm(QtGui.QMainWindow):
         if currentRow >= 0:
             addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
                 currentRow, 1).text()
-            sqlExecute('''UPDATE addressbook set label=? WHERE address=?''',
-                       str(self.ui.tableWidgetAddressBook.item(currentRow, 0).text().toUtf8()),
-                       str(addressAtCurrentRow))
-        self.rerenderInboxFromLabels()
-        self.rerenderSentToLabels()
+            tmpLabel = str(self.ui.tableWidgetAddressBook.item(currentRow, 0).text().toUtf8())
+            if (tmpLabel.isspace() or tmpLabel == ''):
+                self.statusBar().showMessage(_translate(
+                    "MainWindow", "Error: Label should contain at least one non-space character."))
+            else:
+                queryreturn = sqlQuery('''select * from addressbook where label=?''', tmpLabel)
+                if queryreturn == []:
+                    sqlExecute('''UPDATE addressbook set label=? WHERE address=?''',
+                        tmpLabel,
+                        str(addressAtCurrentRow))
+                    self.rerenderInboxFromLabels()
+                    self.rerenderSentToLabels()
+                else:
+                    self.statusBar().showMessage(_translate(
+                        "MainWindow", "Error: You cannot add the same label to your address book twice. Try renaming the new one if you want."))
+            self.rerenderAddressBook()
 
     def tableWidgetSubscriptionsItemChanged(self):
         currentRow = self.ui.tableWidgetSubscriptions.currentRow()
@@ -3263,8 +3307,8 @@ class hashtagDialog(QtGui.QDialog):
             if len(self.h1.array) > i:
                 newItem = QtGui.QTableWidgetItem(unicode(self.h1.array[i], 'utf-8'))
                 ##the following two lines show the hashtags in colors varying from green to red
-                #color = self.h1.get_color(self.h1.dic[self.h1.array[i]],self.sum)
-                #newItem.setTextColor(QtGui.QColor((color>>8)&0xff, color&0xff, 0))
+                color = self.h1.get_color(self.h1.dic[self.h1.array[i]],self.sum)
+                newItem.setTextColor(QtGui.QColor((color>>8)&0xff, color&0xff, 0))
                 self.ui.tableWidgetHashtag.setItem(i, column, newItem)
         self.h1.array = []
 
