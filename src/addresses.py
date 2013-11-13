@@ -139,7 +139,7 @@ def decodeAddress(address):
         integer = decodeBase58(address)
     if integer == 0:
         status = 'invalidcharacters'
-        return status,0,0,0
+        return status,0,0,""
     #after converting to hex, the string will be prepended with a 0x and appended with a L
     hexdata = hex(integer)[2:-1]
 
@@ -161,7 +161,7 @@ def decodeAddress(address):
 
     if checksum != sha.digest()[0:4]:
         status = 'checksumfailed'
-        return status,0,0,0
+        return status,0,0,""
     #else:
     #    print 'checksum PASSED'
 
@@ -172,11 +172,11 @@ def decodeAddress(address):
     if addressVersionNumber > 4:
         print 'cannot decode address version numbers this high'
         status = 'versiontoohigh'
-        return status,0,0,0
+        return status,0,0,""
     elif addressVersionNumber == 0:
         print 'cannot decode address version numbers of zero.'
         status = 'versiontoohigh'
-        return status,0,0,0
+        return status,0,0,""
 
     streamNumber, bytesUsedByStreamNumber = decodeVarint(data[bytesUsedByVersionNumber:])
     #print streamNumber
@@ -191,16 +191,16 @@ def decodeAddress(address):
         elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 18:
             return status,addressVersionNumber,streamNumber,'\x00\x00'+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
         elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) < 18:
-            return 'ripetooshort',0,0,0
+            return 'ripetooshort',0,0,""
         elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) > 20:
-            return 'ripetoolong',0,0,0
+            return 'ripetoolong',0,0,""
         else:
-            return 'otherproblem',0,0,0
+            return 'otherproblem',0,0,""
     elif addressVersionNumber == 4:
         if len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) > 20:
-            return 'ripetoolong',0,0,0
+            return 'ripetoolong',0,0,""
         elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) < 4:
-            return 'ripetooshort',0,0,0
+            return 'ripetooshort',0,0,""
         else:
             x00string = '\x00' * (20 - len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]))
             return status,addressVersionNumber,streamNumber,x00string+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]

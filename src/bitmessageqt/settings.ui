@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>567</width>
-    <height>343</height>
+    <width>585</width>
+    <height>437</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -36,8 +36,8 @@
       <attribute name="title">
        <string>User Interface</string>
       </attribute>
-      <layout class="QGridLayout" name="gridLayout_5">
-       <item row="0" column="0" colspan="2">
+      <layout class="QFormLayout" name="formLayout">
+       <item row="0" column="0">
         <widget class="QCheckBox" name="checkBoxStartOnLogon">
          <property name="text">
           <string>Start Bitmessage on user login</string>
@@ -61,7 +61,7 @@
          </property>
         </widget>
        </item>
-       <item row="3" column="0" colspan="2">
+       <item row="3" column="0">
         <widget class="QCheckBox" name="checkBoxShowTrayNotifications">
          <property name="text">
           <string>Show notification when message received</string>
@@ -75,8 +75,14 @@
          </property>
         </widget>
        </item>
-       <item row="5" column="0" colspan="3">
+       <item row="5" column="0" colspan="2">
         <widget class="QLabel" name="PortableModeDescription">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
          <property name="text">
           <string>In Portable Mode, messages and config files are stored in the same directory as the program rather than the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.</string>
          </property>
@@ -85,30 +91,27 @@
          </property>
         </widget>
        </item>
-       <item row="6" column="0" colspan="3">
+       <item row="6" column="0" colspan="2">
         <widget class="QCheckBox" name="checkBoxWillinglySendToMobile">
          <property name="text">
           <string>Willingly include unencrypted destination address when sending to a mobile device</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="0" colspan="2">
-        <widget class="QLabel" name="labelSettingsNote">
+       <item row="7" column="0">
+        <widget class="QCheckBox" name="checkBoxUseIdenticons">
          <property name="text">
-          <string/>
-         </property>
-         <property name="wordWrap">
-          <bool>true</bool>
+          <string>Use Identicons</string>
          </property>
         </widget>
        </item>
-       <item row="7" column="2" rowspan="2">
+       <item row="8" column="1">
         <widget class="QGroupBox" name="groupBox">
          <property name="title">
           <string>Interface Language</string>
          </property>
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
-          <item>
+         <layout class="QFormLayout" name="formLayout_2">
+          <item row="0" column="0">
            <widget class="QComboBox" name="languageComboBox">
             <property name="minimumSize">
              <size>
@@ -143,12 +146,12 @@
             </item>
             <item>
              <property name="text">
-              <string comment="es">Español</string>
+              <string comment="es">Españl</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="ru">Русский</string>
+              <string comment="ru">русский язык</string>
              </property>
             </item>
             <item>
@@ -165,19 +168,6 @@
           </item>
          </layout>
         </widget>
-       </item>
-       <item row="8" column="1">
-        <spacer name="verticalSpacer_2">
-         <property name="orientation">
-          <enum>Qt::Vertical</enum>
-         </property>
-         <property name="sizeHint" stdset="0">
-          <size>
-           <width>20</width>
-           <height>40</height>
-          </size>
-         </property>
-        </spacer>
        </item>
       </layout>
      </widget>
@@ -236,25 +226,6 @@
             <property name="text">
              <string>Type:</string>
             </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="comboBoxProxyType">
-            <item>
-             <property name="text">
-              <string>none</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>SOCKS4a</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string>SOCKS5</string>
-             </property>
-            </item>
            </widget>
           </item>
           <item row="1" column="1">
@@ -323,6 +294,25 @@
             <property name="text">
              <string>Listen for incoming connections when using proxy</string>
             </property>
+           </widget>
+          </item>
+          <item row="0" column="1">
+           <widget class="QComboBox" name="comboBoxProxyType">
+            <item>
+             <property name="text">
+              <string>none</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>SOCKS4a</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string>SOCKS5</string>
+             </property>
+            </item>
            </widget>
           </item>
          </layout>
@@ -758,13 +748,13 @@
  </widget>
  <widget class="QWidget" name="tabResendingMessagesAdjustment">
       <attribute name="title">
-       <string>Adjusting time period for resending messages</string>
+       <string>Adjusting time period to stop sending messages</string>
       </attribute>
      <layout class="QGridLayout" name="gridLayout_9">
       <item row="0" column="0" colspan="5">
         <widget class="QLabel" name="label_19">
          <property name="text">
-          <string> If you send a message to someone and he is offline for more than two days, Bitmessage  will send the message again after an additional two days. This will be continued with exponential backoff forever. Μessages will continue to be sent after 4, 8,16 days etc. until the receiver get them. Here you can adjust Bitmessage to stop trying to send messages after X hours/days/months. This time period needs to be longer than 5 days./p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <string> If you send a message to someone and he is offline for more than two and a half days, Bitmessage will send the message again after an additional two and a half days. This will be continued with exponential backoff forever. Μessages will continue to be sent after 5, 10, 20 days etc. until the receiver gets them. Leaving all the input fields blank means the default behavior which will continue the resending with exponential backoff. Setting these values to 0/0/0 or less than 5 days mean that the client will not resend any messages. Here you can adjust Bitmessage to stop trying to send messages after X hours/days/months./p&gt;&lt;/body&gt;&lt;/html&gt;</string>
          </property>
          <property name="wordWrap">
           <bool>true</bool>
@@ -828,7 +818,6 @@
   <tabstop>checkBoxStartOnLogon</tabstop>
   <tabstop>checkBoxStartInTray</tabstop>
   <tabstop>checkBoxMinimizeToTray</tabstop>
-  <tabstop>checkBoxShowTrayNotifications</tabstop>
   <tabstop>lineEditTCPPort</tabstop>
   <tabstop>comboBoxProxyType</tabstop>
   <tabstop>lineEditSocksHostname</tabstop>
@@ -839,7 +828,9 @@
   <tabstop>checkBoxSocksListen</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>
- <resources/>
+ <resources>
+  <include location="bitmessage_icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>
