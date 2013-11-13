@@ -809,10 +809,13 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetSent.setItem(0, 3, newItem)
 
             newItem = QtGui.QTableWidgetItem(str(starred))
-            #if not read:
-            #    newItem.setFont(font)
+            if starred == 1:
+                iconStar = QtGui.QIcon(":/newPrefix/images/star1.png")
+            else:
+                iconStar = QtGui.QIcon(":/newPrefix/images/star2.png")
+            newItem.setIcon(iconStar)
+            newItem.setForeground(Qt.white)
             self.ui.tableWidgetSent.setItem(0, 4, newItem)
-
 
         self.ui.tableWidgetSent.sortItems(3, Qt.DescendingOrder)
         self.ui.tableWidgetSent.keyPressEvent = self.tableWidgetSentKeyPressEvent
@@ -928,7 +931,15 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setFont(font)
             self.ui.tableWidgetInbox.setItem(0, 3, newItem)
 
-            newItem = QtGui.QTableWidgetItem(str(starred))
+            newItem = QtGui.QTableWidgetItem()
+            if starred == 1:
+                iconStar = QtGui.QIcon(":/newPrefix/images/star1.png")
+            else:
+                iconStar = QtGui.QIcon(":/newPrefix/images/star2.png")
+            newItem.setData(Qt.UserRole, str(starred))
+            newItem.setIcon(iconStar)
+            newItem.setForeground(Qt.white)
+
             if not read:
                 newItem.setFont(font)
             self.ui.tableWidgetInbox.setItem(0, 4, newItem)
