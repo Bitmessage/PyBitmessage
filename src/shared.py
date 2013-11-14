@@ -72,6 +72,9 @@ daemon = False
 inventorySets = {} # key = streamNumer, value = a set which holds the inventory object hashes that we are aware of. This is used whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it every couple hours.
 needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it to disk eventually.
 maximumLengthOfTimeToBotherResendingMessages = 0
+objectProcessorQueue = Queue.Queue(
+    )  # receiveDataThreads dump objects they hear on the network into this queue to be processed.
+streamsInWhichIAmParticipating = {}
 
 #If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
@@ -276,6 +279,20 @@ def reloadBroadcastSendersForWhichImWatching():
             tag = doubleHashOfAddressData[32:]
             privEncryptionKey = doubleHashOfAddressData[:32]
             MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
+
+def isProofOfWorkSufficient(
+    self,
+    data,
+    nonceTrialsPerByte=0,
+        payloadLengthExtraBytes=0):
+    if nonceTrialsPerByte < shared.networkDefaultProofOfWorkNonceTrialsPerByte:
+        nonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
+    if payloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
+        payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
+    POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
+                  :8] + hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
+    # print 'POW:', POW
+    return POW <= 2 ** 64 / ((len(data) + payloadLengthExtraBytes) * (nonceTrialsPerByte))
 
 def doCleanShutdown():
     global shutdown

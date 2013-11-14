@@ -158,7 +158,7 @@ class receiveDataThread(threading.Thread):
             elif remoteCommand == 'getdata\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
                 self.recgetdata(self.data[24:self.payloadLength + 24])
             elif remoteCommand == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                self.recmsg(self.data[24:self.payloadLength + 24])
+                self.recmsg(self.data[:self.payloadLength + 24])
             elif remoteCommand == 'broadcast\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
                 self.recbroadcast(self.data[24:self.payloadLength + 24])
             elif remoteCommand == 'ping\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
@@ -221,19 +221,6 @@ class receiveDataThread(threading.Thread):
                 self.data = self.ackDataThatWeHaveYetToSend.pop()
         self.processData()
 
-    def isProofOfWorkSufficient(
-        self,
-        data,
-        nonceTrialsPerByte=0,
-            payloadLengthExtraBytes=0):
-        if nonceTrialsPerByte < shared.networkDefaultProofOfWorkNonceTrialsPerByte:
-            nonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
-        if payloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
-            payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
-        POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
-                      :8] + hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
-        # print 'POW:', POW
-        return POW <= 2 ** 64 / ((len(data) + payloadLengthExtraBytes) * (nonceTrialsPerByte))
 
     def sendpong(self):
         print 'Sending pong'
@@ -342,7 +329,7 @@ class receiveDataThread(threading.Thread):
     def recbroadcast(self, data):
         self.messageProcessingStartTime = time.time()
         # First we must check to make sure the proof of work is sufficient.
-        if not self.isProofOfWorkSufficient(data):
+        if not shared.isProofOfWorkSufficient(data):
             print 'Proof of work in broadcast message insufficient.'
             return
         readPosition = 8  # bypass the nonce
@@ -858,13 +845,14 @@ class receiveDataThread(threading.Thread):
 
     # We have received a msg message.
     def recmsg(self, data):
+        readPosition = 24 # bypass the network header
         self.messageProcessingStartTime = time.time()
         # First we must check to make sure the proof of work is sufficient.
-        if not self.isProofOfWorkSufficient(data):
+        if not shared.isProofOfWorkSufficient(data[readPosition:readPosition+10]):
             print 'Proof of work in msg message insufficient.'
             return
 
-        readPosition = 8
+        readPosition += 8 # bypass the POW nonce
         embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
 
         # This section is used for the transition from 32 bit time to 64 bit
@@ -905,12 +893,15 @@ class receiveDataThread(threading.Thread):
         shared.inventorySets[self.streamNumber].add(self.inventoryHash)
         shared.inventoryLock.release()
         self.broadcastinv(self.inventoryHash)
-        shared.numberOfMessagesProcessed += 1
-        shared.UISignalQueue.put((
-            'updateNumberOfMessagesProcessed', 'no data'))
+        #shared.numberOfMessagesProcessed += 1
+        #shared.UISignalQueue.put((
+        #    'updateNumberOfMessagesProcessed', 'no data'))
 
-        self.processmsg(
-            readPosition, data)  # When this function returns, we will have either successfully processed the message bound for us, ignored it because it isn't bound for us, or found problem with the message that warranted ignoring it.
+        #self.processmsg(
+        #    readPosition, data)  # When this function returns, we will have either successfully processed the message bound for us, ignored it because it isn't bound for us, or found problem with the message that warranted ignoring it.
+        shared.objectProcessorQueue.put(data)
+        with shard.printLock:
+            print 'Size of objectProcessorQueue is:', sys.getsizeof(shared.objectProcessorQueue)
 
         # Let us now set lengthOfTimeWeShouldUseToProcessThisMessage. If we
         # haven't used the specified amount of time, we shall sleep. These
@@ -1104,7 +1095,7 @@ class receiveDataThread(threading.Thread):
                         toAddress, 'noncetrialsperbyte')
                     requiredPayloadLengthExtraBytes = shared.config.getint(
                         toAddress, 'payloadlengthextrabytes')
-                    if not self.isProofOfWorkSufficient(encryptedData, requiredNonceTrialsPerByte, requiredPayloadLengthExtraBytes):
+                    if not shared.isProofOfWorkSufficient(encryptedData, requiredNonceTrialsPerByte, requiredPayloadLengthExtraBytes):
                         print 'Proof of work in msg message insufficient only because it does not meet our higher requirement.'
                         return
             blockMessage = False  # Gets set to True if the user shouldn't see the message according to black or white lists.
@@ -1283,7 +1274,7 @@ class receiveDataThread(threading.Thread):
         if len(data) < 146 or len(data) > 420:  # sanity check
             return
         # We must check to make sure the proof of work is sufficient.
-        if not self.isProofOfWorkSufficient(data):
+        if not shared.isProofOfWorkSufficient(data):
             print 'Proof of work in pubkey message insufficient.'
             return
 
@@ -1567,10 +1558,9 @@ class receiveDataThread(threading.Thread):
             # the messages that require it.
             self.possibleNewPubkey(address = fromAddress)
             
-
     # We have received a getpubkey message
     def recgetpubkey(self, data):
-        if not self.isProofOfWorkSufficient(data):
+        if not shared.isProofOfWorkSufficient(data):
             print 'Proof of work in getpubkey message insufficient.'
             return
         if len(data) < 34:
