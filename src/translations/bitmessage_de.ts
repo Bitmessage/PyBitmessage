@@ -381,7 +381,7 @@ Es ist wichtig, dass Sie diese Datei sichern. Möchten Sie die datei jetzt öffn
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1874"/>
         <source>From </source>
-        <translation>Von</translation>
+        <translation>Von </translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3282"/>
