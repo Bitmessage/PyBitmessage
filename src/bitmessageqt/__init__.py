@@ -38,6 +38,7 @@ from debug import logger
 import subprocess
 import datetime
 from helper_sql import *
+import functools
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -278,9 +279,9 @@ class MyForm(QtGui.QMainWindow):
         self.actionMarkUnread = self.ui.inboxContextMenuToolbar.addAction(_translate(
             "MainWindow", "Mark Unread"), self.on_action_InboxMarkUnread)
         self.actionAddStar = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Add Star"), self.on_action_InboxAddStar)
+            "MainWindow", "Star"), functools.partial(self.on_action_AddStar, "inbox", self.ui.tableWidgetInbox, self.loadInbox))
         self.actionRemoveStar = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Remove Star"), self.on_action_InboxRemoveStar)
+            "MainWindow", "Unstar"), functools.partial(self.on_action_RemoveStar, "inbox", self.ui.tableWidgetInbox, self.loadInbox))
 
         self.ui.tableWidgetInbox.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
@@ -396,9 +397,9 @@ class MyForm(QtGui.QMainWindow):
             'customContextMenuRequested(const QPoint&)'), self.on_context_menuSent)
 
         self.actionSentAddStar = self.ui.sentContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Add Star"), self.on_action_SentAddStar)
+            "MainWindow", "Star"), functools.partial(self.on_action_AddStar, "sent", self.ui.tableWidgetSent, self.loadSent))
         self.actionSentRemoveStar = self.ui.sentContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Remove Star"), self.on_action_SentRemoveStar)
+            "MainWindow", "Unstar"), functools.partial(self.on_action_RemoveStar, "sent", self.ui.tableWidgetSent, self.loadSent))
 
         # self.popMenuSent = QtGui.QMenu( self )
         # self.popMenuSent.addAction( self.actionSentClipboard )
@@ -807,14 +808,14 @@ class MyForm(QtGui.QMainWindow):
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetSent.setItem(0, 3, newItem)
-
-            newItem = QtGui.QTableWidgetItem(str(starred))
+            #starred
             if starred == 1:
                 iconStar = QtGui.QIcon(":/newPrefix/images/star1.png")
+                newItem = QtGui.QTableWidgetItem(u"\u200B")
             else:
                 iconStar = QtGui.QIcon(":/newPrefix/images/star2.png")
+                newItem = QtGui.QTableWidgetItem()
             newItem.setIcon(iconStar)
-            newItem.setForeground(Qt.white)
             self.ui.tableWidgetSent.setItem(0, 4, newItem)
 
         self.ui.tableWidgetSent.sortItems(3, Qt.DescendingOrder)
@@ -930,18 +931,14 @@ class MyForm(QtGui.QMainWindow):
             if not read:
                 newItem.setFont(font)
             self.ui.tableWidgetInbox.setItem(0, 3, newItem)
-
-            newItem = QtGui.QTableWidgetItem()
+            #starred
             if starred == 1:
                 iconStar = QtGui.QIcon(":/newPrefix/images/star1.png")
+                newItem = QtGui.QTableWidgetItem(u"\u200B")
             else:
                 iconStar = QtGui.QIcon(":/newPrefix/images/star2.png")
-            newItem.setData(Qt.UserRole, str(starred))
+                newItem = QtGui.QTableWidgetItem()
             newItem.setIcon(iconStar)
-            newItem.setForeground(Qt.white)
-
-            if not read:
-                newItem.setFont(font)
             self.ui.tableWidgetInbox.setItem(0, 4, newItem)
 
         self.ui.tableWidgetInbox.sortItems(3, Qt.DescendingOrder)
@@ -2494,38 +2491,29 @@ class MyForm(QtGui.QMainWindow):
         content = content.replace('\n\n', '<br><br>')
         self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
 
-    def on_action_InboxAddStar(self):
-        currentRow = self.ui.tableWidgetInbox.currentRow()
-        inventoryHashToAddStar = str(self.ui.tableWidgetInbox.item(
-                currentRow, 3).data(Qt.UserRole).toPyObject())
-        sqlExecute('''UPDATE inbox SET starred=1 WHERE msgid=?''', inventoryHashToAddStar)
+    def on_action_AddStar(self, dbTableName, TableWidget, LoadFunction):
 
-        self.loadInbox()
+        for i in TableWidget.selectedItems()[0::TableWidget.columnCount()]:
+            selectedRowNumber = TableWidget.row(i)
+            inventoryHashToAddStar = str(TableWidget.item(selectedRowNumber, 3).data(Qt.UserRole).toPyObject())
+            if dbTableName == "inbox":
+                sqlExecute('''UPDATE inbox SET starred=1 WHERE msgid=?''', inventoryHashToAddStar)
+            elif dbTableName == "sent":
+                sqlExecute('''UPDATE sent SET starred=1 WHERE ackdata=?''', inventoryHashToAddStar)
 
-    def on_action_InboxRemoveStar(self):
-        currentRow = self.ui.tableWidgetInbox.currentRow()
-        inventoryHashToRemoveStar = str(self.ui.tableWidgetInbox.item(
-                currentRow, 3).data(Qt.UserRole).toPyObject())
-        sqlExecute('''UPDATE inbox SET starred=0 WHERE msgid=?''', inventoryHashToRemoveStar)
+        LoadFunction()
 
-        self.loadInbox()
+    def on_action_RemoveStar(self, dbTableName, TableWidget, LoadFunction):
 
-    def on_action_SentAddStar(self):
-        currentRow = self.ui.tableWidgetSent.currentRow()
+        for i in TableWidget.selectedItems()[0::TableWidget.columnCount()]:
+            selectedRowNumber = TableWidget.row(i)
+            inventoryHashToRemoveStar = str(TableWidget.item(selectedRowNumber, 3).data(Qt.UserRole).toPyObject())
+            if dbTableName == "inbox":
+                sqlExecute('''UPDATE inbox SET starred=0 WHERE msgid=?''', inventoryHashToRemoveStar)
+            elif dbTableName == "sent":
+                sqlExecute('''UPDATE sent SET starred=0 WHERE ackdata=?''', inventoryHashToRemoveStar)
 
-        ackdataToAddStar = str(self.ui.tableWidgetSent.item(
-            currentRow, 3).data(Qt.UserRole).toPyObject())
-        sqlExecute('''UPDATE sent SET starred=1 WHERE ackdata=?''', ackdataToAddStar)
-
-        self.loadSent()
-
-    def on_action_SentRemoveStar(self):
-        currentRow = self.ui.tableWidgetSent.currentRow()
-        ackdataToRemoveStar = str(self.ui.tableWidgetSent.item(
-            currentRow, 3).data(Qt.UserRole).toPyObject())
-        sqlExecute('''UPDATE sent SET starred=0 WHERE ackdata=?''', ackdataToRemoveStar)
-
-        self.loadSent()
+        LoadFunction()
 
     def on_action_InboxMarkUnread(self):
         font = QFont()
