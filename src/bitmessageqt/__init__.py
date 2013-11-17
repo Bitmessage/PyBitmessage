@@ -38,6 +38,7 @@ from debug import logger
 import subprocess
 import datetime
 from helper_sql import *
+from pywyg import *
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -222,6 +223,11 @@ class MyForm(QtGui.QMainWindow):
         self.timer.start(2000) # milliseconds
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
+        #Initializing PyWyg Editor for Send tab's QTextEdit Object
+        self.SendPyWyg = PyWyg(self.ui)
+        messagecontainer = self.ui.textEditMessage
+
+
         # FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
             "triggered()"), self.quit)
@@ -235,42 +241,44 @@ class MyForm(QtGui.QMainWindow):
             "triggered()"), self.click_actionJoinChan) # also used for creating chans.
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL(
             "clicked()"), self.click_NewAddressDialog)
+        QtCore.QObject.connect(self.ui.textEditMessage, QtCore.SIGNAL(
+            "cursorPositionChanged()"), self.SendPyWyg.getCurrentStyle)
         QtCore.QObject.connect(self.ui.pushButtonItalic, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonItalic)
+            "clicked()"), self.SendPyWyg.click_pushButtonItalic)
         QtCore.QObject.connect(self.ui.comboBoxFontSize, QtCore.SIGNAL(
-            "currentIndexChanged(const QString&)"), self.click_comboBoxFontSize)
+            "currentIndexChanged(const QString&)"), self.SendPyWyg.click_comboBoxFontSize)
         QtCore.QObject.connect(self.ui.pushButtonHighlight, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonHighlight)
+            "clicked()"), self.SendPyWyg.click_pushButtonHighlight)
         QtCore.QObject.connect(self.ui.pushButtonBold, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonBold)
+            "clicked()"), self.SendPyWyg.click_pushButtonBold)
         QtCore.QObject.connect(self.ui.pushButtonStrike, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonStrike)
+            "clicked()"), self.SendPyWyg.click_pushButtonStrike)
         QtCore.QObject.connect(self.ui.pushButtonClear, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonClear)
+            "clicked()"), self.SendPyWyg.click_pushButtonClear)
         QtCore.QObject.connect(self.ui.pushButtonUnderline, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonUnderline)
+            "clicked()"), self.SendPyWyg.click_pushButtonUnderline)
         QtCore.QObject.connect(self.ui.pushButtonFontDecrease, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonFontDecrease)
+            "clicked()"), self.SendPyWyg.click_pushButtonFontDecrease)
         QtCore.QObject.connect(self.ui.pushButtonFontIncrease, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonFontIncrease)
+            "clicked()"), self.SendPyWyg.click_pushButtonFontIncrease)
         QtCore.QObject.connect(self.ui.pushButtonAlignmentCenter, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonAlignmentCenter)
+            "clicked()"), self.SendPyWyg.click_pushButtonAlignmentCenter)
         QtCore.QObject.connect(self.ui.pushButtonAlignmentLeft, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonAlignmentLeft)
+            "clicked()"), self.SendPyWyg.click_pushButtonAlignmentLeft)
         QtCore.QObject.connect(self.ui.pushButtonAlignmentRight, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonAlignmentRight)
+            "clicked()"), self.SendPyWyg.click_pushButtonAlignmentRight)
         QtCore.QObject.connect(self.ui.pushButtonAlignmentJustify, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonAlignmentJustify)
+            "clicked()"), self.SendPyWyg.click_pushButtonAlignmentJustify)
         QtCore.QObject.connect(self.ui.pushButtonTextColor, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonTextColor)
+            "clicked()"), self.SendPyWyg.click_pushButtonTextColor)
         QtCore.QObject.connect(self.ui.pushButtonPaste, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonPaste)
+            "clicked()"), self.SendPyWyg.click_pushButtonPaste)
         QtCore.QObject.connect(self.ui.pushButtonCopy, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonCopy)
+            "clicked()"), self.SendPyWyg.click_pushButtonCopy)
         QtCore.QObject.connect(self.ui.pushButtonRedo, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonRedo)
+            "clicked()"), self.SendPyWyg.click_pushButtonRedo)
         QtCore.QObject.connect(self.ui.pushButtonUndo, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonUndo)
+            "clicked()"), self.SendPyWyg.click_pushButtonUndo)
         QtCore.QObject.connect(self.ui.comboBoxSendFrom, QtCore.SIGNAL(
             "activated(int)"), self.redrawLabelFrom)
         QtCore.QObject.connect(self.ui.pushButtonAddAddressBook, QtCore.SIGNAL(
@@ -1716,243 +1724,6 @@ class MyForm(QtGui.QMainWindow):
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetSubscriptions.setItem(0, 1, newItem)
-
-    def click_pushButtonBold(self):
-        messagecontainer = self.ui.textEditMessage
-        mycursor = messagecontainer.textCursor()
-        myformat = mycursor.charFormat()
-        if mycursor.hasSelection():
-            mycursor.beginEditBlock()
-            if self.ui.pushButtonBold.isChecked():
-                myformat.setFontWeight(QFont.Bold)
-            else:
-                myformat.setFontWeight(QFont.Normal)
-            mycursor.setCharFormat(myformat)
-            mycursor.endEditBlock()
-        elif mycursor.position() >= 0:
-            mycursor.beginEditBlock()
-            if self.ui.pushButtonBold.isChecked():
-                messagecontainer.setFontWeight(QFont.Bold)
-            else:
-                messagecontainer.setFontWeight(QFont.Normal)
-            mycursor.endEditBlock()
-        else:
-            return False
-
-    def click_pushButtonUnderline(self):
-        messagecontainer = self.ui.textEditMessage
-        mycursor = messagecontainer.textCursor()
-        myformat = mycursor.charFormat()
-        if mycursor.hasSelection():
-            mycursor.beginEditBlock()
-            if self.ui.pushButtonUnderline.isChecked():
-                myformat.setFontUnderline(True)
-            else:
-                myformat.setFontUnderline(False)
-            mycursor.setCharFormat(myformat)
-            mycursor.endEditBlock()
-        elif mycursor.position() >= 0:
-            mycursor.beginEditBlock()
-            if self.ui.pushButtonUnderline.isChecked():
-                messagecontainer.setFontUnderline(True)
-            else:
-                messagecontainer.setFontUnderline(False)
-            mycursor.endEditBlock()
-        else:
-            return False
-
-    def click_pushButtonStrike(self):
-        messagecontainer = self.ui.textEditMessage
-        mycursor = messagecontainer.textCursor()
-        myformat = mycursor.charFormat()
-        if mycursor.hasSelection():
-            mycursor.beginEditBlock()
-            if self.ui.pushButtonStrike.isChecked():
-                myformat.setFontStrikeOut(True)
-            else:
-                myformat.setFontStrikeOut(False)
-            mycursor.setCharFormat(myformat)
-            mycursor.endEditBlock()
-        elif mycursor.position() >= 0:
-            mycursor.beginEditBlock()
-            if self.ui.pushButtonStrike.isChecked():
-                striked = QFont()
-                striked.setStrikeOut(True)
-                messagecontainer.setCurrentFont(striked)
-            else:
-                striked = QFont()
-                striked.setStrikeOut(False)
-                messagecontainer.setCurrentFont(striked)
-            mycursor.endEditBlock()
-        else:
-            return False
-
-    def click_pushButtonHighlight(self):
-        col = QtGui.QColor(0, 0, 0)
-        col = QtGui.QColorDialog.getColor()
-        messagecontainer = self.ui.textEditMessage
-        mycursor = messagecontainer.textCursor()
-        if col.isValid():
-            if mycursor.hasSelection():
-                mycursor.beginEditBlock()
-                myformat = mycursor.charFormat()
-                myformat.setBackground(col)
-                mycursor.setCharFormat(myformat)
-                mycursor.endEditBlock()
-            else:
-                mycursor.beginEditBlock()
-                messagecontainer.setTextBackgroundColor(col)
-                mycursor.endEditBlock()
-        else:
-            return False
-
-    def click_comboBoxFontSize(self, fontsize):
-        messagecontainer = self.ui.textEditMessage
-        mycursor = messagecontainer.textCursor()
-        myformat = mycursor.charFormat()
-        if mycursor.hasSelection():
-            mycursor.beginEditBlock()
-            myformat.setFontPointSize(float(fontsize))
-            mycursor.setCharFormat(myformat)
-            mycursor.endEditBlock()
-        elif mycursor.position() >= 0:
-            mycursor.beginEditBlock()
-            messagecontainer.setFontPointSize(float(fontsize))
-            mycursor.endEditBlock()
-        else:
-            return False
-
-    def click_pushButtonItalic(self):
-        messagecontainer = self.ui.textEditMessage
-        mycursor = messagecontainer.textCursor()
-        myformat = mycursor.charFormat()
-        if mycursor.hasSelection():
-            mycursor.beginEditBlock()
-            if self.ui.pushButtonItalic.isChecked():
-                myformat.setFontItalic(True)
-            else:
-                myformat.setFontItalic(False)
-            mycursor.setCharFormat(myformat)
-            mycursor.endEditBlock()
-        elif mycursor.position() >= 0:
-            mycursor.beginEditBlock()
-            if self.ui.pushButtonItalic.isChecked():
-                messagecontainer.setFontItalic(True)
-            else:
-                messagecontainer.setFontItalic(False)
-            mycursor.endEditBlock()
-        else:
-            return False
-
-    def click_pushButtonClear(self):
-        messagecontainer = self.ui.textEditMessage
-        messagecontainer.clear()
-
-    def Alignment_Buttons_Checked_Status(self, initiator, to_uncheck1, to_uncheck2, to_uncheck3):
-        if initiator.isChecked():
-            to_uncheck1.setChecked(False)
-            to_uncheck2.setChecked(False)
-            to_uncheck3.setChecked(False)
-
-    def click_pushButtonFontIncrease(self):
-        messagecontainer = self.ui.textEditMessage
-        mycursor = messagecontainer.textCursor()
-        myformat = mycursor.charFormat()
-        if mycursor.hasSelection():
-            mycursor.beginEditBlock()
-            curfontsize = messagecontainer.currentFont().pointSize()
-            if curfontsize <= 70:
-                curfontsize += 2
-                myformat.setFontPointSize(float(curfontsize))
-                mycursor.setCharFormat(myformat)
-            mycursor.endEditBlock()
-        elif mycursor.position() >= 0:
-            mycursor.beginEditBlock()
-            curfontsize = messagecontainer.currentFont().pointSize()
-            if curfontsize <= 70:
-                curfontsize += 2
-                messagecontainer.setFontPointSize(float(curfontsize))
-            mycursor.endEditBlock()
-        else:
-            return False
-
-    def click_pushButtonFontDecrease(self):
-        messagecontainer = self.ui.textEditMessage
-        mycursor = messagecontainer.textCursor()
-        myformat = mycursor.charFormat()
-        if mycursor.hasSelection():
-            mycursor.beginEditBlock()
-            curfontsize = messagecontainer.currentFont().pointSize()
-            if curfontsize >= 8:
-                curfontsize -= 2
-                myformat.setFontPointSize(float(curfontsize))
-                mycursor.setCharFormat(myformat)
-            mycursor.endEditBlock()
-        elif mycursor.position() >= 0:
-            mycursor.beginEditBlock()
-            curfontsize = messagecontainer.currentFont().pointSize()
-            if curfontsize >= 8:
-                curfontsize -= 2
-                messagecontainer.setFontPointSize(float(curfontsize))
-            mycursor.endEditBlock()
-        else:
-            return False
-
-    def click_pushButtonAlignmentCenter(self):
-        self.Alignment_Buttons_Checked_Status(self.ui.pushButtonAlignmentCenter, self.ui.pushButtonAlignmentRight, self.ui.pushButtonAlignmentLeft, self.ui.pushButtonAlignmentJustify)
-        messagecontainer = self.ui.textEditMessage
-        messagecontainer.setAlignment(QtCore.Qt.AlignCenter)
-
-    def click_pushButtonAlignmentLeft(self):
-        self.Alignment_Buttons_Checked_Status(self.ui.pushButtonAlignmentLeft, self.ui.pushButtonAlignmentRight, self.ui.pushButtonAlignmentCenter, self.ui.pushButtonAlignmentJustify)
-        messagecontainer = self.ui.textEditMessage
-        messagecontainer.setAlignment(QtCore.Qt.AlignLeft)
-
-    def click_pushButtonAlignmentRight(self):
-        self.Alignment_Buttons_Checked_Status(self.ui.pushButtonAlignmentRight, self.ui.pushButtonAlignmentLeft, self.ui.pushButtonAlignmentCenter, self.ui.pushButtonAlignmentJustify)
-        messagecontainer = self.ui.textEditMessage
-        messagecontainer.setAlignment(QtCore.Qt.AlignRight)
-
-    def click_pushButtonAlignmentJustify(self):
-        self.Alignment_Buttons_Checked_Status(self.ui.pushButtonAlignmentJustify, self.ui.pushButtonAlignmentLeft, self.ui.pushButtonAlignmentRight, self.ui.pushButtonAlignmentCenter)
-        messagecontainer = self.ui.textEditMessage
-        messagecontainer.setAlignment(QtCore.Qt.AlignJustify)
-
-
-    def click_pushButtonTextColor(self):
-        col = QtGui.QColor(0, 0, 0)
-        col = QtGui.QColorDialog.getColor()
-        messagecontainer = self.ui.textEditMessage
-        mycursor = messagecontainer.textCursor()
-        if col.isValid():
-            if mycursor.hasSelection():
-                mycursor.beginEditBlock()
-                myformat = mycursor.charFormat()
-                myformat.setForeground(col)
-                mycursor.setCharFormat(myformat)
-                mycursor.endEditBlock()
-            else:
-                mycursor.beginEditBlock()
-                messagecontainer.setTextColor(col)
-                mycursor.endEditBlock()
-        else:
-            return False
-
-    def click_pushButtonPaste(self):
-        messagecontainer = self.ui.textEditMessage
-        messagecontainer.paste()
-
-    def click_pushButtonCopy(self):
-        messagecontainer = self.ui.textEditMessage
-        messagecontainer.copy()
-
-    def click_pushButtonUndo(self):
-        messagecontainer = self.ui.textEditMessage
-        messagecontainer.undo()
-
-    def click_pushButtonRedo(self):
-        messagecontainer = self.ui.textEditMessage
-        messagecontainer.redo()
 
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
