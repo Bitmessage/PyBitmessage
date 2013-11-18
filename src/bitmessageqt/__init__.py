@@ -224,7 +224,7 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
         #Sent and Inbox Tabs
-        QtCore.QObject.connect(self.ui.tabWidget, QtCore.SIGNAL("currentChanged(int)"), self.loadInbox)
+        QtCore.QObject.connect(self.ui.tabWidget, QtCore.SIGNAL("currentChanged(int)"), self.ReloadOnlyInboxTable)
         # FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
             "triggered()"), self.quit)
@@ -822,6 +822,13 @@ class MyForm(QtGui.QMainWindow):
 
         self.ui.tableWidgetSent.sortItems(3, Qt.DescendingOrder)
         self.ui.tableWidgetSent.keyPressEvent = self.tableWidgetSentKeyPressEvent
+
+    # Reload inbox Table when Inbox tab is selected
+    def ReloadOnlyInboxTable(self):
+        if self.ui.tabWidget.currentIndex() == self.ui.tabWidget.indexOf(self.ui.inbox):
+            self.loadInbox()
+        elif self.ui.tabWidget.currentIndex() == self.ui.tabWidget.indexOf(self.ui.sent):
+            self.loadSent()
 
     # Load inbox from messages database file
     def loadInbox(self, where="", what=""):
@@ -1812,7 +1819,6 @@ class MyForm(QtGui.QMainWindow):
                         self.ui.lineEditTo.setText('')
                         self.ui.lineEditSubject.setText('')
                         self.ui.textEditMessage.setText('')
-                        self.loadSent()
                         self.ui.tabWidget.setCurrentIndex(2)
                         self.ui.tableWidgetSent.setCurrentCell(0, 0)
                 else:
@@ -1847,7 +1853,6 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.lineEditTo.setText('')
                 self.ui.lineEditSubject.setText('')
                 self.ui.textEditMessage.setText('')
-                self.loadSent()
                 self.ui.tabWidget.setCurrentIndex(2)
                 self.ui.tableWidgetSent.setCurrentCell(0, 0)
 
