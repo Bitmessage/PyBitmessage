@@ -2,7 +2,13 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="0aa79bef-9e18-44a2-a1d3-4500168a4d2b" name="Default" comment="Implementing sorting of starred messages. Code refactoring.">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/.idea/scopes/scope_settings.xml" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitmessageqt/bitmessageui.ui" afterPath="$PROJECT_DIR$/src/bitmessageqt/bitmessageui.ui" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitmessageqt/__init__.py" afterPath="$PROJECT_DIR$/src/bitmessageqt/__init__.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/bitmessageqt/bitmessageui.py" afterPath="$PROJECT_DIR$/src/bitmessageqt/bitmessageui.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/class_receiveDataThread.py" afterPath="$PROJECT_DIR$/src/class_receiveDataThread.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/class_singleWorker.py" afterPath="$PROJECT_DIR$/src/class_singleWorker.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/src/helper_inbox.py" afterPath="$PROJECT_DIR$/src/helper_inbox.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
     </list>
     <ignored path="PyBitmessage.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -14,7 +20,7 @@
   </component>
   <component name="ChangesViewManager" flattened_view="true" show_ignored="false" />
   <component name="CoverageDataManager">
-    <SUITE FILE_PATH="coverage/PyBitmessage$bitmessagemain.coverage" NAME="bitmessagemain Coverage Results" MODIFIED="1384635004146" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
+    <SUITE FILE_PATH="coverage/PyBitmessage$bitmessagemain.coverage" NAME="bitmessagemain Coverage Results" MODIFIED="1384800747337" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="$PROJECT_DIR$/src" />
   </component>
   <component name="CreatePatchCommitExecutor">
     <option name="PATCH_PATH" value="" />
@@ -28,12 +34,43 @@
   </component>
   <component name="FileEditorManager">
     <leaf>
+      <file leaf-file-name="class_receiveDataThread.py" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/class_receiveDataThread.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="938" column="12" selection-start="51754" selection-end="51760" vertical-scroll-proportion="0.0" vertical-offset="13785" max-vertical-offset="32430">
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="class_singleWorker.py" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/class_singleWorker.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="14" column="19" selection-start="384" selection-end="384" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="14160">
+              <folding>
+                <element signature="e#0#16#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="__init__.py" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/src/bitmessageqt/__init__.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="813" column="59" selection-start="42996" selection-end="42996" vertical-scroll-proportion="0.33333334" vertical-offset="11860" max-vertical-offset="55140">
+            <state line="226" column="102" selection-start="9497" selection-end="9497" vertical-scroll-proportion="0.34700316" vertical-offset="3060" max-vertical-offset="48570">
               <folding>
                 <element signature="e#228#251#0" expanded="true" />
+                <element signature="e#36057#43520#0" expanded="false" />
+                <element signature="e#43613#49237#0" expanded="false" />
+                <element signature="e#49313#51434#0" expanded="false" />
+                <element signature="e#51553#51672#0" expanded="false" />
+                <element signature="e#51807#52801#0" expanded="false" />
+                <element signature="e#52892#53876#0" expanded="false" />
+                <element signature="e#54023#54624#0" expanded="false" />
+                <element signature="e#54710#55525#0" expanded="false" />
+                <element signature="e#55642#56621#0" expanded="false" />
+                <element signature="e#56780#56975#0" expanded="false" />
+                <element signature="e#61294#61394#0" expanded="false" />
               </folding>
             </state>
           </provider>
@@ -42,8 +79,30 @@
       <file leaf-file-name="bitmessageui.py" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/bitmessageqt/bitmessageui.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="613" column="13" selection-start="41233" selection-end="41257" vertical-scroll-proportion="-12.92" vertical-offset="8872" max-vertical-offset="9915">
+            <state line="513" column="133" selection-start="32877" selection-end="32877" vertical-scroll-proportion="0.0" vertical-offset="7079" max-vertical-offset="9885">
               <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="helper_inbox.py" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/helper_inbox.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="3" column="9" selection-start="44" selection-end="50" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="240">
+              <folding>
+                <element signature="e#0#24#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="helper_sql.py" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/helper_sql.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="1080">
+              <folding>
+                <element signature="e#0#16#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -51,8 +110,19 @@
       <file leaf-file-name="bitmessagemain.py" pinned="false" current="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/src/bitmessagemain.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="1001" column="35" selection-start="54451" selection-end="54451" vertical-scroll-proportion="0.0" vertical-offset="14773" max-vertical-offset="15990">
+            <state line="1001" column="35" selection-start="54451" selection-end="54451" vertical-scroll-proportion="-8.68" vertical-offset="14798" max-vertical-offset="15990">
               <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="class_outgoingSynSender.py" pinned="false" current="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/src/class_outgoingSynSender.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="1.0" vertical-offset="25" max-vertical-offset="2700">
+              <folding>
+                <element signature="e#0#16#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -76,8 +146,11 @@
   <component name="IdeDocumentHistory">
     <option name="changedFiles">
       <list>
-        <option value="$PROJECT_DIR$/src/bitmessageqt/bitmessageui.py" />
         <option value="$PROJECT_DIR$/src/bitmessagemain.py" />
+        <option value="$PROJECT_DIR$/src/helper_inbox.py" />
+        <option value="$PROJECT_DIR$/src/class_receiveDataThread.py" />
+        <option value="$PROJECT_DIR$/src/class_singleWorker.py" />
+        <option value="$PROJECT_DIR$/src/bitmessageqt/bitmessageui.py" />
         <option value="$PROJECT_DIR$/src/bitmessageqt/__init__.py" />
       </list>
     </option>
@@ -172,6 +245,11 @@
   <component name="PropertiesComponent">
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="recentsLimit" value="5" />
+  </component>
+  <component name="RecentsManager">
+    <key name="MoveFile.RECENT_KEYS">
+      <recent name="$PROJECT_DIR$/src/bitmessageqt" />
+    </key>
   </component>
   <component name="RunManager" selected="Python.bitmessagemain">
     <configuration default="false" name="bitmessagemain" type="PythonConfigurationType" factoryName="Python" temporary="true">
@@ -277,9 +355,6 @@
       <option name="PARAMETERS" value="" />
       <method />
     </configuration>
-    <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug" singleton="true">
-      <method />
-    </configuration>
     <configuration default="true" type="tests" factoryName="Unittests">
       <option name="INTERPRETER_OPTIONS" value="" />
       <option name="PARENT_ENVS" value="true" />
@@ -301,6 +376,9 @@
       <option name="PUREUNITTEST" value="true" />
       <option name="PARAMS" value="" />
       <option name="USE_PARAM" value="false" />
+      <method />
+    </configuration>
+    <configuration default="true" type="JavascriptDebugType" factoryName="JavaScript Debug" singleton="true">
       <method />
     </configuration>
     <configuration default="true" type="tests" factoryName="Doctests">
@@ -380,29 +458,33 @@
       <created>1384635076980</created>
       <updated>1384635076980</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="GUI changes.">
+      <created>1384703394029</created>
+      <updated>1384703394029</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="ToolWindowManager">
     <frame x="56" y="29" width="2489" height="1378" extended-state="0" />
     <editor active="true" />
     <layout>
-      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="-1" side_tool="false" content_ui="tabs" />
       <window_info id="Changes" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.16534181" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="TODO" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="6" side_tool="false" content_ui="tabs" />
+      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.32936507" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Database" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25787964" sideWeight="0.8513514" order="0" side_tool="false" content_ui="combo" />
+      <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.25992632" sideWeight="0.8084261" order="0" side_tool="false" content_ui="combo" />
       <window_info id="Debug" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="3" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.14864865" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
-      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.3298887" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" weight="0.19157393" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.112877585" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Cvs" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="4" side_tool="false" content_ui="tabs" />
       <window_info id="Message" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Ant Build" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
-      <window_info id="Find" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
+      <window_info id="Messages" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.33" sideWeight="0.5" order="7" side_tool="false" content_ui="tabs" />
       <window_info id="Commander" active="false" anchor="right" auto_hide="false" internal_type="SLIDING" type="SLIDING" visible="false" weight="0.4" sideWeight="0.5" order="0" side_tool="false" content_ui="tabs" />
       <window_info id="Hierarchy" active="false" anchor="right" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.25" sideWeight="0.5" order="2" side_tool="false" content_ui="combo" />
       <window_info id="Inspection" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" weight="0.4" sideWeight="0.5" order="5" side_tool="false" content_ui="tabs" />
@@ -416,12 +498,40 @@
       <TodoPanelSettings />
     </option>
     <MESSAGE value="Implementing sorting of starred messages. Code refactoring." />
-    <option name="LAST_COMMIT_MESSAGE" value="Implementing sorting of starred messages. Code refactoring." />
+    <MESSAGE value="GUI changes." />
+    <option name="LAST_COMMIT_MESSAGE" value="GUI changes." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager />
   </component>
   <component name="editorHistoryManager">
+    <entry file="file://$PROJECT_DIR$/src/bitmessageqt/__init__.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="2516" column="0" selection-start="139379" selection-end="139379" vertical-scroll-proportion="0.0" vertical-offset="405" max-vertical-offset="55140">
+          <folding>
+            <element signature="e#228#251#0" expanded="true" />
+            <element signature="e#36057#43520#0" expanded="false" />
+            <element signature="e#43613#49237#0" expanded="false" />
+            <element signature="e#49313#51434#0" expanded="false" />
+            <element signature="e#51553#51672#0" expanded="false" />
+            <element signature="e#51807#52801#0" expanded="false" />
+            <element signature="e#52892#53876#0" expanded="false" />
+            <element signature="e#54023#54624#0" expanded="false" />
+            <element signature="e#54710#55525#0" expanded="false" />
+            <element signature="e#55642#56621#0" expanded="false" />
+            <element signature="e#56780#56975#0" expanded="false" />
+            <element signature="e#61294#61394#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/bitmessagemain.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="1001" column="35" selection-start="54451" selection-end="54451" vertical-scroll-proportion="0.0" vertical-offset="14773" max-vertical-offset="15990">
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/src/bitmessagemain.py">
       <provider selected="true" editor-type-id="text-editor">
         <state line="40" column="19" selection-start="1254" selection-end="1254" vertical-scroll-proportion="0.0" vertical-offset="1125" max-vertical-offset="15990">
@@ -450,25 +560,79 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/src/bitmessageqt/bitmessageui.py">
+    <entry file="file://$PROJECT_DIR$/src/helper_inbox.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="613" column="13" selection-start="41233" selection-end="41257" vertical-scroll-proportion="-12.92" vertical-offset="8872" max-vertical-offset="9915">
-          <folding />
+        <state line="3" column="9" selection-start="44" selection-end="50" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="240">
+          <folding>
+            <element signature="e#0#24#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/helper_sql.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="-0.0" vertical-offset="0" max-vertical-offset="1080">
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/bitmessagemain.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="1001" column="35" selection-start="54451" selection-end="54451" vertical-scroll-proportion="0.0" vertical-offset="14773" max-vertical-offset="15990">
+        <state line="1001" column="35" selection-start="54451" selection-end="54451" vertical-scroll-proportion="-8.68" vertical-offset="14798" max-vertical-offset="15990">
           <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/class_outgoingSynSender.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="0" column="0" selection-start="0" selection-end="0" vertical-scroll-proportion="1.0" vertical-offset="25" max-vertical-offset="2700">
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/bitmessageqt/bitmessageui.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="513" column="133" selection-start="32877" selection-end="32877" vertical-scroll-proportion="0.0" vertical-offset="7079" max-vertical-offset="9885">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/class_receiveDataThread.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="938" column="12" selection-start="51754" selection-end="51760" vertical-scroll-proportion="0.0" vertical-offset="13785" max-vertical-offset="32430">
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/src/class_singleWorker.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state line="14" column="19" selection-start="384" selection-end="384" vertical-scroll-proportion="0.0" vertical-offset="0" max-vertical-offset="14160">
+          <folding>
+            <element signature="e#0#16#0" expanded="true" />
+          </folding>
         </state>
       </provider>
     </entry>
     <entry file="file://$PROJECT_DIR$/src/bitmessageqt/__init__.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="813" column="59" selection-start="42996" selection-end="42996" vertical-scroll-proportion="0.33333334" vertical-offset="11860" max-vertical-offset="55140">
+        <state line="226" column="102" selection-start="9497" selection-end="9497" vertical-scroll-proportion="0.34700316" vertical-offset="3060" max-vertical-offset="48570">
           <folding>
             <element signature="e#228#251#0" expanded="true" />
+            <element signature="e#36057#43520#0" expanded="false" />
+            <element signature="e#43613#49237#0" expanded="false" />
+            <element signature="e#49313#51434#0" expanded="false" />
+            <element signature="e#51553#51672#0" expanded="false" />
+            <element signature="e#51807#52801#0" expanded="false" />
+            <element signature="e#52892#53876#0" expanded="false" />
+            <element signature="e#54023#54624#0" expanded="false" />
+            <element signature="e#54710#55525#0" expanded="false" />
+            <element signature="e#55642#56621#0" expanded="false" />
+            <element signature="e#56780#56975#0" expanded="false" />
+            <element signature="e#61294#61394#0" expanded="false" />
           </folding>
         </state>
       </provider>

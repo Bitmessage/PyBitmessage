@@ -541,7 +541,7 @@ class receiveDataThread(threading.Thread):
                 if messageEncodingType != 0:
                     
                     t = (self.inventoryHash, toAddress, fromAddress, subject, int(
-                        time.time()), body, 'inbox', messageEncodingType, 0)
+                        time.time()), body, 'inbox', messageEncodingType, 0, 0)
                     helper_inbox.insert(t)
                     
                     shared.UISignalQueue.put(('displayNewInboxMessage', (
@@ -688,7 +688,7 @@ class receiveDataThread(threading.Thread):
             if messageEncodingType != 0:
                 
                 t = (self.inventoryHash, toAddress, fromAddress, subject, int(
-                    time.time()), body, 'inbox', messageEncodingType, 0)
+                    time.time()), body, 'inbox', messageEncodingType, 0, 0)
                 helper_inbox.insert(t)
                 
                 shared.UISignalQueue.put(('displayNewInboxMessage', (
@@ -834,7 +834,7 @@ class receiveDataThread(threading.Thread):
             if messageEncodingType != 0:
 
                 t = (self.inventoryHash, toAddress, fromAddress, subject, int(
-                    time.time()), body, 'inbox', messageEncodingType, 0)
+                    time.time()), body, 'inbox', messageEncodingType, 0, 0)
                 helper_inbox.insert(t)
 
                 shared.UISignalQueue.put(('displayNewInboxMessage', (
@@ -1144,7 +1144,7 @@ class receiveDataThread(threading.Thread):
                     subject = ''
                 if messageEncodingType != 0:
                     t = (self.inventoryHash, toAddress, fromAddress, subject, int(
-                        time.time()), body, 'inbox', messageEncodingType, 0)
+                        time.time()), body, 'inbox', messageEncodingType, 0, 0)
                     helper_inbox.insert(t)
                     
                     shared.UISignalQueue.put(('displayNewInboxMessage', (

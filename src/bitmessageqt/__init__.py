@@ -223,6 +223,8 @@ class MyForm(QtGui.QMainWindow):
         self.timer.start(2000) # milliseconds
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
+        #Sent and Inbox Tabs
+        QtCore.QObject.connect(self.ui.tabWidget, QtCore.SIGNAL("currentChanged(int)"), self.loadInbox)
         # FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
             "triggered()"), self.quit)
@@ -1778,7 +1780,7 @@ class MyForm(QtGui.QMainWindow):
                         ackdata = OpenSSL.rand(32)
                         t = ()
                         sqlExecute(
-                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
                             '',
                             toAddress,
                             ripe,
@@ -1791,7 +1793,8 @@ class MyForm(QtGui.QMainWindow):
                             1,
                             1,
                             'sent',
-                            2)
+                            2,
+                            0)
 
                         toLabel = ''
                         queryreturn = sqlQuery('''select label from addressbook where address=?''',
@@ -1809,6 +1812,7 @@ class MyForm(QtGui.QMainWindow):
                         self.ui.lineEditTo.setText('')
                         self.ui.lineEditSubject.setText('')
                         self.ui.textEditMessage.setText('')
+                        self.loadSent()
                         self.ui.tabWidget.setCurrentIndex(2)
                         self.ui.tableWidgetSent.setCurrentCell(0, 0)
                 else:
@@ -1827,9 +1831,9 @@ class MyForm(QtGui.QMainWindow):
                 toAddress = self.str_broadcast_subscribers
                 ripe = ''
                 t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
-                    time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
+                    time.time()), 'broadcastqueued', 1, 1, 'sent', 2, 0)
                 sqlExecute(
-                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
+                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
 
                 toLabel = self.str_broadcast_subscribers
                 
@@ -1843,6 +1847,7 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.lineEditTo.setText('')
                 self.ui.lineEditSubject.setText('')
                 self.ui.textEditMessage.setText('')
+                self.loadSent()
                 self.ui.tabWidget.setCurrentIndex(2)
                 self.ui.tableWidgetSent.setCurrentCell(0, 0)
 

@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Sun Nov 17 14:29:34 2013
+# Created: Mon Nov 18 22:23:35 2013
 #      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -93,9 +93,9 @@ class Ui_MainWindow(object):
         item.setTextAlignment(QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.tableWidgetInbox.setHorizontalHeaderItem(4, item)
         self.tableWidgetInbox.horizontalHeader().setCascadingSectionResizes(True)
-        self.tableWidgetInbox.horizontalHeader().setDefaultSectionSize(178)
+        self.tableWidgetInbox.horizontalHeader().setDefaultSectionSize(179)
         self.tableWidgetInbox.horizontalHeader().setHighlightSections(False)
-        self.tableWidgetInbox.horizontalHeader().setMinimumSectionSize(28)
+        self.tableWidgetInbox.horizontalHeader().setMinimumSectionSize(27)
         self.tableWidgetInbox.horizontalHeader().setSortIndicatorShown(False)
         self.tableWidgetInbox.horizontalHeader().setStretchLastSection(True)
         self.tableWidgetInbox.verticalHeader().setVisible(False)
@@ -225,9 +225,9 @@ class Ui_MainWindow(object):
         item = QtGui.QTableWidgetItem()
         self.tableWidgetSent.setHorizontalHeaderItem(4, item)
         self.tableWidgetSent.horizontalHeader().setCascadingSectionResizes(True)
-        self.tableWidgetSent.horizontalHeader().setDefaultSectionSize(178)
+        self.tableWidgetSent.horizontalHeader().setDefaultSectionSize(179)
         self.tableWidgetSent.horizontalHeader().setHighlightSections(False)
-        self.tableWidgetSent.horizontalHeader().setMinimumSectionSize(28)
+        self.tableWidgetSent.horizontalHeader().setMinimumSectionSize(29)
         self.tableWidgetSent.horizontalHeader().setSortIndicatorShown(False)
         self.tableWidgetSent.horizontalHeader().setStretchLastSection(True)
         self.tableWidgetSent.verticalHeader().setVisible(False)
@@ -508,7 +508,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(2)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.lineEditTo.setEnabled)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("clicked(bool)")), self.labelSendBroadcastWarning.hide)
         QtCore.QObject.connect(self.radioButtonBroadcast, QtCore.SIGNAL(_fromUtf8("clicked()")), self.labelSendBroadcastWarning.show)
@@ -650,12 +650,4 @@ class Ui_MainWindow(object):
 
 import bitmessage_icons_rc
 
-if __name__ == "__main__":
-    import sys
-    app = QtGui.QApplication(sys.argv)
-    MainWindow = QtGui.QMainWindow()
-    ui = Ui_MainWindow()
-    ui.setupUi(MainWindow)
-    MainWindow.show()
-    sys.exit(app.exec_())
 

@@ -57,7 +57,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>2</number>
       </property>
       <widget class="QWidget" name="inbox">
        <attribute name="icon">
@@ -1290,8 +1290,24 @@ p, li { white-space: pre-wrap; }
      <y>84</y>
     </hint>
     <hint type="destinationlabel">
-     <x>218</x>
-     <y>546</y>
+     <x>275</x>
+     <y>544</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>tabWidget</sender>
+   <signal>tabCloseRequested(int)</signal>
+   <receiver>tableWidgetSent</receiver>
+   <slot>update()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>201</x>
+     <y>36</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>204</x>
+     <y>101</y>
     </hint>
    </hints>
   </connection>

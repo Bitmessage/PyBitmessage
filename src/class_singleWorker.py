@@ -835,7 +835,7 @@ class singleWorker(threading.Thread):
             # our own inbox.
             if shared.config.has_section(toaddress):
                 t = (inventoryHash, toaddress, fromaddress, subject, int(
-                    time.time()), message, 'inbox', 2, 0)
+                    time.time()), message, 'inbox', 2, 0, 0)
                 helper_inbox.insert(t)
 
                 shared.UISignalQueue.put(('displayNewInboxMessage', (
