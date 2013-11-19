@@ -1295,21 +1295,5 @@ p, li { white-space: pre-wrap; }
     </hint>
    </hints>
   </connection>
-  <connection>
-   <sender>tabWidget</sender>
-   <signal>tabCloseRequested(int)</signal>
-   <receiver>tableWidgetSent</receiver>
-   <slot>update()</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>201</x>
-     <y>36</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>204</x>
-     <y>101</y>
-    </hint>
-   </hints>
-  </connection>
  </connections>
 </ui>
