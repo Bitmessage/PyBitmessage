@@ -45,6 +45,8 @@ sendDataQueues = [] #each sendData thread puts its queue in this list.
 inventory = {} #of objects (like msg payloads and pubkey payloads) Does not include protocol headers (the first 24 bytes of each packet).
 inventoryLock = threading.Lock() #Guarantees that two receiveDataThreads don't receive and process the same message concurrently (probably sent by a malicious individual)
 printLock = threading.Lock()
+objectProcessorQueueSizeLock = threading.Lock()
+objectProcessorQueueSize = 0 # in Bytes. We maintain this to prevent nodes from flooing us with objects which take up too much memory. If this gets too big we'll sleep before asking for further objects.
 appdata = '' #holds the location of the application data storage directory
 statusIconColor = 'red'
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
@@ -92,10 +94,7 @@ frozen = getattr(sys,'frozen', None)
 
 def isInSqlInventory(hash):
     queryreturn = sqlQuery('''select hash from inventory where hash=?''', hash)
-    if queryreturn == []:
-        return False
-    else:
-        return True
+    return queryreturn != []
 
 def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload = ''
@@ -104,7 +103,7 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload += pack('>q', int(time.time()))
 
     payload += pack(
-        '>q', 1)  # boolservices of remote connection. How can I even know this for sure? This is probably ignored by the remote host.
+        '>q', 1)  # boolservices of remote connection; ignored by the remote host.
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
         socket.inet_aton(remoteHost)
     payload += pack('>H', remotePort)  # remote IPv6 and port
@@ -113,7 +112,7 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
         '>L', 2130706433)  # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
     payload += pack('>H', shared.config.getint(
-        'bitmessagesettings', 'port'))  # my external IPv6 and port
+        'bitmessagesettings', 'port'))
 
     random.seed()
     payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
@@ -132,7 +131,6 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
 
 def lookupAppdataFolder():
     APPNAME = "PyBitmessage"
-    from os import path, environ
     if "BITMESSAGE_HOME" in environ:
         dataFolder = environ["BITMESSAGE_HOME"]
         if dataFolder[-1] not in [os.path.sep, os.path.altsep]:
@@ -210,7 +208,8 @@ def decodeWalletImportFormat(WIFstring):
     privkey = fullString[:-4]
     if fullString[-4:] != hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
         logger.critical('Major problem! When trying to decode one of your private keys, the checksum '
-                     'failed. Here is the PRIVATE key: %s' % str(WIFstring))
+                     'failed. Here are the first 6 characters of the PRIVATE key: %s' % str(WIFstring)[:6])
+        os._exit(0)
         return ""
     else:
         #checksum passed
@@ -220,6 +219,7 @@ def decodeWalletImportFormat(WIFstring):
             logger.critical('Major problem! When trying to decode one of your private keys, the '
                          'checksum passed but the key doesn\'t begin with hex 80. Here is the '
                          'PRIVATE key: %s' % str(WIFstring))
+            os._exit(0)
             return ""
 
 
@@ -281,14 +281,13 @@ def reloadBroadcastSendersForWhichImWatching():
             MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
 
 def isProofOfWorkSufficient(
-    self,
     data,
     nonceTrialsPerByte=0,
         payloadLengthExtraBytes=0):
-    if nonceTrialsPerByte < shared.networkDefaultProofOfWorkNonceTrialsPerByte:
-        nonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
-    if payloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
-        payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
+    if nonceTrialsPerByte < networkDefaultProofOfWorkNonceTrialsPerByte:
+        nonceTrialsPerByte = networkDefaultProofOfWorkNonceTrialsPerByte
+    if payloadLengthExtraBytes < networkDefaultPayloadLengthExtraBytes:
+        payloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
     POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
                   :8] + hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
     # print 'POW:', POW
@@ -413,8 +412,8 @@ def decryptAndCheckPubkeyPayload(payload, address):
     status, addressVersion, streamNumber, ripe = decodeAddress(address)
     doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
         addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
-    # this function expects that the nonce is Not included in payload.
-    readPosition = 8  # for the time
+    readPosition = 8 # bypass the nonce
+    readPosition += 8 # bypass the time
     embeddedVersionNumber, varintLength = decodeVarint(
         payload[readPosition:readPosition + 10])
     if embeddedVersionNumber != addressVersion:
@@ -448,7 +447,7 @@ def decryptAndCheckPubkeyPayload(payload, address):
     readPosition = 4 # bypass the behavior bitfield
     publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
     # Is it possible for a public key to be invalid such that trying to
-    # encrypt or sign with it will cause an error? If it is, we should
+    # encrypt or check a sig with it will cause an error? If it is, we should
     # probably test these keys here.
     readPosition += 64
     publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
@@ -492,6 +491,260 @@ def decryptAndCheckPubkeyPayload(payload, address):
     return 'successful'
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])
+
+def checkAndShareMsgWithPeers(data):
+    # Let us check to make sure that the proof of work is sufficient.
+    if not isProofOfWorkSufficient(data):
+        print 'Proof of work in msg message insufficient.'
+        return
+
+    readPosition = 8
+    embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
+
+    # This section is used for the transition from 32 bit time to 64 bit
+    # time in the protocol.
+    if embeddedTime == 0:
+        embeddedTime, = unpack('>Q', data[readPosition:readPosition + 8])
+        readPosition += 8
+    else:
+        readPosition += 4
+
+    streamNumberAsClaimedByMsg, streamNumberAsClaimedByMsgLength = decodeVarint(
+        data[readPosition:readPosition + 9])
+    if not streamNumberAsClaimedByMsg in streamsInWhichIAmParticipating:
+        print 'The streamNumber', streamNumberAsClaimedByMsg, 'isn\'t one we are interested in.'
+        return
+    readPosition += streamNumberAsClaimedByMsgLength
+    inventoryHash = calculateInventoryHash(data)
+    shared.numberOfInventoryLookupsPerformed += 1
+    inventoryLock.acquire()
+    if inventoryHash in inventory:
+        print 'We have already received this msg message. Ignoring.'
+        inventoryLock.release()
+        return
+    elif isInSqlInventory(inventoryHash):
+        print 'We have already received this msg message (it is stored on disk in the SQL inventory). Ignoring it.'
+        inventoryLock.release()
+        return
+    # This msg message is valid. Let's let our peers know about it.
+    objectType = 'msg'
+    inventory[inventoryHash] = (
+        objectType, streamNumberAsClaimedByMsg, data, embeddedTime,'')
+    inventorySets[streamNumberAsClaimedByMsg].add(inventoryHash)
+    inventoryLock.release()
+    with printLock:
+        print 'advertising inv with hash:', inventoryHash.encode('hex')
+    broadcastToSendDataQueues((streamNumberAsClaimedByMsg, 'advertiseobject', inventoryHash))
+
+    # Now let's enqueue it to be processed ourselves.
+    # If we already have too much data in the queue to be processed, just sleep for now.
+    while shared.objectProcessorQueueSize > 120000000:
+        time.sleep(2)
+    with shared.objectProcessorQueueSizeLock:
+        shared.objectProcessorQueueSize += len(data)
+    objectProcessorQueue.put((objectType,data))
+
+def checkAndSharegetpubkeyWithPeers(data):
+    if not isProofOfWorkSufficient(data):
+        print 'Proof of work in getpubkey message insufficient.'
+        return
+    if len(data) < 34:
+        print 'getpubkey message doesn\'t contain enough data. Ignoring.'
+        return
+    readPosition = 8  # bypass the nonce
+    embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
+
+    # This section is used for the transition from 32 bit time to 64 bit
+    # time in the protocol.
+    if embeddedTime == 0:
+        embeddedTime, = unpack('>Q', data[readPosition:readPosition + 8])
+        readPosition += 8
+    else:
+        readPosition += 4
+
+    if embeddedTime > int(time.time()) + 10800:
+        print 'The time in this getpubkey message is too new. Ignoring it. Time:', embeddedTime
+        return
+    if embeddedTime < int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept:
+        print 'The time in this getpubkey message is too old. Ignoring it. Time:', embeddedTime
+        return
+    requestedAddressVersionNumber, addressVersionLength = decodeVarint(
+        data[readPosition:readPosition + 10])
+    readPosition += addressVersionLength
+    streamNumber, streamNumberLength = decodeVarint(
+        data[readPosition:readPosition + 10])
+    if not streamNumber in streamsInWhichIAmParticipating:
+        print 'The streamNumber', streamNumber, 'isn\'t one we are interested in.'
+        return
+    readPosition += streamNumberLength
+
+    shared.numberOfInventoryLookupsPerformed += 1
+    inventoryHash = calculateInventoryHash(data)
+    inventoryLock.acquire()
+    if inventoryHash in inventory:
+        print 'We have already received this getpubkey request. Ignoring it.'
+        inventoryLock.release()
+        return
+    elif isInSqlInventory(inventoryHash):
+        print 'We have already received this getpubkey request (it is stored on disk in the SQL inventory). Ignoring it.'
+        inventoryLock.release()
+        return
+
+    objectType = 'getpubkey'
+    inventory[inventoryHash] = (
+        objectType, streamNumber, data, embeddedTime,'')
+    inventorySets[streamNumber].add(inventoryHash)
+    inventoryLock.release()
+    # This getpubkey request is valid. Forward to peers.
+    with printLock:
+        print 'advertising inv with hash:', inventoryHash.encode('hex')
+    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+
+    # Now let's queue it to be processed ourselves.
+    # If we already have too much data in the queue to be processed, just sleep for now.
+    while shared.objectProcessorQueueSize > 120000000:
+        time.sleep(2)
+    with shared.objectProcessorQueueSizeLock:
+        shared.objectProcessorQueueSize += len(data)
+    objectProcessorQueue.put((objectType,data))
+
+def checkAndSharePubkeyWithPeers(data):
+    if len(data) < 146 or len(data) > 420:  # sanity check
+        return
+    # Let us make sure that the proof of work is sufficient.
+    if not isProofOfWorkSufficient(data):
+        print 'Proof of work in pubkey message insufficient.'
+        return
+
+    readPosition = 8  # for the nonce
+    embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
+
+    # This section is used for the transition from 32 bit time to 64 bit
+    # time in the protocol.
+    if embeddedTime == 0:
+        embeddedTime, = unpack('>Q', data[readPosition:readPosition + 8])
+        readPosition += 8
+    else:
+        readPosition += 4
+
+    if embeddedTime < int(time.time()) - lengthOfTimeToHoldOnToAllPubkeys:
+        with printLock:
+            print 'The embedded time in this pubkey message is too old. Ignoring. Embedded time is:', embeddedTime
+        return
+    if embeddedTime > int(time.time()) + 10800:
+        with printLock:
+            print 'The embedded time in this pubkey message more than several hours in the future. This is irrational. Ignoring message.'
+        return
+    addressVersion, varintLength = decodeVarint(
+        data[readPosition:readPosition + 10])
+    readPosition += varintLength
+    streamNumber, varintLength = decodeVarint(
+        data[readPosition:readPosition + 10])
+    readPosition += varintLength
+    if not streamNumber in streamsInWhichIAmParticipating:
+        print 'The streamNumber', streamNumber, 'isn\'t one we are interested in.'
+        return
+    if addressVersion >= 4:
+        tag = data[readPosition:readPosition + 32]
+        print 'tag in received pubkey is:', tag.encode('hex')
+    else:
+        tag = ''
+
+    shared.numberOfInventoryLookupsPerformed += 1
+    inventoryHash = calculateInventoryHash(data)
+    inventoryLock.acquire()
+    if inventoryHash in inventory:
+        print 'We have already received this pubkey. Ignoring it.'
+        inventoryLock.release()
+        return
+    elif isInSqlInventory(inventoryHash):
+        print 'We have already received this pubkey (it is stored on disk in the SQL inventory). Ignoring it.'
+        inventoryLock.release()
+        return
+    objectType = 'pubkey'
+    inventory[inventoryHash] = (
+        objectType, streamNumber, data, embeddedTime, tag)
+    inventorySets[streamNumber].add(inventoryHash)
+    inventoryLock.release()
+    # This object is valid. Forward it to peers.
+    with printLock:
+        print 'advertising inv with hash:', inventoryHash.encode('hex')
+    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+
+
+    # Now let's queue it to be processed ourselves.
+    # If we already have too much data in the queue to be processed, just sleep for now.
+    while shared.objectProcessorQueueSize > 120000000:
+        time.sleep(2)
+    with shared.objectProcessorQueueSizeLock:
+        shared.objectProcessorQueueSize += len(data)
+    objectProcessorQueue.put((objectType,data))
+
+
+def checkAndShareBroadcastWithPeers(data):
+    # Let us verify that the proof of work is sufficient.
+    if not isProofOfWorkSufficient(data):
+        print 'Proof of work in broadcast message insufficient.'
+        return
+    readPosition = 8  # bypass the nonce
+    embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
+
+    # This section is used for the transition from 32 bit time to 64 bit
+    # time in the protocol.
+    if embeddedTime == 0:
+        embeddedTime, = unpack('>Q', data[readPosition:readPosition + 8])
+        readPosition += 8
+    else:
+        readPosition += 4
+
+    if embeddedTime > (int(time.time()) + 10800):  # prevent funny business
+        print 'The embedded time in this broadcast message is more than three hours in the future. That doesn\'t make sense. Ignoring message.'
+        return
+    if embeddedTime < (int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept):
+        print 'The embedded time in this broadcast message is too old. Ignoring message.'
+        return
+    if len(data) < 180:
+        print 'The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.'
+        return
+    broadcastVersion, broadcastVersionLength = decodeVarint(
+        data[readPosition:readPosition + 10])
+    if broadcastVersion >= 2:
+        streamNumber, streamNumberLength = decodeVarint(data[
+                                                        readPosition + broadcastVersionLength:readPosition + broadcastVersionLength + 10])
+        if not streamNumber in streamsInWhichIAmParticipating:
+            print 'The streamNumber', streamNumber, 'isn\'t one we are interested in.'
+            return
+
+    shared.numberOfInventoryLookupsPerformed += 1
+    inventoryLock.acquire()
+    inventoryHash = calculateInventoryHash(data)
+    if inventoryHash in inventory:
+        print 'We have already received this broadcast object. Ignoring.'
+        inventoryLock.release()
+        return
+    elif isInSqlInventory(inventoryHash):
+        print 'We have already received this broadcast object (it is stored on disk in the SQL inventory). Ignoring it.'
+        inventoryLock.release()
+        return
+    # It is valid. Let's let our peers know about it.
+    objectType = 'broadcast'
+    inventory[inventoryHash] = (
+        objectType, streamNumber, data, embeddedTime,'')
+    inventorySets[streamNumber].add(inventoryHash)
+    inventoryLock.release()
+    # This object is valid. Forward it to peers.
+    with printLock:
+        print 'advertising inv with hash:', inventoryHash.encode('hex')
+    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+
+    # Now let's queue it to be processed ourselves.
+    # If we already have too much data in the queue to be processed, just sleep for now.
+    while shared.objectProcessorQueueSize > 120000000:
+        time.sleep(2)
+    with shared.objectProcessorQueueSizeLock:
+        shared.objectProcessorQueueSize += len(data)
+    objectProcessorQueue.put((objectType,data))
+
 
 helper_startup.loadConfig()
 from debug import logger
