@@ -494,7 +494,7 @@ class singleWorker(threading.Thread):
                         if queryreturn != []: # if there was a pubkey in our inventory with the correct tag, we need to try to decrypt it.
                             for row in queryreturn:
                                 data, = row
-                                if shared.decryptAndCheckPubkeyPayload(data[8:], toaddress) == 'successful':
+                                if shared.decryptAndCheckPubkeyPayload(data, toaddress) == 'successful':
                                     needToRequestPubkey = False
                                     print 'debug. successfully decrypted and checked pubkey from sql inventory.' #testing
                                     sqlExecute(
@@ -508,7 +508,7 @@ class singleWorker(threading.Thread):
                                 for hash, storedValue in shared.inventory.items():
                                     objectType, streamNumber, payload, receivedTime, tag = storedValue
                                     if objectType == 'pubkey' and tag == toTag:
-                                        result = shared.decryptAndCheckPubkeyPayload(payload[8:], toaddress) #if valid, this function also puts it in the pubkeys table.
+                                        result = shared.decryptAndCheckPubkeyPayload(payload, toaddress) #if valid, this function also puts it in the pubkeys table.
                                         if result == 'successful':
                                             print 'debug. successfully decrypted and checked pubkey from memory inventory.'
                                             needToRequestPubkey = False

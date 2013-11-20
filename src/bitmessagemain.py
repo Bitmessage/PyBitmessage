@@ -29,6 +29,7 @@ from helper_sql import *
 from class_sqlThread import *
 from class_singleCleaner import *
 from class_singleWorker import *
+from class_objectProcessor import *
 from class_outgoingSynSender import *
 from class_singleListener import *
 from class_addressGenerator import *
@@ -47,6 +48,7 @@ if sys.platform == 'darwin':
         sys.exit(0)
 
 def connectToStream(streamNumber):
+    shared.streamsInWhichIAmParticipating[streamNumber] = 'no data'
     selfInitiatedConnections[streamNumber] = {}
     shared.inventorySets[streamNumber] = set()
     queryData = sqlQuery('''SELECT hash FROM inventory WHERE streamnumber=?''', streamNumber)
@@ -979,6 +981,11 @@ class Main:
         singleWorkerThread = singleWorker()
         singleWorkerThread.daemon = True  # close the main program even if there are threads left
         singleWorkerThread.start()
+
+        # Start the thread that calculates POWs
+        objectProcessorThread = objectProcessor()
+        objectProcessorThread.daemon = True  # close the main program even if there are threads left
+        objectProcessorThread.start()
 
         # Start the SQL thread
         sqlLookup = sqlThread()
