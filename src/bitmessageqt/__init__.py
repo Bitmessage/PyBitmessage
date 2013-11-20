@@ -824,7 +824,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSent.keyPressEvent = self.tableWidgetSentKeyPressEvent
 
     # Reload inbox Table when Inbox tab is selected
-    def ReloadOnlyInboxTable(self):
+    def ReloadInboxSentTables(self):
         if self.ui.tabWidget.currentIndex() == self.ui.tabWidget.indexOf(self.ui.inbox):
             self.loadInbox()
         elif self.ui.tabWidget.currentIndex() == self.ui.tabWidget.indexOf(self.ui.sent):
