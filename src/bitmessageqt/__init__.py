@@ -224,7 +224,7 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
         #Sent and Inbox Tabs
-        QtCore.QObject.connect(self.ui.tabWidget, QtCore.SIGNAL("currentChanged(int)"), self.ReloadOnlyInboxTable)
+        QtCore.QObject.connect(self.ui.tabWidget, QtCore.SIGNAL("currentChanged(int)"), self.ReloadInboxSentTables)
         # FILE MENU and other buttons
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
             "triggered()"), self.quit)
