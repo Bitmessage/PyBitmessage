@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>885</width>
-    <height>587</height>
+    <width>904</width>
+    <height>629</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,7 +57,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="inbox">
        <attribute name="icon">
@@ -368,8 +368,8 @@
            <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
 &lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
 p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:12pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'.Lucida Grande UI'; font-size:12pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:'MS Shell Dlg 2'; font-size:9pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
           </property>
          </widget>
         </item>
@@ -436,7 +436,7 @@ p, li { white-space: pre-wrap; }
           </property>
           <property name="minimumSize">
            <size>
-            <width>773</width>
+            <width>780</width>
             <height>53</height>
            </size>
           </property>
@@ -446,7 +446,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonBold">
            <property name="geometry">
             <rect>
-             <x>149</x>
+             <x>157</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -462,7 +462,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/bold.png</normaloff>:/newPrefix/images/bold.png</iconset>
            </property>
            <property name="iconSize">
@@ -478,7 +478,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonClear">
            <property name="geometry">
             <rect>
-             <x>729</x>
+             <x>734</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -488,7 +488,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/remove_format.png</normaloff>:/newPrefix/images/remove_format.png</iconset>
            </property>
            <property name="iconSize">
@@ -501,7 +501,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonUndo">
            <property name="geometry">
             <rect>
-             <x>649</x>
+             <x>654</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -511,7 +511,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/undo.png</normaloff>:/newPrefix/images/undo.png</iconset>
            </property>
            <property name="iconSize">
@@ -524,7 +524,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonPastPlainText">
            <property name="geometry">
             <rect>
-             <x>569</x>
+             <x>574</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -534,7 +534,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/paste_as_plain_text.png</normaloff>:/newPrefix/images/paste_as_plain_text.png</iconset>
            </property>
            <property name="iconSize">
@@ -547,7 +547,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonPastFormattedText">
            <property name="geometry">
             <rect>
-             <x>609</x>
+             <x>614</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -557,7 +557,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/paste.png</normaloff>:/newPrefix/images/paste.png</iconset>
            </property>
            <property name="iconSize">
@@ -570,7 +570,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonRedo">
            <property name="geometry">
             <rect>
-             <x>689</x>
+             <x>694</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -580,7 +580,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/redo.png</normaloff>:/newPrefix/images/redo.png</iconset>
            </property>
            <property name="iconSize">
@@ -593,7 +593,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonTextColor">
            <property name="geometry">
             <rect>
-             <x>309</x>
+             <x>317</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -603,7 +603,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/select_color_text.png</normaloff>:/newPrefix/images/select_color_text.png</iconset>
            </property>
            <property name="iconSize">
@@ -616,7 +616,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonAlignmentLeft">
            <property name="geometry">
             <rect>
-             <x>399</x>
+             <x>407</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -626,7 +626,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/align_left.png</normaloff>:/newPrefix/images/align_left.png</iconset>
            </property>
            <property name="iconSize">
@@ -651,7 +651,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonHighlight">
            <property name="geometry">
             <rect>
-             <x>349</x>
+             <x>357</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -661,7 +661,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/select_background_color.png</normaloff>:/newPrefix/images/select_background_color.png</iconset>
            </property>
            <property name="iconSize">
@@ -674,7 +674,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonAlignmentCenter">
            <property name="geometry">
             <rect>
-             <x>439</x>
+             <x>447</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -684,7 +684,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/align_center.png</normaloff>:/newPrefix/images/align_center.png</iconset>
            </property>
            <property name="iconSize">
@@ -700,7 +700,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonAlignmentRight">
            <property name="geometry">
             <rect>
-             <x>479</x>
+             <x>487</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -710,7 +710,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/align_right.png</normaloff>:/newPrefix/images/align_right.png</iconset>
            </property>
            <property name="iconSize">
@@ -726,7 +726,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonAlignmentJustify">
            <property name="geometry">
             <rect>
-             <x>519</x>
+             <x>527</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -736,7 +736,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/align_justify.png</normaloff>:/newPrefix/images/align_justify.png</iconset>
            </property>
            <property name="iconSize">
@@ -752,14 +752,25 @@ p, li { white-space: pre-wrap; }
           <widget class="QComboBox" name="comboBoxFontSize">
            <property name="geometry">
             <rect>
-             <x>10</x>
-             <y>9</y>
-             <width>43</width>
-             <height>34</height>
+             <x>9</x>
+             <y>8</y>
+             <width>52</width>
+             <height>35</height>
             </rect>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>12</pointsize>
+            </font>
            </property>
            <property name="currentIndex">
             <number>6</number>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
            </property>
            <item>
             <property name="text">
@@ -855,7 +866,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonUnderline">
            <property name="geometry">
             <rect>
-             <x>229</x>
+             <x>237</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -865,7 +876,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/underline.png</normaloff>:/newPrefix/images/underline.png</iconset>
            </property>
            <property name="iconSize">
@@ -881,7 +892,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonItalic">
            <property name="geometry">
             <rect>
-             <x>189</x>
+             <x>197</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -894,7 +905,7 @@ p, li { white-space: pre-wrap; }
             <string/>
            </property>
            <property name="icon">
-            <iconset resource="bitmessage_icons.qrc">
+            <iconset>
              <normaloff>:/newPrefix/images/italic.png</normaloff>:/newPrefix/images/italic.png</iconset>
            </property>
            <property name="iconSize">
@@ -910,7 +921,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonFontDecrease">
            <property name="geometry">
             <rect>
-             <x>59</x>
+             <x>67</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -920,6 +931,12 @@ p, li { white-space: pre-wrap; }
             <font>
              <pointsize>1</pointsize>
             </font>
+           </property>
+           <property name="autoFillBackground">
+            <bool>false</bool>
+           </property>
+           <property name="styleSheet">
+            <string notr="true"/>
            </property>
            <property name="text">
             <string/>
@@ -934,11 +951,14 @@ p, li { white-space: pre-wrap; }
              <height>18</height>
             </size>
            </property>
+           <property name="default">
+            <bool>false</bool>
+           </property>
           </widget>
           <widget class="QPushButton" name="pushButtonFontIncrease">
            <property name="geometry">
             <rect>
-             <x>99</x>
+             <x>107</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -961,7 +981,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonStrike">
            <property name="geometry">
             <rect>
-             <x>269</x>
+             <x>277</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -1687,8 +1707,8 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>885</width>
-     <height>21</height>
+     <width>904</width>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuFile">
