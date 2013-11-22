@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>885</width>
-    <height>580</height>
+    <height>587</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -57,7 +57,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="inbox">
        <attribute name="icon">
@@ -204,14 +204,27 @@
         <string>Send</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="4" column="1" colspan="5">
+        <item row="5" column="3" colspan="6">
+         <spacer name="horizontalSpacer_3">
+          <property name="orientation">
+           <enum>Qt::Horizontal</enum>
+          </property>
+          <property name="sizeHint" stdset="0">
+           <size>
+            <width>40</width>
+            <height>20</height>
+           </size>
+          </property>
+         </spacer>
+        </item>
+        <item row="5" column="1">
          <widget class="QLineEdit" name="lineEditSubject">
           <property name="text">
            <string/>
           </property>
          </widget>
         </item>
-        <item row="3" column="4">
+        <item row="4" column="4">
          <widget class="QPushButton" name="pushButtonLoadFromAddressBook">
           <property name="font">
            <font>
@@ -223,7 +236,7 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="5">
+        <item row="4" column="5">
          <widget class="QPushButton" name="pushButtonFetchNamecoinID">
           <property name="font">
            <font>
@@ -235,7 +248,7 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="1">
+        <item row="3" column="1">
          <widget class="QComboBox" name="comboBoxSendFrom">
           <property name="minimumSize">
            <size>
@@ -245,14 +258,14 @@
           </property>
          </widget>
         </item>
-        <item row="4" column="0">
+        <item row="5" column="0">
          <widget class="QLabel" name="label_3">
           <property name="text">
            <string>Subject:</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="4" colspan="4">
+        <item row="3" column="4" colspan="4">
          <widget class="QLabel" name="labelFrom">
           <property name="text">
            <string/>
@@ -269,17 +282,17 @@
           </property>
          </widget>
         </item>
-        <item row="3" column="1">
+        <item row="4" column="1">
          <widget class="QLineEdit" name="lineEditTo"/>
         </item>
-        <item row="3" column="0">
+        <item row="4" column="0">
          <widget class="QLabel" name="label">
           <property name="text">
            <string>To:</string>
           </property>
          </widget>
         </item>
-        <item row="2" column="0">
+        <item row="3" column="0">
          <widget class="QLabel" name="label_2">
           <property name="text">
            <string>From:</string>
@@ -293,14 +306,14 @@
           </property>
          </widget>
         </item>
-        <item row="12" column="8">
+        <item row="14" column="8">
          <widget class="QPushButton" name="pushButtonSend">
           <property name="text">
            <string>Send</string>
           </property>
          </widget>
         </item>
-        <item row="12" column="1" colspan="7">
+        <item row="14" column="1" colspan="7">
          <widget class="QLabel" name="labelSendBroadcastWarning">
           <property name="enabled">
            <bool>true</bool>
@@ -319,17 +332,7 @@
           </property>
          </widget>
         </item>
-        <item row="11" column="0">
-         <widget class="QLabel" name="label_4">
-          <property name="text">
-           <string>Message:</string>
-          </property>
-          <property name="alignment">
-           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="6" colspan="3">
+        <item row="4" column="6" colspan="3">
          <spacer name="horizontalSpacer_6">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -342,8 +345,48 @@
           </property>
          </spacer>
         </item>
-        <item row="4" column="7" colspan="2">
-         <spacer name="horizontalSpacer_3">
+        <item row="13" column="1" colspan="8">
+         <widget class="QTextEdit" name="textEditMessage">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>805</width>
+            <height>260</height>
+           </size>
+          </property>
+          <property name="font">
+           <font>
+            <pointsize>12</pointsize>
+           </font>
+          </property>
+          <property name="html">
+           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:12pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="0">
+         <widget class="QLabel" name="label_8">
+          <property name="font">
+           <font>
+            <pointsize>2</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="3" column="8">
+         <spacer name="horizontalSpacer_7">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
           </property>
@@ -355,7 +398,7 @@
           </property>
          </spacer>
         </item>
-        <item row="9" column="0">
+        <item row="8" column="0">
          <spacer name="verticalSpacer">
           <property name="orientation">
            <enum>Qt::Vertical</enum>
@@ -371,31 +414,39 @@
           </property>
          </spacer>
         </item>
-        <item row="11" column="1" colspan="8">
-         <widget class="QTextEdit" name="textEditMessage">
+        <item row="6" column="0" rowspan="2">
+         <widget class="QLabel" name="label_7">
           <property name="font">
            <font>
-            <pointsize>12</pointsize>
+            <pointsize>2</pointsize>
            </font>
           </property>
-          <property name="html">
-           <string>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:'MS Shell Dlg 2'; font-size:12pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-size:9pt;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+          <property name="text">
+           <string/>
           </property>
          </widget>
         </item>
-        <item row="7" column="1" rowspan="3" colspan="8">
+        <item row="6" column="1" rowspan="7" colspan="8">
          <widget class="QGroupBox" name="groupBox">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>773</width>
+            <height>53</height>
+           </size>
+          </property>
           <property name="title">
            <string/>
           </property>
           <widget class="QPushButton" name="pushButtonBold">
            <property name="geometry">
             <rect>
-             <x>153</x>
+             <x>149</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -427,7 +478,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonClear">
            <property name="geometry">
             <rect>
-             <x>760</x>
+             <x>729</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -450,7 +501,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonUndo">
            <property name="geometry">
             <rect>
-             <x>680</x>
+             <x>649</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -470,36 +521,56 @@ p, li { white-space: pre-wrap; }
             </size>
            </property>
           </widget>
-          <widget class="QPushButton" name="pushButtonCopy">
+          <widget class="QPushButton" name="pushButtonPastPlainText">
            <property name="geometry">
             <rect>
-             <x>610</x>
-             <y>0</y>
-             <width>41</width>
-             <height>23</height>
+             <x>569</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
             </rect>
            </property>
            <property name="text">
-            <string>Copy</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/paste_as_plain_text.png</normaloff>:/newPrefix/images/paste_as_plain_text.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
            </property>
           </widget>
-          <widget class="QPushButton" name="pushButtonPaste">
+          <widget class="QPushButton" name="pushButtonPastFormattedText">
            <property name="geometry">
             <rect>
-             <x>610</x>
-             <y>20</y>
-             <width>41</width>
-             <height>23</height>
+             <x>609</x>
+             <y>8</y>
+             <width>36</width>
+             <height>36</height>
             </rect>
            </property>
            <property name="text">
-            <string>Paste</string>
+            <string/>
+           </property>
+           <property name="icon">
+            <iconset resource="bitmessage_icons.qrc">
+             <normaloff>:/newPrefix/images/paste.png</normaloff>:/newPrefix/images/paste.png</iconset>
+           </property>
+           <property name="iconSize">
+            <size>
+             <width>24</width>
+             <height>24</height>
+            </size>
            </property>
           </widget>
           <widget class="QPushButton" name="pushButtonRedo">
            <property name="geometry">
             <rect>
-             <x>720</x>
+             <x>689</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -522,7 +593,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonTextColor">
            <property name="geometry">
             <rect>
-             <x>313</x>
+             <x>309</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -545,7 +616,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonAlignmentLeft">
            <property name="geometry">
             <rect>
-             <x>406</x>
+             <x>399</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -580,7 +651,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonHighlight">
            <property name="geometry">
             <rect>
-             <x>353</x>
+             <x>349</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -603,7 +674,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonAlignmentCenter">
            <property name="geometry">
             <rect>
-             <x>446</x>
+             <x>439</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -629,7 +700,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonAlignmentRight">
            <property name="geometry">
             <rect>
-             <x>486</x>
+             <x>479</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -655,7 +726,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonAlignmentJustify">
            <property name="geometry">
             <rect>
-             <x>526</x>
+             <x>519</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -784,7 +855,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonUnderline">
            <property name="geometry">
             <rect>
-             <x>233</x>
+             <x>229</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -810,11 +881,14 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonItalic">
            <property name="geometry">
             <rect>
-             <x>193</x>
+             <x>189</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
             </rect>
+           </property>
+           <property name="whatsThis">
+            <string/>
            </property>
            <property name="text">
             <string/>
@@ -841,6 +915,11 @@ p, li { white-space: pre-wrap; }
              <width>36</width>
              <height>36</height>
             </rect>
+           </property>
+           <property name="font">
+            <font>
+             <pointsize>1</pointsize>
+            </font>
            </property>
            <property name="text">
             <string/>
@@ -882,7 +961,7 @@ p, li { white-space: pre-wrap; }
           <widget class="QPushButton" name="pushButtonStrike">
            <property name="geometry">
             <rect>
-             <x>273</x>
+             <x>269</x>
              <y>8</y>
              <width>36</width>
              <height>36</height>
@@ -905,45 +984,16 @@ p, li { white-space: pre-wrap; }
             <bool>true</bool>
            </property>
           </widget>
-          <widget class="Line" name="line">
-           <property name="geometry">
-            <rect>
-             <x>134</x>
-             <y>6</y>
-             <width>20</width>
-             <height>41</height>
-            </rect>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-          </widget>
-          <widget class="Line" name="line_2">
-           <property name="geometry">
-            <rect>
-             <x>388</x>
-             <y>6</y>
-             <width>20</width>
-             <height>41</height>
-            </rect>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-          </widget>
-          <widget class="Line" name="line_3">
-           <property name="geometry">
-            <rect>
-             <x>561</x>
-             <y>6</y>
-             <width>20</width>
-             <height>41</height>
-            </rect>
-           </property>
-           <property name="orientation">
-            <enum>Qt::Vertical</enum>
-           </property>
-          </widget>
+         </widget>
+        </item>
+        <item row="10" column="0" rowspan="5">
+         <widget class="QLabel" name="label_4">
+          <property name="text">
+           <string>Message:</string>
+          </property>
+          <property name="alignment">
+           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          </property>
          </widget>
         </item>
        </layout>

@@ -271,10 +271,10 @@ class MyForm(QtGui.QMainWindow):
             "clicked()"), self.SendPyWyg.click_pushButtonAlignmentJustify)
         QtCore.QObject.connect(self.ui.pushButtonTextColor, QtCore.SIGNAL(
             "clicked()"), self.SendPyWyg.click_pushButtonTextColor)
-        QtCore.QObject.connect(self.ui.pushButtonPaste, QtCore.SIGNAL(
-            "clicked()"), self.SendPyWyg.click_pushButtonPaste)
-        QtCore.QObject.connect(self.ui.pushButtonCopy, QtCore.SIGNAL(
-            "clicked()"), self.SendPyWyg.click_pushButtonCopy)
+        QtCore.QObject.connect(self.ui.pushButtonPastPlainText, QtCore.SIGNAL(
+            "clicked()"), self.SendPyWyg.click_pushButtonPastPlainText)
+        QtCore.QObject.connect(self.ui.pushButtonPastFormattedText, QtCore.SIGNAL(
+            "clicked()"), self.SendPyWyg.click_pushButtonPastFormattedText)
         QtCore.QObject.connect(self.ui.pushButtonRedo, QtCore.SIGNAL(
             "clicked()"), self.SendPyWyg.click_pushButtonRedo)
         QtCore.QObject.connect(self.ui.pushButtonUndo, QtCore.SIGNAL(

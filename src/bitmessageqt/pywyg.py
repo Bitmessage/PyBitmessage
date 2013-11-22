@@ -14,7 +14,7 @@ class PyWyg:
     def __init__(self, TheGui):
         self.ui = TheGui
         self.messagecontainer = self.ui.textEditMessage
-        #initializing default style values and applying them to container
+        #initializing default style and applying it to container
         self.thefont = QFont()
         self.thefont.setBold(False)
         self.thefont.setItalic(False)
@@ -30,11 +30,12 @@ class PyWyg:
         self.messagecontainer.setTextBackgroundColor(self.bgcol)
 
     #Setting style to container
-    def setCurrentStyle(self):
-        self.messagecontainer.setFont(self.thefont)
-        self.messagecontainer.setAlignment(self.thealignment)
-        self.messagecontainer.setTextColor(self.txtcol)
-        self.messagecontainer.setTextBackgroundColor(self.bgcol)
+    def setCurrentStyle(self, CurrentFont):
+        self.messagecontainer.setCurrentFont(CurrentFont)
+        #self.messagecontainer.setFont(self.thefont)
+        #self.messagecontainer.setAlignment(self.thealignment)
+        #self.messagecontainer.setTextColor(self.txtcol)
+        #self.messagecontainer.setTextBackgroundColor(self.bgcol)
 
     #Getting current style and setting according checked states to buttons
     def getCurrentStyle(self):
@@ -70,8 +71,7 @@ class PyWyg:
             self.Alignment_Buttons_Checked_Status(self.ui.pushButtonAlignmentJustify, self.ui.pushButtonAlignmentLeft, self.ui.pushButtonAlignmentRight, self.ui.pushButtonAlignmentCenter)
 
     def click_pushButtonBold(self):
-        messagecontainer = self.ui.textEditMessage
-        mycursor = messagecontainer.textCursor()
+        mycursor = self.messagecontainer.textCursor()
         myformat = mycursor.charFormat()
         if mycursor.hasSelection():
             mycursor.beginEditBlock()
@@ -79,23 +79,22 @@ class PyWyg:
                 myformat.setFontWeight(QFont.Bold)
             else:
                 myformat.setFontWeight(QFont.Normal)
-            mycursor.setCharFormat(myformat)
+            mycursor.mergeCharFormat(myformat)
             mycursor.endEditBlock()
         elif mycursor.position() >= 0:
             mycursor.beginEditBlock()
             if self.ui.pushButtonBold.isChecked():
                 self.thefont.setBold(True)
-                self.setCurrentStyle()
+                self.setCurrentStyle(self.thefont)
             else:
                 self.thefont.setBold(False)
-                self.setCurrentStyle()
+                self.setCurrentStyle(self.thefont)
             mycursor.endEditBlock()
         else:
             return False
 
     def click_pushButtonUnderline(self):
-        messagecontainer = self.ui.textEditMessage
-        mycursor = messagecontainer.textCursor()
+        mycursor = self.messagecontainer.textCursor()
         myformat = mycursor.charFormat()
         if mycursor.hasSelection():
             mycursor.beginEditBlock()
@@ -103,14 +102,16 @@ class PyWyg:
                 myformat.setFontUnderline(True)
             else:
                 myformat.setFontUnderline(False)
-            mycursor.setCharFormat(myformat)
+            mycursor.mergeCharFormat(myformat)
             mycursor.endEditBlock()
         elif mycursor.position() >= 0:
             mycursor.beginEditBlock()
             if self.ui.pushButtonUnderline.isChecked():
-                messagecontainer.setFontUnderline(True)
+                self.thefont.setUnderline(True)
+                self.setCurrentStyle(self.thefont)
             else:
-                messagecontainer.setFontUnderline(False)
+                self.thefont.setUnderline(False)
+                self.setCurrentStyle(self.thefont)
             mycursor.endEditBlock()
         else:
             return False
@@ -177,8 +178,7 @@ class PyWyg:
             return False
 
     def click_pushButtonItalic(self):
-        messagecontainer = self.ui.textEditMessage
-        mycursor = messagecontainer.textCursor()
+        mycursor = self.messagecontainer.textCursor()
         myformat = mycursor.charFormat()
         if mycursor.hasSelection():
             mycursor.beginEditBlock()
@@ -186,17 +186,24 @@ class PyWyg:
                 myformat.setFontItalic(True)
             else:
                 myformat.setFontItalic(False)
-            mycursor.setCharFormat(myformat)
+            mycursor.mergeCharFormat(myformat)
             mycursor.endEditBlock()
         elif mycursor.position() >= 0:
             mycursor.beginEditBlock()
             if self.ui.pushButtonItalic.isChecked():
-                messagecontainer.setFontItalic(True)
+                self.thefont.setItalic(True)
+                self.setCurrentStyle(self.thefont)
             else:
-                messagecontainer.setFontItalic(False)
+                self.thefont.setItalic(True)
+                self.setCurrentStyle(self.thefont)
             mycursor.endEditBlock()
         else:
             return False
+    def click_pushButtonPastPlainText(self):
+        print "sdfsdf"
+
+    def click_pushButtonPastFormattedText(self):
+        print "dsfsd"
 
     def click_pushButtonClear(self):
         messagecontainer = self.ui.textEditMessage
