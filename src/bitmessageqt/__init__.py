@@ -242,7 +242,7 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.ui.pushButtonNewAddress, QtCore.SIGNAL(
             "clicked()"), self.click_NewAddressDialog)
         QtCore.QObject.connect(self.ui.textEditMessage, QtCore.SIGNAL(
-            "cursorPositionChanged()"), self.SendPyWyg.getCurrentStyle)
+            "cursorPositionChanged()"), self.SendPyWyg.getCurrentStyleonPositionChange)
         QtCore.QObject.connect(self.ui.pushButtonItalic, QtCore.SIGNAL(
             "clicked()"), self.SendPyWyg.click_pushButtonItalic)
         QtCore.QObject.connect(self.ui.comboBoxFontSize, QtCore.SIGNAL(
