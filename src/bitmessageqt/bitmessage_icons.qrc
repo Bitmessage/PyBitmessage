@@ -8,8 +8,6 @@
     <file>../images/increase_font.png</file>
     <file>../images/decrease_font.png</file>
     <file>../images/bold.png</file>
-    <file>../images/copy.png</file>
-    <file>../images/cut.png</file>
     <file>../images/italic.png</file>
     <file>../images/paste.png</file>
     <file>../images/paste_as_plain_text.png</file>
@@ -28,7 +26,6 @@
     <file>../images/qidenticon.png</file>
     <file>../images/qidenticon_two.png</file>
     <file>../images/qidenticon_two_x.png</file>
-    <file>../images/text-strikethrough.png</file>
     <file>../images/txtstrike.png</file>
     <file>../images/can-icon-24px-yellow.png</file>
     <file>../images/can-icon-24px-red.png</file>
