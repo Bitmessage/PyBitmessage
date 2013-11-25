@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>904</width>
+    <width>903</width>
     <height>629</height>
    </rect>
   </property>
@@ -57,7 +57,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>0</number>
+       <number>1</number>
       </property>
       <widget class="QWidget" name="inbox">
        <attribute name="icon">
@@ -1625,7 +1625,7 @@ p, li { white-space: pre-wrap; }
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>904</width>
+     <width>903</width>
      <height>21</height>
     </rect>
    </property>
