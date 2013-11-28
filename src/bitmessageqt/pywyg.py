@@ -2,8 +2,8 @@
 # 20.12.2013
 # arnukk@gmail.com
 # Areg Karapetyan
-# For Installation details and detailed explanation please refer
-# to
+# Installation guide and a detailed explanation of this module is available upon request
+#
 
 from PyQt4 import QtCore, QtGui
 from PyQt4.QtCore import *
