@@ -57,7 +57,7 @@
        <enum>QTabWidget::Rounded</enum>
       </property>
       <property name="currentIndex">
-       <number>1</number>
+       <number>0</number>
       </property>
       <widget class="QWidget" name="inbox">
        <attribute name="icon">
@@ -204,7 +204,7 @@
         <string>Send</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="14" column="1" colspan="10">
+        <item row="14" column="1" colspan="9">
          <widget class="QTextEdit" name="textEditMessage">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
@@ -314,7 +314,7 @@ p, li { white-space: pre-wrap; }
           </property>
          </widget>
         </item>
-        <item row="4" column="6" colspan="5">
+        <item row="4" column="6" colspan="4">
          <spacer name="horizontalSpacer_6">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -380,14 +380,7 @@ p, li { white-space: pre-wrap; }
           </property>
          </widget>
         </item>
-        <item row="3" column="4" colspan="4">
-         <widget class="QLabel" name="labelFrom">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="5" column="3" colspan="8">
+        <item row="5" column="3" colspan="7">
          <spacer name="horizontalSpacer_3">
           <property name="orientation">
            <enum>Qt::Horizontal</enum>
@@ -400,7 +393,7 @@ p, li { white-space: pre-wrap; }
           </property>
          </spacer>
         </item>
-        <item row="15" column="10">
+        <item row="15" column="9">
          <widget class="QPushButton" name="pushButtonSend">
           <property name="sizePolicy">
            <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
@@ -432,10 +425,22 @@ p, li { white-space: pre-wrap; }
           </property>
          </spacer>
         </item>
-        <item row="7" column="1" rowspan="7" colspan="10">
+        <item row="6" column="1">
+         <widget class="QLabel" name="label_7">
+          <property name="font">
+           <font>
+            <pointsize>2</pointsize>
+           </font>
+          </property>
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="7" column="1" rowspan="7" colspan="9">
          <widget class="QGroupBox" name="groupBox">
           <property name="sizePolicy">
-           <sizepolicy hsizetype="Maximum" vsizetype="Maximum">
+           <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
             <horstretch>0</horstretch>
             <verstretch>0</verstretch>
            </sizepolicy>
@@ -922,12 +927,25 @@ p, li { white-space: pre-wrap; }
           </widget>
          </widget>
         </item>
-        <item row="6" column="1">
-         <widget class="QLabel" name="label_7">
-          <property name="font">
-           <font>
-            <pointsize>2</pointsize>
-           </font>
+        <item row="3" column="4" colspan="5">
+         <widget class="QLabel" name="labelFrom">
+          <property name="sizePolicy">
+           <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+            <horstretch>0</horstretch>
+            <verstretch>0</verstretch>
+           </sizepolicy>
+          </property>
+          <property name="minimumSize">
+           <size>
+            <width>0</width>
+            <height>0</height>
+           </size>
+          </property>
+          <property name="maximumSize">
+           <size>
+            <width>280</width>
+            <height>20</height>
+           </size>
           </property>
           <property name="text">
            <string/>
