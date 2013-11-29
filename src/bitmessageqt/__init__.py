@@ -822,7 +822,7 @@ class MyForm(QtGui.QMainWindow):
 
             if status == 'awaitingpubkey':
                 statusText = _translate(
-                    "MainWindow", "Waiting on their encryption key. Will request it again soon.")
+                    "MainWindow", "Waiting for their encryption key. Will request it again soon.")
             elif status == 'doingpowforpubkey':
                 statusText = _translate(
                     "MainWindow", "Encryption key request queued.")
@@ -830,7 +830,7 @@ class MyForm(QtGui.QMainWindow):
                 statusText = _translate(
                     "MainWindow", "Queued.")
             elif status == 'msgsent':
-                statusText = _translate("MainWindow", "Message sent. Waiting on acknowledgement. Sent at %1").arg(
+                statusText = _translate("MainWindow", "Message sent. Waiting for acknowledgement. Sent at %1").arg(
                     unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
             elif status == 'msgsentnoackexpected':
                 statusText = _translate("MainWindow", "Message sent. Sent at %1").arg(
