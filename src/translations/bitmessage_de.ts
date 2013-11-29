@@ -96,7 +96,7 @@
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="632"/>
-        <source>Waiting on their encryption key. Will request it again soon.</source>
+        <source>Waiting for their encryption key. Will request it again soon.</source>
         <translation>Warte auf den Verschlüsselungscode. Wird bald erneut angefordert.</translation>
     </message>
     <message>
@@ -111,7 +111,7 @@
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="641"/>
-        <source>Message sent. Waiting on acknowledgement. Sent at %1</source>
+        <source>Message sent. Waiting for acknowledgement. Sent at %1</source>
         <translation>Nachricht gesendet. Warten auf Bestätigung. Gesendet %1</translation>
     </message>
     <message>
