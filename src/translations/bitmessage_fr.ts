@@ -313,7 +313,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="632"/>
-        <source>Waiting on their encryption key. Will request it again soon.</source>
+        <source>Waiting for their encryption key. Will request it again soon.</source>
         <translation>En attente de la clé de chiffrement. Une nouvelle requête sera bientôt lancée.</translation>
     </message>
     <message>
@@ -358,7 +358,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="641"/>
-        <source>Message sent. Waiting on acknowledgement. Sent at %1</source>
+        <source>Message sent. Waiting for acknowledgement. Sent at %1</source>
         <translation>Message envoyé. En attente de l&apos;accusé de réception. Envoyé le %1</translation>
     </message>
     <message>
@@ -747,7 +747,7 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
     </message>
     <message>
         <location filename="../bitmessagemain.py" line="3779"/>
-        <source>Message sent. Waiting on acknowledgement. Sent on %1</source>
+        <source>Message sent. Waiting for acknowledgement. Sent on %1</source>
         <translation type="obsolete">Message envoyé. En attente de l&apos;accusé de réception. Envoyé le %1</translation>
     </message>
     <message>
