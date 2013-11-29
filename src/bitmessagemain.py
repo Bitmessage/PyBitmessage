@@ -516,6 +516,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 # UPDATE is slow, only update if status is different
                 if queryreturn != [] and (queryreturn[0][0] == 1) != readStatus:
                     sqlExecute('''UPDATE inbox set read = ? WHERE msgid=?''', readStatus, msgid)
+                    shared.UISignalQueue.put(('changedInboxUnread', None))
             queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox WHERE msgid=?''', msgid)
             data = '{"inboxMessage":['
             for row in queryreturn:

@@ -85,6 +85,7 @@ def markAllInboxMessagesAsUnread():
     cur.execute(item, parameters)
     output = cur.fetchall()
     conn.commit()
+    shared.UISignalQueue.put(('changedInboxUnread', None))
     print 'done'
 
 def vacuum():
