@@ -2147,7 +2147,6 @@ class MyForm(QtGui.QMainWindow):
                     with shared.objectProcessorQueueSizeLock:
                         shared.objectProcessorQueueSize += len(payload)
                     shared.objectProcessorQueue.put((objectType,payload))
-            ####
 
     def loadBlackWhiteList(self):
         # Initialize the Blacklist or Whitelist table

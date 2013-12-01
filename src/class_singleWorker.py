@@ -386,7 +386,10 @@ class singleWorker(threading.Thread):
             if addressVersionNumber >= 4:
                 doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
                     addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()).digest()
-                payload += doubleHashOfAddressData[32:]  # the tag
+                tag = doubleHashOfAddressData[32:]
+                payload += tag
+            else:
+                tag = ''
 
             if addressVersionNumber <= 3:
                 dataToEncrypt = encodeVarint(2)  # broadcast version
@@ -416,6 +419,7 @@ class singleWorker(threading.Thread):
                     addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()[:32]
             else:
                 privEncryptionKey = doubleHashOfAddressData[:32]
+
             pubEncryptionKey = pointMult(privEncryptionKey)
             payload += highlevelcrypto.encrypt(
                 dataToEncrypt, pubEncryptionKey.encode('hex'))
@@ -434,7 +438,7 @@ class singleWorker(threading.Thread):
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'broadcast'
             shared.inventory[inventoryHash] = (
-                objectType, streamNumber, payload, int(time.time()),'')
+                objectType, streamNumber, payload, int(time.time()),tag)
             shared.inventorySets[streamNumber].add(inventoryHash)
             with shared.printLock:
                 print 'sending inv (within sendBroadcast function) for object:', inventoryHash.encode('hex')
