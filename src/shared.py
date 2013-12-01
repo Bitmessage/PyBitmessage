@@ -708,13 +708,18 @@ def checkAndShareBroadcastWithPeers(data):
         return
     broadcastVersion, broadcastVersionLength = decodeVarint(
         data[readPosition:readPosition + 10])
+    readPosition += broadcastVersionLength
     if broadcastVersion >= 2:
-        streamNumber, streamNumberLength = decodeVarint(data[
-                                                        readPosition + broadcastVersionLength:readPosition + broadcastVersionLength + 10])
+        streamNumber, streamNumberLength = decodeVarint(data[readPosition:readPosition + 10])
+        readPosition += streamNumberLength
         if not streamNumber in streamsInWhichIAmParticipating:
             print 'The streamNumber', streamNumber, 'isn\'t one we are interested in.'
             return
-
+    if broadcastVersion >= 3:
+        tag = data[readPosition:readPosition+32]
+        print 'debugging. in broadcast, tag is:', tag.encode('hex')
+    else:
+        tag = ''
     shared.numberOfInventoryLookupsPerformed += 1
     inventoryLock.acquire()
     inventoryHash = calculateInventoryHash(data)
@@ -729,7 +734,7 @@ def checkAndShareBroadcastWithPeers(data):
     # It is valid. Let's let our peers know about it.
     objectType = 'broadcast'
     inventory[inventoryHash] = (
-        objectType, streamNumber, data, embeddedTime,'')
+        objectType, streamNumber, data, embeddedTime, tag)
     inventorySets[streamNumber].add(inventoryHash)
     inventoryLock.release()
     # This object is valid. Forward it to peers.
