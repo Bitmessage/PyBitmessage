@@ -295,8 +295,12 @@ def isProofOfWorkSufficient(
 
 def doCleanShutdown():
     global shutdown
-    shutdown = 1 #Used to tell proof of work worker threads to exit.    
-    broadcastToSendDataQueues((0, 'shutdown', 'all'))
+    shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
+    broadcastToSendDataQueues((0, 'shutdown', 'all'))   
+    with shared.objectProcessorQueueSizeLock:
+        data = 'no data'
+        shared.objectProcessorQueueSize += len(data)
+        objectProcessorQueue.put(('checkShutdownVariable',data))
     
     knownNodesLock.acquire()
     UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
@@ -314,13 +318,18 @@ def doCleanShutdown():
         'updateStatusBar',
         'Flushing inventory in memory out to disk. This should normally only take a second...'))
     flushInventory()
-
-    # This one last useless query will guarantee that the previous flush committed before we close
-    # the program.
+    
+    # Verify that the objectProcessor has finished exiting. It should have incremented the 
+    # shutdown variable from 1 to 2. This must finish before we command the sqlThread to exit.
+    while shutdown == 1:
+        time.sleep(.1)
+    
+    # This one last useless query will guarantee that the previous flush committed and that the
+    # objectProcessorThread committed before we close the program.
     sqlQuery('SELECT address FROM subscriptions')
-    sqlStoredProcedure('exit')
     logger.info('Finished flushing inventory.')
-
+    sqlStoredProcedure('exit')
+    
     # Wait long enough to guarantee that any running proof of work worker threads will check the
     # shutdown variable and exit. If the main thread closes before they do then they won't stop.
     time.sleep(.25) 
@@ -542,7 +551,7 @@ def checkAndShareMsgWithPeers(data):
         time.sleep(2)
     with shared.objectProcessorQueueSizeLock:
         shared.objectProcessorQueueSize += len(data)
-    objectProcessorQueue.put((objectType,data))
+        objectProcessorQueue.put((objectType,data))
 
 def checkAndSharegetpubkeyWithPeers(data):
     if not isProofOfWorkSufficient(data):
@@ -606,7 +615,7 @@ def checkAndSharegetpubkeyWithPeers(data):
         time.sleep(2)
     with shared.objectProcessorQueueSizeLock:
         shared.objectProcessorQueueSize += len(data)
-    objectProcessorQueue.put((objectType,data))
+        objectProcessorQueue.put((objectType,data))
 
 def checkAndSharePubkeyWithPeers(data):
     if len(data) < 146 or len(data) > 420:  # sanity check
@@ -678,7 +687,7 @@ def checkAndSharePubkeyWithPeers(data):
         time.sleep(2)
     with shared.objectProcessorQueueSizeLock:
         shared.objectProcessorQueueSize += len(data)
-    objectProcessorQueue.put((objectType,data))
+        objectProcessorQueue.put((objectType,data))
 
 
 def checkAndShareBroadcastWithPeers(data):
@@ -748,7 +757,7 @@ def checkAndShareBroadcastWithPeers(data):
         time.sleep(2)
     with shared.objectProcessorQueueSizeLock:
         shared.objectProcessorQueueSize += len(data)
-    objectProcessorQueue.put((objectType,data))
+        objectProcessorQueue.put((objectType,data))
 
 
 helper_startup.loadConfig()

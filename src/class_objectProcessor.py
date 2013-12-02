@@ -27,6 +27,23 @@ class objectProcessor(threading.Thread):
     """
     def __init__(self):
         threading.Thread.__init__(self)
+        """
+        It may be the case that the last time Bitmessage was running, the user
+        closed it before it finished processing everything in the
+        objectProcessorQueue. Assuming that Bitmessage wasn't closed forcefully,
+        it should have saved the data in the queue into the objectprocessorqueue 
+        table. Let's pull it out.
+        """
+        queryreturn = sqlQuery(
+            '''SELECT objecttype, data FROM objectprocessorqueue''')
+        with shared.objectProcessorQueueSizeLock:
+            for row in queryreturn:
+                objectType, data = row
+                shared.objectProcessorQueueSize += len(data)
+                shared.objectProcessorQueue.put((objectType,data))
+        sqlExecute('''DELETE FROM objectprocessorqueue''')
+        logger.debug('Loaded %s objects from disk into the objectProcessorQueue.' % str(len(queryreturn)))
+
 
     def run(self):
         while True:
@@ -40,13 +57,29 @@ class objectProcessor(threading.Thread):
                 self.processmsg(data)
             elif objectType == 'broadcast':
                 self.processbroadcast(data)
+            elif objectType == 'checkShutdownVariable': # is more of a command, not an object type. Is used to get this thread past the queue.get() so that it will check the shutdown variable.
+                pass
             else:
                 logger.critical('Error! Bug! The class_objectProcessor was passed an object type it doesn\'t recognize: %s' % str(objectType))
 
             with shared.objectProcessorQueueSizeLock:
                 shared.objectProcessorQueueSize -= len(data) # We maintain objectProcessorQueueSize so that we will slow down requesting objects if too much data accumulates in the queue.
-            #print 'objectProcessorQueueSize:', shared.objectProcessorQueueSize
 
+            if shared.shutdown:
+                time.sleep(.5) # Wait just a moment for most of the connections to close
+                numberOfObjectsThatWereInTheObjectProcessorQueue = 0
+                with SqlBulkExecute() as sql:
+                    while shared.objectProcessorQueueSize > 1:
+                        objectType, data = shared.objectProcessorQueue.get()
+                        sql.execute('''INSERT INTO objectprocessorqueue VALUES (?,?)''',
+                                   objectType,data)
+                        with shared.objectProcessorQueueSizeLock:
+                            shared.objectProcessorQueueSize -= len(data) # We maintain objectProcessorQueueSize so that we will slow down requesting objects if too much data accumulates in the queue.
+                        numberOfObjectsThatWereInTheObjectProcessorQueue += 1
+                logger.debug('Saved %s objects from the objectProcessorQueue to disk. objectProcessorThread exiting.' % str(numberOfObjectsThatWereInTheObjectProcessorQueue))
+                shared.shutdown = 2
+                break
+    
     def processgetpubkey(self, data):
         readPosition = 8  # bypass the nonce
         embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
