@@ -982,15 +982,15 @@ class Main:
         singleWorkerThread.daemon = True  # close the main program even if there are threads left
         singleWorkerThread.start()
 
-        # Start the thread that calculates POWs
-        objectProcessorThread = objectProcessor()
-        objectProcessorThread.daemon = True  # close the main program even if there are threads left
-        objectProcessorThread.start()
-
         # Start the SQL thread
         sqlLookup = sqlThread()
         sqlLookup.daemon = False  # DON'T close the main program even if there are threads left. The closeEvent should command this thread to exit gracefully.
         sqlLookup.start()
+
+        # Start the thread that calculates POWs
+        objectProcessorThread = objectProcessor()
+        objectProcessorThread.daemon = False  # DON'T close the main program even the thread remains. This thread checks the shutdown variable after processing each object.
+        objectProcessorThread.start()
 
         # Start the cleanerThread
         singleCleanerThread = singleCleaner()
