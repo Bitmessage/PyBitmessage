@@ -149,7 +149,7 @@ class objectProcessor(threading.Thread):
                 print 'Ignoring getpubkey request because it is for one of my chan addresses. The other party should already have the pubkey.'
             return
         try:
-            lastPubkeySendTime = int(config.get(
+            lastPubkeySendTime = int(shared.config.get(
                 myAddress, 'lastpubkeysendtime'))
         except:
             lastPubkeySendTime = 0
@@ -298,6 +298,15 @@ class objectProcessor(threading.Thread):
             self.possibleNewPubkey(ripe = ripe)
 
         if addressVersion == 4:
+            """
+            There exist a function: shared.decryptAndCheckPubkeyPayload which does something almost
+            the same as this section of code. There are differences, however; one being that 
+            decryptAndCheckPubkeyPayload requires that a cryptor object be created each time it is
+            run which is an expensive operation. This, on the other hand, keeps them saved in 
+            the shared.neededPubkeys dictionary so that if an attacker sends us many 
+            incorrectly-tagged pubkeys, which would force us to try to decrypt them, this code 
+            would run and handle that event quite quickly. 
+            """ 
             if len(data) < 350:  # sanity check.
                 print '(within processpubkey) payloadLength less than 350. Sanity check failed.'
                 return
@@ -320,7 +329,6 @@ class objectProcessor(threading.Thread):
                 with shared.printLock:
                     print 'Pubkey decryption was unsuccessful.'
                 return
-
 
             readPosition = 0
             bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
