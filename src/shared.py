@@ -437,7 +437,7 @@ def decryptAndCheckPubkeyPayload(payload, address):
             print 'Pubkey decryption was UNsuccessful due to stream number mismatch. This shouldn\'t have happened.'
         return 'failed'
     readPosition += varintLength
-    signedData = payload[:readPosition] # Some of the signed data is not encrypted so let's keep it for now.
+    signedData = payload[8:readPosition] # Some of the signed data is not encrypted so let's keep it for now.
     toTag = payload[readPosition:readPosition+32]
     readPosition += 32 #for the tag
     encryptedData = payload[readPosition:]
