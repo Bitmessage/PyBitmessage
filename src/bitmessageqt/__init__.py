@@ -16,6 +16,7 @@ import shared
 from bitmessageui import *
 from namecoin import namecoinConnection, ensureNamecoinOptions
 from newaddressdialog import *
+from addaddressdialog import *
 from newsubscriptiondialog import *
 from regenerateaddresses import *
 from newchandialog import *
@@ -2063,15 +2064,15 @@ class MyForm(QtGui.QMainWindow):
         self.ubuntuMessagingMenuUpdate(True, newItem, toLabel)
 
     def click_pushButtonAddAddressBook(self):
-        self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
-        if self.NewSubscriptionDialogInstance.exec_():
-            if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() == _translate("MainWindow", "Address is valid."):
+        self.AddAddressDialogInstance = AddAddressDialog(self)
+        if self.AddAddressDialogInstance.exec_():
+            if self.AddAddressDialogInstance.ui.labelAddressCheck.text() == _translate("MainWindow", "Address is valid."):
                 # First we must check to see if the address is already in the
                 # address book. The user cannot add it again or else it will
                 # cause problems when updating and deleting the entry.
                 address = addBMIfNotPresent(str(
-                    self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
-                label = self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()
+                    self.AddAddressDialogInstance.ui.lineEditAddress.text()))
+                label = self.AddAddressDialogInstance.ui.newAddressLabel.text().toUtf8()
                 self.addEntryToAddressBook(address,label)
             else:
                 self.statusBar().showMessage(_translate(
@@ -2120,7 +2121,7 @@ class MyForm(QtGui.QMainWindow):
     def click_pushButtonAddSubscription(self):
         self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
         if self.NewSubscriptionDialogInstance.exec_():
-            if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() != _translate("MainWindow", "Address is valid."):
+            if self.NewSubscriptionDialogInstance.ui.labelAddressCheck.text() != _translate("MainWindow", "Address is valid."):
                 self.statusBar().showMessage(_translate("MainWindow", "The address you entered was invalid. Ignoring it."))
                 return
             address = addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
@@ -2130,6 +2131,22 @@ class MyForm(QtGui.QMainWindow):
                 return
             label = self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()
             self.addSubscription(address, label)
+            # Now, if the user wants to display old broadcasts, let's get them out of the inventory and put them 
+            # in the objectProcessorQueue to be processed
+            if self.NewSubscriptionDialogInstance.ui.checkBoxDisplayMessagesAlreadyInInventory.isChecked():
+                status, addressVersion, streamNumber, ripe = decodeAddress(address)
+                shared.flushInventory()
+                doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
+                    addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
+                tag = doubleHashOfAddressData[32:]
+                queryreturn = sqlQuery(
+                    '''select payload from inventory where objecttype='broadcast' and tag=?''', tag)
+                for row in queryreturn:
+                    payload, = row
+                    objectType = 'broadcast'
+                    with shared.objectProcessorQueueSizeLock:
+                        shared.objectProcessorQueueSize += len(payload)
+                        shared.objectProcessorQueue.put((objectType,payload))
 
     def loadBlackWhiteList(self):
         # Initialize the Blacklist or Whitelist table
@@ -2368,11 +2385,11 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tabWidget.setTabText(6, 'Whitelist')
 
     def click_pushButtonAddBlacklist(self):
-        self.NewBlacklistDialogInstance = NewSubscriptionDialog(self)
+        self.NewBlacklistDialogInstance = AddAddressDialog(self)
         if self.NewBlacklistDialogInstance.exec_():
-            if self.NewBlacklistDialogInstance.ui.labelSubscriptionAddressCheck.text() == _translate("MainWindow", "Address is valid."):
+            if self.NewBlacklistDialogInstance.ui.labelAddressCheck.text() == _translate("MainWindow", "Address is valid."):
                 address = addBMIfNotPresent(str(
-                    self.NewBlacklistDialogInstance.ui.lineEditSubscriptionAddress.text()))
+                    self.NewBlacklistDialogInstance.ui.lineEditAddress.text()))
                 # First we must check to see if the address is already in the
                 # address book. The user cannot add it again or else it will
                 # cause problems when updating and deleting the entry.
@@ -2386,7 +2403,7 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetBlacklist.setSortingEnabled(False)
                     self.ui.tableWidgetBlacklist.insertRow(0)
                     newItem = QtGui.QTableWidgetItem(unicode(
-                        self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8(), 'utf-8'))
+                        self.NewBlacklistDialogInstance.ui.newAddressLabel.text().toUtf8(), 'utf-8'))
                     newItem.setIcon(avatarize(address))
                     self.ui.tableWidgetBlacklist.setItem(0, 0, newItem)
                     newItem = QtGui.QTableWidgetItem(address)
@@ -2394,7 +2411,7 @@ class MyForm(QtGui.QMainWindow):
                         QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
                     self.ui.tableWidgetBlacklist.setItem(0, 1, newItem)
                     self.ui.tableWidgetBlacklist.setSortingEnabled(True)
-                    t = (str(self.NewBlacklistDialogInstance.ui.newsubscriptionlabel.text().toUtf8()), address, True)
+                    t = (str(self.NewBlacklistDialogInstance.ui.newAddressLabel.text().toUtf8()), address, True)
                     if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
                         sql = '''INSERT INTO blacklist VALUES (?,?,?)'''
                     else:
@@ -3465,6 +3482,40 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 
+class AddAddressDialog(QtGui.QDialog):
+
+    def __init__(self, parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_AddAddressDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        QtCore.QObject.connect(self.ui.lineEditAddress, QtCore.SIGNAL(
+            "textChanged(QString)"), self.addressChanged)
+
+    def addressChanged(self, QString):
+        status, a, b, c = decodeAddress(str(QString))
+        if status == 'missingbm':
+            self.ui.labelAddressCheck.setText(_translate(
+                "MainWindow", "The address should start with ''BM-''"))
+        elif status == 'checksumfailed':
+            self.ui.labelAddressCheck.setText(_translate(
+                "MainWindow", "The address is not typed or copied correctly (the checksum failed)."))
+        elif status == 'versiontoohigh':
+            self.ui.labelAddressCheck.setText(_translate(
+                "MainWindow", "The version number of this address is higher than this software can support. Please upgrade Bitmessage."))
+        elif status == 'invalidcharacters':
+            self.ui.labelAddressCheck.setText(_translate(
+                "MainWindow", "The address contains invalid characters."))
+        elif status == 'ripetooshort':
+            self.ui.labelAddressCheck.setText(_translate(
+                "MainWindow", "Some data encoded in the address is too short."))
+        elif status == 'ripetoolong':
+            self.ui.labelAddressCheck.setText(_translate(
+                "MainWindow", "Some data encoded in the address is too long."))
+        elif status == 'success':
+            self.ui.labelAddressCheck.setText(
+                _translate("MainWindow", "Address is valid."))
+            
 class NewSubscriptionDialog(QtGui.QDialog):
 
     def __init__(self, parent):
@@ -3473,31 +3524,56 @@ class NewSubscriptionDialog(QtGui.QDialog):
         self.ui.setupUi(self)
         self.parent = parent
         QtCore.QObject.connect(self.ui.lineEditSubscriptionAddress, QtCore.SIGNAL(
-            "textChanged(QString)"), self.subscriptionAddressChanged)
+            "textChanged(QString)"), self.addressChanged)
+        self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
+            _translate("MainWindow", "Enter an address above."))
 
-    def subscriptionAddressChanged(self, QString):
-        status, a, b, c = decodeAddress(str(QString))
+    def addressChanged(self, QString):
+        self.ui.checkBoxDisplayMessagesAlreadyInInventory.setEnabled(False)
+        self.ui.checkBoxDisplayMessagesAlreadyInInventory.setChecked(False)
+        status, addressVersion, streamNumber, ripe = decodeAddress(str(QString))
         if status == 'missingbm':
-            self.ui.labelSubscriptionAddressCheck.setText(_translate(
+            self.ui.labelAddressCheck.setText(_translate(
                 "MainWindow", "The address should start with ''BM-''"))
         elif status == 'checksumfailed':
-            self.ui.labelSubscriptionAddressCheck.setText(_translate(
+            self.ui.labelAddressCheck.setText(_translate(
                 "MainWindow", "The address is not typed or copied correctly (the checksum failed)."))
         elif status == 'versiontoohigh':
-            self.ui.labelSubscriptionAddressCheck.setText(_translate(
+            self.ui.labelAddressCheck.setText(_translate(
                 "MainWindow", "The version number of this address is higher than this software can support. Please upgrade Bitmessage."))
         elif status == 'invalidcharacters':
-            self.ui.labelSubscriptionAddressCheck.setText(_translate(
+            self.ui.labelAddressCheck.setText(_translate(
                 "MainWindow", "The address contains invalid characters."))
         elif status == 'ripetooshort':
-            self.ui.labelSubscriptionAddressCheck.setText(_translate(
+            self.ui.labelAddressCheck.setText(_translate(
                 "MainWindow", "Some data encoded in the address is too short."))
         elif status == 'ripetoolong':
-            self.ui.labelSubscriptionAddressCheck.setText(_translate(
+            self.ui.labelAddressCheck.setText(_translate(
                 "MainWindow", "Some data encoded in the address is too long."))
         elif status == 'success':
-            self.ui.labelSubscriptionAddressCheck.setText(
+            self.ui.labelAddressCheck.setText(
                 _translate("MainWindow", "Address is valid."))
+            if addressVersion <= 3:
+                self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
+                    _translate("MainWindow", "Address is an old type. We cannot display its past broadcasts."))
+            else:
+                shared.flushInventory()
+                doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
+                    addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
+                tag = doubleHashOfAddressData[32:]
+                queryreturn = sqlQuery(
+                    '''select hash from inventory where objecttype='broadcast' and tag=?''', tag)
+                if len(queryreturn) == 0:
+                    self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
+                        _translate("MainWindow", "There are no recent broadcasts from this address to display."))
+                elif len(queryreturn) == 1:
+                    self.ui.checkBoxDisplayMessagesAlreadyInInventory.setEnabled(True)
+                    self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
+                        _translate("MainWindow", "Display the %1 recent broadcast from this address.").arg(str(len(queryreturn))))
+                else:
+                    self.ui.checkBoxDisplayMessagesAlreadyInInventory.setEnabled(True)
+                    self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
+                        _translate("MainWindow", "Display the %1 recent broadcasts from this address.").arg(str(len(queryreturn))))
 
 
 class NewAddressDialog(QtGui.QDialog):
