@@ -260,7 +260,6 @@ class singleWorker(threading.Thread):
         payload = pack('>Q', (embeddedTime))
         payload += encodeVarint(addressVersionNumber)  # Address version number
         payload += encodeVarint(streamNumber)
-        dataToStoreInOurPubkeysTable = payload # used if this is a chan. We'll add more data further down.
 
         dataToEncrypt = '\x00\x00\x00\x01'  # bitfield of features supported by me (see the wiki).
 
@@ -290,8 +289,6 @@ class singleWorker(threading.Thread):
             myAddress, 'noncetrialsperbyte'))
         dataToEncrypt += encodeVarint(shared.config.getint(
             myAddress, 'payloadlengthextrabytes'))
-
-        dataToStoreInOurPubkeysTable += dataToEncrypt # dataToStoreInOurPubkeysTable is used if this is a chan
 
         signature = highlevelcrypto.sign(payload + dataToEncrypt, privSigningKeyHex)
         dataToEncrypt += encodeVarint(len(signature))
@@ -337,10 +334,8 @@ class singleWorker(threading.Thread):
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
-        except:
-            # The user deleted the address out of the keys.dat file before this
-            # finished.
-            pass
+        except Exception as err:
+            logger.error('Error: Couldn\'t add the lastpubkeysendtime to the keys.dat file. Error message: %s' % err)
 
     def sendBroadcast(self):
         queryreturn = sqlQuery(
@@ -386,7 +381,10 @@ class singleWorker(threading.Thread):
             if addressVersionNumber >= 4:
                 doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
                     addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()).digest()
-                payload += doubleHashOfAddressData[32:]  # the tag
+                tag = doubleHashOfAddressData[32:]
+                payload += tag
+            else:
+                tag = ''
 
             if addressVersionNumber <= 3:
                 dataToEncrypt = encodeVarint(2)  # broadcast version
@@ -416,6 +414,7 @@ class singleWorker(threading.Thread):
                     addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()[:32]
             else:
                 privEncryptionKey = doubleHashOfAddressData[:32]
+
             pubEncryptionKey = pointMult(privEncryptionKey)
             payload += highlevelcrypto.encrypt(
                 dataToEncrypt, pubEncryptionKey.encode('hex'))
@@ -434,7 +433,7 @@ class singleWorker(threading.Thread):
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'broadcast'
             shared.inventory[inventoryHash] = (
-                objectType, streamNumber, payload, int(time.time()),'')
+                objectType, streamNumber, payload, int(time.time()),tag)
             shared.inventorySets[streamNumber].add(inventoryHash)
             with shared.printLock:
                 print 'sending inv (within sendBroadcast function) for object:', inventoryHash.encode('hex')
@@ -494,7 +493,7 @@ class singleWorker(threading.Thread):
                         if queryreturn != []: # if there was a pubkey in our inventory with the correct tag, we need to try to decrypt it.
                             for row in queryreturn:
                                 data, = row
-                                if shared.decryptAndCheckPubkeyPayload(data[8:], toaddress) == 'successful':
+                                if shared.decryptAndCheckPubkeyPayload(data, toaddress) == 'successful':
                                     needToRequestPubkey = False
                                     print 'debug. successfully decrypted and checked pubkey from sql inventory.' #testing
                                     sqlExecute(
@@ -508,7 +507,7 @@ class singleWorker(threading.Thread):
                                 for hash, storedValue in shared.inventory.items():
                                     objectType, streamNumber, payload, receivedTime, tag = storedValue
                                     if objectType == 'pubkey' and tag == toTag:
-                                        result = shared.decryptAndCheckPubkeyPayload(payload[8:], toaddress) #if valid, this function also puts it in the pubkeys table.
+                                        result = shared.decryptAndCheckPubkeyPayload(payload, toaddress) #if valid, this function also puts it in the pubkeys table.
                                         if result == 'successful':
                                             print 'debug. successfully decrypted and checked pubkey from memory inventory.'
                                             needToRequestPubkey = False
@@ -682,7 +681,7 @@ class singleWorker(threading.Thread):
                     ackdata, tr.translateText("MainWindow", "Doing work necessary to send message."))))
 
             embeddedTime = pack('>Q', (int(time.time()) + random.randrange(
-                -300, 300)))  # the current time plus or minus five minutes. We will use this time both for our message and for the ackdata packed within our message.
+                -300, 300)))  # the current time plus or minus five minutes.
             if fromAddressVersionNumber == 2:
                 payload = '\x01'  # Message version.
                 payload += encodeVarint(fromAddressVersionNumber)
@@ -722,7 +721,7 @@ class singleWorker(threading.Thread):
                 payload += encodeVarint(len(messageToTransmit))
                 payload += messageToTransmit
                 fullAckPayload = self.generateFullAckMessage(
-                    ackdata, toStreamNumber, embeddedTime)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
+                    ackdata, toStreamNumber)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
                 payload += encodeVarint(len(fullAckPayload))
                 payload += fullAckPayload
                 signature = highlevelcrypto.sign(payload, privSigningKeyHex)
@@ -791,7 +790,7 @@ class singleWorker(threading.Thread):
                     fullAckPayload = ''                    
                 else:
                     fullAckPayload = self.generateFullAckMessage(
-                        ackdata, toStreamNumber, embeddedTime)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
+                        ackdata, toStreamNumber)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
                 payload += encodeVarint(len(fullAckPayload))
                 payload += fullAckPayload
                 signature = highlevelcrypto.sign(payload, privSigningKeyHex)
@@ -930,7 +929,9 @@ class singleWorker(threading.Thread):
         shared.UISignalQueue.put(('updateSentItemStatusByHash', (ripe, tr.translateText("MainWindow",'Sending public key request. Waiting for reply. Requested at %1').arg(unicode(
             strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
 
-    def generateFullAckMessage(self, ackdata, toStreamNumber, embeddedTime):
+    def generateFullAckMessage(self, ackdata, toStreamNumber):
+        embeddedTime = pack('>Q', (int(time.time()) + random.randrange(
+            -300, 300)))  # the current time plus or minus five minutes.
         payload = embeddedTime + encodeVarint(toStreamNumber) + ackdata
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)

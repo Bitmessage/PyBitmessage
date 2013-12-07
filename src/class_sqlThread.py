@@ -25,6 +25,7 @@ class sqlThread(threading.Thread):
         self.conn = sqlite3.connect(shared.appdata + 'messages.dat')
         self.conn.text_factory = str
         self.cur = self.conn.cursor()
+
         try:
             self.cur.execute(
                 '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text, received text, message text, folder text, encodingtype int, read bool, UNIQUE(msgid) ON CONFLICT REPLACE)''' )
@@ -52,16 +53,14 @@ class sqlThread(threading.Thread):
             self.cur.execute(
                 '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute(
-                '''CREATE TABLE knownnodes (timelastseen int, stream int, services blob, host blob, port blob, UNIQUE(host, stream, port) ON CONFLICT REPLACE)''' )
-                             # This table isn't used in the program yet but I
-                             # have a feeling that we'll need it.
-            self.cur.execute(
                 '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
                 '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','5')''')
+            self.cur.execute( '''INSERT INTO settings VALUES('version','6')''')
             self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
+            self.cur.execute(
+                '''CREATE TABLE objectprocessorqueue (objecttype text, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''' )
             self.conn.commit()
             logger.info('Created messages database file')
         except Exception as err:
@@ -289,6 +288,20 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'settingsversion', '8') 
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
+
+        # Add a new table: objectprocessorqueue with which to hold objects
+        # that have yet to be processed if the user shuts down Bitmessage.
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        currentVersion = int(self.cur.fetchall()[0][0])
+        if currentVersion == 5:
+            self.cur.execute( '''DROP TABLE knownnodes''')
+            self.cur.execute(
+                '''CREATE TABLE objectprocessorqueue (objecttype text, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''' )
+            item = '''update settings set value=? WHERE key='version';'''
+            parameters = (6,)
+            self.cur.execute(item, parameters)
 
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users? Add it right above this line!
