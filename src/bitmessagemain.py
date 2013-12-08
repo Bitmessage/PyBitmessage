@@ -20,8 +20,8 @@ import os
 import sys
 if sys.platform == 'darwin':
     if float("{1}.{2}".format(*sys.version_info)) < 7.5:
-    	msg = "You should use python 2.7.5 or greater. Your version: %s", "{0}.{1}.{2}".format(*sys.version_info)
-    	logger.critical(msg)
+        msg = "You should use python 2.7.5 or greater. Your version: %s", "{0}.{1}.{2}".format(*sys.version_info)
+        logger.critical(msg)
         print msg
         sys.exit(0)
 
