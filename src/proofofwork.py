@@ -65,7 +65,7 @@ def _doFastPoW(target, initialHash, cancellable):
             while True:
                 time.sleep(10) # Don't let this thread return here; it will return nothing and cause an exception in bitmessagemain.py
             return
-	if (shared.PoWQueue.empty() == True) and cancellable: #If the PoW is cancellable it can be interrupted
+        if (shared.PoWQueue.empty() == True) and cancellable: #If the PoW is cancellable it can be interrupted
             pool.terminate()
             pool.join() #Wait for the workers to exit...
             return [-1, -1] #Special value for differentiation
@@ -74,12 +74,13 @@ def _doFastPoW(target, initialHash, cancellable):
                 result = result[i].get()
                 pool.terminate()
                 pool.join() #Wait for the workers to exit...
-		if cancellable: shared.PoWQueue.get() #If the PoW is cancellable we need to communicate its end to the UI                
-		return result[0], result[1]
+                if cancellable: shared.PoWQueue.get() #If the PoW is cancellable we need to communicate its end to the UI                
+                return result[0], result[1]
         time.sleep(0.2)
 
 def run(target, initialHash, cancellable):
     import time
+    
     #Only message PoW calculations are cancellable, Key requests are not.
     if cancellable:
         #If the PoW is cancellable we need to communicate its beginning to the UI

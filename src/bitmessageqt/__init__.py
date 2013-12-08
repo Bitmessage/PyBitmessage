@@ -390,11 +390,11 @@ class MyForm(QtGui.QMainWindow):
             _translate(
                 "MainWindow", "Copy destination address to clipboard"),
             self.on_action_SentClipboard)
-	self.actionCancelPoW = self.ui.sentContextMenuToolbar.addAction(
-	    _translate(
+        self.actionCancelPoW = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
             	"MainWindow", "Cancel sending"), self.on_action_CancelPoW)
-	self.actionContinuePoW = self.ui.sentContextMenuToolbar.addAction(
-	    _translate(
+        self.actionContinuePoW = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
             	"MainWindow", "Continue sending"), self.on_action_ContinuePoW)
         self.actionForceSend = self.ui.sentContextMenuToolbar.addAction(
             _translate(
