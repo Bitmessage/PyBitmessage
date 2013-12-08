@@ -14,6 +14,7 @@ import ConfigParser
 import os
 import pickle
 import Queue
+from multiprocessing import Queue as MQueue #A Multiproccessing Queue is necessary for the PoW cancellation.
 import random
 import socket
 import sys
@@ -39,6 +40,7 @@ broadcastSendersForWhichImWatching = {}
 workerQueue = Queue.Queue()
 UISignalQueue = Queue.Queue()
 addressGeneratorQueue = Queue.Queue()
+PoWQueue = MQueue() #Multithreaded queue for interprocess communication. It is used for the PoW calculation
 knownNodesLock = threading.Lock()
 knownNodes = {}
 sendDataQueues = [] #each sendData thread puts its queue in this list.
