@@ -271,6 +271,20 @@ class sqlThread(threading.Thread):
             parameters = (5,)
             self.cur.execute(item, parameters)
             
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)   
+        currentVersion = int(self.cur.fetchall()[0][0])
+        if currentVersion == 5:
+            print 'upgrading database - adding groups'
+            self.cur.execute(
+                '''ALTER TABLE addressbook ADD 'group' text''' )
+            parameters = ''
+            self.cur.execute(item, parameters)
+            item = '''update settings set value=? WHERE key='version';'''
+            parameters = (6,)
+            self.cur.execute(item, parameters)
+        
         if not shared.config.has_option('bitmessagesettings', 'useidenticons'):
             shared.config.set('bitmessagesettings', 'useidenticons', 'True')
         if not shared.config.has_option('bitmessagesettings', 'identiconsuffix'): # acts as a salt

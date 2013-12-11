@@ -206,28 +206,29 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             data += ']}'
             return data
         elif method == 'listAddressBookEntries' or method == 'listAddressbook': # the listAddressbook alias should be removed eventually.
-            queryreturn = sqlQuery('''SELECT label, address from addressbook''')
-            data = '{"addresses":['
-            for row in queryreturn:
-                label, address = row
+           queryreturn = sqlQuery('''SELECT label, address, group from addressbook''')
+           data = '{"addresses":['
+           for row in queryreturn:
+                label, address, group = row
                 label = shared.fixPotentiallyInvalidUTF8Data(label)
                 if len(data) > 20:
                     data += ','
-                data += json.dumps({'label':label.encode('base64'), 'address': address}, indent=4, separators=(',', ': '))
-            data += ']}'
-            return data
+           data += json.dumps({'label':label.encode('base64'), 'address': address, 'group':group.encode('base64')}, indent=4, separators=(',', ': '))
+           data += ']}'
+           return data
         elif method == 'addAddressBookEntry' or method == 'addAddressbook': # the addAddressbook alias should be deleted eventually.
-            if len(params) != 2:
-                raise APIError(0, "I need label and address")
-            address, label = params
+            if len(params) != 3:
+                raise APIError(0, "I need label, address and group")
+            address, label, group = params
             label = self._decode(label, "base64")
             address = addBMIfNotPresent(address)
+            group = self._decode(group, "base64")
             self._verifyAddress(address)
             queryreturn = sqlQuery("SELECT address FROM addressbook WHERE address=?", address)
             if queryreturn != []:
                 raise APIError(16, 'You already have this address in your address book.')
 
-            sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
+            sqlExecute("INSERT INTO addressbook VALUES(?,?,?)", label, address,group)
             shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
             shared.UISignalQueue.put(('rerenderSentToLabels',''))
             shared.UISignalQueue.put(('rerenderAddressBook',''))

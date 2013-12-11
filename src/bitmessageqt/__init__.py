@@ -12,6 +12,7 @@ except ImportError:
     MessagingMenu = None
 
 from addresses import *
+from newGroupdialog import *
 import shared
 from bitmessageui import *
 from namecoin import namecoinConnection, ensureNamecoinOptions
@@ -309,6 +310,9 @@ class MyForm(QtGui.QMainWindow):
         # Popup menu for the Address Book page
         self.ui.addressBookContextMenuToolbar = QtGui.QToolBar()
         # Actions
+        self.actionAddressBookGroupSend = self.ui.addressBookContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Send message to this group"), self.on_action_AddressBookGroupSend)
         self.actionAddressBookSend = self.ui.addressBookContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Send message to this address"),
@@ -338,6 +342,7 @@ class MyForm(QtGui.QMainWindow):
                      self.on_context_menuAddressBook)
         self.popMenuAddressBook = QtGui.QMenu(self)
         self.popMenuAddressBook.addAction(self.actionAddressBookSend)
+        self.popMenuAddressBook.addAction(self.actionAddressBookGroupSend)
         self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
         self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
         self.popMenuAddressBook.addAction(self.actionAddressBookSetAvatar)
@@ -743,7 +748,6 @@ class MyForm(QtGui.QMainWindow):
 
     # Load Sent items from database
     def loadSent(self, where="", what=""):
-        what = "%" + what + "%"
         if where == "To":
             where = "toaddress"
         elif where == "From":
@@ -764,6 +768,28 @@ class MyForm(QtGui.QMainWindow):
         while self.ui.tableWidgetSent.rowCount() > 0:
             self.ui.tableWidgetSent.removeRow(0)
 
+        tmpAddress = ''
+        tmpLabel = what
+        for item in shared.config.sections():
+            if shared.config.has_option(item, 'label'):
+                if tmpLabel == shared.config.get(item, 'label'):
+                    tmpAddress = item
+        if tmpAddress == '':  # If the tmpAddress isn't one of our addresses and isn't a chan
+            queryreturn = sqlQuery(
+                    '''select address from addressbook where label=?''', tmpLabel)
+            if queryreturn != []:
+                for row in queryreturn:
+                    tmpAddress, = row
+        if tmpAddress == '':  # If this address wasn't in our address book...
+            queryreturn = sqlQuery(
+                '''select address from subscriptions where label=?''', tmpLabel)
+            if queryreturn != []:
+                for row in queryreturn:
+                    tmpAddress, = row
+        if tmpAddress != '':
+            what = tmpAddress
+            
+        what = "%" + what + "%"
         queryreturn = sqlQuery(sqlStatement, what)
         for row in queryreturn:
             toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
@@ -872,7 +898,6 @@ class MyForm(QtGui.QMainWindow):
 
     # Load inbox from messages database file
     def loadInbox(self, where="", what=""):
-        what = "%" + what + "%"
         if where == "To":
             where = "toaddress"
         elif where == "From":
@@ -895,88 +920,115 @@ class MyForm(QtGui.QMainWindow):
 
         font = QFont()
         font.setBold(True)
+
+        tmpAddress = ''
+        tmpLabel = what
+        for item in shared.config.sections():
+            if shared.config.has_option(item, 'label'):
+                if tmpLabel == shared.config.get(item, 'label'):
+                    tmpAddress = item
+        if tmpAddress == '':  # If the tmpAddress isn't one of our addresses and isn't a chan
+            queryreturn = sqlQuery(
+                    '''select address from addressbook where label=?''', tmpLabel)
+            if queryreturn != []:
+                for row in queryreturn:
+                    tmpAddress, = row
+        if tmpAddress == '':  # If this address wasn't in our address book...
+            queryreturn = sqlQuery(
+                '''select address from subscriptions where label=?''', tmpLabel)
+            if queryreturn != []:
+                for row in queryreturn:
+                    tmpAddress, = row
+        if tmpAddress != '':
+            what = tmpAddress
+            
+        what = "%" + what + "%"        
         queryreturn = sqlQuery(sqlStatement, what)
-        for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, received, read = row
-            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            try:
-                if toAddress == self.str_broadcast_subscribers:
-                    toLabel = self.str_broadcast_subscribers
-                else:
-                    toLabel = shared.config.get(toAddress, 'label')
-            except:
-                toLabel = ''
-            if toLabel == '':
-                toLabel = toAddress
+        if queryreturn != []:
+			for row in queryreturn:
+				msgid, toAddress, fromAddress, subject, received, read = row
+				subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+				try:
+					if toAddress == self.str_broadcast_subscribers:
+						toLabel = self.str_broadcast_subscribers
+					else:
+						toLabel = shared.config.get(toAddress, 'label')
+				except:
+					toLabel = ''
+				if toLabel == '':
+					toLabel = toAddress
 
-            fromLabel = ''
-            if shared.config.has_section(fromAddress):
-                fromLabel = shared.config.get(fromAddress, 'label')
-            
-            if fromLabel == '':  # If the fromAddress isn't one of our addresses and isn't a chan
-                queryreturn = sqlQuery(
-                    '''select label from addressbook where address=?''', fromAddress)
-                if queryreturn != []:
-                    for row in queryreturn:
-                        fromLabel, = row
+				fromLabel = ''
+				if shared.config.has_section(fromAddress):
+					fromLabel = shared.config.get(fromAddress, 'label')
+				
+				if fromLabel == '':  # If the fromAddress isn't one of our addresses and isn't a chan
+					queryreturn = sqlQuery(
+						'''select label from addressbook where address=?''', fromAddress)
+					if queryreturn != []:
+						for row in queryreturn:
+							fromLabel, = row
 
-            if fromLabel == '':  # If this address wasn't in our address book...
-                queryreturn = sqlQuery(
-                    '''select label from subscriptions where address=?''', fromAddress)
-                if queryreturn != []:
-                    for row in queryreturn:
-                        fromLabel, = row
-            if fromLabel == '':
-                fromLabel = fromAddress
-            
-            # message row
-            self.ui.tableWidgetInbox.insertRow(0)
-            # to
-            to_item = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
-            to_item.setToolTip(unicode(toLabel, 'utf-8'))
-            to_item.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            if not read:
-                to_item.setFont(font)
-            to_item.setData(Qt.UserRole, str(toAddress))
-            if shared.safeConfigGetBoolean(toAddress, 'mailinglist'):
-                to_item.setTextColor(QtGui.QColor(137, 04, 177)) # magenta
-            if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
-                to_item.setTextColor(QtGui.QColor(216, 119, 0)) # orange
-            to_item.setIcon(avatarize(toAddress))
-            self.ui.tableWidgetInbox.setItem(0, 0, to_item)
-            # from
-            from_item = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
-            from_item.setToolTip(unicode(fromLabel, 'utf-8'))
-            from_item.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            if not read:
-                from_item.setFont(font)
-            from_item.setData(Qt.UserRole, str(fromAddress))
-            if shared.safeConfigGetBoolean(str(fromAddress), 'chan'):
-                from_item.setTextColor(QtGui.QColor(216, 119, 0)) # orange
-            from_item.setIcon(avatarize(fromAddress))
-            self.ui.tableWidgetInbox.setItem(0, 1, from_item)
-            # subject
-            subject_item = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
-            subject_item.setToolTip(unicode(subject, 'utf-8'))
-            subject_item.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            if not read:
-                subject_item.setFont(font)
-            self.ui.tableWidgetInbox.setItem(0, 2, subject_item)
-            # time received
-            time_item = myTableWidgetItem(unicode(strftime(shared.config.get(
-                'bitmessagesettings', 'timeformat'), localtime(int(received))), 'utf-8'))
-            time_item.setToolTip(unicode(strftime(shared.config.get(
-                'bitmessagesettings', 'timeformat'), localtime(int(received))), 'utf-8'))
-            time_item.setData(Qt.UserRole, QByteArray(msgid))
-            time_item.setData(33, int(received))
-            time_item.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            if not read:
-                time_item.setFont(font)
-            self.ui.tableWidgetInbox.setItem(0, 3, time_item)
+				if fromLabel == '':  # If this address wasn't in our address book...
+					queryreturn = sqlQuery(
+						'''select label from subscriptions where address=?''', fromAddress)
+					if queryreturn != []:
+						for row in queryreturn:
+							fromLabel, = row
+				if fromLabel == '':
+					fromLabel = fromAddress
+				
+				# message row
+				self.ui.tableWidgetInbox.insertRow(0)
+				# to
+				to_item = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
+				to_item.setToolTip(unicode(toLabel, 'utf-8'))
+				to_item.setFlags(
+					QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+				if not read:
+					to_item.setFont(font)
+				to_item.setData(Qt.UserRole, str(toAddress))
+				if shared.safeConfigGetBoolean(toAddress, 'mailinglist'):
+					to_item.setTextColor(QtGui.QColor(137, 04, 177)) # magenta
+				if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
+					to_item.setTextColor(QtGui.QColor(216, 119, 0)) # orange
+				to_item.setIcon(avatarize(toAddress))
+				self.ui.tableWidgetInbox.setItem(0, 0, to_item)
+				# from
+				from_item = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
+				from_item.setToolTip(unicode(fromLabel, 'utf-8'))
+				from_item.setFlags(
+					QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+				if not read:
+					from_item.setFont(font)
+				from_item.setData(Qt.UserRole, str(fromAddress))
+				if shared.safeConfigGetBoolean(str(fromAddress), 'chan'):
+					from_item.setTextColor(QtGui.QColor(216, 119, 0)) # orange
+				from_item.setIcon(avatarize(fromAddress))
+				self.ui.tableWidgetInbox.setItem(0, 1, from_item)
+				# subject
+				subject_item = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
+				subject_item.setToolTip(unicode(subject, 'utf-8'))
+				subject_item.setFlags(
+					QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+				if not read:
+					subject_item.setFont(font)
+				self.ui.tableWidgetInbox.setItem(0, 2, subject_item)
+				# time received
+				time_item = myTableWidgetItem(unicode(strftime(shared.config.get(
+					'bitmessagesettings', 'timeformat'), localtime(int(received))), 'utf-8'))
+				time_item.setToolTip(unicode(strftime(shared.config.get(
+					'bitmessagesettings', 'timeformat'), localtime(int(received))), 'utf-8'))
+				time_item.setData(Qt.UserRole, QByteArray(msgid))
+				time_item.setData(33, int(received))
+				time_item.setFlags(
+					QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+				if not read:
+					time_item.setFont(font)
+				self.ui.tableWidgetInbox.setItem(0, 3, time_item)
+        else:
+            self.statusBar().showMessage(_translate(
+                    "MainWindow", "Error: No match found."))
 
         self.ui.tableWidgetInbox.sortItems(3, Qt.DescendingOrder)
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
@@ -1733,7 +1785,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetAddressBook.setRowCount(0)
         queryreturn = sqlQuery('SELECT * FROM addressbook')
         for row in queryreturn:
-            label, address = row
+            label, address, group = row
             self.ui.tableWidgetAddressBook.insertRow(0)
             newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
             newItem.setIcon(avatarize(address))
@@ -1742,6 +1794,10 @@ class MyForm(QtGui.QMainWindow):
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
+            newItem = QtGui.QTableWidgetItem(unicode(group, 'utf-8'))
+            newItem.setFlags(
+                             QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidgetAddressBook.setItem(0, 2, newItem)
 
     def rerenderSubscriptions(self):
         self.ui.tableWidgetSubscriptions.setRowCount(0)
@@ -2071,23 +2127,25 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetInbox.setItem(0, 3, newItem)
         self.ui.tableWidgetInbox.setSortingEnabled(True)
         self.ubuntuMessagingMenuUpdate(True, newItem, toLabel)
-
+        
     def click_pushButtonAddAddressBook(self):
-        self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
-        if self.NewSubscriptionDialogInstance.exec_():
-            if self.NewSubscriptionDialogInstance.ui.labelSubscriptionAddressCheck.text() == _translate("MainWindow", "Address is valid."):
+        self.NewGroupDialogInstance = NewGroupDialog(self)
+        if self.NewGroupDialogInstance.exec_():
+            if self.NewGroupDialogInstance.ui.labelSubscriptionAddressCheck.text() == _translate("MainWindow", "Address is valid."):
                 # First we must check to see if the address is already in the
                 # address book. The user cannot add it again or else it will
                 # cause problems when updating and deleting the entry.
                 address = addBMIfNotPresent(str(
-                    self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
-                label = self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()
-                self.addEntryToAddressBook(address,label)
+                                                self.NewGroupDialogInstance.ui.lineEditSubscriptionAddress.text()))
+                label = self.NewGroupDialogInstance.ui.newsubscriptionlabel.text().toUtf8()
+                group = self.NewGroupDialogInstance.ui.lineEditGroupName.text().toUtf8()
+                    
+                self.addEntryToAddressBook(address,label, group)
             else:
                 self.statusBar().showMessage(_translate(
                     "MainWindow", "The address you entered was invalid. Ignoring it."))
 
-    def addEntryToAddressBook(self,address,label):
+    def addEntryToAddressBook(self,address,label,group):
         queryreturn = sqlQuery('''select * from addressbook where address=?''', address)
         if queryreturn == []:
             queryreturn = sqlQuery('''select * from addressbook where label=?''', str(label))
@@ -2104,8 +2162,10 @@ class MyForm(QtGui.QMainWindow):
                     newItem.setFlags(
                         QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
                     self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
+                    newItem = QtGui.QTableWidgetItem(unicode(group, 'utf-8'))
+                    self.ui.tableWidgetAddressBook.setItem(0, 2, newItem) 
                     self.ui.tableWidgetAddressBook.setSortingEnabled(True)
-                    sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(label), address)
+                    sqlExecute('''INSERT INTO addressbook VALUES (?,?,?)''', str(label), address,str(group))
                     self.rerenderAddressBook()
                     self.rerenderInboxFromLabels()
                     self.rerenderSentToLabels()
@@ -2645,9 +2705,10 @@ class MyForm(QtGui.QMainWindow):
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
-            sqlExecute('''INSERT INTO addressbook VALUES (?,?)''',
+            sqlExecute('''INSERT INTO addressbook VALUES (?,?,?)''',
                        newLabel,
-                       addressAtCurrentInboxRow)
+                       addressAtCurrentInboxRow,
+                       "")
             self.ui.tabWidget.setCurrentIndex(5)
             self.ui.tableWidgetAddressBook.setCurrentCell(0, 0)
             self.statusBar().showMessage(_translate(
@@ -2742,6 +2803,37 @@ class MyForm(QtGui.QMainWindow):
         clipboard.setText(str(addressAtCurrentRow))
 
     # Group of functions for the Address Book dialog box
+    def on_action_AddressBookGroupSend(self):
+        currentRow = self.ui.tableWidgetAddressBook.currentRow()         
+        groupAtCurrentRow = self.ui.tableWidgetAddressBook.item(
+                                                                 currentRow, 2).text().toUtf8()
+                                                                    #Group name not specified        
+        if groupAtCurrentRow == '':
+            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow, 1).text()
+            if self.ui.lineEditTo.text() == '':
+                self.ui.lineEditTo.setText(str(addressAtCurrentRow))
+            else:
+                self.ui.lineEditTo.setText(str(self.ui.lineEditTo.text()) + '; ' + str(addressAtCurrentRow))   
+                        
+            self.statusBar().showMessage('')
+            self.ui.tabWidget.setCurrentIndex(1)    
+      # there is a Group name
+        else:
+            currenrtAddress = ''
+            #groupToLookup = str(self.ui.tableWidgetAddressBook.item(currentRow, 2).data(Qt.UserRole).toPyObject())
+            currentRow = self.ui.tableWidgetAddressBook.currentRow()
+            groupToLookup = self.ui.tableWidgetAddressBook.item(currentRow, 2).text().toUtf8()
+            selectLabelsQuery = sqlQuery('''SELECT label FROM addressbook where "group" =?''', str(groupToLookup))
+            if selectLabelsQuery != []:
+                for label in selectLabelsQuery:
+                    currenrtLabel, = label      
+                    if self.ui.lineEditTo.text() == '':
+                        self.ui.lineEditTo.setText(currenrtLabel)
+                    else:
+                        self.ui.lineEditTo.setText(str(self.ui.lineEditTo.text()) + '; ' + currenrtLabel)
+            self.statusBar().showMessage('')
+            self.ui.tabWidget.setCurrentIndex(1)      
+
     def on_action_AddressBookNew(self):
         self.click_pushButtonAddAddressBook()
 
@@ -3343,7 +3435,7 @@ class settingsDialog(QtGui.QDialog):
             shared.safeConfigGetBoolean('bitmessagesettings', 'useidenticons'))
         
         global languages 
-        languages = ['system','en','eo','fr','de','es','ru','en_pirate','other']
+        languages = ['system','en','eo','fr','de','es','ru','en_pirate','ar','other']
         user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
         if user_countrycode in languages:
             curr_index = languages.index(user_countrycode)
@@ -3597,6 +3689,39 @@ class NewSubscriptionDialog(QtGui.QDialog):
             self.ui.labelSubscriptionAddressCheck.setText(
                 _translate("MainWindow", "Address is valid."))
 
+class NewGroupDialog(QtGui.QDialog):
+
+    def __init__(self, parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_NewGroupDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        QtCore.QObject.connect(self.ui.lineEditSubscriptionAddress, QtCore.SIGNAL(
+            "textChanged(QString)"), self.subscriptionAddressChanged)
+
+    def subscriptionAddressChanged(self, QString):
+        status, a, b, c = decodeAddress(str(QString))
+        if status == 'missingbm':
+            self.ui.labelSubscriptionAddressCheck.setText(_translate(
+                "MainWindow", "The address should start with ''BM-''"))
+        elif status == 'checksumfailed':
+            self.ui.labelSubscriptionAddressCheck.setText(_translate(
+                "MainWindow", "The address is not typed or copied correctly (the checksum failed)."))
+        elif status == 'versiontoohigh':
+            self.ui.labelSubscriptionAddressCheck.setText(_translate(
+                "MainWindow", "The version number of this address is higher than this software can support. Please upgrade Bitmessage."))
+        elif status == 'invalidcharacters':
+            self.ui.labelSubscriptionAddressCheck.setText(_translate(
+                "MainWindow", "The address contains invalid characters."))
+        elif status == 'ripetooshort':
+            self.ui.labelSubscriptionAddressCheck.setText(_translate(
+                "MainWindow", "Some data encoded in the address is too short."))
+        elif status == 'ripetoolong':
+            self.ui.labelSubscriptionAddressCheck.setText(_translate(
+                "MainWindow", "Some data encoded in the address is too long."))
+        elif status == 'success':
+            self.ui.labelSubscriptionAddressCheck.setText(
+                _translate("MainWindow", "Address is valid."))
 
 class NewAddressDialog(QtGui.QDialog):
 
