@@ -364,6 +364,8 @@ class MyForm(QtGui.QMainWindow):
         self.actionsubscriptionsSetAvatar = self.ui.subscriptionsContextMenuToolbar.addAction(
             _translate("MainWindow", "Set avatar..."),
             self.on_action_SubscriptionsSetAvatar)
+        self.actionsendaddressfromsubscription = self.ui.subscriptionsContextMenuToolbar.addAction(
+            _translate("MainWindow", "Add Subscription to Address book"), self.on_action_SubscriptionAddSenderToAddressBook)
         self.ui.tableWidgetSubscriptions.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
         self.connect(self.ui.tableWidgetSubscriptions, QtCore.SIGNAL(
@@ -378,6 +380,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuSubscriptions.addAction(self.actionsubscriptionsSetAvatar)
         self.popMenuSubscriptions.addSeparator()
         self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
+        self.popMenuSubscriptions.addAction(self.actionsendaddressfromsubscription)
 
     def init_sent_popup_menu(self):
         # Popup menu for the Sent page
@@ -2847,6 +2850,39 @@ class MyForm(QtGui.QMainWindow):
     def on_context_menuSubscriptions(self, point):
         self.popMenuSubscriptions.exec_(
             self.ui.tableWidgetSubscriptions.mapToGlobal(point))
+
+    def on_action_SubscriptionAddSenderToAddressBook(self):
+        currentSubscriptionRow = self.ui.tableWidgetSubscriptions.currentRow()
+        # self.ui.tableWidgetInbox.item(currentRow,1).data(Qt.UserRole).toPyObject()
+        addressAtCurrentSubscriptionRow = str(self.ui.tableWidgetSubscriptions.item(
+            currentSubscriptionRow, 1).text())
+        labelAtCurrentSubscriptionRow = str(self.ui.tableWidgetSubscriptions.item(
+            currentSubscriptionRow, 0).text())
+
+        # Let's make sure that it isn't already in the address book
+        queryreturn = sqlQuery('''select * from addressbook where address=?''',
+            addressAtCurrentSubscriptionRow)
+        if queryreturn == []:
+            self.ui.tableWidgetAddressBook.insertRow(0)
+            #newItem = QtGui.QTableWidgetItem(
+            #    '--New entry. Change label in Address Book.--')
+            newItem = QtGui.QTableWidgetItem(labelAtCurrentSubscriptionRow)
+            self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
+            newItem = QtGui.QTableWidgetItem(addressAtCurrentSubscriptionRow)
+            newItem.setFlags(
+                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
+            sqlExecute('''INSERT INTO addressbook VALUES (?,?)''',
+                labelAtCurrentSubscriptionRow,
+                addressAtCurrentSubscriptionRow)
+            self.ui.tabWidget.setCurrentIndex(5)
+            self.ui.tableWidgetAddressBook.setCurrentCell(0, 0)
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Entry added to the Address Book. Edit the label to your liking. "))
+        else:
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
+
 
     # Group of functions for the Blacklist dialog box
     def on_action_BlacklistNew(self):
