@@ -1,6 +1,7 @@
 SOURCES	= 	../addresses.py\
 			../bitmessagemain.py\
 			../class_addressGenerator.py\
+			../class_objectProcessor.py\
 			../class_outgoingSynSender.py\
 			../class_receiveDataThread.py\
 			../class_sendDataThread.py\
@@ -17,6 +18,7 @@ SOURCES	= 	../addresses.py\
 			../shared.py\
 			../bitmessageqt/__init__.py\
 			../bitmessageqt/about.py\
+			../bitmessageqt/addaddressdialog.py\
 			../bitmessageqt/bitmessageui.py\
 			../bitmessageqt/connect.py\
 			../bitmessageqt/help.py\
