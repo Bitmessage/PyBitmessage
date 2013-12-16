@@ -18,6 +18,7 @@ SOURCES	= 	../addresses.py\
 			../shared.py\
 			../bitmessageqt/__init__.py\
 			../bitmessageqt/about.py\
+			../bitmessageqt/addaddressdialog.py\
 			../bitmessageqt/bitmessageui.py\
 			../bitmessageqt/connect.py\
 			../bitmessageqt/help.py\
