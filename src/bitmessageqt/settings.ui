@@ -156,6 +156,11 @@
             </item>
             <item>
              <property name="text">
+              <string comment="no">norsk</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string comment="en_pirate">Pirate English</string>
              </property>
             </item>
