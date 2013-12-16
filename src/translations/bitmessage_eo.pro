@@ -1,6 +1,7 @@
 SOURCES	= 	../addresses.py\
 			../bitmessagemain.py\
 			../class_addressGenerator.py\
+			../class_objectProcessor.py\
 			../class_outgoingSynSender.py\
 			../class_receiveDataThread.py\
 			../class_sendDataThread.py\
