@@ -121,8 +121,7 @@
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="832"/>
-        <source>Waiting for their encryption key. Will request it again soon.</source>
+        <location filename="../bitmessageqt/__init__.py" line="823"/>
         <source>Waiting for their encryption key. Will request it again soon.</source>
         <translation type="unfinished"></translation>
     </message>
