@@ -112,7 +112,8 @@
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="823"/>
-        <source>Waiting on their encryption key. Will request it again soon.</source>
+        <source>Waiting for their encryption key. Will request it again soon.</source>
+        <translatorcomment>mi ne certas kiel traduki &quot;their&quot; ĉi tie. Sonas strange al mi.</translatorcomment>
         <translation type="unfinished">Atendante al ilia ĉifroŝlosilo. Baldaŭ petos ĝin denove.</translation>
     </message>
     <message>
@@ -127,7 +128,7 @@
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="832"/>
-        <source>Message sent. Waiting on acknowledgement. Sent at %1</source>
+        <source>Message sent. Waiting for acknowledgement. Sent at %1</source>
         <translation>Mesaĝo sendita. Atendante konfirmon. Sendita je %1</translation>
     </message>
     <message>

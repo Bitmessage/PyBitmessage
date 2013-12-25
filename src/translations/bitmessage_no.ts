@@ -330,7 +330,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="823"/>
-        <source>Waiting on their encryption key. Will request it again soon.</source>
+        <source>Waiting for their encryption key. Will request it again soon.</source>
         <translation>Venter på krypteringsnøkkel. Sender straks en ny forespørsel.</translation>
     </message>
     <message>
@@ -375,7 +375,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="832"/>
-        <source>Message sent. Waiting on acknowledgement. Sent at %1</source>
+        <source>Message sent. Waiting for acknowledgement. Sent at %1</source>
         <translation>Beskjed sendt. Venter på bekreftelse. Sendt %1</translation>
     </message>
     <message>
