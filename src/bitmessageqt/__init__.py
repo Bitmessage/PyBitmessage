@@ -2655,24 +2655,29 @@ class MyForm(QtGui.QMainWindow):
         
            
          
-        AllItems = [str(self.ui.comboBoxSendFrom.itemText(i)) for i in range(self.ui.comboBoxSendFrom.count())]
-        AllItems_address = [str(self.ui.comboBoxSendFrom.itemData(i).toPyObject()) for i in range(self.ui.comboBoxSendFrom.count())]
-        
+        listOfLabelsInComboBoxSendFrom = [str(self.ui.comboBoxSendFrom.itemText(i)) for i in range(self.ui.comboBoxSendFrom.count())]
+        listOfAddressesInComboBoxSendFrom = [str(self.ui.comboBoxSendFrom.itemData(i).toPyObject()) for i in range(self.ui.comboBoxSendFrom.count())]
+        """
         isPresent_Label = False
-        for item in AllItems:
+        for item in listOfLabelsInComboBoxSendFrom:
             if toAddressAtCurrentInboxRow_label == item:
                 isPresent_Label = True
                 break;
-        if(isPresent_Label == True):
-            currentIndex = AllItems.index(toAddressAtCurrentInboxRow_label)
+        """
+        #if isPresent_Label:
+        if toAddressAtCurrentInboxRow_label in listOfLabelsInComboBoxSendFrom:
+            currentIndex = listOfLabelsInComboBoxSendFrom.index(toAddressAtCurrentInboxRow_label)
             self.ui.comboBoxSendFrom.setCurrentIndex(currentIndex)
             
         else:
-            currentIndex = AllItems_address.index(toAddressAtCurrentInboxRow)
-            self.ui.comboBoxSendFrom.setCurrentIndex(currentIndex)
-            
-           
-        #self.ui.comboBoxSendFrom.setCurrentIndex(0)
+            try:
+                currentIndex = listOfAddressesInComboBoxSendFrom.index(toAddressAtCurrentInboxRow)
+                self.ui.comboBoxSendFrom.setCurrentIndex(currentIndex)
+            except:
+                # The toAddressAtCurrentInboxRow isn't in our combo box which can happen if 
+                # we are replying to a broadcast address or if the address is disabled.
+                self.ui.comboBoxSendFrom.setCurrentIndex(0) 
+        
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
             self.ui.lineEditSubject.setText(
