@@ -2617,6 +2617,7 @@ class MyForm(QtGui.QMainWindow):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
             currentInboxRow, 0).data(Qt.UserRole).toPyObject())
+       
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
             currentInboxRow, 1).data(Qt.UserRole).toPyObject())
         msgid = str(self.ui.tableWidgetInbox.item(
@@ -2647,8 +2648,14 @@ class MyForm(QtGui.QMainWindow):
             if shared.safeConfigGetBoolean(toAddressAtCurrentInboxRow, 'chan'):
                 print 'original sent to a chan. Setting the to address in the reply to the chan address.'
                 self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
-
-        self.ui.comboBoxSendFrom.setCurrentIndex(0)
+        
+        listOfAddressesInComboBoxSendFrom = [str(self.ui.comboBoxSendFrom.itemData(i).toPyObject()) for i in range(self.ui.comboBoxSendFrom.count())]
+        if toAddressAtCurrentInboxRow in listOfAddressesInComboBoxSendFrom:
+            currentIndex = listOfAddressesInComboBoxSendFrom.index(toAddressAtCurrentInboxRow)
+            self.ui.comboBoxSendFrom.setCurrentIndex(currentIndex)
+        else:
+            self.ui.comboBoxSendFrom.setCurrentIndex(0)
+        
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
             self.ui.lineEditSubject.setText(
