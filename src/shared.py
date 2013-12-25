@@ -147,7 +147,7 @@ def lookupAppdataFolder():
             sys.exit()
 
     elif 'win32' in sys.platform or 'win64' in sys.platform:
-        dataFolder = path.join(environ['APPDATA'], APPNAME) + '\\'
+        dataFolder = path.join(environ['APPDATA'].decode(sys.getfilesystemencoding(), 'ignore'), APPNAME) + path.sep
     else:
         from shutil import move
         try:
