@@ -2617,10 +2617,6 @@ class MyForm(QtGui.QMainWindow):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
             currentInboxRow, 0).data(Qt.UserRole).toPyObject())
-        
-            
-        toAddressAtCurrentInboxRow_label = str(self.ui.tableWidgetInbox.item(
-            currentInboxRow, 0).text())
        
         fromAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
             currentInboxRow, 1).data(Qt.UserRole).toPyObject())
@@ -2653,30 +2649,12 @@ class MyForm(QtGui.QMainWindow):
                 print 'original sent to a chan. Setting the to address in the reply to the chan address.'
                 self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
         
-           
-         
-        listOfLabelsInComboBoxSendFrom = [str(self.ui.comboBoxSendFrom.itemText(i)) for i in range(self.ui.comboBoxSendFrom.count())]
         listOfAddressesInComboBoxSendFrom = [str(self.ui.comboBoxSendFrom.itemData(i).toPyObject()) for i in range(self.ui.comboBoxSendFrom.count())]
-        """
-        isPresent_Label = False
-        for item in listOfLabelsInComboBoxSendFrom:
-            if toAddressAtCurrentInboxRow_label == item:
-                isPresent_Label = True
-                break;
-        """
-        #if isPresent_Label:
-        if toAddressAtCurrentInboxRow_label in listOfLabelsInComboBoxSendFrom:
-            currentIndex = listOfLabelsInComboBoxSendFrom.index(toAddressAtCurrentInboxRow_label)
+        if toAddressAtCurrentInboxRow in listOfAddressesInComboBoxSendFrom:
+            currentIndex = listOfAddressesInComboBoxSendFrom.index(toAddressAtCurrentInboxRow)
             self.ui.comboBoxSendFrom.setCurrentIndex(currentIndex)
-            
         else:
-            try:
-                currentIndex = listOfAddressesInComboBoxSendFrom.index(toAddressAtCurrentInboxRow)
-                self.ui.comboBoxSendFrom.setCurrentIndex(currentIndex)
-            except:
-                # The toAddressAtCurrentInboxRow isn't in our combo box which can happen if 
-                # we are replying to a broadcast address or if the address is disabled.
-                self.ui.comboBoxSendFrom.setCurrentIndex(0) 
+            self.ui.comboBoxSendFrom.setCurrentIndex(0)
         
         self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
