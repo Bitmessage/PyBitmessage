@@ -15,15 +15,15 @@ from addresses import *
 # receiveDataThread).
 class sendDataThread(threading.Thread):
 
-    def __init__(self):
+    def __init__(self, sendDataThreadQueue):
         threading.Thread.__init__(self)
-        self.mailbox = Queue.Queue()
-        shared.sendDataQueues.append(self.mailbox)
+        self.sendDataThreadQueue = sendDataThreadQueue
+        shared.sendDataQueues.append(self.sendDataThreadQueue)
         with shared.printLock:
             print 'The length of sendDataQueues at sendDataThread init is:', len(shared.sendDataQueues)
 
         self.data = ''
-        self.objectHashHolderInstance = objectHashHolder(self.mailbox)
+        self.objectHashHolderInstance = objectHashHolder(self.sendDataThreadQueue)
         self.objectHashHolderInstance.start()
 
 
@@ -38,7 +38,7 @@ class sendDataThread(threading.Thread):
         self.peer = shared.Peer(HOST, PORT)
         self.streamNumber = streamNumber
         self.remoteProtocolVersion = - \
-            1  # This must be set using setRemoteProtocolVersion command which is sent through the self.mailbox queue.
+            1  # This must be set using setRemoteProtocolVersion command which is sent through the self.sendDataThreadQueue queue.
         self.lastTimeISentData = int(
             time.time())  # If this value increases beyond five minutes ago, we'll send a pong message to keep the connection alive.
         self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware = someObjectsOfWhichThisRemoteNodeIsAlreadyAware
@@ -64,7 +64,7 @@ class sendDataThread(threading.Thread):
 
     def run(self):
         while True:
-            deststream, command, data = self.mailbox.get()
+            deststream, command, data = self.sendDataThreadQueue.get()
 
             if deststream == self.streamNumber or deststream == 0:
                 if command == 'shutdown':
@@ -77,7 +77,7 @@ class sendDataThread(threading.Thread):
                             self.sock.close()
                         except:
                             pass
-                        shared.sendDataQueues.remove(self.mailbox)
+                        shared.sendDataQueues.remove(self.sendDataThreadQueue)
                         with shared.printLock:
                             print 'len of sendDataQueues', len(shared.sendDataQueues)
 
@@ -96,12 +96,10 @@ class sendDataThread(threading.Thread):
 
                         self.streamNumber = specifiedStreamNumber
                 elif command == 'setRemoteProtocolVersion':
-                    peerInMessage, specifiedRemoteProtocolVersion = data
-                    if peerInMessage == self.peer:
-                        with shared.printLock:
-                            print 'setting the remote node\'s protocol version in the sendData thread (ID:', id(self), ') to', specifiedRemoteProtocolVersion
-
-                        self.remoteProtocolVersion = specifiedRemoteProtocolVersion
+                    specifiedRemoteProtocolVersion = data
+                    with shared.printLock:
+                        print 'setting the remote node\'s protocol version in the sendDataThread (ID:', id(self), ') to', specifiedRemoteProtocolVersion
+                    self.remoteProtocolVersion = specifiedRemoteProtocolVersion
                 elif command == 'advertisepeer':
                     self.objectHashHolderInstance.holdPeer(data)
                 elif command == 'sendaddr':
@@ -135,7 +133,7 @@ class sendDataThread(threading.Thread):
                             self.sock.close()
                         except:
                             pass
-                        shared.sendDataQueues.remove(self.mailbox)
+                        shared.sendDataQueues.remove(self.sendDataThreadQueue)
                         print 'sendDataThread thread (ID:', str(id(self)) + ') ending now. Was connected to', self.peer
                         break
                 elif command == 'advertiseobject':
@@ -161,7 +159,7 @@ class sendDataThread(threading.Thread):
                                 self.sock.close()
                             except:
                                 pass
-                            shared.sendDataQueues.remove(self.mailbox)
+                            shared.sendDataQueues.remove(self.sendDataThreadQueue)
                             print 'sendDataThread thread (ID:', str(id(self)) + ') ending now. Was connected to', self.peer
                             break
                 elif command == 'pong':
@@ -182,9 +180,22 @@ class sendDataThread(threading.Thread):
                                 self.sock.close()
                             except:
                                 pass
-                            shared.sendDataQueues.remove(self.mailbox)
+                            shared.sendDataQueues.remove(self.sendDataThreadQueue)
                             print 'sendDataThread thread', self, 'ending now. Was connected to', self.peer
                             break
+                elif command == 'sendRawData':
+                    try:
+                        self.sock.sendall(data)
+                        self.lastTimeISentData = int(time.time())
+                    except:
+                        try:
+                            self.sock.shutdown(socket.SHUT_RDWR)
+                            self.sock.close()
+                        except:
+                            pass
+                        shared.sendDataQueues.remove(self.sendDataThreadQueue)
+                        print 'Sending of data to', self.peer, 'failed. sendDataThread thread', self, 'ending now.' 
+                        break
             else:
                 with shared.printLock:
                     print 'sendDataThread ID:', id(self), 'ignoring command', command, 'because the thread is not in stream', deststream
