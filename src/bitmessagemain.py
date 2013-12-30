@@ -19,8 +19,9 @@ import os
 import sys
 if sys.platform == 'darwin':
     if float("{1}.{2}".format(*sys.version_info)) < 7.5:
-        print "You should use python 2.7.5 or greater."
-        print "Your version: {0}.{1}.{2}".format(*sys.version_info)
+        msg = "You should use python 2.7.5 or greater. Your version: %s", "{0}.{1}.{2}".format(*sys.version_info)
+        logger.critical(msg)
+        print msg
         sys.exit(0)
 
 from SimpleXMLRPCServer import SimpleXMLRPCServer
@@ -52,13 +53,6 @@ import helper_generic
 
 from subprocess import call
 import time
-
-
-#TODO: done twice  - quite paranoid
-if sys.platform == 'darwin':
-    if float("{1}.{2}".format(*sys.version_info)) < 7.5:
-        logger.critical("You should use python 2.7.5 or greater. Your version: %s", "{0}.{1}.{2}".format(*sys.version_info))
-        sys.exit(0)
 
 def connectToStream(streamNumber):
     shared.streamsInWhichIAmParticipating[streamNumber] = 'no data'
