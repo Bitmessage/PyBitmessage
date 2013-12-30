@@ -40,14 +40,17 @@ class receiveDataThread(threading.Thread):
         HOST,
         port,
         streamNumber,
-            someObjectsOfWhichThisRemoteNodeIsAlreadyAware,
-            selfInitiatedConnections):
+        someObjectsOfWhichThisRemoteNodeIsAlreadyAware,
+        selfInitiatedConnections,
+        sendDataThreadQueue):
+        
         self.sock = sock
         self.peer = shared.Peer(HOST, port)
         self.streamNumber = streamNumber
         self.payloadLength = 0  # This is the protocol payload length thus it doesn't include the 24 byte message header
         self.objectsThatWeHaveYetToGetFromThisPeer = {}
         self.selfInitiatedConnections = selfInitiatedConnections
+        self.sendDataThreadQueue = sendDataThreadQueue # used to send commands and data to the sendDataThread
         shared.connectedHostsList[
             self.peer.host] = 0  # The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
         self.connectionIsOrWasFullyEstablished = False  # set to true after the remote node and I accept each other's version messages. This is needed to allow the user interface to accurately reflect the current number of connections.
@@ -218,13 +221,7 @@ class receiveDataThread(threading.Thread):
 
     def sendpong(self):
         print 'Sending pong'
-        try:
-            self.sock.sendall(
-                '\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
-        except Exception as err:
-            # if not 'Bad file descriptor' in err:
-            with shared.printLock:
-                print 'sock.sendall error:', err
+        self.sendDataThreadQueue.put((0, 'sendRawData', '\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35'))
 
 
     def recverack(self):
@@ -309,13 +306,7 @@ class receiveDataThread(threading.Thread):
         headerData += hashlib.sha512(payload).digest()[:4]
         with shared.printLock:
             print 'Sending huge inv message with', numberOfObjects, 'objects to just this one peer'
-
-        try:
-            self.sock.sendall(headerData + payload)
-        except Exception as err:
-            # if not 'Bad file descriptor' in err:
-            with shared.printLock:
-                print 'sock.sendall error:', err
+        self.sendDataThreadQueue.put((0, 'sendRawData', headerData + payload))
 
 
     # We have received a broadcast message
@@ -462,12 +453,7 @@ class receiveDataThread(threading.Thread):
         headerData += pack('>L', len(
             payload))  # payload length. Note that we add an extra 8 for the nonce.
         headerData += hashlib.sha512(payload).digest()[:4]
-        try:
-            self.sock.sendall(headerData + payload)
-        except Exception as err:
-            # if not 'Bad file descriptor' in err:
-            with shared.printLock:
-                print 'sock.sendall error:', err
+        self.sendDataThreadQueue.put((0, 'sendRawData', headerData + payload))
 
 
     # We have received a getdata request from our peer
@@ -531,12 +517,7 @@ class receiveDataThread(threading.Thread):
             return
         headerData += pack('>L', len(payload))  # payload length.
         headerData += hashlib.sha512(payload).digest()[:4]
-        try:
-            self.sock.sendall(headerData + payload)
-        except Exception as err:
-            # if not 'Bad file descriptor' in err:
-            with shared.printLock:
-                print 'sock.sendall error:', err
+        self.sendDataThreadQueue.put((0, 'sendRawData', headerData + payload))
 
 
     # Advertise this object to all of our peers
@@ -735,16 +716,7 @@ class receiveDataThread(threading.Thread):
         datatosend = datatosend + pack('>L', len(payload))  # payload length
         datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
         datatosend = datatosend + payload
-        try:
-            self.sock.sendall(datatosend)
-            if shared.verbose >= 1:
-                with shared.printLock:
-                    print 'Sending addr with', numberOfAddressesInAddrMessage, 'entries.'
-
-        except Exception as err:
-            # if not 'Bad file descriptor' in err:
-            with shared.printLock:
-                print 'sock.sendall error:', err
+        self.sendDataThreadQueue.put((0, 'sendRawData', datatosend))
 
 
     # We have received a version message
@@ -794,8 +766,7 @@ class receiveDataThread(threading.Thread):
                 with shared.printLock:
                     print 'Closing connection to myself: ', self.peer
                 return
-            shared.broadcastToSendDataQueues((0, 'setRemoteProtocolVersion', (
-                self.peer, self.remoteProtocolVersion)))
+            self.sendDataThreadQueue.put((0, 'setRemoteProtocolVersion', self.remoteProtocolVersion))
 
             shared.knownNodesLock.acquire()
             shared.knownNodes[self.streamNumber][shared.Peer(self.peer.host, self.remoteNodeIncomingPort)] = int(time.time())
@@ -810,27 +781,15 @@ class receiveDataThread(threading.Thread):
     def sendversion(self):
         with shared.printLock:
             print 'Sending version message'
-
-        try:
-            self.sock.sendall(shared.assembleVersionMessage(
-                self.peer.host, self.peer.port, self.streamNumber))
-        except Exception as err:
-            # if not 'Bad file descriptor' in err:
-            with shared.printLock:
-                print 'sock.sendall error:', err
+        self.sendDataThreadQueue.put((0, 'sendRawData', shared.assembleVersionMessage(
+                self.peer.host, self.peer.port, self.streamNumber)))
 
 
     # Sends a verack message
     def sendverack(self):
         with shared.printLock:
             print 'Sending verack'
-        try:
-            self.sock.sendall(
-                '\xE9\xBE\xB4\xD9\x76\x65\x72\x61\x63\x6B\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
-        except Exception as err:
-            # if not 'Bad file descriptor' in err:
-            with shared.printLock:
-                print 'sock.sendall error:', err
+        self.sendDataThreadQueue.put((0, 'sendRawData', '\xE9\xBE\xB4\xD9\x76\x65\x72\x61\x63\x6B\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35'))
         self.verackSent = True
         if self.verackReceived:
             self.connectionFullyEstablished()
