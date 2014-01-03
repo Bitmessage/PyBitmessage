@@ -1678,7 +1678,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="401"/>
-        <source>norsk</source>
+        <source>Norwegian</source>
         <comment>no</comment>
         <translation></translation>
     </message>
