@@ -1609,7 +1609,7 @@ T&apos; &apos;Random Number&apos; option be selected by default but deterministi
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="401"/>
-        <source>norsk</source>
+        <source>Norwegian</source>
         <comment>no</comment>
         <translation type="unfinished"></translation>
     </message>
