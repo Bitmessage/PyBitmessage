@@ -1155,7 +1155,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/about.py" line="69"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright Â© 2012-2013 Jonathan Warren&lt;br/&gt;Copyright Â© 2013 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;版权所有 Â© 2012-2013 Jonathan Warren&lt;br/&gt;版权所有 Â© 2013 比特信开发者&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="unfinished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;版权所有 © 2012-2013 Jonathan Warren&lt;br/&gt;版权所有 © 2013 比特信开发者&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/about.py" line="70"/>
@@ -1295,7 +1295,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="116"/>
         <source>Passphrase</source>
-        <translation>密码</translation>
+        <translation>密钥</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="117"/>
@@ -1614,12 +1614,12 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/settings.py" line="439"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, if you send a message to someone and he is offline for more than two days, Bitmessage will send the message again after an additional two days. This will be continued with exponential backoff forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them. Here you may change that behavior by having Bitmessage give up after a certain number of days or months.&lt;/p&gt;&lt;p&gt;Leave these input fields blank for the default behavior. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;您发给他们的消息默认会在网络上保存两天，之后比特信会再重发一次. 之后的重发时间会随指数上升; 消息会在5, 10, 20... 天后重发. 直到收到收件人的回执. 你可以在这里改变这一行为，让比特信在尝试一段时间后放弃.&lt;/p&gt;&lt;p&gt;留空意味着默认行为. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;您发给他们的消息默认会在网络上保存两天，之后比特信会再重发一次. 重发时间会随指数上升; 消息会在5, 10, 20... 天后重发并以此类推. 直到收到收件人的回执. 你可以在这里改变这一行为，让比特信在尝试一段时间后放弃.&lt;/p&gt;&lt;p&gt;留空意味着默认行为. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="440"/>
         <source>Give up after</source>
-        <translation>放弃在尝试</translation>
+        <translation>在</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="441"/>
@@ -1634,7 +1634,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/settings.py" line="443"/>
         <source>months.</source>
-        <translation>月。</translation>
+        <translation>月后放弃。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="444"/>
