@@ -1277,7 +1277,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="106"/>
         <source>Chan bitmessage address:</source>
-        <translation>频道的比特信：</translation>
+        <translation>频道的地址：</translation>
     </message>
 </context>
 <context>
