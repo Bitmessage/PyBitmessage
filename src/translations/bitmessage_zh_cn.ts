@@ -1272,7 +1272,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="104"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A chan exists when a group of people share the same decryption keys. The keys and bitmessage address used by a chan are generated from a human-friendly word or phrase (the chan name). To send a message to everyone in the chan, send a normal person-to-person message to the chan address.&lt;/p&gt;&lt;p&gt;Chans are experimental and completely unmoderatable.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;一个频道存在于一群共有同一个解密密钥的人之间。频道的密钥和比特信地址生成自可读的文字或密码（频道的名字）。要给一个频道中的每一个人发送消息，仅仅需要发送一个普通的点对点消息到频道的地址。&lt;/p&gt;&lt;p&gt;频道是实验性的而不受到监管。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;一个频道存在于一群共有同一个解密密钥的人之间。频道的密钥和比特信地址生成自可读的文字或密码（频道的名字）。要给一个频道中的每一个人发送消息，仅仅需要发送一个普通的点对点消息到频道的地址。&lt;/p&gt;&lt;p&gt;频道是实验性的且不受到监管。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="106"/>
