@@ -163,7 +163,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 if addressInKeysFile != 'bitmessagesettings':
                     status, addressVersionNumber, streamNumber, hash01 = decodeAddress(
                         addressInKeysFile)
-                    data  # this is totally meaningless row?
                     if len(data) > 20:
                         data += ','
                     if shared.config.has_option(addressInKeysFile, 'chan'):
