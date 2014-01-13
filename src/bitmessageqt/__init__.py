@@ -3320,7 +3320,7 @@ class settingsDialog(QtGui.QDialog):
             shared.safeConfigGetBoolean('bitmessagesettings', 'useidenticons'))
         
         global languages 
-        languages = ['system','en','eo','fr','de','es','ru','no','en_pirate','other']
+        languages = ['system','en','eo','fr','de','es','ru','no','en_pirate','ar','other']
         user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
         if user_countrycode in languages:
             curr_index = languages.index(user_countrycode)
