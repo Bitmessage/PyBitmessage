@@ -1,6 +1,15 @@
-# Copyright (c) 2012 Jonathan Warren
-# Copyright (c) 2012 The Bitmessage developers
-# Moved  API stuff from main program to here /EM
+# Copyright (c) 2012-2014 Jonathan Warren
+# Copyright (c) 2012-2014 The Bitmessage developers
+
+comment= """
+This is not what you run to run the Bitmessage API. Instead, enable daemon mode
+( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py. 
+"""
+
+if __name__ == "__main__":
+    print comment
+    import sys
+    sys.exit(0)
 
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 import json
