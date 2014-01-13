@@ -15,7 +15,7 @@ import singleton
 import os
 
 from SimpleXMLRPCServer import SimpleXMLRPCServer
-from bitmessageapi import MySimpleXMLRPCRequestHandler        
+from api import MySimpleXMLRPCRequestHandler        
 
 import shared
 from helper_sql import sqlQuery
