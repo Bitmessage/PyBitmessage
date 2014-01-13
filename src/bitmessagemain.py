@@ -94,7 +94,7 @@ class Main:
     def start(self, daemon=False):
         shared.daemon = daemon
         # is the application already running?  If yes then exit.
-        singleton.singleinstance()
+        thisapp = singleton.singleinstance()
 
         signal.signal(signal.SIGINT, helper_generic.signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
