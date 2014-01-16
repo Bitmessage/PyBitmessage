@@ -1733,7 +1733,7 @@ L&apos;option &apos;Nombre Aléatoire&apos; est sélectionnée par défaut mais 
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="401"/>
-        <source>norsk</source>
+        <source>Norsk</source>
         <comment>no</comment>
         <translation></translation>
     </message>
