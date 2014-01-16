@@ -400,7 +400,7 @@ class Ui_settingsDialog(object):
         self.languageComboBox.setItemText(4, _translate("settingsDialog", "Deutsch", "de"))
         self.languageComboBox.setItemText(5, _translate("settingsDialog", "Españl", "es"))
         self.languageComboBox.setItemText(6, _translate("settingsDialog", "русский язык", "ru"))
-        self.languageComboBox.setItemText(7, _translate("settingsDialog", "norsk", "no"))
+        self.languageComboBox.setItemText(7, _translate("settingsDialog", "Norsk", "no"))
         self.languageComboBox.setItemText(8, _translate("settingsDialog", "العربية", "ar"))
         self.languageComboBox.setItemText(9, _translate("settingsDialog", "中国的", "zh_cn"))
         self.languageComboBox.setItemText(10, _translate("settingsDialog", "Pirate English", "en_pirate"))
