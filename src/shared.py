@@ -290,7 +290,6 @@ def isProofOfWorkSufficient(
         payloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
     POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
                   :8] + hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
-    # print 'POW:', POW
     return POW <= 2 ** 64 / ((len(data) + payloadLengthExtraBytes) * (nonceTrialsPerByte))
 
 def doCleanShutdown():
@@ -431,15 +430,13 @@ def decryptAndCheckPubkeyPayload(payload, address):
     embeddedVersionNumber, varintLength = decodeVarint(
         payload[readPosition:readPosition + 10])
     if embeddedVersionNumber != addressVersion:
-        with shared.printLock:
-            print 'Pubkey decryption was UNsuccessful due to address version mismatch. This shouldn\'t have happened.'
+        logger.info('Pubkey decryption was UNsuccessful due to address version mismatch. This shouldn\'t have happened.')
         return 'failed'
     readPosition += varintLength
     embeddedStreamNumber, varintLength = decodeVarint(
         payload[readPosition:readPosition + 10])
     if embeddedStreamNumber != streamNumber:
-        with shared.printLock:
-            print 'Pubkey decryption was UNsuccessful due to stream number mismatch. This shouldn\'t have happened.'
+        logger.info('Pubkey decryption was UNsuccessful due to stream number mismatch. This shouldn\'t have happened.')
         return 'failed'
     readPosition += varintLength
     signedData = payload[8:readPosition] # Some of the signed data is not encrypted so let's keep it for now.
@@ -454,10 +451,9 @@ def decryptAndCheckPubkeyPayload(payload, address):
     except:
         # Someone must have encrypted some data with a different key
         # but tagged it with a tag for which we are watching.
-        with shared.printLock:
-            print 'Pubkey decryption was UNsuccessful. This shouldn\'t have happened.'
+        logger.info('Pubkey decryption was UNsuccessful. This shouldn\'t have happened.')
         return 'failed'
-    print 'Pubkey decryption successful'
+    logger.debug('Pubkey decryption successful')
     readPosition = 4 # bypass the behavior bitfield
     publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
     # Is it possible for a public key to be invalid such that trying to
@@ -479,11 +475,11 @@ def decryptAndCheckPubkeyPayload(payload, address):
     signature = decryptedData[readPosition:readPosition + signatureLength]
     try:
         if not highlevelcrypto.verify(signedData, signature, publicSigningKey.encode('hex')):
-            print 'ECDSA verify failed (within decryptAndCheckPubkeyPayload).'
+            logger.info('ECDSA verify failed (within decryptAndCheckPubkeyPayload).')
             return 'failed'
-        print 'ECDSA verify passed (within decryptAndCheckPubkeyPayload)'
+        logger.debug('ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
     except Exception as err:
-        print 'ECDSA verify failed (within decryptAndCheckPubkeyPayload)', err
+        logger.debug('ECDSA verify failed (within decryptAndCheckPubkeyPayload) %s' % err)
         return 'failed'
 
     sha = hashlib.new('sha512')
@@ -496,8 +492,7 @@ def decryptAndCheckPubkeyPayload(payload, address):
         # Although this pubkey object had the tag were were looking for and was
         # encrypted with the correct encryption key, it doesn't contain the
         # correct keys. Someone is either being malicious or using buggy software.
-        with shared.printLock:
-            print 'Pubkey decryption was UNsuccessful due to RIPE mismatch. This shouldn\'t have happened.'
+        logger.info('Pubkey decryption was UNsuccessful due to RIPE mismatch. This shouldn\'t have happened.')
         return 'failed'
     
     t = (ripe, addressVersion, signedData, int(time.time()), 'yes')
@@ -509,7 +504,7 @@ Peer = collections.namedtuple('Peer', ['host', 'port'])
 def checkAndShareMsgWithPeers(data):
     # Let us check to make sure that the proof of work is sufficient.
     if not isProofOfWorkSufficient(data):
-        print 'Proof of work in msg message insufficient.'
+        logger.debug('Proof of work in msg message insufficient.')
         return
 
     readPosition = 8
@@ -523,21 +518,27 @@ def checkAndShareMsgWithPeers(data):
     else:
         readPosition += 4
 
+    if embeddedTime > (int(time.time()) + 10800): 
+        logger.debug('The embedded time in this msg message is more than three hours in the future. That doesn\'t make sense. Ignoring message.')
+        return
+    if embeddedTime < (int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept):
+        logger.debug('The embedded time in this msg message is too old. Ignoring message.')
+        return
     streamNumberAsClaimedByMsg, streamNumberAsClaimedByMsgLength = decodeVarint(
         data[readPosition:readPosition + 9])
     if not streamNumberAsClaimedByMsg in streamsInWhichIAmParticipating:
-        print 'The streamNumber', streamNumberAsClaimedByMsg, 'isn\'t one we are interested in.'
+        logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumberAsClaimedByMsg)
         return
     readPosition += streamNumberAsClaimedByMsgLength
     inventoryHash = calculateInventoryHash(data)
     shared.numberOfInventoryLookupsPerformed += 1
     inventoryLock.acquire()
     if inventoryHash in inventory:
-        print 'We have already received this msg message. Ignoring.'
+        logger.debug('We have already received this msg message. Ignoring.')
         inventoryLock.release()
         return
     elif isInSqlInventory(inventoryHash):
-        print 'We have already received this msg message (it is stored on disk in the SQL inventory). Ignoring it.'
+        logger.debug('We have already received this msg message (it is stored on disk in the SQL inventory). Ignoring it.')
         inventoryLock.release()
         return
     # This msg message is valid. Let's let our peers know about it.
@@ -546,8 +547,7 @@ def checkAndShareMsgWithPeers(data):
         objectType, streamNumberAsClaimedByMsg, data, embeddedTime,'')
     inventorySets[streamNumberAsClaimedByMsg].add(inventoryHash)
     inventoryLock.release()
-    with printLock:
-        print 'advertising inv with hash:', inventoryHash.encode('hex')
+    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
     broadcastToSendDataQueues((streamNumberAsClaimedByMsg, 'advertiseobject', inventoryHash))
 
     # Now let's enqueue it to be processed ourselves.
@@ -560,10 +560,10 @@ def checkAndShareMsgWithPeers(data):
 
 def checkAndSharegetpubkeyWithPeers(data):
     if not isProofOfWorkSufficient(data):
-        print 'Proof of work in getpubkey message insufficient.'
+        logger.debug('Proof of work in getpubkey message insufficient.')
         return
     if len(data) < 34:
-        print 'getpubkey message doesn\'t contain enough data. Ignoring.'
+        logger.debug('getpubkey message doesn\'t contain enough data. Ignoring.')
         return
     readPosition = 8  # bypass the nonce
     embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
@@ -577,10 +577,10 @@ def checkAndSharegetpubkeyWithPeers(data):
         readPosition += 4
 
     if embeddedTime > int(time.time()) + 10800:
-        print 'The time in this getpubkey message is too new. Ignoring it. Time:', embeddedTime
+        logger.debug('The time in this getpubkey message is too new. Ignoring it. Time: %s' % embeddedTime)
         return
     if embeddedTime < int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept:
-        print 'The time in this getpubkey message is too old. Ignoring it. Time:', embeddedTime
+        logger.debug('The time in this getpubkey message is too old. Ignoring it. Time: %s' % embeddedTime)
         return
     requestedAddressVersionNumber, addressVersionLength = decodeVarint(
         data[readPosition:readPosition + 10])
@@ -588,7 +588,7 @@ def checkAndSharegetpubkeyWithPeers(data):
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 10])
     if not streamNumber in streamsInWhichIAmParticipating:
-        print 'The streamNumber', streamNumber, 'isn\'t one we are interested in.'
+        logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
         return
     readPosition += streamNumberLength
 
@@ -596,11 +596,11 @@ def checkAndSharegetpubkeyWithPeers(data):
     inventoryHash = calculateInventoryHash(data)
     inventoryLock.acquire()
     if inventoryHash in inventory:
-        print 'We have already received this getpubkey request. Ignoring it.'
+        logger.debug('We have already received this getpubkey request. Ignoring it.')
         inventoryLock.release()
         return
     elif isInSqlInventory(inventoryHash):
-        print 'We have already received this getpubkey request (it is stored on disk in the SQL inventory). Ignoring it.'
+        logger.debug('We have already received this getpubkey request (it is stored on disk in the SQL inventory). Ignoring it.')
         inventoryLock.release()
         return
 
@@ -610,8 +610,7 @@ def checkAndSharegetpubkeyWithPeers(data):
     inventorySets[streamNumber].add(inventoryHash)
     inventoryLock.release()
     # This getpubkey request is valid. Forward to peers.
-    with printLock:
-        print 'advertising inv with hash:', inventoryHash.encode('hex')
+    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's queue it to be processed ourselves.
@@ -627,7 +626,7 @@ def checkAndSharePubkeyWithPeers(data):
         return
     # Let us make sure that the proof of work is sufficient.
     if not isProofOfWorkSufficient(data):
-        print 'Proof of work in pubkey message insufficient.'
+        logger.debug('Proof of work in pubkey message insufficient.')
         return
 
     readPosition = 8  # for the nonce
@@ -642,12 +641,10 @@ def checkAndSharePubkeyWithPeers(data):
         readPosition += 4
 
     if embeddedTime < int(time.time()) - lengthOfTimeToHoldOnToAllPubkeys:
-        with printLock:
-            print 'The embedded time in this pubkey message is too old. Ignoring. Embedded time is:', embeddedTime
+        logger.debug('The embedded time in this pubkey message is too old. Ignoring. Embedded time is: %s' % embeddedTime)
         return
     if embeddedTime > int(time.time()) + 10800:
-        with printLock:
-            print 'The embedded time in this pubkey message more than several hours in the future. This is irrational. Ignoring message.'
+        logger.debug('The embedded time in this pubkey message more than several hours in the future. This is irrational. Ignoring message.') 
         return
     addressVersion, varintLength = decodeVarint(
         data[readPosition:readPosition + 10])
@@ -656,11 +653,11 @@ def checkAndSharePubkeyWithPeers(data):
         data[readPosition:readPosition + 10])
     readPosition += varintLength
     if not streamNumber in streamsInWhichIAmParticipating:
-        print 'The streamNumber', streamNumber, 'isn\'t one we are interested in.'
+        logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
         return
     if addressVersion >= 4:
         tag = data[readPosition:readPosition + 32]
-        print 'tag in received pubkey is:', tag.encode('hex')
+        logger.debug('tag in received pubkey is: %s' % tag.encode('hex'))
     else:
         tag = ''
 
@@ -668,11 +665,11 @@ def checkAndSharePubkeyWithPeers(data):
     inventoryHash = calculateInventoryHash(data)
     inventoryLock.acquire()
     if inventoryHash in inventory:
-        print 'We have already received this pubkey. Ignoring it.'
+        logger.debug('We have already received this pubkey. Ignoring it.')
         inventoryLock.release()
         return
     elif isInSqlInventory(inventoryHash):
-        print 'We have already received this pubkey (it is stored on disk in the SQL inventory). Ignoring it.'
+        logger.debug('We have already received this pubkey (it is stored on disk in the SQL inventory). Ignoring it.')
         inventoryLock.release()
         return
     objectType = 'pubkey'
@@ -681,8 +678,7 @@ def checkAndSharePubkeyWithPeers(data):
     inventorySets[streamNumber].add(inventoryHash)
     inventoryLock.release()
     # This object is valid. Forward it to peers.
-    with printLock:
-        print 'advertising inv with hash:', inventoryHash.encode('hex')
+    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
 
@@ -698,7 +694,7 @@ def checkAndSharePubkeyWithPeers(data):
 def checkAndShareBroadcastWithPeers(data):
     # Let us verify that the proof of work is sufficient.
     if not isProofOfWorkSufficient(data):
-        print 'Proof of work in broadcast message insufficient.'
+        logger.debug('Proof of work in broadcast message insufficient.')
         return
     readPosition = 8  # bypass the nonce
     embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
@@ -712,13 +708,13 @@ def checkAndShareBroadcastWithPeers(data):
         readPosition += 4
 
     if embeddedTime > (int(time.time()) + 10800):  # prevent funny business
-        print 'The embedded time in this broadcast message is more than three hours in the future. That doesn\'t make sense. Ignoring message.'
+        logger.debug('The embedded time in this broadcast message is more than three hours in the future. That doesn\'t make sense. Ignoring message.') 
         return
     if embeddedTime < (int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept):
-        print 'The embedded time in this broadcast message is too old. Ignoring message.'
+        logger.debug('The embedded time in this broadcast message is too old. Ignoring message.')
         return
     if len(data) < 180:
-        print 'The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.'
+        logger.debug('The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.')
         return
     broadcastVersion, broadcastVersionLength = decodeVarint(
         data[readPosition:readPosition + 10])
@@ -727,22 +723,21 @@ def checkAndShareBroadcastWithPeers(data):
         streamNumber, streamNumberLength = decodeVarint(data[readPosition:readPosition + 10])
         readPosition += streamNumberLength
         if not streamNumber in streamsInWhichIAmParticipating:
-            print 'The streamNumber', streamNumber, 'isn\'t one we are interested in.'
+            logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
             return
     if broadcastVersion >= 3:
         tag = data[readPosition:readPosition+32]
-        print 'debugging. in broadcast, tag is:', tag.encode('hex')
     else:
         tag = ''
     shared.numberOfInventoryLookupsPerformed += 1
     inventoryLock.acquire()
     inventoryHash = calculateInventoryHash(data)
     if inventoryHash in inventory:
-        print 'We have already received this broadcast object. Ignoring.'
+        logger.debug('We have already received this broadcast object. Ignoring.')
         inventoryLock.release()
         return
     elif isInSqlInventory(inventoryHash):
-        print 'We have already received this broadcast object (it is stored on disk in the SQL inventory). Ignoring it.'
+        logger.debug('We have already received this broadcast object (it is stored on disk in the SQL inventory). Ignoring it.')
         inventoryLock.release()
         return
     # It is valid. Let's let our peers know about it.
@@ -752,8 +747,7 @@ def checkAndShareBroadcastWithPeers(data):
     inventorySets[streamNumber].add(inventoryHash)
     inventoryLock.release()
     # This object is valid. Forward it to peers.
-    with printLock:
-        print 'advertising inv with hash:', inventoryHash.encode('hex')
+    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's queue it to be processed ourselves.
