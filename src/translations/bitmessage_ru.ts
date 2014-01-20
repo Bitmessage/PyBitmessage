@@ -1725,7 +1725,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="401"/>
-        <source>norsk</source>
+        <source>Norsk</source>
         <comment>no</comment>
         <translation></translation>
     </message>
