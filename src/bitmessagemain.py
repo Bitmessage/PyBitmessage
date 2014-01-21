@@ -15,7 +15,8 @@ import singleton
 import os
 
 from SimpleXMLRPCServer import SimpleXMLRPCServer
-from api import MySimpleXMLRPCRequestHandler        
+from api import MySimpleXMLRPCRequestHandler
+from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
 
 import shared
 from helper_sql import sqlQuery
@@ -59,10 +60,12 @@ def connectToStream(streamNumber):
     for row in queryData:
         shared.inventorySets[streamNumber].add(row[0])
 
-    if sys.platform[0:3] == 'win':
+    
+    if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
+        # Some XP and Vista systems can only have 10 outgoing connections at a time.
         maximumNumberOfHalfOpenConnections = 9
     else:
-        maximumNumberOfHalfOpenConnections = 32
+        maximumNumberOfHalfOpenConnections = 64
     for i in range(maximumNumberOfHalfOpenConnections):
         a = outgoingSynSender()
         a.setup(streamNumber, selfInitiatedConnections)

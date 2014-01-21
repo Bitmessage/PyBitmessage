@@ -5,6 +5,8 @@ import os
 import locale
 import random
 import string
+import platform
+from distutils.version import StrictVersion
 
 from namecoin import ensureNamecoinOptions
 
@@ -119,3 +121,13 @@ def loadConfig():
             os.umask(0o077)
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
             shared.config.write(configfile)
+
+def isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
+    try:
+        VER_THIS=StrictVersion(platform.version())
+        if sys.platform[0:3]=="win":
+            return StrictVersion("5.1.2600")<=VER_THIS and StrictVersion("6.0.6000")>=VER_THIS
+        return False
+    except Exception as err:
+        print 'An Exception occurred within isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections:', err
+        return False
