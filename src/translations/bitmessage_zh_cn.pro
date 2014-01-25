@@ -1,8 +1,8 @@
 SOURCES	= 	../addresses.py\
 			../bitmessagemain.py\
 			../class_addressGenerator.py\
-			../class_objectProcessor.py\
 			../class_outgoingSynSender.py\
+			../class_objectProcessor.py\
 			../class_receiveDataThread.py\
 			../class_sendDataThread.py\
 			../class_singleCleaner.py\
@@ -31,5 +31,5 @@ SOURCES	= 	../addresses.py\
 			../bitmessageqt/specialaddressbehavior.py
 
 			
-TRANSLATIONS	= bitmessage_fr.ts
-CODECFORTR      = UTF-8
+TRANSLATIONS	= bitmessage_zh_cn.ts
+CODECFORTR		= UTF-8

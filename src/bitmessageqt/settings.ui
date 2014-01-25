@@ -156,6 +156,21 @@
             </item>
             <item>
              <property name="text">
+              <string comment="no">Norsk</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="ar">العربية</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string comment="zh_cn">简体中文</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string comment="en_pirate">Pirate English</string>
              </property>
             </item>

@@ -69,9 +69,10 @@ class singleListener(threading.Thread):
                 a.close()
                 a, (HOST, PORT) = sock.accept()
             someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
+            sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection.
             a.settimeout(20)
 
-            sd = sendDataThread()
+            sd = sendDataThread(sendDataThreadQueue)
             sd.setup(
                 a, HOST, PORT, -1, someObjectsOfWhichThisRemoteNodeIsAlreadyAware)
             sd.start()
@@ -79,7 +80,7 @@ class singleListener(threading.Thread):
             rd = receiveDataThread()
             rd.daemon = True  # close the main program even if there are threads left
             rd.setup(
-                a, HOST, PORT, -1, someObjectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections)
+                a, HOST, PORT, -1, someObjectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections, sendDataThreadQueue)
             rd.start()
 
             with shared.printLock:
