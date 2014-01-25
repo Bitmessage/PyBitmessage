@@ -57,7 +57,7 @@ def _doFastPoW(target, initialHash):
     for i in range(pool_size):
         result.append(pool.apply_async(_pool_worker, args = (i, initialHash, target, pool_size)))
     while True:
-        if shared.shutdown:
+        if shared.shutdown >= 1:
             pool.terminate()
             while True:
                 time.sleep(10) # Don't let this thread return here; it will return nothing and cause an exception in bitmessagemain.py
