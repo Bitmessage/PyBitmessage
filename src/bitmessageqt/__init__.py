@@ -34,6 +34,7 @@ import hashlib
 from pyelliptic.openssl import OpenSSL
 import pickle
 import platform
+import textwrap
 import debug
 from debug import logger
 import subprocess
@@ -2613,6 +2614,25 @@ class MyForm(QtGui.QMainWindow):
         # We could also select upwards, but then our problem would be with the topmost message.
         # self.ui.tableWidgetInbox.clearSelection() manages to mark the message as read again.
 
+    # Format predefined text on message reply.
+    def quoted_text(self, message):
+        quoteWrapper = textwrap.TextWrapper(replace_whitespace = False,
+                                            initial_indent = '> ',
+                                            subsequent_indent = '> ',
+                                            break_long_words = False,
+                                            break_on_hyphens = False)
+        def quote_line(line):
+            # Do quote empty lines.
+            if line == '' or line.isspace():
+                return '> '
+            # Quote already quoted lines, but do not wrap them.
+            elif line[0:2] == '> ':
+                return '> ' + line
+            # Wrap and quote lines/paragraphs new to this message.
+            else:
+                return quoteWrapper.fill(line)
+        return '\n'.join([quote_line(l) for l in message.splitlines()]) + '\n\n'
+
     def on_action_InboxReply(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
@@ -2655,7 +2675,9 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.comboBoxSendFrom.setCurrentIndex(0)
         
-        self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
+        #self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
+        quotedText = self.quoted_text(unicode(messageAtCurrentInboxRow, 'utf-8'))
+        self.ui.textEditMessage.setText(quotedText)
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
             self.ui.lineEditSubject.setText(
                 self.ui.tableWidgetInbox.item(currentInboxRow, 2).text())
