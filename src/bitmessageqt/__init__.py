@@ -2251,6 +2251,8 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxWillinglySendToMobile.isChecked()))
             shared.config.set('bitmessagesettings', 'useidenticons', str(
                 self.settingsDialogInstance.ui.checkBoxUseIdenticons.isChecked()))
+            shared.config.set('bitmessagesettings', 'replybelow', str(
+                self.settingsDialogInstance.ui.checkBoxReplyBelow.isChecked()))
                 
             lang_ind = int(self.settingsDialogInstance.ui.languageComboBox.currentIndex())
             if not languages[lang_ind] == 'other':
@@ -2616,6 +2618,9 @@ class MyForm(QtGui.QMainWindow):
 
     # Format predefined text on message reply.
     def quoted_text(self, message):
+        if not shared.safeConfigGetBoolean('bitmessagesettings', 'replybelow'):
+          return '\n\n------------------------------------------------------\n' + message
+
         quoteWrapper = textwrap.TextWrapper(replace_whitespace = False,
                                             initial_indent = '> ',
                                             subsequent_indent = '> ',
@@ -2675,7 +2680,6 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.comboBoxSendFrom.setCurrentIndex(0)
         
-        #self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
         quotedText = self.quoted_text(unicode(messageAtCurrentInboxRow, 'utf-8'))
         self.ui.textEditMessage.setText(quotedText)
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
@@ -3340,6 +3344,8 @@ class settingsDialog(QtGui.QDialog):
             shared.safeConfigGetBoolean('bitmessagesettings', 'willinglysendtomobile'))
         self.ui.checkBoxUseIdenticons.setChecked(
             shared.safeConfigGetBoolean('bitmessagesettings', 'useidenticons'))
+        self.ui.checkBoxReplyBelow.setChecked(
+            shared.safeConfigGetBoolean('bitmessagesettings', 'replybelow'))
         
         global languages 
         languages = ['system','en','eo','fr','de','es','ru','no','ar','zh_cn','en_pirate','other']
