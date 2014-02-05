@@ -862,7 +862,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2750"/>
         <source>Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.</source>
-        <translation>已经移动项目到回收站。没有图形化的界面可以查看您的回收站，不过如果您还想找回的化它还在您的硬盘上。</translation>
+        <translation>已经移动项目到回收站。没有图形化的界面可以查看您的回收站，不过如果您还想找回的话它还在您的硬盘上。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2730"/>
@@ -882,7 +882,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3063"/>
         <source>Do you really want to remove this avatar?</source>
-        <translation>您真的想一处这个头像么？</translation>
+        <translation>您真的想移除这个头像么？</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3071"/>
@@ -983,6 +983,95 @@ It is important that you back up this file. Would you like to open the file now?
         <location filename="../bitmessageqt/__init__.py" line="834"/>
         <source>Message sent. Waiting for acknowledgement. Sent at %1</source>
         <translation>消息已经发送. 正在等待回执. 发送于 %1</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="361"/>
+        <source>Error! Could not find sender address (your address) in the keys.dat file.</source>
+        <translation>错误! 无法在文件 keys.dat 中找到发送者地址(你的地址)</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="426"/>
+        <source>Doing work necessary to send broadcast...</source>
+        <translation>正在做一些必须的工作来发送广播.</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="443"/>
+        <source>Broadcast sent on %1</source>
+        <translation>广播发送于 %1</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="485"/>
+        <source>Encryption key was requested earlier.</source>
+        <translation>已在更早的时候得到加密密钥.</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="523"/>
+        <source>Sending a request for the recipient&apos;s encryption key.</source>
+        <translation>正在请求收件人的加密密钥.</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="564"/>
+        <source>Looking up the receiver&apos;s public key</source>
+        <translation>正在查找收件人的公钥.</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="619"/>
+        <source>Problem: Destination is a mobile device who requests that the destination be included in the message but this is disallowed in your settings.  %1</source>
+        <translation>错误: 目标是一个移动设备, 要求不加密目标地址, 但是你的设置中不允许这么做. %1</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="636"/>
+        <source>Doing work necessary to send message.
+There is no required difficulty for version 2 addresses like this.</source>
+        <translation>正在做一些必要的工作来发送消息.
+这里要求的难度不像第2版的地址那样.</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="648"/>
+        <source>Doing work necessary to send message.
+Receiver&apos;s required difficulty: %1 and %2</source>
+        <translation>正在做一些必要的工作来发送消息.
+接收者要求的难度为: %1 和 %2</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="657"/>
+        <source>Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do.</source>
+        <translation>错误: 收件人要求的做工量(%1 和 %2)大于我们的最大接受做工量. </translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="669"/>
+        <source>Problem: You are trying to send a message to yourself or a chan but your encryption key could not be found in the keys.dat file. Could not encrypt message. %1</source>
+        <translation>错误: 你正在尝试发送消息到你自身或者一个频道, 但是你的加密密钥无法在文件keys.dat中找到. 无法加密消息. %1</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="681"/>
+        <source>Doing work necessary to send message.</source>
+        <translation>正在做一些必要的工作来发送消息.</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="831"/>
+        <source>Message sent. Sent on %1</source>
+        <translation>消息已经发送. 发送于 %1</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="835"/>
+        <source>Message sent. Waiting for acknowledgement. Sent on %1</source>
+        <translation>消息已经发送. 正在等待回执. 发送于 %1</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="904"/>
+        <source>Doing work necessary to request encryption key.</source>
+        <translation>正在做一些必要的工作来请求加密密钥.</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="928"/>
+        <source>Broacasting the public key request. This program will auto-retry if they are offline.</source>
+        <translation>正在广播公钥请求. 如果他们不在线, 这一过程将自动重试.</translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="929"/>
+        <source>Sending public key request. Waiting for reply. Requested at %1</source>
+        <translation>正在发送公钥请求. 等待回应中. 请求于 %1</translation>
     </message>
 </context>
 <context>
