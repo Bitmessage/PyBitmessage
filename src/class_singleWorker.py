@@ -131,7 +131,7 @@ class singleWorker(threading.Thread):
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
+        trialValue, nonce = proofofwork.run(target, initialHash, False)
         print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
         payload = pack('>Q', nonce) + payload
 
@@ -217,7 +217,7 @@ class singleWorker(threading.Thread):
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
+        trialValue, nonce = proofofwork.run(target, initialHash, False)
         print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
 
         payload = pack('>Q', nonce) + payload
@@ -313,7 +313,7 @@ class singleWorker(threading.Thread):
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
+        trialValue, nonce = proofofwork.run(target, initialHash, False)
         print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
 
         payload = pack('>Q', nonce) + payload
@@ -425,7 +425,7 @@ class singleWorker(threading.Thread):
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                 ackdata, tr.translateText("MainWindow", "Doing work necessary to send broadcast..."))))
             initialHash = hashlib.sha512(payload).digest()
-            trialValue, nonce = proofofwork.run(target, initialHash)
+            trialValue, nonce = proofofwork.run(target, initialHash, False)
             print '(For broadcast message) Found proof of work', trialValue, 'Nonce:', nonce
 
             payload = pack('>Q', nonce) + payload
@@ -812,7 +812,14 @@ class singleWorker(threading.Thread):
 
             powStartTime = time.time()
             initialHash = hashlib.sha512(encryptedPayload).digest()
-            trialValue, nonce = proofofwork.run(target, initialHash)
+            trialValue, nonce = proofofwork.run(target, initialHash, True)
+
+            #The PoW was cancelled by the user
+            if ((trialValue==-1) and (nonce==-1)): #if the PoW was Cancelled 
+                sqlExecute('''UPDATE sent SET status='PoW_Cancelled' WHERE ackdata=? ''', ackdata)
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Problem: The sending was cancelled. %1").arg(unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))))
+                continue
+
             with shared.printLock:
                 print '(For msg message) Found proof of work', trialValue, 'Nonce:', nonce
                 try:
@@ -905,7 +912,7 @@ class singleWorker(threading.Thread):
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
         initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
+        trialValue, nonce = proofofwork.run(target, initialHash, False)
         with shared.printLock:
             print 'Found proof of work', trialValue, 'Nonce:', nonce
 
@@ -940,7 +947,7 @@ class singleWorker(threading.Thread):
 
         powStartTime = time.time()
         initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
+        trialValue, nonce = proofofwork.run(target, initialHash, False)
         with shared.printLock:
             print '(For ack message) Found proof of work', trialValue, 'Nonce:', nonce
             try:

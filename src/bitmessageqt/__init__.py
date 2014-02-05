@@ -390,6 +390,12 @@ class MyForm(QtGui.QMainWindow):
             _translate(
                 "MainWindow", "Copy destination address to clipboard"),
             self.on_action_SentClipboard)
+        self.actionCancelPoW = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
+            	"MainWindow", "Cancel sending"), self.on_action_CancelPoW)
+        self.actionContinuePoW = self.ui.sentContextMenuToolbar.addAction(
+            _translate(
+            	"MainWindow", "Continue sending"), self.on_action_ContinuePoW)
         self.actionForceSend = self.ui.sentContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Force send"), self.on_action_ForceSend)
@@ -850,6 +856,9 @@ class MyForm(QtGui.QMainWindow):
                     shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
             elif status == 'toodifficult':
                 statusText = _translate("MainWindow", "Problem: The work demanded by the recipient is more difficult than you are willing to do. %1").arg(
+                    unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
+            elif status == 'PoW_Cancelled':
+                statusText = _translate("MainWindow", "Problem: The sending was cancelled. %1").arg(
                     unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
             elif status == 'badkey':
                 statusText = _translate("MainWindow", "Problem: The recipient\'s encryption key is no good. Could not encrypt message. %1").arg(
@@ -2776,6 +2785,31 @@ class MyForm(QtGui.QMainWindow):
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(str(addressAtCurrentRow))
 
+    def on_action_CancelPoW(self):
+        #The user wants to cancel the sending
+        if shared.PoWQueue.empty() == True: #The PoW calculation finished
+            QMessageBox.about(self, _translate("MainWindow", "PoW Finished"), _translate(
+                    "MainWindow", "The message has already been sent!"))
+        else: #The PoW calculation is still in progress
+            if shared.PoWQueue.get() == 'PoW_Single_Thread': #It is the single threaded version
+                QMessageBox.about(self, _translate("MainWindow", "PoW Cancelled"), _translate(
+                    "MainWindow", "The sending was cancelled!"))
+            else: #The multi threaded version is different, because of the possible overhead of the termination of the threads.
+                QMessageBox.about(self, _translate("MainWindow", "PoW Cancellation"), _translate(
+                    "MainWindow", "The cancellation of sending can take up to a few seconds because of the multi-threaded environment. If the message is not be sent during this period it will be cancelled!"))
+            time.sleep(0.2) # We need to give some time to the PoW process to terminate and change the status of the message
+            self.loadSent()
+
+    def on_action_ContinuePoW(self):
+        #Continue sending of a message if it was cancelled by the user
+        currentRow = self.ui.tableWidgetSent.selectedIndexes()[0].row()
+        ackdataToContinue = str(self.ui.tableWidgetSent.item(
+            currentRow, 3).data(Qt.UserRole).toPyObject())
+        sqlExecute('''UPDATE sent SET status='msgqueued' WHERE status='PoW_Cancelled' AND ackdata=?''', ackdataToContinue)
+        self.statusBar().showMessage(_translate(
+            "MainWindow", "The sending will be continued."))
+        shared.workerQueue.put(('sendmessage', ''))
+
     # Group of functions for the Address Book dialog box
     def on_action_AddressBookNew(self):
         self.click_pushButtonAddAddressBook()
@@ -3118,6 +3152,12 @@ class MyForm(QtGui.QMainWindow):
             status, = row
         if status == 'toodifficult':
             self.popMenuSent.addAction(self.actionForceSend)
+        if status == 'PoW_Cancelled':
+            self.popMenuSent.addSeparator()
+            self.popMenuSent.addAction(self.actionContinuePoW)
+        if (status == 'doingmsgpow') and (shared.PoWQueue.empty() == False): #The PoW of a message is calculating
+            self.popMenuSent.addSeparator()
+            self.popMenuSent.addAction(self.actionCancelPoW)
         self.popMenuSent.exec_(self.ui.tableWidgetSent.mapToGlobal(point))
 
     def inboxSearchLineEditPressed(self):
