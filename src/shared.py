@@ -92,6 +92,18 @@ namecoinDefaultRpcPort = "8336"
 # binary distributions vs source distributions.
 frozen = getattr(sys,'frozen', None)
 
+# If the trustedpeer option is specified in keys.dat then this will
+# contain a Peer which will be connected to instead of using the
+# addresses advertised by other peers. The client will only connect to
+# this peer and the timing attack mitigation will be disabled in order
+# to download data faster. The expected use case is where the user has
+# a fast connection to a trusted server where they run a BitMessage
+# daemon permanently. If they then run a second instance of the client
+# on a local machine periodically when they want to check for messages
+# it will sync with the network a lot faster without compromising
+# security.
+trustedPeer = None
+
 def isInSqlInventory(hash):
     queryreturn = sqlQuery('''select hash from inventory where hash=?''', hash)
     return queryreturn != []

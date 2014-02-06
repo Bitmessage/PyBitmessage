@@ -22,26 +22,37 @@ class outgoingSynSender(threading.Thread):
         self.streamNumber = streamNumber
         self.selfInitiatedConnections = selfInitiatedConnections
 
+    def _getPeer(self):
+        # If the user has specified a trusted peer then we'll only
+        # ever connect to that. Otherwise we'll pick a random one from
+        # the known nodes
+        shared.knownNodesLock.acquire()
+        if shared.trustedPeer:
+            peer = shared.trustedPeer
+            shared.knownNodes[self.streamNumber][peer] = time.time()
+        else:
+            peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
+        shared.knownNodesLock.release()
+
+        return peer
+
     def run(self):
         while shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
             time.sleep(2)
         while shared.safeConfigGetBoolean('bitmessagesettings', 'sendoutgoingconnections'):
-            while len(self.selfInitiatedConnections[self.streamNumber]) >= 8:  # maximum number of outgoing connections = 8
+            maximumConnections = 1 if shared.trustedPeer else 8 # maximum number of outgoing connections = 8
+            while len(self.selfInitiatedConnections[self.streamNumber]) >= maximumConnections:
                 time.sleep(10)
             if shared.shutdown:
                 break
             random.seed()
-            shared.knownNodesLock.acquire()
-            peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
-            shared.knownNodesLock.release()
+            peer = self._getPeer()
             shared.alreadyAttemptedConnectionsListLock.acquire()
             while peer in shared.alreadyAttemptedConnectionsList or peer.host in shared.connectedHostsList:
                 shared.alreadyAttemptedConnectionsListLock.release()
                 # print 'choosing new sample'
                 random.seed()
-                shared.knownNodesLock.acquire()
-                peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
-                shared.knownNodesLock.release()
+                peer = self._getPeer()
                 time.sleep(1)
                 # Clear out the shared.alreadyAttemptedConnectionsList every half
                 # hour so that this program will again attempt a connection
