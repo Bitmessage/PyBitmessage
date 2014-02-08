@@ -316,17 +316,17 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1265"/>
         <source>Processed %1 person-to-person messages.</source>
-        <translation>処理された1対1のメッセージ数 %1</translation>
+        <translation>%1 通の1対1のメッセージを処理しました。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1270"/>
         <source>Processed %1 broadcast messages.</source>
-        <translation>処理されたBroadcastmessage数 %1</translation>
+        <translation>%1 件のBroadcastメッセージを処理しました。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1275"/>
         <source>Processed %1 public keys.</source>
-        <translation>処理された公開鍵数 %1</translation>
+        <translation>%1 件の公開鍵を処理しました。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1319"/>
@@ -441,7 +441,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1728"/>
         <source>Fetched address from namecoin identity.</source>
-        <translation>namecoin IDからアドレスを取得</translation>
+        <translation>namecoin IDからアドレスを取得。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1805"/>
@@ -526,12 +526,12 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2380"/>
         <source>Address is gone</source>
-        <translation>アドレスが無効になりました。</translation>
+        <translation>アドレスが無効になりました</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2380"/>
         <source>Bitmessage cannot find your address %1. Perhaps you removed it?</source>
-        <translation>アドレス%1が見つかりません。既に削除されている可能性があります。</translation>
+        <translation>アドレス %1 が見つかりません。既に削除していませんか？</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2384"/>
@@ -616,7 +616,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3324"/>
         <source>You are using TCP port %1. (This can be changed in the settings).</source>
-        <translation>使用中のポート %1 （設定で変更できます）</translation>
+        <translation>使用中のポート %1 （設定で変更できます）。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="524"/>
@@ -815,17 +815,17 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="613"/>
         <source>Processed 0 person-to-person message.</source>
-        <translation>処理された1対1のメッセージ数 0</translation>
+        <translation>0 通の1対1のメッセージを処理しました。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="614"/>
         <source>Processed 0 public key.</source>
-        <translation>処理された公開鍵数 0</translation>
+        <translation>0 件の公開鍵を処理しました。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="615"/>
         <source>Processed 0 broadcast.</source>
-        <translation>処理されたBroadcastメッセージ数 0</translation>
+        <translation>0 件のBroadcastメッセージを処理しました。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="616"/>
@@ -905,7 +905,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="176"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Pros:&lt;br/&gt;&lt;/span&gt;You can recreate your addresses on any computer from memory. &lt;br/&gt;You need-not worry about backing up your keys.dat file as long as you can remember your passphrase. &lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;Cons:&lt;br/&gt;&lt;/span&gt;You must remember (or write down) your passphrase if you expect to be able to recreate your keys if they are lost. &lt;br/&gt;You must remember the address version number and the stream number along with your passphrase. &lt;br/&gt;If you choose a weak passphrase and someone on the Internet can brute-force it, they can read your messages and send messages as you.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;長所:&lt;br/&gt;&lt;/span&gt;記憶を頼りにアドレスを再生成できます。&lt;br/&gt;keys.datファイルのバックアップの心配をしないでも、パスフレーズを覚えておけばよくなります。&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;短所:&lt;br/&gt;&lt;/span&gt;アドレスの暗号鍵を紛失した場合に備えてアドレスを再生成出来るようにしたい場合、パスフレーズを覚えて（もしくは書き留めて）必要があります。&lt;br/&gt;パスフレーズを覚えておくのに加えて、アドレスのバージョン番号とストリーム番号も覚えておく必要があります。&lt;br/&gt;If you choose a weak passphrase and someone on the Internet can brute-force it, they can read your messages and send messages as you.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;長所:&lt;br/&gt;&lt;/span&gt;記憶を頼りにアドレスを再生成できます。&lt;br/&gt;keys.datファイルのバックアップの心配をしないでも、パスフレーズを覚えておけばよくなります。&lt;br/&gt;&lt;span style=&quot; font-weight:600;&quot;&gt;短所:&lt;br/&gt;&lt;/span&gt;アドレスの暗号鍵を紛失した場合に備えてアドレスを再生成出来るようにしたい場合、パスフレーズを覚えて（もしくは書き留めて）必要があります。&lt;br/&gt;パスフレーズを覚えておくのに加えて、アドレスのバージョン番号とストリーム番号も覚えておく必要があります。&lt;br/&gt;弱いパスフレーズを設定すると、ネット上の誰かがブルートフォース攻撃を行ってあなたの送信メッセージ、受信メッセージを読んでしまう可能性があります。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="177"/>
@@ -920,12 +920,12 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="179"/>
         <source>Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter</source>
-        <translation type="unfinished"></translation>
+        <translation>アドレスを1、2文字短くするために数分間追加の計算処理を行う</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="180"/>
         <source>Make deterministic addresses</source>
-        <translation type="unfinished">Make deterministic arrddresses</translation>
+        <translation>deterministiｃアドレスを作る</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="181"/>
@@ -935,7 +935,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="182"/>
         <source>In addition to your passphrase, you must remember these numbers:</source>
-        <translation type="unfinished"></translation>
+        <translation>パスフレーズに加えて、これらの値を覚えておいてください:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="183"/>
@@ -945,7 +945,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="184"/>
         <source>Number of addresses to make based on your passphrase:</source>
-        <translation>パスフレーズから生成されたアドレスの数</translation>
+        <translation>パスフレーズから生成されたアドレスの数:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="185"/>
@@ -1133,7 +1133,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/iconglossary.py" line="85"/>
         <source>You are using TCP port ?. (This can be changed in the settings).</source>
-        <translation>使用中のポート ? （設定で変更できます）</translation>
+        <translation>使用中のポート ? （設定で変更できます）。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/iconglossary.py" line="86"/>
