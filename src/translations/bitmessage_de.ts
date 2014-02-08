@@ -1537,12 +1537,12 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="423"/>
         <source>The &apos;Small message difficulty&apos; mostly only affects the difficulty of sending small messages. Doubling this value makes it almost twice as difficult to send a small message but doesn&apos;t really affect large messages.</source>
-        <translation>Die &quot;Schwierigkeit für kurze Nachrichten&quot; trifft nur auf das senden kurzen Nachrichten zu. Verdoppelung des Wertes macht es fast doppelt so schwer kurze Nachrichten zu senden, aber hat keinen Effekt bei langen Nachrichten.</translation>
+            <translation>Die &quot;Schwierigkeit für kurze Nachrichten&quot; trifft nur auf das Senden kurzer Nachrichten zu. Verdoppelung dieses Wertes macht es fast doppelt so schwer, kurze Nachrichten zu senden, aber hat keinen Effekt bei langen Nachrichten.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="420"/>
         <source>The &apos;Total difficulty&apos; affects the absolute amount of work the sender must complete. Doubling this value doubles the amount of work.</source>
-        <translation>Die &quot;Gesammtschwierigkeit&quot; beeinflusst die absolute menge Arbeit die ein Sender verrichten muss. Verdoppelung dieses Wertes verdoppelt die Menge der Arbeit.</translation>
+        <translation>Die &quot;Gesamtschwierigkeit&quot; beeinflusst die absolute Menge Arbeit, die ein Sender verrichten muss. Verdoppelung dieses Wertes verdoppelt die Menge der Arbeit.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="424"/>
@@ -1557,7 +1557,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="426"/>
         <source>Maximum acceptable total difficulty:</source>
-        <translation>Maximale akzeptierte Gesammtschwierigkeit:</translation>
+        <translation>Maximale akzeptierte Gesamtschwierigkeit:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="427"/>
@@ -1572,7 +1572,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="414"/>
         <source>Listen for incoming connections when using proxy</source>
-        <translation>Auf eingehende Verdindungen warten, auch wenn eine Proxy-Server verwendet wird</translation>
+        <translation>Auf eingehende Verdindungen warten, auch wenn ein Proxy-Server verwendet wird</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="391"/>
@@ -1582,7 +1582,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="429"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitmessage can utilize a different Bitcoin-based program called Namecoin to make addresses human-friendly. For example, instead of having to tell your friend your long Bitmessage address, you can simply tell him to send a message to &lt;span style=&quot; font-style:italic;&quot;&gt;test. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(Getting your own Bitmessage address into Namecoin is still rather difficult).&lt;/p&gt;&lt;p&gt;Bitmessage can use either namecoind directly or a running nmcontrol instance.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitmessage kann ein anderes Bitcoin basiertes Programm namens Namecoin nutzen um Adressen leserlicher zu machen. Zum Beispiel: Anstelle Ihrem Bekannten Ihre lange Bitmessage-Adresse vorzulesen, können Sie ihm einfach sagen, er soll eine Nachricht an &lt;span style=&quot; font-style:italic;&quot;&gt;test &lt;/span&gt;senden.&lt;/p&gt;&lt;p&gt; (Ihre Bitmessage-Adresse in Namecoin zu speichern ist noch sehr umständlich)&lt;/p&gt;&lt;p&gt;Bitmessage kann direkt namecoind verwenden, oder eine nmcontrol Instanz.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitmessage kann ein anderes Bitcoin basiertes Programm namens Namecoin nutzen, um Adressen leserlicher zu machen. Zum Beispiel: Anstelle Ihrem Bekannten Ihre lange Bitmessage-Adresse vorzulesen, können Sie ihm einfach sagen, er soll eine Nachricht an &lt;span style=&quot; font-style:italic;&quot;&gt;test &lt;/span&gt;senden.&lt;/p&gt;&lt;p&gt; (Ihre Bitmessage-Adresse in Namecoin zu speichern ist noch sehr umständlich)&lt;/p&gt;&lt;p&gt;Bitmessage kann direkt namecoind verwenden, oder eine nmcontrol Instanz.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="430"/>
