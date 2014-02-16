@@ -96,6 +96,13 @@ def isInSqlInventory(hash):
     queryreturn = sqlQuery('''select hash from inventory where hash=?''', hash)
     return queryreturn != []
 
+def encodeHost(host):
+    if host.find(':') == -1:
+        return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
+            socket.inet_aton(host)
+    else:
+        return socket.inet_pton(socket.AF_INET6, host)
+
 def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload = ''
     payload += pack('>L', 2)  # protocol version.
@@ -104,8 +111,7 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
 
     payload += pack(
         '>q', 1)  # boolservices of remote connection; ignored by the remote host.
-    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-        socket.inet_aton(remoteHost)
+    payload += encodeHost(remoteHost)
     payload += pack('>H', remotePort)  # remote IPv6 and port
 
     payload += pack('>q', 1)  # bitflags of the services I offer.
