@@ -532,6 +532,32 @@ class receiveDataThread(threading.Thread):
 
         shared.broadcastToSendDataQueues((self.streamNumber, 'advertiseobject', hash))
     """
+
+    def _checkIPv4Address(self, host, hostFromAddrMessage):
+        # print 'hostFromAddrMessage', hostFromAddrMessage
+        if host[0] == '\x7F':
+            print 'Ignoring IP address in loopback range:', hostFromAddrMessage
+            return False
+        if host[0] == '\x0A':
+            print 'Ignoring IP address in private range:', hostFromAddrMessage
+            return False
+        if host[0:2] == '\xC0A8':
+            print 'Ignoring IP address in private range:', hostFromAddrMessage
+            return False
+        return True
+
+    def _checkIPv6Address(self, host, hostFromAddrMessage):
+        if host == ('\x00' * 15) + '\x01':
+            print 'Ignoring loopback address:', hostFromAddrMessage
+            return False
+        if host[0] == '\xFE' and (ord(host[1]) & 0xc0) == 0x80:
+            print 'Ignoring local address:', hostFromAddrMessage
+            return False
+        if (ord(host[0]) & 0xfe) == 0xfc:
+            print 'Ignoring unique local address:', hostFromAddrMessage
+            return False
+        return True
+
     # We have received an addr message.
     def recaddr(self, data):
         #listOfAddressDetailsToBroadcastToPeers = []
@@ -551,14 +577,11 @@ class receiveDataThread(threading.Thread):
 
         for i in range(0, numberOfAddressesIncluded):
             try:
-                if data[20 + lengthOfNumberOfAddresses + (38 * i):32 + lengthOfNumberOfAddresses + (38 * i)] != '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-                    with shared.printLock:
-                       print 'Skipping IPv6 address.', repr(data[20 + lengthOfNumberOfAddresses + (38 * i):32 + lengthOfNumberOfAddresses + (38 * i)])
-                    continue
+                fullHost = data[20 + lengthOfNumberOfAddresses + (38 * i):36 + lengthOfNumberOfAddresses + (38 * i)]
             except Exception as err:
                 with shared.printLock:
                    sys.stderr.write(
-                       'ERROR TRYING TO UNPACK recaddr (to test for an IPv6 address). Message: %s\n' % str(err))
+                       'ERROR TRYING TO UNPACK recaddr (recaddrHost). Message: %s\n' % str(err))
                 break  # giving up on unpacking any more. We should still be connected however.
 
             try:
@@ -592,18 +615,15 @@ class receiveDataThread(threading.Thread):
                 break  # giving up on unpacking any more. We should still be connected however.
             # print 'Within recaddr(): IP', recaddrIP, ', Port',
             # recaddrPort, ', i', i
-            hostFromAddrMessage = socket.inet_ntoa(data[
-                                                   32 + lengthOfNumberOfAddresses + (38 * i):36 + lengthOfNumberOfAddresses + (38 * i)])
-            # print 'hostFromAddrMessage', hostFromAddrMessage
-            if data[32 + lengthOfNumberOfAddresses + (38 * i)] == '\x7F':
-                print 'Ignoring IP address in loopback range:', hostFromAddrMessage
-                continue
-            if data[32 + lengthOfNumberOfAddresses + (38 * i)] == '\x0A':
-                print 'Ignoring IP address in private range:', hostFromAddrMessage
-                continue
-            if data[32 + lengthOfNumberOfAddresses + (38 * i):34 + lengthOfNumberOfAddresses + (38 * i)] == '\xC0A8':
-                print 'Ignoring IP address in private range:', hostFromAddrMessage
-                continue
+            if fullHost[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
+                ipv4Host = fullHost[12:]
+                hostFromAddrMessage = socket.inet_ntop(socket.AF_INET, ipv4Host)
+                if not self._checkIPv4Address(ipv4Host, hostFromAddrMessage):
+                    continue
+            else:
+                hostFromAddrMessage = socket.inet_ntop(socket.AF_INET6, fullHost)
+                if not self._checkIPv6Address(fullHost, hostFromAddrMessage):
+                    continue
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>Q', data[lengthOfNumberOfAddresses + (
                 38 * i):8 + lengthOfNumberOfAddresses + (38 * i)])  # This is the 'time' value in the received addr message. 64-bit.
             if recaddrStream not in shared.knownNodes:  # knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
@@ -688,8 +708,7 @@ class receiveDataThread(threading.Thread):
                 payload += pack('>I', self.streamNumber)
                 payload += pack(
                     '>q', 1)  # service bit flags offered by this node
-                payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-                    socket.inet_aton(HOST)
+                payload += shared.encodeHost(HOST)
                 payload += pack('>H', PORT)  # remote port
         for (HOST, PORT), value in addrsInChildStreamLeft.items():
             timeLastReceivedMessageFromThisNode = value
@@ -700,8 +719,7 @@ class receiveDataThread(threading.Thread):
                 payload += pack('>I', self.streamNumber * 2)
                 payload += pack(
                     '>q', 1)  # service bit flags offered by this node
-                payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-                    socket.inet_aton(HOST)
+                payload += shared.encodeHost(HOST)
                 payload += pack('>H', PORT)  # remote port
         for (HOST, PORT), value in addrsInChildStreamRight.items():
             timeLastReceivedMessageFromThisNode = value
@@ -712,8 +730,7 @@ class receiveDataThread(threading.Thread):
                 payload += pack('>I', (self.streamNumber * 2) + 1)
                 payload += pack(
                     '>q', 1)  # service bit flags offered by this node
-                payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-                    socket.inet_aton(HOST)
+                payload += shared.encodeHost(HOST)
                 payload += pack('>H', PORT)  # remote port
 
         payload = encodeVarint(numberOfAddressesInAddrMessage) + payload

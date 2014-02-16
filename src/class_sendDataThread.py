@@ -113,8 +113,7 @@ class sendDataThread(threading.Thread):
                         payload += pack('>I', streamNumber)
                         payload += pack(
                             '>q', services)  # service bit flags offered by this node
-                        payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-                            socket.inet_aton(host)
+                        payload += shared.encodeHost(host)
                         payload += pack('>H', port)
 
                     payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
