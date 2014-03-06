@@ -170,6 +170,12 @@
              </property>
             </item>
             <item>
+            <item>
+             <property name="text">
+              <string comment="ja">日本語</string>
+             </property>
+            </item>
+            <item>
              <property name="text">
               <string comment="en_pirate">Pirate English</string>
              </property>
