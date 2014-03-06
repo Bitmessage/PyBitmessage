@@ -59,7 +59,7 @@ pybitmessage (0.4.2-1) saucy; urgency=low
   * Add feature in settings menu to give up resending a message after a
     specified period of time
 
- -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Sat, 29 June 2013 11:23:00 +0100
+ -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Thu, 6 March 2014 20:23:00 +0100
 
 pybitmessage (0.4.1-1) raring; urgency=low
 
@@ -72,7 +72,7 @@ pybitmessage (0.4.1-1) raring; urgency=low
 
   * Change _verifyAddress function to support v4 addresses
 
- -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Sat, 29 June 2013 11:23:00 +0100
+ -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Sun, 29 September 2013 09:54:00 +0100
 
 pybitmessage (0.4.0-1) raring; urgency=low
 

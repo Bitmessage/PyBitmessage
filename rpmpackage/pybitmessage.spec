@@ -69,7 +69,7 @@ make install -B DESTDIR=%{buildroot} PREFIX=/usr
 %attr(644,root,root) /usr/share/icons/hicolor/24x24/apps/%{name}.png
 
 %changelog
-* Sat Jun 29 2013 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.4.2-1
+* Thu Mar 6 2014 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.4.2-1
 - Exclude debian directory from orig.tar.gz
 - Added Norwegian, Chinese, and Arabic translations
 - sock.sendall function isn't atomic.
@@ -107,7 +107,7 @@ make install -B DESTDIR=%{buildroot} PREFIX=/usr
 - Add feature in settings menu to give up resending a message after a
   specified period of time
 
-* Sat Jun 29 2013 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.4.1-1
+* Sun Sep 29 2013 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.4.1-1
 - Fixed whitelist bug
 - Fixed chan bug
   Added addressversion field to pubkeys table
