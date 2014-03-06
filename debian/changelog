@@ -384,7 +384,7 @@ pybitmessage (0.3.0-1) raring; urgency=low
 
   * Bug fix: can't delete address from address book
 
- -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Tue, 6 May 2013 12:06:00 +0100
+ -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Mon, 6 May 2013 12:06:00 +0100
 
 pybitmessage (0.2.8-1) unstable; urgency=low
 
@@ -441,4 +441,4 @@ pybitmessage (0.2.7-1) unstable; urgency=low
 
   * Trailing carriage return on COPYING LICENSE and README.md
 
- -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Tue, 1 Apr 2013 17:12:14 +0100
+ -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Mon, 1 Apr 2013 17:12:14 +0100
