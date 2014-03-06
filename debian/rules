@@ -37,7 +37,6 @@ binary-indep: build install
 			  dh_md5sums
 			  dh_builddeb
 
-		 dh_python2
 binary-arch: build install
 
 binary: binary-indep binary-arch
