@@ -1,8 +1,8 @@
 #!/bin/bash
 
 APP=pybitmessage
-PREV_VERSION=0.4.1
-VERSION=0.4.1
+PREV_VERSION=0.4.2
+VERSION=0.4.2
 RELEASE=1
 ARCH_TYPE=`uname -m`
 BUILDDIR=~/slackbuild

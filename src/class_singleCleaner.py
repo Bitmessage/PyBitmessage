@@ -2,6 +2,7 @@ import threading
 import shared
 import time
 import sys
+import os
 import pickle
 
 import tr#anslate
