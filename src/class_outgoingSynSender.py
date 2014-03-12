@@ -55,7 +55,11 @@ class outgoingSynSender(threading.Thread):
             shared.alreadyAttemptedConnectionsListLock.release()
             timeNodeLastSeen = shared.knownNodes[
                 self.streamNumber][peer]
-            sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
+            if peer.host.find(':') == -1:
+                address_family = socket.AF_INET
+            else:
+                address_family = socket.AF_INET6
+            sock = socks.socksocket(address_family, socket.SOCK_STREAM)
             # This option apparently avoids the TIME_WAIT state so that we
             # can rebind faster
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
