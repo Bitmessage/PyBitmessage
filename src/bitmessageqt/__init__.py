@@ -16,7 +16,7 @@ except ImportError:
 from addresses import *
 import shared
 from bitmessageui import *
-#from namecoin import namecoinConnection, ensureNamecoinOptions
+from namecoin import namecoinConnection, ensureNamecoinOptions
 from newaddressdialog import *
 from addaddressdialog import *
 from newsubscriptiondialog import *
