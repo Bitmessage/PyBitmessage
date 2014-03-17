@@ -29,7 +29,7 @@ git fetch --all
 git reset --hard origin/master
 python bitmessagemain.py
 ```
-Viola! Bitmessage is updated!
+Voilà! Bitmessage is updated!
 
 ####Linux
 To run PyBitmessage from the command-line, you must download the source, then

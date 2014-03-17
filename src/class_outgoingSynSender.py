@@ -113,14 +113,20 @@ class outgoingSynSender(threading.Thread):
                 rd = receiveDataThread()
                 rd.daemon = True  # close the main program even if there are threads left
                 someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
-                rd.setup(sock, peer.host, peer.port, self.streamNumber,
-                         someObjectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections)
+                sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection. 
+                rd.setup(sock, 
+                         peer.host, 
+                         peer.port, 
+                         self.streamNumber,
+                         someObjectsOfWhichThisRemoteNodeIsAlreadyAware, 
+                         self.selfInitiatedConnections, 
+                         sendDataThreadQueue)
                 rd.start()
                 with shared.printLock:
                     print self, 'connected to', peer, 'during an outgoing attempt.'
 
 
-                sd = sendDataThread()
+                sd = sendDataThread(sendDataThreadQueue)
                 sd.setup(sock, peer.host, peer.port, self.streamNumber,
                          someObjectsOfWhichThisRemoteNodeIsAlreadyAware)
                 sd.start()
