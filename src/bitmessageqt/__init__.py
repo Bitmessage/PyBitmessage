@@ -2654,8 +2654,9 @@ class MyForm(QtGui.QMainWindow):
             self.ui.comboBoxSendFrom.setCurrentIndex(currentIndex)
         else:
             self.ui.comboBoxSendFrom.setCurrentIndex(0)
-        
-        self.ui.textEditMessage.setText('\n\n------------------------------------------------------\n' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
+
+        messageAtCurrentInboxRow = "".join(["> " + line + "\n" for line in messageAtCurrentInboxRow.split("\n")])
+        self.ui.textEditMessage.setText('\n\n' + str(fromAddressAtCurrentInboxRow) + ' wrote:\n' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
             self.ui.lineEditSubject.setText(
                 self.ui.tableWidgetInbox.item(currentInboxRow, 2).text())
