@@ -116,13 +116,18 @@ class receiveDataThread(threading.Thread):
         if len(self.data) < 24:  # if so little of the data has arrived that we can't even read the checksum then wait for more data.
             return
         if self.data[0:4] != '\xe9\xbe\xb4\xd9':
-            if shared.verbose >= 1:
-                with shared.printLock:
-                    print 'The magic bytes were not correct. First 40 bytes of data: ' + repr(self.data[0:40])
+            #if shared.verbose >= 1:
+            #    with shared.printLock:
+            #        print 'The magic bytes were not correct. First 40 bytes of data: ' + repr(self.data[0:40])
 
             self.data = ""
             return
         self.payloadLength, = unpack('>L', self.data[16:20])
+        if self.payloadLength > 20000000:
+            logger.info('The incoming message, which we have not yet download, is too large. Ignoring it. (unfortunately there is no way to tell the other node to stop sending it except to disconnect.) Message size: %s' % self.payloadLength)
+            self.data = self.data[self.payloadLength + 24:]
+            self.processData()
+            return
         if len(self.data) < self.payloadLength + 24:  # check if the whole message has arrived yet.
             return
         if self.data[20:24] != hashlib.sha512(self.data[24:self.payloadLength + 24]).digest()[0:4]:  # test the checksum in the message. If it is correct...
@@ -137,35 +142,35 @@ class receiveDataThread(threading.Thread):
             shared.knownNodesLock.acquire()
             shared.knownNodes[self.streamNumber][self.peer] = int(time.time())
             shared.knownNodesLock.release()
-        if self.payloadLength <= 180000000:  # If the size of the message is greater than 180MB, ignore it. (I get memory errors when processing messages much larger than this though it is concievable that this value will have to be lowered if some systems are less tolarant of large messages.)
-            remoteCommand = self.data[4:16]
-            with shared.printLock:
-                print 'remoteCommand', repr(remoteCommand.replace('\x00', '')), ' from', self.peer
+        
+        remoteCommand = self.data[4:16]
+        with shared.printLock:
+            print 'remoteCommand', repr(remoteCommand.replace('\x00', '')), ' from', self.peer
 
-            if remoteCommand == 'version\x00\x00\x00\x00\x00':
-                self.recversion(self.data[24:self.payloadLength + 24])
-            elif remoteCommand == 'verack\x00\x00\x00\x00\x00\x00':
-                self.recverack()
-            elif remoteCommand == 'addr\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                self.recaddr(self.data[24:self.payloadLength + 24])
-            elif remoteCommand == 'getpubkey\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                shared.checkAndSharegetpubkeyWithPeers(self.data[24:self.payloadLength + 24])
-            elif remoteCommand == 'pubkey\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                self.recpubkey(self.data[24:self.payloadLength + 24])
-            elif remoteCommand == 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                self.recinv(self.data[24:self.payloadLength + 24])
-            elif remoteCommand == 'getdata\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                self.recgetdata(self.data[24:self.payloadLength + 24])
-            elif remoteCommand == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                self.recmsg(self.data[24:self.payloadLength + 24])
-            elif remoteCommand == 'broadcast\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                self.recbroadcast(self.data[24:self.payloadLength + 24])
-            elif remoteCommand == 'ping\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                self.sendpong()
-            elif remoteCommand == 'pong\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                pass
-            elif remoteCommand == 'alert\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
-                pass
+        if remoteCommand == 'version\x00\x00\x00\x00\x00':
+            self.recversion(self.data[24:self.payloadLength + 24])
+        elif remoteCommand == 'verack\x00\x00\x00\x00\x00\x00':
+            self.recverack()
+        elif remoteCommand == 'addr\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+            self.recaddr(self.data[24:self.payloadLength + 24])
+        elif remoteCommand == 'getpubkey\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+            shared.checkAndSharegetpubkeyWithPeers(self.data[24:self.payloadLength + 24])
+        elif remoteCommand == 'pubkey\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+            self.recpubkey(self.data[24:self.payloadLength + 24])
+        elif remoteCommand == 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+            self.recinv(self.data[24:self.payloadLength + 24])
+        elif remoteCommand == 'getdata\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+            self.recgetdata(self.data[24:self.payloadLength + 24])
+        elif remoteCommand == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+            self.recmsg(self.data[24:self.payloadLength + 24])
+        elif remoteCommand == 'broadcast\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+            self.recbroadcast(self.data[24:self.payloadLength + 24])
+        elif remoteCommand == 'ping\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+            self.sendpong()
+        elif remoteCommand == 'pong\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+            pass
+        elif remoteCommand == 'alert\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+            pass
 
         self.data = self.data[
             self.payloadLength + 24:]  # take this message out and then process the next message
