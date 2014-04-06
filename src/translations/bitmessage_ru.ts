@@ -230,7 +230,7 @@ It is important that you back up this file.</source>
         <source>You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)</source>
         <translation>Вы можете управлять Вашими ключами, отредактировав файл keys.dat, находящийся в той же папке, что и эта программа. 
 Создайте резервную копию этого файла перед тем как будете его редактировать. Хотели бы Вы открыть этот файл сейчас? 
-(пожалуйста, закройте Bitmessage до того как Вы внесете в этот файл какие-либо изменения.)</translation>
+(пожалуйста, закройте Bitmessage до того как Вы внесёте в этот файл какие-либо изменения.)</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1332"/>
@@ -240,7 +240,7 @@ It is important that you back up this file. Would you like to open the file now?
         <translation>Вы можете управлять Вашими ключами, отредактировав файл keys.dat, находящийся в
  %1 
 Создайте резервную копию этого файла перед тем как будете его редактировать. Хотели бы Вы открыть этот файл сейчас? 
-(пожалуйста, закройте Bitmessage до того как Вы внесете в этот файл какие-либо изменения.)</translation>
+(пожалуйста, закройте Bitmessage до того как Вы внесёте в этот файл какие-либо изменения.)</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1338"/>
@@ -250,7 +250,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1338"/>
         <source>Are you sure you want to delete all trashed messages?</source>
-        <translation>Вы уверены, что хотите очистить корзину?</translation>
+        <translation>Вы уверены что хотите очистить корзину?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1347"/>
@@ -260,7 +260,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1347"/>
         <source>You must type your passphrase. If you don&apos;t have one then this is not the form for you.</source>
-        <translation>Вы должны ввести секретную фразу. Если Вы не хотите это делать, то Вы выбрали неправильную опцию.</translation>
+        <translation>Вы должны ввести секретную фразу. Если Вы не хотите этого делать, то Вы выбрали неправильную опцию.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1458"/>
@@ -310,7 +310,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1789"/>
         <source>Error: The address %1 contains invalid characters. Please check it.</source>
-        <translation>Ошибка: адрес %1 содержит запрещенные символы. Пожалуйста, перепроверьте.</translation>
+        <translation>Ошибка: адрес %1 содержит запрещённые символы. Пожалуйста, перепроверьте.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1792"/>
@@ -385,7 +385,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1897"/>
         <source>Right click one or more entries in your address book and select &apos;Send message to this address&apos;.</source>
-        <translation>Нажмите правую кнопку мышки на каком-либо адресе и выберите &quot;Отправить сообщение на этот адрес&quot;.</translation>
+        <translation>Нажмите правую кнопку мыши на каком-либо адресе и выберите &quot;Отправить сообщение на этот адрес&quot;.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1987"/>
@@ -410,7 +410,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2636"/>
         <source>Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want.</source>
-        <translation>Ошибка: Вы не можете добавлять один и тот же адрес в Адресную Книгу несколько раз. Просто переименуйте существующий адрес.</translation>
+        <translation>Ошибка: Вы не можете добавлять один и тот же адрес в Адресную Книгу несколько раз. Попробуйте переименовать существующий адрес.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2424"/>
@@ -435,7 +435,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1751"/>
         <source>Bitmessage will use your proxy from now on but you may want to manually restart Bitmessage now to close existing connections.</source>
-        <translation type="obsolete">Bitmessage будет использовать Ваш прокси в дальнейшем, тем не менее, мы рекомендуем перезапустить Bitmessage в ручную, чтобы закрыть уже существующие соединения.</translation>
+        <translation type="obsolete">Bitmessage будет использовать Ваш прокси в дальнейшем, тем не менее, мы рекомендуем перезапустить Bitmessage вручную, чтобы закрыть уже существующие соединения.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2421"/>
@@ -490,7 +490,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2633"/>
         <source>Entry added to the Address Book. Edit the label to your liking.</source>
-        <translation>Запись добавлена в Адресную Книгу. Вы можете ее отредактировать.</translation>
+        <translation>Запись добавлена в Адресную Книгу. Вы можете её отредактировать.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2692"/>
@@ -515,7 +515,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3082"/>
         <source>Options have been disabled because they either aren&apos;t applicable or because they haven&apos;t yet been implemented for your operating system.</source>
-        <translation type="obsolete">Опции были отключены, потому что ли они либо не подходят, либо еще не выполнены под Вашу операционную систему.</translation>
+        <translation type="obsolete">Опции были отключены, потому что они либо не подходят, либо еще не выполнены под Вашу операционную систему.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3536"/>
@@ -535,7 +535,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3545"/>
         <source>The address contains invalid characters.</source>
-        <translation>Адрес содержит запрещенные символы.</translation>
+        <translation>Адрес содержит запрещённые символы.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3548"/>
@@ -550,7 +550,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3617"/>
         <source>You are using TCP port %1. (This can be changed in the settings).</source>
-        <translation>Вы используете TCP порт %1 (Его можно поменять в настройках).</translation>
+        <translation>Вы используете TCP порт %1. (Его можно поменять в настройках).</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="535"/>
@@ -668,7 +668,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="593"/>
         <source>Here you can subscribe to &apos;broadcast messages&apos; that are sent by other users. Messages will appear in your Inbox. Addresses here override those on the Blacklist tab.</source>
-        <translation>Здесь Вы можете подписаться на рассылки от других пользователей. Все рассылки будут появляться у Вас во Входящих. Вы будете следить за всеми адресами, указанными здесь, даже если они в черном списке.</translation>
+        <translation>Здесь Вы можете подписаться на рассылки от других пользователей. Все рассылки будут появляться у Вас во Входящих. Вы будете следить за всеми адресами, указанными здесь, даже если они в чёрном списке.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="594"/>
@@ -688,7 +688,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="601"/>
         <source>The Address book is useful for adding names or labels to other people&apos;s Bitmessage addresses so that you can recognize them more easily in your inbox. You can add entries here using the &apos;Add&apos; button, or from your inbox by right-clicking on a message.</source>
-        <translation>Адресная книга удобна для присвоения осмысленных имен Bitmessage адресам Ваших друзей. Вы можете добавлять новые записи с помощью кнопки &quot;Добавить новую запись&quot;, или же правым кликом мышки на сообщении.</translation>
+        <translation>Адресная книга удобна для присвоения осмысленных имен Bitmessage адресам Ваших друзей. Вы можете добавлять новые записи с помощью кнопки &quot;Добавить новую запись&quot;, или же правым кликом мыши на сообщения.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="614"/>
@@ -698,7 +698,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="609"/>
         <source>Use a Blacklist (Allow all incoming messages except those on the Blacklist)</source>
-        <translation>Использовать черный список (Разрешить все входящие сообщения, кроме указанных в черном списке)</translation>
+        <translation>Использовать чёрный список (Разрешить все входящие сообщения, кроме указанных в чёрном списке)</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="610"/>
@@ -708,7 +708,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="617"/>
         <source>Blacklist</source>
-        <translation>Черный список</translation>
+        <translation>Чёрный список</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="619"/>
@@ -833,7 +833,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1396"/>
         <source>Although that Bitmessage address might be valid, its version number is too new for us to handle. Perhaps you need to upgrade Bitmessage.</source>
-        <translation>Этот Bitmessage адрес похож на правильный, но его версия этого адреса слишком новая. Возможно, Вам необходимо обновить программу Bitmessage.</translation>
+        <translation>Этот Bitmessage адрес похож на правильный, но версия этого адреса слишком новая. Возможно, Вам необходимо обновить программу Bitmessage.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1400"/>
@@ -1110,7 +1110,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="190"/>
         <source> (best if this is the first of many addresses you will create)</source>
-        <translation> (выберите этот вариант, если это лишь первый из многих адресов, которые Вы планируете создать)</translation>
+        <translation> (выберите этот вариант если это лишь первый из многих адресов, которые Вы планируете создать)</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="191"/>
@@ -1168,7 +1168,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="97"/>
         <source>Enter a name for your chan. If you choose a sufficiently complex chan name (like a strong and unique passphrase) and none of your friends share it publicly then the chan will be secure and private.</source>
-        <translation type="obsolete">Введите имя Вашего chan-a. Если Вы выберете достаточно сложное имя для chan-а (например, сложную и необычную секретную фразу) и никто из Ваших друзей не опубликует эту фразу, то Вам chan будет надежно зашифрован.</translation>
+        <translation type="obsolete">Введите имя Вашего chan-a. Если Вы выберете достаточно сложное имя для chan-а (например, сложную и необычную секретную фразу) и никто из Ваших друзей не опубликует эту фразу, то Ваш chan будет надёжно зашифрован.</translation>
     </message>
 </context>
 <context>
@@ -1270,7 +1270,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/connect.py" line="57"/>
         <source>Bitmessage won&apos;t connect to anyone until you let it. </source>
-        <translation>Bitmessage не будет соединяться ни с кем, пока Вы не разрешите.</translation>
+        <translation>Bitmessage не будет соединяться ни с кем, пока Вы это не разрешите.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/connect.py" line="58"/>
@@ -1354,7 +1354,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="96"/>
         <source>Enter a name for your chan. If you choose a sufficiently complex chan name (like a strong and unique passphrase) and none of your friends share it publicly then the chan will be secure and private.</source>
-        <translation type="obsolete">Введите имя Вашего chan-a. Если Вы выберете достаточно сложное имя для chan-а (например, сложную и необычную секретную фразу) и никто из Ваших друзей не опубликует эту фразу, то Вам chan будет надежно зашифрован.</translation>
+        <translation type="obsolete">Введите имя Вашего chan-a. Если Вы выберете достаточно сложное имя для chan-а (например, сложную и необычную секретную фразу) и никто из Ваших друзей не опубликует эту фразу, то Ваш chan будет надёжно зашифрован.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="105"/>
@@ -1364,7 +1364,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="104"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A chan exists when a group of people share the same decryption keys. The keys and bitmessage address used by a chan are generated from a human-friendly word or phrase (the chan name). To send a message to everyone in the chan, send a normal person-to-person message to the chan address.&lt;/p&gt;&lt;p&gt;Chans are experimental and completely unmoderatable.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Chan - это способ общения, когда набор ключей шифрования известен сразу целой группе людей. Ключи и Bitmessage-адрес, используемый chan-ом, генерируется из слова или фразы (имя chan-а). Чтобы отправить сообщение всем, находящимся в chan-е, отправьте обычное приватное сообщения на адрес chan-a.&lt;/p&gt;&lt;p&gt;Chan-ы - это экспериментальная фича.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Chan - это способ общения, когда набор ключей шифрования известен сразу целой группе людей. Ключи и Bitmessage-адрес, используемый chan-ом, генерируется из слова или фразы (имя chan-а). Чтобы отправить сообщение всем, находящимся в chan-е, отправьте обычное приватное сообщение на адрес chan-a.&lt;/p&gt;&lt;p&gt;Chan-ы — это экспериментальная фича.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="106"/>
@@ -1374,7 +1374,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="101"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter a name for your chan. If you choose a sufficiently complex chan name (like a strong and unique passphrase) and none of your friends share it publicly then the chan will be secure and private. If you and someone else both create a chan with the same chan name then it is currently very likely that they will be the same chan.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Введите имя Вашего chan-a. Если Вы выберете достаточно сложное имя для chan-а (например, сложную и необычную секретную фразу) и никто из Ваших друзей не опубликует эту фразу, то Вам chan будет надежно зашифрован. Если Вы и кто-то другой независимо создадите chan с полностью идентичным именем, то скорее всего Вы получите в итоге один и тот же chan.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Введите имя Вашего chan-a. Если Вы выберете достаточно сложное имя для chan-а (например, сложную и необычную секретную фразу) и никто из Ваших друзей не опубликует эту фразу, то Ваш chan будет надёжно зашифрован. Если Вы и кто-то другой независимо создадите chan с полностью идентичным именем, то скорее всего Вы получите в итоге один и тот же chan.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
 </context>
 <context>
@@ -1427,12 +1427,12 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="122"/>
         <source>You must check (or not check) this box just like you did (or didn&apos;t) when you made your addresses the first time.</source>
-        <translation>Вы должны кликнуть эту галочку (или не кликать) точно также как Вы сделали в самый первый раз, когда создавали Ваши адреса.</translation>
+        <translation>Вы должны кликнуть эту галочку (или не кликать) точно так же, как Вы сделали в самый первый раз, когда создавали Ваши адреса.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="123"/>
         <source>If you have previously made deterministic addresses but lost them due to an accident (like hard drive failure), you can regenerate them here. If you used the random number generator to make your addresses then this form will be of no use to you.</source>
-        <translation>Если Вы ранее делали детерминистические адреса, но случайно потеряли их, Вы можете их восстановить здесь. Если же Вы использовали генератор случайных чисел, чтобы создать Ваши адреса, то Вы не сможете их здесь восстановить.</translation>
+        <translation>Если Вы ранее создавали детерминистические адреса, но случайно потеряли их, Вы можете их восстановить здесь. Если же Вы использовали генератор случайных чисел чтобы создать Ваши адреса, то Вы не сможете их здесь восстановить.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="118"/>
@@ -1550,7 +1550,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/settings.py" line="422"/>
         <source>When someone sends you a message, their computer must first complete some work. The difficulty of this work, by default, is 1. You may raise this default for new addresses you create by changing the values here. Any new addresses you create will require senders to meet the higher difficulty. There is one exception: if you add a friend or acquaintance to your address book, Bitmessage will automatically notify them when you next send a message that they need only complete the minimum amount of work: difficulty 1. </source>
-        <translation>Когда кто-либо отправляет Вам сообщение, его компьютер должен сперва решить определенную вычислительную задачу. Сложность этой задачи по умолчанию равна 1. Вы можете повысить эту сложность для новых адресов, которые Вы создадите, здесь. Таким образом, любые новые адреса, которые Вы создадите, могут требовать от отправителей сложность большую чем 1. Однако, есть одно исключение: если Вы специально добавите Вашего собеседника в адресную книгу, то Bitmessage автоматически уведомит его о том, что для него минимальная сложность будет составлять всегда всего лишь 1.</translation>
+        <translation>Когда кто-либо отправляет Вам сообщение, его компьютер должен сперва решить определённую вычислительную задачу. Сложность этой задачи по умолчанию равна 1. Вы можете повысить эту сложность для новых адресов, которые Вы создадите, здесь. Таким образом, любые новые адреса, которые Вы создадите, могут требовать от отправителей сложность большую чем 1. Однако, есть одно исключение: если Вы специально добавите Вашего собеседника в адресную книгу, то Bitmessage автоматически уведомит его о том, что для него минимальная сложность будет составлять всегда всего лишь 1.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="419"/>
@@ -1580,17 +1580,17 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/settings.py" line="425"/>
         <source>Here you may set the maximum amount of work you are willing to do to send a message to another person. Setting these values to 0 means that any value is acceptable.</source>
-        <translation>Здесь Вы можете установить максимальную вычислительную работу, которую Вы согласны проделать, чтобы отправить сообщение другому пользователю. Ноль означает, чтобы любое значение допустимо.</translation>
+        <translation>Здесь Вы можете установить максимальную вычислительную работу, которую Вы согласны проделать, чтобы отправить сообщение другому пользователю. Ноль означает, что любое значение допустимо.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="426"/>
         <source>Maximum acceptable total difficulty:</source>
-        <translation>Макс допустимая общая сложность:</translation>
+        <translation>Максимально допустимая общая сложность:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="427"/>
         <source>Maximum acceptable small message difficulty:</source>
-        <translation>Макс допустимая сложность для маленький сообщений:</translation>
+        <translation>Максимально допустимая сложность для маленький сообщений:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="428"/>
