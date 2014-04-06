@@ -39,6 +39,7 @@ from debug import logger
 import subprocess
 import datetime
 from helper_sql import *
+import base64
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -177,7 +178,9 @@ class MyForm(QtGui.QMainWindow):
 
     str_broadcast_subscribers = '[Broadcast subscribers]'
     str_chan = '[chan]'
-
+    
+    images_dir=os.path.expanduser("~")
+    
     def init_file_menu(self):
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
             "triggered()"), self.quit)
@@ -204,6 +207,8 @@ class MyForm(QtGui.QMainWindow):
             "clicked()"), self.click_pushButtonAddSubscription)
         QtCore.QObject.connect(self.ui.pushButtonAddBlacklist, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonAddBlacklist)
+        QtCore.QObject.connect(self.ui.pushButtonAddImage, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonAddImage)
         QtCore.QObject.connect(self.ui.pushButtonSend, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonSend)
         QtCore.QObject.connect(self.ui.pushButtonLoadFromAddressBook,
@@ -445,7 +450,7 @@ class MyForm(QtGui.QMainWindow):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-
+        
         # Ask the user if we may delete their old version 1 addresses if they
         # have any.
         configSections = shared.config.sections()
@@ -1809,6 +1814,37 @@ class MyForm(QtGui.QMainWindow):
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetSubscriptions.setItem(0, 1, newItem)
+
+    def click_pushButtonAddImage(self):
+        file_name=QtGui.QFileDialog.getOpenFileName(
+            self,"Select an image",self.images_dir,"Image (*.png *.jpg *.jepg *.gif)")
+        if file_name.isNull(): # Operation was canceled 
+            return
+            
+        file_info=QFileInfo(file_name)
+        self.images_dir=file_info.dir().absolutePath() #coz os.path.dirname does not support unicode
+        file_ext=file_info.suffix() #get an extension
+        
+        image=QImage()
+        if image.load(file_name):
+            if image.height()*image.width()>300*300:
+                #Do we need to resize it?
+                r=QtGui.QMessageBox.question(
+                    self,"Image","This image is to big.\nShould it be scaled?",
+                    QtGui.QMessageBox.Yes,QtGui.QMessageBox.No) # Why I cannot put Yes button before No button? That is sux
+                if r==QtGui.QMessageBox.Yes:
+                    if image.height()>=image.width():
+                        image=image.scaledToHeight(300)
+                    else:
+                        image=image.scaledToWidth(300)
+               
+            buf=QBuffer()
+            image.save(buf,"PNG")
+            encoded_data=buf.buffer().toBase64().data()
+            html_data="<img src=\"data:image/png;base64,"+encoded_data+"\" />"
+            self.ui.textEditMessage.insertPlainText("\n"+html_data)
+        else:
+            QtGui.QMessageBox.information(self,"Error","Could not open an image")
 
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
