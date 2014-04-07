@@ -1842,7 +1842,7 @@ class MyForm(QtGui.QMainWindow):
             image.save(buf,"PNG")
             encoded_data=buf.buffer().toBase64().data()
             html_data="<img src=\"data:image/png;base64,"+encoded_data+"\" />"
-            self.ui.textEditMessage.insertPlainText("\n"+html_data)
+            self.ui.textEditMessage.insertHtml("\n"+html_data)
         else:
             QtGui.QMessageBox.information(self,"Error","Could not open an image")
 
