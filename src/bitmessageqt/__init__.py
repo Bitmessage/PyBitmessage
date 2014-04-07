@@ -1857,7 +1857,7 @@ class MyForm(QtGui.QMainWindow):
         fromAddress = str(self.ui.labelFrom.text())
         subject = str(self.ui.lineEditSubject.text().toUtf8())
         message = str(
-            self.ui.textEditMessage.document().toPlainText().toUtf8())
+            self.ui.textEditMessage.document().toHtml().toUtf8())
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
                                for s in toAddresses.replace(',', ';').split(';')]
