@@ -2629,7 +2629,7 @@ class MyForm(QtGui.QMainWindow):
         for i in xrange(len(lines)):
             content += lines[i]
         content = content.replace('\n\n', '<br><br>')
-        self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
+        self.ui.textEditInboxMessage.setHtml(QtCore.QString.fromUtf8(content))
 
     def on_action_InboxMarkUnread(self):
         font = QFont()
