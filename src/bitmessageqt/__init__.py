@@ -268,6 +268,11 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuInbox.addSeparator()
         self.popMenuInbox.addAction(self.actionSaveMessageAs)
         self.popMenuInbox.addAction(self.actionTrashInboxMessage)
+        # Text browser actions
+        self.ui.textEditInboxMessage.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.connect(self.ui.textEditInboxMessage, QtCore.SIGNAL(
+            'customContextMenuRequested(const QPoint&)'),
+                     self.on_context_inboxMessage)
 
     def init_identities_popup_menu(self):
         # Popup menu for the Your Identities tab
@@ -2790,6 +2795,23 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.tableWidgetSent.selectRow(currentRow - 1)
 
+    def on_action_InboxMessageSaveAs(self):
+        cursor=self.ui.textEditInboxMessage.textCursor()
+        text_block=cursor.block()
+        i=text_block.begin()
+        while not i.atEnd():
+            frag=i.fragment()
+            if frag.charFormat().isImageFormat():
+                img_frag=frag.charFormat().toImageFormat()
+                image_data=self.ui.textEditInboxMessage.document().resource(
+                    QtGui.QTextDocument.ImageResource,QtCore.QUrl(img_frag.name()))
+                file_name=QtGui.QFileDialog.getSaveFileName(self,"Save image",self.images_dir,"Image ( *.png *.jpg *.jepg *.gif)")
+                if not file_name.isNull():
+                    img=QImage(image_data)
+                    img.save(file_name)
+                return
+            i+=1
+        
     def on_action_ForceSend(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         addressAtCurrentRow = str(self.ui.tableWidgetSent.item(
@@ -3138,7 +3160,13 @@ class MyForm(QtGui.QMainWindow):
 
     def on_context_menuInbox(self, point):
         self.popMenuInbox.exec_(self.ui.tableWidgetInbox.mapToGlobal(point))
-
+    
+    def on_context_inboxMessage(self, point):
+        popMenuInboxMessage = self.ui.textEditInboxMessage.createStandardContextMenu()
+        popMenuInboxMessage.addAction(_translate("MainWindow", "Save as"),
+            self.on_action_InboxMessageSaveAs)
+        popMenuInboxMessage.exec_(self.ui.textEditInboxMessage.mapToGlobal(point))
+        
     def on_context_menuSent(self, point):
         self.popMenuSent = QtGui.QMenu(self)
         self.popMenuSent.addAction(self.actionSentClipboard)
