@@ -40,6 +40,7 @@ import subprocess
 import datetime
 from helper_sql import *
 import base64
+import re
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -1857,7 +1858,9 @@ class MyForm(QtGui.QMainWindow):
         fromAddress = str(self.ui.labelFrom.text())
         subject = str(self.ui.lineEditSubject.text().toUtf8())
         message = str(
-            self.ui.textEditMessage.document().toHtml().toUtf8())
+            self.ui.textEditMessage.document().toHtml("utf-8"))
+        # Remove style which may conatin some information about the user (ex. font='Ubuntu' on Ubuntu) 
+        message=re.sub("<body style=\"[ a-zA-Z\\-\\:\\'\\;0-9]*\"","<body ",message) 
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
                                for s in toAddresses.replace(',', ';').split(';')]
