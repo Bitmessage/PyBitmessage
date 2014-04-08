@@ -1852,15 +1852,40 @@ class MyForm(QtGui.QMainWindow):
         else:
             QtGui.QMessageBox.information(self,"Error","Could not open an image")
 
+    def getPlainMessageText(self):
+        text=QString()
+        text_block=self.ui.textEditMessage.document().begin()
+        while text_block.isValid():
+            i=text_block.begin()
+            while not i.atEnd():
+                frag=i.fragment()
+                if frag.isValid():
+                    frag_format=frag.charFormat()
+                    if frag_format.isImageFormat():
+                        img_format=frag_format.toImageFormat()
+                        image_data=self.ui.textEditMessage.document().resource(
+                            QtGui.QTextDocument.ImageResource,QtCore.QUrl(img_format.name()))
+                        img=QImage(image_data)
+                        buf=QBuffer()
+                        img.save(buf,"PNG")
+                        encoded_data=buf.buffer().toBase64().data()
+                        text+="\n<img src=\"data:image/png;base64,"+encoded_data+"\" />"
+                    else:
+                        text+=frag.text()
+                i+=1
+            text_block=text_block.next()
+        return str(text.toUtf8())
+        
+        
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
         toAddresses = str(self.ui.lineEditTo.text())
         fromAddress = str(self.ui.labelFrom.text())
         subject = str(self.ui.lineEditSubject.text().toUtf8())
-        message = str(
-            self.ui.textEditMessage.document().toHtml("utf-8"))
+        message = self.getPlainMessageText() #str(
+            #self.ui.textEditMessage.document().toPlainText())
         # Remove style which may conatin some information about the user (ex. font='Ubuntu' on Ubuntu) 
-        message=re.sub("<body style=\"[ a-zA-Z\\-\\:\\'\\;0-9]*\"","<body ",message) 
+        # message=re.sub("<body style=\"[ a-zA-Z\\-\\:\\'\\;0-9]*\"","<body ",message) 
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
                                for s in toAddresses.replace(',', ';').split(';')]
