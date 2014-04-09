@@ -1844,48 +1844,49 @@ class MyForm(QtGui.QMainWindow):
                     else:
                         image=image.scaledToWidth(300)
                
-            buf=QBuffer()
-            image.save(buf,"PNG")
-            encoded_data=buf.buffer().toBase64().data()
-            html_data="<img src=\"data:image/png;base64,"+encoded_data+"\" />"
-            self.ui.textEditMessage.insertHtml("\n"+html_data)
+            #buf=QBuffer()
+            #image.save(buf,"PNG")
+            #encoded_data=buf.buffer().toBase64().data()
+            doc=self.ui.textEditMessage.document()
+            embeded_url="images://"+file_info.fileName()+"."+str(doc.revision())
+            doc.addResource(QTextDocument.ImageResource,
+                QUrl(embeded_url), QVariant(image));
+         
+            html_data="<img src=\""+embeded_url+"\" />"
+            self.ui.textEditMessage.insertPlainText("\n"+html_data)
         else:
             QtGui.QMessageBox.information(self,"Error","Could not open an image")
-
-    def getPlainMessageText(self):
-        text=QString()
-        text_block=self.ui.textEditMessage.document().begin()
-        while text_block.isValid():
-            i=text_block.begin()
-            while not i.atEnd():
-                frag=i.fragment()
-                if frag.isValid():
-                    frag_format=frag.charFormat()
-                    if frag_format.isImageFormat():
-                        img_format=frag_format.toImageFormat()
-                        image_data=self.ui.textEditMessage.document().resource(
-                            QtGui.QTextDocument.ImageResource,QtCore.QUrl(img_format.name()))
-                        img=QImage(image_data)
-                        buf=QBuffer()
-                        img.save(buf,"PNG")
-                        encoded_data=buf.buffer().toBase64().data()
-                        text+="\n<img src=\"data:image/png;base64,"+encoded_data+"\" />"
-                    else:
-                        text+=frag.text()
-                i+=1
-            text_block=text_block.next()
-        return str(text.toUtf8())
         
+    def imageRecourceToBase64(self,doc,name):
+        buf=QBuffer()
+        image_data=doc.resource(QtGui.QTextDocument.ImageResource,QtCore.QUrl(name))
+        if image_data.isNull() or not image_data.isValid():
+            return ""
+        image=QImage(image_data)
+        image.save(buf,"PNG")
+        return buf.buffer().toBase64().data()
+        
+    def getMessageText(self):
+        doc=self.ui.textEditMessage.document()
+        content=self.ui.textEditMessage.document().toPlainText()
+        last_i=content.indexOf("images://")
+        while last_i>=0:
+            j=content.indexOf("\"",last_i)
+            if j>0:
+                l=j-last_i
+                url=content.mid(last_i,l)
+                base64=self.imageRecourceToBase64(doc,url)
+                content.replace(last_i,l,"data:image/png;base64"+base64)
+            last_i=content.indexOf("images://",last_i)
+        return content
         
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
         toAddresses = str(self.ui.lineEditTo.text())
         fromAddress = str(self.ui.labelFrom.text())
         subject = str(self.ui.lineEditSubject.text().toUtf8())
-        message = self.getPlainMessageText() #str(
-            #self.ui.textEditMessage.document().toPlainText())
-        # Remove style which may conatin some information about the user (ex. font='Ubuntu' on Ubuntu) 
-        # message=re.sub("<body style=\"[ a-zA-Z\\-\\:\\'\\;0-9]*\"","<body ",message) 
+        message = str(self.getMessageText().toUtf8()) 
+            
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
                                for s in toAddresses.replace(',', ';').split(';')]
@@ -2724,7 +2725,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.comboBoxSendFrom.setCurrentIndex(0)
         
-        self.ui.textEditMessage.setHtml('<br><br>------------------------------------------------------<br>' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
+        self.ui.textEditMessage.setPlainText('\n\n------------------------------------------------------\n' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
             self.ui.lineEditSubject.setText(
                 self.ui.tableWidgetInbox.item(currentInboxRow, 2).text())
