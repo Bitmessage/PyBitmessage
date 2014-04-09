@@ -1876,7 +1876,7 @@ class MyForm(QtGui.QMainWindow):
                 l=j-last_i
                 url=content.mid(last_i,l)
                 base64=self.imageRecourceToBase64(doc,url)
-                content.replace(last_i,l,"data:image/png;base64"+base64)
+                content.replace(last_i,l,"data:image/png;base64,"+base64)
             last_i=content.indexOf("images://",last_i)
         return content
         
