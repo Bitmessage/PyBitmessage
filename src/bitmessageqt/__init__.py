@@ -1866,7 +1866,7 @@ class MyForm(QtGui.QMainWindow):
         image.save(buf,"PNG")
         return buf.buffer().toBase64().data()
         
-    def getMessageText(self):
+    def embedeImages(self):
         doc=self.ui.textEditMessage.document()
         content=self.ui.textEditMessage.document().toPlainText()
         last_i=content.indexOf("images://")
@@ -1885,7 +1885,7 @@ class MyForm(QtGui.QMainWindow):
         toAddresses = str(self.ui.lineEditTo.text())
         fromAddress = str(self.ui.labelFrom.text())
         subject = str(self.ui.lineEditSubject.text().toUtf8())
-        message = str(self.getMessageText().toUtf8()) 
+        message = str(self.embedeImages().toUtf8()) 
             
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
@@ -2683,6 +2683,33 @@ class MyForm(QtGui.QMainWindow):
         # We could also select upwards, but then our problem would be with the topmost message.
         # self.ui.tableWidgetInbox.clearSelection() manages to mark the message as read again.
 
+    # data  - data:image/png;base64,blablalbabla.....
+    def imageRecourceFromBase64(self,doc,name,data): 
+        image_format=data.mid(11,3)
+        base64=data.mid(22)
+        image=QImage()
+        if not image.loadFromData(QByteArray.fromBase64(base64.toUtf8()),image_format):
+            return False
+            
+        doc.addResource(QtGui.QTextDocument.ImageResource,QUrl(name),QVariant(image))
+        return True
+        
+    def hideImages(self,text):
+        content=QString.fromUtf8(text)
+        doc=self.ui.textEditMessage.document()
+        last_i=content.indexOf("data:image/")
+        while last_i>=0:
+            j=content.indexOf("\"",last_i)
+            if j>0:
+                l=j-last_i
+                data=content.mid(last_i,l)
+                name="images://img"+str(last_i)
+                # replace source only if the image can be loaded as a resource, otherwsie keep it
+                if self.imageRecourceFromBase64(doc,name,data):
+                    content.replace(last_i,l,name)
+            last_i=content.indexOf("data:image/",last_i)
+        return content
+    
     def on_action_InboxReply(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
@@ -2725,7 +2752,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.comboBoxSendFrom.setCurrentIndex(0)
         
-        self.ui.textEditMessage.setPlainText('\n\n------------------------------------------------------\n' + unicode(messageAtCurrentInboxRow, 'utf-8)'))
+        self.ui.textEditMessage.setPlainText('\n\n------------------------------------------------------\n' + self.hideImages(messageAtCurrentInboxRow))
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
             self.ui.lineEditSubject.setText(
                 self.ui.tableWidgetInbox.item(currentInboxRow, 2).text())
