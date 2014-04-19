@@ -25,6 +25,7 @@ from addresses import *
 quit = False
 menutab = 1
 menu = ["Inbox", "Send", "Sent", "Your Identities", "Subscriptions", "Address Book", "Blacklist", "Network Status"]
+naptime = 100
 log = ""
 logpad = None
 inventorydata = 0
@@ -85,15 +86,16 @@ def drawtab(stdscr):
             stdscr.addstr(3, 5, "Label", curses.A_BOLD)
             stdscr.addstr(3, 50, "Address", curses.A_BOLD)
             stdscr.addstr(3, 100, "Stream", curses.A_BOLD)
+            stdscr.hline(4, 5, '-', 101)
             for i, item in enumerate(addresses):
                 a = 0
                 if i == addrcur: # Highlight current address
                     a = a | curses.A_REVERSE
                 if item[1] == True and item[3] not in [8,9]: # Embolden enabled, non-special addresses
                     a = a | curses.A_BOLD
-                stdscr.addstr(4+i, 5, item[0], a)
-                stdscr.addstr(4+i, 50, item[2], cpair(item[3]) | a)
-                stdscr.addstr(4+i, 100, str(1), a)
+                stdscr.addstr(5+i, 5, item[0], a)
+                stdscr.addstr(5+i, 50, item[2], cpair(item[3]) | a)
+                stdscr.addstr(5+i, 100, str(1), a)
         elif menutab == 5: # Subscriptions
             pass
         elif menutab == 6: # Address book
@@ -104,7 +106,8 @@ def drawtab(stdscr):
             # Connection data
             stdscr.addstr(4, 5, "Total Connections: "+str(len(shared.connectedHostsList)).ljust(2))
             stdscr.addstr(6, 6, "Stream #", curses.A_BOLD)
-            stdscr.addstr(6, 17, "Connections", curses.A_BOLD)
+            stdscr.addstr(6, 18, "Connections", curses.A_BOLD)
+            stdscr.hline(7, 6, '-', 23)
             streamcount = []
             for host, stream in shared.connectedHostsList.items():
                 if stream >= len(streamcount):
@@ -112,12 +115,12 @@ def drawtab(stdscr):
                 else:
                     streamcount[stream] += 1
             for i, item in enumerate(streamcount):
-                if i < 5:
+                if i < 4:
                     if i == 0:
-                        stdscr.addstr(7+i, 6, "?")
+                        stdscr.addstr(8+i, 6, "?")
                     else:
-                        stdscr.addstr(7+i, 6, str(i))
-                    stdscr.addstr(7+i, 17, str(item))
+                        stdscr.addstr(8+i, 6, str(i))
+                    stdscr.addstr(8+i, 18, str(item).ljust(2))
             
             # Uptime and processing data
             stdscr.addstr(6, 35, "Since startup on "+unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(startuptime)))))
@@ -159,8 +162,14 @@ def handlech(c, stdscr):
     if c != curses.ERR:
         if c in range(256): 
             if chr(c) in '12345678':
-                global menutab
+                global menutab, naptime
                 menutab = int(chr(c))
+                if menutab in [1,8]: # Tabs which require live updating
+                    stdscr.nodelay(1)
+                    naptime = 100
+                else:
+                    stdscr.nodelay(0)
+                    naptime = 0
             elif chr(c) == 'q':
                 global quit
                 quit = True
@@ -336,7 +345,6 @@ def runwrapper():
     
     stdscr.nodelay(1)
     curses.curs_set(0)
-    curses.start_color()
     
     curses.wrapper(run)
     shutdown()
@@ -397,6 +405,8 @@ def run(stdscr):
     while quit == False:
         drawtab(stdscr)
         handlech(stdscr.getch(), stdscr)
+        if naptime > 0:
+            curses.napms(naptime)
 
 def shutdown():
     sys.stdout = sys.__stdout__
