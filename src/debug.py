@@ -19,6 +19,7 @@ Use: `from debug import logger` to import this facility into whatever module you
 import logging
 import logging.config
 import shared
+import sys
 
 # TODO(xj9): Get from a config file.
 log_level = 'DEBUG'
@@ -69,7 +70,10 @@ def configureLogging():
 # TODO (xj9): Get from a config file.
 #logger = logging.getLogger('console_only')
 configureLogging()
-logger = logging.getLogger('both')
+if '-c' in sys.argv:
+    logger = logging.getLogger('file_only')
+else:
+    logger = logging.getLogger('both')
 
 def restartLoggingInUpdatedAppdataLocation():
     global logger
@@ -78,4 +82,8 @@ def restartLoggingInUpdatedAppdataLocation():
         i.flush()
         i.close()
     configureLogging()
-    logger = logging.getLogger('both')
+    if '-c' in sys.argv:
+        logger = logging.getLogger('file_only')
+    else:
+        logger = logging.getLogger('both')
+
