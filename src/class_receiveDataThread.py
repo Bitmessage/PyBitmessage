@@ -622,6 +622,10 @@ class receiveDataThread(threading.Thread):
                     continue
             else:
                 hostFromAddrMessage = socket.inet_ntop(socket.AF_INET6, fullHost)
+                if hostFromAddrMessage == "":
+                    # This can happen on Windows systems which are not 64-bit compatible 
+                    # so let us drop the IPv6 address. 
+                    continue
                 if not self._checkIPv6Address(fullHost, hostFromAddrMessage):
                     continue
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>Q', data[lengthOfNumberOfAddresses + (
