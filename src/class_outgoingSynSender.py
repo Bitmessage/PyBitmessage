@@ -55,7 +55,28 @@ class outgoingSynSender(threading.Thread):
             shared.alreadyAttemptedConnectionsListLock.release()
             timeNodeLastSeen = shared.knownNodes[
                 self.streamNumber][peer]
-            sock = socks.socksocket(socket.AF_INET, socket.SOCK_STREAM)
+            if peer.host.find(':') == -1:
+                address_family = socket.AF_INET
+            else:
+                address_family = socket.AF_INET6
+            try:
+                sock = socks.socksocket(address_family, socket.SOCK_STREAM)
+            except:
+                """
+                The line can fail on Windows systems which aren't
+                64-bit compatiable:
+                      File "C:\Python27\lib\socket.py", line 187, in __init__
+                        _sock = _realsocket(family, type, proto)
+                      error: [Errno 10047] An address incompatible with the requested protocol was used
+                      
+                So let us remove the offending address from our knownNodes file.
+                """
+                shared.knownNodesLock.acquire()
+                del shared.knownNodes[self.streamNumber][peer]
+                shared.knownNodesLock.release()
+                with shared.printLock:
+                    print 'deleting ', peer, 'from shared.knownNodes because it caused a socks.socksocket exception. We must not be 64-bit compatible.'
+                continue
             # This option apparently avoids the TIME_WAIT state so that we
             # can rebind faster
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
