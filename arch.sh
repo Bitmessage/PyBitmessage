@@ -24,14 +24,14 @@ sed -i 's/-'${PREV_VERSION}'.so/-'${VERSION}'.so/g' debian/*.links
 make clean
 rm -f archpackage/*.gz
 
-# having the root directory called name-version seems essential
+# Having the root directory called name-version seems essential
 mv ../${APP} ../${APP}-${VERSION}
 tar -cvzf ${SOURCE} ../${APP}-${VERSION} --exclude-vcs
 
-# rename the root directory without the version number
+# Rename the root directory without the version number
 mv ../${APP}-${VERSION} ../${APP}
 
-# calculate the MD5 checksum
+# Calculate the MD5 checksum
 CHECKSM=$(md5sum ${SOURCE})
 sed -i "s/md5sums[^)]*)/md5sums=(${CHECKSM%% *})/g" archpackage/PKGBUILD
 
