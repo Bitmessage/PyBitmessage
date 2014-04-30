@@ -319,6 +319,14 @@ class receiveDataThread(threading.Thread):
             print 'Sending huge inv message with', numberOfObjects, 'objects to just this one peer'
         self.sendDataThreadQueue.put((0, 'sendRawData', headerData + payload))
 
+    def _sleepForTimingAttackMitigation(self, sleepTime):
+        # We don't need to do the timing attack mitigation if we are
+        # only connected to the trusted peer because we can trust the
+        # peer not to attack
+        if sleepTime > 0 and doTimingAttackMitigation and shared.trustedPeer == None:
+            with shared.printLock:
+                print 'Timing attack mitigation: Sleeping for', sleepTime, 'seconds.'
+            time.sleep(sleepTime)
 
     # We have received a broadcast message
     def recbroadcast(self, data):
@@ -347,10 +355,7 @@ class receiveDataThread(threading.Thread):
 
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
             (time.time() - self.messageProcessingStartTime)
-        if sleepTime > 0 and doTimingAttackMitigation:
-            with shared.printLock:
-                print 'Timing attack mitigation: Sleeping for', sleepTime, 'seconds.'
-            time.sleep(sleepTime)
+        self._sleepForTimingAttackMitigation(sleepTime)
 
     # We have received a msg message.
     def recmsg(self, data):
@@ -379,10 +384,7 @@ class receiveDataThread(threading.Thread):
 
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
             (time.time() - self.messageProcessingStartTime)
-        if sleepTime > 0 and doTimingAttackMitigation:
-            with shared.printLock:
-                print 'Timing attack mitigation: Sleeping for', sleepTime, 'seconds.'
-            time.sleep(sleepTime)
+        self._sleepForTimingAttackMitigation(sleepTime)
 
     # We have received a pubkey
     def recpubkey(self, data):
@@ -393,11 +395,7 @@ class receiveDataThread(threading.Thread):
         lengthOfTimeWeShouldUseToProcessThisMessage = .1
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
             (time.time() - self.pubkeyProcessingStartTime)
-        if sleepTime > 0 and doTimingAttackMitigation:
-            with shared.printLock:
-                print 'Timing attack mitigation: Sleeping for', sleepTime, 'seconds.'
-            time.sleep(sleepTime)
-
+        self._sleepForTimingAttackMitigation(sleepTime)
 
     # We have received an inv message
     def recinv(self, data):
