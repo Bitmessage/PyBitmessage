@@ -36,7 +36,7 @@ startuptime = time.time()
 
 inbox = []
 inboxcur = 0
-sent = []
+sentbox = []
 sentcur = 0
 addresses = []
 addrcur = 0
@@ -47,6 +47,7 @@ addrbook = []
 abookcur = 0
 blacklist = []
 blackcur = 0
+bwtype = "black"
 
 BROADCAST_STR = "[Broadcast subscribers]"
 
@@ -100,10 +101,10 @@ def drawtab(stdscr):
     if menutab in range(1, len(menu)+1):
         if menutab == 1: # Inbox
             stdscr.addstr(3, 5, "To", curses.A_BOLD)
-            stdscr.addstr(3, 30, "From", curses.A_BOLD)
-            stdscr.addstr(3, 60, "Subject", curses.A_BOLD)
-            stdscr.addstr(3, 90, "Time Received", curses.A_BOLD)
-            stdscr.hline(4, 5, '-', 91)
+            stdscr.addstr(3, 40, "From", curses.A_BOLD)
+            stdscr.addstr(3, 80, "Subject", curses.A_BOLD)
+            stdscr.addstr(3, 120, "Time Received", curses.A_BOLD)
+            stdscr.hline(4, 5, '-', 121)
             for i, item in enumerate(inbox[max(min(len(inbox)-curses.LINES+6, inboxcur-5), 0):]):
                 if 6+i < curses.LINES:
                     a = 0
@@ -111,40 +112,82 @@ def drawtab(stdscr):
                         a = a | curses.A_REVERSE
                     if item[7] == False: # If not read, highlight
                         a = a | curses.A_BOLD
-                    stdscr.addstr(5+i, 5, item[1][:29], a)
-                    stdscr.addstr(5+i, 30, item[3][:29], a)
-                    stdscr.addstr(5+i, 60, item[5][:29], a)
-                    stdscr.addstr(5+i, 90, item[6][:29], a)
+                    stdscr.addstr(5+i, 5, item[1][:34], a)
+                    stdscr.addstr(5+i, 40, item[3][:39], a)
+                    stdscr.addstr(5+i, 80, item[5][:39], a)
+                    stdscr.addstr(5+i, 120, item[6][:39], a)
         elif menutab == 3: # Sent
-            pass
+            stdscr.addstr(3, 5, "To", curses.A_BOLD)
+            stdscr.addstr(3, 40, "From", curses.A_BOLD)
+            stdscr.addstr(3, 80, "Subject", curses.A_BOLD)
+            stdscr.addstr(3, 120, "Status", curses.A_BOLD)
+            stdscr.hline(4, 5, '-', 121)
+            for i, item in enumerate(sentbox[max(min(len(sentbox)-curses.LINES+6, sentcur-5), 0):]):
+                if 6+i < curses.LINES:
+                    a = 0
+                    if i == sentcur - max(min(len(sentbox)-curses.LINES+6, sentcur-5), 0): # Highlight current address
+                        a = a | curses.A_REVERSE
+                    stdscr.addstr(5+i, 5, item[0][:34], a)
+                    stdscr.addstr(5+i, 40, item[2][:39], a)
+                    stdscr.addstr(5+i, 80, item[4][:39], a)
+                    stdscr.addstr(5+i, 120, item[5][:39], a)
         elif menutab == 2 or menutab == 4: # Send or Identities
             stdscr.addstr(3, 5, "Label", curses.A_BOLD)
-            stdscr.addstr(3, 30, "Address", curses.A_BOLD)
-            stdscr.addstr(3, 60, "Stream", curses.A_BOLD)
-            stdscr.hline(4, 5, '-', 61)
+            stdscr.addstr(3, 40, "Address", curses.A_BOLD)
+            stdscr.addstr(3, 80, "Stream", curses.A_BOLD)
+            stdscr.hline(4, 5, '-', 81)
             for i, item in enumerate(addresses[max(min(len(addresses)-curses.LINES+6, addrcur-5), 0):]):
-                a = 0
-                if i == addrcur - max(min(len(addresses)-curses.LINES+6, addrcur-5), 0): # Highlight current address
-                    a = a | curses.A_REVERSE
-                if item[1] == True and item[3] not in [8,9]: # Embolden enabled, non-special addresses
-                    a = a | curses.A_BOLD
-                stdscr.addstr(5+i, 5, item[0][:30], a)
-                stdscr.addstr(5+i, 30, item[2][:30], cpair(item[3]) | a)
-                stdscr.addstr(5+i, 60, str(1)[:30], a)
+                if 6+i < curses.LINES:
+                    a = 0
+                    if i == addrcur - max(min(len(addresses)-curses.LINES+6, addrcur-5), 0): # Highlight current address
+                        a = a | curses.A_REVERSE
+                    if item[1] == True and item[3] not in [8,9]: # Embolden enabled, non-special addresses
+                        a = a | curses.A_BOLD
+                    stdscr.addstr(5+i, 5, item[0][:34], a)
+                    stdscr.addstr(5+i, 40, item[2][:39], cpair(item[3]) | a)
+                    stdscr.addstr(5+i, 80, str(1)[:39], a)
         elif menutab == 5: # Subscriptions
-            pass
+            stdscr.addstr(3, 5, "Label", curses.A_BOLD)
+            stdscr.addstr(3, 80, "Address", curses.A_BOLD)
+            stdscr.addstr(3, 120, "Enabled", curses.A_BOLD)
+            stdscr.hline(4, 5, '-', 121)
+            for i, item in enumerate(subscriptions[max(min(len(subscriptions)-curses.LINES+6, subcur-5), 0):]):
+                if 6+i < curses.LINES:
+                    a = 0
+                    if i == subcur - max(min(len(subscriptions)-curses.LINES+6, subcur-5), 0): # Highlight current address
+                        a = a | curses.A_REVERSE
+                    if item[2] == True: # Embolden enabled subscriptions
+                        a = a | curses.A_BOLD
+                    stdscr.addstr(5+i, 5, item[0][:74], a)
+                    stdscr.addstr(5+i, 80, item[1][:39], a)
+                    stdscr.addstr(5+i, 120, str(item[2]), a)
         elif menutab == 6: # Address book
             stdscr.addstr(3, 5, "Label", curses.A_BOLD)
-            stdscr.addstr(3, 30, "Address", curses.A_BOLD)
-            stdscr.hline(4, 5, '-', 31)
+            stdscr.addstr(3, 40, "Address", curses.A_BOLD)
+            stdscr.hline(4, 5, '-', 41)
             for i, item in enumerate(addrbook[max(min(len(addrbook)-curses.LINES+6, abookcur-5), 0):]):
-                a = 0
-                if i == abookcur - max(min(len(addrbook)-curses.LINES+6, abookcur-5), 0): # Highlight current address
-                    a = a | curses.A_REVERSE
-                stdscr.addstr(5+i, 5, item[0][:30], a)
-                stdscr.addstr(5+i, 30, item[1][:30], a)
+                if 6+i < curses.LINES:
+                    a = 0
+                    if i == abookcur - max(min(len(addrbook)-curses.LINES+6, abookcur-5), 0): # Highlight current address
+                        a = a | curses.A_REVERSE
+                    stdscr.addstr(5+i, 5, item[0][:34], a)
+                    stdscr.addstr(5+i, 40, item[1][:39], a)
         elif menutab == 7: # Blacklist
-            pass
+            stdscr.addstr(3, 5, "Type: "+bwtype)
+            stdscr.addstr(4, 5, "Label", curses.A_BOLD)
+            stdscr.addstr(4, 80, "Address", curses.A_BOLD)
+            stdscr.addstr(4, 120, "Enabled", curses.A_BOLD)
+            stdscr.hline(5, 5, '-', 121)
+            for i, item in enumerate(blacklist[max(min(len(blacklist)-curses.LINES+6, blackcur-5), 0):]):
+                if 7+i < curses.LINES:
+                    a = 0
+                    if i == blackcur - max(min(len(blacklist)-curses.LINES+6, blackcur-5), 0): # Highlight current address
+                        a = a | curses.A_REVERSE
+                    if item[2] == True: # Embolden enabled subscriptions
+                        a = a | curses.A_BOLD
+                    stdscr.addstr(6+i, 5, item[0][:74], a)
+                    stdscr.addstr(6+i, 80, item[1][:39], a)
+                    stdscr.addstr(6+i, 120, str(item[2]), a)
         elif menutab == 8: # Network status
             # Connection data
             stdscr.addstr(4, 5, "Total Connections: "+str(len(shared.connectedHostsList)).ljust(2))
@@ -211,9 +254,9 @@ def handlech(c, stdscr):
                 global quit
                 quit = True
             elif chr(c) == '\n':
+                curses.curs_set(1)
+                d = Dialog(dialog="dialog")
                 if menutab == 1:
-                    curses.curs_set(1)
-                    d = Dialog(dialog="dialog")
                     d.set_background_title("Inbox Message Dialog Box")
                     r, t = d.menu("Do what with \""+inbox[inboxcur][5]+"\" from \""+inbox[inboxcur][3]+"\"?",
                         choices=[("1", "View message"),
@@ -265,11 +308,11 @@ def handlech(c, stdscr):
                                 for row in ret:
                                     body, = row
                             
-                            sendMessage(fromaddr, toaddr, ischan, subject, body)
+                            sendMessage(fromaddr, toaddr, ischan, subject, body, True)
                             dialogreset(stdscr)
                         elif t == "4": # Add to Address Book
                             addr = inbox[inboxcur][4]
-                            if addr in [item[1] for i,item in enumerate(addrbook)]:
+                            if addr not in [item[1] for i,item in enumerate(addrbook)]:
                                 r, t = d.inputbox("Label for address \""+addr+"\"")
                                 if r == d.DIALOG_OK:
                                     sqlExecute("INSERT INTO addressbook VALUES (?,?)", t, addr)
@@ -293,20 +336,37 @@ def handlech(c, stdscr):
                         elif t == "6": # Move to trash
                             sqlExecute("UPDATE inbox SET folder='trash' WHERE msgid=?", inbox[inboxcur][0])
                             del inbox[inboxcur]
-                            d.scrollbox(unicode("Message moved to trash. There is no interface to view your trash, but the message is still on disk if you are desperate to recover it."),
+                            d.scrollbox(unicode("Message moved to trash. There is no interface to view your trash, \nbut the message is still on disk if you are desperate to recover it."),
                                 exit_label="Continue")
-                    dialogreset(stdscr)
                 elif menutab == 2:
-                    curses.curs_set(1)
                     sendMessage(addresses[addrcur][2])
-                    dialogreset(stdscr)
+                elif menutab == 3:
+                    d.set_background_title("Sent Messages Dialog Box")
+                    r, t = d.menu("Do what with \""+sentbox[sentcur][4]+"\" to \""+sentbox[sentcur][0]+"\"?",
+                        choices=[("1", "View message"),
+                            ("2", "Move to trash")])
+                    if r == d.DIALOG_OK:
+                        if t == "1": # View
+                            d.set_background_title("\""+sentbox[sentcur][4]+"\" from \""+sentbox[sentcur][3]+"\" to \""+sentbox[sentcur][1]+"\"")
+                            msg = ""
+                            ret = sqlQuery("SELECT message FROM sent WHERE subject=? AND ackdata=?", sentbox[sentcur][4], sentbox[sentcur][6])
+                            if ret != []:
+                                for row in ret:
+                                    msg, = row
+                                msg = shared.fixPotentiallyInvalidUTF8Data(msg)
+                                d.scrollbox(unicode(ascii(msg)), 30, 100, exit_label="Continue")
+                            else:
+                                d.scrollbox(unicode("Could not fetch message."), exit_label="Continue")
+                        elif t == "2": # Move to trash
+                            sqlExecute("UPDATE sent SET folder='trash' WHERE subject=? AND ackdata=?", sentbox[sentcur][4], sentbox[sentcur][6])
+                            del sentbox[sentcur]
+                            d.scrollbox(unicode("Message moved to trash. There is no interface to view your trash, \nbut the message is still on disk if you are desperate to recover it."),
+                                exit_label="Continue")
                 elif menutab == 4:
-                    curses.curs_set(1)
-                    d = Dialog(dialog="dialog")
                     d.set_background_title("Your Identities Dialog Box")
                     r, t = d.menu("Do what with \""+addresses[addrcur][0]+"\" : \""+addresses[addrcur][2]+"\"?",
                         choices=[("1", "Create new address"),
-                            ("2", "Copy address to internal buffer"),
+                            ("2", "Send a message from this address"),
                             ("3", "Rename"),
                             ("4", "Enable"),
                             ("5", "Disable"),
@@ -381,9 +441,8 @@ def handlech(c, stdscr):
                                                 shared.addressGeneratorQueue.put(('createDeterministicAddresses', 4, stream, "unused deterministic address", number, str(passphrase), shorten))
                                         else:
                                             d.scrollbox(unicode("Passphrases do not match"), exit_label="Continue")
-                        elif t == "2": # Copy address to internal buffer
-                            global addrcopy
-                            addrcopy = addrcur
+                        elif t == "2": # Send a message
+                            sendMessage(addresses[addrcur][2])
                         elif t == "3": # Rename address label
                             a = addresses[addrcur][2]
                             label = addresses[addrcur][0]
@@ -420,7 +479,12 @@ def handlech(c, stdscr):
                             addresses[addrcur][1] = False
                             shared.reloadMyAddressHashes() # Reload address hashes
                         elif t == "6": # Delete address
-                            pass
+                            r, t = d.inputbox("Type in \"I want to delete this address\"", width=50)
+                            if r == d.DIALOG_OK and t == "I want to delete this address":
+                                    shared.config.remove_section(addresses[addrcur][2])
+                                    with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                                        shared.config.write(configfile)
+                                    del addresses[addrcur]
                         elif t == "7": # Special address behavior
                             a = addresses[addrcur][2]
                             d.set_background_title("Special address behavior")
@@ -452,39 +516,147 @@ def handlech(c, stdscr):
                                     # Write config
                                     with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                                         shared.config.write(configfile)
-                    dialogreset(stdscr)
+                elif menutab == 5:
+                    d.set_background_title("Subscriptions Dialog Box")
+                    r, t = d.menu("Do what with subscription to \""+subscriptions[subcur][0]+"\"?",
+                        choices=[("1", "Add new subscription"),
+                            ("2", "Delete this subscription"),
+                            ("3", "Enable"),
+                            ("4", "Disable")])
+                    if r == d.DIALOG_OK:
+                        if t == "1":
+                            r, t = d.inputbox("New subscription address")
+                            if r == d.DIALOG_OK:
+                                addr = addBMIfNotPresent(t)
+                                if not shared.isAddressInMySubscriptionsList(addr):
+                                    r, t = d.inputbox("New subscription label")
+                                    if r == d.DIALOG_OK:
+                                        label = t
+                                        subscriptions.reverse().append(label, addr, True).reverse()
+                                        sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
+                                        shared.reloadBroadcastSendersForWhichImWatching()
+                        elif t == "2":
+                            r, t = d.inpuxbox("Type in \"I want to delete this subscription\"")
+                            if r == d.DIALOG_OK and t == "I want to delete this subscription":
+                                    sqlExecute("DELETE FROM subscriptions WHERE label=? AND address=?", subscriptions[subcur][0], subscriptions[subcur][1])
+                                    shared.reloadBroadcastSendersForWhichImWatching()
+                                    del subscriptions[subcur]
+                        elif t == "3":
+                            sqlExecute("UPDATE subscriptions SET enabled=1 WHERE label=? AND address=?", subscriptions[subcur][0], subscriptions[subcur][1])
+                            shared.reloadBroadcastSendersForWhichImWatching()
+                            subscriptions[subcur][2] = True
+                        elif t == "4":
+                            sqlExecute("UPDATE subscriptions SET enabled=0 WHERE label=? AND address=?", subscriptions[subcur][0], subscriptions[subcur][1])
+                            shared.reloadBroadcastSendersForWhichImWatching()
+                            subscriptions[subcur][2] = False
+                elif menutab == 6:
+                    d.set_background_title("Address Book Dialog Box")
+                    r, t = d.menu("Do what with \""+addrbook[abookcur][0]+"\" : \""+addrbook[abookcur][1]+"\"",
+                        choices=[("1", "Send a message to this address"),
+                            ("2", "Subscribe to this address"),
+                            ("3", "Add new address to Address Book"),
+                            ("4", "Delete this address")])
+                    if r == d.DIALOG_OK:
+                        if t == "1":
+                            sendMessage(recv=addrbook[abookcur][1])
+                        elif t == "2":
+                            r, t = d.inputbox("New subscription label")
+                            if r == d.DIALOG_OK:
+                                label = t
+                                subscriptions.reverse().append(label, addr, True).reverse()
+                                sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
+                                shared.reloadBroadcastSendersForWhichImWatching()
+                        elif t == "3":
+                            r, t = d.inputbox("Input new address")
+                            if r == d.DIALOG_OK:
+                                addr = t
+                                if addr not in [item[1] for i,item in enumerate(addrbook)]:
+                                    r, t = d.inputbox("Label for address \""+addr+"\"")
+                                    if r == d.DIALOG_OK:
+                                        sqlExecute("INSERT INTO addressbook VALUES (?,?)", t, addr)
+                                        addrbook.reverse().append([t, addr]).reverse() # Prepend new entry
+                                else:
+                                    d.scrollbox(unicode("The selected address is already in the Address Book."), exit_label="Continue")
+                        elif t == "4":
+                            r, t = d.inputbox("Type in \"I want to delete this Address Book entry\"")
+                            if r == d.DIALOG_OK and t == "I want to delete this Address Book entry":
+                                sqlExecute("DELETE FROM addressbook WHERE label=? AND address=?", addrbook[abookcur][0], addrbook[abookcur][1])
+                                del addrbook[abookcur]
+                elif menutab == 7:
+                    d.set_background_title("Blacklist Dialog Box")
+                    r, t = d.menu("Do what with \""+blacklist[blackcur][0]+"\" : \""+blacklist[blackcur][1]+"\"?",
+                        choices=[("1", "Delete"),
+                            ("2", "Enable"),
+                            ("3", "Disable")])
+                    if r == d.DIALOG_OK:
+                        if t == "1":
+                            r, t = d.inputbox("Type in \"I want to delete this Blacklist entry\"")
+                            if r == d.DIALOG_OK and t == "I want to delete this Blacklist entry":
+                                sqlExecute("DELETE FROM blacklist WHERE label=? AND address=?", blacklist[blackcur][0], blacklist[blackcur][1])
+                                del blacklist[blackcur]
+                        elif t == "2":
+                            sqlExecute("UPDATE blacklist SET enabled=1 WHERE label=? AND address=?", blacklist[blackcur][0], blacklist[blackcur][1])
+                            blacklist[blackcur][2] = True
+                        elif t== "3":
+                            sqlExecute("UPDATE blacklist SET enabled=0 WHERE label=? AND address=?", blacklist[blackcur][0], blacklist[blackcur][1])
+                            blacklist[blackcur][2] = False
+                dialogreset(stdscr)
         else:
-            global addrcur, inboxcur, abookcur
+            global addrcur, inboxcur, sentcur, subcur, abookcur, blackcur
             if c == curses.KEY_UP:
                 if menutab == 1 and inboxcur > 0:
                     inboxcur -= 1
                 if (menutab == 2 or menutab == 4) and addrcur > 0:
                     addrcur -= 1
+                if menutab == 3 and sentcur > 0:
+                    sentcur -= 1
+                if menutab == 5 and subcur > 0:
+                    subcur -= 1
                 if menutab == 6 and abookcur > 0:
                     abookcur -= 1
+                if menutab == 7 and blackcur > 0:
+                    blackcur -= 1
             elif c == curses.KEY_DOWN:
                 if menutab == 1 and inboxcur < len(inbox)-1:
                     inboxcur += 1
                 if (menutab == 2 or menutab == 4) and addrcur < len(addresses)-1:
                     addrcur += 1
+                if menutab == 3 and sentcur < len(sentbox)-1:
+                    sentcur += 1
+                if menutab == 5 and subcur < len(subscriptions)-1:
+                    subcur += 1
                 if menutab == 6 and abookcur < len(addrbook)-1:
                     abookcur += 1
+                if menutab == 7 and blackcur < len(blacklist)-1:
+                    blackcur += 1
             elif c == curses.KEY_HOME:
                 if menutab == 1:
                     inboxcur = 0
                 if menutab == 2 or menutab == 4:
                     addrcur = 0
+                if menutab == 3:
+                    sentcur = 0
+                if menutab == 5:
+                    subcur = 0
                 if menutab == 6:
                     abookcur = 0
+                if menutab == 7:
+                    blackcur = 0
             elif c == curses.KEY_END:
                 if menutab == 1:
                     inboxcur = len(inbox)-1
                 if menutab == 2 or menutab == 4:
                     addrcur = len(addresses)-1
+                if menutab == 3:
+                    sentcur = len(sentbox)-1
+                if menutab == 5:
+                    subcur = len(subscriptions)-1
                 if menutab == 6:
                     abookcur = len(addrbook)-1
+                if menutab == 7:
+                    blackcur = len(blackcur)-1
         redraw(stdscr)
-def sendMessage(sender="", recv="", broadcast=None, subject="", body=""):
+def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=False):
     if sender == "":
         return
     d = Dialog(dialog="dialog")
@@ -505,13 +677,13 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body=""):
         broadcast = False
         if t == "2": # Broadcast
             broadcast = True
-    if subject == "":
-        r, t = d.inputbox("Message subject", width=60)
+    if subject == "" or reply:
+        r, t = d.inputbox("Message subject", width=60, init=subject)
         if r != d.DIALOG_OK:
             return
         subject = shared.fixPotentiallyInvalidUTF8Data(t)
-    if body == "":
-        r, t = d.inputbox("Message body", 10, 80)
+    if body == "" or reply:
+        r, t = d.inputbox("Message body", 10, 80, init=body)
         if r != d.DIALOG_OK:
             return
         body = shared.fixPotentiallyInvalidUTF8Data(t)
@@ -561,8 +733,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body=""):
                     
                     ackdata = OpenSSL.rand(32)
                     sqlExecute(
-                        '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-                        '',
+                        "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        "",
                         addr,
                         ripe,
                         sender,
@@ -570,10 +742,10 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body=""):
                         body,
                         ackdata,
                         int(time.time()),
-                        'msgqueued',
+                        "msgqueued",
                         1,
                         1,
-                        'sent',
+                        "sent",
                         2)
                     shared.workerQueue.put(("sendmessage", addr))
     else: # Broadcast
@@ -586,8 +758,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body=""):
             addr = BROADCAST_STR
             ripe = ""
             sqlExecute(
-                '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',
-                '',
+                "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "",
                 addr,
                 ripe,
                 sender,
@@ -595,10 +767,10 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body=""):
                 body,
                 ackdata,
                 int(time.time()),
-                'broadcastqueued',
+                "broadcastqueued",
                 1,
                 1,
-                'sent',
+                "sent",
                 2)
             shared.workerQueue.put(('sendbroadcast', ''))
 
@@ -653,6 +825,83 @@ def loadInbox():
             strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(received))),
             read])
     inbox.reverse()
+def loadSent():
+    sys.stdout = sys.__stdout__
+    print("Loading sent messages...")
+    sys.stdout = printlog
+    
+    where = "toaddress || fromaddress || subject || message"
+    what = "%%"
+    ret = sqlQuery("""SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime
+        FROM sent WHERE folder='sent' AND %s LIKE ?
+        ORDER BY lastactiontime
+        """ % (where,), what)
+    global sent
+    for row in ret:
+        toaddr, fromaddr, subject, status, ackdata, lastactiontime = row
+        subject = ascii(shared.fixPotentiallyInvalidUTF8Data(subject))
+        
+        # Set label for to address
+        tolabel = ""
+        qr = sqlQuery("SELECT label FROM addressbook WHERE address=?", toaddr)
+        if qr != []:
+            for r in qr:
+                tolabel, = r
+        if tolabel == "":
+            qr = sqlQuery("SELECT label FROM subscriptions WHERE address=?", toaddr)
+            if qr != []:
+                for r in qr:
+                    tolabel, = r
+        if tolabel == "":
+            if shared.config.has_section(toaddr):
+                tolabel = shared.config.get(toaddr, "label")
+        if tolabel == "":
+            tolabel = toaddr
+        
+        # Set label for from address
+        fromlabel = ""
+        if shared.config.has_section(fromaddr):
+            fromlabel = shared.config.get(fromaddr, "label")
+        if fromlabel == "":
+            fromlabel = fromaddr
+        
+        # Set status string
+        if status == "awaitingpubkey":
+            statstr = "Waiting for their public key. Will request it again soon"
+        elif status == "doingpowforpubkey":
+            statstr = "Encryption key request queued"
+        elif status == "msgqueued":
+            statstr = "Message queued"
+        elif status == "msgsent":
+            t = strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(lastactiontime)))
+            statstr = "Message sent at "+t+".Waiting for acknowledgement."
+        elif status == "msgsentnoackexpected":
+            t = strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(lastactiontime)))
+            statstr = "Message sent at "+t+"."
+        elif status == "doingmsgpow":
+            statstr = "The proof of work required to send the message has been queued."
+        elif status == "askreceived":
+            t = strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(lastactiontime)))
+            statstr = "Acknowledgment of the message received at "+t+"."
+        elif status == "broadcastqueued":
+            statstr = "Broadcast queued."
+        elif status == "broadcastsent":
+            t = strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(lastactiontime)))
+            statstr = "Broadcast sent at "+t+"."
+        elif status == "forcepow":
+            statstr = "Forced difficulty override. Message will start sending soon."
+        elif status == "badkey":
+            statstr = "Warning: Could not encrypt message because the recipient's encryption key is no good."
+        elif status == "toodifficult":
+            statstr = "Error: The work demanded by the recipient is more difficult than you are willing to do."
+        else:
+            t = strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(lastactiontime)))
+            statstr = "Unknown status "+status+" at "+t+"."
+        
+        # Load into array
+        sentbox.append([tolabel, toaddr, fromlabel, fromaddr, subject, statstr, ackdata,
+            strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(lastactiontime)))])
+    sentbox.reverse()
 def loadAddrBook():
     sys.stdout = sys.__stdout__
     print("Loading address book...")
@@ -665,6 +914,23 @@ def loadAddrBook():
         label = shared.fixPotentiallyInvalidUTF8Data(label)
         addrbook.append([label, addr])
     addrbook.reverse()
+def loadSubscriptions():
+    ret = sqlQuery("SELECT label, address, enabled FROM subscriptions")
+    for row in ret:
+        label, address, enabled = row
+        subscriptions.append([label, address, enabled])
+    subscriptions.reverse()
+def loadBlackWhiteList():
+    global bwtype
+    bwtype = shared.config.get("bitmessagesettings", "blackwhitelist")
+    if bwtype == "black":
+        ret = sqlQuery("SELECT label, address, enabled FROM blacklist")
+    else:
+        ret = sqlQuery("SELECT label, address, enabled FROM whitelist")
+    for row in ret:
+        label, address, enabled = row
+        blacklist.append([label, address, enabled])
+    blacklist.reverse()
 
 def runwrapper():
     sys.stdout = printlog
@@ -672,8 +938,10 @@ def runwrapper():
     
     # Load messages from database
     loadInbox()
-    #loadSent()
+    loadSent()
     loadAddrBook()
+    loadSubscriptions()
+    loadBlackWhiteList()
     
     stdscr = curses.initscr()
     
