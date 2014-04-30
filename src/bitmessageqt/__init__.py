@@ -771,7 +771,7 @@ class MyForm(QtGui.QMainWindow):
 
             if shared.config.has_section(fromAddress):
                 fromLabel = shared.config.get(fromAddress, 'label')
-            if fromLabel == '':
+            else:
                 fromLabel = fromAddress
 
             toLabel = ''
