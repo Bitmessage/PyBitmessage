@@ -29,7 +29,7 @@ sed -i 's/-'${PREV_VERSION}'.so/-'${VERSION}'.so/g' debian/*.links
 make clean
 make
 
-# change the parent directory name to debian format
+# Change the parent directory name to Debian format
 mv ../${APP} ../${DIR}
 
 # Create a source archive
@@ -38,9 +38,9 @@ make source
 # Build the package
 dpkg-buildpackage -F
 
-# sign files
+# Sign files
 gpg -ba ../${APP}_${VERSION}-1_${ARCH_TYPE}.deb
 gpg -ba ../${APP}_${VERSION}.orig.tar.gz
 
-# restore the parent directory name
+# Restore the parent directory name
 mv ../${DIR} ../${APP}
