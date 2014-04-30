@@ -163,8 +163,6 @@ class sendDataThread(threading.Thread):
                         print 'Sending of data to', self.peer, 'failed. sendDataThread thread', self, 'ending now.' 
                         break
                 elif command == 'connectionIsOrWasFullyEstablished':
-                    with shared.printLock:
-                        print 'sendDataThread (associated with', self.peer, ') ID:', id(self), 'setting connectionIsOrWasFullyEstablished to True.'
                     self.connectionIsOrWasFullyEstablished = True
             else:
                 with shared.printLock:
