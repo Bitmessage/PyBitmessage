@@ -10,6 +10,7 @@
 import os
 import sys
 import StringIO
+from textwrap import *
 
 import time
 from time import strftime, localtime
@@ -246,6 +247,7 @@ def dialogreset(stdscr):
     curses.curs_set(0)
 def handlech(c, stdscr):
     if c != curses.ERR:
+        global inboxcur, addrcur, sentcur, subcur, abookcur, blackcur
         if c in range(256): 
             if chr(c) in '12345678':
                 global menutab
@@ -268,13 +270,16 @@ def handlech(c, stdscr):
                     if r == d.DIALOG_OK:
                         if t == "1": # View
                             d.set_background_title("\""+inbox[inboxcur][5]+"\" from \""+inbox[inboxcur][3]+"\" to \""+inbox[inboxcur][1]+"\"")
-                            msg = ""
+                            data = ""
                             ret = sqlQuery("SELECT message FROM inbox WHERE msgid=?", inbox[inboxcur][0])
                             if ret != []:
                                 for row in ret:
-                                    msg, = row
-                                msg = shared.fixPotentiallyInvalidUTF8Data(msg)
-                                d.scrollbox(unicode(ascii(msg)), 30, 100, exit_label="Continue")
+                                    data, = row
+                                data = shared.fixPotentiallyInvalidUTF8Data(data)
+                                msg = ""
+                                for i, item in enumerate(data.split("\n")):
+                                    msg += fill(item, replace_whitespace=False)+"\n"
+                                d.scrollbox(unicode(ascii(msg)), 30, 80, exit_label="Continue")
                                 sqlExecute("UPDATE inbox SET read=1 WHERE msgid=?", inbox[inboxcur][0])
                                 inbox[inboxcur][7] = 1
                             else:
@@ -311,12 +316,17 @@ def handlech(c, stdscr):
                             sendMessage(fromaddr, toaddr, ischan, subject, body, True)
                             dialogreset(stdscr)
                         elif t == "4": # Add to Address Book
+                            global addrbook
                             addr = inbox[inboxcur][4]
                             if addr not in [item[1] for i,item in enumerate(addrbook)]:
                                 r, t = d.inputbox("Label for address \""+addr+"\"")
                                 if r == d.DIALOG_OK:
-                                    sqlExecute("INSERT INTO addressbook VALUES (?,?)", t, addr)
-                                    addrbook.reverse().append([t, addr]).reverse() # Prepend new entry
+                                    label = t
+                                    sqlExecute("INSERT INTO addressbook VALUES (?,?)", label, addr)
+                                    # Prepend entry
+                                    addrbook.reverse()
+                                    addrbook.append([label, addr])
+                                    addrbook.reverse()
                             else:
                                 d.scrollbox(unicode("The selected address is already in the Address Book."), exit_label="Continue")
                         elif t == "5": # Save message
@@ -348,13 +358,16 @@ def handlech(c, stdscr):
                     if r == d.DIALOG_OK:
                         if t == "1": # View
                             d.set_background_title("\""+sentbox[sentcur][4]+"\" from \""+sentbox[sentcur][3]+"\" to \""+sentbox[sentcur][1]+"\"")
-                            msg = ""
+                            data = ""
                             ret = sqlQuery("SELECT message FROM sent WHERE subject=? AND ackdata=?", sentbox[sentcur][4], sentbox[sentcur][6])
                             if ret != []:
                                 for row in ret:
-                                    msg, = row
-                                msg = shared.fixPotentiallyInvalidUTF8Data(msg)
-                                d.scrollbox(unicode(ascii(msg)), 30, 100, exit_label="Continue")
+                                    data, = row
+                                data = shared.fixPotentiallyInvalidUTF8Data(data)
+                                msg = ""
+                                for i, item in enumerate(data.split("\n")):
+                                    msg += fill(item, replace_whitespace=False)+"\n"
+                                d.scrollbox(unicode(ascii(msg)), 30, 80, exit_label="Continue")
                             else:
                                 d.scrollbox(unicode("Could not fetch message."), exit_label="Continue")
                         elif t == "2": # Move to trash
@@ -602,7 +615,6 @@ def handlech(c, stdscr):
                             blacklist[blackcur][2] = False
                 dialogreset(stdscr)
         else:
-            global addrcur, inboxcur, sentcur, subcur, abookcur, blackcur
             if c == curses.KEY_UP:
                 if menutab == 1 and inboxcur > 0:
                     inboxcur -= 1
@@ -681,13 +693,14 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
         r, t = d.inputbox("Message subject", width=60, init=subject)
         if r != d.DIALOG_OK:
             return
-        subject = shared.fixPotentiallyInvalidUTF8Data(t)
+        subject = t
     if body == "" or reply:
         r, t = d.inputbox("Message body", 10, 80, init=body)
         if r != d.DIALOG_OK:
             return
-        body = shared.fixPotentiallyInvalidUTF8Data(t)
-    
+        body = t
+        body = body.replace("\\n", "\n").replace("\\t", "\t")
+
     if not broadcast:
         recvlist = []
         for i, item in enumerate(recv.replace(",", ";").split(";")):
@@ -730,7 +743,6 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         d.set_background_title("Not connected warning")
                         d.scrollbox(unicode("Because you are not currently connected to the network, "),
                             exit_label="Continue")
-                    
                     ackdata = OpenSSL.rand(32)
                     sqlExecute(
                         "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
