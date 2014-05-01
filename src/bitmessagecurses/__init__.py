@@ -1,7 +1,7 @@
 # Copyright (c) 2014 Luke Montalvo <lukemontalvo@gmail.com>
 # This file adds a alternative commandline interface, feel free to critique and fork
 # 
-# This has only been tested on Arch Linux
+# This has only been tested on Arch Linux and Linux Mint
 # Dependencies:
 #  * from python2-pip
 #     * python2-pythondialog
@@ -349,7 +349,10 @@ def handlech(c, stdscr):
                             d.scrollbox(unicode("Message moved to trash. There is no interface to view your trash, \nbut the message is still on disk if you are desperate to recover it."),
                                 exit_label="Continue")
                 elif menutab == 2:
-                    sendMessage(addresses[addrcur][2])
+                    a = ""
+                    if addresses[addrcur][3] != 0: # if current address is a chan
+                        a = addresses[addrcur][2]
+                    sendMessage(addresses[addrcur][2], a)
                 elif menutab == 3:
                     d.set_background_title("Sent Messages Dialog Box")
                     r, t = d.menu("Do what with \""+sentbox[sentcur][4]+"\" to \""+sentbox[sentcur][0]+"\"?",
@@ -455,7 +458,10 @@ def handlech(c, stdscr):
                                         else:
                                             d.scrollbox(unicode("Passphrases do not match"), exit_label="Continue")
                         elif t == "2": # Send a message
-                            sendMessage(addresses[addrcur][2])
+                            a = ""
+                            if addresses[addrcur][3] != 0: # if current address is a chan
+                                a = addresses[addrcur][2]
+                            sendMessage(addresses[addrcur][2], a)
                         elif t == "3": # Rename address label
                             a = addresses[addrcur][2]
                             label = addresses[addrcur][0]
@@ -545,7 +551,11 @@ def handlech(c, stdscr):
                                     r, t = d.inputbox("New subscription label")
                                     if r == d.DIALOG_OK:
                                         label = t
-                                        subscriptions.reverse().append(label, addr, True).reverse()
+                                        # Prepend entry
+                                        subscriptions.reverse()
+                                        subscriptions.append([label, addr, True])
+                                        subscriptions.reverse()
+
                                         sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
                                         shared.reloadBroadcastSendersForWhichImWatching()
                         elif t == "2":
@@ -576,7 +586,11 @@ def handlech(c, stdscr):
                             r, t = d.inputbox("New subscription label")
                             if r == d.DIALOG_OK:
                                 label = t
-                                subscriptions.reverse().append(label, addr, True).reverse()
+                                # Prepend entry
+                                subscriptions.reverse()
+                                subscriptions.append([label, addr, True])
+                                subscriptions.reverse()
+
                                 sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
                                 shared.reloadBroadcastSendersForWhichImWatching()
                         elif t == "3":
@@ -587,7 +601,10 @@ def handlech(c, stdscr):
                                     r, t = d.inputbox("Label for address \""+addr+"\"")
                                     if r == d.DIALOG_OK:
                                         sqlExecute("INSERT INTO addressbook VALUES (?,?)", t, addr)
-                                        addrbook.reverse().append([t, addr]).reverse() # Prepend new entry
+                                        # Prepend entry
+                                        addrbook.reverse()
+                                        addrbook.append([t, addr])
+                                        addrbook.reverse()
                                 else:
                                     d.scrollbox(unicode("The selected address is already in the Address Book."), exit_label="Continue")
                         elif t == "4":
@@ -680,7 +697,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
             menutab = 6
             return
         recv = t
-    if broadcast == None:
+    if broadcast == None and sender != recv:
         r, t = d.radiolist("How to send the message?",
             choices=[("1", "Send to one or more specific people", True),
                 ("2", "Broadcast to everyone who is subscribed to your address", False)])
@@ -761,18 +778,18 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         2)
                     shared.workerQueue.put(("sendmessage", addr))
     else: # Broadcast
-        if addr == "":
+        if recv == "":
             d.set_background_title("Empty sender error")
             d.scrollbox(unicode("You must specify an address to send the message from."),
                 exit_label="Continue")
         else:
             ackdata = OpenSSL.rand(32)
-            addr = BROADCAST_STR
+            recv = BROADCAST_STR
             ripe = ""
             sqlExecute(
                 "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 "",
-                addr,
+                recv,
                 ripe,
                 sender,
                 subject,
