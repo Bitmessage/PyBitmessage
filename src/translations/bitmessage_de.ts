@@ -5,17 +5,17 @@
     <message>
         <location filename="../bitmessageqt/addaddressdialog.py" line="62"/>
         <source>Add new entry</source>
-        <translation type="unfinished">Neuen Eintrag erstellen</translation>
+        <translation>Neuen Eintrag erstellen</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/addaddressdialog.py" line="63"/>
         <source>Label</source>
-        <translation type="unfinished"></translation>
+        <translation>Name oder Bezeichnung</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/addaddressdialog.py" line="64"/>
         <source>Address</source>
-        <translation type="unfinished">Adresse</translation>
+        <translation>Adresse</translation>
     </message>
 </context>
 <context>
@@ -153,7 +153,7 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="850"/>
         <source>Problem: The work demanded by the recipient is more difficult than you are willing to do. %1</source>
-        <translation>Problem: Die vom Empfänger geforderte Arbeit ist schwerer als Sie bereit sind zu berechnen. %1</translation>
+        <translation>Problem: Die vom Empfänger geforderte Arbeit ist schwerer als Sie bereit sind, zu berechnen. %1</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="853"/>
@@ -686,7 +686,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="601"/>
         <source>The Address book is useful for adding names or labels to other people&apos;s Bitmessage addresses so that you can recognize them more easily in your inbox. You can add entries here using the &apos;Add&apos; button, or from your inbox by right-clicking on a message.</source>
-        <translation>Das Adressbuch ist nützlich um die Bitmessage-Adressen anderer Personen Namen oder Beschreibungen zuzuordnen, so dass Sie sie einfacher im Posteingang erkennen können. Sie können Adressen über &quot;Hinzufügen&quot; eintragen, oder über einen Rechtsklick auf eine Nachricht im Posteingang.</translation>
+        <translation>Das Adressbuch ist nützlich, um die Bitmessage-Adressen anderer Personen Namen oder Beschreibungen zuzuordnen, sodass Sie sie einfacher im Posteingang erkennen können. Sie können Adressen über &quot;Neuen Eintrag erstellen&quot; hinzufügen, oder über einen Rechtsklick auf eine Nachricht im Posteingang.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="614"/>
@@ -946,7 +946,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2998"/>
         <source>Set avatar...</source>
-        <translation type="unfinished"></translation>
+        <translation>Avatar wählen...</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1359"/>
@@ -966,7 +966,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1519"/>
         <source>Inventory lookups per second: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Inventory lookups pro Sekunde: %1</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2286"/>
@@ -981,12 +981,12 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3005"/>
         <source>Do you really want to remove this avatar?</source>
-        <translation type="unfinished"></translation>
+        <translation>Wollen Sie diesen Avatar wirklich entfernen?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3013"/>
         <source>You have already set an avatar for this address. Do you really want to overwrite it?</source>
-        <translation type="unfinished"></translation>
+        <translation>Sie haben bereits einen Avatar für diese Adresse gewählt. Wollen Sie ihn wirklich überschreiben?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3287"/>
@@ -1040,7 +1040,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="627"/>
         <source>Inventory lookups per second: 0</source>
-        <translation type="unfinished"></translation>
+        <translation>Inventory lookups pro Sekunde: 0</translation>
     </message>
 </context>
 <context>
@@ -1130,7 +1130,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="190"/>
         <source> (best if this is the first of many addresses you will create)</source>
-        <translation>(zum generieren der erste Adresse empfohlen)</translation>
+        <translation>(Zum Generieren der ersten Adresse empfohlen)</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="191"/>
@@ -1145,7 +1145,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="181"/>
         <source>Address version number: 4</source>
-        <translation type="unfinished">Adress-Versionsnummer: 4</translation>
+        <translation>Adress-Versionsnummer: 4</translation>
     </message>
 </context>
 <context>
@@ -1275,7 +1275,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/help.py" line="47"/>
         <source>As Bitmessage is a collaborative project, help can be found online in the Bitmessage Wiki:</source>
-        <translation>Bei Bitmessage handelt es sich um ein kollaboratives Projekt, Hilfe finden Sie online in Bitmessage-Wiki:</translation>
+        <translation>Bitmessage ist ein kollaboratives Projekt. Hilfe finden Sie online im Bitmessage-Wiki:</translation>
     </message>
 </context>
 <context>
@@ -1293,7 +1293,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/iconglossary.py" line="84"/>
         <source>You have made at least one connection to a peer using an outgoing connection but you have not yet received any incoming connections. Your firewall or home router probably isn&apos;t configured to forward incoming TCP connections to your computer. Bitmessage will work just fine but it would help the Bitmessage network if you allowed for incoming connections and will help you be a better-connected node.</source>
-        <translation>Sie haben mindestes eine Verbindung mit einem Netzwerkteilnehmer über eine ausgehende Verbindung, aber Sie haben noch keine eingehende Verbindung. Ihre Firewall oder Router ist vermutlich nicht richtig konfiguriert um eingehende TCP-Verbindungen an Ihren Computer weiterzuleiten. Bittmessage wird gut funktionieren, jedoch helfen Sie dem Netzwerk, wenn Sie eingehende Verbindungen erlauben. Es hilft auch Ihnen schneller und mehr Verbindungen ins Netzwerk aufzubauen.</translation>
+        <translation>Sie haben mindestes eine Verbindung mit einem Netzwerkteilnehmer über eine ausgehende Verbindung, aber Sie haben noch keine eingehende Verbindung. Ihre Firewall oder Ihr Router ist vermutlich nicht richtig konfiguriert, um eingehende TCP-Verbindungen an Ihren Computer weiterzuleiten. Bitmessage wird gut funktionieren, jedoch helfen Sie dem Netzwerk, wenn Sie eingehende Verbindungen erlauben. Es hilft auch Ihnen schneller und mehr Verbindungen ins Netzwerk aufzubauen.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/iconglossary.py" line="85"/>
@@ -1336,7 +1336,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="104"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A chan exists when a group of people share the same decryption keys. The keys and bitmessage address used by a chan are generated from a human-friendly word or phrase (the chan name). To send a message to everyone in the chan, send a normal person-to-person message to the chan address.&lt;/p&gt;&lt;p&gt;Chans are experimental and completely unmoderatable.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ein Chan existiert, wenn eine Gruppe von Leuten sich den gleichen Entschlüsselungscode teilen. Die Schlüssel und Bitmessage-Adressen werden basierend auf einem lesbaren Wort oder Satz generiert (Dem Chan-Namen). Um eine Nachricht an den Chan zu senden, senden Sie eine normale Person-zu-Person-Nachricht an die Chan-Adresse.&lt;/p&gt;&lt;p&gt;Chans sind experimentell and völlig unmoderierbar.&lt;/p&gt;&lt;br&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ein Chan existiert, wenn eine Gruppe von Leuten sich den gleichen Entschlüsselungscode teilen. Die Schlüssel und Bitmessage-Adressen werden basierend auf einem lesbaren Wort oder Satz generiert (dem Chan-Namen). Um eine Nachricht an den Chan zu senden, senden Sie eine normale Person-zu-Person-Nachricht an die Chan-Adresse.&lt;/p&gt;&lt;p&gt;Chans sind experimentell und völlig unmoderierbar.&lt;/p&gt;&lt;br&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="106"/>
@@ -1346,7 +1346,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="101"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter a name for your chan. If you choose a sufficiently complex chan name (like a strong and unique passphrase) and none of your friends share it publicly then the chan will be secure and private. If you and someone else both create a chan with the same chan name then it is currently very likely that they will be the same chan.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Geben Sie einen Namen für Ihren Chan ein. Wenn Sie einen ausreichend komplexen Chan-Namen wählen (Wie einen starkes und einzigartigen Kennwortsatz) und keiner Ihrer Freunde ihn öffentlich weitergibt, wird der Chan sicher und privat bleiben. Wenn eine andere Person einen Chan mit dem gleichen Namen erzeugt, werden diese zu einem Chan.&lt;/p&gt;&lt;br&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Geben Sie einen Namen für Ihren Chan ein. Wenn Sie einen ausreichend komplexen Chan-Namen wählen (wie einen starken, einzigartigen Kennwortsatz) und keiner Ihrer Freunde ihn öffentlich weitergibt, wird der Chan sicher und privat bleiben. Wenn eine andere Person einen Chan mit dem gleichen Namen erzeugt, werden diese zu einem Chan.&lt;/p&gt;&lt;br&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
 </context>
 <context>
@@ -1369,7 +1369,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="117"/>
         <source>Number of addresses to make based on your passphrase:</source>
-        <translation>Anzahl der Adressen die basierend auf diesem Kennwortsatz erzeugt werden sollen:</translation>
+        <translation>Anzahl der Adressen, die basierend auf diesem Kennwortsatz erzeugt werden sollen:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="108"/>
@@ -1384,7 +1384,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="119"/>
         <source>Stream number:</source>
-        <translation>Stream Nummer:</translation>
+        <translation>Stream-Nummer:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="120"/>
@@ -1394,7 +1394,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="121"/>
         <source>Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter</source>
-        <translation>Verwenden Sie einige Minuten extra Rechenleistung um die Adresse(n) ein bis zwei Zeichen kürzer zu machen</translation>
+        <translation>Verwenden Sie einige Minuten extra Rechenleistung, um die Adresse(n) ein bis zwei Zeichen kürzer zu machen</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="122"/>
@@ -1404,12 +1404,12 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="123"/>
         <source>If you have previously made deterministic addresses but lost them due to an accident (like hard drive failure), you can regenerate them here. If you used the random number generator to make your addresses then this form will be of no use to you.</source>
-        <translation>Wenn Sie bereits deterministische Adressen erstellt haben, aber diese durch einen Unfall wie eine defekte Festplatte verloren haben, können Sie sie hier regenerieren. Wenn Sie den Zufallsgenerator verwendet haben um Ihre Adressen erstmals zu erstellen, kann dieses Formular Ihnen nicht helfen.</translation>
+        <translation>Wenn Sie bereits deterministische Adressen erstellt haben, aber diese durch einen Unfall (zum Beispiel durch eine defekte Festplatte) verloren haben, können Sie sie hier regenerieren. Dies funktioniert nur dann, wenn Sie bei der erstmaligen Erstellung Ihrer Adressen nicht den Zufallsgenerator verwendet haben.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="118"/>
         <source>Address version number:</source>
-        <translation type="unfinished"></translation>
+        <translation>Adress-Versionsnummer:</translation>
     </message>
 </context>
 <context>
@@ -1427,7 +1427,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="386"/>
         <source>Start Bitmessage in the tray (don&apos;t show main window)</source>
-        <translation>Bitmessage minimiert starten (Zeigt das Hauptfenster nicht an)</translation>
+        <translation>Bitmessage minimiert starten (zeigt das Hauptfenster nicht an)</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="387"/>
@@ -1442,12 +1442,12 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="389"/>
         <source>Run in Portable Mode</source>
-        <translation>In portablem Modus arbeiten</translation>
+        <translation>Im portablen Modus arbeiten</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="390"/>
         <source>In Portable Mode, messages and config files are stored in the same directory as the program rather than the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.</source>
-        <translation>Im portablen Modus werden Nachrichten und Konfigurationen im gleichen Ordner abgelegt, wie sich das Programm selbst befindet anstelle im normalen Anwendungsdaten-Ordner. Das macht es möglich Bitmessage auf einem USB-Stick zu betreiben.</translation>
+        <translation>Im portablen Modus werden Nachrichten und Konfigurationen im gleichen Ordner abgelegt, in dem sich das Programm selbst befindet (anstatt im normalen Anwendungsdaten-Ordner). Das macht es möglich, Bitmessage auf einem USB-Stick zu betreiben.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="404"/>
@@ -1522,7 +1522,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="422"/>
         <source>When someone sends you a message, their computer must first complete some work. The difficulty of this work, by default, is 1. You may raise this default for new addresses you create by changing the values here. Any new addresses you create will require senders to meet the higher difficulty. There is one exception: if you add a friend or acquaintance to your address book, Bitmessage will automatically notify them when you next send a message that they need only complete the minimum amount of work: difficulty 1. </source>
-        <translation>Wenn jemand Ihnen eine Nachricht schickt, muss der absendende Computer erst einige Arbeit verrichten. Die Schwierigkeit dieser Arbeit ist standardmäßig 1. Sie können diesen Wert für alle neuen Adressen, die Sie generieren hier ändern. Es gibt eine Ausnahme: Wenn Sie einen Freund oder Bekannten in Ihr Adressbuch übernehmen, wird Bitmessage ihn mit der nächsten Nachricht automatisch informieren, dass er nur noch die minimale Arbeit verrichten muss: Schwierigkeit 1.</translation>
+        <translation>Wenn jemand Ihnen eine Nachricht schickt, muss der absendende Computer erst einige Arbeit verrichten. Die Schwierigkeit dieser Arbeit ist standardmäßig 1. Sie können diesen Wert für alle neuen Adressen, die Sie generieren, hier ändern. Es gibt eine Ausnahme: Wenn Sie einen Freund oder Bekannten in Ihr Adressbuch übernehmen, wird Bitmessage ihn mit der nächsten Nachricht automatisch informieren, dass er nur noch die minimale Arbeit verrichten muss: Schwierigkeit 1.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="419"/>
@@ -1537,12 +1537,12 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="423"/>
         <source>The &apos;Small message difficulty&apos; mostly only affects the difficulty of sending small messages. Doubling this value makes it almost twice as difficult to send a small message but doesn&apos;t really affect large messages.</source>
-        <translation>Die &quot;Schwierigkeit für kurze Nachrichten&quot; trifft nur auf das senden kurzen Nachrichten zu. Verdoppelung des Wertes macht es fast doppelt so schwer kurze Nachrichten zu senden, aber hat keinen Effekt bei langen Nachrichten.</translation>
+        <translation>Die &quot;Schwierigkeit für kurze Nachrichten&quot; trifft nur auf das Senden kurzer Nachrichten zu. Verdoppelung dieses Wertes macht es fast doppelt so schwer, kurze Nachrichten zu senden, aber hat keinen Effekt bei langen Nachrichten.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="420"/>
         <source>The &apos;Total difficulty&apos; affects the absolute amount of work the sender must complete. Doubling this value doubles the amount of work.</source>
-        <translation>Die &quot;Gesammtschwierigkeit&quot; beeinflusst die absolute menge Arbeit die ein Sender verrichten muss. Verdoppelung dieses Wertes verdoppelt die Menge der Arbeit.</translation>
+        <translation>Die &quot;Gesamtschwierigkeit&quot; beeinflusst die absolute Menge Arbeit, die ein Sender verrichten muss. Verdoppelung dieses Wertes verdoppelt die Menge der Arbeit.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="424"/>
@@ -1557,7 +1557,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="426"/>
         <source>Maximum acceptable total difficulty:</source>
-        <translation>Maximale akzeptierte Gesammtschwierigkeit:</translation>
+        <translation>Maximale akzeptierte Gesamtschwierigkeit:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="427"/>
@@ -1572,7 +1572,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="414"/>
         <source>Listen for incoming connections when using proxy</source>
-        <translation>Auf eingehende Verdindungen warten, auch wenn eine Proxy-Server verwendet wird</translation>
+        <translation>Auf eingehende Verdindungen warten, auch wenn ein Proxy-Server verwendet wird</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="391"/>
@@ -1582,7 +1582,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="429"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitmessage can utilize a different Bitcoin-based program called Namecoin to make addresses human-friendly. For example, instead of having to tell your friend your long Bitmessage address, you can simply tell him to send a message to &lt;span style=&quot; font-style:italic;&quot;&gt;test. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(Getting your own Bitmessage address into Namecoin is still rather difficult).&lt;/p&gt;&lt;p&gt;Bitmessage can use either namecoind directly or a running nmcontrol instance.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitmessage kann ein anderes Bitcoin basiertes Programm namens Namecoin nutzen um Adressen leserlicher zu machen. Zum Beispiel: Anstelle Ihrem Bekannten Ihre lange Bitmessage-Adresse vorzulesen, können Sie ihm einfach sagen, er soll eine Nachricht an &lt;span style=&quot; font-style:italic;&quot;&gt;test &lt;/span&gt;senden.&lt;/p&gt;&lt;p&gt; (Ihre Bitmessage-Adresse in Namecoin zu speichern ist noch sehr umständlich)&lt;/p&gt;&lt;p&gt;Bitmessage kann direkt namecoind verwenden, oder eine nmcontrol Instanz.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitmessage kann ein anderes Bitcoin basiertes Programm namens Namecoin nutzen, um Adressen leserlicher zu machen. Zum Beispiel: Anstelle Ihrem Bekannten Ihre lange Bitmessage-Adresse vorzulesen, können Sie ihm einfach sagen, er soll eine Nachricht an &lt;span style=&quot; font-style:italic;&quot;&gt;test &lt;/span&gt;senden.&lt;/p&gt;&lt;p&gt; (Ihre Bitmessage-Adresse in Namecoin zu speichern ist noch sehr umständlich)&lt;/p&gt;&lt;p&gt;Bitmessage kann direkt namecoind verwenden, oder eine nmcontrol Instanz.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="430"/>

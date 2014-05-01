@@ -39,6 +39,11 @@ class singleListener(threading.Thread):
         return sock
 
     def run(self):
+        # If there is a trusted peer then we don't want to accept
+        # incoming connections so we'll just abandon the thread
+        if shared.trustedPeer:
+            return
+
         while shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
             time.sleep(1)
         helper_bootstrap.dns()

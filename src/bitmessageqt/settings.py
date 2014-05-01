@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Mon Jan 20 14:26:31 2014
+# Created: Wed Apr 30 18:35:41 2014
 #      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -26,7 +26,7 @@ except AttributeError:
 class Ui_settingsDialog(object):
     def setupUi(self, settingsDialog):
         settingsDialog.setObjectName(_fromUtf8("settingsDialog"))
-        settingsDialog.resize(521, 399)
+        settingsDialog.resize(521, 413)
         self.gridLayout = QtGui.QGridLayout(settingsDialog)
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.buttonBox = QtGui.QDialogButtonBox(settingsDialog)
@@ -72,6 +72,9 @@ class Ui_settingsDialog(object):
         self.checkBoxUseIdenticons = QtGui.QCheckBox(self.tabUserInterface)
         self.checkBoxUseIdenticons.setObjectName(_fromUtf8("checkBoxUseIdenticons"))
         self.formLayout.setWidget(7, QtGui.QFormLayout.LabelRole, self.checkBoxUseIdenticons)
+        self.checkBoxReplyBelow = QtGui.QCheckBox(self.tabUserInterface)
+        self.checkBoxReplyBelow.setObjectName(_fromUtf8("checkBoxReplyBelow"))
+        self.formLayout.setWidget(8, QtGui.QFormLayout.LabelRole, self.checkBoxReplyBelow)
         self.groupBox = QtGui.QGroupBox(self.tabUserInterface)
         self.groupBox.setObjectName(_fromUtf8("groupBox"))
         self.formLayout_2 = QtGui.QFormLayout(self.groupBox)
@@ -91,8 +94,9 @@ class Ui_settingsDialog(object):
         self.languageComboBox.addItem(_fromUtf8(""))
         self.languageComboBox.addItem(_fromUtf8(""))
         self.languageComboBox.addItem(_fromUtf8(""))
+        self.languageComboBox.addItem(_fromUtf8(""))
         self.formLayout_2.setWidget(0, QtGui.QFormLayout.LabelRole, self.languageComboBox)
-        self.formLayout.setWidget(8, QtGui.QFormLayout.FieldRole, self.groupBox)
+        self.formLayout.setWidget(9, QtGui.QFormLayout.FieldRole, self.groupBox)
         self.tabWidgetSettings.addTab(self.tabUserInterface, _fromUtf8(""))
         self.tabNetworkSettings = QtGui.QWidget()
         self.tabNetworkSettings.setObjectName(_fromUtf8("tabNetworkSettings"))
@@ -392,6 +396,7 @@ class Ui_settingsDialog(object):
         self.PortableModeDescription.setText(_translate("settingsDialog", "In Portable Mode, messages and config files are stored in the same directory as the program rather than the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.", None))
         self.checkBoxWillinglySendToMobile.setText(_translate("settingsDialog", "Willingly include unencrypted destination address when sending to a mobile device", None))
         self.checkBoxUseIdenticons.setText(_translate("settingsDialog", "Use Identicons", None))
+        self.checkBoxReplyBelow.setText(_translate("settingsDialog", "Reply below Quote", None))
         self.groupBox.setTitle(_translate("settingsDialog", "Interface Language", None))
         self.languageComboBox.setItemText(0, _translate("settingsDialog", "System Settings", "system"))
         self.languageComboBox.setItemText(1, _translate("settingsDialog", "English", "en"))
@@ -399,12 +404,13 @@ class Ui_settingsDialog(object):
         self.languageComboBox.setItemText(3, _translate("settingsDialog", "Français", "fr"))
         self.languageComboBox.setItemText(4, _translate("settingsDialog", "Deutsch", "de"))
         self.languageComboBox.setItemText(5, _translate("settingsDialog", "Españl", "es"))
-        self.languageComboBox.setItemText(6, _translate("settingsDialog", "русский язык", "ru"))
+        self.languageComboBox.setItemText(6, _translate("settingsDialog", "русский", "ru"))
         self.languageComboBox.setItemText(7, _translate("settingsDialog", "Norsk", "no"))
         self.languageComboBox.setItemText(8, _translate("settingsDialog", "العربية", "ar"))
         self.languageComboBox.setItemText(9, _translate("settingsDialog", "简体中文", "zh_cn"))
-        self.languageComboBox.setItemText(10, _translate("settingsDialog", "Pirate English", "en_pirate"))
-        self.languageComboBox.setItemText(11, _translate("settingsDialog", "Other (set in keys.dat)", "other"))
+        self.languageComboBox.setItemText(10, _translate("settingsDialog", "日本語", "ja"))
+        self.languageComboBox.setItemText(11, _translate("settingsDialog", "Pirate English", "en_pirate"))
+        self.languageComboBox.setItemText(12, _translate("settingsDialog", "Other (set in keys.dat)", "other"))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabUserInterface), _translate("settingsDialog", "User Interface", None))
         self.groupBox1.setTitle(_translate("settingsDialog", "Listening port", None))
         self.label.setText(_translate("settingsDialog", "Listen for connections on port:", None))

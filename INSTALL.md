@@ -68,8 +68,8 @@ cd PyBitmessage && python src/bitmessagemain.py
 ```
 
 ##Creating a package for installation
-If you really want, you can make a package for PyBitmessage which you may
-install yourself or distribute to friends. This isn't reccomended, since
+If you really want, you can make a package for PyBitmessage, which you may
+install yourself or distribute to friends. This isn't recommended, since
 PyBitmessage is in Beta, and subject to frequent change.
 
 ####Linux
@@ -78,7 +78,7 @@ First off, since PyBitmessage uses something nifty called
 [packagemonkey](https://github.com/fuzzgun/packagemonkey), go ahead and get
 that installed. You may have to build it from source.
 
-Next, edit the generate.sh script. To your liking.
+Next, edit the generate.sh script to your liking.
 
 Now, run the appropriate script for the type of package you'd like to make
 ```
