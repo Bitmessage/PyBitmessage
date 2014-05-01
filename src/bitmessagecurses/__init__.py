@@ -1,7 +1,7 @@
 # Copyright (c) 2014 Luke Montalvo <lukemontalvo@gmail.com>
 # This file adds a alternative commandline interface, feel free to critique and fork
 # 
-# This has only been tested on Arch Linux
+# This has only been tested on Arch Linux and Linux Mint
 # Dependencies:
 #  * from python2-pip
 #     * python2-pythondialog
@@ -545,7 +545,11 @@ def handlech(c, stdscr):
                                     r, t = d.inputbox("New subscription label")
                                     if r == d.DIALOG_OK:
                                         label = t
-                                        subscriptions.reverse().append(label, addr, True).reverse()
+                                        # Prepend entry
+                                        subscriptions.reverse()
+                                        subscriptions.append([label, addr, True])
+                                        subscriptions.reverse()
+
                                         sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
                                         shared.reloadBroadcastSendersForWhichImWatching()
                         elif t == "2":
@@ -576,7 +580,11 @@ def handlech(c, stdscr):
                             r, t = d.inputbox("New subscription label")
                             if r == d.DIALOG_OK:
                                 label = t
-                                subscriptions.reverse().append(label, addr, True).reverse()
+                                # Prepend entry
+                                subscriptions.reverse()
+                                subscriptions.append([label, addr, True])
+                                subscriptions.reverse()
+
                                 sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
                                 shared.reloadBroadcastSendersForWhichImWatching()
                         elif t == "3":
@@ -587,7 +595,10 @@ def handlech(c, stdscr):
                                     r, t = d.inputbox("Label for address \""+addr+"\"")
                                     if r == d.DIALOG_OK:
                                         sqlExecute("INSERT INTO addressbook VALUES (?,?)", t, addr)
-                                        addrbook.reverse().append([t, addr]).reverse() # Prepend new entry
+                                        # Prepend entry
+                                        addrbook.reverse()
+                                        addrbook.append([t, addr])
+                                        addrbook.reverse()
                                 else:
                                     d.scrollbox(unicode("The selected address is already in the Address Book."), exit_label="Continue")
                         elif t == "4":
