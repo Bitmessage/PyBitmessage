@@ -1823,7 +1823,7 @@ class MyForm(QtGui.QMainWindow):
 
     def click_pushButtonAddImage(self):
         file_name=QtGui.QFileDialog.getOpenFileName(
-            self,"Select an image",self.images_dir,"Image (*.png *.jpg *.jepg *.gif)")
+            self,_translate("MainWindow","Select an image"),self.images_dir,_translate("MainWindow","Image (*.png *.jpg *.jepg *.gif)"))
         if file_name.isNull(): # Operation was canceled 
             return
             
@@ -1836,7 +1836,7 @@ class MyForm(QtGui.QMainWindow):
             if image.height()*image.width()>300*300:
                 #Do we need to resize it?
                 r=QtGui.QMessageBox.question(
-                    self,"Image","This image is to big.\nShould it be scaled?",
+                    self,_translate("MainWindow","Image"),_translate("MainWindow","This image is too big.\nShould it be scaled?"),
                     QtGui.QMessageBox.Yes,QtGui.QMessageBox.No) # Why I cannot put Yes button before No button? That is sux
                 if r==QtGui.QMessageBox.Yes:
                     if image.height()>=image.width():
@@ -1855,7 +1855,7 @@ class MyForm(QtGui.QMainWindow):
             html_data="<img src=\""+embeded_url+"\" />"
             self.ui.textEditMessage.insertPlainText("\n"+html_data)
         else:
-            QtGui.QMessageBox.information(self,"Error","Could not open an image")
+            QtGui.QMessageBox.information(self,_translate("MainWindow","Error"),_translate("MainWindow","Could not open an image"))
         
     def imageRecourceToBase64(self,doc,name):
         buf=QBuffer()
