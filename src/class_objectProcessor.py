@@ -12,6 +12,7 @@ from pyelliptic.openssl import OpenSSL
 import highlevelcrypto
 from addresses import *
 import helper_generic
+from helper_generic import addDataPadding
 import helper_bitcoin
 import helper_inbox
 import helper_sent
@@ -659,13 +660,13 @@ class objectProcessor(threading.Thread):
                 shared.workerQueue.put(('sendbroadcast', ''))
 
         if self.ackDataHasAVaildHeader(ackData):
-            if ackData[4:16] == 'getpubkey\x00\x00\x00':
+            if ackData[4:16] == addDataPadding('getpubkey'):
                 shared.checkAndSharegetpubkeyWithPeers(ackData[24:])
-            elif ackData[4:16] == 'pubkey\x00\x00\x00\x00\x00\x00':
+            elif ackData[4:16] == addDataPadding('pubkey'):
                 shared.checkAndSharePubkeyWithPeers(ackData[24:])
-            elif ackData[4:16] == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00':
+            elif ackData[4:16] == addDataPadding('msg'):
                 shared.checkAndShareMsgWithPeers(ackData[24:])
-            elif ackData[4:16] == 'broadcast\x00\x00\x00':
+            elif ackData[4:16] == addDataPadding('broadcast'):
                 shared.checkAndShareBroadcastWithPeers(ackData[24:])
 
         # Display timing data
@@ -1164,10 +1165,10 @@ class objectProcessor(threading.Thread):
             return False
         if ackDataPayloadLength > 180000000: # If the size of the message is greater than 180MB, ignore it.
             return False
-        if (ackData[4:16] != 'getpubkey\x00\x00\x00' and
-            ackData[4:16] != 'pubkey\x00\x00\x00\x00\x00\x00' and
-            ackData[4:16] != 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and
-            ackData[4:16] != 'broadcast\x00\x00\x00'):
+        if (ackData[4:16] != addDataPadding('getpubkey') and
+            ackData[4:16] != addDataPadding('pubkey') and
+            ackData[4:16] != addDataPadding('msg') and
+            ackData[4:16] != addDataPadding('broadcast')):
             return False
         return True
 

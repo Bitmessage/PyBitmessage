@@ -14,7 +14,7 @@ import sys
 
 #import highlevelcrypto
 from addresses import *
-import helper_generic
+from helper_generic import addDataPadding, isHostInPrivateIPRange
 #import helper_bitcoin
 #import helper_inbox
 #import helper_sent
@@ -147,29 +147,29 @@ class receiveDataThread(threading.Thread):
         with shared.printLock:
             print 'remoteCommand', repr(remoteCommand.replace('\x00', '')), ' from', self.peer
 
-        if remoteCommand == 'version\x00\x00\x00\x00\x00' and not self.connectionIsOrWasFullyEstablished:
+        if remoteCommand == addDataPadding('version') and not self.connectionIsOrWasFullyEstablished:
             self.recversion(self.data[24:self.payloadLength + 24])
-        elif remoteCommand == 'verack\x00\x00\x00\x00\x00\x00' and not self.connectionIsOrWasFullyEstablished:
+        elif remoteCommand == addDataPadding('verack') and not self.connectionIsOrWasFullyEstablished:
             self.recverack()
-        elif remoteCommand == 'addr\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+        elif remoteCommand == addDataPadding('addr') and self.connectionIsOrWasFullyEstablished:
             self.recaddr(self.data[24:self.payloadLength + 24])
-        elif remoteCommand == 'getpubkey\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+        elif remoteCommand == addDataPadding('getpubkey') and self.connectionIsOrWasFullyEstablished:
             shared.checkAndSharegetpubkeyWithPeers(self.data[24:self.payloadLength + 24])
-        elif remoteCommand == 'pubkey\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+        elif remoteCommand == addDataPadding('pubkey') and self.connectionIsOrWasFullyEstablished:
             self.recpubkey(self.data[24:self.payloadLength + 24])
-        elif remoteCommand == 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+        elif remoteCommand == addDataPadding('inv') and self.connectionIsOrWasFullyEstablished:
             self.recinv(self.data[24:self.payloadLength + 24])
-        elif remoteCommand == 'getdata\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+        elif remoteCommand == addDataPadding('getdata') and self.connectionIsOrWasFullyEstablished:
             self.recgetdata(self.data[24:self.payloadLength + 24])
-        elif remoteCommand == 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+        elif remoteCommand == addDataPadding('msg') and self.connectionIsOrWasFullyEstablished:
             self.recmsg(self.data[24:self.payloadLength + 24])
-        elif remoteCommand == 'broadcast\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+        elif remoteCommand == addDataPadding('broadcast') and self.connectionIsOrWasFullyEstablished:
             self.recbroadcast(self.data[24:self.payloadLength + 24])
-        elif remoteCommand == 'ping\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+        elif remoteCommand == addDataPadding('ping') and self.connectionIsOrWasFullyEstablished:
             self.sendpong()
-        elif remoteCommand == 'pong\x00\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+        elif remoteCommand == addDataPadding('pong') and self.connectionIsOrWasFullyEstablished:
             pass
-        elif remoteCommand == 'alert\x00\x00\x00\x00\x00\x00\x00' and self.connectionIsOrWasFullyEstablished:
+        elif remoteCommand == addDataPadding('alert') and self.connectionIsOrWasFullyEstablished:
             pass
 
         self.data = self.data[
@@ -226,7 +226,7 @@ class receiveDataThread(threading.Thread):
 
     def sendpong(self):
         print 'Sending pong'
-        self.sendDataThreadQueue.put((0, 'sendRawData', '\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35'))
+        self.sendDataThreadQueue.put((0, 'sendRawData', '\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67' + addDataPadding('') + '\xcf\x83\xe1\x35'))
 
 
     def recverack(self):
@@ -312,7 +312,7 @@ class receiveDataThread(threading.Thread):
     def sendinvMessageToJustThisOnePeer(self, numberOfObjects, payload):
         payload = encodeVarint(numberOfObjects) + payload
         headerData = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
-        headerData += 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        headerData += addDataPadding('inv')
         headerData += pack('>L', len(payload))
         headerData += hashlib.sha512(payload).digest()[:4]
         with shared.printLock:
@@ -458,7 +458,7 @@ class receiveDataThread(threading.Thread):
 
         payload = '\x01' + hash
         headerData = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
-        headerData += 'getdata\x00\x00\x00\x00\x00'
+        headerData += addDataPadding('getdata')
         headerData += pack('>L', len(
             payload))  # payload length. Note that we add an extra 8 for the nonce.
         headerData += hashlib.sha512(payload).digest()[:4]
@@ -504,22 +504,22 @@ class receiveDataThread(threading.Thread):
             with shared.printLock:
                 print 'sending pubkey'
 
-            headerData += 'pubkey\x00\x00\x00\x00\x00\x00'
+            headerData += addDataPadding('pubkey')
         elif objectType == 'getpubkey' or objectType == 'pubkeyrequest':
             with shared.printLock:
                 print 'sending getpubkey'
 
-            headerData += 'getpubkey\x00\x00\x00'
+            headerData += addDataPadding('getpubkey')
         elif objectType == 'msg':
             with shared.printLock:
                 print 'sending msg'
 
-            headerData += 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+            headerData += addDataPadding('msg')
         elif objectType == 'broadcast':
             with shared.printLock:
                 print 'sending broadcast'
 
-            headerData += 'broadcast\x00\x00\x00'
+            headerData += addDataPadding('broadcast')
         else:
             sys.stderr.write(
                 'Error: sendData has been asked to send a strange objectType: %s\n' % str(objectType))
@@ -686,7 +686,7 @@ class receiveDataThread(threading.Thread):
         if len(shared.knownNodes[self.streamNumber]) > 0:
             for i in range(500):
                 peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
-                if helper_generic.isHostInPrivateIPRange(peer.host):
+                if isHostInPrivateIPRange(peer.host):
                     continue
                 addrsInMyStream[peer] = shared.knownNodes[
                     self.streamNumber][peer]
@@ -694,7 +694,7 @@ class receiveDataThread(threading.Thread):
             for i in range(250):
                 peer, = random.sample(shared.knownNodes[
                                       self.streamNumber * 2], 1)
-                if helper_generic.isHostInPrivateIPRange(peer.host):
+                if isHostInPrivateIPRange(peer.host):
                     continue
                 addrsInChildStreamLeft[peer] = shared.knownNodes[
                     self.streamNumber * 2][peer]
@@ -702,7 +702,7 @@ class receiveDataThread(threading.Thread):
             for i in range(250):
                 peer, = random.sample(shared.knownNodes[
                                       (self.streamNumber * 2) + 1], 1)
-                if helper_generic.isHostInPrivateIPRange(peer.host):
+                if isHostInPrivateIPRange(peer.host):
                     continue
                 addrsInChildStreamRight[peer] = shared.knownNodes[
                     (self.streamNumber * 2) + 1][peer]
@@ -745,7 +745,7 @@ class receiveDataThread(threading.Thread):
                 payload += pack('>H', PORT)  # remote port
 
         payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
-        datatosend = '\xE9\xBE\xB4\xD9addr\x00\x00\x00\x00\x00\x00\x00\x00'
+        datatosend = '\xE9\xBE\xB4\xD9' + addDataPadding('addr')
         datatosend = datatosend + pack('>L', len(payload))  # payload length
         datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
         datatosend = datatosend + payload
