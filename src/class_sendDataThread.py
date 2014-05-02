@@ -8,6 +8,7 @@ import random
 import sys
 import socket
 
+from helper_generic import addDataPadding
 from class_objectHashHolder import *
 from addresses import *
 
@@ -108,7 +109,7 @@ class sendDataThread(threading.Thread):
                         payload += pack('>H', port)
 
                     payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
-                    datatosend = '\xE9\xBE\xB4\xD9addr\x00\x00\x00\x00\x00\x00\x00\x00'
+                    datatosend = '\xE9\xBE\xB4\xD9' + addDataPadding('addr')
                     datatosend = datatosend + pack('>L', len(payload))  # payload length
                     datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
                     datatosend = datatosend + payload
@@ -132,7 +133,7 @@ class sendDataThread(threading.Thread):
                     if payload != '':
                         payload = encodeVarint(len(payload)/32) + payload
                         headerData = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
-                        headerData += 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+                        headerData += addDataPadding('inv')
                         headerData += pack('>L', len(payload))
                         headerData += hashlib.sha512(payload).digest()[:4]
                         try:
@@ -150,7 +151,7 @@ class sendDataThread(threading.Thread):
 
                         try:
                             self.sock.sendall(
-                                '\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
+                                '\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67' + addDataPadding('') + '\xcf\x83\xe1\x35')
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'send pong failed'
