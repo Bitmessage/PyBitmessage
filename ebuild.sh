@@ -21,13 +21,13 @@ sed -i "s/|${PREV_VERSION}|/|${VERSION}|/g" puppypackage/*.specs
 sed -i 's/VERSION='${PREV_VERSION}'/VERSION='${VERSION}'/g' puppypackage/pinstall.sh puppypackage/puninstall.sh
 sed -i 's/-'${PREV_VERSION}'.so/-'${VERSION}'.so/g' debian/*.links
 
-# create the source code in the SOURCES directory
+# Create the source code in the SOURCES directory
 make clean
 mkdir -p ~/ebuild
 rm -f ${SOURCE}
 mv ../${APP} ../${APP}-${VERSION}
 tar -cvzf ${SOURCE} ../${APP}-${VERSION} --exclude-vcs
 
-# rename the root directory without the version number
+# Rename the root directory without the version number
 mv ../${APP}-${VERSION} ../${APP}
 

@@ -1,11 +1,12 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="2.0" language="ru" sourcelanguage="en">
+<!DOCTYPE TS>
+<TS version="2.0" language="ru" sourcelanguage="en">
 <context>
     <name>AddAddressDialog</name>
     <message>
         <location filename="../bitmessageqt/addaddressdialog.py" line="62"/>
         <source>Add new entry</source>
-        <translation type="unfinished">Добавить новую запись</translation>
+        <translation>Добавить новую запись</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/addaddressdialog.py" line="63"/>
@@ -1239,7 +1240,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <source>version ?</source>
         <translation>версия ?</translation>
     </message>
-    <message encoding="UTF-8">
+    <message utf8="true">
         <location filename="../bitmessageqt/about.py" line="60"/>
         <source>Copyright © 2013 Jonathan Warren</source>
         <translation type="obsolete">Копирайт © 2013 Джонатан Уоррен</translation>
@@ -1256,7 +1257,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     </message>
     <message>
         <location filename="../bitmessageqt/about.py" line="69"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright &#xc2;&#xa9; 2012-2013 Jonathan Warren&lt;br/&gt;Copyright &#xc2;&#xa9; 2013 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright Â© 2012-2013 Jonathan Warren&lt;br/&gt;Copyright Â© 2013 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1672,7 +1673,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="397"/>
-        <source>Fran&#xc3;&#xa7;ais</source>
+        <source>FranÃ§ais</source>
         <comment>fr</comment>
         <translation>Francais</translation>
     </message>
@@ -1684,13 +1685,13 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="353"/>
-        <source>Espa&#xc3;&#xb1;ol</source>
+        <source>EspaÃ±ol</source>
         <comment>es</comment>
         <translation type="obsolete">Espanol</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="354"/>
-        <source>&#xd0;&#xa0;&#xd1;&#x83;&#xd1;&#x81;&#xd1;&#x81;&#xd0;&#xba;&#xd0;&#xb8;&#xd0;&#xb9;</source>
+        <source>Ð ÑÑÑÐºÐ¸Ð¹</source>
         <comment>ru</comment>
         <translation type="obsolete">Русский</translation>
     </message>
@@ -1713,13 +1714,13 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="399"/>
-        <source>Espa&#xc3;&#xb1;l</source>
+        <source>EspaÃ±l</source>
         <comment>es</comment>
         <translation></translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="400"/>
-        <source>&#xd1;&#x80;&#xd1;&#x83;&#xd1;&#x81;&#xd1;&#x81;&#xd0;&#xba;&#xd0;&#xb8;&#xd0;&#xb9; &#xd1;&#x8f;&#xd0;&#xb7;&#xd1;&#x8b;&#xd0;&#xba;</source>
+        <source>ÑÑÑÑÐºÐ¸Ð¹ ÑÐ·ÑÐº</source>
         <comment>ru</comment>
         <translation></translation>
     </message>

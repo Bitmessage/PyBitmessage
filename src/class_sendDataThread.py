@@ -25,6 +25,7 @@ class sendDataThread(threading.Thread):
         self.data = ''
         self.objectHashHolderInstance = objectHashHolder(self.sendDataThreadQueue)
         self.objectHashHolderInstance.start()
+        self.connectionIsOrWasFullyEstablished = False
 
 
     def setup(
@@ -71,16 +72,6 @@ class sendDataThread(threading.Thread):
                     if data == self.peer or data == 'all':
                         with shared.printLock:
                             print 'sendDataThread (associated with', self.peer, ') ID:', id(self), 'shutting down now.'
-
-                        try:
-                            self.sock.shutdown(socket.SHUT_RDWR)
-                            self.sock.close()
-                        except:
-                            pass
-                        shared.sendDataQueues.remove(self.sendDataThreadQueue)
-                        with shared.printLock:
-                            print 'len of sendDataQueues', len(shared.sendDataQueues)
-
                         break
                 # When you receive an incoming connection, a sendDataThread is
                 # created even though you don't yet know what stream number the
@@ -89,12 +80,9 @@ class sendDataThread(threading.Thread):
                 # will continue on with the connection and will set the
                 # streamNumber of this send data thread here:
                 elif command == 'setStreamNumber':
-                    peerInMessage, specifiedStreamNumber = data
-                    if peerInMessage == self.peer:
-                        with shared.printLock:
-                            print 'setting the stream number in the sendData thread (ID:', id(self), ') to', specifiedStreamNumber
-
-                        self.streamNumber = specifiedStreamNumber
+                    self.streamNumber = data
+                    with shared.printLock:
+                        print 'setting the stream number in the sendData thread (ID:', id(self), ') to', self.streamNumber 
                 elif command == 'setRemoteProtocolVersion':
                     specifiedRemoteProtocolVersion = data
                     with shared.printLock:
@@ -103,6 +91,9 @@ class sendDataThread(threading.Thread):
                 elif command == 'advertisepeer':
                     self.objectHashHolderInstance.holdPeer(data)
                 elif command == 'sendaddr':
+                    if not self.connectionIsOrWasFullyEstablished:
+                        # not sending addr because we haven't sent and heard a verack from the remote node yet
+                        return
                     numberOfAddressesInAddrMessage = len(
                         data)
                     payload = ''
@@ -113,8 +104,7 @@ class sendDataThread(threading.Thread):
                         payload += pack('>I', streamNumber)
                         payload += pack(
                             '>q', services)  # service bit flags offered by this node
-                        payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-                            socket.inet_aton(host)
+                        payload += shared.encodeHost(host)
                         payload += pack('>H', port)
 
                     payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
@@ -128,17 +118,13 @@ class sendDataThread(threading.Thread):
                         self.lastTimeISentData = int(time.time())
                     except:
                         print 'sendaddr: self.sock.sendall failed'
-                        try:
-                            self.sock.shutdown(socket.SHUT_RDWR)
-                            self.sock.close()
-                        except:
-                            pass
-                        shared.sendDataQueues.remove(self.sendDataThreadQueue)
-                        print 'sendDataThread thread (ID:', str(id(self)) + ') ending now. Was connected to', self.peer
                         break
                 elif command == 'advertiseobject':
                     self.objectHashHolderInstance.holdHash(data)
                 elif command == 'sendinv':
+                    if not self.connectionIsOrWasFullyEstablished:
+                        # not sending inv because we haven't sent and heard a verack from the remote node yet
+                        return
                     payload = ''
                     for hash in data:
                         if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
@@ -154,13 +140,6 @@ class sendDataThread(threading.Thread):
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'sendinv: self.sock.sendall failed'
-                            try:
-                                self.sock.shutdown(socket.SHUT_RDWR)
-                                self.sock.close()
-                            except:
-                                pass
-                            shared.sendDataQueues.remove(self.sendDataThreadQueue)
-                            print 'sendDataThread thread (ID:', str(id(self)) + ') ending now. Was connected to', self.peer
                             break
                 elif command == 'pong':
                     self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware.clear() # To save memory, let us clear this data structure from time to time. As its function is to help us keep from sending inv messages to peers which sent us the same inv message mere seconds earlier, it will be fine to clear this data structure from time to time.
@@ -175,29 +154,26 @@ class sendDataThread(threading.Thread):
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'send pong failed'
-                            try:
-                                self.sock.shutdown(socket.SHUT_RDWR)
-                                self.sock.close()
-                            except:
-                                pass
-                            shared.sendDataQueues.remove(self.sendDataThreadQueue)
-                            print 'sendDataThread thread', self, 'ending now. Was connected to', self.peer
                             break
                 elif command == 'sendRawData':
                     try:
                         self.sock.sendall(data)
                         self.lastTimeISentData = int(time.time())
                     except:
-                        try:
-                            self.sock.shutdown(socket.SHUT_RDWR)
-                            self.sock.close()
-                        except:
-                            pass
-                        shared.sendDataQueues.remove(self.sendDataThreadQueue)
                         print 'Sending of data to', self.peer, 'failed. sendDataThread thread', self, 'ending now.' 
                         break
+                elif command == 'connectionIsOrWasFullyEstablished':
+                    self.connectionIsOrWasFullyEstablished = True
             else:
                 with shared.printLock:
                     print 'sendDataThread ID:', id(self), 'ignoring command', command, 'because the thread is not in stream', deststream
 
+        try:
+            self.sock.shutdown(socket.SHUT_RDWR)
+            self.sock.close()
+        except:
+            pass
+        shared.sendDataQueues.remove(self.sendDataThreadQueue)
+        with shared.printLock:
+            print 'Number of queues remaining in sendDataQueues:', len(shared.sendDataQueues)
         self.objectHashHolderInstance.close()
