@@ -40,6 +40,8 @@ from debug import logger
 import subprocess
 import datetime
 from helper_sql import *
+import base64
+import re
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -178,7 +180,9 @@ class MyForm(QtGui.QMainWindow):
 
     str_broadcast_subscribers = '[Broadcast subscribers]'
     str_chan = '[chan]'
-
+    
+    images_dir=os.path.expanduser("~")
+    
     def init_file_menu(self):
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
             "triggered()"), self.quit)
@@ -205,6 +209,8 @@ class MyForm(QtGui.QMainWindow):
             "clicked()"), self.click_pushButtonAddSubscription)
         QtCore.QObject.connect(self.ui.pushButtonAddBlacklist, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonAddBlacklist)
+        QtCore.QObject.connect(self.ui.pushButtonAddImage, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonAddImage)
         QtCore.QObject.connect(self.ui.pushButtonSend, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonSend)
         QtCore.QObject.connect(self.ui.pushButtonLoadFromAddressBook,
@@ -264,6 +270,11 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuInbox.addSeparator()
         self.popMenuInbox.addAction(self.actionSaveMessageAs)
         self.popMenuInbox.addAction(self.actionTrashInboxMessage)
+        # Text browser actions
+        self.ui.textEditInboxMessage.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
+        self.connect(self.ui.textEditInboxMessage, QtCore.SIGNAL(
+            'customContextMenuRequested(const QPoint&)'),
+                     self.on_context_inboxMessage)
 
     def init_identities_popup_menu(self):
         # Popup menu for the Your Identities tab
@@ -446,7 +457,7 @@ class MyForm(QtGui.QMainWindow):
         QtGui.QWidget.__init__(self, parent)
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-
+        
         # Ask the user if we may delete their old version 1 addresses if they
         # have any.
         configSections = shared.config.sections()
@@ -1811,13 +1822,72 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetSubscriptions.setItem(0, 1, newItem)
 
+    def click_pushButtonAddImage(self):
+        file_name=QtGui.QFileDialog.getOpenFileName(
+            self,_translate("MainWindow","Select an image"),self.images_dir,_translate("MainWindow","Image (*.png *.jpg *.jepg *.gif)"))
+        if file_name.isNull(): # Operation was canceled 
+            return
+            
+        file_info=QFileInfo(file_name)
+        self.images_dir=file_info.dir().absolutePath() #coz os.path.dirname does not support unicode
+        file_ext=file_info.suffix() #get an extension
+        
+        image=QImage()
+        if image.load(file_name):
+            if image.height()*image.width()>300*300:
+                #Do we need to resize it?
+                r=QtGui.QMessageBox.question(
+                    self,_translate("MainWindow","Image"),_translate("MainWindow","This image is too big.\nShould it be scaled?"),
+                    QtGui.QMessageBox.Yes,QtGui.QMessageBox.No) # Why I cannot put Yes button before No button? That is sux
+                if r==QtGui.QMessageBox.Yes:
+                    if image.height()>=image.width():
+                        image=image.scaledToHeight(300)
+                    else:
+                        image=image.scaledToWidth(300)
+               
+            #buf=QBuffer()
+            #image.save(buf,"PNG")
+            #encoded_data=buf.buffer().toBase64().data()
+            doc=self.ui.textEditMessage.document()
+            embeded_url="images://"+file_info.fileName()+"."+str(doc.revision())
+            doc.addResource(QTextDocument.ImageResource,
+                QUrl(embeded_url), QVariant(image));
+         
+            html_data="<img src=\""+embeded_url+"\" />"
+            self.ui.textEditMessage.insertPlainText("\n"+html_data)
+        else:
+            QtGui.QMessageBox.information(self,_translate("MainWindow","Error"),_translate("MainWindow","Could not open an image"))
+        
+    def imageRecourceToBase64(self,doc,name):
+        buf=QBuffer()
+        image_data=doc.resource(QtGui.QTextDocument.ImageResource,QtCore.QUrl(name))
+        if image_data.isNull() or not image_data.isValid():
+            return ""
+        image=QImage(image_data)
+        image.save(buf,"PNG")
+        return buf.buffer().toBase64().data()
+        
+    def embedeImages(self):
+        doc=self.ui.textEditMessage.document()
+        content=self.ui.textEditMessage.document().toPlainText()
+        last_i=content.indexOf("images://")
+        while last_i>=0:
+            j=content.indexOf("\"",last_i)
+            if j>0:
+                l=j-last_i
+                url=content.mid(last_i,l)
+                base64=self.imageRecourceToBase64(doc,url)
+                content.replace(last_i,l,"data:image/png;base64,"+base64)
+            last_i=content.indexOf("images://",last_i)
+        return content
+        
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
         toAddresses = str(self.ui.lineEditTo.text())
         fromAddress = str(self.ui.labelFrom.text())
         subject = str(self.ui.lineEditSubject.text().toUtf8())
-        message = str(
-            self.ui.textEditMessage.document().toPlainText().toUtf8())
+        message = str(self.embedeImages().toUtf8()) 
+            
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
                                for s in toAddresses.replace(',', ';').split(';')]
@@ -2596,7 +2666,7 @@ class MyForm(QtGui.QMainWindow):
         for i in xrange(len(lines)):
             content += lines[i]
         content = content.replace('\n\n', '<br><br>')
-        self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
+        self.ui.textEditInboxMessage.setHtml(QtCore.QString.fromUtf8(content))
 
     def on_action_InboxMarkUnread(self):
         font = QFont()
@@ -2638,6 +2708,33 @@ class MyForm(QtGui.QMainWindow):
                 return quoteWrapper.fill(line)
         return '\n'.join([quote_line(l) for l in message.splitlines()]) + '\n\n'
 
+    # data  - data:image/png;base64,blablalbabla.....
+    def imageRecourceFromBase64(self,doc,name,data): 
+        image_format=data.mid(11,3)
+        base64=data.mid(22)
+        image=QImage()
+        if not image.loadFromData(QByteArray.fromBase64(base64.toUtf8()),image_format):
+            return False
+            
+        doc.addResource(QtGui.QTextDocument.ImageResource,QUrl(name),QVariant(image))
+        return True
+        
+    def hideImages(self,text):
+        content=QString.fromUtf8(text)
+        doc=self.ui.textEditMessage.document()
+        last_i=content.indexOf("data:image/")
+        while last_i>=0:
+            j=content.indexOf("\"",last_i)
+            if j>0:
+                l=j-last_i
+                data=content.mid(last_i,l)
+                name="images://img"+str(last_i)
+                # replace source only if the image can be loaded as a resource, otherwsie keep it
+                if self.imageRecourceFromBase64(doc,name,data):
+                    content.replace(last_i,l,name)
+            last_i=content.indexOf("data:image/",last_i)
+        return content
+    
     def on_action_InboxReply(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
         toAddressAtCurrentInboxRow = str(self.ui.tableWidgetInbox.item(
@@ -2780,6 +2877,23 @@ class MyForm(QtGui.QMainWindow):
         else:
             self.ui.tableWidgetSent.selectRow(currentRow - 1)
 
+    def on_action_InboxMessageSaveAs(self):
+        cursor=self.ui.textEditInboxMessage.textCursor()
+        text_block=cursor.block()
+        i=text_block.begin()
+        while not i.atEnd():
+            frag=i.fragment()
+            if frag.charFormat().isImageFormat():
+                img_frag=frag.charFormat().toImageFormat()
+                image_data=self.ui.textEditInboxMessage.document().resource(
+                    QtGui.QTextDocument.ImageResource,QtCore.QUrl(img_frag.name()))
+                file_name=QtGui.QFileDialog.getSaveFileName(self,"Save image",self.images_dir,"Image ( *.png *.jpg *.jepg *.gif)")
+                if not file_name.isNull():
+                    img=QImage(image_data)
+                    img.save(file_name)
+                return
+            i+=1
+        
     def on_action_ForceSend(self):
         currentRow = self.ui.tableWidgetSent.currentRow()
         addressAtCurrentRow = str(self.ui.tableWidgetSent.item(
@@ -3128,7 +3242,13 @@ class MyForm(QtGui.QMainWindow):
 
     def on_context_menuInbox(self, point):
         self.popMenuInbox.exec_(self.ui.tableWidgetInbox.mapToGlobal(point))
-
+    
+    def on_context_inboxMessage(self, point):
+        popMenuInboxMessage = self.ui.textEditInboxMessage.createStandardContextMenu()
+        popMenuInboxMessage.addAction(_translate("MainWindow", "Save as"),
+            self.on_action_InboxMessageSaveAs)
+        popMenuInboxMessage.exec_(self.ui.textEditInboxMessage.mapToGlobal(point))
+        
     def on_context_menuSent(self, point):
         self.popMenuSent = QtGui.QMenu(self)
         self.popMenuSent.addAction(self.actionSentClipboard)

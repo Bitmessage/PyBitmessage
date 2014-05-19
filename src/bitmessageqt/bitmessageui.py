@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Sat Nov  2 18:01:09 2013
+# Created: Sat Apr  5 16:04:46 2014
 #      by: PyQt4 UI code generator 4.10
 #
 # WARNING! All changes made in this file will be lost!
@@ -109,12 +109,6 @@ class Ui_MainWindow(object):
         self.send.setObjectName(_fromUtf8("send"))
         self.gridLayout_2 = QtGui.QGridLayout(self.send)
         self.gridLayout_2.setObjectName(_fromUtf8("gridLayout_2"))
-        self.pushButtonLoadFromAddressBook = QtGui.QPushButton(self.send)
-        font = QtGui.QFont()
-        font.setPointSize(7)
-        self.pushButtonLoadFromAddressBook.setFont(font)
-        self.pushButtonLoadFromAddressBook.setObjectName(_fromUtf8("pushButtonLoadFromAddressBook"))
-        self.gridLayout_2.addWidget(self.pushButtonLoadFromAddressBook, 3, 2, 1, 1)
         self.pushButtonFetchNamecoinID = QtGui.QPushButton(self.send)
         font = QtGui.QFont()
         font.setPointSize(7)
@@ -145,14 +139,20 @@ class Ui_MainWindow(object):
         self.textEditMessage = QtGui.QTextEdit(self.send)
         self.textEditMessage.setObjectName(_fromUtf8("textEditMessage"))
         self.gridLayout_2.addWidget(self.textEditMessage, 5, 1, 2, 5)
+        spacerItem = QtGui.QSpacerItem(20, 297, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
+        self.gridLayout_2.addItem(spacerItem, 6, 0, 1, 1)
         self.label = QtGui.QLabel(self.send)
         self.label.setObjectName(_fromUtf8("label"))
         self.gridLayout_2.addWidget(self.label, 3, 0, 1, 1)
+        self.pushButtonLoadFromAddressBook = QtGui.QPushButton(self.send)
+        font = QtGui.QFont()
+        font.setPointSize(7)
+        self.pushButtonLoadFromAddressBook.setFont(font)
+        self.pushButtonLoadFromAddressBook.setObjectName(_fromUtf8("pushButtonLoadFromAddressBook"))
+        self.gridLayout_2.addWidget(self.pushButtonLoadFromAddressBook, 3, 2, 1, 1)
         self.label_2 = QtGui.QLabel(self.send)
         self.label_2.setObjectName(_fromUtf8("label_2"))
         self.gridLayout_2.addWidget(self.label_2, 2, 0, 1, 1)
-        spacerItem = QtGui.QSpacerItem(20, 297, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
-        self.gridLayout_2.addItem(spacerItem, 6, 0, 1, 1)
         self.radioButtonBroadcast = QtGui.QRadioButton(self.send)
         self.radioButtonBroadcast.setObjectName(_fromUtf8("radioButtonBroadcast"))
         self.gridLayout_2.addWidget(self.radioButtonBroadcast, 1, 1, 1, 3)
@@ -164,7 +164,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2.addItem(spacerItem1, 3, 4, 1, 1)
         self.pushButtonSend = QtGui.QPushButton(self.send)
         self.pushButtonSend.setObjectName(_fromUtf8("pushButtonSend"))
-        self.gridLayout_2.addWidget(self.pushButtonSend, 7, 5, 1, 1)
+        self.gridLayout_2.addWidget(self.pushButtonSend, 8, 5, 1, 1)
         self.labelSendBroadcastWarning = QtGui.QLabel(self.send)
         self.labelSendBroadcastWarning.setEnabled(True)
         sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Ignored, QtGui.QSizePolicy.Preferred)
@@ -174,7 +174,10 @@ class Ui_MainWindow(object):
         self.labelSendBroadcastWarning.setSizePolicy(sizePolicy)
         self.labelSendBroadcastWarning.setIndent(-1)
         self.labelSendBroadcastWarning.setObjectName(_fromUtf8("labelSendBroadcastWarning"))
-        self.gridLayout_2.addWidget(self.labelSendBroadcastWarning, 7, 1, 1, 4)
+        self.gridLayout_2.addWidget(self.labelSendBroadcastWarning, 8, 1, 1, 4)
+        self.pushButtonAddImage = QtGui.QPushButton(self.send)
+        self.pushButtonAddImage.setObjectName(_fromUtf8("pushButtonAddImage"))
+        self.gridLayout_2.addWidget(self.pushButtonAddImage, 7, 5, 1, 1)
         icon2 = QtGui.QIcon()
         icon2.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/send.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.send, icon2, _fromUtf8(""))
@@ -439,7 +442,7 @@ class Ui_MainWindow(object):
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 885, 27))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 885, 22))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -501,7 +504,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(1)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.lineEditTo.setEnabled)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("clicked(bool)")), self.labelSendBroadcastWarning.hide)
         QtCore.QObject.connect(self.radioButtonBroadcast, QtCore.SIGNAL(_fromUtf8("clicked()")), self.labelSendBroadcastWarning.show)
@@ -549,7 +552,6 @@ class Ui_MainWindow(object):
         item = self.tableWidgetInbox.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Received", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.inbox), _translate("MainWindow", "Inbox", None))
-        self.pushButtonLoadFromAddressBook.setText(_translate("MainWindow", "Load from Address book", None))
         self.pushButtonFetchNamecoinID.setText(_translate("MainWindow", "Fetch Namecoin ID", None))
         self.label_4.setText(_translate("MainWindow", "Message:", None))
         self.label_3.setText(_translate("MainWindow", "Subject:", None))
@@ -557,13 +559,15 @@ class Ui_MainWindow(object):
         self.textEditMessage.setHtml(_translate("MainWindow", "<!DOCTYPE HTML PUBLIC \"-//W3C//DTD HTML 4.0//EN\" \"http://www.w3.org/TR/REC-html40/strict.dtd\">\n"
 "<html><head><meta name=\"qrichtext\" content=\"1\" /><style type=\"text/css\">\n"
 "p, li { white-space: pre-wrap; }\n"
-"</style></head><body style=\" font-family:\'Sans\'; font-size:9pt; font-weight:400; font-style:normal;\">\n"
-"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\';\"><br /></p></body></html>", None))
+"</style></head><body style=\" font-family:\'Ubuntu\'; font-size:9pt; font-weight:200; font-style:normal;\">\n"
+"<p style=\"-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:\'MS Shell Dlg 2\'; font-weight:400;\"><br /></p></body></html>", None))
         self.label.setText(_translate("MainWindow", "To:", None))
+        self.pushButtonLoadFromAddressBook.setText(_translate("MainWindow", "Load from Address book", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.radioButtonBroadcast.setText(_translate("MainWindow", "Broadcast to everyone who is subscribed to your address", None))
         self.pushButtonSend.setText(_translate("MainWindow", "Send", None))
         self.labelSendBroadcastWarning.setText(_translate("MainWindow", "Be aware that broadcasts are only encrypted with your address. Anyone who knows your address can read them.", None))
+        self.pushButtonAddImage.setText(_translate("MainWindow", "Add image", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send", None))
         self.sentSearchLineEdit.setPlaceholderText(_translate("MainWindow", "Search", None))
         self.sentSearchOptionCB.setItemText(0, _translate("MainWindow", "All", None))
