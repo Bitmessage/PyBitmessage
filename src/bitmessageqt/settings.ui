@@ -133,52 +133,57 @@
             </item>
             <item>
              <property name="text">
-              <string comment="en">English</string>
+              <string notr="true" comment="en">English</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="eo">Esperanto</string>
+              <string notr="true" comment="eo">Esperanto</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="fr">Français</string>
+              <string notr="true" comment="fr">Français</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="de">Deutsch</string>
+              <string notr="true" comment="de">Deutsch</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="es">Españl</string>
+              <string notr="true" comment="es">Españl</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="ru">русский</string>
+              <string notr="true" comment="ru">русский</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="no">Norsk</string>
+              <string notr="true" comment="no">Norsk</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="ar">العربية</string>
+              <string notr="true" comment="ar">العربية</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="zh_cn">简体中文</string>
+              <string notr="true" comment="zh_cn">简体中文</string>
              </property>
             </item>
             <item>
              <property name="text">
-              <string comment="ja">日本語</string>
+              <string notr="true" comment="ja">日本語</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
+              <string notr="true" comment="nl">Nederlands</string>
              </property>
             </item>
             <item>
