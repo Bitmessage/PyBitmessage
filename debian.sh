@@ -33,7 +33,7 @@ make
 mv ../${APP} ../${DIR}
 
 # Create a source archive
-make source
+make sourcedeb
 
 # Build the package
 dpkg-buildpackage -F

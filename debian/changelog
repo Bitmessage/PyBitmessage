@@ -1,53 +1,166 @@
+pybitmessage (0.4.2-1) saucy; urgency=low
+
+  * Exclude debian directory from orig.tar.gz
+
+  * Added Norwegian, Chinese, and Arabic translations
+
+  * sock.sendall function isn't atomic.
+    Let sendDataThread be the only thread which sends data.
+
+  * Moved API code to api.py
+
+  * Populate comboBoxSendFrom when replying
+
+  * Added option to show recent broadcasts when subscribing
+
+  * Fixed issue: If Windows username contained an international character,
+    Bitmessage wouldn't start
+
+  * Added some code for FreeBSD compatibility
+
+  * Moved responsibility for processing network objects
+    to the new ObjectProcessorThread
+
+  * Refactored main QT module
+    Moved popup menus initialization to separate methods
+    Simplified inbox loading
+    Moved magic strings to the model scope constants so they won't
+    be created every time.
+
+  * Updated list of defaultKnownNodes
+
+  * Fixed issue: [Linux] When too many messages arrive too quickly,
+    exception occurs: "Exceeded maximum number of notifications"
+
+  * Fixed issue: creating then deleting an Address in short time crashes
+    class_singleWorker.py
+
+  * Refactored code which displays messages to improve code readability
+
+  * load "Sent To" label from subscriptions if available
+
+  * Removed code to add chans to our address book as it is no longer necessary
+
+  * Added identicons
+
+  * Modified addresses.decodeAddress so that API command decodeAddress
+    works properly
+
+  * Added API commands createChan, joinChan, leaveChan, deleteAddress
+
+  * In pyelliptic, check the return value of RAND_bytes to make sure enough
+    random data was generated
+
+  * Don't store messages in UI table (and thus in memory), pull from SQL
+    inventory as needed
+
+  * Fix typos in API commands addSubscription and getInboxMessagesByAddress
+
+  * Add feature in settings menu to give up resending a message after a
+    specified period of time
+
+ -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Thu, 6 March 2014 20:23:00 +0100
+
+pybitmessage (0.4.1-1) raring; urgency=low
+
+  * Fixed whitelist bug
+
+  * Fixed chan bug
+    Added addressversion field to pubkeys table
+    Sending messages to a chan no longer uses anything in the pubkeys table
+    Sending messages to yourself is now fully supported
+
+  * Change _verifyAddress function to support v4 addresses
+
+ -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Sun, 29 September 2013 09:54:00 +0100
+
 pybitmessage (0.4.0-1) raring; urgency=low
 
   * Raised default demanded difficulty from 1 to 2 for new addresses
+
   * Added v4 addresses:
     pubkeys are now encrypted and tagged in the inventory
+
   * Use locks when accessing dictionary inventory
+
   * Refactored the way inv and addr messages are shared
+
   * Give user feedback when disk is full
+
   * Added chan true/false to listAddresses results
+
   * When replying using chan address, send to whole chan not just sender
+
   * Refactored of the way PyBitmessage looks for interesting new objects
     in large inv messages from peers
+
   * Show inventory lookup rate on Network Status tab
+
   * Added SqlBulkExecute class
     so we can update inventory with only one commit
+
   * Updated Russian translations
+
   * Move duplicated SQL code into helper
+
   * Allow specification of alternate settings dir
     via BITMESSAGE_HOME environment variable
+
   * Removed use of gevent. Removed class_bgWorker.py
+
   * Added Sip and PyQt to includes in build_osx.py
+
   * Show number of each message type processed
     in the API command clientStatus
+
   * Use fast PoW
     unless we're explicitly a frozen (binary) version of the code
+
   * Enable user-set localization in settings
+
   * Fix Archlinux package creation
+
   * Fallback to language only localization when region doesn't match
+
   * Fixed brew install instructions
+
   * Added German translation
+
   * Made inbox and sent messages table panels read-only
+
   * Allow inbox and sent preview panels to resize
+
   * Count RE: as a reply header, just like Re: so we don't chain Re: RE:
+
   * Fix for traceback on OSX
+
   * Added backend ability to understand shorter addresses
+
   * Convert 'API Error' to raise APIError()
+
   * Added option in settings to allow sending to a mobile device
     (app not yet done)
+
   * Added ability to start daemon mode when using Bitmessage as a module
+
   * Improved the way client detects locale
+
   * Added API commands:
     getInboxMessageIds, getSentMessageIds, listAddressBookEntries,
     trashSentMessageByAckData, addAddressBookEntry,
     deleteAddressBookEntry, listAddresses2, listSubscriptions
+
   * Set a maximum frequency for playing sounds
+
   * Show Invalid Method error in same format as other API errors
+
   * Update status of separate broadcasts separately
     even if the sent data is identical
+
   * Added Namecoin integration
+
   * Internally distinguish peers by IP and port
+
   * Inbox message retrieval API
     functions now also returns read status
 
@@ -56,28 +169,50 @@ pybitmessage (0.4.0-1) raring; urgency=low
 pybitmessage (0.3.5-1) raring; urgency=low
 
   * Inbox message retrieval API functions now also returns read status
+
   * Added right-click option to mark a message as unread
+
   * Prompt user to connect at first startup
+
   * Install into /usr/local by default
+
   * Add a missing rm -f to the uninstall task.
+
   * Use system text color for enabled addresses instead of black
+
   * Added support for Chans
+
   * Start storing msgid in sent table
+
   * Optionally play sounds on connection/disconnection or when messages arrive
+
   * Adding configuration option to listen for connections when using SOCKS
+
   * Added packaging for multiple distros (Arch, Puppy, Slack, etc.)
+
   * Added Russian translation
+
   * Added search support in the UI
+
   * Added 'make uninstall'
+
   * To improve OSX support, use PKCS5_PBKDF2_HMAC_SHA1
     if PKCS5_PBKDF2_HMAC is unavailable
+
   * Added better warnings for OSX users who are using old versions of Python
+
   * Repaired debian packaging
+
   * Altered Makefile to avoid needing to chase changes
+
   * Added logger module
+
   * Added bgWorker class for background tasks
+
   * Added use of gevent module
+
   * On not-Windows: Fix insecure keyfile permissions
+
   * Fix 100% CPU usage issue
 
  -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Mon, 29 July 2013 22:11:00 +0100
@@ -86,8 +221,11 @@ pybitmessage (0.3.4-1) raring; urgency=low
 
   * Switched addr, msg, broadcast, and getpubkey message types
     to 8 byte time. Last remaining type is pubkey.
+
   * Added tooltips to show the full subject of messages
+
   * Added Maximum Acceptable Difficulty fields in the settings
+
   * Send out pubkey immediately after generating deterministic
     addresses rather than waiting for a request
 
@@ -96,10 +234,14 @@ pybitmessage (0.3.4-1) raring; urgency=low
 pybitmessage (0.3.3-1) raring; urgency=low
 
   * Remove inbox item from GUI when using API command trashMessage
+
   * Add missing trailing semicolons to pybitmessage.desktop
+
   * Ensure $(DESTDIR)/usr/bin exists
+
   * Update Makefile to correct sandbox violations when built
     via Portage (Gentoo)
+
   * Fix message authentication bug
 
  -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Sat, 29 June 2013 11:23:00 +0100
@@ -209,7 +351,8 @@ pybitmessage (0.3.0-1) raring; urgency=low
   * Swapped out the v2 announcements subscription address for a v3
     announcements subscription address
 
-  * Vacuum the messages.dat file once a month: will greatly reduce the file size
+  * Vacuum the messages.dat file once a month:
+    will greatly reduce the file size
 
   * Added a settings table in message.dat
 
@@ -241,7 +384,7 @@ pybitmessage (0.3.0-1) raring; urgency=low
 
   * Bug fix: can't delete address from address book
 
- -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Tue, 6 May 2013 12:06:00 +0100
+ -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Mon, 6 May 2013 12:06:00 +0100
 
 pybitmessage (0.2.8-1) unstable; urgency=low
 
@@ -289,9 +432,13 @@ pybitmessage (0.2.8-1) unstable; urgency=low
 pybitmessage (0.2.7-1) unstable; urgency=low
 
   * Added debian packaging
+
   * Script to generate debian packages
+
   * SVG icon for Gnome shell, etc
+
   * Source moved int src directory for debian standards compatibility
+
   * Trailing carriage return on COPYING LICENSE and README.md
 
- -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Tue, 1 Apr 2013 17:12:14 +0100
+ -- Bob Mottram (4096 bits) <bob@sluggish.dyndns.org>  Mon, 1 Apr 2013 17:12:14 +0100

@@ -69,6 +69,52 @@ make install -B DESTDIR=%{buildroot} PREFIX=/usr
 %attr(644,root,root) /usr/share/icons/hicolor/24x24/apps/%{name}.png
 
 %changelog
+* Thu Mar 6 2014 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.4.2-1
+- Exclude debian directory from orig.tar.gz
+- Added Norwegian, Chinese, and Arabic translations
+- sock.sendall function isn't atomic.
+  Let sendDataThread be the only thread which sends data.
+- Moved API code to api.py
+- Populate comboBoxSendFrom when replying
+- Added option to show recent broadcasts when subscribing
+- Fixed issue: If Windows username contained an international character,
+  Bitmessage wouldn't start
+- Added some code for FreeBSD compatibility
+- Moved responsibility for processing network objects
+  to the new ObjectProcessorThread
+- Refactored main QT module
+  Moved popup menus initialization to separate methods
+  Simplified inbox loading
+  Moved magic strings to the model scope constants so they won't
+  be created every time.
+- Updated list of defaultKnownNodes
+- Fixed issue: [Linux] When too many messages arrive too quickly,
+  exception occurs: "Exceeded maximum number of notifications"
+- Fixed issue: creating then deleting an Address in short time crashes
+  class_singleWorker.py
+- Refactored code which displays messages to improve code readability
+- load "Sent To" label from subscriptions if available
+- Removed code to add chans to our address book as it is no longer necessary
+- Added identicons
+- Modified addresses.decodeAddress so that API command decodeAddress
+  works properly
+- Added API commands createChan, joinChan, leaveChan, deleteAddress
+- In pyelliptic, check the return value of RAND_bytes to make sure enough
+  random data was generated
+- Don't store messages in UI table (and thus in memory), pull from SQL
+  inventory as needed
+- Fix typos in API commands addSubscription and getInboxMessagesByAddress
+- Add feature in settings menu to give up resending a message after a
+  specified period of time
+
+* Sun Sep 29 2013 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.4.1-1
+- Fixed whitelist bug
+- Fixed chan bug
+  Added addressversion field to pubkeys table
+  Sending messages to a chan no longer uses anything in the pubkeys table
+  Sending messages to yourself is now fully supported
+- Change _verifyAddress function to support v4 addresses
+
 * Sat Sep 28 2013 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.4.0-1
 - Raised default demanded difficulty from 1 to 2 for new addresses
 - Added v4 addresses:
@@ -212,7 +258,7 @@ make install -B DESTDIR=%{buildroot} PREFIX=/usr
 - Changed Debian install directory and run script name based
   on Github issue #135
 
-* Tue May 6 2013 Bob Mottram (4096 bits) <bob@sluggish.dyndns.org> - 0.3.0-1
+* Mon May 6 2013 Bob Mottram (4096 bits) <bob@sluggish.dyndns.org> - 0.3.0-1
 - Added new API function: getStatus
 - Added error-handling around all sock.sendall() functions
   in the receiveData thread so that if there is a problem
@@ -229,7 +275,8 @@ make install -B DESTDIR=%{buildroot} PREFIX=/usr
   let the sendDataThreads do it
 - Swapped out the v2 announcements subscription address for a v3
   announcements subscription address
-- Vacuum the messages.dat file once a month: will greatly reduce the file size
+- Vacuum the messages.dat file once a month:
+  will greatly reduce the file size
 - Added a settings table in message.dat
 - Implemented v3 addresses:
   pubkey messages must now include two var_ints: nonce_trials_per_byte
@@ -278,7 +325,7 @@ make install -B DESTDIR=%{buildroot} PREFIX=/usr
   address book, subscriptions, and blacklist.
 - Improved the display of the time for foreign language users.
 
-* Tue Apr 1 2013 Bob Mottram (4096 bits) <bob@sluggish.dyndns.org> - 0.2.7-1
+* Mon Apr 1 2013 Bob Mottram (4096 bits) <bob@sluggish.dyndns.org> - 0.2.7-1
 - Added debian packaging
 - Script to generate debian packages
 - SVG icon for Gnome shell, etc

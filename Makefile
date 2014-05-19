@@ -6,6 +6,9 @@ PREFIX?=/usr/local
 
 all:
 debug:
+sourcedeb:
+	tar -cvf ../${APP}_${VERSION}.orig.tar ../${APP}-${VERSION} --exclude-vcs --exclude 'debian'
+	gzip -f9n ../${APP}_${VERSION}.orig.tar
 source:
 	tar -cvf ../${APP}_${VERSION}.orig.tar ../${APP}-${VERSION} --exclude-vcs
 	gzip -f9n ../${APP}_${VERSION}.orig.tar
