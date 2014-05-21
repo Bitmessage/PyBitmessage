@@ -1,5 +1,5 @@
 import pyelliptic
-from pyelliptic import arithmetic as a
+from pyelliptic import arithmetic as a, OpenSSL
 def makeCryptor(privkey):
   privkey_bin = '\x02\xca\x00 '+a.changebase(privkey,16,256,minlen=32)
   pubkey = a.changebase(a.privtopub(privkey),16,256,minlen=65)[1:]
@@ -31,3 +31,23 @@ def sign(msg,hexPrivkey):
 # Verifies with hex public key
 def verify(msg,sig,hexPubkey):
   return makePubCryptor(hexPubkey).verify(sig,msg)
+
+# Does an EC point multiplication; turns a private key into a public key.
+def pointMult(secret):
+  k = OpenSSL.EC_KEY_new_by_curve_name(OpenSSL.get_curve('secp256k1'))
+  priv_key = OpenSSL.BN_bin2bn(secret, 32, None)
+  group = OpenSSL.EC_KEY_get0_group(k)
+  pub_key = OpenSSL.EC_POINT_new(group)
+  
+  OpenSSL.EC_POINT_mul(group, pub_key, priv_key, None, None, None)
+  OpenSSL.EC_KEY_set_private_key(k, priv_key)
+  OpenSSL.EC_KEY_set_public_key(k, pub_key)
+  
+  size = OpenSSL.i2o_ECPublicKey(k, None)
+  mb = OpenSSL.create_string_buffer(size)
+  OpenSSL.i2o_ECPublicKey(k, OpenSSL.byref(OpenSSL.pointer(mb)))
+  
+  OpenSSL.EC_POINT_free(pub_key)
+  OpenSSL.BN_free(priv_key)
+  OpenSSL.EC_KEY_free(k)
+  return mb.raw
