@@ -1,9 +1,10 @@
 import pyelliptic
 from pyelliptic import arithmetic as a, OpenSSL
 def makeCryptor(privkey):
-  privkey_bin = '\x02\xca\x00 '+a.changebase(privkey,16,256,minlen=32)
-  pubkey = a.changebase(a.privtopub(privkey),16,256,minlen=65)[1:]
-  pubkey_bin = '\x02\xca\x00 '+pubkey[:32]+'\x00 '+pubkey[32:]
+  private_key = a.changebase(privkey, 16, 256, minlen=32)
+  public_key = pointMult(private_key)
+  privkey_bin = '\x02\xca\x00\x20' + private_key
+  pubkey_bin = '\x02\xca\x00\x20' + public_key[1:-32] + '\x00\x20' + pubkey[-32:]
   cryptor = pyelliptic.ECC(curve='secp256k1',privkey=privkey_bin,pubkey=pubkey_bin)
   return cryptor
 def hexToPubkey(pubkey):
@@ -15,7 +16,9 @@ def makePubCryptor(pubkey):
   return pyelliptic.ECC(curve='secp256k1',pubkey=pubkey_bin)
 # Converts hex private key into hex public key
 def privToPub(privkey):
-  return a.privtopub(privkey)
+  private_key = a.changebase(privkey, 16, 256, minlen=32)
+  public_key = pointMult(private_key)
+  return public_key.encode('hex')
 # Encrypts message with hex public key
 def encrypt(msg,hexPubkey):
   return pyelliptic.ECC(curve='secp256k1').encrypt(msg,hexToPubkey(hexPubkey))
