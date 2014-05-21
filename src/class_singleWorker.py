@@ -8,7 +8,6 @@ from addresses import *
 import highlevelcrypto
 import proofofwork
 import sys
-from class_addressGenerator import pointMult
 import tr
 from debug import logger
 from helper_sql import *
@@ -304,7 +303,7 @@ class singleWorker(threading.Thread):
             addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()
         payload += doubleHashOfAddressData[32:] # the tag
         privEncryptionKey = doubleHashOfAddressData[:32]
-        pubEncryptionKey = pointMult(privEncryptionKey)
+        pubEncryptionKey = highlevelcrypto.pointMult(privEncryptionKey)
         payload += highlevelcrypto.encrypt(
             dataToEncrypt, pubEncryptionKey.encode('hex'))
 
@@ -415,7 +414,7 @@ class singleWorker(threading.Thread):
             else:
                 privEncryptionKey = doubleHashOfAddressData[:32]
 
-            pubEncryptionKey = pointMult(privEncryptionKey)
+            pubEncryptionKey = highlevelcrypto.pointMult(privEncryptionKey)
             payload += highlevelcrypto.encrypt(
                 dataToEncrypt, pubEncryptionKey.encode('hex'))
 
