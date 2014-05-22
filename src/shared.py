@@ -21,6 +21,7 @@ import stat
 import threading
 import time
 from os import path, environ
+from struct import Struct
 
 # Project imports.
 from addresses import *
@@ -104,6 +105,23 @@ frozen = getattr(sys,'frozen', None)
 # security.
 trustedPeer = None
 
+#Compiled struct for packing/unpacking headers
+#New code should use CreatePacket instead of Header.pack
+Header = Struct('!L12sL4s')
+
+#Create a packet
+def CreatePacket(command, payload=''):
+    payload_length = len(payload)
+    if payload_length == 0:
+        checksum = '\xCF\x83\xE1\x35'
+    else:
+        checksum = hashlib.sha512(payload).digest()[0:4]
+    
+    b = bytearray(Header.size + payload_length)
+    Header.pack_into(b, 0, 0xE9BEB4D9, command, payload_length, checksum)
+    b[Header.size:] = payload
+    return bytes(b)
+
 def isInSqlInventory(hash):
     queryreturn = sqlQuery('''select hash from inventory where hash=?''', hash)
     return queryreturn != []
@@ -141,11 +159,7 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
         1)  # The number of streams about which I care. PyBitmessage currently only supports 1 per connection.
     payload += encodeVarint(myStreamNumber)
 
-    datatosend = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
-    datatosend = datatosend + 'version\x00\x00\x00\x00\x00'  # version command
-    datatosend = datatosend + pack('>L', len(payload))  # payload length
-    datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
-    return datatosend + payload
+    return CreatePacket('version', payload)
 
 def lookupAppdataFolder():
     APPNAME = "PyBitmessage"
