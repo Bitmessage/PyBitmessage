@@ -948,8 +948,4 @@ class singleWorker(threading.Thread):
                 pass
 
         payload = pack('>Q', nonce) + payload
-        headerData = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
-        headerData += 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-        headerData += pack('>L', len(payload))
-        headerData += hashlib.sha512(payload).digest()[:4]
-        return headerData + payload
+        return shared.CreatePacket('msg', payload)
