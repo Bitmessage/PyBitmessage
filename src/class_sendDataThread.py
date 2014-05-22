@@ -108,13 +108,9 @@ class sendDataThread(threading.Thread):
                         payload += pack('>H', port)
 
                     payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
-                    datatosend = '\xE9\xBE\xB4\xD9addr\x00\x00\x00\x00\x00\x00\x00\x00'
-                    datatosend = datatosend + pack('>L', len(payload))  # payload length
-                    datatosend = datatosend + hashlib.sha512(payload).digest()[0:4]
-                    datatosend = datatosend + payload
-
+                    packet = shared.CreatePacket('addr', payload)
                     try:
-                        self.sock.sendall(datatosend)
+                        self.sock.sendall(packet)
                         self.lastTimeISentData = int(time.time())
                     except:
                         print 'sendaddr: self.sock.sendall failed'
@@ -131,12 +127,9 @@ class sendDataThread(threading.Thread):
                             payload += hash
                     if payload != '':
                         payload = encodeVarint(len(payload)/32) + payload
-                        headerData = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
-                        headerData += 'inv\x00\x00\x00\x00\x00\x00\x00\x00\x00'
-                        headerData += pack('>L', len(payload))
-                        headerData += hashlib.sha512(payload).digest()[:4]
+                        packet = shared.CreatePacket('inv', payload)
                         try:
-                            self.sock.sendall(headerData + payload)
+                            self.sock.sendall(packet)
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'sendinv: self.sock.sendall failed'
@@ -147,10 +140,9 @@ class sendDataThread(threading.Thread):
                         # Send out a pong message to keep the connection alive.
                         with shared.printLock:
                             print 'Sending pong to', self.peer, 'to keep connection alive.'
-
+                        packet = shared.CreatePacket('pong')
                         try:
-                            self.sock.sendall(
-                                '\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
+                            self.sock.sendall(packet)
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'send pong failed'
