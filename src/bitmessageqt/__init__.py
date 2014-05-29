@@ -62,11 +62,11 @@ def _translate(context, text):
 
 def identiconize(address):
     size = 48
-    
-    # If you include another identicon library, please generate an 
+
+    # If you include another identicon library, please generate an
     # example identicon with the following md5 hash:
     # 3fd4bf901b9d4ea1394f0fb358725b28
-    
+
     try:
         identicon_lib = shared.config.get('bitmessagesettings', 'identiconlib')
     except:
@@ -77,11 +77,11 @@ def identiconize(address):
     # It can be used as a pseudo-password to salt the generation of the identicons to decrease the risk
     # of attacks where someone creates an address to mimic someone else's identicon.
     identiconsuffix = shared.config.get('bitmessagesettings', 'identiconsuffix')
-    
+
     if not shared.config.getboolean('bitmessagesettings', 'useidenticons'):
         idcon = QtGui.QIcon()
         return idcon
-    
+
     if (identicon_lib[:len('qidenticon')] == 'qidenticon'):
         # print identicon_lib
         # originally by:
@@ -115,7 +115,7 @@ def identiconize(address):
         idcon = QtGui.QIcon()
         idcon.addPixmap(pix, QtGui.QIcon.Normal, QtGui.QIcon.Off)
         return idcon
-        
+
 def avatarize(address):
     """
         loads a supported image for the given address' hash form 'avatars' folder
@@ -587,7 +587,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSubscriptions.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.tableWidgetAddressBook.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.tableWidgetBlacklist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
-        
+
         self.UISignalThread = UISignaler()
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
@@ -631,7 +631,7 @@ class MyForm(QtGui.QMainWindow):
         # structures were initialized.
 
         self.rerenderComboBoxSendFrom()
-        
+
         # Check to see whether we can connect to namecoin. Hide the 'Fetch Namecoin ID' button if we can't.
         try:
             options = {}
@@ -757,8 +757,8 @@ class MyForm(QtGui.QMainWindow):
             where = "toaddress || fromaddress || subject || message"
 
         sqlStatement = '''
-            SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime 
-            FROM sent WHERE folder="sent" AND %s LIKE ? 
+            SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime
+            FROM sent WHERE folder="sent" AND %s LIKE ?
             ORDER BY lastactiontime
             ''' % (where,)
 
@@ -790,7 +790,7 @@ class MyForm(QtGui.QMainWindow):
                 if queryreturn != []:
                     for row in queryreturn:
                         toLabel, = row
-            
+
             if toLabel == '':
                 if shared.config.has_section(toAddress):
                     toLabel = shared.config.get(toAddress, 'label')
@@ -913,7 +913,7 @@ class MyForm(QtGui.QMainWindow):
             fromLabel = ''
             if shared.config.has_section(fromAddress):
                 fromLabel = shared.config.get(fromAddress, 'label')
-            
+
             if fromLabel == '':  # If the fromAddress isn't one of our addresses and isn't a chan
                 queryreturn = sqlQuery(
                     '''select label from addressbook where address=?''', fromAddress)
@@ -929,7 +929,7 @@ class MyForm(QtGui.QMainWindow):
                         fromLabel, = row
             if fromLabel == '':
                 fromLabel = fromAddress
-            
+
             # message row
             self.ui.tableWidgetInbox.insertRow(0)
             # to
@@ -1231,7 +1231,7 @@ class MyForm(QtGui.QMainWindow):
                 soundFilename = shared.appdata + 'sounds/disconnected'
             # sound when the connection status becomes green
             elif category is self.SOUND_CONNECTION_GREEN:
-                soundFilename = shared.appdata + 'sounds/green'            
+                soundFilename = shared.appdata + 'sounds/green'
 
         if soundFilename is not None and play is True:
             if not self.isConnectionSound(category):
@@ -1251,7 +1251,7 @@ class MyForm(QtGui.QMainWindow):
                         gst_available=False
                         try:
                             subprocess.call(["gst123", soundFilename],
-                                            stdin=subprocess.PIPE, 
+                                            stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE)
                             gst_available=True
                         except:
@@ -1259,7 +1259,7 @@ class MyForm(QtGui.QMainWindow):
                         if not gst_available:
                             try:
                                 subprocess.call(["mpg123", soundFilename],
-                                                stdin=subprocess.PIPE, 
+                                                stdin=subprocess.PIPE,
                                                 stdout=subprocess.PIPE)
                                 gst_available=True
                             except:
@@ -1267,7 +1267,7 @@ class MyForm(QtGui.QMainWindow):
                     else:
                         try:
                             subprocess.call(["aplay", soundFilename],
-                                            stdin=subprocess.PIPE, 
+                                            stdin=subprocess.PIPE,
                                             stdout=subprocess.PIPE)
                         except:
                             print "WARNING: aplay must be installed in order to play WAV sounds"
@@ -1693,7 +1693,7 @@ class MyForm(QtGui.QMainWindow):
             if queryreturn != []:
                 for row in queryreturn:
                     fromLabel, = row
-            
+
             if fromLabel == '':
                 # It might be a broadcast message. We should check for that
                 # label.
@@ -1720,7 +1720,7 @@ class MyForm(QtGui.QMainWindow):
             else:
                 self.ui.tableWidgetInbox.item(
                     i, 1).setTextColor(QApplication.palette().text().color())
-                    
+
 
     def rerenderInboxToLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
@@ -1769,7 +1769,7 @@ class MyForm(QtGui.QMainWindow):
             if queryreturn != []:
                 for row in queryreturn:
                     toLabel, = row
-            
+
             if toLabel == '':
                 # Message might be to an address we own like a chan address. Let's look for that label.
                 if shared.config.has_section(addressToLookup):
@@ -1926,7 +1926,7 @@ class MyForm(QtGui.QMainWindow):
                     '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
 
                 toLabel = self.str_broadcast_subscribers
-                
+
                 self.displayNewSentMessage(
                     toAddress, toLabel, fromAddress, subject, message, ackdata)
 
@@ -2183,7 +2183,7 @@ class MyForm(QtGui.QMainWindow):
                 return
             label = self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()
             self.addSubscription(address, label)
-            # Now, if the user wants to display old broadcasts, let's get them out of the inventory and put them 
+            # Now, if the user wants to display old broadcasts, let's get them out of the inventory and put them
             # in the objectProcessorQueue to be processed
             if self.NewSubscriptionDialogInstance.ui.checkBoxDisplayMessagesAlreadyInInventory.isChecked():
                 status, addressVersion, streamNumber, ripe = decodeAddress(address)
@@ -2253,11 +2253,11 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.checkBoxUseIdenticons.isChecked()))
             shared.config.set('bitmessagesettings', 'replybelow', str(
                 self.settingsDialogInstance.ui.checkBoxReplyBelow.isChecked()))
-                
+
             lang_ind = int(self.settingsDialogInstance.ui.languageComboBox.currentIndex())
             if not languages[lang_ind] == 'other':
                 shared.config.set('bitmessagesettings', 'userlocale', languages[lang_ind])
-            
+
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
                     QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
@@ -2583,7 +2583,7 @@ class MyForm(QtGui.QMainWindow):
             '''select message from inbox where msgid=?''', msgid)
         if queryreturn != []:
             for row in queryreturn:
-                messageAtCurrentInboxRow, = row 
+                messageAtCurrentInboxRow, = row
 
         lines = messageAtCurrentInboxRow.split('\n')
         for i in xrange(len(lines)):
@@ -2611,7 +2611,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.item(currentRow, 2).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 3).setFont(font)
         self.changedInboxUnread()
-        # self.ui.tableWidgetInbox.selectRow(currentRow + 1) 
+        # self.ui.tableWidgetInbox.selectRow(currentRow + 1)
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
         # self.ui.tableWidgetInbox.clearSelection() manages to mark the message as read again.
@@ -2666,20 +2666,20 @@ class MyForm(QtGui.QMainWindow):
             self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(toAddressAtCurrentInboxRow)
 
         self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
-        
+
         # If the previous message was to a chan then we should send our reply to the chan rather than to the particular person who sent the message.
         if shared.config.has_section(toAddressAtCurrentInboxRow):
             if shared.safeConfigGetBoolean(toAddressAtCurrentInboxRow, 'chan'):
                 print 'original sent to a chan. Setting the to address in the reply to the chan address.'
                 self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
-        
+
         listOfAddressesInComboBoxSendFrom = [str(self.ui.comboBoxSendFrom.itemData(i).toPyObject()) for i in range(self.ui.comboBoxSendFrom.count())]
         if toAddressAtCurrentInboxRow in listOfAddressesInComboBoxSendFrom:
             currentIndex = listOfAddressesInComboBoxSendFrom.index(toAddressAtCurrentInboxRow)
             self.ui.comboBoxSendFrom.setCurrentIndex(currentIndex)
         else:
             self.ui.comboBoxSendFrom.setCurrentIndex(0)
-        
+
         quotedText = self.quoted_text(unicode(messageAtCurrentInboxRow, 'utf-8'))
         self.ui.textEditMessage.setText(quotedText)
         if self.ui.tableWidgetInbox.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
@@ -2877,7 +2877,7 @@ class MyForm(QtGui.QMainWindow):
     # Group of functions for the Subscriptions dialog box
     def on_action_SubscriptionsNew(self):
         self.click_pushButtonAddSubscription()
-        
+
     def on_action_SubscriptionsDelete(self):
         print 'clicked Delete'
         currentRow = self.ui.tableWidgetSubscriptions.currentRow()
@@ -3044,16 +3044,16 @@ class MyForm(QtGui.QMainWindow):
 
     def on_action_YourIdentitiesSetAvatar(self):
         self.on_action_SetAvatar(self.ui.tableWidgetYourIdentities)
-        
+
     def on_action_AddressBookSetAvatar(self):
         self.on_action_SetAvatar(self.ui.tableWidgetAddressBook)
-        
+
     def on_action_SubscriptionsSetAvatar(self):
         self.on_action_SetAvatar(self.ui.tableWidgetSubscriptions)
-        
+
     def on_action_BlacklistSetAvatar(self):
         self.on_action_SetAvatar(self.ui.tableWidgetBlacklist)
-        
+
     def on_action_SetAvatar(self, thisTableWidget):
         # thisTableWidget =  self.ui.tableWidgetYourIdentities
         if not os.path.exists(shared.appdata + 'avatars/'):
@@ -3099,7 +3099,7 @@ class MyForm(QtGui.QMainWindow):
                             self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             else:
                 overwrite = QtGui.QMessageBox.No
-            
+
         # copy the image file to the appdata folder
         if (not exists) | (overwrite == QtGui.QMessageBox.Yes):
             if overwrite == QtGui.QMessageBox.Yes:
@@ -3121,7 +3121,7 @@ class MyForm(QtGui.QMainWindow):
             self.rerenderInboxToLabels()
             self.rerenderSentFromLabels()
             self.rerenderSentToLabels()
-        
+
     def on_context_menuYourIdentities(self, point):
         self.popMenu.exec_(
             self.ui.tableWidgetYourIdentities.mapToGlobal(point))
@@ -3166,7 +3166,7 @@ class MyForm(QtGui.QMainWindow):
             font = QFont()
             font.setBold(False)
             self.ui.textEditInboxMessage.setCurrentFont(font)
-            
+
             fromAddress = str(self.ui.tableWidgetInbox.item(
                 currentRow, 1).data(Qt.UserRole).toPyObject())
             msgid = str(self.ui.tableWidgetInbox.item(
@@ -3296,7 +3296,7 @@ class helpDialog(QtGui.QDialog):
         self.parent = parent
         self.ui.labelHelpURI.setOpenExternalLinks(True)
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
-        
+
 class connectDialog(QtGui.QDialog):
 
     def __init__(self, parent):
@@ -3346,8 +3346,8 @@ class settingsDialog(QtGui.QDialog):
             shared.safeConfigGetBoolean('bitmessagesettings', 'useidenticons'))
         self.ui.checkBoxReplyBelow.setChecked(
             shared.safeConfigGetBoolean('bitmessagesettings', 'replybelow'))
-        
-        global languages 
+
+        global languages
         languages = ['system','en','eo','fr','de','es','ru','no','ar','zh_cn','ja','nl','en_pirate','other']
         user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
         if user_countrycode in languages:
@@ -3355,7 +3355,7 @@ class settingsDialog(QtGui.QDialog):
         else:
             curr_index = languages.index('other')
         self.ui.languageComboBox.setCurrentIndex(curr_index)
-        
+
         if shared.appdata == '':
             self.ui.checkBoxPortableMode.setChecked(True)
         if 'darwin' in sys.platform:
@@ -3453,8 +3453,8 @@ class settingsDialog(QtGui.QDialog):
             shared.config.get('bitmessagesettings', 'stopresendingafterxdays')))
         self.ui.lineEditMonths.setText(str(
             shared.config.get('bitmessagesettings', 'stopresendingafterxmonths')))
-        
-        
+
+
         #'System' tab removed for now.
         """try:
             maxCores = shared.config.getint('bitmessagesettings', 'maxcores')
@@ -3507,7 +3507,7 @@ class settingsDialog(QtGui.QDialog):
     def namecoinTypeChanged(self, checked):
         nmctype = self.getNamecoinType()
         assert nmctype == "namecoind" or nmctype == "nmcontrol"
-            
+
         isNamecoind = (nmctype == "namecoind")
         self.ui.lineEditNamecoinUser.setEnabled(isNamecoind)
         self.ui.labelNamecoinUser.setEnabled(isNamecoind)
@@ -3601,7 +3601,7 @@ class AddAddressDialog(QtGui.QDialog):
         elif status == 'success':
             self.ui.labelAddressCheck.setText(
                 _translate("MainWindow", "Address is valid."))
-            
+
 class NewSubscriptionDialog(QtGui.QDialog):
 
     def __init__(self, parent):
@@ -3690,7 +3690,7 @@ class newChanDialog(QtGui.QDialog):
         self.ui.setupUi(self)
         self.parent = parent
         self.ui.groupBoxCreateChan.setHidden(True)
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))     
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 
 class iconGlossaryDialog(QtGui.QDialog):
@@ -3777,7 +3777,7 @@ class UISignaler(QThread):
 def run():
     app = QtGui.QApplication(sys.argv)
     translator = QtCore.QTranslator()
-    
+
     try:
         locale_countrycode = str(locale.getdefaultlocale()[0])
     except:
@@ -3790,7 +3790,7 @@ def run():
         translation_path = os.path.join(sys._MEIPASS, "translations/bitmessage_")
     except Exception, e:
         translation_path = "translations/bitmessage_"
-    
+
     if shared.config.get('bitmessagesettings', 'userlocale') == 'system':
         # try to detect the users locale otherwise fallback to English
         try:

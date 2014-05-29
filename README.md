@@ -12,7 +12,7 @@ warrantless wiretapping programs.
 
 Development
 ----------
-Bitmessage is a collaborative project. You are welcome to submit pull requests 
+Bitmessage is a collaborative project. You are welcome to submit pull requests
 although if you plan to put a non-trivial amount of work into coding new
 features, it is recommended that you first solicit feedback on the DevTalk
 pseudo-mailing list:

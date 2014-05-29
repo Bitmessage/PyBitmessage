@@ -13,7 +13,7 @@ def sqlQuery(sqlStatement, *args):
         sqlSubmitQueue.put('')
     else:
         sqlSubmitQueue.put(args)
-    
+
     queryreturn = sqlReturnQueue.get()
     sqlLock.release()
 
@@ -27,7 +27,7 @@ def sqlExecute(sqlStatement, *args):
         sqlSubmitQueue.put('')
     else:
         sqlSubmitQueue.put(args)
-    
+
     sqlReturnQueue.get()
     sqlSubmitQueue.put('commit')
     sqlLock.release()
@@ -48,7 +48,7 @@ class SqlBulkExecute:
 
     def execute(self, sqlStatement, *args):
         sqlSubmitQueue.put(sqlStatement)
-        
+
         if args == ():
             sqlSubmitQueue.put('')
         else:

@@ -4,7 +4,7 @@
 comment= """
 This is not what you run to run the Bitmessage API. Instead, enable the API
 ( https://bitmessage.org/wiki/API ) and optionally enable daemon mode
-( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py. 
+( https://bitmessage.org/wiki/Daemon ) then run bitmessagemain.py.
 """
 
 if __name__ == "__main__":

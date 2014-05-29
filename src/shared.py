@@ -88,7 +88,7 @@ networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a 
 namecoinDefaultRpcPort = "8336"
 
 # When using py2exe or py2app, the variable frozen is added to the sys
-# namespace.  This can be used to setup a different code path for 
+# namespace.  This can be used to setup a different code path for
 # binary distributions vs source distributions.
 frozen = getattr(sys,'frozen', None)
 
@@ -287,7 +287,7 @@ def reloadBroadcastSendersForWhichImWatching():
         if addressVersionNumber == 2:
             broadcastSendersForWhichImWatching[hash] = 0
         #Now, for all addresses, even version 2 addresses, we should create Cryptor objects in a dictionary which we will use to attempt to decrypt encrypted broadcast messages.
-        
+
         if addressVersionNumber <= 3:
             privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).digest()[:32]
             MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
@@ -313,12 +313,12 @@ def isProofOfWorkSufficient(
 def doCleanShutdown():
     global shutdown
     shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
-    broadcastToSendDataQueues((0, 'shutdown', 'all'))   
+    broadcastToSendDataQueues((0, 'shutdown', 'all'))
     with shared.objectProcessorQueueSizeLock:
         data = 'no data'
         shared.objectProcessorQueueSize += len(data)
         objectProcessorQueue.put(('checkShutdownVariable',data))
-    
+
     knownNodesLock.acquire()
     UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
     output = open(appdata + 'knownnodes.dat', 'wb')
@@ -335,21 +335,21 @@ def doCleanShutdown():
         'updateStatusBar',
         'Flushing inventory in memory out to disk. This should normally only take a second...'))
     flushInventory()
-    
-    # Verify that the objectProcessor has finished exiting. It should have incremented the 
+
+    # Verify that the objectProcessor has finished exiting. It should have incremented the
     # shutdown variable from 1 to 2. This must finish before we command the sqlThread to exit.
     while shutdown == 1:
         time.sleep(.1)
-    
+
     # This one last useless query will guarantee that the previous flush committed and that the
     # objectProcessorThread committed before we close the program.
     sqlQuery('SELECT address FROM subscriptions')
     logger.info('Finished flushing inventory.')
     sqlStoredProcedure('exit')
-    
+
     # Wait long enough to guarantee that any running proof of work worker threads will check the
     # shutdown variable and exit. If the main thread closes before they do then they won't stop.
-    time.sleep(.25) 
+    time.sleep(.25)
 
     if safeConfigGetBoolean('bitmessagesettings','daemon'):
         logger.info('Clean shutdown complete.')
@@ -362,7 +362,7 @@ def broadcastToSendDataQueues(data):
     # logger.debug('running broadcastToSendDataQueues')
     for q in sendDataQueues:
         q.put(data)
-        
+
 def flushInventory():
     #Note that the singleCleanerThread clears out the inventory dictionary from time to time, although it only clears things that have been in the dictionary for a long time. This clears the inventory dictionary Now.
     with SqlBulkExecute() as sql:
@@ -432,7 +432,7 @@ def fixSensitiveFilePermissions(filename, hasEnabledKeys):
     except Exception, e:
         logger.exception('Keyfile permissions could not be fixed.')
         raise
-    
+
 def isBitSetWithinBitfield(fourByteString, n):
     # Uses MSB 0 bit numbering across 4 bytes of data
     n = 31 - n
@@ -512,7 +512,7 @@ def decryptAndCheckPubkeyPayload(payload, address):
         # correct keys. Someone is either being malicious or using buggy software.
         logger.info('Pubkey decryption was UNsuccessful due to RIPE mismatch. This shouldn\'t have happened.')
         return 'failed'
-    
+
     t = (ripe, addressVersion, signedData, int(time.time()), 'yes')
     sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
     return 'successful'
@@ -536,7 +536,7 @@ def checkAndShareMsgWithPeers(data):
     else:
         readPosition += 4
 
-    if embeddedTime > (int(time.time()) + 10800): 
+    if embeddedTime > (int(time.time()) + 10800):
         logger.debug('The embedded time in this msg message is more than three hours in the future. That doesn\'t make sense. Ignoring message.')
         return
     if embeddedTime < (int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept):
@@ -662,7 +662,7 @@ def checkAndSharePubkeyWithPeers(data):
         logger.debug('The embedded time in this pubkey message is too old. Ignoring. Embedded time is: %s' % embeddedTime)
         return
     if embeddedTime > int(time.time()) + 10800:
-        logger.debug('The embedded time in this pubkey message more than several hours in the future. This is irrational. Ignoring message.') 
+        logger.debug('The embedded time in this pubkey message more than several hours in the future. This is irrational. Ignoring message.')
         return
     addressVersion, varintLength = decodeVarint(
         data[readPosition:readPosition + 10])
@@ -726,7 +726,7 @@ def checkAndShareBroadcastWithPeers(data):
         readPosition += 4
 
     if embeddedTime > (int(time.time()) + 10800):  # prevent funny business
-        logger.debug('The embedded time in this broadcast message is more than three hours in the future. That doesn\'t make sense. Ignoring message.') 
+        logger.debug('The embedded time in this broadcast message is more than three hours in the future. That doesn\'t make sense. Ignoring message.')
         return
     if embeddedTime < (int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept):
         logger.debug('The embedded time in this broadcast message is too old. Ignoring message.')

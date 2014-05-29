@@ -160,7 +160,7 @@ reason other then the two mentioned next.
 The Socks server had tried an ident lookup on your computer and has failed. In this
 case you should run an identd server and/or configure your firewall to allow incoming
 connections to local port 113 from the remote server.
-3 - request rejected because the client program and identd report different user-ids - 
+3 - request rejected because the client program and identd report different user-ids -
 The Socks server had performed an ident lookup on your computer and has received a
 different userid than the one you have provided. Change your userid (through the
 username parameter of the setproxy method) to match and try again.

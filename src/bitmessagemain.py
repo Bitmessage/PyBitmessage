@@ -63,7 +63,7 @@ def connectToStream(streamNumber):
     for row in queryData:
         shared.inventorySets[streamNumber].add(row[0])
 
-    
+
     if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
         # Some XP and Vista systems can only have 10 outgoing connections at a time.
         maximumNumberOfHalfOpenConnections = 9
@@ -236,7 +236,7 @@ class Main:
         shared.doCleanShutdown()
 
 
-    #TODO: nice function but no one is using this 
+    #TODO: nice function but no one is using this
     def getApiAddress(self):
         if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
             return None

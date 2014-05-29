@@ -43,7 +43,7 @@ class receiveDataThread(threading.Thread):
         someObjectsOfWhichThisRemoteNodeIsAlreadyAware,
         selfInitiatedConnections,
         sendDataThreadQueue):
-        
+
         self.sock = sock
         self.peer = shared.Peer(HOST, port)
         self.streamNumber = streamNumber
@@ -142,7 +142,7 @@ class receiveDataThread(threading.Thread):
             shared.knownNodesLock.acquire()
             shared.knownNodes[self.streamNumber][self.peer] = int(time.time())
             shared.knownNodesLock.release()
-        
+
         remoteCommand = self.data[4:16]
         with shared.printLock:
             print 'remoteCommand', repr(remoteCommand.replace('\x00', '')), ' from', self.peer
@@ -306,8 +306,8 @@ class receiveDataThread(threading.Thread):
             self.sendinvMessageToJustThisOnePeer(
                 numberOfObjectsInInvMessage, payload)
 
-    # Used to send a big inv message when the connection with a node is 
-    # first fully established. Notice that there is also a broadcastinv 
+    # Used to send a big inv message when the connection with a node is
+    # first fully established. Notice that there is also a broadcastinv
     # function for broadcasting invs to everyone in our stream.
     def sendinvMessageToJustThisOnePeer(self, numberOfObjects, payload):
         payload = encodeVarint(numberOfObjects) + payload
@@ -439,7 +439,7 @@ class receiveDataThread(threading.Thread):
                 advertisedSet.add(data[lengthOfVarint + (32 * i):32 + lengthOfVarint + (32 * i)])
             objectsNewToMe = advertisedSet - shared.inventorySets[self.streamNumber]
             logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
-            for item in objectsNewToMe:  
+            for item in objectsNewToMe:
                 if totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers > 200000 and len(self.objectsThatWeHaveYetToGetFromThisPeer) > 1000:  # inv flooding attack mitigation
                     with shared.printLock:
                         print 'We already have', totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers, 'items yet to retrieve from peers and over', len(self.objectsThatWeHaveYetToGetFromThisPeer), 'from this node in particular. Ignoring the rest of this inv message.'
@@ -627,8 +627,8 @@ class receiveDataThread(threading.Thread):
             else:
                 hostFromAddrMessage = socket.inet_ntop(socket.AF_INET6, fullHost)
                 if hostFromAddrMessage == "":
-                    # This can happen on Windows systems which are not 64-bit compatible 
-                    # so let us drop the IPv6 address. 
+                    # This can happen on Windows systems which are not 64-bit compatible
+                    # so let us drop the IPv6 address.
                     continue
                 if not self._checkIPv6Address(fullHost, hostFromAddrMessage):
                     continue
@@ -669,9 +669,9 @@ class receiveDataThread(threading.Thread):
             print 'knownNodes currently has', len(shared.knownNodes[self.streamNumber]), 'nodes for this stream.'
 
 
-    # Send a huge addr message to our peer. This is only used 
-    # when we fully establish a connection with a 
-    # peer (with the full exchange of version and verack 
+    # Send a huge addr message to our peer. This is only used
+    # when we fully establish a connection with a
+    # peer (with the full exchange of version and verack
     # messages).
     def sendaddr(self):
         addrsInMyStream = {}
@@ -764,7 +764,7 @@ class receiveDataThread(threading.Thread):
             a new version message, like if the remote node wants to update
             the streams in which they are interested. But for now we'll
             ignore this version message
-            """ 
+            """
             return
         self.remoteProtocolVersion, = unpack('>L', data[:4])
         if self.remoteProtocolVersion <= 1:
@@ -806,7 +806,7 @@ class receiveDataThread(threading.Thread):
             with shared.printLock:
                 print 'Closing connection to myself: ', self.peer
             return
-        
+
         # The other peer's protocol version is of interest to the sendDataThread but we learn of it
         # in this version message. Let us inform the sendDataThread.
         self.sendDataThreadQueue.put((0, 'setRemoteProtocolVersion', self.remoteProtocolVersion))

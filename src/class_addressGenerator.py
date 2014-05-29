@@ -307,5 +307,5 @@ def pointMult(secret):
     OpenSSL.BN_free(priv_key)
     OpenSSL.EC_KEY_free(k)
     return mb.raw
-    
-    
+
+

@@ -5,7 +5,7 @@
 # Requires all build dependencies for Bitmessage
 # Especially important is openssl installed through brew
 
-export ARCHFLAGS="-arch i386 -arch x86_64" 
+export ARCHFLAGS="-arch i386 -arch x86_64"
 
 if [[ -z "$1" ]]; then
   echo "Please supply a version number for this release as the first argument."
