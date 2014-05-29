@@ -1,4 +1,4 @@
-#PyBitmessage Installation Instructions 
+#PyBitmessage Installation Instructions
 
 For an up-to-date version of these instructions, please visit the
 [Bitmessage Wiki](https://bitmessage.org/wiki/Compiling_instructions).
@@ -14,7 +14,7 @@ Here's a list of dependencies needed for PyBitmessage
 - python2.7
 - python2-qt4 (python-qt4 on Debian/Ubuntu)
 - openssl
-- (Fedora & Redhat only) openssl-compat-bitcoin-libs 
+- (Fedora & Redhat only) openssl-compat-bitcoin-libs
 
 ##Running PyBitmessage
 PyBitmessage can be run two ways: straight from source or via a package which

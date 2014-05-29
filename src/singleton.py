@@ -12,7 +12,7 @@ class singleinstance:
     Implements a single instance application by creating a lock file based on the full path to the script file.
 
     This is based upon the singleton class from tendo https://github.com/pycontribs/tendo
-    which is under the Python Software Foundation License version 2    
+    which is under the Python Software Foundation License version 2
     """
     def __init__(self, flavor_id=""):
         import sys

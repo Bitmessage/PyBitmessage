@@ -21,7 +21,7 @@ def createDefaultKnownNodes(appdata):
     stream1[shared.Peer('75.95.134.9', 8444)] = int(time.time())
     stream1[shared.Peer('46.236.100.108', 48444)] = int(time.time())
     stream1[shared.Peer('66.108.53.42', 8080)] = int(time.time())
-    
+
     ############# Stream 2 #################
     stream2 = {}
     # None yet

@@ -294,7 +294,7 @@ class _OpenSSL:
         except:
             # The above is not compatible with all versions of OSX.
             self.PKCS5_PBKDF2_HMAC = self._lib.PKCS5_PBKDF2_HMAC_SHA1
-            
+
         self.PKCS5_PBKDF2_HMAC.restype = ctypes.c_int
         self.PKCS5_PBKDF2_HMAC.argtypes = [ctypes.c_void_p, ctypes.c_int,
                                            ctypes.c_void_p, ctypes.c_int,
@@ -394,11 +394,11 @@ class _OpenSSL:
         OpenSSL random function
         """
         buffer = self.malloc(0, size)
-        # This pyelliptic library, by default, didn't check the return value of RAND_bytes. It is 
+        # This pyelliptic library, by default, didn't check the return value of RAND_bytes. It is
         # evidently possible that it returned an error and not-actually-random data. However, in
-        # tests on various operating systems, while generating hundreds of gigabytes of random 
+        # tests on various operating systems, while generating hundreds of gigabytes of random
         # strings of various sizes I could not get an error to occur. Also Bitcoin doesn't check
-        # the return value of RAND_bytes either. 
+        # the return value of RAND_bytes either.
         # Fixed in Bitmessage version 0.4.2 (in source code on 2013-10-13)
         while self.RAND_bytes(buffer, size) != 1:
             import time

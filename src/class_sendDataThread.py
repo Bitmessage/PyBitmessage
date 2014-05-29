@@ -60,7 +60,7 @@ class sendDataThread(threading.Thread):
             # if not 'Bad file descriptor' in err:
             with shared.printLock:
                 sys.stderr.write('sock.sendall error: %s\n' % err)
-            
+
         self.versionSent = 1
 
     def run(self):
@@ -82,7 +82,7 @@ class sendDataThread(threading.Thread):
                 elif command == 'setStreamNumber':
                     self.streamNumber = data
                     with shared.printLock:
-                        print 'setting the stream number in the sendData thread (ID:', id(self), ') to', self.streamNumber 
+                        print 'setting the stream number in the sendData thread (ID:', id(self), ') to', self.streamNumber
                 elif command == 'setRemoteProtocolVersion':
                     specifiedRemoteProtocolVersion = data
                     with shared.printLock:
@@ -160,7 +160,7 @@ class sendDataThread(threading.Thread):
                         self.sock.sendall(data)
                         self.lastTimeISentData = int(time.time())
                     except:
-                        print 'Sending of data to', self.peer, 'failed. sendDataThread thread', self, 'ending now.' 
+                        print 'Sending of data to', self.peer, 'failed. sendDataThread thread', self, 'ending now.'
                         break
                 elif command == 'connectionIsOrWasFullyEstablished':
                     self.connectionIsOrWasFullyEstablished = True

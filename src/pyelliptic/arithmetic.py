@@ -25,7 +25,7 @@ def get_code_string(base):
 
 def encode(val,base,minlen=0):
    code_string = get_code_string(base)
-   result = ""   
+   result = ""
    while val > 0:
       result = code_string[val % base] + result
       val /= base
@@ -49,14 +49,14 @@ def changebase(string,frm,to,minlen=0):
 def base10_add(a,b):
   if a == None: return b[0],b[1]
   if b == None: return a[0],a[1]
-  if a[0] == b[0]: 
+  if a[0] == b[0]:
     if a[1] == b[1]: return base10_double(a[0],a[1])
     else: return None
   m = ((b[1]-a[1]) * inv(b[0]-a[0],P)) % P
   x = (m*m-a[0]-b[0]) % P
   y = (m*(a[0]-x)-a[1]) % P
   return (x,y)
-  
+
 def base10_double(a):
   if a == None: return None
   m = ((3*a[0]*a[0]+A)*inv(2*a[1],P)) % P
@@ -94,7 +94,7 @@ def hash_160(string):
 
 def dbl_sha256(string):
    return hashlib.sha256(hashlib.sha256(string).digest()).digest()
-  
+
 def bin_to_b58check(inp):
    inp_fmtd = '\x00' + inp
    leadingzbytes = len(re.match('^\x00*',inp_fmtd).group(0))

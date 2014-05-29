@@ -79,7 +79,7 @@ class outgoingSynSender(threading.Thread):
                       File "C:\Python27\lib\socket.py", line 187, in __init__
                         _sock = _realsocket(family, type, proto)
                       error: [Errno 10047] An address incompatible with the requested protocol was used
-                      
+
                 So let us remove the offending address from our knownNodes file.
                 """
                 shared.knownNodesLock.acquire()
@@ -145,13 +145,13 @@ class outgoingSynSender(threading.Thread):
                 rd = receiveDataThread()
                 rd.daemon = True  # close the main program even if there are threads left
                 someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
-                sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection. 
-                rd.setup(sock, 
-                         peer.host, 
-                         peer.port, 
+                sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection.
+                rd.setup(sock,
+                         peer.host,
+                         peer.port,
                          self.streamNumber,
-                         someObjectsOfWhichThisRemoteNodeIsAlreadyAware, 
-                         self.selfInitiatedConnections, 
+                         someObjectsOfWhichThisRemoteNodeIsAlreadyAware,
+                         self.selfInitiatedConnections,
                          sendDataThreadQueue)
                 rd.start()
                 with shared.printLock:

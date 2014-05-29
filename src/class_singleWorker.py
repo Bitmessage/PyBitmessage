@@ -161,7 +161,7 @@ class singleWorker(threading.Thread):
     # does the necessary POW and sends it out. If it *is* a chan then it
     # assembles the pubkey and stores is in the pubkey table so that we can
     # send messages to "ourselves".
-    def sendOutOrStoreMyV3Pubkey(self, hash): 
+    def sendOutOrStoreMyV3Pubkey(self, hash):
         try:
             myAddress = shared.myAddressesByHash[hash]
         except:
@@ -244,7 +244,7 @@ class singleWorker(threading.Thread):
             pass
 
     # If this isn't a chan address, this function assembles the pubkey data,
-    # does the necessary POW and sends it out. 
+    # does the necessary POW and sends it out.
     def sendOutOrStoreMyV4Pubkey(self, myAddress):
         if not shared.config.has_section(myAddress):
             #The address has been deleted.
@@ -406,9 +406,9 @@ class singleWorker(threading.Thread):
             dataToEncrypt += encodeVarint(len(signature))
             dataToEncrypt += signature
 
-            # Encrypt the broadcast with the information contained in the broadcaster's address. Anyone who knows the address can generate 
-            # the private encryption key to decrypt the broadcast. This provides virtually no privacy; its purpose is to keep questionable 
-            # and illegal content from flowing through the Internet connections and being stored on the disk of 3rd parties. 
+            # Encrypt the broadcast with the information contained in the broadcaster's address. Anyone who knows the address can generate
+            # the private encryption key to decrypt the broadcast. This provides virtually no privacy; its purpose is to keep questionable
+            # and illegal content from flowing through the Internet connections and being stored on the disk of 3rd parties.
             if addressVersionNumber <= 3:
                 privEncryptionKey = hashlib.sha512(encodeVarint(
                     addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()[:32]
@@ -451,7 +451,7 @@ class singleWorker(threading.Thread):
                 'broadcastsent',
                 int(time.time()),
                 ackdata)
-        
+
 
     def sendMsg(self):
         # Check to see if there are any messages queued to be sent
@@ -787,7 +787,7 @@ class singleWorker(threading.Thread):
                 elif not shared.isBitSetWithinBitfield(behaviorBitfield,31):
                     with shared.printLock:
                         print 'Not bothering to include ackdata because the receiver said that they won\'t relay it anyway.'
-                    fullAckPayload = ''                    
+                    fullAckPayload = ''
                 else:
                     fullAckPayload = self.generateFullAckMessage(
                         ackdata, toStreamNumber)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.

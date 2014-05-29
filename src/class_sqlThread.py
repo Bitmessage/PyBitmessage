@@ -21,7 +21,7 @@ class sqlThread(threading.Thread):
     def __init__(self):
         threading.Thread.__init__(self)
 
-    def run(self):        
+    def run(self):
         self.conn = sqlite3.connect(shared.appdata + 'messages.dat')
         self.conn.text_factory = str
         self.cur = self.conn.cursor()
@@ -188,12 +188,12 @@ class sqlThread(threading.Thread):
         self.cur.execute(
             '''update sent set status='broadcastqueued' where status='broadcastpending'  ''')
         self.conn.commit()
-        
+
         if not shared.config.has_option('bitmessagesettings', 'sockslisten'):
             shared.config.set('bitmessagesettings', 'sockslisten', 'false')
-            
+
         ensureNamecoinOptions()
-            
+
         """# Add a new column to the inventory table to store the first 20 bytes of encrypted messages to support Android app
         item = '''SELECT value FROM settings WHERE key='version';'''
         parameters = ''
@@ -269,7 +269,7 @@ class sqlThread(threading.Thread):
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (5,)
             self.cur.execute(item, parameters)
-            
+
         if not shared.config.has_option('bitmessagesettings', 'useidenticons'):
             shared.config.set('bitmessagesettings', 'useidenticons', 'True')
         if not shared.config.has_option('bitmessagesettings', 'identiconsuffix'): # acts as a salt
@@ -285,7 +285,7 @@ class sqlThread(threading.Thread):
             shared.config.set(
                 'bitmessagesettings', 'stopresendingafterxmonths', '')
             #shared.config.set(
-            shared.config.set('bitmessagesettings', 'settingsversion', '8') 
+            shared.config.set('bitmessagesettings', 'settingsversion', '8')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
 
@@ -305,7 +305,7 @@ class sqlThread(threading.Thread):
 
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users? Add it right above this line!
-        
+
         try:
             testpayload = '\x00\x00'
             t = ('1234', 1, testpayload, '12345678', 'no')

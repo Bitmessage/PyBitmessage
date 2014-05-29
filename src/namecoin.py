@@ -100,11 +100,11 @@ class namecoinConnection (object):
         try:
             val = json.loads (res)
         except:
-            return (tr.translateText("MainWindow",'The name %1 has no valid JSON data.').arg(unicode(string)), None)            
+            return (tr.translateText("MainWindow",'The name %1 has no valid JSON data.').arg(unicode(string)), None)
 
         if "bitmessage" in val:
             return (None, val["bitmessage"])
-        return (tr.translateText("MainWindow",'The name %1 has no associated Bitmessage address.').arg(unicode(string)), None) 
+        return (tr.translateText("MainWindow",'The name %1 has no associated Bitmessage address.').arg(unicode(string)), None)
 
     # Test the connection settings.  This routine tries to query a "getinfo"
     # command, and builds either an error message or a success message with
@@ -114,7 +114,7 @@ class namecoinConnection (object):
             if self.nmctype == "namecoind":
                 res = self.callRPC ("getinfo", [])
                 vers = res["version"]
-                
+
                 v3 = vers % 100
                 vers = vers / 100
                 v2 = vers % 100
@@ -192,7 +192,7 @@ class namecoinConnection (object):
         try:
             s = socket.socket (socket.AF_INET, socket.SOCK_STREAM)
             s.setsockopt (socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            s.settimeout(3) 
+            s.settimeout(3)
             s.connect ((self.host, int (self.port)))
             s.sendall (data)
             result = ""
@@ -266,7 +266,7 @@ def ensureNamecoinOptions ():
                     defaultPass = val
                 if key == "rpcport":
                     shared.namecoinDefaultRpcPort = val
-                
+
         nmc.close ()
 
     except Exception as exc:
