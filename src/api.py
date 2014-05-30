@@ -314,7 +314,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(0, 'Too many parameters!')
             if len(passphrase) == 0:
                 raise APIError(1, 'The specified passphrase is blank.')
-            if isinstance(eighteenByteRipe, int) and eighteenByteRipe in [1,2]:
+            if isinstance(eighteenByteRipe, int) and eighteenByteRipe in [0,1]:
                 eighteenByteRipe = bool(eighteenByteRipe)
             if not isinstance(eighteenByteRipe, bool):
                 raise APIError(23, 'Bool expected in eighteenByteRipe, saw %s instead' % type(eighteenByteRipe))
@@ -485,7 +485,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             elif len(params) >= 2:
                 msgid = self._decode(params[0], "hex")
                 readStatus = params[1]
-                if isinstance(readStatus, int) and readStatus in [1,2]:
+                if isinstance(readStatus, int) and readStatus in [0,1]:
                   readStatus = bool(readStatus)
                 if not isinstance(readStatus, bool):
                     raise APIError(23, 'Bool expected in readStatus, saw %s instead.' % type(readStatus))
