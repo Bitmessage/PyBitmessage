@@ -2583,16 +2583,18 @@ class MyForm(QtGui.QMainWindow):
             '''select message from inbox where msgid=?''', msgid)
         if queryreturn != []:
             for row in queryreturn:
-                messageAtCurrentInboxRow, = row 
+                messageText, = row
 
-        lines = messageAtCurrentInboxRow.split('\n')
+        messageText = shared.fixPotentiallyInvalidUTF8Data(messageText)
+        messageText = unicode(messageText, 'utf-8)')
+        lines = messageText.split('\n')
         for i in xrange(len(lines)):
             if 'Message ostensibly from ' in lines[i]:
-                lines[i] = '<p style="font-size: 12px; color: grey;">%s</span></p>' % (
+                lines[i] = u'<p style="font-size: 12px; color: grey;">%s</span></p>' % (
                     lines[i])
             elif lines[i] == '------------------------------------------------------':
                 lines[i] = '<hr>'
-        content = ''
+        content = u''
         for i in xrange(len(lines)):
             content += lines[i]
         content = content.replace('\n\n', '<br><br>')
