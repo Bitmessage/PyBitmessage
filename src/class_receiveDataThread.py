@@ -505,8 +505,10 @@ class receiveDataThread(threading.Thread):
         # pubkeyrequest??
         if objectType == 'pubkeyrequest':
             objectType = 'getpubkey'
-        elif objectType != 'pubkey' and objectType != 'getpubkey' and
-            objectType != 'msg' and objectType != 'broadcast':
+        elif (objectType != 'pubkey' and
+              objectType != 'getpubkey' and
+              objectType != 'msg' and
+              objectType != 'broadcast'):
             sys.stderr.write(
                 'Error: sendData has been asked to send a strange objectType: %s\n' % str(objectType))
             return
