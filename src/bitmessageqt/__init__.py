@@ -1,3 +1,5 @@
+
+
 try:
     import locale
 except:
@@ -40,6 +42,7 @@ from debug import logger
 import subprocess
 import datetime
 from helper_sql import *
+import functools
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -494,6 +497,15 @@ class MyForm(QtGui.QMainWindow):
         self.init_addressbook_popup_menu()
         self.init_subscriptions_popup_menu()
         self.init_sent_popup_menu()
+        self.actionSentAddStar = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Star"), functools.partial(self.on_action_AddStar, "sent", self.ui.tableWidgetSent, self.loadSent))
+        self.actionSentRemoveStar = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Unstar"), functools.partial(self.on_action_RemoveStar, "sent", self.ui.tableWidgetSent, self.loadSent))
+        self.actionInboxAddStar = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Star"), functools.partial(self.on_action_AddStar, "inbox", self.ui.tableWidgetInbox, self.loadInbox))
+        self.actionInboxRemoveStar = self.ui.sentContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Unstar"), functools.partial(self.on_action_RemoveStar, "inbox", self.ui.tableWidgetInbox, self.loadInbox))
+
         self.init_blacklist_popup_menu()
 
         # Initialize the user's list of addresses on the 'Your Identities' tab.
@@ -753,11 +765,14 @@ class MyForm(QtGui.QMainWindow):
             where = "subject"
         elif where == "Message":
             where = "message"
+        elif where == "Starred":
+            where = "starred"
+
         else:
-            where = "toaddress || fromaddress || subject || message"
+            where = "toaddress || fromaddress || subject || message || starred"
 
         sqlStatement = '''
-            SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime 
+            SELECT toaddress, fromaddress, subject, message, status, ackdata, lastactiontime, starred
             FROM sent WHERE folder="sent" AND %s LIKE ? 
             ORDER BY lastactiontime
             ''' % (where,)
@@ -767,7 +782,7 @@ class MyForm(QtGui.QMainWindow):
 
         queryreturn = sqlQuery(sqlStatement, what)
         for row in queryreturn:
-            toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
+            toAddress, fromAddress, subject, message, status, ackdata, lastactiontime, starred = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
 
             if shared.config.has_section(fromAddress):
@@ -868,8 +883,25 @@ class MyForm(QtGui.QMainWindow):
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             self.ui.tableWidgetSent.setItem(0, 3, newItem)
+            #starred
+            if starred == 1:
+                iconStar = QtGui.QIcon(":/newPrefix/images/star1.png")
+                newItem = QtGui.QTableWidgetItem(u"\u200B")
+            else:
+                iconStar = QtGui.QIcon(":/newPrefix/images/star2.png")
+                newItem = QtGui.QTableWidgetItem()
+            newItem.setIcon(iconStar)
+            self.ui.tableWidgetSent.setItem(0, 4, newItem)
+
         self.ui.tableWidgetSent.sortItems(3, Qt.DescendingOrder)
         self.ui.tableWidgetSent.keyPressEvent = self.tableWidgetSentKeyPressEvent
+
+    # Reload inbox Table when Inbox tab is selected
+    def ReloadInboxSentTables(self):
+        if self.ui.tabWidget.currentIndex() == self.ui.tabWidget.indexOf(self.ui.inbox):
+            self.loadInbox()
+        elif self.ui.tabWidget.currentIndex() == self.ui.tabWidget.indexOf(self.ui.sent):
+            self.loadSent()
 
     # Load inbox from messages database file
     def loadInbox(self, where="", what=""):
@@ -882,12 +914,14 @@ class MyForm(QtGui.QMainWindow):
             where = "subject"
         elif where == "Message":
             where = "message"
+        elif where == "Starred":
+            where = "starred"
         else:
-            where = "toaddress || fromaddress || subject || message"
+            where = "toaddress || fromaddress || subject || message || starred"
 
         sqlStatement = '''
-            SELECT msgid, toaddress, fromaddress, subject, received, read
-            FROM inbox WHERE folder="inbox" AND %s LIKE ?
+            SELECT msgid, toaddress, fromaddress, subject, received, message, read, starred
+            FROM inbox WHERE folder="inbox" AND %s LIKE ? 
             ORDER BY received
             ''' % (where,)
 
@@ -898,7 +932,7 @@ class MyForm(QtGui.QMainWindow):
         font.setBold(True)
         queryreturn = sqlQuery(sqlStatement, what)
         for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, received, read = row
+            msgid, toAddress, fromAddress, subject, received, message, read, starred = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             try:
                 if toAddress == self.str_broadcast_subscribers:
@@ -978,6 +1012,15 @@ class MyForm(QtGui.QMainWindow):
             if not read:
                 time_item.setFont(font)
             self.ui.tableWidgetInbox.setItem(0, 3, time_item)
+            #starred
+            if starred == 1:
+                iconStar = QtGui.QIcon(":/newPrefix/images/star1.png")
+                newItem = QtGui.QTableWidgetItem(u"\u200B")
+            else:
+                iconStar = QtGui.QIcon(":/newPrefix/images/star2.png")
+                newItem = QtGui.QTableWidgetItem()
+            newItem.setIcon(iconStar)
+            self.ui.tableWidgetInbox.setItem(0, 4, newItem)
 
         self.ui.tableWidgetInbox.sortItems(3, Qt.DescendingOrder)
         self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetInboxKeyPressEvent
@@ -1921,9 +1964,9 @@ class MyForm(QtGui.QMainWindow):
                 toAddress = self.str_broadcast_subscribers
                 ripe = ''
                 t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
-                    time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
+                    time.time()), 'broadcastqueued', 1, 1, 'sent', 2, 0)
                 sqlExecute(
-                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
+                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
 
                 toLabel = self.str_broadcast_subscribers
                 
@@ -2598,6 +2641,30 @@ class MyForm(QtGui.QMainWindow):
         content = content.replace('\n\n', '<br><br>')
         self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
 
+    def on_action_AddStar(self, dbTableName, TableWidget, LoadFunction):
+
+        for i in TableWidget.selectedItems()[0::TableWidget.columnCount()]:
+            selectedRowNumber = TableWidget.row(i)
+            inventoryHashToAddStar = str(TableWidget.item(selectedRowNumber, 3).data(Qt.UserRole).toPyObject())
+            if dbTableName == "inbox":
+                sqlExecute('''UPDATE inbox SET starred=1 WHERE msgid=?''', inventoryHashToAddStar)
+            elif dbTableName == "sent":
+                sqlExecute('''UPDATE sent SET starred=1 WHERE ackdata=?''', inventoryHashToAddStar)
+
+        LoadFunction()
+
+    def on_action_RemoveStar(self, dbTableName, TableWidget, LoadFunction):
+
+        for i in TableWidget.selectedItems()[0::TableWidget.columnCount()]:
+            selectedRowNumber = TableWidget.row(i)
+            inventoryHashToRemoveStar = str(TableWidget.item(selectedRowNumber, 3).data(Qt.UserRole).toPyObject())
+            if dbTableName == "inbox":
+                sqlExecute('''UPDATE inbox SET starred=0 WHERE msgid=?''', inventoryHashToRemoveStar)
+            elif dbTableName == "sent":
+                sqlExecute('''UPDATE sent SET starred=0 WHERE ackdata=?''', inventoryHashToRemoveStar)
+
+        LoadFunction()
+
     def on_action_InboxMarkUnread(self):
         font = QFont()
         font.setBold(True)
@@ -2610,7 +2677,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetInbox.item(currentRow, 1).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 2).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 3).setFont(font)
-        self.changedInboxUnread()
+            self.ui.tableWidgetInbox.item(currentRow, 4).setFont(font)
         # self.ui.tableWidgetInbox.selectRow(currentRow + 1) 
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
@@ -3127,12 +3194,17 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tableWidgetYourIdentities.mapToGlobal(point))
 
     def on_context_menuInbox(self, point):
+        self.popMenuInbox.addAction(self.actionInboxAddStar)
+        self.popMenuInbox.addAction(self.actionInboxRemoveStar)
         self.popMenuInbox.exec_(self.ui.tableWidgetInbox.mapToGlobal(point))
 
     def on_context_menuSent(self, point):
         self.popMenuSent = QtGui.QMenu(self)
         self.popMenuSent.addAction(self.actionSentClipboard)
         self.popMenuSent.addAction(self.actionTrashSentMessage)
+
+        self.popMenuSent.addAction(self.actionSentAddStar)
+        self.popMenuSent.addAction(self.actionSentRemoveStar)
 
         # Check to see if this item is toodifficult and display an additional
         # menu option (Force Send) if it is.
