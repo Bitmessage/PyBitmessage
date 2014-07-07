@@ -1459,14 +1459,23 @@ class MyForm(QtGui.QMainWindow):
     def updateNumberOfMessagesProcessed(self):
         self.ui.labelMessageCount.setText(_translate(
             "MainWindow", "Processed %1 person-to-person messages.").arg(str(shared.numberOfMessagesProcessed)))
+        self.updateNumberOfBytes()
 
     def updateNumberOfBroadcastsProcessed(self):
         self.ui.labelBroadcastCount.setText(_translate(
             "MainWindow", "Processed %1 broadcast messages.").arg(str(shared.numberOfBroadcastsProcessed)))
+        self.updateNumberOfBytes()
 
     def updateNumberOfPubkeysProcessed(self):
         self.ui.labelPubkeyCount.setText(_translate(
             "MainWindow", "Processed %1 public keys.").arg(str(shared.numberOfPubkeysProcessed)))
+        self.updateNumberOfBytes()
+
+    def updateNumberOfBytes(self):
+        self.ui.labelBytesRecvCount.setText(_translate(
+            "MainWindow", "Received %1 bytes.").arg(str(locale.format("%d", shared.numberOfBytesReceived, grouping=True))))
+        self.ui.labelBytesSentCount.setText(_translate(
+            "MainWindow", "Sent %1 bytes.").arg(str(locale.format("%d", shared.numberOfBytesSent, grouping=True))))
 
     def updateNetworkStatusTab(self):
         # print 'updating network status tab'
@@ -1521,6 +1530,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.labelLookupsPerSecond.setText(_translate(
             "MainWindow", "Inventory lookups per second: %1").arg(str(shared.numberOfInventoryLookupsPerformed/2)))
         shared.numberOfInventoryLookupsPerformed = 0
+        self.updateNumberOfBytes()
 
     # Indicates whether or not there is a connection to the Bitmessage network
     connected = False

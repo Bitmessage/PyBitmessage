@@ -55,13 +55,17 @@ class sendDataThread(threading.Thread):
             print 'Sending version packet: ', repr(datatosend)
 
         try:
-            self.sock.sendall(datatosend)
+            self.sendBytes(datatosend)
         except Exception as err:
             # if not 'Bad file descriptor' in err:
             with shared.printLock:
                 sys.stderr.write('sock.sendall error: %s\n' % err)
             
         self.versionSent = 1
+
+    def sendBytes(self, data):
+        self.sock.sendall(data)
+        shared.numberOfBytesSent += len(data)
 
     def run(self):
         while True:
@@ -114,7 +118,7 @@ class sendDataThread(threading.Thread):
                     datatosend = datatosend + payload
 
                     try:
-                        self.sock.sendall(datatosend)
+                        self.sendBytes(datatosend)
                         self.lastTimeISentData = int(time.time())
                     except:
                         print 'sendaddr: self.sock.sendall failed'
@@ -136,7 +140,7 @@ class sendDataThread(threading.Thread):
                         headerData += pack('>L', len(payload))
                         headerData += hashlib.sha512(payload).digest()[:4]
                         try:
-                            self.sock.sendall(headerData + payload)
+                            self.sendBytes(headerData + payload)
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'sendinv: self.sock.sendall failed'
@@ -149,7 +153,7 @@ class sendDataThread(threading.Thread):
                             print 'Sending pong to', self.peer, 'to keep connection alive.'
 
                         try:
-                            self.sock.sendall(
+                            self.sendBytes(
                                 '\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xcf\x83\xe1\x35')
                             self.lastTimeISentData = int(time.time())
                         except:
@@ -157,7 +161,7 @@ class sendDataThread(threading.Thread):
                             break
                 elif command == 'sendRawData':
                     try:
-                        self.sock.sendall(data)
+                        self.sendBytes(data)
                         self.lastTimeISentData = int(time.time())
                     except:
                         print 'Sending of data to', self.peer, 'failed. sendDataThread thread', self, 'ending now.' 
