@@ -2,8 +2,8 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Sat Nov  2 18:01:09 2013
-#      by: PyQt4 UI code generator 4.10
+# Created: Mon Jul  7 12:26:18 2014
+#      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
 
@@ -431,15 +431,21 @@ class Ui_MainWindow(object):
         self.labelBroadcastCount.setGeometry(QtCore.QRect(350, 150, 351, 16))
         self.labelBroadcastCount.setObjectName(_fromUtf8("labelBroadcastCount"))
         self.labelLookupsPerSecond = QtGui.QLabel(self.networkstatus)
-        self.labelLookupsPerSecond.setGeometry(QtCore.QRect(320, 210, 291, 16))
+        self.labelLookupsPerSecond.setGeometry(QtCore.QRect(320, 230, 291, 16))
         self.labelLookupsPerSecond.setObjectName(_fromUtf8("labelLookupsPerSecond"))
+        self.labelBytesRecvCount = QtGui.QLabel(self.networkstatus)
+        self.labelBytesRecvCount.setGeometry(QtCore.QRect(350, 190, 331, 16))
+        self.labelBytesRecvCount.setObjectName(_fromUtf8("labelBytesRecvCount"))
+        self.labelBytesSentCount = QtGui.QLabel(self.networkstatus)
+        self.labelBytesSentCount.setGeometry(QtCore.QRect(350, 210, 331, 16))
+        self.labelBytesSentCount.setObjectName(_fromUtf8("labelBytesSentCount"))
         icon9 = QtGui.QIcon()
         icon9.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/networkstatus.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.networkstatus, icon9, _fromUtf8(""))
         self.gridLayout.addWidget(self.tabWidget, 0, 0, 1, 1)
         MainWindow.setCentralWidget(self.centralwidget)
         self.menubar = QtGui.QMenuBar(MainWindow)
-        self.menubar.setGeometry(QtCore.QRect(0, 0, 885, 27))
+        self.menubar.setGeometry(QtCore.QRect(0, 0, 885, 20))
         self.menubar.setObjectName(_fromUtf8("menubar"))
         self.menuFile = QtGui.QMenu(self.menubar)
         self.menuFile.setObjectName(_fromUtf8("menuFile"))
@@ -501,7 +507,7 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(7)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("toggled(bool)")), self.lineEditTo.setEnabled)
         QtCore.QObject.connect(self.radioButtonSpecific, QtCore.SIGNAL(_fromUtf8("clicked(bool)")), self.labelSendBroadcastWarning.hide)
         QtCore.QObject.connect(self.radioButtonBroadcast, QtCore.SIGNAL(_fromUtf8("clicked()")), self.labelSendBroadcastWarning.show)
@@ -625,6 +631,8 @@ class Ui_MainWindow(object):
         self.labelPubkeyCount.setText(_translate("MainWindow", "Processed 0 public key.", None))
         self.labelBroadcastCount.setText(_translate("MainWindow", "Processed 0 broadcast.", None))
         self.labelLookupsPerSecond.setText(_translate("MainWindow", "Inventory lookups per second: 0", None))
+        self.labelBytesRecvCount.setText(_translate("MainWindow", "Received 0 bytes.", None))
+        self.labelBytesSentCount.setText(_translate("MainWindow", "Sent 0 bytes.", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus), _translate("MainWindow", "Network Status", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.menuSettings.setTitle(_translate("MainWindow", "Settings", None))
