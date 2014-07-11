@@ -1471,11 +1471,22 @@ class MyForm(QtGui.QMainWindow):
             "MainWindow", "Processed %1 public keys.").arg(str(shared.numberOfPubkeysProcessed)))
         self.updateNumberOfBytes()
 
+
+    def formatNumberAsHumanReadable(self, num):
+        for x in ['bytes','KB','MB','GB']:
+            if num < 1024.0:
+                return "%3.1f %s" % (num, x)
+            num /= 1024.0
+        return "%3.1f %s" % (num, 'TB')
+
+    def formatNumberOfBytes(self, num):
+        return "%s (%s bytes)" % (self.formatNumberAsHumanReadable(num), str(locale.format("%d", num, grouping=True)))
+
     def updateNumberOfBytes(self):
         self.ui.labelBytesRecvCount.setText(_translate(
-            "MainWindow", "Received %1 bytes.").arg(str(locale.format("%d", shared.numberOfBytesReceived, grouping=True))))
+            "MainWindow", "Received %1.").arg(self.formatNumberOfBytes(shared.numberOfBytesReceived)))
         self.ui.labelBytesSentCount.setText(_translate(
-            "MainWindow", "Sent %1 bytes.").arg(str(locale.format("%d", shared.numberOfBytesSent, grouping=True))))
+            "MainWindow", "Sent %1.").arg(self.formatNumberOfBytes(shared.numberOfBytesSent)))
 
     def updateNetworkStatusTab(self):
         # print 'updating network status tab'
