@@ -2583,19 +2583,22 @@ class MyForm(QtGui.QMainWindow):
             '''select message from inbox where msgid=?''', msgid)
         if queryreturn != []:
             for row in queryreturn:
-                messageAtCurrentInboxRow, = row 
+                messageText, = row
 
-        lines = messageAtCurrentInboxRow.split('\n')
-        for i in xrange(len(lines)):
+        lines = messageText.split('\n')
+        totalLines = len(lines)
+        for i in xrange(totalLines):
             if 'Message ostensibly from ' in lines[i]:
                 lines[i] = '<p style="font-size: 12px; color: grey;">%s</span></p>' % (
                     lines[i])
             elif lines[i] == '------------------------------------------------------':
                 lines[i] = '<hr>'
-        content = ''
-        for i in xrange(len(lines)):
-            content += lines[i]
-        content = content.replace('\n\n', '<br><br>')
+            elif lines[i] == '' and (i+1) < totalLines and \
+                 lines[i+1] != '------------------------------------------------------':
+                lines[i] = '<br><br>'
+        content = ' '.join(lines) # To keep the whitespace between lines
+        content = shared.fixPotentiallyInvalidUTF8Data(content)
+        content = unicode(content, 'utf-8)')
         self.ui.textEditInboxMessage.setHtml(QtCore.QString(content))
 
     def on_action_InboxMarkUnread(self):
