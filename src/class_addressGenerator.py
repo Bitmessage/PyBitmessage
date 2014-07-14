@@ -79,11 +79,11 @@ class addressGenerator(threading.Thread):
                 startTime = time.time()
                 numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix = 0
                 potentialPrivSigningKey = OpenSSL.rand(32)
-                potentialPubSigningKey = pointMult(potentialPrivSigningKey)
+                potentialPubSigningKey = highlevelcrypto.pointMult(potentialPrivSigningKey)
                 while True:
                     numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix += 1
                     potentialPrivEncryptionKey = OpenSSL.rand(32)
-                    potentialPubEncryptionKey = pointMult(
+                    potentialPubEncryptionKey = highlevelcrypto.pointMult(
                         potentialPrivEncryptionKey)
                     # print 'potentialPubSigningKey', potentialPubSigningKey.encode('hex')
                     # print 'potentialPubEncryptionKey',
@@ -175,9 +175,9 @@ class addressGenerator(threading.Thread):
                             deterministicPassphrase + encodeVarint(signingKeyNonce)).digest()[:32]
                         potentialPrivEncryptionKey = hashlib.sha512(
                             deterministicPassphrase + encodeVarint(encryptionKeyNonce)).digest()[:32]
-                        potentialPubSigningKey = pointMult(
+                        potentialPubSigningKey = highlevelcrypto.pointMult(
                             potentialPrivSigningKey)
-                        potentialPubEncryptionKey = pointMult(
+                        potentialPubEncryptionKey = highlevelcrypto.pointMult(
                             potentialPrivEncryptionKey)
                         # print 'potentialPubSigningKey', potentialPubSigningKey.encode('hex')
                         # print 'potentialPubEncryptionKey',
@@ -280,32 +280,3 @@ class addressGenerator(threading.Thread):
                 raise Exception(
                     "Error in the addressGenerator thread. Thread was given a command it could not understand: " + command)
 
-
-# Does an EC point multiplication; turns a private key into a public key.
-def pointMult(secret):
-    # ctx = OpenSSL.BN_CTX_new() #This value proved to cause Seg Faults on
-    # Linux. It turns out that it really didn't speed up EC_POINT_mul anyway.
-    k = OpenSSL.EC_KEY_new_by_curve_name(OpenSSL.get_curve('secp256k1'))
-    priv_key = OpenSSL.BN_bin2bn(secret, 32, 0)
-    group = OpenSSL.EC_KEY_get0_group(k)
-    pub_key = OpenSSL.EC_POINT_new(group)
-
-    OpenSSL.EC_POINT_mul(group, pub_key, priv_key, None, None, None)
-    OpenSSL.EC_KEY_set_private_key(k, priv_key)
-    OpenSSL.EC_KEY_set_public_key(k, pub_key)
-    # print 'priv_key',priv_key
-    # print 'pub_key',pub_key
-
-    size = OpenSSL.i2o_ECPublicKey(k, 0)
-    mb = ctypes.create_string_buffer(size)
-    OpenSSL.i2o_ECPublicKey(k, ctypes.byref(ctypes.pointer(mb)))
-    # print 'mb.raw', mb.raw.encode('hex'), 'length:', len(mb.raw)
-    # print 'mb.raw', mb.raw, 'length:', len(mb.raw)
-
-    OpenSSL.EC_POINT_free(pub_key)
-    # OpenSSL.BN_CTX_free(ctx)
-    OpenSSL.BN_free(priv_key)
-    OpenSSL.EC_KEY_free(k)
-    return mb.raw
-    
-    
