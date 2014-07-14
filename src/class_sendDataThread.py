@@ -151,7 +151,7 @@ class sendDataThread(threading.Thread):
 
                         try:
                             self.sock.sendall(
-                                '\xE9\xBE\xB4\xD9\x70\x6F\x6E\x67' + addDataPadding('') + '\xcf\x83\xe1\x35')
+                                '\xE9\xBE\xB4\xD9' + addDataPadding('pong') + '\x00\x00\x00\x00\xcf\x83\xe1\x35') # Magic bytes + pong command + zero data length + checksum
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'send pong failed'
