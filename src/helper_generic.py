@@ -32,3 +32,6 @@ def isHostInPrivateIPRange(host):
     if host[:8] == '192.168.':
         return True
     return False
+
+def addDataPadding(data, desiredMsgLength = 12, paddingChar = '\x00'):
+    return data + paddingChar * (desiredMsgLength - len(data))
