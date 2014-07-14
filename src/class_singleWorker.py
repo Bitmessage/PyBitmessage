@@ -13,6 +13,7 @@ import tr
 from debug import logger
 from helper_sql import *
 import helper_inbox
+from helper_generic import addDataPadding
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
@@ -950,7 +951,7 @@ class singleWorker(threading.Thread):
 
         payload = pack('>Q', nonce) + payload
         headerData = '\xe9\xbe\xb4\xd9'  # magic bits, slighly different from Bitcoin's magic bits.
-        headerData += 'msg\x00\x00\x00\x00\x00\x00\x00\x00\x00'
+        headerData += addDataPadding('msg')
         headerData += pack('>L', len(payload))
         headerData += hashlib.sha512(payload).digest()[:4]
         return headerData + payload
