@@ -1150,25 +1150,27 @@ class objectProcessor(threading.Thread):
                 shared.workerQueue.put(('sendmessage', ''))
 
     def ackDataHasAVaildHeader(self, ackData):
-        if len(ackData) < 24:
+        if len(ackData) < shared.Header.size:
             logger.info('The length of ackData is unreasonably short. Not sending ackData.')
             return False
-        if ackData[0:4] != '\xe9\xbe\xb4\xd9':
+        
+        magic,command,payload_length,checksum = shared.Header.unpack(ackData[:shared.Header.size])
+        if magic != 0xE9BEB4D9:
             logger.info('Ackdata magic bytes were wrong. Not sending ackData.')
             return False
-        ackDataPayloadLength, = unpack('>L', ackData[16:20])
-        if len(ackData) - 24 != ackDataPayloadLength:
+        payload = ackData[shared.Header.size:]
+        if len(payload) != payload_length:
             logger.info('ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.')
             return False
-        if ackData[20:24] != hashlib.sha512(ackData[24:]).digest()[0:4]:  # test the checksum in the message.
+        if payload_length > 180000000: # If the size of the message is greater than 180MB, ignore it.
+            return False
+        if checksum != hashlib.sha512(payload).digest()[0:4]:  # test the checksum in the message.
             logger.info('ackdata checksum wrong. Not sending ackdata.')
             return False
-        if ackDataPayloadLength > 180000000: # If the size of the message is greater than 180MB, ignore it.
-            return False
-        if (ackData[4:16] != addDataPadding('getpubkey') and
-            ackData[4:16] != addDataPadding('pubkey') and
-            ackData[4:16] != addDataPadding('msg') and
-            ackData[4:16] != addDataPadding('broadcast')):
+        if (command != addDataPadding('getpubkey') and
+            command != addDataPadding('pubkey') and
+            command != addDataPadding('msg') and
+            command != addDataPadding('broadcast')):
             return False
         return True
 
