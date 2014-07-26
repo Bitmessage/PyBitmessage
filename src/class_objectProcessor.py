@@ -595,22 +595,29 @@ class objectProcessor(threading.Thread):
             if queryreturn == []:
                 logger.info('Message ignored because address not in whitelist.')
                 blockMessage = True
-        if not blockMessage:
-            toLabel = shared.config.get(toAddress, 'label')
-            if toLabel == '':
-                toLabel = toAddress
+        
+        toLabel = shared.config.get(toAddress, 'label')
+        if toLabel == '':
+            toLabel = toAddress
 
-            if messageEncodingType == 2:
-                subject, body = self.decodeType2Message(message)
-                logger.info('Message subject (first 100 characters): %s' % repr(subject)[:100])
-            elif messageEncodingType == 1:
-                body = message
-                subject = ''
-            elif messageEncodingType == 0:
-                logger.info('messageEncodingType == 0. Doing nothing with the message. They probably just sent it so that we would store their public key or send their ack data for them.') 
-            else:
-                body = 'Unknown encoding type.\n\n' + repr(message)
-                subject = ''
+        if messageEncodingType == 2:
+            subject, body = self.decodeType2Message(message)
+            logger.info('Message subject (first 100 characters): %s' % repr(subject)[:100])
+        elif messageEncodingType == 1:
+            body = message
+            subject = ''
+        elif messageEncodingType == 0:
+            logger.info('messageEncodingType == 0. Doing nothing with the message. They probably just sent it so that we would store their public key or send their ack data for them.')
+            subject = ''
+            body = '' 
+        else:
+            body = 'Unknown encoding type.\n\n' + repr(message)
+            subject = ''
+        # Let us make sure that we haven't already received this message
+        if helper_inbox.isMessageAlreadyInInbox(toAddress, fromAddress, subject, body, messageEncodingType):
+            logger.info('This msg is already in our inbox. Ignoring it.')
+            blockMessage = True
+        if not blockMessage:
             if messageEncodingType != 0:
                 t = (inventoryHash, toAddress, fromAddress, subject, int(
                     time.time()), body, 'inbox', messageEncodingType, 0)
@@ -808,25 +815,28 @@ class objectProcessor(threading.Thread):
 
                 toAddress = '[Broadcast subscribers]'
                 if messageEncodingType != 0:
-
-                    t = (inventoryHash, toAddress, fromAddress, subject, int(
-                        time.time()), body, 'inbox', messageEncodingType, 0)
-                    helper_inbox.insert(t)
-
-                    shared.UISignalQueue.put(('displayNewInboxMessage', (
-                        inventoryHash, toAddress, fromAddress, subject, body)))
-
-                    # If we are behaving as an API then we might need to run an
-                    # outside command to let some program know that a new
-                    # message has arrived.
-                    if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
-                        try:
-                            apiNotifyPath = shared.config.get(
-                                'bitmessagesettings', 'apinotifypath')
-                        except:
-                            apiNotifyPath = ''
-                        if apiNotifyPath != '':
-                            call([apiNotifyPath, "newBroadcast"])
+                    # Let us make sure that we haven't already received this message
+                    if helper_inbox.isMessageAlreadyInInbox(toAddress, fromAddress, subject, body, messageEncodingType):
+                        logger.info('This broadcast is already in our inbox. Ignoring it.')
+                    else:
+                        t = (inventoryHash, toAddress, fromAddress, subject, int(
+                            time.time()), body, 'inbox', messageEncodingType, 0)
+                        helper_inbox.insert(t)
+    
+                        shared.UISignalQueue.put(('displayNewInboxMessage', (
+                            inventoryHash, toAddress, fromAddress, subject, body)))
+    
+                        # If we are behaving as an API then we might need to run an
+                        # outside command to let some program know that a new
+                        # message has arrived.
+                        if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+                            try:
+                                apiNotifyPath = shared.config.get(
+                                    'bitmessagesettings', 'apinotifypath')
+                            except:
+                                apiNotifyPath = ''
+                            if apiNotifyPath != '':
+                                call([apiNotifyPath, "newBroadcast"])
 
                 # Display timing data
                 logger.debug('Time spent processing this interesting broadcast: %s' % (time.time() - messageProcessingStartTime,))
@@ -953,25 +963,27 @@ class objectProcessor(threading.Thread):
 
             toAddress = '[Broadcast subscribers]'
             if messageEncodingType != 0:
-
-                t = (inventoryHash, toAddress, fromAddress, subject, int(
-                    time.time()), body, 'inbox', messageEncodingType, 0)
-                helper_inbox.insert(t)
-
-                shared.UISignalQueue.put(('displayNewInboxMessage', (
-                    inventoryHash, toAddress, fromAddress, subject, body)))
-
-                # If we are behaving as an API then we might need to run an
-                # outside command to let some program know that a new message
-                # has arrived.
-                if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
-                    try:
-                        apiNotifyPath = shared.config.get(
-                            'bitmessagesettings', 'apinotifypath')
-                    except:
-                        apiNotifyPath = ''
-                    if apiNotifyPath != '':
-                        call([apiNotifyPath, "newBroadcast"])
+                if helper_inbox.isMessageAlreadyInInbox(toAddress, fromAddress, subject, body, messageEncodingType):
+                    logger.info('This broadcast is already in our inbox. Ignoring it.')
+                else:
+                    t = (inventoryHash, toAddress, fromAddress, subject, int(
+                        time.time()), body, 'inbox', messageEncodingType, 0)
+                    helper_inbox.insert(t)
+    
+                    shared.UISignalQueue.put(('displayNewInboxMessage', (
+                        inventoryHash, toAddress, fromAddress, subject, body)))
+    
+                    # If we are behaving as an API then we might need to run an
+                    # outside command to let some program know that a new message
+                    # has arrived.
+                    if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+                        try:
+                            apiNotifyPath = shared.config.get(
+                                'bitmessagesettings', 'apinotifypath')
+                        except:
+                            apiNotifyPath = ''
+                        if apiNotifyPath != '':
+                            call([apiNotifyPath, "newBroadcast"])
 
             # Display timing data
             logger.info('Time spent processing this interesting broadcast: %s' % (time.time() - messageProcessingStartTime,))
@@ -1096,25 +1108,27 @@ class objectProcessor(threading.Thread):
 
             toAddress = '[Broadcast subscribers]'
             if messageEncodingType != 0:
-
-                t = (inventoryHash, toAddress, fromAddress, subject, int(
-                    time.time()), body, 'inbox', messageEncodingType, 0)
-                helper_inbox.insert(t)
-
-                shared.UISignalQueue.put(('displayNewInboxMessage', (
-                    inventoryHash, toAddress, fromAddress, subject, body)))
-
-                # If we are behaving as an API then we might need to run an
-                # outside command to let some program know that a new message
-                # has arrived.
-                if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
-                    try:
-                        apiNotifyPath = shared.config.get(
-                            'bitmessagesettings', 'apinotifypath')
-                    except:
-                        apiNotifyPath = ''
-                    if apiNotifyPath != '':
-                        call([apiNotifyPath, "newBroadcast"])
+                if helper_inbox.isMessageAlreadyInInbox(toAddress, fromAddress, subject, body, messageEncodingType):
+                    logger.info('This broadcast is already in our inbox. Ignoring it.')
+                else:
+                    t = (inventoryHash, toAddress, fromAddress, subject, int(
+                        time.time()), body, 'inbox', messageEncodingType, 0)
+                    helper_inbox.insert(t)
+    
+                    shared.UISignalQueue.put(('displayNewInboxMessage', (
+                        inventoryHash, toAddress, fromAddress, subject, body)))
+    
+                    # If we are behaving as an API then we might need to run an
+                    # outside command to let some program know that a new message
+                    # has arrived.
+                    if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+                        try:
+                            apiNotifyPath = shared.config.get(
+                                'bitmessagesettings', 'apinotifypath')
+                        except:
+                            apiNotifyPath = ''
+                        if apiNotifyPath != '':
+                            call([apiNotifyPath, "newBroadcast"])
 
             # Display timing data
             logger.debug('Time spent processing this interesting broadcast: %s' % (time.time() - messageProcessingStartTime,))
