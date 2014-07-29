@@ -437,8 +437,10 @@ class ECC:
         iv = OpenSSL.rand(OpenSSL.get_cipher(ciphername).get_blocksize())
         ctx = Cipher(key_e, iv, 1, ciphername)
         ciphertext = ctx.ciphering(data)
+        #ciphertext = iv + pubkey + ctx.ciphering(data) # We will switch to this line after an upgrade period
         mac = hmac_sha256(key_m, ciphertext)
         return iv + pubkey + ciphertext + mac
+        #return ciphertext + mac # We will switch to this line after an upgrade period.
 
     def decrypt(self, data, ciphername='aes-256-cbc'):
         """
@@ -454,7 +456,14 @@ class ECC:
         mac = data[i:]
         key = sha512(self.raw_get_ecdh_key(pubkey_x, pubkey_y)).digest()
         key_e, key_m = key[:32], key[32:]
+        """
+        pyelliptic was changed slightly so that the hmac covers the
+        iv and pubkey. So let's have an upgrade period where we support
+        both the old and the new hmac'ing algorithms.
+        https://github.com/yann2192/pyelliptic/issues/17
+        """
         if hmac_sha256(key_m, ciphertext) != mac:
-            raise RuntimeError("Fail to verify data")
+            if hmac_sha256(key_m, data[:len(data) - 32]) != mac:
+                raise RuntimeError("Fail to verify data")
         ctx = Cipher(key_e, iv, 0, ciphername)
         return ctx.ciphering(ciphertext)
