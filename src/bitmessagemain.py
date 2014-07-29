@@ -9,6 +9,26 @@
 
 # The software version variable is now held in shared.py
 
+
+import sys
+#Version check
+#Older versions of Python don't support the print function while Python 3 doesn't
+#like the print statement, so we use sys.stdout for the version check. After this
+#check we can then use the print function in the remainder of this file. Currently
+#in order to use logging, a lot of unnecessary code needs to be executed which could
+#potentially render this version check useless. So logging won't be used here until
+#there is a more efficient way to configure logging
+if sys.hexversion >= 0x3000000:
+    msg = "PyBitmessage does not support Python 3. Python 2.7.5 or later is required. Your version: %s" % sys.version
+    #logger.critical(msg)
+    sys.stdout.write(msg)
+    sys.exit(0)
+if sys.hexversion < 0x20705F0:
+    msg = "You should use Python 2.7.5 or greater (but not Python 3). Your version: %s" % sys.version
+    #logger.critical(msg)
+    sys.stdout.write(msg)
+    sys.exit(0)
+
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
 import singleton
@@ -45,15 +65,7 @@ import helper_generic
 
 from subprocess import call
 import time
-
-# OSX python version check
-import sys
-if 'win' in sys.platform:
-    if float("{1}.{2}".format(*sys.version_info)) < 7.5:
-        msg = "You should use python 2.7.5 or greater. Your version: %s", "{0}.{1}.{2}".format(*sys.version_info)
-        logger.critical(msg)
-        print msg
-        sys.exit(0)
+    
 
 def connectToStream(streamNumber):
     shared.streamsInWhichIAmParticipating[streamNumber] = 'no data'
@@ -199,7 +211,7 @@ class Main:
                 apiNotifyPath = ''
             if apiNotifyPath != '':
                 with shared.printLock:
-                    print 'Trying to call', apiNotifyPath
+                    print('Trying to call', apiNotifyPath)
 
                 call([apiNotifyPath, "startingUp"])
             singleAPIThread = singleAPI()
@@ -218,15 +230,15 @@ class Main:
                 try:
                     from PyQt4 import QtCore, QtGui
                 except Exception as err:
-                    print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
-                    print 'Error message:', err
-                    print 'You can also run PyBitmessage with the new curses interface by providing \'-c\' as a commandline argument.'
+                    print('PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon')
+                    print('Error message:', err)
+                    print('You can also run PyBitmessage with the new curses interface by providing \'-c\' as a commandline argument.')
                     os._exit(0)
 
                 import bitmessageqt
                 bitmessageqt.run()
             else:
-                print 'Running with curses'
+                print('Running with curses')
                 import bitmessagecurses
                 bitmessagecurses.runwrapper()
         else:
@@ -234,16 +246,16 @@ class Main:
 
             if daemon:
                 with shared.printLock:
-                    print 'Running as a daemon. The main program should exit this thread.'
+                    print('Running as a daemon. The main program should exit this thread.')
             else:
                 with shared.printLock:
-                    print 'Running as a daemon. You can use Ctrl+C to exit.'
+                    print('Running as a daemon. You can use Ctrl+C to exit.')
                 while True:
                     time.sleep(20)
 
     def stop(self):
         with shared.printLock:
-            print 'Stopping Bitmessage Deamon.'
+            print('Stopping Bitmessage Deamon.')
         shared.doCleanShutdown()
 
 
