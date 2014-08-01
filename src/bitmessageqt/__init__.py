@@ -482,6 +482,10 @@ class MyForm(QtGui.QMainWindow):
             # startup for linux
             pass
 
+
+        self.totalNumberOfBytesReceived = 0
+        self.totalNumberOfBytesSent = 0
+        
         self.ui.labelSendBroadcastWarning.setVisible(False)
 
         self.timer = QtCore.QTimer()
@@ -1468,6 +1472,31 @@ class MyForm(QtGui.QMainWindow):
         self.ui.labelPubkeyCount.setText(_translate(
             "MainWindow", "Processed %1 public keys.").arg(str(shared.numberOfPubkeysProcessed)))
 
+    def formatBytes(self, num):
+        for x in ['bytes','KB','MB','GB']:
+            if num < 1000.0:
+                return "%3.0f %s" % (num, x)
+            num /= 1000.0
+        return "%3.0f %s" % (num, 'TB')
+    
+    def formatByteRate(self, num):
+        num /= 1000
+        return "%4.0f KB" % num
+
+    def updateNumberOfBytes(self):
+        """
+        This function is run every two seconds, so we divide the rate of bytes
+        sent and received by 2.
+        """
+        self.ui.labelBytesRecvCount.setText(_translate(
+            "MainWindow", "Down: %1/s  Total: %2").arg(self.formatByteRate(shared.numberOfBytesReceived/2), self.formatBytes(self.totalNumberOfBytesReceived)))
+        self.ui.labelBytesSentCount.setText(_translate(
+            "MainWindow", "Up: %1/s  Total: %2").arg(self.formatByteRate(shared.numberOfBytesSent/2), self.formatBytes(self.totalNumberOfBytesSent)))
+        self.totalNumberOfBytesReceived += shared.numberOfBytesReceived
+        self.totalNumberOfBytesSent += shared.numberOfBytesSent
+        shared.numberOfBytesReceived = 0
+        shared.numberOfBytesSent = 0
+
     def updateNetworkStatusTab(self):
         # print 'updating network status tab'
         totalNumberOfConnectionsFromAllStreams = 0  # One would think we could use len(sendDataQueues) for this but the number doesn't always match: just because we have a sendDataThread running doesn't mean that the connection has been fully established (with the exchange of version messages).
@@ -1521,6 +1550,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.labelLookupsPerSecond.setText(_translate(
             "MainWindow", "Inventory lookups per second: %1").arg(str(shared.numberOfInventoryLookupsPerformed/2)))
         shared.numberOfInventoryLookupsPerformed = 0
+        self.updateNumberOfBytes()
 
     # Indicates whether or not there is a connection to the Bitmessage network
     connected = False
