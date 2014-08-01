@@ -67,7 +67,9 @@ class receiveDataThread(threading.Thread):
         while True:
             dataLen = len(self.data)
             try:
-                self.data += self.sock.recv(4096)
+                dataRecv = self.sock.recv(4096)
+                self.data += dataRecv
+                shared.numberOfBytesReceived += len(dataRecv)
             except socket.timeout:
                 with shared.printLock:
                     print 'Timeout occurred waiting for data from', self.peer, '. Closing receiveData thread. (ID:', str(id(self)) + ')'

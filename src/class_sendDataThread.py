@@ -56,13 +56,17 @@ class sendDataThread(threading.Thread):
             print 'Sending version packet: ', repr(datatosend)
 
         try:
-            self.sock.sendall(datatosend)
+            self.sendBytes(datatosend)
         except Exception as err:
             # if not 'Bad file descriptor' in err:
             with shared.printLock:
                 sys.stderr.write('sock.sendall error: %s\n' % err)
             
         self.versionSent = 1
+
+    def sendBytes(self, data):
+        self.sock.sendall(data)
+        shared.numberOfBytesSent += len(data)
 
     def run(self):
         while True:
@@ -111,7 +115,7 @@ class sendDataThread(threading.Thread):
                     payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
                     packet = shared.CreatePacket('addr', payload)
                     try:
-                        self.sock.sendall(packet)
+                        self.sendBytes(packet)
                         self.lastTimeISentData = int(time.time())
                     except:
                         print 'sendaddr: self.sock.sendall failed'
@@ -130,7 +134,7 @@ class sendDataThread(threading.Thread):
                         payload = encodeVarint(len(payload)/32) + payload
                         packet = shared.CreatePacket('inv', payload)
                         try:
-                            self.sock.sendall(packet)
+                            self.sendBytes(packet)
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'sendinv: self.sock.sendall failed'
@@ -143,14 +147,14 @@ class sendDataThread(threading.Thread):
                             print 'Sending pong to', self.peer, 'to keep connection alive.'
                         packet = shared.CreatePacket('pong')
                         try:
-                            self.sock.sendall(packet)
+                            self.sendBytes(packet)
                             self.lastTimeISentData = int(time.time())
                         except:
                             print 'send pong failed'
                             break
                 elif command == 'sendRawData':
                     try:
-                        self.sock.sendall(data)
+                        self.sendBytes(data)
                         self.lastTimeISentData = int(time.time())
                     except:
                         print 'Sending of data to', self.peer, 'failed. sendDataThread thread', self, 'ending now.' 
