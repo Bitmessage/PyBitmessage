@@ -20,9 +20,6 @@ class sendDataThread(threading.Thread):
         threading.Thread.__init__(self)
         self.sendDataThreadQueue = sendDataThreadQueue
         shared.sendDataQueues.append(self.sendDataThreadQueue)
-        with shared.printLock:
-            print 'The length of sendDataQueues at sendDataThread init is:', len(shared.sendDataQueues)
-
         self.data = ''
         self.objectHashHolderInstance = objectHashHolder(self.sendDataThreadQueue)
         self.objectHashHolderInstance.start()
@@ -67,17 +64,20 @@ class sendDataThread(threading.Thread):
     def sendBytes(self, data):
         self.sock.sendall(data)
         shared.numberOfBytesSent += len(data)
+        self.lastTimeISentData = int(time.time())
+
 
     def run(self):
+        with shared.printLock:
+            print 'sendDataThread starting. ID:', str(id(self))+'. Number of queues in sendDataQueues:', len(shared.sendDataQueues)
         while True:
             deststream, command, data = self.sendDataThreadQueue.get()
 
             if deststream == self.streamNumber or deststream == 0:
                 if command == 'shutdown':
-                    if data == self.peer or data == 'all':
-                        with shared.printLock:
-                            print 'sendDataThread (associated with', self.peer, ') ID:', id(self), 'shutting down now.'
-                        break
+                    with shared.printLock:
+                        print 'sendDataThread (associated with', self.peer, ') ID:', id(self), 'shutting down now.'
+                    break
                 # When you receive an incoming connection, a sendDataThread is
                 # created even though you don't yet know what stream number the
                 # remote peer is interested in. They will tell you in a version
@@ -96,49 +96,44 @@ class sendDataThread(threading.Thread):
                 elif command == 'advertisepeer':
                     self.objectHashHolderInstance.holdPeer(data)
                 elif command == 'sendaddr':
-                    if not self.connectionIsOrWasFullyEstablished:
-                        # not sending addr because we haven't sent and heard a verack from the remote node yet
-                        return
-                    numberOfAddressesInAddrMessage = len(
-                        data)
-                    payload = ''
-                    for hostDetails in data:
-                        timeLastReceivedMessageFromThisNode, streamNumber, services, host, port = hostDetails
-                        payload += pack(
-                            '>Q', timeLastReceivedMessageFromThisNode)  # now uses 64-bit time
-                        payload += pack('>I', streamNumber)
-                        payload += pack(
-                            '>q', services)  # service bit flags offered by this node
-                        payload += shared.encodeHost(host)
-                        payload += pack('>H', port)
-
-                    payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
-                    packet = shared.CreatePacket('addr', payload)
-                    try:
-                        self.sendBytes(packet)
-                        self.lastTimeISentData = int(time.time())
-                    except:
-                        print 'sendaddr: self.sock.sendall failed'
-                        break
+                    if self.connectionIsOrWasFullyEstablished: # only send addr messages if we have send and heard a verack from the remote node
+                        numberOfAddressesInAddrMessage = len(data)
+                        payload = ''
+                        for hostDetails in data:
+                            timeLastReceivedMessageFromThisNode, streamNumber, services, host, port = hostDetails
+                            payload += pack(
+                                '>Q', timeLastReceivedMessageFromThisNode)  # now uses 64-bit time
+                            payload += pack('>I', streamNumber)
+                            payload += pack(
+                                '>q', services)  # service bit flags offered by this node
+                            payload += shared.encodeHost(host)
+                            payload += pack('>H', port)
+    
+                        payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
+                        packet = shared.CreatePacket('addr', payload)
+                        try:
+                            self.sendBytes(packet)
+                        except:
+                            with shared.printLock:
+                                print 'sendaddr: self.sock.sendall failed'
+                            break
                 elif command == 'advertiseobject':
                     self.objectHashHolderInstance.holdHash(data)
                 elif command == 'sendinv':
-                    if not self.connectionIsOrWasFullyEstablished:
-                        # not sending inv because we haven't sent and heard a verack from the remote node yet
-                        return
-                    payload = ''
-                    for hash in data:
-                        if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
-                            payload += hash
-                    if payload != '':
-                        payload = encodeVarint(len(payload)/32) + payload
-                        packet = shared.CreatePacket('inv', payload)
-                        try:
-                            self.sendBytes(packet)
-                            self.lastTimeISentData = int(time.time())
-                        except:
-                            print 'sendinv: self.sock.sendall failed'
-                            break
+                    if self.connectionIsOrWasFullyEstablished: # only send inv messages if we have send and heard a verack from the remote node
+                        payload = ''
+                        for hash in data:
+                            if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
+                                payload += hash
+                        if payload != '':
+                            payload = encodeVarint(len(payload)/32) + payload
+                            packet = shared.CreatePacket('inv', payload)
+                            try:
+                                self.sendBytes(packet)
+                            except:
+                                with shared.printLock:
+                                    print 'sendinv: self.sock.sendall failed'
+                                break
                 elif command == 'pong':
                     self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware.clear() # To save memory, let us clear this data structure from time to time. As its function is to help us keep from sending inv messages to peers which sent us the same inv message mere seconds earlier, it will be fine to clear this data structure from time to time.
                     if self.lastTimeISentData < (int(time.time()) - 298):
@@ -148,16 +143,16 @@ class sendDataThread(threading.Thread):
                         packet = shared.CreatePacket('pong')
                         try:
                             self.sendBytes(packet)
-                            self.lastTimeISentData = int(time.time())
                         except:
-                            print 'send pong failed'
+                            with shared.printLock:
+                                print 'send pong failed'
                             break
                 elif command == 'sendRawData':
                     try:
                         self.sendBytes(data)
-                        self.lastTimeISentData = int(time.time())
                     except:
-                        print 'Sending of data to', self.peer, 'failed. sendDataThread thread', self, 'ending now.' 
+                        with shared.printLock:
+                            print 'Sending of data to', self.peer, 'failed. sendDataThread thread', self, 'ending now.' 
                         break
                 elif command == 'connectionIsOrWasFullyEstablished':
                     self.connectionIsOrWasFullyEstablished = True
@@ -172,5 +167,5 @@ class sendDataThread(threading.Thread):
             pass
         shared.sendDataQueues.remove(self.sendDataThreadQueue)
         with shared.printLock:
-            print 'Number of queues remaining in sendDataQueues:', len(shared.sendDataQueues)
+            print 'sendDataThread ending. ID:', str(id(self))+'. Number of queues in sendDataQueues:', len(shared.sendDataQueues)
         self.objectHashHolderInstance.close()

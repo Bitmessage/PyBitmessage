@@ -19,12 +19,12 @@ import sys
 #potentially render this version check useless. So logging won't be used here until
 #there is a more efficient way to configure logging
 if sys.hexversion >= 0x3000000:
-    msg = "PyBitmessage does not support Python 3. Python 2.7.5 or later is required. Your version: %s" % sys.version
+    msg = "PyBitmessage does not support Python 3. Python 2.7.3 or later is required. Your version: %s" % sys.version
     #logger.critical(msg)
     sys.stdout.write(msg)
     sys.exit(0)
-if sys.hexversion < 0x20705F0:
-    msg = "You should use Python 2.7.5 or greater (but not Python 3). Your version: %s" % sys.version
+if sys.hexversion < 0x20703F0:
+    msg = "You should use Python 2.7.3 or greater (but not Python 3). Your version: %s" % sys.version
     #logger.critical(msg)
     sys.stdout.write(msg)
     sys.exit(0)
