@@ -329,7 +329,7 @@ def isProofOfWorkSufficient(
 def doCleanShutdown():
     global shutdown
     shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
-    broadcastToSendDataQueues((0, 'shutdown', 'all'))   
+    broadcastToSendDataQueues((0, 'shutdown', 'no data'))   
     with shared.objectProcessorQueueSizeLock:
         data = 'no data'
         shared.objectProcessorQueueSize += len(data)
