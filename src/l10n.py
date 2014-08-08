@@ -8,15 +8,19 @@ import shared
 #logger = logging.getLogger(__name__)
 logger = logging.getLogger('file_only')
 
+
+DEFAULT_ENCODING = 'ISO8859-1'
+DEFAULT_LANGUAGE = 'en_US'
+
+encoding = DEFAULT_ENCODING
+language = DEFAULT_LANGUAGE
+
 try:
     import locale
-    encoding = locale.getpreferredencoding(False)
-    language = locale.getlocale()[0] or locale.getdefaultlocale()[0]
+    encoding = locale.getpreferredencoding(False) or DEFAULT_ENCODING
+    language = locale.getlocale()[0] or locale.getdefaultlocale()[0] or DEFAULT_LANGUAGE
 except:
     logger.exception('Could not determine language or encoding')
-    if not encoding:
-        encoding = 'ISO8859-1'
-    language = 'en_US'
 
 
 time_format = shared.config.get('bitmessagesettings', 'timeformat')
