@@ -6,7 +6,7 @@ import sys
 #them. The logging module was introduced in Python 2.3
 if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
     sys.stdout.write('Python version: ' + sys.version)
-    sys.stdout.write('PyBitmessage requires Python 2.7.5 or greater (but not Python 3)')
+    sys.stdout.write('PyBitmessage requires Python 2.7.3 or greater (but not Python 3)')
     sys.exit()
 
 #We can now use logging so set up a simple configuration
@@ -144,7 +144,7 @@ def check_openssl():
 #TODO: The minimum versions of pythondialog and dialog need to be determined
 def check_curses():
     if sys.hexversion < 0x20600F0:
-        logger.error('The curses interface requires Python 2.6 or later, the pythondialog package and the dialog utility.')
+        logger.error('The curses interface requires the pythondialog package and the dialog utility.')
         return False
     try:
         import curses
@@ -188,14 +188,14 @@ def check_dependencies(verbose = False, optional = False):
 
     has_all_dependencies = True
 
-    #Python 2.7.5 is the required minimum. Python 3+ is not supported, but it is
+    #Python 2.7.3 is the required minimum. Python 3+ is not supported, but it is
     #still useful to provide information about our other requirements.
     logger.info('Python version: %s', sys.version)
-    if sys.hexversion < 0x20705F0:
-        logger.error('PyBitmessage requires Python 2.7.5 or greater (but not Python 3+)')
+    if sys.hexversion < 0x20703F0:
+        logger.error('PyBitmessage requires Python 2.7.3 or greater (but not Python 3+)')
         has_all_dependencies = False
     if sys.hexversion >= 0x3000000:
-        logger.error('PyBitmessage does not support Python 3+. Python 2.7.5 or greater is required.')
+        logger.error('PyBitmessage does not support Python 3+. Python 2.7.3 or greater is required.')
         has_all_dependencies = False
 
     check_functions = [check_hashlib, check_sqlite, check_openssl]
