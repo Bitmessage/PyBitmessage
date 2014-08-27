@@ -42,6 +42,8 @@ from api import MySimpleXMLRPCRequestHandler
 from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
 
 import shared
+import helper_startup
+helper_startup.loadConfig()
 from helper_sql import sqlQuery
 import threading
 
@@ -154,9 +156,9 @@ selfInitiatedConnections = {}
 
 if shared.useVeryEasyProofOfWorkForTesting:
     shared.networkDefaultProofOfWorkNonceTrialsPerByte = int(
-        shared.networkDefaultProofOfWorkNonceTrialsPerByte / 16)
+        shared.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
     shared.networkDefaultPayloadLengthExtraBytes = int(
-        shared.networkDefaultPayloadLengthExtraBytes / 7000)
+        shared.networkDefaultPayloadLengthExtraBytes / 100)
 
 class Main:
     def start(self, daemon=False):

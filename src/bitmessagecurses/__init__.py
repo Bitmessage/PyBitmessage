@@ -742,6 +742,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         err += "Some data encoded in the address is too short. There might be something wrong with the software of your acquaintance."
                     elif status == "ripetoolong":
                         err += "Some data encoded in the address is too long. There might be something wrong with the software of your acquaintance."
+                    elif status == "varintmalformed":
+                        err += "Some data encoded in the address is malformed. There might be something wrong with the software of your acquaintance."
                     else:
                         err += "It is unknown what is wrong with the address."
                     d.scrollbox(unicode(err), exit_label="Continue")

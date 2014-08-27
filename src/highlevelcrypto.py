@@ -33,7 +33,10 @@ def sign(msg,hexPrivkey):
     return makeCryptor(hexPrivkey).sign(msg)
 # Verifies with hex public key
 def verify(msg,sig,hexPubkey):
-    return makePubCryptor(hexPubkey).verify(sig,msg)
+    try:
+        return makePubCryptor(hexPubkey).verify(sig,msg)
+    except:
+        return False
 
 # Does an EC point multiplication; turns a private key into a public key.
 def pointMult(secret):
