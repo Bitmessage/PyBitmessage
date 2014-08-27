@@ -8,6 +8,7 @@ import socket
 import random
 from struct import unpack, pack
 import sys
+import traceback
 #import string
 #from subprocess import call  # used when the API must execute an outside program
 #from pyelliptic.openssl import OpenSSL
@@ -21,7 +22,6 @@ from helper_generic import addDataPadding, isHostInPrivateIPRange
 from helper_sql import *
 #import tr
 from debug import logger
-#from bitmessagemain import shared.lengthOfTimeToLeaveObjectsInInventory, shared.lengthOfTimeToHoldOnToAllPubkeys, shared.maximumAgeOfAnObjectThatIAmWillingToAccept, shared.maximumAgeOfObjectsThatIAdvertiseToOthers, shared.maximumAgeOfNodesThatIAdvertiseToOthers, shared.numberOfObjectsThatWeHaveYetToGetPerPeer, shared.neededPubkeys
 
 # This thread is created either by the synSenderThread(for outgoing
 # connections) or the singleListenerThread(for incoming connections).
@@ -117,7 +117,7 @@ class receiveDataThread(threading.Thread):
         if magic != 0xE9BEB4D9:
             self.data = ""
             return
-        if payloadLength > 20000000:
+        if payloadLength > 2 ** 18: # 256 KiB
             logger.info('The incoming message, which we have not yet download, is too large. Ignoring it. (unfortunately there is no way to tell the other node to stop sending it except to disconnect.) Message size: %s' % payloadLength)
             self.data = self.data[payloadLength + shared.Header.size:]
             del magic,command,payloadLength,checksum # we don't need these anymore and better to clean them now before the recursive call rather than after
@@ -146,33 +146,30 @@ class receiveDataThread(threading.Thread):
         with shared.printLock:
             print 'remoteCommand', repr(command), ' from', self.peer
         
-        #TODO: Use a dispatcher here
-        if not self.connectionIsOrWasFullyEstablished:
-            if command == 'version':
-                self.recversion(payload)
-            elif command == 'verack':
-                self.recverack()
-        else:
-            if command == 'addr':
-                self.recaddr(payload)
-            elif command == 'getpubkey':
-                shared.checkAndSharegetpubkeyWithPeers(payload)
-            elif command == 'pubkey':
-                self.recpubkey(payload)
-            elif command == 'inv':
-                self.recinv(payload)
-            elif command == 'getdata':
-                self.recgetdata(payload)
-            elif command == 'msg':
-                self.recmsg(payload)
-            elif command == 'broadcast':
-                self.recbroadcast(payload)
-            elif command == 'ping':
-                self.sendpong(payload)
-            #elif command == 'pong':
-            #    pass
-            #elif command == 'alert':
-            #    pass
+        try:
+            #TODO: Use a dispatcher here
+            if not self.connectionIsOrWasFullyEstablished:
+                if command == 'version':
+                    self.recversion(payload)
+                elif command == 'verack':
+                    self.recverack()
+            else:
+                if command == 'addr':
+                    self.recaddr(payload)
+                elif command == 'inv':
+                    self.recinv(payload)
+                elif command == 'getdata':
+                    self.recgetdata(payload)
+                elif command == 'object':
+                    self.recobject(payload)
+                elif command == 'ping':
+                    self.sendpong(payload)
+                #elif command == 'pong':
+                #    pass
+        except varintDecodeError as e:
+            logger.debug("There was a problem with a varint while processing a message from the wire. Some details: %s" % e)
+        except Exception as e:
+            logger.critical("Critical error in a receiveDataThread: \n%s" % traceback.format_exc())
         
         del payload
         self.data = self.data[payloadLength + shared.Header.size:] # take this message out and then process the next message
@@ -273,12 +270,10 @@ class receiveDataThread(threading.Thread):
         self.sendBigInv()
 
     def sendBigInv(self):
-        # Select all hashes which are younger than two days old and in this
-        # stream.
+        # Select all hashes for objects in this stream.
         queryreturn = sqlQuery(
-            '''SELECT hash FROM inventory WHERE ((receivedtime>? and objecttype<>'pubkey') or (receivedtime>? and objecttype='pubkey')) and streamnumber=?''',
-            int(time.time()) - shared.maximumAgeOfObjectsThatIAdvertiseToOthers,
-            int(time.time()) - shared.lengthOfTimeToHoldOnToAllPubkeys,
+            '''SELECT hash FROM inventory WHERE expirestime>? and streamnumber=?''',
+            int(time.time()),
             self.streamNumber)
         bigInvList = {}
         for row in queryreturn:
@@ -290,8 +285,8 @@ class receiveDataThread(threading.Thread):
         with shared.inventoryLock:
             for hash, storedValue in shared.inventory.items():
                 if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
-                    objectType, streamNumber, payload, receivedTime, tag = storedValue
-                    if streamNumber == self.streamNumber and receivedTime > int(time.time()) - shared.maximumAgeOfObjectsThatIAdvertiseToOthers:
+                    objectType, streamNumber, payload, expiresTime, tag = storedValue
+                    if streamNumber == self.streamNumber and expiresTime > int(time.time()):
                         bigInvList[hash] = 0
         numberOfObjectsInInvMessage = 0
         payload = ''
@@ -327,78 +322,27 @@ class receiveDataThread(threading.Thread):
                 print 'Timing attack mitigation: Sleeping for', sleepTime, 'seconds.'
             time.sleep(sleepTime)
 
-    # We have received a broadcast message
-    def recbroadcast(self, data):
+
+    def recobject(self, data):
         self.messageProcessingStartTime = time.time()
-
-        shared.checkAndShareBroadcastWithPeers(data)
-
+        lengthOfTimeWeShouldUseToProcessThisMessage = shared.checkAndShareObjectWithPeers(data)
+        
         """
-        Let us now set lengthOfTimeWeShouldUseToProcessThisMessage. Sleeping
-        will help guarantee that we can process messages faster than a remote
-        node can send them. If we fall behind, the attacker could observe that
-        we are are slowing down the rate at which we request objects from the
+        Sleeping will help guarantee that we can process messages faster than a 
+        remote node can send them. If we fall behind, the attacker could observe 
+        that we are are slowing down the rate at which we request objects from the
         network which would indicate that we own a particular address (whichever
         one to which they are sending all of their attack messages). Note
         that if an attacker connects to a target with many connections, this
         mitigation mechanism might not be sufficient.
         """
-        if len(data) > 100000000:  # Size is greater than 100 megabytes
-            lengthOfTimeWeShouldUseToProcessThisMessage = 100  # seconds.
-        elif len(data) > 10000000:  # Between 100 and 10 megabytes
-            lengthOfTimeWeShouldUseToProcessThisMessage = 20  # seconds.
-        elif len(data) > 1000000:  # Between 10 and 1 megabyte
-            lengthOfTimeWeShouldUseToProcessThisMessage = 3  # seconds.
-        else:  # Less than 1 megabyte
-            lengthOfTimeWeShouldUseToProcessThisMessage = .6  # seconds.
-
-        sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
-            (time.time() - self.messageProcessingStartTime)
+        sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - (time.time() - self.messageProcessingStartTime)
         self._sleepForTimingAttackMitigation(sleepTime)
-
-    # We have received a msg message.
-    def recmsg(self, data):
-        self.messageProcessingStartTime = time.time()
-
-        shared.checkAndShareMsgWithPeers(data)
-
-        """
-        Let us now set lengthOfTimeWeShouldUseToProcessThisMessage. Sleeping
-        will help guarantee that we can process messages faster than a remote
-        node can send them. If we fall behind, the attacker could observe that
-        we are are slowing down the rate at which we request objects from the
-        network which would indicate that we own a particular address (whichever
-        one to which they are sending all of their attack messages). Note
-        that if an attacker connects to a target with many connections, this
-        mitigation mechanism might not be sufficient.
-        """
-        if len(data) > 100000000:  # Size is greater than 100 megabytes
-            lengthOfTimeWeShouldUseToProcessThisMessage = 100  # seconds. Actual length of time it took my computer to decrypt and verify the signature of a 100 MB message: 3.7 seconds.
-        elif len(data) > 10000000:  # Between 100 and 10 megabytes
-            lengthOfTimeWeShouldUseToProcessThisMessage = 20  # seconds. Actual length of time it took my computer to decrypt and verify the signature of a 10 MB message: 0.53 seconds. Actual length of time it takes in practice when processing a real message: 1.44 seconds.
-        elif len(data) > 1000000:  # Between 10 and 1 megabyte
-            lengthOfTimeWeShouldUseToProcessThisMessage = 3  # seconds. Actual length of time it took my computer to decrypt and verify the signature of a 1 MB message: 0.18 seconds. Actual length of time it takes in practice when processing a real message: 0.30 seconds.
-        else:  # Less than 1 megabyte
-            lengthOfTimeWeShouldUseToProcessThisMessage = .6  # seconds. Actual length of time it took my computer to decrypt and verify the signature of a 100 KB message: 0.15 seconds. Actual length of time it takes in practice when processing a real message: 0.25 seconds.
-
-        sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
-            (time.time() - self.messageProcessingStartTime)
-        self._sleepForTimingAttackMitigation(sleepTime)
-
-    # We have received a pubkey
-    def recpubkey(self, data):
-        self.pubkeyProcessingStartTime = time.time()
-
-        shared.checkAndSharePubkeyWithPeers(data)
-
-        lengthOfTimeWeShouldUseToProcessThisMessage = .1
-        sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - \
-            (time.time() - self.pubkeyProcessingStartTime)
-        self._sleepForTimingAttackMitigation(sleepTime)
+    
 
     # We have received an inv message
     def recinv(self, data):
-        totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers = 0  # this counts duplicates seperately because they take up memory
+        totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers = 0  # this counts duplicates separately because they take up memory
         if len(shared.numberOfObjectsThatWeHaveYetToGetPerPeer) > 0:
             for key, value in shared.numberOfObjectsThatWeHaveYetToGetPerPeer.items():
                 totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers += value
@@ -474,34 +418,27 @@ class receiveDataThread(threading.Thread):
             shared.numberOfInventoryLookupsPerformed += 1
             shared.inventoryLock.acquire()
             if hash in shared.inventory:
-                objectType, streamNumber, payload, receivedTime, tag = shared.inventory[
-                    hash]
+                objectType, streamNumber, payload, expiresTime, tag = shared.inventory[hash]
                 shared.inventoryLock.release()
-                self.sendData(objectType, payload)
+                self.sendObject(payload)
             else:
                 shared.inventoryLock.release()
                 queryreturn = sqlQuery(
-                    '''select objecttype, payload from inventory where hash=?''',
-                    hash)
+                    '''select payload from inventory where hash=? and expirestime>=?''',
+                    hash,
+                    int(time.time()))
                 if queryreturn != []:
                     for row in queryreturn:
-                        objectType, payload = row
-                    self.sendData(objectType, payload)
+                        payload, = row
+                    self.sendObject(payload)
                 else:
-                    print 'Someone asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. That shouldn\'t have happened.'
+                    logger.warning('%s asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. We probably cleaned it out after advertising it but before they got around to asking for it.' % self.peer)
 
     # Our peer has requested (in a getdata message) that we send an object.
-    def sendData(self, objectType, payload):
-        if (objectType != 'pubkey' and
-              objectType != 'getpubkey' and
-              objectType != 'msg' and
-              objectType != 'broadcast'):
-            sys.stderr.write(
-                'Error: sendData has been asked to send a strange objectType: %s\n' % str(objectType))
-            return
+    def sendObject(self, payload):
         with shared.printLock:
-            print 'sending', objectType
-        self.sendDataThreadQueue.put((0, 'sendRawData', shared.CreatePacket(objectType, payload)))
+            print 'sending an object.'
+        self.sendDataThreadQueue.put((0, 'sendRawData', shared.CreatePacket('object',payload)))
 
 
     def _checkIPv4Address(self, host, hostFromAddrMessage):
@@ -730,10 +667,10 @@ class receiveDataThread(threading.Thread):
             """ 
             return
         self.remoteProtocolVersion, = unpack('>L', data[:4])
-        if self.remoteProtocolVersion <= 1:
+        if self.remoteProtocolVersion < 3:
             self.sendDataThreadQueue.put((0, 'shutdown','no data'))
             with shared.printLock:
-                print 'Closing connection to old protocol version 1 node: ', self.peer
+                print 'Closing connection to old protocol version',  self.remoteProtocolVersion, 'node: ', self.peer
             return
         # print 'remoteProtocolVersion', self.remoteProtocolVersion
         self.myExternalIP = socket.inet_ntoa(data[40:44])
@@ -760,7 +697,7 @@ class receiveDataThread(threading.Thread):
             return
         shared.connectedHostsList[
             self.peer.host] = 1  # We use this data structure to not only keep track of what hosts we are connected to so that we don't try to connect to them again, but also to list the connections count on the Network Status tab.
-        # If this was an incoming connection, then the sendData thread
+        # If this was an incoming connection, then the sendDataThread
         # doesn't know the stream. We have to set it.
         if not self.initiatedConnection:
             self.sendDataThreadQueue.put((0, 'setStreamNumber', self.streamNumber))

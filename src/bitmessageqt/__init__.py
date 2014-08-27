@@ -1842,6 +1842,17 @@ class MyForm(QtGui.QMainWindow):
         subject = str(self.ui.lineEditSubject.text().toUtf8())
         message = str(
             self.ui.textEditMessage.document().toPlainText().toUtf8())
+        """
+        The whole network message must fit in 2^18 bytes. Let's assume 500 
+        bytes of overhead. If someone wants to get that too an exact 
+        number you are welcome to but I think that it would be a better
+        use of time to support message continuation so that users can
+        send messages of any length.
+        """
+        if len(message) > (2 ** 18 - 500):  
+            QMessageBox.about(self, _translate("MainWindow", "Message too long"), _translate(
+                "MainWindow", "The message that you are trying to send is too long by %1 bytes. (The maximum is 261644 bytes). Please cut it down before sending.").arg(len(message) - (2 ** 18 - 500)))
+            return
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
                                for s in toAddresses.replace(',', ';').split(';')]
@@ -1873,6 +1884,9 @@ class MyForm(QtGui.QMainWindow):
                         elif status == 'ripetoolong':
                             self.statusBar().showMessage(_translate(
                                 "MainWindow", "Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.").arg(toAddress))
+                        elif status == 'varintmalformed':
+                            self.statusBar().showMessage(_translate(
+                                "MainWindow", "Error: Some data encoded in the address %1 is malformed. There might be something wrong with the software of your acquaintance.").arg(toAddress))
                         else:
                             self.statusBar().showMessage(_translate(
                                 "MainWindow", "Error: Something is wrong with the address %1.").arg(toAddress))
@@ -2211,10 +2225,10 @@ class MyForm(QtGui.QMainWindow):
                     addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
                 tag = doubleHashOfAddressData[32:]
                 queryreturn = sqlQuery(
-                    '''select payload from inventory where objecttype='broadcast' and tag=?''', tag)
+                    '''select payload from inventory where objecttype=3 and tag=?''', tag)
                 for row in queryreturn:
                     payload, = row
-                    objectType = 'broadcast'
+                    objectType = 3
                     with shared.objectProcessorQueueSizeLock:
                         shared.objectProcessorQueueSize += len(payload)
                         shared.objectProcessorQueue.put((objectType,payload))
@@ -3620,6 +3634,9 @@ class AddAddressDialog(QtGui.QDialog):
         elif status == 'ripetoolong':
             self.ui.labelAddressCheck.setText(_translate(
                 "MainWindow", "Some data encoded in the address is too long."))
+        elif status == 'varintmalformed':
+            self.ui.labelAddressCheck.setText(_translate(
+                "MainWindow", "Some data encoded in the address is malformed."))
         elif status == 'success':
             self.ui.labelAddressCheck.setText(
                 _translate("MainWindow", "Address is valid."))
@@ -3658,6 +3675,9 @@ class NewSubscriptionDialog(QtGui.QDialog):
         elif status == 'ripetoolong':
             self.ui.labelAddressCheck.setText(_translate(
                 "MainWindow", "Some data encoded in the address is too long."))
+        elif status == 'varintmalformed':
+            self.ui.labelAddressCheck.setText(_translate(
+                "MainWindow", "Some data encoded in the address is malformed."))
         elif status == 'success':
             self.ui.labelAddressCheck.setText(
                 _translate("MainWindow", "Address is valid."))
@@ -3670,7 +3690,7 @@ class NewSubscriptionDialog(QtGui.QDialog):
                     addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
                 tag = doubleHashOfAddressData[32:]
                 queryreturn = sqlQuery(
-                    '''select hash from inventory where objecttype='broadcast' and tag=?''', tag)
+                    '''select hash from inventory where objecttype=3 and tag=?''', tag)
                 if len(queryreturn) == 0:
                     self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
                         _translate("MainWindow", "There are no recent broadcasts from this address to display."))
