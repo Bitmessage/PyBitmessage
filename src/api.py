@@ -623,6 +623,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(6, 'The encoding type must be 2 because that is the only one this program currently supports.')
             subject = self._decode(subject, "base64")
             message = self._decode(message, "base64")
+            if len(subject + message) > (2 ** 18 - 500):
+                raise APIError(27, 'Message is too long.')
             toAddress = addBMIfNotPresent(toAddress)
             fromAddress = addBMIfNotPresent(fromAddress)
             status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(toAddress)
@@ -666,7 +668,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(6, 'The encoding type must be 2 because that is the only one this program currently supports.')
             subject = self._decode(subject, "base64")
             message = self._decode(message, "base64")
-
+            if len(subject + message) > (2 ** 18 - 500):
+                raise APIError(27, 'Message is too long.')
             fromAddress = addBMIfNotPresent(fromAddress)
             self._verifyAddress(fromAddress)
             try:
@@ -912,7 +915,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return str(e)
         except varintDecodeError as e:
             logger.error(e)
-            return "Data contains a malformed varint. Some details: %s" % e
+            return "API Error 0026: Data contains a malformed varint. Some details: %s" % e
         except Exception as e:
             logger.exception(e)
             return "API Error 0021: Unexpected API Failure - %s" % str(e)

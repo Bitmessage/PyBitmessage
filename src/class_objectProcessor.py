@@ -672,7 +672,7 @@ class objectProcessor(threading.Thread):
             logger.info('Version 1 broadcasts are no longer supported. Not processing it at all.')
         if broadcastVersion in [2,4]:
             """
-            v2 or v4 broadcasts are encrypted the same way the msgs were encrypted. To see if we are interested in a
+            v2 (and later v4) broadcasts are encrypted the same way the msgs were encrypted. To see if we are interested in a
             v2 broadcast, we try to decrypt it. This was replaced with v3 (and later v5) broadcasts which include a tag which 
             we check instead, just like we do with v4 pubkeys. 
             v2 and v3 broadcasts should be completely obsolete after the protocol v3 upgrade period and some code can be simplified.
@@ -849,9 +849,9 @@ class objectProcessor(threading.Thread):
                 return
 
             # broadcast version 3 includes the broadcast version at the beginning
-            # of the decryptedData. Broadcast version 4 doesn't.
+            # of the decryptedData. Broadcast version 5 doesn't.
             readPosition = 0
-            if broadcastVersion == 3:
+            if broadcastVersion == 3: # This section can be removed after the protocol v3 upgrade period
                 signedBroadcastVersion, signedBroadcastVersionLength = decodeVarint(
                     decryptedData[:10])
                 readPosition += signedBroadcastVersionLength
