@@ -77,6 +77,7 @@ def decodeVarint(data):
     Decodes an encoded varint to an integer and returns it. 
     Per protocol v3, the encoded value must be encoded with 
     the minimum amount of data possible or else it is malformed.    
+    Returns a tuple: (theEncodedValue, theSizeOfTheVarintInBytes)
     """
     
     if len(data) == 0:
@@ -131,23 +132,17 @@ def encodeAddress(version,stream,ripe):
             raise Exception("Programming error in encodeAddress: The length of a given ripe hash was not 20.")
         ripe = ripe.lstrip('\x00')
 
-    a = encodeVarint(version) + encodeVarint(stream) + ripe
+    storedBinaryData = encodeVarint(version) + encodeVarint(stream) + ripe
+    
+    # Generate the checksum
     sha = hashlib.new('sha512')
-    sha.update(a)
+    sha.update(storedBinaryData)
     currentHash = sha.digest()
-    #print 'sha after first hashing: ', sha.hexdigest()
     sha = hashlib.new('sha512')
     sha.update(currentHash)
-    #print 'sha after second hashing: ', sha.hexdigest()
-
     checksum = sha.digest()[0:4]
-    #print 'len(a) = ', len(a)
-    #print 'checksum = ', checksum.encode('hex')
-    #print 'len(checksum) = ', len(checksum)
 
-    asInt = int(a.encode('hex') + checksum.encode('hex'),16)
-    #asInt = int(checksum.encode('hex') + a.encode('hex'),16)
-    # print asInt
+    asInt = int(storedBinaryData.encode('hex') + checksum.encode('hex'),16)
     return 'BM-'+ encodeBase58(asInt)
 
 def decodeAddress(address):
