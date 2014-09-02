@@ -96,7 +96,7 @@ class sendDataThread(threading.Thread):
                 elif command == 'advertisepeer':
                     self.objectHashHolderInstance.holdPeer(data)
                 elif command == 'sendaddr':
-                    if self.connectionIsOrWasFullyEstablished: # only send addr messages if we have send and heard a verack from the remote node
+                    if self.connectionIsOrWasFullyEstablished: # only send addr messages if we have sent and heard a verack from the remote node
                         numberOfAddressesInAddrMessage = len(data)
                         payload = ''
                         for hostDetails in data:

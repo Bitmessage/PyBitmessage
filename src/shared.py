@@ -370,7 +370,7 @@ def doCleanShutdown():
         logger.info('Clean shutdown complete.')
         os._exit(0)
 
-# When you want to command a sendDataThread to do something, like shutdown or send some data, this
+# If you want to command all of the sendDataThreads to do something, like shutdown or send some data, this
 # function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are
 # responsible for putting their queue into (and out of) the sendDataQueues list.
 def broadcastToSendDataQueues(data):

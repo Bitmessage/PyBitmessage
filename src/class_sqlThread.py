@@ -124,8 +124,6 @@ class sqlThread(threading.Thread):
             self.conn.commit()
 
             shared.config.set('bitmessagesettings', 'settingsversion', '4')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
 
         if shared.config.getint('bitmessagesettings', 'settingsversion') == 4:
             shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
@@ -140,9 +138,6 @@ class sqlThread(threading.Thread):
             shared.config.set(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
             shared.config.set('bitmessagesettings', 'settingsversion', '6')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
-
         # From now on, let us keep a 'version' embedded in the messages.dat
         # file so that when we make changes to the database, the database
         # version we are on can stay embedded in the messages.dat file. Let us
@@ -258,8 +253,6 @@ class sqlThread(threading.Thread):
                 shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(shared.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
                 """
             shared.config.set('bitmessagesettings', 'settingsversion', '7')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
 
         # Add a new column to the pubkeys table to store the address version.
         # We're going to trash all of our pubkeys and let them be redownloaded.
@@ -281,9 +274,6 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'useidenticons', 'True')
         if not shared.config.has_option('bitmessagesettings', 'identiconsuffix'): # acts as a salt
             shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
-            # Since we've added a new config entry, let's write keys.dat to disk.
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
 
         #Add settings to support no longer resending messages after a certain period of time even if we never get an ack
         if shared.config.getint('bitmessagesettings', 'settingsversion') == 7:
@@ -332,10 +322,26 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(shared.networkDefaultProofOfWorkNonceTrialsPerByte))
             shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes', str(shared.networkDefaultPayloadLengthExtraBytes))
             previousTotalDifficulty = int(shared.config.getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / 320
-            previousSmallMessageDifficulty = int(shared.config.getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / 1400
+            previousSmallMessageDifficulty = int(shared.config.getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / 14000
             shared.config.set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(previousTotalDifficulty * 1000))
             shared.config.set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(previousSmallMessageDifficulty * 1000))
             shared.config.set('bitmessagesettings', 'settingsversion', '9')
+                
+        # Adjust the required POW values for each of this user's addresses to conform to protocol v3 norms.
+        if shared.config.getint('bitmessagesettings', 'settingsversion') == 9:
+            for addressInKeysFile in shared.config.sections():
+                try:
+                    previousTotalDifficulty = float(shared.config.getint(addressInKeysFile, 'noncetrialsperbyte')) / 320
+                    previousSmallMessageDifficulty = float(shared.config.getint(addressInKeysFile, 'payloadlengthextrabytes')) / 14000
+                    if previousTotalDifficulty <= 2:
+                        previousTotalDifficulty = 1
+                    if previousSmallMessageDifficulty < 1:
+                        previousSmallMessageDifficulty = 1
+                    shared.config.set(addressInKeysFile,'noncetrialsperbyte', str(int(previousTotalDifficulty * 1000)))
+                    shared.config.set(addressInKeysFile,'payloadlengthextrabytes', str(int(previousSmallMessageDifficulty * 1000)))
+                except:
+                    continue
+            shared.config.set('bitmessagesettings', 'settingsversion', '10')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
         
