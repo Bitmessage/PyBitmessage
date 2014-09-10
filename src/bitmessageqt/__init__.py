@@ -1346,26 +1346,23 @@ class MyForm(QtGui.QMainWindow):
             if self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text() == "":
                 QMessageBox.about(self, _translate("MainWindow", "bad passphrase"), _translate(
                     "MainWindow", "You must type your passphrase. If you don\'t have one then this is not the form for you."))
-            else:
-                streamNumberForAddress = int(
-                    self.regenerateAddressesDialogInstance.ui.lineEditStreamNumber.text())
-                try:
-                    addressVersionNumber = int(
-                        self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
-                except:
-                    QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
-                        "MainWindow", "Your address version number must be a number: either 3 or 4."))
-                if addressVersionNumber < 3 or addressVersionNumber > 4:
-                    QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
-                        "MainWindow", "Your address version number must be either 3 or 4."))
-                # self.addressGenerator = addressGenerator()
-                # self.addressGenerator.setup(addressVersionNumber,streamNumberForAddress,"unused address",self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(),self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(),self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked())
-                # QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
-                # QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-                # self.addressGenerator.start()
-                shared.addressGeneratorQueue.put(('createDeterministicAddresses', addressVersionNumber, streamNumberForAddress, "regenerated deterministic address", self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(
-                ), self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(), self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked()))
-                self.ui.tabWidget.setCurrentIndex(3)
+                return
+            streamNumberForAddress = int(
+                self.regenerateAddressesDialogInstance.ui.lineEditStreamNumber.text())
+            try:
+                addressVersionNumber = int(
+                    self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
+            except:
+                QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
+                    "MainWindow", "Your address version number must be a number: either 3 or 4."))
+                return
+            if addressVersionNumber < 3 or addressVersionNumber > 4:
+                QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
+                    "MainWindow", "Your address version number must be either 3 or 4."))
+                return
+            shared.addressGeneratorQueue.put(('createDeterministicAddresses', addressVersionNumber, streamNumberForAddress, "regenerated deterministic address", self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(
+            ), self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(), self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked()))
+            self.ui.tabWidget.setCurrentIndex(3)
 
     def click_actionJoinChan(self):
         self.newChanDialogInstance = newChanDialog(self)
@@ -2322,6 +2319,15 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.lineEditSocksPassword.text()))
             shared.config.set('bitmessagesettings', 'sockslisten', str(
                 self.settingsDialogInstance.ui.checkBoxSocksListen.isChecked()))
+            try:
+                # Rounding to integers just for aesthetics
+                shared.config.set('bitmessagesettings', 'maxdownloadrate', str(
+                    int(float(self.settingsDialogInstance.ui.lineEditMaxDownloadRate.text()))))
+                shared.config.set('bitmessagesettings', 'maxuploadrate', str(
+                    int(float(self.settingsDialogInstance.ui.lineEditMaxUploadRate.text()))))
+            except:
+                QMessageBox.about(self, _translate("MainWindow", "Number needed"), _translate(
+                    "MainWindow", "Your maximum download and upload rate must be numbers. Ignoring what you typed."))
 
             shared.config.set('bitmessagesettings', 'namecoinrpctype',
                 self.settingsDialogInstance.getNamecoinType())
@@ -2333,7 +2339,8 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.lineEditNamecoinUser.text()))
             shared.config.set('bitmessagesettings', 'namecoinrpcpassword', str(
                 self.settingsDialogInstance.ui.lineEditNamecoinPassword.text()))
-
+            
+            # Demanded difficulty tab
             if float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) >= 1:
                 shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(int(float(
                     self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
@@ -3443,7 +3450,12 @@ class settingsDialog(QtGui.QDialog):
             shared.config.get('bitmessagesettings', 'sockspassword')))
         QtCore.QObject.connect(self.ui.comboBoxProxyType, QtCore.SIGNAL(
             "currentIndexChanged(int)"), self.comboBoxProxyTypeChanged)
+        self.ui.lineEditMaxDownloadRate.setText(str(
+            shared.config.get('bitmessagesettings', 'maxdownloadrate')))
+        self.ui.lineEditMaxUploadRate.setText(str(
+            shared.config.get('bitmessagesettings', 'maxuploadrate')))
 
+        # Demanded difficulty tab
         self.ui.lineEditTotalDifficulty.setText(str((float(shared.config.getint(
             'bitmessagesettings', 'defaultnoncetrialsperbyte')) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.ui.lineEditSmallMessageDifficulty.setText(str((float(shared.config.getint(

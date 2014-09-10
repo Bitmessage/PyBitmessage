@@ -70,8 +70,14 @@ numberOfMessagesProcessed = 0
 numberOfBroadcastsProcessed = 0
 numberOfPubkeysProcessed = 0
 numberOfInventoryLookupsPerformed = 0
-numberOfBytesReceived = 0
-numberOfBytesSent = 0
+numberOfBytesReceived = 0 # Used for the 'network status' page
+numberOfBytesSent = 0 # Used for the 'network status' page
+numberOfBytesReceivedLastSecond = 0 # used for the bandwidth rate limit
+numberOfBytesSentLastSecond = 0 # used for the bandwidth rate limit
+lastTimeWeResetBytesReceived = 0 # used for the bandwidth rate limit
+lastTimeWeResetBytesSent = 0 # used for the bandwidth rate limit
+sendDataLock = threading.Lock() # used for the bandwidth rate limit
+receiveDataLock = threading.Lock() # used for the bandwidth rate limit
 daemon = False
 inventorySets = {} # key = streamNumer, value = a set which holds the inventory object hashes that we are aware of. This is used whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it every couple hours.
 needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it to disk eventually.
@@ -158,6 +164,15 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload += encodeVarint(myStreamNumber)
 
     return CreatePacket('version', payload)
+
+def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
+    payload = encodeVarint(fatal)
+    payload += encodeVarint(banTime)
+    payload += encodeVarint(len(inventoryVector))
+    payload += inventoryVector
+    payload += encodeVarint(len(errorText))
+    payload += errorText
+    return CreatePacket('error', payload)
 
 def lookupAppdataFolder():
     APPNAME = "PyBitmessage"
@@ -586,11 +601,14 @@ Peer = collections.namedtuple('Peer', ['host', 'port'])
 
 def checkAndShareObjectWithPeers(data):
     """
-    Function is called after either receiving an object off of the wire
+    This function is called after either receiving an object off of the wire
     or after receiving one as ackdata. 
     Returns the length of time that we should reserve to process this message
     if we are receiving it off of the wire.
     """
+    if len(data) > 2 ** 18:
+        logger.info('The payload length of this object is too large (%s bytes). Ignoring it.' % len(data))
+        return
     # Let us check to make sure that the proof of work is sufficient.
     if not isProofOfWorkSufficient(data):
         logger.info('Proof of work is insufficient.')

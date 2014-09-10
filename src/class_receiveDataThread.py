@@ -65,11 +65,25 @@ class receiveDataThread(threading.Thread):
             print 'receiveDataThread starting. ID', str(id(self)) + '. The size of the shared.connectedHostsList is now', len(shared.connectedHostsList)
 
         while True:
+            if shared.config.getint('bitmessagesettings', 'maxdownloadrate') == 0:
+                downloadRateLimitBytes = float("inf")
+            else:
+                downloadRateLimitBytes = shared.config.getint('bitmessagesettings', 'maxdownloadrate') * 1000
+            with shared.receiveDataLock:
+                while shared.numberOfBytesReceivedLastSecond >= downloadRateLimitBytes:
+                    if int(time.time()) == shared.lastTimeWeResetBytesReceived:
+                        # If it's still the same second that it was last time then sleep.
+                        time.sleep(0.3)
+                    else:
+                        # It's a new second. Let us clear the shared.numberOfBytesReceivedLastSecond.
+                        shared.lastTimeWeResetBytesReceived = int(time.time())
+                        shared.numberOfBytesReceivedLastSecond = 0
             dataLen = len(self.data)
             try:
-                dataRecv = self.sock.recv(4096)
+                dataRecv = self.sock.recv(1024)
                 self.data += dataRecv
-                shared.numberOfBytesReceived += len(dataRecv)
+                shared.numberOfBytesReceived += len(dataRecv) # for the 'network status' UI tab. The UI clears this value whenever it updates.
+                shared.numberOfBytesReceivedLastSecond += len(dataRecv) # for the download rate limit
             except socket.timeout:
                 with shared.printLock:
                     print 'Timeout occurred waiting for data from', self.peer, '. Closing receiveData thread. (ID:', str(id(self)) + ')'
@@ -117,7 +131,7 @@ class receiveDataThread(threading.Thread):
         if magic != 0xE9BEB4D9:
             self.data = ""
             return
-        if payloadLength > 2 ** 18: # 256 KiB
+        if payloadLength > 1600100: # ~1.6 MB which is the maximum possible size of an inv message.
             logger.info('The incoming message, which we have not yet download, is too large. Ignoring it. (unfortunately there is no way to tell the other node to stop sending it except to disconnect.) Message size: %s' % payloadLength)
             self.data = self.data[payloadLength + shared.Header.size:]
             del magic,command,payloadLength,checksum # we don't need these anymore and better to clean them now before the recursive call rather than after
@@ -148,7 +162,9 @@ class receiveDataThread(threading.Thread):
         
         try:
             #TODO: Use a dispatcher here
-            if not self.connectionIsOrWasFullyEstablished:
+            if command == 'error':
+                self.recerror(payload)
+            elif not self.connectionIsOrWasFullyEstablished:
                 if command == 'version':
                     self.recversion(payload)
                 elif command == 'verack':
@@ -321,6 +337,37 @@ class receiveDataThread(threading.Thread):
             with shared.printLock:
                 print 'Timing attack mitigation: Sleeping for', sleepTime, 'seconds.'
             time.sleep(sleepTime)
+            
+    def recerror(self, data):
+        """
+        The remote node has been polite enough to send you an error message.
+        """
+        fatalStatus, readPosition = decodeVarint(data[:10])
+        banTime, banTimeLength = decodeVarint(data[readPosition:readPosition+10])
+        readPosition += banTimeLength
+        inventoryVectorLength, inventoryVectorLengthLength = decodeVarint(data[readPosition:readPosition+10])
+        if inventoryVectorLength > 100:
+            return
+        readPosition += inventoryVectorLengthLength
+        inventoryVector = data[readPosition:readPosition+inventoryVectorLength]
+        readPosition += inventoryVectorLength
+        errorTextLength, errorTextLengthLength = decodeVarint(data[readPosition:readPosition+10])
+        if errorTextLength > 1000:
+            return 
+        readPosition += errorTextLengthLength
+        errorText = data[readPosition:readPosition+errorTextLength]
+        if fatalStatus == 0:
+            fatalHumanFriendly = 'Warning'
+        elif fatalStatus == 1:
+            fatalHumanFriendly = 'Error'
+        elif fatalStatus == 2:
+            fatalHumanFriendly = 'Fatal'
+        message = '%s message received from %s: %s.' % (fatalHumanFriendly, self.peer, errorText)
+        if inventoryVector:
+            message += " This concerns object %s" % inventoryVector.encode('hex')
+        if banTime > 0:
+            message += " Remote node says that the ban time is %s" % banTime
+        logger.error(message)
 
 
     def recobject(self, data):
@@ -672,7 +719,20 @@ class receiveDataThread(threading.Thread):
             with shared.printLock:
                 print 'Closing connection to old protocol version',  self.remoteProtocolVersion, 'node: ', self.peer
             return
-        # print 'remoteProtocolVersion', self.remoteProtocolVersion
+        timestamp, = unpack('>Q', data[12:20])
+        timeOffset = timestamp - int(time.time())
+        if timeOffset > 3600:
+            self.sendDataThreadQueue.put((0, 'sendRawData', shared.assembleErrorMessage(fatal=2, errorText="Your time is too far in the future compared to mine. Closing connection.")))
+            logger.info("%s's time is too far in the future (%s seconds). Closing connection to it." % (self.peer, timeOffset))
+            time.sleep(2)
+            self.sendDataThreadQueue.put((0, 'shutdown','no data'))
+            return
+        if timeOffset < -3600:
+            self.sendDataThreadQueue.put((0, 'sendRawData', shared.assembleErrorMessage(fatal=2, errorText="Your time is too far in the past compared to mine. Closing connection.")))
+            logger.info("%s's time is too far in the past (timeOffset %s seconds). Closing connection to it." % (self.peer, timeOffset))
+            time.sleep(2)
+            self.sendDataThreadQueue.put((0, 'shutdown','no data'))
+            return 
         self.myExternalIP = socket.inet_ntoa(data[40:44])
         # print 'myExternalIP', self.myExternalIP
         self.remoteNodeIncomingPort, = unpack('>H', data[70:72])
@@ -688,7 +748,7 @@ class receiveDataThread(threading.Thread):
         self.streamNumber, lengthOfRemoteStreamNumber = decodeVarint(
             data[readPosition:])
         with shared.printLock:
-            print 'Remote node useragent:', useragent, '  stream number:', self.streamNumber
+            print 'Remote node useragent:', useragent, '  stream number:', self.streamNumber, '  time offset:', timeOffset, 'seconds.'
 
         if self.streamNumber != 1:
             self.sendDataThreadQueue.put((0, 'shutdown','no data'))

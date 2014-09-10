@@ -341,6 +341,8 @@ class sqlThread(threading.Thread):
                     shared.config.set(addressInKeysFile,'payloadlengthextrabytes', str(int(previousSmallMessageDifficulty * 1000)))
                 except:
                     continue
+            shared.config.set('bitmessagesettings', 'maxdownloadrate', '0')
+            shared.config.set('bitmessagesettings', 'maxuploadrate', '0')
             shared.config.set('bitmessagesettings', 'settingsversion', '10')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
