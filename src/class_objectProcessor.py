@@ -1024,7 +1024,13 @@ class objectProcessor(threading.Thread):
         if len(payload) != payloadLength:
             logger.info('ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.')
             return False
-        if payloadLength > 2 ** 18: # 256 KiB
+        if payloadLength > 1600100: # ~1.6 MB which is the maximum possible size of an inv message.
+            """
+            The largest message should be either an inv or a getdata message at 1.6 MB in size. 
+            That doesn't mean that the object may be that big. The 
+            shared.checkAndShareObjectWithPeers function will verify that it is no larger than 
+            2^18 bytes.
+            """
             return False
         if checksum != hashlib.sha512(payload).digest()[0:4]:  # test the checksum in the message.
             logger.info('ackdata checksum wrong. Not sending ackdata.')

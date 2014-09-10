@@ -62,9 +62,32 @@ class sendDataThread(threading.Thread):
         self.versionSent = 1
 
     def sendBytes(self, data):
-        self.sock.sendall(data)
-        shared.numberOfBytesSent += len(data)
-        self.lastTimeISentData = int(time.time())
+        if shared.config.getint('bitmessagesettings', 'maxuploadrate') == 0:
+            uploadRateLimitBytes = 999999999 # float("inf") doesn't work
+        else:
+            uploadRateLimitBytes = shared.config.getint('bitmessagesettings', 'maxuploadrate') * 1000
+        with shared.sendDataLock:
+            while data:
+                while shared.numberOfBytesSentLastSecond >= uploadRateLimitBytes:
+                    if int(time.time()) == shared.lastTimeWeResetBytesSent:
+                        time.sleep(0.3)
+                    else:
+                        # It's a new second. Let us clear the shared.numberOfBytesSentLastSecond
+                        shared.lastTimeWeResetBytesSent = int(time.time())
+                        shared.numberOfBytesSentLastSecond = 0
+                        # If the user raises or lowers the uploadRateLimit then we should make use of
+                        # the new setting. If we are hitting the limit then we'll check here about 
+                        # once per second.
+                        if shared.config.getint('bitmessagesettings', 'maxuploadrate') == 0:
+                            uploadRateLimitBytes = 999999999 # float("inf") doesn't work
+                        else:
+                            uploadRateLimitBytes = shared.config.getint('bitmessagesettings', 'maxuploadrate') * 1000
+                numberOfBytesWeMaySend = uploadRateLimitBytes - shared.numberOfBytesSentLastSecond
+                self.sock.sendall(data[:numberOfBytesWeMaySend])
+                shared.numberOfBytesSent += len(data[:numberOfBytesWeMaySend]) # used for the 'network status' tab in the UI
+                shared.numberOfBytesSentLastSecond += len(data[:numberOfBytesWeMaySend])
+                self.lastTimeISentData = int(time.time())
+                data = data[numberOfBytesWeMaySend:]
 
 
     def run(self):
