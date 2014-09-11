@@ -19,9 +19,9 @@ pseudo-mailing list:
 BM-2D9QKN4teYRvoq2fyzpiftPh9WP9qggtzh
 
 
-references
+References
 ----------
-* [project website](https://bitmessage.org)
-* [protocol specification](https://bitmessage.org/wiki/Protocol_specification)
-* [whitepaper](https://bitmessage.org/bitmessage.pdf)
-* [installation](https://bitmessage.org/wiki/Compiling_instructions)
+* [Project Website](https://bitmessage.org)
+* [Protocol Specification](https://bitmessage.org/wiki/Protocol_specification)
+* [Whitepaper](https://bitmessage.org/bitmessage.pdf)
+* [Installation](https://bitmessage.org/wiki/Compiling_instructions)

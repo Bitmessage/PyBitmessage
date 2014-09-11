@@ -1,4 +1,4 @@
-softwareVersion = '0.4.2'
+softwareVersion = '0.4.3'
 verbose = 1
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # Equals two days and 12 hours.
 lengthOfTimeToLeaveObjectsInInventory = 237600 # Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
@@ -71,6 +71,8 @@ numberOfMessagesProcessed = 0
 numberOfBroadcastsProcessed = 0
 numberOfPubkeysProcessed = 0
 numberOfInventoryLookupsPerformed = 0
+numberOfBytesReceived = 0
+numberOfBytesSent = 0
 daemon = False
 clibAvaible = False
 inventorySets = {} # key = streamNumer, value = a set which holds the inventory object hashes that we are aware of. This is used whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it every couple hours.
@@ -328,7 +330,7 @@ def isProofOfWorkSufficient(
 def doCleanShutdown():
     global shutdown
     shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
-    broadcastToSendDataQueues((0, 'shutdown', 'all'))   
+    broadcastToSendDataQueues((0, 'shutdown', 'no data'))   
     with shared.objectProcessorQueueSizeLock:
         data = 'no data'
         shared.objectProcessorQueueSize += len(data)

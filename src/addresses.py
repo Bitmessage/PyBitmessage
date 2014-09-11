@@ -42,14 +42,12 @@ def decodeBase58(string, alphabet=ALPHABET):
     - `alphabet`: The alphabet to use for encoding
     """
     base = len(alphabet)
-    strlen = len(string)
     num = 0
-
+    
     try:
-        power = strlen - 1
         for char in string:
-            num += alphabet.index(char) * (base ** power)
-            power -= 1
+            num *= base
+            num += alphabet.index(char)
     except:
         #character not found (like a space character or a 0)
         return 0

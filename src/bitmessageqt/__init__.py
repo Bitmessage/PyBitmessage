@@ -1,8 +1,3 @@
-try:
-    import locale
-except:
-    pass
-
 withMessagingMenu = False
 try:
     from gi.repository import MessagingMenu
@@ -40,6 +35,7 @@ from debug import logger
 import subprocess
 import datetime
 from helper_sql import *
+import l10n
 
 try:
     from PyQt4 import QtCore, QtGui
@@ -482,6 +478,10 @@ class MyForm(QtGui.QMainWindow):
             # startup for linux
             pass
 
+
+        self.totalNumberOfBytesReceived = 0
+        self.totalNumberOfBytesSent = 0
+        
         self.ui.labelSendBroadcastWarning.setVisible(False)
 
         self.timer = QtCore.QTimer()
@@ -574,7 +574,7 @@ class MyForm(QtGui.QMainWindow):
         self.statusbar = self.statusBar()
         self.statusbar.insertPermanentWidget(0, self.ui.pushButtonStatusIcon)
         self.ui.labelStartupTime.setText(_translate("MainWindow", "Since startup on %1").arg(
-            unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(int(time.time()))),'utf-8')))
+            l10n.formatTimestamp()))
         self.numberOfMessagesProcessed = 0
         self.numberOfBroadcastsProcessed = 0
         self.numberOfPubkeysProcessed = 0
@@ -833,34 +833,34 @@ class MyForm(QtGui.QMainWindow):
                     "MainWindow", "Queued.")
             elif status == 'msgsent':
                 statusText = _translate("MainWindow", "Message sent. Waiting for acknowledgement. Sent at %1").arg(
-                    unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
+                    l10n.formatTimestamp(lastactiontime))
             elif status == 'msgsentnoackexpected':
                 statusText = _translate("MainWindow", "Message sent. Sent at %1").arg(
-                    unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
+                    l10n.formatTimestamp(lastactiontime))
             elif status == 'doingmsgpow':
                 statusText = _translate(
                     "MainWindow", "Need to do work to send message. Work is queued.")
             elif status == 'ackreceived':
                 statusText = _translate("MainWindow", "Acknowledgement of the message received %1").arg(
-                    unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
+                    l10n.formatTimestamp(lastactiontime))
             elif status == 'broadcastqueued':
                 statusText = _translate(
                     "MainWindow", "Broadcast queued.")
             elif status == 'broadcastsent':
-                statusText = _translate("MainWindow", "Broadcast on %1").arg(unicode(strftime(
-                    shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
+                statusText = _translate("MainWindow", "Broadcast on %1").arg(
+                    l10n.formatTimestamp(lastactiontime))
             elif status == 'toodifficult':
                 statusText = _translate("MainWindow", "Problem: The work demanded by the recipient is more difficult than you are willing to do. %1").arg(
-                    unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
+                    l10n.formatTimestamp(lastactiontime))
             elif status == 'badkey':
                 statusText = _translate("MainWindow", "Problem: The recipient\'s encryption key is no good. Could not encrypt message. %1").arg(
-                    unicode(strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
+                    l10n.formatTimestamp(lastactiontime))
             elif status == 'forcepow':
                 statusText = _translate(
                     "MainWindow", "Forced difficulty override. Send should start soon.")
             else:
-                statusText = _translate("MainWindow", "Unknown status: %1 %2").arg(status).arg(unicode(
-                    strftime(shared.config.get('bitmessagesettings', 'timeformat'), localtime(lastactiontime)),'utf-8'))
+                statusText = _translate("MainWindow", "Unknown status: %1 %2").arg(status).arg(
+                    l10n.formatTimestamp(lastactiontime))
             newItem = myTableWidgetItem(statusText)
             newItem.setToolTip(statusText)
             newItem.setData(Qt.UserRole, QByteArray(ackdata))
@@ -967,10 +967,8 @@ class MyForm(QtGui.QMainWindow):
                 subject_item.setFont(font)
             self.ui.tableWidgetInbox.setItem(0, 2, subject_item)
             # time received
-            time_item = myTableWidgetItem(unicode(strftime(shared.config.get(
-                'bitmessagesettings', 'timeformat'), localtime(int(received))), 'utf-8'))
-            time_item.setToolTip(unicode(strftime(shared.config.get(
-                'bitmessagesettings', 'timeformat'), localtime(int(received))), 'utf-8'))
+            time_item = myTableWidgetItem(l10n.formatTimestamp(received))
+            time_item.setToolTip(l10n.formatTimestamp(received))
             time_item.setData(Qt.UserRole, QByteArray(msgid))
             time_item.setData(33, int(received))
             time_item.setFlags(
@@ -1468,6 +1466,31 @@ class MyForm(QtGui.QMainWindow):
         self.ui.labelPubkeyCount.setText(_translate(
             "MainWindow", "Processed %1 public keys.").arg(str(shared.numberOfPubkeysProcessed)))
 
+    def formatBytes(self, num):
+        for x in ['bytes','KB','MB','GB']:
+            if num < 1000.0:
+                return "%3.0f %s" % (num, x)
+            num /= 1000.0
+        return "%3.0f %s" % (num, 'TB')
+    
+    def formatByteRate(self, num):
+        num /= 1000
+        return "%4.0f KB" % num
+
+    def updateNumberOfBytes(self):
+        """
+        This function is run every two seconds, so we divide the rate of bytes
+        sent and received by 2.
+        """
+        self.ui.labelBytesRecvCount.setText(_translate(
+            "MainWindow", "Down: %1/s  Total: %2").arg(self.formatByteRate(shared.numberOfBytesReceived/2), self.formatBytes(self.totalNumberOfBytesReceived)))
+        self.ui.labelBytesSentCount.setText(_translate(
+            "MainWindow", "Up: %1/s  Total: %2").arg(self.formatByteRate(shared.numberOfBytesSent/2), self.formatBytes(self.totalNumberOfBytesSent)))
+        self.totalNumberOfBytesReceived += shared.numberOfBytesReceived
+        self.totalNumberOfBytesSent += shared.numberOfBytesSent
+        shared.numberOfBytesReceived = 0
+        shared.numberOfBytesSent = 0
+
     def updateNetworkStatusTab(self):
         # print 'updating network status tab'
         totalNumberOfConnectionsFromAllStreams = 0  # One would think we could use len(sendDataQueues) for this but the number doesn't always match: just because we have a sendDataThread running doesn't mean that the connection has been fully established (with the exchange of version messages).
@@ -1521,6 +1544,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.labelLookupsPerSecond.setText(_translate(
             "MainWindow", "Inventory lookups per second: %1").arg(str(shared.numberOfInventoryLookupsPerformed/2)))
         shared.numberOfInventoryLookupsPerformed = 0
+        self.updateNumberOfBytes()
 
     # Indicates whether or not there is a connection to the Bitmessage network
     connected = False
@@ -2032,12 +2056,9 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tableWidgetSent.setItem(0, 2, newItem)
         # newItem =  QtGui.QTableWidgetItem('Doing work necessary to send
         # broadcast...'+
-        # unicode(strftime(shared.config.get('bitmessagesettings',
-        # 'timeformat'),localtime(int(time.time()))),'utf-8'))
-        newItem = myTableWidgetItem(_translate("MainWindow", "Work is queued. %1").arg(unicode(strftime(shared.config.get(
-            'bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))
-        newItem.setToolTip(_translate("MainWindow", "Work is queued. %1").arg(unicode(strftime(shared.config.get(
-            'bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8')))
+        # l10n.formatTimestamp())
+        newItem = myTableWidgetItem(_translate("MainWindow", "Work is queued. %1").arg(l10n.formatTimestamp()))
+        newItem.setToolTip(_translate("MainWindow", "Work is queued. %1").arg(l10n.formatTimestamp()))
         newItem.setData(Qt.UserRole, QByteArray(ackdata))
         newItem.setData(33, int(time.time()))
         self.ui.tableWidgetSent.setItem(0, 3, newItem)
@@ -2104,10 +2125,8 @@ class MyForm(QtGui.QMainWindow):
         #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0, 2, newItem)
-        newItem = myTableWidgetItem(unicode(strftime(shared.config.get(
-            'bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8'))
-        newItem.setToolTip(unicode(strftime(shared.config.get(
-            'bitmessagesettings', 'timeformat'), localtime(int(time.time()))), 'utf-8'))
+        newItem = myTableWidgetItem(l10n.formatTimestamp())
+        newItem.setToolTip(l10n.formatTimestamp())
         newItem.setData(Qt.UserRole, QByteArray(inventoryHash))
         newItem.setData(33, int(time.time()))
         newItem.setFont(font)
@@ -3781,52 +3800,12 @@ def run():
     app = QtGui.QApplication(sys.argv)
     translator = QtCore.QTranslator()
     
-    try:
-        locale_countrycode = str(locale.getdefaultlocale()[0])
-    except:
-        # The above is not compatible with all versions of OSX.
-        locale_countrycode = "en_US" # Default to english.
-    locale_lang = locale_countrycode[0:2]
-    user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
-    user_lang = user_countrycode[0:2]
-    try:
-        translation_path = os.path.join(sys._MEIPASS, "translations/bitmessage_")
-    except Exception, e:
-        translation_path = "translations/bitmessage_"
-    
-    if shared.config.get('bitmessagesettings', 'userlocale') == 'system':
-        # try to detect the users locale otherwise fallback to English
-        try:
-            # try the users full locale, e.g. 'en_US':
-            # since we usually only provide languages, not localozations
-            # this will usually fail
-            translator.load(translation_path + locale_countrycode)
-        except:
-            try:
-                # try the users locale language, e.g. 'en':
-                # since we usually only provide languages, not localozations
-                # this will usually succeed
-                translator.load(translation_path + locale_lang)
-            except:
-                # as English is already the default language, we don't
-                # need to do anything. No need to translate.
-                pass
-    else:
-        try:
-            # check if the user input is a valid translation file:
-            # since user_countrycode will be usually set by the combobox
-            # it will usually just be a language code
-            translator.load(translation_path + user_countrycode)
-        except:
-            try:
-                # check if the user lang is a valid translation file:
-                # this is only needed if the user manually set his 'userlocale'
-                # in the keys.dat to a countrycode (e.g. 'de_CH')
-                translator.load(translation_path + user_lang)
-            except:
-                # as English is already the default language, we don't
-                # need to do anything. No need to translate.
-                pass
+    translationpath = os.path.join(
+        getattr(sys, '_MEIPASS', ''),
+        'translations',
+        'bitmessage_' + l10n.getTranslationLanguage()
+    )
+    translator.load(translationpath)
 
     QtGui.QApplication.installTranslator(translator)
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")

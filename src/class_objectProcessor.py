@@ -19,6 +19,7 @@ import helper_sent
 from helper_sql import *
 import tr
 from debug import logger
+import l10n
 
 
 class objectProcessor(threading.Thread):
@@ -421,8 +422,7 @@ class objectProcessor(threading.Thread):
             del shared.ackdataForWhichImWatching[data[readPosition:]]
             sqlExecute('UPDATE sent SET status=? WHERE ackdata=?',
                        'ackreceived', data[readPosition:])
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[readPosition:], tr.translateText("MainWindow",'Acknowledgement of the message received. %1').arg(unicode(
-                time.strftime(shared.config.get('bitmessagesettings', 'timeformat'), time.localtime(int(time.time()))), 'utf-8')))))
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[readPosition:], tr.translateText("MainWindow",'Acknowledgement of the message received. %1').arg(l10n.formatTimestamp()))))
             return
         else:
             logger.info('This was NOT an acknowledgement bound for me.')
