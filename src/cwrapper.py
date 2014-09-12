@@ -35,8 +35,8 @@ def buildLibUnix() :
     try:
         os.chdir("./c")
         dirChanged = True
-        os.system("cc -c -fpic proofofwork.c sha512.c test.c")
-        os.system("cc -shared -o pybitmessage.so proofofwork.o sha512.o test.o")
+        os.system("cc -c -fpic -std=c99 proofofwork.c sha512.c test.c")
+        os.system("cc -shared -o pybitmessage.so -std=c99 proofofwork.o sha512.o test.o")
         os.rename("./pybitmessage.so", "./../pybitmessage.so")
         os.chdir("./..")
         logger.debug("Builded C library successfully")
