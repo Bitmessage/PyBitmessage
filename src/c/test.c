@@ -1,4 +1,4 @@
-#include <inttypes.h>
+#include <stdint.h>
 
 //Raise this here and in cwrapper.py when making incompatible changes in the lib
 #define LIBRARYVERSION 1

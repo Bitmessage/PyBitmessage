@@ -1,5 +1,5 @@
 #include "sha512.h"
-#include <inttypes.h>
+#include <stdint.h>
 
 /*
  * 64-bit integer manipulation macros (big endian)
@@ -33,30 +33,27 @@
 #endif /* PUT_UINT64_BE */
 
 void doPoW(uint64_t target, unsigned char initialHash[64], uint64_t* trialValue, uint64_t* nonce, unsigned int poolSize) {
-	sha512_context ctx;
+	struct sha512_ctx ctx;
 	unsigned char tmp[72];
 
 	*trialValue = target + 1;
 
-	sha512_init(&ctx);
 	while (*trialValue > target) {
 		*nonce += poolSize;
 
 		PUT_UINT64_BE(*nonce, tmp, 0);
 		memcpy(&(tmp[8]), initialHash, 64);
 			
-		sha512_starts(&ctx, 0);
-		sha512_update(&ctx, tmp, 72);
-		sha512_finish(&ctx, tmp);
+		sha512_init_ctx(&ctx);
+		sha512_process_bytes(tmp, 72, &ctx);
+		sha512_finish_ctx(&ctx, tmp);
 
-		sha512_starts(&ctx, 0);
-		sha512_update(&ctx, tmp, 64);
-		sha512_finish(&ctx, tmp);
+		sha512_init_ctx(&ctx);
+		sha512_process_bytes(tmp, 64, &ctx);
+		sha512_finish_ctx(&ctx, tmp);
 
 		GET_UINT64_BE(*trialValue, tmp, 0);
 	}
-
-	sha512_free(&ctx);
 }
 
 #ifdef TEST
