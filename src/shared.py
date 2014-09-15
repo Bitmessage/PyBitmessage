@@ -792,6 +792,15 @@ def checkAndShareBroadcastWithPeers(data):
         shared.objectProcessorQueueSize += len(data)
         objectProcessorQueue.put((objectType,data))
 
+def openKeysFile():
+    if 'linux' in sys.platform:
+        subprocess.call(["xdg-open", shared.appdata + 'keys.dat'])
+    else:
+        os.startfile(shared.appdata + 'keys.dat')
+
+def writeKeysFile():
+    with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+        shared.config.write(configfile)
 
 helper_startup.loadConfig()
 from debug import logger

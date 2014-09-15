@@ -429,8 +429,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if not shared.safeConfigGetBoolean(address, 'chan'):
                 raise APIError(25, 'Specified address is not a chan address. Use deleteAddress API call instead.')
             shared.config.remove_section(address)
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
             return 'success'
 
         elif method == 'deleteAddress':
@@ -443,8 +442,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if not shared.config.has_section(address):
                 raise APIError(13, 'Could not find this address in your keys.dat file.')
             shared.config.remove_section(address)
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
             shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
             shared.UISignalQueue.put(('rerenderSentToLabels',''))
             shared.reloadMyAddressHashes()

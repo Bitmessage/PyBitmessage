@@ -86,8 +86,7 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'sockslisten', 'false')
             shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
             shared.config.set('bitmessagesettings', 'messagesencrypted', 'false')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
 
         # People running earlier versions of PyBitmessage do not have the
         # usedpersonally field in their pubkeys table. Let's add it.
@@ -98,8 +97,7 @@ class sqlThread(threading.Thread):
             self.conn.commit()
 
             shared.config.set('bitmessagesettings', 'settingsversion', '3')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
 
         # People running earlier versions of PyBitmessage do not have the
         # encodingtype field in their inbox and sent tables or the read field
@@ -119,8 +117,7 @@ class sqlThread(threading.Thread):
             self.conn.commit()
 
             shared.config.set('bitmessagesettings', 'settingsversion', '4')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
 
         if shared.config.getint('bitmessagesettings', 'settingsversion') == 4:
             shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
@@ -135,8 +132,7 @@ class sqlThread(threading.Thread):
             shared.config.set(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
             shared.config.set('bitmessagesettings', 'settingsversion', '6')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
 
         # From now on, let us keep a 'version' embedded in the messages.dat
         # file so that when we make changes to the database, the database
@@ -251,8 +247,7 @@ class sqlThread(threading.Thread):
             if int(shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')) == shared.networkDefaultProofOfWorkNonceTrialsPerByte:
                 shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(shared.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
             shared.config.set('bitmessagesettings', 'settingsversion', '7')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
 
         # Add a new column to the pubkeys table to store the address version.
         # We're going to trash all of our pubkeys and let them be redownloaded.
@@ -275,8 +270,7 @@ class sqlThread(threading.Thread):
         if not shared.config.has_option('bitmessagesettings', 'identiconsuffix'): # acts as a salt
             shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
             # Since we've added a new config entry, let's write keys.dat to disk.
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
 
         #Adjusting time period to stop sending messages
         if shared.config.getint('bitmessagesettings', 'settingsversion') == 7:
@@ -286,8 +280,7 @@ class sqlThread(threading.Thread):
                 'bitmessagesettings', 'stopresendingafterxmonths', '')
             #shared.config.set(
             shared.config.set('bitmessagesettings', 'settingsversion', '8') 
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
 
         # Add a new table: objectprocessorqueue with which to hold objects
         # that have yet to be processed if the user shuts down Bitmessage.
