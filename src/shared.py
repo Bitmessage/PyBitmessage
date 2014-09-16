@@ -21,6 +21,7 @@ import stat
 import threading
 import time
 import shutil  # used for moving the data folder and copying keys.dat
+import datetime
 from os import path, environ
 from struct import Struct
 
@@ -801,13 +802,14 @@ def openKeysFile():
 
 def writeKeysFile():
     fileName = shared.appdata + 'keys.dat'
+    fileNameBak = fileName + "." + datetime.datetime.now().strftime("%Y%j%H%M%S%f") + '.bak'
     # create a backup copy to prevent the accidental loss due to the disk write failure
-    shutil.copyfile(fileName, fileName + '.bak')
+    shutil.copyfile(fileName, fileNameBak)
     # write the file
     with open(fileName, 'wb') as configfile:
         shared.config.write(configfile)
     # delete a backup
-    os.remove(fileName + '.bak')
+    os.remove(fileNameBak)
 
 helper_startup.loadConfig()
 from debug import logger
