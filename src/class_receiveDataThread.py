@@ -276,15 +276,17 @@ class receiveDataThread(threading.Thread):
         # Select all hashes which are younger than two days old and in this
         # stream.
         queryreturn = sqlQuery(
-            '''SELECT hash FROM inventory WHERE ((receivedtime>? and objecttype<>'pubkey') or (receivedtime>? and objecttype='pubkey')) and streamnumber=?''',
+            '''SELECT hash, payload FROM inventory WHERE ((receivedtime>? and objecttype<>'pubkey') or (receivedtime>? and objecttype='pubkey')) and streamnumber=?''',
             int(time.time()) - shared.maximumAgeOfObjectsThatIAdvertiseToOthers,
             int(time.time()) - shared.lengthOfTimeToHoldOnToAllPubkeys,
             self.streamNumber)
         bigInvList = {}
         for row in queryreturn:
-            hash, = row
+            hash, payload = row
             if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
-                bigInvList[hash] = 0
+		POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(payload[
+		:8] + hashlib.sha512(payload[8:]).digest()).digest()).digest()[0:8]) #check POW
+                bigInvList[hash] = POW
         # We also have messages in our inventory in memory (which is a python
         # dictionary). Let's fetch those too.
         with shared.inventoryLock:
@@ -292,12 +294,14 @@ class receiveDataThread(threading.Thread):
                 if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
                     objectType, streamNumber, payload, receivedTime, tag = storedValue
                     if streamNumber == self.streamNumber and receivedTime > int(time.time()) - shared.maximumAgeOfObjectsThatIAdvertiseToOthers:
-                        bigInvList[hash] = 0
+			POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(payload[
+			:8] + hashlib.sha512(payload[8:]).digest()).digest()).digest()[0:8]) #check POW
+                        bigInvList[hash] = POW
         numberOfObjectsInInvMessage = 0
         payload = ''
         # Now let us start appending all of these hashes together. They will be
-        # sent out in a big inv message to our new peer.
-        for hash, storedValue in bigInvList.items():
+        # sent out in a big inv message to our new peer in POW order
+        for hash in sorted(bigInvList, key=bigInvList.__getitem__):
             payload += hash
             numberOfObjectsInInvMessage += 1
             if numberOfObjectsInInvMessage == 50000:  # We can only send a max of 50000 items per inv message but we may have more objects to advertise. They must be split up into multiple inv messages.
