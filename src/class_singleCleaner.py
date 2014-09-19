@@ -94,9 +94,11 @@ class singleCleaner(threading.Thread):
                     toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber = row
                     if status == 'awaitingpubkey':
                         if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
+			    shared.networkDefaultPayloadLengthExtraBytes += 500 #increase POW for each object dropped
                             resendPubkey(pubkeyretrynumber,toripe)
                     else: # status == msgsent
                         if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
+			    shared.networkDefaultPayloadLengthExtraBytes += 500 #increase POW for each object dropped
                             resendMsg(msgretrynumber,ackdata)
 
                 # Let's also clear and reload shared.inventorySets to keep it from

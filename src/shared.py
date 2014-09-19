@@ -83,7 +83,7 @@ streamsInWhichIAmParticipating = {}
 
 #If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
-networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
+networkDefaultPayloadLengthExtraBytes = 15000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
 # Remember here the RPC port read from namecoin.conf so we can restore to
 # it as default whenever the user changes the "method" selection for
