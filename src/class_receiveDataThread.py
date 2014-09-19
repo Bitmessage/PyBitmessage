@@ -300,7 +300,7 @@ class receiveDataThread(threading.Thread):
         numberOfObjectsInInvMessage = 0
         payload = ''
         # Now let us start appending all of these hashes together. They will be
-        # sent out in a big inv message to our new peer in POW order
+        # sent out in a big inv message to our new peer with the stonger POW objects first
         for hash in sorted(bigInvList, key=bigInvList.__getitem__):
             payload += hash
             numberOfObjectsInInvMessage += 1
