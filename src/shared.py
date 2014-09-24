@@ -85,6 +85,10 @@ streamsInWhichIAmParticipating = {}
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
 networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
+#inventory average (and count) of nonce trials per byte of actual payload (excluding extra bytes)
+averageNonceTrialsPerByteActual = (networkDefaultPayloadLengthExtraBytes * networkDefaultProofOfWorkNonceTrialsPerByte)/50
+countNonceTrialsPerByteActual = 1
+
 # Remember here the RPC port read from namecoin.conf so we can restore to
 # it as default whenever the user changes the "method" selection for
 # namecoin integration to "namecoind".
@@ -577,9 +581,7 @@ def checkAndShareMsgWithPeers(data):
         return
     # This msg message is valid. Let's let our peers know about it.
     objectType = 'msg'
-    inventory[inventoryHash] = (
-        objectType, streamNumberAsClaimedByMsg, data, embeddedTime,'')
-    inventorySets[streamNumberAsClaimedByMsg].add(inventoryHash)
+    addInventory(inventoryHash, objectType, streamNumberAsClaimedByMsg, data, embeddedTime, '')
     inventoryLock.release()
     logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
     broadcastToSendDataQueues((streamNumberAsClaimedByMsg, 'advertiseobject', inventoryHash))
@@ -639,9 +641,7 @@ def checkAndSharegetpubkeyWithPeers(data):
         return
 
     objectType = 'getpubkey'
-    inventory[inventoryHash] = (
-        objectType, streamNumber, data, embeddedTime,'')
-    inventorySets[streamNumber].add(inventoryHash)
+    addInventory(inventoryHash, objectType, streamNumber, data, embeddedTime, '')
     inventoryLock.release()
     # This getpubkey request is valid. Forward to peers.
     logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
@@ -707,9 +707,7 @@ def checkAndSharePubkeyWithPeers(data):
         inventoryLock.release()
         return
     objectType = 'pubkey'
-    inventory[inventoryHash] = (
-        objectType, streamNumber, data, embeddedTime, tag)
-    inventorySets[streamNumber].add(inventoryHash)
+    addInventory(inventoryHash, objectType, streamNumber, data, embeddedTime, tag)
     inventoryLock.release()
     # This object is valid. Forward it to peers.
     logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
@@ -776,9 +774,7 @@ def checkAndShareBroadcastWithPeers(data):
         return
     # It is valid. Let's let our peers know about it.
     objectType = 'broadcast'
-    inventory[inventoryHash] = (
-        objectType, streamNumber, data, embeddedTime, tag)
-    inventorySets[streamNumber].add(inventoryHash)
+    addInventory(inventoryHash, objectType, streamNumber, data, embeddedTime, tag)
     inventoryLock.release()
     # This object is valid. Forward it to peers.
     logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
@@ -792,6 +788,18 @@ def checkAndShareBroadcastWithPeers(data):
         shared.objectProcessorQueueSize += len(data)
         objectProcessorQueue.put((objectType,data))
 
+def addInventory(inventoryHash, objectType, streamNumber, data, embeddedTime, tag):
+	#add object to inventory
+	inventory[inventoryHash] = (
+        objectType, streamNumber, data, embeddedTime, tag)
+    	inventorySets[streamNumber].add(inventoryHash)
 
+	#include object in POW statistics
+	POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
+	:8] + hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8]) #calculate POW
+	nonceTrialsPerByteActual = (2 ** 64)/(POW*len(data)) #calculate nonceTrialsPerByteActual
+	shared.countNonceTrialsPerByteActual += 1 #update count for average
+	shared.averageNonceTrialsPerByteActual += (nonceTrialsPerByteActual-shared.averageNonceTrialsPerByteActual)/shared.countNonceTrialsPerByteActual #update inventory average of nonceTrialsPerByteActual
+	
 helper_startup.loadConfig()
 from debug import logger

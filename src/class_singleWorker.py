@@ -130,6 +130,7 @@ class singleWorker(threading.Thread):
         # Do the POW for this pubkey message
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+	self.prioritizeTarget(target, payload)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -138,9 +139,7 @@ class singleWorker(threading.Thread):
 
         inventoryHash = calculateInventoryHash(payload)
         objectType = 'pubkey'
-        shared.inventory[inventoryHash] = (
-            objectType, streamNumber, payload, embeddedTime,'')
-        shared.inventorySets[streamNumber].add(inventoryHash)
+	shared.addInventory(inventoryHash, objectType, streamNumber, payload, embeddedTime, '')
 
         with shared.printLock:
             print 'broadcasting inv with hash:', inventoryHash.encode('hex')
@@ -216,6 +215,7 @@ class singleWorker(threading.Thread):
         # Do the POW for this pubkey message
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+	self.prioritizeTarget(target, payload)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -224,9 +224,7 @@ class singleWorker(threading.Thread):
         payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
         objectType = 'pubkey'
-        shared.inventory[inventoryHash] = (
-            objectType, streamNumber, payload, embeddedTime,'')
-        shared.inventorySets[streamNumber].add(inventoryHash)
+	shared.addInventory(inventoryHash, objectType, streamNumber, payload, embeddedTime, '')
 
         with shared.printLock:
             print 'broadcasting inv with hash:', inventoryHash.encode('hex')
@@ -312,6 +310,7 @@ class singleWorker(threading.Thread):
         # Do the POW for this pubkey message
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+	self.prioritizeTarget(target, payload)
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -320,9 +319,7 @@ class singleWorker(threading.Thread):
         payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
         objectType = 'pubkey'
-        shared.inventory[inventoryHash] = (
-            objectType, streamNumber, payload, embeddedTime, doubleHashOfAddressData[32:])
-        shared.inventorySets[streamNumber].add(inventoryHash)
+	shared.addInventory(inventoryHash, objectType, streamNumber, payload, embeddedTime, doubleHashOfAddressData[32:])
 
         with shared.printLock:
             print 'broadcasting inv with hash:', inventoryHash.encode('hex')
@@ -422,6 +419,8 @@ class singleWorker(threading.Thread):
 
             target = 2 ** 64 / ((len(
                 payload) + shared.networkDefaultPayloadLengthExtraBytes + 8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+	    if ( target > (2 ** 64)/(len(payload)*shared.averageNonceTrialsPerByteActual)):
+	    	target = (2 ** 64)/(len(payload)*shared.averageNonceTrialsPerByteActual)
             print '(For broadcast message) Doing proof of work...'
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                 ackdata, tr.translateText("MainWindow", "Doing work necessary to send broadcast..."))))
@@ -433,9 +432,7 @@ class singleWorker(threading.Thread):
 
             inventoryHash = calculateInventoryHash(payload)
             objectType = 'broadcast'
-            shared.inventory[inventoryHash] = (
-                objectType, streamNumber, payload, int(time.time()),tag)
-            shared.inventorySets[streamNumber].add(inventoryHash)
+	    shared.addInventory(inventoryHash, objectType, streamNumber, payload, int(time.time()), tag)
             with shared.printLock:
                 print 'sending inv (within sendBroadcast function) for object:', inventoryHash.encode('hex')
             shared.broadcastToSendDataQueues((
@@ -807,6 +804,8 @@ class singleWorker(threading.Thread):
                 continue
             encryptedPayload = embeddedTime + encodeVarint(toStreamNumber) + encrypted
             target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
+	    if ( target > (2 ** 64)/(len(payload)*shared.averageNonceTrialsPerByteActual)):
+	    	target = (2 ** 64)/(len(payload)*shared.averageNonceTrialsPerByteActual)
             with shared.printLock:
                 print '(For msg message) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes
 
@@ -824,9 +823,7 @@ class singleWorker(threading.Thread):
 
             inventoryHash = calculateInventoryHash(encryptedPayload)
             objectType = 'msg'
-            shared.inventory[inventoryHash] = (
-                objectType, toStreamNumber, encryptedPayload, int(time.time()),'')
-            shared.inventorySets[toStreamNumber].add(inventoryHash)
+	    shared.addInventory(inventoryHash, objectType, toStreamNumber, encryptedPayload, int(time.time()), '')
             if shared.config.has_section(toaddress):
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Message sent. Sent on %1").arg(l10n.formatTimestamp()))))
             else:
@@ -902,6 +899,7 @@ class singleWorker(threading.Thread):
             ripe, tr.translateText("MainWindow",'Doing work necessary to request encryption key.'))))
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+	self.prioritizeTarget(target, payload)
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
         with shared.printLock:
@@ -911,9 +909,7 @@ class singleWorker(threading.Thread):
         payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
         objectType = 'getpubkey'
-        shared.inventory[inventoryHash] = (
-            objectType, streamNumber, payload, int(time.time()),'')
-        shared.inventorySets[streamNumber].add(inventoryHash)
+	shared.addInventory(inventoryHash, objectType, streamNumber, payload, int(time.time()), '')
         print 'sending inv (for the getpubkey message)'
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
@@ -932,6 +928,7 @@ class singleWorker(threading.Thread):
         payload = embeddedTime + encodeVarint(toStreamNumber) + ackdata
         target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
                              8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+	self.prioritizeTarget(target, payload)
         with shared.printLock:
             print '(For ack message) Doing proof of work...'
 
@@ -947,3 +944,10 @@ class singleWorker(threading.Thread):
 
         payload = pack('>Q', nonce) + payload
         return shared.CreatePacket('msg', payload)
+
+    def prioritizeTarget(self, target, payload):
+	#set target to the inventory average of length adjusted targets for 
+	#large inventories and twice the inventory average for small inventories
+	if ( target > (2 ** 64)/(len(payload)*shared.averageNonceTrialsPerByteActual)):
+		target = (1+1/shared.countNonceTrialsPerByteActual)*(2 ** 64)/(len(payload)*shared.averageNonceTrialsPerByteActual)	
+
