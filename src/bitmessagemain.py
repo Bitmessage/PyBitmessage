@@ -168,7 +168,11 @@ class Main:
 
         # get curses flag
         curses = False
-        if '-c' in sys.argv:
+        transparent = False
+        if '-ct' in sys.argv:
+            curses = True
+            transparent = True
+        elif '-c' in sys.argv:
             curses = True
 
         signal.signal(signal.SIGINT, helper_generic.signal_handler)
@@ -232,7 +236,7 @@ class Main:
                 except Exception as err:
                     print('PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon')
                     print('Error message:', err)
-                    print('You can also run PyBitmessage with the new curses interface by providing \'-c\' as a commandline argument.')
+                    print('You can also run PyBitmessage with the new curses interface by providing \'-c\' as a commandline argument. For transparent curses mode, \'-ct\' may be used.')
                     os._exit(0)
 
                 import bitmessageqt
@@ -240,7 +244,7 @@ class Main:
             else:
                 print('Running with curses')
                 import bitmessagecurses
-                bitmessagecurses.runwrapper()
+                bitmessagecurses.runwrapper(transparent)
         else:
             shared.config.remove_option('bitmessagesettings', 'dontconnect')
 
