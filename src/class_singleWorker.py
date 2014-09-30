@@ -946,8 +946,9 @@ class singleWorker(threading.Thread):
         return shared.CreatePacket('msg', payload)
 
     def prioritizeTarget(self, target, payload):
-	#set target to the inventory average of length adjusted targets for 
+	#set target to at most the inventory average of length adjusted targets for 
 	#large inventories and twice the inventory average for small inventories
-	if ( target > (2 ** 64)/(len(payload)*shared.averageNonceTrialsPerByteActual)):
-		target = (1+1/shared.countNonceTrialsPerByteActual)*(2 ** 64)/(len(payload)*shared.averageNonceTrialsPerByteActual)	
+	ptarget = (1+(2**10)/((2**10)+shared.countNonceTrialsPerByteActual))*(2 ** 64)/(len(payload)*shared.averageNonceTrialsPerByteActual)
+	if ( target > ptarget):
+		target = ptarget 
 

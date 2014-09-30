@@ -85,8 +85,9 @@ streamsInWhichIAmParticipating = {}
 networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
 networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
-#inventory average (and count) of nonce trials per byte of actual payload (excluding extra bytes)
+#average over bytes of inventory of nonce trials per byte of actual payload (excluding extra bytes) 
 averageNonceTrialsPerByteActual = (networkDefaultPayloadLengthExtraBytes * networkDefaultProofOfWorkNonceTrialsPerByte)/50
+#count of bytes of inventory (corresponding to average)
 countNonceTrialsPerByteActual = 1
 
 # Remember here the RPC port read from namecoin.conf so we can restore to
@@ -798,8 +799,8 @@ def addInventory(inventoryHash, objectType, streamNumber, data, embeddedTime, ta
 	POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
 	:8] + hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8]) #calculate POW
 	nonceTrialsPerByteActual = (2 ** 64)/(POW*len(data)) #calculate nonceTrialsPerByteActual
-	shared.countNonceTrialsPerByteActual += 1 #update count for average
-	shared.averageNonceTrialsPerByteActual += (nonceTrialsPerByteActual-shared.averageNonceTrialsPerByteActual)/shared.countNonceTrialsPerByteActual #update inventory average of nonceTrialsPerByteActual
+	shared.countNonceTrialsPerByteActual += len(data) #update byte count for byte average
+	shared.averageNonceTrialsPerByteActual += len(data)*(nonceTrialsPerByteActual-shared.averageNonceTrialsPerByteActual)/shared.countNonceTrialsPerByteActual #update inventory byte average of nonceTrialsPerByteActual
 	
 helper_startup.loadConfig()
 from debug import logger
