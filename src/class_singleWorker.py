@@ -128,7 +128,6 @@ class singleWorker(threading.Thread):
         payload += pubEncryptionKey[1:]
 
         # Do the POW for this pubkey message
-        TTL = 2.5 * 24 * 60 * 60 # 2.5 days for now; user specifyable later.
         target = 2 ** 64 / (shared.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + shared.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+shared.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
         print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
@@ -472,7 +471,6 @@ class singleWorker(threading.Thread):
             payload += highlevelcrypto.encrypt(
                 dataToEncrypt, pubEncryptionKey.encode('hex'))
 
-            TTL = 2.5 * 24 * 60 * 60 # 2.5 days for now; user specifyable later.
             target = 2 ** 64 / (shared.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + shared.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+shared.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
             print '(For broadcast message) Doing proof of work...'
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
@@ -790,7 +788,7 @@ class singleWorker(threading.Thread):
                 if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
                     dataToSign = payload
                 else:
-                    dataToSign = encodeVarint(1) + encodeVarint(toStreamNumber) + payload 
+                    dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + encodeVarint(1) + encodeVarint(toStreamNumber) + payload 
                 signature = highlevelcrypto.sign(dataToSign, privSigningKeyHex)
                 payload += encodeVarint(len(signature))
                 payload += signature
