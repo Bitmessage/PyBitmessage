@@ -220,7 +220,7 @@ class singleWorker(threading.Thread):
             myAddress, 'payloadlengthextrabytes'))
         
         if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-            signedData = pack('>Q', signedTimeForProtocolV2) + payload[12:]
+            signedData = pack('>I', signedTimeForProtocolV2) + payload[12:]
         else:
             signedData = payload
         
@@ -230,10 +230,12 @@ class singleWorker(threading.Thread):
 
         # Do the POW for this pubkey message
         target = 2 ** 64 / (shared.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + shared.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+shared.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
-        print '(For pubkey message) Doing proof of work...'
+        with shared.printLock:
+            print '(For pubkey message) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
-        print '(For pubkey message) Found proof of work', trialValue, 'Nonce:', nonce
+        with shared.printLock:
+            print '(For pubkey message) Found proof of work. Nonce:', nonce
 
         payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
