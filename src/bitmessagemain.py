@@ -42,8 +42,6 @@ from api import MySimpleXMLRPCRequestHandler
 from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
 
 import shared
-import helper_startup
-helper_startup.loadConfig()
 from helper_sql import sqlQuery
 import threading
 
