@@ -18,7 +18,7 @@ language = DEFAULT_LANGUAGE
 
 try:
     import locale
-    encoding = locale.getpreferredencoding(False) or DEFAULT_ENCODING
+    encoding = locale.getpreferredencoding(True) or DEFAULT_ENCODING
     language = locale.getlocale()[0] or locale.getdefaultlocale()[0] or DEFAULT_LANGUAGE
 except:
     logger.exception('Could not determine language or encoding')
