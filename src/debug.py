@@ -20,6 +20,8 @@ import logging
 import logging.config
 import shared
 import sys
+import helper_startup
+helper_startup.loadConfig()
 
 # TODO(xj9): Get from a config file.
 log_level = 'DEBUG'

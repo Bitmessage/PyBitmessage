@@ -859,6 +859,4 @@ def _checkAndShareBroadcastWithPeers(data):
         shared.objectProcessorQueueSize += len(data)
         objectProcessorQueue.put((objectType,data))
 
-
-#helper_startup.loadConfig()
 from debug import logger
