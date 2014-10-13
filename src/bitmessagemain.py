@@ -174,6 +174,7 @@ class Main:
             curses = True
 
         signal.signal(signal.SIGINT, helper_generic.signal_handler)
+        signal.signal(signal.SIGTERM, helper_generic.signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
         helper_bootstrap.knownNodes()
