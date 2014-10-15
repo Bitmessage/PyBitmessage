@@ -515,14 +515,9 @@ class singleWorker(threading.Thread):
     def sendMsg(self):
         while True: # while we have a msg that needs some work
             
-            # Select just one msg that needs work. We'll get a msg 
-            # which is ready to be sent or a msg which we have sent in 
-            # the last 28 days which were previously marked
-            # as 'toodifficult'. If the user has raised the maximum acceptable
-            # difficulty then those msgs may now be sendable.
+            # Select just one msg that needs work.
             queryreturn = sqlQuery(
-                '''SELECT toaddress, toripe, fromaddress, subject, message, ackdata, status FROM sent WHERE (status='msgqueued' or status='doingmsgpow' or status='forcepow' or (status='toodifficult' and lastactiontime>?)) and folder='sent' LIMIT 1''',
-                int(time.time()) - 2419200)
+                '''SELECT toaddress, toripe, fromaddress, subject, message, ackdata, status FROM sent WHERE (status='msgqueued' or status='doingmsgpow' or status='forcepow') and folder='sent' LIMIT 1''')
             if len(queryreturn) == 0: # if there is no work to do then 
                 break                 # break out of this sendMsg loop and 
                                       # wait for something to get put in the shared.workerQueue.
@@ -717,7 +712,7 @@ class singleWorker(threading.Thread):
                             sqlExecute(
                                 '''UPDATE sent SET status='toodifficult' WHERE ackdata=? ''',
                                 ackdata)
-                            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do.").arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(
+                            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do. %3").arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(
                                 requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes)).arg(l10n.formatTimestamp()))))
                             continue
             else: # if we are sending a message to ourselves or a chan..
