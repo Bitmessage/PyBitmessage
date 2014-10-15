@@ -56,6 +56,10 @@ class singleCleaner(threading.Thread):
                                 receivedTime,
                                 tag)
                             del shared.inventory[hash]
+		shared.config.set('bitmessagesettings', 'averagenoncetrialsperbyteactual', str(shared.averageNonceTrialsPerByteActual))
+		shared.config.set('bitmessagesettings', 'countnoncetrialsperbyteactual', str(shared.countNonceTrialsPerByteActual))
+           	with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                    shared.config.write(configfile)
             shared.UISignalQueue.put(('updateStatusBar', ''))
             shared.broadcastToSendDataQueues((
                 0, 'pong', 'no data')) # commands the sendData threads to send out a pong message if they haven't sent anything else in the last five minutes. The socket timeout-time is 10 minutes.

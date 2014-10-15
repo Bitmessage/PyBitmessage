@@ -10,6 +10,7 @@ from namecoin import ensureNamecoinOptions
 import random
 import string
 import tr#anslate
+from pyelliptic import arithmetic 
 
 # This thread exists because SQLITE3 is so un-threadsafe that we must
 # submit queries to it and it puts results back in a different queue. They
@@ -302,6 +303,15 @@ class sqlThread(threading.Thread):
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (6,)
             self.cur.execute(item, parameters)
+	
+	if shared.config.has_option('bitmessagesettings', 'averagenoncetrialsperbyteactual') and shared.config.has_option('bitmessagesettings', 'countnoncetrialsperbyteactual'): 
+		shared.averageNonceTrialsPerByteActual = shared.config.getint('bitmessagesettings', 'averagenoncetrialsperbyteactual')
+		shared.countNonceTrialsPerByteActual = shared.config.getint('bitmessagesettings', 'countnoncetrialsperbyteactual')
+	else:
+		shared.config.set('bitmessagesettings', 'averagenoncetrialsperbyteactual', str(shared.averageNonceTrialsPerByteActual))
+		shared.config.set('bitmessagesettings', 'countnoncetrialsperbyteactual', str(shared.countNonceTrialsPerByteActual))
+		with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                    shared.config.write(configfile)
 
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users? Add it right above this line!
@@ -345,6 +355,7 @@ class sqlThread(threading.Thread):
                 logger.info('It has been a long time since the messages.dat file has been vacuumed. Vacuuming now...')
                 try:
                     self.cur.execute( ''' VACUUM ''')
+		    shared.countNonceTrialsPerByteActual = arithmetic.isqrt(shared.countNonceTrialsPerByteActual)
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(While VACUUM) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
@@ -418,7 +429,8 @@ class sqlThread(threading.Thread):
                 self.cur.execute('''delete from sent where folder='trash' ''')
                 self.conn.commit()
                 try:
-                    self.cur.execute( ''' VACUUM ''')
+		    self.cur.execute( ''' VACUUM ''')
+		    shared.countNonceTrialsPerByteActual = arithmetic.isqrt(shared.countNonceTrialsPerByteActual)
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(while deleteandvacuume) Alert: Your disk or data storage volume is full. sqlThread will now exit.')

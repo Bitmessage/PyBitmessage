@@ -70,6 +70,21 @@ def base10_multiply(a,n):
   if (n%2) == 0: return base10_double(base10_multiply(a,n/2))
   if (n%2) == 1: return base10_add(base10_double(base10_multiply(a,n/2)),a)
 
+def isqrt(x):
+    if x < 0:
+        raise ValueError('square root not defined for negative numbers')
+    n = int(x)
+    if n == 0:
+        return 0
+    a, b = divmod(n.bit_length(), 2)
+    x = 2**(a+b)
+    while True:
+        y = (x + n//x)//2
+        if y >= x:
+            return x
+        x = y
+
+
 def hex_to_point(h): return (decode(h[2:66],16),decode(h[66:],16))
 
 def point_to_hex(p): return '04'+encode(p[0],16,64)+encode(p[1],16,64)

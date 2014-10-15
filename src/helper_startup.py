@@ -92,6 +92,8 @@ def loadConfig():
             shared.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
         shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
             shared.networkDefaultPayloadLengthExtraBytes))
+	shared.config.set('bitmessagesettings', 'averagenoncetrialsperbyteactual', str(shared.averageNonceTrialsPerByteActual))
+	shared.config.set('bitmessagesettings', 'countnoncetrialsperbyteactual', str(shared.countNonceTrialsPerByteActual))
         shared.config.set('bitmessagesettings', 'minimizeonclose', 'false')
         shared.config.set(
             'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
