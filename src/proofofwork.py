@@ -4,7 +4,8 @@
 import hashlib
 from struct import unpack, pack
 import sys
-from shared import config, frozen
+import shared
+import cwrapper
 #import os
 
 def _set_idle():
@@ -47,7 +48,7 @@ def _doFastPoW(target, initialHash):
     except:
         pool_size = 4
     try:
-        maxCores = config.getint('bitmessagesettings', 'maxcores')
+        maxCores = shared.config.getint('bitmessagesettings', 'maxcores')
     except:
         maxCores = 99999
     if pool_size > maxCores:
@@ -55,7 +56,10 @@ def _doFastPoW(target, initialHash):
     pool = Pool(processes=pool_size)
     result = []
     for i in range(pool_size):
-        result.append(pool.apply_async(_pool_worker, args = (i, initialHash, target, pool_size)))
+        if shared.clibAvaible:
+            result.append(pool.apply_async(cwrapper.doPoW, args = (target, initialHash, i, pool_size)))
+        else:
+            result.append(pool.apply_async(_pool_worker, args = (i, initialHash, target, pool_size)))
     while True:
         if shared.shutdown >= 1:
             pool.terminate()
@@ -71,7 +75,10 @@ def _doFastPoW(target, initialHash):
         time.sleep(0.2)
 
 def run(target, initialHash):
-    if frozen == "macosx_app" or not frozen:
+    if shared.frozen == "macosx_app" or not shared.frozen:
         return _doFastPoW(target, initialHash)
     else:
-        return _doSafePoW(target, initialHash)
+        if shared.clibAvaible:
+            return cwrapper.doPoW(target, initialHash, 0, 1)
+        else:
+            return _doSafePoW(target, initialHash)

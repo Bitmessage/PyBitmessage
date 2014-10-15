@@ -58,6 +58,7 @@ from class_singleWorker import singleWorker
 #from class_addressGenerator import *
 from class_addressGenerator import addressGenerator
 from debug import logger
+import cwrapper
 
 # Helper Functions
 import helper_bootstrap
@@ -217,6 +218,9 @@ class Main:
             singleAPIThread = singleAPI()
             singleAPIThread.daemon = True  # close the main program even if there are threads left
             singleAPIThread.start()
+
+        if not shared.safeConfigGetBoolean('bitmessagesettings', 'disableclib'):
+            shared.clibAvaible = cwrapper.init()
 
         connectToStream(1)
 

@@ -74,6 +74,7 @@ numberOfInventoryLookupsPerformed = 0
 numberOfBytesReceived = 0
 numberOfBytesSent = 0
 daemon = False
+clibAvaible = False
 inventorySets = {} # key = streamNumer, value = a set which holds the inventory object hashes that we are aware of. This is used whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it every couple hours.
 needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it to disk eventually.
 maximumLengthOfTimeToBotherResendingMessages = 0
