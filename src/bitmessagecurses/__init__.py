@@ -963,7 +963,7 @@ def loadBlackWhiteList():
         blacklist.append([label, address, enabled])
     blacklist.reverse()
 
-def runwrapper():
+def runwrapper(transparent):
     sys.stdout = printlog
     #sys.stderr = errlog
     
@@ -983,30 +983,37 @@ def runwrapper():
     curses.curs_set(0)
     stdscr.timeout(1000)
     
-    curses.wrapper(run)
+    if (transparent):
+        curses.wrapper(run_transparent)
+    else:
+        curses.wrapper(run)
     shutdown()
 
-def run(stdscr):
+def run_transparent(stdscr):
+    curses.use_default_colors()
+    run(stdscr, -1)
+
+def run(stdscr,bgcolor=curses.COLOR_BLACK):
     # Schedule inventory lookup data
     resetlookups()
     
     # Init color pairs
     if curses.has_colors():
-        curses.init_pair(1, curses.COLOR_RED, curses.COLOR_BLACK) # red
-        curses.init_pair(2, curses.COLOR_GREEN, curses.COLOR_BLACK) # green
-        curses.init_pair(3, curses.COLOR_YELLOW, curses.COLOR_BLACK) # yellow
-        curses.init_pair(4, curses.COLOR_BLUE, curses.COLOR_BLACK) # blue
-        curses.init_pair(5, curses.COLOR_MAGENTA, curses.COLOR_BLACK) # magenta
-        curses.init_pair(6, curses.COLOR_CYAN, curses.COLOR_BLACK) # cyan
-        curses.init_pair(7, curses.COLOR_WHITE, curses.COLOR_BLACK) # white
+        curses.init_pair(1, curses.COLOR_RED, bgcolor) # red
+        curses.init_pair(2, curses.COLOR_GREEN, bgcolor) # green
+        curses.init_pair(3, curses.COLOR_YELLOW, bgcolor) # yellow
+        curses.init_pair(4, curses.COLOR_BLUE, bgcolor) # blue
+        curses.init_pair(5, curses.COLOR_MAGENTA, bgcolor) # magenta
+        curses.init_pair(6, curses.COLOR_CYAN, bgcolor) # cyan
+        curses.init_pair(7, curses.COLOR_WHITE, bgcolor) # white
         if curses.can_change_color():
             curses.init_color(8, 500, 500, 500) # gray
-            curses.init_pair(8, 8, 0)
+            curses.init_pair(8, 8, bgcolor)
             curses.init_color(9, 844, 465, 0) # orange
-            curses.init_pair(9, 9, 0)
+            curses.init_pair(9, 9, bgcolor)
         else:
-            curses.init_pair(8, curses.COLOR_WHITE, curses.COLOR_BLACK) # grayish
-            curses.init_pair(9, curses.COLOR_YELLOW, curses.COLOR_BLACK) # orangish
+            curses.init_pair(8, curses.COLOR_WHITE, bgcolor) # grayish
+            curses.init_pair(9, curses.COLOR_YELLOW, bgcolor) # orangish
     
     # Init list of address in 'Your Identities' tab
     configSections = shared.config.sections()
