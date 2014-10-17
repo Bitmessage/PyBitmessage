@@ -57,7 +57,7 @@ def loadConfig():
         # This appears to be the first time running the program; there is
         # no config file (or it cannot be accessed). Create config file.
         shared.config.add_section('bitmessagesettings')
-        shared.config.set('bitmessagesettings', 'settingsversion', '8')
+        shared.config.set('bitmessagesettings', 'settingsversion', '10')
         shared.config.set('bitmessagesettings', 'port', '8444')
         shared.config.set(
             'bitmessagesettings', 'timeformat', '%%a, %%d %%b %%Y  %%I:%%M %%p')
@@ -89,7 +89,7 @@ def loadConfig():
         shared.config.set(
             'bitmessagesettings', 'messagesencrypted', 'false')
         shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
-            shared.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
+            shared.networkDefaultProofOfWorkNonceTrialsPerByte))
         shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
             shared.networkDefaultPayloadLengthExtraBytes))
         shared.config.set('bitmessagesettings', 'minimizeonclose', 'false')
@@ -102,6 +102,8 @@ def loadConfig():
         shared.config.set('bitmessagesettings', 'useidenticons', 'True')
         shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
         shared.config.set('bitmessagesettings', 'replybelow', 'False')
+        shared.config.set('bitmessagesettings', 'maxdownloadrate', '0')
+        shared.config.set('bitmessagesettings', 'maxuploadrate', '0')
         
          #start:UI setting to stop trying to send messages after X days/months
         shared.config.set(

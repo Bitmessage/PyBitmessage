@@ -68,23 +68,48 @@ def encodeVarint(integer):
     if integer >= 18446744073709551616:
         print 'varint cannot be >= 18446744073709551616'
         raise SystemExit
+    
+class varintDecodeError(Exception):
+    pass
 
 def decodeVarint(data):
+    """
+    Decodes an encoded varint to an integer and returns it. 
+    Per protocol v3, the encoded value must be encoded with 
+    the minimum amount of data possible or else it is malformed.    
+    Returns a tuple: (theEncodedValue, theSizeOfTheVarintInBytes)
+    """
+    
     if len(data) == 0:
         return (0,0)
     firstByte, = unpack('>B',data[0:1])
     if firstByte < 253:
+        # encodes 0 to 252
         return (firstByte,1) #the 1 is the length of the varint
     if firstByte == 253:
-        a, = unpack('>H',data[1:3])
-        return (a,3)
+        # encodes 253 to 65535
+        if len(data) < 3:
+            raise varintDecodeError('The first byte of this varint as an integer is %s but the total length is only %s. It needs to be at least 3.' % (firstByte, len(data)))
+        encodedValue, = unpack('>H',data[1:3])
+        if encodedValue < 253:
+            raise varintDecodeError('This varint does not encode the value with the lowest possible number of bytes.')
+        return (encodedValue,3)
     if firstByte == 254:
-        a, = unpack('>I',data[1:5])
-        return (a,5)
+        # encodes 65536 to 4294967295
+        if len(data) < 5:
+            raise varintDecodeError('The first byte of this varint as an integer is %s but the total length is only %s. It needs to be at least 5.' % (firstByte, len(data)))
+        encodedValue, = unpack('>I',data[1:5])
+        if encodedValue < 65536:
+            raise varintDecodeError('This varint does not encode the value with the lowest possible number of bytes.')
+        return (encodedValue,5)
     if firstByte == 255:
-        a, = unpack('>Q',data[1:9])
-        return (a,9)
-
+        # encodes 4294967296 to 18446744073709551615
+        if len(data) < 9:
+            raise varintDecodeError('The first byte of this varint as an integer is %s but the total length is only %s. It needs to be at least 9.' % (firstByte, len(data)))
+        encodedValue, = unpack('>Q',data[1:9])
+        if encodedValue < 4294967296:
+            raise varintDecodeError('This varint does not encode the value with the lowest possible number of bytes.')
+        return (encodedValue,9)
 
 
 def calculateInventoryHash(data):
@@ -107,23 +132,17 @@ def encodeAddress(version,stream,ripe):
             raise Exception("Programming error in encodeAddress: The length of a given ripe hash was not 20.")
         ripe = ripe.lstrip('\x00')
 
-    a = encodeVarint(version) + encodeVarint(stream) + ripe
+    storedBinaryData = encodeVarint(version) + encodeVarint(stream) + ripe
+    
+    # Generate the checksum
     sha = hashlib.new('sha512')
-    sha.update(a)
+    sha.update(storedBinaryData)
     currentHash = sha.digest()
-    #print 'sha after first hashing: ', sha.hexdigest()
     sha = hashlib.new('sha512')
     sha.update(currentHash)
-    #print 'sha after second hashing: ', sha.hexdigest()
-
     checksum = sha.digest()[0:4]
-    #print 'len(a) = ', len(a)
-    #print 'checksum = ', checksum.encode('hex')
-    #print 'len(checksum) = ', len(checksum)
 
-    asInt = int(a.encode('hex') + checksum.encode('hex'),16)
-    #asInt = int(checksum.encode('hex') + a.encode('hex'),16)
-    # print asInt
+    asInt = int(storedBinaryData.encode('hex') + checksum.encode('hex'),16)
     return 'BM-'+ encodeBase58(asInt)
 
 def decodeAddress(address):
@@ -163,7 +182,12 @@ def decodeAddress(address):
     #else:
     #    print 'checksum PASSED'
 
-    addressVersionNumber, bytesUsedByVersionNumber = decodeVarint(data[:9])
+    try:
+        addressVersionNumber, bytesUsedByVersionNumber = decodeVarint(data[:9])
+    except varintDecodeError as e:
+        print e
+        status = 'varintmalformed'
+        return status,0,0,""
     #print 'addressVersionNumber', addressVersionNumber
     #print 'bytesUsedByVersionNumber', bytesUsedByVersionNumber
 
@@ -176,32 +200,42 @@ def decodeAddress(address):
         status = 'versiontoohigh'
         return status,0,0,""
 
-    streamNumber, bytesUsedByStreamNumber = decodeVarint(data[bytesUsedByVersionNumber:])
+    try:
+        streamNumber, bytesUsedByStreamNumber = decodeVarint(data[bytesUsedByVersionNumber:])
+    except varintDecodeError as e:
+        print e
+        status = 'varintmalformed'
+        return status,0,0,""
     #print streamNumber
     status = 'success'
     if addressVersionNumber == 1:
         return status,addressVersionNumber,streamNumber,data[-24:-4]
     elif addressVersionNumber == 2 or addressVersionNumber == 3:
-        if len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 19:
-            return status,addressVersionNumber,streamNumber,'\x00'+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
-        elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 20:
-            return status,addressVersionNumber,streamNumber,data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
-        elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) == 18:
-            return status,addressVersionNumber,streamNumber,'\x00\x00'+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
-        elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) < 18:
+        embeddedRipeData = data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
+        if len(embeddedRipeData) == 19:
+            return status,addressVersionNumber,streamNumber,'\x00'+embeddedRipeData
+        elif len(embeddedRipeData) == 20:
+            return status,addressVersionNumber,streamNumber,embeddedRipeData
+        elif len(embeddedRipeData) == 18:
+            return status,addressVersionNumber,streamNumber,'\x00\x00'+embeddedRipeData
+        elif len(embeddedRipeData) < 18:
             return 'ripetooshort',0,0,""
-        elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) > 20:
+        elif len(embeddedRipeData) > 20:
             return 'ripetoolong',0,0,""
         else:
             return 'otherproblem',0,0,""
     elif addressVersionNumber == 4:
-        if len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) > 20:
+        embeddedRipeData = data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
+        if embeddedRipeData[0:1] == '\x00':
+            # In order to enforce address non-malleability, encoded RIPE data must have NULL bytes removed from the front
+            return 'encodingproblem',0,0,"" 
+        elif len(embeddedRipeData) > 20:
             return 'ripetoolong',0,0,""
-        elif len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]) < 4:
+        elif len(embeddedRipeData) < 4:
             return 'ripetooshort',0,0,""
         else:
-            x00string = '\x00' * (20 - len(data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]))
-            return status,addressVersionNumber,streamNumber,x00string+data[bytesUsedByVersionNumber+bytesUsedByStreamNumber:-4]
+            x00string = '\x00' * (20 - len(embeddedRipeData))
+            return status,addressVersionNumber,streamNumber,x00string+embeddedRipeData
 
 def addBMIfNotPresent(address):
     address = str(address).strip()

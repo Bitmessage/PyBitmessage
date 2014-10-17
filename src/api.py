@@ -17,7 +17,7 @@ import json
 
 import shared
 import time
-from addresses import decodeAddress,addBMIfNotPresent,decodeVarint,calculateInventoryHash
+from addresses import decodeAddress,addBMIfNotPresent,decodeVarint,calculateInventoryHash,varintDecodeError
 import helper_inbox
 import helper_sent
 import hashlib
@@ -139,6 +139,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(9, 'Invalid characters in address: ' + address)
             if status == 'versiontoohigh':
                 raise APIError(10, 'Address version number too high (or zero) in address: ' + address)
+            if status == 'varintmalformed':
+                raise APIError(26, 'Malformed varint in address: ' + address)
             raise APIError(7, 'Could not decode address: ' + address + ' : ' + status)
         if addressVersionNumber < 2 or addressVersionNumber > 4:
             raise APIError(11, 'The address version number currently must be 2, 3 or 4. Others aren\'t supported. Check the address.')
@@ -621,6 +623,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(6, 'The encoding type must be 2 because that is the only one this program currently supports.')
             subject = self._decode(subject, "base64")
             message = self._decode(message, "base64")
+            if len(subject + message) > (2 ** 18 - 500):
+                raise APIError(27, 'Message is too long.')
             toAddress = addBMIfNotPresent(toAddress)
             fromAddress = addBMIfNotPresent(fromAddress)
             status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(toAddress)
@@ -664,7 +668,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 raise APIError(6, 'The encoding type must be 2 because that is the only one this program currently supports.')
             subject = self._decode(subject, "base64")
             message = self._decode(message, "base64")
-
+            if len(subject + message) > (2 ** 18 - 500):
+                raise APIError(27, 'Message is too long.')
             fromAddress = addBMIfNotPresent(fromAddress)
             self._verifyAddress(fromAddress)
             try:
@@ -777,9 +782,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             encryptedPayload = pack('>Q', nonce) + encryptedPayload
             toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
             inventoryHash = calculateInventoryHash(encryptedPayload)
-            objectType = 'msg'
+            objectType = 2
+            TTL = 2.5 * 24 * 60 * 60
             shared.inventory[inventoryHash] = (
-                objectType, toStreamNumber, encryptedPayload, int(time.time()),'')
+                objectType, toStreamNumber, encryptedPayload, int(time.time()) + TTL,'')
             shared.inventorySets[toStreamNumber].add(inventoryHash)
             with shared.printLock:
                 print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', inventoryHash.encode('hex')
@@ -814,10 +820,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             pubkeyReadPosition += addressVersionLength
             pubkeyStreamNumber = decodeVarint(payload[pubkeyReadPosition:pubkeyReadPosition+10])[0]
             inventoryHash = calculateInventoryHash(payload)
-            objectType = 'pubkey'
+            objectType = 1
                         #todo: support v4 pubkeys
+            TTL = 28 * 24 * 60 * 60
             shared.inventory[inventoryHash] = (
-                objectType, pubkeyStreamNumber, payload, int(time.time()),'')
+                objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL,'')
             shared.inventorySets[pubkeyStreamNumber].add(inventoryHash)
             with shared.printLock:
                 print 'broadcasting inv within API command disseminatePubkey with hash:', inventoryHash.encode('hex')
@@ -839,7 +846,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # use it we'll need to fill out a field in our inventory database
             # which is blank by default (first20bytesofencryptedmessage).
             queryreturn = sqlQuery(
-                '''SELECT hash, payload FROM inventory WHERE tag = '' and objecttype = 'msg' ; ''')
+                '''SELECT hash, payload FROM inventory WHERE tag = '' and objecttype = 2 ; ''')
             with SqlBulkExecute() as sql:
                 for row in queryreturn:
                     hash01, payload = row
@@ -906,6 +913,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return self._handle_request(method, params)
         except APIError as e:
             return str(e)
+        except varintDecodeError as e:
+            logger.error(e)
+            return "API Error 0026: Data contains a malformed varint. Some details: %s" % e
         except Exception as e:
             logger.exception(e)
             return "API Error 0021: Unexpected API Failure - %s" % str(e)
