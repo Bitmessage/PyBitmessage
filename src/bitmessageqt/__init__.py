@@ -1346,26 +1346,23 @@ class MyForm(QtGui.QMainWindow):
             if self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text() == "":
                 QMessageBox.about(self, _translate("MainWindow", "bad passphrase"), _translate(
                     "MainWindow", "You must type your passphrase. If you don\'t have one then this is not the form for you."))
-            else:
-                streamNumberForAddress = int(
-                    self.regenerateAddressesDialogInstance.ui.lineEditStreamNumber.text())
-                try:
-                    addressVersionNumber = int(
-                        self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
-                except:
-                    QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
-                        "MainWindow", "Your address version number must be a number: either 3 or 4."))
-                if addressVersionNumber < 3 or addressVersionNumber > 4:
-                    QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
-                        "MainWindow", "Your address version number must be either 3 or 4."))
-                # self.addressGenerator = addressGenerator()
-                # self.addressGenerator.setup(addressVersionNumber,streamNumberForAddress,"unused address",self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(),self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(),self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked())
-                # QtCore.QObject.connect(self.addressGenerator, SIGNAL("writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
-                # QtCore.QObject.connect(self.addressGenerator, QtCore.SIGNAL("updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
-                # self.addressGenerator.start()
-                shared.addressGeneratorQueue.put(('createDeterministicAddresses', addressVersionNumber, streamNumberForAddress, "regenerated deterministic address", self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(
-                ), self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(), self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked()))
-                self.ui.tabWidget.setCurrentIndex(3)
+                return
+            streamNumberForAddress = int(
+                self.regenerateAddressesDialogInstance.ui.lineEditStreamNumber.text())
+            try:
+                addressVersionNumber = int(
+                    self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
+            except:
+                QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
+                    "MainWindow", "Your address version number must be a number: either 3 or 4."))
+                return
+            if addressVersionNumber < 3 or addressVersionNumber > 4:
+                QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
+                    "MainWindow", "Your address version number must be either 3 or 4."))
+                return
+            shared.addressGeneratorQueue.put(('createDeterministicAddresses', addressVersionNumber, streamNumberForAddress, "regenerated deterministic address", self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(
+            ), self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(), self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked()))
+            self.ui.tabWidget.setCurrentIndex(3)
 
     def click_actionJoinChan(self):
         self.newChanDialogInstance = newChanDialog(self)
@@ -1842,6 +1839,17 @@ class MyForm(QtGui.QMainWindow):
         subject = str(self.ui.lineEditSubject.text().toUtf8())
         message = str(
             self.ui.textEditMessage.document().toPlainText().toUtf8())
+        """
+        The whole network message must fit in 2^18 bytes. Let's assume 500 
+        bytes of overhead. If someone wants to get that too an exact 
+        number you are welcome to but I think that it would be a better
+        use of time to support message continuation so that users can
+        send messages of any length.
+        """
+        if len(message) > (2 ** 18 - 500):  
+            QMessageBox.about(self, _translate("MainWindow", "Message too long"), _translate(
+                "MainWindow", "The message that you are trying to send is too long by %1 bytes. (The maximum is 261644 bytes). Please cut it down before sending.").arg(len(message) - (2 ** 18 - 500)))
+            return
         if self.ui.radioButtonSpecific.isChecked():  # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
                                for s in toAddresses.replace(',', ';').split(';')]
@@ -1873,6 +1881,9 @@ class MyForm(QtGui.QMainWindow):
                         elif status == 'ripetoolong':
                             self.statusBar().showMessage(_translate(
                                 "MainWindow", "Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.").arg(toAddress))
+                        elif status == 'varintmalformed':
+                            self.statusBar().showMessage(_translate(
+                                "MainWindow", "Error: Some data encoded in the address %1 is malformed. There might be something wrong with the software of your acquaintance.").arg(toAddress))
                         else:
                             self.statusBar().showMessage(_translate(
                                 "MainWindow", "Error: Something is wrong with the address %1.").arg(toAddress))
@@ -2211,10 +2222,10 @@ class MyForm(QtGui.QMainWindow):
                     addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
                 tag = doubleHashOfAddressData[32:]
                 queryreturn = sqlQuery(
-                    '''select payload from inventory where objecttype='broadcast' and tag=?''', tag)
+                    '''select payload from inventory where objecttype=3 and tag=?''', tag)
                 for row in queryreturn:
                     payload, = row
-                    objectType = 'broadcast'
+                    objectType = 3
                     with shared.objectProcessorQueueSizeLock:
                         shared.objectProcessorQueueSize += len(payload)
                         shared.objectProcessorQueue.put((objectType,payload))
@@ -2308,6 +2319,15 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.lineEditSocksPassword.text()))
             shared.config.set('bitmessagesettings', 'sockslisten', str(
                 self.settingsDialogInstance.ui.checkBoxSocksListen.isChecked()))
+            try:
+                # Rounding to integers just for aesthetics
+                shared.config.set('bitmessagesettings', 'maxdownloadrate', str(
+                    int(float(self.settingsDialogInstance.ui.lineEditMaxDownloadRate.text()))))
+                shared.config.set('bitmessagesettings', 'maxuploadrate', str(
+                    int(float(self.settingsDialogInstance.ui.lineEditMaxUploadRate.text()))))
+            except:
+                QMessageBox.about(self, _translate("MainWindow", "Number needed"), _translate(
+                    "MainWindow", "Your maximum download and upload rate must be numbers. Ignoring what you typed."))
 
             shared.config.set('bitmessagesettings', 'namecoinrpctype',
                 self.settingsDialogInstance.getNamecoinType())
@@ -2319,19 +2339,39 @@ class MyForm(QtGui.QMainWindow):
                 self.settingsDialogInstance.ui.lineEditNamecoinUser.text()))
             shared.config.set('bitmessagesettings', 'namecoinrpcpassword', str(
                 self.settingsDialogInstance.ui.lineEditNamecoinPassword.text()))
-
+            
+            # Demanded difficulty tab
             if float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) >= 1:
                 shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(int(float(
                     self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
             if float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) >= 1:
                 shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
+
+            acceptableDifficultyChanged = False
+            
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) == 0:
-                shared.config.set('bitmessagesettings', 'maxacceptablenoncetrialsperbyte', str(int(float(
-                    self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
+                if shared.config.get('bitmessagesettings','maxacceptablenoncetrialsperbyte') != str(int(float(
+                    self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)):
+                    # the user changed the max acceptable total difficulty
+                    acceptableDifficultyChanged = True
+                    shared.config.set('bitmessagesettings', 'maxacceptablenoncetrialsperbyte', str(int(float(
+                        self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0:
-                shared.config.set('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', str(int(float(
-                    self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
+                if shared.config.get('bitmessagesettings','maxacceptablepayloadlengthextrabytes') != str(int(float(
+                    self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)):
+                    # the user changed the max acceptable small message difficulty
+                    acceptableDifficultyChanged = True
+                    shared.config.set('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', str(int(float(
+                        self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
+            if acceptableDifficultyChanged:
+                # It might now be possible to send msgs which were previously marked as toodifficult. 
+                # Let us change them to 'msgqueued'. The singleWorker will try to send them and will again
+                # mark them as toodifficult if the receiver's required difficulty is still higher than
+                # we are willing to do.
+                sqlExecute('''UPDATE sent SET status='msgqueued' WHERE status='toodifficult' ''')
+                shared.workerQueue.put(('sendmessage', ''))
+            
             #start:UI setting to stop trying to send messages after X days/months
             # I'm open to changing this UI to something else if someone has a better idea.
             if ((self.settingsDialogInstance.ui.lineEditDays.text()=='') and (self.settingsDialogInstance.ui.lineEditMonths.text()=='')):#We need to handle this special case. Bitmessage has its default behavior. The input is blank/blank
@@ -3429,7 +3469,12 @@ class settingsDialog(QtGui.QDialog):
             shared.config.get('bitmessagesettings', 'sockspassword')))
         QtCore.QObject.connect(self.ui.comboBoxProxyType, QtCore.SIGNAL(
             "currentIndexChanged(int)"), self.comboBoxProxyTypeChanged)
+        self.ui.lineEditMaxDownloadRate.setText(str(
+            shared.config.get('bitmessagesettings', 'maxdownloadrate')))
+        self.ui.lineEditMaxUploadRate.setText(str(
+            shared.config.get('bitmessagesettings', 'maxuploadrate')))
 
+        # Demanded difficulty tab
         self.ui.lineEditTotalDifficulty.setText(str((float(shared.config.getint(
             'bitmessagesettings', 'defaultnoncetrialsperbyte')) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.ui.lineEditSmallMessageDifficulty.setText(str((float(shared.config.getint(
@@ -3620,6 +3665,9 @@ class AddAddressDialog(QtGui.QDialog):
         elif status == 'ripetoolong':
             self.ui.labelAddressCheck.setText(_translate(
                 "MainWindow", "Some data encoded in the address is too long."))
+        elif status == 'varintmalformed':
+            self.ui.labelAddressCheck.setText(_translate(
+                "MainWindow", "Some data encoded in the address is malformed."))
         elif status == 'success':
             self.ui.labelAddressCheck.setText(
                 _translate("MainWindow", "Address is valid."))
@@ -3658,6 +3706,9 @@ class NewSubscriptionDialog(QtGui.QDialog):
         elif status == 'ripetoolong':
             self.ui.labelAddressCheck.setText(_translate(
                 "MainWindow", "Some data encoded in the address is too long."))
+        elif status == 'varintmalformed':
+            self.ui.labelAddressCheck.setText(_translate(
+                "MainWindow", "Some data encoded in the address is malformed."))
         elif status == 'success':
             self.ui.labelAddressCheck.setText(
                 _translate("MainWindow", "Address is valid."))
@@ -3670,7 +3721,7 @@ class NewSubscriptionDialog(QtGui.QDialog):
                     addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
                 tag = doubleHashOfAddressData[32:]
                 queryreturn = sqlQuery(
-                    '''select hash from inventory where objecttype='broadcast' and tag=?''', tag)
+                    '''select hash from inventory where objecttype=3 and tag=?''', tag)
                 if len(queryreturn) == 0:
                     self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
                         _translate("MainWindow", "There are no recent broadcasts from this address to display."))

@@ -39,28 +39,33 @@ class sqlThread(threading.Thread):
                 '''CREATE TABLE blacklist (label text, address text, enabled bool)''' )
             self.cur.execute(
                 '''CREATE TABLE whitelist (label text, address text, enabled bool)''' )
-            # Explanation of what is in the pubkeys table:
-            #   The hash is the RIPEMD160 hash that is encoded in the Bitmessage address.
-            #   transmitdata is literally the data that was included in the Bitmessage pubkey message when it arrived, except for the 24 byte protocol header- ie, it starts with the POW nonce.
-            #   time is the time that the pubkey was broadcast on the network same as with every other type of Bitmessage object.
-            # usedpersonally is set to "yes" if we have used the key
-            # personally. This keeps us from deleting it because we may want to
-            # reply to a message in the future. This field is not a bool
-            # because we may need more flexability in the future and it doesn't
-            # take up much more space anyway.
+            """
+            Explanation of what is in the pubkeys table:
+                The hash is the RIPEMD160 hash that is encoded in the Bitmessage address.
+              
+                transmitdata /was/ literally the data that was included in the Bitmessage pubkey message when it arrived, 
+                except for the 24 byte protocol header- ie, it started with the POW nonce. Since protocol v3, to maintain
+                backwards compability, the data format of the data on disk is staying the same even though the wire format has changed.
+              
+                time is the time that the pubkey was broadcast on the network same as with every other type of Bitmessage object.
+              
+                usedpersonally is set to "yes" if we have used the key personally. This keeps us from deleting it because we may want to
+                reply to a message in the future. This field is not a bool because we may need more flexability in the future and it doesn't
+                take up much more space anyway.
+            """
             self.cur.execute(
                 '''CREATE TABLE pubkeys (hash blob, addressversion int, transmitdata blob, time int, usedpersonally text, UNIQUE(hash, addressversion) ON CONFLICT REPLACE)''' )
             self.cur.execute(
-                '''CREATE TABLE inventory (hash blob, objecttype text, streamnumber int, payload blob, receivedtime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE inventory (hash blob, objecttype int, streamnumber int, payload blob, expirestime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute(
                 '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
                 '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','6')''')
+            self.cur.execute( '''INSERT INTO settings VALUES('version','7')''')
             self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             self.cur.execute(
-                '''CREATE TABLE objectprocessorqueue (objecttype text, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE objectprocessorqueue (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''' )
             self.conn.commit()
             logger.info('Created messages database file')
         except Exception as err:
@@ -119,8 +124,6 @@ class sqlThread(threading.Thread):
             self.conn.commit()
 
             shared.config.set('bitmessagesettings', 'settingsversion', '4')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
 
         if shared.config.getint('bitmessagesettings', 'settingsversion') == 4:
             shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
@@ -135,9 +138,6 @@ class sqlThread(threading.Thread):
             shared.config.set(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
             shared.config.set('bitmessagesettings', 'settingsversion', '6')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
-
         # From now on, let us keep a 'version' embedded in the messages.dat
         # file so that when we make changes to the database, the database
         # version we are on can stay embedded in the messages.dat file. Let us
@@ -247,12 +247,12 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'sendoutgoingconnections', 'True')
 
         # Raise the default required difficulty from 1 to 2
+        # With the change to protocol v3, this is obsolete.
         if shared.config.getint('bitmessagesettings', 'settingsversion') == 6:
-            if int(shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')) == shared.networkDefaultProofOfWorkNonceTrialsPerByte:
+            """if int(shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')) == shared.networkDefaultProofOfWorkNonceTrialsPerByte:
                 shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(shared.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
+                """
             shared.config.set('bitmessagesettings', 'settingsversion', '7')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
 
         # Add a new column to the pubkeys table to store the address version.
         # We're going to trash all of our pubkeys and let them be redownloaded.
@@ -274,11 +274,8 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'useidenticons', 'True')
         if not shared.config.has_option('bitmessagesettings', 'identiconsuffix'): # acts as a salt
             shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
-            # Since we've added a new config entry, let's write keys.dat to disk.
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
 
-        #Adjusting time period to stop sending messages
+        #Add settings to support no longer resending messages after a certain period of time even if we never get an ack
         if shared.config.getint('bitmessagesettings', 'settingsversion') == 7:
             shared.config.set(
                 'bitmessagesettings', 'stopresendingafterxdays', '')
@@ -302,9 +299,57 @@ class sqlThread(threading.Thread):
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (6,)
             self.cur.execute(item, parameters)
+        
+        # changes related to protocol v3
+		#    In table inventory and objectprocessorqueue, objecttype is now an integer (it was a human-friendly string previously)
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        currentVersion = int(self.cur.fetchall()[0][0])
+        if currentVersion == 6:
+            logger.debug('In messages.dat database, dropping and recreating the inventory table.')
+            self.cur.execute( '''DROP TABLE inventory''')
+            self.cur.execute( '''CREATE TABLE inventory (hash blob, objecttype int, streamnumber int, payload blob, expirestime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''' )
+            self.cur.execute( '''DROP TABLE objectprocessorqueue''')
+            self.cur.execute( '''CREATE TABLE objectprocessorqueue (objecttype int, data blob, UNIQUE(objecttype, data) ON CONFLICT REPLACE)''' )
+            item = '''update settings set value=? WHERE key='version';'''
+            parameters = (7,)
+            self.cur.execute(item, parameters)
+            logger.debug('Finished dropping and recreating the inventory table.')
+        
+        # With the change to protocol version 3, reset the user-settable difficulties to 1    
+        if shared.config.getint('bitmessagesettings', 'settingsversion') == 8:
+            shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(shared.networkDefaultProofOfWorkNonceTrialsPerByte))
+            shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes', str(shared.networkDefaultPayloadLengthExtraBytes))
+            previousTotalDifficulty = int(shared.config.getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / 320
+            previousSmallMessageDifficulty = int(shared.config.getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / 14000
+            shared.config.set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(previousTotalDifficulty * 1000))
+            shared.config.set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(previousSmallMessageDifficulty * 1000))
+            shared.config.set('bitmessagesettings', 'settingsversion', '9')
+                
+        # Adjust the required POW values for each of this user's addresses to conform to protocol v3 norms.
+        if shared.config.getint('bitmessagesettings', 'settingsversion') == 9:
+            for addressInKeysFile in shared.config.sections():
+                try:
+                    previousTotalDifficulty = float(shared.config.getint(addressInKeysFile, 'noncetrialsperbyte')) / 320
+                    previousSmallMessageDifficulty = float(shared.config.getint(addressInKeysFile, 'payloadlengthextrabytes')) / 14000
+                    if previousTotalDifficulty <= 2:
+                        previousTotalDifficulty = 1
+                    if previousSmallMessageDifficulty < 1:
+                        previousSmallMessageDifficulty = 1
+                    shared.config.set(addressInKeysFile,'noncetrialsperbyte', str(int(previousTotalDifficulty * 1000)))
+                    shared.config.set(addressInKeysFile,'payloadlengthextrabytes', str(int(previousSmallMessageDifficulty * 1000)))
+                except:
+                    continue
+            shared.config.set('bitmessagesettings', 'maxdownloadrate', '0')
+            shared.config.set('bitmessagesettings', 'maxuploadrate', '0')
+            shared.config.set('bitmessagesettings', 'settingsversion', '10')
+            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+                shared.config.write(configfile)
+        
 
         # Are you hoping to add a new option to the keys.dat file of existing
-        # Bitmessage users? Add it right above this line!
+        # Bitmessage users or modify the SQLite database? Add it right above this line!
         
         try:
             testpayload = '\x00\x00'

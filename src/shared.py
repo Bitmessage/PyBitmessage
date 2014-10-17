@@ -1,9 +1,7 @@
-softwareVersion = '0.4.3'
+softwareVersion = '0.4.4'
 verbose = 1
-maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # Equals two days and 12 hours.
-lengthOfTimeToLeaveObjectsInInventory = 237600 # Equals two days and 18 hours. This should be longer than maximumAgeOfAnObjectThatIAmWillingToAccept so that we don't process messages twice.
+maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # This is obsolete with the change to protocol v3 but the singleCleaner thread still hasn't been updated so we need this a little longer.
 lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
-maximumAgeOfObjectsThatIAdvertiseToOthers = 216000  # Equals two days and 12 hours
 maximumAgeOfNodesThatIAdvertiseToOthers = 10800  # Equals three hours
 useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the normal network, you won't be able to send or sometimes receive messages.
 
@@ -22,12 +20,13 @@ import threading
 import time
 from os import path, environ
 from struct import Struct
+import traceback
 
 # Project imports.
 from addresses import *
 import highlevelcrypto
 import shared
-import helper_startup
+#import helper_startup
 from helper_sql import *
 
 
@@ -71,8 +70,14 @@ numberOfMessagesProcessed = 0
 numberOfBroadcastsProcessed = 0
 numberOfPubkeysProcessed = 0
 numberOfInventoryLookupsPerformed = 0
-numberOfBytesReceived = 0
-numberOfBytesSent = 0
+numberOfBytesReceived = 0 # Used for the 'network status' page
+numberOfBytesSent = 0 # Used for the 'network status' page
+numberOfBytesReceivedLastSecond = 0 # used for the bandwidth rate limit
+numberOfBytesSentLastSecond = 0 # used for the bandwidth rate limit
+lastTimeWeResetBytesReceived = 0 # used for the bandwidth rate limit
+lastTimeWeResetBytesSent = 0 # used for the bandwidth rate limit
+sendDataLock = threading.Lock() # used for the bandwidth rate limit
+receiveDataLock = threading.Lock() # used for the bandwidth rate limit
 daemon = False
 inventorySets = {} # key = streamNumer, value = a set which holds the inventory object hashes that we are aware of. This is used whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it every couple hours.
 needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it to disk eventually.
@@ -82,8 +87,8 @@ objectProcessorQueue = Queue.Queue(
 streamsInWhichIAmParticipating = {}
 
 #If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
-networkDefaultProofOfWorkNonceTrialsPerByte = 320 #The amount of work that should be performed (and demanded) per byte of the payload. Double this number to double the work.
-networkDefaultPayloadLengthExtraBytes = 14000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
+networkDefaultProofOfWorkNonceTrialsPerByte = 1000 #The amount of work that should be performed (and demanded) per byte of the payload.
+networkDefaultPayloadLengthExtraBytes = 1000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
 # Remember here the RPC port read from namecoin.conf so we can restore to
 # it as default whenever the user changes the "method" selection for
@@ -114,10 +119,7 @@ Header = Struct('!L12sL4s')
 #Create a packet
 def CreatePacket(command, payload=''):
     payload_length = len(payload)
-    if payload_length == 0:
-        checksum = '\xCF\x83\xE1\x35'
-    else:
-        checksum = hashlib.sha512(payload).digest()[0:4]
+    checksum = hashlib.sha512(payload).digest()[0:4]
     
     b = bytearray(Header.size + payload_length)
     Header.pack_into(b, 0, 0xE9BEB4D9, command, payload_length, checksum)
@@ -137,7 +139,7 @@ def encodeHost(host):
 
 def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload = ''
-    payload += pack('>L', 2)  # protocol version.
+    payload += pack('>L', 3)  # protocol version.
     payload += pack('>q', 1)  # bitflags of the services I offer.
     payload += pack('>q', int(time.time()))
 
@@ -162,6 +164,15 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload += encodeVarint(myStreamNumber)
 
     return CreatePacket('version', payload)
+
+def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
+    payload = encodeVarint(fatal)
+    payload += encodeVarint(banTime)
+    payload += encodeVarint(len(inventoryVector))
+    payload += inventoryVector
+    payload += encodeVarint(len(errorText))
+    payload += errorText
+    return CreatePacket('error', payload)
 
 def lookupAppdataFolder():
     APPNAME = "PyBitmessage"
@@ -314,17 +325,20 @@ def reloadBroadcastSendersForWhichImWatching():
             privEncryptionKey = doubleHashOfAddressData[:32]
             MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
 
-def isProofOfWorkSufficient(
-    data,
-    nonceTrialsPerByte=0,
-        payloadLengthExtraBytes=0):
+def isProofOfWorkSufficient(data,
+                            nonceTrialsPerByte=0,
+                            payloadLengthExtraBytes=0):
     if nonceTrialsPerByte < networkDefaultProofOfWorkNonceTrialsPerByte:
         nonceTrialsPerByte = networkDefaultProofOfWorkNonceTrialsPerByte
     if payloadLengthExtraBytes < networkDefaultPayloadLengthExtraBytes:
         payloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
+    endOfLifeTime, = unpack('>Q', data[8:16])
+    TTL = endOfLifeTime - int(time.time())
+    if TTL < 300:
+        TTL = 300
     POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
                   :8] + hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
-    return POW <= 2 ** 64 / ((len(data) + payloadLengthExtraBytes) * (nonceTrialsPerByte))
+    return POW <= 2 ** 64 / (nonceTrialsPerByte*(len(data) + payloadLengthExtraBytes + ((TTL*(len(data)+payloadLengthExtraBytes))/(2 ** 16))))
 
 def doCleanShutdown():
     global shutdown
@@ -371,7 +385,7 @@ def doCleanShutdown():
         logger.info('Clean shutdown complete.')
         os._exit(0)
 
-# When you want to command a sendDataThread to do something, like shutdown or send some data, this
+# If you want to command all of the sendDataThreads to do something, like shutdown or send some data, this
 # function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are
 # responsible for putting their queue into (and out of) the sendDataQueues list.
 def broadcastToSendDataQueues(data):
@@ -383,9 +397,9 @@ def flushInventory():
     #Note that the singleCleanerThread clears out the inventory dictionary from time to time, although it only clears things that have been in the dictionary for a long time. This clears the inventory dictionary Now.
     with SqlBulkExecute() as sql:
         for hash, storedValue in inventory.items():
-            objectType, streamNumber, payload, receivedTime, tag = storedValue
+            objectType, streamNumber, payload, expiresTime, tag = storedValue
             sql.execute('''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
-                       hash,objectType,streamNumber,payload,receivedTime,tag)
+                       hash,objectType,streamNumber,payload,expiresTime,tag)
             del inventory[hash]
 
 def fixPotentiallyInvalidUTF8Data(text):
@@ -455,115 +469,223 @@ def isBitSetWithinBitfield(fourByteString, n):
     x, = unpack('>L', fourByteString)
     return x & 2**n != 0
 
-def decryptAndCheckPubkeyPayload(payload, address):
-    status, addressVersion, streamNumber, ripe = decodeAddress(address)
-    doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
-        addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
-    readPosition = 8 # bypass the nonce
-    readPosition += 8 # bypass the time
-    embeddedVersionNumber, varintLength = decodeVarint(
-        payload[readPosition:readPosition + 10])
-    if embeddedVersionNumber != addressVersion:
-        logger.info('Pubkey decryption was UNsuccessful due to address version mismatch. This shouldn\'t have happened.')
-        return 'failed'
-    readPosition += varintLength
-    embeddedStreamNumber, varintLength = decodeVarint(
-        payload[readPosition:readPosition + 10])
-    if embeddedStreamNumber != streamNumber:
-        logger.info('Pubkey decryption was UNsuccessful due to stream number mismatch. This shouldn\'t have happened.')
-        return 'failed'
-    readPosition += varintLength
-    signedData = payload[8:readPosition] # Some of the signed data is not encrypted so let's keep it for now.
-    toTag = payload[readPosition:readPosition+32]
-    readPosition += 32 #for the tag
-    encryptedData = payload[readPosition:]
-    # Let us try to decrypt the pubkey
-    privEncryptionKey = doubleHashOfAddressData[:32]
-    cryptorObject = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
-    try:
-        decryptedData = cryptorObject.decrypt(encryptedData)
-    except:
-        # Someone must have encrypted some data with a different key
-        # but tagged it with a tag for which we are watching.
-        logger.info('Pubkey decryption was UNsuccessful. This shouldn\'t have happened.')
-        return 'failed'
-    logger.debug('Pubkey decryption successful')
-    readPosition = 4 # bypass the behavior bitfield
-    publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
-    # Is it possible for a public key to be invalid such that trying to
-    # encrypt or check a sig with it will cause an error? If it is, we should
-    # probably test these keys here.
-    readPosition += 64
-    publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
-    readPosition += 64
-    specifiedNonceTrialsPerByte, specifiedNonceTrialsPerByteLength = decodeVarint(
-        decryptedData[readPosition:readPosition + 10])
-    readPosition += specifiedNonceTrialsPerByteLength
-    specifiedPayloadLengthExtraBytes, specifiedPayloadLengthExtraBytesLength = decodeVarint(
-        decryptedData[readPosition:readPosition + 10])
-    readPosition += specifiedPayloadLengthExtraBytesLength
-    signedData += decryptedData[:readPosition]
-    signatureLength, signatureLengthLength = decodeVarint(
-        decryptedData[readPosition:readPosition + 10])
-    readPosition += signatureLengthLength
-    signature = decryptedData[readPosition:readPosition + signatureLength]
-    try:
-        if not highlevelcrypto.verify(signedData, signature, publicSigningKey.encode('hex')):
-            logger.info('ECDSA verify failed (within decryptAndCheckPubkeyPayload).')
-            return 'failed'
-        logger.debug('ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
-    except Exception as err:
-        logger.debug('ECDSA verify failed (within decryptAndCheckPubkeyPayload) %s' % err)
-        return 'failed'
 
-    sha = hashlib.new('sha512')
-    sha.update(publicSigningKey + publicEncryptionKey)
-    ripeHasher = hashlib.new('ripemd160')
-    ripeHasher.update(sha.digest())
-    embeddedRipe = ripeHasher.digest()
-
-    if embeddedRipe != ripe:
-        # Although this pubkey object had the tag were were looking for and was
-        # encrypted with the correct encryption key, it doesn't contain the
-        # correct keys. Someone is either being malicious or using buggy software.
-        logger.info('Pubkey decryption was UNsuccessful due to RIPE mismatch. This shouldn\'t have happened.')
-        return 'failed'
+def decryptAndCheckPubkeyPayload(data, address):
+    """
+    With the changes in protocol v3, to maintain backwards compatibility, signatures will be sent
+    the 'old' way during an upgrade period and then a 'new' simpler way after that. We will therefore
+    check the sig both ways. 
+    Old way:
+    signedData = timePubkeyWasSigned(8 bytes) + addressVersion + streamNumber + the decrypted data down through the payloadLengthExtraBytes
+    New way:
+    signedData = all of the payload data from the time to the tag + the decrypted data down through the payloadLengthExtraBytes
     
-    t = (ripe, addressVersion, signedData, int(time.time()), 'yes')
-    sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
-    return 'successful'
+    The timePubkeyWasSigned will be calculated by subtracting 28 days form the embedded expiresTime.
+    """
+    
+    """
+    The time, address version, and stream number are not encrypted so let's 
+    keep that data here for now.
+    """
+    try:
+        status, addressVersion, streamNumber, ripe = decodeAddress(address)
+        
+        readPosition = 20  # bypass the nonce, time, and object type
+        embeddedAddressVersion, varintLength = decodeVarint(data[readPosition:readPosition + 10])
+        readPosition += varintLength
+        embeddedStreamNumber, varintLength = decodeVarint(data[readPosition:readPosition + 10])
+        readPosition += varintLength
+        
+        if addressVersion != embeddedAddressVersion:
+            logger.info('Pubkey decryption was UNsuccessful due to address version mismatch.')
+            return 'failed'
+        if streamNumber != embeddedStreamNumber:
+            logger.info('Pubkey decryption was UNsuccessful due to stream number mismatch.')
+            return 'failed'
+        
+        expiresTime, = unpack('>Q', data[8:16])
+        TTL = 28 * 24 * 60 * 60
+        signedDataOldMethod = pack('>Q', (expiresTime - TTL)) # the time that the pubkey was signed. 8 bytes. 
+        signedDataOldMethod += data[20:readPosition] # the address version and stream number
+        
+        tag = data[readPosition:readPosition + 32]
+        readPosition += 32
+        
+        signedDataNewMethod = data[8:readPosition] # the time through the tag
+        
+        encryptedData = data[readPosition:]
+    
+        # Let us try to decrypt the pubkey
+        toAddress, cryptorObject = shared.neededPubkeys[tag]
+        if toAddress != address:
+            logger.critical('decryptAndCheckPubkeyPayload failed due to toAddress mismatch. This is very peculiar. toAddress: %s, address %s' % (toAddress, address))
+            # the only way I can think that this could happen is if someone encodes their address data two different ways.
+            # That sort of address-malleability should have been prevented earlier. 
+            return 'failed'
+        try:
+            decryptedData = cryptorObject.decrypt(encryptedData)
+        except:
+            # Someone must have encrypted some data with a different key
+            # but tagged it with a tag for which we are watching.
+            logger.info('Pubkey decryption was unsuccessful.')
+            return 'failed'
+        
+        readPosition = 0
+        bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
+        readPosition += 4
+        publicSigningKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        readPosition += 64
+        publicEncryptionKey = '\x04' + decryptedData[readPosition:readPosition + 64]
+        readPosition += 64
+        specifiedNonceTrialsPerByte, specifiedNonceTrialsPerByteLength = decodeVarint(
+            decryptedData[readPosition:readPosition + 10])
+        readPosition += specifiedNonceTrialsPerByteLength
+        specifiedPayloadLengthExtraBytes, specifiedPayloadLengthExtraBytesLength = decodeVarint(
+            decryptedData[readPosition:readPosition + 10])
+        readPosition += specifiedPayloadLengthExtraBytesLength
+        signedDataOldMethod += decryptedData[:readPosition]
+        signedDataNewMethod += decryptedData[:readPosition]
+        signatureLength, signatureLengthLength = decodeVarint(
+            decryptedData[readPosition:readPosition + 10])
+        readPosition += signatureLengthLength
+        signature = decryptedData[readPosition:readPosition + signatureLength]
+        
+        if highlevelcrypto.verify(signedDataOldMethod, signature, publicSigningKey.encode('hex')):
+            logger.info('ECDSA verify passed (within decryptAndCheckPubkeyPayload, old method)')
+        else:
+            logger.info('ECDSA verify failed (within decryptAndCheckPubkeyPayload, old method)')
+            # Try the protocol v3 signing method
+            if highlevelcrypto.verify(signedDataNewMethod, signature, publicSigningKey.encode('hex')):
+                logger.info('ECDSA verify passed (within decryptAndCheckPubkeyPayload, new method)')
+            else:
+                logger.info('ECDSA verify failed (within decryptAndCheckPubkeyPayload, new method)')
+                return 'failed'
+    
+        sha = hashlib.new('sha512')
+        sha.update(publicSigningKey + publicEncryptionKey)
+        ripeHasher = hashlib.new('ripemd160')
+        ripeHasher.update(sha.digest())
+        embeddedRipe = ripeHasher.digest()
+    
+        if embeddedRipe != ripe:
+            # Although this pubkey object had the tag were were looking for and was
+            # encrypted with the correct encryption key, it doesn't contain the
+            # correct keys. Someone is either being malicious or using buggy software.
+            logger.info('Pubkey decryption was UNsuccessful due to RIPE mismatch.')
+            return 'failed'
+        
+        # Everything checked out. Insert it into the pubkeys table.
+        
+        logger.info('within decryptAndCheckPubkeyPayload, addressVersion: %s, streamNumber: %s \n\
+                    ripe %s\n\
+                    publicSigningKey in hex: %s\n\
+                    publicEncryptionKey in hex: %s' % (addressVersion,
+                                                       streamNumber, 
+                                                       ripe.encode('hex'), 
+                                                       publicSigningKey.encode('hex'), 
+                                                       publicEncryptionKey.encode('hex')
+                                                       )
+                    )
+    
+        t = (ripe, addressVersion, signedDataOldMethod, int(time.time()), 'yes')
+        sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
+        return 'successful'
+    except varintDecodeError as e:
+        logger.info('Pubkey decryption was UNsuccessful due to a malformed varint.')
+        return 'failed'
+    except Exception as e:
+        logger.critical('Pubkey decryption was UNsuccessful because of an unhandled exception! This is definitely a bug! \n%s' % traceback.format_exc())
+        return 'failed'
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])
 
-def checkAndShareMsgWithPeers(data):
+def checkAndShareObjectWithPeers(data):
+    """
+    This function is called after either receiving an object off of the wire
+    or after receiving one as ackdata. 
+    Returns the length of time that we should reserve to process this message
+    if we are receiving it off of the wire.
+    """
+    if len(data) > 2 ** 18:
+        logger.info('The payload length of this object is too large (%s bytes). Ignoring it.' % len(data))
+        return
     # Let us check to make sure that the proof of work is sufficient.
     if not isProofOfWorkSufficient(data):
-        logger.debug('Proof of work in msg message insufficient.')
-        return
+        logger.info('Proof of work is insufficient.')
+        return 0
+    
+    endOfLifeTime, = unpack('>Q', data[8:16])
+    if endOfLifeTime - int(time.time()) > 28 * 24 * 60 * 60 + 10800: # The TTL may not be larger than 28 days + 3 hours of wiggle room
+        logger.info('This object\'s End of Life time is too far in the future. Ignoring it. Time is %s' % endOfLifeTime)
+        return 0
+    if endOfLifeTime - int(time.time()) < - 3600: # The EOL time was more than an hour ago. That's too much.
+        logger.info('This object\'s End of Life time was more than an hour ago. Ignoring the object. Time is %s' % endOfLifeTime)
+        return 0
+    intObjectType, = unpack('>I', data[16:20])
+    try:
+        if intObjectType == 0:
+            _checkAndShareGetpubkeyWithPeers(data)
+            return 0.1
+        elif intObjectType == 1:
+            _checkAndSharePubkeyWithPeers(data)
+            return 0.1
+        elif intObjectType == 2:
+            _checkAndShareMsgWithPeers(data)
+            return 0.6
+        elif intObjectType == 3:
+            _checkAndShareBroadcastWithPeers(data)
+            return 0.6
+        else:
+            _checkAndShareUndefinedObjectWithPeers(data)
+            return 0.6
+    except varintDecodeError as e:
+        logger.debug("There was a problem with a varint while checking to see whether it was appropriate to share an object with peers. Some details: %s" % e)
+    except Exception as e:
+        logger.critical('There was a problem while checking to see whether it was appropriate to share an object with peers. This is definitely a bug! \n%s' % traceback.format_exc())
+    return 0
+        
 
-    readPosition = 8
-    embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
-
-    # This section is used for the transition from 32 bit time to 64 bit
-    # time in the protocol.
-    if embeddedTime == 0:
-        embeddedTime, = unpack('>Q', data[readPosition:readPosition + 8])
-        readPosition += 8
-    else:
-        readPosition += 4
-
-    if embeddedTime > (int(time.time()) + 10800): 
-        logger.debug('The embedded time in this msg message is more than three hours in the future. That doesn\'t make sense. Ignoring message.')
-        return
-    if embeddedTime < (int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept):
-        logger.debug('The embedded time in this msg message is too old. Ignoring message.')
-        return
-    streamNumberAsClaimedByMsg, streamNumberAsClaimedByMsgLength = decodeVarint(
+def _checkAndShareUndefinedObjectWithPeers(data):
+    embeddedTime, = unpack('>Q', data[8:16])
+    readPosition = 20 # bypass nonce, time, and object type
+    objectVersion, objectVersionLength = decodeVarint(
         data[readPosition:readPosition + 9])
-    if not streamNumberAsClaimedByMsg in streamsInWhichIAmParticipating:
-        logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumberAsClaimedByMsg)
+    readPosition += objectVersionLength
+    streamNumber, streamNumberLength = decodeVarint(
+        data[readPosition:readPosition + 9])
+    if not streamNumber in streamsInWhichIAmParticipating:
+        logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
         return
-    readPosition += streamNumberAsClaimedByMsgLength
+    
+    inventoryHash = calculateInventoryHash(data)
+    shared.numberOfInventoryLookupsPerformed += 1
+    inventoryLock.acquire()
+    if inventoryHash in inventory:
+        logger.debug('We have already received this undefined object. Ignoring.')
+        inventoryLock.release()
+        return
+    elif isInSqlInventory(inventoryHash):
+        logger.debug('We have already received this undefined object (it is stored on disk in the SQL inventory). Ignoring it.')
+        inventoryLock.release()
+        return
+    objectType, = unpack('>I', data[16:20])
+    inventory[inventoryHash] = (
+        objectType, streamNumber, data, embeddedTime,'')
+    inventorySets[streamNumber].add(inventoryHash)
+    inventoryLock.release()
+    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
+    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+    
+    
+def _checkAndShareMsgWithPeers(data):
+    embeddedTime, = unpack('>Q', data[8:16])
+    readPosition = 20 # bypass nonce, time, and object type
+    streamNumber, streamNumberLength = decodeVarint(
+        data[readPosition:readPosition + 9])
+    if not streamNumber in streamsInWhichIAmParticipating:
+        logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
+        return
+    readPosition += streamNumberLength
     inventoryHash = calculateInventoryHash(data)
     shared.numberOfInventoryLookupsPerformed += 1
     inventoryLock.acquire()
@@ -576,13 +698,13 @@ def checkAndShareMsgWithPeers(data):
         inventoryLock.release()
         return
     # This msg message is valid. Let's let our peers know about it.
-    objectType = 'msg'
+    objectType = 2
     inventory[inventoryHash] = (
-        objectType, streamNumberAsClaimedByMsg, data, embeddedTime,'')
-    inventorySets[streamNumberAsClaimedByMsg].add(inventoryHash)
+        objectType, streamNumber, data, embeddedTime,'')
+    inventorySets[streamNumber].add(inventoryHash)
     inventoryLock.release()
     logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
-    broadcastToSendDataQueues((streamNumberAsClaimedByMsg, 'advertiseobject', inventoryHash))
+    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's enqueue it to be processed ourselves.
     # If we already have too much data in the queue to be processed, just sleep for now.
@@ -592,30 +714,14 @@ def checkAndShareMsgWithPeers(data):
         shared.objectProcessorQueueSize += len(data)
         objectProcessorQueue.put((objectType,data))
 
-def checkAndSharegetpubkeyWithPeers(data):
-    if not isProofOfWorkSufficient(data):
-        logger.debug('Proof of work in getpubkey message insufficient.')
+def _checkAndShareGetpubkeyWithPeers(data):
+    if len(data) < 42:
+        logger.info('getpubkey message doesn\'t contain enough data. Ignoring.')
         return
-    if len(data) < 34:
-        logger.debug('getpubkey message doesn\'t contain enough data. Ignoring.')
-        return
-    readPosition = 8  # bypass the nonce
-    embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
-
-    # This section is used for the transition from 32 bit time to 64 bit
-    # time in the protocol.
-    if embeddedTime == 0:
-        embeddedTime, = unpack('>Q', data[readPosition:readPosition + 8])
-        readPosition += 8
-    else:
-        readPosition += 4
-
-    if embeddedTime > int(time.time()) + 10800:
-        logger.debug('The time in this getpubkey message is too new. Ignoring it. Time: %s' % embeddedTime)
-        return
-    if embeddedTime < int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept:
-        logger.debug('The time in this getpubkey message is too old. Ignoring it. Time: %s' % embeddedTime)
-        return
+    if len(data) > 200:
+        logger.info('getpubkey is abnormally long. Sanity check failed. Ignoring object.')
+    embeddedTime, = unpack('>Q', data[8:16])
+    readPosition = 20  # bypass the nonce, time, and object type
     requestedAddressVersionNumber, addressVersionLength = decodeVarint(
         data[readPosition:readPosition + 10])
     readPosition += addressVersionLength
@@ -638,7 +744,7 @@ def checkAndSharegetpubkeyWithPeers(data):
         inventoryLock.release()
         return
 
-    objectType = 'getpubkey'
+    objectType = 0
     inventory[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime,'')
     inventorySets[streamNumber].add(inventoryHash)
@@ -655,31 +761,11 @@ def checkAndSharegetpubkeyWithPeers(data):
         shared.objectProcessorQueueSize += len(data)
         objectProcessorQueue.put((objectType,data))
 
-def checkAndSharePubkeyWithPeers(data):
-    if len(data) < 146 or len(data) > 420:  # sanity check
+def _checkAndSharePubkeyWithPeers(data):
+    if len(data) < 146 or len(data) > 440:  # sanity check
         return
-    # Let us make sure that the proof of work is sufficient.
-    if not isProofOfWorkSufficient(data):
-        logger.debug('Proof of work in pubkey message insufficient.')
-        return
-
-    readPosition = 8  # for the nonce
-    embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
-
-    # This section is used for the transition from 32 bit time to 64 bit
-    # time in the protocol.
-    if embeddedTime == 0:
-        embeddedTime, = unpack('>Q', data[readPosition:readPosition + 8])
-        readPosition += 8
-    else:
-        readPosition += 4
-
-    if embeddedTime < int(time.time()) - lengthOfTimeToHoldOnToAllPubkeys:
-        logger.debug('The embedded time in this pubkey message is too old. Ignoring. Embedded time is: %s' % embeddedTime)
-        return
-    if embeddedTime > int(time.time()) + 10800:
-        logger.debug('The embedded time in this pubkey message more than several hours in the future. This is irrational. Ignoring message.') 
-        return
+    embeddedTime, = unpack('>Q', data[8:16])
+    readPosition = 20  # bypass the nonce, time, and object type
     addressVersion, varintLength = decodeVarint(
         data[readPosition:readPosition + 10])
     readPosition += varintLength
@@ -706,7 +792,7 @@ def checkAndSharePubkeyWithPeers(data):
         logger.debug('We have already received this pubkey (it is stored on disk in the SQL inventory). Ignoring it.')
         inventoryLock.release()
         return
-    objectType = 'pubkey'
+    objectType = 1
     inventory[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime, tag)
     inventorySets[streamNumber].add(inventoryHash)
@@ -725,31 +811,12 @@ def checkAndSharePubkeyWithPeers(data):
         objectProcessorQueue.put((objectType,data))
 
 
-def checkAndShareBroadcastWithPeers(data):
-    # Let us verify that the proof of work is sufficient.
-    if not isProofOfWorkSufficient(data):
-        logger.debug('Proof of work in broadcast message insufficient.')
-        return
-    readPosition = 8  # bypass the nonce
-    embeddedTime, = unpack('>I', data[readPosition:readPosition + 4])
-
-    # This section is used for the transition from 32 bit time to 64 bit
-    # time in the protocol.
-    if embeddedTime == 0:
-        embeddedTime, = unpack('>Q', data[readPosition:readPosition + 8])
-        readPosition += 8
-    else:
-        readPosition += 4
-
-    if embeddedTime > (int(time.time()) + 10800):  # prevent funny business
-        logger.debug('The embedded time in this broadcast message is more than three hours in the future. That doesn\'t make sense. Ignoring message.') 
-        return
-    if embeddedTime < (int(time.time()) - maximumAgeOfAnObjectThatIAmWillingToAccept):
-        logger.debug('The embedded time in this broadcast message is too old. Ignoring message.')
-        return
+def _checkAndShareBroadcastWithPeers(data):
     if len(data) < 180:
         logger.debug('The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.')
         return
+    embeddedTime, = unpack('>Q', data[8:16])
+    readPosition = 20  # bypass the nonce, time, and object type
     broadcastVersion, broadcastVersionLength = decodeVarint(
         data[readPosition:readPosition + 10])
     readPosition += broadcastVersionLength
@@ -775,7 +842,7 @@ def checkAndShareBroadcastWithPeers(data):
         inventoryLock.release()
         return
     # It is valid. Let's let our peers know about it.
-    objectType = 'broadcast'
+    objectType = 3
     inventory[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime, tag)
     inventorySets[streamNumber].add(inventoryHash)
@@ -792,6 +859,4 @@ def checkAndShareBroadcastWithPeers(data):
         shared.objectProcessorQueueSize += len(data)
         objectProcessorQueue.put((objectType,data))
 
-
-helper_startup.loadConfig()
 from debug import logger

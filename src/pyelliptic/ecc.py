@@ -436,11 +436,16 @@ class ECC:
         pubkey = ephem.get_pubkey()
         iv = OpenSSL.rand(OpenSSL.get_cipher(ciphername).get_blocksize())
         ctx = Cipher(key_e, iv, 1, ciphername)
-        ciphertext = ctx.ciphering(data)
-        #ciphertext = iv + pubkey + ctx.ciphering(data) # We will switch to this line after an upgrade period
+        import time
+        if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
+            ciphertext = ctx.ciphering(data)
+        else:
+            ciphertext = iv + pubkey + ctx.ciphering(data) # Everyone should be using this line after the Bitmessage protocol v3 upgrade period
         mac = hmac_sha256(key_m, ciphertext)
-        return iv + pubkey + ciphertext + mac
-        #return ciphertext + mac # We will switch to this line after an upgrade period.
+        if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
+            return iv + pubkey + ciphertext + mac
+        else:
+            return ciphertext + mac # Everyone should be using this line after the Bitmessage protocol v3 upgrade period
 
     def decrypt(self, data, ciphername='aes-256-cbc'):
         """

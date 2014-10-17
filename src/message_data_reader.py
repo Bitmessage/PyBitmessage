@@ -54,13 +54,13 @@ def readPubkeys():
 
 def readInventory():
     print 'Printing everything in inventory table:'
-    item = '''select hash, objecttype, streamnumber, payload, receivedtime from inventory'''
+    item = '''select hash, objecttype, streamnumber, payload, expirestime from inventory'''
     parameters = ''
     cur.execute(item, parameters)
     output = cur.fetchall()
     for row in output:
-        hash, objecttype, streamnumber, payload, receivedtime = row
-        print 'Hash:', hash.encode('hex'), objecttype, streamnumber, '\t', payload.encode('hex'), '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(receivedtime)),'utf-8')
+        hash, objecttype, streamnumber, payload, expirestime = row
+        print 'Hash:', hash.encode('hex'), objecttype, streamnumber, '\t', payload.encode('hex'), '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(expirestime)),'utf-8')
 
 
 def takeInboxMessagesOutOfTrash():

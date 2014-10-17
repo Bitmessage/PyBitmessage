@@ -25,7 +25,7 @@ def knownNodes():
                 shared.knownNodes[stream][peer] = time
     except:
         shared.knownNodes = defaultKnownNodes.createDefaultKnownNodes(shared.appdata)
-    if shared.config.getint('bitmessagesettings', 'settingsversion') > 8:
+    if shared.config.getint('bitmessagesettings', 'settingsversion') > 10:
         print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
         raise SystemExit
 
