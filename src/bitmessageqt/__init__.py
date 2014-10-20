@@ -2663,15 +2663,19 @@ class MyForm(QtGui.QMainWindow):
     def on_action_InboxMarkUnread(self):
         font = QFont()
         font.setBold(True)
+        inventoryHashesToMarkUnread = []
         for row in self.ui.tableWidgetInbox.selectedIndexes():
             currentRow = row.row()
             inventoryHashToMarkUnread = str(self.ui.tableWidgetInbox.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
-            sqlExecute('''UPDATE inbox SET read=0 WHERE msgid=?''', inventoryHashToMarkUnread)
+            inventoryHashesToMarkUnread.append(inventoryHashToMarkUnread)
             self.ui.tableWidgetInbox.item(currentRow, 0).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 1).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 2).setFont(font)
             self.ui.tableWidgetInbox.item(currentRow, 3).setFont(font)
+        #sqlite requires the exact number of ?s to prevent injection
+        sqlExecute('''UPDATE inbox SET read=0 WHERE msgid IN (%s)''' % (
+            "?," * len(inventoryHashesToMarkUnread))[:-1], *inventoryHashesToMarkUnread)
         self.changedInboxUnread()
         # self.ui.tableWidgetInbox.selectRow(currentRow + 1) 
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
