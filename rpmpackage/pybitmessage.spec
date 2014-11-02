@@ -1,5 +1,5 @@
 Name: pybitmessage
-Version: 0.4.2
+Version: 0.4.4
 Release: 1%{?dist}
 Summary: Send encrypted messages
 License: MIT
@@ -69,6 +69,30 @@ make install -B DESTDIR=%{buildroot} PREFIX=/usr
 %attr(644,root,root) /usr/share/icons/hicolor/24x24/apps/%{name}.png
 
 %changelog
+* Sun Nov 2 2014 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.4.4-1
+- Added ability to limit network transfer rate
+- Updated to Protocol Version 3
+- Removed use of memoryview so that we can support python 2.7.3
+- Make use of l10n for localizations
+
+* Thu Mar 6 2014 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.4.3-1
+- Support pyelliptic's updated HMAC algorithm. We'll remove support for the old method after an upgrade period.
+- Improved version check
+- Refactored decodeBase58 function
+- Ignore duplicate messages
+- Added bytes received/sent counts and rate on the network information tab
+- Fix unicode handling in 'View HTML code as formatted text'
+- Refactor handling of packet headers
+- Use pointMult function instead of arithmetic.privtopub since it is faster
+- Fixed issue where client wasn't waiting for a verack before continuing on with the conversation
+- Fixed CPU hogging by implementing tab-based refresh improvements
+- Added curses interface
+- Added support for IPv6
+- Added a 'trustedpeer' option to keys.dat
+- Limit maximum object size to 20 MB
+- Support email-like > quote characters and reply-below-quote
+- Added Japanese and Dutch language files; updated Norwegian and Russian languages files
+
 * Thu Mar 6 2014 Bob Mottram (4096 bits) <bob@robotics.uk.to> - 0.4.2-1
 - Exclude debian directory from orig.tar.gz
 - Added Norwegian, Chinese, and Arabic translations

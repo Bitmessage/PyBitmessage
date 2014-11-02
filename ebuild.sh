@@ -1,8 +1,8 @@
 #!/bin/bash
 
 APP=pybitmessage
-PREV_VERSION=0.4.2
-VERSION=0.4.2
+PREV_VERSION=0.4.4
+VERSION=0.4.4
 RELEASE=1
 SOURCEDIR=.
 ARCH_TYPE=`uname -m`
@@ -21,13 +21,13 @@ sed -i "s/|${PREV_VERSION}|/|${VERSION}|/g" puppypackage/*.specs
 sed -i 's/VERSION='${PREV_VERSION}'/VERSION='${VERSION}'/g' puppypackage/pinstall.sh puppypackage/puninstall.sh
 sed -i 's/-'${PREV_VERSION}'.so/-'${VERSION}'.so/g' debian/*.links
 
-# Create the source code in the SOURCES directory
+# create the source code in the SOURCES directory
 make clean
 mkdir -p ~/ebuild
 rm -f ${SOURCE}
 mv ../${APP} ../${APP}-${VERSION}
 tar -cvzf ${SOURCE} ../${APP}-${VERSION} --exclude-vcs
 
-# Rename the root directory without the version number
+# rename the root directory without the version number
 mv ../${APP}-${VERSION} ../${APP}
 

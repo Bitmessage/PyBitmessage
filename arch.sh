@@ -1,8 +1,8 @@
 #!/bin/bash
 
 APP=pybitmessage
-PREV_VERSION=0.4.2
-VERSION=0.4.2
+PREV_VERSION=0.4.4
+VERSION=0.4.4
 RELEASE=1
 ARCH_TYPE=any
 CURRDIR=`pwd`
@@ -24,14 +24,14 @@ sed -i 's/-'${PREV_VERSION}'.so/-'${VERSION}'.so/g' debian/*.links
 make clean
 rm -f archpackage/*.gz
 
-# Having the root directory called name-version seems essential
+# having the root directory called name-version seems essential
 mv ../${APP} ../${APP}-${VERSION}
 tar -cvzf ${SOURCE} ../${APP}-${VERSION} --exclude-vcs
 
-# Rename the root directory without the version number
+# rename the root directory without the version number
 mv ../${APP}-${VERSION} ../${APP}
 
-# Calculate the MD5 checksum
+# calculate the MD5 checksum
 CHECKSM=$(md5sum ${SOURCE})
 sed -i "s/md5sums[^)]*)/md5sums=(${CHECKSM%% *})/g" archpackage/PKGBUILD
 
