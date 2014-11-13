@@ -96,8 +96,8 @@ class singleWorker(threading.Thread):
         status, addressVersionNumber, streamNumber, hash = decodeAddress(
             myAddress)
         
-        TTL = 28 * 24 * 60 * 60 # 28 days
-        embeddedTime = int(time.time() + random.randrange(-300, 300) + TTL)  # 28 days from now plus or minus five minutes
+        TTL = int(28 * 24 * 60 * 60 + random.randrange(-300, 300))# 28 days from now plus or minus five minutes
+        embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', (embeddedTime))
         payload += '\x00\x00\x00\x01' # object type: pubkey
         payload += encodeVarint(addressVersionNumber)  # Address version number
@@ -174,8 +174,8 @@ class singleWorker(threading.Thread):
         status, addressVersionNumber, streamNumber, hash = decodeAddress(
             myAddress)
         
-        TTL = 28 * 24 * 60 * 60 # 28 days
-        embeddedTime = int(time.time() + random.randrange(-300, 300) + TTL)  # 28 days from now plus or minus five minutes
+        TTL = int(28 * 24 * 60 * 60 + random.randrange(-300, 300))# 28 days from now plus or minus five minutes
+        embeddedTime = int(time.time() + TTL)
         signedTimeForProtocolV2 = embeddedTime - TTL
         """
         According to the protocol specification, the expiresTime along with the pubkey information is
@@ -273,8 +273,8 @@ class singleWorker(threading.Thread):
         status, addressVersionNumber, streamNumber, hash = decodeAddress(
             myAddress)
         
-        TTL = 28 * 24 * 60 * 60 # 28 days
-        embeddedTime = int(time.time() + random.randrange(-300, 300) + TTL)  # 28 days from now plus or minus five minutes
+        TTL = int(28 * 24 * 60 * 60 + random.randrange(-300, 300))# 28 days from now plus or minus five minutes
+        embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', (embeddedTime))
         payload += '\x00\x00\x00\x01' # object type: pubkey
         payload += encodeVarint(addressVersionNumber)  # Address version number
@@ -407,8 +407,8 @@ class singleWorker(threading.Thread):
             pubEncryptionKey = highlevelcrypto.privToPub(
                 privEncryptionKeyHex).decode('hex')
 
-            TTL = 2.5 * 24 * 60 * 60 # 2.5 days
-            embeddedTime = int(time.time() + random.randrange(-300, 300) + TTL)
+            TTL = int(28 * 24 * 60 * 60 + random.randrange(-300, 300))# 28 days from now plus or minus five minutes
+            embeddedTime = int(time.time() + TTL)
             payload = pack('>Q', embeddedTime)
             payload += '\x00\x00\x00\x03' # object type: broadcast
             
@@ -460,9 +460,11 @@ class singleWorker(threading.Thread):
             dataToEncrypt += encodeVarint(len(signature))
             dataToEncrypt += signature
 
-            # Encrypt the broadcast with the information contained in the broadcaster's address. Anyone who knows the address can generate 
-            # the private encryption key to decrypt the broadcast. This provides virtually no privacy; its purpose is to keep questionable 
-            # and illegal content from flowing through the Internet connections and being stored on the disk of 3rd parties. 
+            # Encrypt the broadcast with the information contained in the broadcaster's address. 
+            # Anyone who knows the address can generate the private encryption key to decrypt 
+            # the broadcast. This provides virtually no privacy; its purpose is to keep 
+            # questionable and illegal content from flowing through the Internet connections 
+            # and being stored on the disk of 3rd parties. 
             if addressVersionNumber <= 3:
                 privEncryptionKey = hashlib.sha512(encodeVarint(
                     addressVersionNumber) + encodeVarint(streamNumber) + ripe).digest()[:32]
@@ -624,8 +626,8 @@ class singleWorker(threading.Thread):
                             continue #on with the next msg on which we can do some work
             
             # At this point we know that we have the necessary pubkey in the pubkeys table.
-            TTL = 2.5 * 24 * 60 * 60 # 2.5 days
-            embeddedTime = int(time.time() + random.randrange(-300, 300) + TTL)  # 2.5 days from now plus or minus five minutes
+            TTL = int(28 * 24 * 60 * 60 + random.randrange(-300, 300))# 28 days from now plus or minus five minutes
+            embeddedTime = int(time.time() + TTL)
             
             if not shared.config.has_section(toaddress): # if we aren't sending this to ourselves or a chan
                 shared.ackdataForWhichImWatching[ackdata] = 0
@@ -967,8 +969,8 @@ class singleWorker(threading.Thread):
             if tag not in shared.neededPubkeys:
                 shared.neededPubkeys[tag] = (toAddress, highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
         
-        TTL = 2.5 * 24 * 60 * 60 # 2.5 days
-        embeddedTime = int(time.time() + random.randrange(-300, 300) + TTL)  # 2.5 days from now plus or minus five minutes
+        TTL = int(2.5 * 24 * 60 * 60 + random.randrange(-300, 300)) # 2.5 days from now plus or minus five minutes
+        embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', embeddedTime)
         payload += '\x00\x00\x00\x00' # object type: getpubkey
         payload += encodeVarint(addressVersionNumber)
@@ -988,7 +990,6 @@ class singleWorker(threading.Thread):
         shared.UISignalQueue.put(('updateSentItemStatusByHash', (
             ripe, tr.translateText("MainWindow",'Doing work necessary to request encryption key.'))))
         
-        TTL = 2.5 * 24 * 60 * 60 # 2.5 days
         target = 2 ** 64 / (shared.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + shared.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+shared.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -1014,13 +1015,14 @@ class singleWorker(threading.Thread):
         shared.UISignalQueue.put(('updateSentItemStatusByHash', (ripe, tr.translateText("MainWindow",'Sending public key request. Waiting for reply. Requested at %1').arg(l10n.formatTimestamp()))))
 
     def generateFullAckMessage(self, ackdata, toStreamNumber):
-        embeddedTime = int(time.time() + random.randrange(-300, 300))  # the current time plus or minus five minutes.
+        TTL = int(2.5 * 24 * 60 * 60 + random.randrange(-300, 300)) # 2.5 days plus or minus 5 minutes
+        embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', (embeddedTime))
         payload += '\x00\x00\x00\x02' # object type: msg
         if int(time.time()) >= 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
             payload += encodeVarint(1) # msg version
         payload += encodeVarint(toStreamNumber) + ackdata
-        TTL = 2.5 * 24 * 60 * 60 # 2.5 days
+        
         target = 2 ** 64 / (shared.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + shared.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+shared.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
         with shared.printLock:
             print '(For ack message) Doing proof of work...'
