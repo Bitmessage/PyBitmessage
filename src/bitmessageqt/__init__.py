@@ -3852,7 +3852,7 @@ def run():
     translator = QtCore.QTranslator()
     
     translationpath = os.path.join(
-        getattr(sys, '_MEIPASS', ''),
+        getattr(sys, '_MEIPASS', sys.path[0]),
         'translations',
         'bitmessage_' + l10n.getTranslationLanguage()
     )
