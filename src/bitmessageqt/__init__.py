@@ -154,6 +154,17 @@ def avatarize(address):
             return idcon
     # If no avatar is found
     return identiconize(address)
+    
+def change_translation(locale):
+    global qtranslator
+    qtranslator = QtCore.QTranslator()
+    translationpath = os.path.join(
+        getattr(sys, '_MEIPASS', sys.path[0]),
+        'translations',
+        'bitmessage_' + locale
+    )
+    qtranslator.load(translationpath)
+    QtGui.QApplication.installTranslator(qtranslator)
 
 
 class MyForm(QtGui.QMainWindow):
@@ -1431,6 +1442,8 @@ class MyForm(QtGui.QMainWindow):
             os.startfile(shared.appdata + 'keys.dat')
 
     def changeEvent(self, event):
+        if event.type() == QtCore.QEvent.LanguageChange:
+            self.ui.retranslateUi(self)
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.windowState() & QtCore.Qt.WindowMinimized:
                 self.actionShow.setChecked(False)
@@ -2287,6 +2300,7 @@ class MyForm(QtGui.QMainWindow):
             lang_ind = int(self.settingsDialogInstance.ui.languageComboBox.currentIndex())
             if not languages[lang_ind] == 'other':
                 shared.config.set('bitmessagesettings', 'userlocale', languages[lang_ind])
+                change_translation(languages[lang_ind])
             
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
@@ -3849,16 +3863,7 @@ class UISignaler(QThread):
 
 def run():
     app = QtGui.QApplication(sys.argv)
-    translator = QtCore.QTranslator()
-    
-    translationpath = os.path.join(
-        getattr(sys, '_MEIPASS', sys.path[0]),
-        'translations',
-        'bitmessage_' + l10n.getTranslationLanguage()
-    )
-    translator.load(translationpath)
-
-    QtGui.QApplication.installTranslator(translator)
+    change_translation(l10n.getTranslationLanguage())
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
 
