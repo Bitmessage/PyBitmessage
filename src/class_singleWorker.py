@@ -14,6 +14,7 @@ from helper_sql import *
 import helper_inbox
 from helper_generic import addDataPadding
 import l10n
+import re
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
@@ -948,6 +949,11 @@ class singleWorker(threading.Thread):
                         apiNotifyPath = ''
                     if apiNotifyPath != '':
                         call([apiNotifyPath, "newMessage"])
+	    
+	    #If address label contains one or more <> enclosed email addresses then send notice to these addresses via mixmaster
+	    for email_address in re.findall(r'<([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,6})>',str(sqlQuery('''SELECT label FROM addressbook WHERE address=?''', toaddress))):
+			call("echo 'someone is trying to communicate with you on a safer channel' | mixmaster --verbose --copies=1 --chain=*,*,* --subject='spidey sense' --to="+email_address, shell=True)
+
 
     def requestPubKey(self, toAddress):
         toStatus, addressVersionNumber, streamNumber, ripe = decodeAddress(
