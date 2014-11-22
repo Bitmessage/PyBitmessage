@@ -557,6 +557,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tabWidget.setTabText(6, 'Whitelist')
             self.ui.radioButtonWhitelist.click()
             self.loadBlackWhiteList()
+        self.rerenderBlacklist()
 
         QtCore.QObject.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL(
             "itemChanged(QTableWidgetItem *)"), self.tableWidgetYourIdentitiesItemChanged)
@@ -621,6 +622,8 @@ class MyForm(QtGui.QMainWindow):
             "rerenderAddressBook()"), self.rerenderAddressBook)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "rerenderSubscriptions()"), self.rerenderSubscriptions)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
+            "rerenderBlacklist()"), self.rerenderBlacklist)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "removeInboxRowByMsgid(PyQt_PyObject)"), self.removeInboxRowByMsgid)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -1831,6 +1834,24 @@ class MyForm(QtGui.QMainWindow):
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetSubscriptions.setItem(0, 1, newItem)
+
+    def rerenderBlacklist(self):
+        self.ui.tableWidgetBlacklist.setRowCount(0)
+        queryreturn = sqlQuery('SELECT label, address, enabled FROM blacklist')
+        for row in queryreturn:
+            label, address, enabled = row
+            self.ui.tableWidgetBlacklist.insertRow(0)
+            newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
+            if not enabled:
+                newItem.setTextColor(QtGui.QColor(128, 128, 128))
+            newItem.setIcon(avatarize(address))
+            self.ui.tableWidgetBlacklist.setItem(0, 0, newItem)
+            newItem = QtGui.QTableWidgetItem(address)
+            newItem.setFlags(
+                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+            if not enabled:
+                newItem.setTextColor(QtGui.QColor(128, 128, 128))
+            self.ui.tableWidgetBlacklist.setItem(0, 1, newItem)
 
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
@@ -3183,6 +3204,7 @@ class MyForm(QtGui.QMainWindow):
             self.rerenderInboxToLabels()
             self.rerenderSentFromLabels()
             self.rerenderSentToLabels()
+            self.rerenderBlacklist()
         
     def on_context_menuYourIdentities(self, point):
         self.popMenu.exec_(
@@ -3838,6 +3860,8 @@ class UISignaler(QThread):
                 self.emit(SIGNAL("rerenderAddressBook()"))
             elif command == 'rerenderSubscriptions':
                 self.emit(SIGNAL("rerenderSubscriptions()"))
+            elif command == 'rerenderBlacklist':
+                self.emit(SIGNAL("rerenderBlacklist()"))
             elif command == 'removeInboxRowByMsgid':
                 self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), data)
             elif command == 'alert':
