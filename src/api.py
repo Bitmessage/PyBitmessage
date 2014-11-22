@@ -763,9 +763,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # black-/white-list.
             queryreturn = sqlQuery('''select * from '''+table+''' where address=?''', address)
             if queryreturn != []:
-                raise APIError(16, 'You have already black-/white-listed that address.')
+                raise APIError(28, 'You have already black-/white-listed that address.')
             sqlExecute('''INSERT INTO '''+table+''' VALUES (?,?,?)''',label, address, True)
-            shared.UISignalQueue.put(('rerenderBlacklist', ''))
+            shared.UISignalQueue.put(('rerenderBlackWhiteList', ''))
             return 'Added black-/white-list entry.'
 
         elif method == 'removeAddressFromBlackWhiteList':
@@ -780,8 +780,14 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             else:
                 table = 'whitelist'
 
-            sqlExecute('''DELETE FROM blacklist WHERE address=?''', address)
-            shared.UISignalQueue.put(('rerenderBlacklist', ''))
+            # First we must check to see if the address is already in the
+            # black-/white-list.
+            queryreturn = sqlQuery('''select * from '''+table+''' where address=?''', address)
+            if queryreturn == []:
+                raise APIError(29, 'That entry does not exist in the black-/white-list.')
+
+            sqlExecute('''DELETE FROM '''+table+''' WHERE address=?''', address)
+            shared.UISignalQueue.put(('rerenderBlackWhiteList', ''))
             return 'Deleted black-/white-list entry if it existed.'
 
         elif method == 'deleteSubscription':
