@@ -156,6 +156,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif method == 'add':
             (a, b) = params
             return a + b
+        elif method == 'getVersion':
+            return shared.softwareVersion
         elif method == 'statusBar':
             message, = params
             shared.UISignalQueue.put(('updateStatusBar', message))
