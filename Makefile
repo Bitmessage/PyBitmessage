@@ -34,10 +34,10 @@ install:
 	install -m 644 desktop/can-icon.svg ${DESTDIR}${PREFIX}/share/icons/hicolor/scalable/apps/${APP}.svg
 	cp -rf src/* ${DESTDIR}${PREFIX}/share/${APP}
 	echo '#!/bin/sh' > ${DESTDIR}${PREFIX}/bin/${APP}
-	echo 'if [ -d ${DESTDIR}/usr/local/share/${APP} ]; then' >> ${DESTDIR}${PREFIX}/bin/${APP}
-	echo '  cd ${DESTDIR}/usr/local/share/${APP}' >> ${DESTDIR}${PREFIX}/bin/${APP}
+	echo 'if [ -d /usr/local/share/${APP} ]; then' >> ${DESTDIR}${PREFIX}/bin/${APP}
+	echo '  cd /usr/local/share/${APP}' >> ${DESTDIR}${PREFIX}/bin/${APP}
 	echo 'else' >> ${DESTDIR}${PREFIX}/bin/${APP}
-	echo '  cd ${DESTDIR}/usr/share/pybitmessage' >> ${DESTDIR}${PREFIX}/bin/${APP}
+	echo '  cd /usr/share/pybitmessage' >> ${DESTDIR}${PREFIX}/bin/${APP}
 	echo 'fi' >> ${DESTDIR}${PREFIX}/bin/${APP}
 	echo 'LD_LIBRARY_PATH="/opt/openssl-compat-bitcoin/lib/" exec python2 bitmessagemain.py' >> ${DESTDIR}${PREFIX}/bin/${APP}
 	chmod +x ${DESTDIR}${PREFIX}/bin/${APP}
