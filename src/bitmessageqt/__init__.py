@@ -2426,7 +2426,8 @@ class MyForm(QtGui.QMainWindow):
             if shared.appdata != '' and self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we are NOT using portable mode now but the user selected that we should...
                 # Write the keys.dat file to disk in the new location
                 sqlStoredProcedure('movemessagstoprog')
-                shared.writeKeysFile()
+                with open('keys.dat', 'wb') as configfile:
+                    shared.config.write(configfile)
                 # Write the knownnodes.dat file to disk in the new location
                 shared.knownNodesLock.acquire()
                 output = open('knownnodes.dat', 'wb')
