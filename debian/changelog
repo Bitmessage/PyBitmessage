@@ -1,3 +1,33 @@
+pybitmessage (0.4.4-1) utopic; urgency=low
+
+  * Added ability to limit network transfer rate
+  * Updated to Protocol Version 3
+  * Removed use of memoryview so that we can support python 2.7.3
+  * Make use of l10n for localizations
+
+ -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Sun, 2 November 2014 12:55:00 +0100
+
+pybitmessage (0.4.3-1) saucy; urgency=low
+
+  * Support pyelliptic's updated HMAC algorithm. We'll remove support for the old method after an upgrade period.
+  * Improved version check
+  * Refactored decodeBase58 function
+  * Ignore duplicate messages
+  * Added bytes received/sent counts and rate on the network information tab
+  * Fix unicode handling in 'View HTML code as formatted text'
+  * Refactor handling of packet headers
+  * Use pointMult function instead of arithmetic.privtopub since it is faster
+  * Fixed issue where client wasn't waiting for a verack before continuing on with the conversation
+  * Fixed CPU hogging by implementing tab-based refresh improvements
+  * Added curses interface
+  * Added support for IPv6
+  * Added a 'trustedpeer' option to keys.dat
+  * Limit maximum object size to 20 MB
+  * Support email-like > quote characters and reply-below-quote
+  * Added Japanese and Dutch language files; updated Norwegian and Russian languages files
+
+ -- Bob Mottram (4096 bits) <bob@robotics.uk.to>  Thu, 6 March 2014 20:23:00 +0100
+
 pybitmessage (0.4.2-1) saucy; urgency=low
 
   * Exclude debian directory from orig.tar.gz

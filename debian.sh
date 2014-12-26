@@ -1,7 +1,7 @@
 #!/bin/bash
 
 APP=pybitmessage
-PREV_VERSION=0.4.4
+PREV_VERSION=0.4.2
 VERSION=0.4.4
 RELEASE=1
 ARCH_TYPE=all
