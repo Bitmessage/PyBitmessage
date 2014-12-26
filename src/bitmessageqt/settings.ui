@@ -188,6 +188,11 @@
             </item>
             <item>
              <property name="text">
+              <string notr="true" comment="cs">Česky</string>
+             </property>
+            </item>
+            <item>
+             <property name="text">
               <string comment="en_pirate">Pirate English</string>
              </property>
             </item>

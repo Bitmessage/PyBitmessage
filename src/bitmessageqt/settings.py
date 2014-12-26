@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'settings.ui'
 #
-# Created: Tue Sep 09 15:13:28 2014
+# Created: Thu Dec 25 23:21:20 2014
 #      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -105,6 +105,8 @@ class Ui_settingsDialog(object):
         self.languageComboBox.setItemText(10, _fromUtf8("日本語"))
         self.languageComboBox.addItem(_fromUtf8(""))
         self.languageComboBox.setItemText(11, _fromUtf8("Nederlands"))
+        self.languageComboBox.addItem(_fromUtf8(""))
+        self.languageComboBox.setItemText(12, _fromUtf8("Česky"))
         self.languageComboBox.addItem(_fromUtf8(""))
         self.languageComboBox.addItem(_fromUtf8(""))
         self.formLayout_2.setWidget(0, QtGui.QFormLayout.LabelRole, self.languageComboBox)
@@ -442,8 +444,8 @@ class Ui_settingsDialog(object):
         self.checkBoxReplyBelow.setText(_translate("settingsDialog", "Reply below Quote", None))
         self.groupBox.setTitle(_translate("settingsDialog", "Interface Language", None))
         self.languageComboBox.setItemText(0, _translate("settingsDialog", "System Settings", "system"))
-        self.languageComboBox.setItemText(12, _translate("settingsDialog", "Pirate English", "en_pirate"))
-        self.languageComboBox.setItemText(13, _translate("settingsDialog", "Other (set in keys.dat)", "other"))
+        self.languageComboBox.setItemText(13, _translate("settingsDialog", "Pirate English", "en_pirate"))
+        self.languageComboBox.setItemText(14, _translate("settingsDialog", "Other (set in keys.dat)", "other"))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabUserInterface), _translate("settingsDialog", "User Interface", None))
         self.groupBox1.setTitle(_translate("settingsDialog", "Listening port", None))
         self.label.setText(_translate("settingsDialog", "Listen for connections on port:", None))
