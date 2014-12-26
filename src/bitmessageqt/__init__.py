@@ -1283,7 +1283,7 @@ class MyForm(QtGui.QMainWindow):
     def notifierShow(self, title, subtitle, fromCategory, label):
         global withMessagingMenu
 
-        self.playSound(fromCategory, label);
+        self.playSound(fromCategory, label)
 
         if withMessagingMenu:
             n = Notify.Notification.new(
