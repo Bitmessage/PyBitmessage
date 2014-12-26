@@ -3413,7 +3413,7 @@ class settingsDialog(QtGui.QDialog):
             shared.safeConfigGetBoolean('bitmessagesettings', 'replybelow'))
         
         global languages 
-        languages = ['system','en','eo','fr','de','es','ru','no','ar','zh_cn','ja','nl','en_pirate','other']
+        languages = ['system','en','eo','fr','de','es','ru','no','ar','zh_cn','ja','nl','cs','en_pirate','other']
         user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
         if user_countrycode in languages:
             curr_index = languages.index(user_countrycode)
