@@ -91,8 +91,6 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'sockslisten', 'false')
             shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
             shared.config.set('bitmessagesettings', 'messagesencrypted', 'false')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
 
         # People running earlier versions of PyBitmessage do not have the
         # usedpersonally field in their pubkeys table. Let's add it.
@@ -103,8 +101,6 @@ class sqlThread(threading.Thread):
             self.conn.commit()
 
             shared.config.set('bitmessagesettings', 'settingsversion', '3')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
 
         # People running earlier versions of PyBitmessage do not have the
         # encodingtype field in their inbox and sent tables or the read field
@@ -138,6 +134,7 @@ class sqlThread(threading.Thread):
             shared.config.set(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
             shared.config.set('bitmessagesettings', 'settingsversion', '6')
+
         # From now on, let us keep a 'version' embedded in the messages.dat
         # file so that when we make changes to the database, the database
         # version we are on can stay embedded in the messages.dat file. Let us
@@ -281,10 +278,7 @@ class sqlThread(threading.Thread):
                 'bitmessagesettings', 'stopresendingafterxdays', '')
             shared.config.set(
                 'bitmessagesettings', 'stopresendingafterxmonths', '')
-            #shared.config.set(
             shared.config.set('bitmessagesettings', 'settingsversion', '8') 
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
 
         # Add a new table: objectprocessorqueue with which to hold objects
         # that have yet to be processed if the user shuts down Bitmessage.
@@ -344,10 +338,8 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'maxdownloadrate', '0')
             shared.config.set('bitmessagesettings', 'maxuploadrate', '0')
             shared.config.set('bitmessagesettings', 'settingsversion', '10')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
-                
-        
+            shared.writeKeysFile()                
+
         # The format of data stored in the pubkeys table has changed. Let's
         # clear it, and the pubkeys from inventory, so that they'll be re-downloaded.
         item = '''SELECT value FROM settings WHERE key='version';'''

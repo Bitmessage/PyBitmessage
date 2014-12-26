@@ -129,8 +129,7 @@ class addressGenerator(threading.Thread):
                     address, 'privSigningKey', privSigningKeyWIF)
                 shared.config.set(
                     address, 'privEncryptionKey', privEncryptionKeyWIF)
-                with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                    shared.config.write(configfile)
+                shared.writeKeysFile()
 
                 # The API and the join and create Chan functionality
                 # both need information back from the address generator.
@@ -244,8 +243,7 @@ class addressGenerator(threading.Thread):
                                 address, 'privSigningKey', privSigningKeyWIF)
                             shared.config.set(
                                 address, 'privEncryptionKey', privEncryptionKeyWIF)
-                            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                                shared.config.write(configfile)
+                            shared.writeKeysFile()
 
                             shared.UISignalQueue.put(('writeNewAddressToTable', (
                                 label, address, str(streamNumber))))

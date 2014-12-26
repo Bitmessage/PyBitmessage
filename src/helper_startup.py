@@ -133,8 +133,7 @@ def loadConfig():
                 os.makedirs(shared.appdata)
         if not sys.platform.startswith('win'):
             os.umask(0o077)
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
+        shared.writeKeysFile()
 
     _loadTrustedPeer()
 
