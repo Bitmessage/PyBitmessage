@@ -852,15 +852,16 @@ def writeKeysFile():
     # create a backup copy to prevent the accidental loss due to the disk write failure
     try:
         shutil.copyfile(fileName, fileNameBak)
-        # The backup succeeded. This can fail if the file didn't exist before. 
-        existingFileNameExisted = True
+        # The backup succeeded.
+        fileNameExisted = True
     except:
-        existingFileNameExisted = False
+        # The backup failed. This can happen if the file didn't exist before.
+        fileNameExisted = False
     # write the file
     with open(fileName, 'wb') as configfile:
         shared.config.write(configfile)
-    # delete a backup
-    if existingFileNameExisted:
+    # delete the backup
+    if fileNameExisted:
         os.remove(fileNameBak)
 
 from debug import logger
