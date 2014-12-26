@@ -471,15 +471,13 @@ def handlech(c, stdscr):
                                 label = t
                                 shared.config.set(a, "label", label)
                                 # Write config
-                                with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                                    shared.config.write(configfile)
+                                shared.writeKeysFile()
                                 addresses[addrcur][0] = label
                         elif t == "4": # Enable address
                             a = addresses[addrcur][2]
                             shared.config.set(a, "enabled", "true") # Set config
                             # Write config
-                            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                                shared.config.write(configfile)
+                            shared.writeKeysFile()
                             # Change color
                             if shared.safeConfigGetBoolean(a, 'chan'):
                                 addresses[addrcur][3] = 9 # orange
@@ -494,16 +492,14 @@ def handlech(c, stdscr):
                             shared.config.set(a, "enabled", "false") # Set config
                             addresses[addrcur][3] = 8 # Set color to gray
                             # Write config
-                            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                                shared.config.write(configfile)
+                            shared.writeKeysFile()
                             addresses[addrcur][1] = False
                             shared.reloadMyAddressHashes() # Reload address hashes
                         elif t == "6": # Delete address
                             r, t = d.inputbox("Type in \"I want to delete this address\"", width=50)
                             if r == d.DIALOG_OK and t == "I want to delete this address":
                                     shared.config.remove_section(addresses[addrcur][2])
-                                    with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                                        shared.config.write(configfile)
+                                    shared.writeKeysFile()
                                     del addresses[addrcur]
                         elif t == "7": # Special address behavior
                             a = addresses[addrcur][2]
@@ -534,8 +530,7 @@ def handlech(c, stdscr):
                                             shared.config.set(a, "mailinglistname", mn)
                                             addresses[addrcur][3] = 6 # Set color to magenta
                                     # Write config
-                                    with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                                        shared.config.write(configfile)
+                                    shared.writeKeysFile()
                 elif menutab == 5:
                     d.set_background_title("Subscriptions Dialog Box")
                     r, t = d.menu("Do what with subscription to \""+subscriptions[subcur][0]+"\"?",

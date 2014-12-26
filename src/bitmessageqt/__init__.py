@@ -458,8 +458,7 @@ class MyForm(QtGui.QMainWindow):
                         self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
                     if reply == QtGui.QMessageBox.Yes:
                         shared.config.remove_section(addressInKeysFile)
-                        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                            shared.config.write(configfile)
+                        shared.writeKeysFile()
 
         # Configure Bitmessage to start on startup (or remove the
         # configuration) based on the setting in the keys.dat file
@@ -1332,7 +1331,7 @@ class MyForm(QtGui.QMainWindow):
                 reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open keys.dat?"), _translate(
                     "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)").arg(shared.appdata), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
-                self.openKeysFile()
+                shared.openKeysFile()
 
     def click_actionDeleteAllTrashedMessages(self):
         if QtGui.QMessageBox.question(self, _translate("MainWindow", "Delete trash?"), _translate("MainWindow", "Are you sure you want to delete all trashed messages?"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
@@ -1419,16 +1418,9 @@ class MyForm(QtGui.QMainWindow):
         if self.connectDialogInstance.exec_():
             if self.connectDialogInstance.ui.radioButtonConnectNow.isChecked():
                 shared.config.remove_option('bitmessagesettings', 'dontconnect')
-                with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                    shared.config.write(configfile)
+                shared.writeKeysFile()
             else:
                 self.click_actionSettings()
-
-    def openKeysFile(self):
-        if 'linux' in sys.platform:
-            subprocess.call(["xdg-open", shared.appdata + 'keys.dat'])
-        else:
-            os.startfile(shared.appdata + 'keys.dat')
 
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.WindowStateChange:
@@ -2414,8 +2406,7 @@ class MyForm(QtGui.QMainWindow):
             # shared.config.set('bitmessagesettings', 'maxcores',
             # str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()))
 
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
 
             if 'win32' in sys.platform or 'win64' in sys.platform:
             # Auto-startup for Windows
@@ -2460,8 +2451,7 @@ class MyForm(QtGui.QMainWindow):
                     os.makedirs(shared.appdata)
                 sqlStoredProcedure('movemessagstoappdata')
                 # Write the keys.dat file to disk in the new location
-                with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                    shared.config.write(configfile)
+                shared.writeKeysFile()
                 # Write the knownnodes.dat file to disk in the new location
                 shared.knownNodesLock.acquire()
                 output = open(shared.appdata + 'knownnodes.dat', 'wb')
@@ -2480,8 +2470,7 @@ class MyForm(QtGui.QMainWindow):
     def click_radioButtonBlacklist(self):
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
             shared.config.set('bitmessagesettings', 'blackwhitelist', 'black')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
             # self.ui.tableWidgetBlacklist.clearContents()
             self.ui.tableWidgetBlacklist.setRowCount(0)
             self.loadBlackWhiteList()
@@ -2490,8 +2479,7 @@ class MyForm(QtGui.QMainWindow):
     def click_radioButtonWhitelist(self):
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
             shared.config.set('bitmessagesettings', 'blackwhitelist', 'white')
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
             # self.ui.tableWidgetBlacklist.clearContents()
             self.ui.tableWidgetBlacklist.setRowCount(0)
             self.loadBlackWhiteList()
@@ -2563,8 +2551,7 @@ class MyForm(QtGui.QMainWindow):
                 shared.config.set(str(addressAtCurrentRow), 'mailinglistname', str(
                     self.dialog.ui.lineEditMailingListName.text().toUtf8()))
                 self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(137, 04, 177)) # magenta
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
             self.rerenderInboxToLabels()
 
     def click_NewAddressDialog(self):
@@ -3066,8 +3053,7 @@ class MyForm(QtGui.QMainWindow):
         addressAtCurrentRow = str(
             self.ui.tableWidgetYourIdentities.item(currentRow, 1).text())
         shared.config.set(addressAtCurrentRow, 'enabled', 'true')
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
+        shared.writeKeysFile()
         self.ui.tableWidgetYourIdentities.item(
             currentRow, 0).setTextColor(QApplication.palette().text().color())
         self.ui.tableWidgetYourIdentities.item(
@@ -3093,8 +3079,7 @@ class MyForm(QtGui.QMainWindow):
             currentRow, 2).setTextColor(QtGui.QColor(128, 128, 128))
         if shared.safeConfigGetBoolean(addressAtCurrentRow, 'mailinglist'):
             self.ui.tableWidgetYourIdentities.item(currentRow, 1).setTextColor(QtGui.QColor(137, 04, 177)) # magenta
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
+        shared.writeKeysFile()
         shared.reloadMyAddressHashes()
 
     def on_action_YourIdentitiesClipboard(self):
@@ -3291,8 +3276,7 @@ class MyForm(QtGui.QMainWindow):
                 currentRow, 1).text()
             shared.config.set(str(addressAtCurrentRow), 'label', str(
                 self.ui.tableWidgetYourIdentities.item(currentRow, 0).text().toUtf8()))
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
             self.rerenderComboBoxSendFrom()
             # self.rerenderInboxFromLabels()
             self.rerenderInboxToLabels()
