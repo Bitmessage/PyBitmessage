@@ -150,8 +150,7 @@ class singleWorker(threading.Thread):
         try:
             shared.config.set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
         except:
             # The user deleted the address out of the keys.dat file before this
             # finished.
@@ -248,8 +247,7 @@ class singleWorker(threading.Thread):
         try:
             shared.config.set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
         except:
             # The user deleted the address out of the keys.dat file before this
             # finished.
@@ -345,8 +343,7 @@ class singleWorker(threading.Thread):
         try:
             shared.config.set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
-            with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-                shared.config.write(configfile)
+            shared.writeKeysFile()
         except Exception as err:
             logger.error('Error: Couldn\'t add the lastpubkeysendtime to the keys.dat file. Error message: %s' % err)
 
