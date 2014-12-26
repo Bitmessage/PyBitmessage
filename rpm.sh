@@ -24,25 +24,25 @@ sed -i 's/-'${PREV_VERSION}'.so/-'${VERSION}'.so/g' debian/*.links
 sudo yum groupinstall "Development Tools"
 sudo yum install rpmdevtools
 
-# Setup the rpmbuild directory tree
+# setup the rpmbuild directory tree
 rpmdev-setuptree
 
-# Create the source code in the SOURCES directory
+# create the source code in the SOURCES directory
 make clean
 mkdir -p ~/rpmbuild/SOURCES
 rm -f ${SOURCE}
 
-# Having the root directory called name-version seems essential
+# having the root directory called name-version seems essential
 mv ../${APP} ../${APP}-${VERSION}
 tar -cvzf ${SOURCE} ../${APP}-${VERSION} --exclude-vcs
 
-# Rename the root directory without the version number
+# rename the root directory without the version number
 mv ../${APP}-${VERSION} ../${APP}
 
-# Copy the spec file into the SPECS directory
+# copy the spec file into the SPECS directory
 cp -f rpmpackage/${APP}.spec ~/rpmbuild/SPECS
 
-# Build
+# build
 cd ~/rpmbuild/SPECS
 rpmbuild -ba ${APP}.spec
 cd ${CURRDIR}
