@@ -7,7 +7,7 @@
 from hashlib import sha512
 from pyelliptic.openssl import OpenSSL
 from pyelliptic.cipher import Cipher
-from pyelliptic.hash import hmac_sha256
+from pyelliptic.hash import hmac_sha256, equals
 from struct import pack, unpack
 
 
@@ -436,16 +436,9 @@ class ECC:
         pubkey = ephem.get_pubkey()
         iv = OpenSSL.rand(OpenSSL.get_cipher(ciphername).get_blocksize())
         ctx = Cipher(key_e, iv, 1, ciphername)
-        import time
-        if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-            ciphertext = ctx.ciphering(data)
-        else:
-            ciphertext = iv + pubkey + ctx.ciphering(data) # Everyone should be using this line after the Bitmessage protocol v3 upgrade period
+        ciphertext = iv + pubkey + ctx.ciphering(data)
         mac = hmac_sha256(key_m, ciphertext)
-        if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-            return iv + pubkey + ciphertext + mac
-        else:
-            return ciphertext + mac # Everyone should be using this line after the Bitmessage protocol v3 upgrade period
+        return ciphertext + mac
 
     def decrypt(self, data, ciphername='aes-256-cbc'):
         """
@@ -461,14 +454,7 @@ class ECC:
         mac = data[i:]
         key = sha512(self.raw_get_ecdh_key(pubkey_x, pubkey_y)).digest()
         key_e, key_m = key[:32], key[32:]
-        """
-        pyelliptic was changed slightly so that the hmac covers the
-        iv and pubkey. So let's have an upgrade period where we support
-        both the old and the new hmac'ing algorithms.
-        https://github.com/yann2192/pyelliptic/issues/17
-        """
-        if hmac_sha256(key_m, ciphertext) != mac:
-            if hmac_sha256(key_m, data[:len(data) - 32]) != mac:
-                raise RuntimeError("Fail to verify data")
+        if not equals(hmac_sha256(key_m, data[:len(data) - 32]), mac):
+            raise RuntimeError("Fail to verify data")
         ctx = Cipher(key_e, iv, 0, ciphername)
         return ctx.ciphering(ciphertext)
