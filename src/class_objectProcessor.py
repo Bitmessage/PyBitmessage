@@ -342,7 +342,6 @@ class objectProcessor(threading.Thread):
                 toRipe = key  # This is the RIPE hash of my pubkeys. We need this below to compare to the destination_ripe included in the encrypted data.
                 initialDecryptionSuccessful = True
                 logger.info('EC decryption successful using key associated with ripe hash: %s.' % key.encode('hex'))
-                #msgObjectContainedVersion = False
                 break
             except Exception as err:
                 pass
@@ -768,13 +767,11 @@ class objectProcessor(threading.Thread):
         logger.info('Time spent processing this interesting broadcast: %s' % (time.time() - messageProcessingStartTime,))
 
 
-    # We have inserted a pubkey into our pubkey table which we received from a
-    # pubkey, msg, or broadcast message. It might be one that we have been
-    # waiting for. Let's check.
     def possibleNewPubkey(self, ripe=None, address=None):
         """
-        We have put a new pubkey in our pubkeys table. Let's see if we have been
-        awaiting it.
+        We have inserted a pubkey into our pubkey table which we received from a
+        pubkey, msg, or broadcast message. It might be one that we have been
+        waiting for. Let's check.
         """
         # For address versions <= 3, we wait on a key with the correct ripe hash
         if ripe != None:

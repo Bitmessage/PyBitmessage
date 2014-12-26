@@ -61,7 +61,7 @@ class sqlThread(threading.Thread):
                 '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
                 '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','7')''')
+            self.cur.execute( '''INSERT INTO settings VALUES('version','8')''')
             self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             self.cur.execute(
