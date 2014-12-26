@@ -18,6 +18,8 @@ import sys
 import stat
 import threading
 import time
+import shutil  # used for moving the data folder and copying keys.dat
+import datetime
 from os import path, environ
 from struct import Struct
 import traceback
@@ -838,4 +840,22 @@ def _checkAndShareBroadcastWithPeers(data):
         shared.objectProcessorQueueSize += len(data)
         objectProcessorQueue.put((objectType,data))
 
+def openKeysFile():
+    if 'linux' in sys.platform:
+        subprocess.call(["xdg-open", shared.appdata + 'keys.dat'])
+    else:
+        os.startfile(shared.appdata + 'keys.dat')
+
+def writeKeysFile():
+    fileName = shared.appdata + 'keys.dat'
+    fileNameBak = fileName + "." + datetime.datetime.now().strftime("%Y%j%H%M%S%f") + '.bak'
+    # create a backup copy to prevent the accidental loss due to the disk write failure
+    shutil.copyfile(fileName, fileNameBak)
+    # write the file
+    with open(fileName, 'wb') as configfile:
+        shared.config.write(configfile)
+    # delete a backup
+    os.remove(fileNameBak)
+
+helper_startup.loadConfig()
 from debug import logger
