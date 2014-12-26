@@ -219,12 +219,7 @@ class singleWorker(threading.Thread):
         payload += encodeVarint(shared.config.getint(
             myAddress, 'payloadlengthextrabytes'))
         
-        if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-            signedData = pack('>I', signedTimeForProtocolV2) + payload[12:]
-        else:
-            signedData = payload
-        
-        signature = highlevelcrypto.sign(signedData, privSigningKeyHex)
+        signature = highlevelcrypto.sign(payload, privSigningKeyHex)
         payload += encodeVarint(len(signature))
         payload += signature
 
@@ -309,8 +304,6 @@ class singleWorker(threading.Thread):
         dataToEncrypt += encodeVarint(shared.config.getint(
             myAddress, 'payloadlengthextrabytes'))
         
-
-
         # When we encrypt, we'll use a hash of the data
         # contained in an address as a decryption key. This way in order to
         # read the public keys in a pubkey message, a node must know the address
@@ -320,23 +313,7 @@ class singleWorker(threading.Thread):
         doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
             addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()
         payload += doubleHashOfAddressData[32:] # the tag
-        
-        """
-        According to the protocol specification, the expiresTime along with the pubkey information is
-        signed. But to be backwards compatible during the upgrade period, we shall sign not the 
-        expiresTime but rather the current time. There must be precisely a 28 day difference
-        between the two. After the upgrade period we'll switch to signing the whole payload from
-        above appended with dataToEncrypt. 
-        """
-        if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-            dataToSign = pack('>Q', (embeddedTime - TTL))
-            dataToSign += encodeVarint(addressVersionNumber)  # Address version number
-            dataToSign += encodeVarint(streamNumber)
-            dataToSign += dataToEncrypt
-        else:
-            dataToSign = payload + dataToEncrypt
-
-        signature = highlevelcrypto.sign(dataToSign, privSigningKeyHex)
+        signature = highlevelcrypto.sign(payload + dataToEncrypt, privSigningKeyHex)
         dataToEncrypt += encodeVarint(len(signature))
         dataToEncrypt += signature
         
@@ -411,17 +388,11 @@ class singleWorker(threading.Thread):
             embeddedTime = int(time.time() + TTL)
             payload = pack('>Q', embeddedTime)
             payload += '\x00\x00\x00\x03' # object type: broadcast
-            
-            if int(time.time()) < 1416175200: # Before Sun, 16 Nov 2014 22:00:00 GMT
-                if addressVersionNumber <= 3:
-                    payload += encodeVarint(2)  # broadcast version
-                else:
-                    payload += encodeVarint(3)  # broadcast version
-            else: # After Sun, 16 Nov 2014 22:00:00 GMT
-                if addressVersionNumber <= 3:
-                    payload += encodeVarint(4)  # broadcast version
-                else:
-                    payload += encodeVarint(5)  # broadcast version
+
+            if addressVersionNumber <= 3:
+                payload += encodeVarint(4)  # broadcast version
+            else:
+                payload += encodeVarint(5)  # broadcast version
             
             payload += encodeVarint(streamNumber)
             if addressVersionNumber >= 4:
@@ -432,14 +403,7 @@ class singleWorker(threading.Thread):
             else:
                 tag = ''
 
-            dataToEncrypt = ""
-            # the broadcast version is not included here after the end of the protocol v3 upgrade period
-            if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-                if addressVersionNumber <= 3:
-                    dataToEncrypt += encodeVarint(2)  # broadcast version
-                else:
-                    dataToEncrypt += encodeVarint(3)  # broadcast version
-            dataToEncrypt += encodeVarint(addressVersionNumber)
+            dataToEncrypt = encodeVarint(addressVersionNumber)
             dataToEncrypt += encodeVarint(streamNumber)
             dataToEncrypt += '\x00\x00\x00\x01'  # behavior bitfield
             dataToEncrypt += pubSigningKey[1:]
@@ -450,10 +414,7 @@ class singleWorker(threading.Thread):
             dataToEncrypt += '\x02' # message encoding type
             dataToEncrypt += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding per the documentation on the wiki.
             dataToEncrypt += 'Subject:' + subject + '\n' + 'Body:' + body
-            if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-                dataToSign = dataToEncrypt
-            else:
-                dataToSign = payload + dataToEncrypt
+            dataToSign = payload + dataToEncrypt
             
             signature = highlevelcrypto.sign(
                 dataToSign, privSigningKeyHex)
@@ -646,25 +607,16 @@ class singleWorker(threading.Thread):
                 for row in queryreturn:
                     pubkeyPayload, = row
 
-                # The pubkey message is stored the way we originally received it
-                # under protocol version 2
-                # which means that we need to read beyond things like the nonce and
-                # time to get to the actual public keys.
-                if toAddressVersionNumber <= 3:
-                    readPosition = 8  # to bypass the nonce
-                elif toAddressVersionNumber >= 4:
-                    readPosition = 0 # the nonce is not included here so we don't need to skip over it.
-                pubkeyEmbeddedTime, = unpack(
-                    '>I', pubkeyPayload[readPosition:readPosition + 4])
-                # This section is used for the transition from 32 bit time to 64
-                # bit time in the protocol.
-                if pubkeyEmbeddedTime == 0:
-                    pubkeyEmbeddedTime, = unpack(
-                        '>Q', pubkeyPayload[readPosition:readPosition + 8])
-                    readPosition += 8
-                else:
-                    readPosition += 4
-                readPosition += 1  # to bypass the address version whose length is definitely 1
+                # The pubkey message is stored with the following items all appended:
+                #    -address version
+                #    -stream number
+                #    -behavior bitfield
+                #    -pub signing key
+                #    -pub encryption key
+                #    -nonce trials per byte (if address version is >= 3) 
+                #    -length extra bytes (if address version is >= 3)
+
+                readPosition = 1  # to bypass the address version whose length is definitely 1
                 streamNumber, streamNumberLength = decodeVarint(
                     pubkeyPayload[readPosition:readPosition + 10])
                 readPosition += streamNumberLength
@@ -679,9 +631,7 @@ class singleWorker(threading.Thread):
                         # if the human changes their setting and then sends another message or restarts their client, this one will send at that time.
                         continue
                 readPosition += 4  # to bypass the bitfield of behaviors
-                # pubSigningKeyBase256 =
-                # pubkeyPayload[readPosition:readPosition+64] #We don't use this
-                # key for anything here.
+                # pubSigningKeyBase256 = pubkeyPayload[readPosition:readPosition+64] # We don't use this key for anything here.
                 readPosition += 64
                 pubEncryptionKeyBase256 = pubkeyPayload[
                     readPosition:readPosition + 64]
@@ -740,91 +690,38 @@ class singleWorker(threading.Thread):
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                     ackdata, tr.translateText("MainWindow", "Doing work necessary to send message."))))
 
-            if fromAddressVersionNumber == 2:
-                payload = ""
-                if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-                    payload += '\x01'  # Message version.
-                payload += encodeVarint(fromAddressVersionNumber)
-                payload += encodeVarint(fromStreamNumber)
-                payload += '\x00\x00\x00\x01'  # Bitfield of features and behaviors that can be expected from me. (See https://bitmessage.org/wiki/Protocol_specification#Pubkey_bitfield_features  )
+            # Now we can start to assemble our message.
+            payload = encodeVarint(fromAddressVersionNumber)
+            payload += encodeVarint(fromStreamNumber)
+            payload += '\x00\x00\x00\x01'  # Bitfield of features and behaviors that can be expected from me. (See https://bitmessage.org/wiki/Protocol_specification#Pubkey_bitfield_features  )
 
-                # We need to convert our private keys to public keys in order
-                # to include them.
-                try:
-                    privSigningKeyBase58 = shared.config.get(
-                        fromaddress, 'privsigningkey')
-                    privEncryptionKeyBase58 = shared.config.get(
-                        fromaddress, 'privencryptionkey')
-                except:
-                    shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
-                    continue
+            # We need to convert our private keys to public keys in order
+            # to include them.
+            try:
+                privSigningKeyBase58 = shared.config.get(
+                    fromaddress, 'privsigningkey')
+                privEncryptionKeyBase58 = shared.config.get(
+                    fromaddress, 'privencryptionkey')
+            except:
+                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
+                    ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
+                continue
 
-                privSigningKeyHex = shared.decodeWalletImportFormat(
-                    privSigningKeyBase58).encode('hex')
-                privEncryptionKeyHex = shared.decodeWalletImportFormat(
-                    privEncryptionKeyBase58).encode('hex')
+            privSigningKeyHex = shared.decodeWalletImportFormat(
+                privSigningKeyBase58).encode('hex')
+            privEncryptionKeyHex = shared.decodeWalletImportFormat(
+                privEncryptionKeyBase58).encode('hex')
 
-                pubSigningKey = highlevelcrypto.privToPub(
-                    privSigningKeyHex).decode('hex')
-                pubEncryptionKey = highlevelcrypto.privToPub(
-                    privEncryptionKeyHex).decode('hex')
+            pubSigningKey = highlevelcrypto.privToPub(
+                privSigningKeyHex).decode('hex')
+            pubEncryptionKey = highlevelcrypto.privToPub(
+                privEncryptionKeyHex).decode('hex')
 
-                payload += pubSigningKey[
-                    1:]  # The \x04 on the beginning of the public keys are not sent. This way there is only one acceptable way to encode and send a public key.
-                payload += pubEncryptionKey[1:]
-
-                payload += toRipe  # This hash will be checked by the receiver of the message to verify that toRipe belongs to them. This prevents a Surreptitious Forwarding Attack.
-                payload += '\x02'  # Type 2 is simple UTF-8 message encoding as specified on the Protocol Specification on the Bitmessage Wiki.
-                messageToTransmit = 'Subject:' + \
-                    subject + '\n' + 'Body:' + message
-                payload += encodeVarint(len(messageToTransmit))
-                payload += messageToTransmit
-                fullAckPayload = self.generateFullAckMessage(
-                    ackdata, toStreamNumber)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
-                payload += encodeVarint(len(fullAckPayload))
-                payload += fullAckPayload
-                if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-                    dataToSign = payload
-                else:
-                    dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + encodeVarint(1) + encodeVarint(toStreamNumber) + payload 
-                signature = highlevelcrypto.sign(dataToSign, privSigningKeyHex)
-                payload += encodeVarint(len(signature))
-                payload += signature
+            payload += pubSigningKey[
+                1:]  # The \x04 on the beginning of the public keys are not sent. This way there is only one acceptable way to encode and send a public key.
+            payload += pubEncryptionKey[1:]
 
             if fromAddressVersionNumber >= 3:
-                payload = ""
-                if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-                    payload += '\x01'  # Message version.
-                payload += encodeVarint(fromAddressVersionNumber)
-                payload += encodeVarint(fromStreamNumber)
-                payload += '\x00\x00\x00\x01'  # Bitfield of features and behaviors that can be expected from me. (See https://bitmessage.org/wiki/Protocol_specification#Pubkey_bitfield_features  )
-
-                # We need to convert our private keys to public keys in order
-                # to include them.
-                try:
-                    privSigningKeyBase58 = shared.config.get(
-                        fromaddress, 'privsigningkey')
-                    privEncryptionKeyBase58 = shared.config.get(
-                        fromaddress, 'privencryptionkey')
-                except:
-                    shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
-                        ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
-                    continue
-
-                privSigningKeyHex = shared.decodeWalletImportFormat(
-                    privSigningKeyBase58).encode('hex')
-                privEncryptionKeyHex = shared.decodeWalletImportFormat(
-                    privEncryptionKeyBase58).encode('hex')
-
-                pubSigningKey = highlevelcrypto.privToPub(
-                    privSigningKeyHex).decode('hex')
-                pubEncryptionKey = highlevelcrypto.privToPub(
-                    privEncryptionKeyHex).decode('hex')
-
-                payload += pubSigningKey[
-                    1:]  # The \x04 on the beginning of the public keys are not sent. This way there is only one acceptable way to encode and send a public key.
-                payload += pubEncryptionKey[1:]
                 # If the receiver of our message is in our address book,
                 # subscriptions list, or whitelist then we will allow them to
                 # do the network-minimum proof of work. Let us check to see if
@@ -840,34 +737,30 @@ class singleWorker(threading.Thread):
                     payload += encodeVarint(shared.config.getint(
                         fromaddress, 'payloadlengthextrabytes'))
 
-                payload += toRipe  # This hash will be checked by the receiver of the message to verify that toRipe belongs to them. This prevents a Surreptitious Forwarding Attack.
-                payload += '\x02'  # Type 2 is simple UTF-8 message encoding as specified on the Protocol Specification on the Bitmessage Wiki.
-                messageToTransmit = 'Subject:' + \
-                    subject + '\n' + 'Body:' + message
-                payload += encodeVarint(len(messageToTransmit))
-                payload += messageToTransmit
-                if shared.config.has_section(toaddress):
-                    with shared.printLock:
-                        print 'Not bothering to include ackdata because we are sending to ourselves or a chan.'
-                    fullAckPayload = ''
-                elif not shared.isBitSetWithinBitfield(behaviorBitfield,31):
-                    with shared.printLock:
-                        print 'Not bothering to include ackdata because the receiver said that they won\'t relay it anyway.'
-                    fullAckPayload = ''                    
-                else:
-                    fullAckPayload = self.generateFullAckMessage(
-                        ackdata, toStreamNumber)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
-                payload += encodeVarint(len(fullAckPayload))
-                payload += fullAckPayload
-                if int(time.time()) < 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-                    dataToSign = payload
-                else:
-                    dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + encodeVarint(1) + encodeVarint(toStreamNumber) + payload 
-                signature = highlevelcrypto.sign(dataToSign, privSigningKeyHex)
-                payload += encodeVarint(len(signature))
-                payload += signature
+            payload += toRipe  # This hash will be checked by the receiver of the message to verify that toRipe belongs to them. This prevents a Surreptitious Forwarding Attack.
+            payload += '\x02'  # Type 2 is simple UTF-8 message encoding as specified on the Protocol Specification on the Bitmessage Wiki.
+            messageToTransmit = 'Subject:' + \
+                subject + '\n' + 'Body:' + message
+            payload += encodeVarint(len(messageToTransmit))
+            payload += messageToTransmit
+            if shared.config.has_section(toaddress):
+                with shared.printLock:
+                    print 'Not bothering to include ackdata because we are sending to ourselves or a chan.'
+                fullAckPayload = ''
+            elif not shared.isBitSetWithinBitfield(behaviorBitfield,31):
+                with shared.printLock:
+                    print 'Not bothering to include ackdata because the receiver said that they won\'t relay it anyway.'
+                fullAckPayload = ''                    
+            else:
+                fullAckPayload = self.generateFullAckMessage(
+                    ackdata, toStreamNumber)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
+            payload += encodeVarint(len(fullAckPayload))
+            payload += fullAckPayload
+            dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + encodeVarint(1) + encodeVarint(toStreamNumber) + payload 
+            signature = highlevelcrypto.sign(dataToSign, privSigningKeyHex)
+            payload += encodeVarint(len(signature))
+            payload += signature
 
-            print 'using pubEncryptionKey:', pubEncryptionKeyBase256.encode('hex')
             # We have assembled the data that will be encrypted.
             try:
                 encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
@@ -878,8 +771,7 @@ class singleWorker(threading.Thread):
             
             encryptedPayload = pack('>Q', embeddedTime)
             encryptedPayload += '\x00\x00\x00\x02' # object type: msg
-            if int(time.time()) >= 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-                encryptedPayload += encodeVarint(1) # msg version
+            encryptedPayload += encodeVarint(1) # msg version
             encryptedPayload += encodeVarint(toStreamNumber) + encrypted
             target = 2 ** 64 / (requiredAverageProofOfWorkNonceTrialsPerByte*(len(encryptedPayload) + 8 + requiredPayloadLengthExtraBytes + ((TTL*(len(encryptedPayload)+8+requiredPayloadLengthExtraBytes))/(2 ** 16))))
             with shared.printLock:
@@ -1019,8 +911,7 @@ class singleWorker(threading.Thread):
         embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', (embeddedTime))
         payload += '\x00\x00\x00\x02' # object type: msg
-        if int(time.time()) >= 1416175200: # Sun, 16 Nov 2014 22:00:00 GMT
-            payload += encodeVarint(1) # msg version
+        payload += encodeVarint(1) # msg version
         payload += encodeVarint(toStreamNumber) + ackdata
         
         target = 2 ** 64 / (shared.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + shared.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+shared.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))

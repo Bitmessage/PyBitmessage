@@ -346,6 +346,28 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'settingsversion', '10')
             with open(shared.appdata + 'keys.dat', 'wb') as configfile:
                 shared.config.write(configfile)
+                
+        
+        # The format of data stored in the pubkeys table has changed. Let's
+        # clear it, and the pubkeys from inventory, so that they'll be re-downloaded.
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        currentVersion = int(self.cur.fetchall()[0][0])
+        if currentVersion == 7:
+            logger.debug('In messages.dat database, clearing pubkeys table because the data format has been updated.')
+            self.cur.execute(
+                '''delete from inventory where objecttype = 1;''')
+            self.cur.execute(
+                '''delete from pubkeys;''')
+            # Any sending messages for which we *thought* that we had the pubkey must
+            # be rechecked.
+            self.cur.execute(
+                '''UPDATE sent SET status='msgqueued' WHERE status='doingmsgpow' or status='badkey';''')
+            query = '''update settings set value=? WHERE key='version';'''
+            parameters = (8,)
+            self.cur.execute(query, parameters)
+            logger.debug('Finished clearing currently held pubkeys.')
         
 
         # Are you hoping to add a new option to the keys.dat file of existing
