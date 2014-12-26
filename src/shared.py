@@ -850,12 +850,17 @@ def writeKeysFile():
     fileName = shared.appdata + 'keys.dat'
     fileNameBak = fileName + "." + datetime.datetime.now().strftime("%Y%j%H%M%S%f") + '.bak'
     # create a backup copy to prevent the accidental loss due to the disk write failure
-    shutil.copyfile(fileName, fileNameBak)
+    try:
+        shutil.copyfile(fileName, fileNameBak)
+        # The backup succeeded. This can fail if the file didn't exist before. 
+        existingFileNameExisted = True
+    except:
+        existingFileNameExisted = False
     # write the file
     with open(fileName, 'wb') as configfile:
         shared.config.write(configfile)
     # delete a backup
-    os.remove(fileNameBak)
+    if existingFileNameExisted:
+        os.remove(fileNameBak)
 
-helper_startup.loadConfig()
 from debug import logger
