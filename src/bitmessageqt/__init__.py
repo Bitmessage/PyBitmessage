@@ -233,7 +233,7 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.ui.actionHelp, QtCore.SIGNAL(
             "triggered()"), self.click_actionHelp)
 
-    def init_inbox_popup_menu(self):
+    def init_inbox_popup_menu(self, connectSignal=True):
         # Popup menu for the Inbox tab
         self.ui.inboxContextMenuToolbar = QtGui.QToolBar()
         # Actions
@@ -259,9 +259,10 @@ class MyForm(QtGui.QMainWindow):
                 "MainWindow", "Mark Unread"), self.on_action_InboxMarkUnread)
         self.ui.tableWidgetInbox.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'),
-                     self.on_context_menuInbox)
+        if connectSignal:
+            self.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
+                'customContextMenuRequested(const QPoint&)'),
+                        self.on_context_menuInbox)
         self.popMenuInbox = QtGui.QMenu(self)
         self.popMenuInbox.addAction(self.actionForceHtml)
         self.popMenuInbox.addAction(self.actionMarkUnread)
@@ -272,7 +273,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuInbox.addAction(self.actionSaveMessageAs)
         self.popMenuInbox.addAction(self.actionTrashInboxMessage)
 
-    def init_identities_popup_menu(self):
+    def init_identities_popup_menu(self, connectSignal=True):
         # Popup menu for the Your Identities tab
         self.ui.addressContextMenuToolbar = QtGui.QToolBar()
         # Actions
@@ -298,9 +299,10 @@ class MyForm(QtGui.QMainWindow):
             self.on_action_SpecialAddressBehaviorDialog)
         self.ui.tableWidgetYourIdentities.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'),
-                     self.on_context_menuYourIdentities)
+        if connectSignal:
+            self.connect(self.ui.tableWidgetYourIdentities, QtCore.SIGNAL(
+                'customContextMenuRequested(const QPoint&)'),
+                        self.on_context_menuYourIdentities)
         self.popMenu = QtGui.QMenu(self)
         self.popMenu.addAction(self.actionNew)
         self.popMenu.addSeparator()
@@ -311,7 +313,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenu.addAction(self.actionSetAvatar)
         self.popMenu.addAction(self.actionSpecialAddressBehavior)
 
-    def init_addressbook_popup_menu(self):
+    def init_addressbook_popup_menu(self, connectSignal=True):
         # Popup menu for the Address Book page
         self.ui.addressBookContextMenuToolbar = QtGui.QToolBar()
         # Actions
@@ -339,9 +341,10 @@ class MyForm(QtGui.QMainWindow):
                 "MainWindow", "Delete"), self.on_action_AddressBookDelete)
         self.ui.tableWidgetAddressBook.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'),
-                     self.on_context_menuAddressBook)
+        if connectSignal:
+            self.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL(
+                'customContextMenuRequested(const QPoint&)'),
+                        self.on_context_menuAddressBook)
         self.popMenuAddressBook = QtGui.QMenu(self)
         self.popMenuAddressBook.addAction(self.actionAddressBookSend)
         self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
@@ -351,7 +354,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuAddressBook.addAction(self.actionAddressBookNew)
         self.popMenuAddressBook.addAction(self.actionAddressBookDelete)
 
-    def init_subscriptions_popup_menu(self):
+    def init_subscriptions_popup_menu(self, connectSignal=True):
         # Popup menu for the Subscriptions page
         self.ui.subscriptionsContextMenuToolbar = QtGui.QToolBar()
         # Actions
@@ -374,9 +377,10 @@ class MyForm(QtGui.QMainWindow):
             self.on_action_SubscriptionsSetAvatar)
         self.ui.tableWidgetSubscriptions.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetSubscriptions, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'),
-                     self.on_context_menuSubscriptions)
+        if connectSignal:
+            self.connect(self.ui.tableWidgetSubscriptions, QtCore.SIGNAL(
+                'customContextMenuRequested(const QPoint&)'),
+                        self.on_context_menuSubscriptions)
         self.popMenuSubscriptions = QtGui.QMenu(self)
         self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
         self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
@@ -387,7 +391,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuSubscriptions.addSeparator()
         self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
 
-    def init_sent_popup_menu(self):
+    def init_sent_popup_menu(self, connectSignal=True):
         # Popup menu for the Sent page
         self.ui.sentContextMenuToolbar = QtGui.QToolBar()
         # Actions
@@ -403,14 +407,15 @@ class MyForm(QtGui.QMainWindow):
                 "MainWindow", "Force send"), self.on_action_ForceSend)
         self.ui.tableWidgetSent.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetSent, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'),
-                     self.on_context_menuSent)
+        if connectSignal:
+            self.connect(self.ui.tableWidgetSent, QtCore.SIGNAL(
+              'customContextMenuRequested(const QPoint&)'),
+                      self.on_context_menuSent)
         # self.popMenuSent = QtGui.QMenu( self )
         # self.popMenuSent.addAction( self.actionSentClipboard )
         # self.popMenuSent.addAction( self.actionTrashSentMessage )
 
-    def init_blacklist_popup_menu(self):
+    def init_blacklist_popup_menu(self, connectSignal=True):
         # Popup menu for the Blacklist page
         self.ui.blacklistContextMenuToolbar = QtGui.QToolBar()
         # Actions
@@ -436,9 +441,10 @@ class MyForm(QtGui.QMainWindow):
             self.on_action_BlacklistSetAvatar)
         self.ui.tableWidgetBlacklist.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
-        self.connect(self.ui.tableWidgetBlacklist, QtCore.SIGNAL(
-            'customContextMenuRequested(const QPoint&)'),
-                     self.on_context_menuBlacklist)
+        if connectSignal:
+            self.connect(self.ui.tableWidgetBlacklist, QtCore.SIGNAL(
+                'customContextMenuRequested(const QPoint&)'),
+                        self.on_context_menuBlacklist)
         self.popMenuBlacklist = QtGui.QMenu(self)
         # self.popMenuBlacklist.addAction( self.actionBlacklistNew )
         self.popMenuBlacklist.addAction(self.actionBlacklistDelete)
@@ -1436,6 +1442,12 @@ class MyForm(QtGui.QMainWindow):
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.LanguageChange:
             self.ui.retranslateUi(self)
+            self.init_inbox_popup_menu(False)
+            self.init_identities_popup_menu(False)
+            self.init_addressbook_popup_menu(False)
+            self.init_subscriptions_popup_menu(False)
+            self.init_sent_popup_menu(False)
+            self.init_blacklist_popup_menu(False)
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.windowState() & QtCore.Qt.WindowMinimized:
                 self.actionShow.setChecked(False)
