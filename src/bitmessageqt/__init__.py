@@ -1438,18 +1438,16 @@ class MyForm(QtGui.QMainWindow):
             self.ui.retranslateUi(self)
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.windowState() & QtCore.Qt.WindowMinimized:
-                self.actionShow.setChecked(False)
-        if shared.config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
-            if event.type() == QtCore.QEvent.WindowStateChange:
-                if self.windowState() & QtCore.Qt.WindowMinimized:
+                if shared.config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
                     self.appIndicatorHide()
                     if 'win32' in sys.platform or 'win64' in sys.platform:
-                        self.setWindowFlags(Qt.ToolTip)
-                elif event.oldState() & QtCore.Qt.WindowMinimized:
-                    # The window state has just been changed to
-                    # Normal/Maximised/FullScreen
-                    pass
-            # QtGui.QWidget.changeEvent(self, event)
+                        self.setWindowFlags(Qt.ToolTip)           
+            elif event.oldState() & QtCore.Qt.WindowMinimized:
+                # The window state has just been changed to
+                # Normal/Maximised/FullScreen
+                pass
+        # QtGui.QWidget.changeEvent(self, event)
+
 
     def __icon_activated(self, reason):
         if reason == QtGui.QSystemTrayIcon.Trigger:
@@ -3437,9 +3435,6 @@ class settingsDialog(QtGui.QDialog):
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxStartOnLogon.setText(_translate(
                 "MainWindow", "Start-on-login not yet supported on your OS."))
-            self.ui.checkBoxMinimizeToTray.setDisabled(True)
-            self.ui.checkBoxMinimizeToTray.setText(_translate(
-                "MainWindow", "Minimize-to-tray not yet supported on your OS."))
         # On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(
             shared.config.get('bitmessagesettings', 'port')))
