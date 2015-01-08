@@ -44,7 +44,7 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="241"/>
         <source>View HTML code as formatted text</source>
-        <translation type="unfinished"></translation>
+        <translation>Bekijk HTML als geformatteerde tekst</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="245"/>
@@ -84,7 +84,7 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="310"/>
         <source>Send message to this address</source>
-        <translation type="unfinished"></translation>
+        <translation>Stuur bericht naar dit adres</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="318"/>
@@ -94,7 +94,7 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="326"/>
         <source>Add New Address</source>
-        <translation type="unfinished"></translation>
+        <translation>Nieuw adres toevoegen</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="412"/>
@@ -104,7 +104,7 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="389"/>
         <source>Copy destination address to clipboard</source>
-        <translation type="unfinished"></translation>
+        <translation>Kopieer bestemmingsadres naar klembord</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="393"/>
@@ -139,7 +139,7 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="832"/>
         <source>Message sent. Waiting for acknowledgement. Sent at %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Bericht verzonden. Wachten op bevestiging. Verzonden op %1</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="835"/>
@@ -154,7 +154,7 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="841"/>
         <source>Acknowledgement of the message received %1</source>
-        <translation type="unfinished"></translation>
+        <translation>Bevestiging van het bericht ontvangen op %1</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="844"/>
@@ -184,7 +184,7 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="859"/>
         <source>Unknown status: %1 %2</source>
-        <translation type="unfinished"></translation>
+        <translation>Status onbekend: %1 %2</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1541"/>
@@ -204,7 +204,7 @@
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1018"/>
         <source>Subscribe</source>
-        <translation type="unfinished"></translation>
+        <translation>Abonneer</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="608"/>
@@ -231,7 +231,7 @@ It is important that you back up this file.</source>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1332"/>
         <source>Open keys.dat?</source>
-        <translation type="unfinished"></translation>
+        <translation>keys.dat openen?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1329"/>
@@ -288,7 +288,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1416"/>
         <source>Success</source>
-        <translation type="unfinished"></translation>
+        <translation>Gelukt</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1387"/>
@@ -298,7 +298,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1396"/>
         <source>Address too new</source>
-        <translation type="unfinished"></translation>
+        <translation>Adres te nieuw</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1396"/>
@@ -313,7 +313,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1400"/>
         <source>That Bitmessage address is not valid.</source>
-        <translation type="unfinished"></translation>
+        <translation>Dat Bitmessage adres is niet geldig.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1408"/>
@@ -333,17 +333,17 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1458"/>
         <source>Processed %1 person-to-person messages.</source>
-        <translation type="unfinished"></translation>
+        <translation>Verwerkt %1 peer-to-peer-bericht(en).</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1462"/>
         <source>Processed %1 broadcast messages.</source>
-        <translation type="unfinished"></translation>
+        <translation>Verwerkt %1 broadcast-bericht(en).</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1466"/>
         <source>Processed %1 public keys.</source>
-        <translation type="unfinished"></translation>
+        <translation>Verwerkt %1 publieke sleutel(s).</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1510"/>
@@ -408,7 +408,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1809"/>
         <source>Address version number</source>
-        <translation type="unfinished"></translation>
+        <translation>Adres versienummer</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1809"/>
@@ -458,7 +458,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2045"/>
         <source>From </source>
-        <translation>Van</translation>
+        <translation>Van </translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3554"/>
@@ -468,7 +468,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2424"/>
         <source>The address you entered was invalid. Ignoring it.</source>
-        <translation type="unfinished"></translation>
+        <translation>Het ingevoerd adres is ongeldig. Worden genegeerd.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2636"/>
@@ -568,7 +568,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2769"/>
         <source>No addresses selected.</source>
-        <translation>Geen adressen geselecteerd</translation>
+        <translation>Geen adressen geselecteerd.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3438"/>
@@ -733,7 +733,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="592"/>
         <source>Your Identities</source>
-        <translation>Je identiteiten</translation>
+        <translation>Uw identiteiten</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="593"/>
@@ -803,22 +803,22 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="624"/>
         <source>Processed 0 person-to-person message.</source>
-        <translation type="unfinished"></translation>
+        <translation>Verwerkt 0 peer-to-peer-bericht.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="625"/>
         <source>Processed 0 public key.</source>
-        <translation type="unfinished"></translation>
+        <translation>Verwerkt 0 broadcast-bericht.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="626"/>
         <source>Processed 0 broadcast.</source>
-        <translation type="unfinished"></translation>
+        <translation>Verwerkt 0 publieke sleutel.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="628"/>
         <source>Network Status</source>
-        <translation type="unfinished"></translation>
+        <translation>netwerkstatus</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="629"/>
@@ -848,7 +848,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="635"/>
         <source>Ctrl+Q</source>
-        <translation>Ctrrl+Q</translation>
+        <translation>Ctrl+Q</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="637"/>
@@ -883,7 +883,7 @@ It is important that you back up this file. Would you like to open the file now?
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1359"/>
         <source>Bad address version number</source>
-        <translation type="unfinished"></translation>
+        <translation>Slechte adres versienummer</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1356"/>
@@ -1150,7 +1150,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/about.py" line="66"/>
         <source>About</source>
-        <translation type="unfinished"></translation>
+        <translation>Over</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/about.py" line="70"/>
@@ -1173,7 +1173,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/connect.py" line="56"/>
         <source>Bitmessage</source>
-        <translation type="unfinished"></translation>
+        <translation>Bitmessage</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/connect.py" line="57"/>
@@ -1528,7 +1528,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/settings.py" line="433"/>
         <source>Password:</source>
-        <translation type="unfinished"></translation>
+        <translation>Wachtwoord</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="434"/>
@@ -1563,7 +1563,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/settings.py" line="393"/>
         <source>Interface Language</source>
-        <translation type="unfinished"></translation>
+        <translation>Interface Taal</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="394"/>
@@ -1633,22 +1633,22 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/settings.py" line="440"/>
         <source>Give up after</source>
-        <translation type="unfinished"></translation>
+        <translation>Opgeven na</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="441"/>
         <source>and</source>
-        <translation type="unfinished"></translation>
+        <translation>en</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="442"/>
         <source>days</source>
-        <translation type="unfinished"></translation>
+        <translation>dagen</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="443"/>
         <source>months.</source>
-        <translation type="unfinished"></translation>
+        <translation>maanden.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="444"/>
