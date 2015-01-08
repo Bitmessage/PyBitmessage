@@ -976,7 +976,7 @@ p, li { white-space: pre-wrap; }
          </rect>
         </property>
         <property name="text">
-         <string>Total connections: 0</string>
+         <string>Total connections:</string>
         </property>
        </widget>
        <widget class="QLabel" name="labelStartupTime">
@@ -989,7 +989,7 @@ p, li { white-space: pre-wrap; }
          </rect>
         </property>
         <property name="text">
-         <string>Since startup at asdf:</string>
+         <string>Since startup:</string>
         </property>
        </widget>
        <widget class="QLabel" name="labelMessageCount">
@@ -1002,7 +1002,7 @@ p, li { white-space: pre-wrap; }
          </rect>
         </property>
         <property name="text">
-         <string>Processed 0 person-to-person message.</string>
+         <string>Processed 0 person-to-person messages.</string>
         </property>
        </widget>
        <widget class="QLabel" name="labelPubkeyCount">
@@ -1015,7 +1015,7 @@ p, li { white-space: pre-wrap; }
          </rect>
         </property>
         <property name="text">
-         <string>Processed 0 public key.</string>
+         <string>Processed 0 public keys.</string>
         </property>
        </widget>
        <widget class="QLabel" name="labelBroadcastCount">
@@ -1028,7 +1028,7 @@ p, li { white-space: pre-wrap; }
          </rect>
         </property>
         <property name="text">
-         <string>Processed 0 broadcast.</string>
+         <string>Processed 0 broadcasts.</string>
         </property>
        </widget>
        <widget class="QLabel" name="labelLookupsPerSecond">

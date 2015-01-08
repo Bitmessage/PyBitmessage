@@ -7,6 +7,7 @@ import ctypes
 import hashlib
 import highlevelcrypto
 from addresses import *
+from debug import logger
 from pyelliptic import arithmetic
 import tr
 
@@ -85,20 +86,19 @@ class addressGenerator(threading.Thread):
                     potentialPrivEncryptionKey = OpenSSL.rand(32)
                     potentialPubEncryptionKey = highlevelcrypto.pointMult(
                         potentialPrivEncryptionKey)
-                    # print 'potentialPubSigningKey', potentialPubSigningKey.encode('hex')
-                    # print 'potentialPubEncryptionKey',
-                    # potentialPubEncryptionKey.encode('hex')
                     ripe = hashlib.new('ripemd160')
                     sha = hashlib.new('sha512')
                     sha.update(
                         potentialPubSigningKey + potentialPubEncryptionKey)
                     ripe.update(sha.digest())
-                    # print 'potential ripe.digest',
-                    # ripe.digest().encode('hex')
                     if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
                         break
-                print 'Generated address with ripe digest:', ripe.digest().encode('hex')
-                print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime), 'addresses per second before finding one with the correct ripe-prefix.'
+                logger.info('Generated address with ripe digest: %s' % ripe.digest().encode('hex'))
+                try:
+                    logger.info('Address generator calculated %s addresses at %s addresses per second before finding one with the correct ripe-prefix.' % (numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime)))
+                except ZeroDivisionError:
+                    # The user must have a pretty fast computer. time.time() - startTime equaled zero.
+                    pass
                 address = encodeAddress(addressVersionNumber, streamNumber, ripe.digest())
 
                 # An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
@@ -108,14 +108,12 @@ class addressGenerator(threading.Thread):
                     privSigningKey).digest()).digest()[0:4]
                 privSigningKeyWIF = arithmetic.changebase(
                     privSigningKey + checksum, 256, 58)
-                # print 'privSigningKeyWIF',privSigningKeyWIF
 
                 privEncryptionKey = '\x80' + potentialPrivEncryptionKey
                 checksum = hashlib.sha256(hashlib.sha256(
                     privEncryptionKey).digest()).digest()[0:4]
                 privEncryptionKeyWIF = arithmetic.changebase(
                     privEncryptionKey + checksum, 256, 58)
-                # print 'privEncryptionKeyWIF',privEncryptionKeyWIF
 
                 shared.config.add_section(address)
                 shared.config.set(address, 'label', label)
@@ -178,9 +176,6 @@ class addressGenerator(threading.Thread):
                             potentialPrivSigningKey)
                         potentialPubEncryptionKey = highlevelcrypto.pointMult(
                             potentialPrivEncryptionKey)
-                        # print 'potentialPubSigningKey', potentialPubSigningKey.encode('hex')
-                        # print 'potentialPubEncryptionKey',
-                        # potentialPubEncryptionKey.encode('hex')
                         signingKeyNonce += 2
                         encryptionKeyNonce += 2
                         ripe = hashlib.new('ripemd160')
@@ -188,13 +183,16 @@ class addressGenerator(threading.Thread):
                         sha.update(
                             potentialPubSigningKey + potentialPubEncryptionKey)
                         ripe.update(sha.digest())
-                        # print 'potential ripe.digest',
-                        # ripe.digest().encode('hex')
                         if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
                             break
 
-                    print 'ripe.digest', ripe.digest().encode('hex')
-                    print 'Address generator calculated', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, 'addresses at', numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime), 'keys per second.'
+                    
+                    logger.info('Generated address with ripe digest: %s' % ripe.digest().encode('hex'))
+                    try:
+                        logger.info('Address generator calculated %s addresses at %s addresses per second before finding one with the correct ripe-prefix.' % (numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime)))
+                    except ZeroDivisionError:
+                        # The user must have a pretty fast computer. time.time() - startTime equaled zero.
+                        pass
                     address = encodeAddress(addressVersionNumber, streamNumber, ripe.digest())
 
                     saveAddressToDisk = True
@@ -222,14 +220,19 @@ class addressGenerator(threading.Thread):
                         privEncryptionKeyWIF = arithmetic.changebase(
                             privEncryptionKey + checksum, 256, 58)
 
-                        addressAlreadyExists = False
+                        
                         try:
                             shared.config.add_section(address)
+                            addressAlreadyExists = False
                         except:
-                            print address, 'already exists. Not adding it again.'
                             addressAlreadyExists = True
-                        if not addressAlreadyExists:
-                            print 'label:', label
+                            
+                        if addressAlreadyExists:
+                            logger.info('%s already exists. Not adding it again.' % address)
+                            shared.UISignalQueue.put((
+                                'updateStatusBar', tr.translateText("MainWindow","%1 is already in 'Your Identities'. Not adding it again.").arg(address)))
+                        else:
+                            logger.debug('label: %s' % label)
                             shared.config.set(address, 'label', label)
                             shared.config.set(address, 'enabled', 'true')
                             shared.config.set(address, 'decoy', 'false')
@@ -262,18 +265,16 @@ class addressGenerator(threading.Thread):
                             elif addressVersionNumber == 4:
                                 shared.workerQueue.put((
                                     'sendOutOrStoreMyV4Pubkey', address))
+                            shared.UISignalQueue.put((
+                                'updateStatusBar', tr.translateText("MainWindow", "Done generating address")))
 
 
                 # Done generating addresses.
                 if command == 'createDeterministicAddresses' or command == 'joinChan' or command == 'createChan':
                     shared.apiAddressGeneratorReturnQueue.put(
                         listOfNewAddressesToSendOutThroughTheAPI)
-                    shared.UISignalQueue.put((
-                        'updateStatusBar', tr.translateText("MainWindow", "Done generating address")))
-                    # shared.reloadMyAddressHashes()
                 elif command == 'getDeterministicAddress':
                     shared.apiAddressGeneratorReturnQueue.put(address)
-                #todo: return things to the API if createChan or joinChan assuming saveAddressToDisk
             else:
                 raise Exception(
                     "Error in the addressGenerator thread. Thread was given a command it could not understand: " + command)
