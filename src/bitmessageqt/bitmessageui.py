@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Fri Aug 01 15:30:14 2014
+# Created: Mon Jan 05 16:21:20 2015
 #      by: PyQt4 UI code generator 4.10.3
 #
 # WARNING! All changes made in this file will be lost!
@@ -625,11 +625,11 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Stream #", None))
         item = self.tableWidgetConnectionCount.horizontalHeaderItem(1)
         item.setText(_translate("MainWindow", "Connections", None))
-        self.labelTotalConnections.setText(_translate("MainWindow", "Total connections: 0", None))
-        self.labelStartupTime.setText(_translate("MainWindow", "Since startup at asdf:", None))
-        self.labelMessageCount.setText(_translate("MainWindow", "Processed 0 person-to-person message.", None))
-        self.labelPubkeyCount.setText(_translate("MainWindow", "Processed 0 public key.", None))
-        self.labelBroadcastCount.setText(_translate("MainWindow", "Processed 0 broadcast.", None))
+        self.labelTotalConnections.setText(_translate("MainWindow", "Total connections:", None))
+        self.labelStartupTime.setText(_translate("MainWindow", "Since startup:", None))
+        self.labelMessageCount.setText(_translate("MainWindow", "Processed 0 person-to-person messages.", None))
+        self.labelPubkeyCount.setText(_translate("MainWindow", "Processed 0 public keys.", None))
+        self.labelBroadcastCount.setText(_translate("MainWindow", "Processed 0 broadcasts.", None))
         self.labelLookupsPerSecond.setText(_translate("MainWindow", "Inventory lookups per second: 0", None))
         self.labelBytesRecvCount.setText(_translate("MainWindow", "Down: 0 KB/s", None))
         self.labelBytesSentCount.setText(_translate("MainWindow", "Up: 0 KB/s", None))
