@@ -1,9 +1,9 @@
 #!/bin/bash
 
 # OS X Build script wrapper around the py2app script.
-# These build can only be generated on OS X.
+# This build can only be generated on OS X.
 # Requires all build dependencies for Bitmessage
-# Especially important is openssl installed through brew
+# Especially important is OpenSSL installed through brew
 
 export ARCHFLAGS="-arch i386 -arch x86_64" 
 

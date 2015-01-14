@@ -4,10 +4,10 @@ For an up-to-date version of these instructions, please visit the
 [Bitmessage Wiki](https://bitmessage.org/wiki/Compiling_instructions).
 
 PyBitmessage can be run either straight from source or from an installed
-packaged.
+package.
 
 ##Dependencies
-Before running PyBitmessage, make sure you have all the needed dependencies
+Before running PyBitmessage, make sure you have all the necessary dependencies
 installed on your system.
 
 Here's a list of dependencies needed for PyBitmessage
@@ -42,7 +42,7 @@ cd PyBitmessage/ && python src/bitmessagemain.py
 That's it! *Honestly*!
 
 ####Windows
-In Windows you can download an executable for Bitmessage
+On Windows you can download an executable for Bitmessage
 [here](https://bitmessage.org/download/windows/Bitmessage.exe).
 
 However, if you would like to run PyBitmessage via Python in Windows, you can
@@ -52,13 +52,12 @@ information on how to do so.
 ####OS X
 First off, install Homebrew.
 ```
-ruby -e "$(curl -fsSL https://raw.github.com/mxcl/homebrew/go)"
+ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
 ```
 
 Now, install the required dependencies
 ```
-brew install python pyqt
-brew install git
+brew install git python pyqt
 ```
 
 Download and run PyBitmessage:
