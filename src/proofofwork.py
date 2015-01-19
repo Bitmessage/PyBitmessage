@@ -6,6 +6,7 @@ from struct import unpack, pack
 import sys
 from shared import config, frozen
 import shared
+from openclpow import do_opencl_pow
 #import os
 
 def _set_idle():
@@ -70,8 +71,16 @@ def _doFastPoW(target, initialHash):
                 return result[0], result[1]
         time.sleep(0.2)
 
+def _doGPUPow(target, initialHash):
+    nonce = do_opencl_pow(initialHash.encode("hex"), target)
+    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+    #print "{} - value {} < {}".format(nonce, trialValue, target)
+    return [trialValue, nonce]
+
 def run(target, initialHash):
-    if frozen == "macosx_app" or not frozen:
+    if has_opencl:
+	return _doGPUPow(target, initialHash)
+    elif frozen == "macosx_app" or not frozen:
         return _doFastPoW(target, initialHash)
     else:
         return _doSafePoW(target, initialHash)
