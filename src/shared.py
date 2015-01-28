@@ -591,7 +591,7 @@ def checkAndShareObjectWithPeers(data):
     """
     if len(data) > 2 ** 18:
         logger.info('The payload length of this object is too large (%s bytes). Ignoring it.' % len(data))
-        return
+        return 0
     # Let us check to make sure that the proof of work is sufficient.
     if not isProofOfWorkSufficient(data):
         logger.info('Proof of work is insufficient.')
@@ -663,6 +663,9 @@ def _checkAndShareUndefinedObjectWithPeers(data):
 def _checkAndShareMsgWithPeers(data):
     embeddedTime, = unpack('>Q', data[8:16])
     readPosition = 20 # bypass nonce, time, and object type
+    objectVersion, objectVersionLength = decodeVarint(
+        data[readPosition:readPosition + 9])
+    readPosition += objectVersionLength
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 9])
     if not streamNumber in streamsInWhichIAmParticipating:
