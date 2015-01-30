@@ -8,40 +8,12 @@ from debug import logger
 
 # Helper Functions
 import proofofwork
-
 from addresses import decodeAddress,addBMIfNotPresent,decodeVarint,calculateInventoryHash,varintDecodeError
 import helper_inbox
 import helper_sent
 from pyelliptic.openssl import OpenSSL
 
 str_chan = '[chan]'
-
-# class messages( array ):
-
-#     def base( self ):
-#         msgid, toAddress, fromAddress, subject, message, encodingtype, received, read= query
-#         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-#         message = shared.fixPotentiallyInvalidUTF8Data(message)
-#         data.append({
-#             'msgid':msgid.encode('hex'),
-#             'toAddress':toAddress,
-#             'fromAddress':fromAddress,
-#             'subject':subject.encode('base64'),
-#             'message':message.encode('base64'),
-#             'encodingType':encodingtype,
-            
-#         })
-
-#     def sent( sefl, query ):
-#         lastactiontime, status, ackdata = row[6:8]
-#         'lastactiontime':lastactiontime,
-#         'status':status,
-#         'ackdata': ackdata
-
-#     def ( self, query ):
-#         received, read = row[6:7]
-#         'receivedTime':received
-#         'read': read
 
 class _handle_request( object ):
     def ping( self, *args ):
@@ -467,7 +439,7 @@ class _handle_request( object ):
         return 200, {}
 
     def getAllInboxMessages( self, *args ):
-        queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox where folder='inbox' ORDER BY received''')
+        queryreturn = sqlQuery('''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, received, read FROM inbox where folder='inbox' ORDER BY received''')
         # data = rowMessage( queryreturn )
         print queryreturn
         return 200, queryreturn
@@ -507,25 +479,26 @@ class _handle_request( object ):
 
     #     return 200, data
 
-    # def getAllSentMessages( self, *args ):
-    #     queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
-    #     data = []
-    #     for row in queryreturn:
-    #         msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
-    #         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-    #         message = shared.fixPotentiallyInvalidUTF8Data(message)
-    #         data.append({
-    #             'msgid':msgid.encode('hex'),
-    #             'toAddress':toAddress,
-    #             'fromAddress':fromAddress,
-    #             'subject':subject.encode('base64'),
-    #             'message':message.encode('base64'),
-    #             'encodingType':encodingtype,
-    #             'lastActionTime':lastactiontime,
-    #             'status':status,
-    #             'ackData':ackdata.encode('hex')
-    #         })
-    #     return 200, data
+    def getAllSentMessages( self, *args ):
+        queryreturn = sqlQuery('''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, lastactiontime, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
+        print queryreturn
+        data = []
+        # for row in queryreturn:
+        #     msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
+        #     subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+        #     message = shared.fixPotentiallyInvalidUTF8Data(message)
+        #     data.append({
+        #         'msgid':msgid.encode('hex'),
+        #         'toAddress':toAddress,
+        #         'fromAddress':fromAddress,
+        #         'subject':subject.encode('base64'),
+        #         'message':message.encode('base64'),
+        #         'encodingType':encodingtype,
+        #         'lastActionTime':lastactiontime,
+        #         'status':status,
+        #         'ackData':ackdata.encode('hex')
+        #     })
+        return 200, queryreturn
 
     # def getAllSentMessageIDs( self, *args ): # undocumented
     #     queryreturn = sqlQuery('''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''')
@@ -844,3 +817,174 @@ class _handle_request( object ):
     #     shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
     #     shared.UISignalQueue.put(('rerenderSubscriptions', ''))
     #     return 200, 'Deleted subscription if it existed.'
+    
+    def listSubscriptions( self, *args ):
+        queryreturn = sqlQuery('''SELECT label, address, enabled FROM subscriptions''')
+        data = []
+        for row in queryreturn:
+            label, address, enabled = row
+            label = shared.fixPotentiallyInvalidUTF8Data(label)
+            data.append({
+                'label':label.encode('base64'), 
+                'address': address, 
+                'enabled': enabled == 1
+            })
+        return 200, data
+
+    def disseminatePreEncryptedMsg( self, *args ):
+        # The device issuing this command to PyBitmessage supplies a msg object that has
+        # already been encrypted but which still needs the POW to be done. PyBitmessage
+        # accepts this msg object and sends it out to the rest of the Bitmessage network
+        # as if it had generated the message itself. Please do not yet add this to the
+        # api doc.
+        if len( args ) != 3:
+            return 0, 'I need 3 parameter!'
+        encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte, requiredPayloadLengthExtraBytes = args
+        encryptedPayload = self._decode(encryptedPayload, "hex")
+        # Let us do the POW and attach it to the front
+        target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
+        with shared.printLock:
+            print '(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes
+        powStartTime = time.time()
+        initialHash = hashlib.sha512(encryptedPayload).digest()
+        trialValue, nonce = proofofwork.run(target, initialHash)
+        with shared.printLock:
+            print '(For msg message via API) Found proof of work', trialValue, 'Nonce:', nonce
+            try:
+                print 'POW took', int(time.time() - powStartTime), 'seconds.', nonce / (time.time() - powStartTime), 'nonce trials per second.'
+            except:
+                pass
+        encryptedPayload = pack('>Q', nonce) + encryptedPayload
+        toStreamNumber = decodeVarint(encryptedPayload[16:26])[0]
+        inventoryHash = calculateInventoryHash(encryptedPayload)
+        objectType = 2
+        TTL = 2.5 * 24 * 60 * 60
+        shared.inventory[inventoryHash] = (
+            objectType, toStreamNumber, encryptedPayload, int(time.time()) + TTL,'')
+        shared.inventorySets[toStreamNumber].add(inventoryHash)
+        with shared.printLock:
+            print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', inventoryHash.encode('hex')
+        shared.broadcastToSendDataQueues((
+            toStreamNumber, 'advertiseobject', inventoryHash))
+
+    def disseminatePubkey':
+        # The device issuing this command to PyBitmessage supplies a pubkey object to be
+        # disseminated to the rest of the Bitmessage network. PyBitmessage accepts this
+        # pubkey object and sends it out to the rest of the Bitmessage network as if it
+        # had generated the pubkey object itself. Please do not yet add this to the api
+        # doc.
+        if len( args ) != 1:
+            return 0, 'I need 1 parameter!'
+        payload, = args
+        payload = self._decode(payload, "hex")
+
+        # Let us do the POW
+        target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
+                             8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+        print '(For pubkey message via API) Doing proof of work...'
+        initialHash = hashlib.sha512(payload).digest()
+        trialValue, nonce = proofofwork.run(target, initialHash)
+        print '(For pubkey message via API) Found proof of work', trialValue, 'Nonce:', nonce
+        payload = pack('>Q', nonce) + payload
+
+        pubkeyReadPosition = 8 # bypass the nonce
+        if payload[pubkeyReadPosition:pubkeyReadPosition+4] == '\x00\x00\x00\x00': # if this pubkey uses 8 byte time
+            pubkeyReadPosition += 8
+        else:
+            pubkeyReadPosition += 4
+        addressVersion, addressVersionLength = decodeVarint(payload[pubkeyReadPosition:pubkeyReadPosition+10])
+        pubkeyReadPosition += addressVersionLength
+        pubkeyStreamNumber = decodeVarint(payload[pubkeyReadPosition:pubkeyReadPosition+10])[0]
+        inventoryHash = calculateInventoryHash(payload)
+        objectType = 1
+                    #todo: support v4 pubkeys
+        TTL = 28 * 24 * 60 * 60
+        shared.inventory[inventoryHash] = (
+            objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL,'')
+        shared.inventorySets[pubkeyStreamNumber].add(inventoryHash)
+        with shared.printLock:
+            print 'broadcasting inv within API command disseminatePubkey with hash:', inventoryHash.encode('hex')
+        shared.broadcastToSendDataQueues((
+            streamNumber, 'advertiseobject', inventoryHash))
+
+    def getMessageDataByDestinationTag( self, *args ):
+        # Method will eventually be used by a particular Android app to
+        # select relevant messages. Do not yet add this to the api
+        # doc.
+
+        if len( args ) != 1:
+            0, 'I need 1 parameter!'
+        requestedHash, = args
+        if len(requestedHash) != 32:
+            return 19, 'The length of hash should be 32 bytes (encoded in hex thus 64 characters).'
+        requestedHash = self._decode(requestedHash, "hex")
+
+        # This is not a particularly commonly used API function. Before we
+        # use it we'll need to fill out a field in our inventory database
+        # which is blank by default (first20bytesofencryptedmessage).
+        queryreturn = sqlQuery(
+            '''SELECT hash, payload FROM inventory WHERE tag = '' and objecttype = 2 ; ''')
+        with SqlBulkExecute() as sql:
+            for row in queryreturn:
+                hash01, payload = row
+                readPosition = 16 # Nonce length + time length
+                readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
+                t = (payload[readPosition:readPosition+32],hash01)
+                sql.execute('''UPDATE inventory SET tag=? WHERE hash=?; ''', *t)
+
+        queryreturn = sqlQuery('''SELECT payload FROM inventory WHERE tag = ?''',
+                               requestedHash)
+        data = []
+        for row in queryreturn:
+            payload, = row
+            data.append({'data':payload.encode('hex')})
+
+        return 200, data
+
+    def getPubkeyByHash( self, *args ):
+        # Method will eventually be used by a particular Android app to
+        # retrieve pubkeys. Please do not yet add this to the api docs.
+        if len( args ) != 1:
+            return 0, 'I need 1 parameter!'
+        requestedHash, = args
+        if len(requestedHash) != 40:
+            return 19, 'The length of hash should be 20 bytes (encoded in hex thus 40 characters).'
+        requestedHash = self._decode(requestedHash, "hex")
+        queryreturn = sqlQuery('''SELECT transmitdata FROM pubkeys WHERE hash = ? ; ''', requestedHash)
+        data = []
+        for row in queryreturn:
+            transmitdata, = row
+            data.append({'data':transmitdata.encode('hex')})
+        return 200, data
+
+    def clientStatus( self, *args ):
+        if len(shared.connectedHostsList) == 0:
+            networkStatus = 'notConnected'
+        elif len(shared.connectedHostsList) > 0 and not shared.clientHasReceivedIncomingConnections:
+            networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
+        else:
+            networkStatus = 'connectedAndReceivingIncomingConnections'
+        data = {
+            'networkConnections':len(shared.connectedHostsList),
+            'numberOfMessagesProcessed':shared.numberOfMessagesProcessed,
+            'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed,
+            'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed,
+            'networkStatus':networkStatus,
+            'softwareName':'PyBitmessage',
+            'softwareVersion':shared.softwareVersion
+        }
+        return 200, data
+
+    def decodeAddress( self, *args ):
+        # Return a meaningful decoding of an address.
+        if len( args ) != 1:
+            return 0, 'I need 1 parameter!'
+        address, = params
+        status, addressVersion, streamNumber, ripe = decodeAddress(address)
+        data = {
+            'status':status,
+            'addressVersion':addressVersion,
+            'streamNumber':streamNumber,
+            'ripe':ripe.encode('base64')
+        }
+        return 200, data
