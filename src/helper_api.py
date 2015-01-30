@@ -16,32 +16,41 @@ from pyelliptic.openssl import OpenSSL
 
 str_chan = '[chan]'
 
-# class messages( array ):
+class Message:
+    def __init__(self, query):
+        self.data = []
 
-#     def base( self ):
-#         msgid, toAddress, fromAddress, subject, message, encodingtype, received, read= query
-#         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-#         message = shared.fixPotentiallyInvalidUTF8Data(message)
-#         data.append({
-#             'msgid':msgid.encode('hex'),
-#             'toAddress':toAddress,
-#             'fromAddress':fromAddress,
-#             'subject':subject.encode('base64'),
-#             'message':message.encode('base64'),
-#             'encodingType':encodingtype,
-            
-#         })
+class Sent( Message ):
+    def __init__( self, query ):
+        super( Sent, self).__init__()
+        # lastactiontime, status, ackdata = query[6:8]
+        for entry in query:
+            self.data.append({
+            'msgid':entry[0].encode(),
+            'toAddress':entry[1],
+            'fromAddress':entry[2],
+            'subject':entry[3].encode(),
+            'message':entry[4].encode(),
+            'encodingType':entry[5],
+            'lastactiontime':lastactiontime,
+            'status':status,
+            'ackdata': ackdata.endcode("hex"),
+            })
 
-#     def sent( sefl, query ):
-#         lastactiontime, status, ackdata = row[6:8]
-#         'lastactiontime':lastactiontime,
-#         'status':status,
-#         'ackdata': ackdata
-
-#     def ( self, query ):
-#         received, read = row[6:7]
-#         'receivedTime':received
-#         'read': read
+class Recieved( Message ):
+    def __init__( self, query ):
+        super( Recieved, self ).__init__(query)
+        for entry in query:
+            self.data.append({
+            'msgid':entry[0].encode(),
+            'toAddress':entry[1],
+            'fromAddress':entry[2],
+            'subject':entry[3].encode(),
+            'message':entry[4].encode(),
+            'encodingType':entry[5],
+            'receivedTime':entry[6],
+            'read': entry[7],
+            })
 
 class _handle_request( object ):
     def ping( self, *args ):
