@@ -14,6 +14,7 @@ if __name__ == "__main__":
 
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
 import json
+import re
 
 import shared
 import time
@@ -21,7 +22,7 @@ import time
 import hashlib
 
 from helper_api import _handle_request
-
+from addresses import decodeAddress,addBMIfNotPresent,decodeVarint,calculateInventoryHash,varintDecodeError
 from pyelliptic.openssl import OpenSSL
 from struct import pack
 
@@ -74,6 +75,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # SimpleXMLRPCDispatcher. To maintain backwards compatibility,
             # check to see if a subclass implements _dispatch and dispatch
             # using that method if present.
+
+            from pprint import pprint
+            print self.headers['Content-type']
             response = self.server._marshaled_dispatch(
                 data, getattr(self, '_dispatch', None)
             )
@@ -151,13 +155,18 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             time.sleep(2)
             return "RPC Username or password incorrect or HTTP header lacks authentication at all."
 
-        
         if method in dir( _handle_request ):
             logger.warn( 'Found "{}" in API'.format( method ) )
             try:
                 statusCode, data = object.__getattribute__( _handle_request, method )( self, *params )
             except Exception as e:
                 logger.exception(e)
+        else:
+            statusCode = 404
+            data = "Method not found"
+
+        if statusCode != 200:
+            data = { 'error': data }
 
         response = {
             'data': data,
@@ -165,14 +174,3 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             'method': method
         }
         return json.dumps( response )
-
-        # try:
-        #     return self._handle_request(method, params)
-        # except APIError as e:
-        #     return str(e)
-        # except varintDecodeError as e:
-        #     logger.error(e)
-        #     return "API Error 0026: Data contains a malformed varint. Some details: %s" % e
-        # except Exception as e:
-        #     logger.exception(e)
-        #     return "API Error 0021: Unexpected API Failure - %s" % str(e)

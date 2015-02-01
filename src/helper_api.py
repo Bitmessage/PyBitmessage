@@ -15,14 +15,50 @@ from pyelliptic.openssl import OpenSSL
 
 str_chan = '[chan]'
 
+def sentMessage( query ):
+    data = []
+    for row in query:
+        data.append( {
+            'msgid': row[0].encode( 'hex' ),
+            'toAddress': row[1],
+            'fromAddress': row[2],
+            'subject': shared.fixPotentiallyInvalidUTF8Data( row[3].encode( 'base64' ) ),
+            'message': shared.fixPotentiallyInvalidUTF8Data( row[4].encode( 'base64' ) ),
+            'encodingType': row[5],
+            'lastactiontime': row[6],
+            'status': row[7],
+            'ackdata': row[8].endcode( 'hex' ),
+        } )
+
+    return data
+
+def recievedMessage( query ):
+    data = []
+    for row in query:
+        data.append( {
+            'msgid': row[0].encode( 'hex' ),
+            'toAddress': row[1],
+            'fromAddress': row[2],
+            'subject': shared.fixPotentiallyInvalidUTF8Data( row[3].encode( 'base64' ) ),
+            'message': shared.fixPotentiallyInvalidUTF8Data( row[4].encode( 'base64' ) ),
+            'encodingType': row[5],
+            'receivedTime': row[6],
+            'read': row[7],
+        } )
+
+    return data
+
 class _handle_request( object ):
     def ping( self, *args ):
         data = { 'pong': args }
         return 200, data
 
     def statusBar( self, *args ):
+        if not args:
+            return 0, 'Need status message!'
         message, = args
-        shared.UISignalQueue.put( ('updateStatusBar', message) )
+        shared.UISignalQueue.put( ('updateStatusBar', message) ) # does this need to be encoded before transmission? 
+
         return 200, True
 
     def listAddresses( self, *args ):
@@ -36,15 +72,15 @@ class _handle_request( object ):
                     chan = shared.config.getboolean( addressInKeysFile, 'chan' )
                 else:
                     chan = False
-                label = shared.config.get( addressInKeysFile, 'label' ).encode( 'base64' )
 
-                data.append({
+                label = shared.config.get( addressInKeysFile, 'label' ).encode( 'base64' )
+                data.append( {
                     'label': label,
                     'address': addressInKeysFile,
                     'stream': streamNumber,
                     'enabled': shared.config.getboolean(addressInKeysFile, 'enabled'),
                     'chan': chan
-                })
+                } )
         return 200, data
 
     def listAddressBookEntries( self, *args ):
@@ -53,19 +89,17 @@ class _handle_request( object ):
 
         # if address book is empty, return nothing and stop for loop from firing.
         if not queryreturn: 
-            return data
+            return 200, data
 
         for row in queryreturn:
             label, address = row
             label = shared.fixPotentiallyInvalidUTF8Data( label )
-            data.append({
+            data.append( {
                 'label':label.encode( 'base64' ),
                 'address': address
-            })
+            } )
 
         return 200, data
-
-    ''' test below this line '''
 
     def addAddressBookEntry( self, *args ): ## fix verifyAddress!
         if len( args ) != 2:
@@ -81,9 +115,9 @@ class _handle_request( object ):
             return 16, 'You already have this address in your address book.'
 
         sqlExecute( "INSERT INTO addressbook VALUES(?,?)", label, address )
-        shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-        shared.UISignalQueue.put(('rerenderSentToLabels',''))
-        shared.UISignalQueue.put(('rerenderAddressBook',''))
+        shared.UISignalQueue.put( ( 'rerenderInboxFromLabels','' ) )
+        shared.UISignalQueue.put( ( 'rerenderSentToLabels','' ) )
+        shared.UISignalQueue.put( ( 'rerenderAddressBook','' ) )
         return 200, address
 
     def deleteAddressBookEntry( self, *args ): ## fix verifyAddress!
@@ -91,17 +125,16 @@ class _handle_request( object ):
             return 0, 'I need an address'
 
         address, = args
-        address = addBMIfNotPresent(address)
-        self._verifyAddress(address)
-        sqlExecute('DELETE FROM addressbook WHERE address=?', address)
-        shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-        shared.UISignalQueue.put(('rerenderSentToLabels',''))
-        shared.UISignalQueue.put(('rerenderAddressBook',''))
+        address = addBMIfNotPresent( address )
+        self._verifyAddress( address )
+        sqlExecute( 'DELETE FROM addressbook WHERE address=?', address )
+        shared.UISignalQueue.put( ( 'rerenderInboxFromLabels','' ) )
+        shared.UISignalQueue.put( ( 'rerenderSentToLabels','' ) )
+        shared.UISignalQueue.put( ( 'rerenderAddressBook','' ) )
         return 200, "Deleted address book entry for %s if it existed" % address
 
-    ''' not tested above this line '''
     def createRandomAddress( self, *args ):
-        if not args:
+        if len( args ) not in [1,2,3,4]:
             return 0, 'I need parameters!'
 
         if len( args ) == 1:
@@ -129,7 +162,8 @@ class _handle_request( object ):
         elif len( args ) == 3:
             label, eighteenByteRipe, totalDifficulty = args
             nonceTrialsPerByte = int(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty
+            )
             payloadLengthExtraBytes = shared.config.get(
                 'bitmessagesettings',
                 'defaultpayloadlengthextrabytes'
@@ -137,21 +171,23 @@ class _handle_request( object ):
         elif len( args ) == 4:
             label, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = args
             nonceTrialsPerByte = int(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty
+            )
             payloadLengthExtraBytes = int(
-                shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+                shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty
+            )
         else:
             return 0, 'Too many parameters!'
 
-        label = self._decode(label, "base64")
+        label = self._decode( label, "base64" )
         try:
-            unicode(label, 'utf-8')
+            unicode( label, 'utf-8' )
         except:
             return 17, 'Label is not valid UTF-8 data.'
 
         shared.apiAddressGeneratorReturnQueue.queue.clear()
         streamNumberForAddress = 1
-        shared.addressGeneratorQueue.put((
+        shared.addressGeneratorQueue.put( (
             'createRandomAddress',
             4,
             streamNumberForAddress,
@@ -161,8 +197,7 @@ class _handle_request( object ):
             eighteenByteRipe,
             nonceTrialsPerByte,
             payloadLengthExtraBytes
-        ))
-
+        ) )
         data = {
             'address': shared.apiAddressGeneratorReturnQueue.get(),
             'label': label
@@ -170,7 +205,7 @@ class _handle_request( object ):
         return 200, data
 
     def createDeterministicAddresses( self, *args ): # needs to be tested
-        if not args:
+        if len( args ) not in range( 1,7 ):
             return 0, 'I need parameters!'
 
         if len( args ) == 1:
@@ -236,7 +271,8 @@ class _handle_request( object ):
         elif len( args ) == 6:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty = args
             nonceTrialsPerByte = int(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty
+            )
             payloadLengthExtraBytes = shared.config.get(
                 'bitmessagesettings',
                 'defaultpayloadlengthextrabytes'
@@ -244,19 +280,21 @@ class _handle_request( object ):
         elif len( args ) == 7:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = args
             nonceTrialsPerByte = int(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty
+            )
             payloadLengthExtraBytes = int(
-                shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+                shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty
+            )
         else:
             return 0, 'Too many parameters!'
 
-        if len(passphrase) == 0:
+        if len( passphrase ) == 0:
             return 1, 'The specified passphrase is blank.'
 
-        if not isinstance(eighteenByteRipe, bool):
+        if not isinstance( eighteenByteRipe, bool ):
             return 23, 'Bool expected in eighteenByteRipe, saw %s instead' % type(eighteenByteRipe)
 
-        passphrase = self._decode(passphrase, "base64")
+        passphrase = self._decode( passphrase, "base64" )
         if addressVersionNumber == 0:  # 0 means "just use the proper addressVersionNumber"
             addressVersionNumber = 4
 
@@ -276,8 +314,11 @@ class _handle_request( object ):
             return 5, 'You have (accidentally?) specified too many addresses to make. Maximum 999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.'
 
         shared.apiAddressGeneratorReturnQueue.queue.clear()
-        logger.debug('Requesting that the addressGenerator create %s addresses.', numberOfAddresses)
-        shared.addressGeneratorQueue.put((
+        logger.debug(
+            'Requesting that the addressGenerator create %s addresses.',
+            numberOfAddresses
+        )
+        shared.addressGeneratorQueue.put( (
             'createDeterministicAddresses',
             addressVersionNumber,
             streamNumber,
@@ -287,9 +328,10 @@ class _handle_request( object ):
             eighteenByteRipe,
             nonceTrialsPerByte,
             payloadLengthExtraBytes
-        ))
+        ) )
         data = []
         queueReturn = shared.apiAddressGeneratorReturnQueue.get()
+
         for item in queueReturn:
             data.append( item )
 
@@ -306,7 +348,7 @@ class _handle_request( object ):
         if len( passphrase ) == 0:
             return 1, 'The specified passphrase is blank.'
 
-        passphrase = self._decode(passphrase, "base64")
+        passphrase = self._decode( passphrase, "base64" )
         if addressVersionNumber != 3 and addressVersionNumber != 4:
             return 2, 'The address version number currently must be 3 or 4. ' + addressVersionNumber + ' isn\'t supported.'
         
@@ -314,8 +356,11 @@ class _handle_request( object ):
             return 3, ' The stream number must be 1. Others aren\'t supported.'
 
         shared.apiAddressGeneratorReturnQueue.queue.clear()
-        logger.debug('Requesting that the addressGenerator create %s addresses.', numberOfAddresses)
-        shared.addressGeneratorQueue.put((
+        logger.debug(
+            'Requesting that the addressGenerator create %s addresses.',
+            numberOfAddresses
+        )
+        shared.addressGeneratorQueue.put( (
             'getDeterministicAddress',
             addressVersionNumber,
             streamNumber,
@@ -323,12 +368,13 @@ class _handle_request( object ):
             numberOfAddresses,
             passphrase,
             eighteenByteRipe
-        ))
+        ) )
+
         return 200, shared.apiAddressGeneratorReturnQueue.get()
 
     def createChan( self, *args ):
-        if not args:
-            return 0, 'I need parameters.'
+        if len( args ) != 1:
+            return 0, 'Passphrase needed!'
 
         if len( args ) == 1:
             passphrase, = args
@@ -336,6 +382,7 @@ class _handle_request( object ):
         passphrase = self._decode( passphrase, "base64" )
         if len( passphrase ) == 0:
             return 1, 'The specified passphrase is blank.'
+
         # It would be nice to make the label the passphrase but it is
         # possible that the passphrase contains non-utf-8 characters. -wtf!
         try:
@@ -347,22 +394,27 @@ class _handle_request( object ):
         addressVersionNumber = 4
         streamNumber = 1
         shared.apiAddressGeneratorReturnQueue.queue.clear()
-        logger.debug('Requesting that the addressGenerator create chan %s.', passphrase)
-        shared.addressGeneratorQueue.put((
+        logger.debug(
+            'Requesting that the addressGenerator create chan %s.',
+            passphrase
+        )
+        shared.addressGeneratorQueue.put( (
             'createChan',
             addressVersionNumber,
             streamNumber,
             label,
             passphrase
-        ))
+        ) )
         queueReturn = shared.apiAddressGeneratorReturnQueue.get()
-        if len(queueReturn) == 0:
+        if len( queueReturn ) == 0:
             return 24, 'Chan address is already present.'
+
         address = queueReturn[0]
         data = {
             'address': address,
             'label': label
         }
+
         return 200, data
 
     def joinChan( self, *args ):
@@ -383,16 +435,16 @@ class _handle_request( object ):
         except:
             label = str_chan + ' ' + repr( passphrase )
 
-        status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(suppliedAddress)
-        suppliedAddress = addBMIfNotPresent(suppliedAddress)
+        status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress( suppliedAddress )
+        suppliedAddress = addBMIfNotPresent( suppliedAddress )
         shared.apiAddressGeneratorReturnQueue.queue.clear()
-        shared.addressGeneratorQueue.put(('joinChan', suppliedAddress, label, passphrase))
+        shared.addressGeneratorQueue.put( ( 'joinChan', suppliedAddress, label, passphrase ) )
         addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
 
         if addressGeneratorReturnValue == 'chan name does not match address':
             return 18, 'Chan name does not match address.'
 
-        if len(addressGeneratorReturnValue) == 0:
+        if len( addressGeneratorReturnValue ) == 0:
             return 24, 'Chan address is already present.'
         
         data ={
@@ -407,21 +459,21 @@ class _handle_request( object ):
 
         address, = args
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(address)
-        address = addBMIfNotPresent(address)
+        address = addBMIfNotPresent( address )
 
-        if not shared.config.has_section(address):
+        if not shared.config.has_section( address ):
             return 13, 'Could not find this address in your keys.dat file.'
 
-        if not shared.safeConfigGetBoolean(address, 'chan'):
+        if not shared.safeConfigGetBoolean( address, 'chan' ):
             return 25, 'Specified address is not a chan address. Use deleteAddress API call instead.'
 
-        shared.config.remove_section(address)
+        shared.config.remove_section( address )
         shared.writeKeysFile()
 
         return 200, {}
 
     def deleteAddress( self, *args ):
-        if len( args ) != 0:
+        if len( args ) != 1:
             return 0, 'I need parameters.'
 
         address, = args
@@ -430,405 +482,447 @@ class _handle_request( object ):
         if not shared.config.has_section(address):
             return 13, 'Could not find this address in your keys.dat file.'
 
-        shared.config.remove_section(address)
+        shared.config.remove_section( address )
         shared.writeKeysFile()
-        shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-        shared.UISignalQueue.put(('rerenderSentToLabels',''))
+        shared.UISignalQueue.put( ( 'rerenderInboxFromLabels', '' ) )
+        shared.UISignalQueue.put( ( 'rerenderSentToLabels', '' ) )
         shared.reloadMyAddressHashes()
 
         return 200, {}
 
     def getAllInboxMessages( self, *args ):
-        queryreturn = sqlQuery('''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, received, read FROM inbox where folder='inbox' ORDER BY received''')
-        # data = rowMessage( queryreturn )
-        print queryreturn
-        return 200, queryreturn
+        queryreturn = sqlQuery(
+            '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, received, read FROM inbox where folder='inbox' ORDER BY received'''
+        )
+        data = recievedMessage( queryreturn )
+        return 200, data
 
-    # def getAllInboxMessageIDs( self, *args ):
-    #     queryreturn = sqlQuery(
-    #         '''SELECT msgid FROM inbox where folder='inbox' ORDER BY received''')
-    #     data = []
-    #     for row in queryreturn:
-    #         msgid = row[0]
-    #         data.append({
-    #             'msgid': msgid.encode('hex')
-    #         })
+    def getAllInboxMessageIDs( self, *args ):
+        queryreturn = sqlQuery(
+            '''SELECT msgid FROM inbox where folder='inbox' ORDER BY received'''
+        )
+        data = []
+        for row in queryreturn:
+            msgid = row[0]
+            data.append( {
+                'msgid': msgid.encode( 'hex' )
+            } )
 
-    #     return 200, data
+        return 200, data
 
-    # def getInboxMessageByID( self, *args ):
-    #     if len( args ) not in range(1,2):
-    #         return 0, 'I need parameters!'
+    def getInboxMessageByID( self, *args ):
+        if len( args ) not in [1,2]:
+            return 0, 'Missing message id'
 
-    #     if len(args) == 1:
-    #         msgid = self._decode(args[0], "hex")
-    #     elif len(args) >= 2:
-    #         msgid = self._decode(args[0], "hex")
-    #         readStatus = args[1]
-    #         if not isinstance(readStatus, bool):
-    #             return 23, 'Bool expected in readStatus, saw %s instead.' % type(readStatus)
+        if len( args ) == 1:
+            msgid = self._decode( args[0], "hex" )
 
-    #         queryreturn = sqlQuery('''SELECT read FROM inbox WHERE msgid=?''', msgid)
-    #         # UPDATE is slow, only update if status is different
-    #         if queryreturn != [] and (queryreturn[0][0] == 1) != readStatus:
-    #             sqlExecute('''UPDATE inbox set read = ? WHERE msgid=?''', readStatus, msgid)
-    #             shared.UISignalQueue.put(('changedInboxUnread', None))
+        elif len( args ) >= 2:
+            msgid = self._decode( args[0], "hex" )
+            readStatus = args[1]
+            if not isinstance( readStatus, bool ):
+                return 23, 'Bool expected in readStatus, saw %s instead.' % type( readStatus )
 
-    #     queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox WHERE msgid=?''', msgid)
-    #     data = rowMessage( queryreturn )
+            queryreturn = sqlQuery( '''SELECT read FROM inbox WHERE msgid=?''', msgid )
+            # UPDATE is slow, only update if status is different
+            if queryreturn != [] and ( queryreturn[0][0] == 1 ) != readStatus:
+                sqlExecute( '''UPDATE inbox set read = ? WHERE msgid=?''', readStatus, msgid )
+                shared.UISignalQueue.put( ( 'changedInboxUnread', None ) )
 
-    #     return 200, data
+        queryreturn = sqlQuery(
+            '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, received, read FROM inbox WHERE msgid=?''',
+            msgid
+        )
+        data = recievedMessage( queryreturn )
+
+        return 200, data
 
     def getAllSentMessages( self, *args ):
-        queryreturn = sqlQuery('''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, lastactiontime, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
-        print queryreturn
-        data = []
-        # for row in queryreturn:
-        #     msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
-        #     subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-        #     message = shared.fixPotentiallyInvalidUTF8Data(message)
-        #     data.append({
-        #         'msgid':msgid.encode('hex'),
-        #         'toAddress':toAddress,
-        #         'fromAddress':fromAddress,
-        #         'subject':subject.encode('base64'),
-        #         'message':message.encode('base64'),
-        #         'encodingType':encodingtype,
-        #         'lastActionTime':lastactiontime,
-        #         'status':status,
-        #         'ackData':ackdata.encode('hex')
-        #     })
+        queryreturn = sqlQuery(
+            '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, lastactiontime, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime'''
+        )
+        data = sentMessage( queryreturn )
+
         return 200, queryreturn
 
-    # def getAllSentMessageIDs( self, *args ): # undocumented
-    #     queryreturn = sqlQuery('''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''')
-    #     data = []
-    #     for row in queryreturn:
-    #         msgid = row[0]
-    #         data.append({ 'msgid':msgid.encode('hex') })
+    def getAllSentMessageIDs( self, *args ): # undocumented
+        queryreturn = sqlQuery( '''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''' )
+        data = []
+        for row in queryreturn:
+            msgid = row[0]
+            data.append( { 'msgid':msgid.encode( 'hex' ) } )
 
-    #     return 200, data
+        return 200, data
 
-    # def getInboxMessagesByToAddress( self, *args ): # renamed from getInboxMessagesByReceiver / undocumented
-    #     if len( args ) == 0:
-    #         return 0, 'I need parameters!'
+    def getInboxMessagesByToAddress( self, *args ): # renamed from getInboxMessagesByReceiver / undocumented
+        if len( args ) != 1:
+            return 0, 'I need parameters!'
 
-    #     toAddress = args[0]
-    #     queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox WHERE folder='inbox' AND toAddress=?''', toAddress)
-    #     data = rowMessage( queryreturn )
-    #     return 200, data
+        toAddress, = args
+        queryreturn = sqlQuery(
+            '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, received, read FROM inbox WHERE folder='inbox' AND toAddress=?''',
+            toAddress
+        )
+        data = recievedMessage( queryreturn )
 
-    # def getSentMessagesBySender( self, *args ):
-    #         if len( args ) == 0:
-    #             return 0, 'I need parameters!'
-    #         fromAddress = args[0]
-    #         queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime''',
-    #                                fromAddress)
-    #         data = []
-    #         for row in queryreturn:
-    #             msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
-    #             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-    #             message = shared.fixPotentiallyInvalidUTF8Data(message)
-    #             data.append({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
-    #         return data
+        return 200, data
 
-    # def getSentMessageByID( self, *args ):
-    #     if len( args ) == 0:
-    #         return 0, 'I need parameters!'
+    def getSentMessagesBySender( self, *args ):
+            if len( args ) != 1:
+                return 0, 'I need parameters!'
 
-    #     msgid = self._decode( args[0], "hex")
-    #     queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE msgid=?''', msgid)
-    #     data = []
-    #     for row in queryreturn:
-    #         msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
-    #         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-    #         message = shared.fixPotentiallyInvalidUTF8Data(message)
-    #         data.append({
-    #             'msgid':msgid.encode('hex'),
-    #             'toAddress':toAddress,
-    #             'fromAddress':fromAddress,
-    #             'subject':subject.encode('base64'),
-    #             'message':message.encode('base64'),
-    #             'encodingType':encodingtype,
-    #             'lastActionTime':lastactiontime,
-    #             'status':status,
-    #             'ackData':ackdata.encode('hex')
-    #         })
+            fromAddress, = args
+            queryreturn = sqlQuery(
+                '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, lastactiontime, status, ackdata FROM sent WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime''',
+                fromAddress
+            )
+            data = sentMessage( queryreturn )
 
-    #     return 200, data
+            return 200, data
 
-    # def getSentMessageByAckData( self, *args ):
-    #     if len( args ) == 0:
-    #         return 0, 'I need parameters!'
-    #     ackData = self._decode( args[0], "hex" )
-    #     queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent WHERE ackdata=?''',
-    #                            ackData)
-    #     data = sentMessageRow( queryreturn )
-    #     return data
+    def getSentMessageByID( self, *args ):
+        if len( args ) != 1:
+            return 0, 'I need parameters!'
 
-    #  def trashMessage( self, *args ):
-    #     if len( args ) == 0:
-    #         return 0, 'I need parameters!'
-    #     msgid = self._decode(args[0], "hex")
+        msgid = self._decode( args[0], "hex" )
+        queryreturn = sqlQuery(
+            '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, lastactiontime, status, ackdata FROM sent WHERE msgid=?''',
+            msgid
+        )
+        data = sentMessage( queryreturn )
 
-    #     # Trash if in inbox table
-    #     helper_inbox.trash(msgid)
-    #     # Trash if in sent table
-    #     sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
-    #     return 200, 'Trashed message (assuming message existed).'
+        return 200, data
 
-    # def trashInboxMessage( self, *args ):
-    #     if len( args ) == 0:
-    #         return 0, 'I need parameters!'
-    #     msgid = self._decode(args[0], "hex")
-    #     helper_inbox.trash(msgid)
-    #     return 200, 'Trashed inbox message (assuming message existed).'
+    def getSentMessageByAckData( self, *args ):
+        if len( args ) != 1:
+            return 0, 'I need parameters!'
 
-    # def trashInboxMessage( self, *args ):
-    #     if len( args ) == 0:
-    #         return 0, 'I need parameters!'
-    #     msgid = self._decode(args[0], "hex")
-    #     helper_inbox.trash(msgid)
-    #     return 200, 'Trashed inbox message (assuming message existed).'
+        ackData = self._decode( args[0], "hex" )
+        queryreturn = sqlQuery(
+            '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, lastactiontime, status, ackdata FROM sent WHERE ackdata=?''',
+            ackData
+        )
+        data = sentMessage( queryreturn )
 
-    # def trashSentMessage( self, *args ):
-    #     if len( args ) == 0:
-    #         return 0, 'I need parameters!'
-    #     msgid = self._decode(args[0], "hex")
-    #     sqlExecute('''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid)
-    #     return 200, 'Trashed sent message (assuming message existed).'
+        return 200, data
 
-    # def trashSentMessageByAckData( self, *args ):
-    #     # This API method should only be used when msgid is not available
-    #     if len( args ) == 0:
-    #         return 0, 'I need parameters!'
-    #     ackdata = self._decode(args[0], "hex")
-    #     sqlExecute('''UPDATE sent SET folder='trash' WHERE ackdata=?''',
-    #                ackdata)
-    #     return 200, 'Trashed sent message (assuming message existed).'
+    def trashMessage( self, *args ):
+        if len( args ) != 1:
+            return 0, 'I need parameters!'
 
-    # def sendMessage( self, *args ):
-    #     if len( args ) not in [4,5]:
-    #         return 0, 'I need parameters!'
+        msgid = self._decode( args[0], "hex" )
 
-    #     elif len( args ) == 4:
-    #         toAddress, fromAddress, subject, message = args
-    #         encodingType = 2
-    #     elif len( args ) == 5:
-    #         toAddress, fromAddress, subject, message, encodingType = args
+        # Trash if in inbox table
+        helper_inbox.trash(msgid)
+        # Trash if in sent table
+        sqlExecute( '''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid )
+        return 200, 'Trashed message (assuming message existed).'
 
-    #     if encodingType != 2:
-    #         return 6, 'The encoding type must be 2 because that is the only one this program currently supports.'
+    def trashInboxMessage( self, *args ):
+        if len( args ) != 1:
+            return 0, 'I need parameters!'
 
-    #     subject = self._decode(subject, "base64")
-    #     message = self._decode(message, "base64")
-    #     if len(subject + message) > (2 ** 18 - 500):
-    #         return 27, 'Message is too long.'
+        msgid = self._decode( args[0], "hex" )
+        helper_inbox.trash( msgid )
 
-    #     toAddress = addBMIfNotPresent(toAddress)
-    #     fromAddress = addBMIfNotPresent(fromAddress)
-    #     status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(toAddress)
-    #     self._verifyAddress(fromAddress)
-    #     try:
-    #         fromAddressEnabled = shared.config.getboolean(
-    #             fromAddress, 'enabled')
-    #     except:
-    #         return 13, 'Could not find your fromAddress in the keys.dat file.'
+        return 200, 'Trashed inbox message (assuming message existed).'
 
-    #     if not fromAddressEnabled:
-    #         return 14, 'Your fromAddress is disabled. Cannot send.'
+    def trashInboxMessage( self, *args ):
+        if len( args ) != 1:
+            return 0, 'I need parameters!'
 
-    #     ackdata = OpenSSL.rand(32)
+        msgid = self._decode( args[0], "hex" )
+        helper_inbox.trash( msgid )
 
-    #     t = ('', toAddress, toRipe, fromAddress, subject, message, ackdata, int(
-    #         time.time()), 'msgqueued', 1, 1, 'sent', 2)
-    #     helper_sent.insert(t)
+        return 200, 'Trashed inbox message (assuming message existed).'
 
-    #     toLabel = ''
-    #     queryreturn = sqlQuery('''select label from addressbook where address=?''', toAddress)
-    #     if queryreturn != []:
-    #         for row in queryreturn:
-    #             toLabel, = row
-    #     # apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
-    #     shared.UISignalQueue.put(('displayNewSentMessage', (
-    #         toAddress, toLabel, fromAddress, subject, message, ackdata)))
+    def trashSentMessage( self, *args ):
+        if len( args ) != 1:
+            return 0, 'I need parameters!'
 
-    #     shared.workerQueue.put(('sendmessage', toAddress))
+        msgid = self._decode( args[0], "hex" )
+        sqlExecute( '''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid )
 
-    #     return 200, ackdata.encode('hex')
+        return 200, 'Trashed sent message (assuming message existed).'
 
-    # def sendBroadcast( self, *args ):
-    #     if len(params) not in [3,4]:
-    #         return 0, 'I need parameters!'
+    def trashSentMessageByAckData( self, *args ):
+        # This API method should only be used when msgid is not available
+        if len( args ) != 1:
+            return 0, 'I need parameters!'
 
-    #     if len( args ) == 3:
-    #         fromAddress, subject, message = args
-    #         encodingType = 2
-    #     elif len(params) == 4:
-    #         fromAddress, subject, message, encodingType = args
+        ackdata = self._decode (args[0], "hex" )
+        sqlExecute( '''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdata )
 
-    #     if encodingType != 2:
-    #         return 6, 'The encoding type must be 2 because that is the only one this program currently supports.'
+        return 200, 'Trashed sent message (assuming message existed).'
 
-    #     subject = self._decode(subject, "base64")
-    #     message = self._decode(message, "base64")
-    #     if len(subject + message) > (2 ** 18 - 500):
-    #         return 27, 'Message is too long.'
+    def sendMessage( self, *args ):
+        if len( args ) not in [4,5]:
+            return 0, 'I need parameters!'
 
-    #     fromAddress = addBMIfNotPresent(fromAddress)
-    #     self._verifyAddress(fromAddress)
-    #     try:
-    #         fromAddressEnabled = shared.config.getboolean(
-    #             fromAddress, 'enabled')
-    #     except:
-    #         return 13, 'could not find your fromAddress in the keys.dat file.'
+        elif len( args ) == 4:
+            toAddress, fromAddress, subject, message = args
+            encodingType = 2
+        elif len( args ) == 5:
+            toAddress, fromAddress, subject, message, encodingType = args
 
-    #     ackdata = OpenSSL.rand(32)
-    #     toAddress = '[Broadcast subscribers]'
-    #     ripe = ''
+        if encodingType != 2:
+            return 6, 'The encoding type must be 2 because that is the only one this program currently supports.'
 
-    #     t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
-    #         time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
-    #     helper_sent.insert(t)
+        subject = self._decode( subject, "base64" )
+        message = self._decode( message, "base64" )
+        if len( subject + message ) > ( 2 ** 18 - 500 ):
+            return 27, 'Message is too long.'
 
-    #     toLabel = '[Broadcast subscribers]'
-    #     shared.UISignalQueue.put(('displayNewSentMessage', (
-    #         toAddress, toLabel, fromAddress, subject, message, ackdata)))
-    #     shared.workerQueue.put(('sendbroadcast', ''))
+        toAddress = addBMIfNotPresent( toAddress )
+        fromAddress = addBMIfNotPresent( fromAddress )
+        status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress( toAddress )
+        self._verifyAddress( fromAddress )
+        try:
+            fromAddressEnabled = shared.config.getboolean( fromAddress, 'enabled' )
+        except:
+            return 13, 'Could not find your fromAddress in the keys.dat file.'
 
-    #     return 200, ackdata.encode('hex')
+        if not fromAddressEnabled:
+            return 14, 'Your fromAddress is disabled. Cannot send.'
 
-    # def getStatus( self, *args ):
-    #     if len( args ) != 1:
-    #         return 0, 'I need one parameter!'
+        ackdata = OpenSSL.rand( 32 )
 
-    #     ackdata, = args
-    #     if len(ackdata) != 64:
-    #         return 15, 'The length of ackData should be 32 bytes (encoded in hex thus 64 characters).'
+        sendData = (
+            '',
+            toAddress,
+            toRipe,
+            fromAddress,
+            subject,
+            message,
+            ackdata, int( time.time() ),
+            'msgqueued',
+            1,
+            1,
+            'sent',
+            2
+        )
+        helper_sent.insert( sendData )
 
-    #     ackdata = self._decode(ackdata, "hex")
-    #     queryreturn = sqlQuery(
-    #         '''SELECT status FROM sent where ackdata=?''',
-    #         ackdata)
-    #     if queryreturn == []:
-    #         return 404, 'notfound'
-    #     for row in queryreturn:
-    #         status, = row
-    #         return 200, status
+        toLabel = ''
+        queryreturn = sqlQuery( '''select label from addressbook where address=?''', toAddress )
+        if queryreturn != []:
+            for row in queryreturn:
+                toLabel, = row
 
-    # def addSubscription( self, *args ):
-    #     if len( args ) not in [1,2]:
-    #         return 0, 'I need parameters!'
+        # apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
+        shared.UISignalQueue.put( ( 
+            'displayNewSentMessage',
+            (
+                toAddress,
+                toLabel,
+                fromAddress,
+                subject,
+                message,
+                ackdata
+            )
+        ) )
+        shared.workerQueue.put( ( 'sendmessage', toAddress ) )
 
-    #     if len( args ) == 1:
-    #         address, = args
-    #         label = ''
-    #     if len( args ) == 2:
-    #         address, label = args
-    #         label = self._decode(label, "base64")
-    #         try:
-    #             unicode(label, 'utf-8')
-    #         except:
-    #             return 17, 'Label is not valid UTF-8 data.'
+        return 200, ackdata.encode( 'hex' )
 
-    #     address = addBMIfNotPresent(address)
-    #     self._verifyAddress(address)
-    #     # First we must check to see if the address is already in the
-    #     # subscriptions list.
-    #     queryreturn = sqlQuery('''select * from subscriptions where address=?''', address)
-    #     if queryreturn != []:
-    #         return 16, 'You are already subscribed to that address.'
-    #     sqlExecute('''INSERT INTO subscriptions VALUES (?,?,?)''',label, address, True)
-    #     shared.reloadBroadcastSendersForWhichImWatching()
-    #     shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
-    #     shared.UISignalQueue.put(('rerenderSubscriptions', ''))
-    #     return 200, 'Added subscription.'
+    def sendBroadcast( self, *args ):
+        if len( args ) not in [3,4]:
+            return 0, 'I need parameters!'
 
-    # def addAddressToBlackWhiteList( self, *args ):
-    #     if len(params) not in [1,2]:
-    #         return 0, 'I need parameters!'
+        if len( args ) == 3:
+            fromAddress, subject, message = args
+            encodingType = 2
+        elif len( args ) == 4:
+            fromAddress, subject, message, encodingType = args
 
-    #     if len( args ) == 1:
-    #         address, = args
-    #         label = ''
+        if encodingType != 2:
+            return 6, 'The encoding type must be 2 because that is the only one this program currently supports.'
 
-    #     if len( args ) == 2:
-    #         address, label = args
-    #         label = self._decode(label, "base64")
-    #         try:
-    #             unicode(label, 'utf-8')
-    #         except:
-    #             return 17, 'Label is not valid UTF-8 data.'
+        subject = self._decode( subject, "base64" )
+        message = self._decode( message, "base64" )
+        if len( subject + message ) > ( 2 ** 18 - 500 ):
+            return 27, 'Message is too long.'
 
-    #     if len( args ) > 2:
-    #         return 0, 'I need either 1 or 2 parameters!'
+        fromAddress = addBMIfNotPresent( fromAddress )
+        self._verifyAddress( fromAddress )
+        try:
+            fromAddressEnabled = shared.config.getboolean( fromAddress, 'enabled' )
+        except:
+            return 13, 'could not find your fromAddress in the keys.dat file.'
 
-    #     address = addBMIfNotPresent(address)
-    #     self._verifyAddress(address)
+        ackdata = OpenSSL.rand( 32 )
+        toAddress = '[Broadcast subscribers]'
+        ripe = ''
 
-    #     table = ''
-    #     if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-    #         table = 'blacklist'
-    #     else:
-    #         table = 'whitelist'
+        sendData = (
+            '',
+            toAddress,
+            ripe,
+            fromAddress,
+            subject,
+            message,
+            ackdata, int( time.time() ),
+            'broadcastqueued',
+            1,
+            1,
+            'sent',
+            2
+        )
+        helper_sent.insert( sendData )
 
-    #     # First we must check to see if the address is already in the
-    #     # black-/white-list.
-    #     queryreturn = sqlQuery('''select * from '''+table+''' where address=?''', address)
-    #     if queryreturn != []:
-    #         return 28, 'You have already black-/white-listed that address.'
+        toLabel = '[Broadcast subscribers]'
+        shared.UISignalQueue.put( (
+            'displayNewSentMessage', 
+            (
+                toAddress,
+                toLabel,
+                fromAddress,
+                subject,
+                message,
+                ackdata
+            )
+        ) )
+        shared.workerQueue.put( ( 'sendbroadcast', '' ) )
 
-    #     sqlExecute('''INSERT INTO '''+table+''' VALUES (?,?,?)''',label, address, True)
-    #     shared.UISignalQueue.put(('rerenderBlackWhiteList', ''))
+        return 200, ackdata.encode( 'hex' )
 
-    #     return 200, 'Added black-/white-list entry.'
+    def getStatus( self, *args ):
+        if len( args ) != 1:
+            return 0, 'I need one parameter!'
 
-    # def removeAddressFromBlackWhiteList':
-    #     if len( args ) != 1:
-    #         return 0, 'I need 1 parameter!'
+        ackdata, = args
+        if len(ackdata) != 64:
+            return 15, 'The length of ackData should be 32 bytes (encoded in hex thus 64 characters).'
 
-    #     address, = args
-    #     address = addBMIfNotPresent(address)
+        ackdata = self._decode( ackdata, "hex" )
+        queryreturn = sqlQuery(
+            '''SELECT status FROM sent where ackdata=?''',
+            ackdata)
+        if queryreturn == []:
+            return 404, 'notfound'
 
-    #     table = ''
-    #     if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-    #         table = 'blacklist'
-    #     else:
-    #         table = 'whitelist'
+        for row in queryreturn:
+            status, = row
 
-    #     # First we must check to see if the address is already in the
-    #     # black-/white-list.
-    #     queryreturn = sqlQuery('''select * from '''+table+''' where address=?''', address)
-    #     if queryreturn == []:
-    #         return 29, 'That entry does not exist in the black-/white-list.'
+            return 200, status
 
-    #     sqlExecute('''DELETE FROM '''+table+''' WHERE address=?''', address)
-    #     shared.UISignalQueue.put(('rerenderBlackWhiteList', ''))
-    #     return 200, 'Deleted black-/white-list entry if it existed.'
+    def addSubscription( self, *args ):
+        if len( args ) not in [1,2]:
+            return 0, 'I need parameters!'
 
-    # def deleteSubscription( self, *args):
-    #     if len( args ) != 1:
-    #         return 0, 'I need 1 parameter!'
+        if len( args ) == 1:
+            address, = args
+            label = ''
+        if len( args ) == 2:
+            address, label = args
+            label = self._decode( label, "base64" )
+            try:
+                unicode( label, 'utf-8' )
+            except:
+                return 17, 'Label is not valid UTF-8 data.'
 
-    #     address, = args
-    #     address = addBMIfNotPresent(address)
-    #     sqlExecute('''DELETE FROM subscriptions WHERE address=?''', address)
-    #     shared.reloadBroadcastSendersForWhichImWatching()
-    #     shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
-    #     shared.UISignalQueue.put(('rerenderSubscriptions', ''))
-    #     return 200, 'Deleted subscription if it existed.'
+        address = addBMIfNotPresent( address )
+        self._verifyAddress( address )
+        # First we must check to see if the address is already in the
+        # subscriptions list.
+        queryreturn = sqlQuery( '''select * from subscriptions where address=?''', address )
+        if queryreturn != []:
+            return 16, 'You are already subscribed to that address.'
+
+        sqlExecute( '''INSERT INTO subscriptions VALUES (?,?,?)''', label, address, True )
+        shared.reloadBroadcastSendersForWhichImWatching()
+        shared.UISignalQueue.put( ( 'rerenderInboxFromLabels', '' ) )
+        shared.UISignalQueue.put( ( 'rerenderSubscriptions', '' ) )
+        return 200, 'Added subscription.'
+
+    def addAddressToBlackWhiteList( self, *args ):
+        if len( args ) not in [1,2]:
+            return 0, 'I need parameters!'
+
+        if len( args ) == 1:
+            address, = args
+            label = ''
+
+        if len( args ) == 2:
+            address, label = args
+            label = self._decode( label, "base64" )
+            try:
+                unicode( label, 'utf-8' )
+            except:
+                return 17, 'Label is not valid UTF-8 data.'
+
+        if len( args ) > 2:
+            return 0, 'I need either 1 or 2 parameters!'
+
+        address = addBMIfNotPresent( address )
+        self._verifyAddress( address )
+
+        table = ''
+        if shared.config.get( 'bitmessagesettings', 'blackwhitelist' ) == 'black':
+            table = 'blacklist'
+        else:
+            table = 'whitelist'
+
+        # First we must check to see if the address is already in the
+        # black-/white-list.
+        queryreturn = sqlQuery( '''select * from '''+table+''' where address=?''', address )
+        if queryreturn != []:
+            return 28, 'You have already black-/white-listed that address.'
+
+        sqlExecute( '''INSERT INTO '''+table+''' VALUES (?,?,?)''',label, address, True )
+        shared.UISignalQueue.put( ( 'rerenderBlackWhiteList', '' ) )
+
+        return 200, 'Added black-/white-list entry.'
+
+    def removeAddressFromBlackWhiteList( self, *args ):
+        if len( args ) != 1:
+            return 0, 'I need 1 parameter!'
+
+        address, = args
+        address = addBMIfNotPresent( address )
+
+        table = ''
+        if shared.config.get( 'bitmessagesettings', 'blackwhitelist' ) == 'black':
+            table = 'blacklist'
+        else:
+            table = 'whitelist'
+
+        # First we must check to see if the address is already in the
+        # black-/white-list.
+        queryreturn = sqlQuery( '''select * from '''+table+''' where address=?''', address )
+        if queryreturn == []:
+            return 29, 'That entry does not exist in the black-/white-list.'
+
+        sqlExecute( '''DELETE FROM '''+table+''' WHERE address=?''', address )
+        shared.UISignalQueue.put( ( 'rerenderBlackWhiteList', '' ) )
+
+        return 200, 'Deleted black-/white-list entry if it existed.'
+
+    def deleteSubscription( self, *args):
+        if len( args ) != 1:
+            return 0, 'I need 1 parameter!'
+
+        address, = args
+        address = addBMIfNotPresent( address )
+        sqlExecute( '''DELETE FROM subscriptions WHERE address=?''', address )
+        shared.reloadBroadcastSendersForWhichImWatching()
+        shared.UISignalQueue.put( ( 'rerenderInboxFromLabels', '' ) )
+        shared.UISignalQueue.put( ( 'rerenderSubscriptions', '' ) )
+
+        return 200, 'Deleted subscription if it existed.'
     
     def listSubscriptions( self, *args ):
-        queryreturn = sqlQuery('''SELECT label, address, enabled FROM subscriptions''')
+        queryreturn = sqlQuery( '''SELECT label, address, enabled FROM subscriptions''' )
         data = []
         for row in queryreturn:
             label, address, enabled = row
-            label = shared.fixPotentiallyInvalidUTF8Data(label)
-            data.append({
-                'label':label.encode('base64'), 
+            label = shared.fixPotentiallyInvalidUTF8Data( label )
+            data.append( {
+                'label':label.encode( 'base64'), 
                 'address': address, 
                 'enabled': enabled == 1
-            })
+            } )
+
         return 200, data
 
     def disseminatePreEncryptedMsg( self, *args ):
@@ -867,7 +961,7 @@ class _handle_request( object ):
         shared.broadcastToSendDataQueues((
             toStreamNumber, 'advertiseobject', inventoryHash))
 
-    def disseminatePubkey':
+    def disseminatePubkey( self, *args ):
         # The device issuing this command to PyBitmessage supplies a pubkey object to be
         # disseminated to the rest of the Bitmessage network. PyBitmessage accepts this
         # pubkey object and sends it out to the rest of the Bitmessage network as if it
@@ -915,29 +1009,34 @@ class _handle_request( object ):
         if len( args ) != 1:
             0, 'I need 1 parameter!'
         requestedHash, = args
+
         if len(requestedHash) != 32:
             return 19, 'The length of hash should be 32 bytes (encoded in hex thus 64 characters).'
-        requestedHash = self._decode(requestedHash, "hex")
+
+        requestedHash = self._decode( requestedHash, "hex" )
 
         # This is not a particularly commonly used API function. Before we
         # use it we'll need to fill out a field in our inventory database
         # which is blank by default (first20bytesofencryptedmessage).
         queryreturn = sqlQuery(
-            '''SELECT hash, payload FROM inventory WHERE tag = '' and objecttype = 2 ; ''')
+            '''SELECT hash, payload FROM inventory WHERE tag = '' and objecttype = 2 ; '''
+        )
         with SqlBulkExecute() as sql:
             for row in queryreturn:
                 hash01, payload = row
                 readPosition = 16 # Nonce length + time length
-                readPosition += decodeVarint(payload[readPosition:readPosition+10])[1] # Stream Number length
-                t = (payload[readPosition:readPosition+32],hash01)
+                readPosition += decodeVarint( payload[readPosition:readPosition+10] )[1] # Stream Number length
+                t = ( payload[readPosition:readPosition+32], hash01 )
                 sql.execute('''UPDATE inventory SET tag=? WHERE hash=?; ''', *t)
 
-        queryreturn = sqlQuery('''SELECT payload FROM inventory WHERE tag = ?''',
-                               requestedHash)
+        queryreturn = sqlQuery(
+            '''SELECT payload FROM inventory WHERE tag = ?''',
+            requestedHash
+        )
         data = []
         for row in queryreturn:
             payload, = row
-            data.append({'data':payload.encode('hex')})
+            data.append( { 'data': payload.encode( 'hex' ) } )
 
         return 200, data
 
@@ -949,42 +1048,50 @@ class _handle_request( object ):
         requestedHash, = args
         if len(requestedHash) != 40:
             return 19, 'The length of hash should be 20 bytes (encoded in hex thus 40 characters).'
-        requestedHash = self._decode(requestedHash, "hex")
-        queryreturn = sqlQuery('''SELECT transmitdata FROM pubkeys WHERE hash = ? ; ''', requestedHash)
+        requestedHash = self._decode( requestedHash, "hex" )
+        queryreturn = sqlQuery(
+            '''SELECT transmitdata FROM pubkeys WHERE hash = ? ; ''',
+            requestedHash
+        )
         data = []
         for row in queryreturn:
             transmitdata, = row
-            data.append({'data':transmitdata.encode('hex')})
+            data.append( { 'data': transmitdata.encode('hex') } )
+
         return 200, data
 
     def clientStatus( self, *args ):
-        if len(shared.connectedHostsList) == 0:
+        if len( shared.connectedHostsList ) == 0:
             networkStatus = 'notConnected'
-        elif len(shared.connectedHostsList) > 0 and not shared.clientHasReceivedIncomingConnections:
+        elif len( shared.connectedHostsList ) > 0 and not shared.clientHasReceivedIncomingConnections:
             networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
         else:
             networkStatus = 'connectedAndReceivingIncomingConnections'
+
         data = {
-            'networkConnections':len(shared.connectedHostsList),
-            'numberOfMessagesProcessed':shared.numberOfMessagesProcessed,
-            'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed,
-            'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed,
-            'networkStatus':networkStatus,
-            'softwareName':'PyBitmessage',
-            'softwareVersion':shared.softwareVersion
+            'networkConnections': len( shared.connectedHostsList ),
+            'numberOfMessagesProcessed': shared.numberOfMessagesProcessed,
+            'numberOfBroadcastsProcessed': shared.numberOfBroadcastsProcessed,
+            'numberOfPubkeysProcessed': shared.numberOfPubkeysProcessed,
+            'networkStatus': networkStatus,
+            'softwareName': 'PyBitmessage',
+            'softwareVersion': shared.softwareVersion
         }
+
         return 200, data
 
     def decodeAddress( self, *args ):
         # Return a meaningful decoding of an address.
         if len( args ) != 1:
             return 0, 'I need 1 parameter!'
-        address, = params
-        status, addressVersion, streamNumber, ripe = decodeAddress(address)
+
+        address, = args
+        status, addressVersion, streamNumber, ripe = decodeAddress( address )
         data = {
-            'status':status,
-            'addressVersion':addressVersion,
-            'streamNumber':streamNumber,
-            'ripe':ripe.encode('base64')
+            'status': status,
+            'addressVersion': addressVersion,
+            'streamNumber': streamNumber,
+            'ripe': ripe.encode( 'base64' )
         }
+
         return 200, data
