@@ -1,6 +1,7 @@
 import shared
 import time
 import hashlib
+import re
 
 # Classes
 from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute
@@ -50,18 +51,47 @@ def recievedMessage( query ):
 
 class _handle_request( object ):
     def ping( self, *args ):
+        '''( echo's ) Test method, echo response '''
+
         data = { 'pong': args }
+
+        return 200, data
+
+    def help( self, *args ):
+        ''' List all method's'''
+
+        data = []
+        for method in dir( self.apiDir ):
+            print method, re.match( "^_", method ) 
+            if re.match( "^_", method ): continue
+
+            this = object.__getattribute__( self.apiDir, method )
+            if this.__doc__ != None:
+                data.append( {
+                    'mathod': method,
+                    'doc': this.__doc__
+                } )
         return 200, data
 
     def statusBar( self, *args ):
-        if not args:
+        '''( new status ) Displays the message in the status bar on the GUI '''
+
+        if len( args != 1 ):
             return 0, 'Need status message!'
+
         message, = args
         shared.UISignalQueue.put( ('updateStatusBar', message) ) # does this need to be encoded before transmission? 
 
         return 200, True
 
     def listAddresses( self, *args ):
+        ''' Lists all addresses shown on the Your Identities tab. Returns a list of objects with these properties:
+label (base64, decodes into utf-8)
+address (ascii/utf-8)
+stream (integer)
+enabled (bool)
+chan (bool)'''
+
         data = []
         configSections = shared.config.sections()
         for addressInKeysFile in configSections:
@@ -84,6 +114,10 @@ class _handle_request( object ):
         return 200, data
 
     def listAddressBookEntries( self, *args ):
+        '''() Returns a list of objects with these properties:
+address (ascii/utf-8)
+label (base64, decodes into utf-8)'''
+
         queryreturn = sqlQuery( '''SELECT label, address from addressbook''' )
         data = []
 
@@ -102,6 +136,9 @@ class _handle_request( object ):
         return 200, data
 
     def addAddressBookEntry( self, *args ): ## fix verifyAddress!
+        '''( address, label )
+add an entry to your address book. label must be base64-encoded.'''
+
         if len( args ) != 2:
             return 0, "I need label and address"
 
@@ -121,6 +158,9 @@ class _handle_request( object ):
         return 200, address
 
     def deleteAddressBookEntry( self, *args ): ## fix verifyAddress!
+        ''' ( address )
+Delete an entry from your address book. The program does not check to see whether it was there in the first place.'''
+
         if len( args ) != 1:
             return 0, 'I need an address'
 
@@ -134,6 +174,11 @@ class _handle_request( object ):
         return 200, "Deleted address book entry for %s if it existed" % address
 
     def createRandomAddress( self, *args ):
+        '''( label [eighteenByteRipe] [totalDifficulty] [smallMessageDifficulty] )
+Creates one address using the random number generator. label should be base64 encoded. eighteenByteRipe is a boolean telling Bitmessage whether to generate an address with an 18 byte RIPE hash(as opposed to a 19 byte hash). This is the same setting as the "Do extra work to make the address 1 or 2 characters shorter" in the user interface. Using False is recommended if you are running some sort of website and will be generating a lot of addresses. Note that even if you don't ask for it, there is still a 1 in 256 chance that you will get an address with an 18 byte RIPE hash so if you actually need an address with a 19 byte RIPE hash for some reason, you will need to check for it. eighteenByteRipe defaults to False. totalDifficulty and smallMessageDifficulty default to 1.
+Returns the address.
+Warning: At present, Bitmessage gets confused if you use both the API and the UI to make an address at the same time.'''
+
         if len( args ) not in [1,2,3,4]:
             return 0, 'I need parameters!'
 
@@ -205,6 +250,11 @@ class _handle_request( object ):
         return 200, data
 
     def createDeterministicAddresses( self, *args ): # needs to be tested
+        ''' ( passphrase> [numberOfAddresses] [addressVersionNumber] [streamNumber] [eighteenByteRipe] [totalDifficulty] [smallMessageDifficulty] )
+Similar to createRandomAddress except that you may generate many addresses in one go. passphrase should be base64 encoded. numberOfAddresses defaults to 1. addressVersionNumber and streamNumber may be set to 0 which will tell Bitmessage to use the most up-to-date addressVersionNumber and the most available streamNumber. Using zero for each of these fields is recommended. eighteenByteRipe defaults to False. totalDifficulty and smallMessageDifficulty default to 1.
+Returns a list of new addresses. This list will be empty if the addresses already existed.
+Warning: At present, Bitmessage gets confused if you use both the API and the UI to make addresses at the same time.'''
+
         if len( args ) not in range( 1,7 ):
             return 0, 'I need parameters!'
 
@@ -338,6 +388,11 @@ class _handle_request( object ):
         return 200, data
 
     def getDeterministicAddress( self, *args ): # needs to be tested
+        '''( passphrase,  addressVersionNumber, streamNumber )
+Similar to createDeterministicAddresses except that the one address that is returned will not be added to the Bitmessage user interface or the keys.dat file. passphrase should be base64 encoded. addressVersionNumber should be set to 3 or 4 as these are the only ones currently supported. streamNumber must be set to 1 as this is the only one currently supported.
+Returns a single address.
+Warning: At present, Bitmessage gets confused if you use both this API command and the UI to make addresses at the same time.'''
+
         if len( args ) != 3:
             return 0, 'I need exactly 3 parameters.'
 
@@ -373,6 +428,9 @@ class _handle_request( object ):
         return 200, shared.apiAddressGeneratorReturnQueue.get()
 
     def createChan( self, *args ):
+        '''( passphrase )
+Creates a new chan. passphrase must be base64 encoded. Outputs the corresponding Bitmessage address and label.'''
+
         if len( args ) != 1:
             return 0, 'Passphrase needed!'
 
@@ -418,6 +476,8 @@ class _handle_request( object ):
         return 200, data
 
     def joinChan( self, *args ):
+        '''( passphrase, address )
+Join a chan. passphrase must be base64 encoded. Outputs chan address'''
         if len( args ) != 2:
             return 0, 'I need two parameters.'
 
@@ -454,6 +514,10 @@ class _handle_request( object ):
         return 200, data
 
     def leaveChan( self, *args ):
+        '''( address )
+Leave a chan. Outputs "success".
+Note that at this time, the address is still shown in the UI until a restart.'''
+
         if len( args ) != 1:
             return 0, 'I need parameters.'
 
@@ -473,6 +537,10 @@ class _handle_request( object ):
         return 200, {}
 
     def deleteAddress( self, *args ):
+        '''( address )
+Permanently delete an address from Your Identities and your keys.dat file. Outputs "success".
+Note that at this time, the address is still shown in the UI until a restart.'''
+
         if len( args ) != 1:
             return 0, 'I need parameters.'
 
@@ -491,6 +559,18 @@ class _handle_request( object ):
         return 200, {}
 
     def getAllInboxMessages( self, *args ):
+        '''()
+Does not include trashed messages. Returns a list of objects with these properties:
+msgid (hex)
+toAddress (ascii/utf-8)
+fromAddress (ascii/utf-8)
+subject (base64, decodes into utf-8)
+message (base64, decodes into utf-8)
+encodingType (integer)
+receivedTime (integer, Unix time)
+read (integer representing binary state (0 or 1))
+The msgid is the same as the hash of the message (analogous to the TXID in Bitcoin) thus it is shown in hex as that is the de facto standard. The base64 encoding Bitmessage uses includes line breaks including one on the end of the string.'''
+
         queryreturn = sqlQuery(
             '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, received, read FROM inbox where folder='inbox' ORDER BY received'''
         )
@@ -498,6 +578,10 @@ class _handle_request( object ):
         return 200, data
 
     def getAllInboxMessageIDs( self, *args ):
+        '''()
+Returns a list of msgids of all Inbox messages with there properties:
+msgid (hex)'''
+
         queryreturn = sqlQuery(
             '''SELECT msgid FROM inbox where folder='inbox' ORDER BY received'''
         )
@@ -511,6 +595,19 @@ class _handle_request( object ):
         return 200, data
 
     def getInboxMessageByID( self, *args ):
+        ''' ( msgid, [read] )
+Returns an object with these properties:
+msgid (hex)
+toAddress (ascii/utf-8)
+fromAddress (ascii/utf-8)
+subject (base64, decodes into utf-8)
+message (base64, decodes into utf-8)
+encodingType (integer)
+receivedTime (integer, Unix time)
+read (integer representing binary state (0 or 1))
+Optionally sets the specific message to have a read status of 'read' (bool).
+The msgid is the same as the hash of the message (analogous to the TXID in Bitcoin) thus it should be given in hex as that is the de facto standard. The base64 encoding Bitmessage uses includes line breaks including one on the end of the string.'''
+        
         if len( args ) not in [1,2]:
             return 0, 'Missing message id'
 
@@ -538,6 +635,18 @@ class _handle_request( object ):
         return 200, data
 
     def getAllSentMessages( self, *args ):
+        '''()
+Returns an object with these properties:
+msgid (hex)
+toAddress (ascii/utf-8)
+fromAddress (ascii/utf-8)
+subject (base64, decodes into utf-8)
+message (base64, decodes into utf-8)
+encodingType (integer)
+lastActionTime (integer, Unix time)
+status (ascii/utf-8)
+ackData (hex)'''
+
         queryreturn = sqlQuery(
             '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, lastactiontime, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime'''
         )
@@ -546,6 +655,9 @@ class _handle_request( object ):
         return 200, queryreturn
 
     def getAllSentMessageIDs( self, *args ): # undocumented
+        '''()
+Returns a list of all sent message ids'''
+
         queryreturn = sqlQuery( '''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''' )
         data = []
         for row in queryreturn:
@@ -555,6 +667,9 @@ class _handle_request( object ):
         return 200, data
 
     def getInboxMessagesByToAddress( self, *args ): # renamed from getInboxMessagesByReceiver / undocumented
+        '''( toAddress )
+Returns a list of messages that are address to toAddress'''
+
         if len( args ) != 1:
             return 0, 'I need parameters!'
 
@@ -568,19 +683,43 @@ class _handle_request( object ):
         return 200, data
 
     def getSentMessagesBySender( self, *args ):
-            if len( args ) != 1:
-                return 0, 'I need parameters!'
+        '''( fromAddress )
+Returns a list of objects with these properties:
+msgid (hex)
+toAddress (ascii/utf-8)
+fromAddress (ascii/utf-8)
+subject (base64, decodes into utf-8)
+message (base64, decodes into utf-8)
+encodingType (integer)
+lastActionTime (integer, Unix time)
+status (ascii/utf-8)
+ackData (hex)'''
 
-            fromAddress, = args
-            queryreturn = sqlQuery(
-                '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, lastactiontime, status, ackdata FROM sent WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime''',
-                fromAddress
-            )
-            data = sentMessage( queryreturn )
+        if len( args ) != 1:
+            return 0, 'I need parameters!'
 
-            return 200, data
+        fromAddress, = args
+        queryreturn = sqlQuery(
+            '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, lastactiontime, status, ackdata FROM sent WHERE folder='sent' AND fromAddress=? ORDER BY lastactiontime''',
+            fromAddress
+        )
+        data = sentMessage( queryreturn )
+
+        return 200, data
 
     def getSentMessageByID( self, *args ):
+        '''( msgid )
+Returns an object with these properties:
+msgid (hex)
+toAddress (ascii/utf-8)
+fromAddress (ascii/utf-8)
+subject (base64, decodes into utf-8)
+message (base64, decodes into utf-8)
+encodingType (integer)
+lastActionTime (integer, Unix time)
+status (ascii/utf-8)
+ackData (hex)'''
+
         if len( args ) != 1:
             return 0, 'I need parameters!'
 
@@ -594,6 +733,18 @@ class _handle_request( object ):
         return 200, data
 
     def getSentMessageByAckData( self, *args ):
+        '''( ackData )
+Returns an object with these properties:
+msgid (hex)
+toAddress (ascii/utf-8)
+fromAddress (ascii/utf-8)
+subject (base64, decodes into utf-8)
+message (base64, decodes into utf-8)
+encodingType (integer)
+lastActionTime (integer, Unix time)
+status (ascii/utf-8)
+ackData (hex)'''
+
         if len( args ) != 1:
             return 0, 'I need parameters!'
 
@@ -607,6 +758,9 @@ class _handle_request( object ):
         return 200, data
 
     def trashMessage( self, *args ):
+        '''( msgid )
+returns a simple message saying that the message was trashed assuming it ever even existed. Prior existence is not checked. msgid is encoded in hex just like in the getAllInboxMessages function.'''
+
         if len( args ) != 1:
             return 0, 'I need parameters!'
 
@@ -619,15 +773,9 @@ class _handle_request( object ):
         return 200, 'Trashed message (assuming message existed).'
 
     def trashInboxMessage( self, *args ):
-        if len( args ) != 1:
-            return 0, 'I need parameters!'
+        '''( msgid )
+returns a simple message saying that the message was trashed assuming it ever even existed. Prior existence is not checked. msgid is encoded in hex just like in the getAllInboxMessages function.'''
 
-        msgid = self._decode( args[0], "hex" )
-        helper_inbox.trash( msgid )
-
-        return 200, 'Trashed inbox message (assuming message existed).'
-
-    def trashInboxMessage( self, *args ):
         if len( args ) != 1:
             return 0, 'I need parameters!'
 
@@ -637,6 +785,9 @@ class _handle_request( object ):
         return 200, 'Trashed inbox message (assuming message existed).'
 
     def trashSentMessage( self, *args ):
+        '''( msgid )
+returns a simple message saying that the message was trashed assuming it ever even existed. Prior existence is not checked. msgid is encoded in hex just like in the getAllInboxMessages function.'''
+
         if len( args ) != 1:
             return 0, 'I need parameters!'
 
@@ -646,7 +797,10 @@ class _handle_request( object ):
         return 200, 'Trashed sent message (assuming message existed).'
 
     def trashSentMessageByAckData( self, *args ):
-        # This API method should only be used when msgid is not available
+        '''( ackData )
+Trashes a sent message based on its ackdata. ackData should be encoded in hex. Returns a simple message saying that the message was trashed assuming it ever even existed. Prior existence is not checked.
+This API method should only be used when msgid is not available'''
+
         if len( args ) != 1:
             return 0, 'I need parameters!'
 
@@ -656,6 +810,9 @@ class _handle_request( object ):
         return 200, 'Trashed sent message (assuming message existed).'
 
     def sendMessage( self, *args ):
+        '''( toAddress, fromAddress, subject, message, [encodingType] )
+returns ackdata encoded in hex. subject and message must be encoded in base64 which may optionally include line breaks. If used, the encodingType must be set to 2; this is included for forwards compatibility.'''
+
         if len( args ) not in [4,5]:
             return 0, 'I need parameters!'
 
@@ -726,6 +883,9 @@ class _handle_request( object ):
         return 200, ackdata.encode( 'hex' )
 
     def sendBroadcast( self, *args ):
+        '''( fromAddress, subject, message, [encodingType] )
+returns ackData encoded in hex. subject and message must be encoded in base64. If used, the encodingType must be set to 2; this is included for forwards compatibility.'''
+
         if len( args ) not in [3,4]:
             return 0, 'I need parameters!'
 
@@ -787,6 +947,9 @@ class _handle_request( object ):
         return 200, ackdata.encode( 'hex' )
 
     def getStatus( self, *args ):
+        '''( ackData )
+returns one of these strings: notFound, findingPubkey, doingPOW, sentMessage, or ackReceived notfound, msgqueued, broadcastqueued, broadcastsent, doingpubkeypow, awaitingpubkey, doingmsgpow, forcepow, msgsent, msgsentnoackexpected, or ackreceived.'''
+        
         if len( args ) != 1:
             return 0, 'I need one parameter!'
 
@@ -807,6 +970,9 @@ class _handle_request( object ):
             return 200, status
 
     def addSubscription( self, *args ):
+        '''( address [label] )
+Subscribe to an address. label must be base64-encoded.'''
+
         if len( args ) not in [1,2]:
             return 0, 'I need parameters!'
 
@@ -836,6 +1002,9 @@ class _handle_request( object ):
         return 200, 'Added subscription.'
 
     def addAddressToBlackWhiteList( self, *args ):
+        '''( address, [label] )
+Add an entry to your black or white list- whichever you are currently using. label must be base64-encoded.'''
+
         if len( args ) not in [1,2]:
             return 0, 'I need parameters!'
 
@@ -875,6 +1044,9 @@ class _handle_request( object ):
         return 200, 'Added black-/white-list entry.'
 
     def removeAddressFromBlackWhiteList( self, *args ):
+        '''( address )
+Delete an entry from your black or white list- whichever you are currently using (but not both).'''
+
         if len( args ) != 1:
             return 0, 'I need 1 parameter!'
 
@@ -899,6 +1071,9 @@ class _handle_request( object ):
         return 200, 'Deleted black-/white-list entry if it existed.'
 
     def deleteSubscription( self, *args):
+        '''( address )
+Unsubscribe from an address. The program does not check to see whether you were subscribed in the first place.'''
+
         if len( args ) != 1:
             return 0, 'I need 1 parameter!'
 
@@ -912,6 +1087,11 @@ class _handle_request( object ):
         return 200, 'Deleted subscription if it existed.'
     
     def listSubscriptions( self, *args ):
+        '''Returns a list of objects with these properties:
+label (base64, decodes into utf-8)
+address (ascii/utf-8)
+enabled (bool)'''
+
         queryreturn = sqlQuery( '''SELECT label, address, enabled FROM subscriptions''' )
         data = []
         for row in queryreturn:
@@ -925,12 +1105,14 @@ class _handle_request( object ):
 
         return 200, data
 
-    def disseminatePreEncryptedMsg( self, *args ):
-        # The device issuing this command to PyBitmessage supplies a msg object that has
-        # already been encrypted but which still needs the POW to be done. PyBitmessage
-        # accepts this msg object and sends it out to the rest of the Bitmessage network
-        # as if it had generated the message itself. Please do not yet add this to the
-        # api doc.
+    def disseminatePreEncryptedMsg( self, *args ): # undocumented
+        ''' (encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte, requiredPayloadLengthExtraBytes )
+The device issuing this command to PyBitmessage supplies a msg object that has
+already been encrypted but which still needs the POW to be done. PyBitmessage
+accepts this msg object and sends it out to the rest of the Bitmessage network
+as if it had generated the message itself. Please do not yet add this to the
+api doc.'''
+
         if len( args ) != 3:
             return 0, 'I need 3 parameter!'
         encryptedPayload, requiredAverageProofOfWorkNonceTrialsPerByte, requiredPayloadLengthExtraBytes = args
@@ -961,12 +1143,14 @@ class _handle_request( object ):
         shared.broadcastToSendDataQueues((
             toStreamNumber, 'advertiseobject', inventoryHash))
 
-    def disseminatePubkey( self, *args ):
-        # The device issuing this command to PyBitmessage supplies a pubkey object to be
-        # disseminated to the rest of the Bitmessage network. PyBitmessage accepts this
-        # pubkey object and sends it out to the rest of the Bitmessage network as if it
-        # had generated the pubkey object itself. Please do not yet add this to the api
-        # doc.
+    def disseminatePubkey( self, *args ): # undocumented
+        '''( payload )
+The device issuing this command to PyBitmessage supplies a pubkey object to be
+disseminated to the rest of the Bitmessage network. PyBitmessage accepts this
+pubkey object and sends it out to the rest of the Bitmessage network as if it
+had generated the pubkey object itself. Please do not yet add this to the api
+doc.'''
+
         if len( args ) != 1:
             return 0, 'I need 1 parameter!'
         payload, = args
@@ -1001,10 +1185,11 @@ class _handle_request( object ):
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
 
-    def getMessageDataByDestinationTag( self, *args ):
-        # Method will eventually be used by a particular Android app to
-        # select relevant messages. Do not yet add this to the api
-        # doc.
+    def getMessageDataByDestinationTag( self, *args ): # undocumented
+        '''( requestedHash )
+Method will eventually be used by a particular Android app to
+select relevant messages. Do not yet add this to the api
+doc.'''
 
         if len( args ) != 1:
             0, 'I need 1 parameter!'
@@ -1040,9 +1225,11 @@ class _handle_request( object ):
 
         return 200, data
 
-    def getPubkeyByHash( self, *args ):
-        # Method will eventually be used by a particular Android app to
-        # retrieve pubkeys. Please do not yet add this to the api docs.
+    def getPubkeyByHash( self, *args ): #undocumented
+        '''( requestedHash )
+Method will eventually be used by a particular Android app to
+retrieve pubkeys. Please do not yet add this to the api docs.'''
+
         if len( args ) != 1:
             return 0, 'I need 1 parameter!'
         requestedHash, = args
@@ -1061,6 +1248,8 @@ class _handle_request( object ):
         return 200, data
 
     def clientStatus( self, *args ):
+        '''Returns the softwareName, softwareVersion, networkStatus, networkConnections, numberOfPubkeysProcessed, numberOfMessagesProcessed, and numberOfBroadcastsProcessed. networkStatus will be one of these strings: "notConnected", "connectedButHaveNotReceivedIncomingConnections", or "connectedAndReceivingIncomingConnections".'''
+        
         if len( shared.connectedHostsList ) == 0:
             networkStatus = 'notConnected'
         elif len( shared.connectedHostsList ) > 0 and not shared.clientHasReceivedIncomingConnections:
@@ -1081,6 +1270,13 @@ class _handle_request( object ):
         return 200, data
 
     def decodeAddress( self, *args ):
+        '''( address )
+Returns an object with these properties:
+status (ascii/utf-8)
+addressVersion (ascii integer)
+streamNumber (ascii integer)
+ripe (base64, decodes into binary data)'''
+
         # Return a meaningful decoding of an address.
         if len( args ) != 1:
             return 0, 'I need 1 parameter!'

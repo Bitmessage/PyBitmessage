@@ -29,7 +29,6 @@ from struct import pack
 # Classes
 from debug import logger
 
-
 class APIError(Exception):
     def __init__(self, error_number, error_message):
         super(APIError, self).__init__()
@@ -76,8 +75,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # check to see if a subclass implements _dispatch and dispatch
             # using that method if present.
 
-            from pprint import pprint
-            print self.headers['Content-type']
             response = self.server._marshaled_dispatch(
                 data, getattr(self, '_dispatch', None)
             )
@@ -155,12 +152,16 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             time.sleep(2)
             return "RPC Username or password incorrect or HTTP header lacks authentication at all."
 
-        if method in dir( _handle_request ):
+        self.apiDir = _handle_request
+
+        if method in dir( self.apiDir ):
             logger.warn( 'Found "{}" in API'.format( method ) )
             try:
                 statusCode, data = object.__getattribute__( _handle_request, method )( self, *params )
             except Exception as e:
                 logger.exception(e)
+                statusCode = 500
+                data = "500"
         else:
             statusCode = 404
             data = "Method not found"
