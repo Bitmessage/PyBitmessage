@@ -245,9 +245,10 @@ Warning: At present, Bitmessage gets confused if you use both the API and the UI
             nonceTrialsPerByte,
             payloadLengthExtraBytes
         ) )
+        label = shared.fixPotentiallyInvalidUTF8Data( label )
         data = {
             'address': shared.apiAddressGeneratorReturnQueue.get(),
-            'label': label
+            'label': label.encode( 'base64' )
         }
         return 200, data
 
@@ -653,7 +654,7 @@ ackData (hex)'''
             '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, lastactiontime, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime'''
         )
         data = sentMessage( queryreturn )
-        
+
         return 200, data
 
     def getAllSentMessageIDs( self, *args ): # undocumented
