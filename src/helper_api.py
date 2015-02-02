@@ -28,7 +28,7 @@ def sentMessage( query ):
             'encodingType': row[5],
             'lastactiontime': row[6],
             'status': row[7],
-            'ackdata': row[8].endcode( 'hex' ),
+            'ackdata': row[8].encode( 'hex' ),
         } )
 
     return data
@@ -653,8 +653,8 @@ ackData (hex)'''
             '''SELECT msgid, toAddress, fromAddress, subject, message, encodingtype, lastactiontime, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime'''
         )
         data = sentMessage( queryreturn )
-
-        return 200, queryreturn
+        
+        return 200, data
 
     def getAllSentMessageIDs( self, *args ): # undocumented
         '''()
@@ -1009,7 +1009,7 @@ Subscribe to an address. label must be base64-encoded.'''
         shared.reloadBroadcastSendersForWhichImWatching()
         shared.UISignalQueue.put( ( 'rerenderInboxFromLabels', '' ) )
         shared.UISignalQueue.put( ( 'rerenderSubscriptions', '' ) )
-        
+
         return 200, 'Added subscription.'
 
     def addAddressToBlackWhiteList( self, *args ):
