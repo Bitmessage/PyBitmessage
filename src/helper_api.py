@@ -882,7 +882,11 @@ returns ackdata encoded in hex. subject and message must be encoded in base64 wh
         ) )
         shared.workerQueue.put( ( 'sendmessage', toAddress ) )
 
-        return 200, ackdata.encode( 'hex' )
+        data = {
+            'ackdata': ackdata.encode( 'hex' )
+        }
+
+        return 200, data
 
     def sendBroadcast( self, *args ):
         '''( fromAddress, subject, message, [encodingType] )
@@ -946,7 +950,11 @@ returns ackData encoded in hex. subject and message must be encoded in base64. I
         ) )
         shared.workerQueue.put( ( 'sendbroadcast', '' ) )
 
-        return 200, ackdata.encode( 'hex' )
+        data = {
+            'ackdata': ackdata.encode( 'hex' )
+        }
+        
+        return 200, data
 
     def getStatus( self, *args ):
         '''( ackData )
@@ -1001,6 +1009,7 @@ Subscribe to an address. label must be base64-encoded.'''
         shared.reloadBroadcastSendersForWhichImWatching()
         shared.UISignalQueue.put( ( 'rerenderInboxFromLabels', '' ) )
         shared.UISignalQueue.put( ( 'rerenderSubscriptions', '' ) )
+        
         return 200, 'Added subscription.'
 
     def addAddressToBlackWhiteList( self, *args ):
