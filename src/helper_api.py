@@ -68,9 +68,10 @@ class _handle_request( object ):
             this = object.__getattribute__( self.apiDir, method )
             if this.__doc__ != None:
                 data.append( {
-                    'mathod': method,
+                    'method': method,
                     'doc': this.__doc__
                 } )
+
         return 200, data
 
     def statusBar( self, *args ):
@@ -111,6 +112,7 @@ chan (bool)'''
                     'enabled': shared.config.getboolean(addressInKeysFile, 'enabled'),
                     'chan': chan
                 } )
+
         return 200, data
 
     def listAddressBookEntries( self, *args ):
@@ -250,7 +252,7 @@ Warning: At present, Bitmessage gets confused if you use both the API and the UI
         return 200, data
 
     def createDeterministicAddresses( self, *args ): # needs to be tested
-        ''' ( passphrase> [numberOfAddresses] [addressVersionNumber] [streamNumber] [eighteenByteRipe] [totalDifficulty] [smallMessageDifficulty] )
+        ''' ( passphrase [numberOfAddresses] [addressVersionNumber] [streamNumber] [eighteenByteRipe] [totalDifficulty] [smallMessageDifficulty] )
 Similar to createRandomAddress except that you may generate many addresses in one go. passphrase should be base64 encoded. numberOfAddresses defaults to 1. addressVersionNumber and streamNumber may be set to 0 which will tell Bitmessage to use the most up-to-date addressVersionNumber and the most available streamNumber. Using zero for each of these fields is recommended. eighteenByteRipe defaults to False. totalDifficulty and smallMessageDifficulty default to 1.
 Returns a list of new addresses. This list will be empty if the addresses already existed.
 Warning: At present, Bitmessage gets confused if you use both the API and the UI to make addresses at the same time.'''
