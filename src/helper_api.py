@@ -473,7 +473,7 @@ Creates a new chan. passphrase must be base64 encoded. Outputs the corresponding
         address = queueReturn[0]
         data = {
             'address': address,
-            'label': label
+            'label': label.encode( 'base64')
         }
 
         return 200, data
