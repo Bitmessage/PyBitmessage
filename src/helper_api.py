@@ -529,7 +529,7 @@ Note that at this time, the address is still shown in the UI until a restart.'''
         address = addBMIfNotPresent( address )
 
         if not shared.config.has_section( address ):
-            return 13, 'Could not find this address in your keys.dat file.'
+            return 406, 'Could not find this address in your keys.dat file.'
 
         if not shared.safeConfigGetBoolean( address, 'chan' ):
             return 25, 'Specified address is not a chan address. Use deleteAddress API call instead.'
@@ -551,7 +551,7 @@ Note that at this time, the address is still shown in the UI until a restart.'''
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress( address )
         address = addBMIfNotPresent( address )
         if not shared.config.has_section(address):
-            return 13, 'Could not find this address in your keys.dat file.'
+            return 406, 'Could not find this address in your keys.dat file.'
 
         shared.config.remove_section( address )
         shared.writeKeysFile()
@@ -840,7 +840,7 @@ returns ackdata encoded in hex. subject and message must be encoded in base64 wh
         try:
             fromAddressEnabled = shared.config.getboolean( fromAddress, 'enabled' )
         except:
-            return 13, 'Could not find your fromAddress in the keys.dat file.'
+            return 406, 'Could not find your fromAddress in the keys.dat file.'
 
         if not fromAddressEnabled:
             return 14, 'Your fromAddress is disabled. Cannot send.'
@@ -915,7 +915,7 @@ returns ackData encoded in hex. subject and message must be encoded in base64. I
         try:
             fromAddressEnabled = shared.config.getboolean( fromAddress, 'enabled' )
         except:
-            return 13, 'could not find your fromAddress in the keys.dat file.'
+            return 406, 'could not find your fromAddress in the keys.dat file.'
 
         ackdata = OpenSSL.rand( 32 )
         toAddress = '[Broadcast subscribers]'
