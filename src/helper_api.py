@@ -773,7 +773,12 @@ returns a simple message saying that the message was trashed assuming it ever ev
         helper_inbox.trash(msgid)
         # Trash if in sent table
         sqlExecute( '''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid )
-        return 200, 'Trashed message (assuming message existed).'
+
+        data = {
+            'message': 'Trashed message (assuming message existed).'
+        }
+        
+        return 200, data
 
     def trashInboxMessage( self, *args ):
         '''( msgid )
@@ -786,8 +791,9 @@ returns a simple message saying that the message was trashed assuming it ever ev
         helper_inbox.trash( msgid )
 
         data = {
-            'message': data
+            'message': 'Trashed message (assuming message existed).'
         }
+
         return 200, data
 
     def trashSentMessage( self, *args ):
@@ -801,8 +807,9 @@ returns a simple message saying that the message was trashed assuming it ever ev
         sqlExecute( '''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid )
 
         data = {
-            'message': data
+            'message': 'Trashed message (assuming message existed).'
         }
+        
         return 200, data
 
     def trashSentMessageByAckData( self, *args ):
@@ -816,7 +823,11 @@ This API method should only be used when msgid is not available'''
         ackdata = self._decode (args[0], "hex" )
         sqlExecute( '''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdata )
 
-        return 200, 'Trashed sent message (assuming message existed).'
+        data = {
+            'message': 'Trashed message (assuming message existed).'
+        }
+        
+        return 200, data
 
     def sendMessage( self, *args ):
         '''( toAddress, fromAddress, subject, message, [encodingType] )
