@@ -785,7 +785,10 @@ returns a simple message saying that the message was trashed assuming it ever ev
         msgid = self._decode( args[0], "hex" )
         helper_inbox.trash( msgid )
 
-        return 200, 'Trashed inbox message (assuming message existed).'
+        data = {
+            'message': data
+        }
+        return 200, data
 
     def trashSentMessage( self, *args ):
         '''( msgid )
@@ -797,7 +800,10 @@ returns a simple message saying that the message was trashed assuming it ever ev
         msgid = self._decode( args[0], "hex" )
         sqlExecute( '''UPDATE sent SET folder='trash' WHERE msgid=?''', msgid )
 
-        return 200, 'Trashed sent message (assuming message existed).'
+        data = {
+            'message': data
+        }
+        return 200, data
 
     def trashSentMessageByAckData( self, *args ):
         '''( ackData )
