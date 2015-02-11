@@ -246,8 +246,8 @@ def addBMIfNotPresent(address):
 
 if __name__ == "__main__":
     print 'Let us make an address from scratch. Suppose we generate two random 32 byte values and call the first one the signing key and the second one the encryption key:'
-    privateSigningKey = '93d0b61371a54b53df143b954035d612f8efa8a3ed1cf842c2186bfd8f876665'
-    privateEncryptionKey = '4b0b73a54e19b059dc274ab69df095fe699f43b17397bca26fdf40f4d7400a3a'
+    privateSigningKey = '176b9c357297fd32ad1abcff52fcd45d1af9fb255bb79718922de5f114b0db57'
+    privateEncryptionKey = 'bfe026dbdcb4a128adf7512e37e73bbaa5c847c24790f421ae299a34428ace76'
     print 'privateSigningKey =', privateSigningKey
     print 'privateEncryptionKey =', privateEncryptionKey
     print 'Now let us convert them to public keys by doing an elliptic curve point multiplication.'
