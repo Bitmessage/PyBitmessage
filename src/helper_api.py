@@ -1028,7 +1028,11 @@ Subscribe to an address. label must be base64-encoded.'''
         shared.UISignalQueue.put( ( 'rerenderInboxFromLabels', '' ) )
         shared.UISignalQueue.put( ( 'rerenderSubscriptions', '' ) )
 
-        return 200, 'Added subscription.'
+        data = {
+            "label": 'Added subscription.'
+        }
+
+        return 200, data
 
     def addAddressToBlackWhiteList( self, *args ):
         '''( address, [label] )
