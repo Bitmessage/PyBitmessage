@@ -427,6 +427,7 @@ class objectProcessor(threading.Thread):
         logger.debug('As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person: %s  ..and here is the testnet address: %s. The other person must take their private signing key from Bitmessage and import it into Bitcoin (or a service like Blockchain.info) for it to be of any use. Do not use this unless you know what you are doing.' %
                      (helper_bitcoin.calculateBitcoinAddressFromPubkey(pubSigningKey), helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey))
                      )
+        sigHash = hashlib.sha512(hashlib.sha512(signature).digest()).digest()[32:] # Used to detect and ignore duplicate messages in our inbox
 
         # calculate the fromRipe.
         sha = hashlib.new('sha512')
@@ -503,13 +504,13 @@ class objectProcessor(threading.Thread):
             body = 'Unknown encoding type.\n\n' + repr(message)
             subject = ''
         # Let us make sure that we haven't already received this message
-        if helper_inbox.isMessageAlreadyInInbox(toAddress, fromAddress, subject, body, messageEncodingType):
+        if helper_inbox.isMessageAlreadyInInbox(sigHash):
             logger.info('This msg is already in our inbox. Ignoring it.')
             blockMessage = True
         if not blockMessage:
             if messageEncodingType != 0:
                 t = (inventoryHash, toAddress, fromAddress, subject, int(
-                    time.time()), body, 'inbox', messageEncodingType, 0)
+                    time.time()), body, 'inbox', messageEncodingType, 0, sigHash)
                 helper_inbox.insert(t)
 
                 shared.UISignalQueue.put(('displayNewInboxMessage', (
@@ -701,6 +702,7 @@ class objectProcessor(threading.Thread):
             logger.debug('ECDSA verify failed')
             return
         logger.debug('ECDSA verify passed')
+        sigHash = hashlib.sha512(hashlib.sha512(signature).digest()).digest()[32:] # Used to detect and ignore duplicate messages in our inbox
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
@@ -735,33 +737,33 @@ class objectProcessor(threading.Thread):
             subject = ''
         elif messageEncodingType == 0:
             logger.info('messageEncodingType == 0. Doing nothing with the message.')
+            return
         else:
             body = 'Unknown encoding type.\n\n' + repr(message)
             subject = ''
 
         toAddress = '[Broadcast subscribers]'
-        if messageEncodingType != 0:
-            if helper_inbox.isMessageAlreadyInInbox(toAddress, fromAddress, subject, body, messageEncodingType):
-                logger.info('This broadcast is already in our inbox. Ignoring it.')
-            else:
-                t = (inventoryHash, toAddress, fromAddress, subject, int(
-                    time.time()), body, 'inbox', messageEncodingType, 0)
-                helper_inbox.insert(t)
+        if helper_inbox.isMessageAlreadyInInbox(sigHash):
+            logger.info('This broadcast is already in our inbox. Ignoring it.')
+            return
+        t = (inventoryHash, toAddress, fromAddress, subject, int(
+            time.time()), body, 'inbox', messageEncodingType, 0, sigHash)
+        helper_inbox.insert(t)
 
-                shared.UISignalQueue.put(('displayNewInboxMessage', (
-                    inventoryHash, toAddress, fromAddress, subject, body)))
+        shared.UISignalQueue.put(('displayNewInboxMessage', (
+            inventoryHash, toAddress, fromAddress, subject, body)))
 
-                # If we are behaving as an API then we might need to run an
-                # outside command to let some program know that a new message
-                # has arrived.
-                if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
-                    try:
-                        apiNotifyPath = shared.config.get(
-                            'bitmessagesettings', 'apinotifypath')
-                    except:
-                        apiNotifyPath = ''
-                    if apiNotifyPath != '':
-                        call([apiNotifyPath, "newBroadcast"])
+        # If we are behaving as an API then we might need to run an
+        # outside command to let some program know that a new message
+        # has arrived.
+        if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+            try:
+                apiNotifyPath = shared.config.get(
+                    'bitmessagesettings', 'apinotifypath')
+            except:
+                apiNotifyPath = ''
+            if apiNotifyPath != '':
+                call([apiNotifyPath, "newBroadcast"])
 
         # Display timing data
         logger.info('Time spent processing this interesting broadcast: %s' % (time.time() - messageProcessingStartTime,))

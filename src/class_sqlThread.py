@@ -28,7 +28,7 @@ class sqlThread(threading.Thread):
 
         try:
             self.cur.execute(
-                '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text, received text, message text, folder text, encodingtype int, read bool, UNIQUE(msgid) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text, received text, message text, folder text, encodingtype int, read bool, sighash blob, UNIQUE(msgid) ON CONFLICT REPLACE)''' )
             self.cur.execute(
                 '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text, ackdata blob, lastactiontime integer, status text, pubkeyretrynumber integer, msgretrynumber integer, folder text, encodingtype int)''' )
             self.cur.execute(
@@ -61,7 +61,7 @@ class sqlThread(threading.Thread):
                 '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
                 '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','8')''')
+            self.cur.execute( '''INSERT INTO settings VALUES('version','9')''')
             self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             self.cur.execute(
@@ -360,7 +360,21 @@ class sqlThread(threading.Thread):
             parameters = (8,)
             self.cur.execute(query, parameters)
             logger.debug('Finished clearing currently held pubkeys.')
-        
+
+        # Add a new column to the inbox table to store the hash of the message signature.
+        # We'll use this as temporary message UUID in order to detect duplicates. 
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        currentVersion = int(self.cur.fetchall()[0][0])
+        if currentVersion == 8:
+            logger.debug('In messages.dat database, adding sighash field to the inbox table.')
+            item = '''ALTER TABLE inbox ADD sighash blob DEFAULT '' '''
+            parameters = ''
+            self.cur.execute(item, parameters)
+            item = '''update settings set value=? WHERE key='version';'''
+            parameters = (9,)
+            self.cur.execute(item, parameters)
 
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users or modify the SQLite database? Add it right above this line!
