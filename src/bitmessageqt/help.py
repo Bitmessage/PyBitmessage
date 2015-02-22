@@ -2,7 +2,7 @@
 
 # Form implementation generated from reading ui file 'help.ui'
 #
-# Created: Mon Mar 11 11:20:54 2013
+# Created: Wed Jan 14 22:42:39 2015
 #      by: PyQt4 UI code generator 4.9.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -43,6 +43,6 @@ class Ui_helpDialog(object):
 
     def retranslateUi(self, helpDialog):
         helpDialog.setWindowTitle(QtGui.QApplication.translate("helpDialog", "Help", None, QtGui.QApplication.UnicodeUTF8))
-        self.labelHelpURI.setText(QtGui.QApplication.translate("helpDialog", "<a href=\"http://Bitmessage.org/wiki/PyBitmessage_Help\">http://Bitmessage.org/wiki/PyBitmessage_Help</a>", None, QtGui.QApplication.UnicodeUTF8))
+        self.labelHelpURI.setText(QtGui.QApplication.translate("helpDialog", "<a href=\"https://bitmessage.org/wiki/PyBitmessage_Help\">https://bitmessage.org/wiki/PyBitmessage_Help</a>", None, QtGui.QApplication.UnicodeUTF8))
         self.label.setText(QtGui.QApplication.translate("helpDialog", "As Bitmessage is a collaborative project, help can be found online in the Bitmessage Wiki:", None, QtGui.QApplication.UnicodeUTF8))
 
