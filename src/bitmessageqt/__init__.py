@@ -999,10 +999,9 @@ class MyForm(QtGui.QMainWindow):
     # create application indicator
     def appIndicatorInit(self, app):
         self.initTrayIcon("can-icon-24px-red.png", app)
-        if sys.platform[0:3] == 'win':
-            traySignal = "activated(QSystemTrayIcon::ActivationReason)"
-            QtCore.QObject.connect(self.tray, QtCore.SIGNAL(
-                traySignal), self.__icon_activated)
+        traySignal = "activated(QSystemTrayIcon::ActivationReason)"
+        QtCore.QObject.connect(self.tray, QtCore.SIGNAL(
+            traySignal), self.__icon_activated)
 
         m = QMenu()
 
