@@ -212,6 +212,8 @@ class MyForm(QtGui.QMainWindow):
             "clicked()"), self.click_pushButtonAddSubscription)
         QtCore.QObject.connect(self.ui.pushButtonAddBlacklist, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonAddBlacklist)
+        QtCore.QObject.connect(self.ui.pushButtonTTL, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonTTL)
         QtCore.QObject.connect(self.ui.pushButtonSend, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonSend)
         QtCore.QObject.connect(self.ui.pushButtonLoadFromAddressBook,
@@ -648,6 +650,18 @@ class MyForm(QtGui.QMainWindow):
 
         self.rerenderComboBoxSendFrom()
         
+        # Put the TTL slider in the correct spot
+        TTL = shared.config.getint('bitmessagesettings', 'ttl')
+        if TTL < 3600: # an hour
+            TTL = 3600
+        elif TTL > 28*24*60*60: # 28 days
+            TTL = 28*24*60*60
+        self.ui.horizontalSliderTTL.setSliderPosition((TTL - 3600) ** (1/3.199))
+        self.updateHumanFriendlyTTLDescription(TTL)
+        
+        QtCore.QObject.connect(self.ui.horizontalSliderTTL, QtCore.SIGNAL(
+            "valueChanged(int)"), self.updateTTL)
+        
         # Check to see whether we can connect to namecoin. Hide the 'Fetch Namecoin ID' button if we can't.
         try:
             options = {}
@@ -662,7 +676,23 @@ class MyForm(QtGui.QMainWindow):
         except:
             print 'There was a problem testing for a Namecoin daemon. Hiding the Fetch Namecoin ID button'
             self.ui.pushButtonFetchNamecoinID.hide()
-
+            
+    def updateTTL(self, sliderPosition):
+        TTL = int(sliderPosition ** 3.199 + 3600)
+        self.updateHumanFriendlyTTLDescription(TTL)
+        shared.config.set('bitmessagesettings', 'ttl', str(TTL))
+        shared.writeKeysFile()
+        
+    def updateHumanFriendlyTTLDescription(self, TTL):
+        numberOfHours = int(round(TTL / (60*60)))
+        if numberOfHours < 48:
+            if numberOfHours == 1:
+                self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "1 hour"))
+            else:
+                self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%1 hours").arg(numberOfHours))
+        else:
+            numberOfDays = int(round(TTL / (24*60*60)))
+            self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%1 days").arg(numberOfDays))
 
     # Show or hide the application window after clicking an item within the
     # tray icon or, on Windows, the try icon itself.
@@ -1868,6 +1898,14 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetBlacklist.setItem(0, 1, newItem)
 
+    def click_pushButtonTTL(self):
+        QtGui.QMessageBox.information(self, 'Time To Live', _translate(
+            "MainWindow", "The TTL, or Time-To-Live is the length of time that the network will hold the message. \
+The recipient must get it during this time. If your client does not hear an acknowledgement, your \
+Bitmessage client will resend the message automatically if it is open. The longer the Time-To-Live, the \
+more work your computer must do to send the message. A Time-To-Live of four or five days is often appropriate."), QMessageBox.Ok)
+        ###############
+
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
         toAddresses = str(self.ui.lineEditTo.text())
@@ -1953,10 +1991,11 @@ class MyForm(QtGui.QMainWindow):
                             ackdata,
                             int(time.time()),
                             'msgqueued',
-                            1,
-                            1,
+                            1, # pubkeyretrynumber
+                            1, # msgretrynumber
                             'sent',
-                            2)
+                            2 # encodingtype
+                            )
 
                         toLabel = ''
                         queryreturn = sqlQuery('''select label from addressbook where address=?''',
@@ -2421,13 +2460,6 @@ class MyForm(QtGui.QMainWindow):
                         self.settingsDialogInstance.ui.lineEditDays.text())))
                         shared.config.set('bitmessagesettings', 'stopresendingafterxmonths', str(float(
                         self.settingsDialogInstance.ui.lineEditMonths.text())))
-            #end
-
-            # if str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()) == 'All':
-            #    shared.config.set('bitmessagesettings', 'maxcores', '99999')
-            # else:
-            # shared.config.set('bitmessagesettings', 'maxcores',
-            # str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()))
 
             shared.writeKeysFile()
 
@@ -3756,8 +3788,6 @@ class NewAddressDialog(QtGui.QDialog):
         # the 'Your Identities' tab.
         while self.parent.ui.tableWidgetYourIdentities.item(row - 1, 1):
             self.ui.radioButtonExisting.click()
-            # print
-            # self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text()
             self.ui.comboBoxExisting.addItem(
                 self.parent.ui.tableWidgetYourIdentities.item(row - 1, 1).text())
             row += 1
