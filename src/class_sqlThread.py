@@ -375,6 +375,10 @@ class sqlThread(threading.Thread):
             item = '''update settings set value=? WHERE key='version';'''
             parameters = (9,)
             self.cur.execute(item, parameters)
+            
+        # TTL is now user-specifyable. Let's add an option to save whatever the user selects. 
+        if not shared.config.has_option('bitmessagesettings', 'ttl'):
+            shared.config.set('bitmessagesettings', 'ttl', '367200')
 
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users or modify the SQLite database? Add it right above this line!
