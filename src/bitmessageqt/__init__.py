@@ -610,7 +610,7 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
+            "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByToAddress)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -1694,13 +1694,11 @@ class MyForm(QtGui.QMainWindow):
             cnt, = row
         return int(cnt)
 
-    def updateSentItemStatusByHash(self, toRipe, textToDisplay):
+    def updateSentItemStatusByToAddress(self, toAddress, textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
-            toAddress = str(self.ui.tableWidgetSent.item(
+            rowAddress = str(self.ui.tableWidgetSent.item(
                 i, 0).data(Qt.UserRole).toPyObject())
-            status, addressVersionNumber, streamNumber, ripe = decodeAddress(
-                toAddress)
-            if ripe == toRipe:
+            if toAddress == rowAddress:
                 self.ui.tableWidgetSent.item(i, 3).setToolTip(textToDisplay)
                 try:
                     newlinePosition = textToDisplay.indexOf('\n')
@@ -1901,10 +1899,9 @@ class MyForm(QtGui.QMainWindow):
     def click_pushButtonTTL(self):
         QtGui.QMessageBox.information(self, 'Time To Live', _translate(
             "MainWindow", "The TTL, or Time-To-Live is the length of time that the network will hold the message. \
-The recipient must get it during this time. If your client does not hear an acknowledgement, your \
-Bitmessage client will resend the message automatically if it is open. The longer the Time-To-Live, the \
+The recipient must get it during this time. If your Bitmessage client does not hear an acknowledgement, it \
+will resend the message automatically. The longer the Time-To-Live, the \
 more work your computer must do to send the message. A Time-To-Live of four or five days is often appropriate."), QMessageBox.Ok)
-        ###############
 
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
@@ -1981,7 +1978,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
                         ackdata = OpenSSL.rand(32)
                         t = ()
                         sqlExecute(
-                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
                             '',
                             toAddress,
                             ripe,
@@ -1989,12 +1986,14 @@ more work your computer must do to send the message. A Time-To-Live of four or f
                             subject,
                             message,
                             ackdata,
-                            int(time.time()),
+                            int(time.time()), # sentTime (this will never change)
+                            int(time.time()), # lastActionTime
+                            0, # sleepTill time. This will get set when the POW gets done.
                             'msgqueued',
-                            1, # pubkeyretrynumber
-                            1, # msgretrynumber
-                            'sent',
-                            2 # encodingtype
+                            0, # retryNumber
+                            'sent', # folder
+                            2, # encodingtype
+                            shared.config.getint('bitmessagesettings', 'ttl')
                             )
 
                         toLabel = ''
@@ -2030,10 +2029,24 @@ more work your computer must do to send the message. A Time-To-Live of four or f
                 ackdata = OpenSSL.rand(32)
                 toAddress = self.str_broadcast_subscribers
                 ripe = ''
-                t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
-                    time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
+                t = ('', # msgid. We don't know what this will be until the POW is done. 
+                     toAddress, 
+                     ripe, 
+                     fromAddress, 
+                     subject, 
+                     message, 
+                     ackdata, 
+                     int(time.time()), # sentTime (this will never change)
+                     int(time.time()), # lastActionTime
+                     0, # sleepTill time. This will get set when the POW gets done.
+                     'broadcastqueued', 
+                     0, # retryNumber
+                     'sent', # folder
+                     2, # encoding type
+                     shared.config.getint('bitmessagesettings', 'ttl')
+                     )
                 sqlExecute(
-                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
+                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
 
                 toLabel = self.str_broadcast_subscribers
                 
@@ -3839,10 +3852,10 @@ class UISignaler(QThread):
                     "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), label, address, str(streamNumber))
             elif command == 'updateStatusBar':
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
-            elif command == 'updateSentItemStatusByHash':
-                hash, message = data
+            elif command == 'updateSentItemStatusByToAddress':
+                toAddress, message = data
                 self.emit(SIGNAL(
-                    "updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), hash, message)
+                    "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject)"), toAddress, message)
             elif command == 'updateSentItemStatusByAckdata':
                 ackData, message = data
                 self.emit(SIGNAL(

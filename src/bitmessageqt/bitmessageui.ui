@@ -204,13 +204,6 @@
         <string>Send</string>
        </attribute>
        <layout class="QGridLayout" name="gridLayout_2">
-        <item row="4" column="1">
-         <widget class="QLineEdit" name="lineEditSubject">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
         <item row="3" column="2">
          <widget class="QPushButton" name="pushButtonLoadFromAddressBook">
           <property name="font">
@@ -239,6 +232,12 @@
         </item>
         <item row="7" column="6">
          <widget class="QSlider" name="horizontalSliderTTL">
+          <property name="minimumSize">
+           <size>
+            <width>35</width>
+            <height>0</height>
+           </size>
+          </property>
           <property name="maximumSize">
            <size>
             <width>70</width>
@@ -425,26 +424,6 @@
           </property>
          </widget>
         </item>
-        <item row="2" column="2">
-         <widget class="QLabel" name="labelFrom">
-          <property name="text">
-           <string/>
-          </property>
-         </widget>
-        </item>
-        <item row="3" column="4">
-         <spacer name="horizontalSpacer_6">
-          <property name="orientation">
-           <enum>Qt::Horizontal</enum>
-          </property>
-          <property name="sizeHint" stdset="0">
-           <size>
-            <width>20</width>
-            <height>20</height>
-           </size>
-          </property>
-         </spacer>
-        </item>
         <item row="3" column="1">
          <widget class="QLineEdit" name="lineEditTo"/>
         </item>
@@ -468,6 +447,20 @@ p, li { white-space: pre-wrap; }
           </property>
           <property name="text">
            <string>Fetch Namecoin ID</string>
+          </property>
+         </widget>
+        </item>
+        <item row="2" column="2" colspan="7">
+         <widget class="QLabel" name="labelFrom">
+          <property name="text">
+           <string/>
+          </property>
+         </widget>
+        </item>
+        <item row="4" column="1" colspan="8">
+         <widget class="QLineEdit" name="lineEditSubject">
+          <property name="text">
+           <string/>
           </property>
          </widget>
         </item>

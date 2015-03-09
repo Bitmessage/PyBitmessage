@@ -615,14 +615,22 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             elif len(params) == 4:
                 toAddress, fromAddress, subject, message = params
                 encodingType = 2
+                TTL = 4*24*60*60
             elif len(params) == 5:
                 toAddress, fromAddress, subject, message, encodingType = params
+                TTL = 4*24*60*60
+            elif len(params) == 6:
+                toAddress, fromAddress, subject, message, encodingType, TTL = params
             if encodingType != 2:
                 raise APIError(6, 'The encoding type must be 2 because that is the only one this program currently supports.')
             subject = self._decode(subject, "base64")
             message = self._decode(message, "base64")
             if len(subject + message) > (2 ** 18 - 500):
                 raise APIError(27, 'Message is too long.')
+            if TTL < 60*60:
+                TTL = 60*60
+            if TTL > 28*24*60*60:
+                TTL = 28*24*60*60
             toAddress = addBMIfNotPresent(toAddress)
             fromAddress = addBMIfNotPresent(fromAddress)
             status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(toAddress)
@@ -637,8 +645,21 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
             ackdata = OpenSSL.rand(32)
 
-            t = ('', toAddress, toRipe, fromAddress, subject, message, ackdata, int(
-                time.time()), 'msgqueued', 1, 1, 'sent', 2)
+            t = ('', 
+                 toAddress, 
+                 toRipe, 
+                 fromAddress, 
+                 subject, 
+                 message, 
+                 ackdata, 
+                 int(time.time()), # sentTime (this won't change)
+                 int(time.time()), # lastActionTime
+                 0, 
+                 'msgqueued', 
+                 0, 
+                 'sent', 
+                 2, 
+                 TTL)
             helper_sent.insert(t)
 
             toLabel = ''
@@ -660,14 +681,22 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             if len(params) == 3:
                 fromAddress, subject, message = params
                 encodingType = 2
+                TTL = 4*24*60*60
             elif len(params) == 4:
                 fromAddress, subject, message, encodingType = params
+                TTL = 4*24*60*60
+            elif len(params) == 5:
+                fromAddress, subject, message, encodingType, TTL = params
             if encodingType != 2:
                 raise APIError(6, 'The encoding type must be 2 because that is the only one this program currently supports.')
             subject = self._decode(subject, "base64")
             message = self._decode(message, "base64")
             if len(subject + message) > (2 ** 18 - 500):
                 raise APIError(27, 'Message is too long.')
+            if TTL < 60*60:
+                TTL = 60*60
+            if TTL > 28*24*60*60:
+                TTL = 28*24*60*60
             fromAddress = addBMIfNotPresent(fromAddress)
             self._verifyAddress(fromAddress)
             try:
@@ -679,9 +708,21 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             toAddress = '[Broadcast subscribers]'
             ripe = ''
 
-
-            t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
-                time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
+            t = ('', 
+                 toAddress, 
+                 ripe, 
+                 fromAddress, 
+                 subject, 
+                 message, 
+                 ackdata, 
+                 int(time.time()), # sentTime (this doesn't change)
+                 int(time.time()), # lastActionTime
+                 0, 
+                 'broadcastqueued', 
+                 0, 
+                 'sent', 
+                 2, 
+                 TTL)
             helper_sent.insert(t)
 
             toLabel = '[Broadcast subscribers]'
@@ -916,22 +957,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 if len(data) > 25:
                     data += ','
                 data += json.dumps({'data':payload.encode('hex')}, indent=4, separators=(',', ': '))
-            data += ']}'
-            return data
-        elif method == 'getPubkeyByHash':
-            # Method will eventually be used by a particular Android app to
-            # retrieve pubkeys. Please do not yet add this to the api docs.
-            if len(params) != 1:
-                raise APIError(0, 'I need 1 parameter!')
-            requestedHash, = params
-            if len(requestedHash) != 40:
-                raise APIError(19, 'The length of hash should be 20 bytes (encoded in hex thus 40 characters).')
-            requestedHash = self._decode(requestedHash, "hex")
-            queryreturn = sqlQuery('''SELECT transmitdata FROM pubkeys WHERE hash = ? ; ''', requestedHash)
-            data = '{"pubkey":['
-            for row in queryreturn:
-                transmitdata, = row
-                data += json.dumps({'data':transmitdata.encode('hex')}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
         elif method == 'clientStatus':
