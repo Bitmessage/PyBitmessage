@@ -570,7 +570,7 @@ def decryptAndCheckPubkeyPayload(data, address):
                                                        )
                     )
     
-        t = (ripe, addressVersion, storedData, int(time.time()), 'yes')
+        t = (address, addressVersion, storedData, int(time.time()), 'yes')
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
         return 'successful'
     except varintDecodeError as e:

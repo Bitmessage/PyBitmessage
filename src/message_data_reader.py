@@ -30,8 +30,8 @@ def readSent():
     cur.execute(item, parameters)
     output = cur.fetchall()
     for row in output:
-        msgid, toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber, folder, encodingtype = row
-        print msgid.encode('hex'), toaddress, 'toripe:', toripe.encode('hex'), 'fromaddress:', fromaddress, 'ENCODING TYPE:', encodingtype, 'SUBJECT:', repr(subject), 'MESSAGE:', repr(message), 'ACKDATA:', ackdata.encode('hex'), lastactiontime, status, pubkeyretrynumber, msgretrynumber, folder
+        msgid, toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, sleeptill, status, retrynumber, folder, encodingtype, ttl = row
+        print msgid.encode('hex'), toaddress, 'toripe:', toripe.encode('hex'), 'fromaddress:', fromaddress, 'ENCODING TYPE:', encodingtype, 'SUBJECT:', repr(subject), 'MESSAGE:', repr(message), 'ACKDATA:', ackdata.encode('hex'), lastactiontime, status, retrynumber, folder
 
 def readSubscriptions():
     print 'Printing everything in subscriptions table:'
@@ -44,13 +44,13 @@ def readSubscriptions():
 
 def readPubkeys():
     print 'Printing everything in pubkeys table:'
-    item = '''select hash, transmitdata, time, usedpersonally from pubkeys'''
+    item = '''select address, transmitdata, time, usedpersonally from pubkeys'''
     parameters = ''
     cur.execute(item, parameters)
     output = cur.fetchall()
     for row in output:
-        hash, transmitdata, time, usedpersonally = row
-        print 'Hash:', hash.encode('hex'), '\tTime first broadcast:', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(time)),'utf-8'), '\tUsed by me personally:', usedpersonally, '\tFull pubkey message:', transmitdata.encode('hex')
+        address, transmitdata, time, usedpersonally = row
+        print 'Address:', address, '\tTime first broadcast:', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(time)),'utf-8'), '\tUsed by me personally:', usedpersonally, '\tFull pubkey message:', transmitdata.encode('hex')
 
 def readInventory():
     print 'Printing everything in inventory table:'
