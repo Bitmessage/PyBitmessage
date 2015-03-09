@@ -787,7 +787,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
             recv = BROADCAST_STR
             ripe = ""
             sqlExecute(
-                "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 "",
                 recv,
                 ripe,
