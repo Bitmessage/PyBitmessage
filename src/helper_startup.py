@@ -104,6 +104,7 @@ def loadConfig():
         shared.config.set('bitmessagesettings', 'replybelow', 'False')
         shared.config.set('bitmessagesettings', 'maxdownloadrate', '0')
         shared.config.set('bitmessagesettings', 'maxuploadrate', '0')
+        shared.config.set('bitmessagesettings', 'ttl', '367200')
         
          #start:UI setting to stop trying to send messages after X days/months
         shared.config.set(

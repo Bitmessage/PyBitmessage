@@ -16,11 +16,7 @@ import traceback
 #import highlevelcrypto
 from addresses import *
 from helper_generic import addDataPadding, isHostInPrivateIPRange
-#import helper_bitcoin
-#import helper_inbox
-#import helper_sent
-from helper_sql import *
-#import tr
+from helper_sql import sqlQuery
 from debug import logger
 
 # This thread is created either by the synSenderThread(for outgoing
