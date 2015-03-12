@@ -760,7 +760,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                             exit_label="Continue")
                     ackdata = OpenSSL.rand(32)
                     sqlExecute(
-                        "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                        "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         "",
                         addr,
                         ripe,
@@ -768,12 +768,14 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         subject,
                         body,
                         ackdata,
-                        int(time.time()),
+                        int(time.time()), # sentTime (this will never change)
+                        int(time.time()), # lastActionTime
+                        0, # sleepTill time. This will get set when the POW gets done.
                         "msgqueued",
-                        1,
-                        1,
+                        0, # retryNumber
                         "sent",
-                        2)
+                        2, # encodingType
+                        shared.config.getint('bitmessagesettings', 'ttl'))
                     shared.workerQueue.put(("sendmessage", addr))
     else: # Broadcast
         if recv == "":
@@ -785,7 +787,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
             recv = BROADCAST_STR
             ripe = ""
             sqlExecute(
-                "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                 "",
                 recv,
                 ripe,
@@ -793,12 +795,14 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                 subject,
                 body,
                 ackdata,
-                int(time.time()),
+                int(time.time()), # sentTime (this will never change)
+                int(time.time()), # lastActionTime
+                0, # sleepTill time. This will get set when the POW gets done.
                 "broadcastqueued",
-                1,
-                1,
-                "sent",
-                2)
+                0, # retryNumber
+                "sent", # folder
+                2, # encodingType
+                shared.config.getint('bitmessagesettings', 'ttl'))
             shared.workerQueue.put(('sendbroadcast', ''))
 
 def loadInbox():
