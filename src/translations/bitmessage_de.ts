@@ -1229,7 +1229,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/about.py" line="71"/>
         <source>This is Beta software.</source>
-        <translation>Diese ist Beta-Software.</translation>
+        <translation>Dies ist Beta-Software.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/about.py" line="69"/>
