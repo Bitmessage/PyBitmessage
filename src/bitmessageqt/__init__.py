@@ -676,7 +676,23 @@ class MyForm(QtGui.QMainWindow):
         except:
             print 'There was a problem testing for a Namecoin daemon. Hiding the Fetch Namecoin ID button'
             #self.ui.pushButtonFetchNamecoinID.hide()
-
+            
+    def updateTTL(self, sliderPosition):
+        TTL = int(sliderPosition ** 3.199 + 3600)
+        self.updateHumanFriendlyTTLDescription(TTL)
+        shared.config.set('bitmessagesettings', 'ttl', str(TTL))
+        shared.writeKeysFile()
+        
+    def updateHumanFriendlyTTLDescription(self, TTL):
+        numberOfHours = int(round(TTL / (60*60)))
+        if numberOfHours < 48:
+            if numberOfHours == 1:
+                self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "1 hour"))
+            else:
+                self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%1 hours").arg(numberOfHours))
+        else:
+            numberOfDays = int(round(TTL / (24*60*60)))
+            self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%1 days").arg(numberOfDays))
 
     # Show or hide the application window after clicking an item within the
     # tray icon or, on Windows, the try icon itself.
