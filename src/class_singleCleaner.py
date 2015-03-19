@@ -76,23 +76,23 @@ class singleCleaner(threading.Thread):
                     '''DELETE FROM pubkeys WHERE time<? AND usedpersonally='no' ''',
                     int(time.time()) - shared.lengthOfTimeToHoldOnToAllPubkeys)
 
+                # Let us resend getpubkey objects if we have not yet heard a pubkey, and also msg objects if we have not yet heard an acknowledgement
                 queryreturn = sqlQuery(
-                    '''select toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber FROM sent WHERE ((status='awaitingpubkey' OR status='msgsent') AND folder='sent' AND lastactiontime>?) ''',
-                    int(time.time()) - shared.maximumLengthOfTimeToBotherResendingMessages) # If the message's folder='trash' then we'll ignore it.
+                    '''select toaddress, ackdata, status FROM sent WHERE ((status='awaitingpubkey' OR status='msgsent') AND folder='sent' AND sleeptill<? AND senttime>?) ''',
+                    int(time.time()),
+                    int(time.time()) - shared.maximumLengthOfTimeToBotherResendingMessages)
                 for row in queryreturn:
-                    if len(row) < 5:
+                    if len(row) < 2:
                         with shared.printLock:
                             sys.stderr.write(
                                 'Something went wrong in the singleCleaner thread: a query did not return the requested fields. ' + repr(row))
                         time.sleep(3)
                         break
-                    toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, pubkeyretrynumber, msgretrynumber = row
+                    toAddress, ackData, status = row
                     if status == 'awaitingpubkey':
-                        if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (pubkeyretrynumber))):
-                            resendPubkey(pubkeyretrynumber,toripe)
-                    else: # status == msgsent
-                        if (int(time.time()) - lastactiontime) > (shared.maximumAgeOfAnObjectThatIAmWillingToAccept * (2 ** (msgretrynumber))):
-                            resendMsg(msgretrynumber,ackdata)
+                        resendPubkeyRequest(toAddress)
+                    elif status == 'msgsent':
+                        resendMsg(ackData)
 
                 # Let's also clear and reload shared.inventorySets to keep it from
                 # taking up an unnecessary amount of memory.
@@ -126,32 +126,26 @@ class singleCleaner(threading.Thread):
             time.sleep(300)
 
 
-def resendPubkey(pubkeyretrynumber,toripe):
-    print 'It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.'
+def resendPubkeyRequest(address):
+    logger.debug('It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.')
     try:
         del shared.neededPubkeys[
-            toripe] # We need to take this entry out of the shared.neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
+            address] # We need to take this entry out of the shared.neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
     except:
         pass
 
     shared.UISignalQueue.put((
          'updateStatusBar', 'Doing work necessary to again attempt to request a public key...'))
-    t = ()
     sqlExecute(
-        '''UPDATE sent SET lastactiontime=?, pubkeyretrynumber=?, status='msgqueued' WHERE toripe=?''',
-        int(time.time()),
-        pubkeyretrynumber + 1,
-        toripe)
+        '''UPDATE sent SET status='msgqueued' WHERE toaddress=?''',
+        address)
     shared.workerQueue.put(('sendmessage', ''))
 
-def resendMsg(msgretrynumber,ackdata):
-    print 'It has been a long time and we haven\'t heard an acknowledgement to our msg. Sending again.'
+def resendMsg(ackdata):
+    logger.debug('It has been a long time and we haven\'t heard an acknowledgement to our msg. Sending again.')
     sqlExecute(
-    '''UPDATE sent SET lastactiontime=?, msgretrynumber=?, status=? WHERE ackdata=?''',
-    int(time.time()),
-    msgretrynumber + 1,
-    'msgqueued',
-    ackdata)
+        '''UPDATE sent SET status='msgqueued' WHERE ackdata=?''',
+        ackdata)
     shared.workerQueue.put(('sendmessage', ''))
     shared.UISignalQueue.put((
     'updateStatusBar', 'Doing work necessary to again attempt to deliver a message...'))

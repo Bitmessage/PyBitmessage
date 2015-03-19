@@ -201,7 +201,7 @@ class objectProcessor(threading.Thread):
             ripe = ripeHasher.digest()
 
 
-            logger.info('within recpubkey, addressVersion: %s, streamNumber: %s \n\
+            logger.debug('within recpubkey, addressVersion: %s, streamNumber: %s \n\
                         ripe %s\n\
                         publicSigningKey in hex: %s\n\
                         publicEncryptionKey in hex: %s' % (addressVersion, 
@@ -212,17 +212,19 @@ class objectProcessor(threading.Thread):
                                                            )
                         )
 
-            queryreturn = sqlQuery(
-                '''SELECT usedpersonally FROM pubkeys WHERE hash=? AND addressversion=? AND usedpersonally='yes' ''', ripe, addressVersion)
             
+            address = encodeAddress(addressVersion, streamNumber, ripe)
+            
+            queryreturn = sqlQuery(
+                '''SELECT usedpersonally FROM pubkeys WHERE address=? AND usedpersonally='yes' ''', address)
             if queryreturn != []:  # if this pubkey is already in our database and if we have used it personally:
                 logger.info('We HAVE used this pubkey personally. Updating time.')
-                t = (ripe, addressVersion, dataToStore, int(time.time()), 'yes')
+                t = (address, addressVersion, dataToStore, int(time.time()), 'yes')
             else:
                 logger.info('We have NOT used this pubkey personally. Inserting in database.')
-                t = (ripe, addressVersion, dataToStore, int(time.time()), 'no')
+                t = (address, addressVersion, dataToStore, int(time.time()), 'no')
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
-            self.possibleNewPubkey(ripe = ripe)
+            self.possibleNewPubkey(address)
         if addressVersion == 3:
             if len(data) < 170:  # sanity check.
                 logger.warning('(within processpubkey) payloadLength less than 170. Sanity check failed.')
@@ -258,7 +260,7 @@ class objectProcessor(threading.Thread):
             ripe = ripeHasher.digest()
             
 
-            logger.info('within recpubkey, addressVersion: %s, streamNumber: %s \n\
+            logger.debug('within recpubkey, addressVersion: %s, streamNumber: %s \n\
                         ripe %s\n\
                         publicSigningKey in hex: %s\n\
                         publicEncryptionKey in hex: %s' % (addressVersion, 
@@ -269,16 +271,16 @@ class objectProcessor(threading.Thread):
                                                            )
                         )
 
-
-            queryreturn = sqlQuery('''SELECT usedpersonally FROM pubkeys WHERE hash=? AND addressversion=? AND usedpersonally='yes' ''', ripe, addressVersion)
+            address = encodeAddress(addressVersion, streamNumber, ripe)
+            queryreturn = sqlQuery('''SELECT usedpersonally FROM pubkeys WHERE address=? AND usedpersonally='yes' ''', address)
             if queryreturn != []:  # if this pubkey is already in our database and if we have used it personally:
                 logger.info('We HAVE used this pubkey personally. Updating time.')
-                t = (ripe, addressVersion, dataToStore, int(time.time()), 'yes')
+                t = (address, addressVersion, dataToStore, int(time.time()), 'yes')
             else:
                 logger.info('We have NOT used this pubkey personally. Inserting in database.')
-                t = (ripe, addressVersion, dataToStore, int(time.time()), 'no')
+                t = (address, addressVersion, dataToStore, int(time.time()), 'no')
             sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
-            self.possibleNewPubkey(ripe = ripe)
+            self.possibleNewPubkey(address)
 
         if addressVersion == 4:
             if len(data) < 350:  # sanity check.
@@ -296,7 +298,7 @@ class objectProcessor(threading.Thread):
                 # At this point we know that we have been waiting on this pubkey.
                 # This function will command the workerThread to start work on
                 # the messages that require it.
-                self.possibleNewPubkey(address=toAddress)
+                self.possibleNewPubkey(toAddress)
 
         # Display timing data
         timeRequiredToProcessPubkey = time.time(
@@ -325,8 +327,10 @@ class objectProcessor(threading.Thread):
         if data[-32:] in shared.ackdataForWhichImWatching:
             logger.info('This msg IS an acknowledgement bound for me.')
             del shared.ackdataForWhichImWatching[data[-32:]]
-            sqlExecute('UPDATE sent SET status=? WHERE ackdata=?',
-                       'ackreceived', data[-32:])
+            sqlExecute('UPDATE sent SET status=?, lastactiontime=? WHERE ackdata=?',
+                       'ackreceived',
+                       int(time.time()), 
+                       data[-32:])
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[-32:], tr.translateText("MainWindow",'Acknowledgement of the message received. %1').arg(l10n.formatTimestamp()))))
             return
         else:
@@ -427,6 +431,7 @@ class objectProcessor(threading.Thread):
         logger.debug('As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person: %s  ..and here is the testnet address: %s. The other person must take their private signing key from Bitmessage and import it into Bitcoin (or a service like Blockchain.info) for it to be of any use. Do not use this unless you know what you are doing.' %
                      (helper_bitcoin.calculateBitcoinAddressFromPubkey(pubSigningKey), helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey))
                      )
+        sigHash = hashlib.sha512(hashlib.sha512(signature).digest()).digest()[32:] # Used to detect and ignore duplicate messages in our inbox
 
         # calculate the fromRipe.
         sha = hashlib.new('sha512')
@@ -440,7 +445,7 @@ class objectProcessor(threading.Thread):
         # person.
         sqlExecute(
             '''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
-            ripe.digest(),
+            fromAddress,
             sendersAddressVersionNumber,
             decryptedData[:endOfThePublicKeyPosition],
             int(time.time()),
@@ -449,10 +454,7 @@ class objectProcessor(threading.Thread):
         # Check to see whether we happen to be awaiting this
         # pubkey in order to send a message. If we are, it will do the POW
         # and send it.
-        if sendersAddressVersionNumber <= 3:
-            self.possibleNewPubkey(ripe=ripe.digest())
-        elif sendersAddressVersionNumber >= 4:
-            self.possibleNewPubkey(address = fromAddress)
+        self.possibleNewPubkey(fromAddress)
         
         # If this message is bound for one of my version 3 addresses (or
         # higher), then we must check to make sure it meets our demanded
@@ -503,13 +505,13 @@ class objectProcessor(threading.Thread):
             body = 'Unknown encoding type.\n\n' + repr(message)
             subject = ''
         # Let us make sure that we haven't already received this message
-        if helper_inbox.isMessageAlreadyInInbox(toAddress, fromAddress, subject, body, messageEncodingType):
+        if helper_inbox.isMessageAlreadyInInbox(sigHash):
             logger.info('This msg is already in our inbox. Ignoring it.')
             blockMessage = True
         if not blockMessage:
             if messageEncodingType != 0:
                 t = (inventoryHash, toAddress, fromAddress, subject, int(
-                    time.time()), body, 'inbox', messageEncodingType, 0)
+                    time.time()), body, 'inbox', messageEncodingType, 0, sigHash)
                 helper_inbox.insert(t)
 
                 shared.UISignalQueue.put(('displayNewInboxMessage', (
@@ -547,8 +549,25 @@ class objectProcessor(threading.Thread):
                 toAddress = '[Broadcast subscribers]'
                 ripe = ''
 
-                t = ('', toAddress, ripe, fromAddress, subject, message, ackdataForBroadcast, int(
-                    time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
+                # We really should have a discussion about how to
+                # set the TTL for mailing list broadcasts. This is obviously
+                # hard-coded. 
+                TTL = 2*7*24*60*60 # 2 weeks
+                t = ('', 
+                     toAddress, 
+                     ripe, 
+                     fromAddress, 
+                     subject, 
+                     message, 
+                     ackdataForBroadcast, 
+                     int(time.time()), # sentTime (this doesn't change)
+                     int(time.time()), # lastActionTime
+                     0, 
+                     'broadcastqueued', 
+                     0, 
+                     'sent', 
+                     2, 
+                     TTL)
                 helper_sent.insert(t)
 
                 shared.UISignalQueue.put(('displayNewSentMessage', (
@@ -701,6 +720,7 @@ class objectProcessor(threading.Thread):
             logger.debug('ECDSA verify failed')
             return
         logger.debug('ECDSA verify passed')
+        sigHash = hashlib.sha512(hashlib.sha512(signature).digest()).digest()[32:] # Used to detect and ignore duplicate messages in our inbox
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
@@ -708,7 +728,7 @@ class objectProcessor(threading.Thread):
 
         # Let's store the public key in case we want to reply to this person.
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''',
-                   calculatedRipe,
+                   fromAddress,
                    sendersAddressVersion,
                    decryptedData[:endOfPubkeyPosition],
                    int(time.time()),
@@ -717,10 +737,7 @@ class objectProcessor(threading.Thread):
         # Check to see whether we happen to be awaiting this
         # pubkey in order to send a message. If we are, it will do the POW
         # and send it.
-        if broadcastVersion == 4:
-            self.possibleNewPubkey(ripe=calculatedRipe)
-        elif broadcastVersion == 5:
-            self.possibleNewPubkey(address=fromAddress)
+        self.possibleNewPubkey(fromAddress)
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
@@ -735,63 +752,65 @@ class objectProcessor(threading.Thread):
             subject = ''
         elif messageEncodingType == 0:
             logger.info('messageEncodingType == 0. Doing nothing with the message.')
+            return
         else:
             body = 'Unknown encoding type.\n\n' + repr(message)
             subject = ''
 
         toAddress = '[Broadcast subscribers]'
-        if messageEncodingType != 0:
-            if helper_inbox.isMessageAlreadyInInbox(toAddress, fromAddress, subject, body, messageEncodingType):
-                logger.info('This broadcast is already in our inbox. Ignoring it.')
-            else:
-                t = (inventoryHash, toAddress, fromAddress, subject, int(
-                    time.time()), body, 'inbox', messageEncodingType, 0)
-                helper_inbox.insert(t)
+        if helper_inbox.isMessageAlreadyInInbox(sigHash):
+            logger.info('This broadcast is already in our inbox. Ignoring it.')
+            return
+        t = (inventoryHash, toAddress, fromAddress, subject, int(
+            time.time()), body, 'inbox', messageEncodingType, 0, sigHash)
+        helper_inbox.insert(t)
 
-                shared.UISignalQueue.put(('displayNewInboxMessage', (
-                    inventoryHash, toAddress, fromAddress, subject, body)))
+        shared.UISignalQueue.put(('displayNewInboxMessage', (
+            inventoryHash, toAddress, fromAddress, subject, body)))
 
-                # If we are behaving as an API then we might need to run an
-                # outside command to let some program know that a new message
-                # has arrived.
-                if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
-                    try:
-                        apiNotifyPath = shared.config.get(
-                            'bitmessagesettings', 'apinotifypath')
-                    except:
-                        apiNotifyPath = ''
-                    if apiNotifyPath != '':
-                        call([apiNotifyPath, "newBroadcast"])
+        # If we are behaving as an API then we might need to run an
+        # outside command to let some program know that a new message
+        # has arrived.
+        if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+            try:
+                apiNotifyPath = shared.config.get(
+                    'bitmessagesettings', 'apinotifypath')
+            except:
+                apiNotifyPath = ''
+            if apiNotifyPath != '':
+                call([apiNotifyPath, "newBroadcast"])
 
         # Display timing data
         logger.info('Time spent processing this interesting broadcast: %s' % (time.time() - messageProcessingStartTime,))
 
 
-    def possibleNewPubkey(self, ripe=None, address=None):
+    def possibleNewPubkey(self, address):
         """
         We have inserted a pubkey into our pubkey table which we received from a
         pubkey, msg, or broadcast message. It might be one that we have been
         waiting for. Let's check.
         """
-        # For address versions <= 3, we wait on a key with the correct ripe hash
-        if ripe != None:
-            if ripe in shared.neededPubkeys:
-                del shared.neededPubkeys[ripe]
-                self.sendMessages(ripe)
+        
+        # For address versions <= 3, we wait on a key with the correct address version,
+        # stream number, and RIPE hash.
+        status, addressVersion, streamNumber, ripe = decodeAddress(address)
+        if addressVersion <=3:
+            if address in shared.neededPubkeys:
+                del shared.neededPubkeys[address]
+                self.sendMessages(address)
             else:
-                logger.debug('We don\'t need this pub key. We didn\'t ask for it. Pubkey hash: %s' % ripe.encode('hex'))
+                logger.debug('We don\'t need this pub key. We didn\'t ask for it. For address: %s' % address)
         # For address versions >= 4, we wait on a pubkey with the correct tag.
         # Let us create the tag from the address and see if we were waiting
         # for it.
-        elif address != None:
-            status, addressVersion, streamNumber, ripe = decodeAddress(address)
+        elif addressVersion >= 4:
             tag = hashlib.sha512(hashlib.sha512(encodeVarint(
                 addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()[32:]
             if tag in shared.neededPubkeys:
                 del shared.neededPubkeys[tag]
-                self.sendMessages(ripe)
+                self.sendMessages(address)
 
-    def sendMessages(self, ripe):
+    def sendMessages(self, address):
         """
         This function is called by the possibleNewPubkey function when
         that function sees that we now have the necessary pubkey
@@ -799,8 +818,8 @@ class objectProcessor(threading.Thread):
         """
         logger.info('We have been awaiting the arrival of this pubkey.')
         sqlExecute(
-            '''UPDATE sent SET status='doingmsgpow' WHERE toripe=? AND (status='awaitingpubkey' or status='doingpubkeypow') and folder='sent' ''',
-            ripe)
+            '''UPDATE sent SET status='doingmsgpow', retrynumber=0 WHERE toaddress=? AND (status='awaitingpubkey' or status='doingpubkeypow') AND folder='sent' ''',
+            address)
         shared.workerQueue.put(('sendmessage', ''))
 
     def ackDataHasAVaildHeader(self, ackData):

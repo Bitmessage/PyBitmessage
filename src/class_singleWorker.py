@@ -28,13 +28,15 @@ class singleWorker(threading.Thread):
         threading.Thread.__init__(self)
 
     def run(self):
+        
+        # Initialize the neededPubkeys dictionary.
         queryreturn = sqlQuery(
             '''SELECT DISTINCT toaddress FROM sent WHERE (status='awaitingpubkey' AND folder='sent')''')
         for row in queryreturn:
             toAddress, = row
             toStatus, toAddressVersionNumber, toStreamNumber, toRipe = decodeAddress(toAddress)
             if toAddressVersionNumber <= 3 :
-                shared.neededPubkeys[toRipe] = 0
+                shared.neededPubkeys[toAddress] = 0
             elif toAddressVersionNumber >= 4:
                 doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
                     toAddressVersionNumber) + encodeVarint(toStreamNumber) + toRipe).digest()).digest()
@@ -50,14 +52,14 @@ class singleWorker(threading.Thread):
             print 'Watching for ackdata', ackdata.encode('hex')
             shared.ackdataForWhichImWatching[ackdata] = 0
 
+        time.sleep(
+            10)  # give some time for the GUI to start before we start on existing POW tasks.
+
         queryreturn = sqlQuery(
             '''SELECT DISTINCT toaddress FROM sent WHERE (status='doingpubkeypow' AND folder='sent')''')
         for row in queryreturn:
             toaddress, = row
             self.requestPubKey(toaddress)
-
-        time.sleep(
-            10)  # give some time for the GUI to start before we start on existing POW tasks.
 
         self.sendMsg()
                      # just in case there are any pending tasks for msg
@@ -351,9 +353,9 @@ class singleWorker(threading.Thread):
 
     def sendBroadcast(self):
         queryreturn = sqlQuery(
-            '''SELECT fromaddress, subject, message, ackdata FROM sent WHERE status=? and folder='sent' ''', 'broadcastqueued')
+            '''SELECT fromaddress, subject, message, ackdata, ttl FROM sent WHERE status=? and folder='sent' ''', 'broadcastqueued')
         for row in queryreturn:
-            fromaddress, subject, body, ackdata = row
+            fromaddress, subject, body, ackdata, TTL = row
             status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                 fromaddress)
             if addressVersionNumber <= 1:
@@ -383,7 +385,11 @@ class singleWorker(threading.Thread):
             pubEncryptionKey = highlevelcrypto.privToPub(
                 privEncryptionKeyHex).decode('hex')
 
-            TTL = int(28 * 24 * 60 * 60 + random.randrange(-300, 300))# 28 days from now plus or minus five minutes
+            if TTL > 28 * 24 * 60 * 60:
+                TTL = 28 * 24 * 60 * 60
+            if TTL < 60*60:
+                TTL = 60*60
+            TTL = int(TTL + random.randrange(-300, 300))# add some randomness to the TTL
             embeddedTime = int(time.time() + TTL)
             payload = pack('>Q', embeddedTime)
             payload += '\x00\x00\x00\x03' # object type: broadcast
@@ -479,12 +485,12 @@ class singleWorker(threading.Thread):
             
             # Select just one msg that needs work.
             queryreturn = sqlQuery(
-                '''SELECT toaddress, toripe, fromaddress, subject, message, ackdata, status FROM sent WHERE (status='msgqueued' or status='doingmsgpow' or status='forcepow') and folder='sent' LIMIT 1''')
+                '''SELECT toaddress, fromaddress, subject, message, ackdata, status, ttl, retrynumber FROM sent WHERE (status='msgqueued' or status='doingmsgpow' or status='forcepow') and folder='sent' LIMIT 1''')
             if len(queryreturn) == 0: # if there is no work to do then 
                 break                 # break out of this sendMsg loop and 
                                       # wait for something to get put in the shared.workerQueue.
             row = queryreturn[0]
-            toaddress, toripe, fromaddress, subject, message, ackdata, status = row
+            toaddress, fromaddress, subject, message, ackdata, status, TTL, retryNumber = row
             toStatus, toAddressVersionNumber, toStreamNumber, toRipe = decodeAddress(
                 toaddress)
             fromStatus, fromAddressVersionNumber, fromStreamNumber, fromRipe = decodeAddress(
@@ -496,38 +502,45 @@ class singleWorker(threading.Thread):
                 # because the user could not have overridden the message about the POW being
                 # too difficult without knowing the required difficulty.
                 pass
+            elif status == 'doingmsgpow':
+                # We wouldn't have set the status to doingmsgpow if we didn't already have the pubkey
+                # so let's assume that we have it.
+                pass
             # If we are sending a message to ourselves or a chan then we won't need an entry in the pubkeys table; we can calculate the needed pubkey using the private keys in our keys.dat file.
             elif shared.config.has_section(toaddress):
                 sqlExecute(
                     '''UPDATE sent SET status='doingmsgpow' WHERE toaddress=? AND status='msgqueued' ''',
                     toaddress)
                 status='doingmsgpow'
-            else:
+            elif status == 'msgqueued':
                 # Let's see if we already have the pubkey in our pubkeys table
                 queryreturn = sqlQuery(
-                    '''SELECT hash FROM pubkeys WHERE hash=? AND addressversion=?''', toRipe, toAddressVersionNumber)
+                    '''SELECT address FROM pubkeys WHERE address=?''', toaddress)
                 if queryreturn != []:  # If we have the needed pubkey in the pubkey table already, 
                     # set the status of this msg to doingmsgpow
                     sqlExecute(
                         '''UPDATE sent SET status='doingmsgpow' WHERE toaddress=? AND status='msgqueued' ''',
                         toaddress)
                     status = 'doingmsgpow'
-                    # mark the pubkey as 'usedpersonally' so that we don't delete it later
+                    # mark the pubkey as 'usedpersonally' so that we don't delete it later. If the pubkey version
+                    # is >= 4 then usedpersonally will already be set to yes because we'll only ever have 
+                    # usedpersonally v4 pubkeys in the pubkeys table.
                     sqlExecute(
-                        '''UPDATE pubkeys SET usedpersonally='yes' WHERE hash=? and addressversion=?''',
-                        toRipe,
-                        toAddressVersionNumber)
+                        '''UPDATE pubkeys SET usedpersonally='yes' WHERE address=?''',
+                        toaddress)
                 else:  # We don't have the needed pubkey in the pubkeys table already.
                     if toAddressVersionNumber <= 3:
                         toTag = ''
                     else:
                         toTag = hashlib.sha512(hashlib.sha512(encodeVarint(toAddressVersionNumber)+encodeVarint(toStreamNumber)+toRipe).digest()).digest()[32:]
-                    if toRipe in shared.neededPubkeys or toTag in shared.neededPubkeys:
+                    if toaddress in shared.neededPubkeys or toTag in shared.neededPubkeys:
                         # We already sent a request for the pubkey
                         sqlExecute(
-                            '''UPDATE sent SET status='awaitingpubkey' WHERE toaddress=? AND status='msgqueued' ''', toaddress)
-                        shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-                            toRipe, tr.translateText("MainWindow",'Encryption key was requested earlier.'))))
+                            '''UPDATE sent SET status='awaitingpubkey', sleeptill=? WHERE toaddress=? AND status='msgqueued' ''', 
+                            int(time.time()) + 2.5*24*60*60,
+                            toaddress)
+                        shared.UISignalQueue.put(('updateSentItemStatusByToAddress', (
+                            toaddress, tr.translateText("MainWindow",'Encryption key was requested earlier.'))))
                         continue #on with the next msg on which we can do some work
                     else:
                         # We have not yet sent a request for the pubkey
@@ -554,13 +567,13 @@ class singleWorker(threading.Thread):
                                     if shared.decryptAndCheckPubkeyPayload(payload, toaddress) == 'successful':
                                         needToRequestPubkey = False
                                         sqlExecute(
-                                            '''UPDATE sent SET status='doingmsgpow' WHERE toaddress=? AND (status='msgqueued' or status='awaitingpubkey' or status='doingpubkeypow')''',
+                                            '''UPDATE sent SET status='doingmsgpow', retrynumber=0 WHERE toaddress=? AND (status='msgqueued' or status='awaitingpubkey' or status='doingpubkeypow')''',
                                             toaddress)
                                         del shared.neededPubkeys[tag]
-                                        continue # We'll start back at the beginning, pick up this msg, mark the pubkey as 'usedpersonally', and then send the msg.
+                                        break
                                     #else:  # There was something wrong with this pubkey object even
                                             # though it had the correct tag- almost certainly because
-                                            #  of malicious behavior or a badly programmed client. If
+                                            # of malicious behavior or a badly programmed client. If
                                             # there are any other pubkeys in our inventory with the correct
                                             # tag then we'll try to decrypt those.
 
@@ -572,21 +585,27 @@ class singleWorker(threading.Thread):
                                             if shared.decryptAndCheckPubkeyPayload(payload, toaddress) == 'successful': #if valid, this function also puts it in the pubkeys table.
                                                 needToRequestPubkey = False
                                                 sqlExecute(
-                                                    '''UPDATE sent SET status='doingmsgpow' WHERE toaddress=? AND (status='msgqueued' or status='awaitingpubkey' or status='doingpubkeypow')''',
+                                                    '''UPDATE sent SET status='doingmsgpow', retrynumber=0 WHERE toaddress=? AND (status='msgqueued' or status='awaitingpubkey' or status='doingpubkeypow')''',
                                                     toaddress)
                                                 del shared.neededPubkeys[tag]
-                                                continue # We'll start back at the beginning, pick up this msg, mark the pubkey as 'usedpersonally', and then send the msg.
+                                                break
                         if needToRequestPubkey:
                             sqlExecute(
                                 '''UPDATE sent SET status='doingpubkeypow' WHERE toaddress=? AND status='msgqueued' ''',
                                 toaddress)
-                            shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-                                toRipe, tr.translateText("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
+                            shared.UISignalQueue.put(('updateSentItemStatusByToAddress', (
+                                toaddress, tr.translateText("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
                             self.requestPubKey(toaddress)
                             continue #on with the next msg on which we can do some work
             
             # At this point we know that we have the necessary pubkey in the pubkeys table.
-            TTL = int(28 * 24 * 60 * 60 + random.randrange(-300, 300))# 28 days from now plus or minus five minutes
+            
+            if retryNumber == 0:
+                if TTL > 28 * 24 * 60 * 60:
+                    TTL = 28 * 24 * 60 * 60
+            else:
+                TTL = 28 * 24 * 60 * 60 
+            TTL = int(TTL + random.randrange(-300, 300))# add some randomness to the TTL
             embeddedTime = int(time.time() + TTL)
             
             if not shared.config.has_section(toaddress): # if we aren't sending this to ourselves or a chan
@@ -600,9 +619,8 @@ class singleWorker(threading.Thread):
                 # the required proof of work difficulty is too hard then we'll
                 # abort.
                 queryreturn = sqlQuery(
-                    'SELECT transmitdata FROM pubkeys WHERE hash=? and addressversion=?',
-                    toRipe,
-                    toAddressVersionNumber)
+                    'SELECT transmitdata FROM pubkeys WHERE address=?',
+                    toaddress)
                 for row in queryreturn:
                     pubkeyPayload, = row
 
@@ -752,7 +770,7 @@ class singleWorker(threading.Thread):
                 fullAckPayload = ''                    
             else:
                 fullAckPayload = self.generateFullAckMessage(
-                    ackdata, toStreamNumber)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
+                    ackdata, toStreamNumber, TTL)  # The fullAckPayload is a normal msg protocol message with the proof of work already completed that the receiver of this message can easily send out.
             payload += encodeVarint(len(fullAckPayload))
             payload += fullAckPayload
             dataToSign = pack('>Q', embeddedTime) + '\x00\x00\x00\x02' + encodeVarint(1) + encodeVarint(toStreamNumber) + payload 
@@ -809,20 +827,29 @@ class singleWorker(threading.Thread):
             shared.broadcastToSendDataQueues((
                 toStreamNumber, 'advertiseobject', inventoryHash))
 
-            # Update the status of the message in the 'sent' table to have a
-            # 'msgsent' or 'msgsentnoackexpected' status.
+            # Update the sent message in the sent table with the necessary information.
             if shared.config.has_section(toaddress):
                 newStatus = 'msgsentnoackexpected'
             else:
                 newStatus = 'msgsent'
-            sqlExecute('''UPDATE sent SET msgid=?, status=? WHERE ackdata=?''',
-                       inventoryHash,newStatus,ackdata)
+            if retryNumber == 0:
+                sleepTill = int(time.time()) + TTL
+            else:
+                sleepTill = int(time.time()) + 28*24*60*60 * 2**retryNumber
+            sqlExecute('''UPDATE sent SET msgid=?, status=?, retrynumber=?, sleeptill=?, lastactiontime=? WHERE ackdata=?''',
+                       inventoryHash,
+                       newStatus,
+                       retryNumber+1,
+                       sleepTill,
+                       int(time.time()),
+                       ackdata)
 
             # If we are sending to ourselves or a chan, let's put the message in
             # our own inbox.
             if shared.config.has_section(toaddress):
+                sigHash = hashlib.sha512(hashlib.sha512(signature).digest()).digest()[32:] # Used to detect and ignore duplicate messages in our inbox
                 t = (inventoryHash, toaddress, fromaddress, subject, int(
-                    time.time()), message, 'inbox', 2, 0)
+                    time.time()), message, 'inbox', 2, 0, sigHash)
                 helper_inbox.insert(t)
 
                 shared.UISignalQueue.put(('displayNewInboxMessage', (
@@ -847,10 +874,18 @@ class singleWorker(threading.Thread):
             with shared.printLock:
                 sys.stderr.write('Very abnormal error occurred in requestPubKey. toAddress is: ' + repr(
                     toAddress) + '. Please report this error to Atheros.')
-
             return
+        
+        queryReturn = sqlQuery(
+            '''SELECT retrynumber FROM sent WHERE toaddress=? AND (status='doingpubkeypow' OR status='awaitingpubkey') LIMIT 1''', 
+            toAddress)
+        if len(queryReturn) == 0:
+            logger.critical("BUG: Why are we requesting the pubkey for %s if there are no messages in the sent folder to that address?" % toAddress)
+            return
+        retryNumber = queryReturn[0][0]
+
         if addressVersionNumber <= 3:
-            shared.neededPubkeys[ripe] = 0
+            shared.neededPubkeys[toAddress] = 0
         elif addressVersionNumber >= 4:
             # If the user just clicked 'send' then the tag (and other information) will already
             # be in the neededPubkeys dictionary. But if we are recovering from a restart
@@ -860,7 +895,11 @@ class singleWorker(threading.Thread):
             if tag not in shared.neededPubkeys:
                 shared.neededPubkeys[tag] = (toAddress, highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
         
-        TTL = int(2.5 * 24 * 60 * 60 + random.randrange(-300, 300)) # 2.5 days from now plus or minus five minutes
+        if retryNumber == 0:
+            TTL = 2.5*24*60*60 # 2.5 days. This was chosen fairly arbitrarily. 
+        else:
+            TTL = 28*24*60*60
+        TTL = TTL + random.randrange(-300, 300) # add some randomness to the TTL
         embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', embeddedTime)
         payload += '\x00\x00\x00\x00' # object type: getpubkey
@@ -878,8 +917,8 @@ class singleWorker(threading.Thread):
         # print 'trial value', trialValue
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
         shared.UISignalQueue.put(('updateStatusBar', statusbar))
-        shared.UISignalQueue.put(('updateSentItemStatusByHash', (
-            ripe, tr.translateText("MainWindow",'Doing work necessary to request encryption key.'))))
+        shared.UISignalQueue.put(('updateSentItemStatusByToAddress', (
+            toAddress, tr.translateText("MainWindow",'Doing work necessary to request encryption key.'))))
         
         target = 2 ** 64 / (shared.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + shared.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+shared.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
         initialHash = hashlib.sha512(payload).digest()
@@ -896,17 +935,40 @@ class singleWorker(threading.Thread):
         print 'sending inv (for the getpubkey message)'
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
-
+        
+        if retryNumber == 0:
+            sleeptill = int(time.time()) + TTL
+        else:
+            sleeptill = int(time.time()) + 28*24*60*60 * 2**retryNumber
         sqlExecute(
-            '''UPDATE sent SET status='awaitingpubkey' WHERE toaddress=? AND status='doingpubkeypow' ''',
+            '''UPDATE sent SET lastactiontime=?, status='awaitingpubkey', retrynumber=?, sleeptill=? WHERE toaddress=? AND (status='doingpubkeypow' OR status='awaitingpubkey') ''',
+            int(time.time()),
+            retryNumber+1,
+            sleeptill,
             toAddress)
 
         shared.UISignalQueue.put((
             'updateStatusBar', tr.translateText("MainWindow",'Broacasting the public key request. This program will auto-retry if they are offline.')))
-        shared.UISignalQueue.put(('updateSentItemStatusByHash', (ripe, tr.translateText("MainWindow",'Sending public key request. Waiting for reply. Requested at %1').arg(l10n.formatTimestamp()))))
+        shared.UISignalQueue.put(('updateSentItemStatusByToAddress', (toAddress, tr.translateText("MainWindow",'Sending public key request. Waiting for reply. Requested at %1').arg(l10n.formatTimestamp()))))
 
-    def generateFullAckMessage(self, ackdata, toStreamNumber):
-        TTL = int(2.5 * 24 * 60 * 60 + random.randrange(-300, 300)) # 2.5 days plus or minus 5 minutes
+    def generateFullAckMessage(self, ackdata, toStreamNumber, TTL):
+        
+        # It might be perfectly fine to just use the same TTL for
+        # the ackdata that we use for the message. But I would rather
+        # it be more difficult for attackers to associate ackData with 
+        # the associated msg object. However, users would want the TTL
+        # of the acknowledgement to be about the same as they set
+        # for the message itself. So let's set the TTL of the 
+        # acknowledgement to be in one of three 'buckets': 1 hour, 7 
+        # days, or 28 days, whichever is relatively close to what the 
+        # user specified.
+        if TTL < 24*60*60: # 1 day
+            TTL = 24*60*60 # 1 day
+        elif TTL < 7*24*60*60: # 1 week
+            TTL = 7*24*60*60 # 1 week
+        else:
+            TTL = 28*24*60*60 # 4 weeks
+        TTL = int(TTL + random.randrange(-300, 300)) # Add some randomness to the TTL
         embeddedTime = int(time.time() + TTL)
         payload = pack('>Q', (embeddedTime))
         payload += '\x00\x00\x00\x02' # object type: msg
@@ -915,7 +977,7 @@ class singleWorker(threading.Thread):
         
         target = 2 ** 64 / (shared.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + shared.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+shared.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
         with shared.printLock:
-            print '(For ack message) Doing proof of work...'
+            print '(For ack message) Doing proof of work. TTL set to', TTL
 
         powStartTime = time.time()
         initialHash = hashlib.sha512(payload).digest()
