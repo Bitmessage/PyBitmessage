@@ -20,6 +20,8 @@ import socket
 import ctypes
 from struct import pack
 import sys
+from subprocess import call
+import time
 
 from SimpleXMLRPCServer import SimpleXMLRPCServer
 from api import MySimpleXMLRPCRequestHandler
@@ -30,25 +32,18 @@ from helper_sql import sqlQuery
 import threading
 
 # Classes
-#from helper_sql import *
-#from class_sqlThread import *
 from class_sqlThread import sqlThread
 from class_singleCleaner import singleCleaner
-#from class_singleWorker import *
 from class_objectProcessor import objectProcessor
 from class_outgoingSynSender import outgoingSynSender
 from class_singleListener import singleListener
 from class_singleWorker import singleWorker
-#from class_addressGenerator import *
 from class_addressGenerator import addressGenerator
 from debug import logger
 
 # Helper Functions
 import helper_bootstrap
 import helper_generic
-
-from subprocess import call
-import time
     
 
 def connectToStream(streamNumber):
