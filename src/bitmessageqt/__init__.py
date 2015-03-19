@@ -693,7 +693,6 @@ class MyForm(QtGui.QMainWindow):
         else:
             numberOfDays = int(round(TTL / (24*60*60)))
             self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%1 days").arg(numberOfDays))
->>>>>>> bbb8c645afd8900b15ec35a1f1b632e095f41f6e
 
     # Show or hide the application window after clicking an item within the
     # tray icon or, on Windows, the try icon itself.
