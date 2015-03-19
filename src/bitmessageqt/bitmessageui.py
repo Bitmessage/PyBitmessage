@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-# Form implementation generated from reading ui file 'bmail.ui'
+# Form implementation generated from reading ui file 'bitmessageui.ui'
 #
-# Created: Sun Mar  1 23:18:09 2015
+# Created: Wed Mar  4 00:11:02 2015
 #      by: PyQt4 UI code generator 4.10.4
 #
 # WARNING! All changes made in this file will be lost!
@@ -572,7 +572,7 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.tableWidgetConnectionCount, self.pushButtonStatusIcon)
 
     def retranslateUi(self, MainWindow):
-        MainWindow.setWindowTitle(_translate("MainWindow", "B-Mail", None))
+        MainWindow.setWindowTitle(_translate("MainWindow", "Bitmessage", None))
         self.treeWidgetYourIdentities.headerItem().setText(0, _translate("MainWindow", "Identities", None))
         self.pushButtonNewAddress.setText(_translate("MainWindow", "New Indentitiy", None))
         self.inboxSearchLineEdit.setPlaceholderText(_translate("MainWindow", "Search", None))
