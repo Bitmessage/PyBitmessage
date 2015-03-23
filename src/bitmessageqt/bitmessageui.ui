@@ -105,7 +105,7 @@
            </layout>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_11">
+           <layout class="QVBoxLayout" name="verticalLayout_7">
             <item>
              <layout class="QHBoxLayout" name="horizontalLayoutSearch">
               <property name="topMargin">
@@ -116,6 +116,35 @@
                 <property name="placeholderText">
                  <string>Search</string>
                 </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="inboxSearchOption">
+                <item>
+                 <property name="text">
+                  <string>All</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>To</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>From</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Subject</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Message</string>
+                 </property>
+                </item>
                </widget>
               </item>
              </layout>
@@ -255,7 +284,7 @@
               </attribute>
               <column>
                <property name="text">
-                <string>Name</string>
+                <string>Address book</string>
                </property>
                <property name="icon">
                 <iconset>
@@ -573,7 +602,6 @@ p, li { white-space: pre-wrap; }
         </item>
        </layout>
        <zorder></zorder>
-       <zorder>pushButtonFetchNamecoinID</zorder>
       </widget>
       <widget class="QWidget" name="subscriptions">
        <attribute name="icon">
@@ -583,9 +611,9 @@ p, li { white-space: pre-wrap; }
        <attribute name="title">
         <string>Subscriptions</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_4">
+       <layout class="QGridLayout" name="gridLayout_3">
         <item row="0" column="0">
-         <layout class="QHBoxLayout" name="horizontalLayout_2">
+         <layout class="QHBoxLayout" name="horizontalLayout_4">
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_3">
             <item>
@@ -635,11 +663,44 @@ p, li { white-space: pre-wrap; }
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_4">
             <item>
-             <widget class="QLineEdit" name="inboxSearchLineSubscriptions">
-              <property name="placeholderText">
-               <string>Search</string>
-              </property>
-             </widget>
+             <layout class="QHBoxLayout" name="horizontalLayout_2">
+              <item>
+               <widget class="QLineEdit" name="inboxSearchLineEditSubscriptions">
+                <property name="placeholderText">
+                 <string>Search</string>
+                </property>
+               </widget>
+              </item>
+              <item>
+               <widget class="QComboBox" name="inboxSearchOptionSubscriptions">
+                <item>
+                 <property name="text">
+                  <string>All</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>To</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>From</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Subject</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Message</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
+             </layout>
             </item>
             <item>
              <widget class="QTableWidget" name="tableWidgetInboxSubscriptions">
@@ -708,7 +769,7 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <widget class="QTextEdit" name="textEditInboxSubscriptions">
+             <widget class="QTextEdit" name="textEditInboxMessageSubscriptions">
               <property name="baseSize">
                <size>
                 <width>0</width>
@@ -734,13 +795,13 @@ p, li { white-space: pre-wrap; }
        <attribute name="title">
         <string>Chans</string>
        </attribute>
-       <layout class="QGridLayout" name="gridLayout_3">
+       <layout class="QGridLayout" name="gridLayout_4">
         <item row="0" column="0">
-         <layout class="QHBoxLayout" name="horizontalLayout_4">
+         <layout class="QHBoxLayout" name="horizontalLayout_7">
           <item>
            <layout class="QVBoxLayout" name="verticalLayout_17">
             <item>
-             <widget class="QTreeWidget" name="treeWidgetChanList">
+             <widget class="QTreeWidget" name="treeWidgetChans">
               <property name="maximumSize">
                <size>
                 <width>200</width>
@@ -775,7 +836,7 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <widget class="QPushButton" name="pushButtonAddChanel">
+             <widget class="QPushButton" name="pushButtonAddChan">
               <property name="maximumSize">
                <size>
                 <width>200</width>
@@ -783,30 +844,56 @@ p, li { white-space: pre-wrap; }
                </size>
               </property>
               <property name="text">
-               <string>Add Chanel</string>
+               <string>Add Chan</string>
               </property>
              </widget>
             </item>
            </layout>
           </item>
           <item>
-           <layout class="QVBoxLayout" name="verticalLayout_13">
+           <layout class="QVBoxLayout" name="verticalLayout_8">
             <item>
-             <layout class="QHBoxLayout" name="horizontalLayoutSearch_2">
-              <property name="topMargin">
-               <number>0</number>
-              </property>
+             <layout class="QHBoxLayout" name="horizontalLayout_6">
               <item>
-               <widget class="QLineEdit" name="inboxSearchLineEdit_2">
+               <widget class="QLineEdit" name="inboxSearchLineEditChans">
                 <property name="placeholderText">
                  <string>Search</string>
                 </property>
                </widget>
               </item>
+              <item>
+               <widget class="QComboBox" name="inboxSearchOptionChans">
+                <item>
+                 <property name="text">
+                  <string>All</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>To</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>From</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Subject</string>
+                 </property>
+                </item>
+                <item>
+                 <property name="text">
+                  <string>Message</string>
+                 </property>
+                </item>
+               </widget>
+              </item>
              </layout>
             </item>
             <item>
-             <widget class="QTableWidget" name="tableWidgetInbox_2">
+             <widget class="QTableWidget" name="tableWidgetInboxChans">
               <property name="editTriggers">
                <set>QAbstractItemView::NoEditTriggers</set>
               </property>
@@ -872,7 +959,7 @@ p, li { white-space: pre-wrap; }
              </widget>
             </item>
             <item>
-             <widget class="QTextEdit" name="textEditInboxMessage_2">
+             <widget class="QTextEdit" name="textEditInboxMessageChans">
               <property name="baseSize">
                <size>
                 <width>0</width>

@@ -202,7 +202,7 @@ class Main:
             singleAPIThread.daemon = True  # close the main program even if there are threads left
             singleAPIThread.start()
 
-        #connectToStream(1)
+        connectToStream(1)
 
         singleListenerThread = singleListener()
         singleListenerThread.setup(selfInitiatedConnections)
