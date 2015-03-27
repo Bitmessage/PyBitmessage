@@ -231,6 +231,10 @@ class _OpenSSL:
         self.EVP_DigestInit.restype = ctypes.c_int
         self._lib.EVP_DigestInit.argtypes = [ctypes.c_void_p, ctypes.c_void_p]
 
+        self.EVP_DigestInit_ex = self._lib.EVP_DigestInit_ex
+        self.EVP_DigestInit_ex.restype = ctypes.c_int
+        self._lib.EVP_DigestInit_ex.argtypes = 3 * [ctypes.c_void_p]
+        
         self.EVP_DigestUpdate = self._lib.EVP_DigestUpdate
         self.EVP_DigestUpdate.restype = ctypes.c_int
         self.EVP_DigestUpdate.argtypes = [ctypes.c_void_p,
@@ -241,6 +245,11 @@ class _OpenSSL:
         self.EVP_DigestFinal.argtypes = [ctypes.c_void_p,
                                          ctypes.c_void_p, ctypes.c_void_p]
 
+        self.EVP_DigestFinal_ex = self._lib.EVP_DigestFinal_ex
+        self.EVP_DigestFinal_ex.restype = ctypes.c_int
+        self.EVP_DigestFinal_ex.argtypes = [ctypes.c_void_p,
+                                            ctypes.c_void_p, ctypes.c_void_p]
+        
         self.EVP_ecdsa = self._lib.EVP_ecdsa
         self._lib.EVP_ecdsa.restype = ctypes.c_void_p
         self._lib.EVP_ecdsa.argtypes = []
