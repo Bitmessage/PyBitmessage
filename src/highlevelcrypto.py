@@ -30,11 +30,28 @@ def decryptFast(msg,cryptor):
     return cryptor.decrypt(msg)
 # Signs with hex private key
 def sign(msg,hexPrivkey):
-    return makeCryptor(hexPrivkey).sign(msg)
+    # pyelliptic is upgrading from SHA1 to SHA256 for signing. We must 
+    # upgrade PyBitmessage gracefully. 
+    # https://github.com/yann2192/pyelliptic/pull/33
+    # More discussion: https://github.com/yann2192/pyelliptic/issues/32
+    return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_ecdsa) # SHA1
+    #return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_sha256) # SHA256. We should switch to this eventually.
 # Verifies with hex public key
 def verify(msg,sig,hexPubkey):
+    # As mentioned above, we must upgrade gracefully to use SHA256. So
+    # let us check the signature using both SHA1 and SHA256 and if one
+    # of them passes then we will be satisfied. Eventually this can 
+    # be simplified and we'll only check with SHA256. 
     try:
-        return makePubCryptor(hexPubkey).verify(sig,msg)
+        sigVerifyPassed = makePubCryptor(hexPubkey).verify(sig,msg,digest_alg=OpenSSL.EVP_ecdsa) # old SHA1 algorithm.
+    except:
+        sigVerifyPassed = False
+    if sigVerifyPassed:
+        # The signature check passed using SHA1
+        return True
+    # The signature check using SHA1 failed. Let us try it with SHA256. 
+    try:
+        return makePubCryptor(hexPubkey).verify(sig,msg,digest_alg=OpenSSL.EVP_sha256)
     except:
         return False
 
