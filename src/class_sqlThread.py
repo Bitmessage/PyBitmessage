@@ -400,7 +400,7 @@ class sqlThread(threading.Thread):
         queryreturn = self.cur.fetchall()
         for row in queryreturn:
             value, = row
-            if int(value) < int(time.time()) - 2592000:
+            if int(value) < int(time.time()) - 86400:
                 logger.info('It has been a long time since the messages.dat file has been vacuumed. Vacuuming now...')
                 try:
                     self.cur.execute( ''' VACUUM ''')

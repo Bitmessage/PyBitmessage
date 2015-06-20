@@ -26,7 +26,7 @@ from pyelliptic.openssl import OpenSSL
 from struct import pack
 
 # Classes
-from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute
+from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute,sqlStoredProcedure
 from debug import logger
 
 # Helper Functions
@@ -181,6 +181,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return data
         elif method == 'listAddressBookEntries' or method == 'listAddressbook': # the listAddressbook alias should be removed eventually.
             queryreturn = sqlQuery('''SELECT label, address from addressbook''')
+            if len(params) == 1:
+                label, = params
+                label = self._decode(label, "base64")
+                queryreturn = sqlQuery('''SELECT label, address from addressbook WHERE label = ?''', label)
+	    elif len(params) > 1:
+                raise APIError(0, "Too many paremeters, max 1")
             data = '{"addresses":['
             for row in queryreturn:
                 label, address = row
@@ -190,6 +196,22 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += json.dumps({'label':label.encode('base64'), 'address': address}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
+        elif method == 'getAddressBookEntry': # search by label
+            if len(params) != 1:
+                raise APIError(0, "I need a label")
+            label, = params
+            label = self._decode(label, "base64")
+            queryreturn = sqlQuery('''SELECT label, address from addressbook WHERE label = ?''', label)
+            data = '{"address":['
+            for row in queryreturn:
+                label, address = row
+                label = shared.fixPotentiallyInvalidUTF8Data(label)
+                if len(data) > 20:
+                    data += ','
+                data += json.dumps({'label':label.encode('base64'), 'address': address}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+ 
         elif method == 'addAddressBookEntry' or method == 'addAddressbook': # the addAddressbook alias should be deleted eventually.
             if len(params) != 2:
                 raise APIError(0, "I need label and address")
@@ -951,6 +973,52 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             return json.dumps({'status':status, 'addressVersion':addressVersion,
                                'streamNumber':streamNumber, 'ripe':ripe.encode('base64')}, indent=4,
                               separators=(',', ': '))
+        elif method == 'getInboxCount':
+            #queryreturn = sqlQuery('''SELECT read, received < 'now' - 60 AS old, COUNT (*) AS cnt FROM inbox WHERE folder = 'inbox' GROUP BY read, old''')
+            ret = {} 
+            queryreturn = sqlQuery('''SELECT COUNT (*) AS cnt FROM inbox WHERE folder = 'inbox' AND read = 0 AND received < 'now' - 60''')
+            for row in queryreturn:
+                count, = row
+                ret['oldread'] = count
+            queryreturn = sqlQuery('''SELECT COUNT (*) AS cnt FROM inbox WHERE folder = 'inbox' AND read = 1 AND received < 'now' - 60''')
+            for row in queryreturn:
+                count, = row
+                ret['oldunread'] = count
+            queryreturn = sqlQuery('''SELECT COUNT (*) AS cnt FROM inbox WHERE folder = 'inbox' AND read = 0 AND received >= 'now' - 60''')
+            for row in queryreturn:
+                count, = row
+                ret['newread'] = count
+            queryreturn = sqlQuery('''SELECT COUNT (*) AS cnt FROM inbox WHERE folder = 'inbox' AND read = 1 AND received >= 'now' - 60''')
+            for row in queryreturn:
+                count, = row
+                ret['newunread'] = count
+            data = '{"inboxCount":{'
+            for key in ret:
+                val = ret[key]
+                if len(data) > 16:
+                    data += ','
+                data += json.dumps({key:val}, indent=4, separators=(',', ': '))
+            data += '}}'
+        elif method == 'getSentCount':
+            ret = {} 
+            queryreturn = sqlQuery('''SELECT COUNT (*) AS cnt FROM sent WHERE folder = 'sent' AND status = 'msgqueued' ''')
+            for row in queryreturn:
+                count, = row
+                ret['queued'] = count
+            queryreturn = sqlQuery('''SELECT COUNT (*) AS cnt FROM sent WHERE folder = 'sent' AND status = 'msgsent' ''')
+            for row in queryreturn:
+                count, = row
+                ret['awaitingack'] = count
+            data = '{"sentCount":{'
+            for key in ret:
+                val = ret[key]
+                if len(data) > 15:
+                    data += ','
+                data += json.dumps({key:val}, indent=4, separators=(',', ': '))
+            data += '}}'
+        elif method == 'deleteAndVacuum':
+            sqlStoredProcedure('deleteandvacuume')
+            return 'done'
         else:
             raise APIError(20, 'Invalid method: %s' % method)
 
