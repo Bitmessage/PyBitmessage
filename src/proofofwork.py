@@ -6,7 +6,7 @@ from struct import unpack, pack
 import sys
 from shared import config, frozen
 import shared
-from openclpow import do_opencl_pow
+import openclpow
 #import os
 
 def _set_idle():
@@ -33,6 +33,7 @@ def _pool_worker(nonce, initialHash, target, pool_size):
     return [trialValue, nonce]
 
 def _doSafePoW(target, initialHash):
+    print "Safe POW\n"
     nonce = 0
     trialValue = float('inf')
     while trialValue > target:
@@ -41,6 +42,7 @@ def _doSafePoW(target, initialHash):
     return [trialValue, nonce]
 
 def _doFastPoW(target, initialHash):
+    print "Fast POW\n"
     import time
     from multiprocessing import Pool, cpu_count
     try:
@@ -72,13 +74,14 @@ def _doFastPoW(target, initialHash):
         time.sleep(0.2)
 
 def _doGPUPow(target, initialHash):
-    nonce = do_opencl_pow(initialHash.encode("hex"), target)
+    print "GPU POW\n"
+    nonce = openclpow.do_opencl_pow(initialHash.encode("hex"), target)
     trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
     #print "{} - value {} < {}".format(nonce, trialValue, target)
     return [trialValue, nonce]
 
 def run(target, initialHash):
-    if has_opencl:
+    if openclpow.has_opencl():
 	return _doGPUPow(target, initialHash)
     elif frozen == "macosx_app" or not frozen:
         return _doFastPoW(target, initialHash)
