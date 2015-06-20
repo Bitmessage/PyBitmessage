@@ -2,6 +2,7 @@ import numpy
 from struct import pack, unpack
 import time
 import hashlib
+import random
 import pyopencl as cl
 
 hash_dt = numpy.dtype([('target', numpy.uint64), ('v', numpy.str_, 73)])
@@ -14,7 +15,7 @@ try:
 		ctx = cl.create_some_context()
 		queue = cl.CommandQueue(ctx)
 
-		f = open('kernel.cl', 'r')
+		f = open('/usr/src/PyBitmessage/src/kernel.cl', 'r')
 		fstr = ''.join(f.readlines())
 		program = cl.Program(ctx, fstr).build()
 except: 
@@ -42,7 +43,10 @@ def do_opencl_pow(hash, target):
 	kernel.set_arg(1, dest_buf)
 
 	start = time.time()
+	#startpos = random.getrandbits(32) << 32 | random.getrandbits(32)
+	#startpos = random.getrandbits(32)
 	startpos = 0
+	progress = 0
 	globamt = worksize*2000
 
 	while output[0][0] == 0:
@@ -50,17 +54,19 @@ def do_opencl_pow(hash, target):
 		cl.enqueue_nd_range_kernel(queue, kernel, (globamt,), (worksize,))
 		cl.enqueue_read_buffer(queue, dest_buf, output)
 		queue.finish()
+		#startpos == (globamt + startpos) & 0xFFFFFFFFFFFFFFFF
 		startpos += globamt
+		progress += globamt
 		sofar = time.time() - start
-		print sofar, startpos / sofar, "hashes/sec"
+		print sofar, progress / sofar, "hashes/sec"
 	taken = time.time() - start
-	print startpos, taken
+	print progress, taken
 	return output[0][0]
 
 if __name__ == "__main__":
 	target = 54227212183L
 	initialHash = "3758f55b5a8d902fd3597e4ce6a2d3f23daff735f65d9698c270987f4e67ad590b93f3ffeba0ef2fd08a8dc2f87b68ae5a0dc819ab57f22ad2c4c9c8618a43b3".decode("hex")
-	nonce = do_pow(initialHash.encode("hex"), target)
+	nonce = do_opencl_pow(initialHash.encode("hex"), target)
 	trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
 	print "{} - value {} < {}".format(nonce, trialValue, target)
 	
