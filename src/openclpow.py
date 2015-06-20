@@ -43,19 +43,14 @@ def do_opencl_pow(hash, target):
 	kernel.set_arg(1, dest_buf)
 
 	start = time.time()
-	#startpos = random.getrandbits(32) << 32 | random.getrandbits(32)
-	#startpos = random.getrandbits(32)
-	startpos = 0
 	progress = 0
 	globamt = worksize*2000
 
 	while output[0][0] == 0:
-		kernel.set_arg(2, pack("<Q", startpos))
+		kernel.set_arg(2, pack("<Q", progress))
 		cl.enqueue_nd_range_kernel(queue, kernel, (globamt,), (worksize,))
 		cl.enqueue_read_buffer(queue, dest_buf, output)
 		queue.finish()
-		#startpos == (globamt + startpos) & 0xFFFFFFFFFFFFFFFF
-		startpos += globamt
 		progress += globamt
 		sofar = time.time() - start
 		print sofar, progress / sofar, "hashes/sec"
