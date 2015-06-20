@@ -991,7 +991,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3287"/>
         <source>Start-on-login not yet supported on your OS.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Mit Betriebssystem starten, noch nicht unterstützt</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="3290"/>
@@ -1627,12 +1627,12 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="392"/>
         <source>Use Identicons</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Benutze Identicons (Automatisch generierte Icons zu einer Bitcoinadresse)</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="393"/>
         <source>Interface Language</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Sprachauswahl</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="394"/>
@@ -1697,32 +1697,52 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="439"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, if you send a message to someone and he is offline for more than two days, Bitmessage will send the message again after an additional two days. This will be continued with exponential backoff forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them. Here you may change that behavior by having Bitmessage give up after a certain number of days or months.&lt;/p&gt;&lt;p&gt;Leave these input fields blank for the default behavior. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Wurde eine Nachricht innerhalb von zwei Tagen nicht bestätigt, wird sie in zwei Tag noch einmal gesendet. Schlägt dies wieder fehl, wird es in 5, dann in 10, dann in 20 usw. Tagen wieder versucht. Sendet der Empfänger keine Bestätigung, geht dies unendlich so weiter.&lt;/p&gt;&lt;p&gt;Dieses Verhalten kann hier begrenz werden.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="440"/>
         <source>Give up after</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Gib auf nach</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="441"/>
         <source>and</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">und</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="442"/>
         <source>days</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Tagen</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="443"/>
         <source>months.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Monaten</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="444"/>
         <source>Resends Expire</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">Neusendung</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/settings.py" line="442"/>
+        <source>Reply below Quote</source>
+        <translation>Antworte unter zitierter Nachricht</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/settings.py" line="450"/>
+        <source>Bandwidth limit</source>
+        <translation>Bandbreite begrenzen</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/settings.py" line="451"/>
+        <source>Maximum download rate (kB/s): [0: unlimited]</source>
+        <translation>Maximale Downloadrate in kB/s, 0 bedeutet kein Limit</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/settings.py" line="452"/>
+        <source>Maximum upload rate (kB/s): [0: unlimited]</source>
+        <translation>Maximale Uploadrate in kB/s, 0 bedeutet kein Limit</translation>
     </message>
 </context>
 </TS>

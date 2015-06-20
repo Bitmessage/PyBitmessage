@@ -28,9 +28,9 @@ class sqlThread(threading.Thread):
 
         try:
             self.cur.execute(
-                '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text, received text, message text, folder text, encodingtype int, read bool, UNIQUE(msgid) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE inbox (msgid blob, toaddress text, fromaddress text, subject text, received text, message text, folder text, encodingtype int, read bool, sighash blob, UNIQUE(msgid) ON CONFLICT REPLACE)''' )
             self.cur.execute(
-                '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text, ackdata blob, lastactiontime integer, status text, pubkeyretrynumber integer, msgretrynumber integer, folder text, encodingtype int)''' )
+                '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text, ackdata blob, senttime integer, lastactiontime integer, sleeptill integer, status text, retrynumber integer, folder text, encodingtype int, ttl int)''' )
             self.cur.execute(
                 '''CREATE TABLE subscriptions (label text, address text, enabled bool)''' )
             self.cur.execute(
@@ -39,29 +39,15 @@ class sqlThread(threading.Thread):
                 '''CREATE TABLE blacklist (label text, address text, enabled bool)''' )
             self.cur.execute(
                 '''CREATE TABLE whitelist (label text, address text, enabled bool)''' )
-            """
-            Explanation of what is in the pubkeys table:
-                The hash is the RIPEMD160 hash that is encoded in the Bitmessage address.
-              
-                transmitdata /was/ literally the data that was included in the Bitmessage pubkey message when it arrived, 
-                except for the 24 byte protocol header- ie, it started with the POW nonce. Since protocol v3, to maintain
-                backwards compability, the data format of the data on disk is staying the same even though the wire format has changed.
-              
-                time is the time that the pubkey was broadcast on the network same as with every other type of Bitmessage object.
-              
-                usedpersonally is set to "yes" if we have used the key personally. This keeps us from deleting it because we may want to
-                reply to a message in the future. This field is not a bool because we may need more flexability in the future and it doesn't
-                take up much more space anyway.
-            """
             self.cur.execute(
-                '''CREATE TABLE pubkeys (hash blob, addressversion int, transmitdata blob, time int, usedpersonally text, UNIQUE(hash, addressversion) ON CONFLICT REPLACE)''' )
+                '''CREATE TABLE pubkeys (address text, addressversion int, transmitdata blob, time int, usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''' )
             self.cur.execute(
                 '''CREATE TABLE inventory (hash blob, objecttype int, streamnumber int, payload blob, expirestime integer, tag blob, UNIQUE(hash) ON CONFLICT REPLACE)''' )
             self.cur.execute(
                 '''INSERT INTO subscriptions VALUES('Bitmessage new releases/announcements','BM-GtovgYdgs7qXPkoYaRgrLFuFKz1SFpsw',1)''')
             self.cur.execute(
                 '''CREATE TABLE settings (key blob, value blob, UNIQUE(key) ON CONFLICT REPLACE)''' )
-            self.cur.execute( '''INSERT INTO settings VALUES('version','8')''')
+            self.cur.execute( '''INSERT INTO settings VALUES('version','10')''')
             self.cur.execute( '''INSERT INTO settings VALUES('lastvacuumtime',?)''', (
                 int(time.time()),))
             self.cur.execute(
@@ -360,8 +346,72 @@ class sqlThread(threading.Thread):
             parameters = (8,)
             self.cur.execute(query, parameters)
             logger.debug('Finished clearing currently held pubkeys.')
-        
 
+        # Add a new column to the inbox table to store the hash of the message signature.
+        # We'll use this as temporary message UUID in order to detect duplicates. 
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        currentVersion = int(self.cur.fetchall()[0][0])
+        if currentVersion == 8:
+            logger.debug('In messages.dat database, adding sighash field to the inbox table.')
+            item = '''ALTER TABLE inbox ADD sighash blob DEFAULT '' '''
+            parameters = ''
+            self.cur.execute(item, parameters)
+            item = '''update settings set value=? WHERE key='version';'''
+            parameters = (9,)
+            self.cur.execute(item, parameters)
+            
+        # TTL is now user-specifiable. Let's add an option to save whatever the user selects. 
+        if not shared.config.has_option('bitmessagesettings', 'ttl'):
+            shared.config.set('bitmessagesettings', 'ttl', '367200')
+        # We'll also need a `sleeptill` field and a `ttl` field. Also we can combine 
+        # the pubkeyretrynumber and msgretrynumber into one.
+        item = '''SELECT value FROM settings WHERE key='version';'''
+        parameters = ''
+        self.cur.execute(item, parameters)
+        currentVersion = int(self.cur.fetchall()[0][0])
+        if currentVersion == 9:
+            logger.info('In messages.dat database, making TTL-related changes: combining the pubkeyretrynumber and msgretrynumber fields into the retrynumber field and adding the sleeptill and ttl fields...')
+            self.cur.execute(
+                '''CREATE TEMPORARY TABLE sent_backup (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text, ackdata blob, lastactiontime integer, status text, retrynumber integer, folder text, encodingtype int)''' )
+            self.cur.execute(
+                '''INSERT INTO sent_backup SELECT msgid, toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, status, 0, folder, encodingtype FROM sent;''')
+            self.cur.execute( '''DROP TABLE sent''')
+            self.cur.execute(
+                '''CREATE TABLE sent (msgid blob, toaddress text, toripe blob, fromaddress text, subject text, message text, ackdata blob, senttime integer, lastactiontime integer, sleeptill int, status text, retrynumber integer, folder text, encodingtype int, ttl int)''' )
+            self.cur.execute(
+                '''INSERT INTO sent SELECT msgid, toaddress, toripe, fromaddress, subject, message, ackdata, lastactiontime, lastactiontime, 0, status, 0, folder, encodingtype, 216000 FROM sent_backup;''')
+            self.cur.execute( '''DROP TABLE sent_backup''')
+            logger.info('In messages.dat database, finished making TTL-related changes.')
+            logger.debug('In messages.dat database, adding address field to the pubkeys table.')
+            # We're going to have to calculate the address for each row in the pubkeys
+            # table. Then we can take out the hash field. 
+            self.cur.execute('''ALTER TABLE pubkeys ADD address text DEFAULT '' ''')
+            self.cur.execute('''SELECT hash, addressversion FROM pubkeys''')
+            queryResult = self.cur.fetchall()
+            from addresses import encodeAddress
+            for row in queryResult:
+                hash, addressVersion = row
+                address = encodeAddress(addressVersion, 1, hash)
+                item = '''UPDATE pubkeys SET address=? WHERE hash=?;'''
+                parameters = (address, hash)
+                self.cur.execute(item, parameters)
+            # Now we can remove the hash field from the pubkeys table.
+            self.cur.execute(
+                '''CREATE TEMPORARY TABLE pubkeys_backup (address text, addressversion int, transmitdata blob, time int, usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''' )
+            self.cur.execute(
+                '''INSERT INTO pubkeys_backup SELECT address, addressversion, transmitdata, time, usedpersonally FROM pubkeys;''')
+            self.cur.execute( '''DROP TABLE pubkeys''')
+            self.cur.execute(
+                '''CREATE TABLE pubkeys (address text, addressversion int, transmitdata blob, time int, usedpersonally text, UNIQUE(address) ON CONFLICT REPLACE)''' )
+            self.cur.execute(
+                '''INSERT INTO pubkeys SELECT address, addressversion, transmitdata, time, usedpersonally FROM pubkeys_backup;''')
+            self.cur.execute( '''DROP TABLE pubkeys_backup''')
+            logger.debug('In messages.dat database, done adding address field to the pubkeys table and removing the hash field.')
+            self.cur.execute('''update settings set value=10 WHERE key='version';''')
+        
+        
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users or modify the SQLite database? Add it right above this line!
         
@@ -371,11 +421,11 @@ class sqlThread(threading.Thread):
             self.cur.execute( '''INSERT INTO pubkeys VALUES(?,?,?,?,?)''', t)
             self.conn.commit()
             self.cur.execute(
-                '''SELECT transmitdata FROM pubkeys WHERE hash='1234' ''')
+                '''SELECT transmitdata FROM pubkeys WHERE address='1234' ''')
             queryreturn = self.cur.fetchall()
             for row in queryreturn:
                 transmitdata, = row
-            self.cur.execute('''DELETE FROM pubkeys WHERE hash='1234' ''')
+            self.cur.execute('''DELETE FROM pubkeys WHERE address='1234' ''')
             self.conn.commit()
             if transmitdata == '':
                 logger.fatal('Problem: The version of SQLite you have cannot store Null values. Please download and install the latest revision of your version of Python (for example, the latest Python 2.7 revision) and try again.\n')

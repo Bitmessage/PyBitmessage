@@ -212,6 +212,8 @@ class MyForm(QtGui.QMainWindow):
             "clicked()"), self.click_pushButtonAddSubscription)
         QtCore.QObject.connect(self.ui.pushButtonAddBlacklist, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonAddBlacklist)
+        QtCore.QObject.connect(self.ui.pushButtonTTL, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonTTL)
         QtCore.QObject.connect(self.ui.pushButtonSend, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonSend)
         QtCore.QObject.connect(self.ui.pushButtonLoadFromAddressBook,
@@ -608,7 +610,7 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateStatusBar(PyQt_PyObject)"), self.updateStatusBar)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByHash)
+            "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByToAddress)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), self.updateSentItemStatusByAckdata)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -648,6 +650,18 @@ class MyForm(QtGui.QMainWindow):
 
         self.rerenderComboBoxSendFrom()
         
+        # Put the TTL slider in the correct spot
+        TTL = shared.config.getint('bitmessagesettings', 'ttl')
+        if TTL < 3600: # an hour
+            TTL = 3600
+        elif TTL > 28*24*60*60: # 28 days
+            TTL = 28*24*60*60
+        self.ui.horizontalSliderTTL.setSliderPosition((TTL - 3600) ** (1/3.199))
+        self.updateHumanFriendlyTTLDescription(TTL)
+        
+        QtCore.QObject.connect(self.ui.horizontalSliderTTL, QtCore.SIGNAL(
+            "valueChanged(int)"), self.updateTTL)
+        
         # Check to see whether we can connect to namecoin. Hide the 'Fetch Namecoin ID' button if we can't.
         try:
             options = {}
@@ -662,7 +676,23 @@ class MyForm(QtGui.QMainWindow):
         except:
             print 'There was a problem testing for a Namecoin daemon. Hiding the Fetch Namecoin ID button'
             self.ui.pushButtonFetchNamecoinID.hide()
-
+            
+    def updateTTL(self, sliderPosition):
+        TTL = int(sliderPosition ** 3.199 + 3600)
+        self.updateHumanFriendlyTTLDescription(TTL)
+        shared.config.set('bitmessagesettings', 'ttl', str(TTL))
+        shared.writeKeysFile()
+        
+    def updateHumanFriendlyTTLDescription(self, TTL):
+        numberOfHours = int(round(TTL / (60*60)))
+        if numberOfHours < 48:
+            if numberOfHours == 1:
+                self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "1 hour"))
+            else:
+                self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%1 hours").arg(numberOfHours))
+        else:
+            numberOfDays = int(round(TTL / (24*60*60)))
+            self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%1 days").arg(numberOfDays))
 
     # Show or hide the application window after clicking an item within the
     # tray icon or, on Windows, the try icon itself.
@@ -999,10 +1029,9 @@ class MyForm(QtGui.QMainWindow):
     # create application indicator
     def appIndicatorInit(self, app):
         self.initTrayIcon("can-icon-24px-red.png", app)
-        if sys.platform[0:3] == 'win':
-            traySignal = "activated(QSystemTrayIcon::ActivationReason)"
-            QtCore.QObject.connect(self.tray, QtCore.SIGNAL(
-                traySignal), self.__icon_activated)
+        traySignal = "activated(QSystemTrayIcon::ActivationReason)"
+        QtCore.QObject.connect(self.tray, QtCore.SIGNAL(
+            traySignal), self.__icon_activated)
 
         m = QMenu()
 
@@ -1450,18 +1479,16 @@ class MyForm(QtGui.QMainWindow):
             self.init_blacklist_popup_menu(False)
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.windowState() & QtCore.Qt.WindowMinimized:
-                self.actionShow.setChecked(False)
-        if shared.config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
-            if event.type() == QtCore.QEvent.WindowStateChange:
-                if self.windowState() & QtCore.Qt.WindowMinimized:
+                if shared.config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
                     self.appIndicatorHide()
                     if 'win32' in sys.platform or 'win64' in sys.platform:
-                        self.setWindowFlags(Qt.ToolTip)
-                elif event.oldState() & QtCore.Qt.WindowMinimized:
-                    # The window state has just been changed to
-                    # Normal/Maximised/FullScreen
-                    pass
-            # QtGui.QWidget.changeEvent(self, event)
+                        self.setWindowFlags(Qt.ToolTip)           
+            elif event.oldState() & QtCore.Qt.WindowMinimized:
+                # The window state has just been changed to
+                # Normal/Maximised/FullScreen
+                pass
+        # QtGui.QWidget.changeEvent(self, event)
+
 
     def __icon_activated(self, reason):
         if reason == QtGui.QSystemTrayIcon.Trigger:
@@ -1667,13 +1694,11 @@ class MyForm(QtGui.QMainWindow):
             cnt, = row
         return int(cnt)
 
-    def updateSentItemStatusByHash(self, toRipe, textToDisplay):
+    def updateSentItemStatusByToAddress(self, toAddress, textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
-            toAddress = str(self.ui.tableWidgetSent.item(
+            rowAddress = str(self.ui.tableWidgetSent.item(
                 i, 0).data(Qt.UserRole).toPyObject())
-            status, addressVersionNumber, streamNumber, ripe = decodeAddress(
-                toAddress)
-            if ripe == toRipe:
+            if toAddress == rowAddress:
                 self.ui.tableWidgetSent.item(i, 3).setToolTip(textToDisplay)
                 try:
                     newlinePosition = textToDisplay.indexOf('\n')
@@ -1871,6 +1896,13 @@ class MyForm(QtGui.QMainWindow):
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetBlacklist.setItem(0, 1, newItem)
 
+    def click_pushButtonTTL(self):
+        QtGui.QMessageBox.information(self, 'Time To Live', _translate(
+            "MainWindow", "The TTL, or Time-To-Live is the length of time that the network will hold the message. \
+The recipient must get it during this time. If your Bitmessage client does not hear an acknowledgement, it \
+will resend the message automatically. The longer the Time-To-Live, the \
+more work your computer must do to send the message. A Time-To-Live of four or five days is often appropriate."), QMessageBox.Ok)
+
     def click_pushButtonSend(self):
         self.statusBar().showMessage('')
         toAddresses = str(self.ui.lineEditTo.text())
@@ -1946,7 +1978,7 @@ class MyForm(QtGui.QMainWindow):
                         ackdata = OpenSSL.rand(32)
                         t = ()
                         sqlExecute(
-                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+                            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
                             '',
                             toAddress,
                             ripe,
@@ -1954,12 +1986,15 @@ class MyForm(QtGui.QMainWindow):
                             subject,
                             message,
                             ackdata,
-                            int(time.time()),
+                            int(time.time()), # sentTime (this will never change)
+                            int(time.time()), # lastActionTime
+                            0, # sleepTill time. This will get set when the POW gets done.
                             'msgqueued',
-                            1,
-                            1,
-                            'sent',
-                            2)
+                            0, # retryNumber
+                            'sent', # folder
+                            2, # encodingtype
+                            shared.config.getint('bitmessagesettings', 'ttl')
+                            )
 
                         toLabel = ''
                         queryreturn = sqlQuery('''select label from addressbook where address=?''',
@@ -1994,10 +2029,24 @@ class MyForm(QtGui.QMainWindow):
                 ackdata = OpenSSL.rand(32)
                 toAddress = self.str_broadcast_subscribers
                 ripe = ''
-                t = ('', toAddress, ripe, fromAddress, subject, message, ackdata, int(
-                    time.time()), 'broadcastqueued', 1, 1, 'sent', 2)
+                t = ('', # msgid. We don't know what this will be until the POW is done. 
+                     toAddress, 
+                     ripe, 
+                     fromAddress, 
+                     subject, 
+                     message, 
+                     ackdata, 
+                     int(time.time()), # sentTime (this will never change)
+                     int(time.time()), # lastActionTime
+                     0, # sleepTill time. This will get set when the POW gets done.
+                     'broadcastqueued', 
+                     0, # retryNumber
+                     'sent', # folder
+                     2, # encoding type
+                     shared.config.getint('bitmessagesettings', 'ttl')
+                     )
                 sqlExecute(
-                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
+                    '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
 
                 toLabel = self.str_broadcast_subscribers
                 
@@ -2424,13 +2473,6 @@ class MyForm(QtGui.QMainWindow):
                         self.settingsDialogInstance.ui.lineEditDays.text())))
                         shared.config.set('bitmessagesettings', 'stopresendingafterxmonths', str(float(
                         self.settingsDialogInstance.ui.lineEditMonths.text())))
-            #end
-
-            # if str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()) == 'All':
-            #    shared.config.set('bitmessagesettings', 'maxcores', '99999')
-            # else:
-            # shared.config.set('bitmessagesettings', 'maxcores',
-            # str(self.settingsDialogInstance.ui.comboBoxMaxCores.currentText()))
 
             shared.writeKeysFile()
 
@@ -3449,9 +3491,6 @@ class settingsDialog(QtGui.QDialog):
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxStartOnLogon.setText(_translate(
                 "MainWindow", "Start-on-login not yet supported on your OS."))
-            self.ui.checkBoxMinimizeToTray.setDisabled(True)
-            self.ui.checkBoxMinimizeToTray.setText(_translate(
-                "MainWindow", "Minimize-to-tray not yet supported on your OS."))
         # On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(
             shared.config.get('bitmessagesettings', 'port')))
@@ -3762,8 +3801,6 @@ class NewAddressDialog(QtGui.QDialog):
         # the 'Your Identities' tab.
         while self.parent.ui.tableWidgetYourIdentities.item(row - 1, 1):
             self.ui.radioButtonExisting.click()
-            # print
-            # self.parent.ui.tableWidgetYourIdentities.item(row-1,1).text()
             self.ui.comboBoxExisting.addItem(
                 self.parent.ui.tableWidgetYourIdentities.item(row - 1, 1).text())
             row += 1
@@ -3815,10 +3852,10 @@ class UISignaler(QThread):
                     "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), label, address, str(streamNumber))
             elif command == 'updateStatusBar':
                 self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
-            elif command == 'updateSentItemStatusByHash':
-                hash, message = data
+            elif command == 'updateSentItemStatusByToAddress':
+                toAddress, message = data
                 self.emit(SIGNAL(
-                    "updateSentItemStatusByHash(PyQt_PyObject,PyQt_PyObject)"), hash, message)
+                    "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject)"), toAddress, message)
             elif command == 'updateSentItemStatusByAckdata':
                 ackData, message = data
                 self.emit(SIGNAL(

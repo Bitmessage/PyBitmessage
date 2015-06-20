@@ -30,30 +30,63 @@ def decryptFast(msg,cryptor):
     return cryptor.decrypt(msg)
 # Signs with hex private key
 def sign(msg,hexPrivkey):
-    return makeCryptor(hexPrivkey).sign(msg)
+    # pyelliptic is upgrading from SHA1 to SHA256 for signing. We must 
+    # upgrade PyBitmessage gracefully. 
+    # https://github.com/yann2192/pyelliptic/pull/33
+    # More discussion: https://github.com/yann2192/pyelliptic/issues/32
+    return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_ecdsa) # SHA1
+    #return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_sha256) # SHA256. We should switch to this eventually.
 # Verifies with hex public key
 def verify(msg,sig,hexPubkey):
+    # As mentioned above, we must upgrade gracefully to use SHA256. So
+    # let us check the signature using both SHA1 and SHA256 and if one
+    # of them passes then we will be satisfied. Eventually this can 
+    # be simplified and we'll only check with SHA256. 
     try:
-        return makePubCryptor(hexPubkey).verify(sig,msg)
+        sigVerifyPassed = makePubCryptor(hexPubkey).verify(sig,msg,digest_alg=OpenSSL.EVP_ecdsa) # old SHA1 algorithm.
+    except:
+        sigVerifyPassed = False
+    if sigVerifyPassed:
+        # The signature check passed using SHA1
+        return True
+    # The signature check using SHA1 failed. Let us try it with SHA256. 
+    try:
+        return makePubCryptor(hexPubkey).verify(sig,msg,digest_alg=OpenSSL.EVP_sha256)
     except:
         return False
 
 # Does an EC point multiplication; turns a private key into a public key.
 def pointMult(secret):
-    k = OpenSSL.EC_KEY_new_by_curve_name(OpenSSL.get_curve('secp256k1'))
-    priv_key = OpenSSL.BN_bin2bn(secret, 32, None)
-    group = OpenSSL.EC_KEY_get0_group(k)
-    pub_key = OpenSSL.EC_POINT_new(group)
+    while True:
+        try:
+            """
+            Evidently, this type of error can occur very rarely:
+            
+            File "highlevelcrypto.py", line 54, in pointMult
+              group = OpenSSL.EC_KEY_get0_group(k)
+            WindowsError: exception: access violation reading 0x0000000000000008
+            """
+            k = OpenSSL.EC_KEY_new_by_curve_name(OpenSSL.get_curve('secp256k1'))
+            priv_key = OpenSSL.BN_bin2bn(secret, 32, None)
+            group = OpenSSL.EC_KEY_get0_group(k)
+            pub_key = OpenSSL.EC_POINT_new(group)
+            
+            OpenSSL.EC_POINT_mul(group, pub_key, priv_key, None, None, None)
+            OpenSSL.EC_KEY_set_private_key(k, priv_key)
+            OpenSSL.EC_KEY_set_public_key(k, pub_key)
+            
+            size = OpenSSL.i2o_ECPublicKey(k, None)
+            mb = OpenSSL.create_string_buffer(size)
+            OpenSSL.i2o_ECPublicKey(k, OpenSSL.byref(OpenSSL.pointer(mb)))
+            
+            OpenSSL.EC_POINT_free(pub_key)
+            OpenSSL.BN_free(priv_key)
+            OpenSSL.EC_KEY_free(k)
+            return mb.raw
+
+        except Exception as e:
+            import traceback
+            import time
+            traceback.print_exc()
+            time.sleep(0.2)
     
-    OpenSSL.EC_POINT_mul(group, pub_key, priv_key, None, None, None)
-    OpenSSL.EC_KEY_set_private_key(k, priv_key)
-    OpenSSL.EC_KEY_set_public_key(k, pub_key)
-    
-    size = OpenSSL.i2o_ECPublicKey(k, None)
-    mb = OpenSSL.create_string_buffer(size)
-    OpenSSL.i2o_ECPublicKey(k, OpenSSL.byref(OpenSSL.pointer(mb)))
-    
-    OpenSSL.EC_POINT_free(pub_key)
-    OpenSSL.BN_free(priv_key)
-    OpenSSL.EC_KEY_free(k)
-    return mb.raw

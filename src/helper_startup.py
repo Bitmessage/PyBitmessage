@@ -104,6 +104,7 @@ def loadConfig():
         shared.config.set('bitmessagesettings', 'replybelow', 'False')
         shared.config.set('bitmessagesettings', 'maxdownloadrate', '0')
         shared.config.set('bitmessagesettings', 'maxuploadrate', '0')
+        shared.config.set('bitmessagesettings', 'ttl', '367200')
         
          #start:UI setting to stop trying to send messages after X days/months
         shared.config.set(
@@ -144,5 +145,5 @@ def isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
             return StrictVersion("5.1.2600")<=VER_THIS and StrictVersion("6.0.6000")>=VER_THIS
         return False
     except Exception as err:
-        print 'An Exception occurred within isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections:', err
+        print "Info: we could not tell whether your OS is limited to having very view half open connections because we couldn't interpret the platform version. Don't worry; we'll assume that it is not limited. This tends to occur on Raspberry Pis. :", err
         return False

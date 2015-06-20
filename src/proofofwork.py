@@ -81,6 +81,7 @@ def _doGPUPow(target, initialHash):
     return [trialValue, nonce]
 
 def run(target, initialHash):
+    target = int(target)
     if openclpow.has_opencl():
 	return _doGPUPow(target, initialHash)
     elif frozen == "macosx_app" or not frozen:

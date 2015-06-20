@@ -2,14 +2,14 @@ from helper_sql import *
 import shared
 
 def insert(t):
-    sqlExecute('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?)''', *t)
+    sqlExecute('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?,?)''', *t)
     shared.UISignalQueue.put(('changedInboxUnread', None))
     
 def trash(msgid):
     sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', msgid)
     shared.UISignalQueue.put(('removeInboxRowByMsgid',msgid))
     
-def isMessageAlreadyInInbox(toAddress, fromAddress, subject, body, encodingType):
+def isMessageAlreadyInInbox(sigHash):
     queryReturn = sqlQuery(
-        '''SELECT COUNT(*) FROM inbox WHERE toaddress=? AND fromaddress=? AND subject=? AND message=? AND encodingtype=? ''', toAddress, fromAddress, subject, body, encodingType)
+        '''SELECT COUNT(*) FROM inbox WHERE sighash=?''', sigHash)
     return queryReturn[0][0] != 0
