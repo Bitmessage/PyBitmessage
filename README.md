@@ -19,6 +19,14 @@ pseudo-mailing list:
 BM-2D9QKN4teYRvoq2fyzpiftPh9WP9qggtzh
 
 
+This fork
+---------
+
+The purpose of this fork is to add features for server deployment for a
+bitmessage/email gateway. It contains merged support for OpenCL PoW and a
+couple of new/modified API calls.
+
+
 References
 ----------
 * [Project Website](https://bitmessage.org)
