@@ -1229,7 +1229,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/about.py" line="71"/>
         <source>This is Beta software.</source>
-        <translation>Diese ist Beta-Software.</translation>
+        <translation>Dies ist Beta-Software.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/about.py" line="69"/>
@@ -1697,7 +1697,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="439"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, if you send a message to someone and he is offline for more than two days, Bitmessage will send the message again after an additional two days. This will be continued with exponential backoff forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them. Here you may change that behavior by having Bitmessage give up after a certain number of days or months.&lt;/p&gt;&lt;p&gt;Leave these input fields blank for the default behavior. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Wurde eine Nachricht innerhalb von zwei Tagen nicht bestätigt, wird sie in zwei Tag noch einmal gesendet. Schlägt dies wieder fehl, wird es in 5, dann in 10, dann in 20 usw. Tagen wieder versucht. Sendet der Empfänger keine Bestätigung, geht dies unendlich so weiter.&lt;/p&gt;&lt;p&gt;Dieses Verhalten kann hier begrenz werden.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="unfinished">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Wurde eine Nachricht innerhalb von zwei Tagen nicht bestätigt, wird sie in zwei Tagen noch einmal gesendet. Schlägt dies wieder fehl, wird es in 5, dann in 10, dann in 20 usw. Tagen wieder versucht. Sendet der Empfänger keine Bestätigung, geht dies unendlich so weiter.&lt;/p&gt;&lt;p&gt;Dieses Verhalten kann hier begrenzt werden.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="440"/>
