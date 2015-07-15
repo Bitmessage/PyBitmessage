@@ -82,12 +82,11 @@ class sendDataThread(threading.Thread):
                             uploadRateLimitBytes = 999999999 # float("inf") doesn't work
                         else:
                             uploadRateLimitBytes = shared.config.getint('bitmessagesettings', 'maxuploadrate') * 1000
-                numberOfBytesWeMaySend = uploadRateLimitBytes - shared.numberOfBytesSentLastSecond
-                self.sock.sendall(data[:numberOfBytesWeMaySend])
-                shared.numberOfBytesSent += len(data[:numberOfBytesWeMaySend]) # used for the 'network status' tab in the UI
-                shared.numberOfBytesSentLastSecond += len(data[:numberOfBytesWeMaySend])
+                amountSent = self.sock.send(data[:1000])
+                shared.numberOfBytesSent += amountSent # used for the 'network status' tab in the UI
+                shared.numberOfBytesSentLastSecond += amountSent
                 self.lastTimeISentData = int(time.time())
-                data = data[numberOfBytesWeMaySend:]
+                data = data[amountSent:]
 
 
     def run(self):
