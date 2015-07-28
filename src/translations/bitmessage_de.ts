@@ -1572,7 +1572,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/settings.py" line="414"/>
         <source>Listen for incoming connections when using proxy</source>
-        <translation>Auf eingehende Verdindungen warten, auch wenn ein Proxy-Server verwendet wird</translation>
+        <translation>Auf eingehende Verbindungen warten, auch wenn ein Proxy-Server verwendet wird</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="391"/>
