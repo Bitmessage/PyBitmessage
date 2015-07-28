@@ -631,7 +631,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="566"/>
         <source>Be aware that broadcasts are only encrypted with your address. Anyone who knows your address can read them.</source>
-        <translation>Beachten Sie, dass Rudrufe nur mit Ihrer Adresse verschlüsselt werden. Jeder, der Ihre Adresse kennt, kann diese Nachrichten lesen.</translation>
+        <translation>Beachten Sie, dass Rundrufe nur mit Ihrer Adresse verschlüsselt werden. Jeder, der Ihre Adresse kennt, kann diese Nachrichten lesen.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="582"/>
