@@ -427,11 +427,15 @@ def handlech(c, stdscr):
                                             if r == d.DIALOG_OK:
                                                 stream = decodeAddress(addrs[int(t)][1])[2]
                                         shorten = False
+                                        behaviorBits = shared.BEHAVIOR_SENDACK,
                                         r, t = d.checklist("Miscellaneous options",
-                                            choices=[("1", "Spend time shortening the address", shorten)])
-                                        if r == d.DIALOG_OK and "1" in t:
-                                            shorten = True
-                                        shared.addressGeneratorQueue.put(("createRandomAddress", 4, stream, label, 1, "", shorten))
+                                            choices=[("1", "Spend time shortening the address", shorten), ("2", "Create a mobile address")])
+                                        if r == d.DIALOG_OK:
+                                            if "1" in t:
+                                                shorten = True
+                                            if "2" in t:
+                                                behaviorBits += shared.BEHAVIOR_NEEDRIPE,
+                                        shared.addressGeneratorQueue.put(("createRandomAddress", 4, stream, label, 1, "", shorten, behaviorBits))
                                 elif t == "2":
                                     d.set_background_title("Make deterministic addresses")
                                     r, t = d.passwordform("Enter passphrase",
@@ -447,15 +451,19 @@ def handlech(c, stdscr):
                                                 number = t
                                                 stream = 1
                                                 shorten = False
+                                                behaviorBits = shared.BEHAVIOR_SENDACK,
                                                 r, t = d.checklist("Miscellaneous options",
-                                                    choices=[("1", "Spend time shortening the address", shorten)])
-                                                if r == d.DIALOG_OK and "1" in t:
-                                                    shorten = True
+                                                    choices=[("1", "Spend time shortening the address", shorten), ("2", "Create a mobile address")])
+                                                if r == d.DIALOG_OK:
+                                                    if "1" in t:
+                                                        shorten = True
+                                                    if "2" in t:
+                                                        behaviorBits += shared.BEHAVIOR_NEEDRIPE,
                                                 d.scrollbox(unicode("In addition to your passphrase, be sure to remember the following numbers:\n"
                                                     "\n  * Address version number: "+str(4)+"\n"
                                                     "  * Stream number: "+str(stream)),
                                                     exit_label="Continue")
-                                                shared.addressGeneratorQueue.put(('createDeterministicAddresses', 4, stream, "unused deterministic address", number, str(passphrase), shorten))
+                                                shared.addressGeneratorQueue.put(('createDeterministicAddresses', 4, stream, "unused deterministic address", number, str(passphrase), shorten, behaviorBits))
                                         else:
                                             d.scrollbox(unicode("Passphrases do not match"), exit_label="Continue")
                         elif t == "2": # Send a message

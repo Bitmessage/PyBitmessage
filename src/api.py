@@ -220,24 +220,34 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif len(params) == 1:
             label, = params
             eighteenByteRipe = False
+            behaviorBits = shared.BEHAVIOR_SENDACK,
             nonceTrialsPerByte = shared.config.get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
             payloadLengthExtraBytes = shared.config.get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 2:
             label, eighteenByteRipe = params
+            behaviorBits = shared.BEHAVIOR_SENDACK,
             nonceTrialsPerByte = shared.config.get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
             payloadLengthExtraBytes = shared.config.get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 3:
             label, eighteenByteRipe, totalDifficulty = params
+            behaviorBits = shared.BEHAVIOR_SENDACK,
             nonceTrialsPerByte = int(
                 shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = shared.config.get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 4:
             label, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = params
+            behaviorBits = shared.BEHAVIOR_SENDACK,
+            nonceTrialsPerByte = int(
+                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+            payloadLengthExtraBytes = int(
+                shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+        elif len(params) == 5:
+            label, eighteenByteRipe, totalDifficulty, smallMessageDifficulty, behaviorBits = params
             nonceTrialsPerByte = int(
                 shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = int(
@@ -252,7 +262,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         shared.apiAddressGeneratorReturnQueue.queue.clear()
         streamNumberForAddress = 1
         shared.addressGeneratorQueue.put((
-            'createRandomAddress', 4, streamNumberForAddress, label, 1, "", eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
+            'createRandomAddress', 4, streamNumberForAddress, label, 1, "", eighteenByteRipe, behaviorBits, nonceTrialsPerByte, payloadLengthExtraBytes))
         return shared.apiAddressGeneratorReturnQueue.get()
 
     def HandleCreateDeterministicAddresses(self, params):
@@ -264,6 +274,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             addressVersionNumber = 0
             streamNumber = 0
             eighteenByteRipe = False
+            behaviorBits = shared.BEHAVIOR_SENDACK,
             nonceTrialsPerByte = shared.config.get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
             payloadLengthExtraBytes = shared.config.get(
@@ -273,6 +284,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             addressVersionNumber = 0
             streamNumber = 0
             eighteenByteRipe = False
+            behaviorBits = shared.BEHAVIOR_SENDACK,
             nonceTrialsPerByte = shared.config.get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
             payloadLengthExtraBytes = shared.config.get(
@@ -281,6 +293,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             passphrase, numberOfAddresses, addressVersionNumber = params
             streamNumber = 0
             eighteenByteRipe = False
+            behaviorBits = shared.BEHAVIOR_SENDACK,
             nonceTrialsPerByte = shared.config.get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
             payloadLengthExtraBytes = shared.config.get(
@@ -288,24 +301,34 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif len(params) == 4:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber = params
             eighteenByteRipe = False
+            behaviorBits = shared.BEHAVIOR_SENDACK,
             nonceTrialsPerByte = shared.config.get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
             payloadLengthExtraBytes = shared.config.get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 5:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe = params
+            behaviorBits = shared.BEHAVIOR_SENDACK,
             nonceTrialsPerByte = shared.config.get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
             payloadLengthExtraBytes = shared.config.get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 6:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty = params
+            behaviorBits = shared.BEHAVIOR_SENDACK,
             nonceTrialsPerByte = int(
                 shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = shared.config.get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 7:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = params
+            behaviorBits = shared.BEHAVIOR_SENDACK,
+            nonceTrialsPerByte = int(
+                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+            payloadLengthExtraBytes = int(
+                shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+        elif len(params) == 8:
+            passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty, smallMessageDifficulty, behaviorBits = params
             nonceTrialsPerByte = int(
                 shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = int(
@@ -333,7 +356,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         logger.debug('Requesting that the addressGenerator create %s addresses.', numberOfAddresses)
         shared.addressGeneratorQueue.put(
             ('createDeterministicAddresses', addressVersionNumber, streamNumber,
-             'unused API address', numberOfAddresses, passphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
+             'unused API address', numberOfAddresses, passphrase, eighteenByteRipe, behaviorBits, nonceTrialsPerByte, payloadLengthExtraBytes))
         data = '{"addresses":['
         queueReturn = shared.apiAddressGeneratorReturnQueue.get()
         for item in queueReturn:
@@ -349,6 +372,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         passphrase, addressVersionNumber, streamNumber = params
         numberOfAddresses = 1
         eighteenByteRipe = False
+        behaviorBits = shared.BEHAVIOR_SENDACK,
         if len(passphrase) == 0:
             raise APIError(1, 'The specified passphrase is blank.')
         passphrase = self._decode(passphrase, "base64")
@@ -360,7 +384,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         logger.debug('Requesting that the addressGenerator create %s addresses.', numberOfAddresses)
         shared.addressGeneratorQueue.put(
             ('getDeterministicAddress', addressVersionNumber,
-             streamNumber, 'unused API address', numberOfAddresses, passphrase, eighteenByteRipe))
+             streamNumber, 'unused API address', numberOfAddresses, passphrase, eighteenByteRipe, behaviorBits))
         return shared.apiAddressGeneratorReturnQueue.get()
 
     def HandleCreateChan(self, params):

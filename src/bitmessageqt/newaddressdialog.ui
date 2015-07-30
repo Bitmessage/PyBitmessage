@@ -90,6 +90,13 @@ The 'Random Number' option is selected by default but deterministic addresses ha
      </property>
     </widget>
    </item>
+   <item row="10" column="0" colspan="2">
+    <widget class="QCheckBox" name="checkBoxMobile">
+     <property name="text">
+      <string>Require messages sent to you include your address(es) unencrypted (saves resources, for mobile)</string>
+     </propert>
+    </widget>
+   </item>
    <item row="8" column="0">
     <widget class="QGroupBox" name="groupBoxDeterministic">
      <property name="title">
@@ -284,7 +291,7 @@ The 'Random Number' option is selected by default but deterministic addresses ha
      <zorder>horizontalSpacer_3</zorder>
     </widget>
    </item>
-   <item row="10" column="0" colspan="2">
+   <item row="11" column="0" colspan="2">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="sizePolicy">
       <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">

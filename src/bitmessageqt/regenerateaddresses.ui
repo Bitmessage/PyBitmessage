@@ -168,13 +168,20 @@
        </spacer>
       </item>
       <item row="6" column="0" colspan="5">
+       <widget class="QCheckBox" name="checkBoxMobile">
+        <property name="text">
+         <string>Require messages sent to you include your address(es) unencrypted (saves resources, for mobile)</string>
+	</property>
+       </widget>
+      </item>
+      <item row="7" column="0" colspan="5">
        <widget class="QCheckBox" name="checkBoxEighteenByteRipe">
         <property name="text">
          <string>Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter</string>
         </property>
        </widget>
       </item>
-      <item row="7" column="0" colspan="5">
+      <item row="8" column="0" colspan="5">
        <widget class="QLabel" name="label_4">
         <property name="text">
          <string>You must check (or not check) this box just like you did (or didn't) when you made your addresses the first time.</string>

@@ -116,6 +116,10 @@ frozen = getattr(sys,'frozen', None)
 # security.
 trustedPeer = None
 
+# Behavior bitfield constants
+BEHAVIOR_SENDACK = 31
+BEHAVIOR_NEEDRIPE = 30
+
 #Compiled struct for packing/unpacking headers
 #New code should use CreatePacket instead of Header.pack
 Header = Struct('!L12sL4s')
@@ -472,6 +476,25 @@ def isBitSetWithinBitfield(fourByteString, n):
     n = 31 - n
     x, = unpack('>L', fourByteString)
     return x & 2**n != 0
+
+def createBitfield(*fields):
+    x = 0
+    for n in fields:
+        n = 31 - n
+        x |= 2**n
+    return pack('>L', x)
+
+def createBehaviorBitfieldFromConfig(myAddress):
+    fields = ()
+    if not config.getboolean(myAddress, 'notsendack'):
+        fields += BEHAVIOR_SENDACK,
+    if config.getboolean(myAddress, 'needripe'):
+        fields += BEHAVIOR_NEEDRIPE,
+    return createBitfield(*fields)
+
+def setConfigFromBehaviorBitfield(address, bitfield):
+    config.set(address, 'notsendack', str(not isBitSetWithinBitfield(bitfield, BEHAVIOR_SENDACK)))
+    config.set(address, 'needripe', str(isBitSetWithinBitfield(bitfield, BEHAVIOR_NEEDRIPE)))
 
 
 def decryptAndCheckPubkeyPayload(data, address):

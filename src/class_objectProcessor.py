@@ -342,7 +342,12 @@ class objectProcessor(threading.Thread):
         
         for key, cryptorObject in shared.myECCryptorObjects.items():
             try:
-                decryptedData = cryptorObject.decrypt(data[readPosition:])
+                mobileRipe = key.lstrip('\x00')
+                if data[readPosition:readPosition+len(mobileRipe)] == mobileRipe:
+                    decryptedData = cryptorObject.decrypt(data[readPosition+len(mobileRipe):])
+                    logger.info('Received a mobile message containing our unencrypted address.')
+                else:
+                    decryptedData = cryptorObject.decrypt(data[readPosition:])
                 toRipe = key  # This is the RIPE hash of my pubkeys. We need this below to compare to the destination_ripe included in the encrypted data.
                 initialDecryptionSuccessful = True
                 logger.info('EC decryption successful using key associated with ripe hash: %s.' % key.encode('hex'))
@@ -575,7 +580,10 @@ class objectProcessor(threading.Thread):
                 shared.workerQueue.put(('sendbroadcast', ''))
 
         if self.ackDataHasAVaildHeader(ackData):
-            shared.checkAndShareObjectWithPeers(ackData[24:])
+            if shared.config.getboolean(toAddress, 'notsendack'):
+                logger.info('Ack data was provided even though we do not send it.  Ignoring.')
+            else:
+                shared.checkAndShareObjectWithPeers(ackData[24:])
 
         # Display timing data
         timeRequiredToAttemptToDecryptMessage = time.time(

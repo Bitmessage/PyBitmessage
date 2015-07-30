@@ -1405,8 +1405,11 @@ class MyForm(QtGui.QMainWindow):
                 QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
                     "MainWindow", "Your address version number must be either 3 or 4."))
                 return
+            behaviorBits = shared.BEHAVIOR_SENDACK,
+            if self.dialog.ui.checkBoxMobile.isChecked():
+                behaviorBits += shared.BEHAVIOR_NEEDRIPE,
             shared.addressGeneratorQueue.put(('createDeterministicAddresses', addressVersionNumber, streamNumberForAddress, "regenerated deterministic address", self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(
-            ), self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(), self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked()))
+            ), self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(), self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked(), behaviorBits))
             self.ui.tabWidget.setCurrentIndex(3)
 
     def click_actionJoinChan(self):
@@ -2635,8 +2638,11 @@ more work your computer must do to send the message. A Time-To-Live of four or f
                     # address.'
                     streamNumberForAddress = decodeAddress(
                         self.dialog.ui.comboBoxExisting.currentText())[2]
+                behaviorBits = shared.BEHAVIOR_SENDACK,
+                if self.dialog.ui.checkBoxMobile.isChecked():
+                    behaviorBits += shared.BEHAVIOR_NEEDRIPE,
                 shared.addressGeneratorQueue.put(('createRandomAddress', 4, streamNumberForAddress, str(
-                    self.dialog.ui.newaddresslabel.text().toUtf8()), 1, "", self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
+                    self.dialog.ui.newaddresslabel.text().toUtf8()), 1, "", self.dialog.ui.checkBoxEighteenByteRipe.isChecked(), behaviorBits))
             else:
                 if self.dialog.ui.lineEditPassphrase.text() != self.dialog.ui.lineEditPassphraseAgain.text():
                     QMessageBox.about(self, _translate("MainWindow", "Passphrase mismatch"), _translate(
@@ -2646,8 +2652,11 @@ more work your computer must do to send the message. A Time-To-Live of four or f
                         "MainWindow", "Choose a passphrase"), _translate("MainWindow", "You really do need a passphrase."))
                 else:
                     streamNumberForAddress = 1  # this will eventually have to be replaced by logic to determine the most available stream number.
+                    behaviorBits = shared.BEHAVIOR_SENDACK,
+                    if self.dialog.ui.checkBoxMobile.isChecked():
+                        behaviorBits += shared.BEHAVIOR_NEEDRIPE,
                     shared.addressGeneratorQueue.put(('createDeterministicAddresses', 4, streamNumberForAddress, "unused deterministic address", self.dialog.ui.spinBoxNumberOfAddressesToMake.value(
-                    ), self.dialog.ui.lineEditPassphrase.text().toUtf8(), self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
+                    ), self.dialog.ui.lineEditPassphrase.text().toUtf8(), self.dialog.ui.checkBoxEighteenByteRipe.isChecked(), behaviorBits))
         else:
             print 'new address dialog box rejected'
 
