@@ -789,7 +789,10 @@ class singleWorker(threading.Thread):
             encryptedPayload = pack('>Q', embeddedTime)
             encryptedPayload += '\x00\x00\x00\x02' # object type: msg
             encryptedPayload += encodeVarint(1) # msg version
-            encryptedPayload += encodeVarint(toStreamNumber) + encrypted
+            encryptedPayload += encodeVarint(toStreamNumber)
+            if shared.isBitSetWithinBitfield(behaviorBitfield,30): # if receiver is a mobile device who expects that their address RIPE is included unencrypted on the front of the message..
+                encryptedPayload += toRipe.lstrip('\x00')
+            encryptedPayload += encrypted
             target = 2 ** 64 / (requiredAverageProofOfWorkNonceTrialsPerByte*(len(encryptedPayload) + 8 + requiredPayloadLengthExtraBytes + ((TTL*(len(encryptedPayload)+8+requiredPayloadLengthExtraBytes))/(2 ** 16))))
             with shared.printLock:
                 print '(For msg message) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes
