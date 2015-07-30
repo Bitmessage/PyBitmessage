@@ -25,17 +25,19 @@ class addressGenerator(threading.Thread):
             if queueValue[0] == 'createChan':
                 command, addressVersionNumber, streamNumber, label, deterministicPassphrase = queueValue
                 eighteenByteRipe = False
+                behaviorBits = ()
                 numberOfAddressesToMake = 1
                 numberOfNullBytesDemandedOnFrontOfRipeHash = 1
             elif queueValue[0] == 'joinChan':
                 command, chanAddress, label, deterministicPassphrase = queueValue
                 eighteenByteRipe = False
+                behaviorBits = ()
                 addressVersionNumber = decodeAddress(chanAddress)[1]
                 streamNumber = decodeAddress(chanAddress)[2]
                 numberOfAddressesToMake = 1
                 numberOfNullBytesDemandedOnFrontOfRipeHash = 1
-            elif len(queueValue) == 7:
-                command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe = queueValue
+            elif len(queueValue) == 8:
+                command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe, behaviorBits = queueValue
                 try:
                     numberOfNullBytesDemandedOnFrontOfRipeHash = shared.config.getint(
                         'bitmessagesettings', 'numberofnullbytesonaddress')
@@ -44,8 +46,8 @@ class addressGenerator(threading.Thread):
                         numberOfNullBytesDemandedOnFrontOfRipeHash = 2
                     else:
                         numberOfNullBytesDemandedOnFrontOfRipeHash = 1 # the default
-            elif len(queueValue) == 9:
-                command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes = queueValue
+            elif len(queueValue) == 10:
+                command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe, behaviorBits, nonceTrialsPerByte, payloadLengthExtraBytes = queueValue
                 try:
                     numberOfNullBytesDemandedOnFrontOfRipeHash = shared.config.getint(
                         'bitmessagesettings', 'numberofnullbytesonaddress')
@@ -119,6 +121,7 @@ class addressGenerator(threading.Thread):
                 shared.config.set(address, 'label', label)
                 shared.config.set(address, 'enabled', 'true')
                 shared.config.set(address, 'decoy', 'false')
+                shared.setConfigFromBehaviorBitfield(address, shared.createBitfield(*behaviorBits))
                 shared.config.set(address, 'noncetrialsperbyte', str(
                     nonceTrialsPerByte))
                 shared.config.set(address, 'payloadlengthextrabytes', str(
@@ -236,6 +239,7 @@ class addressGenerator(threading.Thread):
                             shared.config.set(address, 'label', label)
                             shared.config.set(address, 'enabled', 'true')
                             shared.config.set(address, 'decoy', 'false')
+                            shared.setConfigFromBehaviorBitfield(address, shared.createBitfield(*behaviorBits))
                             if command == 'joinChan' or command == 'createChan':
                                 shared.config.set(address, 'chan', 'true')
                             shared.config.set(address, 'noncetrialsperbyte', str(

@@ -106,7 +106,7 @@ class singleWorker(threading.Thread):
         payload += '\x00\x00\x00\x01' # object type: pubkey
         payload += encodeVarint(addressVersionNumber)  # Address version number
         payload += encodeVarint(streamNumber)
-        payload += '\x00\x00\x00\x01'  # bitfield of features supported by me (see the wiki).
+        payload += shared.createBehaviorBitfieldFromConfig(myAddress)  # bitfield of features supported by me (see the wiki).
 
         try:
             privSigningKeyBase58 = shared.config.get(
@@ -191,7 +191,7 @@ class singleWorker(threading.Thread):
         payload += '\x00\x00\x00\x01' # object type: pubkey
         payload += encodeVarint(addressVersionNumber)  # Address version number
         payload += encodeVarint(streamNumber)
-        payload += '\x00\x00\x00\x01'  # bitfield of features supported by me (see the wiki).
+        payload += shared.createBehaviorBitfieldFromConfig(myAddress)  # bitfield of features supported by me (see the wiki).
 
         try:
             privSigningKeyBase58 = shared.config.get(
@@ -277,7 +277,7 @@ class singleWorker(threading.Thread):
         payload += encodeVarint(addressVersionNumber)  # Address version number
         payload += encodeVarint(streamNumber)
 
-        dataToEncrypt = '\x00\x00\x00\x01'  # bitfield of features supported by me (see the wiki).
+        dataToEncrypt = shared.createBehaviorBitfieldFromConfig(myAddress)  # bitfield of features supported by me (see the wiki).
 
         try:
             privSigningKeyBase58 = shared.config.get(
@@ -410,7 +410,7 @@ class singleWorker(threading.Thread):
 
             dataToEncrypt = encodeVarint(addressVersionNumber)
             dataToEncrypt += encodeVarint(streamNumber)
-            dataToEncrypt += '\x00\x00\x00\x01'  # behavior bitfield
+            dataToEncrypt += shared.createBehaviorBitfieldFromConfig(fromaddress)  # behavior bitfield
             dataToEncrypt += pubSigningKey[1:]
             dataToEncrypt += pubEncryptionKey[1:]
             if addressVersionNumber >= 3:
@@ -641,7 +641,7 @@ class singleWorker(threading.Thread):
                 # Mobile users may ask us to include their address's RIPE hash on a message
                 # unencrypted. Before we actually do it the sending human must check a box
                 # in the settings menu to allow it.
-                if shared.isBitSetWithinBitfield(behaviorBitfield,30): # if receiver is a mobile device who expects that their address RIPE is included unencrypted on the front of the message..
+                if shared.isBitSetWithinBitfield(behaviorBitfield,shared.BEHAVIOR_NEEDRIPE): # if receiver is a mobile device who expects that their address RIPE is included unencrypted on the front of the message..
                     if not shared.safeConfigGetBoolean('bitmessagesettings','willinglysendtomobile'): # if we are Not willing to include the receiver's RIPE hash on the message..
                         logger.info('The receiver is a mobile user but the sender (you) has not selected that you are willing to send to mobiles. Aborting send.')
                         shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,tr.translateText("MainWindow",'Problem: Destination is a mobile device who requests that the destination be included in the message but this is disallowed in your settings.  %1').arg(l10n.formatTimestamp()))))
@@ -687,7 +687,7 @@ class singleWorker(threading.Thread):
             else: # if we are sending a message to ourselves or a chan..
                 with shared.printLock:
                     print 'Sending a message. First 150 characters of message:', repr(message[:150])
-                behaviorBitfield = '\x00\x00\x00\x01'
+                behaviorBitfield = shared.createBehaviorBitfieldFromConfig(toaddress)
 
                 try:
                     privEncryptionKeyBase58 = shared.config.get(
@@ -710,7 +710,7 @@ class singleWorker(threading.Thread):
             # Now we can start to assemble our message.
             payload = encodeVarint(fromAddressVersionNumber)
             payload += encodeVarint(fromStreamNumber)
-            payload += '\x00\x00\x00\x01'  # Bitfield of features and behaviors that can be expected from me. (See https://bitmessage.org/wiki/Protocol_specification#Pubkey_bitfield_features  )
+            payload += shared.createBehaviorBitfieldFromConfig(fromaddress)  # Bitfield of features and behaviors that can be expected from me. (See https://bitmessage.org/wiki/Protocol_specification#Pubkey_bitfield_features  )
 
             # We need to convert our private keys to public keys in order
             # to include them.
@@ -764,7 +764,7 @@ class singleWorker(threading.Thread):
                 with shared.printLock:
                     print 'Not bothering to include ackdata because we are sending to ourselves or a chan.'
                 fullAckPayload = ''
-            elif not shared.isBitSetWithinBitfield(behaviorBitfield,31):
+            elif not shared.isBitSetWithinBitfield(behaviorBitfield,shared.BEHAVIOR_SENDACK):
                 with shared.printLock:
                     print 'Not bothering to include ackdata because the receiver said that they won\'t relay it anyway.'
                 fullAckPayload = ''                    
@@ -789,7 +789,10 @@ class singleWorker(threading.Thread):
             encryptedPayload = pack('>Q', embeddedTime)
             encryptedPayload += '\x00\x00\x00\x02' # object type: msg
             encryptedPayload += encodeVarint(1) # msg version
-            encryptedPayload += encodeVarint(toStreamNumber) + encrypted
+            encryptedPayload += encodeVarint(toStreamNumber)
+            if shared.isBitSetWithinBitfield(behaviorBitfield,shared.BEHAVIOR_NEEDRIPE): # if receiver is a mobile device who expects that their address RIPE is included unencrypted on the front of the message..
+                encryptedPayload += toRipe.lstrip('\x00')
+            encryptedPayload += encrypted
             target = 2 ** 64 / (requiredAverageProofOfWorkNonceTrialsPerByte*(len(encryptedPayload) + 8 + requiredPayloadLengthExtraBytes + ((TTL*(len(encryptedPayload)+8+requiredPayloadLengthExtraBytes))/(2 ** 16))))
             with shared.printLock:
                 print '(For msg message) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes

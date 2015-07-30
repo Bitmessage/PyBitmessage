@@ -64,6 +64,9 @@ class Ui_NewAddressDialog(object):
         self.checkBoxEighteenByteRipe = QtGui.QCheckBox(NewAddressDialog)
         self.checkBoxEighteenByteRipe.setObjectName(_fromUtf8("checkBoxEighteenByteRipe"))
         self.formLayout.setWidget(9, QtGui.QFormLayout.SpanningRole, self.checkBoxEighteenByteRipe)
+        self.checkBoxMobile = QtGui.QCheckBox(NewAddressDialog)
+        self.checkBoxMobile.setObjectName(_fromUtf8("checkBoxMobile"))
+        self.formLayout.setWidget(10, QtGui.QFormLayout.SpanningRole, self.checkBoxMobile)
         self.groupBoxDeterministic = QtGui.QGroupBox(NewAddressDialog)
         self.groupBoxDeterministic.setObjectName(_fromUtf8("groupBoxDeterministic"))
         self.gridLayout = QtGui.QGridLayout(self.groupBoxDeterministic)
@@ -149,7 +152,7 @@ class Ui_NewAddressDialog(object):
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
         self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
-        self.formLayout.setWidget(10, QtGui.QFormLayout.SpanningRole, self.buttonBox)
+        self.formLayout.setWidget(11, QtGui.QFormLayout.SpanningRole, self.buttonBox)
 
         self.retranslateUi(NewAddressDialog)
         QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), NewAddressDialog.accept)
@@ -167,7 +170,8 @@ class Ui_NewAddressDialog(object):
         NewAddressDialog.setTabOrder(self.lineEditPassphrase, self.lineEditPassphraseAgain)
         NewAddressDialog.setTabOrder(self.lineEditPassphraseAgain, self.spinBoxNumberOfAddressesToMake)
         NewAddressDialog.setTabOrder(self.spinBoxNumberOfAddressesToMake, self.checkBoxEighteenByteRipe)
-        NewAddressDialog.setTabOrder(self.checkBoxEighteenByteRipe, self.buttonBox)
+        NewAddressDialog.setTabOrder(self.checkBoxEighteenByteRipe, self.checkBoxMobile)
+        NewAddressDialog.setTabOrder(self.checkBoxMobile, self.buttonBox)
 
     def retranslateUi(self, NewAddressDialog):
         NewAddressDialog.setWindowTitle(_translate("NewAddressDialog", "Create new Address", None))
@@ -177,6 +181,7 @@ class Ui_NewAddressDialog(object):
         self.radioButtonRandomAddress.setText(_translate("NewAddressDialog", "Use a random number generator to make an address", None))
         self.radioButtonDeterministicAddress.setText(_translate("NewAddressDialog", "Use a passphrase to make addresses", None))
         self.checkBoxEighteenByteRipe.setText(_translate("NewAddressDialog", "Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter", None))
+        self.checkBoxMobile.setText(_translate("NewAddressDialog", "Require messages sent to you include your address unencrypted (saves resources, for mobile)", None))
         self.groupBoxDeterministic.setTitle(_translate("NewAddressDialog", "Make deterministic addresses", None))
         self.label_9.setText(_translate("NewAddressDialog", "Address version number: 4", None))
         self.label_8.setText(_translate("NewAddressDialog", "In addition to your passphrase, you must remember these numbers:", None))
