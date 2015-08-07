@@ -24,7 +24,9 @@ import helper_startup
 helper_startup.loadConfig()
 
 # TODO(xj9): Get from a config file.
-log_level = 'DEBUG'
+possible_log_levels = ['DEBUG', 'INFO', 'WARNING', 'ERROR', 'CRITICAL']
+config_log_level = shared.config.get('bitmessagesettings', 'loglevel').upper()
+log_level = config_log_level if config_log_level in possible_log_levels else 'DEBUG'
 
 def configureLogging():
     logging.config.dictConfig({

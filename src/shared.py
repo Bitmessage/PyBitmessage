@@ -34,7 +34,9 @@ import shared
 from helper_sql import *
 
 
-config = ConfigParser.SafeConfigParser()
+config = ConfigParser.SafeConfigParser(
+    defaults={'loglevel':'DEBUG'
+    })
 myECCryptorObjects = {}
 MyECSubscriptionCryptorObjects = {}
 myAddressesByHash = {} #The key in this dictionary is the RIPE hash which is encoded in an address and value is the address itself.
