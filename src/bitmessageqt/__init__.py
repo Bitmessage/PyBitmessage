@@ -2843,19 +2843,29 @@ more work your computer must do to send the message. A Time-To-Live of four or f
 
     # Send item on the Inbox tab to trash
     def on_action_InboxTrash(self):
-        while self.ui.tableWidgetInbox.selectedIndexes() != []:
-            currentRow = self.ui.tableWidgetInbox.selectedIndexes()[0].row()
-            inventoryHashToTrash = str(self.ui.tableWidgetInbox.item(
-                currentRow, 3).data(Qt.UserRole).toPyObject())
-            sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', inventoryHashToTrash)
-            self.ui.textEditInboxMessage.setText("")
-            self.ui.tableWidgetInbox.removeRow(currentRow)
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back."))
-        if currentRow == 0:
-            self.ui.tableWidgetInbox.selectRow(currentRow)
-        else:
-            self.ui.tableWidgetInbox.selectRow(currentRow - 1)
+        inventoryHashesToTrash = []
+        unsorted_ranges = self.ui.tableWidgetInbox.selectedRanges()
+        ranges = sorted(unsorted_ranges, key=lambda r: r.topRow())
+        for r in ranges:
+            for i in range(r.bottomRow()-r.topRow()+1):
+                inventoryHashToTrash = str(self.ui.tableWidgetInbox.item(
+                               r.topRow()+i, 3).data(Qt.UserRole).toPyObject())
+                inventoryHashesToTrash.append(inventoryHashToTrash)
+        #sqlite requires the exact number of ?s to prevent injection
+        sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid IN (%s)''' % (
+            "?," * len(inventoryHashesToTrash))[:-1], *inventoryHashesToTrash)        
+
+        self.ui.textEditInboxMessage.setText("")
+        self.statusBar().showMessage(_translate(
+            "MainWindow", "Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back."))     
+        #remove ranges from model/view going from bottom to top
+        for r in ranges[::-1]:
+            self.ui.tableWidgetInbox.model().removeRows(r.topRow(),
+                                   r.bottomRow()-r.topRow()+1)
+            lastRow = r.topRow()
+        self.ui.tableWidgetInbox.selectRow(0 if lastRow == 0 else lastRow-1)
+        self.changedInboxUnread()        
+
 
     def on_action_InboxSaveMessageAs(self):
         currentInboxRow = self.ui.tableWidgetInbox.currentRow()
