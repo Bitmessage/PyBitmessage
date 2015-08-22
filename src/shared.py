@@ -1,4 +1,4 @@
-from __future__ import division
+﻿from __future__ import division
 
 softwareVersion = '0.4.4'
 verbose = 1
@@ -370,6 +370,8 @@ def doCleanShutdown():
         'Flushing inventory in memory out to disk. This should normally only take a second...'))
     flushInventory()
     
+    import upnp
+    upnp.deletePortMapping()
     # Verify that the objectProcessor has finished exiting. It should have incremented the 
     # shutdown variable from 1 to 2. This must finish before we command the sqlThread to exit.
     while shutdown == 1:
