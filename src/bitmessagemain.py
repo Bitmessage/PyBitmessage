@@ -1,4 +1,4 @@
-#!/usr/bin/env python2.7
+﻿#!/usr/bin/env python2.7
 # Copyright (c) 2012 Jonathan Warren
 # Copyright (c) 2012 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying
@@ -44,6 +44,7 @@ from debug import logger
 # Helper Functions
 import helper_bootstrap
 import helper_generic
+import upnp
     
 
 def connectToStream(streamNumber):
@@ -144,6 +145,9 @@ class Main:
         shared.daemon = daemon
         # is the application already running?  If yes then exit.
         thisapp = singleton.singleinstance()
+
+        import upnp
+        upnp.createPortMapping()
 
         # get curses flag
         curses = False
