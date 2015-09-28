@@ -565,127 +565,104 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
              streamNumber, 'unused API address', numberOfAddresses, passphrase, eighteenByteRipe))
         return shared.apiAddressGeneratorReturnQueue.get()
 
-    def HandleCreateChan(self, params):
-        if len(params) == 0:
-            raise APIError(0, 'I need parameters.')
-        elif len(params) == 1:
-            passphrase, = params
-        passphrase = self._decode(passphrase, "base64")
-        if len(passphrase) == 0:
-            raise APIError(1, 'The specified passphrase is blank.')
-        # It would be nice to make the label the passphrase but it is
-        # possible that the passphrase contains non-utf-8 characters.
-        try:
-            unicode(passphrase, 'utf-8')
-            label = str_chan + ' ' + passphrase
-        except:
-            label = str_chan + ' ' + repr(passphrase)
-
-        addressVersionNumber = 4
-        streamNumber = 1
-        shared.apiAddressGeneratorReturnQueue.queue.clear()
-        logger.debug('Requesting that the addressGenerator create chan %s.', passphrase)
-        shared.addressGeneratorQueue.put(('createChan', addressVersionNumber, streamNumber, label, passphrase))
-        queueReturn = shared.apiAddressGeneratorReturnQueue.get()
-        if len(queueReturn) == 0:
-            raise APIError(24, 'Chan address is already present.')
-        address = queueReturn[0]
-        return address
-
-    def HandleJoinChan(self, params):
-        if len(params) < 2:
-            raise APIError(0, 'I need two parameters.')
-        elif len(params) == 2:
-            passphrase, suppliedAddress= params
-        passphrase = self._decode(passphrase, "base64")
-        if len(passphrase) == 0:
-            raise APIError(1, 'The specified passphrase is blank.')
-        # It would be nice to make the label the passphrase but it is
-        # possible that the passphrase contains non-utf-8 characters.
-        try:
-            unicode(passphrase, 'utf-8')
-            label = str_chan + ' ' + passphrase
-        except:
-            label = str_chan + ' ' + repr(passphrase)
-
-        status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(suppliedAddress)
-        suppliedAddress = addBMIfNotPresent(suppliedAddress)
-        shared.apiAddressGeneratorReturnQueue.queue.clear()
-        shared.addressGeneratorQueue.put(('joinChan', suppliedAddress, label, passphrase))
-        addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
-
-        if addressGeneratorReturnValue == 'chan name does not match address':
-            raise APIError(18, 'Chan name does not match address.')
-        if len(addressGeneratorReturnValue) == 0:
-            raise APIError(24, 'Chan address is already present.')
-        #TODO: this variable is not used to anything
-        createdAddress = addressGeneratorReturnValue[0] # in case we ever want it for anything.
-        return "success"
-
-    def HandleLeaveChan(self, params):
-        if len(params) == 0:
-            raise APIError(0, 'I need parameters.')
-        elif len(params) == 1:
-            address, = params
-        status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(address)
-        address = addBMIfNotPresent(address)
-        if not shared.config.has_section(address):
-            raise APIError(13, 'Could not find this address in your keys.dat file.')
-        if not shared.safeConfigGetBoolean(address, 'chan'):
-            raise APIError(25, 'Specified address is not a chan address. Use deleteAddress API call instead.')
-        shared.config.remove_section(address)
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
-        return 'success'
-
-    def HandleDeleteAddress(self, params):
-        if len(params) == 0:
-            raise APIError(0, 'I need parameters.')
-        elif len(params) == 1:
-            address, = params
-        status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(address)
-        address = addBMIfNotPresent(address)
-        if not shared.config.has_section(address):
-            raise APIError(13, 'Could not find this address in your keys.dat file.')
-        shared.config.remove_section(address)
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
-        shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-        shared.UISignalQueue.put(('rerenderSentToLabels',''))
-        shared.reloadMyAddressHashes()
-        return 'success'
-
-    def HandleGetAllInboxMessages(self, params):
-        queryreturn = sqlQuery(
-            '''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox where folder='inbox' ORDER BY received''')
-        data = '{"inboxMessages":['
-        for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
-            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            message = shared.fixPotentiallyInvalidUTF8Data(message)
-            if len(data) > 25:
-                data += ','
-            data += json.dumps({'msgid': msgid.encode('hex'), 'toAddress': toAddress, 'fromAddress': fromAddress, 'subject': subject.encode(
-                'base64'), 'message': message.encode('base64'), 'encodingType': encodingtype, 'receivedTime': received, 'read': read}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
-
-    def HandleGetAllInboxMessageIds(self, params):
-        queryreturn = sqlQuery(
-            '''SELECT msgid FROM inbox where folder='inbox' ORDER BY received''')
-        data = '{"inboxMessageIds":['
-        for row in queryreturn:
-            msgid = row[0]
-            if len(data) > 25:
-                data += ','
-            data += json.dumps({'msgid': msgid.encode('hex')}, indent=4, separators=(',', ': '))
-        data += ']}'
-        return data
-
-    def HandleGetInboxMessageById(self, params):
-        if len(params) == 0:
-            raise APIError(0, 'I need parameters!')
-        elif len(params) == 1:
+        elif method == 'getAllInboxMessages':
+            queryreturn = sqlQuery(
+                '''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox where folder='inbox' ORDER BY received''')
+            data = '{"inboxMessages":['
+            for row in queryreturn:
+                msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
+                subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+                message = shared.fixPotentiallyInvalidUTF8Data(message)
+                if len(data) > 25:
+                    data += ','
+                data += json.dumps({'msgid': msgid.encode('hex'), 'toAddress': toAddress, 'fromAddress': fromAddress, 'subject': subject.encode(
+                    'base64'), 'message': message.encode('base64'), 'encodingType': encodingtype, 'receivedTime': received, 'read': read}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+        elif method == 'getAllInboxMessageIds' or method == 'getAllInboxMessageIDs':
+            queryreturn = sqlQuery(
+                '''SELECT msgid FROM inbox where folder='inbox' ORDER BY received''')
+            data = '{"inboxMessageIds":['
+            for row in queryreturn:
+                msgid = row[0]
+                if len(data) > 25:
+                    data += ','
+                data += json.dumps({'msgid': msgid.encode('hex')}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+        elif method == 'getInboxMessageById' or method == 'getInboxMessageByID':
+            if len(params) == 0:
+                raise APIError(0, 'I need parameters!')
+            elif len(params) == 1:
+                msgid = self._decode(params[0], "hex")
+            elif len(params) >= 2:
+                msgid = self._decode(params[0], "hex")
+                readStatus = params[1]
+                if not isinstance(readStatus, bool):
+                    raise APIError(23, 'Bool expected in readStatus, saw %s instead.' % type(readStatus))
+                queryreturn = sqlQuery('''SELECT read FROM inbox WHERE msgid=?''', msgid)
+                # UPDATE is slow, only update if status is different
+                if queryreturn != [] and (queryreturn[0][0] == 1) != readStatus:
+                    sqlExecute('''UPDATE inbox set read = ? WHERE msgid=?''', readStatus, msgid)
+                    shared.UISignalQueue.put(('changedInboxUnread', None))
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox WHERE msgid=?''', msgid)
+            data = '{"inboxMessage":['
+            for row in queryreturn:
+                msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
+                subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+                message = shared.fixPotentiallyInvalidUTF8Data(message)
+                data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received, 'read': read}, indent=4, separators=(',', ': '))
+                data += ']}'
+                return data
+        elif method == 'getAllSentMessages':
+            import pprint
+            try:
+                queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
+            except:
+		print "Exception in getallSentMessages"
+                pprint.pprint (queryreturn)
+            data = '{"sentMessages":['
+            if type(queryreturn) is list:
+                for row in queryreturn:
+                    msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
+                    subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+                    message = shared.fixPotentiallyInvalidUTF8Data(message)
+                    if len(data) > 25:
+                        data += ','
+                    data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
+            else:
+		print "queryreturn is not a list"
+                pprint.pprint (queryreturn)
+            data += ']}'
+            return data
+        elif method == 'getAllSentMessageIds' or method == 'getAllSentMessageIDs':
+            queryreturn = sqlQuery('''SELECT msgid FROM sent where folder='sent' ORDER BY lastactiontime''')
+            data = '{"sentMessageIds":['
+            for row in queryreturn:
+                msgid = row[0]
+                if len(data) > 25:
+                    data += ','
+                data += json.dumps({'msgid':msgid.encode('hex')}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+        elif method == 'getInboxMessagesByReceiver' or method == 'getInboxMessagesByAddress': #after some time getInboxMessagesByAddress should be removed
+            if len(params) == 0:
+                raise APIError(0, 'I need parameters!')
+            toAddress = params[0]
+            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype FROM inbox WHERE folder='inbox' AND toAddress=?''', toAddress)
+            data = '{"inboxMessages":['
+            for row in queryreturn:
+                msgid, toAddress, fromAddress, subject, received, message, encodingtype = row
+                subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+                message = shared.fixPotentiallyInvalidUTF8Data(message)
+                if len(data) > 25:
+                    data += ','
+                data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received}, indent=4, separators=(',', ': '))
+            data += ']}'
+            return data
+        elif method == 'getSentMessageById' or method == 'getSentMessageByID':
+            if len(params) == 0:
+                raise APIError(0, 'I need parameters!')
             msgid = self._decode(params[0], "hex")
         elif len(params) >= 2:
             msgid = self._decode(params[0], "hex")
