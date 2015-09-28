@@ -522,15 +522,24 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 data += ']}'
                 return data
         elif method == 'getAllSentMessages':
-            queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
+            import pprint
+            try:
+                queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, lastactiontime, message, encodingtype, status, ackdata FROM sent where folder='sent' ORDER BY lastactiontime''')
+            except:
+		print "Exception in getallSentMessages"
+                pprint.pprint (queryreturn)
             data = '{"sentMessages":['
-            for row in queryreturn:
-                msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
-                subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-                message = shared.fixPotentiallyInvalidUTF8Data(message)
-                if len(data) > 25:
-                    data += ','
-                data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
+            if type(queryreturn) is list:
+                for row in queryreturn:
+                    msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
+                    subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+                    message = shared.fixPotentiallyInvalidUTF8Data(message)
+                    if len(data) > 25:
+                        data += ','
+                    data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
+            else:
+		print "queryreturn is not a list"
+                pprint.pprint (queryreturn)
             data += ']}'
             return data
         elif method == 'getAllSentMessageIds' or method == 'getAllSentMessageIDs':
