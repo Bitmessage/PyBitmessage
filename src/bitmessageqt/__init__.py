@@ -2028,9 +2028,9 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         if self.ui.tabWidgetSend.currentIndex() == 0:
             # message to specific people
             sendMessageToPeople = True
-            fromAddress = self.ui.comboBoxSendFrom.itemData(
+            fromAddress = str(self.ui.comboBoxSendFrom.itemData(
                 self.ui.comboBoxSendFrom.currentIndex(), 
-                Qt.UserRole).toString()
+                Qt.UserRole).toString())
             toAddresses = str(self.ui.lineEditTo.text())
             subject = str(self.ui.lineEditSubject.text().toUtf8())
             message = str(
@@ -2038,9 +2038,9 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         else:
             # broadcast message
             sendMessageToPeople = False
-            fromAddress = self.ui.comboBoxSendFromBroadcast.itemData(
+            fromAddress = str(self.ui.comboBoxSendFromBroadcast.itemData(
                 self.ui.comboBoxSendFromBroadcast.currentIndex(), 
-                Qt.UserRole).toString()
+                Qt.UserRole).toString())
             subject = str(self.ui.lineEditSubjectBroadcast.text().toUtf8())
             message = str(
                 self.ui.textEditMessageBroadcast.document().toPlainText().toUtf8())
@@ -2098,6 +2098,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
                             "MainWindow", "Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab."))
                     else:
                         toAddress = addBMIfNotPresent(toAddress)
+
                         if addressVersionNumber > 4 or addressVersionNumber <= 1:
                             QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
                                 "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
@@ -2262,6 +2263,8 @@ more work your computer must do to send the message. A Time-To-Live of four or f
     # pseudo-mailing-list. The message will be broadcast out. This function
     # puts the message on the 'Sent' tab.
     def displayNewSentMessage(self, toAddress, toLabel, fromAddress, subject, message, ackdata):
+        if self.getCurrentFolder() != "sent":
+            return
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         message = shared.fixPotentiallyInvalidUTF8Data(message)
         try:
@@ -2303,10 +2306,12 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         newItem.setData(Qt.UserRole, QByteArray(ackdata))
         newItem.setData(33, int(time.time()))
         self.ui.tableWidgetInbox.setItem(0, 3, newItem)
-        self.ui.textEditSentMessage.setPlainText(unicode(message, 'utf-8)'))
+        self.ui.textEditInboxMessage.setPlainText(unicode(message, 'utf-8)'))
         self.ui.tableWidgetInbox.setSortingEnabled(True)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
+        if self.getCurrentFolder() != "inbox":
+            return
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         fromLabel = ''
         queryreturn = sqlQuery(
@@ -3535,16 +3540,43 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             ackdata = self.getCurrentMessageId()
             if ackdata and messageTextedit:
                 queryreturn = sqlQuery(
-                    '''select message from sent where ackdata=?''', ackdata)
+                    '''select message, 1 from sent where ackdata=?''', ackdata)
         else:
             msgid = self.getCurrentMessageId()
             if msgid and messageTextedit:
                 queryreturn = sqlQuery(
-                    '''select message from inbox where msgid=?''', msgid)
+                    '''select message, read from inbox where msgid=?''', msgid)
 
         if queryreturn != []:
+            refresh = False
             for row in queryreturn:
-                message, = row
+                message, read = row
+                if folder == 'inbox' and read == 0:
+                    markread = sqlQuery(
+                        '''UPDATE inbox SET read = 1 WHERE msgid = ?''', msgid)
+                    refresh = True
+            if refresh:
+                tableWidget = self.getCurrentMessagelist()
+                if not tableWidget:
+                    return
+                font = QFont()
+                font.setBold(False)
+#                inventoryHashesToMarkRead = []
+                currentRow = self.getCurrentMessagelist().currentRow()
+#                inventoryHashToMarkRead = str(tableWidget.item(
+#                    currentRow, 3).data(Qt.UserRole).toPyObject())
+#                inventoryHashesToMarkRead.append(inventoryHashToMarkRead)
+                tableWidget.item(currentRow, 0).setFont(font)
+                tableWidget.item(currentRow, 1).setFont(font)
+                tableWidget.item(currentRow, 2).setFont(font)
+                tableWidget.item(currentRow, 3).setFont(font)
+                self.changedInboxUnread()
+#                if self.ui.tabWidget.currentIndex() == 0:
+#                    self.rerenderTabTreeMessages()
+#                elif self.ui.tabWidget.currentIndex() == 2:
+#                    self.rerenderTabTreeSubscriptions()
+#                elif self.ui.tabWidget.currentIndex() == 3:
+#                    self.rerenderTabTreeChans()
         else:
             data = self.getCurrentMessageId()
             if data != False:
