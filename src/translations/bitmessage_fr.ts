@@ -573,8 +573,8 @@ Il est important de faire des sauvegardes de ce fichier. Souhaitez-vous l&apos;o
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2692"/>
-        <source>Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.</source>
-        <translation>Messages déplacés dans la corbeille. Il n&apos;y a pas d&apos;interface utilisateur pour voir votre corbeille, mais ils sont toujours présents sur le disque si vous souhaitez les récupérer.</translation>
+        <source>Moved items to trash.</source>
+        <translation>Messages déplacés dans la corbeille.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2769"/>
