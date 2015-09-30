@@ -15,10 +15,16 @@ try:
 		ctx = cl.create_some_context()
 		queue = cl.CommandQueue(ctx)
 
-		f = open('/usr/src/PyBitmessage/src/kernel.cl', 'r')
+		#f = open('/usr/src/PyBitmessage/src/kernel.cl', 'r')
+		import os
+		print "working directory: " + os.getcwd()
+#		time.sleep(5)
+		f = open('kernel.cl', 'r')
 		fstr = ''.join(f.readlines())
 		program = cl.Program(ctx, fstr).build()
-except: 
+except Exception as e:
+	print "opencl fail:" + str(e)
+#	time.sleep(5)
 	ctx = False
 
 def has_opencl():

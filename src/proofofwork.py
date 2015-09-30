@@ -81,8 +81,9 @@ def _doGPUPow(target, initialHash):
     return [trialValue, nonce]
 
 def run(target, initialHash):
-    if openclpow.has_opencl():
-	return _doGPUPow(target, initialHash)
+    target = int(target)
+    if shared.safeConfigGetBoolean('bitmessagesettings', 'opencl') and openclpow.has_opencl():
+        return _doGPUPow(target, initialHash)
     elif frozen == "macosx_app" or not frozen:
         return _doFastPoW(target, initialHash)
     else:
