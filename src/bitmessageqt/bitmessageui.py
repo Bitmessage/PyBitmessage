@@ -622,7 +622,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "Bitmessage", None))
         self.treeWidgetYourIdentities.headerItem().setText(0, _translate("MainWindow", "Identities", None))
-        self.pushButtonNewAddress.setText(_translate("MainWindow", "New Indentitiy", None))
+        self.pushButtonNewAddress.setText(_translate("MainWindow", "New Identity", None))
         self.inboxSearchLineEdit.setPlaceholderText(_translate("MainWindow", "Search", None))
         self.inboxSearchOption.setItemText(0, _translate("MainWindow", "All", None))
         self.inboxSearchOption.setItemText(1, _translate("MainWindow", "To", None))
