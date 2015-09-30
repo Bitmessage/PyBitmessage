@@ -2261,7 +2261,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
     # pseudo-mailing-list. The message will be broadcast out. This function
     # puts the message on the 'Sent' tab.
     def displayNewSentMessage(self, toAddress, toLabel, fromAddress, subject, message, ackdata):
-        if self.getCurrentFolder() != "sent":
+        if self.getCurrentFolder() != "sent" or self.getCurrentAccount() != fromAddress:
             return
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         message = shared.fixPotentiallyInvalidUTF8Data(message)
@@ -2308,7 +2308,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         self.ui.tableWidgetInbox.setSortingEnabled(True)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
-        if self.getCurrentFolder() != "inbox":
+        if self.getCurrentFolder() != "inbox" or self.getCurrentAccount() != toAddress:
             return
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         fromLabel = ''
