@@ -495,8 +495,8 @@ It is important that you back up this file. Would you like to open the file now?
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2692"/>
-        <source>Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.</source>
-        <translation>Удалено в корзину. Чтобы попасть в корзину, Вам нужно будет найти файл корзины на диске.</translation>
+        <source>Moved items to trash.</source>
+        <translation>Удалено в корзину.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2672"/>

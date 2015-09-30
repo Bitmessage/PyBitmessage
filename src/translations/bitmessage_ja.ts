@@ -550,8 +550,8 @@ It is important that you back up this file. Would you like to open the file now?
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2502"/>
-        <source>Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.</source>
-        <translation>アイテムをゴミ箱へ移動。ゴミ箱の内容を表示する画面はありませんが、もし元に戻したくなった場合に備えてディスク上に残されます。</translation>
+        <source>Moved items to trash.</source>
+        <translation>アイテムをゴミ箱へ移動。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2476"/>
