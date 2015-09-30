@@ -2994,7 +2994,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             self.ui.textEditInboxMessage.setText("")
             tableWidget.removeRow(currentRow)
             self.statusBar().showMessage(_translate(
-                "MainWindow", "Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back."))
+                "MainWindow", "Moved items to trash."))
         if currentRow == 0:
             tableWidget.selectRow(currentRow)
         else:
