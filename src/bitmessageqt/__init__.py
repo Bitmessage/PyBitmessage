@@ -577,53 +577,54 @@ class MyForm(QtGui.QMainWindow):
 
         configSections = sorted(shared.config.sections(), cmp=address_compare)
         for addressInKeysFile in configSections:
-            if addressInKeysFile != 'bitmessagesettings':
-                isEnabled = shared.config.getboolean(
-                    addressInKeysFile, 'enabled')
-                isChan = shared.safeConfigGetBoolean(
-                    addressInKeysFile, 'chan')
-                isMaillinglist = shared.safeConfigGetBoolean(
-                    addressInKeysFile, 'mailinglist')
+            if addressInKeysFile == 'bitmessagesettings':
+                continue
+            isEnabled = shared.config.getboolean(
+                addressInKeysFile, 'enabled')
+            isChan = shared.safeConfigGetBoolean(
+                addressInKeysFile, 'chan')
+            isMaillinglist = shared.safeConfigGetBoolean(
+                addressInKeysFile, 'mailinglist')
 
-                if tab == 'messages':
-                    if isChan:
-                        continue
-                elif tab == 'chan':
-                    if not isChan:
-                        continue
+            if tab == 'messages':
+                if isChan:
+                    continue
+            elif tab == 'chan':
+                if not isChan:
+                    continue
 
-                newItem = QtGui.QTreeWidgetItem(treeWidget)
-                newItem.setExpanded(True)
-                newItem.setIcon(0, avatarize(addressInKeysFile))
-                newItem.setText(0, unicode(
-                    shared.config.get(addressInKeysFile, 'label'), 'utf-8)')
-                    + ' (' + addressInKeysFile + ')')
-                newItem.setData(0, Qt.UserRole, [str(addressInKeysFile), "inbox"])
-                #set text color
-                if isEnabled:
-                    if isMaillinglist:
-                        brush = QtGui.QBrush(QtGui.QColor(137, 04, 177))
-                    else:
-                        brush = QtGui.QBrush(QApplication.palette().text().color())
+            newItem = QtGui.QTreeWidgetItem(treeWidget)
+            newItem.setExpanded(True)
+            newItem.setIcon(0, avatarize(addressInKeysFile))
+            newItem.setText(0, unicode(
+                shared.config.get(addressInKeysFile, 'label'), 'utf-8)')
+                + ' (' + addressInKeysFile + ')')
+            newItem.setData(0, Qt.UserRole, [str(addressInKeysFile), "inbox"])
+            #set text color
+            if isEnabled:
+                if isMaillinglist:
+                    brush = QtGui.QBrush(QtGui.QColor(137, 04, 177))
                 else:
-                    brush = QtGui.QBrush(QtGui.QColor(128, 128, 128))
-                brush.setStyle(QtCore.Qt.NoBrush)
-                newItem.setForeground(0, brush)
+                    brush = QtGui.QBrush(QApplication.palette().text().color())
+            else:
+                brush = QtGui.QBrush(QtGui.QColor(128, 128, 128))
+            brush.setStyle(QtCore.Qt.NoBrush)
+            newItem.setForeground(0, brush)
 
-                for folder in folders:
-                    newSubItem = QtGui.QTreeWidgetItem(newItem)
+            for folder in folders:
+                newSubItem = QtGui.QTreeWidgetItem(newItem)
 
-                    cnt = cntUnreadMsg.get(addressInKeysFile + folder, False)
-                    if cnt:
-                        unreadText = " (" + str(cnt) + ")"
-                        font = QtGui.QFont()
-                        font.setBold(True)
-                        newSubItem.setFont(0, font)
-                    else:
-                        unreadText = ""
+                cnt = cntUnreadMsg.get(addressInKeysFile + folder, False)
+                if cnt:
+                    unreadText = " (" + str(cnt) + ")"
+                    font = QtGui.QFont()
+                    font.setBold(True)
+                    newSubItem.setFont(0, font)
+                else:
+                    unreadText = ""
 
-                    newSubItem.setText(0, _translate("MainWindow", folder) + unreadText)
-                    newSubItem.setData(0, Qt.UserRole, [str(addressInKeysFile), folder])
+                newSubItem.setText(0, _translate("MainWindow", folder) + unreadText)
+                newSubItem.setData(0, Qt.UserRole, [str(addressInKeysFile), folder])
 
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
