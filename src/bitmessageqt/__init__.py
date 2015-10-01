@@ -11,6 +11,8 @@ import shared
 from bitmessageui import *
 from namecoin import namecoinConnection, ensureNamecoinOptions
 from newaddressdialog import *
+from newaddresswizard import *
+from migrationwizard import *
 from addaddressdialog import *
 from newsubscriptiondialog import *
 from regenerateaddresses import *
@@ -2756,6 +2758,17 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             self.rerenderInboxToLabels()
 
     def click_NewAddressDialog(self):
+        addresses = []
+        configSections = shared.config.sections()
+        for addressInKeysFile in configSections:
+            if addressInKeysFile == 'bitmessagesettings':
+                continue
+            addresses.append(addressInKeysFile)
+        self.dialog = Ui_NewAddressWizard(addresses)
+        self.dialog.exec_()
+#        print "Name: " + self.dialog.field("name").toString()
+#        print "Email: " + self.dialog.field("email").toString()
+        return
         self.dialog = NewAddressDialog(self)
         # For Modal dialogs
         if self.dialog.exec_():
