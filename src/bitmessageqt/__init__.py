@@ -175,13 +175,13 @@ def address_compare(x, y):
         return 1
     if shared.config.getboolean(x, 'enabled') == shared.config.getboolean(y, 'enabled'):
         if shared.config.get(x, 'label'):
-            x1 = shared.config.get(x, 'label')
+            x1 = shared.config.get(x, 'label').decode('utf-8').lower()
         else:
-            x1 = x
+            x1 = x.decode('utf-8').lower()
         if shared.config.get(y, 'label'):
-            y1 = shared.config.get(y, 'label')
+            y1 = shared.config.get(y, 'label').decode('utf-8').lower()
         else:
-            y1 = y
+            y1 = y.decode('utf-8').lower()
         if x1 > y1:
             return 1
         elif x1 < y1:
