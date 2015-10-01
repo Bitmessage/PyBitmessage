@@ -608,6 +608,7 @@ class MyForm(QtGui.QMainWindow):
                     brush = QtGui.QBrush(QApplication.palette().text().color())
             else:
                 brush = QtGui.QBrush(QtGui.QColor(128, 128, 128))
+                newItem.setExpanded(False)
             brush.setStyle(QtCore.Qt.NoBrush)
             newItem.setForeground(0, brush)
 
