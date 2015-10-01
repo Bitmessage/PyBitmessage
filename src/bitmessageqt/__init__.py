@@ -189,7 +189,7 @@ def address_compare(x, y):
         else:
             return 0
     else:
-        return (1 if shared.config.getboolean(x, 'enabled') else '-1')
+        return (1 if shared.config.getboolean(x, 'enabled') else -1)
 
 class MyForm(QtGui.QMainWindow):
 
