@@ -168,6 +168,28 @@ def change_translation(locale):
     qtranslator.load(translationpath)
     QtGui.QApplication.installTranslator(qtranslator)
 
+def address_compare(x, y):
+    if x == "bitmessagesettings":
+        return -1
+    elif y == "bitmessagesettings":
+        return 1
+    if shared.config.getboolean(x, 'enabled') == shared.config.getboolean(y, 'enabled'):
+        if shared.config.get(x, 'label'):
+            x1 = shared.config.get(x, 'label')
+        else:
+            x1 = x
+        if shared.config.get(y, 'label'):
+            y1 = shared.config.get(y, 'label')
+        else:
+            y1 = y
+        if x1 > y1:
+            return 1
+        elif x1 < y1:
+            return -1
+        else:
+            return 0
+    else:
+        return (1 if shared.config.getboolean(x, 'enabled') else '-1')
 
 class MyForm(QtGui.QMainWindow):
 
@@ -536,7 +558,7 @@ class MyForm(QtGui.QMainWindow):
 
     def rerenderTabTreeChans(self):
         self.rerenderTabTree('chan')
-
+        
     def rerenderTabTree(self, tab):
         folders = ['inbox', 'sent', 'trash']
         if tab == 'messages':
@@ -553,7 +575,7 @@ class MyForm(QtGui.QMainWindow):
             toaddress, folder, cnt = row
             cntUnreadMsg[toaddress + folder] = cnt
 
-        configSections = shared.config.sections()
+        configSections = sorted(shared.config.sections(), cmp=address_compare)
         for addressInKeysFile in configSections:
             if addressInKeysFile != 'bitmessagesettings':
                 isEnabled = shared.config.getboolean(
