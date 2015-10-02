@@ -56,6 +56,7 @@ from helper_sql import *
 import l10n
 from utils import *
 from collections import OrderedDict
+from account import *
 
 def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
@@ -1004,9 +1005,13 @@ class MyForm(QtGui.QMainWindow):
         font = QFont()
         font.setBold(True)
         queryreturn = sqlQuery(sqlStatement, account, folder, what)
+        acct = None
         for row in queryreturn:
             msgid, toAddress, fromAddress, subject, received, read = row
+            if acct is None:
+                acct = accountClass(toAddress)
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            acct.parseMessage(toAddress, fromAddress, subject, "")
             try:
                 if toAddress == self.str_broadcast_subscribers:
                     toLabel = self.str_broadcast_subscribers
@@ -1018,6 +1023,8 @@ class MyForm(QtGui.QMainWindow):
                 toLabel = toAddress
 
             fromLabel = ''
+            if type(acct) == MailchuckAccount:
+                fromLabel = acct.fromAddress
             if shared.config.has_section(fromAddress):
                 fromLabel = shared.config.get(fromAddress, 'label')
             
@@ -1066,8 +1073,8 @@ class MyForm(QtGui.QMainWindow):
             from_item.setIcon(avatarize(fromAddress))
             tableWidget.setItem(0, 1, from_item)
             # subject
-            subject_item = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
-            subject_item.setToolTip(unicode(subject, 'utf-8'))
+            subject_item = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8'))
+            subject_item.setToolTip(unicode(acct.subject, 'utf-8'))
             subject_item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
@@ -1751,11 +1758,12 @@ class MyForm(QtGui.QMainWindow):
     def drawTrayIcon(self, iconFileName, inboxUnreadCount):
         self.tray.setIcon(self.calcTrayIcon(iconFileName, inboxUnreadCount))
 
-    def changedInboxUnread(self):
+    def changedInboxUnread(self, row = None):
         self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount())
-        if self.ui.tabWidget.currentIndex() == 0:
-            self.rerenderTabTreeMessages()
-        elif self.ui.tabWidget.currentIndex() == 2:
+        self.rerenderTabTreeMessages()
+        if not row is None:
+            row[1], row[6]
+        if self.ui.tabWidget.currentIndex() == 2:
             self.rerenderTabTreeSubscriptions()
         elif self.ui.tabWidget.currentIndex() == 3:
             self.rerenderTabTreeChans()
@@ -2279,6 +2287,8 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         font = QFont()
         font.setBold(True)
         self.ui.tableWidgetInbox.setSortingEnabled(False)
+        account = accountClass(toAddress)
+        account.parseMessage(toAddress, fromAddress, subject, message)
         newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
         newItem.setToolTip(unicode(toLabel, 'utf-8'))
         newItem.setFont(font)
@@ -2291,7 +2301,12 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         newItem.setIcon(avatarize(toAddress))
         self.ui.tableWidgetInbox.setItem(0, 0, newItem)
 
-        if fromLabel == '':
+        if type(account) is MailchuckAccount:
+            newItem = QtGui.QTableWidgetItem(unicode(account.fromAddress, 'utf-8'))
+            newItem.setToolTip(unicode(account.fromAddress, 'utf-8'))
+            if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
+                self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(account.fromAddress, 'utf-8'), self.SOUND_UNKNOWN, None)
+        elif fromLabel == '':
             newItem = QtGui.QTableWidgetItem(unicode(fromAddress, 'utf-8'))
             newItem.setToolTip(unicode(fromAddress, 'utf-8'))
             if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
@@ -2306,7 +2321,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         newItem.setIcon(avatarize(fromAddress))
         self.ui.tableWidgetInbox.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
-        newItem.setToolTip(unicode(subject, 'utf-8)'))
+        newItem.setToolTip(unicode(account.subject, 'utf-8)'))
         #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0, 2, newItem)
@@ -3270,25 +3285,25 @@ more work your computer must do to send the message. A Time-To-Live of four or f
 
     # Group of functions for the Your Identities dialog box
     def getCurrentAccount(self):
-        treeWidget = self.getCurrentTreeWidget()
+        #treeWidget = self.getCurrentTreeWidget()
+        treeWidget = self.ui.treeWidgetYourIdentities
         if treeWidget:
             currentItem = treeWidget.currentItem()
             if currentItem:
-                accountFolder = currentItem.data(0, Qt.UserRole).toPyObject()
-                account = accountFolder[0]
-                return str(account)
+                account = currentItem.address
+                return account
             else:
                 # TODO need debug msg?
                 return False
 
     def getCurrentFolder(self):
-        treeWidget = self.getCurrentTreeWidget()
+        #treeWidget = self.getCurrentTreeWidget()
+        treeWidget = self.ui.treeWidgetYourIdentities
         if treeWidget:
             currentItem = treeWidget.currentItem()
             if currentItem:
-                accountFolder = currentItem.data(0, Qt.UserRole).toPyObject()
-                folder = accountFolder[1]
-                return str(folder)
+                account = currentItem.folderName
+                return account
             else:
                 # TODO need debug msg?
                 return False
