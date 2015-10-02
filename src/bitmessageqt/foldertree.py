@@ -36,7 +36,7 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem):
         self.setFont(0, font)
         self.setText(0, text)
         self.setToolTip(0, text)
-        self.setData(0, QtCore.Qt.UserRole, [self.address, self.folderName])
+ #       self.setData(0, QtCore.Qt.UserRole, [self.address, self.folderName])
 
     # inbox, sent, thrash first, rest alphabetically
     def __lt__(self, other):
@@ -108,7 +108,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem):
         self.setIcon(0, avatarize(self.address))
         self.setText(0, text)
         self.setToolTip(0, text)
-        self.setData(0, QtCore.Qt.UserRole, [self.address, "inbox"])
+#        self.setData(0, QtCore.Qt.UserRole, [self.address, "inbox"])
     
     def setExpanded(self, expand):
         super(Ui_AddressWidget, self).setExpanded(expand)
