@@ -1627,6 +1627,13 @@ class MyForm(QtGui.QMainWindow):
             else:
                 self.click_actionSettings()
 
+    def showMigrationWizard(self, level):
+        self.migrationWizardInstance = Ui_MigrationWizard(["a"])
+        if self.migrationWizardInstance.exec_():
+            pass
+        else:
+            pass
+        
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.LanguageChange:
             self.ui.retranslateUi(self)
@@ -4146,12 +4153,20 @@ def run():
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
 
-    if not shared.config.getboolean('bitmessagesettings', 'startintray'):
-        myapp.show()
-
     myapp.appIndicatorInit(app)
     myapp.ubuntuMessagingMenuInit()
     myapp.notifierInit()
     if shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
         myapp.showConnectDialog() # ask the user if we may connect
+    
+    try:
+        if shared.config.get('bitmessagesettings', 'mailchuck') < 1:
+            myapp.showMigrationWizard(shared.config.get('bitmessagesettings', 'mailchuck'))
+    except:
+        myapp.showMigrationWizard(0)
+    
+    # only show after wizards and connect dialogs have completed
+    if not shared.config.getboolean('bitmessagesettings', 'startintray'):
+        myapp.show()
+
     sys.exit(app.exec_())
