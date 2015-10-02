@@ -1,31 +1,28 @@
-import numpy
+#!/usr/bin/env python2.7
 from struct import pack, unpack
 import time
 import hashlib
 import random
-import pyopencl as cl
+import os
 
-hash_dt = numpy.dtype([('target', numpy.uint64), ('v', numpy.str_, 73)])
 ctx = False
 queue = False
 program = False
 
 try:
-        if (len(cl.get_platforms()) > 0):
-		ctx = cl.create_some_context()
-		queue = cl.CommandQueue(ctx)
-
-		#f = open('/usr/src/PyBitmessage/src/kernel.cl', 'r')
-		import os
-		print "working directory: " + os.getcwd()
-#		time.sleep(5)
-		f = open('kernel.cl', 'r')
-		fstr = ''.join(f.readlines())
-		program = cl.Program(ctx, fstr).build()
+    import numpy
+    import pyopencl as cl
+    hash_dt = numpy.dtype([('target', numpy.uint64), ('v', numpy.str_, 73)])
+    if (len(cl.get_platforms()) > 0):
+        ctx = cl.create_some_context()
+        queue = cl.CommandQueue(ctx)
+        full_path = os.path.dirname(os.path.realpath(__file__))
+        f = open(os.path.join(full_path, 'kernel.cl'), 'r')
+        fstr = ''.join(f.readlines())
+        program = cl.Program(ctx, fstr).build(options="")
 except Exception as e:
-	print "opencl fail:" + str(e)
-#	time.sleep(5)
-	ctx = False
+    print "opencl fail:" + str(e)
+    ctx = False
 
 def has_opencl():
 	return (ctx != False)
@@ -43,7 +40,7 @@ def do_opencl_pow(hash, target):
 	dest_buf = cl.Buffer(ctx, cl.mem_flags.WRITE_ONLY, output.nbytes)
 	
 	kernel = program.kernel_sha512
-	worksize = kernel.get_work_group_info(cl.kernel_work_group_info.WORK_GROUP_SIZE, cl.get_platforms()[0].get_devices()[0])
+	worksize = kernel.get_work_group_info(cl.kernel_work_group_info.WORK_GROUP_SIZE, cl.get_platforms()[0].get_devices()[1])
 
 	kernel.set_arg(0, hash_buf)
 	kernel.set_arg(1, dest_buf)
