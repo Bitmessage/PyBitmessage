@@ -73,7 +73,7 @@ def _doFastPoW(target, initialHash):
                 return result[0], result[1]
         time.sleep(0.2)
 
-def _doGPUPow(target, initialHash):
+def _doGPUPoW(target, initialHash):
     print "GPU POW\n"
     nonce = openclpow.do_opencl_pow(initialHash.encode("hex"), target)
     trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
@@ -83,7 +83,12 @@ def _doGPUPow(target, initialHash):
 def run(target, initialHash):
     target = int(target)
     if shared.safeConfigGetBoolean('bitmessagesettings', 'opencl') and openclpow.has_opencl():
-        return _doGPUPow(target, initialHash)
+#        trialvalue1, nonce1 = _doGPUPoW(target, initialHash)
+#        trialvalue, nonce = _doFastPoW(target, initialHash)
+#        print "GPU: %s, %s" % (trialvalue1, nonce1)
+#        print "Fast: %s, %s" % (trialvalue, nonce)
+#        return [trialvalue, nonce]
+        return _doGPUPoW(target, initialHash)
     elif frozen == "macosx_app" or not frozen:
         return _doFastPoW(target, initialHash)
     else:
