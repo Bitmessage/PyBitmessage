@@ -6,6 +6,21 @@ try:
 except ImportError:
     MessagingMenu = None
 
+try:
+    from PyQt4 import QtCore, QtGui
+    from PyQt4.QtCore import *
+    from PyQt4.QtGui import *
+
+except Exception as err:
+    print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
+    print 'Error message:', err
+    sys.exit()
+
+try:
+    _encoding = QtGui.QApplication.UnicodeUTF8
+except AttributeError:
+    print 'QtGui.QApplication.UnicodeUTF8 error:', err
+
 from addresses import *
 import shared
 from bitmessageui import *
@@ -13,6 +28,7 @@ from namecoin import namecoinConnection, ensureNamecoinOptions
 from newaddressdialog import *
 from newaddresswizard import *
 from migrationwizard import *
+from foldertree import *
 from addaddressdialog import *
 from newsubscriptiondialog import *
 from regenerateaddresses import *
@@ -38,125 +54,12 @@ import subprocess
 import datetime
 from helper_sql import *
 import l10n
-
-try:
-    from PyQt4 import QtCore, QtGui
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
-
-except Exception as err:
-    print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
-    print 'Error message:', err
-    sys.exit()
-
-try:
-    _encoding = QtGui.QApplication.UnicodeUTF8
-except AttributeError:
-    print 'QtGui.QApplication.UnicodeUTF8 error:', err
+from utils import *
+from collections import OrderedDict
 
 def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
 
-
-def identiconize(address):
-    size = 48
-    
-    # If you include another identicon library, please generate an 
-    # example identicon with the following md5 hash:
-    # 3fd4bf901b9d4ea1394f0fb358725b28
-    
-    try:
-        identicon_lib = shared.config.get('bitmessagesettings', 'identiconlib')
-    except:
-        # default to qidenticon_two_x
-        identicon_lib = 'qidenticon_two_x'
-
-    # As an 'identiconsuffix' you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators. (Note however, that E-Mail programs might convert the BM-address to lowercase first.)
-    # It can be used as a pseudo-password to salt the generation of the identicons to decrease the risk
-    # of attacks where someone creates an address to mimic someone else's identicon.
-    identiconsuffix = shared.config.get('bitmessagesettings', 'identiconsuffix')
-    
-    if not shared.config.getboolean('bitmessagesettings', 'useidenticons'):
-        idcon = QtGui.QIcon()
-        return idcon
-    
-    if (identicon_lib[:len('qidenticon')] == 'qidenticon'):
-        # print identicon_lib
-        # originally by:
-        # :Author:Shin Adachi <shn@glucose.jp>
-        # Licesensed under FreeBSD License.
-        # stripped from PIL and uses QT instead (by sendiulo, same license)
-        import qidenticon
-        hash = hashlib.md5(addBMIfNotPresent(address)+identiconsuffix).hexdigest()
-        use_two_colors = (identicon_lib[:len('qidenticon_two')] == 'qidenticon_two')
-        opacity = int(not((identicon_lib == 'qidenticon_x') | (identicon_lib == 'qidenticon_two_x') | (identicon_lib == 'qidenticon_b') | (identicon_lib == 'qidenticon_two_b')))*255
-        penwidth = 0
-        image = qidenticon.render_identicon(int(hash, 16), size, use_two_colors, opacity, penwidth)
-        # filename = './images/identicons/'+hash+'.png'
-        # image.save(filename)
-        idcon = QtGui.QIcon()
-        idcon.addPixmap(image, QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        return idcon
-    elif identicon_lib == 'pydenticon':
-        # print identicon_lib
-        # Here you could load pydenticon.py (just put it in the "src" folder of your Bitmessage source)
-        from pydenticon import Pydenticon
-        # It is not included in the source, because it is licensed under GPLv3
-        # GPLv3 is a copyleft license that would influence our licensing
-        # Find the source here: http://boottunes.googlecode.com/svn-history/r302/trunk/src/pydenticon.py
-        # note that it requires PIL to be installed: http://www.pythonware.com/products/pil/
-        idcon_render = Pydenticon(addBMIfNotPresent(address)+identiconsuffix, size*3)
-        rendering = idcon_render._render()
-        data = rendering.convert("RGBA").tostring("raw", "RGBA")
-        qim = QImage(data, size, size, QImage.Format_ARGB32)
-        pix = QPixmap.fromImage(qim)
-        idcon = QtGui.QIcon()
-        idcon.addPixmap(pix, QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        return idcon
-        
-def avatarize(address):
-    """
-        loads a supported image for the given address' hash form 'avatars' folder
-        falls back to default avatar if 'default.*' file exists
-        falls back to identiconize(address)
-    """
-    idcon = QtGui.QIcon()
-    hash = hashlib.md5(addBMIfNotPresent(address)).hexdigest()
-    str_broadcast_subscribers = '[Broadcast subscribers]'
-    if address == str_broadcast_subscribers:
-        # don't hash [Broadcast subscribers]
-        hash = address
-    # http://pyqt.sourceforge.net/Docs/PyQt4/qimagereader.html#supportedImageFormats
-    # print QImageReader.supportedImageFormats ()
-    # QImageReader.supportedImageFormats ()
-    extensions = ['PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM', 'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
-    # try to find a specific avatar
-    for ext in extensions:
-        lower_hash = shared.appdata + 'avatars/' + hash + '.' + ext.lower()
-        upper_hash = shared.appdata + 'avatars/' + hash + '.' + ext.upper()
-        if os.path.isfile(lower_hash):
-            # print 'found avatar of ', address
-            idcon.addFile(lower_hash)
-            return idcon
-        elif os.path.isfile(upper_hash):
-            # print 'found avatar of ', address
-            idcon.addFile(upper_hash)
-            return idcon
-    # if we haven't found any, try to find a default avatar
-    for ext in extensions:
-        lower_default = shared.appdata + 'avatars/' + 'default.' + ext.lower()
-        upper_default = shared.appdata + 'avatars/' + 'default.' + ext.upper()
-        if os.path.isfile(lower_default):
-            default = lower_default
-            idcon.addFile(lower_default)
-            return idcon
-        elif os.path.isfile(upper_default):
-            default = upper_default
-            idcon.addFile(upper_default)
-            return idcon
-    # If no avatar is found
-    return identiconize(address)
-    
 def change_translation(locale):
     global qtranslator
     qtranslator = QtCore.QTranslator()
@@ -167,29 +70,6 @@ def change_translation(locale):
     )
     qtranslator.load(translationpath)
     QtGui.QApplication.installTranslator(qtranslator)
-
-def address_compare(x, y):
-    if x == "bitmessagesettings":
-        return -1
-    elif y == "bitmessagesettings":
-        return 1
-    if shared.config.getboolean(x, 'enabled') == shared.config.getboolean(y, 'enabled'):
-        if shared.config.get(x, 'label'):
-            x1 = shared.config.get(x, 'label').decode('utf-8').lower()
-        else:
-            x1 = x.decode('utf-8').lower()
-        if shared.config.get(y, 'label'):
-            y1 = shared.config.get(y, 'label').decode('utf-8').lower()
-        else:
-            y1 = y.decode('utf-8').lower()
-        if x1 > y1:
-            return 1
-        elif x1 < y1:
-            return -1
-        else:
-            return 0
-    else:
-        return (-1 if shared.config.getboolean(x, 'enabled') else 1)
 
 class MyForm(QtGui.QMainWindow):
 
@@ -566,25 +446,21 @@ class MyForm(QtGui.QMainWindow):
         elif tab == 'chan':
             treeWidget = self.ui.treeWidgetChans
 
-        treeWidget.clear()
+        #treeWidget.clear()
 
-        # get number of (unread) messages
-        cntUnreadMsg = {}
-        queryreturn = sqlQuery('SELECT toaddress, folder, count(msgid) as cnt FROM inbox WHERE read = 0 GROUP BY toaddress, folder')
-        for row in queryreturn:
-            toaddress, folder, cnt = row
-            cntUnreadMsg[toaddress + folder] = cnt
-
-        configSections = sorted(shared.config.sections(), cmp=address_compare)
-        for addressInKeysFile in configSections:
-            if addressInKeysFile == 'bitmessagesettings':
+        # init dictionary
+        db = {}
+        enabled = {}
+        
+        for toAddress in shared.config.sections():
+            if toAddress == 'bitmessagesettings':
                 continue
             isEnabled = shared.config.getboolean(
-                addressInKeysFile, 'enabled')
+                toAddress, 'enabled')
             isChan = shared.safeConfigGetBoolean(
-                addressInKeysFile, 'chan')
+                toAddress, 'chan')
             isMaillinglist = shared.safeConfigGetBoolean(
-                addressInKeysFile, 'mailinglist')
+                toAddress, 'mailinglist')
 
             if tab == 'messages':
                 if isChan:
@@ -593,39 +469,65 @@ class MyForm(QtGui.QMainWindow):
                 if not isChan:
                     continue
 
-            newItem = QtGui.QTreeWidgetItem(treeWidget)
-            newItem.setExpanded(True)
-            newItem.setIcon(0, avatarize(addressInKeysFile))
-            newItem.setText(0, unicode(
-                shared.config.get(addressInKeysFile, 'label'), 'utf-8)')
-                + ' (' + addressInKeysFile + ')')
-            newItem.setData(0, Qt.UserRole, [str(addressInKeysFile), "inbox"])
-            #set text color
-            if isEnabled:
-                if isMaillinglist:
-                    brush = QtGui.QBrush(QtGui.QColor(137, 04, 177))
-                else:
-                    brush = QtGui.QBrush(QApplication.palette().text().color())
-            else:
-                brush = QtGui.QBrush(QtGui.QColor(128, 128, 128))
-                newItem.setExpanded(False)
-            brush.setStyle(QtCore.Qt.NoBrush)
-            newItem.setForeground(0, brush)
-
+            db[toAddress] = {}
             for folder in folders:
-                newSubItem = QtGui.QTreeWidgetItem(newItem)
+                db[toAddress][folder] = 0
+                
+            enabled[toAddress] = isEnabled
 
-                cnt = cntUnreadMsg.get(addressInKeysFile + folder, False)
-                if cnt:
-                    unreadText = " (" + str(cnt) + ")"
-                    font = QtGui.QFont()
-                    font.setBold(True)
-                    newSubItem.setFont(0, font)
-                else:
-                    unreadText = ""
+        # get number of (unread) messages
+        queryreturn = sqlQuery('SELECT toaddress, folder, count(msgid) as cnt FROM inbox WHERE read = 0 GROUP BY toaddress, folder')
+        for row in queryreturn:
+            toaddress, folder, cnt = row
+            if toaddress in db and folder in db[toaddress]:
+                db[toaddress][folder] = cnt
+        
+        if treeWidget.isSortingEnabled():
+            treeWidget.setSortingEnabled(False)
+        
+        widgets = {}
+        for i in range (0, treeWidget.topLevelItemCount()):
+            widget = treeWidget.topLevelItem(i)
+            toAddress = widget.address
+            
+            if not toAddress in db:
+                treeWidget.takeTopLevelItem(i)
+                i -= 1
+                continue
+            unread = 0
+            for j in range (0, widget.childCount()):
+                subwidget = widget.child(j)
+                try:
+                    subwidget.setUnreadCount(db[toAddress][subwidget.folderName])
+                    unread += db[toAddress][subwidget.folderName]
+                    db[toAddress].pop(subwidget.folderName, None)
+                except:
+                    widget.takeChild(i)
+                    j -= 1
 
-                newSubItem.setText(0, _translate("MainWindow", folder) + unreadText)
-                newSubItem.setData(0, Qt.UserRole, [str(addressInKeysFile), folder])
+            # add missing folders
+            if len(db[toAddress]) > 0:
+                i = 0
+                for f, c in db[toAddress].iteritems():
+                    print "adding %s, %i" % (f, c)
+                    subwidget = Ui_FolderWidget(widget, i, toAddress, f, c)
+                    i += 1
+            widget.setUnreadCount(unread)
+            db.pop(toAddress, None)
+        
+        i = 0
+        for toAddress in db:
+            widget = Ui_AddressWidget(treeWidget, i, toAddress, db[toAddress]["inbox"])
+            j = 0
+            unread = 0
+            for folder in folders:
+                subwidget = Ui_FolderWidget(widget, j, toAddress, folder, db[toAddress][folder])
+                unread += db[toAddress][folder]
+                j += 1
+            widget.setUnreadCount(unread)
+            i += 1
+            
+        treeWidget.setSortingEnabled(True)
 
     def __init__(self, parent=None):
         QtGui.QWidget.__init__(self, parent)
@@ -1851,6 +1753,12 @@ class MyForm(QtGui.QMainWindow):
 
     def changedInboxUnread(self):
         self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount())
+        if self.ui.tabWidget.currentIndex() == 0:
+            self.rerenderTabTreeMessages()
+        elif self.ui.tabWidget.currentIndex() == 2:
+            self.rerenderTabTreeSubscriptions()
+        elif self.ui.tabWidget.currentIndex() == 3:
+            self.rerenderTabTreeChans()
 
     def findInboxUnreadCount(self):
         queryreturn = sqlQuery('''SELECT count(*) from inbox WHERE folder='inbox' and read=0''')
@@ -3613,12 +3521,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
                 tableWidget.item(currentRow, 2).setFont(font)
                 tableWidget.item(currentRow, 3).setFont(font)
                 self.changedInboxUnread()
-#                if self.ui.tabWidget.currentIndex() == 0:
-#                    self.rerenderTabTreeMessages()
-#                elif self.ui.tabWidget.currentIndex() == 2:
-#                    self.rerenderTabTreeSubscriptions()
-#                elif self.ui.tabWidget.currentIndex() == 3:
-#                    self.rerenderTabTreeChans()
+
         else:
             data = self.getCurrentMessageId()
             if data != False:
