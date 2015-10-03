@@ -34,6 +34,7 @@ from newsubscriptiondialog import *
 from regenerateaddresses import *
 from newchandialog import *
 from specialaddressbehavior import *
+from emailgateway import *
 from settings import *
 from about import *
 from help import *
@@ -213,6 +214,10 @@ class MyForm(QtGui.QMainWindow):
             _translate(
                 "MainWindow", "Special address behavior..."),
             self.on_action_SpecialAddressBehaviorDialog)
+        self.actionEmailGateway = self.ui.addressContextMenuToolbarYourIdentities.addAction(
+            _translate(
+                "MainWindow", "Email gateway"),
+            self.on_action_EmailGatewayDialog)
 
         self.ui.treeWidgetYourIdentities.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
@@ -230,6 +235,7 @@ class MyForm(QtGui.QMainWindow):
         self.popMenuYourIdentities.addAction(self.actionDisableYourIdentities)
         self.popMenuYourIdentities.addAction(self.actionSetAvatarYourIdentities)
         self.popMenuYourIdentities.addAction(self.actionSpecialAddressBehaviorYourIdentities)
+        self.popMenuYourIdentities.addAction(self.actionEmailGateway)
 
     def init_chan_popup_menu(self, connectSignal=True):
         # Popup menu for the Channels tab
@@ -902,6 +908,7 @@ class MyForm(QtGui.QMainWindow):
 
             subjectItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8'))
             subjectItem.setToolTip(unicode(acct.subject, 'utf-8'))
+            subjectItem.setData(Qt.UserRole, str(subject))
             subjectItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             tableWidget.setItem(0, 2, subjectItem)
@@ -1038,6 +1045,7 @@ class MyForm(QtGui.QMainWindow):
             # subject
             subject_item = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8'))
             subject_item.setToolTip(unicode(acct.subject, 'utf-8'))
+            subject_item.setData(Qt.UserRole, str(subject))
             subject_item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
@@ -1968,6 +1976,8 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             QMessageBox.about(self, _translate("MainWindow", "Message too long"), _translate(
                 "MainWindow", "The message that you are trying to send is too long by %1 bytes. (The maximum is 261644 bytes). Please cut it down before sending.").arg(len(message) - (2 ** 18 - 500)))
             return
+            
+        acct = accountClass(fromAddress)
 
         if sendMessageToPeople: # To send a message to specific people (rather than broadcast)
             toAddressesList = [s.strip()
@@ -1976,6 +1986,12 @@ more work your computer must do to send the message. A Time-To-Live of four or f
                 toAddressesList))  # remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice.
             for toAddress in toAddressesList:
                 if toAddress != '':
+                    if toAddress.find("@") >= 0 and isinstance(acct, GatewayAccount):
+                        acct.createMessage(toAddress, fromAddress, subject, message)
+                        subject = acct.subject
+                        toAddress = acct.toAddress
+                        print "Subject: %s" % (subject)
+                        print "address: %s" % (toAddress)
                     status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                         toAddress)
                     if status != 'success':
@@ -2197,6 +2213,8 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         self.ui.tableWidgetInbox.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8)'))
         newItem.setToolTip(unicode(acct.subject, 'utf-8)'))
+        newItem.setData(Qt.UserRole, str(subject))
+
         #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
         self.ui.tableWidgetInbox.setItem(0, 2, newItem)
         # newItem =  QtGui.QTableWidgetItem('Doing work necessary to send
@@ -2242,6 +2260,8 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         self.ui.tableWidgetInbox.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8)'))
         newItem.setToolTip(unicode(acct.subject, 'utf-8)'))
+        newItem.setData(Qt.UserRole, str(subject))
+        
         #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0, 2, newItem)
@@ -2631,6 +2651,30 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             shared.writeKeysFile()
             self.rerenderInboxToLabels()
 
+    def on_action_EmailGatewayDialog(self):
+        self.dialog = EmailGatewayDialog(self)
+        # For Modal dialogs
+        if self.dialog.exec_():
+            addressAtCurrentRow = self.getCurrentAccount()
+            acct = accountClass(addressAtCurrentRow)
+            if isinstance(acct, GatewayAccount) and self.dialog.ui.radioButtonUnregister.isChecked():
+                print "unregister"
+                acct.unregister()
+                shared.config.remove_option(addressAtCurrentRow, 'gateway')
+                shared.writeKeysFile()
+            elif (not isinstance(acct, GatewayAccount)) and self.dialog.ui.radioButtonRegister.isChecked():
+                print "register"
+                email = str(self.dialog.ui.lineEditEmail.text().toUtf8())
+                acct = MailchuckAccount(addressAtCurrentRow)
+                acct.register(email)
+                shared.config.set(addressAtCurrentRow, 'label', email)
+                shared.config.set(addressAtCurrentRow, 'gateway', 'mailchuck')
+                shared.writeKeysFile()
+            else:
+                print "well nothing"
+#            shared.writeKeysFile()
+#            self.rerenderInboxToLabels()
+    
     def click_NewAddressDialog(self):
         addresses = []
         configSections = shared.config.sections()
@@ -2638,11 +2682,11 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             if addressInKeysFile == 'bitmessagesettings':
                 continue
             addresses.append(addressInKeysFile)
-        self.dialog = Ui_NewAddressWizard(addresses)
-        self.dialog.exec_()
+#        self.dialog = Ui_NewAddressWizard(addresses)
+#        self.dialog.exec_()
 #        print "Name: " + self.dialog.field("name").toString()
 #        print "Email: " + self.dialog.field("email").toString()
-        return
+#        return
         self.dialog = NewAddressDialog(self)
         # For Modal dialogs
         if self.dialog.exec_():
@@ -2789,6 +2833,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         currentInboxRow = tableWidget.currentRow()
         toAddressAtCurrentInboxRow = str(tableWidget.item(
             currentInboxRow, 0).data(Qt.UserRole).toPyObject())
+        acct = accountClass(toAddressAtCurrentInboxRow)
         fromAddressAtCurrentInboxRow = str(tableWidget.item(
             currentInboxRow, 1).data(Qt.UserRole).toPyObject())
         msgid = str(tableWidget.item(
@@ -2798,6 +2843,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         if queryreturn != []:
             for row in queryreturn:
                 messageAtCurrentInboxRow, = row
+        acct.parseMessage(toAddressAtCurrentInboxRow, fromAddressAtCurrentInboxRow, str(tableWidget.item(currentInboxRow, 2).data(Qt.UserRole).toPyObject()), messageAtCurrentInboxRow)
         if toAddressAtCurrentInboxRow == self.str_broadcast_subscribers:
             #TODO what does this if?..
             a = a
@@ -2810,7 +2856,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         else:
             self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(toAddressAtCurrentInboxRow)
 
-        self.ui.lineEditTo.setText(str(fromAddressAtCurrentInboxRow))
+        self.ui.lineEditTo.setText(str(acct.fromLabel))
         
         # If the previous message was to a chan then we should send our reply to the chan rather than to the particular person who sent the message.
         if shared.config.has_section(toAddressAtCurrentInboxRow):
@@ -2827,12 +2873,10 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         
         quotedText = self.quoted_text(unicode(messageAtCurrentInboxRow, 'utf-8'))
         self.ui.textEditMessage.setText(quotedText)
-        if tableWidget.item(currentInboxRow, 2).text()[0:3] in ['Re:', 'RE:']:
-            self.ui.lineEditSubject.setText(
-                tableWidget.item(currentInboxRow, 2).text())
+        if acct.subject[0:3] in ['Re:', 'RE:']:
+            self.ui.lineEditSubject.setText(acct.subject)
         else:
-            self.ui.lineEditSubject.setText(
-                'Re: ' + tableWidget.item(currentInboxRow, 2).text())
+            self.ui.lineEditSubject.setText('Re: ' + acct.subject)
         self.ui.tabWidgetSend.setCurrentIndex(0)
         self.ui.tabWidget.setCurrentIndex(1)
 
@@ -3774,6 +3818,23 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog):
 
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
+class EmailGatewayDialog(QtGui.QDialog):
+
+    def __init__(self, parent):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_EmailGatewayDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        addressAtCurrentRow = parent.getCurrentAccount()
+        acct = accountClass(addressAtCurrentRow)
+#        if isinstance(acct, GatewayAccount):
+        label = shared.config.get(addressAtCurrentRow, 'label')
+        if label.find("@mailchuck.com") > -1:
+            self.ui.lineEditEmail.setText(label)
+
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+
+
 class AddAddressDialog(QtGui.QDialog):
 
     def __init__(self, parent):
@@ -4001,11 +4062,11 @@ def run():
     if shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
         myapp.showConnectDialog() # ask the user if we may connect
     
-    try:
-        if shared.config.get('bitmessagesettings', 'mailchuck') < 1:
-            myapp.showMigrationWizard(shared.config.get('bitmessagesettings', 'mailchuck'))
-    except:
-        myapp.showMigrationWizard(0)
+#    try:
+#        if shared.config.get('bitmessagesettings', 'mailchuck') < 1:
+#            myapp.showMigrationWizard(shared.config.get('bitmessagesettings', 'mailchuck'))
+#    except:
+#        myapp.showMigrationWizard(0)
     
     # only show after wizards and connect dialogs have completed
     if not shared.config.getboolean('bitmessagesettings', 'startintray'):
