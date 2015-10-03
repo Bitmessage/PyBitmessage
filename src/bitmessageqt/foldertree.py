@@ -49,11 +49,13 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem):
                 y = self.folderWeight[other.folderName]
             else:
                 y = 4
-                
+            reverse = False
+            if self.treeWidget().header().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
+                reverse = True
             if x == y:
-                return self.folderName > other.folderName
+                return self.folderName < other.folderName
             else:
-                return x > y
+                return (x >= y if reverse else x < y)
 
         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
     
@@ -117,6 +119,9 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem):
     # label (or address) alphabetically, disabled at the end
     def __lt__(self, other):
         if (isinstance(other, Ui_AddressWidget)):
+            reverse = False
+            if self.treeWidget().header().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
+                reverse = True
             if shared.config.getboolean(self.address, 'enabled') == shared.config.getboolean(other.address, 'enabled'):
                 if shared.config.get(self.address, 'label'):
                     x = shared.config.get(self.address, 'label').decode('utf-8').lower()
@@ -126,8 +131,8 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem):
                     y = shared.config.get(other.address, 'label').decode('utf-8').lower()
                 else:
                     y = other.address.decode('utf-8').lower()
-                return y < x
+                return x < y
 #            else:
-            return (False if shared.config.getboolean(self.address, 'enabled') else True)
+            return (not reverse if shared.config.getboolean(self.address, 'enabled') else reverse)
 
         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
