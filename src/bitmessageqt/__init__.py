@@ -447,7 +447,9 @@ class MyForm(QtGui.QMainWindow):
         elif tab == 'chan':
             treeWidget = self.ui.treeWidgetChans
 
-        #treeWidget.clear()
+        # sort ascending when creating
+        if treeWidget.topLevelItemCount() == 0:
+            treeWidget.header().setSortIndicator(0, Qt.AscendingOrder)
 
         # init dictionary
         db = {}
@@ -860,6 +862,10 @@ class MyForm(QtGui.QMainWindow):
         else:
             where = "toaddress || fromaddress || subject || message"
 
+        tableWidget.setColumnHidden(0, False)
+        tableWidget.setColumnHidden(1, True)
+        tableWidget.setSortingEnabled(False)
+
         sqlStatement = '''
             SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime 
             FROM sent WHERE fromaddress=? AND folder="sent" AND %s LIKE ? 
@@ -868,60 +874,34 @@ class MyForm(QtGui.QMainWindow):
 
         while tableWidget.rowCount() > 0:
             tableWidget.removeRow(0)
-
+        acct = None
         queryreturn = sqlQuery(sqlStatement, account, what)
         for row in queryreturn:
             toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-
-            if shared.config.has_section(fromAddress):
-                fromLabel = shared.config.get(fromAddress, 'label')
-            else:
-                fromLabel = fromAddress
-
-            toLabel = ''
-            queryreturn = sqlQuery(
-                '''select label from addressbook where address=?''', toAddress)
-            if queryreturn != []:
-                for row in queryreturn:
-                    toLabel, = row
-            if toLabel == '':
-                # It might be a broadcast message. We should check for that
-                # label.
-                queryreturn = sqlQuery(
-                    '''select label from subscriptions where address=?''', toAddress)
-
-                if queryreturn != []:
-                    for row in queryreturn:
-                        toLabel, = row
-            
-            if toLabel == '':
-                if shared.config.has_section(toAddress):
-                    toLabel = shared.config.get(toAddress, 'label')
-            if toLabel == '':
-                toLabel = toAddress
+            if acct is None:
+                acct = accountClass(fromAddress)
+            acct.parseMessage(toAddress, fromAddress, subject, "")
 
             tableWidget.insertRow(0)
-            toAddressItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
-            toAddressItem.setToolTip(unicode(toLabel, 'utf-8'))
+            toAddressItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
+            toAddressItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
             toAddressItem.setIcon(avatarize(toAddress))
             toAddressItem.setData(Qt.UserRole, str(toAddress))
             toAddressItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             tableWidget.setItem(0, 0, toAddressItem)
 
-            if fromLabel == '':
-                fromLabel = fromAddress
-            fromAddressItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
-            fromAddressItem.setToolTip(unicode(fromLabel, 'utf-8'))
+            fromAddressItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
+            fromAddressItem.setToolTip(unicode(acct.fromLabel, 'utf-8'))
             fromAddressItem.setIcon(avatarize(fromAddress))
             fromAddressItem.setData(Qt.UserRole, str(fromAddress))
             fromAddressItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             tableWidget.setItem(0, 1, fromAddressItem)
 
-            subjectItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8'))
-            subjectItem.setToolTip(unicode(subject, 'utf-8'))
+            subjectItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8'))
+            subjectItem.setToolTip(unicode(acct.subject, 'utf-8'))
             subjectItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             tableWidget.setItem(0, 2, subjectItem)
@@ -972,7 +952,9 @@ class MyForm(QtGui.QMainWindow):
             newItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             tableWidget.setItem(0, 3, newItem)
-        tableWidget.sortItems(3, Qt.DescendingOrder)
+
+        tableWidget.setSortingEnabled(False)
+        tableWidget.horizontalHeader().setSortIndicator(3, Qt.DescendingOrder)
         tableWidget.keyPressEvent = self.tableWidgetInboxKeyPressEvent
 
     # Load messages from database file
@@ -993,62 +975,43 @@ class MyForm(QtGui.QMainWindow):
         else:
             where = "toaddress || fromaddress || subject || message"
 
-        sqlStatement = '''
-            SELECT msgid, toaddress, fromaddress, subject, received, read
-            FROM inbox WHERE toaddress=? AND folder=? AND %s LIKE ?
-            ORDER BY received
-            ''' % (where)
+        if folder != False:
+            sqlStatement = '''
+                SELECT folder, msgid, toaddress, fromaddress, subject, received, read
+                FROM inbox WHERE toaddress=? AND folder=? AND %s LIKE ?
+                ORDER BY received
+                ''' % (where)
+            queryreturn = sqlQuery(sqlStatement, account, folder, what)
+        else:
+            sqlStatement = '''
+                SELECT folder, msgid, toaddress, fromaddress, subject, received, read
+                FROM inbox WHERE toaddress=? AND folder != "trash" AND %s LIKE ?
+                ORDER BY received
+                ''' % (where)
+            queryreturn = sqlQuery(sqlStatement, account, what)
 
         while tableWidget.rowCount() > 0:
             tableWidget.removeRow(0)
 
+        tableWidget.setColumnHidden(0, True)
+        tableWidget.setColumnHidden(1, False)
+        tableWidget.setSortingEnabled(False)
+        
         font = QFont()
         font.setBold(True)
-        queryreturn = sqlQuery(sqlStatement, account, folder, what)
         acct = None
         for row in queryreturn:
-            msgid, toAddress, fromAddress, subject, received, read = row
+            msgfolder, msgid, toAddress, fromAddress, subject, received, read = row
             if acct is None:
                 acct = accountClass(toAddress)
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             acct.parseMessage(toAddress, fromAddress, subject, "")
-            try:
-                if toAddress == self.str_broadcast_subscribers:
-                    toLabel = self.str_broadcast_subscribers
-                else:
-                    toLabel = shared.config.get(toAddress, 'label')
-            except:
-                toLabel = ''
-            if toLabel == '':
-                toLabel = toAddress
-
-            fromLabel = ''
-            if type(acct) == MailchuckAccount:
-                fromLabel = acct.fromAddress
-            if shared.config.has_section(fromAddress):
-                fromLabel = shared.config.get(fromAddress, 'label')
-            
-            if fromLabel == '':  # If the fromAddress isn't one of our addresses and isn't a chan
-                queryreturn = sqlQuery(
-                    '''select label from addressbook where address=?''', fromAddress)
-                if queryreturn != []:
-                    for row in queryreturn:
-                        fromLabel, = row
-
-            if fromLabel == '':  # If this address wasn't in our address book...
-                queryreturn = sqlQuery(
-                    '''select label from subscriptions where address=?''', fromAddress)
-                if queryreturn != []:
-                    for row in queryreturn:
-                        fromLabel, = row
-            if fromLabel == '':
-                fromLabel = fromAddress
             
             # message row
             tableWidget.insertRow(0)
             # to
-            to_item = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
-            to_item.setToolTip(unicode(toLabel, 'utf-8'))
+            to_item = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
+            to_item.setToolTip(unicode(acct.toLabel, 'utf-8'))
             to_item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
@@ -1061,8 +1024,8 @@ class MyForm(QtGui.QMainWindow):
             to_item.setIcon(avatarize(toAddress))
             tableWidget.setItem(0, 0, to_item)
             # from
-            from_item = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
-            from_item.setToolTip(unicode(fromLabel, 'utf-8'))
+            from_item = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
+            from_item.setToolTip(unicode(acct.fromLabel, 'utf-8'))
             from_item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
@@ -1091,7 +1054,8 @@ class MyForm(QtGui.QMainWindow):
                 time_item.setFont(font)
             tableWidget.setItem(0, 3, time_item)
 
-        tableWidget.sortItems(3, Qt.DescendingOrder)
+        tableWidget.horizontalHeader().setSortIndicator(3, Qt.DescendingOrder)
+        tableWidget.setSortingEnabled(True)
         tableWidget.keyPressEvent = self.tableWidgetInboxKeyPressEvent
 
     # create application indicator
@@ -1761,8 +1725,8 @@ class MyForm(QtGui.QMainWindow):
     def changedInboxUnread(self, row = None):
         self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount())
         self.rerenderTabTreeMessages()
-        if not row is None:
-            row[1], row[6]
+#        if not row is None:
+#            row[1], row[6]
         if self.ui.tabWidget.currentIndex() == 2:
             self.rerenderTabTreeSubscriptions()
         elif self.ui.tabWidget.currentIndex() == 3:
@@ -2214,35 +2178,23 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             return
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         message = shared.fixPotentiallyInvalidUTF8Data(message)
-        try:
-            fromLabel = shared.config.get(fromAddress, 'label')
-        except:
-            fromLabel = ''
-        if fromLabel == '':
-            fromLabel = fromAddress
+        acct = accountClass(fromAddress)
+        acct.parseMessage(toAddress, fromAddress, subject, message)
 
         self.ui.tableWidgetInbox.setSortingEnabled(False)
         self.ui.tableWidgetInbox.insertRow(0)
-        if toLabel == '':
-            newItem = QtGui.QTableWidgetItem(unicode(toAddress, 'utf-8'))
-            newItem.setToolTip(unicode(toAddress, 'utf-8'))
-        else:
-            newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
-            newItem.setToolTip(unicode(toLabel, 'utf-8'))
+        newItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
+        newItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(toAddress))
         newItem.setIcon(avatarize(toAddress))
         self.ui.tableWidgetInbox.setItem(0, 0, newItem)
-        if fromLabel == '':
-            newItem = QtGui.QTableWidgetItem(unicode(fromAddress, 'utf-8'))
-            newItem.setToolTip(unicode(fromAddress, 'utf-8'))
-        else:
-            newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
-            newItem.setToolTip(unicode(fromLabel, 'utf-8'))
+        newItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
+        newItem.setToolTip(unicode(acct.fromLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setIcon(avatarize(fromAddress))
         self.ui.tableWidgetInbox.setItem(0, 1, newItem)
-        newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
-        newItem.setToolTip(unicode(subject, 'utf-8)'))
+        newItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8)'))
+        newItem.setToolTip(unicode(acct.subject, 'utf-8)'))
         #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
         self.ui.tableWidgetInbox.setItem(0, 2, newItem)
         # newItem =  QtGui.QTableWidgetItem('Doing work necessary to send
@@ -2257,40 +2209,17 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         self.ui.tableWidgetInbox.setSortingEnabled(True)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
-        if self.getCurrentFolder() != "inbox" or self.getCurrentAccount() != toAddress:
+        if (self.getCurrentFolder() != "inbox" and self.getCurrentFolder() != False) or self.getCurrentAccount() != toAddress:
             return
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-        fromLabel = ''
-        queryreturn = sqlQuery(
-            '''select label from addressbook where address=?''', fromAddress)
-        if queryreturn != []:
-            for row in queryreturn:
-                fromLabel, = row
-        else:
-            # There might be a label in the subscriptions table
-            queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', fromAddress)
-            if queryreturn != []:
-                for row in queryreturn:
-                    fromLabel, = row
-
-        try:
-            if toAddress == self.str_broadcast_subscribers:
-                toLabel = self.str_broadcast_subscribers
-            else:
-                toLabel = shared.config.get(toAddress, 'label')
-        except:
-            toLabel = ''
-        if toLabel == '':
-            toLabel = toAddress
+        acct = accountClass(toAddress)
+        acct.parseMessage(toAddress, fromAddress, subject, message)
 
         font = QFont()
         font.setBold(True)
         self.ui.tableWidgetInbox.setSortingEnabled(False)
-        account = accountClass(toAddress)
-        account.parseMessage(toAddress, fromAddress, subject, message)
-        newItem = QtGui.QTableWidgetItem(unicode(toLabel, 'utf-8'))
-        newItem.setToolTip(unicode(toLabel, 'utf-8'))
+        newItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
+        newItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
         newItem.setFont(font)
         newItem.setData(Qt.UserRole, str(toAddress))
         if shared.safeConfigGetBoolean(str(toAddress), 'mailinglist'):
@@ -2301,27 +2230,16 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         newItem.setIcon(avatarize(toAddress))
         self.ui.tableWidgetInbox.setItem(0, 0, newItem)
 
-        if type(account) is MailchuckAccount:
-            newItem = QtGui.QTableWidgetItem(unicode(account.fromAddress, 'utf-8'))
-            newItem.setToolTip(unicode(account.fromAddress, 'utf-8'))
-            if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
-                self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(account.fromAddress, 'utf-8'), self.SOUND_UNKNOWN, None)
-        elif fromLabel == '':
-            newItem = QtGui.QTableWidgetItem(unicode(fromAddress, 'utf-8'))
-            newItem.setToolTip(unicode(fromAddress, 'utf-8'))
-            if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
-                self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(fromAddress, 'utf-8'), self.SOUND_UNKNOWN, None)
-        else:
-            newItem = QtGui.QTableWidgetItem(unicode(fromLabel, 'utf-8'))
-            newItem.setToolTip(unicode(unicode(fromLabel, 'utf-8')))
-            if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
-                self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(fromLabel, 'utf-8'), self.SOUND_KNOWN, unicode(fromLabel, 'utf-8'))
+        newItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
+        newItem.setToolTip(unicode(acct.fromLabel, 'utf-8'))
+        if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
+            self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(acct.fromLabel, 'utf-8'), self.SOUND_UNKNOWN, None)
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setFont(font)
         newItem.setIcon(avatarize(fromAddress))
         self.ui.tableWidgetInbox.setItem(0, 1, newItem)
-        newItem = QtGui.QTableWidgetItem(unicode(subject, 'utf-8)'))
-        newItem.setToolTip(unicode(account.subject, 'utf-8)'))
+        newItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8)'))
+        newItem.setToolTip(unicode(acct.subject, 'utf-8)'))
         #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0, 2, newItem)
@@ -2332,7 +2250,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0, 3, newItem)
         self.ui.tableWidgetInbox.setSortingEnabled(True)
-        self.ubuntuMessagingMenuUpdate(True, newItem, toLabel)
+        self.ubuntuMessagingMenuUpdate(True, newItem, self.toLabel)
 
     def click_pushButtonAddAddressBook(self):
         self.AddAddressDialogInstance = AddAddressDialog(self)
@@ -2953,11 +2871,14 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         tableWidget = self.getCurrentMessagelist()
         if not tableWidget:
             return
+        unread = False
         while tableWidget.selectedIndexes() != []:
             currentRow = tableWidget.selectedIndexes()[0].row()
             inventoryHashToTrash = str(tableWidget.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
             sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', inventoryHashToTrash)
+            if tableWidget.item(currentRow, 0).font().bold():
+                unread = True
             self.ui.textEditInboxMessage.setText("")
             tableWidget.removeRow(currentRow)
             self.statusBar().showMessage(_translate(
@@ -2966,6 +2887,8 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             tableWidget.selectRow(currentRow)
         else:
             tableWidget.selectRow(currentRow - 1)
+        if unread:
+            changedInboxUnread()
 
     def on_action_InboxSaveMessageAs(self):
         tableWidget = self.getCurrentMessagelist()
@@ -3301,9 +3224,8 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         treeWidget = self.ui.treeWidgetYourIdentities
         if treeWidget:
             currentItem = treeWidget.currentItem()
-            if currentItem:
-                account = currentItem.folderName
-                return account
+            if currentItem and hasattr(currentItem, 'folderName'):
+                return currentItem.folderName
             else:
                 # TODO need debug msg?
                 return False
@@ -3516,7 +3438,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             refresh = False
             for row in queryreturn:
                 message, read = row
-                if folder == 'inbox' and read == 0:
+                if folder != 'sent' and read == 0:
                     markread = sqlQuery(
                         '''UPDATE inbox SET read = 1 WHERE msgid = ?''', msgid)
                     refresh = True
