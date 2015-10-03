@@ -5,6 +5,9 @@ import re
 import sys
 import inspect
 from helper_sql import *
+from addresses import decodeAddress
+from pyelliptic.openssl import OpenSSL
+import time
 
 def accountClass(address):
     if not shared.config.has_section(address):
@@ -57,6 +60,31 @@ class GatewayAccount(BMAccount):
     gatewayName = None
     def __init__(self, address):
         super(BMAccount, self).__init__(address)
+        
+    def send(self):
+        status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
+        ackdata = OpenSSL.rand(32)
+        t = ()
+        sqlExecute(
+            '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
+            '',
+            self.toAddress,
+            ripe,
+            self.fromAddress,
+            self.subject,
+            self.message,
+            ackdata,
+            int(time.time()), # sentTime (this will never change)
+            int(time.time()), # lastActionTime
+            0, # sleepTill time. This will get set when the POW gets done.
+            'msgqueued',
+            0, # retryNumber
+            'sent', # folder
+            2, # encodingtype
+            shared.config.getint('bitmessagesettings', 'ttl')
+        )
+
+        shared.workerQueue.put(('sendmessage', self.toAddress))
     
     def parseMessage(self, toAddress, fromAddress, subject, message):
         super(BMAccount, self).parseMessage(toAddress, fromAddress, subject, message)
@@ -71,6 +99,26 @@ class MailchuckAccount(GatewayAccount):
     regExpOutgoing = re.compile("(\S+) (.*)")
     def __init__(self, address):
         super(GatewayAccount, self).__init__(address)
+        
+    def createMessage(self, toAddress, fromAddress, subject, message):
+        self.subject = toAddress + " " + subject
+        self.toAddress = self.relayAddress
+        self.fromAddress = fromAddress
+        self.message = message
+        
+    def register(self, email):
+        self.toAddress = self.registrationAddress
+        self.subject = email
+        self.message = ""
+        self.fromAddress = self.address
+        self.send()
+        
+    def unregister(self):
+        self.toAddress = self.unregistrationAddress
+        self.subject = ""
+        self.message = ""
+        self.fromAddress = self.address
+        self.send()
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
         super(GatewayAccount, self).parseMessage(toAddress, fromAddress, subject, message)
@@ -84,10 +132,12 @@ class MailchuckAccount(GatewayAccount):
                     self.subject += matches.group(3)
                 if not matches.group(2) is None:
                     self.fromLabel = matches.group(2)
+                    self.fromAddress = matches.group(2)
         if toAddress == self.relayAddress:
             matches = self.regExpOutgoing.search(subject)
             if not matches is None:
                 if not matches.group(2) is None:
                     self.subject = matches.group(2)
                 if not matches.group(1) is None:
-                    self.toLabel = matches.group(1)        
+                    self.toLabel = matches.group(1)
+                    self.toAddress = matches.group(1)
