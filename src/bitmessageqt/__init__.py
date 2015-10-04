@@ -535,7 +535,6 @@ class MyForm(QtGui.QMainWindow):
                 j += 1
             widget.setUnreadCount(unread)
             if (tab == 'messages'):
-                print "setting %s editable" % (toAddress)
                 widget.setFlags (widget.flags() | QtCore.Qt.ItemIsEditable)
             i += 1
         
@@ -3467,19 +3466,29 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             self.loadMessagelist(messagelist, account, folder)
 
     def treeWidgetItemChanged(self, item, column):
-        widget = self.getCurrentTreeWidget()
-        if item.address == widget.currentItem().address:
-            newLabel = str(item.text(0))
-            newLabel = newLabel.replace("(" + str(item.address) + ")", '')
-            newLabel = newLabel.rstrip()
-            oldLabel = shared.config.get(str(item.address), 'label')
-            oldLabel = oldLabel.replace("(" + str(item.address) + ")", '')
-            oldLabel = oldLabel.rstrip()
-            if newLabel == oldLabel:
-                return
-            shared.config.set(str(item.address), 'label', newLabel)
-            item.updateText()
-            shared.writeKeysFile()
+        # only for manual edits. automatic edits (setText) are ignored
+        if column != 0:
+            return
+        # only account names
+        if not isinstance(item, Ui_AddressWidget):
+            return
+        # only currently selected item
+        if item.address != self.getCurrentTreeWidget().currentItem().address:
+            return
+        
+        newLabel = str(item.text(0))
+        newLabel = newLabel.replace("(" + str(item.address) + ")", '')
+        newLabel = newLabel.rstrip()
+        oldLabel = shared.config.get(str(item.address), 'label')
+        oldLabel = oldLabel.replace("(" + str(item.address) + ")", '')
+        oldLabel = oldLabel.rstrip()
+        # unchanged, do not do anything either
+        if newLabel == oldLabel:
+            return
+ 
+        shared.config.set(str(item.address), 'label', newLabel)
+        item.updateText()
+        shared.writeKeysFile()
 
     def tableWidgetInboxItemClicked(self):
         folder = self.getCurrentFolder()
