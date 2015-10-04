@@ -2673,6 +2673,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
                 acct.register(email)
                 shared.config.set(addressAtCurrentRow, 'label', email)
                 shared.config.set(addressAtCurrentRow, 'gateway', 'mailchuck')
+                self.getCurrentTreeWidget().currentItem().updateText()
                 shared.writeKeysFile()
             else:
                 print "well nothing"
