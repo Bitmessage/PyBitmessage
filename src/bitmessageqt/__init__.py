@@ -534,8 +534,11 @@ class MyForm(QtGui.QMainWindow):
                 unread += db[toAddress][folder]
                 j += 1
             widget.setUnreadCount(unread)
+            if (tab == 'messages'):
+                print "setting %s editable" % (toAddress)
+                widget.setFlags (widget.flags() | QtCore.Qt.ItemIsEditable)
             i += 1
-            
+        
         treeWidget.setSortingEnabled(True)
 
     def __init__(self, parent=None):
@@ -645,6 +648,8 @@ class MyForm(QtGui.QMainWindow):
         # tree address lists
         QtCore.QObject.connect(self.ui.treeWidgetYourIdentities, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.treeWidgetItemClicked)
+        QtCore.QObject.connect(self.ui.treeWidgetYourIdentities, QtCore.SIGNAL(
+            "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
         QtCore.QObject.connect(self.ui.treeWidgetSubscriptions, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.treeWidgetItemClicked)
         QtCore.QObject.connect(self.ui.treeWidgetChans, QtCore.SIGNAL(
@@ -3460,6 +3465,21 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             account = self.getCurrentAccount()
             folder = self.getCurrentFolder()
             self.loadMessagelist(messagelist, account, folder)
+
+    def treeWidgetItemChanged(self, item, column):
+        widget = self.getCurrentTreeWidget()
+        if item.address == widget.currentItem().address:
+            newLabel = str(item.text(0))
+            newLabel = newLabel.replace("(" + str(item.address) + ")", '')
+            newLabel = newLabel.rstrip()
+            oldLabel = shared.config.get(str(item.address), 'label')
+            oldLabel = oldLabel.replace("(" + str(item.address) + ")", '')
+            oldLabel = oldLabel.rstrip()
+            if newLabel == oldLabel:
+                return
+            shared.config.set(str(item.address), 'label', newLabel)
+            item.updateText()
+            shared.writeKeysFile()
 
     def tableWidgetInboxItemClicked(self):
         folder = self.getCurrentFolder()
