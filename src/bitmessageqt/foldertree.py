@@ -80,9 +80,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem):
         self.updateText()
         
     def updateText(self):
-        text = QtGui.QApplication.translate("MainWindow",
-            unicode(shared.config.get(self.address, 'label'), 'utf-8)')
-                + ' (' + self.address + ')')
+        text = unicode(shared.config.get(self.address, 'label'), 'utf-8)') + ' (' + self.address + ')'
         
         font = QtGui.QFont()
         if self.unreadCount > 0:
@@ -115,6 +113,10 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem):
     def setExpanded(self, expand):
         super(Ui_AddressWidget, self).setExpanded(expand)
         self.updateText()
+
+    def edit(self):
+        self.setText(0, shared.config.get(self.address, 'label'))
+        super(QtGui.QAbstractItemView, self).edit()
 
     # label (or address) alphabetically, disabled at the end
     def __lt__(self, other):
