@@ -587,6 +587,8 @@ class MyForm(QtGui.QMainWindow):
         self.timer.start(2000) # milliseconds
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
+        self.recurDepth = 0
+
         self.init_file_menu()
         self.init_inbox_popup_menu()
         self.init_identities_popup_menu()
@@ -595,7 +597,7 @@ class MyForm(QtGui.QMainWindow):
         self.init_chan_popup_menu()
         self.init_sent_popup_menu()
         self.init_blacklist_popup_menu()
-
+        
         # Initialize the user's list of addresses on the 'Chan' tab.
         self.rerenderTabTreeChans()
 
@@ -3486,10 +3488,16 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         # unchanged, do not do anything either
         if newLabel == oldLabel:
             return
- 
+
+        # recursion prevention
+        if self.recurDepth > 0:
+            return
+
+        self.recurDepth += 1
         shared.config.set(str(item.address), 'label', newLabel)
         item.updateText()
         shared.writeKeysFile()
+        self.recurDepth -= 1
 
     def tableWidgetInboxItemClicked(self):
         folder = self.getCurrentFolder()
