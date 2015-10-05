@@ -447,11 +447,12 @@ class MyForm(QtGui.QMainWindow):
         self.rerenderTabTree('chan')
         
     def rerenderTabTree(self, tab):
-        folders = ['inbox', 'sent', 'trash']
         if tab == 'messages':
             treeWidget = self.ui.treeWidgetYourIdentities
+            folders = ['inbox', 'sent', 'trash']
         elif tab == 'chan':
             treeWidget = self.ui.treeWidgetChans
+            folders = ['inbox', 'trash']
 
         # sort ascending when creating
         if treeWidget.topLevelItemCount() == 0:
@@ -873,6 +874,7 @@ class MyForm(QtGui.QMainWindow):
             where = "message"
         else:
             where = "toaddress || fromaddress || subject || message"
+
 
         tableWidget.setColumnHidden(0, False)
         tableWidget.setColumnHidden(1, True)
@@ -2246,9 +2248,9 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         newItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
         newItem.setFont(font)
         newItem.setData(Qt.UserRole, str(toAddress))
-        if shared.safeConfigGetBoolean(str(toAddress), 'mailinglist'):
+        if acct.type == 'mailinglist':
             newItem.setTextColor(QtGui.QColor(137, 04, 177)) # magenta
-        if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
+        if acct.type == 'chan':
             newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
         self.ui.tableWidgetInbox.insertRow(0)
         newItem.setIcon(avatarize(toAddress))
@@ -3259,8 +3261,8 @@ more work your computer must do to send the message. A Time-To-Live of four or f
 
     # Group of functions for the Your Identities dialog box
     def getCurrentAccount(self):
-        #treeWidget = self.getCurrentTreeWidget()
-        treeWidget = self.ui.treeWidgetYourIdentities
+        treeWidget = self.getCurrentTreeWidget()
+        #treeWidget = self.ui.treeWidgetYourIdentities
         if treeWidget:
             currentItem = treeWidget.currentItem()
             if currentItem:
@@ -3472,8 +3474,8 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         # only for manual edits. automatic edits (setText) are ignored
         if column != 0:
             return
-        # only account names
-        if not isinstance(item, Ui_AddressWidget):
+        # only account names of normal addresses (no chans/mailinglists)
+        if (not isinstance(item, Ui_AddressWidget)) or item.type != 'normal':
             return
         # only currently selected item
         if item.address != self.getCurrentTreeWidget().currentItem().address:
