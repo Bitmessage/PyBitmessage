@@ -28,6 +28,12 @@ def accountClass(address):
 class BMAccount(object):
     def __init__(self, address = None):
         self.address = address
+        self.type = 'normal'
+        if shared.config.has_section(address):
+            if shared.safeConfigGetBoolean(self.address, 'chan'):
+                self.type = "chan"
+            elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
+                self.type = "mailinglist"
         
     def getLabel(self, address = None):
         if address is None:

@@ -2665,7 +2665,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             acct = accountClass(addressAtCurrentRow)
             # no chans / mailinglists
             if acct.type != 'normal':
-                continue
+                return
             if self.dialog.ui.radioButtonUnregister.isChecked():
                 print "unregister"
                 acct.unregister()
@@ -3479,7 +3479,10 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         if column != 0:
             return
         # only account names of normal addresses (no chans/mailinglists)
-        if (not isinstance(item, Ui_AddressWidget)) or item.type != 'normal':
+        if (not isinstance(item, Ui_AddressWidget)) or item.type != 'normal' or self.getCurrentTreeWidget().currentItem() is None:
+            return
+        # not visible
+        if (not self.getCurrentAccount()) or (not isinstance (self.getCurrentAccount(), Ui_AddressWidget)):
             return
         # only currently selected item
         if item.address != self.getCurrentTreeWidget().currentItem().address:
