@@ -63,18 +63,26 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem):
 class Ui_AddressWidget(QtGui.QTreeWidgetItem):
     def __init__(self, parent, pos = 0, address = "", unreadCount = 0):
         super(QtGui.QTreeWidgetItem, self).__init__()
-        self.address = address
         self.unreadCount = unreadCount
         parent.insertTopLevelItem(pos, self)
         # only set default when creating
         #super(QtGui.QTreeWidgetItem, self).setExpanded(shared.config.getboolean(self.address, 'enabled'))
-        self.setExpanded(shared.safeConfigGetBoolean(self.address, 'enabled'))
-        self.updateText()
+        self.setAddress(address)
     
     def setAddress(self, address):
         self.address = str(address)
+        self.setType()
+        self.setExpanded(shared.safeConfigGetBoolean(self.address, 'enabled'))
         self.updateText()
 
+    def setType(self):
+        if shared.safeConfigGetBoolean(self.address, 'chan'):
+            self.type = "chan"
+        elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
+            self.type = "mailinglist"
+        else:
+            self.type = "normal"
+    
     def setUnreadCount(self, cnt):
         self.unreadCount = int(cnt)
         self.updateText()
