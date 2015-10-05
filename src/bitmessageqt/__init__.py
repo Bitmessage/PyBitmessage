@@ -2663,12 +2663,15 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         if self.dialog.exec_():
             addressAtCurrentRow = self.getCurrentAccount()
             acct = accountClass(addressAtCurrentRow)
-            if isinstance(acct, GatewayAccount) and self.dialog.ui.radioButtonUnregister.isChecked():
+            # no chans / mailinglists
+            if acct.type != 'normal':
+                continue
+            if self.dialog.ui.radioButtonUnregister.isChecked():
                 print "unregister"
                 acct.unregister()
                 shared.config.remove_option(addressAtCurrentRow, 'gateway')
                 shared.writeKeysFile()
-            elif (not isinstance(acct, GatewayAccount)) and self.dialog.ui.radioButtonRegister.isChecked():
+            elif self.dialog.ui.radioButtonRegister.isChecked():
                 print "register"
                 email = str(self.dialog.ui.lineEditEmail.text().toUtf8())
                 acct = MailchuckAccount(addressAtCurrentRow)
@@ -2678,7 +2681,8 @@ more work your computer must do to send the message. A Time-To-Live of four or f
                 self.getCurrentTreeWidget().currentItem().updateText()
                 shared.writeKeysFile()
             else:
-                print "well nothing"
+                pass
+                #print "well nothing"
 #            shared.writeKeysFile()
 #            self.rerenderInboxToLabels()
     
