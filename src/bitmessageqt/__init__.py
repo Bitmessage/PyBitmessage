@@ -2278,7 +2278,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         newItem.setFont(font)
         self.ui.tableWidgetInbox.setItem(0, 3, newItem)
         self.ui.tableWidgetInbox.setSortingEnabled(True)
-        self.ubuntuMessagingMenuUpdate(True, newItem, self.toLabel)
+        self.ubuntuMessagingMenuUpdate(True, newItem, acct.toLabel)
 
     def click_pushButtonAddAddressBook(self):
         self.AddAddressDialogInstance = AddAddressDialog(self)
