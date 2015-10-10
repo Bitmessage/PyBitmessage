@@ -419,26 +419,16 @@ class MyForm(QtGui.QMainWindow):
         treeWidget = self.ui.treeWidgetSubscriptions
         folders = ['inbox', 'trash']
         treeWidget.clear()
+        treeWidget.setSortingEnabled(False)
+        treeWidget.header().setSortIndicator(0, Qt.AscendingOrder)
         queryreturn = sqlQuery('SELECT label, address, enabled FROM subscriptions')
         for row in queryreturn:
             label, address, enabled = row
-            newItem = QtGui.QTreeWidgetItem(treeWidget)
-            newItem.setExpanded(True)
-            newItem.setIcon(0, avatarize(address))
-            newItem.setText(0, label + ' (' + address + ')')
-            newItem.setData(0, Qt.UserRole, [str(address), "inbox"])
-            #set text color
-            if enabled:
-                brush = QtGui.QBrush(QApplication.palette().text().color())
-            else:
-                brush = QtGui.QBrush(QtGui.QColor(128, 128, 128))
-            brush.setStyle(QtCore.Qt.NoBrush)
-            newItem.setForeground(0, brush)
+            newItem = Ui_SubscriptionWidget(treeWidget, 0, address, 0, label, enabled)
 
             for folder in folders:
-                newSubItem = QtGui.QTreeWidgetItem(newItem)
-                newSubItem.setText(0, _translate("MainWindow", folder))
-                newSubItem.setData(0, Qt.UserRole, [str(address), folder])
+                newSubItem = Ui_FolderWidget(newItem, 0, address, folder, 0)
+        treeWidget.setSortingEnabled(True)
 
     def rerenderTabTreeMessages(self):
         self.rerenderTabTree('messages')
@@ -457,7 +447,6 @@ class MyForm(QtGui.QMainWindow):
         # sort ascending when creating
         if treeWidget.topLevelItemCount() == 0:
             treeWidget.header().setSortIndicator(0, Qt.AscendingOrder)
-
         # init dictionary
         db = {}
         enabled = {}
@@ -989,18 +978,22 @@ class MyForm(QtGui.QMainWindow):
             where = "message"
         else:
             where = "toaddress || fromaddress || subject || message"
-
+        
+        if tableWidget == self.ui.tableWidgetInboxSubscriptions:
+            xAddress = "fromaddress"
+        else:
+            xAddress = "toaddress"
         if folder != False:
             sqlStatement = '''
                 SELECT folder, msgid, toaddress, fromaddress, subject, received, read
-                FROM inbox WHERE toaddress=? AND folder=? AND %s LIKE ?
+                FROM inbox WHERE ''' + xAddress + '''=? AND folder=? AND %s LIKE ?
                 ORDER BY received
                 ''' % (where)
             queryreturn = sqlQuery(sqlStatement, account, folder, what)
         else:
             sqlStatement = '''
                 SELECT folder, msgid, toaddress, fromaddress, subject, received, read
-                FROM inbox WHERE toaddress=? AND folder != "trash" AND %s LIKE ?
+                FROM inbox WHERE ''' + xAddress + '''=? AND folder != "trash" AND %s LIKE ?
                 ORDER BY received
                 ''' % (where)
             queryreturn = sqlQuery(sqlStatement, account, what)
@@ -1018,7 +1011,10 @@ class MyForm(QtGui.QMainWindow):
         for row in queryreturn:
             msgfolder, msgid, toAddress, fromAddress, subject, received, read = row
             if acct is None:
-                acct = accountClass(toAddress)
+                if tableWidget == self.ui.tableWidgetInboxSubscriptions:
+                    acct = accountClass(fromAddress)
+                else:
+                    acct = accountClass(toAddress)
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             acct.parseMessage(toAddress, fromAddress, subject, "")
             
@@ -1792,11 +1788,12 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetInbox.item(i, 3).setText(textToDisplay)
 
     def removeInboxRowByMsgid(self, msgid):  # msgid and inventoryHash are the same thing
-        for i in range(self.ui.tableWidgetInbox.rowCount()):
-            if msgid == str(self.ui.tableWidgetInbox.item(i, 3).data(Qt.UserRole).toPyObject()):
+        inbox = self.getCurrentMessagelist
+        for i in range(inbox.rowCount()):
+            if msgid == str(inbox.item(i, 3).data(Qt.UserRole).toPyObject()):
                 self.statusBar().showMessage(_translate(
                     "MainWindow", "Message trashed"))
-                self.ui.tableWidgetInbox.removeRow(i)
+                inbox.removeRow(i)
                 break
         self.changedInboxUnread()
 
@@ -2082,7 +2079,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
                         self.ui.lineEditTo.setText('')
                         self.ui.lineEditSubject.setText('')
                         self.ui.textEditMessage.setText('')
-                        self.ui.tabWidget.setCurrentIndex(2)
+                        self.ui.tabWidget.setCurrentIndex(0)
                         self.ui.tableWidgetInbox.setCurrentCell(0, 0)
                 else:
                     self.statusBar().showMessage(_translate(
@@ -2129,7 +2126,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
                 self.ui.lineEditSubjectBroadcast.setText('')
                 self.ui.textEditMessageBroadcast.setText('')
                 self.ui.tabWidget.setCurrentIndex(1)
-                self.ui.tableWidgetInbox.setCurrentCell(0, 0)
+                self.ui.tableWidgetInboxSubscriptions.setCurrentCell(0, 0)
 
     def click_pushButtonLoadFromAddressBook(self):
         self.ui.tabWidget.setCurrentIndex(5)
@@ -2240,10 +2237,12 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         acct = accountClass(toAddress)
         acct.parseMessage(toAddress, fromAddress, subject, message)
+        
+        inbox = self.getCurrentMessagelist()
 
         font = QFont()
         font.setBold(True)
-        self.ui.tableWidgetInbox.setSortingEnabled(False)
+        inbox.setSortingEnabled(False)
         newItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
         newItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
         newItem.setFont(font)
@@ -2252,9 +2251,9 @@ more work your computer must do to send the message. A Time-To-Live of four or f
             newItem.setTextColor(QtGui.QColor(137, 04, 177)) # magenta
         if acct.type == 'chan':
             newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
-        self.ui.tableWidgetInbox.insertRow(0)
+        inbox.insertRow(0)
         newItem.setIcon(avatarize(toAddress))
-        self.ui.tableWidgetInbox.setItem(0, 0, newItem)
+        inbox.setItem(0, 0, newItem)
 
         newItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
         newItem.setToolTip(unicode(acct.fromLabel, 'utf-8'))
@@ -2263,21 +2262,21 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setFont(font)
         newItem.setIcon(avatarize(fromAddress))
-        self.ui.tableWidgetInbox.setItem(0, 1, newItem)
+        inbox.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8)'))
         newItem.setToolTip(unicode(acct.subject, 'utf-8)'))
         newItem.setData(Qt.UserRole, str(subject))
         
         #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
         newItem.setFont(font)
-        self.ui.tableWidgetInbox.setItem(0, 2, newItem)
+        inbox.setItem(0, 2, newItem)
         newItem = myTableWidgetItem(l10n.formatTimestamp())
         newItem.setToolTip(l10n.formatTimestamp())
         newItem.setData(Qt.UserRole, QByteArray(inventoryHash))
         newItem.setData(33, int(time.time()))
         newItem.setFont(font)
-        self.ui.tableWidgetInbox.setItem(0, 3, newItem)
-        self.ui.tableWidgetInbox.setSortingEnabled(True)
+        inbox.setItem(0, 3, newItem)
+        inbox.setSortingEnabled(True)
         self.ubuntuMessagingMenuUpdate(True, newItem, acct.toLabel)
 
     def click_pushButtonAddAddressBook(self):
@@ -2929,7 +2928,8 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         if not tableWidget:
             return
         unread = False
-        while tableWidget.selectedIndexes() != []:
+        currentRow = 0
+        while tableWidget.selectedIndexes():
             currentRow = tableWidget.selectedIndexes()[0].row()
             inventoryHashToTrash = str(tableWidget.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
@@ -2945,7 +2945,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         else:
             tableWidget.selectRow(currentRow - 1)
         if unread:
-            changedInboxUnread()
+            self.changedInboxUnread()
 
     def on_action_InboxSaveMessageAs(self):
         tableWidget = self.getCurrentMessagelist()
@@ -3479,7 +3479,7 @@ more work your computer must do to send the message. A Time-To-Live of four or f
         if column != 0:
             return
         # only account names of normal addresses (no chans/mailinglists)
-        if (not isinstance(item, Ui_AddressWidget)) or item.type != 'normal' or self.getCurrentTreeWidget().currentItem() is None:
+        if (not isinstance(item, Ui_AddressWidget)) or item.type != 'normal' or not self.getCurrentTreeWidget() or self.getCurrentTreeWidget().currentItem() is None:
             return
         # not visible
         if (not self.getCurrentAccount()) or (not isinstance (self.getCurrentAccount(), Ui_AddressWidget)):
