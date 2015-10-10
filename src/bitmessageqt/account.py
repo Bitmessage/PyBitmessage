@@ -11,7 +11,9 @@ import time
 
 def accountClass(address):
     if not shared.config.has_section(address):
-        return None
+        subscription = SubscriptionAccount(address)
+        if subscription.type != 'subscription':
+            return None
     try:
         gateway = shared.config.get(address, "gateway")
         for name, cls in inspect.getmembers(sys.modules[__name__], inspect.isclass):
@@ -24,7 +26,7 @@ def accountClass(address):
         pass
     # no gateway
     return BMAccount(address)
-
+    
 class BMAccount(object):
     def __init__(self, address = None):
         self.address = address
@@ -34,7 +36,12 @@ class BMAccount(object):
                 self.type = "chan"
             elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
                 self.type = "mailinglist"
-        
+        else:
+            queryreturn = sqlQuery(
+                '''select label from subscriptions where address=?''', address)
+            if queryreturn:
+                self.type = 'subscription'
+
     def getLabel(self, address = None):
         if address is None:
             address = self.address
@@ -62,6 +69,11 @@ class BMAccount(object):
         self.fromLabel = self.getLabel(fromAddress)
         self.toLabel = self.getLabel(toAddress)
 
+        
+class SubscriptionAccount(BMAccount):
+    pass
+        
+        
 class GatewayAccount(BMAccount):
     gatewayName = None
     def __init__(self, address):
