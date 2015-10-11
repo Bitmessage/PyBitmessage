@@ -724,6 +724,8 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.ui.horizontalSliderTTL, QtCore.SIGNAL(
             "valueChanged(int)"), self.updateTTL)
         
+        self.readSettings()
+        
         # Check to see whether we can connect to namecoin. Hide the 'Fetch Namecoin ID' button if we can't.
         try:
             options = {}
@@ -2739,6 +2741,11 @@ class MyForm(QtGui.QMainWindow):
         # unregister the messaging system
         if self.mmapp is not None:
             self.mmapp.unregister()
+
+        settings = QSettings("Mailchuck Ltd.", "PyBitmessage")
+        settings.setValue("geometry", self.saveGeometry())
+        settings.setValue("state", self.saveState())
+
         self.statusBar().showMessage(_translate(
             "MainWindow", "All done. Closing user interface..."))
         os._exit(0)
@@ -3582,6 +3589,20 @@ class MyForm(QtGui.QMainWindow):
 
         self.statusBar().showMessage(data)
 
+    def readSettings(self):
+        settings = QSettings("Mailchuck Ltd.", "PyBitmessage")
+        try:
+            geom = settings.value("geometry")
+            self.restoreGeometry(geom.toByteArray() if hasattr(geom, 'toByteArray') else geom)
+        except Exception as e:
+            pass
+
+        try:
+            state = settings.value("state")
+            self.restoreState(state.toByteArray() if hasattr(state, 'toByteArray') else state)
+        except Exception as e:
+            pass
+        
 
 class helpDialog(QtGui.QDialog):
 
