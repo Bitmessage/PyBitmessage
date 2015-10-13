@@ -4,6 +4,8 @@ import os
 import shared
 from addresses import addBMIfNotPresent
 
+str_broadcast_subscribers = '[Broadcast subscribers]'
+
 def identiconize(address):
     size = 48
     
