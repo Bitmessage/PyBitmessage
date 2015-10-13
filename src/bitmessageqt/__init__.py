@@ -89,7 +89,6 @@ class MyForm(QtGui.QMainWindow):
     # the maximum frequency of message sounds in seconds
     maxSoundFrequencySec = 60
 
-    str_broadcast_subscribers = '[Broadcast subscribers]'
     str_chan = '[chan]'
 
     def init_file_menu(self):
@@ -1161,7 +1160,7 @@ class MyForm(QtGui.QMainWindow):
         for row in queryreturn:
             toAddress, read = row
             if not read:
-                if toAddress == self.str_broadcast_subscribers:
+                if toAddress == str_broadcast_subscribers:
                     if self.mmapp.has_source("Subscriptions"):
                         self.mmapp.remove_source("Subscriptions")
                 else:
@@ -1179,8 +1178,8 @@ class MyForm(QtGui.QMainWindow):
             msgid, toAddress, read = row
 
             try:
-                if toAddress == self.str_broadcast_subscribers:
-                    toLabel = self.str_broadcast_subscribers
+                if toAddress == str_broadcast_subscribers:
+                    toLabel = str_broadcast_subscribers
                 else:
                     toLabel = shared.config.get(toAddress, 'label')
             except:
@@ -1189,7 +1188,7 @@ class MyForm(QtGui.QMainWindow):
                 toLabel = toAddress
 
             if not read:
-                if toLabel == self.str_broadcast_subscribers:
+                if toLabel == str_broadcast_subscribers:
                     # increment the unread subscriptions
                     unreadSubscriptions = unreadSubscriptions + 1
                 else:
@@ -1254,7 +1253,7 @@ class MyForm(QtGui.QMainWindow):
             return
 
         # remember this item to that the messaging menu can find it
-        if toLabel == self.str_broadcast_subscribers:
+        if toLabel == str_broadcast_subscribers:
             self.newBroadcastItem = newItem
         else:
             self.newMessageItem = newItem
@@ -2096,7 +2095,7 @@ class MyForm(QtGui.QMainWindow):
                 # this is a broadcast message, but we can use it to update the
                 # user interface when the POW is done generating.
                 ackdata = OpenSSL.rand(32)
-                toAddress = self.str_broadcast_subscribers
+                toAddress = str_broadcast_subscribers
                 ripe = ''
                 t = ('', # msgid. We don't know what this will be until the POW is done. 
                      toAddress, 
@@ -2117,7 +2116,7 @@ class MyForm(QtGui.QMainWindow):
                 sqlExecute(
                     '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''', *t)
 
-                toLabel = self.str_broadcast_subscribers
+                toLabel = str_broadcast_subscribers
                 
                 self.displayNewSentMessage(
                     toAddress, toLabel, fromAddress, subject, message, ackdata)
@@ -2177,15 +2176,13 @@ class MyForm(QtGui.QMainWindow):
 
     def rerenderComboBoxSendFromBroadcast(self):
         self.ui.comboBoxSendFromBroadcast.clear()
-        configSections = shared.config.sections()
-        for addressInKeysFile in configSections:
-            if addressInKeysFile != 'bitmessagesettings':
-                isEnabled = shared.config.getboolean(
-                    addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
-                isMaillinglist = shared.safeConfigGetBoolean(addressInKeysFile, 'mailinglist')
-                if isEnabled and isMaillinglist:
-                    self.ui.comboBoxSendFromBroadcast.insertItem(0, avatarize(addressInKeysFile), unicode(shared.config.get(
-                        addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
+        queryreturn = sqlQuery(
+            '''select label, address from subscriptions where enabled = 1'''
+            )
+        
+        for row in queryreturn:
+            label, address = row
+            self.ui.comboBoxSendFromBroadcast.insertItem(0, avatarize(address), unicode(label, 'utf-8'), address)
         self.ui.comboBoxSendFromBroadcast.insertItem(0, '', '')
         if(self.ui.comboBoxSendFromBroadcast.count() == 2):
             self.ui.comboBoxSendFromBroadcast.setCurrentIndex(1)
@@ -2861,9 +2858,19 @@ class MyForm(QtGui.QMainWindow):
             for row in queryreturn:
                 messageAtCurrentInboxRow, = row
         acct.parseMessage(toAddressAtCurrentInboxRow, fromAddressAtCurrentInboxRow, str(tableWidget.item(currentInboxRow, 2).data(Qt.UserRole).toPyObject()), messageAtCurrentInboxRow)
-        if toAddressAtCurrentInboxRow == self.str_broadcast_subscribers:
-            #TODO what does this if?..
-            a = a
+        widget = {
+            'subject': self.ui.lineEditSubject,
+            'from': self.ui.comboBoxSendFrom,
+            'message': self.ui.textEditMessage
+        }
+        if toAddressAtCurrentInboxRow == str_broadcast_subscribers:
+            widget = {
+                'subject': self.ui.lineEditSubjectBroadcast,
+                'from': self.ui.comboBoxSendFromBroadcast,
+                'message': self.ui.textEditMessageBroadcast
+            }
+            self.ui.tabWidgetSend.setCurrentIndex(1)
+            toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
         elif not shared.config.has_section(toAddressAtCurrentInboxRow):
             QtGui.QMessageBox.information(self, _translate("MainWindow", "Address is gone"), _translate(
                 "MainWindow", "Bitmessage cannot find your address %1. Perhaps you removed it?").arg(toAddressAtCurrentInboxRow), QMessageBox.Ok)
@@ -2871,9 +2878,10 @@ class MyForm(QtGui.QMainWindow):
             QtGui.QMessageBox.information(self, _translate("MainWindow", "Address disabled"), _translate(
                 "MainWindow", "Error: The address from which you are trying to send is disabled. You\'ll have to enable it on the \'Your Identities\' tab before using it."), QMessageBox.Ok)
         else:
-            self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(toAddressAtCurrentInboxRow)
+            #self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(toAddressAtCurrentInboxRow)
+            self.ui.tabWidgetSend.setCurrentIndex(0)
 
-        self.ui.lineEditTo.setText(str(acct.fromLabel))
+        self.ui.lineEditTo.setText(str(acct.fromAddress))
         
         # If the previous message was to a chan then we should send our reply to the chan rather than to the particular person who sent the message.
         if shared.config.has_section(toAddressAtCurrentInboxRow):
@@ -2881,20 +2889,19 @@ class MyForm(QtGui.QMainWindow):
                 print 'original sent to a chan. Setting the to address in the reply to the chan address.'
                 self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
         
-        listOfAddressesInComboBoxSendFrom = [str(self.ui.comboBoxSendFrom.itemData(i).toPyObject()) for i in range(self.ui.comboBoxSendFrom.count())]
+        listOfAddressesInComboBoxSendFrom = [str(widget['from'].itemData(i).toPyObject()) for i in range(widget['from'].count())]
         if toAddressAtCurrentInboxRow in listOfAddressesInComboBoxSendFrom:
             currentIndex = listOfAddressesInComboBoxSendFrom.index(toAddressAtCurrentInboxRow)
-            self.ui.comboBoxSendFrom.setCurrentIndex(currentIndex)
+            widget['from'].setCurrentIndex(currentIndex)
         else:
-            self.ui.comboBoxSendFrom.setCurrentIndex(0)
+            widget['from'].setCurrentIndex(0)
         
         quotedText = self.quoted_text(unicode(messageAtCurrentInboxRow, 'utf-8'))
-        self.ui.textEditMessage.setText(quotedText)
+        widget['message'].setText(quotedText)
         if acct.subject[0:3] in ['Re:', 'RE:']:
-            self.ui.lineEditSubject.setText(acct.subject)
+            widget['subject'].setText(acct.subject)
         else:
-            self.ui.lineEditSubject.setText('Re: ' + acct.subject)
-        self.ui.tabWidgetSend.setCurrentIndex(0)
+            widget['subject'].setText('Re: ' + acct.subject)
         self.ui.tabWidget.setCurrentIndex(1)
 
     def on_action_InboxAddSenderToAddressBook(self):
