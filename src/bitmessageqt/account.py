@@ -7,13 +7,20 @@ import inspect
 from helper_sql import *
 from addresses import decodeAddress
 from pyelliptic.openssl import OpenSSL
+from utils import str_broadcast_subscribers
 import time
 
 def accountClass(address):
     if not shared.config.has_section(address):
-        subscription = SubscriptionAccount(address)
-        if subscription.type != 'subscription':
-            return None
+        if address == str_broadcast_subscribers:
+            subscription = BroadcastAccount(address)
+            if subscription.type != 'broadcast':
+                return None
+        else:
+            subscription = SubscriptionAccount(address)
+            if subscription.type != 'subscription':
+                return None
+        return subscription
     try:
         gateway = shared.config.get(address, "gateway")
         for name, cls in inspect.getmembers(sys.modules[__name__], inspect.isclass):
@@ -36,9 +43,11 @@ class BMAccount(object):
                 self.type = "chan"
             elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
                 self.type = "mailinglist"
+        elif self.address == str_broadcast_subscribers:
+            self.type = 'broadcast'
         else:
             queryreturn = sqlQuery(
-                '''select label from subscriptions where address=?''', address)
+                '''select label from subscriptions where address=?''', self.address)
             if queryreturn:
                 self.type = 'subscription'
 
@@ -71,6 +80,10 @@ class BMAccount(object):
 
         
 class SubscriptionAccount(BMAccount):
+    pass
+    
+
+class BroadcastAccount(BMAccount):
     pass
         
         
