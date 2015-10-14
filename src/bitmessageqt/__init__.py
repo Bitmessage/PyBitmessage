@@ -3295,8 +3295,8 @@ class MyForm(QtGui.QMainWindow):
                 return False
 
     def getCurrentFolder(self):
-        #treeWidget = self.getCurrentTreeWidget()
-        treeWidget = self.ui.treeWidgetYourIdentities
+        treeWidget = self.getCurrentTreeWidget()
+        #treeWidget = self.ui.treeWidgetYourIdentities
         if treeWidget:
             currentItem = treeWidget.currentItem()
             if currentItem and hasattr(currentItem, 'folderName'):
