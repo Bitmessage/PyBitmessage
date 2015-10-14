@@ -2151,13 +2151,13 @@ class MyForm(QtGui.QMainWindow):
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Fetched address from namecoin identity."))
 
-    def setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(self, address):
+    def setBroadcastEnablementDependingOnWhetherThisIsAMailingListAddress(self, address):
         # If this is a chan then don't let people broadcast because no one
         # should subscribe to chan addresses.
-        if shared.safeConfigGetBoolean(str(address), 'chan'):
-            self.ui.tabWidgetSend.setCurrentIndex(0)
-        else:
+        if shared.safeConfigGetBoolean(str(address), 'mailinglist'):
             self.ui.tabWidgetSend.setCurrentIndex(1)
+        else:
+            self.ui.tabWidgetSend.setCurrentIndex(0)
 
     def rerenderComboBoxSendFrom(self):
         self.ui.comboBoxSendFrom.clear()
@@ -2866,13 +2866,8 @@ class MyForm(QtGui.QMainWindow):
             'message': self.ui.textEditMessage
         }
         if toAddressAtCurrentInboxRow == str_broadcast_subscribers:
-            widget = {
-                'subject': self.ui.lineEditSubjectBroadcast,
-                'from': self.ui.comboBoxSendFromBroadcast,
-                'message': self.ui.textEditMessageBroadcast
-            }
-            self.ui.tabWidgetSend.setCurrentIndex(1)
-            toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
+            self.ui.tabWidgetSend.setCurrentIndex(0)
+#            toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
         elif not shared.config.has_section(toAddressAtCurrentInboxRow):
             QtGui.QMessageBox.information(self, _translate("MainWindow", "Address is gone"), _translate(
                 "MainWindow", "Bitmessage cannot find your address %1. Perhaps you removed it?").arg(toAddressAtCurrentInboxRow), QMessageBox.Ok)
@@ -2880,8 +2875,15 @@ class MyForm(QtGui.QMainWindow):
             QtGui.QMessageBox.information(self, _translate("MainWindow", "Address disabled"), _translate(
                 "MainWindow", "Error: The address from which you are trying to send is disabled. You\'ll have to enable it on the \'Your Identities\' tab before using it."), QMessageBox.Ok)
         else:
-            #self.setBroadcastEnablementDependingOnWhetherThisIsAChanAddress(toAddressAtCurrentInboxRow)
-            self.ui.tabWidgetSend.setCurrentIndex(0)
+            self.setBroadcastEnablementDependingOnWhetherThisIsAMailingListAddress(toAddressAtCurrentInboxRow)
+            if self.ui.tabWidgetSend.currentIndex() == 1:
+                widget = {
+                    'subject': self.ui.lineEditSubjectBroadcast,
+                    'from': self.ui.comboBoxSendFromBroadcast,
+                    'message': self.ui.textEditMessageBroadcast
+                }
+                self.ui.tabWidgetSend.setCurrentIndex(1)
+                toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
 
         self.ui.lineEditTo.setText(str(acct.fromAddress))
         
