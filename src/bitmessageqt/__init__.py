@@ -420,13 +420,30 @@ class MyForm(QtGui.QMainWindow):
         treeWidget.clear()
         treeWidget.setSortingEnabled(False)
         treeWidget.header().setSortIndicator(0, Qt.AscendingOrder)
+        db = {}
+        queryreturn = sqlQuery('''SELECT fromaddress, folder, count(msgid) as cnt
+            FROM inbox, subscriptions
+            WHERE read = 0 AND subscriptions.address = inbox.fromaddress
+            GROUP BY inbox.fromaddress, folder''')
+        for row in queryreturn:
+            fromaddress, folder, cnt = row
+            if fromaddress not in db:
+                db[fromaddress] = {}
+            db[fromaddress][folder] = cnt
         queryreturn = sqlQuery('SELECT label, address, enabled FROM subscriptions')
         for row in queryreturn:
             label, address, enabled = row
             newItem = Ui_SubscriptionWidget(treeWidget, 0, address, 0, label, enabled)
 
+            unread = 0
             for folder in folders:
-                newSubItem = Ui_FolderWidget(newItem, 0, address, folder, 0)
+                try:
+                    newSubItem = Ui_FolderWidget(newItem, 0, address, folder, db[address][folder])
+                    unread += db[address][folder]
+                except KeyError:
+                    newSubItem = Ui_FolderWidget(newItem, 0, address, folder, 0)
+                
+            newItem.setUnreadCount(unread)
         treeWidget.setSortingEnabled(True)
 
     def rerenderTabTreeMessages(self):
