@@ -2876,7 +2876,7 @@ class MyForm(QtGui.QMainWindow):
         if queryreturn != []:
             for row in queryreturn:
                 messageAtCurrentInboxRow, = row
-        acct.parseMessage(toAddressAtCurrentInboxRow, fromAddressAtCurrentInboxRow, str(tableWidget.item(currentInboxRow, 2).data(Qt.UserRole).toPyObject()), messageAtCurrentInboxRow)
+        acct.parseMessage(toAddressAtCurrentInboxRow, fromAddressAtCurrentInboxRow, unicode(tableWidget.item(currentInboxRow, 2).data(Qt.UserRole).toPyObject(), 'utf-8'), messageAtCurrentInboxRow)
         widget = {
             'subject': self.ui.lineEditSubject,
             'from': self.ui.comboBoxSendFrom,
