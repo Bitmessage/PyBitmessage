@@ -3301,17 +3301,22 @@ class MyForm(QtGui.QMainWindow):
             return False
 
     # Group of functions for the Your Identities dialog box
-    def getCurrentAccount(self):
+    def getCurrentItem(self):
         treeWidget = self.getCurrentTreeWidget()
-        #treeWidget = self.ui.treeWidgetYourIdentities
         if treeWidget:
             currentItem = treeWidget.currentItem()
             if currentItem:
-                account = currentItem.address
-                return account
-            else:
-                # TODO need debug msg?
-                return False
+                return currentItem
+        return False
+    
+    def getCurrentAccount(self):
+        currentItem = self.getCurrentItem()
+        if currentItem:
+            account = currentItem.address
+            return account
+        else:
+            # TODO need debug msg?
+            return False
 
     def getCurrentFolder(self):
         treeWidget = self.getCurrentTreeWidget()
@@ -3519,10 +3524,10 @@ class MyForm(QtGui.QMainWindow):
         if (not isinstance(item, Ui_AddressWidget)) or item.type != 'normal' or not self.getCurrentTreeWidget() or self.getCurrentTreeWidget().currentItem() is None:
             return
         # not visible
-        if (not self.getCurrentAccount()) or (not isinstance (self.getCurrentAccount(), Ui_AddressWidget)):
+        if (not self.getCurrentItem()) or (not isinstance (self.getCurrentItem(), Ui_AddressWidget)):
             return
         # only currently selected item
-        if item.address != self.getCurrentTreeWidget().currentItem().address:
+        if item.address != self.getCurrentAccount():
             return
         
         newLabel = str(item.text(0))
