@@ -467,9 +467,7 @@ class MyForm(QtGui.QMainWindow):
         db = {}
         enabled = {}
         
-        for toAddress in shared.config.sections():
-            if toAddress == 'bitmessagesettings':
-                continue
+        for toAddress in getSortedAccounts():
             isEnabled = shared.config.getboolean(
                 toAddress, 'enabled')
             isChan = shared.safeConfigGetBoolean(
@@ -553,20 +551,18 @@ class MyForm(QtGui.QMainWindow):
 
         # Ask the user if we may delete their old version 1 addresses if they
         # have any.
-        configSections = shared.config.sections()
-        for addressInKeysFile in configSections:
-            if addressInKeysFile != 'bitmessagesettings':
-                status, addressVersionNumber, streamNumber, hash = decodeAddress(
-                    addressInKeysFile)
-                if addressVersionNumber == 1:
-                    displayMsg = _translate(
-                        "MainWindow", "One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer supported. "
-                        + "May we delete it now?").arg(addressInKeysFile)
-                    reply = QtGui.QMessageBox.question(
-                        self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
-                    if reply == QtGui.QMessageBox.Yes:
-                        shared.config.remove_section(addressInKeysFile)
-                        shared.writeKeysFile()
+        for addressInKeysFile in getSortedAccounts():
+            status, addressVersionNumber, streamNumber, hash = decodeAddress(
+                addressInKeysFile)
+            if addressVersionNumber == 1:
+                displayMsg = _translate(
+                    "MainWindow", "One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer supported. "
+                    + "May we delete it now?").arg(addressInKeysFile)
+                reply = QtGui.QMessageBox.question(
+                    self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                if reply == QtGui.QMessageBox.Yes:
+                    shared.config.remove_section(addressInKeysFile)
+                    shared.writeKeysFile()
 
         # Configure Bitmessage to start on startup (or remove the
         # configuration) based on the setting in the keys.dat file
@@ -2184,15 +2180,14 @@ class MyForm(QtGui.QMainWindow):
 
     def rerenderComboBoxSendFrom(self):
         self.ui.comboBoxSendFrom.clear()
-        configSections = shared.config.sections()
-        for addressInKeysFile in configSections:
-            if addressInKeysFile != 'bitmessagesettings':
-                isEnabled = shared.config.getboolean(
-                    addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
-                isMaillinglist = shared.safeConfigGetBoolean(addressInKeysFile, 'mailinglist')
-                if isEnabled and not isMaillinglist:
-                    self.ui.comboBoxSendFrom.insertItem(0, avatarize(addressInKeysFile), unicode(shared.config.get(
-                        addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
+        for addressInKeysFile in getSortedAccounts():
+            isEnabled = shared.config.getboolean(
+                addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
+            isMaillinglist = shared.safeConfigGetBoolean(addressInKeysFile, 'mailinglist')
+            if isEnabled and not isMaillinglist:
+                self.ui.comboBoxSendFrom.addItem(avatarize(addressInKeysFile), unicode(shared.config.get(
+                     addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
+#        self.ui.comboBoxSendFrom.model().sort(1, Qt.AscendingOrder)
         self.ui.comboBoxSendFrom.insertItem(0, '', '')
         if(self.ui.comboBoxSendFrom.count() == 2):
             self.ui.comboBoxSendFrom.setCurrentIndex(1)
@@ -2201,15 +2196,13 @@ class MyForm(QtGui.QMainWindow):
 
     def rerenderComboBoxSendFromBroadcast(self):
         self.ui.comboBoxSendFromBroadcast.clear()
-        configSections = shared.config.sections()
-        for addressInKeysFile in configSections:
-            if addressInKeysFile != 'bitmessagesettings':
-                isEnabled = shared.config.getboolean(
-                    addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
-                isMaillinglist = shared.safeConfigGetBoolean(addressInKeysFile, 'mailinglist')
-                if isEnabled and isMaillinglist:
-                    self.ui.comboBoxSendFromBroadcast.insertItem(0, avatarize(addressInKeysFile), unicode(shared.config.get(
-                        addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
+        for addressInKeysFile in getSortedAccounts():
+            isEnabled = shared.config.getboolean(
+                addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
+            isMaillinglist = shared.safeConfigGetBoolean(addressInKeysFile, 'mailinglist')
+            if isEnabled and isMaillinglist:
+                self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), unicode(shared.config.get(
+                    addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
         self.ui.comboBoxSendFromBroadcast.insertItem(0, '', '')
         if(self.ui.comboBoxSendFromBroadcast.count() == 2):
             self.ui.comboBoxSendFromBroadcast.setCurrentIndex(1)
@@ -2713,10 +2706,7 @@ class MyForm(QtGui.QMainWindow):
     
     def click_NewAddressDialog(self):
         addresses = []
-        configSections = shared.config.sections()
-        for addressInKeysFile in configSections:
-            if addressInKeysFile == 'bitmessagesettings':
-                continue
+        for addressInKeysFile in getSortedAccounts():
             addresses.append(addressInKeysFile)
 #        self.dialog = Ui_NewAddressWizard(addresses)
 #        self.dialog.exec_()
@@ -4056,10 +4046,7 @@ class NewAddressDialog(QtGui.QDialog):
         row = 1
         # Let's fill out the 'existing address' combo box with addresses from
         # the 'Your Identities' tab.
-        configSections = shared.config.sections()
-        for addressInKeysFile in configSections:
-            if addressInKeysFile == 'bitmessagesettings':
-                continue
+        for addressInKeysFile in getSortedAccounts():
             self.ui.radioButtonExisting.click()
             self.ui.comboBoxExisting.addItem(
                 addressInKeysFile)
