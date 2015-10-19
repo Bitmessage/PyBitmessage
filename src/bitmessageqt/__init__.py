@@ -1821,7 +1821,6 @@ class MyForm(QtGui.QMainWindow):
         
     def newVersionAvailable(self, version):
 #        if (not (self.windowState() & QtCore.Qt.WindowActive)) or (self.windowState() & QtCore.Qt.WindowMinimized):
-#            print "SHIIIIIIIIIIIIIIIIT"
 #            return
         # only notify once until next restart
         try:
