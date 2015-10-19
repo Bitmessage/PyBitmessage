@@ -2670,6 +2670,8 @@ class MyForm(QtGui.QMainWindow):
                 shared.config.set(str(addressAtCurrentRow), 'mailinglistname', str(
                     self.dialog.ui.lineEditMailingListName.text().toUtf8()))
                 self.setCurrentItemColor(QtGui.QColor(137, 04, 177)) #magenta
+            self.rerenderComboBoxSendFrom()
+            self.rerenderComboBoxSendFromBroadcast()
             shared.writeKeysFile()
             self.rerenderInboxToLabels()
 
