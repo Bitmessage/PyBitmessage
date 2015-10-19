@@ -3546,6 +3546,10 @@ class MyForm(QtGui.QMainWindow):
         shared.config.set(str(item.address), 'label', newLabel)
         item.updateText()
         shared.writeKeysFile()
+        if item.type == 'mailinglist':
+            self.rerenderComboBoxSendFromBroadcast()
+        else:
+            self.rerenderComboBoxSendFrom()
         self.recurDepth -= 1
 
     def tableWidgetInboxItemClicked(self):
