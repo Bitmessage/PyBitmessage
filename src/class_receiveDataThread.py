@@ -698,6 +698,17 @@ class receiveDataThread(threading.Thread):
             data[80:84])
         readPosition = 80 + lengthOfUseragentVarint
         useragent = data[readPosition:readPosition + useragentLength]
+        
+        # version check
+        userAgentName, userAgentVersion = useragent[1:-1].split(":")
+        if userAgentName == "PyBitmessage":
+            myVersion = [int(n) for n in shared.softwareVersion.split(".")]
+            remoteVersion = [int(n) for n in userAgentVersion.split(".")]
+            # remote is newer, but do not cross between stable and unstable
+            if cmp(remoteVersion, myVersion) > 0 and \
+                (myVersion[1] % 2 == remoteVersion[1] % 2):
+                shared.UISignalQueue.put(('newVersionAvailable', remoteVersion))
+                
         readPosition += useragentLength
         numberOfStreamsInVersionMessage, lengthOfNumberOfStreamsInVersionMessage = decodeVarint(
             data[readPosition:])
