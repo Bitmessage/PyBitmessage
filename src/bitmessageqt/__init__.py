@@ -2756,7 +2756,7 @@ class MyForm(QtGui.QMainWindow):
         if self.mmapp is not None:
             self.mmapp.unregister()
 
-        settings = QSettings("Mailchuck Ltd.", "PyBitmessage")
+        settings = QSettings("Bitmessage", "PyBitmessage")
         settings.setValue("geometry", self.saveGeometry())
         settings.setValue("state", self.saveState())
 
