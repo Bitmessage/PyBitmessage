@@ -3629,7 +3629,7 @@ class MyForm(QtGui.QMainWindow):
         self.statusBar().showMessage(data)
 
     def readSettings(self):
-        settings = QSettings("Mailchuck Ltd.", "PyBitmessage")
+        settings = QSettings("Bitmessage", "PyBitmessage")
         try:
             geom = settings.value("geometry")
             self.restoreGeometry(geom.toByteArray() if hasattr(geom, 'toByteArray') else geom)
