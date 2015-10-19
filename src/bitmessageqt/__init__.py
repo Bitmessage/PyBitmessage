@@ -593,7 +593,11 @@ class MyForm(QtGui.QMainWindow):
         self.timer.start(2000) # milliseconds
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
+        # e.g. for editing labels
         self.recurDepth = 0
+        
+        # switch back to this when replying
+        self.replyFromTab = None
 
         self.init_file_menu()
         self.init_inbox_popup_menu()
@@ -2099,8 +2103,10 @@ class MyForm(QtGui.QMainWindow):
                         self.ui.lineEditTo.setText('')
                         self.ui.lineEditSubject.setText('')
                         self.ui.textEditMessage.setText('')
-                        self.ui.tabWidget.setCurrentIndex(0)
-                        self.ui.tableWidgetInbox.setCurrentCell(0, 0)
+                        if self.replyFromTab is not None:
+                            self.ui.tabWidget.setCurrentIndex(self.replyFromTab)
+                            self.replyFromTab = None
+                        #self.ui.tableWidgetInbox.setCurrentCell(0, 0)
                 else:
                     self.statusBar().showMessage(_translate(
                         "MainWindow", "Your \'To\' field is empty."))
@@ -2865,6 +2871,10 @@ class MyForm(QtGui.QMainWindow):
         tableWidget = self.getCurrentMessagelist()
         if not tableWidget:
             return
+        
+        # save this to return back after reply is done
+        self.replyFromTab = self.ui.tabWidget.currentIndex()
+        
         currentInboxRow = tableWidget.currentRow()
         toAddressAtCurrentInboxRow = str(tableWidget.item(
             currentInboxRow, 0).data(Qt.UserRole).toPyObject())
