@@ -719,6 +719,8 @@ class MyForm(QtGui.QMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "removeInboxRowByMsgid(PyQt_PyObject)"), self.removeInboxRowByMsgid)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
+            "newVersionAvailable(PyQt_PyObject)"), self.newVersionAvailable)
+        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "displayAlert(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayAlert)
         self.UISignalThread.start()
 
@@ -1816,6 +1818,31 @@ class MyForm(QtGui.QMainWindow):
                 inbox.removeRow(i)
                 break
         self.changedInboxUnread()
+        
+    def newVersionAvailable(self, version):
+#        if (not (self.windowState() & QtCore.Qt.WindowActive)) or (self.windowState() & QtCore.Qt.WindowMinimized):
+#            print "SHIIIIIIIIIIIIIIIIT"
+#            return
+        # only notify once until next restart
+        try:
+            if self.notifiedNewVersion:
+                return
+        except AttributeError:
+            pass
+
+        self.notifiedNewVersion = ".".join(str(n) for n in version)
+        message = "New "
+        if version[1] % 2:
+            message += "UNSTABLE"
+        else:
+            message += "stable"
+        message += " version of PyBitmessage is available: " + self.notifiedNewVersion + ". Download it from https://github.com/"
+        if version[0] == 0 and version[1] == 5:
+            message += "mailchuck"
+        else:
+            message += "Bitmessage"
+        message += "/PyBitmessage/releases/latest"
+        self.displayAlert("New release of PyBitmessage available", message, False)
 
     def displayAlert(self, title, text, exitAfterUserClicksOk):
         self.statusBar().showMessage(text)
@@ -4147,6 +4174,8 @@ class UISignaler(QThread):
                 self.emit(SIGNAL("rerenderBlackWhiteList()"))
             elif command == 'removeInboxRowByMsgid':
                 self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), data)
+            elif command == 'newVersionAvailable':
+                self.emit(SIGNAL("newVersionAvailable(PyQt_PyObject)"), data)
             elif command == 'alert':
                 title, text, exitAfterUserClicksOk = data
                 self.emit(SIGNAL("displayAlert(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), title, text, exitAfterUserClicksOk)
