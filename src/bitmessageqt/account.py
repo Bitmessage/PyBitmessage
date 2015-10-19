@@ -10,6 +10,13 @@ from pyelliptic.openssl import OpenSSL
 from utils import str_broadcast_subscribers
 import time
 
+def getSortedAccounts():
+    configSections = filter(lambda x: x != 'bitmessagesettings', shared.config.sections())
+    configSections.sort(cmp = 
+        lambda x,y: cmp(unicode(shared.config.get(x, 'label'), 'utf-8').lower(), unicode(shared.config.get(y, 'label'), 'utf-8').lower())
+        )
+    return configSections
+
 def accountClass(address):
     if not shared.config.has_section(address):
         if address == str_broadcast_subscribers:
