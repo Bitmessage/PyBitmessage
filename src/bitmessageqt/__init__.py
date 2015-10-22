@@ -1414,7 +1414,7 @@ class MyForm(QtGui.QMainWindow):
     def tableWidgetInboxKeyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Delete:
             self.on_action_InboxTrash()
-        return QtGui.QTableWidget.keyPressEvent(self.ui.tableWidgetInbox, event)
+        return QtGui.QTableWidget.keyPressEvent(self.getCurrentMessagelist(), event)
 
     # menu button 'manage keys'
     def click_actionManageKeys(self):
