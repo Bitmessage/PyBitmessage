@@ -2240,31 +2240,33 @@ class MyForm(QtGui.QMainWindow):
     # pseudo-mailing-list. The message will be broadcast out. This function
     # puts the message on the 'Sent' tab.
     def displayNewSentMessage(self, toAddress, toLabel, fromAddress, subject, message, ackdata):
-        if self.getCurrentFolder() != "sent" or self.getCurrentAccount() != fromAddress:
-            return
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         message = shared.fixPotentiallyInvalidUTF8Data(message)
         acct = accountClass(fromAddress)
         acct.parseMessage(toAddress, fromAddress, subject, message)
+        sent = self.getAccountMessagelist(acct)
+        treeWidget = self.getAccountTreeWidget(acct)
+        if self.getCurrentFolder(treeWidget) != "sent" or self.getCurrentAccount(treeWidget) != fromAddress:
+            return
 
-        self.ui.tableWidgetInbox.setSortingEnabled(False)
-        self.ui.tableWidgetInbox.insertRow(0)
+        sent.setSortingEnabled(False)
+        sent.insertRow(0)
         newItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
         newItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(toAddress))
         newItem.setIcon(avatarize(toAddress))
-        self.ui.tableWidgetInbox.setItem(0, 0, newItem)
+        sent.setItem(0, 0, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
         newItem.setToolTip(unicode(acct.fromLabel, 'utf-8'))
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setIcon(avatarize(fromAddress))
-        self.ui.tableWidgetInbox.setItem(0, 1, newItem)
+        sent.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8)'))
         newItem.setToolTip(unicode(acct.subject, 'utf-8)'))
         newItem.setData(Qt.UserRole, str(subject))
 
         #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
-        self.ui.tableWidgetInbox.setItem(0, 2, newItem)
+        sent.setItem(0, 2, newItem)
         # newItem =  QtGui.QTableWidgetItem('Doing work necessary to send
         # broadcast...'+
         # l10n.formatTimestamp())
@@ -2272,18 +2274,18 @@ class MyForm(QtGui.QMainWindow):
         newItem.setToolTip(_translate("MainWindow", "Work is queued. %1").arg(l10n.formatTimestamp()))
         newItem.setData(Qt.UserRole, QByteArray(ackdata))
         newItem.setData(33, int(time.time()))
-        self.ui.tableWidgetInbox.setItem(0, 3, newItem)
-        self.ui.textEditInboxMessage.setPlainText(unicode(message, 'utf-8)'))
-        self.ui.tableWidgetInbox.setSortingEnabled(True)
+        sent.setItem(0, 3, newItem)
+        self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8)'))
+        sent.setSortingEnabled(True)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
-        if (self.getCurrentFolder() != "inbox" and self.getCurrentFolder() != False) or self.getCurrentAccount() != toAddress:
-            return
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         acct = accountClass(toAddress)
         acct.parseMessage(toAddress, fromAddress, subject, message)
-        
-        inbox = self.getCurrentMessagelist()
+        inbox = self.getAccountMessagelist(acct)
+        treeWidget = self.getAccountTreeWidget(acct)
+        if (self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) != False) or self.getCurrentAccount(treeWidget) != toAddress:
+            return
 
         font = QFont()
         font.setBold(True)
@@ -3266,6 +3268,17 @@ class MyForm(QtGui.QMainWindow):
         else:
             return False
 
+    def getAccountTreeWidget(self, account):
+        try:
+            if account.type == 'chan':
+                return self.ui.treeWidgetChans
+            elif account.type == 'subscription':
+                return self.ui.treeWidgetSubscriptions
+            else:
+                return self.ui.treeWidgetYourIdentities
+        except:
+            return self.ui.treeWidgetYourIdentities
+
     def getCurrentMessagelist(self):
         currentIndex = self.ui.tabWidget.currentIndex();
         messagelistList = [
@@ -3278,6 +3291,17 @@ class MyForm(QtGui.QMainWindow):
             return messagelistList[currentIndex]
         else:
             return False
+            
+    def getAccountMessagelist(self, account):
+        try:
+            if account.type == 'chan':
+                return self.ui.tableWidgetInboxChans
+            elif account.type == 'subscription':
+                return self.ui.tableWidgetInboxSubscriptions
+            else:
+                return self.ui.tableWidgetInbox
+        except:
+            return self.ui.tableWidgetInbox
 
     def getCurrentMessageId(self):
         messagelist = self.getCurrentMessagelist()
@@ -3301,6 +3325,17 @@ class MyForm(QtGui.QMainWindow):
             return messagelistList[currentIndex]
         else:
             return False
+
+    def getAccountTextedit(self, account):
+        try:
+            if account.type == 'chan':
+                return self.ui.textEditInboxMessageChans
+            elif account.type == 'subscription':
+                return self.ui.textEditInboxSubscriptions
+            else:
+                return self.ui.textEditInboxMessage
+        except:
+            return self.ui.textEditInboxMessage
 
     def getCurrentSearchLine(self):
         currentIndex = self.ui.tabWidget.currentIndex();
@@ -3329,16 +3364,17 @@ class MyForm(QtGui.QMainWindow):
             return False
 
     # Group of functions for the Your Identities dialog box
-    def getCurrentItem(self):
-        treeWidget = self.getCurrentTreeWidget()
+    def getCurrentItem(self, treeWidget = None):
+        if treeWidget is None:
+            treeWidget = self.getCurrentTreeWidget()
         if treeWidget:
             currentItem = treeWidget.currentItem()
             if currentItem:
                 return currentItem
         return False
     
-    def getCurrentAccount(self):
-        currentItem = self.getCurrentItem()
+    def getCurrentAccount(self, treeWidget = None):
+        currentItem = self.getCurrentItem(treeWidget)
         if currentItem:
             account = currentItem.address
             return account
@@ -3346,8 +3382,9 @@ class MyForm(QtGui.QMainWindow):
             # TODO need debug msg?
             return False
 
-    def getCurrentFolder(self):
-        treeWidget = self.getCurrentTreeWidget()
+    def getCurrentFolder(self, treeWidget = None):
+        if treeWidget is None:
+            treeWidget = self.getCurrentTreeWidget()
         #treeWidget = self.ui.treeWidgetYourIdentities
         if treeWidget:
             currentItem = treeWidget.currentItem()
