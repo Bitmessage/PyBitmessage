@@ -883,14 +883,15 @@ class MyForm(QtGui.QMainWindow):
         else:
             where = "toaddress || fromaddress || subject || message"
 
-
-        tableWidget.setColumnHidden(0, False)
-        tableWidget.setColumnHidden(1, True)
         tableWidget.setSortingEnabled(False)
         
         if tableWidget == self.ui.tableWidgetInboxChans or tableWidget == self.ui.tableWidgetInboxSubscriptions:
+            tableWidget.setColumnHidden(0, True)
+            tableWidget.setColumnHidden(1, False)
             xAddress = 'toaddress'
         else:
+            tableWidget.setColumnHidden(0, False)
+            tableWidget.setColumnHidden(1, True)
             xAddress = 'fromaddress'
         
         sqlStatement = '''
