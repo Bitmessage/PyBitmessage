@@ -416,7 +416,7 @@ class MyForm(QtGui.QMainWindow):
 
     def rerenderTabTreeSubscriptions(self):
         treeWidget = self.ui.treeWidgetSubscriptions
-        folders = ['inbox', 'trash']
+        folders = ['inbox', 'sent', 'trash']
         treeWidget.clear()
         treeWidget.setSortingEnabled(False)
         treeWidget.header().setSortIndicator(0, Qt.AscendingOrder)
@@ -455,10 +455,9 @@ class MyForm(QtGui.QMainWindow):
     def rerenderTabTree(self, tab):
         if tab == 'messages':
             treeWidget = self.ui.treeWidgetYourIdentities
-            folders = ['inbox', 'sent', 'trash']
         elif tab == 'chan':
             treeWidget = self.ui.treeWidgetChans
-            folders = ['inbox', 'trash']
+        folders = ['inbox', 'sent', 'trash']
 
         # sort ascending when creating
         if treeWidget.topLevelItemCount() == 0:
@@ -888,10 +887,15 @@ class MyForm(QtGui.QMainWindow):
         tableWidget.setColumnHidden(0, False)
         tableWidget.setColumnHidden(1, True)
         tableWidget.setSortingEnabled(False)
-
+        
+        if tableWidget == self.ui.tableWidgetInboxChans or tableWidget == self.ui.tableWidgetInboxSubscriptions:
+            xAddress = 'toaddress'
+        else:
+            xAddress = 'fromaddress'
+        
         sqlStatement = '''
             SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime 
-            FROM sent WHERE fromaddress=? AND folder="sent" AND %s LIKE ? 
+            FROM sent WHERE ''' + xAddress + '''=? AND folder="sent" AND %s LIKE ? 
             ORDER BY lastactiontime
             ''' % (where,)
 
