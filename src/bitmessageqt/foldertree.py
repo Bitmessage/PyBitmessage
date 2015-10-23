@@ -132,16 +132,21 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem):
             reverse = False
             if self.treeWidget().header().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
                 reverse = True
-            if shared.config.getboolean(self.address, 'enabled') == shared.config.getboolean(other.address, 'enabled'):
-                if shared.config.get(self.address, 'label'):
-                    x = shared.config.get(self.address, 'label').decode('utf-8').lower()
+            if shared.config.getboolean(self.address, 'enabled') == \
+                shared.config.getboolean(other.address, 'enabled'):
+                if shared.safeConfigGetBoolean(self.address, 'mailinglist') == \
+                    shared.safeConfigGetBoolean(other.address, 'mailinglist'):
+                    if shared.config.get(self.address, 'label'):
+                        x = shared.config.get(self.address, 'label').decode('utf-8').lower()
+                    else:
+                        x = self.address.decode('utf-8').lower()
+                    if shared.config.get(other.address, 'label'):
+                        y = shared.config.get(other.address, 'label').decode('utf-8').lower()
+                    else:
+                        y = other.address.decode('utf-8').lower()
+                    return x < y
                 else:
-                    x = self.address.decode('utf-8').lower()
-                if shared.config.get(other.address, 'label'):
-                    y = shared.config.get(other.address, 'label').decode('utf-8').lower()
-                else:
-                    y = other.address.decode('utf-8').lower()
-                return x < y
+                    return (reverse if shared.safeConfigGetBoolean(self.address, 'mailinglist') else not reverse)
 #            else:
             return (not reverse if shared.config.getboolean(self.address, 'enabled') else reverse)
 
