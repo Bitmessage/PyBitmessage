@@ -239,3 +239,47 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
             return (not reverse if self.isEnabled else reverse)
 
         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
+        
+class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem):
+    _types = {'normal': 0, 'chan': 1, 'subscription': 2}
+
+    def __init__ (self, text, type = 'normal'):
+        super(QtGui.QTableWidgetItem, self).__init__(text)
+        self.label = text
+        try:
+            self.type = self._types[type]
+        except:
+            self.type = 0
+        if self.type == 2:
+            brush = QtGui.QBrush(QtGui.QColor(137, 04, 177))
+        elif self.type == 1:
+            brush = QtGui.QBrush(QtGui.QColor(216, 119, 0))
+        else:
+            return
+        brush.setStyle(QtCore.Qt.NoBrush)
+        self.setForeground(brush)
+
+    def __lt__ (self, other):
+        if (isinstance(other, Ui_AddressBookWidgetItem)):
+            reverse = False
+            if self.tableWidget().horizontalHeader().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
+                reverse = True
+            if self.type == other.type:
+                return self.label.decode('utf-8').lower() < other.label.decode('utf-8').lower()
+            else:
+                return (not reverse if self.type < other.type else reverse)
+        return super(QtGui.QTableWidgetItem, self).__lt__(other)
+
+
+class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
+    def __init__ (self, address, label, type):
+        Ui_AddressBookWidgetItem.__init__(self, label, type)
+        self.label = label
+        self.setIcon(avatarize(address))
+
+
+class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
+    def __init__ (self, address, label, type):
+        Ui_AddressBookWidgetItem.__init__(self, address, type)
+        self.label = label
+        self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
