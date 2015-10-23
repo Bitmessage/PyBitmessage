@@ -1949,18 +1949,38 @@ class MyForm(QtGui.QMainWindow):
                 i, 0).setText(unicode(toLabel, 'utf-8'))
 
     def rerenderAddressBook(self):
+        def addRow (address, label, type):
+            self.ui.tableWidgetAddressBook.insertRow(0)
+            newItem = Ui_AddressBookWidgetItemLabel(address, unicode(label, 'utf-8'), type)
+            self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
+            newItem = Ui_AddressBookWidgetItemAddress(address, unicode(label, 'utf-8'), type)
+            self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
+        
+        self.ui.tableWidgetAddressBook.setSortingEnabled(False)
         self.ui.tableWidgetAddressBook.setRowCount(0)
+
+        # subscriptions
+        queryreturn = sqlQuery('SELECT label, address FROM subscriptions WHERE enabled = 1')
+        for row in queryreturn:
+            label, address = row
+            addRow(address, label, 'subscription')
+
+        # chans
+        addresses = getSortedAccounts()
+        for address in addresses:
+            account = accountClass(address)
+            if (account.type == 'chan'):
+                addRow(address, account.getLabel(), 'chan')
+        
+        # normal accounts
         queryreturn = sqlQuery('SELECT * FROM addressbook')
         for row in queryreturn:
             label, address = row
-            self.ui.tableWidgetAddressBook.insertRow(0)
-            newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
-            newItem.setIcon(avatarize(address))
-            self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem = QtGui.QTableWidgetItem(address)
-            newItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
+            addRow(address, label, 'normal')
+
+        # sort
+        self.ui.tableWidgetAddressBook.sortItems(0, QtCore.Qt.AscendingOrder)
+        self.ui.tableWidgetAddressBook.setSortingEnabled(True)
 
     def rerenderSubscriptions(self):
         self.rerenderTabTreeSubscriptions()
