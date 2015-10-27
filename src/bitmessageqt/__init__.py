@@ -529,7 +529,7 @@ class MyForm(QtGui.QMainWindow):
         
         i = 0
         for toAddress in db:
-            widget = Ui_AddressWidget(treeWidget, i, toAddress, db[toAddress]["inbox"])
+            widget = Ui_AddressWidget(treeWidget, i, toAddress, db[toAddress]["inbox"], enabled[toAddress])
             j = 0
             unread = 0
             for folder in folders:
@@ -3200,7 +3200,8 @@ class MyForm(QtGui.QMainWindow):
         sqlExecute(
             '''update subscriptions set enabled=1 WHERE address=?''',
             address)
-        self.setCurrentItemColor(QApplication.palette().text().color())
+        account = self.getCurrentItem()
+        account.setEnabled(True)
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_action_SubscriptionsDisable(self):
@@ -3208,7 +3209,8 @@ class MyForm(QtGui.QMainWindow):
         sqlExecute(
             '''update subscriptions set enabled=0 WHERE address=?''',
             address)
-        self.setCurrentItemColor(QtGui.QColor(128, 128, 128))
+        account = self.getCurrentItem()
+        account.setEnabled(False)
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_context_menuSubscriptions(self, point):
@@ -3432,7 +3434,8 @@ class MyForm(QtGui.QMainWindow):
     def on_action_Enable(self):
         addressAtCurrentRow = self.getCurrentAccount()
         self.enableIdentity(addressAtCurrentRow)
-        self.setCurrentItemColor(QApplication.palette().text().color())
+        account = self.getCurrentItem()
+        account.setEnabled(True)
 
     def enableIdentity(self, address):
         shared.config.set(address, 'enabled', 'true')
@@ -3442,7 +3445,8 @@ class MyForm(QtGui.QMainWindow):
     def on_action_Disable(self):
         address = self.getCurrentAccount()
         self.disableIdentity(address)
-        self.setCurrentItemColor(QtGui.QColor(128, 128, 128))
+        account = self.getCurrentItem()
+        account.setEnabled(False)
 
     def disableIdentity(self, address):
         shared.config.set(str(address), 'enabled', 'false')
