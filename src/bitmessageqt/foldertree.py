@@ -3,15 +3,16 @@ from PyQt4 import QtCore, QtGui
 from utils import *
 import shared
 
-class Ui_FolderWidget(QtGui.QTreeWidgetItem):
-    folderWeight = {"inbox": 1, "sent": 2, "trash": 3}
-    def __init__(self, parent, pos = 0, address = "", folderName = "", unreadCount = 0):
-        super(QtGui.QTreeWidgetItem, self).__init__()
-        self.address = address
-        self.folderName = folderName
-        self.unreadCount = unreadCount
-        parent.insertChild(pos, self)
-        self.updateText()
+class AccountMixin (object):
+    def accountColor (self):
+        if not self.isEnabled:
+            return QtGui.QBrush(QtGui.QColor(128, 128, 128))
+        elif self.type == "chan":
+            return QtGui.QBrush(QtGui.QColor(216, 119, 0))
+        elif self.type == "mailinglist" or self.type == "subscription":
+            return QtGui.QBrush(QtGui.QColor(137, 04, 177))
+        else:
+            return QtGui.QBrush(QtGui.QApplication.palette().text().color())
 
     def setAddress(self, address):
         self.address = str(address)
@@ -21,11 +22,41 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem):
         self.unreadCount = int(cnt)
         self.updateText()
 
+    def setEnabled(self, enabled):
+        self.isEnabled = enabled
+        self.updateText()
+
+    def setType(self):
+        if shared.safeConfigGetBoolean(self.address, 'chan'):
+            self.type = "chan"
+        elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
+            self.type = "mailinglist"
+        else:
+            self.type = "normal"
+    
+    def updateText(self):
+        pass
+
+            
+class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
+    folderWeight = {"inbox": 1, "sent": 2, "trash": 3}
+    def __init__(self, parent, pos = 0, address = "", folderName = "", unreadCount = 0):
+        super(QtGui.QTreeWidgetItem, self).__init__()
+        self.initialised = False
+        self.setAddress(address)
+        self.setFolderName(folderName)
+        self.setUnreadCount(unreadCount)
+        self.initialised = True
+        self.updateText()
+        parent.insertChild(pos, self)
+
     def setFolderName(self, fname):
         self.folderName = str(fname)
         self.updateText()
         
     def updateText(self):
+        if not self.initialised:
+            return
         text = QtGui.QApplication.translate("MainWindow", self.folderName)
         font = QtGui.QFont()
         if self.unreadCount > 0:
@@ -60,34 +91,23 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem):
         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
     
 
-class Ui_AddressWidget(QtGui.QTreeWidgetItem):
-    def __init__(self, parent, pos = 0, address = "", unreadCount = 0):
+class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin):
+    def __init__(self, parent, pos = 0, address = "", unreadCount = 0, enabled = True):
         super(QtGui.QTreeWidgetItem, self).__init__()
-        self.unreadCount = unreadCount
         parent.insertTopLevelItem(pos, self)
         # only set default when creating
         #super(QtGui.QTreeWidgetItem, self).setExpanded(shared.config.getboolean(self.address, 'enabled'))
+        self.initialised = False
         self.setAddress(address)
-    
-    def setAddress(self, address):
-        self.address = str(address)
+        self.setEnabled(enabled)
+        self.setUnreadCount(unreadCount)
         self.setType()
-        self.setExpanded(shared.safeConfigGetBoolean(self.address, 'enabled'))
-        self.updateText()
-
-    def setType(self):
-        if shared.safeConfigGetBoolean(self.address, 'chan'):
-            self.type = "chan"
-        elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
-            self.type = "mailinglist"
-        else:
-            self.type = "normal"
+        self.initialised = True
+        self.setExpanded(enabled) # does updateText
     
-    def setUnreadCount(self, cnt):
-        self.unreadCount = int(cnt)
-        self.updateText()
-        
     def updateText(self):
+        if not self.initialised:
+            return
         text = unicode(shared.config.get(self.address, 'label'), 'utf-8)') + ' (' + self.address + ')'
         
         font = QtGui.QFont()
@@ -101,15 +121,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem):
         self.setFont(0, font)
             
         #set text color
-        if shared.safeConfigGetBoolean(self.address, 'enabled'):
-            if shared.safeConfigGetBoolean(self.address, 'mailinglist'):
-                brush = QtGui.QBrush(QtGui.QColor(137, 04, 177))
-            else:
-                brush = QtGui.QBrush(QtGui.QApplication.palette().text().color())
-            #self.setExpanded(True)        
-        else:
-            brush = QtGui.QBrush(QtGui.QColor(128, 128, 128))
-            #self.setExpanded(False)
+        brush = self.accountColor()
         brush.setStyle(QtCore.Qt.NoBrush)
         self.setForeground(0, brush)
 
@@ -132,10 +144,8 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem):
             reverse = False
             if self.treeWidget().header().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
                 reverse = True
-            if shared.config.getboolean(self.address, 'enabled') == \
-                shared.config.getboolean(other.address, 'enabled'):
-                if shared.safeConfigGetBoolean(self.address, 'mailinglist') == \
-                    shared.safeConfigGetBoolean(other.address, 'mailinglist'):
+            if self.isEnabled == other.isEnabled:
+                if self.type == other.type:
                     if shared.config.get(self.address, 'label'):
                         x = shared.config.get(self.address, 'label').decode('utf-8').lower()
                     else:
@@ -146,44 +156,37 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem):
                         y = other.address.decode('utf-8').lower()
                     return x < y
                 else:
-                    return (reverse if shared.safeConfigGetBoolean(self.address, 'mailinglist') else not reverse)
+                    return (reverse if self.type == "mailinglist" else not reverse)
 #            else:
-            return (not reverse if shared.config.getboolean(self.address, 'enabled') else reverse)
+            return (not reverse if self.isEnabled else reverse)
 
         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
 
         
-class Ui_SubscriptionWidget(Ui_AddressWidget):
-    def __init__(self, parent, pos = 0, address = "", unreadCount = 0, label = "", enabled = ""):
+class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
+    def __init__(self, parent, pos = 0, address = "", unreadCount = 0, label = "", enabled = True):
         super(QtGui.QTreeWidgetItem, self).__init__()
-        self.unreadCount = unreadCount
         parent.insertTopLevelItem(pos, self)
         # only set default when creating
         #super(QtGui.QTreeWidgetItem, self).setExpanded(shared.config.getboolean(self.address, 'enabled'))
-        self.setEnabled(enabled)
-        self.setLabel(label)
+        self.initialised = False
         self.setAddress(address)
+        self.setEnabled(enabled)
+        self.setType()
+        self.setLabel(label)
+        self.setUnreadCount (unreadCount)
+        self.initialised = True
+        self.setExpanded(enabled) # does updateText
     
     def setLabel(self, label):
         self.label = label
         
-    def setAddress(self, address):
-        self.address = str(address)
-        self.setType()
-        self.setExpanded(self.isEnabled)
-        self.updateText()
-
-    def setEnabled(self, enabled):
-        self.isEnabled = enabled
-        
     def setType(self):
         self.type = "subscription"
     
-    def setUnreadCount(self, cnt):
-        self.unreadCount = int(cnt)
-        self.updateText()
-        
     def updateText(self):
+        if not self.initialised:
+            return
         text = unicode(self.label, 'utf-8)') + ' (' + self.address + ')'
         
         font = QtGui.QFont()
@@ -197,12 +200,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
         self.setFont(0, font)
             
         #set text color
-        if self.isEnabled:
-            brush = QtGui.QBrush(QtGui.QColor(137, 04, 177))
-            #self.setExpanded(True)        
-        else:
-            brush = QtGui.QBrush(QtGui.QColor(128, 128, 128))
-            #self.setExpanded(False)
+        brush = self.accountColor()
         brush.setStyle(QtCore.Qt.NoBrush)
         self.setForeground(0, brush)
 
@@ -211,14 +209,6 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
         self.setToolTip(0, text)
 #        self.setData(0, QtCore.Qt.UserRole, [self.address, "inbox"])
     
-    def setExpanded(self, expand):
-        super(Ui_SubscriptionWidget, self).setExpanded(expand)
-        self.updateText()
-
-    def edit(self):
-        self.setText(0, self.label)
-        super(QtGui.QAbstractItemView, self).edit()
-
     # label (or address) alphabetically, disabled at the end
     def __lt__(self, other):
         if (isinstance(other, Ui_SubscriptionWidget)):
@@ -240,22 +230,19 @@ class Ui_SubscriptionWidget(Ui_AddressWidget):
 
         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
         
-class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem):
+class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
     _types = {'normal': 0, 'chan': 1, 'subscription': 2}
 
     def __init__ (self, text, type = 'normal'):
         super(QtGui.QTableWidgetItem, self).__init__(text)
         self.label = text
+        self.type = type
         try:
-            self.type = self._types[type]
+            self.typeNum = self._types[self.type]
         except:
             self.type = 0
-        if self.type == 2:
-            brush = QtGui.QBrush(QtGui.QColor(137, 04, 177))
-        elif self.type == 1:
-            brush = QtGui.QBrush(QtGui.QColor(216, 119, 0))
-        else:
-            return
+        self.setEnabled(True)
+        brush = self.accountColor()
         brush.setStyle(QtCore.Qt.NoBrush)
         self.setForeground(brush)
 
@@ -264,10 +251,10 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem):
             reverse = False
             if self.tableWidget().horizontalHeader().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
                 reverse = True
-            if self.type == other.type:
+            if self.typeNum == other.typeNum:
                 return self.label.decode('utf-8').lower() < other.label.decode('utf-8').lower()
             else:
-                return (not reverse if self.type < other.type else reverse)
+                return (not reverse if self.typeNum < other.typeNum else reverse)
         return super(QtGui.QTableWidgetItem, self).__lt__(other)
 
 
