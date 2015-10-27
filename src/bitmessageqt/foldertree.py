@@ -183,6 +183,10 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         
     def setType(self):
         self.type = "subscription"
+        
+    def edit(self):
+        self.setText(0, self.label)
+        super(QtGui.QAbstractItemView, self).edit()
     
     def updateText(self):
         if not self.initialised:

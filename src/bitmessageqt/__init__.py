@@ -444,6 +444,8 @@ class MyForm(QtGui.QMainWindow):
                     newSubItem = Ui_FolderWidget(newItem, 0, address, folder, 0)
                 
             newItem.setUnreadCount(unread)
+            newItem.setFlags (newItem.flags() | QtCore.Qt.ItemIsEditable)
+
         treeWidget.setSortingEnabled(True)
 
     def rerenderTabTreeMessages(self):
@@ -537,8 +539,7 @@ class MyForm(QtGui.QMainWindow):
                 unread += db[toAddress][folder]
                 j += 1
             widget.setUnreadCount(unread)
-            if (tab == 'messages'):
-                widget.setFlags (widget.flags() | QtCore.Qt.ItemIsEditable)
+            widget.setFlags (widget.flags() | QtCore.Qt.ItemIsEditable)
             i += 1
         
         treeWidget.setSortingEnabled(True)
@@ -658,8 +659,12 @@ class MyForm(QtGui.QMainWindow):
             "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
         QtCore.QObject.connect(self.ui.treeWidgetSubscriptions, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.treeWidgetItemClicked)
+        QtCore.QObject.connect(self.ui.treeWidgetSubscriptions, QtCore.SIGNAL(
+            "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
         QtCore.QObject.connect(self.ui.treeWidgetChans, QtCore.SIGNAL(
             "itemSelectionChanged ()"), self.treeWidgetItemClicked)
+        QtCore.QObject.connect(self.ui.treeWidgetChans, QtCore.SIGNAL(
+            "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
 
         # Put the colored icon on the status bar
         # self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
@@ -3615,7 +3620,7 @@ class MyForm(QtGui.QMainWindow):
         if column != 0:
             return
         # only account names of normal addresses (no chans/mailinglists)
-        if (not isinstance(item, Ui_AddressWidget)) or item.type != 'normal' or not self.getCurrentTreeWidget() or self.getCurrentTreeWidget().currentItem() is None:
+        if (not isinstance(item, Ui_AddressWidget)) or (not self.getCurrentTreeWidget()) or self.getCurrentTreeWidget().currentItem() is None:
             return
         # not visible
         if (not self.getCurrentItem()) or (not isinstance (self.getCurrentItem(), Ui_AddressWidget)):
@@ -3627,7 +3632,10 @@ class MyForm(QtGui.QMainWindow):
         newLabel = str(item.text(0))
         newLabel = newLabel.replace("(" + str(item.address) + ")", '')
         newLabel = newLabel.rstrip()
-        oldLabel = shared.config.get(str(item.address), 'label')
+        if item.type == "subscription":
+            oldLabel = item.label
+        else:
+            oldLabel = shared.config.get(str(item.address), 'label')
         oldLabel = oldLabel.replace("(" + str(item.address) + ")", '')
         oldLabel = oldLabel.rstrip()
         # unchanged, do not do anything either
@@ -3639,12 +3647,18 @@ class MyForm(QtGui.QMainWindow):
             return
 
         self.recurDepth += 1
-        shared.config.set(str(item.address), 'label', newLabel)
+        if item.type == "subscription":
+            sqlExecute(
+                '''UPDATE subscriptions SET label=? WHERE address=?''',
+                newLabel, item.address)
+            item.setLabel(newLabel)
+        else:
+            shared.config.set(str(item.address), 'label', newLabel)
+            shared.writeKeysFile()
         item.updateText()
-        shared.writeKeysFile()
         if item.type == 'mailinglist':
             self.rerenderComboBoxSendFromBroadcast()
-        else:
+        elif item.type != "subscription":
             self.rerenderComboBoxSendFrom()
         self.recurDepth -= 1
 
