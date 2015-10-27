@@ -92,7 +92,7 @@ class Ui_settingsDialog(object):
         self.languageComboBox.addItem(_fromUtf8(""))
         self.languageComboBox.setItemText(4, _fromUtf8("Deutsch"))
         self.languageComboBox.addItem(_fromUtf8(""))
-        self.languageComboBox.setItemText(5, _fromUtf8("Españl"))
+        self.languageComboBox.setItemText(5, _fromUtf8("Español"))
         self.languageComboBox.addItem(_fromUtf8(""))
         self.languageComboBox.setItemText(6, _fromUtf8("русский"))
         self.languageComboBox.addItem(_fromUtf8(""))
