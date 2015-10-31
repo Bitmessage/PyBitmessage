@@ -876,7 +876,7 @@ class MyForm(QtGui.QMainWindow):
         self.ui.tabWidget.setCurrentIndex(3)
         
     def propagateUnreadCount(self, address = None, folder = "inbox", widget = None, type = 1):
-        def updateUnreadCount(item, type = 1):
+        def updateUnreadCount(item):
             if type == 1:
                 item.setUnreadCount(item.unreadCount + 1)
                 if isinstance(item, Ui_AddressWidget):
@@ -886,10 +886,14 @@ class MyForm(QtGui.QMainWindow):
                 if isinstance(item, Ui_AddressWidget):
                     self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount(self.unreadCount -1))
             else:
+                if addressItem.type == 'subscription' or addressItem.type == 'mailinglist':
+                    xAddress = "fromaddress"
+                else:
+                    xAddress = "toaddress"
                 if address and folder:
-                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE toaddress = ? AND folder = ? AND read = 0", address, folder)
+                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE " + xAddress + " = ? AND folder = ? AND read = 0", address, folder)
                 elif address:
-                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE toaddress = ? AND read = 0", address)
+                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE " + xAddress + " = ? AND read = 0", address)
                 elif folder:
                     queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE folder = ? AND read = 0", folder)
                 else:
@@ -909,14 +913,14 @@ class MyForm(QtGui.QMainWindow):
                 addressItem = root.child(i)
                 if address is not None and addressItem.data(0, QtCore.Qt.UserRole) != address:
                     continue
-                updateUnreadCount(addressItem, type)
+                updateUnreadCount(addressItem)
                 if addressItem.childCount == 0:
                     continue
                 for j in range(addressItem.childCount()):
                     folderItem = addressItem.child(j)
                     if folder is not None and folderItem.data(0, QtCore.Qt.UserRole) != folder:
                         continue
-                    updateUnreadCount(folderItem, type)
+                    updateUnreadCount(folderItem)
 
     # Load Sent items from database
     def loadSent(self, tableWidget, account, where="", what=""):
@@ -2368,12 +2372,15 @@ class MyForm(QtGui.QMainWindow):
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-        acct = accountClass(toAddress)
+        if toAddress == str_broadcast_subscribers:
+            acct = accountClass(fromAddress)
+        else:
+            acct = accountClass(toAddress)
         acct.parseMessage(toAddress, fromAddress, subject, message)
         inbox = self.getAccountMessagelist(acct)
         treeWidget = self.getAccountTreeWidget(acct)
-        self.propagateUnreadCount(toAddress)
-        if (self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) != False) or self.getCurrentAccount(treeWidget) != toAddress:
+        self.propagateUnreadCount(acct.address)
+        if (self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) != False) or self.getCurrentAccount(treeWidget) != acct.address:
             # Ubuntu should notify of new message irespective of whether it's in current message list or not
             self.ubuntuMessagingMenuUpdate(True, None, acct.toLabel)
             return
