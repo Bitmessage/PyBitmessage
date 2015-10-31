@@ -1860,15 +1860,28 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetInbox.item(i, 3).setText(textToDisplay)
 
     def removeInboxRowByMsgid(self, msgid):  # msgid and inventoryHash are the same thing
-        inbox = self.getCurrentMessagelist()
-        for i in range(inbox.rowCount()):
-            if msgid == str(inbox.item(i, 3).data(Qt.UserRole).toPyObject()):
-                self.statusBar().showMessage(_translate(
-                    "MainWindow", "Message trashed"))
-                inbox.removeRow(i)
-                break
-        # this is a callback from core, not initiated by UI. We don't care about performance
-        self.propagateUnreadCount(None, None, None, 0)
+        def widgetConvert (tableWidget):
+            if tableWidget == self.ui.tableWidgetInbox:
+                return self.ui.treeWidgetYourIdentities
+            elif tableWidget == self.ui.tableWidgetInboxSubscriptions:
+                return self.ui.treeWidgetSubscriptions
+            elif tableWidget == self.ui.tableWidgetInboxChans:
+                return self.ui.treeWidgetChans
+            else:
+                return None
+                
+        for inbox in ([
+            self.ui.tableWidgetInbox,
+            self.ui.tableWidgetInboxSubscriptions,
+            self.ui.tableWidgetInboxChans]):
+            for i in range(inbox.rowCount()):
+                if msgid == str(inbox.item(i, 3).data(Qt.UserRole).toPyObject()):
+                    self.statusBar().showMessage(_translate(
+                        "MainWindow", "Message trashed"))
+                    treeWidget = widgetConvert(inbox)
+                    self.propagateUnreadCount(self.getCurrentAccount(treeWidget), self.getCurrentFolder(treeWidget), treeWidget, 0)
+                    inbox.removeRow(i)
+                    break
         
     def newVersionAvailable(self, version):
 #        if (not (self.windowState() & QtCore.Qt.WindowActive)) or (self.windowState() & QtCore.Qt.WindowMinimized):
