@@ -2938,10 +2938,16 @@ class MyForm(QtGui.QMainWindow):
         font = QFont()
         font.setBold(True)
         inventoryHashesToMarkUnread = []
+        modified = 0
         for row in tableWidget.selectedIndexes():
             currentRow = row.row()
             inventoryHashToMarkUnread = str(tableWidget.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
+            if inventoryHashToMarkUnread in inventoryHashesToMarkUnread:
+                # it returns columns as separate items, so we skip dupes
+                continue
+            if not tableWidget.item(currentRow, 0).font().bold():
+                modified += 1
             inventoryHashesToMarkUnread.append(inventoryHashToMarkUnread)
             tableWidget.item(currentRow, 0).setFont(font)
             tableWidget.item(currentRow, 1).setFont(font)
@@ -2950,7 +2956,11 @@ class MyForm(QtGui.QMainWindow):
         #sqlite requires the exact number of ?s to prevent injection
         sqlExecute('''UPDATE inbox SET read=0 WHERE msgid IN (%s)''' % (
             "?," * len(inventoryHashesToMarkUnread))[:-1], *inventoryHashesToMarkUnread)
-        self.propagateUnreadCount(self.getCurrentAccount(), "inbox", self.getCurrentTreeWidget(), 0)
+        if modified == 1:
+            # performance optimisation
+            self.propagateUnreadCount(self.getCurrentAccount())
+        else:
+            self.propagateUnreadCount(self.getCurrentAccount(), "inbox", self.getCurrentTreeWidget(), 0)
         # tableWidget.selectRow(currentRow + 1) 
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
