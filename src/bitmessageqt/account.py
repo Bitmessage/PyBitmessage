@@ -6,6 +6,7 @@ import sys
 import inspect
 from helper_sql import *
 from addresses import decodeAddress
+from foldertree import AccountMixin
 from pyelliptic.openssl import OpenSSL
 from utils import str_broadcast_subscribers
 import time
@@ -40,6 +41,24 @@ def accountClass(address):
         pass
     # no gateway
     return BMAccount(address)
+    
+class AccountColor(AccountMixin):
+    def __init__(self, address, type = None):
+        self.isEnabled = True
+        self.address = address
+        if type is None:
+            if shared.safeConfigGetBoolean(self.address, 'mailinglist'):
+                self.type = "mailinglist"
+            elif shared.safeConfigGetBoolean(self.address, 'chan'):
+                self.type = "chan"
+            elif sqlQuery(
+                '''select label from subscriptions where address=?''', self.address):
+                self.type = 'subscription'
+            else:
+                self.type = "normal"
+        else:
+            self.type = type
+        
     
 class BMAccount(object):
     def __init__(self, address = None):

@@ -921,6 +921,7 @@ class MyForm(QtGui.QMainWindow):
             toAddressItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
             toAddressItem.setIcon(avatarize(toAddress))
             toAddressItem.setData(Qt.UserRole, str(toAddress))
+            toAddressItem.setTextColor(AccountColor(toAddress).accountColor())
             toAddressItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             tableWidget.setItem(0, 0, toAddressItem)
@@ -929,6 +930,7 @@ class MyForm(QtGui.QMainWindow):
             fromAddressItem.setToolTip(unicode(acct.fromLabel, 'utf-8'))
             fromAddressItem.setIcon(avatarize(fromAddress))
             fromAddressItem.setData(Qt.UserRole, str(fromAddress))
+            fromAddressItem.setTextColor(AccountColor(fromAddress).accountColor())
             fromAddressItem.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             tableWidget.setItem(0, 1, fromAddressItem)
@@ -1058,10 +1060,7 @@ class MyForm(QtGui.QMainWindow):
             if not read:
                 to_item.setFont(font)
             to_item.setData(Qt.UserRole, str(toAddress))
-            if shared.safeConfigGetBoolean(toAddress, 'mailinglist'):
-                to_item.setTextColor(QtGui.QColor(137, 04, 177)) # magenta
-            if shared.safeConfigGetBoolean(str(toAddress), 'chan'):
-                to_item.setTextColor(QtGui.QColor(216, 119, 0)) # orange
+            to_item.setTextColor(AccountColor(toAddress).accountColor())
             to_item.setIcon(avatarize(toAddress))
             tableWidget.setItem(0, 0, to_item)
             # from
@@ -1072,8 +1071,7 @@ class MyForm(QtGui.QMainWindow):
             if not read:
                 from_item.setFont(font)
             from_item.setData(Qt.UserRole, str(fromAddress))
-            if shared.safeConfigGetBoolean(str(fromAddress), 'chan'):
-                from_item.setTextColor(QtGui.QColor(216, 119, 0)) # orange
+            from_item.setTextColor(AccountColor(fromAddress).accountColor())
             from_item.setIcon(avatarize(fromAddress))
             tableWidget.setItem(0, 1, from_item)
             # subject
