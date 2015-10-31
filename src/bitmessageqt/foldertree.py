@@ -40,7 +40,7 @@ class AccountMixin (object):
     def updateText(self):
         pass
 
-            
+
 class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
     folderWeight = {"inbox": 1, "sent": 2, "trash": 3}
     def __init__(self, parent, pos = 0, address = "", folderName = "", unreadCount = 0):
@@ -55,6 +55,7 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
 
     def setFolderName(self, fname):
         self.folderName = str(fname)
+        self.setData(0, QtCore.Qt.UserRole, self.folderName)
         self.updateText()
         
     def updateText(self):
@@ -107,6 +108,10 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin):
         self.setType()
         self.initialised = True
         self.setExpanded(enabled) # does updateText
+        
+    def setAddress(self, address):
+        super(Ui_AddressWidget, self).setAddress(address)
+        self.setData(0, QtCore.Qt.UserRole, self.address)
     
     def updateText(self):
         if not self.initialised:
