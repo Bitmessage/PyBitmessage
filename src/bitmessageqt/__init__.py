@@ -2306,6 +2306,9 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.comboBoxSendFrom.addItem(avatarize(addressInKeysFile), unicode(shared.config.get(
                      addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
 #        self.ui.comboBoxSendFrom.model().sort(1, Qt.AscendingOrder)
+        for i in range(self.ui.comboBoxSendFrom.count()):
+            address = str(self.ui.comboBoxSendFrom.itemData(i, Qt.UserRole).toString())
+            self.ui.comboBoxSendFrom.setItemData(i, AccountColor(address).accountColor(), Qt.ForegroundRole)
         self.ui.comboBoxSendFrom.insertItem(0, '', '')
         if(self.ui.comboBoxSendFrom.count() == 2):
             self.ui.comboBoxSendFrom.setCurrentIndex(1)
@@ -2321,6 +2324,9 @@ class MyForm(QtGui.QMainWindow):
             if isEnabled and isMaillinglist:
                 self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), unicode(shared.config.get(
                     addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
+        for i in range(self.ui.comboBoxSendFromBroadcast.count()):
+            address = str(self.ui.comboBoxSendFromBroadcast.itemData(i, Qt.UserRole).toString())
+            self.ui.comboBoxSendFromBroadcast.setItemData(i, AccountColor(address).accountColor(), Qt.ForegroundRole)
         self.ui.comboBoxSendFromBroadcast.insertItem(0, '', '')
         if(self.ui.comboBoxSendFromBroadcast.count() == 2):
             self.ui.comboBoxSendFromBroadcast.setCurrentIndex(1)
