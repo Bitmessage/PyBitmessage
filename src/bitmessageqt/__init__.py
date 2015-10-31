@@ -310,14 +310,6 @@ class MyForm(QtGui.QMainWindow):
             self.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL(
                 'customContextMenuRequested(const QPoint&)'),
                         self.on_context_menuAddressBook)
-        self.popMenuAddressBook = QtGui.QMenu(self)
-        self.popMenuAddressBook.addAction(self.actionAddressBookSend)
-        self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
-        self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
-        self.popMenuAddressBook.addAction(self.actionAddressBookSetAvatar)
-        self.popMenuAddressBook.addSeparator()
-        self.popMenuAddressBook.addAction(self.actionAddressBookNew)
-        self.popMenuAddressBook.addAction(self.actionAddressBookDelete)
 
     def init_subscriptions_popup_menu(self, connectSignal=True):
         # Popup menu for the Subscriptions page
@@ -2018,6 +2010,7 @@ class MyForm(QtGui.QMainWindow):
         def addRow (address, label, type):
             self.ui.tableWidgetAddressBook.insertRow(0)
             newItem = Ui_AddressBookWidgetItemLabel(address, unicode(label, 'utf-8'), type)
+            newItem.setData(Qt.UserRole, type)
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
             newItem = Ui_AddressBookWidgetItemAddress(address, unicode(label, 'utf-8'), type)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
@@ -3266,6 +3259,26 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tabWidget.setCurrentIndex(4)
 
     def on_context_menuAddressBook(self, point):
+        if hasattr(self, "popMenuAddressBook"):
+            self.popMenuAddressBook.clear()
+        else:
+            self.popMenuAddressBook = QtGui.QMenu(self)
+        self.popMenuAddressBook.addAction(self.actionAddressBookSend)
+        self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
+        self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
+        self.popMenuAddressBook.addAction(self.actionAddressBookSetAvatar)
+        self.popMenuAddressBook.addSeparator()
+        self.popMenuAddressBook.addAction(self.actionAddressBookNew)
+        normal = True
+        for row in self.ui.tableWidgetAddressBook.selectedIndexes():
+            currentRow = row.row()
+            type = str(self.ui.tableWidgetAddressBook.item(
+                currentRow, 0).data(Qt.UserRole).toPyObject())
+            if type != "normal":
+                normal = False
+        if normal:
+            # only if all selected addressbook items are normal, allow delete
+            self.popMenuAddressBook.addAction(self.actionAddressBookDelete)
         self.popMenuAddressBook.exec_(
             self.ui.tableWidgetAddressBook.mapToGlobal(point))
 
