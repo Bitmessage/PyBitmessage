@@ -2212,6 +2212,8 @@ class MyForm(QtGui.QMainWindow):
                         if self.replyFromTab is not None:
                             self.ui.tabWidget.setCurrentIndex(self.replyFromTab)
                             self.replyFromTab = None
+                        self.statusBar().showMessage(_translate(
+                            "MainWindow", "Message queued."))
                         #self.ui.tableWidgetInbox.setCurrentCell(0, 0)
                 else:
                     self.statusBar().showMessage(_translate(
@@ -2259,6 +2261,8 @@ class MyForm(QtGui.QMainWindow):
                 self.ui.textEditMessageBroadcast.setText('')
                 self.ui.tabWidget.setCurrentIndex(1)
                 self.ui.tableWidgetInboxSubscriptions.setCurrentCell(0, 0)
+                self.statusBar().showMessage(_translate(
+                    "MainWindow", "Broadcast queued."))
 
     def click_pushButtonLoadFromAddressBook(self):
         self.ui.tabWidget.setCurrentIndex(5)
