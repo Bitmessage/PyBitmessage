@@ -2375,8 +2375,9 @@ class MyForm(QtGui.QMainWindow):
         inbox = self.getAccountMessagelist(acct)
         treeWidget = self.getAccountTreeWidget(acct)
         self.propagateUnreadCount(toAddress)
-        self.ubuntuMessagingMenuUpdate(True, newItem, acct.toLabel)
         if (self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) != False) or self.getCurrentAccount(treeWidget) != toAddress:
+            # Ubuntu should notify of new message irespective of whether it's in current message list or not
+            self.ubuntuMessagingMenuUpdate(True, None, acct.toLabel)
             return
 
         font = QFont()
@@ -2416,6 +2417,7 @@ class MyForm(QtGui.QMainWindow):
         newItem.setFont(font)
         inbox.setItem(0, 3, newItem)
         inbox.setSortingEnabled(True)
+        self.ubuntuMessagingMenuUpdate(True, newItem, acct.toLabel)
 
     def click_pushButtonAddAddressBook(self):
         self.AddAddressDialogInstance = AddAddressDialog(self)
