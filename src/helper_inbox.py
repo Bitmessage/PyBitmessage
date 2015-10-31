@@ -3,7 +3,8 @@ import shared
 
 def insert(t):
     sqlExecute('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?,?)''', *t)
-    shared.UISignalQueue.put(('changedInboxUnread', None))
+    #shouldn't emit changedInboxUnread and displayNewInboxMessage at the same time
+    #shared.UISignalQueue.put(('changedInboxUnread', None))
     
 def trash(msgid):
     sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', msgid)

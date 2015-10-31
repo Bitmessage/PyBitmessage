@@ -594,7 +594,7 @@ class MyForm(QtGui.QMainWindow):
         
         # switch back to this when replying
         self.replyFromTab = None
-
+        
         self.init_file_menu()
         self.init_inbox_popup_menu()
         self.init_identities_popup_menu()
@@ -675,6 +675,7 @@ class MyForm(QtGui.QMainWindow):
         self.numberOfMessagesProcessed = 0
         self.numberOfBroadcastsProcessed = 0
         self.numberOfPubkeysProcessed = 0
+        self.unreadCount = 0
 
         # Set the icon sizes for the identicons
         identicon_size = 3*7
@@ -873,6 +874,49 @@ class MyForm(QtGui.QMainWindow):
     def appIndicatorChannel(self):
         self.appIndicatorShow()
         self.ui.tabWidget.setCurrentIndex(3)
+        
+    def propagateUnreadCount(self, address = None, folder = "inbox", widget = None, type = 1):
+        def updateUnreadCount(item, type = 1):
+            if type == 1:
+                item.setUnreadCount(item.unreadCount + 1)
+                if isinstance(item, Ui_AddressWidget):
+                    self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount(self.unreadCount + 1))
+            elif type == -1:
+                item.setUnreadCount(item.unreadCount - 1)
+                if isinstance(item, Ui_AddressWidget):
+                    self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount(self.unreadCount -1))
+            else:
+                if address and folder:
+                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE toaddress = ? AND folder = ? AND read = 0", address, folder)
+                elif address:
+                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE toaddress = ? AND read = 0", address)
+                elif folder:
+                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE folder = ? AND read = 0", folder)
+                else:
+                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE read = 0")
+                for row in queryreturn:
+                    item.setUnreadCount(int(row[0]))
+                if isinstance(item, Ui_AddressWidget):
+                    self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount())
+                
+        if widget == None:
+            widgets = [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]
+        else:
+            widgets = [widget]
+        for treeWidget in widgets:
+            root = treeWidget.invisibleRootItem()
+            for i in range(root.childCount()):
+                addressItem = root.child(i)
+                if address is not None and addressItem.data(0, QtCore.Qt.UserRole) != address:
+                    continue
+                updateUnreadCount(addressItem, type)
+                if addressItem.childCount == 0:
+                    continue
+                for j in range(addressItem.childCount()):
+                    folderItem = addressItem.child(j)
+                    if folder is not None and folderItem.data(0, QtCore.Qt.UserRole) != folder:
+                        continue
+                    updateUnreadCount(folderItem, type)
 
     # Load Sent items from database
     def loadSent(self, tableWidget, account, where="", what=""):
@@ -1765,19 +1809,19 @@ class MyForm(QtGui.QMainWindow):
     def changedInboxUnread(self, row = None):
         self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount())
         self.rerenderTabTreeMessages()
-#        if not row is None:
-#            row[1], row[6]
-        if self.ui.tabWidget.currentIndex() == 2:
-            self.rerenderTabTreeSubscriptions()
-        elif self.ui.tabWidget.currentIndex() == 3:
-            self.rerenderTabTreeChans()
+        self.rerenderTabTreeSubscriptions()
+        self.rerenderTabTreeChans()
 
-    def findInboxUnreadCount(self):
-        queryreturn = sqlQuery('''SELECT count(*) from inbox WHERE folder='inbox' and read=0''')
-        cnt = 0
-        for row in queryreturn:
-            cnt, = row
-        return int(cnt)
+    def findInboxUnreadCount(self, count = None):
+        if count is None:
+            queryreturn = sqlQuery('''SELECT count(*) from inbox WHERE folder='inbox' and read=0''')
+            cnt = 0
+            for row in queryreturn:
+                cnt, = row
+            self.unreadCount = int(cnt)
+        else:
+            self.unreadCount = count
+        return self.unreadCount
 
     def updateSentItemStatusByToAddress(self, toAddress, textToDisplay):
         for i in range(self.ui.tableWidgetSent.rowCount()):
@@ -1816,14 +1860,15 @@ class MyForm(QtGui.QMainWindow):
                     self.ui.tableWidgetInbox.item(i, 3).setText(textToDisplay)
 
     def removeInboxRowByMsgid(self, msgid):  # msgid and inventoryHash are the same thing
-        inbox = self.getCurrentMessagelist
+        inbox = self.getCurrentMessagelist()
         for i in range(inbox.rowCount()):
             if msgid == str(inbox.item(i, 3).data(Qt.UserRole).toPyObject()):
                 self.statusBar().showMessage(_translate(
                     "MainWindow", "Message trashed"))
                 inbox.removeRow(i)
                 break
-        self.changedInboxUnread()
+        # this is a callback from core, not initiated by UI. We don't care about performance
+        self.propagateUnreadCount(None, None, None, 0)
         
     def newVersionAvailable(self, version):
 #        if (not (self.windowState() & QtCore.Qt.WindowActive)) or (self.windowState() & QtCore.Qt.WindowMinimized):
@@ -2310,6 +2355,8 @@ class MyForm(QtGui.QMainWindow):
         acct.parseMessage(toAddress, fromAddress, subject, message)
         inbox = self.getAccountMessagelist(acct)
         treeWidget = self.getAccountTreeWidget(acct)
+        self.propagateUnreadCount(toAddress)
+        self.ubuntuMessagingMenuUpdate(True, newItem, acct.toLabel)
         if (self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) != False) or self.getCurrentAccount(treeWidget) != toAddress:
             return
 
@@ -2350,7 +2397,6 @@ class MyForm(QtGui.QMainWindow):
         newItem.setFont(font)
         inbox.setItem(0, 3, newItem)
         inbox.setSortingEnabled(True)
-        self.ubuntuMessagingMenuUpdate(True, newItem, acct.toLabel)
 
     def click_pushButtonAddAddressBook(self):
         self.AddAddressDialogInstance = AddAddressDialog(self)
@@ -2885,7 +2931,7 @@ class MyForm(QtGui.QMainWindow):
         #sqlite requires the exact number of ?s to prevent injection
         sqlExecute('''UPDATE inbox SET read=0 WHERE msgid IN (%s)''' % (
             "?," * len(inventoryHashesToMarkUnread))[:-1], *inventoryHashesToMarkUnread)
-        self.changedInboxUnread()
+        self.propagateUnreadCount(self.getCurrentAccount(), "inbox", self.getCurrentTreeWidget(), 0)
         # tableWidget.selectRow(currentRow + 1) 
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
@@ -3038,7 +3084,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             tableWidget.selectRow(currentRow - 1)
         if unread:
-            self.changedInboxUnread()
+            self.propagateUnreadCount(self.getCurrentAccount(), self.getCurrentFolder(), self.getCurrentTreeWidget(), 0)
 
     def on_action_InboxSaveMessageAs(self):
         tableWidget = self.getCurrentMessagelist()
@@ -3698,7 +3744,7 @@ class MyForm(QtGui.QMainWindow):
                 tableWidget.item(currentRow, 1).setFont(font)
                 tableWidget.item(currentRow, 2).setFont(font)
                 tableWidget.item(currentRow, 3).setFont(font)
-                self.changedInboxUnread()
+                self.propagateUnreadCount(self.getCurrentAccount(), folder, self.getCurrentTreeWidget(), -1)
 
         else:
             data = self.getCurrentMessageId()
