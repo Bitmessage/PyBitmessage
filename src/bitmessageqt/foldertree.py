@@ -15,7 +15,9 @@ class AccountMixin (object):
             return QtGui.QApplication.palette().text().color()
             
     def accountBrush(self):
-        return QtGui.QBrush(self.accountColor())
+        brush = QtGui.QBrush(self.accountColor())
+        brush.setStyle(QtCore.Qt.NoBrush)
+        return brush
 
     def setAddress(self, address):
         self.address = str(address)
@@ -129,9 +131,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin):
         self.setFont(0, font)
             
         #set text color
-        brush = self.accountBrush()
-        brush.setStyle(QtCore.Qt.NoBrush)
-        self.setForeground(0, brush)
+        self.setForeground(0, self.accountBrush())
 
         self.setIcon(0, avatarize(self.address))
         self.setText(0, text)
@@ -212,9 +212,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         self.setFont(0, font)
             
         #set text color
-        brush = self.accountBrush()
-        brush.setStyle(QtCore.Qt.NoBrush)
-        self.setForeground(0, brush)
+        self.setForeground(0, self.accountBrush())
 
         self.setIcon(0, avatarize(self.address))
         self.setText(0, text)
@@ -254,9 +252,7 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
         except:
             self.type = 0
         self.setEnabled(True)
-        brush = self.accountBrush()
-        brush.setStyle(QtCore.Qt.NoBrush)
-        self.setForeground(brush)
+        self.setForeground(self.accountBrush())
 
     def __lt__ (self, other):
         if (isinstance(other, Ui_AddressBookWidgetItem)):
