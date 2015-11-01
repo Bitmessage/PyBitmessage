@@ -3085,7 +3085,7 @@ class MyForm(QtGui.QMainWindow):
             sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', inventoryHashToTrash)
             if tableWidget.item(currentRow, 0).font().bold():
                 unread = True
-            self.ui.textEditInboxMessage.setText("")
+            self.getCurrentMessageTextedit().setText("")
             tableWidget.removeRow(currentRow)
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Moved items to trash."))
