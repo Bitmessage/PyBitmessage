@@ -147,6 +147,9 @@ class MyForm(QtGui.QMainWindow):
         self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction(
             _translate("MainWindow", "Move to Trash"),
             self.on_action_InboxTrash)
+        self.actionUndeleteTrashedMessage = self.ui.inboxContextMenuToolbar.addAction(
+            _translate("MainWindow", "Undelete"),
+            self.on_action_TrashUndelete)
         self.actionForceHtml = self.ui.inboxContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "View HTML code as formatted text"),
@@ -178,16 +181,6 @@ class MyForm(QtGui.QMainWindow):
             self.connect(self.ui.tableWidgetInboxChans, QtCore.SIGNAL(
                 'customContextMenuRequested(const QPoint&)'),
                         self.on_context_menuInbox)
-
-        self.popMenuInbox = QtGui.QMenu(self)
-        self.popMenuInbox.addAction(self.actionForceHtml)
-        self.popMenuInbox.addAction(self.actionMarkUnread)
-        self.popMenuInbox.addSeparator()
-        self.popMenuInbox.addAction(self.actionReply)
-        self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
-        self.popMenuInbox.addSeparator()
-        self.popMenuInbox.addAction(self.actionSaveMessageAs)
-        self.popMenuInbox.addAction(self.actionTrashInboxMessage)
 
     def init_identities_popup_menu(self, connectSignal=True):
         # Popup menu for the Your Identities tab
@@ -3098,6 +3091,30 @@ class MyForm(QtGui.QMainWindow):
             tableWidget.selectRow(currentRow - 1)
         if unread:
             self.propagateUnreadCount(self.getCurrentAccount(), self.getCurrentFolder(), self.getCurrentTreeWidget(), 0)
+            
+    def on_action_TrashUndelete(self):
+        tableWidget = self.getCurrentMessagelist()
+        if not tableWidget:
+            return
+        unread = False
+        currentRow = 0
+        while tableWidget.selectedIndexes():
+            currentRow = tableWidget.selectedIndexes()[0].row()
+            inventoryHashToTrash = str(tableWidget.item(
+                currentRow, 3).data(Qt.UserRole).toPyObject())
+            sqlExecute('''UPDATE inbox SET folder='inbox' WHERE msgid=?''', inventoryHashToTrash)
+            if tableWidget.item(currentRow, 0).font().bold():
+                unread = True
+            self.getCurrentMessageTextedit().setText("")
+            tableWidget.removeRow(currentRow)
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Undeleted item."))
+        if currentRow == 0:
+            tableWidget.selectRow(currentRow)
+        else:
+            tableWidget.selectRow(currentRow - 1)
+        if unread:
+            self.propagateUnreadCount(self.getCurrentAccount(), None, self.getCurrentTreeWidget(), 0)
 
     def on_action_InboxSaveMessageAs(self):
         tableWidget = self.getCurrentMessagelist()
@@ -3678,6 +3695,18 @@ class MyForm(QtGui.QMainWindow):
             if currentFolder == 'sent':
                 self.on_context_menuSent(point)
             else:
+                self.popMenuInbox = QtGui.QMenu(self)
+                self.popMenuInbox.addAction(self.actionForceHtml)
+                self.popMenuInbox.addAction(self.actionMarkUnread)
+                self.popMenuInbox.addSeparator()
+                self.popMenuInbox.addAction(self.actionReply)
+                self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
+                self.popMenuInbox.addSeparator()
+                self.popMenuInbox.addAction(self.actionSaveMessageAs)
+                if currentFolder == "trash":
+                    self.popMenuInbox.addAction(self.actionUndeleteTrashedMessage)
+                else:
+                    self.popMenuInbox.addAction(self.actionTrashInboxMessage)
                 self.popMenuInbox.exec_(tableWidget.mapToGlobal(point))
 
     def on_context_menuSent(self, point):
