@@ -2932,9 +2932,9 @@ class MyForm(QtGui.QMainWindow):
             "?," * len(inventoryHashesToMarkUnread))[:-1], *inventoryHashesToMarkUnread)
         if modified == 1:
             # performance optimisation
-            self.propagateUnreadCount(self.getCurrentAccount())
+            self.propagateUnreadCount(self.getCurrentAccount(), self.getCurrentFolder())
         else:
-            self.propagateUnreadCount(self.getCurrentAccount(), "inbox", self.getCurrentTreeWidget(), 0)
+            self.propagateUnreadCount(self.getCurrentAccount(), self.getCurrentFolder(), self.getCurrentTreeWidget(), 0)
         # tableWidget.selectRow(currentRow + 1) 
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
