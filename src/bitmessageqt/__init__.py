@@ -225,17 +225,6 @@ class MyForm(QtGui.QMainWindow):
                 'customContextMenuRequested(const QPoint&)'),
                         self.on_context_menuYourIdentities)
 
-        self.popMenuYourIdentities = QtGui.QMenu(self)
-        self.popMenuYourIdentities.addAction(self.actionNewYourIdentities)
-        self.popMenuYourIdentities.addSeparator()
-        self.popMenuYourIdentities.addAction(self.actionClipboardYourIdentities)
-        self.popMenuYourIdentities.addSeparator()
-        self.popMenuYourIdentities.addAction(self.actionEnableYourIdentities)
-        self.popMenuYourIdentities.addAction(self.actionDisableYourIdentities)
-        self.popMenuYourIdentities.addAction(self.actionSetAvatarYourIdentities)
-        self.popMenuYourIdentities.addAction(self.actionSpecialAddressBehaviorYourIdentities)
-        self.popMenuYourIdentities.addAction(self.actionEmailGateway)
-
     def init_chan_popup_menu(self, connectSignal=True):
         # Popup menu for the Channels tab
         self.ui.addressContextMenuToolbar = QtGui.QToolBar()
@@ -267,16 +256,6 @@ class MyForm(QtGui.QMainWindow):
             self.connect(self.ui.treeWidgetChans, QtCore.SIGNAL(
                 'customContextMenuRequested(const QPoint&)'),
                         self.on_context_menuChan)
-
-        self.popMenu = QtGui.QMenu(self)
-        self.popMenu.addAction(self.actionNew)
-        self.popMenu.addSeparator()
-        self.popMenu.addAction(self.actionClipboard)
-        self.popMenu.addSeparator()
-        self.popMenu.addAction(self.actionEnable)
-        self.popMenu.addAction(self.actionDisable)
-        self.popMenu.addAction(self.actionSetAvatar)
-        self.popMenu.addAction(self.actionSpecialAddressBehavior)
 
     def init_addressbook_popup_menu(self, connectSignal=True):
         # Popup menu for the Address Book page
@@ -338,15 +317,6 @@ class MyForm(QtGui.QMainWindow):
             self.connect(self.ui.treeWidgetSubscriptions, QtCore.SIGNAL(
                 'customContextMenuRequested(const QPoint&)'),
                         self.on_context_menuSubscriptions)
-        self.popMenuSubscriptions = QtGui.QMenu(self)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
-        self.popMenuSubscriptions.addSeparator()
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsEnable)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsDisable)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsSetAvatar)
-        self.popMenuSubscriptions.addSeparator()
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
 
     def init_sent_popup_menu(self, connectSignal=True):
         # Popup menu for the Sent page
@@ -3259,10 +3229,7 @@ class MyForm(QtGui.QMainWindow):
             self.ui.tabWidget.setCurrentIndex(4)
 
     def on_context_menuAddressBook(self, point):
-        if hasattr(self, "popMenuAddressBook"):
-            self.popMenuAddressBook.clear()
-        else:
-            self.popMenuAddressBook = QtGui.QMenu(self)
+        self.popMenuAddressBook = QtGui.QMenu(self)
         self.popMenuAddressBook.addAction(self.actionAddressBookSend)
         self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
         self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
@@ -3318,6 +3285,17 @@ class MyForm(QtGui.QMainWindow):
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_context_menuSubscriptions(self, point):
+        self.popMenuSubscriptions = QtGui.QMenu(self)
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
+        self.popMenuSubscriptions.addSeparator()
+        if self.getCurrentItem().isEnabled:
+            self.popMenuSubscriptions.addAction(self.actionsubscriptionsDisable)
+        else:
+            self.popMenuSubscriptions.addAction(self.actionsubscriptionsEnable)
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsSetAvatar)
+        self.popMenuSubscriptions.addSeparator()
+        self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
         self.popMenuSubscriptions.exec_(
             self.ui.treeWidgetSubscriptions.mapToGlobal(point))
 
@@ -3652,11 +3630,34 @@ class MyForm(QtGui.QMainWindow):
         return True
         
     def on_context_menuYourIdentities(self, point):
+        self.popMenuYourIdentities = QtGui.QMenu(self)
+        self.popMenuYourIdentities.addAction(self.actionNewYourIdentities)
+        self.popMenuYourIdentities.addSeparator()
+        self.popMenuYourIdentities.addAction(self.actionClipboardYourIdentities)
+        self.popMenuYourIdentities.addSeparator()
+        if self.getCurrentItem().isEnabled:
+            self.popMenuYourIdentities.addAction(self.actionDisableYourIdentities)
+        else:
+            self.popMenuYourIdentities.addAction(self.actionEnableYourIdentities)
+        self.popMenuYourIdentities.addAction(self.actionSetAvatarYourIdentities)
+        self.popMenuYourIdentities.addAction(self.actionSpecialAddressBehaviorYourIdentities)
+        self.popMenuYourIdentities.addAction(self.actionEmailGateway)
         self.popMenuYourIdentities.exec_(
             self.ui.treeWidgetYourIdentities.mapToGlobal(point))
 
     # TODO make one popMenu
     def on_context_menuChan(self, point):
+        self.popMenu = QtGui.QMenu(self)
+        self.popMenu.addAction(self.actionNew)
+        self.popMenu.addSeparator()
+        self.popMenu.addAction(self.actionClipboard)
+        self.popMenu.addSeparator()
+        if self.getCurrentItem().isEnabled:
+            self.popMenu.addAction(self.actionDisable)
+        else:
+            self.popMenu.addAction(self.actionEnable)
+        self.popMenu.addAction(self.actionSetAvatar)
+        self.popMenu.addAction(self.actionSpecialAddressBehavior)
         self.popMenu.exec_(
             self.ui.treeWidgetChans.mapToGlobal(point))
 
