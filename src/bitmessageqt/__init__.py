@@ -832,7 +832,28 @@ class MyForm(QtGui.QMainWindow):
         
     def propagateUnreadCount(self, address = None, folder = "inbox", widget = None, type = 1):
         def updateUnreadCount(item):
-            if type == 1:
+            # if refreshing the account root, we need to rescan folders
+            if type == 0 or (folder is None and isinstance(item, Ui_FolderWidget)):
+                if addressItem.type == 'subscription' or addressItem.type == 'mailinglist':
+                    xAddress = "fromaddress"
+                else:
+                    xAddress = "toaddress"
+                xFolder = folder
+                if isinstance(item, Ui_FolderWidget):
+                    xFolder = item.folderName
+                if address and xFolder:
+                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE " + xAddress + " = ? AND folder = ? AND read = 0", address, xFolder)
+                elif address:
+                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE " + xAddress + " = ? AND read = 0", address)
+                elif xFolder:
+                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE folder = ? AND read = 0", xFolder)
+                else:
+                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE read = 0")
+                for row in queryreturn:
+                    item.setUnreadCount(int(row[0]))
+                if isinstance(item, Ui_AddressWidget):
+                    self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount())
+            elif type == 1:
                 item.setUnreadCount(item.unreadCount + 1)
                 if isinstance(item, Ui_AddressWidget):
                     self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount(self.unreadCount + 1))
@@ -840,23 +861,6 @@ class MyForm(QtGui.QMainWindow):
                 item.setUnreadCount(item.unreadCount - 1)
                 if isinstance(item, Ui_AddressWidget):
                     self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount(self.unreadCount -1))
-            else:
-                if addressItem.type == 'subscription' or addressItem.type == 'mailinglist':
-                    xAddress = "fromaddress"
-                else:
-                    xAddress = "toaddress"
-                if address and folder:
-                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE " + xAddress + " = ? AND folder = ? AND read = 0", address, folder)
-                elif address:
-                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE " + xAddress + " = ? AND read = 0", address)
-                elif folder:
-                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE folder = ? AND read = 0", folder)
-                else:
-                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE read = 0")
-                for row in queryreturn:
-                    item.setUnreadCount(int(row[0]))
-                if isinstance(item, Ui_AddressWidget):
-                    self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount())
                 
         if widget == None:
             widgets = [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]
@@ -873,7 +877,7 @@ class MyForm(QtGui.QMainWindow):
                     continue
                 for j in range(addressItem.childCount()):
                     folderItem = addressItem.child(j)
-                    if folder is not None and folderItem.data(0, QtCore.Qt.UserRole) != folder:
+                    if folder is not None and folderItem.folderName != folder:
                         continue
                     updateUnreadCount(folderItem)
 
@@ -3088,7 +3092,7 @@ class MyForm(QtGui.QMainWindow):
         else:
             tableWidget.selectRow(currentRow - 1)
         if unread:
-            self.propagateUnreadCount(self.getCurrentAccount(), self.getCurrentFolder(), self.getCurrentTreeWidget(), 0)
+            self.propagateUnreadCount(self.getCurrentAccount(), None, self.getCurrentTreeWidget(), 0)
             
     def on_action_TrashUndelete(self):
         tableWidget = self.getCurrentMessagelist()
