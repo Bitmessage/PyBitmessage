@@ -2393,10 +2393,7 @@ class MyForm(QtGui.QMainWindow):
         newItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
         newItem.setFont(font)
         newItem.setData(Qt.UserRole, str(toAddress))
-        if acct.type == 'mailinglist':
-            newItem.setTextColor(QtGui.QColor(137, 04, 177)) # magenta
-        if acct.type == 'chan':
-            newItem.setTextColor(QtGui.QColor(216, 119, 0)) # orange
+        newItem.setTextColor(AccountColor(toAddress).accountColor())
         inbox.insertRow(0)
         newItem.setIcon(avatarize(toAddress))
         inbox.setItem(0, 0, newItem)
@@ -2407,6 +2404,7 @@ class MyForm(QtGui.QMainWindow):
             self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(acct.fromLabel, 'utf-8'), self.SOUND_UNKNOWN, None)
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setFont(font)
+        newItem.setTextColor(AccountColor(fromAddress).accountColor())
         newItem.setIcon(avatarize(fromAddress))
         inbox.setItem(0, 1, newItem)
         newItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8)'))
@@ -3793,12 +3791,14 @@ class MyForm(QtGui.QMainWindow):
                 font = QFont()
                 font.setBold(False)
 #                inventoryHashesToMarkRead = []
-                currentRow = self.getCurrentMessagelist().currentRow()
+                currentRow = tableWidget.currentRow()
 #                inventoryHashToMarkRead = str(tableWidget.item(
 #                    currentRow, 3).data(Qt.UserRole).toPyObject())
 #                inventoryHashesToMarkRead.append(inventoryHashToMarkRead)
                 tableWidget.item(currentRow, 0).setFont(font)
+                tableWidget.item(currentRow, 0).setTextColor(AccountColor(str(tableWidget.item(currentRow, 0).data(Qt.UserRole).toPyObject())).accountColor())
                 tableWidget.item(currentRow, 1).setFont(font)
+                tableWidget.item(currentRow, 1).setTextColor(AccountColor(str(tableWidget.item(currentRow, 1).data(Qt.UserRole).toPyObject())).accountColor())
                 tableWidget.item(currentRow, 2).setFont(font)
                 tableWidget.item(currentRow, 3).setFont(font)
                 self.propagateUnreadCount(self.getCurrentAccount(), folder, self.getCurrentTreeWidget(), -1)
