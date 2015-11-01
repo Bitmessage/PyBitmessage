@@ -1017,7 +1017,7 @@ class MyForm(QtGui.QMainWindow):
             xAddress = "fromaddress"
         else:
             xAddress = "toaddress"
-        if folder != False:
+        if folder is not None:
             sqlStatement = '''
                 SELECT folder, msgid, toaddress, fromaddress, subject, received, read
                 FROM inbox WHERE ''' + xAddress + '''=? AND folder=? AND %s LIKE ?
@@ -2350,7 +2350,7 @@ class MyForm(QtGui.QMainWindow):
         inbox = self.getAccountMessagelist(acct)
         treeWidget = self.getAccountTreeWidget(acct)
         self.propagateUnreadCount(acct.address)
-        if (self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) != False) or self.getCurrentAccount(treeWidget) != acct.address:
+        if (self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) is not None) or self.getCurrentAccount(treeWidget) != acct.address:
             # Ubuntu should notify of new message irespective of whether it's in current message list or not
             self.ubuntuMessagingMenuUpdate(True, None, acct.toLabel)
             return
@@ -3530,8 +3530,7 @@ class MyForm(QtGui.QMainWindow):
             if currentItem and hasattr(currentItem, 'folderName'):
                 return currentItem.folderName
             else:
-                # TODO need debug msg?
-                return False
+                return None
 
     def setCurrentItemColor(self, color):
         treeWidget = self.getCurrentTreeWidget()
@@ -3697,7 +3696,7 @@ class MyForm(QtGui.QMainWindow):
         tableWidget = self.getCurrentMessagelist()
         if tableWidget:
             currentFolder = self.getCurrentFolder()
-            if currentFolder == False:
+            if currentFolder is None:
                 pass
             if currentFolder == 'sent':
                 self.on_context_menuSent(point)
