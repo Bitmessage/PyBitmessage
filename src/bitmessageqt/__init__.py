@@ -2356,6 +2356,8 @@ class MyForm(QtGui.QMainWindow):
         inbox = self.getAccountMessagelist(acct)
         treeWidget = self.getAccountTreeWidget(acct)
         self.propagateUnreadCount(acct.address)
+        if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
+            self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(acct.fromLabel, 'utf-8'), self.SOUND_UNKNOWN, None)
         if (self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) is not None) or self.getCurrentAccount(treeWidget) != acct.address:
             # Ubuntu should notify of new message irespective of whether it's in current message list or not
             self.ubuntuMessagingMenuUpdate(True, None, acct.toLabel)
@@ -2375,8 +2377,6 @@ class MyForm(QtGui.QMainWindow):
 
         newItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
         newItem.setToolTip(unicode(acct.fromLabel, 'utf-8'))
-        if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
-            self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(acct.fromLabel, 'utf-8'), self.SOUND_UNKNOWN, None)
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setFont(font)
         newItem.setTextColor(AccountColor(fromAddress).accountColor())
