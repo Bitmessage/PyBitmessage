@@ -915,8 +915,7 @@ class MyForm(QtGui.QMainWindow):
             ORDER BY lastactiontime
             ''' % (where,)
 
-        while tableWidget.rowCount() > 0:
-            tableWidget.removeRow(0)
+        tableWidget.setRowCount(0)
         acct = None
         queryreturn = sqlQuery(sqlStatement, account, what)
         for row in queryreturn:
@@ -1040,8 +1039,7 @@ class MyForm(QtGui.QMainWindow):
                 ''' % (where)
             queryreturn = sqlQuery(sqlStatement, account, what)
 
-        while tableWidget.rowCount() > 0:
-            tableWidget.removeRow(0)
+        tableWidget.setRowCount(0)
 
         tableWidget.setColumnHidden(0, True)
         tableWidget.setColumnHidden(1, False)
