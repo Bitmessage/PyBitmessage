@@ -1463,6 +1463,16 @@ class MyForm(QtGui.QMainWindow):
         if QtGui.QMessageBox.question(self, _translate("MainWindow", "Delete trash?"), _translate("MainWindow", "Are you sure you want to delete all trashed messages?"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No) == QtGui.QMessageBox.No:
             return
         sqlStoredProcedure('deleteandvacuume')
+        self.rerenderTabTreeMessages()
+        self.rerenderTabTreeSubscriptions()
+        self.rerenderTabTreeChans()
+        if self.getCurrentFolder(self.ui.treeWidgetYourIdentities) == "trash":
+            self.loadMessagelist(self.ui.tableWidgetInbox, self.getCurrentAccount(self.ui.treeWidgetYourIdentities), "trash")
+        elif self.getCurrentFolder(self.ui.treeWidgetSubscriptions) == "trash":
+            self.loadMessagelist(self.ui.tableWidgetInboxSubscriptions, self.getCurrentAccount(self.ui.treeWidgetSubscriptions), "trash")
+        elif self.getCurrentFolder(self.ui.treeWidgetChans) == "trash":
+            self.loadMessagelist(self.ui.tableWidgetInboxChans, self.getCurrentAccount(self.ui.treeWidgetChans), "trash")
+
 
     # menu botton 'regenerate deterministic addresses'
     def click_actionRegenerateDeterministicAddresses(self):
