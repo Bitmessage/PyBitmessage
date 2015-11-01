@@ -3149,19 +3149,28 @@ class MyForm(QtGui.QMainWindow):
 
     # Send item on the Sent tab to trash
     def on_action_SentTrash(self):
-        while self.ui.tableWidgetInbox.selectedIndexes() != []:
-            currentRow = self.ui.tableWidgetInbox.selectedIndexes()[0].row()
-            ackdataToTrash = str(self.ui.tableWidgetInbox.item(
+        currentRow = 0
+        unread = False
+        tableWidget = self.getCurrentMessagelist()
+        if not tableWidget:
+            return
+        while tableWidget.selectedIndexes() != []:
+            currentRow = tableWidget.selectedIndexes()[0].row()
+            ackdataToTrash = str(tableWidget.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
             sqlExecute('''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdataToTrash)
-            self.ui.textEditSentMessage.setPlainText("")
-            self.ui.tableWidgetInbox.removeRow(currentRow)
+            if tableWidget.item(currentRow, 0).font().bold():
+                unread = True
+            self.getCurrentMessageTextedit().setPlainText("")
+            tableWidget.removeRow(currentRow)
             self.statusBar().showMessage(_translate(
-                "MainWindow", "Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back."))
+                "MainWindow", "Moved items to trash."))
         if currentRow == 0:
             self.ui.tableWidgetInbox.selectRow(currentRow)
         else:
             self.ui.tableWidgetInbox.selectRow(currentRow - 1)
+        if unread:
+            self.propagateUnreadCount(self.getCurrentAccount(), None, self.getCurrentTreeWidget(), 0)
 
     def on_action_ForceSend(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
