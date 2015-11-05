@@ -7,7 +7,31 @@ import sys
 from shared import config, frozen
 import shared
 import openclpow
-#import os
+import os
+import ctypes
+
+curdir = os.path.dirname(__file__)
+bitmsglib = 'bitmsghash.so'
+if "win32" == sys.platform:
+    if ctypes.sizeof(ctypes.c_voidp) == 4:
+        bitmsglib = 'bitmsghash32.dll'
+    else:
+        bitmsglib = 'bitmsghash64.dll'
+    try:
+        bso = ctypes.WinDLL(os.path.join(curdir, bitmsglib))
+    except:
+        bso = None
+else:
+    try:
+        bso = ctypes.CDLL(os.path.join(curdir, bitmsglib))
+    except:
+        bso = None
+if bso:
+    try:
+        bmpow = bso.BitmessagePOW
+        bmpow.restype = ctypes.c_ulonglong
+    except:
+        bmpow = None
 
 def _set_idle():
     if 'linux' in sys.platform:
@@ -72,12 +96,23 @@ def _doFastPoW(target, initialHash):
                 pool.join() #Wait for the workers to exit...
                 return result[0], result[1]
         time.sleep(0.2)
+def _doCPoW(target, initialHash):
+    h = initialHash
+    m = target
+    out_h = ctypes.pointer(ctypes.create_string_buffer(h, 64))
+    out_m = ctypes.c_ulonglong(m)
+    print "C PoW start"
+    nonce = bmpow(out_h, out_m)
+    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+    print "C PoW done"
+    return [trialValue, nonce]
 
 def _doGPUPoW(target, initialHash):
-    print "GPU POW\n"
+    print "GPU PoW start"
     nonce = openclpow.do_opencl_pow(initialHash.encode("hex"), target)
     trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
     #print "{} - value {} < {}".format(nonce, trialValue, target)
+    print "GPU PoW done"
     return [trialValue, nonce]
 
 def run(target, initialHash):
@@ -88,8 +123,16 @@ def run(target, initialHash):
 #        print "GPU: %s, %s" % (trialvalue1, nonce1)
 #        print "Fast: %s, %s" % (trialvalue, nonce)
 #        return [trialvalue, nonce]
-        return _doGPUPoW(target, initialHash)
-    elif frozen == "macosx_app" or not frozen:
+        try:
+            return _doGPUPoW(target, initialHash)
+        except:
+            pass # fallback to normal PoW
+    if frozen == "macosx_app" or not frozen:
+        if bmpow:
+            try:
+                return _doCPoW(target, initialHash)
+            except:
+                pass # fallback to normal PoW
         return _doFastPoW(target, initialHash)
     else:
         return _doSafePoW(target, initialHash)
