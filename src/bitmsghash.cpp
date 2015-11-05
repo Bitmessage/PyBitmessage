@@ -17,6 +17,14 @@
 #define HASH_SIZE 64
 #define BUFLEN 16384
 
+#if defined(__GNUC__)
+  #define EXPORT __attribute__ ((__visibility__("default")))
+  #define UINT intptr_t
+#elif defined(WIN32)
+  #define EXPORT __declspec(dllexport)
+  #define UINT unsigned int
+#endif
+
 #define ntohll(x) ( ( (uint64_t)(ntohl( (unsigned int)((x << 32) >> 32) )) << 32) | ntohl( ((unsigned int)(x >> 32)) ) )
 
 unsigned long long max_val;
@@ -30,7 +38,7 @@ DWORD WINAPI threadfunc(LPVOID lpParameter) {
 	DWORD incamt = (DWORD)lpParameter;
 #else
 void * threadfunc(void* param) {
-	unsigned int incamt = (unsigned int)param;
+	UINT incamt = (UINT)param;
 #endif
 	SHA512_CTX sha;
 	unsigned char buf[HASH_SIZE + sizeof(uint64_t)] = { 0 };
@@ -59,7 +67,7 @@ void * threadfunc(void* param) {
 	return NULL;
 }
 
-extern "C" __declspec(dllexport) unsigned long long BitmessagePOW(unsigned char * starthash, unsigned long long target)
+extern "C" EXPORT unsigned long long BitmessagePOW(unsigned char * starthash, unsigned long long target)
 {
 	successval = 0;
 	max_val = target;
@@ -67,14 +75,17 @@ extern "C" __declspec(dllexport) unsigned long long BitmessagePOW(unsigned char 
 #   ifdef _WIN32
 	HANDLE* threads = (HANDLE*)calloc(sizeof(HANDLE), numthreads);
 #   else
-	pthread_t* threads = calloc(sizeof(pthread_t), numthreads);
+	pthread_t* threads = (pthread_t*)calloc(sizeof(pthread_t), numthreads);
+	struct sched_param schparam;
+	schparam.sched_priority = 0;
 #   endif
-	for (int i = 0; i < numthreads; i++) {
+	for (UINT i = 0; i < numthreads; i++) {
 #   ifdef _WIN32
 		threads[i] = CreateThread(NULL, 0, threadfunc, (LPVOID)i, 0, NULL);
 		SetThreadPriority(threads[i], THREAD_PRIORITY_IDLE);
 #   else
 		pthread_create(&threads[i], NULL, threadfunc, (void*)i);
+		pthread_setschedparam(threads[i], SCHED_IDLE, &schparam);
 #   endif
 	}
 #   ifdef _WIN32
