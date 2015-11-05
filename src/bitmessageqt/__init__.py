@@ -1794,23 +1794,25 @@ class MyForm(QtGui.QMainWindow):
             self.unreadCount = count
         return self.unreadCount
 
-    def updateSentItemStatusByHash(self, toRipe, textToDisplay):
-        for i in range(self.ui.tableWidgetInbox.rowCount()):
-            toAddress = str(self.ui.tableWidgetInbox.item(
+    def updateSentItemStatusByToAddress(self, toAddress, textToDisplay):
+        sent = self.getAccountMessagelist(toAddress)
+        treeWidget = self.getAccountTreeWidget(toAddress)
+        if self.getCurrentFolder(treeWidget) != "sent":
+            return
+        for i in range(sent.rowCount()):
+            rowAddress = str(sent.item(
                 i, 0).data(Qt.UserRole).toPyObject())
-            status, addressVersionNumber, streamNumber, ripe = decodeAddress(
-                toAddress)
-            if ripe == toRipe:
-                self.ui.tableWidgetInbox.item(i, 3).setToolTip(textToDisplay)
+            if toAddress == rowAddress:
+                sent.item(i, 3).setToolTip(textToDisplay)
                 try:
                     newlinePosition = textToDisplay.indexOf('\n')
                 except: # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
                     newlinePosition = 0
                 if newlinePosition > 1:
-                    self.ui.tableWidgetInbox.item(i, 3).setText(
+                    sent.item(i, 3).setText(
                         textToDisplay[:newlinePosition])
                 else:
-                    self.ui.tableWidgetInbox.item(i, 3).setText(textToDisplay)
+                    sent.item(i, 3).setText(textToDisplay)
 
     def updateSentItemStatusByAckdata(self, ackdata, textToDisplay):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
