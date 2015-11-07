@@ -31,11 +31,11 @@ unsigned long long successval = 0;
 unsigned int numthreads = 0;
 
 #ifdef _WIN32
-DWORD WINAPI threadfunc(LPVOID lpParameter) {
+DWORD WINAPI threadfunc(LPVOID param) {
 #else
 void * threadfunc(void* param) {
 #endif
-	unsigned int incamt = *((unsigned int*)lpParameter);
+	unsigned int incamt = *((unsigned int*)param);
 	SHA512_CTX sha;
 	unsigned char buf[HASH_SIZE + sizeof(uint64_t)] = { 0 };
 	unsigned char output[HASH_SIZE] = { 0 };
@@ -85,11 +85,14 @@ void getnumthreads()
 		numthreads = core_count;
 #endif
 	for (unsigned int i = 0; i < len * 8; i++)
+#ifdef _WIN32
 		if (dwProcessAffinity & (1i64 << i)) {
+#else
+		if (CPU_ISSET(i, &dwProcessAffinity)) {
+#endif
 			numthreads++;
 			printf("Detected core on: %u\n", i);
 		}
-	printf("Affinity: %lx\n", (unsigned long) dwProcessAffinity);
 	printf("Number of threads: %i\n", (int)numthreads);
 }
 
@@ -111,7 +114,7 @@ extern "C" EXPORT unsigned long long BitmessagePOW(unsigned char * starthash, un
 #   endif
 #   endif
 	unsigned int *threaddata = (unsigned int *)calloc(sizeof(unsigned int), numthreads);
-	for (UINT i = 0; i < numthreads; i++) {
+	for (unsigned int i = 0; i < numthreads; i++) {
 		threaddata[i] = i;
 #   ifdef _WIN32
 		threads[i] = CreateThread(NULL, 0, threadfunc, (LPVOID)&threaddata[i], 0, NULL);
@@ -128,7 +131,7 @@ extern "C" EXPORT unsigned long long BitmessagePOW(unsigned char * starthash, un
 #   ifdef _WIN32
 	WaitForMultipleObjects(numthreads, threads, TRUE, INFINITE);
 #   else
-	for (int i = 0; i < numthreads; i++) {
+	for (unsigned int i = 0; i < numthreads; i++) {
 		pthread_join(threads[i], NULL);
 	}
 #   endif
