@@ -18,12 +18,12 @@ if "win32" == sys.platform:
     else:
         bitmsglib = 'bitmsghash64.dll'
     try:
-        bso = ctypes.WinDLL(os.path.join(curdir, bitmsglib))
+        bso = ctypes.WinDLL(os.path.join(curdir, "bitmsghash", bitmsglib))
     except:
         bso = None
 else:
     try:
-        bso = ctypes.CDLL(os.path.join(curdir, bitmsglib))
+        bso = ctypes.CDLL(os.path.join(curdir, "bitmsghash", bitmsglib))
     except:
         bso = None
 if bso:
