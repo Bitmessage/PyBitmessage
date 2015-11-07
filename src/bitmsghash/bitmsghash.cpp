@@ -19,27 +19,23 @@
 
 #if defined(__GNUC__)
   #define EXPORT __attribute__ ((__visibility__("default")))
-  #define UINT intptr_t
-#elif defined(WIN32)
+#elif defined(_WIN32)
   #define EXPORT __declspec(dllexport)
-  #define UINT unsigned int
 #endif
 
 #define ntohll(x) ( ( (uint64_t)(ntohl( (unsigned int)((x << 32) >> 32) )) << 32) | ntohl( ((unsigned int)(x >> 32)) ) )
 
 unsigned long long max_val;
 unsigned char *initialHash;
-
-
-int numthreads = 8;
 unsigned long long successval = 0;
+unsigned int numthreads = 0;
+
 #ifdef _WIN32
 DWORD WINAPI threadfunc(LPVOID lpParameter) {
-	DWORD incamt = (DWORD)lpParameter;
 #else
 void * threadfunc(void* param) {
-	UINT incamt = (UINT)param;
 #endif
+	unsigned int incamt = *((unsigned int*)lpParameter);
 	SHA512_CTX sha;
 	unsigned char buf[HASH_SIZE + sizeof(uint64_t)] = { 0 };
 	unsigned char output[HASH_SIZE] = { 0 };
@@ -67,25 +63,66 @@ void * threadfunc(void* param) {
 	return NULL;
 }
 
+void getnumthreads()
+{
+#ifdef _WIN32
+	DWORD_PTR dwProcessAffinity, dwSystemAffinity;
+#elif __linux__
+	cpu_set_t dwProcessAffinity;
+#else
+	int dwProcessAffinity = 0;
+	int32_t core_count = 0;
+#endif
+	unsigned int len = sizeof(dwProcessAffinity);
+	if (numthreads > 0)
+		return;
+#ifdef _WIN32
+	GetProcessAffinityMask(GetCurrentProcess(), &dwProcessAffinity, &dwSystemAffinity);
+#elif __linux__
+	sched_getaffinity(0, len, &dwProcessAffinity);
+#else
+	if (sysctlbyname("hw.logicalcpu", &core_count, &len, 0, 0))
+		numthreads = core_count;
+#endif
+	for (unsigned int i = 0; i < len * 8; i++)
+		if (dwProcessAffinity & (1i64 << i)) {
+			numthreads++;
+			printf("Detected core on: %u\n", i);
+		}
+	printf("Affinity: %lx\n", (unsigned long) dwProcessAffinity);
+	printf("Number of threads: %i\n", (int)numthreads);
+}
+
 extern "C" EXPORT unsigned long long BitmessagePOW(unsigned char * starthash, unsigned long long target)
 {
 	successval = 0;
 	max_val = target;
+	getnumthreads();
 	initialHash = (unsigned char *)starthash;
 #   ifdef _WIN32
 	HANDLE* threads = (HANDLE*)calloc(sizeof(HANDLE), numthreads);
 #   else
 	pthread_t* threads = (pthread_t*)calloc(sizeof(pthread_t), numthreads);
 	struct sched_param schparam;
+#   ifdef __linux__
 	schparam.sched_priority = 0;
+#   else
+	schparam.sched_priority = PTHREAD_MIN_PRIORITY;
 #   endif
+#   endif
+	unsigned int *threaddata = (unsigned int *)calloc(sizeof(unsigned int), numthreads);
 	for (UINT i = 0; i < numthreads; i++) {
+		threaddata[i] = i;
 #   ifdef _WIN32
-		threads[i] = CreateThread(NULL, 0, threadfunc, (LPVOID)i, 0, NULL);
+		threads[i] = CreateThread(NULL, 0, threadfunc, (LPVOID)&threaddata[i], 0, NULL);
 		SetThreadPriority(threads[i], THREAD_PRIORITY_IDLE);
 #   else
-		pthread_create(&threads[i], NULL, threadfunc, (void*)i);
+		pthread_create(&threads[i], NULL, threadfunc, (void*)&threaddata[i]);
+#   ifdef __linux__
 		pthread_setschedparam(threads[i], SCHED_IDLE, &schparam);
+#   else
+		pthread_setschedparam(threads[i], SCHED_RR, &schparam)
+#   endif
 #   endif
 	}
 #   ifdef _WIN32
@@ -96,5 +133,6 @@ extern "C" EXPORT unsigned long long BitmessagePOW(unsigned char * starthash, un
 	}
 #   endif
 	free(threads);
+	free(threaddata);
 	return successval;
 }
