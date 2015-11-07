@@ -1,5 +1,4 @@
-all:
-	@echo "This compiles and tests the C PoW library, it's not necessary to run PyBitmessage"
+all: bitmsghash.so
 
 powtest:
 	./testpow.py
