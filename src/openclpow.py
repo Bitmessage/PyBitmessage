@@ -13,15 +13,21 @@ try:
     import numpy
     import pyopencl as cl
     hash_dt = numpy.dtype([('target', numpy.uint64), ('v', numpy.str_, 73)])
-    if (len(cl.get_platforms()) > 0):
-        ctx = cl.create_some_context()
+    gpus = []
+    for platform in cl.get_platforms():
+	gpus.extend(platform.get_devices(device_type=cl.device_type.GPU))
+    if (len(gpus) > 0):
+        ctx = cl.Context(devices=gpus)
         queue = cl.CommandQueue(ctx)
         full_path = os.path.dirname(os.path.realpath(__file__))
-        f = open(os.path.join(full_path, 'kernel.cl'), 'r')
+        f = open(os.path.join(full_path, "bitmsghash", 'bitmsghash.cl'), 'r')
         fstr = ''.join(f.readlines())
         program = cl.Program(ctx, fstr).build(options="")
+    else:
+        print "No OpenCL GPUs found"
+        ctx = False
 except Exception as e:
-    print "opencl fail:" + str(e)
+    print "opencl fail: " + str(e)
     ctx = False
 
 def has_opencl():
@@ -40,7 +46,7 @@ def do_opencl_pow(hash, target):
 	dest_buf = cl.Buffer(ctx, cl.mem_flags.WRITE_ONLY, output.nbytes)
 	
 	kernel = program.kernel_sha512
-	worksize = kernel.get_work_group_info(cl.kernel_work_group_info.WORK_GROUP_SIZE, cl.get_platforms()[0].get_devices()[1])
+	worksize = kernel.get_work_group_info(cl.kernel_work_group_info.WORK_GROUP_SIZE, gpus[0])
 
 	kernel.set_arg(0, hash_buf)
 	kernel.set_arg(1, dest_buf)
