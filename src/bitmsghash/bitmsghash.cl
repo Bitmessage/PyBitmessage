@@ -112,7 +112,7 @@ __constant uint64_t k[] = {
 
 
 
-void setup_ctx(sha512_ctx* ctx, const char * password, uint8_t pass_len) 
+static void setup_ctx(sha512_ctx* ctx, const char * password, uint8_t pass_len) 
 {
 	uint32_t* b32 = ctx->buffer;
 
