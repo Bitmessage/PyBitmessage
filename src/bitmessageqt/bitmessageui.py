@@ -278,7 +278,7 @@ class Ui_MainWindow(object):
         self.gridLayout_9.addWidget(self.verticalSplitter_6, 0, 0, 1, 1)
         self.tabWidgetSend.addTab(self.sendBroadcast, _fromUtf8(""))
         self.verticalSplitter.addWidget(self.tabWidgetSend)
-        self.horizontalSplitter_5 = settingsmixin.SSplitter()
+        self.horizontalSplitter_5 = QtGui.QSplitter()
         self.horizontalSplitter_5.setObjectName(_fromUtf8("horizontalSplitter_5"))
         self.pushButtonTTL = QtGui.QPushButton(self.send)
 #        sizePolicy = QtGui.QSizePolicy(QtGui.QSizePolicy.Fixed, QtGui.QSizePolicy.Fixed)
