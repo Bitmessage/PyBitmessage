@@ -56,7 +56,6 @@ class STableWidget(QtGui.QTableWidget, SettingsMixin):
         self.readState(self.horizontalHeader())
 
     def saveSettings(self):
-        return
         self.writeState(self.horizontalHeader())
 
         
@@ -65,5 +64,4 @@ class SSplitter(QtGui.QSplitter, SettingsMixin):
         self.readState(self)
 
     def saveSettings(self):
-        return
         self.writeState(self)
