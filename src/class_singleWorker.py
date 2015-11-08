@@ -948,7 +948,7 @@ class singleWorker(threading.Thread):
             toAddress)
 
         shared.UISignalQueue.put((
-            'updateStatusBar', tr.translateText("MainWindow",'Broacasting the public key request. This program will auto-retry if they are offline.')))
+            'updateStatusBar', tr.translateText("MainWindow",'Broadcasting the public key request. This program will auto-retry if they are offline.')))
         shared.UISignalQueue.put(('updateSentItemStatusByToAddress', (toAddress, tr.translateText("MainWindow",'Sending public key request. Waiting for reply. Requested at %1').arg(l10n.formatTimestamp()))))
 
     def generateFullAckMessage(self, ackdata, toStreamNumber, TTL):
