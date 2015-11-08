@@ -32,6 +32,8 @@ if bso:
         bmpow.restype = ctypes.c_ulonglong
     except:
         bmpow = None
+else:
+    bmpow = None
 
 def _set_idle():
     if 'linux' in sys.platform:
