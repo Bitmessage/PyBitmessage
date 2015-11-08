@@ -36,6 +36,7 @@ from newchandialog import *
 from specialaddressbehavior import *
 from emailgateway import *
 from settings import *
+import settingsmixin
 from about import *
 from help import *
 from iconglossary import *
@@ -55,6 +56,7 @@ import subprocess
 import datetime
 from helper_sql import *
 import l10n
+import types
 from utils import *
 from collections import OrderedDict
 from account import *
@@ -73,7 +75,7 @@ def change_translation(locale):
     qtranslator.load(translationpath)
     QtGui.QApplication.installTranslator(qtranslator)
 
-class MyForm(QtGui.QMainWindow):
+class MyForm(settingsmixin.SMainWindow):
 
     # sound type constants
     SOUND_NONE = 0
@@ -701,9 +703,9 @@ class MyForm(QtGui.QMainWindow):
         
         QtCore.QObject.connect(self.ui.horizontalSliderTTL, QtCore.SIGNAL(
             "valueChanged(int)"), self.updateTTL)
-        
-        self.readSettings()
-        
+
+        self.initSettings()
+            
         # Check to see whether we can connect to namecoin. Hide the 'Fetch Namecoin ID' button if we can't.
         try:
             options = {}
@@ -2860,9 +2862,9 @@ class MyForm(QtGui.QMainWindow):
         if self.mmapp is not None:
             self.mmapp.unregister()
 
-        settings = QSettings("Bitmessage", "PyBitmessage")
-        settings.setValue("geometry", self.saveGeometry())
-        settings.setValue("state", self.saveState())
+#        settings = QSettings("Bitmessage", "PyBitmessage")
+#        settings.setValue("geometry", self.saveGeometry())
+#        settings.setValue("state", self.saveState())
 
         self.statusBar().showMessage(_translate(
             "MainWindow", "All done. Closing user interface..."))
@@ -2883,6 +2885,13 @@ class MyForm(QtGui.QMainWindow):
             # minimize the application
             event.ignore()
         else:
+            # save state and geometry self and all widgets
+            self.saveSettings()
+            for attr, obj in self.ui.__dict__.iteritems():
+                if hasattr(obj, "__class__") and isinstance(obj, settingsmixin.SettingsMixin):
+                    saveMethod = getattr(obj, "saveSettings", None)
+                    if callable (saveMethod):
+                        obj.saveSettings()
             # quit the application
             event.accept()
             self.quit()
@@ -3887,20 +3896,17 @@ class MyForm(QtGui.QMainWindow):
 
         self.statusBar().showMessage(data)
 
-    def readSettings(self):
-        settings = QSettings("Bitmessage", "PyBitmessage")
-        try:
-            geom = settings.value("geometry")
-            self.restoreGeometry(geom.toByteArray() if hasattr(geom, 'toByteArray') else geom)
-        except Exception as e:
-            pass
-
-        try:
-            state = settings.value("state")
-            self.restoreState(state.toByteArray() if hasattr(state, 'toByteArray') else state)
-        except Exception as e:
-            pass
-        
+    def initSettings(self):
+        QtCore.QCoreApplication.setOrganizationName("PyBitmessage")
+        QtCore.QCoreApplication.setOrganizationDomain("bitmessage.org")
+        QtCore.QCoreApplication.setApplicationName("pybitmessageqt")
+        self.loadSettings()
+        for attr, obj in self.ui.__dict__.iteritems():
+            if hasattr(obj, "__class__") and isinstance(obj, settingsmixin.SettingsMixin):
+                loadMethod = getattr(obj, "loadSettings", None)
+                if callable (loadMethod):
+                    obj.loadSettings()
+       
 
 class helpDialog(QtGui.QDialog):
 
