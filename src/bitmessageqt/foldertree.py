@@ -29,6 +29,8 @@ class AccountMixin (object):
 
     def setEnabled(self, enabled):
         self.isEnabled = enabled
+        if hasattr(self, "setExpanded"):
+            self.setExpanded(enabled)
         self.updateText()
 
     def setType(self):
@@ -107,9 +109,8 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin):
         self.setAddress(address)
         self.setEnabled(enabled)
         self.setUnreadCount(unreadCount)
-        self.setType()
         self.initialised = True
-        self.setExpanded(enabled) # does updateText
+        self.setType() # does updateText
         
     def setAddress(self, address):
         super(Ui_AddressWidget, self).setAddress(address)
@@ -182,9 +183,8 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         self.setEnabled(enabled)
         self.setType()
         self.setLabel(label)
-        self.setUnreadCount (unreadCount)
         self.initialised = True
-        self.setExpanded(enabled) # does updateText
+        self.setUnreadCount (unreadCount) # does updateText
     
     def setLabel(self, label):
         self.label = label
