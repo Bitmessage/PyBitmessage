@@ -1065,7 +1065,7 @@ Receiver&apos;s required difficulty: %1 and %2</source>
     </message>
     <message>
         <location filename="../class_singleWorker.py" line="928"/>
-        <source>Broacasting the public key request. This program will auto-retry if they are offline.</source>
+        <source>Broadcasting the public key request. This program will auto-retry if they are offline.</source>
         <translation>正在广播公钥请求. 如果他们不在线, 这一过程将自动重试.</translation>
     </message>
     <message>
