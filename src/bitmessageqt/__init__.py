@@ -3705,7 +3705,6 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             self.popMenu.addAction(self.actionEnable)
         self.popMenu.addAction(self.actionSetAvatar)
-        self.popMenu.addAction(self.actionSpecialAddressBehavior)
         self.popMenu.exec_(
             self.ui.treeWidgetChans.mapToGlobal(point))
 
