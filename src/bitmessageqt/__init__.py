@@ -226,6 +226,9 @@ class MyForm(settingsmixin.SMainWindow):
         # Actions
         self.actionNew = self.ui.addressContextMenuToolbar.addAction(_translate(
             "MainWindow", "New"), self.on_action_YourIdentitiesNew)
+        self.actionDelete = self.ui.addressContextMenuToolbar.addAction(
+            _translate("MainWindow", "Delete"),
+            self.on_action_YourIdentitiesDelete)
         self.actionEnable = self.ui.addressContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Enable"), self.on_action_Enable)
@@ -459,7 +462,10 @@ class MyForm(settingsmixin.SMainWindow):
         widgets = {}
         for i in range (0, treeWidget.topLevelItemCount()):
             widget = treeWidget.topLevelItem(i)
-            toAddress = widget.address
+            if widget is not None:
+                toAddress = widget.address
+            else:
+                toAddress = None
             
             if not toAddress in db:
                 treeWidget.takeTopLevelItem(i)
@@ -3561,6 +3567,24 @@ class MyForm(settingsmixin.SMainWindow):
     def on_action_YourIdentitiesNew(self):
         self.click_NewAddressDialog()
 
+    def on_action_YourIdentitiesDelete(self):
+        account = self.getCurrentItem()
+        if account.type == "normal":
+            return # maybe in the future
+        elif account.type == "chan":
+            if QtGui.QMessageBox.question(self, "Delete channel?", _translate("MainWindow", "If you delete the channel, messages that you already received will become inaccessible. Maybe you can consider disabling the channel instead. Disabled channels will not receive new messages, but you can still view messages you already received.\n\nAre you sure you want to delete the channel?"), QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes:
+                shared.config.remove_section(str(account.address))
+            else:
+                return
+        else:
+            return
+        shared.writeKeysFile()
+        shared.reloadMyAddressHashes()
+        if account.type == "normal":
+            self.rerenderTabTreeMessages()
+        elif account.type == "chan":
+            self.rerenderTabTreeChans()
+
     def on_action_Enable(self):
         addressAtCurrentRow = self.getCurrentAccount()
         self.enableIdentity(addressAtCurrentRow)
@@ -3697,6 +3721,7 @@ class MyForm(settingsmixin.SMainWindow):
     def on_context_menuChan(self, point):
         self.popMenu = QtGui.QMenu(self)
         self.popMenu.addAction(self.actionNew)
+        self.popMenu.addAction(self.actionDelete)
         self.popMenu.addSeparator()
         self.popMenu.addAction(self.actionClipboard)
         self.popMenu.addSeparator()
