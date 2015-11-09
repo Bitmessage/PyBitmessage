@@ -1808,56 +1808,53 @@ class MyForm(settingsmixin.SMainWindow):
         return self.unreadCount
 
     def updateSentItemStatusByToAddress(self, toAddress, textToDisplay):
-        sent = self.getAccountMessagelist(toAddress)
-        treeWidget = self.getAccountTreeWidget(toAddress)
-        if self.getCurrentFolder(treeWidget) != "sent":
-            return
-        for i in range(sent.rowCount()):
-            rowAddress = str(sent.item(
-                i, 0).data(Qt.UserRole).toPyObject())
-            if toAddress == rowAddress:
-                sent.item(i, 3).setToolTip(textToDisplay)
-                try:
-                    newlinePosition = textToDisplay.indexOf('\n')
-                except: # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
-                    newlinePosition = 0
-                if newlinePosition > 1:
-                    sent.item(i, 3).setText(
-                        textToDisplay[:newlinePosition])
-                else:
-                    sent.item(i, 3).setText(textToDisplay)
+        for sent in [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxSubscriptions, self.ui.tableWidgetInboxChans]:
+            treeWidget = self.widgetConvert(sent)
+            if self.getCurrentFolder(treeWidget) != "sent":
+                continue
+            if treeWidget in [self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans] and self.getCurrentAccount(treeWidget) != toAddress:
+                continue
+
+            for i in range(sent.rowCount()):
+                rowAddress = str(sent.item(
+                    i, 0).data(Qt.UserRole).toPyObject())
+                if toAddress == rowAddress:
+                    sent.item(i, 3).setToolTip(textToDisplay)
+                    try:
+                        newlinePosition = textToDisplay.indexOf('\n')
+                    except: # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
+                        newlinePosition = 0
+                    if newlinePosition > 1:
+                        sent.item(i, 3).setText(
+                            textToDisplay[:newlinePosition])
+                    else:
+                        sent.item(i, 3).setText(textToDisplay)
 
     def updateSentItemStatusByAckdata(self, ackdata, textToDisplay):
-        for i in range(self.ui.tableWidgetInbox.rowCount()):
-            toAddress = str(self.ui.tableWidgetInbox.item(
-                i, 0).data(Qt.UserRole).toPyObject())
-            tableAckdata = self.ui.tableWidgetInbox.item(
-                i, 3).data(Qt.UserRole).toPyObject()
-            status, addressVersionNumber, streamNumber, ripe = decodeAddress(
-                toAddress)
-            if ackdata == tableAckdata:
-                self.ui.tableWidgetInbox.item(i, 3).setToolTip(textToDisplay)
-                try:
-                    newlinePosition = textToDisplay.indexOf('\n')
-                except: # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
-                    newlinePosition = 0
-                if newlinePosition > 1:
-                    self.ui.tableWidgetInbox.item(i, 3).setText(
-                        textToDisplay[:newlinePosition])
-                else:
-                    self.ui.tableWidgetInbox.item(i, 3).setText(textToDisplay)
+        for sent in [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxSubscriptions, self.ui.tableWidgetInboxChans]:
+            treeWidget = self.widgetConvert(sent)
+            if self.getCurrentFolder(treeWidget) != "sent":
+                continue
+            for i in range(sent.rowCount()):
+                toAddress = str(sent.item(
+                    i, 0).data(Qt.UserRole).toPyObject())
+                tableAckdata = sent.item(
+                    i, 3).data(Qt.UserRole).toPyObject()
+                status, addressVersionNumber, streamNumber, ripe = decodeAddress(
+                    toAddress)
+                if ackdata == tableAckdata:
+                    sent.item(i, 3).setToolTip(textToDisplay)
+                    try:
+                        newlinePosition = textToDisplay.indexOf('\n')
+                    except: # If someone misses adding a "_translate" to a string before passing it to this function, this function won't receive a qstring which will cause an exception.
+                        newlinePosition = 0
+                    if newlinePosition > 1:
+                        sent.item(i, 3).setText(
+                            textToDisplay[:newlinePosition])
+                    else:
+                        sent.item(i, 3).setText(textToDisplay)
 
     def removeInboxRowByMsgid(self, msgid):  # msgid and inventoryHash are the same thing
-        def widgetConvert (tableWidget):
-            if tableWidget == self.ui.tableWidgetInbox:
-                return self.ui.treeWidgetYourIdentities
-            elif tableWidget == self.ui.tableWidgetInboxSubscriptions:
-                return self.ui.treeWidgetSubscriptions
-            elif tableWidget == self.ui.tableWidgetInboxChans:
-                return self.ui.treeWidgetChans
-            else:
-                return None
-                
         for inbox in ([
             self.ui.tableWidgetInbox,
             self.ui.tableWidgetInboxSubscriptions,
@@ -1866,7 +1863,7 @@ class MyForm(settingsmixin.SMainWindow):
                 if msgid == str(inbox.item(i, 3).data(Qt.UserRole).toPyObject()):
                     self.statusBar().showMessage(_translate(
                         "MainWindow", "Message trashed"))
-                    treeWidget = widgetConvert(inbox)
+                    treeWidget = self.widgetConvert(inbox)
                     self.propagateUnreadCount(self.getCurrentAccount(treeWidget), self.getCurrentFolder(treeWidget), treeWidget, 0)
                     inbox.removeRow(i)
                     break
@@ -2327,39 +2324,43 @@ class MyForm(settingsmixin.SMainWindow):
         message = shared.fixPotentiallyInvalidUTF8Data(message)
         acct = accountClass(fromAddress)
         acct.parseMessage(toAddress, fromAddress, subject, message)
-        sent = self.getAccountMessagelist(acct)
-        treeWidget = self.getAccountTreeWidget(acct)
-        if self.getCurrentFolder(treeWidget) != "sent" or self.getCurrentAccount(treeWidget) != fromAddress:
-            return
+        for sent in [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxSubscriptions, self.ui.tableWidgetInboxChans]:
+            treeWidget = self.widgetConvert(sent)
+            if self.getCurrentFolder(treeWidget) != "sent":
+                continue
+            if treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) != fromAddress:
+                continue
+            elif treeWidget in [self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans] and self.getCurrentAccount(treeWidget) != toAddress:
+                continue
 
-        sent.setSortingEnabled(False)
-        sent.insertRow(0)
-        newItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
-        newItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
-        newItem.setData(Qt.UserRole, str(toAddress))
-        newItem.setIcon(avatarize(toAddress))
-        sent.setItem(0, 0, newItem)
-        newItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
-        newItem.setToolTip(unicode(acct.fromLabel, 'utf-8'))
-        newItem.setData(Qt.UserRole, str(fromAddress))
-        newItem.setIcon(avatarize(fromAddress))
-        sent.setItem(0, 1, newItem)
-        newItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8)'))
-        newItem.setToolTip(unicode(acct.subject, 'utf-8)'))
-        newItem.setData(Qt.UserRole, str(subject))
+            sent.setSortingEnabled(False)
+            sent.insertRow(0)
+            newItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
+            newItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
+            newItem.setData(Qt.UserRole, str(toAddress))
+            newItem.setIcon(avatarize(toAddress))
+            sent.setItem(0, 0, newItem)
+            newItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
+            newItem.setToolTip(unicode(acct.fromLabel, 'utf-8'))
+            newItem.setData(Qt.UserRole, str(fromAddress))
+            newItem.setIcon(avatarize(fromAddress))
+            sent.setItem(0, 1, newItem)
+            newItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8)'))
+            newItem.setToolTip(unicode(acct.subject, 'utf-8)'))
+            newItem.setData(Qt.UserRole, str(subject))
 
-        #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
-        sent.setItem(0, 2, newItem)
-        # newItem =  QtGui.QTableWidgetItem('Doing work necessary to send
-        # broadcast...'+
-        # l10n.formatTimestamp())
-        newItem = myTableWidgetItem(_translate("MainWindow", "Work is queued. %1").arg(l10n.formatTimestamp()))
-        newItem.setToolTip(_translate("MainWindow", "Work is queued. %1").arg(l10n.formatTimestamp()))
-        newItem.setData(Qt.UserRole, QByteArray(ackdata))
-        newItem.setData(33, int(time.time()))
-        sent.setItem(0, 3, newItem)
-        self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8)'))
-        sent.setSortingEnabled(True)
+            #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
+            sent.setItem(0, 2, newItem)
+            # newItem =  QtGui.QTableWidgetItem('Doing work necessary to send
+            # broadcast...'+
+            # l10n.formatTimestamp())
+            newItem = myTableWidgetItem(_translate("MainWindow", "Work is queued. %1").arg(l10n.formatTimestamp()))
+            newItem.setToolTip(_translate("MainWindow", "Work is queued. %1").arg(l10n.formatTimestamp()))
+            newItem.setData(Qt.UserRole, QByteArray(ackdata))
+            newItem.setData(33, int(time.time()))
+            sent.setItem(0, 3, newItem)
+            self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8)'))
+            sent.setSortingEnabled(True)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
@@ -3421,6 +3422,22 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             sqlExecute(
                 '''UPDATE whitelist SET enabled=0 WHERE address=?''', str(addressAtCurrentRow))
+
+    def widgetConvert (self, widget):
+        if widget == self.ui.tableWidgetInbox:
+            return self.ui.treeWidgetYourIdentities
+        elif widget == self.ui.tableWidgetInboxSubscriptions:
+            return self.ui.treeWidgetSubscriptions
+        elif widget == self.ui.tableWidgetInboxChans:
+            return self.ui.treeWidgetChans
+        elif widget == self.ui.treeWidgetYourIdentities:
+            return self.ui.tableWidgetInbox
+        elif widget == self.ui.treeWidgetSubscriptions:
+            return self.ui.tableWidgetInboxSubscriptions
+        elif twidget == self.ui.treeWidgetChans:
+            return self.ui.tableWidgetInboxChans
+        else:
+            return None
 
     def getCurrentTreeWidget(self):
         currentIndex = self.ui.tabWidget.currentIndex();
