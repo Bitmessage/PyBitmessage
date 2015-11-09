@@ -14,8 +14,19 @@ class AccountMixin (object):
         else:
             return QtGui.QApplication.palette().text().color()
             
+    def folderColor (self):
+        if not self.parent.isEnabled:
+            return QtGui.QColor(128, 128, 128)
+        else:
+            return QtGui.QApplication.palette().text().color()
+            
     def accountBrush(self):
         brush = QtGui.QBrush(self.accountColor())
+        brush.setStyle(QtCore.Qt.NoBrush)
+        return brush
+        
+    def folderBrush(self):
+        brush = QtGui.QBrush(self.folderColor())
         brush.setStyle(QtCore.Qt.NoBrush)
         return brush
 
@@ -53,6 +64,7 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
         self.setAddress(address)
         self.setFolderName(folderName)
         self.setUnreadCount(unreadCount)
+        self.parent = parent
         self.initialised = True
         self.updateText()
         parent.insertChild(pos, self)
@@ -73,6 +85,7 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
         else:
             font.setBold(False)
         self.setFont(0, font)
+        self.setForeground(0, self.folderBrush())
         self.setText(0, text)
         self.setToolTip(0, text)
  #       self.setData(0, QtCore.Qt.UserRole, [self.address, self.folderName])
