@@ -460,7 +460,8 @@ class MyForm(settingsmixin.SMainWindow):
             treeWidget.setSortingEnabled(False)
         
         widgets = {}
-        for i in range (0, treeWidget.topLevelItemCount()):
+        i = 0
+        while i < treeWidget.topLevelItemCount():
             widget = treeWidget.topLevelItem(i)
             if widget is not None:
                 toAddress = widget.address
@@ -469,28 +470,32 @@ class MyForm(settingsmixin.SMainWindow):
             
             if not toAddress in db:
                 treeWidget.takeTopLevelItem(i)
-                i -= 1
+                # no increment
                 continue
             unread = 0
-            for j in range (0, widget.childCount()):
+            j = 0
+            while j < widget.childCount():
                 subwidget = widget.child(j)
                 try:
                     subwidget.setUnreadCount(db[toAddress][subwidget.folderName])
                     unread += db[toAddress][subwidget.folderName]
                     db[toAddress].pop(subwidget.folderName, None)
                 except:
-                    widget.takeChild(i)
-                    j -= 1
+                    widget.takeChild(j)
+                    # no increment
+                    continue
+                j += 1
 
             # add missing folders
             if len(db[toAddress]) > 0:
-                i = 0
+                j = 0
                 for f, c in db[toAddress].iteritems():
                     print "adding %s, %i" % (f, c)
-                    subwidget = Ui_FolderWidget(widget, i, toAddress, f, c)
-                    i += 1
+                    subwidget = Ui_FolderWidget(widget, j, toAddress, f, c)
+                    j += 1
             widget.setUnreadCount(unread)
             db.pop(toAddress, None)
+            i += 1
         
         i = 0
         for toAddress in db:
