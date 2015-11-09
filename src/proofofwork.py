@@ -10,7 +10,12 @@ import openclpow
 import os
 import ctypes
 
-curdir = os.path.dirname(__file__)
+if frozen == "macosx_app":
+    curdir = os.environ.get("RESOURCEPATH")
+elif frozen: # windows
+    curdir = sys._MEIPASS
+else:    
+    curdir = os.path.dirname(__file__)
 bitmsglib = 'bitmsghash.so'
 if "win32" == sys.platform:
     if ctypes.sizeof(ctypes.c_voidp) == 4:
@@ -128,13 +133,18 @@ def run(target, initialHash):
         try:
             return _doGPUPoW(target, initialHash)
         except:
-            pass # fallback to normal PoW
+            pass # fallback
+    if bmpow:
+        try:
+            return _doCPoW(target, initialHash)
+        except:
+            pass # fallback
     if frozen == "macosx_app" or not frozen:
-        if bmpow:
-            try:
-                return _doCPoW(target, initialHash)
-            except:
-                pass # fallback to normal PoW
-        return _doFastPoW(target, initialHash)
-    else:
-        return _doSafePoW(target, initialHash)
+        # on my (Peter Surda) Windows 10, Windows Defender
+        # does not like this and fights with PyBitmessage
+        # over CPU, resulting in very slow PoW
+        try:
+            return _doFastPoW(target, initialHash)
+        except:
+            pass #fallback
+    return _doSafePoW(target, initialHash)
