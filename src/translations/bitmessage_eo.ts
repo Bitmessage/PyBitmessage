@@ -899,7 +899,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../bitmessagemain.py" line="3844"/>
-        <source>Broacasting the public key request. This program will auto-retry if they are offline.</source>
+        <source>Broadcasting the public key request. This program will auto-retry if they are offline.</source>
         <translation type="obsolete">Anfrage für den Verschlüsselungscode versendet (wird automatisch periodisch neu verschickt).</translation>
     </message>
     <message>
