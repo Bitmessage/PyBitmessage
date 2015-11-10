@@ -2802,7 +2802,7 @@ class MyForm(settingsmixin.SMainWindow):
             # no chans / mailinglists
             if acct.type != 'normal':
                 return
-            if self.dialog.ui.radioButtonUnregister.isChecked():
+            if self.dialog.ui.radioButtonUnregister.isChecked() and isinstance(acct, GatewayAccount):
                 print "unregister"
                 acct.unregister()
                 shared.config.remove_option(addressAtCurrentRow, 'gateway')
@@ -4243,7 +4243,10 @@ class EmailGatewayDialog(QtGui.QDialog):
         self.parent = parent
         addressAtCurrentRow = parent.getCurrentAccount()
         acct = accountClass(addressAtCurrentRow)
-#        if isinstance(acct, GatewayAccount):
+        if isinstance(acct, GatewayAccount):
+            self.ui.radioButtonUnregister.setEnabled(True)
+        else:
+            self.ui.radioButtonUnregister.setEnabled(False)
         label = shared.config.get(addressAtCurrentRow, 'label')
         if label.find("@mailchuck.com") > -1:
             self.ui.lineEditEmail.setText(label)
