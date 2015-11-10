@@ -3915,6 +3915,8 @@ class MyForm(settingsmixin.SMainWindow):
             if data != False:
                 message = "Error occurred: could not load message from disk."
         message = unicode(message, 'utf-8)')
+        messageTextedit.setCurrentFont(QtGui.QFont())
+        messageTextedit.setTextColor(QtGui.QColor())
         messageTextedit.setPlainText(message)
 
     def tableWidgetAddressBookItemChanged(self):
