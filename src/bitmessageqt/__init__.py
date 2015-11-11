@@ -67,11 +67,13 @@ def _translate(context, text):
 def change_translation(locale):
     global qtranslator
     qtranslator = QtCore.QTranslator()
-    translationpath = os.path.join(
-        getattr(sys, '_MEIPASS', sys.path[0]),
-        'translations',
-        'bitmessage_' + locale
-    )
+    if shared.frozen == "macosx_app":
+        translationpath = os.environ.get("RESOURCEPATH")
+    elif shared.frozen: # windows
+        translationpath = sys._MEIPASS
+    else:
+        translationpath = os.path.dirname(os.path.dirname(__file__))
+    translationpath = os.path.join (translationpath, 'translations', 'bitmessage_' + locale)
     qtranslator.load(translationpath)
     QtGui.QApplication.installTranslator(qtranslator)
 
