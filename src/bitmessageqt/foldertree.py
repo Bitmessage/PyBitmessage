@@ -2,6 +2,7 @@ from PyQt4 import QtCore, QtGui
 
 from utils import *
 import shared
+from settingsmixin import SettingsMixin
 
 class AccountMixin (object):
     def accountColor (self):
@@ -116,7 +117,7 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
     
 
-class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin):
+class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
     def __init__(self, parent, pos = 0, address = "", unreadCount = 0, enabled = True):
         super(QtGui.QTreeWidgetItem, self).__init__()
         parent.insertTopLevelItem(pos, self)
