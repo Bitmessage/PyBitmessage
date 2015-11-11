@@ -42,6 +42,10 @@ class AccountMixin (object):
         self.isEnabled = enabled
         if hasattr(self, "setExpanded"):
             self.setExpanded(enabled)
+        if isinstance(self, Ui_AddressWidget):
+            for i in range(self.childCount()):
+                if isinstance(self.child(i), Ui_FolderWidget):
+                    self.child(i).setEnabled(enabled)
         self.updateText()
 
     def setType(self):
