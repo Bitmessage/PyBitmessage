@@ -3874,6 +3874,8 @@ class MyForm(settingsmixin.SMainWindow):
     def tableWidgetInboxItemClicked(self):
         folder = self.getCurrentFolder()
         messageTextedit = self.getCurrentMessageTextedit()
+        if not messageTextedit:
+            return
         queryreturn = []
         message = ""
 
