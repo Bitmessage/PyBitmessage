@@ -2307,8 +2307,8 @@ class MyForm(settingsmixin.SMainWindow):
         for addressInKeysFile in getSortedAccounts():
             isEnabled = shared.config.getboolean(
                 addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
-            isMaillinglist = shared.safeConfigGetBoolean(addressInKeysFile, 'mailinglist')
-            if isEnabled and isMaillinglist:
+            isChan = shared.safeConfigGetBoolean(addressInKeysFile, 'chan')
+            if isEnabled and not isChan:
                 self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), unicode(shared.config.get(
                     addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
         for i in range(self.ui.comboBoxSendFromBroadcast.count()):
