@@ -485,13 +485,16 @@ class receiveDataThread(threading.Thread):
 
     def _checkIPv4Address(self, host, hostStandardFormat):
         # print 'hostStandardFormat', hostStandardFormat
-        if host[0] == '\x7F':
+        if host[0] == '\x7F': # 127/8
             print 'Ignoring IP address in loopback range:', hostStandardFormat
             return False
-        if host[0] == '\x0A':
+        if host[0] == '\x0A': # 10/8
             print 'Ignoring IP address in private range:', hostStandardFormat
             return False
-        if host[0:2] == '\xC0\xA8':
+        if host[0:2] == '\xC0\xA8': # 192.168/16
+            print 'Ignoring IP address in private range:', hostStandardFormat
+            return False
+        if host[0:2] >= '\xAC\x10' and host[0:2] < '\xAC\x20': # 172.16/12
             print 'Ignoring IP address in private range:', hostStandardFormat
             return False
         return True
