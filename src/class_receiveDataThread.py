@@ -81,7 +81,7 @@ class receiveDataThread(threading.Thread):
                         shared.numberOfBytesReceivedLastSecond = 0
             dataLen = len(self.data)
             try:
-                if (self.services & 2 == 2) and self.connectionIsOrWasFullyEstablished:
+                if (self.services & shared.NODE_SSL == shared.NODE_SSL) and self.connectionIsOrWasFullyEstablished:
                     dataRecv = self.sslSock.recv(1024)
                 else:
                     dataRecv = self.sock.recv(1024)
@@ -93,11 +93,11 @@ class receiveDataThread(threading.Thread):
                     print 'Timeout occurred waiting for data from', self.peer, '. Closing receiveData thread. (ID:', str(id(self)) + ')'
                 break
             except Exception as err:
-                if (sys.platform == 'win32' and err.errno == 10035) or (sys.platform != 'win32' and err.errno == errno.EWOULDBLOCK):
+                if (sys.platform == 'win32' and err.errno in ([2, 10035])) or (sys.platform != 'win32' and err.errno == errno.EWOULDBLOCK):
                     select.select([self.sslSock], [], [])
                     continue
                 with shared.printLock:
-                    print 'sock.recv error. Closing receiveData thread (' + str(self.peer) + ', Thread ID:', str(id(self)) + ').', err
+                    print 'sock.recv error. Closing receiveData thread (' + str(self.peer) + ', Thread ID:', str(id(self)) + ').', str(err.errno), "/", err
                 break
             # print 'Received', repr(self.data)
             if len(self.data) == dataLen: # If self.sock.recv returned no data:
@@ -265,8 +265,8 @@ class receiveDataThread(threading.Thread):
         self.connectionIsOrWasFullyEstablished = True
 
         self.sslSock = self.sock
-        if (self.services & 2 == 2):
-            self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(shared.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(shared.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=ssl.PROTOCOL_SSLv23, do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
+        if (self.services & shared.NODE_SSL == shared.NODE_SSL):
+            self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(shared.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(shared.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=ssl.PROTOCOL_TLSv1, do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
             while True:
                 try:
                     self.sslSock.do_handshake()
