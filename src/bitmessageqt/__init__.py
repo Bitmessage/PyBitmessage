@@ -2431,17 +2431,8 @@ class MyForm(settingsmixin.SMainWindow):
     def addEntryToAddressBook(self,address,label):
         queryreturn = sqlQuery('''select * from addressbook where address=?''', address)
         if queryreturn == []:
-            self.ui.tableWidgetAddressBook.setSortingEnabled(False)
-            self.ui.tableWidgetAddressBook.insertRow(0)
-            newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
-            newItem.setIcon(avatarize(address))
-            self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem = QtGui.QTableWidgetItem(address)
-            newItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
-            self.ui.tableWidgetAddressBook.setSortingEnabled(True)
             sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(label), address)
+            self.rerenderAddressBook()
             self.rerenderInboxFromLabels()
             self.rerenderSentToLabels()
         else:
@@ -3073,20 +3064,10 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = sqlQuery('''select * from addressbook where address=?''',
                                addressAtCurrentInboxRow)
         if queryreturn == []:
-            self.ui.tableWidgetAddressBook.insertRow(0)
-            newItem = QtGui.QTableWidgetItem(
-                '--New entry. Change label in Address Book.--')
-            self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
-            newItem.setIcon(avatarize(addressAtCurrentInboxRow))
-            newItem = QtGui.QTableWidgetItem(addressAtCurrentInboxRow)
-            newItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
             sqlExecute('''INSERT INTO addressbook VALUES (?,?)''',
                        '--New entry. Change label in Address Book.--',
                        addressAtCurrentInboxRow)
-            self.ui.tabWidget.setCurrentIndex(1)
-            self.ui.tableWidgetAddressBook.setCurrentCell(0, 0)
+            self.rerenderAddressBook()
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Entry added to the Address Book. Edit the label to your liking."))
         else:
@@ -3928,6 +3909,7 @@ class MyForm(settingsmixin.SMainWindow):
             sqlExecute('''UPDATE addressbook set label=? WHERE address=?''',
                        str(self.ui.tableWidgetAddressBook.item(currentRow, 0).text().toUtf8()),
                        str(addressAtCurrentRow))
+            self.ui.tableWidgetAddressBook.item(currentRow, 0).setLabel(str(self.ui.tableWidgetAddressBook.item(currentRow, 0).text().toUtf8()))
         self.rerenderInboxFromLabels()
         self.rerenderSentToLabels()
 
