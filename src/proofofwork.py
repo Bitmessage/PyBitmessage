@@ -4,18 +4,12 @@
 import hashlib
 from struct import unpack, pack
 import sys
-from shared import config, frozen
+from shared import config, frozen, codePath
 import shared
 import openclpow
 import os
 import ctypes
 
-if frozen == "macosx_app":
-    curdir = os.environ.get("RESOURCEPATH")
-elif frozen: # windows
-    curdir = sys._MEIPASS
-else:    
-    curdir = os.path.dirname(__file__)
 bitmsglib = 'bitmsghash.so'
 if "win32" == sys.platform:
     if ctypes.sizeof(ctypes.c_voidp) == 4:
@@ -23,12 +17,12 @@ if "win32" == sys.platform:
     else:
         bitmsglib = 'bitmsghash64.dll'
     try:
-        bso = ctypes.WinDLL(os.path.join(curdir, "bitmsghash", bitmsglib))
+        bso = ctypes.WinDLL(os.path.join(codePath(), "bitmsghash", bitmsglib))
     except:
         bso = None
 else:
     try:
-        bso = ctypes.CDLL(os.path.join(curdir, "bitmsghash", bitmsglib))
+        bso = ctypes.CDLL(os.path.join(codePath(), "bitmsghash", bitmsglib))
     except:
         bso = None
 if bso:

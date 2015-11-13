@@ -217,6 +217,15 @@ def lookupAppdataFolder():
             pass
         dataFolder = dataFolder + '/'
     return dataFolder
+    
+def codePath():
+    if frozen == "macosx_app":
+        codePath = os.environ.get("RESOURCEPATH")
+    elif frozen: # windows
+        codePath = sys._MEIPASS
+    else:    
+        codePath = os.path.dirname(__file__)
+    return codePath
 
 def isAddressInMyAddressBook(address):
     queryreturn = sqlQuery(
