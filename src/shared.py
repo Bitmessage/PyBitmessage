@@ -144,7 +144,7 @@ def encodeHost(host):
 def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload = ''
     payload += pack('>L', 3)  # protocol version.
-    payload += pack('>q', 1)  # bitflags of the services I offer.
+    payload += pack('>q', 3)  # bitflags of the services I offer.
     payload += pack('>q', int(time.time()))
 
     payload += pack(
