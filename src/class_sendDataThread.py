@@ -36,6 +36,7 @@ class sendDataThread(threading.Thread):
         self.sock = sock
         self.peer = shared.Peer(HOST, PORT)
         self.streamNumber = streamNumber
+        self.services = 0
         self.remoteProtocolVersion = - \
             1  # This must be set using setRemoteProtocolVersion command which is sent through the self.sendDataThreadQueue queue.
         self.lastTimeISentData = int(
@@ -82,7 +83,10 @@ class sendDataThread(threading.Thread):
                             uploadRateLimitBytes = 999999999 # float("inf") doesn't work
                         else:
                             uploadRateLimitBytes = shared.config.getint('bitmessagesettings', 'maxuploadrate') * 1000
-                amountSent = self.sock.send(data[:1000])
+                if self.services & 2 == 2 and self.connectionIsOrWasFullyEstablished:
+                    amountSent = self.sslSock.send(data[:1000])
+                else:
+                    amountSent = self.sock.send(data[:1000])
                 shared.numberOfBytesSent += amountSent # used for the 'network status' tab in the UI
                 shared.numberOfBytesSentLastSecond += amountSent
                 self.lastTimeISentData = int(time.time())
@@ -178,6 +182,7 @@ class sendDataThread(threading.Thread):
                         break
                 elif command == 'connectionIsOrWasFullyEstablished':
                     self.connectionIsOrWasFullyEstablished = True
+                    self.services, self.sslSock = data
             else:
                 with shared.printLock:
                     print 'sendDataThread ID:', id(self), 'ignoring command', command, 'because the thread is not in stream', deststream

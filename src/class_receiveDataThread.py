@@ -1,11 +1,15 @@
 doTimingAttackMitigation = True
 
+import errno
 import time
 import threading
 import shared
 import hashlib
+import os
+import select
 import socket
 import random
+import ssl
 from struct import unpack, pack
 import sys
 import traceback
@@ -49,6 +53,7 @@ class receiveDataThread(threading.Thread):
         shared.connectedHostsList[
             self.peer.host] = 0  # The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
         self.connectionIsOrWasFullyEstablished = False  # set to true after the remote node and I accept each other's version messages. This is needed to allow the user interface to accurately reflect the current number of connections.
+        self.services = 0
         if self.streamNumber == -1:  # This was an incoming connection. Send out a version message if we accept the other node's version message.
             self.initiatedConnection = False
         else:
@@ -76,7 +81,10 @@ class receiveDataThread(threading.Thread):
                         shared.numberOfBytesReceivedLastSecond = 0
             dataLen = len(self.data)
             try:
-                dataRecv = self.sock.recv(1024)
+                if (self.services & 2 == 2) and self.connectionIsOrWasFullyEstablished:
+                    dataRecv = self.sslSock.recv(1024)
+                else:
+                    dataRecv = self.sock.recv(1024)
                 self.data += dataRecv
                 shared.numberOfBytesReceived += len(dataRecv) # for the 'network status' UI tab. The UI clears this value whenever it updates.
                 shared.numberOfBytesReceivedLastSecond += len(dataRecv) # for the download rate limit
@@ -85,6 +93,9 @@ class receiveDataThread(threading.Thread):
                     print 'Timeout occurred waiting for data from', self.peer, '. Closing receiveData thread. (ID:', str(id(self)) + ')'
                 break
             except Exception as err:
+                if (sys.platform == 'win32' and err.errno == 10035) or (sys.platform != 'win32' and err.errno == errno.EWOULDBLOCK):
+                    select.select([self.sslSock], [], [])
+                    continue
                 with shared.printLock:
                     print 'sock.recv error. Closing receiveData thread (' + str(self.peer) + ', Thread ID:', str(id(self)) + ').', err
                 break
@@ -252,8 +263,24 @@ class receiveDataThread(threading.Thread):
             # there is no reason to run this function a second time
             return
         self.connectionIsOrWasFullyEstablished = True
+
+        self.sslSock = self.sock
+        if (self.services & 2 == 2):
+            self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(shared.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(shared.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=ssl.PROTOCOL_SSLv23, do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
+            while True:
+                try:
+                    self.sslSock.do_handshake()
+                    break
+                except ssl.SSLError as e:
+                    if e.errno == 2:
+                        select.select([self.sslSock], [self.sslSock], [])
+                    else:
+                        break
+                except:
+                    break
         # Command the corresponding sendDataThread to set its own connectionIsOrWasFullyEstablished variable to True also
-        self.sendDataThreadQueue.put((0, 'connectionIsOrWasFullyEstablished', 'no data'))
+        self.sendDataThreadQueue.put((0, 'connectionIsOrWasFullyEstablished', (self.services, self.sslSock)))
+
         if not self.initiatedConnection:
             shared.clientHasReceivedIncomingConnections = True
             shared.UISignalQueue.put(('setStatusIcon', 'green'))
@@ -674,6 +701,7 @@ class receiveDataThread(threading.Thread):
             """ 
             return
         self.remoteProtocolVersion, = unpack('>L', data[:4])
+        self.services, = unpack('>q', data[4:12])
         if self.remoteProtocolVersion < 3:
             self.sendDataThreadQueue.put((0, 'shutdown','no data'))
             with shared.printLock:
