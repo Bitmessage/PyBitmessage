@@ -287,8 +287,14 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
 class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
     def __init__ (self, address, label, type):
         Ui_AddressBookWidgetItem.__init__(self, label, type)
+        self.address = address
+        self.label = label
         self.setIcon(avatarize(address))
         self.setToolTip(label + " (" + address + ")")
+
+    def setLabel(self, label):
+        self.label = label
+        self.setToolTip(self.label + " (" + self.address + ")")
 
 
 class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
