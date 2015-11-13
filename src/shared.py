@@ -120,6 +120,10 @@ trustedPeer = None
 #New code should use CreatePacket instead of Header.pack
 Header = Struct('!L12sL4s')
 
+#Service flags
+NODE_NETWORK = 1
+NODE_SSL = 2
+
 #Create a packet
 def CreatePacket(command, payload=''):
     payload_length = len(payload)
@@ -144,7 +148,7 @@ def encodeHost(host):
 def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload = ''
     payload += pack('>L', 3)  # protocol version.
-    payload += pack('>q', 3)  # bitflags of the services I offer.
+    payload += pack('>q', NODE_NETWORK|NODE_SSL)  # bitflags of the services I offer.
     payload += pack('>q', int(time.time()))
 
     payload += pack(

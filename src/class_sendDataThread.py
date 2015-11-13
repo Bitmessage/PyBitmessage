@@ -83,7 +83,7 @@ class sendDataThread(threading.Thread):
                             uploadRateLimitBytes = 999999999 # float("inf") doesn't work
                         else:
                             uploadRateLimitBytes = shared.config.getint('bitmessagesettings', 'maxuploadrate') * 1000
-                if self.services & 2 == 2 and self.connectionIsOrWasFullyEstablished:
+                if self.services & shared.NODE_SSL == shared.NODE_SSL and self.connectionIsOrWasFullyEstablished:
                     amountSent = self.sslSock.send(data[:1000])
                 else:
                     amountSent = self.sock.send(data[:1000])
