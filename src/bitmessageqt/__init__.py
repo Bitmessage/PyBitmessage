@@ -2862,6 +2862,14 @@ class MyForm(settingsmixin.SMainWindow):
         if reply is QtGui.QMessageBox.No:
             return
         '''
+        # save state and geometry self and all widgets
+        self.saveSettings()
+        for attr, obj in self.ui.__dict__.iteritems():
+            if hasattr(obj, "__class__") and isinstance(obj, settingsmixin.SettingsMixin):
+                saveMethod = getattr(obj, "saveSettings", None)
+                if callable (saveMethod):
+                    obj.saveSettings()
+
         shared.doCleanShutdown()
         self.tray.hide()
         # unregister the messaging system
@@ -2891,13 +2899,6 @@ class MyForm(settingsmixin.SMainWindow):
             # minimize the application
             event.ignore()
         else:
-            # save state and geometry self and all widgets
-            self.saveSettings()
-            for attr, obj in self.ui.__dict__.iteritems():
-                if hasattr(obj, "__class__") and isinstance(obj, settingsmixin.SettingsMixin):
-                    saveMethod = getattr(obj, "saveSettings", None)
-                    if callable (saveMethod):
-                        obj.saveSettings()
             # quit the application
             event.accept()
             self.quit()
