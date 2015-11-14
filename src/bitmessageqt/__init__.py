@@ -3090,8 +3090,9 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = sqlQuery('''select * from blacklist where address=?''',
                                addressAtCurrentInboxRow)
         if queryreturn == []:
+            label = "\"" + str(tableWidget.item(currentInboxRow, 2).data(Qt.UserRole).toPyObject()) + "\" in " + shared.config.get(self.getCurrentAccount(), "label")
             sqlExecute('''INSERT INTO blacklist VALUES (?,?, ?)''',
-                       '--New entry. Change label in Blacklist.--',
+                       label,
                        addressAtCurrentInboxRow, True)
             self.rerenderBlackWhiteList()
             self.statusBar().showMessage(_translate(
