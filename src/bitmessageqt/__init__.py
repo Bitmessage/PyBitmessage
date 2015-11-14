@@ -142,6 +142,10 @@ class MyForm(settingsmixin.SMainWindow):
             _translate(
                 "MainWindow", "Add sender to your Address Book"),
             self.on_action_InboxAddSenderToAddressBook)
+        self.actionAddSenderToBlackList = self.ui.inboxContextMenuToolbar.addAction(
+            _translate(
+                "MainWindow", "Add sender to your Blacklist"),
+            self.on_action_InboxAddSenderToBlackList)
         self.actionTrashInboxMessage = self.ui.inboxContextMenuToolbar.addAction(
             _translate("MainWindow", "Move to Trash"),
             self.on_action_InboxTrash)
@@ -3074,6 +3078,28 @@ class MyForm(settingsmixin.SMainWindow):
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
 
+    def on_action_InboxAddSenderToBlackList(self):
+        tableWidget = self.getCurrentMessagelist()
+        if not tableWidget:
+            return
+        currentInboxRow = tableWidget.currentRow()
+        # tableWidget.item(currentRow,1).data(Qt.UserRole).toPyObject()
+        addressAtCurrentInboxRow = str(tableWidget.item(
+            currentInboxRow, 1).data(Qt.UserRole).toPyObject())
+        # Let's make sure that it isn't already in the address book
+        queryreturn = sqlQuery('''select * from blacklist where address=?''',
+                               addressAtCurrentInboxRow)
+        if queryreturn == []:
+            sqlExecute('''INSERT INTO blacklist VALUES (?,?, ?)''',
+                       '--New entry. Change label in Blacklist.--',
+                       addressAtCurrentInboxRow, True)
+            self.rerenderBlackWhiteList()
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Entry added to the blacklist. Edit the label to your liking."))
+        else:
+            self.statusBar().showMessage(_translate(
+                "MainWindow", "Error: You cannot add the same address to your blacklist twice. Try renaming the existing one if you want."))
+
     # Send item on the Inbox tab to trash
     def on_action_InboxTrash(self):
         tableWidget = self.getCurrentMessagelist()
@@ -3750,6 +3776,8 @@ class MyForm(settingsmixin.SMainWindow):
                 self.popMenuInbox.addSeparator()
                 self.popMenuInbox.addAction(self.actionReply)
                 self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
+                self.popMenuInbox.addSeparator()
+                self.popMenuInbox.addAction(self.actionAddSenderToBlackList)
                 self.popMenuInbox.addSeparator()
                 self.popMenuInbox.addAction(self.actionSaveMessageAs)
                 if currentFolder == "trash":
