@@ -144,7 +144,7 @@ class Main:
 
         shared.daemon = daemon
         # is the application already running?  If yes then exit.
-        thisapp = singleton.singleinstance()
+        thisapp = singleton.singleinstance("", daemon)
 
         import upnp
         upnp.createPortMapping()
