@@ -265,8 +265,10 @@ class receiveDataThread(threading.Thread):
         self.connectionIsOrWasFullyEstablished = True
 
         self.sslSock = self.sock
-        if (self.services & shared.NODE_SSL == shared.NODE_SSL):
+        if (self.services & shared.NODE_SSL == shared.NODE_SSL and (self.initiatedConnection or sys.version_info >= (2, 7, 9))):
             self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(shared.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(shared.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=ssl.PROTOCOL_TLSv1, do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
+            if hasattr(self.sslSock, "context"):
+                self.sslSock.context.set_ecdh_curve("secp256k1")
             while True:
                 try:
                     self.sslSock.do_handshake()
