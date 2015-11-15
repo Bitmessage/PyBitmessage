@@ -3,22 +3,26 @@
 import sys
 import os
 import errno
-import tempfile
+import shared
 from multiprocessing import Process
-
 
 class singleinstance:
     """
-    Implements a single instance application by creating a lock file based on the full path to the script file.
+    Implements a single instance application by creating a lock file at appdata.
 
     This is based upon the singleton class from tendo https://github.com/pycontribs/tendo
     which is under the Python Software Foundation License version 2    
     """
-    def __init__(self, flavor_id=""):
+    def __init__(self, flavor_id="", daemon=False):
         import sys
         self.initialized = False
-        basename = os.path.splitext(os.path.abspath(sys.argv[0]))[0].replace("/", "-").replace(":", "").replace("\\", "-") + '-%s' % flavor_id + '.lock'
-        self.lockfile = os.path.normpath(tempfile.gettempdir() + '/' + basename)
+        self.daemon = daemon;
+        self.lockfile = os.path.normpath(os.path.join(shared.appdata, 'singleton%s.lock' % flavor_id))
+
+        if not self.daemon:
+            # Tells the already running (if any) application to get focus.
+            import bitmessageqt
+            bitmessageqt.init()
 
         if sys.platform == 'win32':
             try:
