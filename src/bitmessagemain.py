@@ -44,8 +44,9 @@ from debug import logger
 # Helper Functions
 import helper_bootstrap
 import helper_generic
-import upnp
-    
+
+# singleton lock instance
+thisapp = None
 
 def connectToStream(streamNumber):
     shared.streamsInWhichIAmParticipating[streamNumber] = 'no data'
@@ -140,6 +141,8 @@ if shared.useVeryEasyProofOfWorkForTesting:
 
 class Main:
     def start(self, daemon=False):
+        global thisapp
+        
         _fixWinsock()
 
         shared.daemon = daemon
