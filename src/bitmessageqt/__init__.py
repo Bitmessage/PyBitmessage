@@ -10,6 +10,7 @@ try:
     from PyQt4 import QtCore, QtGui
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
+    from PyQt4.QtNetwork import QLocalSocket, QLocalServer
 
 except Exception as err:
     print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
@@ -4483,8 +4484,70 @@ class UISignaler(QThread):
                 sys.stderr.write(
                     'Command sent to UISignaler not recognized: %s\n' % command)
 
+
+app = None
+myapp = None
+
+class MySingleApplication(QApplication):
+    """
+    Listener to allow our Qt form to get focus when another instance of the
+    application is open.
+
+    Based off this nice reimplmentation of MySingleApplication:
+    http://stackoverflow.com/a/12712362/2679626
+    """
+
+    # Unique identifier for this application
+    uuid = '6ec0149b-96e1-4be1-93ab-1465fb3ebf7c'
+
+    def __init__(self, *argv):
+        super(MySingleApplication, self).__init__(*argv)
+        id = MySingleApplication.uuid
+
+        self.server = None
+        self.is_running = False
+
+        socket = QLocalSocket()
+        socket.connectToServer(id)
+        self.is_running = socket.waitForConnected()
+
+        # Cleanup past crashed servers
+        if not self.is_running:
+            if socket.error() == QLocalSocket.ConnectionRefusedError:
+                socket.disconnectFromServer()
+                QLocalServer.removeServer(id)
+
+        socket.abort()
+
+        # Checks if there's an instance of the local server id running
+        if self.is_running:
+            # This should be ignored, singleton.py will take care of exiting me.
+            pass
+        else:
+            # Nope, create a local server with this id and assign on_new_connection
+            # for whenever a second instance tries to run focus the application.
+            self.server = QLocalServer()
+            self.server.listen(id)
+            self.server.newConnection.connect(self.on_new_connection)
+
+    def __del__(self):
+        if self.server:
+            self.server.close()
+
+    def on_new_connection(self):
+        global myapp
+        if myapp:
+            myapp.appIndicatorShow()
+
+def init():
+    global app
+    if not app:
+        app = MySingleApplication(sys.argv)
+    return app
+
 def run():
-    app = QtGui.QApplication(sys.argv)
+    global myapp
+    app = init()
     change_translation(l10n.getTranslationLanguage())
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
