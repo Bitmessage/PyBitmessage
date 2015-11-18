@@ -19,7 +19,7 @@ import tr#anslate
 class sqlThread(threading.Thread):
 
     def __init__(self):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="SQL")
 
     def run(self):        
         self.conn = sqlite3.connect(shared.appdata + 'messages.dat')
