@@ -18,7 +18,7 @@ import re
 class singleListener(threading.Thread):
 
     def __init__(self):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="singleListener")
 
     def setup(self, selfInitiatedConnections):
         self.selfInitiatedConnections = selfInitiatedConnections
@@ -54,8 +54,7 @@ class singleListener(threading.Thread):
         while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not shared.config.getboolean('bitmessagesettings', 'sockslisten'):
             time.sleep(5)
 
-        with shared.printLock:
-            print 'Listening for incoming connections.'
+        logger.info('Listening for incoming connections.')
 
         # First try listening on an IPv6 socket. This should also be
         # able to accept connections on IPv4. If that's not available
@@ -82,8 +81,7 @@ class singleListener(threading.Thread):
             while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not shared.config.getboolean('bitmessagesettings', 'sockslisten'):
                 time.sleep(10)
             while len(shared.connectedHostsList) > 220:
-                with shared.printLock:
-                    print 'We are connected to too many people. Not accepting further incoming connections for ten seconds.'
+                logger.info('We are connected to too many people. Not accepting further incoming connections for ten seconds.')
 
                 time.sleep(10)
 
@@ -104,8 +102,7 @@ class singleListener(threading.Thread):
                 # connection flooding.
                 if HOST in shared.connectedHostsList:
                     socketObject.close()
-                    with shared.printLock:
-                        print 'We are already connected to', HOST + '. Ignoring connection.'
+                    logger.info('We are already connected to ' + str(HOST) + '. Ignoring connection.')
                 else:
                     break
 
@@ -124,6 +121,5 @@ class singleListener(threading.Thread):
                 socketObject, HOST, PORT, -1, someObjectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections, sendDataThreadQueue)
             rd.start()
 
-            with shared.printLock:
-                print self, 'connected to', HOST, 'during INCOMING request.'
+            logger.info('connected to ' + HOST + ' during INCOMING request.')
 
