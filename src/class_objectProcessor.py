@@ -29,7 +29,7 @@ class objectProcessor(threading.Thread):
     objecs (msg, broadcast, pubkey, getpubkey) from the receiveDataThreads.
     """
     def __init__(self):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="objectProcessor")
         """
         It may be the case that the last time Bitmessage was running, the user
         closed it before it finished processing everything in the
@@ -741,8 +741,7 @@ class objectProcessor(threading.Thread):
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
-        with shared.printLock:
-            print 'fromAddress:', fromAddress
+        logger.debug('fromAddress: ' + fromAddress)
 
         if messageEncodingType == 2:
             subject, body = self.decodeType2Message(message)

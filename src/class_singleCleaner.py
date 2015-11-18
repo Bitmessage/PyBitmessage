@@ -31,7 +31,7 @@ resends msg messages in 5 days (then 10 days, then 20 days, etc...)
 class singleCleaner(threading.Thread):
 
     def __init__(self):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="singleCleaner")
 
     def run(self):
         timeWeLastClearedInventoryAndPubkeysTables = 0
@@ -83,9 +83,7 @@ class singleCleaner(threading.Thread):
                     int(time.time()) - shared.maximumLengthOfTimeToBotherResendingMessages)
                 for row in queryreturn:
                     if len(row) < 2:
-                        with shared.printLock:
-                            sys.stderr.write(
-                                'Something went wrong in the singleCleaner thread: a query did not return the requested fields. ' + repr(row))
+                        logger.error('Something went wrong in the singleCleaner thread: a query did not return the requested fields. ' + repr(row))
                         time.sleep(3)
                         break
                     toAddress, ackData, status = row

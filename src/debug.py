@@ -18,15 +18,33 @@ Use: `from debug import logger` to import this facility into whatever module you
 '''
 import logging
 import logging.config
+import os
 import shared
 import sys
+import traceback
 import helper_startup
 helper_startup.loadConfig()
 
 # TODO(xj9): Get from a config file.
 log_level = 'DEBUG'
 
+def log_uncaught_exceptions(ex_cls, ex, tb):
+    logging.critical(''.join(traceback.format_tb(tb)))
+    logging.critical('{0}: {1}'.format(ex_cls, ex))
+
 def configureLogging():
+    have_logging = False
+    try:
+        logging.config.fileConfig(os.path.join (shared.appdata, 'logging.dat'))
+        have_logging = True
+    except:
+        pass
+    
+    sys.excepthook = log_uncaught_exceptions
+
+    if have_logging:
+        return False
+
     logging.config.dictConfig({
         'version': 1,
         'formatters': {
@@ -69,13 +87,17 @@ def configureLogging():
             'handlers': ['console'],
         },
     })
+    return True
+
 # TODO (xj9): Get from a config file.
 #logger = logging.getLogger('console_only')
-configureLogging()
-if '-c' in sys.argv:
-    logger = logging.getLogger('file_only')
+if configureLogging():
+    if '-c' in sys.argv:
+        logger = logging.getLogger('file_only')
+    else:
+        logger = logging.getLogger('both')
 else:
-    logger = logging.getLogger('both')
+    logger = logging.getLogger('default')
 
 def restartLoggingInUpdatedAppdataLocation():
     global logger
@@ -83,9 +105,11 @@ def restartLoggingInUpdatedAppdataLocation():
         logger.removeHandler(i)
         i.flush()
         i.close()
-    configureLogging()
-    if '-c' in sys.argv:
-        logger = logging.getLogger('file_only')
+    if configureLogging():
+        if '-c' in sys.argv:
+            logger = logging.getLogger('file_only')
+        else:
+            logger = logging.getLogger('both')
     else:
-        logger = logging.getLogger('both')
+        logger = logging.getLogger('default')
 

@@ -12,14 +12,14 @@ try:
     from PyQt4.QtGui import *
 
 except Exception as err:
-    print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
-    print 'Error message:', err
+    logger.error( 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).')
+    logger.error('Error message: ' + str(err))
     sys.exit()
 
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
 except AttributeError:
-    print 'QtGui.QApplication.UnicodeUTF8 error:', err
+    logger.error('QtGui.QApplication.UnicodeUTF8 error: ' + str(err))
 
 from addresses import *
 import shared
@@ -503,7 +503,6 @@ class MyForm(settingsmixin.SMainWindow):
             if len(db[toAddress]) > 0:
                 j = 0
                 for f, c in db[toAddress].iteritems():
-                    print "adding %s, %i" % (f, c)
                     subwidget = Ui_FolderWidget(widget, j, toAddress, f, c)
                     j += 1
             widget.setUnreadCount(unread)
@@ -742,7 +741,7 @@ class MyForm(settingsmixin.SMainWindow):
             if nc.test()[0] == 'failed':
                 self.ui.pushButtonFetchNamecoinID.hide()
         except:
-            print 'There was a problem testing for a Namecoin daemon. Hiding the Fetch Namecoin ID button'
+            logger.error('There was a problem testing for a Namecoin daemon. Hiding the Fetch Namecoin ID button')
             self.ui.pushButtonFetchNamecoinID.hide()
             
     def updateTTL(self, sliderPosition):
@@ -1282,7 +1281,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         # has messageing menu been installed
         if not withMessagingMenu:
-            print 'WARNING: MessagingMenu is not available.  Is libmessaging-menu-dev installed?'
+            logger.warning('WARNING: MessagingMenu is not available.  Is libmessaging-menu-dev installed?')
             return
 
         # create the menu server
@@ -1295,7 +1294,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ubuntuMessagingMenuUnread(True)
             except Exception:
                 withMessagingMenu = False
-                print 'WARNING: messaging menu disabled'
+                logger.warning('WARNING: messaging menu disabled')
 
     # update the Ubuntu messaging menu
     def ubuntuMessagingMenuUpdate(self, drawAttention, newItem, toLabel):
@@ -1307,7 +1306,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         # has messageing menu been installed
         if not withMessagingMenu:
-            print 'WARNING: messaging menu disabled or libmessaging-menu-dev not installed'
+            logger.warning('WARNING: messaging menu disabled or libmessaging-menu-dev not installed')
             return
 
         # remember this item to that the messaging menu can find it
@@ -1401,7 +1400,7 @@ class MyForm(settingsmixin.SMainWindow):
                                             stdout=subprocess.PIPE)
                             gst_available=True
                         except:
-                            print "WARNING: gst123 must be installed in order to play mp3 sounds"
+                            logger.warning("WARNING: gst123 must be installed in order to play mp3 sounds")
                         if not gst_available:
                             try:
                                 subprocess.call(["mpg123", soundFilename],
@@ -1409,14 +1408,14 @@ class MyForm(settingsmixin.SMainWindow):
                                                 stdout=subprocess.PIPE)
                                 gst_available=True
                             except:
-                                print "WARNING: mpg123 must be installed in order to play mp3 sounds"
+                                logger.warning("WARNING: mpg123 must be installed in order to play mp3 sounds")
                     else:
                         try:
                             subprocess.call(["aplay", soundFilename],
                                             stdin=subprocess.PIPE, 
                                             stdout=subprocess.PIPE)
                         except:
-                            print "WARNING: aplay must be installed in order to play WAV sounds"
+                            logger.warning("WARNING: aplay must be installed in order to play WAV sounds")
                 elif sys.platform[0:3] == 'win':
                     # use winsound on Windows
                     import winsound
@@ -1533,7 +1532,7 @@ class MyForm(settingsmixin.SMainWindow):
                 shared.apiAddressGeneratorReturnQueue.queue.clear()
                 shared.addressGeneratorQueue.put(('createChan', 4, 1, self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()))
                 addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
-                print 'addressGeneratorReturnValue', addressGeneratorReturnValue
+                logger.debug('addressGeneratorReturnValue ' + addressGeneratorReturnValue)
                 if len(addressGeneratorReturnValue) == 0:
                     QMessageBox.about(self, _translate("MainWindow", "Address already present"), _translate(
                         "MainWindow", "Could not add chan because it appears to already be one of your identities."))
@@ -1558,7 +1557,7 @@ class MyForm(settingsmixin.SMainWindow):
                 shared.apiAddressGeneratorReturnQueue.queue.clear()
                 shared.addressGeneratorQueue.put(('joinChan', addBMIfNotPresent(self.newChanDialogInstance.ui.lineEditChanBitmessageAddress.text()), self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameJoin.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameJoin.text().toUtf8()))
                 addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
-                print 'addressGeneratorReturnValue', addressGeneratorReturnValue
+                logger.debug('addressGeneratorReturnValue ' + addressGeneratorReturnValue)
                 if addressGeneratorReturnValue == 'chan name does not match address':
                     QMessageBox.about(self, _translate("MainWindow", "Address does not match chan name"), _translate(
                         "MainWindow", "Although the Bitmessage address you entered was valid, it doesn\'t match the chan name."))
@@ -2125,13 +2124,12 @@ class MyForm(settingsmixin.SMainWindow):
                         acct.createMessage(toAddress, fromAddress, subject, message)
                         subject = acct.subject
                         toAddress = acct.toAddress
-                        print "Subject: %s" % (subject)
-                        print "address: %s" % (toAddress)
+                        logger.debug("Subject: %s" % (subject))
+                        logger.debug("address: %s" % (toAddress))
                     status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                         toAddress)
                     if status != 'success':
-                        with shared.printLock:
-                            print 'Error: Could not decode', toAddress, ':', status
+                        logger.error('Error: Could not decode ' + toAddress + ':' + status)
 
                         if status == 'missingbm':
                             self.statusBar().showMessage(_translate(
@@ -2499,7 +2497,7 @@ class MyForm(settingsmixin.SMainWindow):
                         shared.objectProcessorQueue.put((objectType,payload))
 
     def click_pushButtonStatusIcon(self):
-        print 'click_pushButtonStatusIcon'
+        logger.debug('click_pushButtonStatusIcon')
         self.iconGlossaryInstance = iconGlossaryDialog(self)
         if self.iconGlossaryInstance.exec_():
             pass
@@ -2810,12 +2808,10 @@ class MyForm(settingsmixin.SMainWindow):
             if acct.type != 'normal':
                 return
             if self.dialog.ui.radioButtonUnregister.isChecked() and isinstance(acct, GatewayAccount):
-                print "unregister"
                 acct.unregister()
                 shared.config.remove_option(addressAtCurrentRow, 'gateway')
                 shared.writeKeysFile()
             elif self.dialog.ui.radioButtonRegister.isChecked():
-                print "register"
                 email = str(self.dialog.ui.lineEditEmail.text().toUtf8())
                 acct = MailchuckAccount(addressAtCurrentRow)
                 acct.register(email)
@@ -2864,7 +2860,7 @@ class MyForm(settingsmixin.SMainWindow):
                     shared.addressGeneratorQueue.put(('createDeterministicAddresses', 4, streamNumberForAddress, "unused deterministic address", self.dialog.ui.spinBoxNumberOfAddressesToMake.value(
                     ), self.dialog.ui.lineEditPassphrase.text().toUtf8(), self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
         else:
-            print 'new address dialog box rejected'
+            logger.debug('new address dialog box rejected')
 
     # Quit selected from menu or application indicator
     def quit(self):
@@ -3052,7 +3048,7 @@ class MyForm(settingsmixin.SMainWindow):
         # If the previous message was to a chan then we should send our reply to the chan rather than to the particular person who sent the message.
         if shared.config.has_section(toAddressAtCurrentInboxRow):
             if shared.safeConfigGetBoolean(toAddressAtCurrentInboxRow, 'chan'):
-                print 'original sent to a chan. Setting the to address in the reply to the chan address.'
+                logger.debug('original sent to a chan. Setting the to address in the reply to the chan address.')
                 self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
         
         listOfAddressesInComboBoxSendFrom = [str(widget['from'].itemData(i).toPyObject()) for i in range(widget['from'].count())]
@@ -3727,7 +3723,7 @@ class MyForm(settingsmixin.SMainWindow):
             if sourcefile != '':
                 copied = QtCore.QFile.copy(sourcefile, destination)
                 if not copied:
-                    print 'couldn\'t copy :('
+                    logger.error('couldn\'t copy :(')
             # set the icon
             self.rerenderTabTreeMessages()
             self.rerenderTabTreeSubscriptions()
@@ -3965,8 +3961,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def updateStatusBar(self, data):
         if data != "":
-            with shared.printLock:
-                print 'Status bar:', data
+            logger.info('Status bar: ' + data)
 
         self.statusBar().showMessage(data)
 
