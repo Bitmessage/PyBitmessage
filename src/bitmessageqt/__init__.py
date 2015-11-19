@@ -992,7 +992,7 @@ class MyForm(settingsmixin.SMainWindow):
 
             tableWidget.insertRow(0)
             toAddressItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
-            toAddressItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
+            toAddressItem.setToolTip(unicode(acct.toLabel, 'utf-8') + " (" + str(acct.toAddress) + ")")
             toAddressItem.setIcon(avatarize(toAddress))
             toAddressItem.setData(Qt.UserRole, str(toAddress))
             toAddressItem.setTextColor(AccountColor(toAddress).accountColor())
@@ -1001,7 +1001,7 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.setItem(0, 0, toAddressItem)
 
             fromAddressItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
-            fromAddressItem.setToolTip(unicode(acct.fromLabel, 'utf-8'))
+            fromAddressItem.setToolTip(unicode(acct.fromLabel, 'utf-8') + " (" + str(acct.fromAddress) + ")")
             fromAddressItem.setIcon(avatarize(fromAddress))
             fromAddressItem.setData(Qt.UserRole, str(fromAddress))
             fromAddressItem.setTextColor(AccountColor(fromAddress).accountColor())
@@ -1127,7 +1127,7 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.insertRow(0)
             # to
             to_item = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
-            to_item.setToolTip(unicode(acct.toLabel, 'utf-8'))
+            to_item.setToolTip(unicode(acct.toLabel, 'utf-8') + " (" + str(acct.toAddress) + ")")
             to_item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
@@ -1138,7 +1138,7 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.setItem(0, 0, to_item)
             # from
             from_item = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
-            from_item.setToolTip(unicode(acct.fromLabel, 'utf-8'))
+            from_item.setToolTip(unicode(acct.fromLabel, 'utf-8') + " (" + str(fromAddress) + ")")
             from_item.setFlags(
                 QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
             if not read:
@@ -2399,12 +2399,12 @@ class MyForm(settingsmixin.SMainWindow):
             sent.setSortingEnabled(False)
             sent.insertRow(0)
             newItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
-            newItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
+            newItem.setToolTip(unicode(acct.toLabel, 'utf-8') + " (" + str(acct.toAddress) + ")")
             newItem.setData(Qt.UserRole, str(toAddress))
             newItem.setIcon(avatarize(toAddress))
             sent.setItem(0, 0, newItem)
             newItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
-            newItem.setToolTip(unicode(acct.fromLabel, 'utf-8'))
+            newItem.setToolTip(unicode(acct.fromLabel, 'utf-8') + " (" + str(acct.fromAddress) + ")")
             newItem.setData(Qt.UserRole, str(fromAddress))
             newItem.setIcon(avatarize(fromAddress))
             sent.setItem(0, 1, newItem)
@@ -2446,7 +2446,7 @@ class MyForm(settingsmixin.SMainWindow):
         font.setBold(True)
         inbox.setSortingEnabled(False)
         newItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
-        newItem.setToolTip(unicode(acct.toLabel, 'utf-8'))
+        newItem.setToolTip(unicode(acct.toLabel, 'utf-8') + " (" + str(acct.toAddress) + ")")
         newItem.setFont(font)
         newItem.setData(Qt.UserRole, str(toAddress))
         newItem.setTextColor(AccountColor(toAddress).accountColor())
@@ -2455,7 +2455,7 @@ class MyForm(settingsmixin.SMainWindow):
         inbox.setItem(0, 0, newItem)
 
         newItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
-        newItem.setToolTip(unicode(acct.fromLabel, 'utf-8'))
+        newItem.setToolTip(unicode(acct.fromLabel, 'utf-8') + " (" + str(acct.fromAddress) + ")")
         newItem.setData(Qt.UserRole, str(fromAddress))
         newItem.setFont(font)
         newItem.setTextColor(AccountColor(fromAddress).accountColor())
