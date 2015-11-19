@@ -18,6 +18,26 @@ def getSortedAccounts():
         )
     return configSections
 
+def getSortedSubscriptions(count = False):
+    queryreturn = sqlQuery('SELECT label, address, enabled FROM subscriptions ORDER BY label COLLATE NOCASE ASC')
+    ret = {}
+    for row in queryreturn:
+        label, address, enabled = row
+        ret[address] = {}
+        ret[address]["inbox"] = {}
+        ret[address]["inbox"]['label'] = label
+        ret[address]["inbox"]['enabled'] = enabled
+        ret[address]["inbox"]['count'] = 0
+    if count:
+        queryreturn = sqlQuery('''SELECT fromaddress, folder, count(msgid) as cnt
+            FROM inbox, subscriptions
+            WHERE read = 0 AND subscriptions.address = inbox.fromaddress
+            GROUP BY inbox.fromaddress, folder''')
+        for row in queryreturn:
+            address, folder, cnt = row
+            ret[address][folder]['count'] = cnt
+    return ret
+
 def accountClass(address):
     if not shared.config.has_section(address):
         if address == str_broadcast_subscribers:
