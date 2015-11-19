@@ -3162,10 +3162,8 @@ class MyForm(settingsmixin.SMainWindow):
             inventoryHashToTrash = str(tableWidget.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
             if folder == "trash" or shifted:
-                logger.debug ("deleting")
                 sqlExecute('''DELETE FROM inbox WHERE msgid=?''', inventoryHashToTrash)
             else:
-                logger.debug ("moving to trash, because folder = \"%s\" and shifted = %r %x", folder, shifted)
                 sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', inventoryHashToTrash)
             if tableWidget.item(currentRow, 0).font().bold():
                 unread = True
