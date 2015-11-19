@@ -1581,7 +1581,7 @@ class MyForm(settingsmixin.SMainWindow):
                 shared.apiAddressGeneratorReturnQueue.queue.clear()
                 shared.addressGeneratorQueue.put(('createChan', 4, 1, self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()))
                 addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
-                logger.debug('addressGeneratorReturnValue ' + addressGeneratorReturnValue)
+                logger.debug('addressGeneratorReturnValue ' + str(addressGeneratorReturnValue))
                 if len(addressGeneratorReturnValue) == 0:
                     QMessageBox.about(self, _translate("MainWindow", "Address already present"), _translate(
                         "MainWindow", "Could not add chan because it appears to already be one of your identities."))
@@ -1606,7 +1606,7 @@ class MyForm(settingsmixin.SMainWindow):
                 shared.apiAddressGeneratorReturnQueue.queue.clear()
                 shared.addressGeneratorQueue.put(('joinChan', addBMIfNotPresent(self.newChanDialogInstance.ui.lineEditChanBitmessageAddress.text()), self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameJoin.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameJoin.text().toUtf8()))
                 addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
-                logger.debug('addressGeneratorReturnValue ' + addressGeneratorReturnValue)
+                logger.debug('addressGeneratorReturnValue ' + str(addressGeneratorReturnValue))
                 if addressGeneratorReturnValue == 'chan name does not match address':
                     QMessageBox.about(self, _translate("MainWindow", "Address does not match chan name"), _translate(
                         "MainWindow", "Although the Bitmessage address you entered was valid, it doesn\'t match the chan name."))
@@ -1619,6 +1619,7 @@ class MyForm(settingsmixin.SMainWindow):
                 QMessageBox.about(self, _translate("MainWindow", "Success"), _translate(
                     "MainWindow", "Successfully joined chan. "))
                 self.ui.tabWidget.setCurrentIndex(3)
+            self.rerenderAddressBook()
 
     def showConnectDialog(self):
         self.connectDialogInstance = connectDialog(self)
@@ -2081,7 +2082,7 @@ class MyForm(settingsmixin.SMainWindow):
         addresses = getSortedAccounts()
         for address in addresses:
             account = accountClass(address)
-            if (account.type == 'chan'):
+            if (account.type == 'chan' and shared.safeConfigGetBoolean(address, 'enabled')):
                 addRow(address, account.getLabel(), 'chan')
         
         # normal accounts
@@ -2512,7 +2513,7 @@ class MyForm(settingsmixin.SMainWindow):
         sqlExecute('''INSERT INTO subscriptions VALUES (?,?,?)''',str(label),address,True)
         self.rerenderInboxFromLabels()
         shared.reloadBroadcastSendersForWhichImWatching()
-    
+        self.rerenderAddressBook()
         self.rerenderTabTreeSubscriptions()
 
     def click_pushButtonAddSubscription(self):
@@ -3396,6 +3397,7 @@ class MyForm(settingsmixin.SMainWindow):
                    address)
         self.rerenderTabTreeSubscriptions()
         self.rerenderInboxFromLabels()
+        self.rerenderAddressBook()
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_action_SubscriptionsClipboard(self):
@@ -3410,6 +3412,7 @@ class MyForm(settingsmixin.SMainWindow):
             address)
         account = self.getCurrentItem()
         account.setEnabled(True)
+        self.rerenderAddressBook()
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_action_SubscriptionsDisable(self):
@@ -3419,6 +3422,7 @@ class MyForm(settingsmixin.SMainWindow):
             address)
         account = self.getCurrentItem()
         account.setEnabled(False)
+        self.rerenderAddressBook()
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_context_menuSubscriptions(self, point):
@@ -3678,6 +3682,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
         shared.writeKeysFile()
         shared.reloadMyAddressHashes()
+        self.rerenderAddressBook()
         if account.type == "normal":
             self.rerenderTabTreeMessages()
         elif account.type == "chan":
@@ -3693,6 +3698,7 @@ class MyForm(settingsmixin.SMainWindow):
         shared.config.set(address, 'enabled', 'true')
         shared.writeKeysFile()
         shared.reloadMyAddressHashes()
+        self.rerenderAddressBook()
 
     def on_action_Disable(self):
         address = self.getCurrentAccount()
@@ -3704,6 +3710,7 @@ class MyForm(settingsmixin.SMainWindow):
         shared.config.set(str(address), 'enabled', 'false')
         shared.writeKeysFile()
         shared.reloadMyAddressHashes()
+        self.rerenderAddressBook()
 
     def on_action_Clipboard(self):
         address = self.getCurrentAccount()
