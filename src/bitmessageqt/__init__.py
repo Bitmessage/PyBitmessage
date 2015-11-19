@@ -1053,7 +1053,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         tableWidget.setSortingEnabled(False)
         tableWidget.horizontalHeader().setSortIndicator(3, Qt.DescendingOrder)
-        tableWidget.keyPressEvent = self.tableWidgetInboxKeyPressEvent
+        tableWidget.keyPressEvent = self.tableWidgetSentKeyPressEvent
 
     # Load messages from database file
     def loadMessagelist(self, tableWidget, account, folder="inbox", where="", what=""):
@@ -1483,6 +1483,12 @@ class MyForm(settingsmixin.SMainWindow):
     def tableWidgetInboxKeyPressEvent(self, event):
         if event.key() == QtCore.Qt.Key_Delete:
             self.on_action_InboxTrash()
+        return QtGui.QTableWidget.keyPressEvent(self.getCurrentMessagelist(), event)
+
+    # set delete key in inbox
+    def tableWidgetSentKeyPressEvent(self, event):
+        if event.key() == QtCore.Qt.Key_Delete:
+            self.on_action_SentTrash()
         return QtGui.QTableWidget.keyPressEvent(self.getCurrentMessagelist(), event)
 
     # menu button 'manage keys'
@@ -3149,11 +3155,18 @@ class MyForm(settingsmixin.SMainWindow):
             return
         unread = False
         currentRow = 0
+        folder = self.getCurrentFolder()
+        shifted = QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier
         while tableWidget.selectedIndexes():
             currentRow = tableWidget.selectedIndexes()[0].row()
             inventoryHashToTrash = str(tableWidget.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
-            sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', inventoryHashToTrash)
+            if folder == "trash" or shifted:
+                logger.debug ("deleting")
+                sqlExecute('''DELETE FROM inbox WHERE msgid=?''', inventoryHashToTrash)
+            else:
+                logger.debug ("moving to trash, because folder = \"%s\" and shifted = %r %x", folder, shifted)
+                sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', inventoryHashToTrash)
             if tableWidget.item(currentRow, 0).font().bold():
                 unread = True
             self.getCurrentMessageTextedit().setText("")
@@ -3229,11 +3242,16 @@ class MyForm(settingsmixin.SMainWindow):
         tableWidget = self.getCurrentMessagelist()
         if not tableWidget:
             return
+        folder = self.getCurrentFolder()
+        shifted = (QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier) > 0
         while tableWidget.selectedIndexes() != []:
             currentRow = tableWidget.selectedIndexes()[0].row()
             ackdataToTrash = str(tableWidget.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
-            sqlExecute('''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdataToTrash)
+            if folder == "trash" or shifted:
+                sqlExecute('''DELETE FROM sent WHERE ackdata=?''', ackdataToTrash)
+            else:
+                sqlExecute('''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdataToTrash)
             if tableWidget.item(currentRow, 0).font().bold():
                 unread = True
             self.getCurrentMessageTextedit().setPlainText("")
