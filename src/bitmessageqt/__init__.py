@@ -397,6 +397,10 @@ class MyForm(settingsmixin.SMainWindow):
         # init dictionary
         
         db = getSortedSubscriptions(True)
+        for address in db:
+            for folder in folders:
+                if not folder in db[address]:
+                    db[address][folder] = {}
             
         if treeWidget.isSortingEnabled():
             treeWidget.setSortingEnabled(False)
@@ -432,7 +436,10 @@ class MyForm(settingsmixin.SMainWindow):
             if len(db[toAddress]) > 0:
                 j = 0
                 for f, c in db[toAddress].iteritems():
-                    subwidget = Ui_FolderWidget(widget, j, toAddress, f, c['count'])
+                    try:
+                        subwidget = Ui_FolderWidget(widget, j, toAddress, f, c['count'])
+                    except KeyError:
+                        subwidget = Ui_FolderWidget(widget, j, toAddress, f, 0)
                     j += 1
             widget.setUnreadCount(unread)
             db.pop(toAddress, None)
