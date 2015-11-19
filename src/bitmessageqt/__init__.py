@@ -390,36 +390,72 @@ class MyForm(settingsmixin.SMainWindow):
     def rerenderTabTreeSubscriptions(self):
         treeWidget = self.ui.treeWidgetSubscriptions
         folders = ['inbox', 'sent', 'trash']
-        treeWidget.clear()
-        treeWidget.setSortingEnabled(False)
-        treeWidget.header().setSortIndicator(0, Qt.AscendingOrder)
-        db = {}
-        queryreturn = sqlQuery('''SELECT fromaddress, folder, count(msgid) as cnt
-            FROM inbox, subscriptions
-            WHERE read = 0 AND subscriptions.address = inbox.fromaddress
-            GROUP BY inbox.fromaddress, folder''')
-        for row in queryreturn:
-            fromaddress, folder, cnt = row
-            if fromaddress not in db:
-                db[fromaddress] = {}
-            db[fromaddress][folder] = cnt
-        queryreturn = sqlQuery('SELECT label, address, enabled FROM subscriptions')
-        for row in queryreturn:
-            label, address, enabled = row
-            newItem = Ui_SubscriptionWidget(treeWidget, 0, address, 0, label, enabled)
 
+        # sort ascending when creating
+        if treeWidget.topLevelItemCount() == 0:
+            treeWidget.header().setSortIndicator(0, Qt.AscendingOrder)
+        # init dictionary
+        
+        db = getSortedSubscriptions(True)
+            
+        if treeWidget.isSortingEnabled():
+            treeWidget.setSortingEnabled(False)
+
+        widgets = {}
+        i = 0
+        while i < treeWidget.topLevelItemCount():
+            widget = treeWidget.topLevelItem(i)
+            if widget is not None:
+                toAddress = widget.address
+            else:
+                toAddress = None
+            
+            if not toAddress in db:
+                treeWidget.takeTopLevelItem(i)
+                # no increment
+                continue
+            unread = 0
+            j = 0
+            while j < widget.childCount():
+                subwidget = widget.child(j)
+                try:
+                    subwidget.setUnreadCount(db[toAddress][subwidget.folderName]['count'])
+                    unread += db[toAddress][subwidget.folderName]['count']
+                    db[toAddress].pop(subwidget.folderName, None)
+                except:
+                    widget.takeChild(j)
+                    # no increment
+                    continue
+                j += 1
+
+            # add missing folders
+            if len(db[toAddress]) > 0:
+                j = 0
+                for f, c in db[toAddress].iteritems():
+                    subwidget = Ui_FolderWidget(widget, j, toAddress, f, c['count'])
+                    j += 1
+            widget.setUnreadCount(unread)
+            db.pop(toAddress, None)
+            i += 1
+        
+        i = 0
+        for toAddress in db:
+            widget = Ui_SubscriptionWidget(treeWidget, i, toAddress, db[toAddress]["inbox"]['count'], db[toAddress]["inbox"]['label'], db[toAddress]["inbox"]['enabled'])
+            j = 0
             unread = 0
             for folder in folders:
                 try:
-                    newSubItem = Ui_FolderWidget(newItem, 0, address, folder, db[address][folder])
-                    unread += db[address][folder]
+                    subwidget = Ui_FolderWidget(widget, j, toAddress, folder, db[toAddress][folder]['count'])
+                    unread += db[toAddress][folder]['count']
                 except KeyError:
-                    newSubItem = Ui_FolderWidget(newItem, 0, address, folder, 0)
-                
-            newItem.setUnreadCount(unread)
-            newItem.setFlags (newItem.flags() | QtCore.Qt.ItemIsEditable)
-
+                    subwidget = Ui_FolderWidget(widget, j, toAddress, folder, 0)
+                j += 1
+            widget.setUnreadCount(unread)
+            widget.setFlags (widget.flags() | QtCore.Qt.ItemIsEditable)
+            i += 1
+        
         treeWidget.setSortingEnabled(True)
+
 
     def rerenderTabTreeMessages(self):
         self.rerenderTabTree('messages')
