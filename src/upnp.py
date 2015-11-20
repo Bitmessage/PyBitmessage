@@ -118,6 +118,20 @@ class Router:
             if service.childNodes[0].data.find('WANIPConnection') > 0:
                 self.path = service.parentNode.getElementsByTagName('controlURL')[0].childNodes[0].data
 
+        # get local IP
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        try:
+            logger.debug("Connecting to %s:%i", self.address, self.routerPath.port)
+            s.connect ((self.address, self.routerPath.port))
+        except:
+            pass
+        self.localAddress = s.getsockname()[0]
+        logger.debug("Local IP: %s", self.localAddress)
+        try:
+            s.close()
+        except:
+            pass
+
     def AddPortMapping(self, externalPort, internalPort, internalClient, protocol, description, leaseDuration = 0, enabled = 1):
         resp = self.soapRequest('WANIPConnection:1', 'AddPortMapping', [
                 ('NewExternalPort', str(externalPort)),
@@ -128,6 +142,7 @@ class Router:
                 ('NewPortMappingDescription', str(description)),
                 ('NewLeaseDuration', str(leaseDuration))
             ])
+        self.extPort = externalPort
         return resp
 
     def DeletePortMapping(self, externalPort, protocol):
@@ -145,6 +160,7 @@ class Router:
     
     def soapRequest(self, service, action, arguments=[]):
         from xml.dom.minidom import parseString
+        from debug import logger
         conn = httplib.HTTPConnection(self.routerPath.hostname, self.routerPath.port)
         conn.request(
             'POST',
@@ -159,40 +175,42 @@ class Router:
         dom = parseString(resp)
         errinfo = dom.getElementsByTagName('errorDescription')
         if len(errinfo) > 0:
+            logger.error("UPnP error: %s", resp)
             raise UPnPError(errinfo[0].childNodes[0].data) 
         return resp
 
+def createPortMappingInternal(router):
+    from debug import logger
+
+    for i in range(0, 50):
+        try:
+            routerIP, = unpack('>I', socket.inet_aton(router.address))
+            localIP = router.localAddress
+            localPort = shared.config.getint('bitmessagesettings', 'port')
+            if i == 0:
+                extPort = localPort # try same port first
+            else:
+                extPort = randint(32767, 65535)
+            logger.debug("Requesting UPnP mapping for %s:%i on external port %i", localIP, localPort,  extPort)
+            router.AddPortMapping(extPort, localPort, localIP, 'TCP', 'BitMessage')
+            logger.info("Successfully established UPnP mapping for %s:%i on external port %i", localIP, localPort, extPort)
+            shared.extPort = extPort
+            break
+        except UPnPError:
+            logger.debug("UPnP error: ", exc_info=True)
 
 def createPortMapping():
-    from struct import unpack, pack
+    from debug import logger
     global routers
+
     routers = searchRouter()
-    localIPs = socket.gethostbyname_ex(socket.gethostname())[2]
+    logger.debug("Found %i UPnP routers", len(routers))
 
-    for i in range(len(localIPs)):
-        localIPs[i], = unpack('>I', socket.inet_aton(localIPs[i]))
-    try:
-        #add port mapping for each router
-        for router in routers:
-            routerIP, = unpack('>I', socket.inet_aton(router.address))
-            localIP = None
-            minDiff = 0xFFFFFFFF
-            #find nearest localIP as clientIP to specified router
-            for IP in localIPs:
-                if IP ^ routerIP < minDiff:
-                    minDiff = IP ^ routerIP
-                    localIP = IP
-
-            localIP = socket.inet_ntoa(pack('>I', localIP))
-            localPort = config.getint('bitmessagesettings', 'port')
-            router.AddPortMapping(localPort, localPort, localIP, 'TCP', 'BitMessage')
-    except UPnPError:
-        from random import randint
-        newPort = str(randint(32767, 65535))
-        config.set('bitmessagesettings', 'port', newPort)
-        createPortMapping()
+    for router in routers:
+        createPortMappingInternal(router)
 
 def deletePortMapping():
     localPort = config.getint('bitmessagesettings', 'port')
     for router in routers:
-        router.DeletePortMapping(localPort, 'TCP')
+        if hasattr(router, "extPort"):
+            router.DeletePortMapping(router.extPort, 'TCP')
