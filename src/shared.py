@@ -160,8 +160,10 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload += pack('>q', 1)  # bitflags of the services I offer.
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
         '>L', 2130706433)  # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
-    payload += pack('>H', shared.config.getint(
-        'bitmessagesettings', 'port'))
+    if safeConfigGetBoolean('bitmessagesettings', 'upnp'):
+        payload += pack('>H', extPort)
+    else:
+        payload += pack('>H', shared.config.getint('bitmessagesettings', 'port'))
 
     random.seed()
     payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
@@ -384,6 +386,9 @@ def doCleanShutdown():
         'Flushing inventory in memory out to disk. This should normally only take a second...'))
     flushInventory()
     
+    if safeConfigGetBoolean('bitmessagesettings','upnp'):
+        import upnp
+        upnp.deletePortMapping()
     # Verify that the objectProcessor has finished exiting. It should have incremented the 
     # shutdown variable from 1 to 2. This must finish before we command the sqlThread to exit.
     while shutdown == 1:

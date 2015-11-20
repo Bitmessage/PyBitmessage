@@ -149,6 +149,10 @@ class Main:
         # is the application already running?  If yes then exit.
         thisapp = singleton.singleinstance("", daemon)
 
+        if shared.safeConfigGetBoolean('bitmessagesettings','upnp'):
+            import upnp
+            upnp.createPortMapping()
+
         # get curses flag
         curses = False
         if '-c' in sys.argv:
