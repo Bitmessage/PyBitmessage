@@ -1,3 +1,4 @@
+from debug import logger
 withMessagingMenu = False
 try:
     from gi.repository import MessagingMenu
@@ -12,14 +13,14 @@ try:
     from PyQt4.QtGui import *
 
 except Exception as err:
-    logger.error( 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).')
-    logger.error('Error message: ' + str(err))
+    logmsg = 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
+    logger.critical(logmsg, exc_info=True)
     sys.exit()
 
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
 except AttributeError:
-    logger.error('QtGui.QApplication.UnicodeUTF8 error: ' + str(err))
+    logger.exception('QtGui.QApplication.UnicodeUTF8 error', exc_info=True)
 
 from addresses import *
 import shared
@@ -51,7 +52,6 @@ import pickle
 import platform
 import textwrap
 import debug
-from debug import logger
 import subprocess
 import datetime
 from helper_sql import *
@@ -3243,7 +3243,7 @@ class MyForm(settingsmixin.SMainWindow):
             f.write(message)
             f.close()
         except Exception, e:
-            sys.stderr.write('Write error: '+ e)
+            logger.exception('Message not saved', exc_info=True)
             self.statusBar().showMessage(_translate("MainWindow", "Write error."))
 
     # Send item on the Sent tab to trash
