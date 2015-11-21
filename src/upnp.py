@@ -166,7 +166,7 @@ class Router:
                 ('NewExternalPort', str(externalPort)),
                 ('NewProtocol', protocol),
             ])
-        logger.info("Removed UPnP mapping on external port %i", extPort)
+        logger.info("Removed UPnP mapping on external port %i", externalPort)
         return resp
 
     def GetExternalIPAddress(self):
