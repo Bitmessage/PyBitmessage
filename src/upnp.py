@@ -23,8 +23,18 @@ def searchRouter():
     routers = []
     sock.settimeout(0.5)
     try:
-        resp,(ip,port) = sock.recvfrom(1000)
-        while resp:
+        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+        sock.settimeout(2)
+        logger.debug("Sending UPnP query")
+        sock.sendto(ssdpRequest, (SSDP_ADDR, SSDP_PORT))
+    except:
+        logger.exception("UPnP sock failed")
+    try:
+        while True:
+            resp,(ip,port) = sock.recvfrom(1000)
+            if resp is None:
+                continue
             routers.append(Router(resp, ip))
             resp,(ip,port) = sock.recvfrom(1000)
     except:pass
@@ -146,10 +156,12 @@ class Router:
         return resp
 
     def DeletePortMapping(self, externalPort, protocol):
+        from debug import logger
         resp = self.soapRequest('WANIPConnection:1', 'DeletePortMapping', [
                 ('NewExternalPort', str(externalPort)),
                 ('NewProtocol', protocol),
             ])
+        logger.info("Removed UPnP mapping on external port %i", extPort)
         return resp
 
     def GetExternalIPAddress(self):
