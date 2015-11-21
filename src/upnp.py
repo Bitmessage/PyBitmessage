@@ -4,41 +4,9 @@ import httplib
 from random import randint
 import socket
 from struct import unpack, pack
+import threading
+import time
 import shared
-
-routers = []
-
-def searchRouter():
-    from debug import logger
-    SSDP_ADDR = "239.255.255.250"
-    SSDP_PORT = 1900
-    SSDP_MX = 2
-    SSDP_ST = "urn:schemas-upnp-org:device:InternetGatewayDevice:1"
-    ssdpRequest = "M-SEARCH * HTTP/1.1\r\n" + \
-                    "HOST: %s:%d\r\n" % (SSDP_ADDR, SSDP_PORT) + \
-                    "MAN: \"ssdp:discover\"\r\n" + \
-                    "MX: %d\r\n" % (SSDP_MX, ) + \
-                    "ST: %s\r\n" % (SSDP_ST, ) + "\r\n"
-    routers = []
-
-    try:
-        sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-        sock.settimeout(2)
-        logger.debug("Sending UPnP query")
-        sock.sendto(ssdpRequest, (SSDP_ADDR, SSDP_PORT))
-    except:
-        logger.exception("UPnP sock failed")
-    try:
-        while True:
-            resp,(ip,port) = sock.recvfrom(1000)
-            if resp is None:
-                continue
-            routers.append(Router(resp, ip))
-    except:
-        logger.error("Failure running UPnP router search.", exc_info=True)
-        
-    return routers
 
 def createRequestXML(service, action, arguments=[]):
     from xml.dom.minidom import Document
@@ -97,6 +65,8 @@ class Router:
     path = ""
     address = None
     routerPath = None
+    extPort = None
+    
     def __init__(self, ssdpResponse, address):
         import urllib2
         from xml.dom.minidom import parseString
@@ -148,6 +118,7 @@ class Router:
             pass
 
     def AddPortMapping(self, externalPort, internalPort, internalClient, protocol, description, leaseDuration = 0, enabled = 1):
+        from debug import logger
         resp = self.soapRequest('WANIPConnection:1', 'AddPortMapping', [
                 ('NewExternalPort', str(externalPort)),
                 ('NewProtocol', protocol),
@@ -158,6 +129,7 @@ class Router:
                 ('NewLeaseDuration', str(leaseDuration))
             ])
         self.extPort = externalPort
+        logger.info("Successfully established UPnP mapping for %s:%i on external port %i", internalClient, internalPort, externalPort)
         return resp
 
     def DeletePortMapping(self, externalPort, protocol):
@@ -196,37 +168,90 @@ class Router:
             raise UPnPError(errinfo[0].childNodes[0].data) 
         return resp
 
-def createPortMappingInternal(router):
-    from debug import logger
+class uPnPThread(threading.Thread):
+    def __init__ (self):
+        threading.Thread.__init__(self, name="uPnPThread")
+        self.localPort = shared.config.getint('bitmessagesettings', 'port')
+        self.extPort = None
+        self.routers = []
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
+        self.sock.settimeout(10)
+        self.sendSleep = 60
 
-    for i in range(0, 50):
+    def run(self):
+        from debug import logger
+        
+        logger.debug("Starting UPnP thread")
+        lastSent = 0
+        while shared.shutdown == 0:
+            if time.time() - lastSent > self.sendSleep and len(self.routers) == 0:
+                self.sendSearchRouter()
+                lastSent = time.time()
+            try:
+                while shared.shutdown == 0:
+                    resp,(ip,port) = self.sock.recvfrom(1000)
+                    if resp is None:
+                        continue
+                    newRouter = Router(resp, ip)
+                    for router in self.routers:
+                        if router.location == newRouter.location:
+                            break
+                    else:
+                        logger.debug("Found UPnP router at %s", ip)
+                        self.routers.append(newRouter)
+                        self.createPortMapping(newRouter)
+                        break
+            except socket.timeout as e:
+                pass
+            except:
+                logger.error("Failure running UPnP router search.", exc_info=True)
+            for router in self.routers:
+                if router.extPort is None:
+                    self.createPortMapping(router)
+        for router in self.routers:
+            if router.extPort is not None:
+                self.deletePortMapping(router)
+        logger.debug("UPnP thread done")
+
+    def sendSearchRouter(self):
+        from debug import logger
+        SSDP_ADDR = "239.255.255.250"
+        SSDP_PORT = 1900
+        SSDP_MX = 2
+        SSDP_ST = "urn:schemas-upnp-org:device:InternetGatewayDevice:1"
+        ssdpRequest = "M-SEARCH * HTTP/1.1\r\n" + \
+                    "HOST: %s:%d\r\n" % (SSDP_ADDR, SSDP_PORT) + \
+                    "MAN: \"ssdp:discover\"\r\n" + \
+                    "MX: %d\r\n" % (SSDP_MX, ) + \
+                    "ST: %s\r\n" % (SSDP_ST, ) + "\r\n"
+
         try:
-            routerIP, = unpack('>I', socket.inet_aton(router.address))
-            localIP = router.localAddress
-            localPort = shared.config.getint('bitmessagesettings', 'port')
-            if i == 0:
-                extPort = localPort # try same port first
-            else:
-                extPort = randint(32767, 65535)
-            logger.debug("Requesting UPnP mapping for %s:%i on external port %i", localIP, localPort,  extPort)
-            router.AddPortMapping(extPort, localPort, localIP, 'TCP', 'BitMessage')
-            logger.info("Successfully established UPnP mapping for %s:%i on external port %i", localIP, localPort, extPort)
-            shared.extPort = extPort
-            break
-        except UPnPError:
-            logger.debug("UPnP error: ", exc_info=True)
+            logger.debug("Sending UPnP query")
+            self.sock.sendto(ssdpRequest, (SSDP_ADDR, SSDP_PORT))
+        except:
+            logger.exception("UPnP send query failed")
 
-def createPortMapping():
-    from debug import logger
-    global routers
+    def createPortMapping(self, router):
+        from debug import logger
 
-    routers = searchRouter()
-    logger.debug("Found %i UPnP routers", len(routers))
+        for i in range(50):
+            try:
+                routerIP, = unpack('>I', socket.inet_aton(router.address))
+                localIP = router.localAddress
+                if i == 0:
+                    extPort = self.localPort # try same port first
+                else:
+                    extPort = randint(32767, 65535)
+                logger.debug("Requesting UPnP mapping for %s:%i on external port %i", localIP, self.localPort,  extPort)
+                router.AddPortMapping(extPort, self.localPort, localIP, 'TCP', 'BitMessage')
+                shared.extPort = extPort
+                break
+            except UPnPError:
+                logger.debug("UPnP error: ", exc_info=True)
 
-    for router in routers:
-        createPortMappingInternal(router)
+    def deletePortMapping(self, router):
+        router.DeletePortMapping(router.extPort, 'TCP')
 
-def deletePortMapping():
-    for router in routers:
-        if hasattr(router, "extPort"):
-            router.DeletePortMapping(router.extPort, 'TCP')
+
+

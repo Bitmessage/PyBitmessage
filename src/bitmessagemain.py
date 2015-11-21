@@ -149,10 +149,6 @@ class Main:
         # is the application already running?  If yes then exit.
         thisapp = singleton.singleinstance("", daemon)
 
-        if shared.safeConfigGetBoolean('bitmessagesettings','upnp'):
-            import upnp
-            upnp.createPortMapping()
-
         # get curses flag
         curses = False
         if '-c' in sys.argv:
@@ -211,6 +207,11 @@ class Main:
         singleListenerThread.setup(selfInitiatedConnections)
         singleListenerThread.daemon = True  # close the main program even if there are threads left
         singleListenerThread.start()
+        
+        if shared.safeConfigGetBoolean('bitmessagesettings','upnp'):
+            import upnp
+            upnpThread = upnp.uPnPThread()
+            upnpThread.start()
 
         if daemon == False and shared.safeConfigGetBoolean('bitmessagesettings', 'daemon') == False:
             if curses == False:
