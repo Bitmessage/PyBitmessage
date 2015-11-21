@@ -384,8 +384,6 @@ def doCleanShutdown():
         'Flushing inventory in memory out to disk. This should normally only take a second...'))
     flushInventory()
     
-    import upnp
-    upnp.deletePortMapping()
     # Verify that the objectProcessor has finished exiting. It should have incremented the 
     # shutdown variable from 1 to 2. This must finish before we command the sqlThread to exit.
     while shutdown == 1:
@@ -399,7 +397,12 @@ def doCleanShutdown():
     
     # Wait long enough to guarantee that any running proof of work worker threads will check the
     # shutdown variable and exit. If the main thread closes before they do then they won't stop.
-    time.sleep(.25) 
+    time.sleep(.25)
+    
+    for thread in threading.enumerate():
+        if thread.name == "uPnPThread" or "outgoingSynSender" in thread.name:
+            logger.debug("Waiting for thread %s", thread.name)
+            thread.join()
 
     if safeConfigGetBoolean('bitmessagesettings','daemon'):
         logger.info('Clean shutdown complete.')
