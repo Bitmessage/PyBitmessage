@@ -8,6 +8,7 @@ import threading
 import time
 from helper_threading import *
 import shared
+import tr
 
 def createRequestXML(service, action, arguments=[]):
     from xml.dom.minidom import Document
@@ -204,6 +205,7 @@ class uPnPThread(threading.Thread, StoppableThread):
                         logger.debug("Found UPnP router at %s", ip)
                         self.routers.append(newRouter)
                         self.createPortMapping(newRouter)
+                        shared.UISignalQueue.put(('updateStatusBar', tr.translateText("MainWindow",'UPnP port mapping established')))
                         break
             except socket.timeout as e:
                 pass
@@ -214,10 +216,14 @@ class uPnPThread(threading.Thread, StoppableThread):
                     self.createPortMapping(router)
         self.sock.shutdown(socket.SHUT.RDWR)
         self.sock.close()
+        deleted = False
         for router in self.routers:
             if router.extPort is not None:
+                deleted = True
                 self.deletePortMapping(router)
         shared.extPort = None
+        if deleted:
+            shared.UISignalQueue.put(('updateStatusBar', tr.translateText("MainWindow",'UPnP port mapping removed')))
         logger.debug("UPnP thread done")
 
     def sendSearchRouter(self):
