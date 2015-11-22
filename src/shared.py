@@ -149,11 +149,18 @@ def encodeHost(host):
     else:
         return socket.inet_pton(socket.AF_INET6, host)
 
-def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
+def haveSSL(server = False):
+    # python < 2.7.9's ssl library does not support ECDSA server due to missing initialisation of available curves, but client works ok
+    if server == False:
+        return True
+    elif sys.version_info >= (2,7,9):
+        return True
+    return False
+        
+def assembleVersionMessage(remoteHost, remotePort, myStreamNumber, server = False):
     payload = ''
     payload += pack('>L', 3)  # protocol version.
-    payload += pack('>q', NODE_NETWORK|(NODE_SSL if sys.version_info >= (2, 7, 9) else 0))  # bitflags of the services I offer.
-    # python < 2.7.9's ssl library does not support ECDSA server due to missing initialisation of available curves, but client works ok
+    payload += pack('>q', NODE_NETWORK|(NODE_SSL if haveSSL(server) else 0))  # bitflags of the services I offer.
     payload += pack('>q', int(time.time()))
 
     payload += pack(
