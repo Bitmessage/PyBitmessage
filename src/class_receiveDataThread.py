@@ -253,8 +253,9 @@ class receiveDataThread(threading.Thread):
         self.connectionIsOrWasFullyEstablished = True
 
         self.sslSock = self.sock
-        if (self.services & shared.NODE_SSL == shared.NODE_SSL and
+        if ((self.services & shared.NODE_SSL == shared.NODE_SSL) and
             shared.haveSSL(not self.initiatedConnection)):
+            logger.debug("Initialising TLS")
             self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(shared.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(shared.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=ssl.PROTOCOL_TLSv1, do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
             if hasattr(self.sslSock, "context"):
                 self.sslSock.context.set_ecdh_curve("secp256k1")
@@ -270,7 +271,7 @@ class receiveDataThread(threading.Thread):
                 except:
                     break
         # Command the corresponding sendDataThread to set its own connectionIsOrWasFullyEstablished variable to True also
-        self.sendDataThreadQueue.put((0, 'connectionIsOrWasFullyEstablished', (self.services, self.sslSock, self.initiatedConnection)))
+        self.sendDataThreadQueue.put((0, 'connectionIsOrWasFullyEstablished', (self.services, self.sslSock)))
 
         if not self.initiatedConnection:
             shared.clientHasReceivedIncomingConnections = True
