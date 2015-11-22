@@ -798,10 +798,6 @@ class MyForm(settingsmixin.SMainWindow):
         if not self.actionShow.isChecked():
             self.hide()
         else:
-            if sys.platform[0:3] == 'win':
-                self.setWindowFlags(Qt.Window)
-            # else:
-                # self.showMaximized()
             self.show()
             self.setWindowState(
                 self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
@@ -1637,9 +1633,7 @@ class MyForm(settingsmixin.SMainWindow):
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.windowState() & QtCore.Qt.WindowMinimized:
                 if shared.config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
-                    self.appIndicatorHide()
-                    if 'win32' in sys.platform or 'win64' in sys.platform:
-                        self.setWindowFlags(Qt.ToolTip)           
+                    QTimer.singleShot(0, self.appIndicatorHide)
             elif event.oldState() & QtCore.Qt.WindowMinimized:
                 # The window state has just been changed to
                 # Normal/Maximised/FullScreen
