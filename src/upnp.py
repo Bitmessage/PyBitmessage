@@ -106,6 +106,7 @@ class Router:
         self.localAddress = s.getsockname()[0]
         logger.debug("Local IP: %s", self.localAddress)
         try:
+            s.shutdown(socket.SHUT.RDWR)
             s.close()
         except:
             pass
@@ -203,6 +204,7 @@ class uPnPThread(threading.Thread, StoppableThread):
             for router in self.routers:
                 if router.extPort is None:
                     self.createPortMapping(router)
+        self.sock.shutdown(socket.SHUT.RDWR)
         self.sock.close()
         for router in self.routers:
             if router.extPort is not None:
