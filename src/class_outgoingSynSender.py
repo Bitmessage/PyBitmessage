@@ -78,7 +78,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             shared.alreadyAttemptedConnectionsList[peer] = 0
             try:
                 shared.alreadyAttemptedConnectionsListLock.release()
-            except ThreadError as e:
+            except threading.ThreadError as e:
                 pass
             self.name = "outgoingSynSender-" + peer.host
             if peer.host.find(':') == -1:
