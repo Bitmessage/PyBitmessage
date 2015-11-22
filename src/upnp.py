@@ -107,7 +107,7 @@ class Router:
         self.localAddress = s.getsockname()[0]
         logger.debug("Local IP: %s", self.localAddress)
         try:
-            s.shutdown(socket.SHUT.RDWR)
+            s.shutdown(socket.SHUT_RDWR)
             s.close()
         except:
             pass
