@@ -50,7 +50,7 @@ class sendDataThread(threading.Thread):
 
     def sendVersionMessage(self):
         datatosend = shared.assembleVersionMessage(
-            self.peer.host, self.peer.port, self.streamNumber)  # the IP and port of the remote host, and my streamNumber.
+            self.peer.host, self.peer.port, self.streamNumber, not self.initiatedConnection)  # the IP and port of the remote host, and my streamNumber.
 
         logger.debug('Sending version packet: ' + repr(datatosend))
 
