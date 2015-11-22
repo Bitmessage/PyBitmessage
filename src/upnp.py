@@ -209,6 +209,7 @@ class uPnPThread(threading.Thread):
             for router in self.routers:
                 if router.extPort is None:
                     self.createPortMapping(router)
+        self.sock.close()
         for router in self.routers:
             if router.extPort is not None:
                 self.deletePortMapping(router)
