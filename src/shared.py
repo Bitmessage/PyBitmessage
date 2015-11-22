@@ -32,6 +32,7 @@ import highlevelcrypto
 import shared
 #import helper_startup
 from helper_sql import *
+from helper_threading import *
 
 
 config = ConfigParser.SafeConfigParser()
@@ -116,6 +117,9 @@ frozen = getattr(sys,'frozen', None)
 # security.
 trustedPeer = None
 
+# For UPnP
+extPort = None
+
 #Compiled struct for packing/unpacking headers
 #New code should use CreatePacket instead of Header.pack
 Header = Struct('!L12sL4s')
@@ -160,8 +164,10 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload += pack('>q', 1)  # bitflags of the services I offer.
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
         '>L', 2130706433)  # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
-    payload += pack('>H', shared.config.getint(
-        'bitmessagesettings', 'port'))
+    if safeConfigGetBoolean('bitmessagesettings', 'upnp' and extPort):
+        payload += pack('>H', extPort)
+    else:
+        payload += pack('>H', shared.config.getint('bitmessagesettings', 'port'))
 
     random.seed()
     payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
@@ -399,6 +405,11 @@ def doCleanShutdown():
     # shutdown variable and exit. If the main thread closes before they do then they won't stop.
     time.sleep(.25)
     
+    from class_outgoingSynSender import outgoingSynSender
+    for thread in threading.enumerate():
+        if thread.name == "uPnPThread" or "outgoingSynSender" in thread.name:
+            if thread.isAlive() and isinstance(thread, StoppableThread):
+                thread.stopThread()
     for thread in threading.enumerate():
         if thread.name == "uPnPThread" or "outgoingSynSender" in thread.name:
             logger.debug("Waiting for thread %s", thread.name)

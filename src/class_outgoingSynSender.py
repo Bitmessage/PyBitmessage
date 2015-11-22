@@ -2,6 +2,7 @@ import threading
 import time
 import random
 import shared
+import select
 import socks
 import socket
 import sys
@@ -9,14 +10,16 @@ import tr
 
 from class_sendDataThread import *
 from class_receiveDataThread import *
+from helper_threading import *
 
 # For each stream to which we connect, several outgoingSynSender threads
 # will exist and will collectively create 8 connections with peers.
 
-class outgoingSynSender(threading.Thread):
+class outgoingSynSender(threading.Thread, StoppableThread):
 
     def __init__(self):
         threading.Thread.__init__(self, name="outgoingSynSender")
+        self.initStop()
 
     def setup(self, streamNumber, selfInitiatedConnections):
         self.streamNumber = streamNumber
@@ -35,15 +38,22 @@ class outgoingSynSender(threading.Thread):
         shared.knownNodesLock.release()
 
         return peer
+        
+    def stopThread(self):
+        super(outgoingSynSender, self).stopThread()
+        try:
+            self.sock.shutdown(socket.SHUT_RDWR)
+        except:
+            pass
 
     def run(self):
-        while shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
-            time.sleep(2)
-        while shared.safeConfigGetBoolean('bitmessagesettings', 'sendoutgoingconnections'):
+        while shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect') and not self._stopped:
+            self.stop.wait(2)
+        while shared.safeConfigGetBoolean('bitmessagesettings', 'sendoutgoingconnections') and not self._stopped:
             self.name = "outgoingSynSender"
             maximumConnections = 1 if shared.trustedPeer else 8 # maximum number of outgoing connections = 8
             while len(self.selfInitiatedConnections[self.streamNumber]) >= maximumConnections:
-                time.sleep(10)
+                self.stop.wait(10)
             if shared.shutdown:
                 break
             random.seed()
@@ -54,7 +64,9 @@ class outgoingSynSender(threading.Thread):
                 # print 'choosing new sample'
                 random.seed()
                 peer = self._getPeer()
-                time.sleep(1)
+                self.stop.wait(1)
+                if shared.shutdown:
+                    break
                 # Clear out the shared.alreadyAttemptedConnectionsList every half
                 # hour so that this program will again attempt a connection
                 # to any nodes, even ones it has already tried.
@@ -71,7 +83,7 @@ class outgoingSynSender(threading.Thread):
             else:
                 address_family = socket.AF_INET6
             try:
-                sock = socks.socksocket(address_family, socket.SOCK_STREAM)
+                self.sock = socks.socksocket(address_family, socket.SOCK_STREAM)
             except:
                 """
                 The line can fail on Windows systems which aren't
@@ -92,8 +104,8 @@ class outgoingSynSender(threading.Thread):
                 continue
             # This option apparently avoids the TIME_WAIT state so that we
             # can rebind faster
-            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-            sock.settimeout(20)
+            self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.sock.settimeout(20)
             if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and shared.verbose >= 2:
                 logger.debug('Trying an outgoing connection to ' + str(peer))
 
@@ -113,10 +125,10 @@ class outgoingSynSender(threading.Thread):
                         'bitmessagesettings', 'socksusername')
                     sockspassword = shared.config.get(
                         'bitmessagesettings', 'sockspassword')
-                    sock.setproxy(
+                    self.sock.setproxy(
                         proxytype, sockshostname, socksport, rdns, socksusername, sockspassword)
                 else:
-                    sock.setproxy(
+                    self.sock.setproxy(
                         proxytype, sockshostname, socksport, rdns)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
                 if shared.verbose >= 2:
@@ -133,19 +145,19 @@ class outgoingSynSender(threading.Thread):
                         'bitmessagesettings', 'socksusername')
                     sockspassword = shared.config.get(
                         'bitmessagesettings', 'sockspassword')
-                    sock.setproxy(
+                    self.sock.setproxy(
                         proxytype, sockshostname, socksport, rdns, socksusername, sockspassword)
                 else:
-                    sock.setproxy(
+                    self.sock.setproxy(
                         proxytype, sockshostname, socksport, rdns)
 
             try:
-                sock.connect((peer.host, peer.port))
+                self.sock.connect((peer.host, peer.port))
                 rd = receiveDataThread()
                 rd.daemon = True  # close the main program even if there are threads left
                 someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
                 sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection. 
-                rd.setup(sock, 
+                rd.setup(self.sock, 
                          peer.host, 
                          peer.port, 
                          self.streamNumber,
@@ -157,7 +169,7 @@ class outgoingSynSender(threading.Thread):
 
 
                 sd = sendDataThread(sendDataThreadQueue)
-                sd.setup(sock, peer.host, peer.port, self.streamNumber,
+                sd.setup(self.sock, peer.host, peer.port, self.streamNumber,
                          someObjectsOfWhichThisRemoteNodeIsAlreadyAware)
                 sd.start()
                 sd.sendVersionMessage()
@@ -221,4 +233,4 @@ class outgoingSynSender(threading.Thread):
             except Exception as err:
                 import traceback
                 logger.exception('An exception has occurred in the outgoingSynSender thread that was not caught by other exception types:')
-            time.sleep(0.1)
+            self.stop.wait(0.1)
