@@ -45,6 +45,10 @@ class sendDataThread(threading.Thread):
         self.lastTimeISentData = int(
             time.time())  # If this value increases beyond five minutes ago, we'll send a pong message to keep the connection alive.
         self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware = someObjectsOfWhichThisRemoteNodeIsAlreadyAware
+        if self.streamNumber == -1:  # This was an incoming connection.
+            self.initiatedConnection = False
+        else:
+            self.initiatedConnection = True
         logger.debug('The streamNumber of this sendDataThread (ID: ' + str(id(self)) + ') at setup() is' + str(self.streamNumber))
 
 
@@ -175,7 +179,7 @@ class sendDataThread(threading.Thread):
                         break
                 elif command == 'connectionIsOrWasFullyEstablished':
                     self.connectionIsOrWasFullyEstablished = True
-                    self.services, self.sslSock, self.initiatedConnection = data
+                    self.services, self.sslSock = data
             else:
                 logger.error('sendDataThread ID: ' + str(id(self)) + ' ignoring command ' + command + ' because the thread is not in stream' + str(deststream))
 
