@@ -6,6 +6,7 @@ import socket
 from struct import unpack, pack
 import threading
 import time
+from helper_threading import *
 import shared
 
 def createRequestXML(service, action, arguments=[]):
@@ -168,7 +169,7 @@ class Router:
             raise UPnPError(errinfo[0].childNodes[0].data) 
         return resp
 
-class uPnPThread(threading.Thread):
+class uPnPThread(threading.Thread, StoppableThread):
     def __init__ (self):
         threading.Thread.__init__(self, name="uPnPThread")
         self.localPort = shared.config.getint('bitmessagesettings', 'port')
@@ -178,6 +179,7 @@ class uPnPThread(threading.Thread):
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
         self.sock.settimeout(2)
         self.sendSleep = 60
+        self.initStop()
 
     def run(self):
         from debug import logger
@@ -213,6 +215,7 @@ class uPnPThread(threading.Thread):
         for router in self.routers:
             if router.extPort is not None:
                 self.deletePortMapping(router)
+        shared.extPort = None
         logger.debug("UPnP thread done")
 
     def sendSearchRouter(self):
