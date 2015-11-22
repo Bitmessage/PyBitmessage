@@ -755,7 +755,7 @@ class receiveDataThread(threading.Thread):
     def sendversion(self):
         logger.debug('Sending version message')
         self.sendDataThreadQueue.put((0, 'sendRawData', shared.assembleVersionMessage(
-                self.peer.host, self.peer.port, self.streamNumber)))
+                self.peer.host, self.peer.port, self.streamNumber, not self.initiatedConnection)))
 
 
     # Sends a verack message
