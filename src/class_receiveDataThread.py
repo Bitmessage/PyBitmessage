@@ -81,7 +81,9 @@ class receiveDataThread(threading.Thread):
                         shared.numberOfBytesReceivedLastSecond = 0
             dataLen = len(self.data)
             try:
-                if (self.services & shared.NODE_SSL == shared.NODE_SSL) and self.connectionIsOrWasFullyEstablished:
+                if ((self.services & shared.NODE_SSL == shared.NODE_SSL) and
+                    self.connectionIsOrWasFullyEstablished and
+                    shared.haveSSL(not self.initiatedConnection)):
                     dataRecv = self.sslSock.recv(1024)
                 else:
                     dataRecv = self.sock.recv(1024)
@@ -251,7 +253,8 @@ class receiveDataThread(threading.Thread):
         self.connectionIsOrWasFullyEstablished = True
 
         self.sslSock = self.sock
-        if (self.services & shared.NODE_SSL == shared.NODE_SSL and (self.initiatedConnection or sys.version_info >= (2, 7, 9))):
+        if (self.services & shared.NODE_SSL == shared.NODE_SSL and
+            shared.haveSSL(not self.initiatedConnection)):
             self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(shared.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(shared.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=ssl.PROTOCOL_TLSv1, do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
             if hasattr(self.sslSock, "context"):
                 self.sslSock.context.set_ecdh_curve("secp256k1")
@@ -267,7 +270,7 @@ class receiveDataThread(threading.Thread):
                 except:
                     break
         # Command the corresponding sendDataThread to set its own connectionIsOrWasFullyEstablished variable to True also
-        self.sendDataThreadQueue.put((0, 'connectionIsOrWasFullyEstablished', (self.services, self.sslSock)))
+        self.sendDataThreadQueue.put((0, 'connectionIsOrWasFullyEstablished', (self.services, self.sslSock, self.initiatedConnection)))
 
         if not self.initiatedConnection:
             shared.clientHasReceivedIncomingConnections = True
