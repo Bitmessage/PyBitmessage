@@ -76,7 +76,10 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                         time.time())
                 shared.alreadyAttemptedConnectionsListLock.acquire()
             shared.alreadyAttemptedConnectionsList[peer] = 0
-            shared.alreadyAttemptedConnectionsListLock.release()
+            try:
+                shared.alreadyAttemptedConnectionsListLock.release()
+            except ThreadError as e:
+                pass
             self.name = "outgoingSynSender-" + peer.host
             if peer.host.find(':') == -1:
                 address_family = socket.AF_INET
