@@ -168,7 +168,7 @@ class uPnPThread(threading.Thread):
         self.routers = []
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-        self.sock.settimeout(10)
+        self.sock.settimeout(2)
         self.sendSleep = 60
 
     def run(self):
@@ -176,12 +176,12 @@ class uPnPThread(threading.Thread):
         
         logger.debug("Starting UPnP thread")
         lastSent = 0
-        while shared.shutdown == 0:
+        while shared.shutdown == 0 and shared.safeConfigGetBoolean('bitmessagesettings', 'upnp'):
             if time.time() - lastSent > self.sendSleep and len(self.routers) == 0:
                 self.sendSearchRouter()
                 lastSent = time.time()
             try:
-                while shared.shutdown == 0:
+                while shared.shutdown == 0 and shared.safeConfigGetBoolean('bitmessagesettings', 'upnp'):
                     resp,(ip,port) = self.sock.recvfrom(1000)
                     if resp is None:
                         continue

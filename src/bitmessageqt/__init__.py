@@ -2583,6 +2583,12 @@ class MyForm(settingsmixin.SMainWindow):
                         "MainWindow", "You must restart Bitmessage for the port number change to take effect."))
                 shared.config.set('bitmessagesettings', 'port', str(
                     self.settingsDialogInstance.ui.lineEditTCPPort.text()))
+            if self.settingsDialogInstance.ui.checkBoxUPnP.isChecked() != shared.safeConfigGetBoolean('bitmessagesettings', 'upnp'):
+                shared.config.set('bitmessagesettings', 'upnp', str(self.settingsDialogInstance.ui.checkBoxUPnP.isChecked()))
+                if self.settingsDialogInstance.ui.checkBoxUPnP.isChecked():
+                    import upnp
+                    upnpThread = upnp.uPnPThread()
+                    upnpThread.start()
             #print 'self.settingsDialogInstance.ui.comboBoxProxyType.currentText()', self.settingsDialogInstance.ui.comboBoxProxyType.currentText()
             #print 'self.settingsDialogInstance.ui.comboBoxProxyType.currentText())[0:5]', self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5]
             if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] == 'SOCKS':
@@ -4127,6 +4133,8 @@ class settingsDialog(QtGui.QDialog):
         # On the Network settings tab:
         self.ui.lineEditTCPPort.setText(str(
             shared.config.get('bitmessagesettings', 'port')))
+        self.ui.checkBoxUPnP.setChecked(
+            shared.safeConfigGetBoolean('bitmessagesettings', 'upnp'))
         self.ui.checkBoxAuthentication.setChecked(shared.config.getboolean(
             'bitmessagesettings', 'socksauthentication'))
         self.ui.checkBoxSocksListen.setChecked(shared.config.getboolean(
