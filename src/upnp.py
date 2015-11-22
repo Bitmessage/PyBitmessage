@@ -214,7 +214,7 @@ class uPnPThread(threading.Thread, StoppableThread):
             for router in self.routers:
                 if router.extPort is None:
                     self.createPortMapping(router)
-        self.sock.shutdown(socket.SHUT.RDWR)
+        self.sock.shutdown(socket.SHUT_RDWR)
         self.sock.close()
         deleted = False
         for router in self.routers:
