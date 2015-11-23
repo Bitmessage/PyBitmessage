@@ -171,7 +171,7 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber, server = Fals
     payload += pack('>q', 1)  # bitflags of the services I offer.
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
         '>L', 2130706433)  # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
-    if safeConfigGetBoolean('bitmessagesettings', 'upnp' and extPort):
+    if safeConfigGetBoolean('bitmessagesettings', 'upnp') and extPort:
         payload += pack('>H', extPort)
     else:
         payload += pack('>H', shared.config.getint('bitmessagesettings', 'port'))
