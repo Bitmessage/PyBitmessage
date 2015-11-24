@@ -1,5 +1,6 @@
 from PyQt4 import QtCore, QtGui
 
+from helper_sql import *
 from utils import *
 import shared
 from settingsmixin import SettingsMixin
@@ -130,6 +131,34 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
         self.initialised = True
         self.setType() # does updateText
         
+    def data(self, column, role):
+        if column == 0:
+            if role == QtCore.Qt.DisplayRole:
+                if self.unreadCount > 0 and not self.isExpanded():
+                    return unicode(shared.config.get(self.address, 'label'), 'utf-8)') + ' (' + str(self.unreadCount) + ') (' + self.address + ')'
+                else:
+                    return unicode(shared.config.get(self.address, 'label'), 'utf-8)') + ' (' + self.address + ')'
+            elif role == QtCore.Qt.EditRole:
+                return unicode(shared.config.get(self.address, 'label'), 'utf-8')
+            elif role == QtCore.Qt.ToolTipRole:    
+                return unicode(shared.config.get(self.address, 'label'), 'utf-8)') + ' (' + self.address + ')'
+            elif role == QtCore.Qt.DecorationRole:
+                return avatarize(self.address)
+            elif role == QtCore.Qt.FontRole:
+                font = QtGui.QFont()
+                font.setBold(self.unreadCount > 0)
+                return font
+            elif role == QtCore.Qt.ForegroundRole:
+                return self.accountBrush()
+        return super(Ui_AddressWidget, self).data(column, role)
+        
+    def setData(self, column, role, value):
+        if role == QtCore.Qt.EditRole:
+            shared.config.set(str(self.address), 'label', str(value.toString()))
+            shared.writeKeysFile()
+            return
+        return super(Ui_AddressWidget, self).setData(column, role, value)
+        
     def setAddress(self, address):
         super(Ui_AddressWidget, self).setAddress(address)
         self.setData(0, QtCore.Qt.UserRole, self.address)
@@ -137,33 +166,11 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
     def updateText(self):
         if not self.initialised:
             return
-        text = unicode(shared.config.get(self.address, 'label'), 'utf-8)') + ' (' + self.address + ')'
-        
-        font = QtGui.QFont()
-        if self.unreadCount > 0:
-            # only show message count if the child doesn't show
-            if not self.isExpanded():
-                text += " (" + str(self.unreadCount) + ")"
-            font.setBold(True)
-        else:
-            font.setBold(False)
-        self.setFont(0, font)
-            
-        #set text color
-        self.setForeground(0, self.accountBrush())
-
-        self.setIcon(0, avatarize(self.address))
-        self.setText(0, text)
-        self.setToolTip(0, text)
-#        self.setData(0, QtCore.Qt.UserRole, [self.address, "inbox"])
+        self.emitDataChanged()
     
     def setExpanded(self, expand):
         super(Ui_AddressWidget, self).setExpanded(expand)
         self.updateText()
-
-    def edit(self):
-        self.setText(0, shared.config.get(self.address, 'label'))
-        super(QtGui.QAbstractItemView, self).edit()
 
     # label (or address) alphabetically, disabled at the end
     def __lt__(self, other):
@@ -210,32 +217,40 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
     def setType(self):
         self.type = "subscription"
         
-    def edit(self):
-        self.setText(0, self.label)
-        super(QtGui.QAbstractItemView, self).edit()
+    def data(self, column, role):
+        if column == 0:
+            if role == QtCore.Qt.DisplayRole:
+                if self.unreadCount > 0 and not self.isExpanded():
+                    return unicode(self.label, 'utf-8)') + ' (' + str(self.unreadCount) + ') (' + self.address + ')'
+                else:
+                    return unicode(self.label, 'utf-8)') + ' (' + self.address + ')'
+            elif role == QtCore.Qt.EditRole:
+                return unicode(self.label, 'utf-8')
+            elif role == QtCore.Qt.ToolTipRole:    
+                return unicode(self.label, 'utf-8)') + ' (' + self.address + ')'
+            elif role == QtCore.Qt.DecorationRole:
+                return avatarize(self.address)
+            elif role == QtCore.Qt.FontRole:
+                font = QtGui.QFont()
+                font.setBold(self.unreadCount > 0)
+                return font
+            elif role == QtCore.Qt.ForegroundRole:
+                return self.accountBrush()
+        return super(Ui_SubscriptionWidget, self).data(column, role)
+        
+    def setData(self, column, role, value):
+        if role == QtCore.Qt.EditRole:
+            self.setLabel(str(value.toString()))
+            sqlExecute(
+                '''UPDATE subscriptions SET label=? WHERE address=?''',
+                self.label, self.address)
+            return
+        return super(Ui_SubscriptionWidget, self).setData(column, role, value)
     
     def updateText(self):
         if not self.initialised:
             return
-        text = unicode(self.label, 'utf-8)') + ' (' + self.address + ')'
-        
-        font = QtGui.QFont()
-        if self.unreadCount > 0:
-            # only show message count if the child doesn't show
-            if not self.isExpanded():
-                text += " (" + str(self.unreadCount) + ")"
-            font.setBold(True)
-        else:
-            font.setBold(False)
-        self.setFont(0, font)
-            
-        #set text color
-        self.setForeground(0, self.accountBrush())
-
-        self.setIcon(0, avatarize(self.address))
-        self.setText(0, text)
-        self.setToolTip(0, text)
-#        self.setData(0, QtCore.Qt.UserRole, [self.address, "inbox"])
+        self.emitDataChanged()
     
     # label (or address) alphabetically, disabled at the end
     def __lt__(self, other):
