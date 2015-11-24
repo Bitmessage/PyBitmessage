@@ -414,12 +414,10 @@ def doCleanShutdown():
     
     from class_outgoingSynSender import outgoingSynSender
     for thread in threading.enumerate():
-        if thread.name == "uPnPThread" or "outgoingSynSender" in thread.name:
-            if thread.isAlive() and isinstance(thread, StoppableThread):
-                thread.stopThread()
+        if thread.isAlive() and isinstance(thread, StoppableThread):
+            thread.stopThread()
     for thread in threading.enumerate():
-        if thread.name == "uPnPThread":
-            #or "outgoingSynSender" in thread.name:
+        if thread is not threading.currentThread() and isinstance(thread, StoppableThread) and not isinstance(thread, outgoingSynSender):
             logger.debug("Waiting for thread %s", thread.name)
             thread.join()
 
