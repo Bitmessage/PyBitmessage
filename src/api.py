@@ -12,7 +12,7 @@ if __name__ == "__main__":
     import sys
     sys.exit(0)
 
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
+from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 import json
 
 import shared
@@ -42,6 +42,13 @@ class APIError(Exception):
         self.error_message = error_message
     def __str__(self):
         return "API Error %04i: %s" % (self.error_number, self.error_message)
+
+
+class StoppableXMLRPCServer(SimpleXMLRPCServer):
+    def serve_forever(self):
+        while shared.shutdown == 0:
+            self.handle_request()
+
 
 # This is one of several classes that constitute the API
 # This class was written by Vaibhav Bhatia. Modified by Jonathan Warren (Atheros).
