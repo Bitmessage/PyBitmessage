@@ -15,17 +15,26 @@ from debug import logger
 from helper_sql import *
 import helper_inbox
 from helper_generic import addDataPadding
+from helper_threading import *
 import l10n
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
 
 
-class singleWorker(threading.Thread):
+class singleWorker(threading.Thread, StoppableThread):
 
     def __init__(self):
         # QThread.__init__(self, parent)
         threading.Thread.__init__(self, name="singleWorker")
+        self.initStop()
+
+    def stopThread(self):
+        try:
+            shared.workerQueue.put(("stopThread", "data"))
+        except:
+            pass
+        super(singleWorker, self).stopThread()
 
     def run(self):
         
@@ -52,7 +61,7 @@ class singleWorker(threading.Thread):
             logger.info('Watching for ackdata ' + ackdata.encode('hex'))
             shared.ackdataForWhichImWatching[ackdata] = 0
 
-        time.sleep(
+        self.stop.wait(
             10)  # give some time for the GUI to start before we start on existing POW tasks.
 
         queryreturn = sqlQuery(
@@ -68,7 +77,7 @@ class singleWorker(threading.Thread):
                            # just in case there are any tasks for Broadcasts
                            # that have yet to be sent.
 
-        while True:
+        while shared.shutdown == 0:
             command, data = shared.workerQueue.get()
             if command == 'sendmessage':
                 self.sendMsg()
@@ -80,6 +89,8 @@ class singleWorker(threading.Thread):
                 self.sendOutOrStoreMyV3Pubkey(data)
             elif command == 'sendOutOrStoreMyV4Pubkey':
                 self.sendOutOrStoreMyV4Pubkey(data)
+            elif command == 'stopThread':
+                return
             else:
                 logger.error('Probable programming error: The command sent to the workerThread is weird. It is: %s\n' % command)
 
