@@ -3909,14 +3909,10 @@ class MyForm(settingsmixin.SMainWindow):
             return
         
         newLabel = str(item.text(0))
-        newLabel = newLabel.replace("(" + str(item.address) + ")", '')
-        newLabel = newLabel.rstrip()
         if item.type == "subscription":
             oldLabel = item.label
         else:
             oldLabel = shared.config.get(str(item.address), 'label')
-        oldLabel = oldLabel.replace("(" + str(item.address) + ")", '')
-        oldLabel = oldLabel.rstrip()
         # unchanged, do not do anything either
         if newLabel == oldLabel:
             return
@@ -3926,14 +3922,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
 
         self.recurDepth += 1
-        if item.type == "subscription":
-            sqlExecute(
-                '''UPDATE subscriptions SET label=? WHERE address=?''',
-                newLabel, item.address)
-            item.setLabel(newLabel)
-        else:
-            shared.config.set(str(item.address), 'label', newLabel)
-            shared.writeKeysFile()
+        item.setData(0, QtCore.Qt.EditRole, newLabel)
         item.updateText()
         if item.type == 'mailinglist':
             self.rerenderComboBoxSendFromBroadcast()
