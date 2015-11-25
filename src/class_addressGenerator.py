@@ -142,7 +142,8 @@ class addressGenerator(threading.Thread, StoppableThread):
 
                 # The API and the join and create Chan functionality
                 # both need information back from the address generator.
-                shared.apiAddressGeneratorReturnQueue.put(address)
+                if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+                    shared.apiAddressGeneratorReturnQueue.put(address)
 
                 shared.UISignalQueue.put((
                     'updateStatusBar', tr.translateText("MainWindow", "Done generating address. Doing work necessary to broadcast it...")))
@@ -161,10 +162,8 @@ class addressGenerator(threading.Thread, StoppableThread):
                     sys.stderr.write(
                         'WARNING: You are creating deterministic address(es) using a blank passphrase. Bitmessage will do it but it is rather stupid.')
                 if command == 'createDeterministicAddresses':
-                    statusbar = 'Generating ' + str(
-                        numberOfAddressesToMake) + ' new addresses.'
                     shared.UISignalQueue.put((
-                        'updateStatusBar', statusbar))
+                                'updateStatusBar', tr.translateText("MainWindow","Generating %1 new addresses.").arg(str(numberOfAddressesToMake))))
                 signingKeyNonce = 0
                 encryptionKeyNonce = 1
                 listOfNewAddressesToSendOutThroughTheAPI = [
@@ -210,7 +209,8 @@ class addressGenerator(threading.Thread, StoppableThread):
                     # If we are joining an existing chan, let us check to make sure it matches the provided Bitmessage address
                     if command == 'joinChan':
                         if address != chanAddress:
-                            shared.apiAddressGeneratorReturnQueue.put('chan name does not match address')
+                            if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+                                shared.apiAddressGeneratorReturnQueue.put('chan name does not match address')
                             saveAddressToDisk = False
                     if command == 'getDeterministicAddress':
                         saveAddressToDisk = False
@@ -281,12 +281,13 @@ class addressGenerator(threading.Thread, StoppableThread):
 
 
                 # Done generating addresses.
-                if command == 'createDeterministicAddresses' or command == 'joinChan' or command == 'createChan':
-                    shared.apiAddressGeneratorReturnQueue.put(
-                        listOfNewAddressesToSendOutThroughTheAPI)
-                elif command == 'getDeterministicAddress':
-                    shared.apiAddressGeneratorReturnQueue.put(address)
+                if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+                    if command == 'createDeterministicAddresses' or command == 'joinChan' or command == 'createChan':
+                        shared.apiAddressGeneratorReturnQueue.put(
+                            listOfNewAddressesToSendOutThroughTheAPI)
+                    elif command == 'getDeterministicAddress':
+                        shared.apiAddressGeneratorReturnQueue.put(address)
             else:
                 raise Exception(
                     "Error in the addressGenerator thread. Thread was given a command it could not understand: " + command)
-            shared.apiAddressGeneratorQueue.task_done()
+            shared.addressGeneratorQueue.task_done()
