@@ -57,6 +57,7 @@ import subprocess
 import datetime
 from helper_sql import *
 import l10n
+import openclpow
 import types
 from utils import *
 from collections import OrderedDict
@@ -2631,6 +2632,9 @@ class MyForm(settingsmixin.SMainWindow):
                 shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
 
+            if openclpow.has_opencl() and self.settingsDialogInstance.ui.checkBoxOpenCL.isChecked != shared.safeConfigGetBoolean("bitmessagesettings", "opencl"):
+                shared.config.set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.checkBoxOpenCL.isChecked))
+
             acceptableDifficultyChanged = False
             
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) == 0:
@@ -4157,6 +4161,16 @@ class settingsDialog(QtGui.QDialog):
             'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.ui.lineEditMaxAcceptableSmallMessageDifficulty.setText(str((float(shared.config.getint(
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / shared.networkDefaultPayloadLengthExtraBytes)))
+
+        # OpenCL
+        if openclpow.has_opencl():
+            self.ui.checkBoxOpenCL.setEnabled(True)
+        else:
+            self.ui.checkBoxOpenCL.setEnabled(False)
+        if shared.safeConfigGetBoolean("bitmessagesettings", "opencl"):
+            self.ui.checkBoxOpenCL.setChecked(True)
+        else:
+            self.ui.checkBoxOpenCL.setChecked(False)
 
         # Namecoin integration tab
         nmctype = shared.config.get('bitmessagesettings', 'namecoinrpctype')
