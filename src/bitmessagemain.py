@@ -18,6 +18,7 @@ import singleton
 import os
 import socket
 import ctypes
+from multiprocessing import Process, freeze_support
 from struct import pack
 import sys
 from subprocess import call
@@ -265,6 +266,7 @@ class Main:
         return {'address':address,'port':port}
 
 if __name__ == "__main__":
+    freeze_support()
     mainprogram = Main()
     mainprogram.start()
 
