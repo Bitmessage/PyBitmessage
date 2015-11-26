@@ -21,6 +21,12 @@ import l10n
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
 
+def sizeof_fmt(num, suffix='h/s'):
+    for unit in ['','k','M','G','T','P','E','Z']:
+        if abs(num) < 1000.0:
+            return "%3.1f%s%s" % (num, unit, suffix)
+        num /= 1024.0
+    return "%.1f%s%s" % (num, 'Yi', suffix)
 
 class singleWorker(threading.Thread, StoppableThread):
 
@@ -787,7 +793,7 @@ class singleWorker(threading.Thread, StoppableThread):
             trialValue, nonce = proofofwork.run(target, initialHash)
             logger.info('(For msg message) Found proof of work ' + str(trialValue) + ' Nonce: ' + str(nonce))
             try:
-                logger.info('POW took ' + str(int(time.time() - powStartTime)) + ' seconds. ' + str(nonce / (time.time() - powStartTime)) +  ' nonce trials per second.')
+                logger.info('PoW took %.1f seconds, speed %s.', time.time() - powStartTime, sizeof_fmt(nonce / (time.time() - powStartTime)))
             except:
                 pass
 
@@ -966,7 +972,7 @@ class singleWorker(threading.Thread, StoppableThread):
         trialValue, nonce = proofofwork.run(target, initialHash)
         logger.info('(For ack message) Found proof of work ' + str(trialValue) + ' Nonce: ' + str(nonce))
         try:
-            logger.info('POW took ' + str(time.time() - powStartTime) +  ' seconds. ' + str(nonce / (time.time() - powStartTime)) + ' nonce trials per second.')
+            logger.info('PoW took %.1f seconds, speed %s.', time.time() - powStartTime, sizeof_fmt(nonce / (time.time() - powStartTime)))
         except:
             pass
 
