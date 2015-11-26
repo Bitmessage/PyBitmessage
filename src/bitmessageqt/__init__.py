@@ -56,23 +56,11 @@ import subprocess
 import datetime
 from helper_sql import *
 import l10n
-
-try:
-    from PyQt4 import QtCore, QtGui
-    from PyQt4.QtCore import *
-    from PyQt4.QtGui import *
-    from PyQt4.QtNetwork import QLocalSocket, QLocalServer
-
-except Exception as err:
-    print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
-    print 'Error message:', err
-    sys.exit()
-
-try:
-    _encoding = QtGui.QApplication.UnicodeUTF8
-except AttributeError:
-    print 'QtGui.QApplication.UnicodeUTF8 error:', err
-
+import openclpow
+import types
+from utils import *
+from collections import OrderedDict
+from account import *
 
 def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
@@ -2643,6 +2631,9 @@ class MyForm(settingsmixin.SMainWindow):
                 shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
 
+            if openclpow.has_opencl() and self.settingsDialogInstance.ui.checkBoxOpenCL.isChecked != shared.safeConfigGetBoolean("bitmessagesettings", "opencl"):
+                shared.config.set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.checkBoxOpenCL.isChecked))
+
             acceptableDifficultyChanged = False
             
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) == 0:
@@ -4169,6 +4160,16 @@ class settingsDialog(QtGui.QDialog):
             'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.ui.lineEditMaxAcceptableSmallMessageDifficulty.setText(str((float(shared.config.getint(
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / shared.networkDefaultPayloadLengthExtraBytes)))
+
+        # OpenCL
+        if openclpow.has_opencl():
+            self.ui.checkBoxOpenCL.setEnabled(True)
+        else:
+            self.ui.checkBoxOpenCL.setEnabled(False)
+        if shared.safeConfigGetBoolean("bitmessagesettings", "opencl"):
+            self.ui.checkBoxOpenCL.setChecked(True)
+        else:
+            self.ui.checkBoxOpenCL.setChecked(False)
 
         # Namecoin integration tab
         nmctype = shared.config.get('bitmessagesettings', 'namecoinrpctype')
