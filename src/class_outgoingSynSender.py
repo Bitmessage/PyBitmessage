@@ -213,7 +213,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                     logger.error('Bitmessage MIGHT be having trouble connecting to the SOCKS server. ' + str(err))
                 else:
                     if shared.verbose >= 1:
-                        logger.error('Could NOT connect to ' + str(peer) + 'during outgoing attempt. ' + str(err))
+                        logger.debug('Could NOT connect to ' + str(peer) + 'during outgoing attempt. ' + str(err))
 
                 deletedPeer = None
                 with shared.knownNodesLock:
