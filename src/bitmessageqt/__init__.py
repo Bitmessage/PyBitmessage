@@ -887,7 +887,7 @@ class MyForm(settingsmixin.SMainWindow):
         def updateUnreadCount(item):
             # if refreshing the account root, we need to rescan folders
             if type == 0 or (folder is None and isinstance(item, Ui_FolderWidget)):
-                if addressItem.type == 'subscription' or addressItem.type == 'mailinglist':
+                if addressItem.type in [AccountMixin.SUBSCRIPTION, AccountMixin.MAILINGLIST]:
                     xAddress = "fromaddress"
                 else:
                     xAddress = "toaddress"
@@ -2059,20 +2059,20 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = sqlQuery('SELECT label, address FROM subscriptions WHERE enabled = 1')
         for row in queryreturn:
             label, address = row
-            addRow(address, label, 'subscription')
+            addRow(address, label, AccountMixin.SUBSCRIPTION)
 
         # chans
         addresses = getSortedAccounts()
         for address in addresses:
             account = accountClass(address)
-            if (account.type == 'chan' and shared.safeConfigGetBoolean(address, 'enabled')):
-                addRow(address, account.getLabel(), 'chan')
+            if (account.type == AccountMixin.CHAN and shared.safeConfigGetBoolean(address, 'enabled')):
+                addRow(address, account.getLabel(), AccountMixin.CHAN)
         
         # normal accounts
         queryreturn = sqlQuery('SELECT * FROM addressbook')
         for row in queryreturn:
             label, address = row
-            addRow(address, label, 'normal')
+            addRow(address, label, AccountMixin.NORMAL)
 
         # sort
         self.ui.tableWidgetAddressBook.sortItems(0, QtCore.Qt.AscendingOrder)
@@ -2847,7 +2847,7 @@ class MyForm(settingsmixin.SMainWindow):
             addressAtCurrentRow = self.getCurrentAccount()
             acct = accountClass(addressAtCurrentRow)
             # no chans / mailinglists
-            if acct.type != 'normal':
+            if acct.type != AccountMixin.NORMAL:
                 return
             if self.dialog.ui.radioButtonUnregister.isChecked() and isinstance(acct, GatewayAccount):
                 acct.unregister()
@@ -3371,7 +3371,7 @@ class MyForm(settingsmixin.SMainWindow):
             currentRow = row.row()
             type = str(self.ui.tableWidgetAddressBook.item(
                 currentRow, 0).data(Qt.UserRole).toPyObject())
-            if type != "normal":
+            if type != AccountMixin.NORMAL:
                 normal = False
         if normal:
             # only if all selected addressbook items are normal, allow delete
@@ -3528,9 +3528,9 @@ class MyForm(settingsmixin.SMainWindow):
 
     def getAccountTreeWidget(self, account):
         try:
-            if account.type == 'chan':
+            if account.type == AccountMixin.CHAN:
                 return self.ui.treeWidgetChans
-            elif account.type == 'subscription':
+            elif account.type == AccountMixin.SUBSCRIPTION:
                 return self.ui.treeWidgetSubscriptions
             else:
                 return self.ui.treeWidgetYourIdentities
@@ -3552,9 +3552,9 @@ class MyForm(settingsmixin.SMainWindow):
             
     def getAccountMessagelist(self, account):
         try:
-            if account.type == 'chan':
+            if account.type == AccountMixin.CHAN:
                 return self.ui.tableWidgetInboxChans
-            elif account.type == 'subscription':
+            elif account.type == AccountMixin.SUBSCRIPTION:
                 return self.ui.tableWidgetInboxSubscriptions
             else:
                 return self.ui.tableWidgetInbox
@@ -3586,9 +3586,9 @@ class MyForm(settingsmixin.SMainWindow):
 
     def getAccountTextedit(self, account):
         try:
-            if account.type == 'chan':
+            if account.type == AccountMixin.CHAN:
                 return self.ui.textEditInboxMessageChans
-            elif account.type == 'subscription':
+            elif account.type == AccountMixin.SUBSCRIPTION:
                 return self.ui.textEditInboxSubscriptions
             else:
                 return self.ui.textEditInboxMessage
@@ -3665,9 +3665,9 @@ class MyForm(settingsmixin.SMainWindow):
 
     def on_action_YourIdentitiesDelete(self):
         account = self.getCurrentItem()
-        if account.type == "normal":
+        if account.type == AccountMixin.NORMAL:
             return # maybe in the future
-        elif account.type == "chan":
+        elif account.type == AccountMixin.CHAN:
             if QtGui.QMessageBox.question(self, "Delete channel?", _translate("MainWindow", "If you delete the channel, messages that you already received will become inaccessible. Maybe you can consider disabling the channel instead. Disabled channels will not receive new messages, but you can still view messages you already received.\n\nAre you sure you want to delete the channel?"), QMessageBox.Yes|QMessageBox.No) == QMessageBox.Yes:
                 shared.config.remove_section(str(account.address))
             else:
@@ -3677,9 +3677,9 @@ class MyForm(settingsmixin.SMainWindow):
         shared.writeKeysFile()
         shared.reloadMyAddressHashes()
         self.rerenderAddressBook()
-        if account.type == "normal":
+        if account.type == AccountMixin.NORMAL:
             self.rerenderTabTreeMessages()
-        elif account.type == "chan":
+        elif account.type == AccountMixin.CHAN:
             self.rerenderTabTreeChans()
 
     def on_action_Enable(self):
@@ -3913,7 +3913,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
         
         newLabel = str(item.text(0))
-        if item.type == "subscription":
+        if item.type == AccountMixin.SUBSCRIPTION:
             oldLabel = item.label
         else:
             oldLabel = shared.config.get(str(item.address), 'label')
@@ -3928,9 +3928,9 @@ class MyForm(settingsmixin.SMainWindow):
         self.recurDepth += 1
         item.setData(0, QtCore.Qt.EditRole, newLabel)
         item.updateText()
-        if item.type == 'mailinglist':
+        if item.type == AccountMixin.MAILINGLIST:
             self.rerenderComboBoxSendFromBroadcast()
-        elif item.type != "subscription":
+        elif item.type != AccountMixin.SUBSCRIPTION:
             self.rerenderComboBoxSendFrom()
         self.recurDepth -= 1
 

@@ -6,12 +6,18 @@ import shared
 from settingsmixin import SettingsMixin
 
 class AccountMixin (object):
+    ALL = 0
+    NORMAL = 1
+    CHAN = 2
+    MAILINGLIST = 3
+    SUBSCRIPTION = 4
+
     def accountColor (self):
         if not self.isEnabled:
             return QtGui.QColor(128, 128, 128)
-        elif self.type == "chan":
+        elif self.type == self.CHAN:
             return QtGui.QColor(216, 119, 0)
-        elif self.type == "mailinglist" or self.type == "subscription":
+        elif self.type in [self.MAILINGLIST, self.SUBSCRIPTION]:
             return QtGui.QColor(137, 04, 177)
         else:
             return QtGui.QApplication.palette().text().color()
@@ -51,12 +57,14 @@ class AccountMixin (object):
         self.updateText()
 
     def setType(self):
-        if shared.safeConfigGetBoolean(self.address, 'chan'):
-            self.type = "chan"
+        if self.address is None:
+            self.type = self.ALL
+        elif shared.safeConfigGetBoolean(self.address, 'chan'):
+            self.type = self.CHAN
         elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
-            self.type = "mailinglist"
+            self.type = self.MAILINGLIST
         else:
-            self.type = "normal"
+            self.type = self.NORMAL
     
     def updateText(self):
         pass
@@ -119,7 +127,7 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
     
 
 class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
-    def __init__(self, parent, pos = 0, address = "", unreadCount = 0, enabled = True):
+    def __init__(self, parent, pos = 0, address = None, unreadCount = 0, enabled = True):
         super(QtGui.QTreeWidgetItem, self).__init__()
         parent.insertTopLevelItem(pos, self)
         # only set default when creating
@@ -131,19 +139,39 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
         self.initialised = True
         self.setType() # does updateText
         
+    def _getLabel(self):
+        if self.address is None:
+            label = QtGui.QApplication.translate("MainWindow", "All accounts")
+        else:
+            try:
+                return unicode(shared.config.get(self.address, 'label'), 'utf-8)')
+            except:
+                return self.address
+    
+    def _getAddressBracket(self, unreadCount = False):
+        ret = ""
+        if unreadCount:
+            ret += " (" + str(self.unreadCount) + ")"
+        if self.address is not None:
+            ret += " (" + self.address + ")"
+        return ret
+        
     def data(self, column, role):
         if column == 0:
             if role == QtCore.Qt.DisplayRole:
                 if self.unreadCount > 0 and not self.isExpanded():
-                    return unicode(shared.config.get(self.address, 'label'), 'utf-8)') + ' (' + str(self.unreadCount) + ') (' + self.address + ')'
+                    return self._getLabel() + self._getAddressBracket(True)
                 else:
-                    return unicode(shared.config.get(self.address, 'label'), 'utf-8)') + ' (' + self.address + ')'
+                    return self._getLabel() + self._getAddressBracket(False)
             elif role == QtCore.Qt.EditRole:
-                return unicode(shared.config.get(self.address, 'label'), 'utf-8')
+                return self._getLabel()
             elif role == QtCore.Qt.ToolTipRole:    
-                return unicode(shared.config.get(self.address, 'label'), 'utf-8)') + ' (' + self.address + ')'
+                return self._getLabel() + self._getAddressBracket(False)
             elif role == QtCore.Qt.DecorationRole:
-                return avatarize(self.address)
+                if self.address is None:
+                    return avatarize(self._getLabel())
+                else:
+                    return avatarize(self.address)
             elif role == QtCore.Qt.FontRole:
                 font = QtGui.QFont()
                 font.setBold(self.unreadCount > 0)
@@ -171,6 +199,12 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
     def setExpanded(self, expand):
         super(Ui_AddressWidget, self).setExpanded(expand)
         self.updateText()
+    
+    def _getSortRank(self):
+        ret = self.type
+        if not self.isEnabled:
+            ret += 5
+        return ret
 
     # label (or address) alphabetically, disabled at the end
     def __lt__(self, other):
@@ -178,21 +212,11 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
             reverse = False
             if self.treeWidget().header().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
                 reverse = True
-            if self.isEnabled == other.isEnabled:
-                if self.type == other.type:
-                    if shared.config.get(self.address, 'label'):
-                        x = shared.config.get(self.address, 'label').decode('utf-8').lower()
-                    else:
-                        x = self.address.decode('utf-8').lower()
-                    if shared.config.get(other.address, 'label'):
-                        y = shared.config.get(other.address, 'label').decode('utf-8').lower()
-                    else:
-                        y = other.address.decode('utf-8').lower()
-                    return x < y
-                else:
-                    return (reverse if self.type == "mailinglist" else not reverse)
-#            else:
-            return (not reverse if self.isEnabled else reverse)
+            if self._getSortRank() == other._getSortRank():
+                x = self._getLabel().decode('utf-8').lower()
+                y = other._getLabel().decode('utf-8').lower()
+                return x < y
+            return (not reverse if self._getSortRank() < other._getSortRank() else reverse)
 
         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
 
@@ -213,30 +237,12 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
     
     def setLabel(self, label):
         self.label = label
+    
+    def _getLabel(self):
+        return unicode(self.label, 'utf-8)')
         
     def setType(self):
-        self.type = "subscription"
-        
-    def data(self, column, role):
-        if column == 0:
-            if role == QtCore.Qt.DisplayRole:
-                if self.unreadCount > 0 and not self.isExpanded():
-                    return unicode(self.label, 'utf-8)') + ' (' + str(self.unreadCount) + ') (' + self.address + ')'
-                else:
-                    return unicode(self.label, 'utf-8)') + ' (' + self.address + ')'
-            elif role == QtCore.Qt.EditRole:
-                return unicode(self.label, 'utf-8')
-            elif role == QtCore.Qt.ToolTipRole:    
-                return unicode(self.label, 'utf-8)') + ' (' + self.address + ')'
-            elif role == QtCore.Qt.DecorationRole:
-                return avatarize(self.address)
-            elif role == QtCore.Qt.FontRole:
-                font = QtGui.QFont()
-                font.setBold(self.unreadCount > 0)
-                return font
-            elif role == QtCore.Qt.ForegroundRole:
-                return self.accountBrush()
-        return super(Ui_SubscriptionWidget, self).data(column, role)
+        self.type = self.SUBSCRIPTION
         
     def setData(self, column, role, value):
         if role == QtCore.Qt.EditRole:
@@ -251,39 +257,13 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         if not self.initialised:
             return
         self.emitDataChanged()
-    
-    # label (or address) alphabetically, disabled at the end
-    def __lt__(self, other):
-        if (isinstance(other, Ui_SubscriptionWidget)):
-            reverse = False
-            if self.treeWidget().header().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
-                reverse = True
-            if self.isEnabled == other.isEnabled:
-                if self.label:
-                    x = self.label.decode('utf-8').lower()
-                else:
-                    x = self.address.decode('utf-8').lower()
-                if other.label:
-                    y = other.label.decode('utf-8').lower()
-                else:
-                    y = other.address.decode('utf-8').lower()
-                return x < y
-#            else:
-            return (not reverse if self.isEnabled else reverse)
-
-        return super(QtGui.QTreeWidgetItem, self).__lt__(other)
+        
         
 class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
-    _types = {'normal': 0, 'chan': 1, 'subscription': 2}
-
-    def __init__ (self, text, type = 'normal'):
+    def __init__ (self, text, type = AccountMixin.NORMAL):
         super(QtGui.QTableWidgetItem, self).__init__(text)
         self.label = text
         self.type = type
-        try:
-            self.typeNum = self._types[self.type]
-        except:
-            self.type = 0
         self.setEnabled(True)
         self.setForeground(self.accountBrush())
 
@@ -292,10 +272,10 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
             reverse = False
             if self.tableWidget().horizontalHeader().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
                 reverse = True
-            if self.typeNum == other.typeNum:
+            if self.type == other.type:
                 return self.label.decode('utf-8').lower() < other.label.decode('utf-8').lower()
             else:
-                return (not reverse if self.typeNum < other.typeNum else reverse)
+                return (not reverse if self.type < other.type else reverse)
         return super(QtGui.QTableWidgetItem, self).__lt__(other)
 
 
