@@ -5,35 +5,49 @@ import hashlib
 import random
 import os
 
+from shared import codePath, safeConfigGetBoolean
+from debug import logger
+
+libAvailable = True
 ctx = False
 queue = False
 program = False
+gpus = []
+hash_dt = None
 
 try:
     import numpy
     import pyopencl as cl
-    hash_dt = numpy.dtype([('target', numpy.uint64), ('v', numpy.str_, 73)])
-    gpus = []
-    for platform in cl.get_platforms():
-	gpus.extend(platform.get_devices(device_type=cl.device_type.GPU))
-    if (len(gpus) > 0):
-        ctx = cl.Context(devices=gpus)
-        queue = cl.CommandQueue(ctx)
-        full_path = os.path.dirname(os.path.realpath(__file__))
-        f = open(os.path.join(full_path, "bitmsghash", 'bitmsghash.cl'), 'r')
-        fstr = ''.join(f.readlines())
-        program = cl.Program(ctx, fstr).build(options="")
-    else:
-        print "No OpenCL GPUs found"
+except:
+    libAvailable = False
+
+def initCL():
+    global ctx, queue, program, gpus, hash_dt
+    try:
+        hash_dt = numpy.dtype([('target', numpy.uint64), ('v', numpy.str_, 73)])
+        for platform in cl.get_platforms():
+            gpus.extend(platform.get_devices(device_type=cl.device_type.GPU))
+        if (len(gpus) > 0):
+            ctx = cl.Context(devices=gpus)
+            queue = cl.CommandQueue(ctx)
+            f = open(os.path.join(codePath(), "bitmsghash", 'bitmsghash.cl'), 'r')
+            fstr = ''.join(f.readlines())
+            program = cl.Program(ctx, fstr).build(options="")
+            logger.info("Loaded OpenCL kernel")
+        else:
+            logger.info("No OpenCL GPUs found")
+            ctx = False
+    except Exception as e:
+        logger.error("OpenCL fail: ", exc_info=True)
         ctx = False
-except Exception as e:
-    print "opencl fail: " + str(e)
-    ctx = False
 
 def has_opencl():
+	global ctx
 	return (ctx != False)
 
 def do_opencl_pow(hash, target):
+	global ctx, queue, program, gpus, hash_dt
+
 	output = numpy.zeros(1, dtype=[('v', numpy.uint64, 1)])
 	if (ctx == False):
 		return output[0][0]
@@ -62,10 +76,13 @@ def do_opencl_pow(hash, target):
 		queue.finish()
 		progress += globamt
 		sofar = time.time() - start
-		print sofar, progress / sofar, "hashes/sec"
+#		logger.debug("Working for %.3fs, %.2f Mh/s", sofar, (progress / sofar) / 1000000)
 	taken = time.time() - start
-	print progress, taken
+#	logger.debug("Took %d tries.", progress)
 	return output[0][0]
+
+if libAvailable:
+    initCL()
 
 if __name__ == "__main__":
 	target = 54227212183L
