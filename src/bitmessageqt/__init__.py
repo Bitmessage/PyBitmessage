@@ -2631,8 +2631,8 @@ class MyForm(settingsmixin.SMainWindow):
                 shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
 
-            if openclpow.has_opencl() and self.settingsDialogInstance.ui.checkBoxOpenCL.isChecked != shared.safeConfigGetBoolean("bitmessagesettings", "opencl"):
-                shared.config.set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.checkBoxOpenCL.isChecked))
+            if openclpow.has_opencl() and self.settingsDialogInstance.ui.checkBoxOpenCL.isChecked() != shared.safeConfigGetBoolean("bitmessagesettings", "opencl"):
+                shared.config.set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.checkBoxOpenCL.isChecked()))
 
             acceptableDifficultyChanged = False
             
