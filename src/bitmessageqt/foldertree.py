@@ -39,7 +39,10 @@ class AccountMixin (object):
         return brush
 
     def setAddress(self, address):
-        self.address = str(address)
+        if address is None:
+            self.address = None
+        else:
+            self.address = str(address)
         self.updateText()
     
     def setUnreadCount(self, cnt):
@@ -71,7 +74,7 @@ class AccountMixin (object):
 
 
 class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
-    folderWeight = {"inbox": 1, "sent": 2, "trash": 3}
+    folderWeight = {"inbox": 1, "new": 2, "sent": 3, "trash": 4}
     def __init__(self, parent, pos = 0, address = "", folderName = "", unreadCount = 0):
         super(QtGui.QTreeWidgetItem, self).__init__()
         self.initialised = False
@@ -110,11 +113,11 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
             if self.folderName in self.folderWeight:
                 x = self.folderWeight[self.folderName]
             else:
-                x = 4
+                x = 99
             if other.folderName in self.folderWeight:
                 y = self.folderWeight[other.folderName]
             else:
-                y = 4
+                y = 99
             reverse = False
             if self.treeWidget().header().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
                 reverse = True
@@ -141,12 +144,12 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
         
     def _getLabel(self):
         if self.address is None:
-            label = QtGui.QApplication.translate("MainWindow", "All accounts")
+            return unicode(str(QtGui.QApplication.translate("MainWindow", "All accounts")), 'utf-8')
         else:
             try:
                 return unicode(shared.config.get(self.address, 'label'), 'utf-8)')
             except:
-                return self.address
+                return unicode(self.address, 'utf-8')
     
     def _getAddressBracket(self, unreadCount = False):
         ret = ""
