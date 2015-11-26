@@ -11,6 +11,8 @@ def sqlQuery(sqlStatement, *args):
 
     if args == ():
         sqlSubmitQueue.put('')
+    elif type(args[0]) in [list, tuple]:
+        sqlSubmitQueue.put(args[0])
     else:
         sqlSubmitQueue.put(args)
     
