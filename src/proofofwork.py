@@ -4,9 +4,10 @@
 import hashlib
 from struct import unpack, pack
 import sys
-from shared import config, frozen, codePath
-import shared
+from debug import logger
+from shared import config, frozen, codePath, shutdown, safeConfigGetBoolean, UISignalQueue
 import openclpow
+import tr
 import os
 import ctypes
 
@@ -17,12 +18,20 @@ if "win32" == sys.platform:
     else:
         bitmsglib = 'bitmsghash64.dll'
     try:
+        # MSVS
         bso = ctypes.WinDLL(os.path.join(codePath(), "bitmsghash", bitmsglib))
+        logger.info("Loaded C PoW DLL (stdcall) %s", bitmsglib)
     except:
-        bso = None
+        try:
+            # MinGW
+            bso = ctypes.CDLL(os.path.join(codePath(), "bitmsghash", bitmsglib))
+            logger.info("Loaded C PoW DLL (cdecl) %s", bitmsglib)
+        except:
+            bso = None
 else:
     try:
         bso = ctypes.CDLL(os.path.join(codePath(), "bitmsghash", bitmsglib))
+        logger.info("Loaded C PoW DLL %s", bitmsglib)
     except:
         bso = None
 if bso:
@@ -58,16 +67,17 @@ def _pool_worker(nonce, initialHash, target, pool_size):
     return [trialValue, nonce]
 
 def _doSafePoW(target, initialHash):
-    print "Safe POW\n"
+    logger.debug("Safe PoW start")
     nonce = 0
     trialValue = float('inf')
     while trialValue > target:
         nonce += 1
         trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+    logger.debug("Safe PoW done")
     return [trialValue, nonce]
 
 def _doFastPoW(target, initialHash):
-    print "Fast POW\n"
+    logger.debug("Fast PoW start")
     import time
     from multiprocessing import Pool, cpu_count
     try:
@@ -85,7 +95,7 @@ def _doFastPoW(target, initialHash):
     for i in range(pool_size):
         result.append(pool.apply_async(_pool_worker, args = (i, initialHash, target, pool_size)))
     while True:
-        if shared.shutdown >= 1:
+        if shutdown >= 1:
             pool.terminate()
             while True:
                 time.sleep(10) # Don't let this thread return here; it will return nothing and cause an exception in bitmessagemain.py
@@ -95,30 +105,38 @@ def _doFastPoW(target, initialHash):
                 result = result[i].get()
                 pool.terminate()
                 pool.join() #Wait for the workers to exit...
+                logger.debug("Fast PoW done")
                 return result[0], result[1]
         time.sleep(0.2)
+        
 def _doCPoW(target, initialHash):
     h = initialHash
     m = target
     out_h = ctypes.pointer(ctypes.create_string_buffer(h, 64))
     out_m = ctypes.c_ulonglong(m)
-    print "C PoW start"
+    logger.debug("C PoW start")
     nonce = bmpow(out_h, out_m)
     trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
-    print "C PoW done"
+    logger.debug("C PoW done")
     return [trialValue, nonce]
 
 def _doGPUPoW(target, initialHash):
-    print "GPU PoW start"
+    logger.debug("GPU PoW start")
     nonce = openclpow.do_opencl_pow(initialHash.encode("hex"), target)
     trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
     #print "{} - value {} < {}".format(nonce, trialValue, target)
-    print "GPU PoW done"
+    if trialValue > target:
+        deviceNames = ", ".join(gpu.name for gpu in openclpow.gpus)
+        UISignalQueue.put(('updateStatusBar', tr.translateText("MainWindow",'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.')))
+        logger.error("Your GPUs (%s) did not calculate correctly, disabling OpenCL. Please report to the developers.", deviceNames)
+        openclpow.ctx = False
+        raise Exception("GPU did not calculate correctly.")
+    logger.debug("GPU PoW done")
     return [trialValue, nonce]
 
 def run(target, initialHash):
     target = int(target)
-    if shared.safeConfigGetBoolean('bitmessagesettings', 'opencl') and openclpow.has_opencl():
+    if safeConfigGetBoolean('bitmessagesettings', 'opencl') and openclpow.has_opencl():
 #        trialvalue1, nonce1 = _doGPUPoW(target, initialHash)
 #        trialvalue, nonce = _doFastPoW(target, initialHash)
 #        print "GPU: %s, %s" % (trialvalue1, nonce1)
@@ -133,12 +151,8 @@ def run(target, initialHash):
             return _doCPoW(target, initialHash)
         except:
             pass # fallback
-    if frozen == "macosx_app" or not frozen:
-        # on my (Peter Surda) Windows 10, Windows Defender
-        # does not like this and fights with PyBitmessage
-        # over CPU, resulting in very slow PoW
-        try:
-            return _doFastPoW(target, initialHash)
-        except:
-            pass #fallback
+    try:
+        return _doFastPoW(target, initialHash)
+    except:
+        pass #fallback
     return _doSafePoW(target, initialHash)
