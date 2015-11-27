@@ -84,7 +84,7 @@ lastTimeWeResetBytesSent = 0 # used for the bandwidth rate limit
 sendDataLock = threading.Lock() # used for the bandwidth rate limit
 receiveDataLock = threading.Lock() # used for the bandwidth rate limit
 daemon = False
-inventorySets = {} # key = streamNumer, value = a set which holds the inventory object hashes that we are aware of. This is used whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it every couple hours.
+inventorySets = {1: set()} # key = streamNumer, value = a set which holds the inventory object hashes that we are aware of. This is used whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it every couple hours.
 needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it to disk eventually.
 maximumLengthOfTimeToBotherResendingMessages = 0
 objectProcessorQueue = Queue.Queue(
