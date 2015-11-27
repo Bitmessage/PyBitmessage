@@ -52,6 +52,8 @@ def dns():
         except:
             logger.error('bootstrap8444.bitmessage.org DNS bootstrapping failed.')
     elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
+        shared.knownNodes[1][shared.Peer('quzwelsuziwqgpt2.onion', 8444)] = int(time.time())
+        logger.debug("Adding quzwelsuziwqgpt2.onion:8444 to knownNodes.")
         for port in [8080, 8444]:
             logger.debug("Resolving %i through SOCKS...", port)
             address_family = socket.AF_INET
