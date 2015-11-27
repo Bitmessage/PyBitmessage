@@ -42,11 +42,11 @@ def accountClass(address):
     if not shared.config.has_section(address):
         if address == str_broadcast_subscribers:
             subscription = BroadcastAccount(address)
-            if subscription.type != 'broadcast':
+            if subscription.type != AccountMixin.BROADCAST:
                 return None
         else:
             subscription = SubscriptionAccount(address)
-            if subscription.type != 'subscription':
+            if subscription.type != AccountMixin.SUBSCRIPTION:
                 return None
         return subscription
     try:
@@ -67,15 +67,17 @@ class AccountColor(AccountMixin):
         self.isEnabled = True
         self.address = address
         if type is None:
-            if shared.safeConfigGetBoolean(self.address, 'mailinglist'):
-                self.type = "mailinglist"
+            if address is None:
+                self.type = AccountMixin.ALL
+            elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
+                self.type = AccountMixin.MAILINGLIST
             elif shared.safeConfigGetBoolean(self.address, 'chan'):
-                self.type = "chan"
+                self.type = AccountMixin.CHAN
             elif sqlQuery(
                 '''select label from subscriptions where address=?''', self.address):
-                self.type = 'subscription'
+                self.type = AccountMixin.SUBSCRIPTION
             else:
-                self.type = "normal"
+                self.type = AccountMixin.NORMAL
         else:
             self.type = type
         
@@ -86,16 +88,16 @@ class BMAccount(object):
         self.type = 'normal'
         if shared.config.has_section(address):
             if shared.safeConfigGetBoolean(self.address, 'chan'):
-                self.type = "chan"
+                self.type = AccountMixin.CHAN
             elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
-                self.type = "mailinglist"
+                self.type = AccountMixin.MAILINGLIST
         elif self.address == str_broadcast_subscribers:
-            self.type = 'broadcast'
+            self.type = AccountMixin.BROADCAST
         else:
             queryreturn = sqlQuery(
                 '''select label from subscriptions where address=?''', self.address)
             if queryreturn:
-                self.type = 'subscription'
+                self.type = AccountMixin.SUBSCRIPTION
 
     def getLabel(self, address = None):
         if address is None:
