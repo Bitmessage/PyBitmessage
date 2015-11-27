@@ -11,6 +11,7 @@ class AccountMixin (object):
     CHAN = 2
     MAILINGLIST = 3
     SUBSCRIPTION = 4
+    BROADCAST = 5
 
     def accountColor (self):
         if not self.isEnabled:
@@ -206,7 +207,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
     def _getSortRank(self):
         ret = self.type
         if not self.isEnabled:
-            ret += 5
+            ret += 100
         return ret
 
     # label (or address) alphabetically, disabled at the end
