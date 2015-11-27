@@ -916,15 +916,15 @@ class MyForm(settingsmixin.SMainWindow):
                     queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE read = 0")
                 for row in queryreturn:
                     item.setUnreadCount(int(row[0]))
-                if isinstance(item, Ui_AddressWidget):
+                if isinstance(item, Ui_AddressWidget) and item.type == AccountMixin.ALL:
                     self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount())
             elif type == 1:
                 item.setUnreadCount(item.unreadCount + 1)
-                if isinstance(item, Ui_AddressWidget):
+                if isinstance(item, Ui_AddressWidget) and item.type == AccountMixin.ALL:
                     self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount(self.unreadCount + 1))
             elif type == -1:
                 item.setUnreadCount(item.unreadCount - 1)
-                if isinstance(item, Ui_AddressWidget):
+                if isinstance(item, Ui_AddressWidget) and item.type == AccountMixin.ALL:
                     self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount(self.unreadCount -1))
                 
         widgets = [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]
