@@ -927,10 +927,7 @@ class MyForm(settingsmixin.SMainWindow):
                 if isinstance(item, Ui_AddressWidget):
                     self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount(self.unreadCount -1))
                 
-        if widget == None or self.getCurrentAccount() == None:
-            widgets = [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]
-        else:
-            widgets = [widget]
+        widgets = [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]
         # FIXME this is a hack
         if folder == "new":
             folder = "inbox"
@@ -948,6 +945,146 @@ class MyForm(settingsmixin.SMainWindow):
                     if folder is not None and folderItem.folderName != folder and addressItem.type != AccountMixin.ALL:
                         continue
                     updateUnreadCount(folderItem)
+
+    def addMessageListItem(self, tableWidget, items):
+        tableWidget.insertRow(0)
+        for i in range(len(items)):
+            tableWidget.setItem(0, i, items[i])
+
+    def addMessageListItemSent(self, tableWidget, toAddress, fromAddress, subject, status, ackdata, lastactiontime):
+        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+        acct = accountClass(fromAddress)
+        acct.parseMessage(toAddress, fromAddress, subject, "")
+
+        items = []
+        toAddressItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
+        toAddressItem.setToolTip(unicode(acct.toLabel, 'utf-8') + " (" + str(acct.toAddress) + ")")
+        toAddressItem.setIcon(avatarize(toAddress))
+        toAddressItem.setData(Qt.UserRole, str(toAddress))
+        toAddressItem.setTextColor(AccountColor(toAddress).accountColor())
+        toAddressItem.setFlags(
+            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        items.append(toAddressItem)
+
+        fromAddressItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
+        fromAddressItem.setToolTip(unicode(acct.fromLabel, 'utf-8') + " (" + str(acct.fromAddress) + ")")
+        fromAddressItem.setIcon(avatarize(fromAddress))
+        fromAddressItem.setData(Qt.UserRole, str(fromAddress))
+        fromAddressItem.setTextColor(AccountColor(fromAddress).accountColor())
+        fromAddressItem.setFlags(
+            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        items.append(fromAddressItem)
+
+        subjectItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8'))
+        subjectItem.setToolTip(unicode(acct.subject, 'utf-8'))
+        subjectItem.setData(Qt.UserRole, str(subject))
+        subjectItem.setFlags(
+            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        items.append(subjectItem)
+
+        if status == 'awaitingpubkey':
+            statusText = _translate(
+                "MainWindow", "Waiting for their encryption key. Will request it again soon.")
+        elif status == 'doingpowforpubkey':
+            statusText = _translate(
+                "MainWindow", "Encryption key request queued.")
+        elif status == 'msgqueued':
+            statusText = _translate(
+                "MainWindow", "Queued.")
+        elif status == 'msgsent':
+            statusText = _translate("MainWindow", "Message sent. Waiting for acknowledgement. Sent at %1").arg(
+                l10n.formatTimestamp(lastactiontime))
+        elif status == 'msgsentnoackexpected':
+            statusText = _translate("MainWindow", "Message sent. Sent at %1").arg(
+                l10n.formatTimestamp(lastactiontime))
+        elif status == 'doingmsgpow':
+            statusText = _translate(
+                "MainWindow", "Need to do work to send message. Work is queued.")
+        elif status == 'ackreceived':
+            statusText = _translate("MainWindow", "Acknowledgement of the message received %1").arg(
+                l10n.formatTimestamp(lastactiontime))
+        elif status == 'broadcastqueued':
+            statusText = _translate(
+                "MainWindow", "Broadcast queued.")
+        elif status == 'broadcastsent':
+            statusText = _translate("MainWindow", "Broadcast on %1").arg(
+                l10n.formatTimestamp(lastactiontime))
+        elif status == 'toodifficult':
+            statusText = _translate("MainWindow", "Problem: The work demanded by the recipient is more difficult than you are willing to do. %1").arg(
+                l10n.formatTimestamp(lastactiontime))
+        elif status == 'badkey':
+            statusText = _translate("MainWindow", "Problem: The recipient\'s encryption key is no good. Could not encrypt message. %1").arg(
+                l10n.formatTimestamp(lastactiontime))
+        elif status == 'forcepow':
+            statusText = _translate(
+                "MainWindow", "Forced difficulty override. Send should start soon.")
+        else:
+            statusText = _translate("MainWindow", "Unknown status: %1 %2").arg(status).arg(
+                l10n.formatTimestamp(lastactiontime))
+        newItem = myTableWidgetItem(statusText)
+        newItem.setToolTip(statusText)
+        newItem.setData(Qt.UserRole, QByteArray(ackdata))
+        newItem.setData(33, int(lastactiontime))
+        newItem.setFlags(
+            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        items.append(newItem)
+        self.addMessageListItem(tableWidget, items)
+        return acct
+
+    def addMessageListItemInbox(self, tableWidget, msgfolder, msgid, toAddress, fromAddress, subject, received, read):
+        font = QFont()
+        font.setBold(True)
+        if tableWidget == self.ui.tableWidgetInboxSubscriptions:
+            acct = accountClass(fromAddress)
+        else:
+            acct = accountClass(toAddress)
+        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+        acct.parseMessage(toAddress, fromAddress, subject, "")
+            
+        items = []
+        #to
+        to_item = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
+        to_item.setToolTip(unicode(acct.toLabel, 'utf-8') + " (" + str(acct.toAddress) + ")")
+        to_item.setFlags(
+            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        if not read:
+            to_item.setFont(font)
+        to_item.setData(Qt.UserRole, str(toAddress))
+        to_item.setTextColor(AccountColor(toAddress).accountColor())
+        to_item.setIcon(avatarize(toAddress))
+        items.append(to_item)
+        # from
+        from_item = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
+        from_item.setToolTip(unicode(acct.fromLabel, 'utf-8') + " (" + str(fromAddress) + ")")
+        from_item.setFlags(
+            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        if not read:
+            from_item.setFont(font)
+        from_item.setData(Qt.UserRole, str(fromAddress))
+        from_item.setTextColor(AccountColor(fromAddress).accountColor())
+        from_item.setIcon(avatarize(fromAddress))
+        items.append(from_item)
+        # subject
+        subject_item = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8'))
+        subject_item.setToolTip(unicode(acct.subject, 'utf-8'))
+        subject_item.setData(Qt.UserRole, str(subject))
+        subject_item.setFlags(
+            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        if not read:
+            subject_item.setFont(font)
+        items.append(subject_item)
+        # time received
+        time_item = myTableWidgetItem(l10n.formatTimestamp(received))
+        time_item.setToolTip(l10n.formatTimestamp(received))
+        time_item.setData(Qt.UserRole, QByteArray(msgid))
+        time_item.setData(33, int(received))
+        time_item.setFlags(
+            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        if not read:
+            time_item.setFont(font)
+        items.append(time_item)
+        self.addMessageListItem(tableWidget, items)
+        return acct
 
     # Load Sent items from database
     def loadSent(self, tableWidget, account, where="", what=""):
@@ -985,83 +1122,7 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = sqlQuery(sqlStatement, account, what)
         for row in queryreturn:
             toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
-            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            if acct is None:
-                acct = accountClass(fromAddress)
-            acct.parseMessage(toAddress, fromAddress, subject, "")
-
-            tableWidget.insertRow(0)
-            toAddressItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
-            toAddressItem.setToolTip(unicode(acct.toLabel, 'utf-8') + " (" + str(acct.toAddress) + ")")
-            toAddressItem.setIcon(avatarize(toAddress))
-            toAddressItem.setData(Qt.UserRole, str(toAddress))
-            toAddressItem.setTextColor(AccountColor(toAddress).accountColor())
-            toAddressItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            tableWidget.setItem(0, 0, toAddressItem)
-
-            fromAddressItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
-            fromAddressItem.setToolTip(unicode(acct.fromLabel, 'utf-8') + " (" + str(acct.fromAddress) + ")")
-            fromAddressItem.setIcon(avatarize(fromAddress))
-            fromAddressItem.setData(Qt.UserRole, str(fromAddress))
-            fromAddressItem.setTextColor(AccountColor(fromAddress).accountColor())
-            fromAddressItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            tableWidget.setItem(0, 1, fromAddressItem)
-
-            subjectItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8'))
-            subjectItem.setToolTip(unicode(acct.subject, 'utf-8'))
-            subjectItem.setData(Qt.UserRole, str(subject))
-            subjectItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            tableWidget.setItem(0, 2, subjectItem)
-
-            if status == 'awaitingpubkey':
-                statusText = _translate(
-                    "MainWindow", "Waiting for their encryption key. Will request it again soon.")
-            elif status == 'doingpowforpubkey':
-                statusText = _translate(
-                    "MainWindow", "Encryption key request queued.")
-            elif status == 'msgqueued':
-                statusText = _translate(
-                    "MainWindow", "Queued.")
-            elif status == 'msgsent':
-                statusText = _translate("MainWindow", "Message sent. Waiting for acknowledgement. Sent at %1").arg(
-                    l10n.formatTimestamp(lastactiontime))
-            elif status == 'msgsentnoackexpected':
-                statusText = _translate("MainWindow", "Message sent. Sent at %1").arg(
-                    l10n.formatTimestamp(lastactiontime))
-            elif status == 'doingmsgpow':
-                statusText = _translate(
-                    "MainWindow", "Need to do work to send message. Work is queued.")
-            elif status == 'ackreceived':
-                statusText = _translate("MainWindow", "Acknowledgement of the message received %1").arg(
-                    l10n.formatTimestamp(lastactiontime))
-            elif status == 'broadcastqueued':
-                statusText = _translate(
-                    "MainWindow", "Broadcast queued.")
-            elif status == 'broadcastsent':
-                statusText = _translate("MainWindow", "Broadcast on %1").arg(
-                    l10n.formatTimestamp(lastactiontime))
-            elif status == 'toodifficult':
-                statusText = _translate("MainWindow", "Problem: The work demanded by the recipient is more difficult than you are willing to do. %1").arg(
-                    l10n.formatTimestamp(lastactiontime))
-            elif status == 'badkey':
-                statusText = _translate("MainWindow", "Problem: The recipient\'s encryption key is no good. Could not encrypt message. %1").arg(
-                    l10n.formatTimestamp(lastactiontime))
-            elif status == 'forcepow':
-                statusText = _translate(
-                    "MainWindow", "Forced difficulty override. Send should start soon.")
-            else:
-                statusText = _translate("MainWindow", "Unknown status: %1 %2").arg(status).arg(
-                    l10n.formatTimestamp(lastactiontime))
-            newItem = myTableWidgetItem(statusText)
-            newItem.setToolTip(statusText)
-            newItem.setData(Qt.UserRole, QByteArray(ackdata))
-            newItem.setData(33, int(lastactiontime))
-            newItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            tableWidget.setItem(0, 3, newItem)
+            self.addMessageListItemSent(tableWidget, toAddress, fromAddress, subject, status, ackdata, lastactiontime)
 
         tableWidget.setSortingEnabled(False)
         tableWidget.horizontalHeader().setSortIndicator(3, Qt.DescendingOrder)
@@ -1120,62 +1181,9 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.setColumnHidden(1, False)
         tableWidget.setSortingEnabled(False)
         
-        font = QFont()
-        font.setBold(True)
-        acct = None
         for row in queryreturn:
             msgfolder, msgid, toAddress, fromAddress, subject, received, read = row
-            if acct is None:
-                if tableWidget == self.ui.tableWidgetInboxSubscriptions:
-                    acct = accountClass(fromAddress)
-                else:
-                    acct = accountClass(toAddress)
-            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-            acct.parseMessage(toAddress, fromAddress, subject, "")
-            
-            # message row
-            tableWidget.insertRow(0)
-            # to
-            to_item = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
-            to_item.setToolTip(unicode(acct.toLabel, 'utf-8') + " (" + str(acct.toAddress) + ")")
-            to_item.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            if not read:
-                to_item.setFont(font)
-            to_item.setData(Qt.UserRole, str(toAddress))
-            to_item.setTextColor(AccountColor(toAddress).accountColor())
-            to_item.setIcon(avatarize(toAddress))
-            tableWidget.setItem(0, 0, to_item)
-            # from
-            from_item = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
-            from_item.setToolTip(unicode(acct.fromLabel, 'utf-8') + " (" + str(fromAddress) + ")")
-            from_item.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            if not read:
-                from_item.setFont(font)
-            from_item.setData(Qt.UserRole, str(fromAddress))
-            from_item.setTextColor(AccountColor(fromAddress).accountColor())
-            from_item.setIcon(avatarize(fromAddress))
-            tableWidget.setItem(0, 1, from_item)
-            # subject
-            subject_item = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8'))
-            subject_item.setToolTip(unicode(acct.subject, 'utf-8'))
-            subject_item.setData(Qt.UserRole, str(subject))
-            subject_item.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            if not read:
-                subject_item.setFont(font)
-            tableWidget.setItem(0, 2, subject_item)
-            # time received
-            time_item = myTableWidgetItem(l10n.formatTimestamp(received))
-            time_item.setToolTip(l10n.formatTimestamp(received))
-            time_item.setData(Qt.UserRole, QByteArray(msgid))
-            time_item.setData(33, int(received))
-            time_item.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            if not read:
-                time_item.setFont(font)
-            tableWidget.setItem(0, 3, time_item)
+            self.addMessageListItemInbox(tableWidget, msgfolder, msgid, toAddress, fromAddress, subject, received, read)
 
         tableWidget.horizontalHeader().setSortIndicator(3, Qt.DescendingOrder)
         tableWidget.setSortingEnabled(True)
@@ -2404,45 +2412,28 @@ class MyForm(settingsmixin.SMainWindow):
                 continue
             elif treeWidget in [self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans] and self.getCurrentAccount(treeWidget) != toAddress:
                 continue
-
-            sent.setSortingEnabled(False)
-            sent.insertRow(0)
-            newItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
-            newItem.setToolTip(unicode(acct.toLabel, 'utf-8') + " (" + str(acct.toAddress) + ")")
-            newItem.setData(Qt.UserRole, str(toAddress))
-            newItem.setIcon(avatarize(toAddress))
-            sent.setItem(0, 0, newItem)
-            newItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
-            newItem.setToolTip(unicode(acct.fromLabel, 'utf-8') + " (" + str(acct.fromAddress) + ")")
-            newItem.setData(Qt.UserRole, str(fromAddress))
-            newItem.setIcon(avatarize(fromAddress))
-            sent.setItem(0, 1, newItem)
-            newItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8)'))
-            newItem.setToolTip(unicode(acct.subject, 'utf-8)'))
-            newItem.setData(Qt.UserRole, str(subject))
-
-            #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
-            sent.setItem(0, 2, newItem)
-            # newItem =  QtGui.QTableWidgetItem('Doing work necessary to send
-            # broadcast...'+
-            # l10n.formatTimestamp())
-            newItem = myTableWidgetItem(_translate("MainWindow", "Work is queued. %1").arg(l10n.formatTimestamp()))
-            newItem.setToolTip(_translate("MainWindow", "Work is queued. %1").arg(l10n.formatTimestamp()))
-            newItem.setData(Qt.UserRole, QByteArray(ackdata))
-            newItem.setData(33, int(time.time()))
-            sent.setItem(0, 3, newItem)
+            
+            self.addMessageListItemSent(sent, toAddress, fromAddress, subject, "msgqueued", ackdata, time.time())
             self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8)'))
-            sent.setSortingEnabled(True)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
-        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         if toAddress == str_broadcast_subscribers:
             acct = accountClass(fromAddress)
         else:
             acct = accountClass(toAddress)
-        acct.parseMessage(toAddress, fromAddress, subject, message)
         inbox = self.getAccountMessagelist(acct)
-        treeWidget = self.getAccountTreeWidget(acct)
+        ret = None
+        for treeWidget in [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]:
+            tableWidget = self.widgetConvert(treeWidget)
+            if tableWidget == inbox and self.getCurrentAccount(treeWidget) == acct.address and self.getCurrentFolder(treeWidget) == "inbox":
+                ret = self.addMessageListItemInbox(inbox, "inbox", inventoryHash, toAddress, fromAddress, subject, time.time(), 0)
+            elif treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) is None:
+                ret = self.addMessageListItemInbox(tableWidget, "inbox", inventoryHash, toAddress, fromAddress, subject, time.time(), 0)
+        if ret is None:
+            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
+            acct.parseMessage(toAddress, fromAddress, subject, "")
+        else:
+            acct = ret
         self.propagateUnreadCount(acct.address)
         if shared.config.getboolean('bitmessagesettings', 'showtraynotifications'):
             self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(acct.fromLabel, 'utf-8'), self.SOUND_UNKNOWN, None)
@@ -2450,41 +2441,6 @@ class MyForm(settingsmixin.SMainWindow):
             # Ubuntu should notify of new message irespective of whether it's in current message list or not
             self.ubuntuMessagingMenuUpdate(True, None, acct.toLabel)
             return
-
-        font = QFont()
-        font.setBold(True)
-        inbox.setSortingEnabled(False)
-        newItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
-        newItem.setToolTip(unicode(acct.toLabel, 'utf-8') + " (" + str(acct.toAddress) + ")")
-        newItem.setFont(font)
-        newItem.setData(Qt.UserRole, str(toAddress))
-        newItem.setTextColor(AccountColor(toAddress).accountColor())
-        inbox.insertRow(0)
-        newItem.setIcon(avatarize(toAddress))
-        inbox.setItem(0, 0, newItem)
-
-        newItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
-        newItem.setToolTip(unicode(acct.fromLabel, 'utf-8') + " (" + str(acct.fromAddress) + ")")
-        newItem.setData(Qt.UserRole, str(fromAddress))
-        newItem.setFont(font)
-        newItem.setTextColor(AccountColor(fromAddress).accountColor())
-        newItem.setIcon(avatarize(fromAddress))
-        inbox.setItem(0, 1, newItem)
-        newItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8)'))
-        newItem.setToolTip(unicode(acct.subject, 'utf-8)'))
-        newItem.setData(Qt.UserRole, str(subject))
-        
-        #newItem.setData(Qt.UserRole, unicode(message, 'utf-8)')) # No longer hold the message in the table; we'll use a SQL query to display it as needed.
-        newItem.setFont(font)
-        inbox.setItem(0, 2, newItem)
-        newItem = myTableWidgetItem(l10n.formatTimestamp())
-        newItem.setToolTip(l10n.formatTimestamp())
-        newItem.setData(Qt.UserRole, QByteArray(inventoryHash))
-        newItem.setData(33, int(time.time()))
-        newItem.setFont(font)
-        inbox.setItem(0, 3, newItem)
-        inbox.setSortingEnabled(True)
-        self.ubuntuMessagingMenuUpdate(True, newItem, acct.toLabel)
 
     def click_pushButtonAddAddressBook(self):
         self.AddAddressDialogInstance = AddAddressDialog(self)
@@ -3531,7 +3487,7 @@ class MyForm(settingsmixin.SMainWindow):
             return self.ui.tableWidgetInbox
         elif widget == self.ui.treeWidgetSubscriptions:
             return self.ui.tableWidgetInboxSubscriptions
-        elif twidget == self.ui.treeWidgetChans:
+        elif widget == self.ui.treeWidgetChans:
             return self.ui.tableWidgetInboxChans
         else:
             return None
@@ -3654,7 +3610,7 @@ class MyForm(settingsmixin.SMainWindow):
                 return currentItem
         return False
     
-    def getCurrentAccount(self, treeWidget = None, force = None):
+    def getCurrentAccount(self, treeWidget = None):
         currentItem = self.getCurrentItem(treeWidget)
         if currentItem:
             account = currentItem.address
