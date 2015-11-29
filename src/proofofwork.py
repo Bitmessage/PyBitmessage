@@ -160,8 +160,4 @@ def run(target, initialHash):
             return _doFastPoW(target, initialHash)
         except:
             pass #fallback
-    try:
-        return _doFastPoW(target, initialHash)
-    except:
-        pass #fallback
     return _doSafePoW(target, initialHash)
