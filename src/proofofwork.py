@@ -151,6 +151,15 @@ def run(target, initialHash):
             return _doCPoW(target, initialHash)
         except:
             pass # fallback
+    if frozen == "macosx_app" or not frozen:
+        # on my (Peter Surda) Windows 10, Windows Defender
+        # does not like this and fights with PyBitmessage
+        # over CPU, resulting in very slow PoW
+        # added on 2015-11-29: multiprocesing.freeze_support() doesn't help
+        try:
+            return _doFastPoW(target, initialHash)
+        except:
+            pass #fallback
     try:
         return _doFastPoW(target, initialHash)
     except:
