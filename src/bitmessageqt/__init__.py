@@ -3348,8 +3348,8 @@ class MyForm(settingsmixin.SMainWindow):
         normal = True
         for row in self.ui.tableWidgetAddressBook.selectedIndexes():
             currentRow = row.row()
-            type = str(self.ui.tableWidgetAddressBook.item(
-                currentRow, 0).data(Qt.UserRole).toPyObject())
+            type = self.ui.tableWidgetAddressBook.item(
+                currentRow, 0).type
             if type != AccountMixin.NORMAL:
                 normal = False
         if normal:
