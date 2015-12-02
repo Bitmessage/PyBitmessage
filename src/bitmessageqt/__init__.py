@@ -52,7 +52,9 @@ import pickle
 import platform
 import textwrap
 import debug
+import random
 import subprocess
+import string
 import datetime
 from helper_sql import *
 import l10n
@@ -2185,12 +2187,24 @@ class MyForm(settingsmixin.SMainWindow):
                 toAddressesList))  # remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice.
             for toAddress in toAddressesList:
                 if toAddress != '':
-                    if toAddress.find("@") >= 0 and isinstance(acct, GatewayAccount):
-                        acct.createMessage(toAddress, fromAddress, subject, message)
-                        subject = acct.subject
-                        toAddress = acct.toAddress
-                        logger.debug("Subject: %s" % (subject))
-                        logger.debug("address: %s" % (toAddress))
+                    if toAddress.find("@") >= 0:
+                        if isinstance(acct, GatewayAccount):
+                            acct.createMessage(toAddress, fromAddress, subject, message)
+                            subject = acct.subject
+                            toAddress = acct.toAddress
+                        else:
+                            email = acct.getLabel()
+                            if email[-14:] != "@mailchuck.com": #attempt register
+                                # 12 character random email address
+                                email = ''.join(random.SystemRandom().choice(string.ascii_lowercase) for _ in range(12)) + "@mailchuck.com"
+                            acct = MailchuckAccount(fromAddress)
+                            acct.register(email)
+                            shared.config.set(fromAddress, 'label', email)
+                            shared.config.set(fromAddress, 'gateway', 'mailchuck')
+                            shared.writeKeysFile()
+                            self.statusBar().showMessage(_translate(
+                                "MainWindow", "Error: Your account wasn't registered at an email gateway. Sending registration now as %1, please wait for the registration to be processed before retrying sending.").arg(email))
+                            return
                     status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                         toAddress)
                     if status != 'success':
