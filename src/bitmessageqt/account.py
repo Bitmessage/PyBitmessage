@@ -85,7 +85,7 @@ class AccountColor(AccountMixin):
 class BMAccount(object):
     def __init__(self, address = None):
         self.address = address
-        self.type = 'normal'
+        self.type = AccountMixin.NORMAL
         if shared.config.has_section(address):
             if shared.safeConfigGetBoolean(self.address, 'chan'):
                 self.type = AccountMixin.CHAN
