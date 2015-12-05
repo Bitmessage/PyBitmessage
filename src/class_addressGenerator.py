@@ -142,8 +142,7 @@ class addressGenerator(threading.Thread, StoppableThread):
 
                 # The API and the join and create Chan functionality
                 # both need information back from the address generator.
-                if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
-                    shared.apiAddressGeneratorReturnQueue.put(address)
+                shared.apiAddressGeneratorReturnQueue.put(address)
 
                 shared.UISignalQueue.put((
                     'updateStatusBar', tr.translateText("MainWindow", "Done generating address. Doing work necessary to broadcast it...")))
@@ -209,8 +208,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                     # If we are joining an existing chan, let us check to make sure it matches the provided Bitmessage address
                     if command == 'joinChan':
                         if address != chanAddress:
-                            if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
-                                shared.apiAddressGeneratorReturnQueue.put('chan name does not match address')
+                            shared.apiAddressGeneratorReturnQueue.put('chan name does not match address')
                             saveAddressToDisk = False
                     if command == 'getDeterministicAddress':
                         saveAddressToDisk = False
@@ -281,12 +279,11 @@ class addressGenerator(threading.Thread, StoppableThread):
 
 
                 # Done generating addresses.
-                if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
-                    if command == 'createDeterministicAddresses' or command == 'joinChan' or command == 'createChan':
-                        shared.apiAddressGeneratorReturnQueue.put(
-                            listOfNewAddressesToSendOutThroughTheAPI)
-                    elif command == 'getDeterministicAddress':
-                        shared.apiAddressGeneratorReturnQueue.put(address)
+                if command == 'createDeterministicAddresses' or command == 'joinChan' or command == 'createChan':
+                    shared.apiAddressGeneratorReturnQueue.put(
+                        listOfNewAddressesToSendOutThroughTheAPI)
+                elif command == 'getDeterministicAddress':
+                    shared.apiAddressGeneratorReturnQueue.put(address)
             else:
                 raise Exception(
                     "Error in the addressGenerator thread. Thread was given a command it could not understand: " + command)
