@@ -556,8 +556,8 @@ Je důležité si tento soubor zazálohovat. Přejete si tento soubor nyní otev
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2838"/>
-        <source>Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.</source>
-        <translation>Položky byly přesunuty do koše. Koš nemá uživatelské rozhraní, ale jeho obsah je stále na disku, pro případ že ho nutně potřebujete obnovit.</translation>
+        <source>Moved items to trash.</source>
+        <translation>Položky byly přesunuty do koše.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2818"/>

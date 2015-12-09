@@ -7,6 +7,7 @@ import pickle
 
 import tr#anslate
 from helper_sql import *
+from helper_threading import *
 from debug import logger
 
 """
@@ -28,10 +29,11 @@ resends msg messages in 5 days (then 10 days, then 20 days, etc...)
 """
 
 
-class singleCleaner(threading.Thread):
+class singleCleaner(threading.Thread, StoppableThread):
 
     def __init__(self):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="singleCleaner")
+        self.initStop()
 
     def run(self):
         timeWeLastClearedInventoryAndPubkeysTables = 0
@@ -41,7 +43,7 @@ class singleCleaner(threading.Thread):
             # Either the user hasn't set stopresendingafterxdays and stopresendingafterxmonths yet or the options are missing from the config file.
             shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
 
-        while True:
+        while shared.shutdown == 0:
             shared.UISignalQueue.put((
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
             with shared.inventoryLock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
@@ -83,10 +85,8 @@ class singleCleaner(threading.Thread):
                     int(time.time()) - shared.maximumLengthOfTimeToBotherResendingMessages)
                 for row in queryreturn:
                     if len(row) < 2:
-                        with shared.printLock:
-                            sys.stderr.write(
-                                'Something went wrong in the singleCleaner thread: a query did not return the requested fields. ' + repr(row))
-                        time.sleep(3)
+                        logger.error('Something went wrong in the singleCleaner thread: a query did not return the requested fields. ' + repr(row))
+                        self.stop.wait(3)
                         break
                     toAddress, ackData, status = row
                     if status == 'awaitingpubkey':
@@ -123,7 +123,7 @@ class singleCleaner(threading.Thread):
                             os._exit(0)
                 shared.knownNodesLock.release()
                 shared.needToWriteKnownNodesToDisk = False
-            time.sleep(300)
+            self.stop.wait(300)
 
 
 def resendPubkeyRequest(address):

@@ -23,8 +23,7 @@ import sys
 from subprocess import call
 import time
 
-from SimpleXMLRPCServer import SimpleXMLRPCServer
-from api import MySimpleXMLRPCRequestHandler
+from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
 from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
 
 import shared
@@ -44,7 +43,10 @@ from debug import logger
 # Helper Functions
 import helper_bootstrap
 import helper_generic
-    
+from helper_threading import *
+
+# singleton lock instance
+thisapp = None
 
 def connectToStream(streamNumber):
     shared.streamsInWhichIAmParticipating[streamNumber] = 'no data'
@@ -117,13 +119,24 @@ def _fixWinsock():
         socket.IPV6_V6ONLY = 27
 
 # This thread, of which there is only one, runs the API.
-class singleAPI(threading.Thread):
-
+class singleAPI(threading.Thread, StoppableThread):
     def __init__(self):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="singleAPI")
+        self.initStop()
+        
+    def stopThread(self):
+        super(singleAPI, self).stopThread()
+        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        try:
+            s.connect((shared.config.get('bitmessagesettings', 'apiinterface'), shared.config.getint(
+                'bitmessagesettings', 'apiport')))
+            s.shutdown(socket.SHUT_RDWR)
+            s.close()
+        except:
+            pass
 
     def run(self):
-        se = SimpleXMLRPCServer((shared.config.get('bitmessagesettings', 'apiinterface'), shared.config.getint(
+        se = StoppableXMLRPCServer((shared.config.get('bitmessagesettings', 'apiinterface'), shared.config.getint(
             'bitmessagesettings', 'apiport')), MySimpleXMLRPCRequestHandler, True, True)
         se.register_introspection_functions()
         se.serve_forever()
@@ -139,11 +152,13 @@ if shared.useVeryEasyProofOfWorkForTesting:
 
 class Main:
     def start(self, daemon=False):
+        global thisapp
+        
         _fixWinsock()
 
         shared.daemon = daemon
         # is the application already running?  If yes then exit.
-        thisapp = singleton.singleinstance()
+        thisapp = singleton.singleinstance("", daemon)
 
         # get curses flag
         curses = False
@@ -203,6 +218,11 @@ class Main:
         singleListenerThread.setup(selfInitiatedConnections)
         singleListenerThread.daemon = True  # close the main program even if there are threads left
         singleListenerThread.start()
+        
+        if shared.safeConfigGetBoolean('bitmessagesettings','upnp'):
+            import upnp
+            upnpThread = upnp.uPnPThread()
+            upnpThread.start()
 
         if daemon == False and shared.safeConfigGetBoolean('bitmessagesettings', 'daemon') == False:
             if curses == False:

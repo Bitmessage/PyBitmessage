@@ -573,8 +573,8 @@ Det er viktig at du tar en sikkerhetskopi av denne filen. Vil du &#xE5;pne denne
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2692"/>
-        <source>Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.</source>
-        <translation>Kastet innholdet. Det finnes ikke noe brukergrensesnitt enda for kastet innhold, men ingenting er slettet enda. Alt ligger fortsatt p&#xE5; disken hvis du er interessert i &#xE5; f&#xE5; det tilbake.</translation>
+        <source>Moved items to trash.</source>
+        <translation>Kastet innholdet.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2769"/>
