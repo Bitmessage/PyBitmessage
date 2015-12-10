@@ -9,7 +9,7 @@ DIRECTORY_LOC=`pwd`
 all:
 debug:
 source:
-	tar -cvf ../${APP}_${VERSION}.orig.tar ..${DIRECTORY_LOC} --exclude-vcs
+	tar -cvf ../${APP}_${VERSION}.orig.tar ${DIRECTORY_LOC} --exclude-vcs
 	gzip -f9n ../${APP}_${VERSION}.orig.tar
 install:
 	mkdir -p ${DESTDIR}/usr
@@ -58,5 +58,5 @@ clean:
 	rm -f puppypackage/*.gz puppypackage/*.pet slackpackage/*.txz
 
 sourcedeb:
-	tar -cvf ../${APP}_${VERSION}.orig.tar ..${DIRECTORY_LOC} --exclude-vcs --exclude 'debian'
+	tar -cvf ../${APP}_${VERSION}.orig.tar ${DIRECTORY_LOC} --exclude-vcs --exclude 'debian'
 	gzip -f9n ../${APP}_${VERSION}.orig.tar
