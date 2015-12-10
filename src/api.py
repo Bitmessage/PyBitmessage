@@ -12,7 +12,7 @@ if __name__ == "__main__":
     import sys
     sys.exit(0)
 
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
+from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 import json
 
 import shared
@@ -26,7 +26,7 @@ from pyelliptic.openssl import OpenSSL
 from struct import pack
 
 # Classes
-from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute
+from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute,sqlStoredProcedure
 from debug import logger
 
 # Helper Functions
@@ -42,6 +42,13 @@ class APIError(Exception):
         self.error_message = error_message
     def __str__(self):
         return "API Error %04i: %s" % (self.error_number, self.error_message)
+
+
+class StoppableXMLRPCServer(SimpleXMLRPCServer):
+    def serve_forever(self):
+        while shared.shutdown == 0:
+            self.handle_request()
+
 
 # This is one of several classes that constitute the API
 # This class was written by Vaibhav Bhatia. Modified by Jonathan Warren (Atheros).
@@ -174,7 +181,14 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         return data
 
     def HandleListAddressBookEntries(self, params):
-        queryreturn = sqlQuery('''SELECT label, address from addressbook''')
+        if len(params) == 1:
+            label, = params
+            label = self._decode(label, "base64")
+            queryreturn = sqlQuery('''SELECT label, address from addressbook WHERE label = ?''', label)
+        elif len(params) > 1:
+            raise APIError(0, "Too many paremeters, max 1")
+        else:
+            queryreturn = sqlQuery('''SELECT label, address from addressbook''')
         data = '{"addresses":['
         for row in queryreturn:
             label, address = row
@@ -956,6 +970,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         message, = params
         shared.UISignalQueue.put(('updateStatusBar', message))
 
+    def HandleDeleteAndVacuum(self, params):
+        sqlStoredProcedure('deleteandvacuume')
+        return 'done'
 
     handlers = {}
     handlers['helloWorld'] = HandleHelloWorld
@@ -1006,6 +1023,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     handlers['getMessageDataByDestinationTag'] = HandleGetMessageDataByDestinationHash
     handlers['clientStatus'] = HandleClientStatus
     handlers['decodeAddress'] = HandleDecodeAddress
+    handlers['deleteAndVacuum'] = HandleDeleteAndVacuum
 
     def _handle_request(self, method, params):
         if (self.handlers.has_key(method)):

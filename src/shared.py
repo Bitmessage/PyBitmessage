@@ -1,6 +1,6 @@
 from __future__ import division
 
-softwareVersion = '0.4.4'
+softwareVersion = '0.5.5'
 verbose = 1
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # This is obsolete with the change to protocol v3 but the singleCleaner thread still hasn't been updated so we need this a little longer.
 lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
@@ -32,6 +32,7 @@ import highlevelcrypto
 import shared
 #import helper_startup
 from helper_sql import *
+from helper_threading import *
 
 
 config = ConfigParser.SafeConfigParser()
@@ -83,7 +84,7 @@ lastTimeWeResetBytesSent = 0 # used for the bandwidth rate limit
 sendDataLock = threading.Lock() # used for the bandwidth rate limit
 receiveDataLock = threading.Lock() # used for the bandwidth rate limit
 daemon = False
-inventorySets = {} # key = streamNumer, value = a set which holds the inventory object hashes that we are aware of. This is used whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it every couple hours.
+inventorySets = {1: set()} # key = streamNumer, value = a set which holds the inventory object hashes that we are aware of. This is used whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it every couple hours.
 needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it to disk eventually.
 maximumLengthOfTimeToBotherResendingMessages = 0
 objectProcessorQueue = Queue.Queue(
@@ -116,9 +117,16 @@ frozen = getattr(sys,'frozen', None)
 # security.
 trustedPeer = None
 
+# For UPnP
+extPort = None
+
 #Compiled struct for packing/unpacking headers
 #New code should use CreatePacket instead of Header.pack
 Header = Struct('!L12sL4s')
+
+#Service flags
+NODE_NETWORK = 1
+NODE_SSL = 2
 
 #Create a packet
 def CreatePacket(command, payload=''):
@@ -135,16 +143,26 @@ def isInSqlInventory(hash):
     return queryreturn != []
 
 def encodeHost(host):
-    if host.find(':') == -1:
+    if host.find('.onion') > -1:
+        return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\x7F\x00\x00\x01'
+    elif host.find(':') == -1:
         return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
             socket.inet_aton(host)
     else:
         return socket.inet_pton(socket.AF_INET6, host)
 
-def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
+def haveSSL(server = False):
+    # python < 2.7.9's ssl library does not support ECDSA server due to missing initialisation of available curves, but client works ok
+    if server == False:
+        return True
+    elif sys.version_info >= (2,7,9):
+        return True
+    return False
+        
+def assembleVersionMessage(remoteHost, remotePort, myStreamNumber, server = False):
     payload = ''
     payload += pack('>L', 3)  # protocol version.
-    payload += pack('>q', 1)  # bitflags of the services I offer.
+    payload += pack('>q', NODE_NETWORK|(NODE_SSL if haveSSL(server) else 0))  # bitflags of the services I offer.
     payload += pack('>q', int(time.time()))
 
     payload += pack(
@@ -155,8 +173,10 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload += pack('>q', 1)  # bitflags of the services I offer.
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
         '>L', 2130706433)  # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
-    payload += pack('>H', shared.config.getint(
-        'bitmessagesettings', 'port'))
+    if safeConfigGetBoolean('bitmessagesettings', 'upnp') and extPort:
+        payload += pack('>H', extPort)
+    else:
+        payload += pack('>H', shared.config.getint('bitmessagesettings', 'port'))
 
     random.seed()
     payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
@@ -217,6 +237,15 @@ def lookupAppdataFolder():
             pass
         dataFolder = dataFolder + '/'
     return dataFolder
+    
+def codePath():
+    if frozen == "macosx_app":
+        codePath = os.environ.get("RESOURCEPATH")
+    elif frozen: # windows
+        codePath = sys._MEIPASS
+    else:    
+        codePath = os.path.dirname(__file__)
+    return codePath
 
 def isAddressInMyAddressBook(address):
     queryreturn = sqlQuery(
@@ -383,7 +412,16 @@ def doCleanShutdown():
     
     # Wait long enough to guarantee that any running proof of work worker threads will check the
     # shutdown variable and exit. If the main thread closes before they do then they won't stop.
-    time.sleep(.25) 
+    time.sleep(.25)
+    
+    from class_outgoingSynSender import outgoingSynSender
+    for thread in threading.enumerate():
+        if thread.isAlive() and isinstance(thread, StoppableThread):
+            thread.stopThread()
+    for thread in threading.enumerate():
+        if thread is not threading.currentThread() and isinstance(thread, StoppableThread) and not isinstance(thread, outgoingSynSender):
+            logger.debug("Waiting for thread %s", thread.name)
+            thread.join()
 
     if safeConfigGetBoolean('bitmessagesettings','daemon'):
         logger.info('Clean shutdown complete.')

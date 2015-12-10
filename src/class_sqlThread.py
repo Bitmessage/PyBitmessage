@@ -19,12 +19,14 @@ import tr#anslate
 class sqlThread(threading.Thread):
 
     def __init__(self):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="SQL")
 
     def run(self):        
         self.conn = sqlite3.connect(shared.appdata + 'messages.dat')
         self.conn.text_factory = str
         self.cur = self.conn.cursor()
+        
+        self.cur.execute('PRAGMA secure_delete = true')
 
         try:
             self.cur.execute(
@@ -450,7 +452,7 @@ class sqlThread(threading.Thread):
         queryreturn = self.cur.fetchall()
         for row in queryreturn:
             value, = row
-            if int(value) < int(time.time()) - 2592000:
+            if int(value) < int(time.time()) - 86400:
                 logger.info('It has been a long time since the messages.dat file has been vacuumed. Vacuuming now...')
                 try:
                     self.cur.execute( ''' VACUUM ''')

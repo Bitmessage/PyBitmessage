@@ -55,7 +55,7 @@ def decodeBase58(string, alphabet=ALPHABET):
 
 def encodeVarint(integer):
     if integer < 0:
-        print 'varint cannot be < 0'
+        logger.error('varint cannot be < 0')
         raise SystemExit
     if integer < 253:
         return pack('>B',integer)
@@ -66,7 +66,7 @@ def encodeVarint(integer):
     if integer >= 4294967296 and integer < 18446744073709551616:
         return pack('>B',255) + pack('>Q',integer)
     if integer >= 18446744073709551616:
-        print 'varint cannot be >= 18446744073709551616'
+        logger.error('varint cannot be >= 18446744073709551616')
         raise SystemExit
     
 class varintDecodeError(Exception):
@@ -185,25 +185,25 @@ def decodeAddress(address):
     try:
         addressVersionNumber, bytesUsedByVersionNumber = decodeVarint(data[:9])
     except varintDecodeError as e:
-        print e
+        logger.error(str(e))
         status = 'varintmalformed'
         return status,0,0,""
     #print 'addressVersionNumber', addressVersionNumber
     #print 'bytesUsedByVersionNumber', bytesUsedByVersionNumber
 
     if addressVersionNumber > 4:
-        print 'cannot decode address version numbers this high'
+        logger.error('cannot decode address version numbers this high')
         status = 'versiontoohigh'
         return status,0,0,""
     elif addressVersionNumber == 0:
-        print 'cannot decode address version numbers of zero.'
+        logger.error('cannot decode address version numbers of zero.')
         status = 'versiontoohigh'
         return status,0,0,""
 
     try:
         streamNumber, bytesUsedByStreamNumber = decodeVarint(data[bytesUsedByVersionNumber:])
     except varintDecodeError as e:
-        print e
+        logger.error(str(e))
         status = 'varintmalformed'
         return status,0,0,""
     #print streamNumber

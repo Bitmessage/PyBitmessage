@@ -1,7 +1,8 @@
+import os
 from setuptools import setup
 
 name = "Bitmessage"
-version = "0.4.4"
+version = os.getenv("PYBITMESSAGEVERSION", "custom")
 mainscript = ["bitmessagemain.py"]
 
 setup(
@@ -11,7 +12,7 @@ setup(
     setup_requires = ["py2app"],
     options = dict(
         py2app = dict(
-            resources = ["images", "translations"],
+            resources = ["images", "translations", "bitmsghash", "sslkeys"],
             includes = ['sip', 'PyQt4._qt'],
             iconfile = "images/bitmessage.icns"
         )

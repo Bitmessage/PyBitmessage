@@ -491,8 +491,8 @@ Es ist wichtig, dass Sie diese Datei sichern. Möchten Sie die datei jetzt öffn
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2692"/>
-        <source>Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.</source>
-        <translation>Objekt in den Papierkorb verschoben. Es gibt kein Benutzerinterface für den Papierkorb, aber die Daten sind noch auf Ihrer Festplatte wenn Sie sie wirklich benötigen.</translation>
+        <source>Moved items to trash.</source>
+        <translation>Objekt in den Papierkorb verschoben.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2672"/>
@@ -905,7 +905,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../bitmessagemain.py" line="3844"/>
-        <source>Broacasting the public key request. This program will auto-retry if they are offline.</source>
+        <source>Broadcasting the public key request. This program will auto-retry if they are offline.</source>
         <translation type="obsolete">Anfrage für den Verschlüsselungscode versendet (wird automatisch periodisch neu verschickt).</translation>
     </message>
     <message>

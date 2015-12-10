@@ -491,8 +491,8 @@ Estas grava ke vi faru savkopion de tiu dosiero. Ĉu vi volas malfermi la dosier
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2692"/>
-        <source>Moved items to trash. There is no user interface to view your trash, but it is still on disk if you are desperate to get it back.</source>
-        <translation>Movis elementojn al rubujo. Ne estas fasado por rigardi vian rubujon, sed ankoraŭ estas sur disko  se vi esperas ĝin retrovi.</translation>
+        <source>Moved items to trash.</source>
+        <translation>Movis elementojn al rubujo.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2672"/>
@@ -899,7 +899,7 @@ p, li { white-space: pre-wrap; }
     </message>
     <message>
         <location filename="../bitmessagemain.py" line="3844"/>
-        <source>Broacasting the public key request. This program will auto-retry if they are offline.</source>
+        <source>Broadcasting the public key request. This program will auto-retry if they are offline.</source>
         <translation type="obsolete">Anfrage für den Verschlüsselungscode versendet (wird automatisch periodisch neu verschickt).</translation>
     </message>
     <message>

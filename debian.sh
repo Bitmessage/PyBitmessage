@@ -7,6 +7,11 @@ RELEASE=1
 ARCH_TYPE=all
 DIR=${APP}-${VERSION}
 
+# This will automatically detect where you are working from
+# and will set the parent name directory variable accordingly
+PWIDW=`pwd`
+PARDIR=`basename ${PWIDW}`
+
 if [ $ARCH_TYPE == "x86_64" ]; then
     ARCH_TYPE="amd64"
 fi
@@ -30,7 +35,7 @@ make clean
 make
 
 # Change the parent directory name to Debian format
-mv ../${APP} ../${DIR}
+mv ../${PARDIR} ../${DIR}
 
 # Create a source archive
 make sourcedeb
@@ -43,4 +48,4 @@ gpg -ba ../${APP}_${VERSION}-1_${ARCH_TYPE}.deb
 gpg -ba ../${APP}_${VERSION}.orig.tar.gz
 
 # Restore the parent directory name
-mv ../${DIR} ../${APP}
+mv ../${DIR} ../${PARDIR}
