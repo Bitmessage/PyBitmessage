@@ -4,7 +4,7 @@ RELEASE=1
 ARCH_TYPE=`uname -m`
 PREFIX?=/usr/local
 LIBDIR=lib
-DIRECTORY_LOC=./
+DIRECTORY_LOC=`pwd`
 
 all:
 debug:
