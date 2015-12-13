@@ -501,8 +501,8 @@ class sqlThread(threading.Thread):
                             return
                 self.conn.close()
                 shutil.move(
-                    shared.lookupAppdataFolder() + 'messages.dat', 'messages.dat')
-                self.conn = sqlite3.connect('messages.dat')
+                    shared.lookupAppdataFolder() + 'messages.dat', shared.lookupExeFolder() + 'messages.dat')
+                self.conn = sqlite3.connect(shared.lookupExeFolder() + 'messages.dat')
                 self.conn.text_factory = str
                 self.cur = self.conn.cursor()
             elif item == 'movemessagstoappdata':
@@ -520,8 +520,8 @@ class sqlThread(threading.Thread):
                             return
                 self.conn.close()
                 shutil.move(
-                    'messages.dat', shared.lookupAppdataFolder() + 'messages.dat')
-                self.conn = sqlite3.connect(shared.appdata + 'messages.dat')
+                    shared.lookupExeFolder() + 'messages.dat', shared.lookupAppdataFolder() + 'messages.dat')
+                self.conn = sqlite3.connect(shared.lookupAppdataFolder() + 'messages.dat')
                 self.conn.text_factory = str
                 self.cur = self.conn.cursor()
             elif item == 'deleteandvacuume':

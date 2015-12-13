@@ -2709,18 +2709,18 @@ class MyForm(settingsmixin.SMainWindow):
             if shared.appdata != '' and self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we are NOT using portable mode now but the user selected that we should...
                 # Write the keys.dat file to disk in the new location
                 sqlStoredProcedure('movemessagstoprog')
-                with open('keys.dat', 'wb') as configfile:
+                with open(shared.lookupExeFolder() + 'keys.dat', 'wb') as configfile:
                     shared.config.write(configfile)
                 # Write the knownnodes.dat file to disk in the new location
                 shared.knownNodesLock.acquire()
-                output = open('knownnodes.dat', 'wb')
+                output = open(shared.lookupExeFolder() + 'knownnodes.dat', 'wb')
                 pickle.dump(shared.knownNodes, output)
                 output.close()
                 shared.knownNodesLock.release()
                 os.remove(shared.appdata + 'keys.dat')
                 os.remove(shared.appdata + 'knownnodes.dat')
                 previousAppdataLocation = shared.appdata
-                shared.appdata = ''
+                shared.appdata = shared.lookupExeFolder()
                 debug.restartLoggingInUpdatedAppdataLocation()
                 try:
                     os.remove(previousAppdataLocation + 'debug.log')
@@ -2741,12 +2741,12 @@ class MyForm(settingsmixin.SMainWindow):
                 pickle.dump(shared.knownNodes, output)
                 output.close()
                 shared.knownNodesLock.release()
-                os.remove('keys.dat')
-                os.remove('knownnodes.dat')
+                os.remove(shared.lookupExeFolder() + 'keys.dat')
+                os.remove(shared.lookupExeFolder() + 'knownnodes.dat')
                 debug.restartLoggingInUpdatedAppdataLocation()
                 try:
-                    os.remove('debug.log')
-                    os.remove('debug.log.1')
+                    os.remove(shared.lookupExeFolder() + 'debug.log')
+                    os.remove(shared.lookupExeFolder() + 'debug.log.1')
                 except:
                     pass
 

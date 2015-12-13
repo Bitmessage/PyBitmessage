@@ -198,6 +198,15 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
     payload += errorText
     return CreatePacket('error', payload)
 
+def lookupExeFolder():
+    if frozen:
+        exeFolder = os.path.join(os.path.dirname(sys.executable), '/')
+   elif __file__:
+        exeFolder = os.path.join(os.path.dirname(__file__), '/')
+    else:
+        exeFolder = ''
+    return exeFolder
+
 def lookupAppdataFolder():
     APPNAME = "PyBitmessage"
     if "BITMESSAGE_HOME" in environ:
