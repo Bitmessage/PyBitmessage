@@ -4091,7 +4091,7 @@ class settingsDialog(QtGui.QDialog):
             curr_index = languages.index('other')
         self.ui.languageComboBox.setCurrentIndex(curr_index)
         
-        if shared.appdata == '':
+        if shared.appdata == shared.lookupExeFolder():
             self.ui.checkBoxPortableMode.setChecked(True)
         if 'darwin' in sys.platform:
             self.ui.checkBoxStartOnLogon.setDisabled(True)
