@@ -2706,7 +2706,7 @@ class MyForm(settingsmixin.SMainWindow):
                 # startup for linux
                 pass
 
-            if shared.appdata != '' and self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we are NOT using portable mode now but the user selected that we should...
+            if shared.appdata != shared.lookupExeFolder() and self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we are NOT using portable mode now but the user selected that we should...
                 # Write the keys.dat file to disk in the new location
                 sqlStoredProcedure('movemessagstoprog')
                 with open(shared.lookupExeFolder() + 'keys.dat', 'wb') as configfile:
@@ -2728,7 +2728,7 @@ class MyForm(settingsmixin.SMainWindow):
                 except:
                     pass
 
-            if shared.appdata == '' and not self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we ARE using portable mode now but the user selected that we shouldn't...
+            if shared.appdata == shared.lookupExeFolder() and not self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we ARE using portable mode now but the user selected that we shouldn't...
                 shared.appdata = shared.lookupAppdataFolder()
                 if not os.path.exists(shared.appdata):
                     os.makedirs(shared.appdata)
