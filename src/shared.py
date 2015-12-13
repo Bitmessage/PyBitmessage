@@ -200,9 +200,9 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
 
 def lookupExeFolder():
     if frozen:
-        exeFolder = os.path.join(os.path.dirname(sys.executable), '/')
-   elif __file__:
-        exeFolder = os.path.join(os.path.dirname(__file__), '/')
+        exeFolder = path.dirname(sys.executable) + path.sep
+    elif __file__:
+        exeFolder = path.dirname(__file__) + path.sep
     else:
         exeFolder = ''
     return exeFolder
