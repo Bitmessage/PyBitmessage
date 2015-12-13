@@ -35,7 +35,7 @@ def loadConfig():
             needToCreateKeysFile = True
 
     else:
-        shared.config.read(shared.lookupExeFolder() + 'keys.dat'))
+        shared.config.read(shared.lookupExeFolder() + 'keys.dat')
         try:
             shared.config.get('bitmessagesettings', 'settingsversion')
             print 'Loading config files from same directory as program.'
