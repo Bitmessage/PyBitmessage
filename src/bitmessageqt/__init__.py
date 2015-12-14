@@ -91,6 +91,9 @@ class MyForm(settingsmixin.SMainWindow):
     maxSoundFrequencySec = 60
 
     str_chan = '[chan]'
+    
+    REPLY_TYPE_SENDER = 0
+    REPLY_TYPE_CHAN = 1
 
     def init_file_menu(self):
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
@@ -140,7 +143,9 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.inboxContextMenuToolbar = QtGui.QToolBar()
         # Actions
         self.actionReply = self.ui.inboxContextMenuToolbar.addAction(_translate(
-            "MainWindow", "Reply"), self.on_action_InboxReply)
+            "MainWindow", "Reply to sender"), self.on_action_InboxReply)
+        self.actionReplyChan = self.ui.inboxContextMenuToolbar.addAction(_translate(
+            "MainWindow", "Reply to channel"), self.on_action_InboxReplyChan)
         self.actionAddSenderToAddressBook = self.ui.inboxContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Add sender to your Address Book"),
@@ -3032,10 +3037,16 @@ class MyForm(settingsmixin.SMainWindow):
                 return quoteWrapper.fill(line)
         return '\n'.join([quote_line(l) for l in message.splitlines()]) + '\n\n'
 
-    def on_action_InboxReply(self):
+    def on_action_InboxReplyChan(self):
+        self.on_action_InboxReply(self.REPLY_TYPE_CHAN)
+    
+    def on_action_InboxReply(self, replyType = None):
         tableWidget = self.getCurrentMessagelist()
         if not tableWidget:
             return
+        
+        if replyType is None:
+            replyType = self.REPLY_TYPE_SENDER
         
         # save this to return back after reply is done
         self.replyFromTab = self.ui.tabWidget.currentIndex()
@@ -3082,10 +3093,9 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.lineEditTo.setText(str(acct.fromAddress))
         
         # If the previous message was to a chan then we should send our reply to the chan rather than to the particular person who sent the message.
-        if shared.config.has_section(toAddressAtCurrentInboxRow):
-            if shared.safeConfigGetBoolean(toAddressAtCurrentInboxRow, 'chan'):
-                logger.debug('original sent to a chan. Setting the to address in the reply to the chan address.')
-                self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
+        if acct.type == AccountMixin.CHAN and replyType == self.REPLY_TYPE_CHAN:
+            logger.debug('original sent to a chan. Setting the to address in the reply to the chan address.')
+            self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
         
         listOfAddressesInComboBoxSendFrom = [str(widget['from'].itemData(i).toPyObject()) for i in range(widget['from'].count())]
         if toAddressAtCurrentInboxRow in listOfAddressesInComboBoxSendFrom:
@@ -3862,6 +3872,11 @@ class MyForm(settingsmixin.SMainWindow):
                 self.popMenuInbox.addAction(self.actionForceHtml)
                 self.popMenuInbox.addAction(self.actionMarkUnread)
                 self.popMenuInbox.addSeparator()
+                address = str(tableWidget.item(
+                    tableWidget.currentRow(), 0).data(Qt.UserRole).toPyObject())
+                account = accountClass(address)
+                if account.type == AccountMixin.CHAN:
+                    self.popMenuInbox.addAction(self.actionReplyChan)
                 self.popMenuInbox.addAction(self.actionReply)
                 self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
                 self.actionClipboardMessagelist = self.ui.inboxContextMenuToolbar.addAction(
