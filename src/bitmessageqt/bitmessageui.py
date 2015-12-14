@@ -8,6 +8,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt4 import QtCore, QtGui
+from messageview import MessageView
 import settingsmixin
 
 try:
@@ -123,7 +124,7 @@ class Ui_MainWindow(object):
         self.tableWidgetInbox.verticalHeader().setVisible(False)
         self.tableWidgetInbox.verticalHeader().setDefaultSectionSize(26)
         self.verticalSplitter_7.addWidget(self.tableWidgetInbox)
-        self.textEditInboxMessage = QtGui.QTextEdit(self.inbox)
+        self.textEditInboxMessage = MessageView(self.inbox)
         self.textEditInboxMessage.setBaseSize(QtCore.QSize(0, 500))
         self.textEditInboxMessage.setReadOnly(True)
         self.textEditInboxMessage.setObjectName(_fromUtf8("textEditInboxMessage"))
@@ -428,7 +429,7 @@ class Ui_MainWindow(object):
         self.tableWidgetInboxSubscriptions.verticalHeader().setVisible(False)
         self.tableWidgetInboxSubscriptions.verticalHeader().setDefaultSectionSize(26)
         self.verticalSplitter_4.addWidget(self.tableWidgetInboxSubscriptions)
-        self.textEditInboxMessageSubscriptions = QtGui.QTextEdit(self.subscriptions)
+        self.textEditInboxMessageSubscriptions = MessageView(self.subscriptions)
         self.textEditInboxMessageSubscriptions.setBaseSize(QtCore.QSize(0, 500))
         self.textEditInboxMessageSubscriptions.setReadOnly(True)
         self.textEditInboxMessageSubscriptions.setObjectName(_fromUtf8("textEditInboxMessageSubscriptions"))
@@ -527,7 +528,7 @@ class Ui_MainWindow(object):
         self.tableWidgetInboxChans.verticalHeader().setVisible(False)
         self.tableWidgetInboxChans.verticalHeader().setDefaultSectionSize(26)
         self.verticalSplitter_8.addWidget(self.tableWidgetInboxChans)
-        self.textEditInboxMessageChans = QtGui.QTextEdit(self.chans)
+        self.textEditInboxMessageChans = MessageView(self.chans)
         self.textEditInboxMessageChans.setBaseSize(QtCore.QSize(0, 500))
         self.textEditInboxMessageChans.setReadOnly(True)
         self.textEditInboxMessageChans.setObjectName(_fromUtf8("textEditInboxMessageChans"))
