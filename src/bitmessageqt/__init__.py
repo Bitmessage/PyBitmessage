@@ -35,6 +35,7 @@ from addaddressdialog import *
 from newsubscriptiondialog import *
 from regenerateaddresses import *
 from newchandialog import *
+from safehtmlparser import *
 from specialaddressbehavior import *
 from emailgateway import *
 from settings import *
@@ -4026,10 +4027,9 @@ class MyForm(settingsmixin.SMainWindow):
             data = self.getCurrentMessageId()
             if data != False:
                 message = "Error occurred: could not load message from disk."
-        message = unicode(message, 'utf-8)')
         messageTextedit.setCurrentFont(QtGui.QFont())
         messageTextedit.setTextColor(QtGui.QColor())
-        messageTextedit.setPlainText(message)
+        messageTextedit.setContent(message)
 
     def tableWidgetAddressBookItemChanged(self):
         currentRow = self.ui.tableWidgetAddressBook.currentRow()
