@@ -3702,6 +3702,31 @@ class MyForm(settingsmixin.SMainWindow):
         address = self.getCurrentAccount()
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(str(address))
+        
+    def on_action_ClipboardMessagelist(self):
+        tableWidget = self.getCurrentMessagelist()
+        currentColumn = tableWidget.currentColumn()
+        currentRow = tableWidget.currentRow()
+        if currentColumn not in [0, 1, 2]: # to, from, subject
+            if self.getCurrentFolder() == "sent":
+                currentColumn = 0
+            else:
+                currentColumn = 1
+        if self.getCurrentFolder() == "sent":
+            myAddress = str(tableWidget.item(currentRow, 1).data(Qt.UserRole).toPyObject())
+            otherAddress = str(tableWidget.item(currentRow, 0).data(Qt.UserRole).toPyObject())
+        else:
+            myAddress = str(tableWidget.item(currentRow, 0).data(Qt.UserRole).toPyObject())
+            otherAddress = str(tableWidget.item(currentRow, 1).data(Qt.UserRole).toPyObject())
+        account = accountClass(myAddress)
+        if isinstance(account, GatewayAccount) and otherAddress == account.relayAddress and (
+            (currentColumn in [0, 2] and self.getCurrentFolder() == "sent") or
+            (currentColumn in [1, 2] and self.getCurrentFolder() != "sent")):
+            text = str(tableWidget.item(currentRow, currentColumn).text())
+        else:
+            text = str(tableWidget.item(currentRow, currentColumn).data(Qt.UserRole).toPyObject())
+        clipboard = QtGui.QApplication.clipboard()
+        clipboard.setText(str(text))
 
     #set avatar functions
     def on_action_TreeWidgetSetAvatar(self):
@@ -3839,6 +3864,12 @@ class MyForm(settingsmixin.SMainWindow):
                 self.popMenuInbox.addSeparator()
                 self.popMenuInbox.addAction(self.actionReply)
                 self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
+                self.actionClipboardMessagelist = self.ui.inboxContextMenuToolbar.addAction(
+                    _translate("MainWindow",
+                        "Copy subject to clipboard" if tableWidget.currentColumn() == 2 else "Copy address to clipboard"
+                    ),
+                    self.on_action_ClipboardMessagelist)
+                self.popMenuInbox.addAction(self.actionClipboardMessagelist)
                 self.popMenuInbox.addSeparator()
                 self.popMenuInbox.addAction(self.actionAddSenderToBlackList)
                 self.popMenuInbox.addSeparator()
