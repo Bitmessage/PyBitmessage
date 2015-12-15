@@ -39,6 +39,7 @@ from specialaddressbehavior import *
 from emailgateway import *
 from settings import *
 import settingsmixin
+import support
 from about import *
 from help import *
 from iconglossary import *
@@ -152,6 +153,8 @@ class MyForm(settingsmixin.SMainWindow):
             "triggered()"), self.click_actionSettings)
         QtCore.QObject.connect(self.ui.actionAbout, QtCore.SIGNAL(
             "triggered()"), self.click_actionAbout)
+        QtCore.QObject.connect(self.ui.actionSupport, QtCore.SIGNAL(
+            "triggered()"), self.click_actionSupport)
         QtCore.QObject.connect(self.ui.actionHelp, QtCore.SIGNAL(
             "triggered()"), self.click_actionHelp)
 
@@ -2554,6 +2557,9 @@ class MyForm(settingsmixin.SMainWindow):
     def click_actionHelp(self):
         self.helpDialogInstance = helpDialog(self)
         self.helpDialogInstance.exec_()
+
+    def click_actionSupport(self):
+        support.createSupportMessage(self)
 
     def click_actionAbout(self):
         self.aboutDialogInstance = aboutDialog(self)
