@@ -34,7 +34,7 @@ class MessageView(QtGui.QTextBrowser):
             super(MessageView, self).mousePressEvent(event)
             
     def confirmURL(self, link):
-        reply = QtGui.QMessageBox.question(self,
+        reply = QtGui.QMessageBox.warning(self,
             QtGui.QApplication.translate(type(self).__name__, MessageView.CONFIRM_TITLE),
             QtGui.QApplication.translate(type(self).__name__, MessageView.CONFIRM_TEXT).arg(str(link.toString())), 
             QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
