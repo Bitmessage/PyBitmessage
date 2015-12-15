@@ -25,8 +25,10 @@ class SafeHTMLParser(HTMLParser):
         self.has_html = False
         
     def reset_safe(self):
+        self.elements = set()
         self.raw = u""
         self.sanitised = u""
+        self.has_html = False
 
     def add_if_acceptable(self, tag, attrs = None):
         if not tag in self.acceptable_elements:
@@ -35,12 +37,12 @@ class SafeHTMLParser(HTMLParser):
         if inspect.stack()[1][3] == "handle_endtag":
             self.sanitised += "/"
         self.sanitised += tag
-        if attrs is not None:
+        if not attrs is None:
             for attr in attrs:
                 if tag == "img" and attr[0] == "src" and not self.allow_picture:
                     attr[1] = ""
                 self.sanitised += " " + quote_plus(attr[0])
-                if attr[1] is not None:
+                if not (attr[1] is None):
                     self.sanitised += "=\"" + attr[1] + "\""
         if inspect.stack()[1][3] == "handle_startendtag":
             self.sanitised += "/"
@@ -51,13 +53,13 @@ class SafeHTMLParser(HTMLParser):
         if inspect.stack()[1][3] == "handle_endtag":
             self.raw += "/"
         self.raw += tag
-        if attrs is not None:
+        if not attrs is None:
             for attr in attrs:
                 if tag == "img" and attr[0] == "src" and not self.allow_picture:
                     attr[1] = ""
                 self.raw += " " + attr[0]
-                if attr[1] is not None:
-                    self.raw + "=&quot;" + attr[1] + "&quot;"
+                if not (attr[1] is None):
+                    self.raw += "=&quot;" + attr[1] + "&quot;"
         if inspect.stack()[1][3] == "handle_startendtag":
             self.raw += "/"
         self.raw += "&gt;"
