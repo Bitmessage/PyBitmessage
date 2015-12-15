@@ -3159,11 +3159,13 @@ class MyForm(settingsmixin.SMainWindow):
         # tableWidget.item(currentRow,1).data(Qt.UserRole).toPyObject()
         addressAtCurrentInboxRow = str(tableWidget.item(
             currentInboxRow, 1).data(Qt.UserRole).toPyObject())
+        recipientAddress = str(tableWidget.item(
+            currentInboxRow, 0).data(Qt.UserRole).toPyObject())
         # Let's make sure that it isn't already in the address book
         queryreturn = sqlQuery('''select * from blacklist where address=?''',
                                addressAtCurrentInboxRow)
         if queryreturn == []:
-            label = "\"" + unicode(tableWidget.item(currentInboxRow, 2).data(Qt.UserRole).toString(), 'utf-8') + "\" in " + shared.config.get(self.getCurrentAccount(), "label")
+            label = "\"" + unicode(tableWidget.item(currentInboxRow, 2).data(Qt.UserRole).toString(), 'utf-8') + "\" in " + shared.config.get(recipientAddress, "label")
             sqlExecute('''INSERT INTO blacklist VALUES (?,?, ?)''',
                        label,
                        addressAtCurrentInboxRow, True)
