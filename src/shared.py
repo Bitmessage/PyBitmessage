@@ -132,6 +132,9 @@ Header = Struct('!L12sL4s')
 NODE_NETWORK = 1
 NODE_SSL = 2
 
+#Bitfield flags
+BITFIELD_DOESACK = 1
+
 #Create a packet
 def CreatePacket(command, payload=''):
     payload_length = len(payload)
