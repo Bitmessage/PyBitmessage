@@ -39,7 +39,9 @@ class SafeHTMLParser(HTMLParser):
             for attr in attrs:
                 if tag == "img" and attr[0] == "src" and not self.allow_picture:
                     attr[1] = ""
-                self.sanitised += " " + quote_plus(attr[0]) + "=\"" + attr[1] + "\""
+                self.sanitised += " " + quote_plus(attr[0])
+                if attr[1] is not None:
+                    self.sanitised += "=\"" + attr[1] + "\""
         if inspect.stack()[1][3] == "handle_startendtag":
             self.sanitised += "/"
         self.sanitised += ">"
@@ -53,7 +55,9 @@ class SafeHTMLParser(HTMLParser):
             for attr in attrs:
                 if tag == "img" and attr[0] == "src" and not self.allow_picture:
                     attr[1] = ""
-                self.raw += " " + attr[0] + "=&quot;" + attr[1] + "&quot;"
+                self.raw += " " + attr[0]
+                if attr[1] is not None:
+                    self.raw + "=&quot;" + attr[1] + "&quot;"
         if inspect.stack()[1][3] == "handle_startendtag":
             self.raw += "/"
         self.raw += "&gt;"
