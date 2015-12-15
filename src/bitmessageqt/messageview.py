@@ -17,6 +17,11 @@ class MessageView(QtGui.QTextBrowser):
         self.setOpenExternalLinks(False)
         self.setOpenLinks(False)
         self.anchorClicked.connect(self.confirmURL)
+        self.out = ""
+        self.outpos = 0
+        self.document().setUndoRedoEnabled(False)
+        self.rendering = False
+        self.verticalScrollBar().valueChanged.connect(self.lazyRender)
     
     def mousePressEvent(self, event):
         #text = textCursor.block().text()
@@ -36,22 +41,49 @@ class MessageView(QtGui.QTextBrowser):
         if reply == QtGui.QMessageBox.Yes:
             QtGui.QDesktopServices.openUrl(link)
 
+    def lazyRender(self):
+        if self.rendering:
+            return
+        self.rendering = True
+        position = self.verticalScrollBar().value()
+        cursor = QtGui.QTextCursor(self.document())
+        while self.outpos < len(self.out) and self.verticalScrollBar().value() >= self.document().size().height() - 2 * self.size().height():
+            startpos = self.outpos
+            self.outpos += 10240
+            # find next end of tag
+            if self.mode == MessageView.MODE_HTML:
+                pos = self.out.find(">", self.outpos)
+                if pos > self.outpos:
+                    self.outpos = pos
+            cursor.movePosition(QtGui.QTextCursor.End, QtGui.QTextCursor.MoveAnchor)
+            cursor.insertHtml(QtCore.QString(self.out[startpos:self.outpos]))
+        self.verticalScrollBar().setValue(position)
+        self.rendering = False
+    
     def showPlain(self):
         self.mode = MessageView.MODE_PLAIN
         out = self.html.raw
         if self.html.has_html:
-            out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + QtGui.QApplication.translate(type(self).__name__, MessageView.TEXT_PLAIN) + "</b></div><br/>" + out
-        self.setHtml(QtCore.QString(out))
+            out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + str(QtGui.QApplication.translate(type(self).__name__, MessageView.TEXT_PLAIN)) + "</b></div><br/>" + out
+        self.out = out
+        self.outpos = 0
+        self.setHtml("")
+        self.lazyRender()
 
     def showHTML(self):
         self.mode = MessageView.MODE_HTML
         out = self.html.sanitised
-        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + QtGui.QApplication.translate(type(self).__name__, MessageView.TEXT_HTML) + "</b></div><br/>" + out
-        self.setHtml(QtCore.QString(out))
+        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + str(QtGui.QApplication.translate(type(self).__name__, MessageView.TEXT_HTML)) + "</b></div><br/>" + out
+        self.out = out
+        self.outpos = 0
+        self.setHtml("")
+        self.lazyRender()
 
     def setContent(self, data):
         self.html = SafeHTMLParser()
         self.html.allow_picture = True
+        self.html.reset()
+        self.html.reset_safe()
         self.html.feed(data)
         self.html.close()
         self.showPlain()
