@@ -326,7 +326,13 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'maxdownloadrate', '0')
             shared.config.set('bitmessagesettings', 'maxuploadrate', '0')
             shared.config.set('bitmessagesettings', 'settingsversion', '10')
-            shared.writeKeysFile()                
+            shared.writeKeysFile()
+            
+        # sanity check
+        if shared.config.getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') == 0:
+            shared.config.set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(shared.ridiculousDifficulty * shared.networkDefaultProofOfWorkNonceTrialsPerByte))
+        if shared.config.getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') == 0:
+            shared.config.set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(shared.ridiculousDifficulty * shared.networkDefaultPayloadLengthExtraBytes))
 
         # The format of data stored in the pubkeys table has changed. Let's
         # clear it, and the pubkeys from inventory, so that they'll be re-downloaded.
