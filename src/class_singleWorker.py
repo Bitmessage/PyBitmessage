@@ -17,6 +17,7 @@ import helper_inbox
 from helper_generic import addDataPadding
 from helper_threading import *
 import l10n
+from protocol import *
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
@@ -121,7 +122,7 @@ class singleWorker(threading.Thread, StoppableThread):
         payload += '\x00\x00\x00\x01' # object type: pubkey
         payload += encodeVarint(addressVersionNumber)  # Address version number
         payload += encodeVarint(streamNumber)
-        payload += '\x00\x00\x00\x01'  # bitfield of features supported by me (see the wiki).
+        payload += getBitfield(myAddress)  # bitfield of features supported by me (see the wiki).
 
         try:
             privSigningKeyBase58 = shared.config.get(
@@ -202,7 +203,7 @@ class singleWorker(threading.Thread, StoppableThread):
         payload += '\x00\x00\x00\x01' # object type: pubkey
         payload += encodeVarint(addressVersionNumber)  # Address version number
         payload += encodeVarint(streamNumber)
-        payload += '\x00\x00\x00\x01'  # bitfield of features supported by me (see the wiki).
+        payload += getBitfield(myAddress)  # bitfield of features supported by me (see the wiki).
 
         try:
             privSigningKeyBase58 = shared.config.get(
@@ -281,8 +282,7 @@ class singleWorker(threading.Thread, StoppableThread):
         payload += '\x00\x00\x00\x01' # object type: pubkey
         payload += encodeVarint(addressVersionNumber)  # Address version number
         payload += encodeVarint(streamNumber)
-
-        dataToEncrypt = '\x00\x00\x00\x01'  # bitfield of features supported by me (see the wiki).
+        dataToEncrypt = getBitfield(myAddress)
 
         try:
             privSigningKeyBase58 = shared.config.get(
@@ -410,7 +410,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
             dataToEncrypt = encodeVarint(addressVersionNumber)
             dataToEncrypt += encodeVarint(streamNumber)
-            dataToEncrypt += '\x00\x00\x00\x01'  # behavior bitfield
+            dataToEncrypt += getBitfield(fromaddress)  # behavior bitfield
             dataToEncrypt += pubSigningKey[1:]
             dataToEncrypt += pubEncryptionKey[1:]
             if addressVersionNumber >= 3:
@@ -686,7 +686,7 @@ class singleWorker(threading.Thread, StoppableThread):
             else: # if we are sending a message to ourselves or a chan..
                 logger.info('Sending a message.')
                 logger.debug('First 150 characters of message: ' + repr(message[:150]))
-                behaviorBitfield = '\x00\x00\x00\x01'
+                behaviorBitfield = getBitfield(fromaddress)
 
                 try:
                     privEncryptionKeyBase58 = shared.config.get(
@@ -707,7 +707,7 @@ class singleWorker(threading.Thread, StoppableThread):
             # Now we can start to assemble our message.
             payload = encodeVarint(fromAddressVersionNumber)
             payload += encodeVarint(fromStreamNumber)
-            payload += '\x00\x00\x00\x01'  # Bitfield of features and behaviors that can be expected from me. (See https://bitmessage.org/wiki/Protocol_specification#Pubkey_bitfield_features  )
+            payload += getBitfield(fromaddress)  # Bitfield of features and behaviors that can be expected from me. (See https://bitmessage.org/wiki/Protocol_specification#Pubkey_bitfield_features  )
 
             # We need to convert our private keys to public keys in order
             # to include them.
@@ -760,7 +760,7 @@ class singleWorker(threading.Thread, StoppableThread):
             if shared.config.has_section(toaddress):
                 logger.info('Not bothering to include ackdata because we are sending to ourselves or a chan.')
                 fullAckPayload = ''
-            elif not shared.isBitSetWithinBitfield(behaviorBitfield,31):
+            elif not checkBitfield(behaviorBitfield, shared.BITFIELD_DOESACK):
                 logger.info('Not bothering to include ackdata because the receiver said that they won\'t relay it anyway.')
                 fullAckPayload = ''                    
             else:
@@ -811,7 +811,7 @@ class singleWorker(threading.Thread, StoppableThread):
             shared.inventory[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
             shared.inventorySets[toStreamNumber].add(inventoryHash)
-            if shared.config.has_section(toaddress):
+            if shared.config.has_section(toaddress) or shared.safeConfigGetBoolean(toaddress, 'dontsendack'):
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Message sent. Sent on %1").arg(l10n.formatTimestamp()))))
             else:
                 # not sending to a chan or one of my addresses
@@ -821,7 +821,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 toStreamNumber, 'advertiseobject', inventoryHash))
 
             # Update the sent message in the sent table with the necessary information.
-            if shared.config.has_section(toaddress):
+            if shared.config.has_section(toaddress) or not checkBitfield(behaviorBitfield, shared.BITFIELD_DOESACK):
                 newStatus = 'msgsentnoackexpected'
             else:
                 newStatus = 'msgsent'
