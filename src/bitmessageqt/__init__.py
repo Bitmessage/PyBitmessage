@@ -69,11 +69,27 @@ def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
 
 def change_translation(locale):
-    global qtranslator
-    qtranslator = QtCore.QTranslator()
+    global qmytranslator, qsystranslator
+    try:
+        if not qmytranslator.isEmpty():
+            QtGui.QApplication.removeTranslator(qmytranslator)
+    except:
+        pass
+    try:
+        if not qsystranslator.isEmpty():
+            QtGui.QApplication.removeTranslator(qsystranslator)
+    except:
+        pass
+
+    qmytranslator = QtCore.QTranslator()
     translationpath = os.path.join (shared.codePath(), 'translations', 'bitmessage_' + locale)
-    qtranslator.load(translationpath)
-    QtGui.QApplication.installTranslator(qtranslator)
+    qmytranslator.load(translationpath)
+    QtGui.QApplication.installTranslator(qmytranslator)
+
+    qsystranslator = QtCore.QTranslator()
+    translationpath = os.path.join (str(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.TranslationsPath)), 'qt_' + locale)
+    qsystranslator.load(translationpath)
+    QtGui.QApplication.installTranslator(qsystranslator)
 
 class MyForm(settingsmixin.SMainWindow):
 
