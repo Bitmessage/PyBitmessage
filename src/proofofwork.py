@@ -133,6 +133,31 @@ def _doGPUPoW(target, initialHash):
         raise Exception("GPU did not calculate correctly.")
     logger.debug("GPU PoW done")
     return [trialValue, nonce]
+    
+def estimate(difficulty, format = False):
+    ret = difficulty / 10
+    if ret < 1:
+        ret = 1
+    if format:
+        out = str(int(ret)) + " seconds"
+        if ret > 60:
+            ret /= 60
+            out = str(int(ret)) + " minutes"
+        if ret > 60:
+            ret /= 60
+            out = str(int(ret)) + " hours"
+        if ret > 24:
+            ret /= 24
+            out = str(int(ret)) + " days"
+        if ret > 7:
+            out = str(int(ret)) + " weeks"
+        if ret > 31:
+            out = str(int(ret)) + " months"
+        if ret > 366:
+            ret /= 366
+            out = str(int(ret)) + " years"
+    else:
+        return ret
 
 def run(target, initialHash):
     target = int(target)
