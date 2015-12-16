@@ -17,6 +17,14 @@ class SafeHTMLParser(HTMLParser):
                            'small', 'sound', 'source', 'spacer', 'span', 'strike', 'strong',
                            'sub', 'sup', 'table', 'tbody', 'td', 'textarea', 'time', 'tfoot',
                            'th', 'thead', 'tr', 'tt', 'u', 'ul', 'var', 'video']
+    replaces = [["&", "&amp;"], ["\"", "&quot;"], ["<", "&lt;"], [">", "&gt;"], ["\n", "<br/>"]]
+
+    @staticmethod
+    def multi_replace(text):
+        for a in SafeHTMLParser.replaces:
+            text = text.replace(a[0], a[1])
+        return text
+
     def __init__(self, *args, **kwargs):
         HTMLParser.__init__(self, *args, **kwargs)
         self.elements = set()
@@ -48,51 +56,33 @@ class SafeHTMLParser(HTMLParser):
             self.sanitised += "/"
         self.sanitised += ">"
     
-    def add_raw(self, tag, attrs = None):
-        self.raw += "&lt;"
-        if inspect.stack()[1][3] == "handle_endtag":
-            self.raw += "/"
-        self.raw += tag
-        if not attrs is None:
-            for attr in attrs:
-                if tag == "img" and attr[0] == "src" and not self.allow_picture:
-                    attr[1] = ""
-                self.raw += " " + attr[0]
-                if not (attr[1] is None):
-                    self.raw += "=&quot;" + attr[1] + "&quot;"
-        if inspect.stack()[1][3] == "handle_startendtag":
-            self.raw += "/"
-        self.raw += "&gt;"
-        
     def handle_starttag(self, tag, attrs):
         if tag in self.acceptable_elements:
             self.has_html = True
         self.add_if_acceptable(tag, attrs)
-        self.add_raw(tag, attrs)
 
     def handle_endtag(self, tag):
         self.add_if_acceptable(tag)
-        self.add_raw(tag)
         
     def handle_startendtag(self, tag, attrs):
         if tag in self.acceptable_elements:
             self.has_html = True
         self.add_if_acceptable(tag, attrs)
-        self.add_raw(tag, attrs)
     
     def handle_data(self, data):
         self.sanitised += unicode(data, 'utf-8', 'replace')
-        tmp = data.replace("\n", "<br/>")
-        self.raw += unicode(tmp, 'utf-8', 'replace')
         
     def handle_charref(self, name):
         self.sanitised += "&#" + name + ";"
-        self.raw += quote("&#" + name + ";")
     
     def handle_entityref(self, name):
         self.sanitised += "&" + name + ";"
-        self.raw += quote("&" + name + ";")
-        
+
+    def feed(self, data):
+        HTMLParser.feed(self, data)
+        tmp = SafeHTMLParser.multi_replace(data)
+        self.raw += unicode(tmp, 'utf-8', 'replace')
+
     def is_html(self, text = None, allow_picture = False):
         if text:
             self.reset()
