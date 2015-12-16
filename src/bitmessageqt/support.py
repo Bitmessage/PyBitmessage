@@ -33,6 +33,7 @@ PyBitmesage version: {}
 Operating system: {}
 Architecture: {}bit
 Frozen: {}
+Portable mode: {}
 C PoW: {}
 OpenCL PoW: {}
 Locale: {}
@@ -87,9 +88,10 @@ def createSupportMessage(myapp):
     frozen = "N/A"
     if shared.frozen:
         frozen = shared.frozen
-    cpow = "Yes" if bmpow else "No"
+    portablemode = "True" if shared.appdata == shared.lookupExeFolder() else "False"
+    cpow = "True" if bmpow else "False"
     #cpow = QtGui.QApplication.translate("Support", cpow)
-    openclpow = "Yes" if shared.safeConfigGetBoolean('bitmessagesettings', 'opencl') and has_opencl() else "No"
+    openclpow = "True" if shared.safeConfigGetBoolean('bitmessagesettings', 'opencl') and has_opencl() else "False"
     #openclpow = QtGui.QApplication.translate("Support", openclpow)
     locale = getTranslationLanguage()
     try:
@@ -102,7 +104,7 @@ def createSupportMessage(myapp):
         upnp = "N/A"
     connectedhosts = len(shared.connectedHostsList)
 
-    myapp.ui.textEditMessage.setText(str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(version, os, architecture, frozen, cpow, openclpow, locale, socks, upnp, connectedhosts))
+    myapp.ui.textEditMessage.setText(str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(version, os, architecture, frozen, portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
 
     # single msg tab
     myapp.ui.tabWidgetSend.setCurrentIndex(0)
