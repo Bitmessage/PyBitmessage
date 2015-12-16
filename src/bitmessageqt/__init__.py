@@ -4162,6 +4162,14 @@ class settingsDialog(QtGui.QDialog):
         
         if shared.appdata == shared.lookupExeFolder():
             self.ui.checkBoxPortableMode.setChecked(True)
+        else:
+            try:
+                import tempfile
+                file = tempfile.NamedTemporaryFile(dir=shared.lookupExeFolder(), delete=True)
+                file.close # should autodelete
+            except:
+                self.ui.checkBoxPortableMode.setDisabled(True)
+
         if 'darwin' in sys.platform:
             self.ui.checkBoxStartOnLogon.setDisabled(True)
             self.ui.checkBoxStartOnLogon.setText(_translate(
