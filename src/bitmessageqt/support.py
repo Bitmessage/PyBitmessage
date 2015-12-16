@@ -29,6 +29,7 @@ Please describe what you happens instead:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Please write above this line and if possible, keep the information about your environment below intact.
 
+PyBitmesage version: {}
 Operating system: {}
 Architecture: {}bit
 Frozen: {}
@@ -74,6 +75,7 @@ def createSupportMessage(myapp):
     myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
     myapp.ui.lineEditTo.setText(SUPPORT_ADDRESS)
     
+    version = shared.softwareVersion
     os = sys.platform
     if os == "win32":
         windowsversion = sys.getwindowsversion()
@@ -100,7 +102,7 @@ def createSupportMessage(myapp):
         upnp = "N/A"
     connectedhosts = len(shared.connectedHostsList)
 
-    myapp.ui.textEditMessage.setText(str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(os, architecture, frozen, cpow, openclpow, locale, socks, upnp, connectedhosts))
+    myapp.ui.textEditMessage.setText(str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(version, os, architecture, frozen, cpow, openclpow, locale, socks, upnp, connectedhosts))
 
     # single msg tab
     myapp.ui.tabWidgetSend.setCurrentIndex(0)
