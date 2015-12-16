@@ -899,10 +899,10 @@ class singleWorker(threading.Thread, StoppableThread):
         payload += encodeVarint(streamNumber)
         if addressVersionNumber <= 3:
             payload += ripe
-            logger.info('making request for pubkey with ripe:', ripe.encode('hex'))
+            logger.info('making request for pubkey with ripe: %s', ripe.encode('hex'))
         else:
             payload += tag
-            logger.info('making request for v4 pubkey with tag:', tag.encode('hex'))
+            logger.info('making request for v4 pubkey with tag: %s', tag.encode('hex'))
 
         # print 'trial value', trialValue
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
