@@ -1,4 +1,5 @@
 import ctypes
+from os import uname
 from PyQt4 import QtCore, QtGui
 import sys
 
@@ -82,7 +83,7 @@ def createSupportMessage(myapp):
         windowsversion = sys.getwindowsversion()
         os = "Windows " + str(windowsversion[0]) + "." + str(windowsversion[1])
     else:
-        unixversion = os.uname()
+        unixversion = uname()
         os = unixversion[0] + " " + unixversion[2]
     architecture = "32" if ctypes.sizeof(ctypes.c_voidp) == 4 else "64"
     frozen = "N/A"
