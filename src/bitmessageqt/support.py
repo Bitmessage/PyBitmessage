@@ -1,5 +1,4 @@
 import ctypes
-from os import uname
 from PyQt4 import QtCore, QtGui
 import sys
 
@@ -17,14 +16,13 @@ SUPPORT_ADDRESS = 'BM-2cTkCtMYkrSPwFTpgcBrMrf5d8oZwvMZWK'
 SUPPORT_LABEL = 'PyBitmessage support'
 SUPPORT_MY_LABEL = 'My new address'
 SUPPORT_SUBJECT = 'Support request'
-SUPPORT_MESSAGE = '''
-You can use this message to send a report to one of the PyBitmessage core developers regarding PyBitmessage or the mailchuck.com email service. If you are using PyBitmessage involuntarily, for example because your computer was infected with ransomware, this is not an appropriate venue for resolving such issues.
+SUPPORT_MESSAGE = '''You can use this message to send a report to one of the PyBitmessage core developers regarding PyBitmessage or the mailchuck.com email service. If you are using PyBitmessage involuntarily, for example because your computer was infected with ransomware, this is not an appropriate venue for resolving such issues.
 
 Please describe what are you trying to do:
 
 Please describe what you expect to happen:
 
-Please describe what you happens instead:
+Please describe what happens instead:
 
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
@@ -83,8 +81,12 @@ def createSupportMessage(myapp):
         windowsversion = sys.getwindowsversion()
         os = "Windows " + str(windowsversion[0]) + "." + str(windowsversion[1])
     else:
-        unixversion = uname()
-        os = unixversion[0] + " " + unixversion[2]
+        try:
+            from os import uname
+            unixversion = uname()
+            os = unixversion[0] + " " + unixversion[2]
+        except:
+            pass
     architecture = "32" if ctypes.sizeof(ctypes.c_voidp) == 4 else "64"
     frozen = "N/A"
     if shared.frozen:
