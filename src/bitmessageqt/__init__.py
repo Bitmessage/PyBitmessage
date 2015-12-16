@@ -841,6 +841,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.show()
             self.setWindowState(
                 self.windowState() & ~QtCore.Qt.WindowMinimized | QtCore.Qt.WindowActive)
+            self.raise_()
             self.activateWindow()
 
     # pointer to the application
@@ -857,7 +858,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
         if not self.actionShow.isChecked():
             self.actionShow.setChecked(True)
-            self.appIndicatorShowOrHideWindow()
+        self.appIndicatorShowOrHideWindow()
 
     # unchecks the show item on the application indicator
     def appIndicatorHide(self):
