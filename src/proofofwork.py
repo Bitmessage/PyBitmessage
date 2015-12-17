@@ -11,38 +11,6 @@ import tr
 import os
 import ctypes
 
-bitmsglib = 'bitmsghash.so'
-if "win32" == sys.platform:
-    if ctypes.sizeof(ctypes.c_voidp) == 4:
-        bitmsglib = 'bitmsghash32.dll'
-    else:
-        bitmsglib = 'bitmsghash64.dll'
-    try:
-        # MSVS
-        bso = ctypes.WinDLL(os.path.join(codePath(), "bitmsghash", bitmsglib))
-        logger.info("Loaded C PoW DLL (stdcall) %s", bitmsglib)
-    except:
-        try:
-            # MinGW
-            bso = ctypes.CDLL(os.path.join(codePath(), "bitmsghash", bitmsglib))
-            logger.info("Loaded C PoW DLL (cdecl) %s", bitmsglib)
-        except:
-            bso = None
-else:
-    try:
-        bso = ctypes.CDLL(os.path.join(codePath(), "bitmsghash", bitmsglib))
-        logger.info("Loaded C PoW DLL %s", bitmsglib)
-    except:
-        bso = None
-if bso:
-    try:
-        bmpow = bso.BitmessagePOW
-        bmpow.restype = ctypes.c_ulonglong
-    except:
-        bmpow = None
-else:
-    bmpow = None
-
 def _set_idle():
     if 'linux' in sys.platform:
         import os
@@ -186,3 +154,47 @@ def run(target, initialHash):
         except:
             pass #fallback
     return _doSafePoW(target, initialHash)
+
+# init
+bitmsglib = 'bitmsghash.so'
+if "win32" == sys.platform:
+    if ctypes.sizeof(ctypes.c_voidp) == 4:
+        bitmsglib = 'bitmsghash32.dll'
+    else:
+        bitmsglib = 'bitmsghash64.dll'
+    try:
+        # MSVS
+        bso = ctypes.WinDLL(os.path.join(codePath(), "bitmsghash", bitmsglib))
+        logger.info("Loaded C PoW DLL (stdcall) %s", bitmsglib)
+        bmpow = bso.BitmessagePOW
+        bmpow.restype = ctypes.c_ulonglong
+        _doCPoW(2**63, "")
+        logger.info("Successfully tested C PoW DLL (stdcall) %s", bitmsglib)
+    except:
+        logger.error("C PoW test fail.", exc_info=True)
+        try:
+            # MinGW
+            bso = ctypes.CDLL(os.path.join(codePath(), "bitmsghash", bitmsglib))
+            logger.info("Loaded C PoW DLL (cdecl) %s", bitmsglib)
+            bmpow = bso.BitmessagePOW
+            bmpow.restype = ctypes.c_ulonglong
+            _doCPoW(2**63, "")
+            logger.info("Successfully tested C PoW DLL (cdecl) %s", bitmsglib)
+        except:
+            logger.error("C PoW test fail.", exc_info=True)
+            bso = None
+else:
+    try:
+        bso = ctypes.CDLL(os.path.join(codePath(), "bitmsghash", bitmsglib))
+        logger.info("Loaded C PoW DLL %s", bitmsglib)
+    except:
+        bso = None
+if bso:
+    try:
+        bmpow = bso.BitmessagePOW
+        bmpow.restype = ctypes.c_ulonglong
+    except:
+        bmpow = None
+else:
+    bmpow = None
+
