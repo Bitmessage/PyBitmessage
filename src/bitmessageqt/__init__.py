@@ -1065,6 +1065,10 @@ class MyForm(settingsmixin.SMainWindow):
             acct = accountClass(fromAddress)
         else:
             acct = accountClass(toAddress)
+            if acct is None:
+                acct = accountClass(fromAddress)
+        if acct is None:
+            acct = BMAccount(fromAddress)
         subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         acct.parseMessage(toAddress, fromAddress, subject, "")
             
