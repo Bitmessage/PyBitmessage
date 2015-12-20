@@ -2994,8 +2994,8 @@ class MyForm(settingsmixin.SMainWindow):
             if not tableWidget.item(currentRow, 0).font().bold():
                 modified += 1
             inventoryHashesToMarkUnread.append(inventoryHashToMarkUnread)
-            tableWidget.item(currentRow, 0).setFont(font)
-            tableWidget.item(currentRow, 1).setFont(font)
+            tableWidget.item(currentRow, 0).setUnread(True)
+            tableWidget.item(currentRow, 1).setUnread(True)
             tableWidget.item(currentRow, 2).setFont(font)
             tableWidget.item(currentRow, 3).setFont(font)
         #sqlite requires the exact number of ?s to prevent injection
