@@ -1896,8 +1896,8 @@ class MyForm(settingsmixin.SMainWindow):
                 continue
 
             for i in range(sent.rowCount()):
-                rowAddress = str(sent.item(
-                    i, 0).data(Qt.UserRole).toPyObject())
+                rowAddress = sent.item(
+                    i, 0).data(Qt.UserRole)
                 if toAddress == rowAddress:
                     sent.item(i, 3).setToolTip(textToDisplay)
                     try:
@@ -1916,8 +1916,8 @@ class MyForm(settingsmixin.SMainWindow):
             if self.getCurrentFolder(treeWidget) != "sent":
                 continue
             for i in range(sent.rowCount()):
-                toAddress = str(sent.item(
-                    i, 0).data(Qt.UserRole).toPyObject())
+                toAddress = sent.item(
+                    i, 0).data(Qt.UserRole)
                 tableAckdata = sent.item(
                     i, 3).data(Qt.UserRole).toPyObject()
                 status, addressVersionNumber, streamNumber, ripe = decodeAddress(
@@ -1944,7 +1944,7 @@ class MyForm(settingsmixin.SMainWindow):
                     self.statusBar().showMessage(_translate(
                         "MainWindow", "Message trashed"))
                     treeWidget = self.widgetConvert(inbox)
-                    self.propagateUnreadCount(str(inbox.item(i, 1 if inbox == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole).toPyObject()), self.getCurrentFolder(treeWidget), treeWidget, 0)
+                    self.propagateUnreadCount(inbox.item(i, 1 if inbox == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), self.getCurrentFolder(treeWidget), treeWidget, 0)
                     inbox.removeRow(i)
                     break
         
@@ -1980,8 +1980,8 @@ class MyForm(settingsmixin.SMainWindow):
 
     def rerenderInboxFromLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
-            addressToLookup = str(self.ui.tableWidgetInbox.item(
-                i, 1).data(Qt.UserRole).toPyObject())
+            addressToLookup = self.ui.tableWidgetInbox.item(
+                i, 1).data(Qt.UserRole)
             fromLabel = ''
             queryreturn = sqlQuery(
                 '''select label from addressbook where address=?''', addressToLookup)
@@ -2020,8 +2020,8 @@ class MyForm(settingsmixin.SMainWindow):
 
     def rerenderInboxToLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
-            toAddress = str(self.ui.tableWidgetInbox.item(
-                i, 0).data(Qt.UserRole).toPyObject())
+            toAddress = self.ui.tableWidgetInbox.item(
+                i, 0).data(Qt.UserRole)
             # Message might be to an address we own like a chan address. Let's look for that label.
             if shared.config.has_section(toAddress):
                 toLabel = shared.config.get(toAddress, 'label')
@@ -2043,8 +2043,8 @@ class MyForm(settingsmixin.SMainWindow):
 
     def rerenderSentFromLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
-            fromAddress = str(self.ui.tableWidgetInbox.item(
-                i, 1).data(Qt.UserRole).toPyObject())
+            fromAddress = self.ui.tableWidgetInbox.item(
+                i, 1).data(Qt.UserRole)
             # Message might be from an address we own like a chan address. Let's look for that label.
             if shared.config.has_section(fromAddress):
                 fromLabel = shared.config.get(fromAddress, 'label')
@@ -2057,8 +2057,8 @@ class MyForm(settingsmixin.SMainWindow):
 
     def rerenderSentToLabels(self):
         for i in range(self.ui.tableWidgetInbox.rowCount()):
-            addressToLookup = str(self.ui.tableWidgetInbox.item(
-                i, 0).data(Qt.UserRole).toPyObject())
+            addressToLookup = self.ui.tableWidgetInbox.item(
+                i, 0).data(Qt.UserRole)
             toLabel = ''
             queryreturn = sqlQuery(
                 '''select label from addressbook where address=?''', addressToLookup)
@@ -3003,9 +3003,9 @@ class MyForm(settingsmixin.SMainWindow):
             "?," * len(inventoryHashesToMarkUnread))[:-1], *inventoryHashesToMarkUnread)
         if modified == 1:
             # performance optimisation
-            self.propagateUnreadCount(str(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole).toPyObject()), self.getCurrentFolder())
+            self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), self.getCurrentFolder())
         else:
-            self.propagateUnreadCount(str(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole).toPyObject()), self.getCurrentFolder(), self.getCurrentTreeWidget(), 0)
+            self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), self.getCurrentFolder(), self.getCurrentTreeWidget(), 0)
         # tableWidget.selectRow(currentRow + 1) 
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
@@ -3048,11 +3048,11 @@ class MyForm(settingsmixin.SMainWindow):
         self.replyFromTab = self.ui.tabWidget.currentIndex()
         
         currentInboxRow = tableWidget.currentRow()
-        toAddressAtCurrentInboxRow = str(tableWidget.item(
-            currentInboxRow, 0).data(Qt.UserRole).toPyObject())
+        toAddressAtCurrentInboxRow = tableWidget.item(
+            currentInboxRow, 0).data(Qt.UserRole)
         acct = accountClass(toAddressAtCurrentInboxRow)
-        fromAddressAtCurrentInboxRow = str(tableWidget.item(
-            currentInboxRow, 1).data(Qt.UserRole).toPyObject())
+        fromAddressAtCurrentInboxRow = tableWidget.item(
+            currentInboxRow, 1).data(Qt.UserRole)
         msgid = str(tableWidget.item(
             currentInboxRow, 3).data(Qt.UserRole).toPyObject())
         queryreturn = sqlQuery(
@@ -3114,8 +3114,8 @@ class MyForm(settingsmixin.SMainWindow):
             return
         currentInboxRow = tableWidget.currentRow()
         # tableWidget.item(currentRow,1).data(Qt.UserRole).toPyObject()
-        addressAtCurrentInboxRow = str(tableWidget.item(
-            currentInboxRow, 1).data(Qt.UserRole).toPyObject())
+        addressAtCurrentInboxRow = tableWidget.item(
+            currentInboxRow, 1).data(Qt.UserRole)
         # Let's make sure that it isn't already in the address book
         queryreturn = sqlQuery('''select * from addressbook where address=?''',
                                addressAtCurrentInboxRow)
@@ -3136,10 +3136,10 @@ class MyForm(settingsmixin.SMainWindow):
             return
         currentInboxRow = tableWidget.currentRow()
         # tableWidget.item(currentRow,1).data(Qt.UserRole).toPyObject()
-        addressAtCurrentInboxRow = str(tableWidget.item(
-            currentInboxRow, 1).data(Qt.UserRole).toPyObject())
-        recipientAddress = str(tableWidget.item(
-            currentInboxRow, 0).data(Qt.UserRole).toPyObject())
+        addressAtCurrentInboxRow = tableWidget.item(
+            currentInboxRow, 1).data(Qt.UserRole)
+        recipientAddress = tableWidget.item(
+            currentInboxRow, 0).data(Qt.UserRole)
         # Let's make sure that it isn't already in the address book
         queryreturn = sqlQuery('''select * from blacklist where address=?''',
                                addressAtCurrentInboxRow)
@@ -3173,9 +3173,9 @@ class MyForm(settingsmixin.SMainWindow):
             else:
                 sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', inventoryHashToTrash)
             if tableWidget.item(currentRow, 0).font().bold():
-                self.propagateUnreadCount(str(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole).toPyObject()), folder, self.getCurrentTreeWidget(), -1)
+                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
                 if folder != "trash" and not shifted:
-                    self.propagateUnreadCount(str(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole).toPyObject()), "trash", self.getCurrentTreeWidget(), 1)
+                    self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), "trash", self.getCurrentTreeWidget(), 1)
 
             self.getCurrentMessageTextedit().setText("")
             tableWidget.removeRow(currentRow)
@@ -3198,8 +3198,8 @@ class MyForm(settingsmixin.SMainWindow):
                 currentRow, 3).data(Qt.UserRole).toPyObject())
             sqlExecute('''UPDATE inbox SET folder='inbox' WHERE msgid=?''', inventoryHashToTrash)
             if tableWidget.item(currentRow, 0).font().bold():
-                self.propagateUnreadCount(str(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole).toPyObject()), "inbox", self.getCurrentTreeWidget(), 1)
-                self.propagateUnreadCount(str(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole).toPyObject()), "trash", self.getCurrentTreeWidget(), -1)
+                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), "inbox", self.getCurrentTreeWidget(), 1)
+                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), "trash", self.getCurrentTreeWidget(), -1)
             self.getCurrentMessageTextedit().setText("")
             tableWidget.removeRow(currentRow)
             self.statusBar().showMessage(_translate(
@@ -3258,7 +3258,7 @@ class MyForm(settingsmixin.SMainWindow):
             else:
                 sqlExecute('''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdataToTrash)
             if tableWidget.item(currentRow, 0).font().bold():
-                self.propagateUnreadCount(str(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole).toPyObject()), folder, self.getCurrentTreeWidget(), -1)
+                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
             self.getCurrentMessageTextedit().setPlainText("")
             tableWidget.removeRow(currentRow)
             self.statusBar().showMessage(_translate(
@@ -3270,8 +3270,8 @@ class MyForm(settingsmixin.SMainWindow):
 
     def on_action_ForceSend(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
-        addressAtCurrentRow = str(self.ui.tableWidgetInbox.item(
-            currentRow, 0).data(Qt.UserRole).toPyObject())
+        addressAtCurrentRow = self.ui.tableWidgetInbox.item(
+            currentRow, 0).data(Qt.UserRole)
         toRipe = decodeAddress(addressAtCurrentRow)[3]
         sqlExecute(
             '''UPDATE sent SET status='forcepow' WHERE toripe=? AND status='toodifficult' and folder='sent' ''',
@@ -3285,8 +3285,8 @@ class MyForm(settingsmixin.SMainWindow):
 
     def on_action_SentClipboard(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
-        addressAtCurrentRow = str(self.ui.tableWidgetInbox.item(
-            currentRow, 0).data(Qt.UserRole).toPyObject())
+        addressAtCurrentRow = self.ui.tableWidgetInbox.item(
+            currentRow, 0).data(Qt.UserRole)
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(str(addressAtCurrentRow))
 
@@ -3721,18 +3721,18 @@ class MyForm(settingsmixin.SMainWindow):
             else:
                 currentColumn = 1
         if self.getCurrentFolder() == "sent":
-            myAddress = str(tableWidget.item(currentRow, 1).data(Qt.UserRole).toPyObject())
-            otherAddress = str(tableWidget.item(currentRow, 0).data(Qt.UserRole).toPyObject())
+            myAddress = tableWidget.item(currentRow, 1).data(Qt.UserRole)
+            otherAddress = tableWidget.item(currentRow, 0).data(Qt.UserRole)
         else:
-            myAddress = str(tableWidget.item(currentRow, 0).data(Qt.UserRole).toPyObject())
-            otherAddress = str(tableWidget.item(currentRow, 1).data(Qt.UserRole).toPyObject())
+            myAddress = tableWidget.item(currentRow, 0).data(Qt.UserRole)
+            otherAddress = tableWidget.item(currentRow, 1).data(Qt.UserRole)
         account = accountClass(myAddress)
         if isinstance(account, GatewayAccount) and otherAddress == account.relayAddress and (
             (currentColumn in [0, 2] and self.getCurrentFolder() == "sent") or
             (currentColumn in [1, 2] and self.getCurrentFolder() != "sent")):
-            text = str(tableWidget.item(currentRow, currentColumn).text())
+            text = str(tableWidget.item(currentRow, currentColumn).label)
         else:
-            text = str(tableWidget.item(currentRow, currentColumn).data(Qt.UserRole).toPyObject())
+            text = tableWidget.item(currentRow, currentColumn).data(Qt.UserRole)
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(str(text))
 
@@ -3870,8 +3870,8 @@ class MyForm(settingsmixin.SMainWindow):
                 self.popMenuInbox.addAction(self.actionForceHtml)
                 self.popMenuInbox.addAction(self.actionMarkUnread)
                 self.popMenuInbox.addSeparator()
-                address = str(tableWidget.item(
-                    tableWidget.currentRow(), 0).data(Qt.UserRole).toPyObject())
+                address = tableWidget.item(
+                    tableWidget.currentRow(), 0).data(Qt.UserRole)
                 account = accountClass(address)
                 if account.type == AccountMixin.CHAN:
                     self.popMenuInbox.addAction(self.actionReplyChan)
@@ -4011,13 +4011,11 @@ class MyForm(settingsmixin.SMainWindow):
 #                inventoryHashToMarkRead = str(tableWidget.item(
 #                    currentRow, 3).data(Qt.UserRole).toPyObject())
 #                inventoryHashesToMarkRead.append(inventoryHashToMarkRead)
-                tableWidget.item(currentRow, 0).setFont(font)
-                tableWidget.item(currentRow, 0).setTextColor(AccountColor(str(tableWidget.item(currentRow, 0).data(Qt.UserRole).toPyObject())).accountColor())
-                tableWidget.item(currentRow, 1).setFont(font)
-                tableWidget.item(currentRow, 1).setTextColor(AccountColor(str(tableWidget.item(currentRow, 1).data(Qt.UserRole).toPyObject())).accountColor())
+                tableWidget.item(currentRow, 0).setUnread(False)
+                tableWidget.item(currentRow, 1).setUnread(False)
                 tableWidget.item(currentRow, 2).setFont(font)
                 tableWidget.item(currentRow, 3).setFont(font)
-                self.propagateUnreadCount(str(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole).toPyObject()), folder, self.getCurrentTreeWidget(), -1)
+                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
 
         else:
             data = self.getCurrentMessageId()
