@@ -1980,6 +1980,7 @@ class MyForm(settingsmixin.SMainWindow):
             os._exit(0)
 
     def rerenderInboxFromLabels(self):
+        return
         for i in range(self.ui.tableWidgetInbox.rowCount()):
             addressToLookup = self.ui.tableWidgetInbox.item(
                 i, 1).data(Qt.UserRole)
@@ -2020,6 +2021,7 @@ class MyForm(settingsmixin.SMainWindow):
                     
 
     def rerenderInboxToLabels(self):
+        return
         for i in range(self.ui.tableWidgetInbox.rowCount()):
             toAddress = self.ui.tableWidgetInbox.item(
                 i, 0).data(Qt.UserRole)
@@ -2043,6 +2045,7 @@ class MyForm(settingsmixin.SMainWindow):
                     i, 0).setTextColor(QApplication.palette().text().color())
 
     def rerenderSentFromLabels(self):
+        return
         for i in range(self.ui.tableWidgetInbox.rowCount()):
             fromAddress = self.ui.tableWidgetInbox.item(
                 i, 1).data(Qt.UserRole)
@@ -2057,6 +2060,7 @@ class MyForm(settingsmixin.SMainWindow):
                 i, 1).setIcon(avatarize(fromAddress))
 
     def rerenderSentToLabels(self):
+        return
         for i in range(self.ui.tableWidgetInbox.rowCount()):
             addressToLookup = self.ui.tableWidgetInbox.item(
                 i, 0).data(Qt.UserRole)
