@@ -985,23 +985,9 @@ class MyForm(settingsmixin.SMainWindow):
         acct.parseMessage(toAddress, fromAddress, subject, "")
 
         items = []
-        toAddressItem = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
-        toAddressItem.setToolTip(unicode(acct.toLabel, 'utf-8') + " (" + str(acct.toAddress) + ")")
-        toAddressItem.setIcon(avatarize(toAddress))
-        toAddressItem.setData(Qt.UserRole, str(toAddress))
-        toAddressItem.setTextColor(AccountColor(toAddress).accountColor())
-        toAddressItem.setFlags(
-            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        items.append(toAddressItem)
+        MessageList_AddressWidget(items, str(acct.toAddress), unicode(acct.toLabel, 'utf-8'))
 
-        fromAddressItem = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
-        fromAddressItem.setToolTip(unicode(acct.fromLabel, 'utf-8') + " (" + str(acct.fromAddress) + ")")
-        fromAddressItem.setIcon(avatarize(fromAddress))
-        fromAddressItem.setData(Qt.UserRole, str(fromAddress))
-        fromAddressItem.setTextColor(AccountColor(fromAddress).accountColor())
-        fromAddressItem.setFlags(
-            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        items.append(fromAddressItem)
+        MessageList_AddressWidget(items, str(acct.fromAddress), unicode(acct.fromLabel, 'utf-8'))
 
         subjectItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8'))
         subjectItem.setToolTip(unicode(acct.subject, 'utf-8'))
@@ -1075,27 +1061,9 @@ class MyForm(settingsmixin.SMainWindow):
             
         items = []
         #to
-        to_item = QtGui.QTableWidgetItem(unicode(acct.toLabel, 'utf-8'))
-        to_item.setToolTip(unicode(acct.toLabel, 'utf-8') + " (" + str(acct.toAddress) + ")")
-        to_item.setFlags(
-            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        if not read:
-            to_item.setFont(font)
-        to_item.setData(Qt.UserRole, str(toAddress))
-        to_item.setTextColor(AccountColor(toAddress).accountColor())
-        to_item.setIcon(avatarize(toAddress))
-        items.append(to_item)
+        MessageList_AddressWidget(items, str(acct.toAddress), unicode(acct.toLabel, 'utf-8'), not read)
         # from
-        from_item = QtGui.QTableWidgetItem(unicode(acct.fromLabel, 'utf-8'))
-        from_item.setToolTip(unicode(acct.fromLabel, 'utf-8') + " (" + str(fromAddress) + ")")
-        from_item.setFlags(
-            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        if not read:
-            from_item.setFont(font)
-        from_item.setData(Qt.UserRole, str(fromAddress))
-        from_item.setTextColor(AccountColor(fromAddress).accountColor())
-        from_item.setIcon(avatarize(fromAddress))
-        items.append(from_item)
+        MessageList_AddressWidget(items, str(acct.fromAddress), unicode(acct.fromLabel, 'utf-8'), not read)
         # subject
         subject_item = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8'))
         subject_item.setToolTip(unicode(acct.subject, 'utf-8'))
