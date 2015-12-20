@@ -261,8 +261,69 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         if not self.initialised:
             return
         self.emitDataChanged()
+
+
+class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMixin):
+    def __init__(self, parent, address = None, label = None, unread = False):
+        super(QtGui.QTableWidgetItem, self).__init__()
+        #parent.insertTopLevelItem(pos, self)
+        # only set default when creating
+        #super(QtGui.QTreeWidgetItem, self).setExpanded(shared.config.getboolean(self.address, 'enabled'))
+        self.initialised = False
+        self.isEnabled = True
+        self.setAddress(address)
+        self.setLabel(label)
+        self.setUnread(unread)
+        self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        self.initialised = True
+        self.setType() # does updateText
+        parent.append(self)
+
+    def setLabel(self, label = None):
+        if label is None:
+            label = unicode(shared.config.get(self.address, 'label'), 'utf-8)')
+        else:
+            self.label = label
+    
+    def setUnread(self, unread):
+        self.unread = unread
+
+    def data(self, role):
+        if role == QtCore.Qt.DisplayRole:
+            return self.label
+        elif role == QtCore.Qt.EditRole:
+            return self.label
+        elif role == QtCore.Qt.ToolTipRole:
+            return self.label + " (" + self.address + ")"
+        elif role == QtCore.Qt.DecorationRole:
+            if shared.safeConfigGetBoolean('bitmessagesettings', 'useidenticons'):
+                if self.address is None:
+                    return avatarize(self.label)
+                else:
+                    return avatarize(self.address)
+        elif role == QtCore.Qt.FontRole:
+            font = QtGui.QFont()
+            font.setBold(self.unread)
+            return font
+        elif role == QtCore.Qt.ForegroundRole:
+            return self.accountBrush()
+        elif role == QtCore.Qt.UserRole:
+            return self.address
+        return super(MessageList_AddressWidget, self).data(role)
         
-        
+    def setData(self, role, value):
+        if role == QtCore.Qt.EditRole:
+            self.setLabel()
+            return
+        return super(MessageList_AddressWidget, self).setData(role, value)
+
+    # label (or address) alphabetically, disabled at the end
+    def __lt__(self, other):
+        if (isinstance(other, MessageList_AddressWidget)):
+            return self.label.lower() < other.label.lower()
+        return super(QtGui.QTableWidgetItem, self).__lt__(other)
+
+
 class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
     def __init__ (self, text, type = AccountMixin.NORMAL):
         super(QtGui.QTableWidgetItem, self).__init__(text)
