@@ -284,9 +284,13 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
             label = unicode(shared.config.get(self.address, 'label'), 'utf-8)')
         else:
             self.label = label
-    
+        if self.initialised:
+            self.emitDataChanged()
+
     def setUnread(self, unread):
         self.unread = unread
+        if self.initialised:
+            self.emitDataChanged()
 
     def data(self, role):
         if role == QtCore.Qt.DisplayRole:
