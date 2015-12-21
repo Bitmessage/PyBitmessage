@@ -1,6 +1,7 @@
 import ctypes
 from PyQt4 import QtCore, QtGui
 import sys
+import time
 
 import account
 from debug import logger
