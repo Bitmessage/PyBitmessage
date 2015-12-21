@@ -207,7 +207,11 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
 
 def lookupExeFolder():
     if frozen:
-        exeFolder = path.dirname(sys.executable) + path.sep
+        if frozen == "macosx_app":
+            # targetdir/Bitmessage.app/Contents/MacOS/Bitmessage
+            exeFolder = path.dirname(path.dirname(path.dirname(path.dirname(sys.executable)))) + path.sep
+        else:
+            exeFolder = path.dirname(sys.executable) + path.sep
     elif __file__:
         exeFolder = path.dirname(__file__) + path.sep
     else:
