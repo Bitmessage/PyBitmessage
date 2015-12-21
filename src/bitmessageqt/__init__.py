@@ -984,16 +984,9 @@ class MyForm(settingsmixin.SMainWindow):
         acct.parseMessage(toAddress, fromAddress, subject, "")
 
         items = []
-        MessageList_AddressWidget(items, str(acct.toAddress), unicode(acct.toLabel, 'utf-8'))
-
-        MessageList_AddressWidget(items, str(acct.fromAddress), unicode(acct.fromLabel, 'utf-8'))
-
-        subjectItem = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8'))
-        subjectItem.setToolTip(unicode(acct.subject, 'utf-8'))
-        subjectItem.setData(Qt.UserRole, str(subject))
-        subjectItem.setFlags(
-            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        items.append(subjectItem)
+        MessageList_AddressWidget(items, str(toAddress), unicode(acct.toLabel, 'utf-8'))
+        MessageList_AddressWidget(items, str(fromAddress), unicode(acct.fromLabel, 'utf-8'))
+        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8'))
 
         if status == 'awaitingpubkey':
             statusText = _translate(
@@ -1060,18 +1053,11 @@ class MyForm(settingsmixin.SMainWindow):
             
         items = []
         #to
-        MessageList_AddressWidget(items, str(acct.toAddress), unicode(acct.toLabel, 'utf-8'), not read)
+        MessageList_AddressWidget(items, toAddress, unicode(acct.toLabel, 'utf-8'), not read)
         # from
-        MessageList_AddressWidget(items, str(acct.fromAddress), unicode(acct.fromLabel, 'utf-8'), not read)
+        MessageList_AddressWidget(items, fromAddress, unicode(acct.fromLabel, 'utf-8'), not read)
         # subject
-        subject_item = QtGui.QTableWidgetItem(unicode(acct.subject, 'utf-8'))
-        subject_item.setToolTip(unicode(acct.subject, 'utf-8'))
-        subject_item.setData(Qt.UserRole, str(subject))
-        subject_item.setFlags(
-            QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        if not read:
-            subject_item.setFont(font)
-        items.append(subject_item)
+        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8'), not read)
         # time received
         time_item = myTableWidgetItem(l10n.formatTimestamp(received))
         time_item.setToolTip(l10n.formatTimestamp(received))
@@ -3000,7 +2986,7 @@ class MyForm(settingsmixin.SMainWindow):
             inventoryHashesToMarkUnread.append(inventoryHashToMarkUnread)
             tableWidget.item(currentRow, 0).setUnread(True)
             tableWidget.item(currentRow, 1).setUnread(True)
-            tableWidget.item(currentRow, 2).setFont(font)
+            tableWidget.item(currentRow, 2).setUnread(True)
             tableWidget.item(currentRow, 3).setFont(font)
         #sqlite requires the exact number of ?s to prevent injection
         sqlExecute('''UPDATE inbox SET read=0 WHERE msgid IN (%s)''' % (
@@ -3064,7 +3050,7 @@ class MyForm(settingsmixin.SMainWindow):
         if queryreturn != []:
             for row in queryreturn:
                 messageAtCurrentInboxRow, = row
-        acct.parseMessage(toAddressAtCurrentInboxRow, fromAddressAtCurrentInboxRow, unicode(tableWidget.item(currentInboxRow, 2).data(Qt.UserRole).toPyObject(), 'utf-8'), messageAtCurrentInboxRow)
+        acct.parseMessage(toAddressAtCurrentInboxRow, fromAddressAtCurrentInboxRow, tableWidget.item(currentInboxRow, 2).subject, messageAtCurrentInboxRow)
         widget = {
             'subject': self.ui.lineEditSubject,
             'from': self.ui.comboBoxSendFrom,
@@ -3148,7 +3134,7 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = sqlQuery('''select * from blacklist where address=?''',
                                addressAtCurrentInboxRow)
         if queryreturn == []:
-            label = "\"" + unicode(tableWidget.item(currentInboxRow, 2).data(Qt.UserRole).toString(), 'utf-8') + "\" in " + shared.config.get(recipientAddress, "label")
+            label = "\"" + tableWidget.item(currentInboxRow, 2).subject + "\" in " + shared.config.get(recipientAddress, "label")
             sqlExecute('''INSERT INTO blacklist VALUES (?,?, ?)''',
                        label,
                        addressAtCurrentInboxRow, True)
@@ -3219,7 +3205,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
         currentInboxRow = tableWidget.currentRow()
         try:
-            subjectAtCurrentInboxRow = str(tableWidget.item(currentInboxRow,2).text())
+            subjectAtCurrentInboxRow = str(tableWidget.item(currentInboxRow,2).data(Qt.UserRole))
         except:
             subjectAtCurrentInboxRow = ''
 
@@ -4017,7 +4003,7 @@ class MyForm(settingsmixin.SMainWindow):
 #                inventoryHashesToMarkRead.append(inventoryHashToMarkRead)
                 tableWidget.item(currentRow, 0).setUnread(False)
                 tableWidget.item(currentRow, 1).setUnread(False)
-                tableWidget.item(currentRow, 2).setFont(font)
+                tableWidget.item(currentRow, 2).setUnread(False)
                 tableWidget.item(currentRow, 3).setFont(font)
                 self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
 
