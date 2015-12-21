@@ -324,6 +324,52 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
         return super(QtGui.QTableWidgetItem, self).__lt__(other)
 
 
+class MessageList_SubjectWidget(QtGui.QTableWidgetItem, SettingsMixin):
+    def __init__(self, parent, subject = None, label = None, unread = False):
+        super(QtGui.QTableWidgetItem, self).__init__()
+        #parent.insertTopLevelItem(pos, self)
+        # only set default when creating
+        #super(QtGui.QTreeWidgetItem, self).setExpanded(shared.config.getboolean(self.address, 'enabled'))
+        self.setSubject(subject)
+        self.setLabel(label)
+        self.setUnread(unread)
+        self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        parent.append(self)
+
+    def setLabel(self, label):
+        self.label = label
+        
+    def setSubject(self, subject):
+        self.subject = subject
+
+    def setUnread(self, unread):
+        self.unread = unread
+
+    def data(self, role):
+        if role == QtCore.Qt.DisplayRole:
+            return self.label
+        elif role == QtCore.Qt.EditRole:
+            return self.label
+        elif role == QtCore.Qt.ToolTipRole:
+            return self.label
+        elif role == QtCore.Qt.FontRole:
+            font = QtGui.QFont()
+            font.setBold(self.unread)
+            return font
+        elif role == QtCore.Qt.UserRole:
+            return self.subject
+        return super(MessageList_SubjectWidget, self).data(role)
+        
+    def setData(self, role, value):
+        return super(MessageList_SubjectWidget, self).setData(role, value)
+
+    # label (or address) alphabetically, disabled at the end
+    def __lt__(self, other):
+        if (isinstance(other, MessageList_SubjectWidget)):
+            return self.label.lower() < other.label.lower()
+        return super(QtGui.QTableWidgetItem, self).__lt__(other)
+
+
 class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
     def __init__ (self, text, type = AccountMixin.NORMAL):
         super(QtGui.QTableWidgetItem, self).__init__(text)
