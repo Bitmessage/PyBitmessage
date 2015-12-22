@@ -18,7 +18,7 @@ setup(
     name = name,
     version = version,
     app = mainscript,
-    data_files=DATA_FILES
+    data_files = DATA_FILES,
     setup_requires = ["py2app"],
     options = dict(
         py2app = dict(
