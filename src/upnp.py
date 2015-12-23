@@ -167,7 +167,10 @@ class uPnPThread(threading.Thread, StoppableThread):
     def __init__ (self):
         threading.Thread.__init__(self, name="uPnPThread")
         self.localPort = shared.config.getint('bitmessagesettings', 'port')
-        self.extPort = None
+        try:
+            self.extPort = shared.config.getint('bitmessagesettings', 'extport')
+        except:
+            self.extPort = None
         self.routers = []
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
@@ -197,7 +200,7 @@ class uPnPThread(threading.Thread, StoppableThread):
                         logger.debug("Found UPnP router at %s", ip)
                         self.routers.append(newRouter)
                         self.createPortMapping(newRouter)
-                        shared.UISignalQueue.put(('updateStatusBar', tr.translateText("MainWindow",'UPnP port mapping established')))
+                        shared.UISignalQueue.put(('updateStatusBar', tr.translateText("MainWindow",'UPnP port mapping established on port {}').format(self.extPort)))
                         break
             except socket.timeout as e:
                 pass
@@ -251,11 +254,15 @@ class uPnPThread(threading.Thread, StoppableThread):
                 localIP = router.localAddress
                 if i == 0:
                     extPort = self.localPort # try same port first
+                elif i == 1 and self.extPort:
+                    extPort = self.extPort # try external port from last time next
                 else:
                     extPort = randint(32767, 65535)
                 logger.debug("Requesting UPnP mapping for %s:%i on external port %i", localIP, self.localPort,  extPort)
                 router.AddPortMapping(extPort, self.localPort, localIP, 'TCP', 'BitMessage')
                 shared.extPort = extPort
+                self.extPort = extPort
+                shared.config.set('bitmessagesettings', 'extport', str(extPort))
                 break
             except UPnPError:
                 logger.debug("UPnP error: ", exc_info=True)
