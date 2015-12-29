@@ -208,7 +208,7 @@ class uPnPThread(threading.Thread, StoppableThread):
                         logger.debug("Found UPnP router at %s", ip)
                         self.routers.append(newRouter)
                         self.createPortMapping(newRouter)
-                        shared.UISignalQueue.put(('updateStatusBar', tr.translateText("MainWindow",'UPnP port mapping established on port {}').format(self.extPort)))
+                        shared.UISignalQueue.put(('updateStatusBar', tr.translateText("MainWindow",'UPnP port mapping established on port %1').arg(str(self.extPort))))
                         break
             except socket.timeout as e:
                 pass
