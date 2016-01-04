@@ -21,6 +21,7 @@ class MessageView(QtGui.QTextBrowser):
         self.outpos = 0
         self.document().setUndoRedoEnabled(False)
         self.rendering = False
+        self.defaultFontPointSize = self.currentFont().pointSize()
         self.verticalScrollBar().valueChanged.connect(self.lazyRender)
     
     def mousePressEvent(self, event):
@@ -32,7 +33,16 @@ class MessageView(QtGui.QTextBrowser):
                 self.showPlain()
         else:
             super(MessageView, self).mousePressEvent(event)
-            
+
+    def wheelEvent(self, event):
+        if (QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
+            numDegrees = event.delta() / 8
+            numSteps = numDegrees / 15
+            zoomDiff = numSteps + self.currentFont().pointSize() - self.defaultFontPointSize
+            QtGui.QApplication.activeWindow().statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Zoom level %1").arg(str(zoomDiff)))
+        # super will actually automatically take care of zooming
+        super(MessageView, self).wheelEvent(event)
+
     def confirmURL(self, link):
         reply = QtGui.QMessageBox.warning(self,
             QtGui.QApplication.translate(type(self).__name__, MessageView.CONFIRM_TITLE),
