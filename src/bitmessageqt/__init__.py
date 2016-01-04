@@ -982,14 +982,13 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.setItem(0, i, items[i])
 
     def addMessageListItemSent(self, tableWidget, toAddress, fromAddress, subject, status, ackdata, lastactiontime):
-        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         acct = accountClass(fromAddress)
         acct.parseMessage(toAddress, fromAddress, subject, "")
 
         items = []
         MessageList_AddressWidget(items, str(toAddress), unicode(acct.toLabel, 'utf-8'))
         MessageList_AddressWidget(items, str(fromAddress), unicode(acct.fromLabel, 'utf-8'))
-        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8'))
+        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'))
 
         if status == 'awaitingpubkey':
             statusText = _translate(
@@ -1051,7 +1050,6 @@ class MyForm(settingsmixin.SMainWindow):
                 acct = accountClass(fromAddress)
         if acct is None:
             acct = BMAccount(fromAddress)
-        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
         acct.parseMessage(toAddress, fromAddress, subject, "")
             
         items = []
@@ -1060,7 +1058,7 @@ class MyForm(settingsmixin.SMainWindow):
         # from
         MessageList_AddressWidget(items, fromAddress, unicode(acct.fromLabel, 'utf-8'), not read)
         # subject
-        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8'), not read)
+        MessageList_SubjectWidget(items, str(subject), unicode(acct.subject, 'utf-8', 'replace'), not read)
         # time received
         time_item = myTableWidgetItem(l10n.formatTimestamp(received))
         time_item.setToolTip(l10n.formatTimestamp(received))
@@ -2404,8 +2402,6 @@ class MyForm(settingsmixin.SMainWindow):
     # pseudo-mailing-list. The message will be broadcast out. This function
     # puts the message on the 'Sent' tab.
     def displayNewSentMessage(self, toAddress, toLabel, fromAddress, subject, message, ackdata):
-        subject = shared.fixPotentiallyInvalidUTF8Data(subject)
-        message = shared.fixPotentiallyInvalidUTF8Data(message)
         acct = accountClass(fromAddress)
         acct.parseMessage(toAddress, fromAddress, subject, message)
         for sent in [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxSubscriptions, self.ui.tableWidgetInboxChans]:
@@ -2418,7 +2414,7 @@ class MyForm(settingsmixin.SMainWindow):
                 continue
             
             self.addMessageListItemSent(sent, toAddress, fromAddress, subject, "msgqueued", ackdata, time.time())
-            self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8)'))
+            self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8)', 'replace'))
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
         if toAddress == str_broadcast_subscribers:
@@ -2434,7 +2430,6 @@ class MyForm(settingsmixin.SMainWindow):
             elif treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) is None:
                 ret = self.addMessageListItemInbox(tableWidget, "inbox", inventoryHash, toAddress, fromAddress, subject, time.time(), 0)
         if ret is None:
-            subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             acct.parseMessage(toAddress, fromAddress, subject, "")
         else:
             acct = ret
@@ -3042,10 +3037,10 @@ class MyForm(settingsmixin.SMainWindow):
         
         currentInboxRow = tableWidget.currentRow()
         toAddressAtCurrentInboxRow = tableWidget.item(
-            currentInboxRow, 0).data(Qt.UserRole)
+            currentInboxRow, 0).address
         acct = accountClass(toAddressAtCurrentInboxRow)
         fromAddressAtCurrentInboxRow = tableWidget.item(
-            currentInboxRow, 1).data(Qt.UserRole)
+            currentInboxRow, 1).address
         msgid = str(tableWidget.item(
             currentInboxRow, 3).data(Qt.UserRole).toPyObject())
         queryreturn = sqlQuery(
@@ -3093,12 +3088,12 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             widget['from'].setCurrentIndex(0)
         
-        quotedText = self.quoted_text(unicode(messageAtCurrentInboxRow, 'utf-8'))
+        quotedText = self.quoted_text(unicode(messageAtCurrentInboxRow, 'utf-8', 'replace'))
         widget['message'].setText(quotedText)
         if acct.subject[0:3] in ['Re:', 'RE:']:
-            widget['subject'].setText(acct.subject)
+            widget['subject'].setText(tableWidget.item(currentInboxRow, 2).label)
         else:
-            widget['subject'].setText('Re: ' + acct.subject)
+            widget['subject'].setText('Re: ' + tableWidget.item(currentInboxRow, 2).label)
         self.ui.tabWidget.setCurrentIndex(1)
 
     def on_action_InboxAddSenderToAddressBook(self):
