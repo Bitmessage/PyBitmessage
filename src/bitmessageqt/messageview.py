@@ -26,7 +26,7 @@ class MessageView(QtGui.QTextBrowser):
     
     def mousePressEvent(self, event):
         #text = textCursor.block().text()
-        if event.button() == QtCore.Qt.LeftButton and self.html.has_html and self.cursorForPosition(event.pos()).block().blockNumber() == 0:
+        if event.button() == QtCore.Qt.LeftButton and self.html and self.html.has_html and self.cursorForPosition(event.pos()).block().blockNumber() == 0:
             if self.mode == MessageView.MODE_PLAIN:
                 self.showHTML()
             else:
