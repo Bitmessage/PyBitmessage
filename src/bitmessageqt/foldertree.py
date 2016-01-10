@@ -61,8 +61,10 @@ class AccountMixin (object):
         self.updateText()
 
     def setType(self):
+        self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
         if self.address is None:
             self.type = self.ALL
+            self.setFlags(self.flags() & ~QtCore.Qt.ItemIsEditable)
         elif shared.safeConfigGetBoolean(self.address, 'chan'):
             self.type = self.CHAN
         elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
@@ -246,7 +248,8 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         return unicode(self.label, 'utf-8)')
         
     def setType(self):
-        self.type = self.SUBSCRIPTION
+        super(Ui_SubscriptionWidget, self).setType() # sets it editable
+        self.type = self.SUBSCRIPTION # overrides type
         
     def setData(self, column, role, value):
         if role == QtCore.Qt.EditRole:
