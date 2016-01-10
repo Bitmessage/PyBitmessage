@@ -477,7 +477,6 @@ class MyForm(settingsmixin.SMainWindow):
                     subwidget = Ui_FolderWidget(widget, j, toAddress, folder, 0)
                 j += 1
             widget.setUnreadCount(unread)
-            widget.setFlags (widget.flags() | QtCore.Qt.ItemIsEditable)
             i += 1
         
         treeWidget.setSortingEnabled(True)
@@ -592,7 +591,6 @@ class MyForm(settingsmixin.SMainWindow):
                 unread += db[toAddress][folder]
                 j += 1
             widget.setUnreadCount(unread)
-            widget.setFlags (widget.flags() | QtCore.Qt.ItemIsEditable)
             i += 1
         
         treeWidget.setSortingEnabled(True)
@@ -3937,6 +3935,9 @@ class MyForm(settingsmixin.SMainWindow):
             return
         # only currently selected item
         if item.address != self.getCurrentAccount():
+            return
+        # "All accounts" can't be renamed
+        if item.type == AccountMixin.ALL:
             return
         
         newLabel = str(item.text(0))
