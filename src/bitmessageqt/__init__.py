@@ -3093,6 +3093,7 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             widget['subject'].setText('Re: ' + tableWidget.item(currentInboxRow, 2).label)
         self.ui.tabWidget.setCurrentIndex(1)
+        widget['message'].setFocus()
 
     def on_action_InboxAddSenderToAddressBook(self):
         tableWidget = self.getCurrentMessagelist()
