@@ -3903,7 +3903,6 @@ class MyForm(settingsmixin.SMainWindow):
         searchOption = self.getCurrentSearchOption()
         if searchLine:
             searchKeyword = searchLine.text().toUtf8().data()
-            searchLine.setText(QString(""))
             messageTextedit = self.getCurrentMessageTextedit()
             if messageTextedit:
                 messageTextedit.setPlainText(QString(""))
