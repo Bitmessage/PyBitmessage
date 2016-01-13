@@ -236,7 +236,7 @@ Es ist wichtig, dass Sie diese Datei sichern.</translation>
 It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)</source>
         <translation>Sie können Ihre Schlüssel verwalten, indem Sie die keys.dat Datei bearbeiten,
 die im Ordner %1 liegt.
-Es ist wichtig, dass Sie diese Datei sichern. Möchten Sie die datei jetzt öffnen?
+Es ist wichtig, dass Sie diese Datei sichern. Möchten Sie die Datei jetzt öffnen?
 (Stellen Sie sicher, dass Bitmessage geschlossen ist, bevor Sie etwas ändern.)</translation>
     </message>
     <message>
@@ -472,7 +472,7 @@ Es ist wichtig, dass Sie diese Datei sichern. Möchten Sie die datei jetzt öffn
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2580"/>
         <source>Bitmessage cannot find your address %1. Perhaps you removed it?</source>
-        <translation>Bitmassage kann Ihre Adresse %1 nicht finden. Haben Sie sie gelöscht?</translation>
+        <translation>Bitmessage kann Ihre Adresse %1 nicht finden. Haben Sie sie gelöscht?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2584"/>
@@ -746,7 +746,7 @@ p, li { white-space: pre-wrap; }
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="628"/>
         <source>Network Status</source>
-        <translation>Netzwerk status</translation>
+        <translation>Netzwerkstatus</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="629"/>
@@ -1191,7 +1191,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/specialaddressbehavior.py" line="62"/>
         <source>Mail received to a pseudo-mailing-list address will be automatically broadcast to subscribers (and thus will be public).</source>
-        <translation>Nachrichten an eine Pseudo-Mailinglistenadresse werden automatisch zu allen Abbonenten weitergeleitet (Der Inhalt ist dann öffentlich).</translation>
+        <translation>Nachrichten an eine Pseudo-Mailinglistenadresse werden automatisch zu allen Abonnenten weitergeleitet (Der Inhalt ist dann öffentlich).</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/specialaddressbehavior.py" line="63"/>
