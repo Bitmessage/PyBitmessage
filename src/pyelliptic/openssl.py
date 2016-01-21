@@ -439,7 +439,7 @@ def loadOpenSSL():
                 path.join(environ['RESOURCEPATH'], '..', 'Frameworks','libcrypto.dylib'),
                 path.join(environ['RESOURCEPATH'], '..', 'Frameworks','libcrypto.1.0.0.dylib')
                 ])
-        elif 'win32' in sys.platform or win64:
+        elif 'win32' in sys.platform or 'win64' in sys.platform:
             lib.append(path.join(sys._MEIPASS, 'libeay32.dll'))
         else:
             libdir.extend([
