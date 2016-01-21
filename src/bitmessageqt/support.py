@@ -1,5 +1,6 @@
 import ctypes
 from PyQt4 import QtCore, QtGui
+import ssl
 import sys
 import time
 
@@ -10,6 +11,7 @@ from helper_sql import *
 from l10n import getTranslationLanguage
 from openclpow import has_opencl
 from proofofwork import bmpow
+from pyelliptic.openssl import OpenSSL
 import shared
 
 # this is BM support address going to Peter Surda
@@ -32,6 +34,8 @@ Please write above this line and if possible, keep the information about your en
 PyBitmesage version: {}
 Operating system: {}
 Architecture: {}bit
+Python Version: {}
+OpenSSL Version: {}
 Frozen: {}
 Portable mode: {}
 C PoW: {}
@@ -89,6 +93,14 @@ def createSupportMessage(myapp):
         except:
             pass
     architecture = "32" if ctypes.sizeof(ctypes.c_voidp) == 4 else "64"
+    pythonversion = sys.version
+    
+    SSLEAY_VERSION = 0
+    OpenSSL._lib.SSLeay.restype = ctypes.c_long
+    OpenSSL._lib.SSLeay_version.restype = ctypes.c_char_p
+    OpenSSL._lib.SSLeay_version.argtypes = [ctypes.c_int]
+    opensslversion = "%s (Python internal), %s (external for PyElliptic)" % (ssl.OPENSSL_VERSION, OpenSSL._lib.SSLeay_version(SSLEAY_VERSION))
+
     frozen = "N/A"
     if shared.frozen:
         frozen = shared.frozen
@@ -108,7 +120,7 @@ def createSupportMessage(myapp):
         upnp = "N/A"
     connectedhosts = len(shared.connectedHostsList)
 
-    myapp.ui.textEditMessage.setText(str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(version, os, architecture, frozen, portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
+    myapp.ui.textEditMessage.setText(str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(version, os, architecture, pythonversion, opensslversion, frozen, portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
 
     # single msg tab
     myapp.ui.tabWidgetSend.setCurrentIndex(0)
