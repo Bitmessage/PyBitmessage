@@ -396,6 +396,9 @@ def doCleanShutdown():
     shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
     broadcastToSendDataQueues((0, 'shutdown', 'no data'))   
     objectProcessorQueue.put(('checkShutdownVariable', 'no data'))
+    for thread in threading.enumerate():
+        if thread.isAlive() and isinstance(thread, StoppableThread):
+            thread.stopThread()
     
     knownNodesLock.acquire()
     UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
@@ -430,9 +433,6 @@ def doCleanShutdown():
     time.sleep(.25)
     
     from class_outgoingSynSender import outgoingSynSender
-    for thread in threading.enumerate():
-        if thread.isAlive() and isinstance(thread, StoppableThread):
-            thread.stopThread()
     for thread in threading.enumerate():
         if thread is not threading.currentThread() and isinstance(thread, StoppableThread) and not isinstance(thread, outgoingSynSender):
             logger.debug("Waiting for thread %s", thread.name)
