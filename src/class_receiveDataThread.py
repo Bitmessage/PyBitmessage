@@ -1,4 +1,4 @@
-doTimingAttackMitigation = True
+doTimingAttackMitigation = False
 
 import errno
 import time

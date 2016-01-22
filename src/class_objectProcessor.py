@@ -39,11 +39,9 @@ class objectProcessor(threading.Thread):
         """
         queryreturn = sqlQuery(
             '''SELECT objecttype, data FROM objectprocessorqueue''')
-        with shared.objectProcessorQueueSizeLock:
-            for row in queryreturn:
-                objectType, data = row
-                shared.objectProcessorQueueSize += len(data)
-                shared.objectProcessorQueue.put((objectType,data))
+        for row in queryreturn:
+            objectType, data = row
+            shared.objectProcessorQueue.put((objectType,data))
         sqlExecute('''DELETE FROM objectprocessorqueue''')
         logger.debug('Loaded %s objects from disk into the objectProcessorQueue.' % str(len(queryreturn)))
 
@@ -70,19 +68,14 @@ class objectProcessor(threading.Thread):
             except Exception as e:
                 logger.critical("Critical error within objectProcessorThread: \n%s" % traceback.format_exc())
 
-            with shared.objectProcessorQueueSizeLock:
-                shared.objectProcessorQueueSize -= len(data) # We maintain objectProcessorQueueSize so that we will slow down requesting objects if too much data accumulates in the queue.
-
             if shared.shutdown:
                 time.sleep(.5) # Wait just a moment for most of the connections to close
                 numberOfObjectsThatWereInTheObjectProcessorQueue = 0
                 with SqlBulkExecute() as sql:
-                    while shared.objectProcessorQueueSize > 1:
+                    while shared.objectProcessorQueue.curSize > 1:
                         objectType, data = shared.objectProcessorQueue.get()
                         sql.execute('''INSERT INTO objectprocessorqueue VALUES (?,?)''',
                                    objectType,data)
-                        with shared.objectProcessorQueueSizeLock:
-                            shared.objectProcessorQueueSize -= len(data) # We maintain objectProcessorQueueSize so that we will slow down requesting objects if too much data accumulates in the queue.
                         numberOfObjectsThatWereInTheObjectProcessorQueue += 1
                 logger.debug('Saved %s objects from the objectProcessorQueue to disk. objectProcessorThread exiting.' % str(numberOfObjectsThatWereInTheObjectProcessorQueue))
                 shared.shutdown = 2

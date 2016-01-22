@@ -2503,9 +2503,7 @@ class MyForm(settingsmixin.SMainWindow):
                 for row in queryreturn:
                     payload, = row
                     objectType = 3
-                    with shared.objectProcessorQueueSizeLock:
-                        shared.objectProcessorQueueSize += len(payload)
-                        shared.objectProcessorQueue.put((objectType,payload))
+                    shared.objectProcessorQueue.put((objectType,payload))
 
     def click_pushButtonStatusIcon(self):
         logger.debug('click_pushButtonStatusIcon')
