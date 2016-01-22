@@ -2413,6 +2413,7 @@ class MyForm(settingsmixin.SMainWindow):
             
             self.addMessageListItemSent(sent, toAddress, fromAddress, subject, "msgqueued", ackdata, time.time())
             self.getAccountTextedit(acct).setPlainText(unicode(message, 'utf-8)', 'replace'))
+            sent.setCurrentCell(0, 0)
 
     def displayNewInboxMessage(self, inventoryHash, toAddress, fromAddress, subject, message):
         if toAddress == str_broadcast_subscribers:
