@@ -71,18 +71,19 @@ class singleWorker(threading.Thread, StoppableThread):
         self.stop.wait(
             10)  # give some time for the GUI to start before we start on existing POW tasks.
 
-        queryreturn = sqlQuery(
-            '''SELECT DISTINCT toaddress FROM sent WHERE (status='doingpubkeypow' AND folder='sent')''')
-        for row in queryreturn:
-            toaddress, = row
-            self.requestPubKey(toaddress)
-
-        self.sendMsg()
-                     # just in case there are any pending tasks for msg
-                     # messages that have yet to be sent.
-        self.sendBroadcast()
-                           # just in case there are any tasks for Broadcasts
-                           # that have yet to be sent.
+        if shared.shutdown == 0:
+            queryreturn = sqlQuery(
+                '''SELECT DISTINCT toaddress FROM sent WHERE (status='doingpubkeypow' AND folder='sent')''')
+            for row in queryreturn:
+                toaddress, = row
+                logger.debug("c: %s", shared.shutdown)
+                self.requestPubKey(toaddress)
+            # just in case there are any pending tasks for msg
+            # messages that have yet to be sent.
+            self.sendMsg()
+            # just in case there are any tasks for Broadcasts
+            # that have yet to be sent.
+            self.sendBroadcast()
 
         while shared.shutdown == 0:
             command, data = shared.workerQueue.get()
