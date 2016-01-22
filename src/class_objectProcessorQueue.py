@@ -13,16 +13,17 @@ class ObjectProcessorQueue(Queue.Queue):
         self.curSize = 0 # in Bytes. We maintain this to prevent nodes from flooing us with objects which take up too much memory. If this gets too big we'll sleep before asking for further objects.
 
     def put(self, item, block = True, timeout = None):
-        while self.curSize >= self.maxSize and not shared.shutdown:
+        while self.curSize >= self.maxSize:
             time.sleep(1)
-        if shared.shutdown:
-            return
         with self.sizeLock:
             self.curSize += len(item[1])
         Queue.Queue.put(self, item, block, timeout)
 
     def get(self, block = True, timeout = None):
-        item = Queue.Queue.get(self, block, timeout)
+        try:
+            item = Queue.Queue.get(self, block, timeout)
+        except Queue.Empty as e:
+            raise Queue.Empty()
         with self.sizeLock:
             self.curSize -= len(item[1])
         return item
