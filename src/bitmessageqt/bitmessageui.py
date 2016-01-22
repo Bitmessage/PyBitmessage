@@ -9,6 +9,7 @@
 
 from PyQt4 import QtCore, QtGui
 from messageview import MessageView
+from messagecompose import MessageCompose
 import settingsmixin
 
 try:
@@ -232,7 +233,7 @@ class Ui_MainWindow(object):
         self.gridLayout_2_Widget = QtGui.QWidget()
         self.gridLayout_2_Widget.setLayout(self.gridLayout_2)
         self.verticalSplitter_5.addWidget(self.gridLayout_2_Widget)
-        self.textEditMessage = QtGui.QTextEdit(self.sendDirect)
+        self.textEditMessage = MessageCompose(self.sendDirect)
         self.textEditMessage.setObjectName(_fromUtf8("textEditMessage"))
         self.verticalSplitter_5.addWidget(self.textEditMessage)
         self.verticalSplitter_5.setStretchFactor(0, 0)
@@ -268,7 +269,7 @@ class Ui_MainWindow(object):
         self.gridLayout_5_Widget = QtGui.QWidget()
         self.gridLayout_5_Widget.setLayout(self.gridLayout_5)
         self.verticalSplitter_6.addWidget(self.gridLayout_5_Widget)
-        self.textEditMessageBroadcast = QtGui.QTextEdit(self.sendBroadcast)
+        self.textEditMessageBroadcast = MessageCompose(self.sendBroadcast)
         self.textEditMessageBroadcast.setObjectName(_fromUtf8("textEditMessageBroadcast"))
         self.verticalSplitter_6.addWidget(self.textEditMessageBroadcast)
         self.verticalSplitter_6.setStretchFactor(0, 0)
