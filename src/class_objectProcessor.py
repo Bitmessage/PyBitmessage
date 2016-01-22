@@ -72,7 +72,7 @@ class objectProcessor(threading.Thread):
                 time.sleep(.5) # Wait just a moment for most of the connections to close
                 numberOfObjectsThatWereInTheObjectProcessorQueue = 0
                 with SqlBulkExecute() as sql:
-                    while shared.objectProcessorQueue.curSize > 1:
+                    while shared.objectProcessorQueue.curSize > 0:
                         objectType, data = shared.objectProcessorQueue.get()
                         sql.execute('''INSERT INTO objectprocessorqueue VALUES (?,?)''',
                                    objectType,data)
