@@ -2275,7 +2275,7 @@ class MyForm(settingsmixin.SMainWindow):
                         self.ui.comboBoxSendFrom.setCurrentIndex(0)
                         self.ui.lineEditTo.setText('')
                         self.ui.lineEditSubject.setText('')
-                        self.ui.textEditMessage.setText('')
+                        self.ui.textEditMessage.reset()
                         if self.replyFromTab is not None:
                             self.ui.tabWidget.setCurrentIndex(self.replyFromTab)
                             self.replyFromTab = None
@@ -2325,7 +2325,7 @@ class MyForm(settingsmixin.SMainWindow):
 
                 self.ui.comboBoxSendFromBroadcast.setCurrentIndex(0)
                 self.ui.lineEditSubjectBroadcast.setText('')
-                self.ui.textEditMessageBroadcast.setText('')
+                self.ui.textEditMessageBroadcast.reset()
                 self.ui.tabWidget.setCurrentIndex(1)
                 self.ui.tableWidgetInboxSubscriptions.setCurrentCell(0, 0)
                 self.statusBar().showMessage(_translate(
