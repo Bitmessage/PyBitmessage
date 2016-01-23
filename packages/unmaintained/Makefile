@@ -65,5 +65,4 @@ sourcedeb:
 	gzip -f9n ../${APP}_${VERSION}.orig.tar
 
 run:
-	cd src/
-	./bitmessagemain.py
+	cd src/ && ./bitmessagemain.py
