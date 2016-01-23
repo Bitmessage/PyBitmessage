@@ -69,6 +69,9 @@ class AccountMixin (object):
             self.type = self.CHAN
         elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
             self.type = self.MAILINGLIST
+        elif sqlQuery(
+            '''select label from subscriptions where address=?''', self.address):
+            self.type = AccountMixin.SUBSCRIPTION
         else:
             self.type = self.NORMAL
     
