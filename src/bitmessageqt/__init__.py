@@ -3086,7 +3086,7 @@ class MyForm(settingsmixin.SMainWindow):
             widget['from'].setCurrentIndex(0)
         
         quotedText = self.quoted_text(unicode(messageAtCurrentInboxRow, 'utf-8', 'replace'))
-        widget['message'].setText(quotedText)
+        widget['message'].setPlainText(quotedText)
         if acct.subject[0:3] in ['Re:', 'RE:']:
             widget['subject'].setText(tableWidget.item(currentInboxRow, 2).label)
         else:
