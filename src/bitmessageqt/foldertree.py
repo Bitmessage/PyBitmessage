@@ -190,10 +190,12 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
         return super(Ui_AddressWidget, self).data(column, role)
         
     def setData(self, column, role, value):
-        if role == QtCore.Qt.EditRole:
-            shared.config.set(str(self.address), 'label', str(value.toString()))
+        if role == QtCore.Qt.EditRole and self.type != AccountMixin.SUBSCRIPTION:
+            if isinstance(value, QtCore.QVariant):
+                shared.config.set(str(self.address), 'label', str(value.toString()))
+            else:
+                shared.config.set(str(self.address), 'label', str(value))
             shared.writeKeysFile()
-            return
         return super(Ui_AddressWidget, self).setData(column, role, value)
         
     def setAddress(self, address):
@@ -203,7 +205,6 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
     def updateText(self):
         if not self.initialised:
             return
-        self.emitDataChanged()
     
     def setExpanded(self, expand):
         super(Ui_AddressWidget, self).setExpanded(expand)
@@ -252,21 +253,22 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         
     def setType(self):
         super(Ui_SubscriptionWidget, self).setType() # sets it editable
-        self.type = self.SUBSCRIPTION # overrides type
+        self.type = AccountMixin.SUBSCRIPTION # overrides type
         
     def setData(self, column, role, value):
         if role == QtCore.Qt.EditRole:
-            self.setLabel(str(value.toString()))
+            if isinstance(value, QtCore.QVariant):
+                self.setLabel(str(value.toString()))
+            else:
+                self.setLabel(str(value))
             sqlExecute(
                 '''UPDATE subscriptions SET label=? WHERE address=?''',
                 self.label, self.address)
-            return
         return super(Ui_SubscriptionWidget, self).setData(column, role, value)
     
     def updateText(self):
         if not self.initialised:
             return
-        self.emitDataChanged()
 
 
 class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMixin):
@@ -286,10 +288,27 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
         parent.append(self)
 
     def setLabel(self, label = None):
+        newLabel = self.address
         if label is None:
-            label = unicode(shared.config.get(self.address, 'label'), 'utf-8)')
+            queryreturn = None
+            if self.type in (AccountMixin.NORMAL, AccountMixin.CHAN, AccountMixin.MAILINGLIST):
+                try:
+                    newLabel = unicode(shared.config.get(self.address, 'label'), 'utf-8)')
+                except:
+                    queryreturn = sqlQuery(
+                    '''select label from addressbook where address=?''', self.address)
+            elif self.type == AccountMixin.SUBSCRIPTION:
+                queryreturn = sqlQuery(
+                    '''select label from subscriptions where address=?''', self.address)
+            if queryreturn is not None:
+                if queryreturn != []:
+                    for row in queryreturn:
+                        newLabel, = row
         else:
-            self.label = label
+            newLabel = label
+        if hasattr(self, 'label') and newLabel == self.label:
+            return
+        self.label = newLabel
 
     def setUnread(self, unread):
         self.unread = unread
@@ -320,7 +339,6 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
     def setData(self, role, value):
         if role == QtCore.Qt.EditRole:
             self.setLabel()
-            return
         return super(MessageList_AddressWidget, self).setData(role, value)
 
     # label (or address) alphabetically, disabled at the end
@@ -382,7 +400,44 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
         self.label = text
         self.type = type
         self.setEnabled(True)
-        self.setForeground(self.accountBrush())
+
+    def data(self, role):
+        if role == QtCore.Qt.DisplayRole:
+            return self.label
+        elif role == QtCore.Qt.EditRole:
+            return self.label
+        elif role == QtCore.Qt.ToolTipRole:
+            return self.label + " (" + self.address + ")"
+        elif role == QtCore.Qt.DecorationRole:
+            if shared.safeConfigGetBoolean('bitmessagesettings', 'useidenticons'):
+                if self.address is None:
+                    return avatarize(self.label)
+                else:
+                    return avatarize(self.address)
+        elif role == QtCore.Qt.FontRole:
+            font = QtGui.QFont()
+            return font
+        elif role == QtCore.Qt.ForegroundRole:
+            return self.accountBrush()
+        elif role == QtCore.Qt.UserRole:
+            return self.type
+        return super(Ui_AddressBookWidgetItem, self).data(role)
+
+    def setData(self, role, value):
+        if role == QtCore.Qt.EditRole and self.type in [AccountMixin.NORMAL, AccountMixin.MAILINGLIST]:
+            if isinstance(value, QtCore.QVariant):
+                self.label = str(value.toString())
+            else:
+                self.label = str(value)
+            if self.type == AccountMixin.NORMAL or self.type == AccountMixin.MAILINGLIST:
+                sqlExecute('''UPDATE addressbook set label=? WHERE address=?''', self.label ,self.address)
+            elif self.type == AccountMixin.SUBSCRIPTION:
+                pass
+            elif self.type == AccountMixin.CHAN:
+                pass
+            else:
+                pass
+        return super(Ui_AddressBookWidgetItem, self).setData(role, value)    
 
     def __lt__ (self, other):
         if (isinstance(other, Ui_AddressBookWidgetItem)):
@@ -401,16 +456,12 @@ class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
         Ui_AddressBookWidgetItem.__init__(self, label, type)
         self.address = address
         self.label = label
-        self.setIcon(avatarize(address))
-        self.setToolTip(label + " (" + address + ")")
 
     def setLabel(self, label):
         self.label = label
-        self.setToolTip(self.label + " (" + self.address + ")")
 
 
 class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
     def __init__ (self, address, label, type):
         Ui_AddressBookWidgetItem.__init__(self, address, type)
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        self.setToolTip(label + " (" + address + ")")
