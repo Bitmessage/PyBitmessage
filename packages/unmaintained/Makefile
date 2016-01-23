@@ -11,6 +11,7 @@ debug:
 source:
 	tar -cvf ../${APP}_${VERSION}.orig.tar ../${APPDIR} --exclude-vcs
 	gzip -f9n ../${APP}_${VERSION}.orig.tar
+
 install:
 	mkdir -p ${DESTDIR}/usr
 	mkdir -p ${DESTDIR}${PREFIX}
@@ -43,6 +44,7 @@ install:
 	echo '  exec python2 bitmessagemain.py' >> ${DESTDIR}${PREFIX}/bin/${APP}
 	echo 'fi' >> ${DESTDIR}${PREFIX}/bin/${APP}
 	chmod +x ${DESTDIR}${PREFIX}/bin/${APP}
+
 uninstall:
 	rm -f ${PREFIX}/share/man/man1/${APP}.1.gz
 	rm -rf ${PREFIX}/share/${APP}
@@ -50,6 +52,7 @@ uninstall:
 	rm -f ${PREFIX}/share/applications/${APP}.desktop
 	rm -f ${PREFIX}/share/icons/hicolor/scalable/apps/${APP}.svg
 	rm -f ${PREFIX}/share/pixmaps/${APP}.svg
+
 clean:
 	rm -f ${APP} \#* \.#* gnuplot* *.png debian/*.substvars debian/*.log
 	rm -fr deb.* debian/${APP} rpmpackage/${ARCH_TYPE}
@@ -60,3 +63,7 @@ clean:
 sourcedeb:
 	tar -cvf ../${APP}_${VERSION}.orig.tar ../${APPDIR} --exclude-vcs --exclude 'debian'
 	gzip -f9n ../${APP}_${VERSION}.orig.tar
+
+run:
+	cd src/
+	./bitmessagemain.py

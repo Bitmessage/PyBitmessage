@@ -21,6 +21,9 @@ PyBitmessage can be run two ways: straight from source or via a package which
 is installed on your system. Since PyBitmessage is Beta, it is best to run
 PyBitmessage from source, so that you may update as needed.
 
+Under Linux/Uni* just do "make run" and PyMessage will be started from source
+code without changing to the right path by yourself.
+
 ####Updating
 To update PyBitmessage from source (Linux/OS X), you can do these easy steps:
 ```
