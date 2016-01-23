@@ -40,6 +40,7 @@ def getSortedSubscriptions(count = False):
 
 def accountClass(address):
     if not shared.config.has_section(address):
+        # FIXME: This BROADCAST section makes no sense
         if address == str_broadcast_subscribers:
             subscription = BroadcastAccount(address)
             if subscription.type != AccountMixin.BROADCAST:
