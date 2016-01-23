@@ -74,6 +74,30 @@ class AccountMixin (object):
             self.type = AccountMixin.SUBSCRIPTION
         else:
             self.type = self.NORMAL
+            
+    def defaultLabel(self):
+        queryreturn = None
+        retval = None
+        if self.type in (AccountMixin.NORMAL, AccountMixin.CHAN, AccountMixin.MAILINGLIST):
+            try:
+                retval = unicode(shared.config.get(self.address, 'label'), 'utf-8')
+            except Exception as e:
+                queryreturn = sqlQuery(
+                    '''select label from addressbook where address=?''', self.address)
+        elif self.type == AccountMixin.SUBSCRIPTION:
+            queryreturn = sqlQuery(
+                '''select label from subscriptions where address=?''', self.address)
+        if queryreturn is not None:
+            if queryreturn != []:
+                for row in queryreturn:
+                    retval, = row
+                    retval = unicode(retval, 'utf-8')
+        elif self.address is None or self.type == AccountMixin.ALL:
+            return unicode(str(QtGui.QApplication.translate("MainWindow", "All accounts")), 'utf-8')
+        if retval is None:
+            return unicode(self.address, 'utf-8')
+        else:
+            return retval
     
     def updateText(self):
         pass
@@ -241,15 +265,17 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         self.setAddress(address)
         self.setEnabled(enabled)
         self.setType()
-        self.setLabel(label)
         self.initialised = True
         self.setUnreadCount (unreadCount) # does updateText
     
-    def setLabel(self, label):
-        self.label = label
-    
     def _getLabel(self):
-        return unicode(self.label, 'utf-8)')
+        queryreturn = sqlQuery(
+            '''select label from subscriptions where address=?''', self.address)
+        if queryreturn != []:
+            for row in queryreturn:
+                retval, = row
+            return unicode(retval, 'utf-8')
+        return unicode(self.address, 'utf-8')
         
     def setType(self):
         super(Ui_SubscriptionWidget, self).setType() # sets it editable
@@ -258,12 +284,12 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
     def setData(self, column, role, value):
         if role == QtCore.Qt.EditRole:
             if isinstance(value, QtCore.QVariant):
-                self.setLabel(str(value.toString()))
+                label = str(value.toString())
             else:
-                self.setLabel(str(value))
+                label = str(value)
             sqlExecute(
                 '''UPDATE subscriptions SET label=? WHERE address=?''',
-                self.label, self.address)
+                label, self.address)
         return super(Ui_SubscriptionWidget, self).setData(column, role, value)
     
     def updateText(self):
@@ -424,17 +450,20 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
         return super(Ui_AddressBookWidgetItem, self).data(role)
 
     def setData(self, role, value):
-        if role == QtCore.Qt.EditRole and self.type in [AccountMixin.NORMAL, AccountMixin.MAILINGLIST]:
+        if role == QtCore.Qt.EditRole:
             if isinstance(value, QtCore.QVariant):
                 self.label = str(value.toString())
             else:
                 self.label = str(value)
-            if self.type == AccountMixin.NORMAL or self.type == AccountMixin.MAILINGLIST:
-                sqlExecute('''UPDATE addressbook set label=? WHERE address=?''', self.label ,self.address)
+            if self.type in (AccountMixin.NORMAL, AccountMixin.MAILINGLIST, AccountMixin.CHAN):
+                try:
+                    a = shared.config.get(self.address, 'label')
+                    shared.config.set(self.address, 'label', self.label)
+                except:
+                    sqlExecute('''UPDATE addressbook set label=? WHERE address=?''', self.label, self.address)
             elif self.type == AccountMixin.SUBSCRIPTION:
-                pass
-            elif self.type == AccountMixin.CHAN:
-                pass
+                from debug import logger
+                sqlExecute('''UPDATE subscriptions set label=? WHERE address=?''', self.label, self.address)
             else:
                 pass
         return super(Ui_AddressBookWidgetItem, self).setData(role, value)    
@@ -457,8 +486,9 @@ class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
         self.address = address
         self.label = label
 
-    def setLabel(self, label):
-        self.label = label
+    def data(self, role):
+        self.label = self.defaultLabel()
+        return super(Ui_AddressBookWidgetItemLabel, self).data(role)
 
 
 class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
