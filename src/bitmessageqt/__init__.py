@@ -1041,7 +1041,7 @@ class MyForm(settingsmixin.SMainWindow):
     def addMessageListItemInbox(self, tableWidget, msgfolder, msgid, toAddress, fromAddress, subject, received, read):
         font = QFont()
         font.setBold(True)
-        if tableWidget == self.ui.tableWidgetInboxSubscriptions:
+        if toAddress == str_broadcast_subscribers:
             acct = accountClass(fromAddress)
         else:
             acct = accountClass(toAddress)
