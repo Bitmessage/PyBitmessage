@@ -9,14 +9,12 @@ class MessageCompose(QtGui.QTextEdit):
     
     def wheelEvent(self, event):
         if (QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
-            numDegrees = event.delta() / 8
-            numSteps = numDegrees / 15
-            zoomDiff = numSteps + self.currentFont().pointSize() - self.defaultFontPointSize
-            if numSteps > 0:
-                self.zoomIn(numSteps)
+            if event.delta() > 0:
+                self.zoomIn(1)
             else:
-                self.zoomOut(-numSteps)
-            QtGui.QApplication.activeWindow().statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Zoom level %1").arg(str(zoomDiff)))
+                self.zoomOut(1)
+            zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
+            QtGui.QApplication.activeWindow().statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(str(zoom)))
         # super will actually automatically take care of zooming
         super(MessageCompose, self).wheelEvent(event)
 
