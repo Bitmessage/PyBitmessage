@@ -17,20 +17,19 @@ class SafeHTMLParser(HTMLParser):
                            'small', 'sound', 'source', 'spacer', 'span', 'strike', 'strong',
                            'sub', 'sup', 'table', 'tbody', 'td', 'textarea', 'time', 'tfoot',
                            'th', 'thead', 'tr', 'tt', 'u', 'ul', 'var', 'video']
-    replaces = [["&", "&amp;"], ["\"", "&quot;"], ["<", "&lt;"], [">", "&gt;"], ["\n", "<br/>"]]
+    replaces = [["&", "&amp;"], ["\"", "&quot;"], ["<", "&lt;"], [">", "&gt;"], ["\n", "<br/>"], ["\t", "&nbsp;&nbsp;&nbsp;&nbsp;"], ["  ", "&nbsp; "], ["  ", "&nbsp; "], ["<br/> ", "<br/>&nbsp;"]]
 
     @staticmethod
     def multi_replace(text):
         for a in SafeHTMLParser.replaces:
             text = text.replace(a[0], a[1])
+        if len(text) > 1 and text[0] == " ":
+            text = "&nbsp;" + text[1:]
         return text
 
     def __init__(self, *args, **kwargs):
         HTMLParser.__init__(self, *args, **kwargs)
-        self.elements = set()
-        self.sanitised = u""
-        self.raw = u""
-        self.has_html = False
+        self.reset_safe()
         
     def reset_safe(self):
         self.elements = set()
