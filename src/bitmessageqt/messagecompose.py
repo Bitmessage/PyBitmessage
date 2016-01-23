@@ -15,8 +15,9 @@ class MessageCompose(QtGui.QTextEdit):
                 self.zoomOut(1)
             zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
             QtGui.QApplication.activeWindow().statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(str(zoom)))
-        # super will actually automatically take care of zooming
-        super(MessageCompose, self).wheelEvent(event)
+        else:
+            # in QTextEdit, super does not zoom, only scroll
+            super(MessageCompose, self).wheelEvent(event)
 
     def reset(self):
         self.setText('')
