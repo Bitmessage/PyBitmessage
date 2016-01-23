@@ -3861,10 +3861,8 @@ class MyForm(settingsmixin.SMainWindow):
             return
         
         newLabel = str(item.text(0))
-        if item.type == AccountMixin.SUBSCRIPTION:
-            oldLabel = item.label
-        else:
-            oldLabel = shared.config.get(str(item.address), 'label')
+        oldLabel = item.defaultLabel()
+
         # unchanged, do not do anything either
         if newLabel == oldLabel:
             return
@@ -3881,6 +3879,8 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderMessagelistFromLabels()
         if item.type != AccountMixin.SUBSCRIPTION:
             self.rerenderMessagelistToLabels()
+        if item.type in (AccountMixin.NORMAL, AccountMixin.CHAN, AccountMixin.SUBSCRIPTION):
+            self.rerenderAddressBook()
         self.recurDepth -= 1
 
     def tableWidgetInboxItemClicked(self):
@@ -3935,7 +3935,9 @@ class MyForm(settingsmixin.SMainWindow):
         messageTextedit.setTextColor(QtGui.QColor())
         messageTextedit.setContent(message)
 
-    def tableWidgetAddressBookItemChanged(self):
+    def tableWidgetAddressBookItemChanged(self, item):
+        if item.type == AccountMixin.CHAN:
+            self.rerenderComboBoxSendFrom()
         self.rerenderMessagelistFromLabels()
         self.rerenderMessagelistToLabels()
 
