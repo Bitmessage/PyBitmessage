@@ -764,9 +764,9 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "changedInboxUnread(PyQt_PyObject)"), self.changedInboxUnread)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "rerenderInboxFromLabels()"), self.rerenderInboxFromLabels)
+            "rerenderMessagelistFromLabels()"), self.rerenderMessagelistFromLabels)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "rerenderSentToLabels()"), self.rerenderSentToLabels)
+            "rerenderMessgelistToLabels()"), self.rerenderMessagelistToLabels)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "rerenderAddressBook()"), self.rerenderAddressBook)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -1964,141 +1964,64 @@ class MyForm(settingsmixin.SMainWindow):
         if exitAfterUserClicksOk:
             os._exit(0)
 
-    def rerenderInboxFromLabels(self):
-        return
-        for i in range(self.ui.tableWidgetInbox.rowCount()):
-            addressToLookup = self.ui.tableWidgetInbox.item(
-                i, 1).data(Qt.UserRole)
-            fromLabel = ''
-            queryreturn = sqlQuery(
-                '''select label from addressbook where address=?''', addressToLookup)
+    def rerenderMessagelistFromLabels(self):
+        for messagelist in (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions):
+            for i in range(messagelist.rowCount()):
+                messagelist.item(i, 1).setLabel()
 
-            if queryreturn != []:
-                for row in queryreturn:
-                    fromLabel, = row
-            
-            if fromLabel == '':
-                # It might be a broadcast message. We should check for that
-                # label.
-                queryreturn = sqlQuery(
-                    '''select label from subscriptions where address=?''', addressToLookup)
-
-                if queryreturn != []:
-                    for row in queryreturn:
-                        fromLabel, = row
-            if fromLabel == '':
-                # Message might be from an address we own like a chan address. Let's look for that label.
-                if shared.config.has_section(addressToLookup):
-                    fromLabel = shared.config.get(addressToLookup, 'label')
-            if fromLabel == '':
-                fromLabel = addressToLookup
-            self.ui.tableWidgetInbox.item(
-                i, 1).setText(unicode(fromLabel, 'utf-8'))
-            self.ui.tableWidgetInbox.item(
-                i, 1).setIcon(avatarize(addressToLookup))
-            # Set the color according to whether it is the address of a mailing
-            # list or not.
-            if shared.safeConfigGetBoolean(addressToLookup, 'chan'):
-                self.ui.tableWidgetInbox.item(i, 1).setTextColor(QtGui.QColor(216, 119, 0)) # orange
-            else:
-                self.ui.tableWidgetInbox.item(
-                    i, 1).setTextColor(QApplication.palette().text().color())
-                    
-
-    def rerenderInboxToLabels(self):
-        return
-        for i in range(self.ui.tableWidgetInbox.rowCount()):
-            toAddress = self.ui.tableWidgetInbox.item(
-                i, 0).data(Qt.UserRole)
-            # Message might be to an address we own like a chan address. Let's look for that label.
-            if shared.config.has_section(toAddress):
-                toLabel = shared.config.get(toAddress, 'label')
-            else:
-                toLabel = toAddress
-            self.ui.tableWidgetInbox.item(
-                i, 0).setText(unicode(toLabel, 'utf-8'))
-            self.ui.tableWidgetInbox.item(
-                i, 0).setIcon(avatarize(toAddress))
-            # Set the color according to whether it is the address of a mailing
-            # list, a chan or neither.
-            if shared.safeConfigGetBoolean(toAddress, 'chan'):
-                self.ui.tableWidgetInbox.item(i, 0).setTextColor(QtGui.QColor(216, 119, 0)) # orange
-            elif shared.safeConfigGetBoolean(toAddress, 'mailinglist'):
-                self.ui.tableWidgetInbox.item(i, 0).setTextColor(QtGui.QColor(137, 04, 177)) # magenta
-            else:
-                self.ui.tableWidgetInbox.item(
-                    i, 0).setTextColor(QApplication.palette().text().color())
-
-    def rerenderSentFromLabels(self):
-        return
-        for i in range(self.ui.tableWidgetInbox.rowCount()):
-            fromAddress = self.ui.tableWidgetInbox.item(
-                i, 1).data(Qt.UserRole)
-            # Message might be from an address we own like a chan address. Let's look for that label.
-            if shared.config.has_section(fromAddress):
-                fromLabel = shared.config.get(fromAddress, 'label')
-            else:
-                fromLabel = fromAddress
-            self.ui.tableWidgetInbox.item(
-                i, 1).setText(unicode(fromLabel, 'utf-8'))
-            self.ui.tableWidgetInbox.item(
-                i, 1).setIcon(avatarize(fromAddress))
-
-    def rerenderSentToLabels(self):
-        return
-        for i in range(self.ui.tableWidgetInbox.rowCount()):
-            addressToLookup = self.ui.tableWidgetInbox.item(
-                i, 0).data(Qt.UserRole)
-            toLabel = ''
-            queryreturn = sqlQuery(
-                '''select label from addressbook where address=?''', addressToLookup)
-            if queryreturn != []:
-                for row in queryreturn:
-                    toLabel, = row
-            
-            if toLabel == '':
-                # Message might be to an address we own like a chan address. Let's look for that label.
-                if shared.config.has_section(addressToLookup):
-                    toLabel = shared.config.get(addressToLookup, 'label')
-            if toLabel == '':
-                toLabel = addressToLookup
-            self.ui.tableWidgetInbox.item(
-                i, 0).setText(unicode(toLabel, 'utf-8'))
+    def rerenderMessagelistToLabels(self):
+        for messagelist in (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions):
+            for i in range(messagelist.rowCount()):
+                messagelist.item(i, 0).setLabel()
 
     def rerenderAddressBook(self):
         def addRow (address, label, type):
             self.ui.tableWidgetAddressBook.insertRow(0)
             newItem = Ui_AddressBookWidgetItemLabel(address, unicode(label, 'utf-8'), type)
-            newItem.setData(Qt.UserRole, type)
             self.ui.tableWidgetAddressBook.setItem(0, 0, newItem)
             newItem = Ui_AddressBookWidgetItemAddress(address, unicode(label, 'utf-8'), type)
             self.ui.tableWidgetAddressBook.setItem(0, 1, newItem)
-        
-        self.ui.tableWidgetAddressBook.setSortingEnabled(False)
-        self.ui.tableWidgetAddressBook.setRowCount(0)
 
+        oldRows = {}
+        for i in range(self.ui.tableWidgetAddressBook.rowCount()):
+            item = self.ui.tableWidgetAddressBook.item(i, 0)
+            oldRows[item.address] = [item.label, item.type, i]
+
+        if self.ui.tableWidgetAddressBook.rowCount() == 0:
+            self.ui.tableWidgetAddressBook.horizontalHeader().setSortIndicator(0, Qt.AscendingOrder)
+        if self.ui.tableWidgetAddressBook.isSortingEnabled():
+            self.ui.tableWidgetAddressBook.setSortingEnabled(False)
+
+        newRows = {}
         # subscriptions
         queryreturn = sqlQuery('SELECT label, address FROM subscriptions WHERE enabled = 1')
         for row in queryreturn:
             label, address = row
-            addRow(address, label, AccountMixin.SUBSCRIPTION)
-
+            newRows[address] = [label, AccountMixin.SUBSCRIPTION]
         # chans
         addresses = getSortedAccounts()
         for address in addresses:
             account = accountClass(address)
             if (account.type == AccountMixin.CHAN and shared.safeConfigGetBoolean(address, 'enabled')):
-                addRow(address, account.getLabel(), AccountMixin.CHAN)
-        
+                newRows[address] = [account.getLabel(), AccountMixin.CHAN]
         # normal accounts
         queryreturn = sqlQuery('SELECT * FROM addressbook')
         for row in queryreturn:
             label, address = row
-            addRow(address, label, AccountMixin.NORMAL)
+            newRows[address] = [label, AccountMixin.NORMAL]
+
+        for address in sorted(oldRows, key = lambda x: oldRows[x][2], reverse = True):
+            if address in newRows:
+                newRows.pop(address)
+            else:
+                self.ui.tableWidgetAddressBook.removeRow(oldRows[address][2])
+        for address in newRows:
+            addRow(address, newRows[address][0], newRows[address][1])
 
         # sort
-        self.ui.tableWidgetAddressBook.sortItems(0, QtCore.Qt.AscendingOrder)
+        self.ui.tableWidgetAddressBook.sortByColumn(0, Qt.AscendingOrder)
         self.ui.tableWidgetAddressBook.setSortingEnabled(True)
+
 
     def rerenderSubscriptions(self):
         self.rerenderTabTreeSubscriptions()
@@ -2460,9 +2383,9 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = sqlQuery('''select * from addressbook where address=?''', address)
         if queryreturn == []:
             sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(label), address)
+            self.rerenderMessagelistFromLabels()
+            self.rerenderMessagelistToLabels()
             self.rerenderAddressBook()
-            self.rerenderInboxFromLabels()
-            self.rerenderSentToLabels()
         else:
             self.statusBar().showMessage(_translate(
                         "MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."))
@@ -2474,7 +2397,7 @@ class MyForm(settingsmixin.SMainWindow):
             return
         #Add to database (perhaps this should be separated from the MyForm class)
         sqlExecute('''INSERT INTO subscriptions VALUES (?,?,?)''',str(label),address,True)
-        self.rerenderInboxFromLabels()
+        self.rerenderMessagelistFromLabels()
         shared.reloadBroadcastSendersForWhichImWatching()
         self.rerenderAddressBook()
         self.rerenderTabTreeSubscriptions()
@@ -2819,7 +2742,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.rerenderComboBoxSendFrom()
             self.rerenderComboBoxSendFromBroadcast()
             shared.writeKeysFile()
-            self.rerenderInboxToLabels()
+            self.rerenderMessagelistToLabels()
 
     def on_action_EmailGatewayDialog(self):
         self.dialog = EmailGatewayDialog(self)
@@ -3292,8 +3215,8 @@ class MyForm(settingsmixin.SMainWindow):
             sqlExecute('''DELETE FROM addressbook WHERE label=? AND address=?''',
                        str(labelAtCurrentRow), str(addressAtCurrentRow))
             self.ui.tableWidgetAddressBook.removeRow(currentRow)
-            self.rerenderInboxFromLabels()
-            self.rerenderSentToLabels()
+            self.rerenderMessagelistFromLabels()
+            self.rerenderMessagelistToLabels()
 
     def on_action_AddressBookClipboard(self):
         fullStringOfAddresses = ''
@@ -3377,7 +3300,7 @@ class MyForm(settingsmixin.SMainWindow):
         sqlExecute('''DELETE FROM subscriptions WHERE address=?''',
                    address)
         self.rerenderTabTreeSubscriptions()
-        self.rerenderInboxFromLabels()
+        self.rerenderMessagelistFromLabels()
         self.rerenderAddressBook()
         shared.reloadBroadcastSendersForWhichImWatching()
 
@@ -3403,7 +3326,7 @@ class MyForm(settingsmixin.SMainWindow):
             address)
         account = self.getCurrentItem()
         account.setEnabled(False)
-        self.rerenderAddressBook()
+        self.rerenderAddressBook(address)
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_context_menuSubscriptions(self, point):
@@ -3802,10 +3725,8 @@ class MyForm(settingsmixin.SMainWindow):
             self.rerenderTabTreeChans()
             self.rerenderComboBoxSendFrom()
             self.rerenderComboBoxSendFromBroadcast()
-            self.rerenderInboxFromLabels()
-            self.rerenderInboxToLabels()
-            self.rerenderSentFromLabels()
-            self.rerenderSentToLabels()
+            self.rerenderMessagelistFromLabels()
+            self.rerenderMessagelistToLabels()
             self.rerenderBlackWhiteList()
             # generate identicon
             return False
@@ -3954,12 +3875,13 @@ class MyForm(settingsmixin.SMainWindow):
             return
 
         self.recurDepth += 1
-        item.setData(0, QtCore.Qt.EditRole, newLabel)
-        item.updateText()
-        if item.type == AccountMixin.MAILINGLIST:
+        if item.type == AccountMixin.NORMAL or item.type == AccountMixin.MAILINGLIST:
             self.rerenderComboBoxSendFromBroadcast()
-        elif item.type != AccountMixin.SUBSCRIPTION:
+        if item.type == AccountMixin.NORMAL or item.type == AccountMixin.CHAN:
             self.rerenderComboBoxSendFrom()
+        self.rerenderMessagelistFromLabels()
+        if item.type != AccountMixin.SUBSCRIPTION:
+            self.rerenderMessagelistToLabels()
         self.recurDepth -= 1
 
     def tableWidgetInboxItemClicked(self):
@@ -4015,16 +3937,8 @@ class MyForm(settingsmixin.SMainWindow):
         messageTextedit.setContent(message)
 
     def tableWidgetAddressBookItemChanged(self):
-        currentRow = self.ui.tableWidgetAddressBook.currentRow()
-        if currentRow >= 0:
-            addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
-                currentRow, 1).text()
-            sqlExecute('''UPDATE addressbook set label=? WHERE address=?''',
-                       str(self.ui.tableWidgetAddressBook.item(currentRow, 0).text().toUtf8()),
-                       str(addressAtCurrentRow))
-            self.ui.tableWidgetAddressBook.item(currentRow, 0).setLabel(str(self.ui.tableWidgetAddressBook.item(currentRow, 0).text().toUtf8()))
-        self.rerenderInboxFromLabels()
-        self.rerenderSentToLabels()
+        self.rerenderMessagelistFromLabels()
+        self.rerenderMessagelistToLabels()
 
     def writeNewAddressToTable(self, label, address, streamNumber):
         self.rerenderTabTreeMessages()
@@ -4564,10 +4478,10 @@ class UISignaler(QThread):
                 self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"), data)
             elif command == 'changedInboxUnread':
                 self.emit(SIGNAL("changedInboxUnread(PyQt_PyObject)"), data)
-            elif command == 'rerenderInboxFromLabels':
-                self.emit(SIGNAL("rerenderInboxFromLabels()"))
-            elif command == 'rerenderSentToLabels':
-                self.emit(SIGNAL("rerenderSentToLabels()"))
+            elif command == 'rerenderMessagelistFromLabels':
+                self.emit(SIGNAL("rerenderMessagelistFromLabels()"))
+            elif command == 'rerenderMessagelistToLabels':
+                self.emit(SIGNAL("rerenderMessagelistToLabels()"))
             elif command == 'rerenderAddressBook':
                 self.emit(SIGNAL("rerenderAddressBook()"))
             elif command == 'rerenderSubscriptions':

@@ -211,8 +211,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(16, 'You already have this address in your address book.')
 
         sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
-        shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-        shared.UISignalQueue.put(('rerenderSentToLabels',''))
+        shared.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
+        shared.UISignalQueue.put(('rerenderMessagelistToLabels',''))
         shared.UISignalQueue.put(('rerenderAddressBook',''))
         return "Added address %s to address book" % address
 
@@ -223,8 +223,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         address = addBMIfNotPresent(address)
         self._verifyAddress(address)
         sqlExecute('DELETE FROM addressbook WHERE address=?', address)
-        shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-        shared.UISignalQueue.put(('rerenderSentToLabels',''))
+        shared.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
+        shared.UISignalQueue.put(('rerenderMessagelistToLabels',''))
         shared.UISignalQueue.put(('rerenderAddressBook',''))
         return "Deleted address book entry for %s if it existed" % address
 
@@ -462,8 +462,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         shared.config.remove_section(address)
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
             shared.config.write(configfile)
-        shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-        shared.UISignalQueue.put(('rerenderSentToLabels',''))
+        shared.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
+        shared.UISignalQueue.put(('rerenderMessagelistToLabels',''))
         shared.reloadMyAddressHashes()
         return 'success'
 
@@ -793,7 +793,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(16, 'You are already subscribed to that address.')
         sqlExecute('''INSERT INTO subscriptions VALUES (?,?,?)''',label, address, True)
         shared.reloadBroadcastSendersForWhichImWatching()
-        shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
+        shared.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         shared.UISignalQueue.put(('rerenderSubscriptions', ''))
         return 'Added subscription.'
 
@@ -804,7 +804,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         address = addBMIfNotPresent(address)
         sqlExecute('''DELETE FROM subscriptions WHERE address=?''', address)
         shared.reloadBroadcastSendersForWhichImWatching()
-        shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
+        shared.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         shared.UISignalQueue.put(('rerenderSubscriptions', ''))
         return 'Deleted subscription if it existed.'
 
