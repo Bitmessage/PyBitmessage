@@ -2764,7 +2764,6 @@ class MyForm(settingsmixin.SMainWindow):
                 acct.register(email)
                 shared.config.set(addressAtCurrentRow, 'label', email)
                 shared.config.set(addressAtCurrentRow, 'gateway', 'mailchuck')
-                self.getCurrentTreeWidget().currentItem().updateText()
                 shared.writeKeysFile()
             else:
                 pass
