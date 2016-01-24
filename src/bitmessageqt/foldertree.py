@@ -24,7 +24,7 @@ class AccountMixin (object):
             return QtGui.QApplication.palette().text().color()
             
     def folderColor (self):
-        if not self.parent.isEnabled:
+        if not self.parent().isEnabled:
             return QtGui.QColor(128, 128, 128)
         else:
             return QtGui.QApplication.palette().text().color()
@@ -44,11 +44,9 @@ class AccountMixin (object):
             self.address = None
         else:
             self.address = str(address)
-        self.updateText()
     
     def setUnreadCount(self, cnt):
         self.unreadCount = int(cnt)
-        self.updateText()
 
     def setEnabled(self, enabled):
         self.isEnabled = enabled
@@ -58,7 +56,8 @@ class AccountMixin (object):
             for i in range(self.childCount()):
                 if isinstance(self.child(i), Ui_FolderWidget):
                     self.child(i).setEnabled(enabled)
-        self.updateText()
+        if isinstance(self, QtGui.QTreeWidgetItem)
+            self.emitDataChanged()
 
     def setType(self):
         self.setFlags(self.flags() | QtCore.Qt.ItemIsEditable)
@@ -98,44 +97,37 @@ class AccountMixin (object):
             return unicode(self.address, 'utf-8')
         else:
             return retval
-    
-    def updateText(self):
-        pass
 
 
 class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
     folderWeight = {"inbox": 1, "new": 2, "sent": 3, "trash": 4}
     def __init__(self, parent, pos = 0, address = "", folderName = "", unreadCount = 0):
         super(QtGui.QTreeWidgetItem, self).__init__()
-        self.initialised = False
         self.setAddress(address)
         self.setFolderName(folderName)
         self.setUnreadCount(unreadCount)
-        self.parent = parent
-        self.initialised = True
-        self.updateText()
         parent.insertChild(pos, self)
 
     def setFolderName(self, fname):
         self.folderName = str(fname)
-        self.setData(0, QtCore.Qt.UserRole, self.folderName)
-        self.updateText()
         
-    def updateText(self):
-        if not self.initialised:
-            return
-        text = QtGui.QApplication.translate("MainWindow", self.folderName)
-        font = QtGui.QFont()
-        if self.unreadCount > 0:
-            text += " (" + str(self.unreadCount) + ")"
-            font.setBold(True)
-        else:
-            font.setBold(False)
-        self.setFont(0, font)
-        self.setForeground(0, self.folderBrush())
-        self.setText(0, text)
-        self.setToolTip(0, text)
- #       self.setData(0, QtCore.Qt.UserRole, [self.address, self.folderName])
+    def data(self, column, role):
+        if column == 0:
+            if role == QtCore.Qt.DisplayRole:
+                return QtGui.QApplication.translate("MainWindow", self.folderName) + (" (" + str(self.unreadCount) + ")" if self.unreadCount > 0 else "")
+            elif role == QtCore.Qt.EditRole:
+                return QtGui.QApplication.translate("MainWindow", self.folderName)
+            elif role == QtCore.Qt.ToolTipRole:    
+                return QtGui.QApplication.translate("MainWindow", self.folderName)
+            elif role == QtCore.Qt.DecorationRole:
+                pass
+            elif role == QtCore.Qt.FontRole:
+                font = QtGui.QFont()
+                font.setBold(self.unreadCount > 0)
+                return font
+            elif role == QtCore.Qt.ForegroundRole:
+                return self.folderBrush()
+        return super(Ui_FolderWidget, self).data(column, role)
 
     # inbox, sent, thrash first, rest alphabetically
     def __lt__(self, other):
@@ -165,12 +157,10 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
         parent.insertTopLevelItem(pos, self)
         # only set default when creating
         #super(QtGui.QTreeWidgetItem, self).setExpanded(shared.config.getboolean(self.address, 'enabled'))
-        self.initialised = False
         self.setAddress(address)
         self.setEnabled(enabled)
         self.setUnreadCount(unreadCount)
-        self.initialised = True
-        self.setType() # does updateText
+        self.setType()
         
     def _getLabel(self):
         if self.address is None:
@@ -226,13 +216,8 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
         super(Ui_AddressWidget, self).setAddress(address)
         self.setData(0, QtCore.Qt.UserRole, self.address)
     
-    def updateText(self):
-        if not self.initialised:
-            return
-    
     def setExpanded(self, expand):
         super(Ui_AddressWidget, self).setExpanded(expand)
-        self.updateText()
     
     def _getSortRank(self):
         ret = self.type
@@ -261,12 +246,10 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         parent.insertTopLevelItem(pos, self)
         # only set default when creating
         #super(QtGui.QTreeWidgetItem, self).setExpanded(shared.config.getboolean(self.address, 'enabled'))
-        self.initialised = False
         self.setAddress(address)
         self.setEnabled(enabled)
         self.setType()
-        self.initialised = True
-        self.setUnreadCount (unreadCount) # does updateText
+        self.setUnreadCount(unreadCount)
     
     def _getLabel(self):
         queryreturn = sqlQuery(
@@ -291,10 +274,6 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
                 '''UPDATE subscriptions SET label=? WHERE address=?''',
                 label, self.address)
         return super(Ui_SubscriptionWidget, self).setData(column, role, value)
-    
-    def updateText(self):
-        if not self.initialised:
-            return
 
 
 class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMixin):
@@ -303,14 +282,12 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
         #parent.insertTopLevelItem(pos, self)
         # only set default when creating
         #super(QtGui.QTreeWidgetItem, self).setExpanded(shared.config.getboolean(self.address, 'enabled'))
-        self.initialised = False
         self.isEnabled = True
         self.setAddress(address)
         self.setLabel(label)
         self.setUnread(unread)
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        self.initialised = True
-        self.setType() # does updateText
+        self.setType()
         parent.append(self)
 
     def setLabel(self, label = None):
