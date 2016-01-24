@@ -1929,7 +1929,7 @@ class MyForm(settingsmixin.SMainWindow):
                     self.statusBar().showMessage(_translate(
                         "MainWindow", "Message trashed"))
                     treeWidget = self.widgetConvert(inbox)
-                    self.propagateUnreadCount(inbox.item(i, 1 if inbox == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), self.getCurrentFolder(treeWidget), treeWidget, 0)
+                    self.propagateUnreadCount(inbox.item(i, 1 if inbox.item(i, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), self.getCurrentFolder(treeWidget), treeWidget, 0)
                     inbox.removeRow(i)
                     break
         
@@ -2901,7 +2901,7 @@ class MyForm(settingsmixin.SMainWindow):
             if inventoryHashToMarkUnread in inventoryHashesToMarkUnread:
                 # it returns columns as separate items, so we skip dupes
                 continue
-            if not tableWidget.item(currentRow, 0).font().bold():
+            if not tableWidget.item(currentRow, 0).unread:
                 modified += 1
             inventoryHashesToMarkUnread.append(inventoryHashToMarkUnread)
             tableWidget.item(currentRow, 0).setUnread(True)
@@ -2913,9 +2913,9 @@ class MyForm(settingsmixin.SMainWindow):
             "?," * len(inventoryHashesToMarkUnread))[:-1], *inventoryHashesToMarkUnread)
         if modified == 1:
             # performance optimisation
-            self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), self.getCurrentFolder())
+            self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), self.getCurrentFolder())
         else:
-            self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), self.getCurrentFolder(), self.getCurrentTreeWidget(), 0)
+            self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), self.getCurrentFolder(), self.getCurrentTreeWidget(), 0)
         # tableWidget.selectRow(currentRow + 1) 
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
@@ -3083,10 +3083,10 @@ class MyForm(settingsmixin.SMainWindow):
                 sqlExecute('''DELETE FROM inbox WHERE msgid=?''', inventoryHashToTrash)
             else:
                 sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', inventoryHashToTrash)
-            if tableWidget.item(currentRow, 0).font().bold():
-                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
+            if tableWidget.item(currentRow, 0).unread:
+                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
                 if folder != "trash" and not shifted:
-                    self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), "trash", self.getCurrentTreeWidget(), 1)
+                    self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), "trash", self.getCurrentTreeWidget(), 1)
 
             self.getCurrentMessageTextedit().setText("")
             tableWidget.removeRow(currentRow)
@@ -3108,9 +3108,9 @@ class MyForm(settingsmixin.SMainWindow):
             inventoryHashToTrash = str(tableWidget.item(
                 currentRow, 3).data(Qt.UserRole).toPyObject())
             sqlExecute('''UPDATE inbox SET folder='inbox' WHERE msgid=?''', inventoryHashToTrash)
-            if tableWidget.item(currentRow, 0).font().bold():
-                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), "inbox", self.getCurrentTreeWidget(), 1)
-                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), "trash", self.getCurrentTreeWidget(), -1)
+            if tableWidget.item(currentRow, 0).unread:
+                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(curentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), "inbox", self.getCurrentTreeWidget(), 1)
+                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(curentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), "trash", self.getCurrentTreeWidget(), -1)
             self.getCurrentMessageTextedit().setText("")
             tableWidget.removeRow(currentRow)
             self.statusBar().showMessage(_translate(
@@ -3168,8 +3168,8 @@ class MyForm(settingsmixin.SMainWindow):
                 sqlExecute('''DELETE FROM sent WHERE ackdata=?''', ackdataToTrash)
             else:
                 sqlExecute('''UPDATE sent SET folder='trash' WHERE ackdata=?''', ackdataToTrash)
-            if tableWidget.item(currentRow, 0).font().bold():
-                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
+            if tableWidget.item(currentRow, 0).unread:
+                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(curentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
             self.getCurrentMessageTextedit().setPlainText("")
             tableWidget.removeRow(currentRow)
             self.statusBar().showMessage(_translate(
@@ -3906,20 +3906,24 @@ class MyForm(settingsmixin.SMainWindow):
 
         if queryreturn != []:
             refresh = False
+            propagate = False
+            tableWidget = self.getCurrentMessagelist()
+            currentRow = tableWidget.currentRow()
             for row in queryreturn:
                 message, read = row
                 if folder != 'sent' and read == 0:
                     markread = sqlQuery(
                         '''UPDATE inbox SET read = 1 WHERE msgid = ?''', msgid)
+                    refresh = propagate = True
+                elif tableWidget.item(currentRow, 0).unread == True:
                     refresh = True
+                    propagate = False
             if refresh:
-                tableWidget = self.getCurrentMessagelist()
                 if not tableWidget:
                     return
                 font = QFont()
                 font.setBold(False)
 #                inventoryHashesToMarkRead = []
-                currentRow = tableWidget.currentRow()
 #                inventoryHashToMarkRead = str(tableWidget.item(
 #                    currentRow, 3).data(Qt.UserRole).toPyObject())
 #                inventoryHashesToMarkRead.append(inventoryHashToMarkRead)
@@ -3927,7 +3931,8 @@ class MyForm(settingsmixin.SMainWindow):
                 tableWidget.item(currentRow, 1).setUnread(False)
                 tableWidget.item(currentRow, 2).setUnread(False)
                 tableWidget.item(currentRow, 3).setFont(font)
-                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget == self.ui.tableWidgetInboxSubscriptions else 0).data(Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
+            if propagate:
+                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
 
         else:
             data = self.getCurrentMessageId()
