@@ -46,7 +46,11 @@ class AccountMixin (object):
             self.address = str(address)
     
     def setUnreadCount(self, cnt):
+        if hasattr(self, "unreadCount") and self.unreadCount == int(cnt):
+            return
         self.unreadCount = int(cnt)
+        if isinstance(self, QtGui.QTreeWidgetItem):
+            self.emitDataChanged()
 
     def setEnabled(self, enabled):
         self.isEnabled = enabled
