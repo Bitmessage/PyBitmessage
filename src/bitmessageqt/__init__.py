@@ -3330,11 +3330,14 @@ class MyForm(settingsmixin.SMainWindow):
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_context_menuSubscriptions(self, point):
+        currentItem = self.getCurrentItem()
+        if not isinstance(currentItem, Ui_AddressWidget):
+            return
         self.popMenuSubscriptions = QtGui.QMenu(self)
         self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
         self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
         self.popMenuSubscriptions.addSeparator()
-        if self.getCurrentItem().isEnabled:
+        if currentItem.isEnabled:
             self.popMenuSubscriptions.addAction(self.actionsubscriptionsDisable)
         else:
             self.popMenuSubscriptions.addAction(self.actionsubscriptionsEnable)
@@ -3734,12 +3737,15 @@ class MyForm(settingsmixin.SMainWindow):
         return True
         
     def on_context_menuYourIdentities(self, point):
+        currentItem = self.getCurrentItem()
+        if not isinstance(currentItem, Ui_AddressWidget):
+            return
         self.popMenuYourIdentities = QtGui.QMenu(self)
         self.popMenuYourIdentities.addAction(self.actionNewYourIdentities)
         self.popMenuYourIdentities.addSeparator()
         self.popMenuYourIdentities.addAction(self.actionClipboardYourIdentities)
         self.popMenuYourIdentities.addSeparator()
-        if self.getCurrentItem().isEnabled:
+        if currentItem.isEnabled:
             self.popMenuYourIdentities.addAction(self.actionDisableYourIdentities)
         else:
             self.popMenuYourIdentities.addAction(self.actionEnableYourIdentities)
@@ -3751,13 +3757,16 @@ class MyForm(settingsmixin.SMainWindow):
 
     # TODO make one popMenu
     def on_context_menuChan(self, point):
+        currentItem = self.getCurrentItem()
+        if not isinstance(currentItem, Ui_AddressWidget):
+            return
         self.popMenu = QtGui.QMenu(self)
         self.popMenu.addAction(self.actionNew)
         self.popMenu.addAction(self.actionDelete)
         self.popMenu.addSeparator()
         self.popMenu.addAction(self.actionClipboard)
         self.popMenu.addSeparator()
-        if self.getCurrentItem().isEnabled:
+        if currentItem.isEnabled:
             self.popMenu.addAction(self.actionDisable)
         else:
             self.popMenu.addAction(self.actionEnable)
