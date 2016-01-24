@@ -510,10 +510,10 @@ class MyForm(settingsmixin.SMainWindow):
             isMaillinglist = shared.safeConfigGetBoolean(
                 toAddress, 'mailinglist')
 
-            if tab == 'messages':
+            if treeWidget == self.ui.treeWidgetYourIdentities:
                 if isChan:
                     continue
-            elif tab == 'chan':
+            elif treeWidget == self.ui.treeWidgetChans:
                 if not isChan:
                     continue
 
@@ -531,7 +531,7 @@ class MyForm(settingsmixin.SMainWindow):
             total += cnt
             if toaddress in db and folder in db[toaddress]:
                 db[toaddress][folder] = cnt
-        if tab == "messages":
+        if treeWidget == self.ui.treeWidgetYourIdentities:
             db[None] = {}
             db[None]["inbox"] = total
             db[None]["new"] = total
