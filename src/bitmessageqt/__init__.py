@@ -2032,6 +2032,7 @@ class MyForm(settingsmixin.SMainWindow):
             queryreturn = sqlQuery('''SELECT label, address, enabled FROM blacklist''')
         else:
             queryreturn = sqlQuery('''SELECT label, address, enabled FROM whitelist''')
+        self.ui.tableWidgetBlacklist.setSortingEnabled(False)
         for row in queryreturn:
             label, address, enabled = row
             self.ui.tableWidgetBlacklist.insertRow(0)
@@ -2046,6 +2047,7 @@ class MyForm(settingsmixin.SMainWindow):
             if not enabled:
                 newItem.setTextColor(QtGui.QColor(128, 128, 128))
             self.ui.tableWidgetBlacklist.setItem(0, 1, newItem)
+        self.ui.tableWidgetBlacklist.setSortingEnabled(True)
 
     def click_pushButtonTTL(self):
         QtGui.QMessageBox.information(self, 'Time To Live', _translate(
