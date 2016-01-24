@@ -56,7 +56,7 @@ class AccountMixin (object):
             for i in range(self.childCount()):
                 if isinstance(self.child(i), Ui_FolderWidget):
                     self.child(i).setEnabled(enabled)
-        if isinstance(self, QtGui.QTreeWidgetItem)
+        if isinstance(self, QtGui.QTreeWidgetItem):
             self.emitDataChanged()
 
     def setType(self):
