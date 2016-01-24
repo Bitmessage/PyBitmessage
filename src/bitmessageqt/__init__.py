@@ -3325,7 +3325,7 @@ class MyForm(settingsmixin.SMainWindow):
             address)
         account = self.getCurrentItem()
         account.setEnabled(False)
-        self.rerenderAddressBook(address)
+        self.rerenderAddressBook()
         shared.reloadBroadcastSendersForWhichImWatching()
 
     def on_context_menuSubscriptions(self, point):
