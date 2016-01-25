@@ -975,9 +975,14 @@ class MyForm(settingsmixin.SMainWindow):
                     updateUnreadCount(folderItem)
 
     def addMessageListItem(self, tableWidget, items):
+        sortingEnabled = tableWidget.isSortingEnabled()
+        if sortingEnabled:
+            tableWidget.setSortingEnabled(False)
         tableWidget.insertRow(0)
         for i in range(len(items)):
             tableWidget.setItem(0, i, items[i])
+        if sortingEnabled:
+            tableWidget.setSortingEnabled(True)
 
     def addMessageListItemSent(self, tableWidget, toAddress, fromAddress, subject, status, ackdata, lastactiontime):
         acct = accountClass(fromAddress)
