@@ -36,7 +36,7 @@ class sendDataThread(threading.Thread):
             someObjectsOfWhichThisRemoteNodeIsAlreadyAware):
         self.sock = sock
         self.peer = shared.Peer(HOST, PORT)
-        self.name = "sendData-" + self.peer.host
+        self.name = "sendData-" + self.peer.host.replace(":", ".") # log parser field separator
         self.streamNumber = streamNumber
         self.services = 0
         self.initiatedConnection = False
