@@ -1,10 +1,16 @@
 #! /usr/bin/env python
 
-import sys
-import os
+import atexit
 import errno
-import shared
 from multiprocessing import Process
+import os
+import sys
+import shared
+
+try:
+    import fcntl  # @UnresolvedImport
+except:
+    pass
 
 class singleinstance:
     """
@@ -14,9 +20,8 @@ class singleinstance:
     which is under the Python Software Foundation License version 2    
     """
     def __init__(self, flavor_id="", daemon=False):
-        import sys
         self.initialized = False
-        self.daemon = daemon;
+        self.daemon = daemon
         self.lockfile = os.path.normpath(os.path.join(shared.appdata, 'singleton%s.lock' % flavor_id))
 
         if not self.daemon:
@@ -38,7 +43,6 @@ class singleinstance:
                 print(e.errno)
                 raise
         else:  # non Windows
-            import fcntl  # @UnresolvedImport
             self.fp = open(self.lockfile, 'w')
             try:
                 fcntl.lockf(self.fp, fcntl.LOCK_EX | fcntl.LOCK_NB)
@@ -46,20 +50,20 @@ class singleinstance:
                 print 'Another instance of this application is already running'
                 sys.exit(-1)
         self.initialized = True
+        atexit.register(self.cleanup)
 
-    def __del__(self):
-        import sys
+    def cleanup(self):
         if not self.initialized:
             return
+        print "Cleaning up lockfile"
         try:
             if sys.platform == 'win32':
                 if hasattr(self, 'fd'):
                     os.close(self.fd)
                     os.unlink(self.lockfile)
             else:
-                import fcntl  # @UnresolvedImport
                 fcntl.lockf(self.fp, fcntl.LOCK_UN)
                 if os.path.isfile(self.lockfile):
                     os.unlink(self.lockfile)
         except Exception, e:
-            sys.exit(-1)
+            pass
