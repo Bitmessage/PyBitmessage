@@ -490,9 +490,19 @@ class receiveDataThread(threading.Thread):
         logger.debug('sending an object.')
         self.sendDataThreadQueue.put((0, 'sendRawData', shared.CreatePacket('object',payload)))
 
+    def _checkIPAddress(self, host):
+        if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
+            hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
+            return self._checkIPv4Address(host[12:], hostStandardFormat)
+        else:
+            hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
+            if hostStandardFormat == "":
+                # This can happen on Windows systems which are not 64-bit compatible 
+                # so let us drop the IPv6 address. 
+                return False
+            return self._checkIPv6Address(host, hostStandardFormat)
 
     def _checkIPv4Address(self, host, hostStandardFormat):
-        # print 'hostStandardFormat', hostStandardFormat
         if host[0] == '\x7F': # 127/8
             logger.debug('Ignoring IP address in loopback range: ' + hostStandardFormat)
             return False
@@ -505,7 +515,7 @@ class receiveDataThread(threading.Thread):
         if host[0:2] >= '\xAC\x10' and host[0:2] < '\xAC\x20': # 172.16/12
             logger.debug('Ignoring IP address in private range:' + hostStandardFormat)
             return False
-        return True
+        return hostStandardFormat
 
     def _checkIPv6Address(self, host, hostStandardFormat):
         if host == ('\x00' * 15) + '\x01':
@@ -517,7 +527,7 @@ class receiveDataThread(threading.Thread):
         if (ord(host[0]) & 0xfe) == 0xfc:
             logger.debug ('Ignoring unique local address: ' + hostStandardFormat)
             return False
-        return True
+        return hostStandardFormat
 
     # We have received an addr message.
     def recaddr(self, data):
@@ -545,19 +555,9 @@ class receiveDataThread(threading.Thread):
                 38 * i):20 + lengthOfNumberOfAddresses + (38 * i)])
             recaddrPort, = unpack('>H', data[36 + lengthOfNumberOfAddresses + (
                 38 * i):38 + lengthOfNumberOfAddresses + (38 * i)])
-            if fullHost[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-                ipv4Host = fullHost[12:]
-                hostStandardFormat = socket.inet_ntop(socket.AF_INET, ipv4Host)
-                if not self._checkIPv4Address(ipv4Host, hostStandardFormat):
-                    continue
-            else:
-                hostStandardFormat = socket.inet_ntop(socket.AF_INET6, fullHost)
-                if hostStandardFormat == "":
-                    # This can happen on Windows systems which are not 64-bit compatible 
-                    # so let us drop the IPv6 address. 
-                    continue
-                if not self._checkIPv6Address(fullHost, hostStandardFormat):
-                    continue
+            hostStandardFormat = self._checkIPAddress(fullHost)
+            if hostStandardFormat is False:
+                continue
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>Q', data[lengthOfNumberOfAddresses + (
                 38 * i):8 + lengthOfNumberOfAddresses + (38 * i)])  # This is the 'time' value in the received addr message. 64-bit.
             if recaddrStream not in shared.knownNodes:  # knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
@@ -744,9 +744,10 @@ class receiveDataThread(threading.Thread):
         # in this version message. Let us inform the sendDataThread.
         self.sendDataThreadQueue.put((0, 'setRemoteProtocolVersion', self.remoteProtocolVersion))
 
-        with shared.knownNodesLock:
-            shared.knownNodes[self.streamNumber][shared.Peer(self.peer.host, self.remoteNodeIncomingPort)] = int(time.time())
-            shared.needToWriteKnownNodesToDisk = True
+        if not isHostInPrivateIPRange(self.peer.host):
+            with shared.knownNodesLock:
+                shared.knownNodes[self.streamNumber][shared.Peer(self.peer.host, self.remoteNodeIncomingPort)] = int(time.time())
+                shared.needToWriteKnownNodesToDisk = True
 
         self.sendverack()
         if self.initiatedConnection == False:
