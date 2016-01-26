@@ -45,9 +45,6 @@ import helper_bootstrap
 import helper_generic
 from helper_threading import *
 
-# singleton lock instance
-thisapp = None
-
 def connectToStream(streamNumber):
     shared.streamsInWhichIAmParticipating[streamNumber] = 'no data'
     selfInitiatedConnections[streamNumber] = {}
