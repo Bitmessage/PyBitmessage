@@ -2842,6 +2842,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.statusBar().showMessage(_translate(
             "MainWindow", "All done. Closing user interface..."))
+        shared.thisapp.cleanup()
         os._exit(0)
 
     # window close event

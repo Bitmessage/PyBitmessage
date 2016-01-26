@@ -55,6 +55,7 @@ appdata = '' #holds the location of the application data storage directory
 statusIconColor = 'red'
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
 shutdown = 0 #Set to 1 by the doCleanShutdown function. Used to tell the proof of work worker threads to exit.
+thisapp = None # singleton lock instance
 alreadyAttemptedConnectionsList = {
 }  # This is a list of nodes to which we have already attempted a connection
 alreadyAttemptedConnectionsListLock = threading.Lock()
@@ -392,7 +393,7 @@ def isProofOfWorkSufficient(data,
     return POW <= 2 ** 64 / (nonceTrialsPerByte*(len(data) + payloadLengthExtraBytes + ((TTL*(len(data)+payloadLengthExtraBytes))/(2 ** 16))))
 
 def doCleanShutdown():
-    global shutdown
+    global shutdown, thisapp
     shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
     broadcastToSendDataQueues((0, 'shutdown', 'no data'))   
     objectProcessorQueue.put(('checkShutdownVariable', 'no data'))
@@ -440,6 +441,7 @@ def doCleanShutdown():
 
     if safeConfigGetBoolean('bitmessagesettings','daemon'):
         logger.info('Clean shutdown complete.')
+        thisapp.cleanup()
         os._exit(0)
 
 # If you want to command all of the sendDataThreads to do something, like shutdown or send some data, this
