@@ -46,7 +46,7 @@ class receiveDataThread(threading.Thread):
         
         self.sock = sock
         self.peer = shared.Peer(HOST, port)
-        self.name = "receiveData-" + self.peer.host
+        self.name = "receiveData-" + self.peer.host.replace(":", ".") # ":" log parser field separator
         self.streamNumber = streamNumber
         self.objectsThatWeHaveYetToGetFromThisPeer = {}
         self.selfInitiatedConnections = selfInitiatedConnections

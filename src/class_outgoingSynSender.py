@@ -80,7 +80,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 shared.alreadyAttemptedConnectionsListLock.release()
             except threading.ThreadError as e:
                 pass
-            self.name = "outgoingSynSender-" + peer.host
+            self.name = "outgoingSynSender-" + peer.host.replace(":", ".") # log parser field separator
             if peer.host.find(':') == -1:
                 address_family = socket.AF_INET
             else:
