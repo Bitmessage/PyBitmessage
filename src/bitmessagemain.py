@@ -152,13 +152,11 @@ if shared.useVeryEasyProofOfWorkForTesting:
 
 class Main:
     def start(self, daemon=False):
-        global thisapp
-        
         _fixWinsock()
 
         shared.daemon = daemon
         # is the application already running?  If yes then exit.
-        thisapp = singleton.singleinstance("", daemon)
+        shared.thisapp = singleton.singleinstance("", daemon)
 
         # get curses flag
         curses = False
