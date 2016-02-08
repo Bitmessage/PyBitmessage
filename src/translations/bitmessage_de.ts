@@ -1191,7 +1191,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     <message>
         <location filename="../bitmessageqt/specialaddressbehavior.py" line="62"/>
         <source>Mail received to a pseudo-mailing-list address will be automatically broadcast to subscribers (and thus will be public).</source>
-        <translation>Nachrichten an eine Pseudo-Mailinglistenadresse werden automatisch zu allen Abbonenten weitergeleitet (Der Inhalt ist dann öffentlich).</translation>
+        <translation>Nachrichten an eine Pseudo-Mailinglistenadresse werden automatisch an alle Abonenten weitergeleitet (Der Inhalt ist dann öffentlich).</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/specialaddressbehavior.py" line="63"/>
