@@ -717,6 +717,10 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QObject.connect(self.ui.treeWidgetChans, QtCore.SIGNAL(
             "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
 
+        # Initialize blacklist
+        QtCore.QObject.connect(self.ui.tableWidgetBlacklist, QtCore.SIGNAL(
+            "itemChanged(QTableWidgetItem *)"), self.tableWidgetBlacklistItemChanged)
+
         # Put the colored icon on the status bar
         # self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
         self.statusbar = self.statusBar()
@@ -3968,6 +3972,16 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderTabTreeChans()
         self.rerenderComboBoxSendFrom()
         self.rerenderComboBoxSendFromBroadcast()
+
+    def tableWidgetBlacklistItemChanged(self, item):
+        if item.column() == 0:
+            addressitem = self.ui.tableWidgetBlacklist.item(item.row(), 1)
+            if self.ui.radioButtonBlacklist.isChecked():
+                sqlExecute('''UPDATE blacklist SET label=? WHERE address=?''',
+                           str(item.text()), str(addressitem.text()))
+            else:
+                sqlExecute('''UPDATE whitelist SET label=? WHERE address=?''',
+                           str(item.text()), str(addressitem.text()))
 
     def updateStatusBar(self, data):
         if data != "":
