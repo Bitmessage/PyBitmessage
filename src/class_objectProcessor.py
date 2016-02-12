@@ -567,11 +567,12 @@ class objectProcessor(threading.Thread):
                     toAddress, '[Broadcast subscribers]', fromAddress, subject, message, ackdataForBroadcast)))
                 shared.workerQueue.put(('sendbroadcast', ''))
 
-        # Don't send ACK if invalid, blacklisted senders, invisible messages or disabled
+        # Don't send ACK if invalid, blacklisted senders, invisible messages, disabled or chan
         if self.ackDataHasAValidHeader(ackData) and \
             not blockMessage and \
             messageEncodingType != 0 and \
-            not shared.safeConfigGetBoolean(toAddress, 'dontsendack'):
+            not shared.safeConfigGetBoolean(toAddress, 'dontsendack') and \
+            not shared.safeConfigGetBoolean(toAddress, 'chan'):
             shared.checkAndShareObjectWithPeers(ackData[24:])
 
         # Display timing data
