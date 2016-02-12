@@ -524,7 +524,7 @@ class objectProcessor(threading.Thread):
 
             # Let us now check and see whether our receiving address is
             # behaving as a mailing list
-            if shared.safeConfigGetBoolean(toAddress, 'mailinglist'):
+            if shared.safeConfigGetBoolean(toAddress, 'mailinglist') and messageEncodingType != 0:
                 try:
                     mailingListName = shared.config.get(
                         toAddress, 'mailinglistname')
@@ -567,7 +567,11 @@ class objectProcessor(threading.Thread):
                     toAddress, '[Broadcast subscribers]', fromAddress, subject, message, ackdataForBroadcast)))
                 shared.workerQueue.put(('sendbroadcast', ''))
 
-        if self.ackDataHasAVaildHeader(ackData):
+        # Don't send ACK if invalid, blacklisted senders, invisible messages or disabled
+        if self.ackDataHasAValidHeader(ackData) and \
+            not blockMessage and \
+            messageEncodingType != 0 and \
+            not shared.safeConfigGetBoolean(toAddress, 'dontsendack'):
             shared.checkAndShareObjectWithPeers(ackData[24:])
 
         # Display timing data
@@ -814,7 +818,7 @@ class objectProcessor(threading.Thread):
             address)
         shared.workerQueue.put(('sendmessage', ''))
 
-    def ackDataHasAVaildHeader(self, ackData):
+    def ackDataHasAValidHeader(self, ackData):
         if len(ackData) < shared.Header.size:
             logger.info('The length of ackData is unreasonably short. Not sending ackData.')
             return False
