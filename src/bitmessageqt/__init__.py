@@ -3976,12 +3976,13 @@ class MyForm(settingsmixin.SMainWindow):
     def tableWidgetBlacklistItemChanged(self, item):
         if item.column() == 0:
             addressitem = self.ui.tableWidgetBlacklist.item(item.row(), 1)
-            if self.ui.radioButtonBlacklist.isChecked():
-                sqlExecute('''UPDATE blacklist SET label=? WHERE address=?''',
-                           str(item.text()), str(addressitem.text()))
-            else:
-                sqlExecute('''UPDATE whitelist SET label=? WHERE address=?''',
-                           str(item.text()), str(addressitem.text()))
+            if isinstance(addressitem, QTableWidgetItem):
+                if self.ui.radioButtonBlacklist.isChecked():
+                    sqlExecute('''UPDATE blacklist SET label=? WHERE address=?''',
+                            str(item.text()), str(addressitem.text()))
+                else:
+                    sqlExecute('''UPDATE whitelist SET label=? WHERE address=?''',
+                            str(item.text()), str(addressitem.text()))
 
     def updateStatusBar(self, data):
         if data != "":
