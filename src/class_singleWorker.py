@@ -812,7 +812,7 @@ class singleWorker(threading.Thread, StoppableThread):
             shared.inventory[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
             shared.inventorySets[toStreamNumber].add(inventoryHash)
-            if shared.config.has_section(toaddress) or shared.safeConfigGetBoolean(toaddress, 'dontsendack'):
+            if shared.config.has_section(toaddress) or not checkBitfield(behaviorBitfield, shared.BITFIELD_DOESACK):
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Message sent. Sent on %1").arg(l10n.formatTimestamp()))))
             else:
                 # not sending to a chan or one of my addresses
