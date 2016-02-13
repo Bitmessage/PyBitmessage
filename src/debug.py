@@ -37,8 +37,10 @@ def configureLogging():
     try:
         logging.config.fileConfig(os.path.join (shared.appdata, 'logging.dat'))
         have_logging = True
+        print "Loaded debug config from %s" % (os.path.join(shared.appdata, 'logging.dat'))
     except:
-        pass
+        print "Failed to load debug config from %s, using default logging config" % (os.path.join(shared.appdata, 'logging.dat'))
+        print sys.exc_info()
     
     sys.excepthook = log_uncaught_exceptions
 
