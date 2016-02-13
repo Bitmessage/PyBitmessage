@@ -1,6 +1,7 @@
 doTimingAttackMitigation = False
 
 import errno
+import math
 import time
 import threading
 import shared
@@ -19,6 +20,7 @@ import traceback
 
 #import highlevelcrypto
 from addresses import *
+from class_objectHashHolder import objectHashHolder
 from helper_generic import addDataPadding, isHostInPrivateIPRange
 from helper_sql import sqlQuery
 from debug import logger
@@ -61,6 +63,7 @@ class receiveDataThread(threading.Thread):
             self.initiatedConnection = True
             self.selfInitiatedConnections[streamNumber][self] = 0
         self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware = someObjectsOfWhichThisRemoteNodeIsAlreadyAware
+        self.startTime = time.time()
 
     def run(self):
         logger.debug('receiveDataThread starting. ID ' + str(id(self)) + '. The size of the shared.connectedHostsList is now ' + str(len(shared.connectedHostsList)))
@@ -125,6 +128,19 @@ class receiveDataThread(threading.Thread):
         shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         logger.debug('receiveDataThread ending. ID ' + str(id(self)) + '. The size of the shared.connectedHostsList is now ' + str(len(shared.connectedHostsList)))
 
+    def antiIntersectionDelay(self, initial = False):
+        # estimated time for a small object to propagate across the whole network
+        delay = math.ceil(math.log(len(shared.knownNodes[self.streamNumber]) + 2, 20)) * (0.2 + objectHashHolder.size/2)
+        # +2 is to avoid problems with log(0) and log(1)
+        # 20 is avg connected nodes count
+        # 0.2 is avg message transmission time
+        now = time.time()
+        if initial and now - delay < self.startTime:
+            logger.info("Sleeping for %.2fs", delay - (now - self.startTime))
+            time.sleep(delay - (now - self.startTime))
+        elif not initial:
+            logger.info("Sleeping for %.2fs", delay)
+            time.sleep(delay)
 
     def processData(self):
         if len(self.data) < shared.Header.size:  # if so little of the data has arrived that we can't even read the checksum then wait for more data.
@@ -318,6 +334,7 @@ class receiveDataThread(threading.Thread):
                         bigInvList[hash] = 0
         numberOfObjectsInInvMessage = 0
         payload = ''
+        self.antiIntersectionDelay(True)
         # Now let us start appending all of these hashes together. They will be
         # sent out in a big inv message to our new peer.
         for hash, storedValue in bigInvList.items():
@@ -483,6 +500,7 @@ class receiveDataThread(threading.Thread):
                         payload, = row
                     self.sendObject(payload)
                 else:
+                    self.antiIntersectionDelay()
                     logger.warning('%s asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. We probably cleaned it out after advertising it but before they got around to asking for it.' % (self.peer,))
 
     # Our peer has requested (in a getdata message) that we send an object.
