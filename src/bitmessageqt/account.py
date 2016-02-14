@@ -161,7 +161,7 @@ class GatewayAccount(BMAccount):
             0, # retryNumber
             'sent', # folder
             2, # encodingtype
-            shared.config.getint('bitmessagesettings', 'ttl')
+            min(shared.config.getint('bitmessagesettings', 'ttl'), 86400 * 2) # not necessary to have a TTL higher than 2 days
         )
 
         shared.workerQueue.put(('sendmessage', self.toAddress))
@@ -206,6 +206,51 @@ class MailchuckAccount(GatewayAccount):
         self.message = ""
         self.fromAddress = self.address
         self.send()
+
+    def settings(self):
+        self.toAddress = self.registrationAddress
+        self.subject = "config"
+        self.message = QtGui.QApplication.translate("Mailchuck", """# You can use this to configure your email gateway account
+# Uncomment the setting you want to use
+# Here are the options:
+# 
+# pgp: server
+# The email gateway will create and maintain PGP keys for you and sign, verify,
+# encrypt and decrypt on your behalf. When you want to use PGP but are lazy,
+# use this. Requires subscription.
+#
+# pgp: local
+# The email gateway will not conduct PGP operations on your behalf. You can
+# either not use PGP at all, or use it locally.
+#
+# attachments: yes
+# Incoming attachments in the email will be uploaded to MEGA.nz, and you can
+# download them from there by following the link. Requires a subscription.
+#
+# attachments: no
+# Attachments will be ignored.
+# 
+# archive: yes
+# Your incoming emails will be archived on the server. Use this if you need
+# help with debugging problems or you need a third party proof of emails. This
+# however means that the operator of the service will be able to read your
+# emails even after they have been delivered to you.
+#
+# archive: no
+# Incoming emails will be deleted from the server as soon as they are relayed
+# to you.
+#
+# masterpubkey_btc: BIP44 xpub key or electrum v1 public seed
+# offset_btc: integer (defaults to 0)
+# feeamount: number with up to 8 decimal places
+# feecurrency: BTC, XBT, USD, EUR or GBP
+# Use these if you want to charge people who send you emails. If this is on and
+# an unknown person sends you an email, they will be requested to pay the fee
+# specified. As this scheme uses deterministic public keys, you will receive
+# the money directly. To turn it off again, set "feeamount" to 0. Requires
+# subscription.
+""")
+        self.fromAddress = self.address
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
         super(GatewayAccount, self).parseMessage(toAddress, fromAddress, subject, message)
