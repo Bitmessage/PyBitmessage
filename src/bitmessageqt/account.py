@@ -200,6 +200,13 @@ class MailchuckAccount(GatewayAccount):
         self.fromAddress = self.address
         self.send()
 
+    def status(self):
+        self.toAddress = self.registrationAddress
+        self.subject = "status"
+        self.message = ""
+        self.fromAddress = self.address
+        self.send()
+
     def parseMessage(self, toAddress, fromAddress, subject, message):
         super(GatewayAccount, self).parseMessage(toAddress, fromAddress, subject, message)
         if fromAddress == self.relayAddress:
