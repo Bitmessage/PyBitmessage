@@ -2737,6 +2737,20 @@ class MyForm(settingsmixin.SMainWindow):
                 acct.status()
                 self.statusBar().showMessage(_translate(
                      "MainWindow", "Sending email gateway status request"))
+            elif self.dialog.ui.radioButtonSettings.isChecked() and isinstance(acct, GatewayAccount):
+                acct.settings()
+                listOfAddressesInComboBoxSendFrom = [str(self.ui.comboBoxSendFrom.itemData(i).toPyObject()) for i in range(self.ui.comboBoxSendFrom.count())]
+                if acct.fromAddress in listOfAddressesInComboBoxSendFrom:
+                    currentIndex = listOfAddressesInComboBoxSendFrom.index(acct.fromAddress)
+                    self.ui.comboBoxSendFrom.setCurrentIndex(currentIndex)
+                else:
+                    self.ui.comboBoxSendFrom.setCurrentIndex(0)
+                self.ui.lineEditTo.setText(acct.toAddress)
+                self.ui.lineEditSubject.setText(acct.subject)
+                self.ui.textEditMessage.setText(acct.message)
+                self.ui.tabWidgetSend.setCurrentIndex(0)
+                self.ui.tabWidget.setCurrentIndex(1)
+                self.ui.textEditMessage.setFocus()
             elif self.dialog.ui.radioButtonRegister.isChecked():
                 email = str(self.dialog.ui.lineEditEmail.text().toUtf8())
                 acct = MailchuckAccount(addressAtCurrentRow)
