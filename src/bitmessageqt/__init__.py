@@ -2731,6 +2731,12 @@ class MyForm(settingsmixin.SMainWindow):
                 acct.unregister()
                 shared.config.remove_option(addressAtCurrentRow, 'gateway')
                 shared.writeKeysFile()
+                self.statusBar().showMessage(_translate(
+                     "MainWindow", "Sending email gateway unregistration request"))
+            elif self.dialog.ui.radioButtonStatus.isChecked() and isinstance(acct, GatewayAccount):
+                acct.status()
+                self.statusBar().showMessage(_translate(
+                     "MainWindow", "Sending email gateway status request"))
             elif self.dialog.ui.radioButtonRegister.isChecked():
                 email = str(self.dialog.ui.lineEditEmail.text().toUtf8())
                 acct = MailchuckAccount(addressAtCurrentRow)
@@ -2738,6 +2744,8 @@ class MyForm(settingsmixin.SMainWindow):
                 shared.config.set(addressAtCurrentRow, 'label', email)
                 shared.config.set(addressAtCurrentRow, 'gateway', 'mailchuck')
                 shared.writeKeysFile()
+                self.statusBar().showMessage(_translate(
+                     "MainWindow", "Sending email gateway registration request"))
             else:
                 pass
                 #print "well nothing"
