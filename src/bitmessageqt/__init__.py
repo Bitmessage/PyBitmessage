@@ -60,6 +60,7 @@ import subprocess
 import string
 import datetime
 from helper_sql import *
+import helper_search
 import l10n
 import openclpow
 import types
@@ -1082,20 +1083,6 @@ class MyForm(settingsmixin.SMainWindow):
 
     # Load Sent items from database
     def loadSent(self, tableWidget, account, where="", what=""):
-        what = "%" + what + "%"
-        if where == _translate("MainWindow", "To"):
-            where = "toaddress"
-        elif where == _translate("MainWindow", "From"):
-            where = "fromaddress"
-        elif where == _translate("MainWindow", "Subject"):
-            where = "subject"
-        elif where == _translate("MainWindow", "Message"):
-            where = "message"
-        else:
-            where = "toaddress || fromaddress || subject || message"
-
-        tableWidget.setSortingEnabled(False)
-        
         if tableWidget == self.ui.tableWidgetInboxChans or tableWidget == self.ui.tableWidgetInboxSubscriptions:
             tableWidget.setColumnHidden(0, True)
             tableWidget.setColumnHidden(1, False)
@@ -1104,16 +1091,11 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.setColumnHidden(0, False)
             tableWidget.setColumnHidden(1, True)
             xAddress = 'fromaddress'
-        
-        sqlStatement = '''
-            SELECT toaddress, fromaddress, subject, status, ackdata, lastactiontime 
-            FROM sent WHERE ''' + xAddress + '''=? AND folder="sent" AND %s LIKE ? 
-            ORDER BY lastactiontime
-            ''' % (where,)
 
+        tableWidget.setSortingEnabled(False)
         tableWidget.setRowCount(0)
-        acct = None
-        queryreturn = sqlQuery(sqlStatement, account, what)
+        queryreturn = helper_search.search_sql(xAddress, account, "sent", where, what, False)
+
         for row in queryreturn:
             toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
             self.addMessageListItemSent(tableWidget, toAddress, fromAddress, subject, status, ackdata, lastactiontime)
@@ -1128,52 +1110,21 @@ class MyForm(settingsmixin.SMainWindow):
             self.loadSent(tableWidget, account, where, what)
             return
 
-        if what != "":
-            what = "%" + what + "%"
-            if where == _translate("MainWindow", "To"):
-                where = "toaddress"
-            elif where == _translate("MainWindow", "From"):
-                where = "fromaddress"
-            elif where == _translate("MainWindow", "Subject"):
-                where = "subject"
-            elif where == _translate("MainWindow", "Message"):
-                where = "message"
-            else:
-                where = "toaddress || fromaddress || subject || message"
-        else:
-            what = None
-        
         if tableWidget == self.ui.tableWidgetInboxSubscriptions:
             xAddress = "fromaddress"
         else:
             xAddress = "toaddress"
-        sqlStatementBase = '''SELECT folder, msgid, toaddress, fromaddress, subject, received, read
-            FROM inbox '''
-        sqlStatementParts = []
-        sqlArguments = []
-        if account is not None:
-            sqlStatementParts.append(xAddress + " = ? ")
-            sqlArguments.append(account)
-        if folder is not None:
-            sqlStatementParts.append("folder = ? ")
-            sqlArguments.append(folder)
-        if what is not None:
-            sqlStatementParts.append("%s LIKE ?" % (where))
-            sqlArguments.append(what)
-        if unreadOnly:
-            sqlStatementParts.append("read = 0")
-        if len(sqlStatementParts) > 0:
-            sqlStatementBase += "WHERE " + " AND ".join(sqlStatementParts)
-        queryreturn = sqlQuery(sqlStatementBase, sqlArguments)
-
-        tableWidget.setRowCount(0)
         if account is not None:
             tableWidget.setColumnHidden(0, True)
             tableWidget.setColumnHidden(1, False)
         else:
             tableWidget.setColumnHidden(0, False)
             tableWidget.setColumnHidden(1, False)
+
         tableWidget.setSortingEnabled(False)
+        tableWidget.setRowCount(0)
+
+        queryreturn = helper_search.search_sql(xAddress, account, folder, where, what, unreadOnly)
         
         for row in queryreturn:
             msgfolder, msgid, toAddress, fromAddress, subject, received, read = row
@@ -2337,13 +2288,19 @@ class MyForm(settingsmixin.SMainWindow):
     def displayNewSentMessage(self, toAddress, toLabel, fromAddress, subject, message, ackdata):
         acct = accountClass(fromAddress)
         acct.parseMessage(toAddress, fromAddress, subject, message)
+        tab = -1
         for sent in [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxSubscriptions, self.ui.tableWidgetInboxChans]:
+            tab += 1
+            if tab == 1:
+                tab = 2
             treeWidget = self.widgetConvert(sent)
             if self.getCurrentFolder(treeWidget) != "sent":
                 continue
             if treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) != fromAddress:
                 continue
             elif treeWidget in [self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans] and self.getCurrentAccount(treeWidget) != toAddress:
+                continue
+            elif not helper_search.check_match(toAddress, fromAddress, subject, message, self.getCurrentSearchOption(tab), self.getCurrentSearchLine(tab)):
                 continue
             
             self.addMessageListItemSent(sent, toAddress, fromAddress, subject, "msgqueued", ackdata, time.time())
@@ -2357,8 +2314,14 @@ class MyForm(settingsmixin.SMainWindow):
             acct = accountClass(toAddress)
         inbox = self.getAccountMessagelist(acct)
         ret = None
+        tab = -1
         for treeWidget in [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]:
+            tab += 1
+            if tab == 1:
+                tab = 2
             tableWidget = self.widgetConvert(treeWidget)
+            if not helper_search.check_match(toAddress, fromAddress, subject, message, self.getCurrentSearchOption(tab), self.getCurrentSearchLine(tab)):
+                continue
             if tableWidget == inbox and self.getCurrentAccount(treeWidget) == acct.address and self.getCurrentFolder(treeWidget) in ["inbox", None]:
                 ret = self.addMessageListItemInbox(inbox, "inbox", inventoryHash, toAddress, fromAddress, subject, time.time(), 0)
             elif treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) is None:
@@ -3519,8 +3482,9 @@ class MyForm(settingsmixin.SMainWindow):
         except:
             return self.ui.textEditInboxMessage
 
-    def getCurrentSearchLine(self):
-        currentIndex = self.ui.tabWidget.currentIndex();
+    def getCurrentSearchLine(self, currentIndex = None):
+        if currentIndex is None:
+            currentIndex = self.ui.tabWidget.currentIndex();
         messagelistList = [
             self.ui.inboxSearchLineEdit,
             False,
@@ -3528,12 +3492,13 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.inboxSearchLineEditChans,
         ]
         if currentIndex >= 0 and currentIndex < len(messagelistList):
-            return messagelistList[currentIndex]
+            return messagelistList[currentIndex].text().toUtf8().data()
         else:
-            return False
+            return None
 
-    def getCurrentSearchOption(self):
-        currentIndex = self.ui.tabWidget.currentIndex();
+    def getCurrentSearchOption(self, currentIndex = None):
+        if currentIndex is None:
+            currentIndex = self.ui.tabWidget.currentIndex();
         messagelistList = [
             self.ui.inboxSearchOption,
             False,
@@ -3543,7 +3508,7 @@ class MyForm(settingsmixin.SMainWindow):
         if currentIndex >= 0 and currentIndex < len(messagelistList):
             return messagelistList[currentIndex].currentText().toUtf8().data()
         else:
-            return False
+            return None
 
     # Group of functions for the Your Identities dialog box
     def getCurrentItem(self, treeWidget = None):
@@ -3843,26 +3808,26 @@ class MyForm(settingsmixin.SMainWindow):
     def inboxSearchLineEditPressed(self):
         searchLine = self.getCurrentSearchLine()
         searchOption = self.getCurrentSearchOption()
-        if searchLine:
-            searchKeyword = searchLine.text().toUtf8().data()
-            messageTextedit = self.getCurrentMessageTextedit()
-            if messageTextedit:
-                messageTextedit.setPlainText(QString(""))
-            messagelist = self.getCurrentMessagelist()
-            if messagelist:
-                account = self.getCurrentAccount()
-                folder = self.getCurrentFolder()
-                self.loadMessagelist(messagelist, account, folder, searchOption, searchKeyword)
-
-    def treeWidgetItemClicked(self):
+        messageTextedit = self.getCurrentMessageTextedit()
+        if messageTextedit:
+            messageTextedit.setPlainText(QString(""))
         messagelist = self.getCurrentMessagelist()
         if messagelist:
             account = self.getCurrentAccount()
             folder = self.getCurrentFolder()
-            if folder == "new":
-                self.loadMessagelist(messagelist, account, None, unreadOnly = True)
-            else:
-                self.loadMessagelist(messagelist, account, folder)
+            self.loadMessagelist(messagelist, account, folder, searchOption, searchLine)
+
+    def treeWidgetItemClicked(self):
+        searchLine = self.getCurrentSearchLine()
+        searchOption = self.getCurrentSearchOption()
+        messageTextedit = self.getCurrentMessageTextedit()
+        if messageTextedit:
+            messageTextedit.setPlainText(QString(""))
+        messagelist = self.getCurrentMessagelist()
+        if messagelist:
+            account = self.getCurrentAccount()
+            folder = self.getCurrentFolder()
+            self.loadMessagelist(messagelist, account, folder, searchOption, searchLine)
 
     def treeWidgetItemChanged(self, item, column):
         # only for manual edits. automatic edits (setText) are ignored
