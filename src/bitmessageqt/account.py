@@ -138,6 +138,8 @@ class BroadcastAccount(BMAccount):
         
 class GatewayAccount(BMAccount):
     gatewayName = None
+    ALL_OK = 0
+    REGISTRATION_DENIED = 1
     def __init__(self, address):
         super(BMAccount, self).__init__(address)
         
@@ -179,6 +181,7 @@ class MailchuckAccount(GatewayAccount):
     regExpOutgoing = re.compile("(\S+) (.*)")
     def __init__(self, address):
         super(GatewayAccount, self).__init__(address)
+        self.feedback = self.ALL_OK
         
     def createMessage(self, toAddress, fromAddress, subject, message):
         self.subject = toAddress + " " + subject
@@ -273,3 +276,7 @@ class MailchuckAccount(GatewayAccount):
                 if not matches.group(1) is None:
                     self.toLabel = matches.group(1)
                     self.toAddress = matches.group(1)
+        self.feedback = self.ALL_OK
+        if fromAddress == self.registrationAddress and self.subject == "Registration Request Denied":
+            self.feedback = self.REGISTRATION_DENIED
+        return self.feedback

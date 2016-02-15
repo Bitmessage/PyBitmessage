@@ -72,3 +72,32 @@ class Ui_EmailGatewayDialog(object):
         self.label.setText(QtGui.QApplication.translate("EmailGatewayDialog", "Email gateway allows you to communicate with email users. Currently, only the Mailchuck email gateway (@mailchuck.com) is available.", None, QtGui.QApplication.UnicodeUTF8))
         self.label_2.setText(QtGui.QApplication.translate("EmailGatewayDialog", "Desired email address (including @mailchuck.com):", None, QtGui.QApplication.UnicodeUTF8))
 
+
+class Ui_EmailGatewayRegistrationDialog(object):
+    def setupUi(self, EmailGatewayRegistrationDialog):
+        EmailGatewayRegistrationDialog.setObjectName(_fromUtf8("EmailGatewayRegistrationDialog"))
+        EmailGatewayRegistrationDialog.resize(386, 172)
+        self.gridLayout = QtGui.QGridLayout(EmailGatewayRegistrationDialog)
+        self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
+        self.label = QtGui.QLabel(EmailGatewayRegistrationDialog)
+        self.label.setWordWrap(True)
+        self.label.setObjectName(_fromUtf8("label"))
+        self.gridLayout.addWidget(self.label, 0, 0, 1, 1)
+        self.lineEditEmail = QtGui.QLineEdit(EmailGatewayRegistrationDialog)
+        self.lineEditEmail.setObjectName(_fromUtf8("lineEditEmail"))
+        self.gridLayout.addWidget(self.lineEditEmail, 1, 0, 1, 1)
+        self.buttonBox = QtGui.QDialogButtonBox(EmailGatewayRegistrationDialog)
+        self.buttonBox.setMinimumSize(QtCore.QSize(368, 0))
+        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
+        self.gridLayout.addWidget(self.buttonBox, 7, 0, 1, 1)
+
+        self.retranslateUi(EmailGatewayRegistrationDialog)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("accepted()")), EmailGatewayRegistrationDialog.accept)
+        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(_fromUtf8("rejected()")), EmailGatewayRegistrationDialog.reject)
+        QtCore.QMetaObject.connectSlotsByName(EmailGatewayRegistrationDialog)
+
+    def retranslateUi(self, EmailGatewayRegistrationDialog):
+        EmailGatewayRegistrationDialog.setWindowTitle(QtGui.QApplication.translate("EmailGatewayRegistrationDialog", "Email gateway registration", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("EmailGatewayRegistrationDialog", "Email gateway allows you to communicate with email users. Currently, only the Mailchuck email gateway (@mailchuck.com) is available.\nPlease type the desiged email address (including @mailchuck.com) below:", None, QtGui.QApplication.UnicodeUTF8))
