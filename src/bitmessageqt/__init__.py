@@ -2336,7 +2336,20 @@ class MyForm(settingsmixin.SMainWindow):
         if self.getCurrentAccount() is not None and ((self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) is not None) or self.getCurrentAccount(treeWidget) != acct.address):
             # Ubuntu should notify of new message irespective of whether it's in current message list or not
             self.ubuntuMessagingMenuUpdate(True, None, acct.toLabel)
-            return
+        if hasattr(acct, "feedback") and acct.feedback != GatewayAccount.ALL_OK:
+            if acct.feedback == GatewayAccount.REGISTRATION_DENIED:
+                self.dialog = EmailGatewayRegistrationDialog(self, _translate("EmailGatewayRegistrationDialog", "Registration failed:"), 
+                    _translate("EmailGatewayRegistrationDialog", "The requested email address is not available, please try a new one. Fill out the new designed email address (including @mailchuck.com) below:")
+                    )
+                if self.dialog.exec_():
+                    email = str(self.dialog.ui.lineEditEmail.text().toUtf8())
+                    # register resets address variables
+                    acct.register(email)
+                    shared.config.set(acct.fromAddress, 'label', email)
+                    shared.config.set(acct.fromAddress, 'gateway', 'mailchuck')
+                    shared.writeKeysFile()
+                    self.statusBar().showMessage(_translate(
+                        "MainWindow", "Sending email gateway registration request"))
 
     def click_pushButtonAddAddressBook(self):
         self.AddAddressDialogInstance = AddAddressDialog(self)
@@ -4306,6 +4319,19 @@ class EmailGatewayDialog(QtGui.QDialog):
         label = shared.config.get(addressAtCurrentRow, 'label')
         if label.find("@mailchuck.com") > -1:
             self.ui.lineEditEmail.setText(label)
+
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+
+
+class EmailGatewayRegistrationDialog(QtGui.QDialog):
+
+    def __init__(self, parent, title, label):
+        QtGui.QWidget.__init__(self, parent)
+        self.ui = Ui_EmailGatewayRegistrationDialog()
+        self.ui.setupUi(self)
+        self.parent = parent
+        self.setWindowTitle(title)
+        self.ui.label.setText(label)
 
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
