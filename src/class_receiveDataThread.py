@@ -44,7 +44,8 @@ class receiveDataThread(threading.Thread):
         streamNumber,
         someObjectsOfWhichThisRemoteNodeIsAlreadyAware,
         selfInitiatedConnections,
-        sendDataThreadQueue):
+        sendDataThreadQueue,
+        objectHashHolderInstance):
         
         self.sock = sock
         self.peer = shared.Peer(HOST, port)
@@ -63,6 +64,7 @@ class receiveDataThread(threading.Thread):
             self.initiatedConnection = True
             self.selfInitiatedConnections[streamNumber][self] = 0
         self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware = someObjectsOfWhichThisRemoteNodeIsAlreadyAware
+        self.objectHashHolderInstance = objectHashHolderInstance
         self.startTime = time.time()
 
     def run(self):
@@ -136,10 +138,10 @@ class receiveDataThread(threading.Thread):
         # 0.2 is avg message transmission time
         now = time.time()
         if initial and now - delay < self.startTime:
-            logger.info("Sleeping for %.2fs", delay - (now - self.startTime))
+            logger.debug("Initial sleeping for %.2fs", delay - (now - self.startTime))
             time.sleep(delay - (now - self.startTime))
         elif not initial:
-            logger.info("Sleeping for %.2fs", delay)
+            logger.debug("Sleeping due to missing object for %.2fs", delay)
             time.sleep(delay)
 
     def processData(self):
@@ -322,7 +324,7 @@ class receiveDataThread(threading.Thread):
         bigInvList = {}
         for row in queryreturn:
             hash, = row
-            if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
+            if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware and not self.objectHashHolderInstance.hasHash(hash):
                 bigInvList[hash] = 0
         # We also have messages in our inventory in memory (which is a python
         # dictionary). Let's fetch those too.
@@ -334,7 +336,6 @@ class receiveDataThread(threading.Thread):
                         bigInvList[hash] = 0
         numberOfObjectsInInvMessage = 0
         payload = ''
-        self.antiIntersectionDelay(True)
         # Now let us start appending all of these hashes together. They will be
         # sent out in a big inv message to our new peer.
         for hash, storedValue in bigInvList.items():
@@ -478,6 +479,7 @@ class receiveDataThread(threading.Thread):
         if len(data) < lengthOfVarint + (32 * numberOfRequestedInventoryItems):
             logger.debug('getdata message does not contain enough data. Ignoring.')
             return
+        self.antiIntersectionDelay(True) # only handle getdata requests if we have been connected long enough
         for i in xrange(numberOfRequestedInventoryItems):
             hash = data[lengthOfVarint + (
                 i * 32):32 + lengthOfVarint + (i * 32)]
@@ -485,7 +487,10 @@ class receiveDataThread(threading.Thread):
 
             shared.numberOfInventoryLookupsPerformed += 1
             shared.inventoryLock.acquire()
-            if hash in shared.inventory:
+            if self.objectHashHolderInstance.hasHash(hash):
+                shared.inventoryLock.release()
+                self.antiIntersectionDelay()
+            elif hash in shared.inventory:
                 objectType, streamNumber, payload, expiresTime, tag = shared.inventory[hash]
                 shared.inventoryLock.release()
                 self.sendObject(payload)

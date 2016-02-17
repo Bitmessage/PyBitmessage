@@ -39,6 +39,12 @@ class objectHashHolder(threading.Thread):
     def holdHash(self,hash):
         self.collectionOfHashLists[random.randrange(0, self.size)].append(hash)
 
+    def hasHash(self, hash):
+        if hash in (hashlist for hashlist in self.collectionOfHashLists):
+            logger.debug("Hash in hashHolder")
+            return True
+        return False
+
     def holdPeer(self,peerDetails):
         self.collectionOfPeerLists[random.randrange(0, self.size)].append(peerDetails)
 
