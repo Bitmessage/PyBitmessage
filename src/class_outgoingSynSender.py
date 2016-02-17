@@ -156,27 +156,29 @@ class outgoingSynSender(threading.Thread, StoppableThread):
 
             try:
                 self.sock.connect((peer.host, peer.port))
-                rd = receiveDataThread()
-                rd.daemon = True  # close the main program even if there are threads left
                 someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
                 sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection. 
+
+                sd = sendDataThread(sendDataThreadQueue)
+                sd.setup(self.sock, peer.host, peer.port, self.streamNumber,
+                         someObjectsOfWhichThisRemoteNodeIsAlreadyAware)
+                sd.start()
+
+                rd = receiveDataThread()
+                rd.daemon = True  # close the main program even if there are threads left
                 rd.setup(self.sock, 
                          peer.host, 
                          peer.port, 
                          self.streamNumber,
                          someObjectsOfWhichThisRemoteNodeIsAlreadyAware, 
                          self.selfInitiatedConnections, 
-                         sendDataThreadQueue)
+                         sendDataThreadQueue,
+                         sd.objectHashHolderInstance)
                 rd.start()
-                logger.debug(str(self) + ' connected to ' + str(peer) + ' during an outgoing attempt.')
 
-
-                sd = sendDataThread(sendDataThreadQueue)
-                sd.setup(self.sock, peer.host, peer.port, self.streamNumber,
-                         someObjectsOfWhichThisRemoteNodeIsAlreadyAware)
-                sd.start()
                 sd.sendVersionMessage()
 
+                logger.debug(str(self) + ' connected to ' + str(peer) + ' during an outgoing attempt.')
             except socks.GeneralProxyError as err:
                 if shared.verbose >= 2:
                     logger.debug('Could NOT connect to ' + str(peer) + ' during outgoing attempt. ' + str(err))
