@@ -335,11 +335,13 @@ class objectProcessor(threading.Thread):
         
         for key, cryptorObject in shared.myECCryptorObjects.items():
             try:
-                decryptedData = cryptorObject.decrypt(data[readPosition:])
-                toRipe = key  # This is the RIPE hash of my pubkeys. We need this below to compare to the destination_ripe included in the encrypted data.
-                initialDecryptionSuccessful = True
-                logger.info('EC decryption successful using key associated with ripe hash: %s.' % key.encode('hex'))
-                break
+                if initialDecryptionSuccessful: # continue decryption attempts to avoid timing attacks
+                    cryptorObject.decrypt(data[readPosition:])
+                else:
+                    decryptedData = cryptorObject.decrypt(data[readPosition:])
+                    toRipe = key  # This is the RIPE hash of my pubkeys. We need this below to compare to the destination_ripe included in the encrypted data.
+                    initialDecryptionSuccessful = True
+                    logger.info('EC decryption successful using key associated with ripe hash: %s.' % key.encode('hex'))
             except Exception as err:
                 pass
         if not initialDecryptionSuccessful:
@@ -615,11 +617,13 @@ class objectProcessor(threading.Thread):
             initialDecryptionSuccessful = False
             for key, cryptorObject in shared.MyECSubscriptionCryptorObjects.items():
                 try:
-                    decryptedData = cryptorObject.decrypt(data[readPosition:])
-                    toRipe = key  # This is the RIPE hash of the sender's pubkey. We need this below to compare to the RIPE hash of the sender's address to verify that it was encrypted by with their key rather than some other key.
-                    initialDecryptionSuccessful = True
-                    logger.info('EC decryption successful using key associated with ripe hash: %s' % key.encode('hex'))
-                    break
+                    if initialDecryptionSuccessful: # continue decryption attempts to avoid timing attacks
+                        cryptorObject.decrypt(data[readPosition:])
+                    else:
+                        decryptedData = cryptorObject.decrypt(data[readPosition:])
+                        toRipe = key  # This is the RIPE hash of the sender's pubkey. We need this below to compare to the RIPE hash of the sender's address to verify that it was encrypted by with their key rather than some other key.
+                        initialDecryptionSuccessful = True
+                        logger.info('EC decryption successful using key associated with ripe hash: %s' % key.encode('hex'))
                 except Exception as err:
                     pass
                     # print 'cryptorObject.decrypt Exception:', err
