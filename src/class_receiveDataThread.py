@@ -581,6 +581,8 @@ class receiveDataThread(threading.Thread):
             hostStandardFormat = self._checkIPAddress(fullHost)
             if hostStandardFormat is False:
                 continue
+            if recaddrPort == 0:
+                continue
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>Q', data[lengthOfNumberOfAddresses + (
                 38 * i):8 + lengthOfNumberOfAddresses + (38 * i)])  # This is the 'time' value in the received addr message. 64-bit.
             if recaddrStream not in shared.knownNodes:  # knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
