@@ -1,6 +1,7 @@
 from HTMLParser import HTMLParser
 import inspect
 from urllib import quote, quote_plus
+from urlparse import urlparse
 
 class SafeHTMLParser(HTMLParser):
     # from html5lib.sanitiser
@@ -18,6 +19,7 @@ class SafeHTMLParser(HTMLParser):
                            'sub', 'sup', 'table', 'tbody', 'td', 'textarea', 'time', 'tfoot',
                            'th', 'thead', 'tr', 'tt', 'u', 'ul', 'var', 'video']
     replaces = [["&", "&amp;"], ["\"", "&quot;"], ["<", "&lt;"], [">", "&gt;"], ["\n", "<br/>"], ["\t", "&nbsp;&nbsp;&nbsp;&nbsp;"], ["  ", "&nbsp; "], ["  ", "&nbsp; "], ["<br/> ", "<br/>&nbsp;"]]
+    src_schemes = [ "data" ]
 
     @staticmethod
     def multi_replace(text):
@@ -36,27 +38,33 @@ class SafeHTMLParser(HTMLParser):
         self.raw = u""
         self.sanitised = u""
         self.has_html = False
+        self.allow_picture = False
+        self.allow_external_src = False
 
     def add_if_acceptable(self, tag, attrs = None):
-        if not tag in self.acceptable_elements:
+        if not tag in SafeHTMLParser.acceptable_elements:
             return
         self.sanitised += "<"
         if inspect.stack()[1][3] == "handle_endtag":
             self.sanitised += "/"
         self.sanitised += tag
         if not attrs is None:
-            for attr in attrs:
-                if tag == "img" and attr[0] == "src" and not self.allow_picture:
-                    attr[1] = ""
-                self.sanitised += " " + quote_plus(attr[0])
-                if not (attr[1] is None):
-                    self.sanitised += "=\"" + attr[1] + "\""
+            for attr, val in attrs:
+                if tag == "img" and attr == "src" and not self.allow_picture:
+                    val = ""
+                elif attr == "src" and not self.allow_external_src:
+                    url = urlparse(val)
+                    if url.scheme not in SafeHTMLParser.src_schemes:
+                        val == ""
+                self.sanitised += " " + quote_plus(attr)
+                if not (val is None):
+                    self.sanitised += "=\"" + val + "\""
         if inspect.stack()[1][3] == "handle_startendtag":
             self.sanitised += "/"
         self.sanitised += ">"
     
     def handle_starttag(self, tag, attrs):
-        if tag in self.acceptable_elements:
+        if tag in SafeHTMLParser.acceptable_elements:
             self.has_html = True
         self.add_if_acceptable(tag, attrs)
 
@@ -64,7 +72,7 @@ class SafeHTMLParser(HTMLParser):
         self.add_if_acceptable(tag)
         
     def handle_startendtag(self, tag, attrs):
-        if tag in self.acceptable_elements:
+        if tag in SafeHTMLParser.acceptable_elements:
             self.has_html = True
         self.add_if_acceptable(tag, attrs)
     
@@ -86,7 +94,7 @@ class SafeHTMLParser(HTMLParser):
         if text:
             self.reset()
             self.reset_safe()
+            self.allow_picture = allow_picture
             self.feed(text)
             self.close()
-            self.allow_picture = allow_picture
         return self.has_html
