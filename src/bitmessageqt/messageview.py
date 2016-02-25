@@ -89,9 +89,9 @@ class MessageView(QtGui.QTextBrowser):
 
     def setContent(self, data):
         self.html = SafeHTMLParser()
-        self.html.allow_picture = True
         self.html.reset()
         self.html.reset_safe()
+        self.html.allow_picture = True
         self.html.feed(data)
         self.html.close()
         self.showPlain()
