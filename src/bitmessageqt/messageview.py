@@ -1,5 +1,6 @@
 from PyQt4 import QtCore, QtGui
 
+from urlparse import urlparse
 from safehtmlparser import *
 
 class MessageView(QtGui.QTextBrowser):
@@ -42,6 +43,16 @@ class MessageView(QtGui.QTextBrowser):
             QtGui.QApplication.activeWindow().statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(str(zoom)))
 
     def confirmURL(self, link):
+        if link.scheme() == "mailto":
+            QtGui.QApplication.activeWindow().ui.lineEditTo.setText(link.path())
+            if link.hasQueryItem("subject"):
+                QtGui.QApplication.activeWindow().ui.lineEditSubject.setText(link.queryItemValue("subject"))
+            if link.hasQueryItem("body"):
+                QtGui.QApplication.activeWindow().ui.textEditMessage.setText(link.queryItemValue("body"))
+            QtGui.QApplication.activeWindow().ui.tabWidgetSend.setCurrentIndex(0)
+            QtGui.QApplication.activeWindow().ui.tabWidget.setCurrentIndex(1)
+            QtGui.QApplication.activeWindow().ui.textEditMessage.setFocus()
+            return
         reply = QtGui.QMessageBox.warning(self,
             QtGui.QApplication.translate(type(self).__name__, MessageView.CONFIRM_TITLE),
             QtGui.QApplication.translate(type(self).__name__, MessageView.CONFIRM_TEXT).arg(str(link.toString())), 
