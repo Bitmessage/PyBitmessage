@@ -1,5 +1,6 @@
 from HTMLParser import HTMLParser
 import inspect
+import re
 from urllib import quote, quote_plus
 from urlparse import urlparse
 
@@ -20,6 +21,9 @@ class SafeHTMLParser(HTMLParser):
                            'th', 'thead', 'tr', 'tt', 'u', 'ul', 'var', 'video']
     replaces = [["&", "&amp;"], ["\"", "&quot;"], ["<", "&lt;"], [">", "&gt;"], ["\n", "<br/>"], ["\t", "&nbsp;&nbsp;&nbsp;&nbsp;"], ["  ", "&nbsp; "], ["  ", "&nbsp; "], ["<br/> ", "<br/>&nbsp;"]]
     src_schemes = [ "data" ]
+    uriregex1 = re.compile(r'(\b(?:https?|telnet|gopher|file|wais|ftp):[\w/#~:.?+=&%@!\-.:;?\\-]+?(?=[.:?\-]*(?:[^\w/#~:;.?+=&%@!\-.:?\-]|$)))')
+    uriregex2 = re.compile(r'<a href="([^"]+)&amp;')
+    emailregex = re.compile(r'\b([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\b')
 
     @staticmethod
     def multi_replace(text):
@@ -88,7 +92,12 @@ class SafeHTMLParser(HTMLParser):
     def feed(self, data):
         HTMLParser.feed(self, data)
         tmp = SafeHTMLParser.multi_replace(data)
-        self.raw += unicode(tmp, 'utf-8', 'replace')
+        tmp = SafeHTMLParser.uriregex1.sub(
+                r'<a href="\1">\1</a>',
+                unicode(tmp, 'utf-8', 'replace'))
+        tmp = SafeHTMLParser.uriregex2.sub(r'<a href="\1&', tmp)
+        tmp = SafeHTMLParser.emailregex.sub(r'<a href="mailto:\1">\1</a>', tmp)
+        self.raw += tmp
 
     def is_html(self, text = None, allow_picture = False):
         if text:
