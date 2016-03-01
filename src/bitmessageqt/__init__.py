@@ -3074,6 +3074,24 @@ class MyForm(settingsmixin.SMainWindow):
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Error: You cannot add the same address to your blacklist twice. Try renaming the existing one if you want."))
 
+    def deleteRowFromMessagelist(row = None, inventoryHash = None, ackData = None, messageLists = None):
+        if messageLists is None:
+            messageLists = (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions)
+        elif type(messageLists) not in (list, tuple):
+            messageLists = (messageLists)
+        for messageList in messageLists:
+            if row is not None:
+                inventoryHash = str(messageList.item(row, 3).data(Qt.UserRole).toPyObject())
+                messageList.removeRow(row)
+            elif inventoryHash is not None:
+                for i in range(messageList.rowCount() - 1, -1, -1):
+                    if messageList.item(i, 3).data(Qt.UserRole).toPyObject() == inventoryHash:
+                        messageList.removeRow(i)
+            elif ackData is not None:
+                for i in range(messageList.rowCount() - 1, -1, -1):
+                    if messageList.item(i, 3).data(Qt.UserRole).toPyObject() == ackData:
+                        messageList.removeRow(i)
+
     # Send item on the Inbox tab to trash
     def on_action_InboxTrash(self):
         tableWidget = self.getCurrentMessagelist()
