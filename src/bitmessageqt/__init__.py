@@ -28,6 +28,7 @@ from bitmessageui import *
 from namecoin import namecoinConnection, ensureNamecoinOptions
 from newaddressdialog import *
 from newaddresswizard import *
+from messageview import MessageView
 from migrationwizard import *
 from foldertree import *
 from addaddressdialog import *
@@ -680,11 +681,17 @@ class MyForm(settingsmixin.SMainWindow):
 
         # Initialize the inbox search
         QtCore.QObject.connect(self.ui.inboxSearchLineEdit, QtCore.SIGNAL(
-            "returnPressed()"), self.inboxSearchLineEditPressed)
+            "returnPressed()"), self.inboxSearchLineEditReturnPressed)
         QtCore.QObject.connect(self.ui.inboxSearchLineEditSubscriptions, QtCore.SIGNAL(
-            "returnPressed()"), self.inboxSearchLineEditPressed)
+            "returnPressed()"), self.inboxSearchLineEditReturnPressed)
         QtCore.QObject.connect(self.ui.inboxSearchLineEditChans, QtCore.SIGNAL(
-            "returnPressed()"), self.inboxSearchLineEditPressed)
+            "returnPressed()"), self.inboxSearchLineEditReturnPressed)
+        QtCore.QObject.connect(self.ui.inboxSearchLineEdit, QtCore.SIGNAL(
+            "textChanged(QString)"), self.inboxSearchLineEditUpdated)
+        QtCore.QObject.connect(self.ui.inboxSearchLineEditSubscriptions, QtCore.SIGNAL(
+            "textChanged(QString)"), self.inboxSearchLineEditUpdated)
+        QtCore.QObject.connect(self.ui.inboxSearchLineEditChans, QtCore.SIGNAL(
+            "textChanged(QString)"), self.inboxSearchLineEditUpdated)
 
         # Initialize the Blacklist or Whitelist
         if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
@@ -784,6 +791,21 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "displayAlert(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayAlert)
         self.UISignalThread.start()
+
+        # Key press in tree view
+        self.ui.treeWidgetYourIdentities.keyPressEvent = self.treeWidgetKeyPressEvent
+        self.ui.treeWidgetSubscriptions.keyPressEvent = self.treeWidgetKeyPressEvent
+        self.ui.treeWidgetChans.keyPressEvent = self.treeWidgetKeyPressEvent
+
+        # Key press in messagelist
+        self.ui.tableWidgetInbox.keyPressEvent = self.tableWidgetKeyPressEvent
+        self.ui.tableWidgetInboxSubscriptions.keyPressEvent = self.tableWidgetKeyPressEvent
+        self.ui.tableWidgetInboxChans.keyPressEvent = self.tableWidgetKeyPressEvent
+
+        # Key press in messageview
+        self.ui.textEditInboxMessage.keyPressEvent = self.textEditKeyPressEvent
+        self.ui.textEditInboxMessageSubscriptions.keyPressEvent = self.textEditKeyPressEvent
+        self.ui.textEditInboxMessageChans.keyPressEvent = self.textEditKeyPressEvent
 
         # Below this point, it would be good if all of the necessary global data
         # structures were initialized.
@@ -1101,7 +1123,6 @@ class MyForm(settingsmixin.SMainWindow):
 
         tableWidget.setSortingEnabled(False)
         tableWidget.horizontalHeader().setSortIndicator(3, Qt.DescendingOrder)
-        tableWidget.keyPressEvent = self.tableWidgetSentKeyPressEvent
 
     # Load messages from database file
     def loadMessagelist(self, tableWidget, account, folder="inbox", where="", what="", unreadOnly = False):
@@ -1131,7 +1152,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         tableWidget.horizontalHeader().setSortIndicator(3, Qt.DescendingOrder)
         tableWidget.setSortingEnabled(True)
-        tableWidget.keyPressEvent = self.tableWidgetInboxKeyPressEvent
+        tableWidget.selectRow(0)
 
     # create application indicator
     def appIndicatorInit(self, app):
@@ -1453,17 +1474,65 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             self.tray.showMessage(title, subtitle, 1, 2000)
 
-    # set delete key in inbox
-    def tableWidgetInboxKeyPressEvent(self, event):
-        if event.key() == QtCore.Qt.Key_Delete:
-            self.on_action_InboxTrash()
-        return QtGui.QTableWidget.keyPressEvent(self.getCurrentMessagelist(), event)
+    # tree
+    def treeWidgetKeyPressEvent(self, event):
+        return self.handleKeyPress(event, self.getCurrentTreeWidget())
 
-    # set delete key in inbox
-    def tableWidgetSentKeyPressEvent(self, event):
+    # inbox / sent
+    def tableWidgetKeyPressEvent(self, event):
+        return self.handleKeyPress(event, self.getCurrentMessagelist())
+
+    # messageview
+    def textEditKeyPressEvent(self, event):
+        return self.handleKeyPress(event, self.getCurrentMessageTextedit())
+
+    def handleKeyPress(self, event, focus = None):
+        messagelist = self.getCurrentMessagelist()
+        folder = self.getCurrentFolder()
         if event.key() == QtCore.Qt.Key_Delete:
-            self.on_action_SentTrash()
-        return QtGui.QTableWidget.keyPressEvent(self.getCurrentMessagelist(), event)
+            if isinstance (focus, MessageView) or isinstance(focus, QtGui.QTableWidget):
+                if folder == "sent":
+                    self.on_action_SentTrash()
+                else:
+                    self.on_action_InboxTrash()
+            event.ignore()
+        elif event.key() == QtCore.Qt.Key_N:
+            currentRow = messagelist.currentRow()
+            if currentRow < messagelist.rowCount() - 1:
+                messagelist.selectRow(currentRow + 1)
+            event.ignore()
+        elif event.key() == QtCore.Qt.Key_P:
+            currentRow = messagelist.currentRow()
+            if currentRow > 0:
+                messagelist.selectRow(currentRow - 1)
+            event.ignore()
+        elif event.key() == QtCore.Qt.Key_R:
+            if messagelist == self.ui.tableWidgetInboxChans:
+                self.on_action_InboxReplyChan()
+            else:
+                self.on_action_InboxReply()
+            event.ignore()
+        elif event.key() == QtCore.Qt.Key_C:
+            currentAddress = self.getCurrentAccount()
+            if currentAddress:
+                self.setSendFromComboBox(currentAddress)
+            self.ui.tabWidgetSend.setCurrentIndex(0)
+            self.ui.tabWidget.setCurrentIndex(1)
+            self.ui.lineEditTo.setFocus()
+            event.ignore()
+        elif event.key() == QtCore.Qt.Key_F:
+            searchline = self.getCurrentSearchLine(retObj = True)
+            if searchline:
+                searchline.setFocus()
+            event.ignore()
+        if not event.isAccepted():
+            return
+        if isinstance (focus, MessageView):
+            return MessageView.keyPressEvent(focus, event)
+        elif isinstance (focus, QtGui.QTableWidget):
+            return QtGui.QTableWidget.keyPressEvent(focus, event)
+        elif isinstance (focus, QtGui.QTreeWidget):
+            return QtGui.QTreeWidget.keyPressEvent(focus, event)
 
     # menu button 'manage keys'
     def click_actionManageKeys(self):
@@ -2952,6 +3021,21 @@ class MyForm(settingsmixin.SMainWindow):
                 return quoteWrapper.fill(line)
         return '\n'.join([quote_line(l) for l in message.splitlines()]) + '\n\n'
 
+    def setSendFromComboBox(self, address = None):
+        if address is None:
+            messagelist = self.getCurrentMessagelist()
+            if messagelist:
+                currentInboxRow = messagelist.currentRow()
+                address = messagelist.item(
+                    currentInboxRow, 0).address
+        for box in [self.ui.comboBoxSendFrom, self.ui.comboBoxSendFromBroadcast]:
+            listOfAddressesInComboBoxSendFrom = [str(box.itemData(i).toPyObject()) for i in range(box.count())]
+            if address in listOfAddressesInComboBoxSendFrom:
+                currentIndex = listOfAddressesInComboBoxSendFrom.index(address)
+                box.setCurrentIndex(currentIndex)
+            else:
+                box.setCurrentIndex(0)
+
     def on_action_InboxReplyChan(self):
         self.on_action_InboxReply(self.REPLY_TYPE_CHAN)
     
@@ -3012,12 +3096,7 @@ class MyForm(settingsmixin.SMainWindow):
             logger.debug('original sent to a chan. Setting the to address in the reply to the chan address.')
             self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
         
-        listOfAddressesInComboBoxSendFrom = [str(widget['from'].itemData(i).toPyObject()) for i in range(widget['from'].count())]
-        if toAddressAtCurrentInboxRow in listOfAddressesInComboBoxSendFrom:
-            currentIndex = listOfAddressesInComboBoxSendFrom.index(toAddressAtCurrentInboxRow)
-            widget['from'].setCurrentIndex(currentIndex)
-        else:
-            widget['from'].setCurrentIndex(0)
+        self.setSendFromComboBox(toAddressAtCurrentInboxRow)
         
         quotedText = self.quoted_text(unicode(messageAtCurrentInboxRow, 'utf-8', 'replace'))
         widget['message'].setPlainText(quotedText)
@@ -3536,7 +3615,7 @@ class MyForm(settingsmixin.SMainWindow):
         except:
             return self.ui.textEditInboxMessage
 
-    def getCurrentSearchLine(self, currentIndex = None):
+    def getCurrentSearchLine(self, currentIndex = None, retObj = False):
         if currentIndex is None:
             currentIndex = self.ui.tabWidget.currentIndex();
         messagelistList = [
@@ -3546,7 +3625,10 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.inboxSearchLineEditChans,
         ]
         if currentIndex >= 0 and currentIndex < len(messagelistList):
-            return messagelistList[currentIndex].text().toUtf8().data()
+            if retObj:
+                return messagelistList[currentIndex]
+            else:
+                return messagelistList[currentIndex].text().toUtf8().data()
         else:
             return None
 
@@ -3859,17 +3941,28 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.popMenuSent.exec_(self.ui.tableWidgetInbox.mapToGlobal(point))
 
-    def inboxSearchLineEditPressed(self):
-        searchLine = self.getCurrentSearchLine()
-        searchOption = self.getCurrentSearchOption()
-        messageTextedit = self.getCurrentMessageTextedit()
-        if messageTextedit:
-            messageTextedit.setPlainText(QString(""))
+    def inboxSearchLineEditUpdated(self, text):
+        # dynamic search for too short text is slow
+        if len(str(text)) < 3:
+            return
         messagelist = self.getCurrentMessagelist()
+        searchOption = self.getCurrentSearchOption()
         if messagelist:
             account = self.getCurrentAccount()
             folder = self.getCurrentFolder()
+            self.loadMessagelist(messagelist, account, folder, searchOption, str(text))
+
+    def inboxSearchLineEditReturnPressed(self):
+        logger.debug("Search return pressed")
+        searchLine = self.getCurrentSearchLine()
+        messagelist = self.getCurrentMessagelist()
+        if len(str(searchLine)) < 3:
+            searchOption = self.getCurrentSearchOption()
+            account = self.getCurrentAccount()
+            folder = self.getCurrentFolder()
             self.loadMessagelist(messagelist, account, folder, searchOption, searchLine)
+        if messagelist:
+            messagelist.setFocus()
 
     def treeWidgetItemClicked(self):
         searchLine = self.getCurrentSearchLine()
