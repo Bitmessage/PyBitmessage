@@ -49,6 +49,7 @@ class MessageView(QtGui.QTextBrowser):
                 QtGui.QApplication.activeWindow().ui.lineEditSubject.setText(link.queryItemValue("subject"))
             if link.hasQueryItem("body"):
                 QtGui.QApplication.activeWindow().ui.textEditMessage.setText(link.queryItemValue("body"))
+            QtGui.QApplication.activeWindow().setSendFromComboBox()
             QtGui.QApplication.activeWindow().ui.tabWidgetSend.setCurrentIndex(0)
             QtGui.QApplication.activeWindow().ui.tabWidget.setCurrentIndex(1)
             QtGui.QApplication.activeWindow().ui.textEditMessage.setFocus()
