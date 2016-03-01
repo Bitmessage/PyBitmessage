@@ -60,6 +60,21 @@ class MessageView(QtGui.QTextBrowser):
         if reply == QtGui.QMessageBox.Yes:
             QtGui.QDesktopServices.openUrl(link)
 
+    def loadResource (restype, name):
+        if restype == QtGui.QTextDocument.ImageResource and name.scheme() == "bmmsg":
+            pass
+#            QImage correctImage;
+#            lookup the correct QImage from a cache
+#            return QVariant::fromValue(correctImage);
+#        elif restype == QtGui.QTextDocument.HtmlResource:
+#        elif restype == QtGui.QTextDocument.ImageResource:
+#        elif restype == QtGui.QTextDocument.StyleSheetResource:
+#        elif restype == QtGui.QTextDocument.UserResource:
+        else:
+            pass
+#            by default, this will interpret it as a local file
+#            QtGui.QTextBrowser.loadResource(restype, name)
+
     def lazyRender(self):
         if self.rendering:
             return
