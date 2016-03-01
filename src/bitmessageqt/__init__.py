@@ -2440,6 +2440,8 @@ class MyForm(settingsmixin.SMainWindow):
                 self.settingsDialogInstance.ui.checkBoxStartOnLogon.isChecked()))
             shared.config.set('bitmessagesettings', 'minimizetotray', str(
                 self.settingsDialogInstance.ui.checkBoxMinimizeToTray.isChecked()))
+            shared.config.set('bitmessagesettings', 'trayonclose', str(
+                self.settingsDialogInstance.ui.checkBoxTrayOnClose.isChecked()))
             shared.config.set('bitmessagesettings', 'showtraynotifications', str(
                 self.settingsDialogInstance.ui.checkBoxShowTrayNotifications.isChecked()))
             shared.config.set('bitmessagesettings', 'startintray', str(
@@ -2850,15 +2852,15 @@ class MyForm(settingsmixin.SMainWindow):
     # window close event
     def closeEvent(self, event):
         self.appIndicatorHide()
-        minimizeonclose = False
+        trayonclose = False
 
         try:
-            minimizeonclose = shared.config.getboolean(
-                'bitmessagesettings', 'minimizeonclose')
+            trayonclose = shared.config.getboolean(
+                'bitmessagesettings', 'trayonclose')
         except Exception:
             pass
 
-        if minimizeonclose:
+        if trayonclose:
             # minimize the application
             event.ignore()
         else:
@@ -4069,6 +4071,8 @@ class settingsDialog(QtGui.QDialog):
             shared.config.getboolean('bitmessagesettings', 'startonlogon'))
         self.ui.checkBoxMinimizeToTray.setChecked(
             shared.config.getboolean('bitmessagesettings', 'minimizetotray'))
+        self.ui.checkBoxTrayOnClose.setChecked(
+            shared.safeConfigGetBoolean('bitmessagesettings', 'trayonclose'))
         self.ui.checkBoxShowTrayNotifications.setChecked(
             shared.config.getboolean('bitmessagesettings', 'showtraynotifications'))
         self.ui.checkBoxStartInTray.setChecked(
