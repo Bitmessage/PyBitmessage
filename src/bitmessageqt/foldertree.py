@@ -434,7 +434,7 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
     def setData(self, role, value):
         if role == QtCore.Qt.EditRole:
             if isinstance(value, QtCore.QVariant):
-                self.label = str(value.toString())
+                self.label = str(value.toString().toUtf8())
             else:
                 self.label = str(value)
             if self.type in (AccountMixin.NORMAL, AccountMixin.MAILINGLIST, AccountMixin.CHAN):
