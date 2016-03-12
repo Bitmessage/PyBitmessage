@@ -171,7 +171,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
             return unicode(str(QtGui.QApplication.translate("MainWindow", "All accounts")), 'utf-8')
         else:
             try:
-                return unicode(shared.config.get(self.address, 'label'), 'utf-8)')
+                return unicode(shared.config.get(self.address, 'label'), 'utf-8', 'ignore')
             except:
                 return unicode(self.address, 'utf-8')
     
@@ -210,7 +210,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
     def setData(self, column, role, value):
         if role == QtCore.Qt.EditRole and self.type != AccountMixin.SUBSCRIPTION:
             if isinstance(value, QtCore.QVariant):
-                shared.config.set(str(self.address), 'label', str(value.toString()))
+                shared.config.set(str(self.address), 'label', str(value.toString().toUtf8()))
             else:
                 shared.config.set(str(self.address), 'label', str(value))
             shared.writeKeysFile()
@@ -236,8 +236,8 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
             if self.treeWidget().header().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
                 reverse = True
             if self._getSortRank() == other._getSortRank():
-                x = self._getLabel().decode('utf-8').lower()
-                y = other._getLabel().decode('utf-8').lower()
+                x = self._getLabel().lower()
+                y = other._getLabel().lower()
                 return x < y
             return (not reverse if self._getSortRank() < other._getSortRank() else reverse)
 
@@ -261,7 +261,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         if queryreturn != []:
             for row in queryreturn:
                 retval, = row
-            return unicode(retval, 'utf-8')
+            return unicode(retval, 'utf-8', 'ignore')
         return unicode(self.address, 'utf-8')
         
     def setType(self):
@@ -270,10 +270,11 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         
     def setData(self, column, role, value):
         if role == QtCore.Qt.EditRole:
+            from debug import logger
             if isinstance(value, QtCore.QVariant):
-                label = str(value.toString())
+                label = str(value.toString().toUtf8()).decode('utf-8', 'ignore')
             else:
-                label = str(value)
+                label = unicode(value, 'utf-8', 'ignore')
             sqlExecute(
                 '''UPDATE subscriptions SET label=? WHERE address=?''',
                 label, self.address)
@@ -300,7 +301,7 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
             queryreturn = None
             if self.type in (AccountMixin.NORMAL, AccountMixin.CHAN, AccountMixin.MAILINGLIST):
                 try:
-                    newLabel = unicode(shared.config.get(self.address, 'label'), 'utf-8)')
+                    newLabel = unicode(shared.config.get(self.address, 'label'), 'utf-8', 'ignore')
                 except:
                     queryreturn = sqlQuery(
                     '''select label from addressbook where address=?''', self.address)
@@ -455,7 +456,7 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
             if self.tableWidget().horizontalHeader().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
                 reverse = True
             if self.type == other.type:
-                return self.label.decode('utf-8').lower() < other.label.decode('utf-8').lower()
+                return self.label.lower() < other.label.lower()
             else:
                 return (not reverse if self.type < other.type else reverse)
         return super(QtGui.QTableWidgetItem, self).__lt__(other)

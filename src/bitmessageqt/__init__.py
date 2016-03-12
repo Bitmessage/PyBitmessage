@@ -3998,7 +3998,7 @@ class MyForm(settingsmixin.SMainWindow):
         if item.type == AccountMixin.ALL:
             return
         
-        newLabel = str(item.text(0))
+        newLabel = unicode(item.text(0), 'utf-8', 'ignore')
         oldLabel = item.defaultLabel()
 
         # unchanged, do not do anything either
