@@ -41,8 +41,13 @@ def search_sql(xAddress = "toaddress", account = None, folder = "inbox", where =
     sqlStatementParts = []
     sqlArguments = []
     if account is not None:
-        sqlStatementParts.append(xAddress + " = ? ")
-        sqlArguments.append(account)
+        if xAddress == 'both':
+            sqlStatementParts.append("(fromaddress = ? OR toaddress = ?)")
+            sqlArguments.append(account)
+            sqlArguments.append(account)
+        else:
+            sqlStatementParts.append(xAddress + " = ? ")
+            sqlArguments.append(account)
     if folder is not None:
         if folder == "new":
             folder = "inbox"
