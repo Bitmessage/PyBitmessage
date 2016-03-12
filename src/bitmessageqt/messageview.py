@@ -61,7 +61,7 @@ class MessageView(QtGui.QTextBrowser):
         if reply == QtGui.QMessageBox.Yes:
             QtGui.QDesktopServices.openUrl(link)
 
-    def loadResource (restype, name):
+    def loadResource (self, restype, name):
         if restype == QtGui.QTextDocument.ImageResource and name.scheme() == "bmmsg":
             pass
 #            QImage correctImage;
