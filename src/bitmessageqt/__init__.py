@@ -1105,10 +1105,14 @@ class MyForm(settingsmixin.SMainWindow):
 
     # Load Sent items from database
     def loadSent(self, tableWidget, account, where="", what=""):
-        if tableWidget == self.ui.tableWidgetInboxChans or tableWidget == self.ui.tableWidgetInboxSubscriptions:
+        if tableWidget == self.ui.tableWidgetInboxSubscriptions:
             tableWidget.setColumnHidden(0, True)
             tableWidget.setColumnHidden(1, False)
             xAddress = 'toaddress'
+        elif tableWidget == self.ui.tableWidgetInboxChans:
+            tableWidget.setColumnHidden(0, False)
+            tableWidget.setColumnHidden(1, True)
+            xAddress = 'both'
         else:
             tableWidget.setColumnHidden(0, False)
             tableWidget.setColumnHidden(1, True)
