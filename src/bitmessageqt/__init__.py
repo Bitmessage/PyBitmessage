@@ -4430,7 +4430,12 @@ class EmailGatewayDialog(QtGui.QDialog):
         acct = accountClass(addressAtCurrentRow)
         if isinstance(acct, GatewayAccount):
             self.ui.radioButtonUnregister.setEnabled(True)
+            self.ui.radioButtonStatus.setEnabled(True)
+            self.ui.radioButtonStatus.setChecked(True)
+            self.ui.radioButtonSettings.setEnabled(True)
         else:
+            self.ui.radioButtonStatus.setEnabled(False)
+            self.ui.radioButtonSettings.setEnabled(False)
             self.ui.radioButtonUnregister.setEnabled(False)
         label = shared.config.get(addressAtCurrentRow, 'label')
         if label.find("@mailchuck.com") > -1:
