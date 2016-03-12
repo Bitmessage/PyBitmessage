@@ -3759,8 +3759,9 @@ class MyForm(settingsmixin.SMainWindow):
             text = str(tableWidget.item(currentRow, currentColumn).label)
         else:
             text = tableWidget.item(currentRow, currentColumn).data(Qt.UserRole)
+        text = unicode(str(text), 'utf-8', 'ignore')
         clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(str(text))
+        clipboard.setText(text)
 
     #set avatar functions
     def on_action_TreeWidgetSetAvatar(self):
