@@ -21,7 +21,7 @@ class SafeHTMLParser(HTMLParser):
                            'th', 'thead', 'tr', 'tt', 'u', 'ul', 'var', 'video']
     replaces = [["&", "&amp;"], ["\"", "&quot;"], ["<", "&lt;"], [">", "&gt;"], ["\n", "<br/>"], ["\t", "&nbsp;&nbsp;&nbsp;&nbsp;"], ["  ", "&nbsp; "], ["  ", "&nbsp; "], ["<br/> ", "<br/>&nbsp;"]]
     src_schemes = [ "data" ]
-    uriregex1 = re.compile(r'(\b(?:https?|telnet|gopher|file|wais|ftp):[\w/#~:.?+=&%@!\-.:;?\\-]+?(?=[.:?\-]*(?:[^\w/#~:;.?+=&%@!\-.:?\-]|$)))')
+    uriregex1 = re.compile(r'(?i)\b((?:(https?|ftp):(?:/{1,3}|[a-z0-9%])|www\d{0,3}[.]|[a-z0-9.\-]+[.][a-z]{2,4}/)(?:[^\s()<>]+|\(([^\s()<>]+|(\([^\s()<>]+\)))*\))+(?:\(([^\s()<>]+|(\([^\s()<>]+\)))*\)|[^\s`!()\[\]{};:\'".,<>?]))')
     uriregex2 = re.compile(r'<a href="([^"]+)&amp;')
     emailregex = re.compile(r'\b([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,})\b')
 
