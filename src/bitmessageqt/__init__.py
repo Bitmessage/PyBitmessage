@@ -152,8 +152,6 @@ class MyForm(settingsmixin.SMainWindow):
             "clicked()"), self.click_radioButtonBlacklist)
         QtCore.QObject.connect(self.ui.radioButtonWhitelist, QtCore.SIGNAL(
             "clicked()"), self.click_radioButtonWhitelist)
-        QtCore.QObject.connect(self.ui.pushButtonStatusIcon, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonStatusIcon)
         QtCore.QObject.connect(self.ui.actionSettings, QtCore.SIGNAL(
             "triggered()"), self.click_actionSettings)
         QtCore.QObject.connect(self.ui.actionAbout, QtCore.SIGNAL(
@@ -730,9 +728,17 @@ class MyForm(settingsmixin.SMainWindow):
             "itemChanged(QTableWidgetItem *)"), self.tableWidgetBlacklistItemChanged)
 
         # Put the colored icon on the status bar
-        # self.ui.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
+        # self.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
         self.statusbar = self.statusBar()
-        self.statusbar.insertPermanentWidget(0, self.ui.pushButtonStatusIcon)
+
+        self.pushButtonStatusIcon = QtGui.QPushButton(self)
+        self.pushButtonStatusIcon.setText('')
+        self.pushButtonStatusIcon.setIcon(QIcon(':/newPrefix/images/redicon.png'))
+        self.pushButtonStatusIcon.setFlat(True)
+        self.statusbar.insertPermanentWidget(0, self.pushButtonStatusIcon)
+        QtCore.QObject.connect(self.pushButtonStatusIcon, QtCore.SIGNAL(
+            "clicked()"), self.click_pushButtonStatusIcon)
+
         self.ui.labelStartupTime.setText(_translate("MainWindow", "Since startup on %1").arg(
             l10n.formatTimestamp()))
         self.numberOfMessagesProcessed = 0
@@ -1814,7 +1820,7 @@ class MyForm(settingsmixin.SMainWindow):
         global withMessagingMenu
         # print 'setting status icon color'
         if color == 'red':
-            self.ui.pushButtonStatusIcon.setIcon(
+            self.pushButtonStatusIcon.setIcon(
                 QIcon(":/newPrefix/images/redicon.png"))
             shared.statusIconColor = 'red'
             # if the connection is lost then show a notification
@@ -1831,7 +1837,7 @@ class MyForm(settingsmixin.SMainWindow):
         if color == 'yellow':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
-            self.ui.pushButtonStatusIcon.setIcon(QIcon(
+            self.pushButtonStatusIcon.setIcon(QIcon(
                 ":/newPrefix/images/yellowicon.png"))
             shared.statusIconColor = 'yellow'
             # if a new connection has been established then show a notification
@@ -1848,7 +1854,7 @@ class MyForm(settingsmixin.SMainWindow):
         if color == 'green':
             if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
                 self.statusBar().showMessage('')
-            self.ui.pushButtonStatusIcon.setIcon(
+            self.pushButtonStatusIcon.setIcon(
                 QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
             if not self.connected:
