@@ -632,14 +632,6 @@ class MyForm(settingsmixin.SMainWindow):
             # startup for linux
             pass
 
-
-        self.totalNumberOfBytesReceived = 0
-        self.totalNumberOfBytesSent = 0
-        
-        self.timer = QtCore.QTimer()
-        self.timer.start(2000) # milliseconds
-        QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
-
         # e.g. for editing labels
         self.recurDepth = 0
         
@@ -739,8 +731,6 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QObject.connect(self.pushButtonStatusIcon, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonStatusIcon)
 
-        self.ui.labelStartupTime.setText(_translate("MainWindow", "Since startup on %1").arg(
-            l10n.formatTimestamp()))
         self.numberOfMessagesProcessed = 0
         self.numberOfBroadcastsProcessed = 0
         self.numberOfPubkeysProcessed = 0
@@ -755,7 +745,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.tableWidgetAddressBook.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.tableWidgetBlacklist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         
-        self.UISignalThread = UISignaler()
+        self.UISignalThread = UISignaler.get()
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.writeNewAddressToTable)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -768,14 +758,6 @@ class MyForm(settingsmixin.SMainWindow):
             "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewInboxMessage)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.displayNewSentMessage)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNetworkStatusTab()"), self.updateNetworkStatusTab)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNumberOfMessagesProcessed()"), self.updateNumberOfMessagesProcessed)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNumberOfPubkeysProcessed()"), self.updateNumberOfPubkeysProcessed)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNumberOfBroadcastsProcessed()"), self.updateNumberOfBroadcastsProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "setStatusIcon(PyQt_PyObject)"), self.setStatusIcon)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -1719,21 +1701,6 @@ class MyForm(settingsmixin.SMainWindow):
             self.actionShow.setChecked(not self.actionShow.isChecked())
             self.appIndicatorShowOrHideWindow()
 
-    def updateNumberOfMessagesProcessed(self):
-        self.ui.labelSyncStatus.setText(_translate("MainWindow", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
-        self.ui.labelMessageCount.setText(_translate(
-            "MainWindow", "Processed %1 person-to-person messages.").arg(str(shared.numberOfMessagesProcessed)))
-
-    def updateNumberOfBroadcastsProcessed(self):
-        self.ui.labelSyncStatus.setText(_translate("MainWindow", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
-        self.ui.labelBroadcastCount.setText(_translate(
-            "MainWindow", "Processed %1 broadcast messages.").arg(str(shared.numberOfBroadcastsProcessed)))
-
-    def updateNumberOfPubkeysProcessed(self):
-        self.ui.labelSyncStatus.setText(_translate("MainWindow", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
-        self.ui.labelPubkeyCount.setText(_translate(
-            "MainWindow", "Processed %1 public keys.").arg(str(shared.numberOfPubkeysProcessed)))
-
     def formatBytes(self, num):
         for x in ['bytes','KB','MB','GB']:
             if num < 1000.0:
@@ -1744,74 +1711,6 @@ class MyForm(settingsmixin.SMainWindow):
     def formatByteRate(self, num):
         num /= 1000
         return "%4.0f KB" % num
-
-    def updateNumberOfBytes(self):
-        """
-        This function is run every two seconds, so we divide the rate of bytes
-        sent and received by 2.
-        """
-        self.ui.labelBytesRecvCount.setText(_translate(
-            "MainWindow", "Down: %1/s  Total: %2").arg(self.formatByteRate(shared.numberOfBytesReceived/2), self.formatBytes(self.totalNumberOfBytesReceived)))
-        self.ui.labelBytesSentCount.setText(_translate(
-            "MainWindow", "Up: %1/s  Total: %2").arg(self.formatByteRate(shared.numberOfBytesSent/2), self.formatBytes(self.totalNumberOfBytesSent)))
-        self.totalNumberOfBytesReceived += shared.numberOfBytesReceived
-        self.totalNumberOfBytesSent += shared.numberOfBytesSent
-        shared.numberOfBytesReceived = 0
-        shared.numberOfBytesSent = 0
-
-    def updateNetworkStatusTab(self):
-        totalNumberOfConnectionsFromAllStreams = 0  # One would think we could use len(sendDataQueues) for this but the number doesn't always match: just because we have a sendDataThread running doesn't mean that the connection has been fully established (with the exchange of version messages).
-        streamNumberTotals = {}
-        for host, streamNumber in shared.connectedHostsList.items():
-            if not streamNumber in streamNumberTotals:
-                streamNumberTotals[streamNumber] = 1
-            else:
-                streamNumberTotals[streamNumber] += 1
-
-        while self.ui.tableWidgetConnectionCount.rowCount() > 0:
-            self.ui.tableWidgetConnectionCount.removeRow(0)
-        for streamNumber, connectionCount in streamNumberTotals.items():
-            self.ui.tableWidgetConnectionCount.insertRow(0)
-            if streamNumber == 0:
-                newItem = QtGui.QTableWidgetItem("?")
-            else:
-                newItem = QtGui.QTableWidgetItem(str(streamNumber))
-            newItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidgetConnectionCount.setItem(0, 0, newItem)
-            newItem = QtGui.QTableWidgetItem(str(connectionCount))
-            newItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.ui.tableWidgetConnectionCount.setItem(0, 1, newItem)
-        """for currentRow in range(self.ui.tableWidgetConnectionCount.rowCount()):
-            rowStreamNumber = int(self.ui.tableWidgetConnectionCount.item(currentRow,0).text())
-            if streamNumber == rowStreamNumber:
-                foundTheRowThatNeedsUpdating = True
-                self.ui.tableWidgetConnectionCount.item(currentRow,1).setText(str(connectionCount))
-                #totalNumberOfConnectionsFromAllStreams += connectionCount
-        if foundTheRowThatNeedsUpdating == False:
-            #Add a line to the table for this stream number and update its count with the current connection count.
-            self.ui.tableWidgetConnectionCount.insertRow(0)
-            newItem =  QtGui.QTableWidgetItem(str(streamNumber))
-            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
-            self.ui.tableWidgetConnectionCount.setItem(0,0,newItem)
-            newItem =  QtGui.QTableWidgetItem(str(connectionCount))
-            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
-            self.ui.tableWidgetConnectionCount.setItem(0,1,newItem)
-            totalNumberOfConnectionsFromAllStreams += connectionCount"""
-        self.ui.labelTotalConnections.setText(_translate(
-            "MainWindow", "Total Connections: %1").arg(str(len(shared.connectedHostsList))))
-        if len(shared.connectedHostsList) > 0 and shared.statusIconColor == 'red':  # FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
-            self.setStatusIcon('yellow')
-        elif len(shared.connectedHostsList) == 0:
-            self.setStatusIcon('red')
-
-    # timer driven
-    def runEveryTwoSeconds(self):
-        self.ui.labelLookupsPerSecond.setText(_translate(
-            "MainWindow", "Inventory lookups per second: %1").arg(str(shared.numberOfInventoryLookupsPerformed/2)))
-        shared.numberOfInventoryLookupsPerformed = 0
-        self.updateNumberOfBytes()
 
     # Indicates whether or not there is a connection to the Bitmessage network
     connected = False
@@ -4631,70 +4530,7 @@ class myTableWidgetItem(QTableWidgetItem):
     def __lt__(self, other):
         return int(self.data(33).toPyObject()) < int(other.data(33).toPyObject())
 
-class UISignaler(QThread):
-
-    def __init__(self, parent=None):
-        QThread.__init__(self, parent)
-
-    def run(self):
-        while True:
-            command, data = shared.UISignalQueue.get()
-            if command == 'writeNewAddressToTable':
-                label, address, streamNumber = data
-                self.emit(SIGNAL(
-                    "writeNewAddressToTable(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), label, address, str(streamNumber))
-            elif command == 'updateStatusBar':
-                self.emit(SIGNAL("updateStatusBar(PyQt_PyObject)"), data)
-            elif command == 'updateSentItemStatusByToAddress':
-                toAddress, message = data
-                self.emit(SIGNAL(
-                    "updateSentItemStatusByToAddress(PyQt_PyObject,PyQt_PyObject)"), toAddress, message)
-            elif command == 'updateSentItemStatusByAckdata':
-                ackData, message = data
-                self.emit(SIGNAL(
-                    "updateSentItemStatusByAckdata(PyQt_PyObject,PyQt_PyObject)"), ackData, message)
-            elif command == 'displayNewInboxMessage':
-                inventoryHash, toAddress, fromAddress, subject, body = data
-                self.emit(SIGNAL(
-                    "displayNewInboxMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
-                    inventoryHash, toAddress, fromAddress, subject, body)
-            elif command == 'displayNewSentMessage':
-                toAddress, fromLabel, fromAddress, subject, message, ackdata = data
-                self.emit(SIGNAL(
-                    "displayNewSentMessage(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"),
-                    toAddress, fromLabel, fromAddress, subject, message, ackdata)
-            elif command == 'updateNetworkStatusTab':
-                self.emit(SIGNAL("updateNetworkStatusTab()"))
-            elif command == 'updateNumberOfMessagesProcessed':
-                self.emit(SIGNAL("updateNumberOfMessagesProcessed()"))
-            elif command == 'updateNumberOfPubkeysProcessed':
-                self.emit(SIGNAL("updateNumberOfPubkeysProcessed()"))
-            elif command == 'updateNumberOfBroadcastsProcessed':
-                self.emit(SIGNAL("updateNumberOfBroadcastsProcessed()"))
-            elif command == 'setStatusIcon':
-                self.emit(SIGNAL("setStatusIcon(PyQt_PyObject)"), data)
-            elif command == 'changedInboxUnread':
-                self.emit(SIGNAL("changedInboxUnread(PyQt_PyObject)"), data)
-            elif command == 'rerenderMessagelistFromLabels':
-                self.emit(SIGNAL("rerenderMessagelistFromLabels()"))
-            elif command == 'rerenderMessagelistToLabels':
-                self.emit(SIGNAL("rerenderMessagelistToLabels()"))
-            elif command == 'rerenderAddressBook':
-                self.emit(SIGNAL("rerenderAddressBook()"))
-            elif command == 'rerenderSubscriptions':
-                self.emit(SIGNAL("rerenderSubscriptions()"))
-            elif command == 'rerenderBlackWhiteList':
-                self.emit(SIGNAL("rerenderBlackWhiteList()"))
-            elif command == 'removeInboxRowByMsgid':
-                self.emit(SIGNAL("removeInboxRowByMsgid(PyQt_PyObject)"), data)
-            elif command == 'newVersionAvailable':
-                self.emit(SIGNAL("newVersionAvailable(PyQt_PyObject)"), data)
-            elif command == 'alert':
-                title, text, exitAfterUserClicksOk = data
-                self.emit(SIGNAL("displayAlert(PyQt_PyObject, PyQt_PyObject, PyQt_PyObject)"), title, text, exitAfterUserClicksOk)
-            else:
-                sys.stderr.write(
-                    'Command sent to UISignaler not recognized: %s\n' % command)
+from uisignaler import UISignaler
 
 
 app = None
