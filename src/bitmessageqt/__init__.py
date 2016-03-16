@@ -538,6 +538,8 @@ class MyForm(settingsmixin.SMainWindow):
             db[None] = {}
             db[None]["inbox"] = total
             db[None]["new"] = total
+            db[None]["sent"] = 0
+            db[None]["trash"] = 0
             enabled[None] = True
         
         if treeWidget.isSortingEnabled():
@@ -587,8 +589,6 @@ class MyForm(settingsmixin.SMainWindow):
             unread = 0
             for folder in folders:
                 if toAddress is not None and folder == "new":
-                    continue
-                if toAddress is None and folder in ["trash", "sent"]:
                     continue
                 subwidget = Ui_FolderWidget(widget, j, toAddress, folder, db[toAddress][folder])
                 unread += db[toAddress][folder]
@@ -993,13 +993,19 @@ class MyForm(settingsmixin.SMainWindow):
                 addressItem = root.child(i)
                 if addressItem.type != AccountMixin.ALL and address is not None and addressItem.data(0, QtCore.Qt.UserRole) != address:
                     continue
-                updateUnreadCount(addressItem)
+                if folder not in ["trash"]:
+                    updateUnreadCount(addressItem)
                 if addressItem.childCount == 0:
                     continue
                 for j in range(addressItem.childCount()):
                     folderItem = addressItem.child(j)
                     if folder is not None and folderItem.folderName != folder and addressItem.type != AccountMixin.ALL:
                         continue
+                    if addressItem.type == AccountMixin.ALL:
+                        if folder in ["sent", "trash"] and folderItem.folderName != folder:
+                            continue
+                        if folder in ["inbox", "new"] and folderItem.folderName not in ["inbox", "new"]:
+                            continue
                     updateUnreadCount(folderItem)
 
     def addMessageListItem(self, tableWidget, items):
@@ -1115,7 +1121,10 @@ class MyForm(settingsmixin.SMainWindow):
             xAddress = 'both'
         else:
             tableWidget.setColumnHidden(0, False)
-            tableWidget.setColumnHidden(1, True)
+            if account is None:
+                tableWidget.setColumnHidden(1, False)
+            else:
+                tableWidget.setColumnHidden(1, True)
             xAddress = 'fromaddress'
 
         tableWidget.setSortingEnabled(False)
@@ -2397,7 +2406,7 @@ class MyForm(settingsmixin.SMainWindow):
                 continue
             if tableWidget == inbox and self.getCurrentAccount(treeWidget) == acct.address and self.getCurrentFolder(treeWidget) in ["inbox", None]:
                 ret = self.addMessageListItemInbox(inbox, "inbox", inventoryHash, toAddress, fromAddress, subject, time.time(), 0)
-            elif treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) is None:
+            elif treeWidget == self.ui.treeWidgetYourIdentities and self.getCurrentAccount(treeWidget) is None and self.getCurrentFolder(treeWidget) in ["inbox", "new", None]:
                 ret = self.addMessageListItemInbox(tableWidget, "inbox", inventoryHash, toAddress, fromAddress, subject, time.time(), 0)
         if ret is None:
             acct.parseMessage(toAddress, fromAddress, subject, "")
