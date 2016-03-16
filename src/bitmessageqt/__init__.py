@@ -1509,35 +1509,36 @@ class MyForm(settingsmixin.SMainWindow):
                 else:
                     self.on_action_InboxTrash()
             event.ignore()
-        elif event.key() == QtCore.Qt.Key_N:
-            currentRow = messagelist.currentRow()
-            if currentRow < messagelist.rowCount() - 1:
-                messagelist.selectRow(currentRow + 1)
-            event.ignore()
-        elif event.key() == QtCore.Qt.Key_P:
-            currentRow = messagelist.currentRow()
-            if currentRow > 0:
-                messagelist.selectRow(currentRow - 1)
-            event.ignore()
-        elif event.key() == QtCore.Qt.Key_R:
-            if messagelist == self.ui.tableWidgetInboxChans:
-                self.on_action_InboxReplyChan()
-            else:
-                self.on_action_InboxReply()
-            event.ignore()
-        elif event.key() == QtCore.Qt.Key_C:
-            currentAddress = self.getCurrentAccount()
-            if currentAddress:
-                self.setSendFromComboBox(currentAddress)
-            self.ui.tabWidgetSend.setCurrentIndex(0)
-            self.ui.tabWidget.setCurrentIndex(1)
-            self.ui.lineEditTo.setFocus()
-            event.ignore()
-        elif event.key() == QtCore.Qt.Key_F:
-            searchline = self.getCurrentSearchLine(retObj = True)
-            if searchline:
-                searchline.setFocus()
-            event.ignore()
+        elif QtGui.QApplication.queryKeyboardModifiers() == QtCore.Qt.NoModifier:
+            if event.key() == QtCore.Qt.Key_N:
+                currentRow = messagelist.currentRow()
+                if currentRow < messagelist.rowCount() - 1:
+                    messagelist.selectRow(currentRow + 1)
+                event.ignore()
+            elif event.key() == QtCore.Qt.Key_P:
+                currentRow = messagelist.currentRow()
+                if currentRow > 0:
+                    messagelist.selectRow(currentRow - 1)
+                event.ignore()
+            elif event.key() == QtCore.Qt.Key_R:
+                if messagelist == self.ui.tableWidgetInboxChans:
+                    self.on_action_InboxReplyChan()
+                else:
+                    self.on_action_InboxReply()
+                event.ignore()
+            elif event.key() == QtCore.Qt.Key_C:
+                currentAddress = self.getCurrentAccount()
+                if currentAddress:
+                    self.setSendFromComboBox(currentAddress)
+                self.ui.tabWidgetSend.setCurrentIndex(0)
+                self.ui.tabWidget.setCurrentIndex(1)
+                self.ui.lineEditTo.setFocus()
+                event.ignore()
+            elif event.key() == QtCore.Qt.Key_F:
+                searchline = self.getCurrentSearchLine(retObj = True)
+                if searchline:
+                    searchline.setFocus()
+                event.ignore()
         if not event.isAccepted():
             return
         if isinstance (focus, MessageView):
