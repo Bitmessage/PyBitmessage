@@ -1,8 +1,8 @@
 SOURCES	= 	../addresses.py\
 			../bitmessagemain.py\
 			../class_addressGenerator.py\
-			../class_objectProcessor.py\
 			../class_outgoingSynSender.py\
+			../class_objectProcessor.py\
 			../class_receiveDataThread.py\
 			../class_sendDataThread.py\
 			../class_singleCleaner.py\
@@ -19,23 +19,31 @@ SOURCES	= 	../addresses.py\
 			../bitmessageqt/__init__.py\
 			../bitmessageqt/about.py\
 			../bitmessageqt/addaddressdialog.py\
-			../bitmessageqt/account.py\
 			../bitmessageqt/bitmessageui.py\
 			../bitmessageqt/connect.py\
-			../bitmessageqt/emailgateway.py\
-			../bitmessageqt/foldertree.py\
 			../bitmessageqt/help.py\
 			../bitmessageqt/iconglossary.py\
-			../bitmessageqt/messagecompose.py\
-			../bitmessageqt/messageview.py\
 			../bitmessageqt/newaddressdialog.py\
 			../bitmessageqt/newchandialog.py\
 			../bitmessageqt/newsubscriptiondialog.py\
 			../bitmessageqt/regenerateaddresses.py\
-			../bitmessageqt/safehtmlparser.py\
 			../bitmessageqt/settings.py\
 			../bitmessageqt/specialaddressbehavior.py
 
-			
-TRANSLATIONS	= bitmessage_eo.ts
+FORMS = \
+    ../bitmessageqt/networkstatus.ui
+
+TRANSLATIONS = \
+    bitmessage_ar.ts \
+    bitmessage_cs.ts \
+    bitmessage_de.ts \
+    bitmessage_en_pirate.ts \
+    bitmessage_eo.ts \
+    bitmessage_fr.ts \
+    bitmessage_ja.ts \
+    bitmessage_nl.ts \
+    bitmessage_no.ts \
+    bitmessage_ru.ts \
+    bitmessage_zh_cn.ts
+
 CODECFORTR      = UTF-8
