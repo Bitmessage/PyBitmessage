@@ -589,14 +589,6 @@ class Ui_MainWindow(object):
         self.tabWidget.addTab(self.blackwhitelist, icon9, _fromUtf8(""))
         self.networkstatus = QtGui.QWidget()
         self.networkstatus.setObjectName(_fromUtf8("networkstatus"))
-        self.pushButtonStatusIcon = QtGui.QPushButton(self.networkstatus)
-        self.pushButtonStatusIcon.setGeometry(QtCore.QRect(680, 440, 21, 23))
-        self.pushButtonStatusIcon.setText(_fromUtf8(""))
-        icon10 = QtGui.QIcon()
-        icon10.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/redicon.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.pushButtonStatusIcon.setIcon(icon10)
-        self.pushButtonStatusIcon.setFlat(True)
-        self.pushButtonStatusIcon.setObjectName(_fromUtf8("pushButtonStatusIcon"))
         self.tableWidgetConnectionCount = settingsmixin.STableWidget(self.networkstatus)
         self.tableWidgetConnectionCount.setGeometry(QtCore.QRect(20, 70, 241, 241))
         palette = QtGui.QPalette()
@@ -739,7 +731,6 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.radioButtonWhitelist, self.pushButtonAddBlacklist)
         MainWindow.setTabOrder(self.pushButtonAddBlacklist, self.tableWidgetBlacklist)
         MainWindow.setTabOrder(self.tableWidgetBlacklist, self.tableWidgetConnectionCount)
-        MainWindow.setTabOrder(self.tableWidgetConnectionCount, self.pushButtonStatusIcon)
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "Bitmessage", None))
