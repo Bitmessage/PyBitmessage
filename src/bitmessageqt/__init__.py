@@ -31,7 +31,6 @@ from newaddresswizard import *
 from messageview import MessageView
 from migrationwizard import *
 from foldertree import *
-from addaddressdialog import *
 from newsubscriptiondialog import *
 from regenerateaddresses import *
 from newchandialog import *
@@ -67,6 +66,7 @@ import types
 from utils import *
 from collections import OrderedDict
 from account import *
+from dialogs import AddAddressDialog
 
 def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
@@ -140,18 +140,12 @@ class MyForm(settingsmixin.SMainWindow):
             "clicked()"), self.click_pushButtonAddAddressBook)
         QtCore.QObject.connect(self.ui.pushButtonAddSubscription, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonAddSubscription)
-        QtCore.QObject.connect(self.ui.pushButtonAddBlacklist, QtCore.SIGNAL(
-            "clicked()"), self.click_pushButtonAddBlacklist)
         QtCore.QObject.connect(self.ui.pushButtonTTL, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonTTL)
         QtCore.QObject.connect(self.ui.pushButtonSend, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonSend)
         QtCore.QObject.connect(self.ui.pushButtonFetchNamecoinID, QtCore.SIGNAL(
             "clicked()"), self.click_pushButtonFetchNamecoinID)
-        QtCore.QObject.connect(self.ui.radioButtonBlacklist, QtCore.SIGNAL(
-            "clicked()"), self.click_radioButtonBlacklist)
-        QtCore.QObject.connect(self.ui.radioButtonWhitelist, QtCore.SIGNAL(
-            "clicked()"), self.click_radioButtonWhitelist)
         QtCore.QObject.connect(self.ui.actionSettings, QtCore.SIGNAL(
             "triggered()"), self.click_actionSettings)
         QtCore.QObject.connect(self.ui.actionAbout, QtCore.SIGNAL(
@@ -364,46 +358,6 @@ class MyForm(settingsmixin.SMainWindow):
         # self.popMenuSent = QtGui.QMenu( self )
         # self.popMenuSent.addAction( self.actionSentClipboard )
         # self.popMenuSent.addAction( self.actionTrashSentMessage )
-
-    def init_blacklist_popup_menu(self, connectSignal=True):
-        # Popup menu for the Blacklist page
-        self.ui.blacklistContextMenuToolbar = QtGui.QToolBar()
-        # Actions
-        self.actionBlacklistNew = self.ui.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Add new entry"), self.on_action_BlacklistNew)
-        self.actionBlacklistDelete = self.ui.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Delete"), self.on_action_BlacklistDelete)
-        self.actionBlacklistClipboard = self.ui.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Copy address to clipboard"),
-            self.on_action_BlacklistClipboard)
-        self.actionBlacklistEnable = self.ui.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Enable"), self.on_action_BlacklistEnable)
-        self.actionBlacklistDisable = self.ui.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Disable"), self.on_action_BlacklistDisable)
-        self.actionBlacklistSetAvatar = self.ui.blacklistContextMenuToolbar.addAction(
-            _translate(
-                "MainWindow", "Set avatar..."),
-            self.on_action_BlacklistSetAvatar)
-        self.ui.tableWidgetBlacklist.setContextMenuPolicy(
-            QtCore.Qt.CustomContextMenu)
-        if connectSignal:
-            self.connect(self.ui.tableWidgetBlacklist, QtCore.SIGNAL(
-                'customContextMenuRequested(const QPoint&)'),
-                        self.on_context_menuBlacklist)
-        self.popMenuBlacklist = QtGui.QMenu(self)
-        # self.popMenuBlacklist.addAction( self.actionBlacklistNew )
-        self.popMenuBlacklist.addAction(self.actionBlacklistDelete)
-        self.popMenuBlacklist.addSeparator()
-        self.popMenuBlacklist.addAction(self.actionBlacklistClipboard)
-        self.popMenuBlacklist.addSeparator()
-        self.popMenuBlacklist.addAction(self.actionBlacklistEnable)
-        self.popMenuBlacklist.addAction(self.actionBlacklistDisable)
-        self.popMenuBlacklist.addAction(self.actionBlacklistSetAvatar)
 
     def rerenderTabTreeSubscriptions(self):
         treeWidget = self.ui.treeWidgetSubscriptions
@@ -645,8 +599,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.init_subscriptions_popup_menu()
         self.init_chan_popup_menu()
         self.init_sent_popup_menu()
-        self.init_blacklist_popup_menu()
-        
+
         # Initialize the user's list of addresses on the 'Chan' tab.
         self.rerenderTabTreeChans()
 
@@ -683,12 +636,6 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QObject.connect(self.ui.inboxSearchLineEditChans, QtCore.SIGNAL(
             "textChanged(QString)"), self.inboxSearchLineEditUpdated)
 
-        # Initialize the Blacklist or Whitelist
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
-            self.ui.tabWidget.setTabText(6, 'Whitelist')
-            self.ui.radioButtonWhitelist.click()
-        self.rerenderBlackWhiteList()
-
         # Initialize addressbook
         QtCore.QObject.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL(
             "itemChanged(QTableWidgetItem *)"), self.tableWidgetAddressBookItemChanged)
@@ -715,10 +662,6 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QObject.connect(self.ui.treeWidgetChans, QtCore.SIGNAL(
             "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
 
-        # Initialize blacklist
-        QtCore.QObject.connect(self.ui.tableWidgetBlacklist, QtCore.SIGNAL(
-            "itemChanged(QTableWidgetItem *)"), self.tableWidgetBlacklistItemChanged)
-
         # Put the colored icon on the status bar
         # self.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
         self.statusbar = self.statusBar()
@@ -743,7 +686,6 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.treeWidgetYourIdentities.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.treeWidgetSubscriptions.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         self.ui.tableWidgetAddressBook.setIconSize(QtCore.QSize(identicon_size, identicon_size))
-        self.ui.tableWidgetBlacklist.setIconSize(QtCore.QSize(identicon_size, identicon_size))
         
         self.UISignalThread = UISignaler.get()
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -770,8 +712,6 @@ class MyForm(settingsmixin.SMainWindow):
             "rerenderAddressBook()"), self.rerenderAddressBook)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "rerenderSubscriptions()"), self.rerenderSubscriptions)
-        QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "rerenderBlackWhiteList()"), self.rerenderBlackWhiteList)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "removeInboxRowByMsgid(PyQt_PyObject)"), self.removeInboxRowByMsgid)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -1684,7 +1624,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.init_addressbook_popup_menu(False)
             self.init_subscriptions_popup_menu(False)
             self.init_sent_popup_menu(False)
-            self.init_blacklist_popup_menu(False)
+            self.ui.blackwhitelist.init_blacklist_popup_menu(False)
         if event.type() == QtCore.QEvent.WindowStateChange:
             if self.windowState() & QtCore.Qt.WindowMinimized:
                 if shared.config.getboolean('bitmessagesettings', 'minimizetotray') and not 'darwin' in sys.platform:
@@ -1968,29 +1908,6 @@ class MyForm(settingsmixin.SMainWindow):
     def rerenderSubscriptions(self):
         self.rerenderTabTreeSubscriptions()
 
-    def rerenderBlackWhiteList(self):
-        self.ui.tableWidgetBlacklist.setRowCount(0)
-        listType = shared.config.get('bitmessagesettings', 'blackwhitelist')
-        if listType == 'black':
-            queryreturn = sqlQuery('''SELECT label, address, enabled FROM blacklist''')
-        else:
-            queryreturn = sqlQuery('''SELECT label, address, enabled FROM whitelist''')
-        self.ui.tableWidgetBlacklist.setSortingEnabled(False)
-        for row in queryreturn:
-            label, address, enabled = row
-            self.ui.tableWidgetBlacklist.insertRow(0)
-            newItem = QtGui.QTableWidgetItem(unicode(label, 'utf-8'))
-            if not enabled:
-                newItem.setTextColor(QtGui.QColor(128, 128, 128))
-            newItem.setIcon(avatarize(address))
-            self.ui.tableWidgetBlacklist.setItem(0, 0, newItem)
-            newItem = QtGui.QTableWidgetItem(address)
-            newItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            if not enabled:
-                newItem.setTextColor(QtGui.QColor(128, 128, 128))
-            self.ui.tableWidgetBlacklist.setItem(0, 1, newItem)
-        self.ui.tableWidgetBlacklist.setSortingEnabled(True)
 
     def click_pushButtonTTL(self):
         QtGui.QMessageBox.information(self, 'Time To Live', _translate(
@@ -2630,64 +2547,6 @@ class MyForm(settingsmixin.SMainWindow):
                 except:
                     pass
 
-    def click_radioButtonBlacklist(self):
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
-            shared.config.set('bitmessagesettings', 'blackwhitelist', 'black')
-            shared.writeKeysFile()
-            # self.ui.tableWidgetBlacklist.clearContents()
-            self.ui.tableWidgetBlacklist.setRowCount(0)
-            self.rerenderBlackWhiteList()
-            self.ui.tabWidget.setTabText(6, 'Blacklist')
-
-    def click_radioButtonWhitelist(self):
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-            shared.config.set('bitmessagesettings', 'blackwhitelist', 'white')
-            shared.writeKeysFile()
-            # self.ui.tableWidgetBlacklist.clearContents()
-            self.ui.tableWidgetBlacklist.setRowCount(0)
-            self.rerenderBlackWhiteList()
-            self.ui.tabWidget.setTabText(6, 'Whitelist')
-
-    def click_pushButtonAddBlacklist(self):
-        self.NewBlacklistDialogInstance = AddAddressDialog(self)
-        if self.NewBlacklistDialogInstance.exec_():
-            if self.NewBlacklistDialogInstance.ui.labelAddressCheck.text() == _translate("MainWindow", "Address is valid."):
-                address = addBMIfNotPresent(str(
-                    self.NewBlacklistDialogInstance.ui.lineEditAddress.text()))
-                # First we must check to see if the address is already in the
-                # address book. The user cannot add it again or else it will
-                # cause problems when updating and deleting the entry.
-                t = (address,)
-                if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-                    sql = '''select * from blacklist where address=?'''
-                else:
-                    sql = '''select * from whitelist where address=?'''
-                queryreturn = sqlQuery(sql,*t)
-                if queryreturn == []:
-                    self.ui.tableWidgetBlacklist.setSortingEnabled(False)
-                    self.ui.tableWidgetBlacklist.insertRow(0)
-                    newItem = QtGui.QTableWidgetItem(unicode(
-                        self.NewBlacklistDialogInstance.ui.newAddressLabel.text().toUtf8(), 'utf-8'))
-                    newItem.setIcon(avatarize(address))
-                    self.ui.tableWidgetBlacklist.setItem(0, 0, newItem)
-                    newItem = QtGui.QTableWidgetItem(address)
-                    newItem.setFlags(
-                        QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-                    self.ui.tableWidgetBlacklist.setItem(0, 1, newItem)
-                    self.ui.tableWidgetBlacklist.setSortingEnabled(True)
-                    t = (str(self.NewBlacklistDialogInstance.ui.newAddressLabel.text().toUtf8()), address, True)
-                    if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-                        sql = '''INSERT INTO blacklist VALUES (?,?,?)'''
-                    else:
-                        sql = '''INSERT INTO whitelist VALUES (?,?,?)'''
-                    sqlExecute(sql, *t)
-                else:
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: You cannot add the same address to your list twice. Perhaps rename the existing one if you want."))
-            else:
-                self.statusBar().showMessage(_translate(
-                    "MainWindow", "The address you entered was invalid. Ignoring it."))
-
     def on_action_SpecialAddressBehaviorDialog(self):
         self.dialog = SpecialAddressBehaviorDialog(self)
         # For Modal dialogs
@@ -3061,7 +2920,7 @@ class MyForm(settingsmixin.SMainWindow):
             sqlExecute('''INSERT INTO blacklist VALUES (?,?, ?)''',
                        label,
                        addressAtCurrentInboxRow, True)
-            self.rerenderBlackWhiteList()
+            self.ui.blackwhitelist.rerenderBlackWhiteList()
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Entry added to the blacklist. Edit the label to your liking."))
         else:
@@ -3368,69 +3227,6 @@ class MyForm(settingsmixin.SMainWindow):
         self.popMenuSubscriptions.exec_(
             self.ui.treeWidgetSubscriptions.mapToGlobal(point))
 
-    # Group of functions for the Blacklist dialog box
-    def on_action_BlacklistNew(self):
-        self.click_pushButtonAddBlacklist()
-
-    def on_action_BlacklistDelete(self):
-        currentRow = self.ui.tableWidgetBlacklist.currentRow()
-        labelAtCurrentRow = self.ui.tableWidgetBlacklist.item(
-            currentRow, 0).text().toUtf8()
-        addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(
-            currentRow, 1).text()
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-            sqlExecute(
-                '''DELETE FROM blacklist WHERE label=? AND address=?''',
-                str(labelAtCurrentRow), str(addressAtCurrentRow))
-        else:
-            sqlExecute(
-                '''DELETE FROM whitelist WHERE label=? AND address=?''',
-                str(labelAtCurrentRow), str(addressAtCurrentRow))
-        self.ui.tableWidgetBlacklist.removeRow(currentRow)
-
-    def on_action_BlacklistClipboard(self):
-        currentRow = self.ui.tableWidgetBlacklist.currentRow()
-        addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(
-            currentRow, 1).text()
-        clipboard = QtGui.QApplication.clipboard()
-        clipboard.setText(str(addressAtCurrentRow))
-
-    def on_context_menuBlacklist(self, point):
-        self.popMenuBlacklist.exec_(
-            self.ui.tableWidgetBlacklist.mapToGlobal(point))
-
-    def on_action_BlacklistEnable(self):
-        currentRow = self.ui.tableWidgetBlacklist.currentRow()
-        addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(
-            currentRow, 1).text()
-        self.ui.tableWidgetBlacklist.item(
-            currentRow, 0).setTextColor(QApplication.palette().text().color())
-        self.ui.tableWidgetBlacklist.item(
-            currentRow, 1).setTextColor(QApplication.palette().text().color())
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-            sqlExecute(
-                '''UPDATE blacklist SET enabled=1 WHERE address=?''',
-                str(addressAtCurrentRow))
-        else:
-            sqlExecute(
-                '''UPDATE whitelist SET enabled=1 WHERE address=?''',
-                str(addressAtCurrentRow))
-
-    def on_action_BlacklistDisable(self):
-        currentRow = self.ui.tableWidgetBlacklist.currentRow()
-        addressAtCurrentRow = self.ui.tableWidgetBlacklist.item(
-            currentRow, 1).text()
-        self.ui.tableWidgetBlacklist.item(
-            currentRow, 0).setTextColor(QtGui.QColor(128, 128, 128))
-        self.ui.tableWidgetBlacklist.item(
-            currentRow, 1).setTextColor(QtGui.QColor(128, 128, 128))
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':
-            sqlExecute(
-                '''UPDATE blacklist SET enabled=0 WHERE address=?''', str(addressAtCurrentRow))
-        else:
-            sqlExecute(
-                '''UPDATE whitelist SET enabled=0 WHERE address=?''', str(addressAtCurrentRow))
-
     def widgetConvert (self, widget):
         if widget == self.ui.tableWidgetInbox:
             return self.ui.treeWidgetYourIdentities
@@ -3684,9 +3480,6 @@ class MyForm(settingsmixin.SMainWindow):
     def on_action_AddressBookSetAvatar(self):
         self.on_action_SetAvatar(self.ui.tableWidgetAddressBook)
         
-    def on_action_BlacklistSetAvatar(self):
-        self.on_action_SetAvatar(self.ui.tableWidgetBlacklist)
-
     def on_action_SetAvatar(self, thisTableWidget):
         currentRow = thisTableWidget.currentRow()
         addressAtCurrentRow = thisTableWidget.item(
@@ -3757,7 +3550,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.rerenderComboBoxSendFromBroadcast()
             self.rerenderMessagelistFromLabels()
             self.rerenderMessagelistToLabels()
-            self.rerenderBlackWhiteList()
+            self.ui.blackwhitelist.rerenderBlackWhiteList()
             # generate identicon
             return False
 
@@ -4000,17 +3793,6 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderTabTreeChans()
         self.rerenderComboBoxSendFrom()
         self.rerenderComboBoxSendFromBroadcast()
-
-    def tableWidgetBlacklistItemChanged(self, item):
-        if item.column() == 0:
-            addressitem = self.ui.tableWidgetBlacklist.item(item.row(), 1)
-            if isinstance(addressitem, QTableWidgetItem):
-                if self.ui.radioButtonBlacklist.isChecked():
-                    sqlExecute('''UPDATE blacklist SET label=? WHERE address=?''',
-                            str(item.text()), str(addressitem.text()))
-                else:
-                    sqlExecute('''UPDATE whitelist SET label=? WHERE address=?''',
-                            str(item.text()), str(addressitem.text()))
 
     def updateStatusBar(self, data):
         if data != "":
@@ -4370,43 +4152,6 @@ class EmailGatewayRegistrationDialog(QtGui.QDialog):
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 
-class AddAddressDialog(QtGui.QDialog):
-
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_AddAddressDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        QtCore.QObject.connect(self.ui.lineEditAddress, QtCore.SIGNAL(
-            "textChanged(QString)"), self.addressChanged)
-
-    def addressChanged(self, QString):
-        status, a, b, c = decodeAddress(str(QString))
-        if status == 'missingbm':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "The address should start with ''BM-''"))
-        elif status == 'checksumfailed':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "The address is not typed or copied correctly (the checksum failed)."))
-        elif status == 'versiontoohigh':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "The version number of this address is higher than this software can support. Please upgrade Bitmessage."))
-        elif status == 'invalidcharacters':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "The address contains invalid characters."))
-        elif status == 'ripetooshort':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "Some data encoded in the address is too short."))
-        elif status == 'ripetoolong':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "Some data encoded in the address is too long."))
-        elif status == 'varintmalformed':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "Some data encoded in the address is malformed."))
-        elif status == 'success':
-            self.ui.labelAddressCheck.setText(
-                _translate("MainWindow", "Address is valid."))
-            
 class NewSubscriptionDialog(QtGui.QDialog):
 
     def __init__(self, parent):
