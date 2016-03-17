@@ -1702,17 +1702,6 @@ class MyForm(settingsmixin.SMainWindow):
             self.actionShow.setChecked(not self.actionShow.isChecked())
             self.appIndicatorShowOrHideWindow()
 
-    def formatBytes(self, num):
-        for x in ['bytes','KB','MB','GB']:
-            if num < 1000.0:
-                return "%3.0f %s" % (num, x)
-            num /= 1000.0
-        return "%3.0f %s" % (num, 'TB')
-    
-    def formatByteRate(self, num):
-        num /= 1000
-        return "%4.0f KB" % num
-
     # Indicates whether or not there is a connection to the Bitmessage network
     connected = False
 

@@ -31,6 +31,17 @@ class NetworkStatus(QtGui.QWidget):
         self.timer.start(2000) # milliseconds
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
+    def formatBytes(self, num):
+        for x in ['bytes','KB','MB','GB']:
+            if num < 1000.0:
+                return "%3.0f %s" % (num, x)
+            num /= 1000.0
+        return "%3.0f %s" % (num, 'TB')
+
+    def formatByteRate(self, num):
+        num /= 1000
+        return "%4.0f KB" % num
+
     def updateNumberOfMessagesProcessed(self):
         self.labelSyncStatus.setText(_translate("MainWindow", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
         self.labelMessageCount.setText(_translate(
