@@ -12,6 +12,8 @@ from messageview import MessageView
 from messagecompose import MessageCompose
 import settingsmixin
 from networkstatus import NetworkStatus
+from blacklist import Blacklist
+import shared
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -551,43 +553,13 @@ class Ui_MainWindow(object):
         icon8 = QtGui.QIcon()
         icon8.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/can-icon-16px.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.tabWidget.addTab(self.chans, icon8, _fromUtf8(""))
-        self.blackwhitelist = QtGui.QWidget()
-        self.blackwhitelist.setObjectName(_fromUtf8("blackwhitelist"))
-        self.gridLayout_6 = QtGui.QGridLayout(self.blackwhitelist)
-        self.gridLayout_6.setObjectName(_fromUtf8("gridLayout_6"))
-        self.radioButtonBlacklist = QtGui.QRadioButton(self.blackwhitelist)
-        self.radioButtonBlacklist.setChecked(True)
-        self.radioButtonBlacklist.setObjectName(_fromUtf8("radioButtonBlacklist"))
-        self.gridLayout_6.addWidget(self.radioButtonBlacklist, 0, 0, 1, 2)
-        self.radioButtonWhitelist = QtGui.QRadioButton(self.blackwhitelist)
-        self.radioButtonWhitelist.setObjectName(_fromUtf8("radioButtonWhitelist"))
-        self.gridLayout_6.addWidget(self.radioButtonWhitelist, 1, 0, 1, 2)
-        self.pushButtonAddBlacklist = QtGui.QPushButton(self.blackwhitelist)
-        self.pushButtonAddBlacklist.setObjectName(_fromUtf8("pushButtonAddBlacklist"))
-        self.gridLayout_6.addWidget(self.pushButtonAddBlacklist, 2, 0, 1, 1)
-        spacerItem = QtGui.QSpacerItem(689, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        self.gridLayout_6.addItem(spacerItem, 2, 1, 1, 1)
-        self.tableWidgetBlacklist = settingsmixin.STableWidget(self.blackwhitelist)
-        self.tableWidgetBlacklist.setAlternatingRowColors(True)
-        self.tableWidgetBlacklist.setSelectionMode(QtGui.QAbstractItemView.SingleSelection)
-        self.tableWidgetBlacklist.setSelectionBehavior(QtGui.QAbstractItemView.SelectRows)
-        self.tableWidgetBlacklist.setObjectName(_fromUtf8("tableWidgetBlacklist"))
-        self.tableWidgetBlacklist.setColumnCount(2)
-        self.tableWidgetBlacklist.setRowCount(0)
-        item = QtGui.QTableWidgetItem()
-        self.tableWidgetBlacklist.setHorizontalHeaderItem(0, item)
-        item = QtGui.QTableWidgetItem()
-        self.tableWidgetBlacklist.setHorizontalHeaderItem(1, item)
-        self.tableWidgetBlacklist.horizontalHeader().setCascadingSectionResizes(True)
-        self.tableWidgetBlacklist.horizontalHeader().setDefaultSectionSize(400)
-        self.tableWidgetBlacklist.horizontalHeader().setHighlightSections(False)
-        self.tableWidgetBlacklist.horizontalHeader().setSortIndicatorShown(False)
-        self.tableWidgetBlacklist.horizontalHeader().setStretchLastSection(True)
-        self.tableWidgetBlacklist.verticalHeader().setVisible(False)
-        self.gridLayout_6.addWidget(self.tableWidgetBlacklist, 3, 0, 1, 2)
-        icon9 = QtGui.QIcon()
-        icon9.addPixmap(QtGui.QPixmap(_fromUtf8(":/newPrefix/images/blacklist.png")), QtGui.QIcon.Normal, QtGui.QIcon.Off)
-        self.tabWidget.addTab(self.blackwhitelist, icon9, _fromUtf8(""))
+        self.blackwhitelist = Blacklist()
+        self.tabWidget.addTab(self.blackwhitelist, QtGui.QIcon(":/newPrefix/images/blacklist.png"), "")
+        # Initialize the Blacklist or Whitelist
+        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
+            self.blackwhitelist.radioButtonWhitelist.click()
+        self.blackwhitelist.rerenderBlackWhiteList()
+
         self.networkstatus = NetworkStatus()
         self.tabWidget.addTab(self.networkstatus, QtGui.QIcon(":/newPrefix/images/networkstatus.png"), "")
         self.gridLayout_10.addWidget(self.tabWidget, 0, 0, 1, 1)
@@ -668,10 +640,6 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.lineEditTo, self.lineEditSubject)
         MainWindow.setTabOrder(self.lineEditSubject, self.textEditMessage)
         MainWindow.setTabOrder(self.textEditMessage, self.pushButtonAddSubscription)
-        MainWindow.setTabOrder(self.pushButtonAddSubscription, self.radioButtonBlacklist)
-        MainWindow.setTabOrder(self.radioButtonBlacklist, self.radioButtonWhitelist)
-        MainWindow.setTabOrder(self.radioButtonWhitelist, self.pushButtonAddBlacklist)
-        MainWindow.setTabOrder(self.pushButtonAddBlacklist, self.tableWidgetBlacklist)
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "Bitmessage", None))
@@ -757,15 +725,6 @@ class Ui_MainWindow(object):
         item = self.tableWidgetInboxChans.horizontalHeaderItem(3)
         item.setText(_translate("MainWindow", "Received", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.chans), _translate("MainWindow", "Chans", None))
-        self.radioButtonBlacklist.setText(_translate("MainWindow", "Use a Blacklist (Allow all incoming messages except those on the Blacklist)", None))
-        self.radioButtonWhitelist.setText(_translate("MainWindow", "Use a Whitelist (Block all incoming messages except those on the Whitelist)", None))
-        self.pushButtonAddBlacklist.setText(_translate("MainWindow", "Add new entry", None))
-        self.tableWidgetBlacklist.setSortingEnabled(True)
-        item = self.tableWidgetBlacklist.horizontalHeaderItem(0)
-        item.setText(_translate("MainWindow", "Name or Label", None))
-        item = self.tableWidgetBlacklist.horizontalHeaderItem(1)
-        item.setText(_translate("MainWindow", "Address", None))
-        self.tabWidget.setTabText(self.tabWidget.indexOf(self.blackwhitelist), _translate("MainWindow", "Blacklist", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus), _translate("MainWindow", "Network Status", None))
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.menuSettings.setTitle(_translate("MainWindow", "Settings", None))
