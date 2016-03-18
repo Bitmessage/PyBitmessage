@@ -29,14 +29,19 @@ class outgoingSynSender(threading.Thread, StoppableThread):
         # If the user has specified a trusted peer then we'll only
         # ever connect to that. Otherwise we'll pick a random one from
         # the known nodes
-        shared.knownNodesLock.acquire()
         if shared.trustedPeer:
+            shared.knownNodesLock.acquire()
             peer = shared.trustedPeer
             shared.knownNodes[self.streamNumber][peer] = time.time()
+            shared.knownNodesLock.release()
         else:
-            peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
-        shared.knownNodesLock.release()
-
+            while True:
+                shared.knownNodesLock.acquire()
+                peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
+                shared.knownNodesLock.release()
+                if shared.config.get('bitmessagesettings', 'socksproxytype') != 'none' or peer.host.find(".onion") == -1:
+                    break
+                time.sleep(1)
         return peer
         
     def stopThread(self):
