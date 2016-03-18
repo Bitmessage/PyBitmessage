@@ -1,6 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS>
-<TS version="2.0" language="de" sourcelanguage="en">
+<!DOCTYPE TS><TS version="2.0" language="de" sourcelanguage="en">
 <context>
     <name>AddAddressDialog</name>
     <message>
@@ -1598,7 +1597,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
         <source>version ?</source>
         <translation>Version ?</translation>
     </message>
-    <message utf8="true">
+    <message encoding="UTF-8">
         <location filename="../bitmessageqt/about.py" line="60"/>
         <source>Copyright © 2013 Jonathan Warren</source>
         <translation type="obsolete">Copyright © 2013 Jonathan Warren</translation>
@@ -1615,7 +1614,7 @@ Die Zufallszahlen-Option ist standard, jedoch haben deterministische Adressen ei
     </message>
     <message>
         <location filename="../bitmessageqt/about.py" line="69"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright Â© 2012-2014 Jonathan Warren&lt;br/&gt;Copyright Â© 2013-2014 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright &#xc2;&#xa9; 2012-2014 Jonathan Warren&lt;br/&gt;Copyright &#xc2;&#xa9; 2013-2014 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
