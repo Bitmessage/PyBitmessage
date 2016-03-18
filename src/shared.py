@@ -9,6 +9,7 @@ useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the
 
 
 # Libraries.
+import base64
 import collections
 import ConfigParser
 import os
@@ -150,7 +151,7 @@ def isInSqlInventory(hash):
 
 def encodeHost(host):
     if host.find('.onion') > -1:
-        return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF\x7F\x00\x00\x01'
+        return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(host.split(".")[0], True)
     elif host.find(':') == -1:
         return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
             socket.inet_aton(host)
