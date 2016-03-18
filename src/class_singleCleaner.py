@@ -46,19 +46,7 @@ class singleCleaner(threading.Thread, StoppableThread):
         while shared.shutdown == 0:
             shared.UISignalQueue.put((
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
-            with shared.inventoryLock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
-                with SqlBulkExecute() as sql:
-                    for hash, storedValue in shared.inventory.items():
-                        objectType, streamNumber, payload, expiresTime, tag = storedValue
-                        sql.execute(
-                            '''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
-                            hash,
-                            objectType,
-                            streamNumber,
-                            payload,
-                            expiresTime,
-                            tag)
-                        del shared.inventory[hash]
+            shared.inventory.flush()
             shared.UISignalQueue.put(('updateStatusBar', ''))
             
             shared.broadcastToSendDataQueues((
@@ -70,9 +58,7 @@ class singleCleaner(threading.Thread, StoppableThread):
                 shared.UISignalQueue.queue.clear()
             if timeWeLastClearedInventoryAndPubkeysTables < int(time.time()) - 7380:
                 timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
-                sqlExecute(
-                    '''DELETE FROM inventory WHERE expirestime<? ''',
-                    int(time.time()) - (60 * 60 * 3))
+                shared.inventory.clean()
                 # pubkeys
                 sqlExecute(
                     '''DELETE FROM pubkeys WHERE time<? AND usedpersonally='no' ''',
@@ -93,20 +79,6 @@ class singleCleaner(threading.Thread, StoppableThread):
                         resendPubkeyRequest(toAddress)
                     elif status == 'msgsent':
                         resendMsg(ackData)
-
-                # Let's also clear and reload shared.inventorySets to keep it from
-                # taking up an unnecessary amount of memory.
-                for streamNumber in shared.inventorySets:
-                    shared.inventorySets[streamNumber] = set()
-                    queryData = sqlQuery('''SELECT hash FROM inventory WHERE streamnumber=?''', streamNumber)
-                    for row in queryData:
-                        shared.inventorySets[streamNumber].add(row[0])
-                with shared.inventoryLock:
-                    for hash, storedValue in shared.inventory.items():
-                        objectType, streamNumber, payload, expiresTime, tag = storedValue
-                        if not streamNumber in shared.inventorySets:
-                            shared.inventorySets[streamNumber] = set()
-                        shared.inventorySets[streamNumber].add(hash)
 
             # Let us write out the knowNodes to disk if there is anything new to write out.
             if shared.needToWriteKnownNodesToDisk:

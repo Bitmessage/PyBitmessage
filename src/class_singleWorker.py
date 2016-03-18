@@ -158,7 +158,6 @@ class singleWorker(threading.Thread, StoppableThread):
         objectType = 1
         shared.inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime,'')
-        shared.inventorySets[streamNumber].add(inventoryHash)
 
         logger.info('broadcasting inv with hash: ' + inventoryHash.encode('hex'))
 
@@ -249,7 +248,6 @@ class singleWorker(threading.Thread, StoppableThread):
         objectType = 1
         shared.inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime,'')
-        shared.inventorySets[streamNumber].add(inventoryHash)
 
         logger.info('broadcasting inv with hash: ' + inventoryHash.encode('hex'))
 
@@ -340,7 +338,6 @@ class singleWorker(threading.Thread, StoppableThread):
         objectType = 1
         shared.inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, doubleHashOfAddressData[32:])
-        shared.inventorySets[streamNumber].add(inventoryHash)
 
         logger.info('broadcasting inv with hash: ' + inventoryHash.encode('hex'))
 
@@ -463,7 +460,6 @@ class singleWorker(threading.Thread, StoppableThread):
             objectType = 3
             shared.inventory[inventoryHash] = (
                 objectType, streamNumber, payload, embeddedTime, tag)
-            shared.inventorySets[streamNumber].add(inventoryHash)
             logger.info('sending inv (within sendBroadcast function) for object: ' + inventoryHash.encode('hex'))
             shared.broadcastToSendDataQueues((
                 streamNumber, 'advertiseobject', inventoryHash))
@@ -558,37 +554,20 @@ class singleWorker(threading.Thread, StoppableThread):
                             privEncryptionKey = doubleHashOfToAddressData[:32] # The first half of the sha512 hash.
                             tag = doubleHashOfToAddressData[32:] # The second half of the sha512 hash.
                             shared.neededPubkeys[tag] = (toaddress, highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex')))
-                            
-                            queryreturn = sqlQuery(
-                                '''SELECT payload FROM inventory WHERE objecttype=1 and tag=? ''', toTag)
-                            if queryreturn != []: # if there are any pubkeys in our inventory with the correct tag..
-                                for row in queryreturn:
-                                    payload, = row
-                                    if shared.decryptAndCheckPubkeyPayload(payload, toaddress) == 'successful':
-                                        needToRequestPubkey = False
-                                        sqlExecute(
-                                            '''UPDATE sent SET status='doingmsgpow', retrynumber=0 WHERE toaddress=? AND (status='msgqueued' or status='awaitingpubkey' or status='doingpubkeypow')''',
-                                            toaddress)
-                                        del shared.neededPubkeys[tag]
-                                        break
-                                    #else:  # There was something wrong with this pubkey object even
-                                            # though it had the correct tag- almost certainly because
-                                            # of malicious behavior or a badly programmed client. If
-                                            # there are any other pubkeys in our inventory with the correct
-                                            # tag then we'll try to decrypt those.
 
-                            if needToRequestPubkey: # Obviously we had no success looking in the sql inventory. Let's look through the memory inventory.
-                                with shared.inventoryLock:
-                                    for hash, storedValue in shared.inventory.items():
-                                        objectType, streamNumber, payload, expiresTime, tag = storedValue
-                                        if objectType == 1 and tag == toTag:
-                                            if shared.decryptAndCheckPubkeyPayload(payload, toaddress) == 'successful': #if valid, this function also puts it in the pubkeys table.
-                                                needToRequestPubkey = False
-                                                sqlExecute(
-                                                    '''UPDATE sent SET status='doingmsgpow', retrynumber=0 WHERE toaddress=? AND (status='msgqueued' or status='awaitingpubkey' or status='doingpubkeypow')''',
-                                                    toaddress)
-                                                del shared.neededPubkeys[tag]
-                                                break
+                            for value in shared.inventory.by_type_and_tag(1, toTag):
+                                if shared.decryptAndCheckPubkeyPayload(value.payload, toaddress) == 'successful': #if valid, this function also puts it in the pubkeys table.
+                                    needToRequestPubkey = False
+                                    sqlExecute(
+                                        '''UPDATE sent SET status='doingmsgpow', retrynumber=0 WHERE toaddress=? AND (status='msgqueued' or status='awaitingpubkey' or status='doingpubkeypow')''',
+                                        toaddress)
+                                    del shared.neededPubkeys[tag]
+                                    break
+                                #else:  # There was something wrong with this pubkey object even
+                                        # though it had the correct tag- almost certainly because
+                                        # of malicious behavior or a badly programmed client. If
+                                        # there are any other pubkeys in our inventory with the correct
+                                        # tag then we'll try to decrypt those.
                         if needToRequestPubkey:
                             sqlExecute(
                                 '''UPDATE sent SET status='doingpubkeypow' WHERE toaddress=? AND status='msgqueued' ''',
@@ -811,7 +790,6 @@ class singleWorker(threading.Thread, StoppableThread):
             objectType = 2
             shared.inventory[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
-            shared.inventorySets[toStreamNumber].add(inventoryHash)
             if shared.config.has_section(toaddress) or not checkBitfield(behaviorBitfield, shared.BITFIELD_DOESACK):
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Message sent. Sent at %1").arg(l10n.formatTimestamp()))))
             else:
@@ -921,7 +899,6 @@ class singleWorker(threading.Thread, StoppableThread):
         objectType = 1
         shared.inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
-        shared.inventorySets[streamNumber].add(inventoryHash)
         logger.info('sending inv (for the getpubkey message)')
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
