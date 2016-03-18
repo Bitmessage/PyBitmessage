@@ -216,14 +216,8 @@ class receiveDataThread(threading.Thread):
                 objectHash, = random.sample(
                     self.objectsThatWeHaveYetToGetFromThisPeer, 1)
                 if objectHash in shared.inventory:
-                    logger.debug('Inventory (in memory) already has object listed in inv message.')
-                    del self.objectsThatWeHaveYetToGetFromThisPeer[
-                        objectHash]
-                elif shared.isInSqlInventory(objectHash):
-                    if shared.verbose >= 3:
-                        logger.debug('Inventory (SQL on disk) already has object listed in inv message.')
-                    del self.objectsThatWeHaveYetToGetFromThisPeer[
-                        objectHash]
+                    logger.debug('Inventory already has object listed in inv message.')
+                    del self.objectsThatWeHaveYetToGetFromThisPeer[objectHash]
                 else:
                     # We don't have the object in our inventory. Let's request it.
                     self.sendgetdata(objectHash)
@@ -318,23 +312,10 @@ class receiveDataThread(threading.Thread):
 
     def sendBigInv(self):
         # Select all hashes for objects in this stream.
-        queryreturn = sqlQuery(
-            '''SELECT hash FROM inventory WHERE expirestime>? and streamnumber=?''',
-            int(time.time()),
-            self.streamNumber)
         bigInvList = {}
-        for row in queryreturn:
-            hash, = row
+        for hash in shared.inventory.unexpired_hashes_by_stream(self.streamNumber):
             if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware and not self.objectHashHolderInstance.hasHash(hash):
                 bigInvList[hash] = 0
-        # We also have messages in our inventory in memory (which is a python
-        # dictionary). Let's fetch those too.
-        with shared.inventoryLock:
-            for hash, storedValue in shared.inventory.items():
-                if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware:
-                    objectType, streamNumber, payload, expiresTime, tag = storedValue
-                    if streamNumber == self.streamNumber and expiresTime > int(time.time()):
-                        bigInvList[hash] = 0
         numberOfObjectsInInvMessage = 0
         payload = ''
         # Now let us start appending all of these hashes together. They will be
@@ -440,9 +421,7 @@ class receiveDataThread(threading.Thread):
                 data[lengthOfVarint:32 + lengthOfVarint]] = 0
             shared.numberOfInventoryLookupsPerformed += 1
             if data[lengthOfVarint:32 + lengthOfVarint] in shared.inventory:
-                logger.debug('Inventory (in memory) has inventory item already.')
-            elif shared.isInSqlInventory(data[lengthOfVarint:32 + lengthOfVarint]):
-                logger.debug('Inventory (SQL on disk) has inventory item already.')
+                logger.debug('Inventory has inventory item already.')
             else:
                 self.sendgetdata(data[lengthOfVarint:32 + lengthOfVarint])
         else:
@@ -453,7 +432,7 @@ class receiveDataThread(threading.Thread):
             advertisedSet = set()
             for i in range(numberOfItemsInInv):
                 advertisedSet.add(data[lengthOfVarint + (32 * i):32 + lengthOfVarint + (32 * i)])
-            objectsNewToMe = advertisedSet - shared.inventorySets[self.streamNumber]
+            objectsNewToMe = advertisedSet - shared.inventory.hashes_by_stream(self.streamNumber)
             logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
             for item in objectsNewToMe:  
                 if totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers > 200000 and len(self.objectsThatWeHaveYetToGetFromThisPeer) > 1000 and shared.trustedPeer == None:  # inv flooding attack mitigation
@@ -491,20 +470,10 @@ class receiveDataThread(threading.Thread):
             if self.objectHashHolderInstance.hasHash(hash):
                 shared.inventoryLock.release()
                 self.antiIntersectionDelay()
-            elif hash in shared.inventory:
-                objectType, streamNumber, payload, expiresTime, tag = shared.inventory[hash]
-                shared.inventoryLock.release()
-                self.sendObject(payload)
             else:
                 shared.inventoryLock.release()
-                queryreturn = sqlQuery(
-                    '''select payload from inventory where hash=? and expirestime>=?''',
-                    hash,
-                    int(time.time()))
-                if queryreturn != []:
-                    for row in queryreturn:
-                        payload, = row
-                    self.sendObject(payload)
+                if hash in shared.inventory:
+                    self.sendObject(shared.inventory[hash].payload)
                 else:
                     self.antiIntersectionDelay()
                     logger.warning('%s asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. We probably cleaned it out after advertising it but before they got around to asking for it.' % (self.peer,))
