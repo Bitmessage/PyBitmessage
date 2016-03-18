@@ -2305,16 +2305,12 @@ class MyForm(settingsmixin.SMainWindow):
             # in the objectProcessorQueue to be processed
             if self.NewSubscriptionDialogInstance.ui.checkBoxDisplayMessagesAlreadyInInventory.isChecked():
                 status, addressVersion, streamNumber, ripe = decodeAddress(address)
-                shared.flushInventory()
+                shared.inventory.flush()
                 doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
                     addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
                 tag = doubleHashOfAddressData[32:]
-                queryreturn = sqlQuery(
-                    '''select payload from inventory where objecttype=3 and tag=?''', tag)
-                for row in queryreturn:
-                    payload, = row
-                    objectType = 3
-                    shared.objectProcessorQueue.put((objectType,payload))
+                for value in shared.inventory.by_type_and_tag(3, tag):
+                    shared.objectProcessorQueue.put((value.type, value.payload))
 
     def click_pushButtonStatusIcon(self):
         logger.debug('click_pushButtonStatusIcon')
@@ -4196,23 +4192,22 @@ class NewSubscriptionDialog(QtGui.QDialog):
                 self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
                     _translate("MainWindow", "Address is an old type. We cannot display its past broadcasts."))
             else:
-                shared.flushInventory()
+                shared.inventory.flush()
                 doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
                     addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
                 tag = doubleHashOfAddressData[32:]
-                queryreturn = sqlQuery(
-                    '''select hash from inventory where objecttype=3 and tag=?''', tag)
-                if len(queryreturn) == 0:
+                count = len(shared.inventory.by_type_and_tag(3, tag))
+                if count == 0:
                     self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
                         _translate("MainWindow", "There are no recent broadcasts from this address to display."))
-                elif len(queryreturn) == 1:
+                elif count == 1:
                     self.ui.checkBoxDisplayMessagesAlreadyInInventory.setEnabled(True)
                     self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
-                        _translate("MainWindow", "Display the %1 recent broadcast from this address.").arg(str(len(queryreturn))))
+                        _translate("MainWindow", "Display the %1 recent broadcast from this address.").arg(count))
                 else:
                     self.ui.checkBoxDisplayMessagesAlreadyInInventory.setEnabled(True)
                     self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
-                        _translate("MainWindow", "Display the %1 recent broadcasts from this address.").arg(str(len(queryreturn))))
+                        _translate("MainWindow", "Display the %1 recent broadcasts from this address.").arg(count))
 
 
 class NewAddressDialog(QtGui.QDialog):

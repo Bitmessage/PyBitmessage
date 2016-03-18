@@ -850,7 +850,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         TTL = 2.5 * 24 * 60 * 60
         shared.inventory[inventoryHash] = (
             objectType, toStreamNumber, encryptedPayload, int(time.time()) + TTL,'')
-        shared.inventorySets[toStreamNumber].add(inventoryHash)
         with shared.printLock:
             print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', inventoryHash.encode('hex')
         shared.broadcastToSendDataQueues((
@@ -898,7 +897,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         TTL = 28 * 24 * 60 * 60
         shared.inventory[inventoryHash] = (
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL,'')
-        shared.inventorySets[pubkeyStreamNumber].add(inventoryHash)
         with shared.printLock:
             print 'broadcasting inv within API command disseminatePubkey with hash:', inventoryHash.encode('hex')
         shared.broadcastToSendDataQueues((
