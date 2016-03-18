@@ -21,7 +21,7 @@ SUPPORT_MY_LABEL = 'My new address'
 SUPPORT_SUBJECT = 'Support request'
 SUPPORT_MESSAGE = '''You can use this message to send a report to one of the PyBitmessage core developers regarding PyBitmessage or the mailchuck.com email service. If you are using PyBitmessage involuntarily, for example because your computer was infected with ransomware, this is not an appropriate venue for resolving such issues.
 
-Please describe what are you trying to do:
+Please describe what you are trying to do:
 
 Please describe what you expect to happen:
 
