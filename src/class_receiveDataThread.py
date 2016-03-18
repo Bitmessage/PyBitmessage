@@ -1,5 +1,6 @@
 doTimingAttackMitigation = False
 
+import base64
 import errno
 import math
 import time
@@ -517,6 +518,10 @@ class receiveDataThread(threading.Thread):
         if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
             hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
             return self._checkIPv4Address(host[12:], hostStandardFormat)
+        elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
+            # Onion, based on BMD/bitcoind
+            hostStandardFormat = base64.b32encode(host[6:]).lower() + ".onion"
+            return hostStandardFormat
         else:
             hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
             if hostStandardFormat == "":
