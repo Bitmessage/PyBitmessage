@@ -26,7 +26,7 @@ import l10n
 class objectProcessor(threading.Thread):
     """
     The objectProcessor thread, of which there is only one, receives network
-    objecs (msg, broadcast, pubkey, getpubkey) from the receiveDataThreads.
+    objects (msg, broadcast, pubkey, getpubkey) from the receiveDataThreads.
     """
     def __init__(self):
         threading.Thread.__init__(self, name="objectProcessor")

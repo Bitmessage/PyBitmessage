@@ -2422,7 +2422,7 @@ class MyForm(settingsmixin.SMainWindow):
         if hasattr(acct, "feedback") and acct.feedback != GatewayAccount.ALL_OK:
             if acct.feedback == GatewayAccount.REGISTRATION_DENIED:
                 self.dialog = EmailGatewayRegistrationDialog(self, _translate("EmailGatewayRegistrationDialog", "Registration failed:"), 
-                    _translate("EmailGatewayRegistrationDialog", "The requested email address is not available, please try a new one. Fill out the new designed email address (including @mailchuck.com) below:")
+                    _translate("EmailGatewayRegistrationDialog", "The requested email address is not available, please try a new one. Fill out the new desired email address (including @mailchuck.com) below:")
                     )
                 if self.dialog.exec_():
                     email = str(self.dialog.ui.lineEditEmail.text().toUtf8())
