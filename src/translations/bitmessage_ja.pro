@@ -17,14 +17,21 @@ SOURCES	= 	../addresses.py\
 			../shared.py\
 			../bitmessageqt/__init__.py\
 			../bitmessageqt/about.py\
+			../bitmessageqt/account.py\
+			../bitmessageqt/addaddressdialog.py\
 			../bitmessageqt/bitmessageui.py\
 			../bitmessageqt/connect.py\
+			../bitmessageqt/emailgateway.py\
+			../bitmessageqt/foldertree.py\
 			../bitmessageqt/help.py\
 			../bitmessageqt/iconglossary.py\
+			../bitmessageqt/messagecompose.py\
+			../bitmessageqt/messageview.py\
 			../bitmessageqt/newaddressdialog.py\
 			../bitmessageqt/newchandialog.py\
 			../bitmessageqt/newsubscriptiondialog.py\
 			../bitmessageqt/regenerateaddresses.py\
+			../bitmessageqt/safehtmlparser.py\
 			../bitmessageqt/settings.py\
 			../bitmessageqt/specialaddressbehavior.py
 
