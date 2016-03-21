@@ -94,23 +94,9 @@ class Router:
         service_types = dom.getElementsByTagName('serviceType')
 
         for service in service_types:
-            if service.childNodes[0].data.find('WANIPConnection') > 0:
+            if service.childNodes[0].data.find('WANIPConnection') > 0 or \
+                service.childNodes[0].data.find('WANPPPConnection') > 0:
                 self.path = service.parentNode.getElementsByTagName('controlURL')[0].childNodes[0].data
-
-        # get local IP
-        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
-        try:
-            logger.debug("Connecting to %s:%i", self.address, self.routerPath.port)
-            s.connect ((self.address, self.routerPath.port))
-        except:
-            pass
-        self.localAddress = s.getsockname()[0]
-        logger.debug("Local IP: %s", self.localAddress)
-        try:
-            s.shutdown(socket.SHUT_RDWR)
-            s.close()
-        except:
-            pass
 
     def AddPortMapping(self, externalPort, internalPort, internalClient, protocol, description, leaseDuration = 0, enabled = 1):
         from debug import logger
@@ -155,15 +141,27 @@ class Router:
                 'Content-Type': 'text/xml'
                 }
             )
-        resp = conn.getresponse().read()
-        dom = parseString(resp)
-        errinfo = dom.getElementsByTagName('errorDescription')
-        if len(errinfo) > 0:
-            logger.error("UPnP error: %s", resp)
-            raise UPnPError(errinfo[0].childNodes[0].data) 
+        resp = conn.getresponse()
+        conn.close()
+        if resp.status == 500:
+            respData = resp.read()
+            try:
+                dom = parseString(respData)
+                errinfo = dom.getElementsByTagName('errorDescription')
+                if len(errinfo) > 0:
+                    logger.error("UPnP error: %s", respData)
+                    raise UPnPError(errinfo[0].childNodes[0].data)
+            except:
+                raise UPnPError("Unable to parse SOAP error: %s", respData)
         return resp
 
 class uPnPThread(threading.Thread, StoppableThread):
+    SSDP_ADDR = "239.255.255.250"
+    GOOGLE_DNS = "8.8.8.8"
+    SSDP_PORT = 1900
+    SSDP_MX = 2
+    SSDP_ST = "urn:schemas-upnp-org:device:InternetGatewayDevice:1"
+
     def __init__ (self):
         threading.Thread.__init__(self, name="uPnPThread")
         self.localPort = shared.config.getint('bitmessagesettings', 'port')
@@ -171,10 +169,12 @@ class uPnPThread(threading.Thread, StoppableThread):
             self.extPort = shared.config.getint('bitmessagesettings', 'extport')
         except:
             self.extPort = None
+        self.localIP = self.getLocalIP()
         self.routers = []
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        self.sock.bind((self.localIP, 10000))
         self.sock.setsockopt(socket.IPPROTO_IP, socket.IP_MULTICAST_TTL, 2)
-        self.sock.settimeout(2)
+        self.sock.settimeout(5)
         self.sendSleep = 60
         self.initStop()
 
@@ -182,6 +182,7 @@ class uPnPThread(threading.Thread, StoppableThread):
         from debug import logger
         
         logger.debug("Starting UPnP thread")
+        logger.debug("Local IP: %s", self.localIP)
         lastSent = 0
         while shared.shutdown == 0 and shared.safeConfigGetBoolean('bitmessagesettings', 'upnp'):
             if time.time() - lastSent > self.sendSleep and len(self.routers) == 0:
@@ -227,21 +228,23 @@ class uPnPThread(threading.Thread, StoppableThread):
             shared.UISignalQueue.put(('updateStatusBar', tr.translateText("MainWindow",'UPnP port mapping removed')))
         logger.debug("UPnP thread done")
 
+    def getLocalIP(self):
+        s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+        s.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        s.connect((uPnPThread.GOOGLE_DNS, 1))
+        return s.getsockname()[0]
+
     def sendSearchRouter(self):
         from debug import logger
-        SSDP_ADDR = "239.255.255.250"
-        SSDP_PORT = 1900
-        SSDP_MX = 2
-        SSDP_ST = "urn:schemas-upnp-org:device:InternetGatewayDevice:1"
         ssdpRequest = "M-SEARCH * HTTP/1.1\r\n" + \
-                    "HOST: %s:%d\r\n" % (SSDP_ADDR, SSDP_PORT) + \
+                    "HOST: %s:%d\r\n" % (uPnPThread.SSDP_ADDR, uPnPThread.SSDP_PORT) + \
                     "MAN: \"ssdp:discover\"\r\n" + \
-                    "MX: %d\r\n" % (SSDP_MX, ) + \
-                    "ST: %s\r\n" % (SSDP_ST, ) + "\r\n"
+                    "MX: %d\r\n" % (uPnPThread.SSDP_MX, ) + \
+                    "ST: %s\r\n" % (uPnPThread.SSDP_ST, ) + "\r\n"
 
         try:
             logger.debug("Sending UPnP query")
-            self.sock.sendto(ssdpRequest, (SSDP_ADDR, SSDP_PORT))
+            self.sock.sendto(ssdpRequest, (uPnPThread.SSDP_ADDR, uPnPThread.SSDP_PORT))
         except:
             logger.exception("UPnP send query failed")
 
@@ -251,7 +254,7 @@ class uPnPThread(threading.Thread, StoppableThread):
         for i in range(50):
             try:
                 routerIP, = unpack('>I', socket.inet_aton(router.address))
-                localIP = router.localAddress
+                localIP = self.localIP
                 if i == 0:
                     extPort = self.localPort # try same port first
                 elif i == 1 and self.extPort:
