@@ -152,7 +152,7 @@ class Router:
                     logger.error("UPnP error: %s", respData)
                     raise UPnPError(errinfo[0].childNodes[0].data)
             except:
-                raise UPnPError("Unable to parse SOAP error: %s", respData)
+                raise UPnPError("Unable to parse SOAP error: %s" %(respData))
         return resp
 
 class uPnPThread(threading.Thread, StoppableThread):
@@ -186,7 +186,10 @@ class uPnPThread(threading.Thread, StoppableThread):
         lastSent = 0
         while shared.shutdown == 0 and shared.safeConfigGetBoolean('bitmessagesettings', 'upnp'):
             if time.time() - lastSent > self.sendSleep and len(self.routers) == 0:
-                self.sendSearchRouter()
+                try:
+                    self.sendSearchRouter()
+                except:
+                    pass
                 lastSent = time.time()
             try:
                 while shared.shutdown == 0 and shared.safeConfigGetBoolean('bitmessagesettings', 'upnp'):
@@ -261,7 +264,7 @@ class uPnPThread(threading.Thread, StoppableThread):
                     extPort = self.extPort # try external port from last time next
                 else:
                     extPort = randint(32767, 65535)
-                logger.debug("Requesting UPnP mapping for %s:%i on external port %i", localIP, self.localPort,  extPort)
+                logger.debug("Attempt %i, requesting UPnP mapping for %s:%i on external port %i", i, localIP, self.localPort,  extPort)
                 router.AddPortMapping(extPort, self.localPort, localIP, 'TCP', 'BitMessage')
                 shared.extPort = extPort
                 self.extPort = extPort
