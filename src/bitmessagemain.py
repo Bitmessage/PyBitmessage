@@ -59,6 +59,12 @@ def connectToStream(streamNumber):
         maximumNumberOfHalfOpenConnections = 9
     else:
         maximumNumberOfHalfOpenConnections = 64
+    try:
+        # don't overload Tor
+        if shared.config.get('bitmessagesettings', 'socksproxytype') != 'none':
+            maximumNumberOfHalfOpenConnections = 4
+    except:
+        pass
     for i in range(maximumNumberOfHalfOpenConnections):
         a = outgoingSynSender()
         a.setup(streamNumber, selfInitiatedConnections)
