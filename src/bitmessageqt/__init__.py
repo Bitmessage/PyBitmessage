@@ -962,14 +962,18 @@ class MyForm(settingsmixin.SMainWindow):
                 xFolder = folder
                 if isinstance(item, Ui_FolderWidget):
                     xFolder = item.folderName
-                if address and xFolder:
-                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE " + xAddress + " = ? AND folder = ? AND read = 0", address, xFolder)
-                elif address:
-                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE " + xAddress + " = ? AND read = 0", address)
-                elif xFolder:
-                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE folder = ? AND read = 0", xFolder)
+                if xFolder == "new":
+                    xFolder = "inbox"
+                if addressItem.type == AccountMixin.ALL:
+                    if xFolder:
+                        queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE folder = ? AND read = 0", xFolder)
+                    else:
+                        queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE read = 0")
                 else:
-                    queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE read = 0")
+                    if address and xFolder:
+                        queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE " + xAddress + " = ? AND folder = ? AND read = 0", address, xFolder)
+                    elif address:
+                        queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE " + xAddress + " = ? AND read = 0", address)
                 for row in queryreturn:
                     item.setUnreadCount(int(row[0]))
                 if isinstance(item, Ui_AddressWidget) and item.type == AccountMixin.ALL:
@@ -984,9 +988,6 @@ class MyForm(settingsmixin.SMainWindow):
                     self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount(self.unreadCount -1))
                 
         widgets = [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]
-        # FIXME this is a hack
-        if folder == "new":
-            folder = "inbox"
         for treeWidget in widgets:
             root = treeWidget.invisibleRootItem()
             for i in range(root.childCount()):
@@ -999,13 +1000,16 @@ class MyForm(settingsmixin.SMainWindow):
                     continue
                 for j in range(addressItem.childCount()):
                     folderItem = addressItem.child(j)
-                    if folder is not None and folderItem.folderName != folder and addressItem.type != AccountMixin.ALL:
+                    if folderItem.folderName == "new" and (folder is None or folder in ["inbox", "new"]):
+                        updateUnreadCount(folderItem)
                         continue
-                    if addressItem.type == AccountMixin.ALL:
-                        if folder in ["sent", "trash"] and folderItem.folderName != folder:
-                            continue
-                        if folder in ["inbox", "new"] and folderItem.folderName not in ["inbox", "new"]:
-                            continue
+                    if folder is None and folderItem.folderName != "inbox":
+                        continue
+                    if folder is not None and ((folder == "new" and folderItem.folderName != "inbox") or \
+                        (folder != "new" and folderItem.folderName != folder)):
+                        continue
+                    if folder in ["sent", "trash"] and folderItem.folderName != folder:
+                        continue
                     updateUnreadCount(folderItem)
 
     def addMessageListItem(self, tableWidget, items):
@@ -3004,9 +3008,9 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.item(currentRow, 2).setUnread(True)
             tableWidget.item(currentRow, 3).setFont(font)
         #sqlite requires the exact number of ?s to prevent injection
-        sqlExecute('''UPDATE inbox SET read=0 WHERE msgid IN (%s)''' % (
+        rowcount = sqlExecute('''UPDATE inbox SET read=0 WHERE msgid IN (%s) AND read=1''' % (
             "?," * len(inventoryHashesToMarkUnread))[:-1], *inventoryHashesToMarkUnread)
-        if modified == 1:
+        if rowcount == 1:
             # performance optimisation
             self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), self.getCurrentFolder())
         else:
@@ -4060,13 +4064,13 @@ class MyForm(settingsmixin.SMainWindow):
             currentRow = tableWidget.currentRow()
             for row in queryreturn:
                 message, read = row
-                if folder != 'sent' and read == 0:
-                    markread = sqlQuery(
-                        '''UPDATE inbox SET read = 1 WHERE msgid = ?''', msgid)
-                    refresh = propagate = True
-                elif tableWidget.item(currentRow, 0).unread == True:
+                if tableWidget.item(currentRow, 0).unread == True:
                     refresh = True
-                    propagate = False
+                if folder != 'sent':
+                    markread = sqlExecute(
+                        '''UPDATE inbox SET read = 1 WHERE msgid = ? AND read=0''', msgid)
+                    if markread > 0:
+                        propagate = True
             if refresh:
                 if not tableWidget:
                     return
