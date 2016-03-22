@@ -1019,6 +1019,8 @@ class MyForm(settingsmixin.SMainWindow):
 
     def addMessageListItemSent(self, tableWidget, toAddress, fromAddress, subject, status, ackdata, lastactiontime):
         acct = accountClass(fromAddress)
+        if acct is None:
+            acct = BMAccount(fromAddress)
         acct.parseMessage(toAddress, fromAddress, subject, "")
 
         items = []
