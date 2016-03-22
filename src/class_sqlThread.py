@@ -546,10 +546,12 @@ class sqlThread(threading.Thread):
                             return
             else:
                 parameters = shared.sqlSubmitQueue.get()
+                rowcount = 0
                 # print 'item', item
                 # print 'parameters', parameters
                 try:
                     self.cur.execute(item, parameters)
+                    rowcount = self.cur.rowcount
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(while cur.execute) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
@@ -564,5 +566,5 @@ class sqlThread(threading.Thread):
 
                     os._exit(0)
 
-                shared.sqlReturnQueue.put(self.cur.fetchall())
+                shared.sqlReturnQueue.put((self.cur.fetchall(), rowcount))
                 # shared.sqlSubmitQueue.task_done()

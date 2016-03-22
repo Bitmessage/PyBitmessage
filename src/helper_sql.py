@@ -16,7 +16,7 @@ def sqlQuery(sqlStatement, *args):
     else:
         sqlSubmitQueue.put(args)
     
-    queryreturn = sqlReturnQueue.get()
+    queryreturn, rowcount = sqlReturnQueue.get()
     sqlLock.release()
 
     return queryreturn
@@ -30,9 +30,10 @@ def sqlExecute(sqlStatement, *args):
     else:
         sqlSubmitQueue.put(args)
     
-    sqlReturnQueue.get()
+    queryreturn, rowcount = sqlReturnQueue.get()
     sqlSubmitQueue.put('commit')
     sqlLock.release()
+    return rowcount
 
 def sqlStoredProcedure(procName):
     sqlLock.acquire()
