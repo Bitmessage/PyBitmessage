@@ -8,6 +8,7 @@ import sys
 import string
 from subprocess import call  # used when the API must execute an outside program
 import traceback
+from binascii import hexlify
 
 from pyelliptic.openssl import OpenSSL
 import highlevelcrypto
@@ -106,7 +107,7 @@ class objectProcessor(threading.Thread):
             if len(requestedHash) != 20:
                 logger.debug('The length of the requested hash is not 20 bytes. Something is wrong. Ignoring.')
                 return
-            logger.info('the hash requested in this getpubkey request is: %s' % requestedHash.encode('hex'))
+            logger.info('the hash requested in this getpubkey request is: %s' % hexlify(requestedHash))
             if requestedHash in shared.myAddressesByHash:  # if this address hash is one of mine
                 myAddress = shared.myAddressesByHash[requestedHash]
         elif requestedAddressVersionNumber >= 4:
@@ -114,7 +115,7 @@ class objectProcessor(threading.Thread):
             if len(requestedTag) != 32:
                 logger.debug('The length of the requested tag is not 32 bytes. Something is wrong. Ignoring.')
                 return
-            logger.debug('the tag requested in this getpubkey request is: %s' % requestedTag.encode('hex'))
+            logger.debug('the tag requested in this getpubkey request is: %s' % hexlify(requestedTag))
             if requestedTag in shared.myAddressesByTag:
                 myAddress = shared.myAddressesByTag[requestedTag]
 
@@ -199,9 +200,9 @@ class objectProcessor(threading.Thread):
                         publicSigningKey in hex: %s\n\
                         publicEncryptionKey in hex: %s' % (addressVersion, 
                                                            streamNumber, 
-                                                           ripe.encode('hex'), 
-                                                           publicSigningKey.encode('hex'), 
-                                                           publicEncryptionKey.encode('hex')
+                                                           hexlify(ripe),
+                                                           hexlify(publicSigningKey),
+                                                           hexlify(publicEncryptionKey)
                                                            )
                         )
 
@@ -240,7 +241,7 @@ class objectProcessor(threading.Thread):
                 data[readPosition:readPosition + 10])
             readPosition += signatureLengthLength
             signature = data[readPosition:readPosition + signatureLength]
-            if highlevelcrypto.verify(data[8:endOfSignedDataPosition], signature, publicSigningKey.encode('hex')):
+            if highlevelcrypto.verify(data[8:endOfSignedDataPosition], signature, hexlify(publicSigningKey)):
                 logger.debug('ECDSA verify passed (within processpubkey)')
             else:
                 logger.warning('ECDSA verify failed (within processpubkey)')
@@ -258,9 +259,9 @@ class objectProcessor(threading.Thread):
                         publicSigningKey in hex: %s\n\
                         publicEncryptionKey in hex: %s' % (addressVersion, 
                                                            streamNumber, 
-                                                           ripe.encode('hex'), 
-                                                           publicSigningKey.encode('hex'), 
-                                                           publicEncryptionKey.encode('hex')
+                                                           hexlify(ripe),
+                                                           hexlify(publicSigningKey),
+                                                           hexlify(publicEncryptionKey)
                                                            )
                         )
 
@@ -341,7 +342,7 @@ class objectProcessor(threading.Thread):
                     decryptedData = cryptorObject.decrypt(data[readPosition:])
                     toRipe = key  # This is the RIPE hash of my pubkeys. We need this below to compare to the destination_ripe included in the encrypted data.
                     initialDecryptionSuccessful = True
-                    logger.info('EC decryption successful using key associated with ripe hash: %s.' % key.encode('hex'))
+                    logger.info('EC decryption successful using key associated with ripe hash: %s.' % hexlify(key))
             except Exception as err:
                 pass
         if not initialDecryptionSuccessful:
@@ -393,7 +394,7 @@ class objectProcessor(threading.Thread):
             logger.info('The original sender of this message did not send it to you. Someone is attempting a Surreptitious Forwarding Attack.\n\
                 See: http://world.std.com/~dtd/sign_encrypt/sign_encrypt7.html \n\
                 your toRipe: %s\n\
-                embedded destination toRipe: %s' % (toRipe.encode('hex'), decryptedData[readPosition:readPosition + 20].encode('hex'))
+                embedded destination toRipe: %s' % (hexlify(toRipe), hexlify(decryptedData[readPosition:readPosition + 20]))
                        )
             return
         readPosition += 20
@@ -419,7 +420,7 @@ class objectProcessor(threading.Thread):
             readPosition:readPosition + signatureLength]
         signedData = data[8:20] + encodeVarint(1) + encodeVarint(streamNumberAsClaimedByMsg) + decryptedData[:positionOfBottomOfAckData]
         
-        if not highlevelcrypto.verify(signedData, signature, pubSigningKey.encode('hex')):
+        if not highlevelcrypto.verify(signedData, signature, hexlify(pubSigningKey)):
             logger.debug('ECDSA verify failed')
             return
         logger.debug('ECDSA verify passed')
@@ -623,7 +624,7 @@ class objectProcessor(threading.Thread):
                         decryptedData = cryptorObject.decrypt(data[readPosition:])
                         toRipe = key  # This is the RIPE hash of the sender's pubkey. We need this below to compare to the RIPE hash of the sender's address to verify that it was encrypted by with their key rather than some other key.
                         initialDecryptionSuccessful = True
-                        logger.info('EC decryption successful using key associated with ripe hash: %s' % key.encode('hex'))
+                        logger.info('EC decryption successful using key associated with ripe hash: %s' % hexlify(key))
                 except Exception as err:
                     pass
                     # print 'cryptorObject.decrypt Exception:', err
@@ -718,7 +719,7 @@ class objectProcessor(threading.Thread):
         signature = decryptedData[
             readPosition:readPosition + signatureLength]
         signedData += decryptedData[:readPositionAtBottomOfMessage]
-        if not highlevelcrypto.verify(signedData, signature, sendersPubSigningKey.encode('hex')):
+        if not highlevelcrypto.verify(signedData, signature, hexlify(sendersPubSigningKey)):
             logger.debug('ECDSA verify failed')
             return
         logger.debug('ECDSA verify passed')

@@ -1,5 +1,6 @@
 import socket
 import sys
+from binascii import hexlify, unhexlify
 
 import shared
 
@@ -8,13 +9,13 @@ def convertIntToString(n):
     if a[-1:] == 'L':
         a = a[:-1]
     if (len(a) % 2) == 0:
-        return a[2:].decode('hex')
+        return unhexlify(a[2:])
     else:
-        return ('0' + a[2:]).decode('hex')
+        return unhexlify('0' + a[2:])
 
 
 def convertStringToInt(s):
-    return int(s.encode('hex'), 16)
+    return int(hexlify(s), 16)
 
 
 def signal_handler(signal, frame):

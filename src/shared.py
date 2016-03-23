@@ -26,6 +26,7 @@ import datetime
 from os import path, environ
 from struct import Struct
 import traceback
+from binascii import hexlify
 
 # Project imports.
 from addresses import *
@@ -417,8 +418,8 @@ def reloadMyAddressHashes():
                 if addressVersionNumber == 2 or addressVersionNumber == 3 or addressVersionNumber == 4:
                     # Returns a simple 32 bytes of information encoded in 64 Hex characters,
                     # or null if there was an error.
-                    privEncryptionKey = decodeWalletImportFormat(
-                            config.get(addressInKeysFile, 'privencryptionkey')).encode('hex')
+                    privEncryptionKey = hexlify(decodeWalletImportFormat(
+                            config.get(addressInKeysFile, 'privencryptionkey')))
 
                     if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
                         myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
@@ -447,13 +448,13 @@ def reloadBroadcastSendersForWhichImWatching():
         
         if addressVersionNumber <= 3:
             privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).digest()[:32]
-            MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
+            MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:
             doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
                 addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()
             tag = doubleHashOfAddressData[32:]
             privEncryptionKey = doubleHashOfAddressData[:32]
-            MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
+            MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
 
 def isProofOfWorkSufficient(data,
                             nonceTrialsPerByte=0,
@@ -662,7 +663,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition += signatureLengthLength
         signature = decryptedData[readPosition:readPosition + signatureLength]
         
-        if highlevelcrypto.verify(signedData, signature, publicSigningKey.encode('hex')):
+        if highlevelcrypto.verify(signedData, signature, hexlify(publicSigningKey)):
             logger.info('ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
         else:
             logger.info('ECDSA verify failed (within decryptAndCheckPubkeyPayload)')
@@ -688,9 +689,9 @@ def decryptAndCheckPubkeyPayload(data, address):
                     publicSigningKey in hex: %s\n\
                     publicEncryptionKey in hex: %s' % (addressVersion,
                                                        streamNumber, 
-                                                       ripe.encode('hex'), 
-                                                       publicSigningKey.encode('hex'), 
-                                                       publicEncryptionKey.encode('hex')
+                                                       hexlify(ripe),
+                                                       hexlify(publicSigningKey),
+                                                       hexlify(publicEncryptionKey)
                                                        )
                     )
     
@@ -775,7 +776,7 @@ def _checkAndShareUndefinedObjectWithPeers(data):
     inventory[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime,'')
     inventoryLock.release()
-    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
+    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
     
     
@@ -803,7 +804,7 @@ def _checkAndShareMsgWithPeers(data):
     inventory[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime,'')
     inventoryLock.release()
-    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
+    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's enqueue it to be processed ourselves.
@@ -840,7 +841,7 @@ def _checkAndShareGetpubkeyWithPeers(data):
         objectType, streamNumber, data, embeddedTime,'')
     inventoryLock.release()
     # This getpubkey request is valid. Forward to peers.
-    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
+    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's queue it to be processed ourselves.
@@ -862,7 +863,7 @@ def _checkAndSharePubkeyWithPeers(data):
         return
     if addressVersion >= 4:
         tag = data[readPosition:readPosition + 32]
-        logger.debug('tag in received pubkey is: %s' % tag.encode('hex'))
+        logger.debug('tag in received pubkey is: %s' % hexlify(tag))
     else:
         tag = ''
 
@@ -878,7 +879,7 @@ def _checkAndSharePubkeyWithPeers(data):
         objectType, streamNumber, data, embeddedTime, tag)
     inventoryLock.release()
     # This object is valid. Forward it to peers.
-    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
+    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
 
@@ -918,7 +919,7 @@ def _checkAndShareBroadcastWithPeers(data):
         objectType, streamNumber, data, embeddedTime, tag)
     inventoryLock.release()
     # This object is valid. Forward it to peers.
-    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
+    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's queue it to be processed ourselves.

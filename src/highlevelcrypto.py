@@ -1,3 +1,4 @@
+from binascii import hexlify
 import pyelliptic
 from pyelliptic import arithmetic as a, OpenSSL
 def makeCryptor(privkey):
@@ -18,7 +19,7 @@ def makePubCryptor(pubkey):
 def privToPub(privkey):
     private_key = a.changebase(privkey, 16, 256, minlen=32)
     public_key = pointMult(private_key)
-    return public_key.encode('hex')
+    return hexlify(public_key)
 # Encrypts message with hex public key
 def encrypt(msg,hexPubkey):
     return pyelliptic.ECC(curve='secp256k1').encrypt(msg,hexToPubkey(hexPubkey))
