@@ -11,6 +11,7 @@ from debug import logger
 from helper_threading import *
 from pyelliptic import arithmetic
 import tr
+from binascii import hexlify
 
 class addressGenerator(threading.Thread, StoppableThread):
 
@@ -104,7 +105,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                     ripe.update(sha.digest())
                     if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
                         break
-                logger.info('Generated address with ripe digest: %s' % ripe.digest().encode('hex'))
+                logger.info('Generated address with ripe digest: %s' % hexlify(ripe.digest()))
                 try:
                     logger.info('Address generator calculated %s addresses at %s addresses per second before finding one with the correct ripe-prefix.' % (numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime)))
                 except ZeroDivisionError:
@@ -196,7 +197,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                             break
 
                     
-                    logger.info('Generated address with ripe digest: %s' % ripe.digest().encode('hex'))
+                    logger.info('Generated address with ripe digest: %s' % hexlify(ripe.digest()))
                     try:
                         logger.info('Address generator calculated %s addresses at %s addresses per second before finding one with the correct ripe-prefix.' % (numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime)))
                     except ZeroDivisionError:
@@ -262,7 +263,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                             listOfNewAddressesToSendOutThroughTheAPI.append(
                                 address)
                             shared.myECCryptorObjects[ripe.digest()] = highlevelcrypto.makeCryptor(
-                                potentialPrivEncryptionKey.encode('hex'))
+                                hexlify(potentialPrivEncryptionKey))
                             shared.myAddressesByHash[ripe.digest()] = address
                             tag = hashlib.sha512(hashlib.sha512(encodeVarint(
                                 addressVersionNumber) + encodeVarint(streamNumber) + ripe.digest()).digest()).digest()[32:]

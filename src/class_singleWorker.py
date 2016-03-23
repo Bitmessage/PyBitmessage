@@ -18,6 +18,7 @@ from helper_generic import addDataPadding
 from helper_threading import *
 import l10n
 from protocol import *
+from binascii import hexlify, unhexlify
 
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
@@ -58,14 +59,14 @@ class singleWorker(threading.Thread, StoppableThread):
                     toAddressVersionNumber) + encodeVarint(toStreamNumber) + toRipe).digest()).digest()
                 privEncryptionKey = doubleHashOfAddressData[:32] # Note that this is the first half of the sha512 hash.
                 tag = doubleHashOfAddressData[32:]
-                shared.neededPubkeys[tag] = (toAddress, highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
+                shared.neededPubkeys[tag] = (toAddress, highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
 
         # Initialize the shared.ackdataForWhichImWatching data structure
         queryreturn = sqlQuery(
             '''SELECT ackdata FROM sent where (status='msgsent' OR status='doingmsgpow')''')
         for row in queryreturn:
             ackdata, = row
-            logger.info('Watching for ackdata ' + ackdata.encode('hex'))
+            logger.info('Watching for ackdata ' + hexlify(ackdata))
             shared.ackdataForWhichImWatching[ackdata] = 0
 
         self.stop.wait(
@@ -134,14 +135,14 @@ class singleWorker(threading.Thread, StoppableThread):
             logger.error('Error within doPOWForMyV2Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
             return
 
-        privSigningKeyHex = shared.decodeWalletImportFormat(
-            privSigningKeyBase58).encode('hex')
-        privEncryptionKeyHex = shared.decodeWalletImportFormat(
-            privEncryptionKeyBase58).encode('hex')
-        pubSigningKey = highlevelcrypto.privToPub(
-            privSigningKeyHex).decode('hex')
-        pubEncryptionKey = highlevelcrypto.privToPub(
-            privEncryptionKeyHex).decode('hex')
+        privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
+            privSigningKeyBase58))
+        privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
+            privEncryptionKeyBase58))
+        pubSigningKey = unhexlify(highlevelcrypto.privToPub(
+            privSigningKeyHex))
+        pubEncryptionKey = unhexlify(highlevelcrypto.privToPub(
+            privEncryptionKeyHex))
 
         payload += pubSigningKey[1:]
         payload += pubEncryptionKey[1:]
@@ -159,7 +160,7 @@ class singleWorker(threading.Thread, StoppableThread):
         shared.inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime,'')
 
-        logger.info('broadcasting inv with hash: ' + inventoryHash.encode('hex'))
+        logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
@@ -215,14 +216,14 @@ class singleWorker(threading.Thread, StoppableThread):
 
             return
 
-        privSigningKeyHex = shared.decodeWalletImportFormat(
-            privSigningKeyBase58).encode('hex')
-        privEncryptionKeyHex = shared.decodeWalletImportFormat(
-            privEncryptionKeyBase58).encode('hex')
-        pubSigningKey = highlevelcrypto.privToPub(
-            privSigningKeyHex).decode('hex')
-        pubEncryptionKey = highlevelcrypto.privToPub(
-            privEncryptionKeyHex).decode('hex')
+        privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
+            privSigningKeyBase58))
+        privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
+            privEncryptionKeyBase58))
+        pubSigningKey = unhexlify(highlevelcrypto.privToPub(
+            privSigningKeyHex))
+        pubEncryptionKey = unhexlify(highlevelcrypto.privToPub(
+            privEncryptionKeyHex))
 
         payload += pubSigningKey[1:]
         payload += pubEncryptionKey[1:]
@@ -249,7 +250,7 @@ class singleWorker(threading.Thread, StoppableThread):
         shared.inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime,'')
 
-        logger.info('broadcasting inv with hash: ' + inventoryHash.encode('hex'))
+        logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
@@ -292,14 +293,14 @@ class singleWorker(threading.Thread, StoppableThread):
             logger.error('Error within sendOutOrStoreMyV4Pubkey. Could not read the keys from the keys.dat file for a requested address. %s\n' % err)
             return
 
-        privSigningKeyHex = shared.decodeWalletImportFormat(
-            privSigningKeyBase58).encode('hex')
-        privEncryptionKeyHex = shared.decodeWalletImportFormat(
-            privEncryptionKeyBase58).encode('hex')
-        pubSigningKey = highlevelcrypto.privToPub(
-            privSigningKeyHex).decode('hex')
-        pubEncryptionKey = highlevelcrypto.privToPub(
-            privEncryptionKeyHex).decode('hex')
+        privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
+            privSigningKeyBase58))
+        privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
+            privEncryptionKeyBase58))
+        pubSigningKey = unhexlify(highlevelcrypto.privToPub(
+            privSigningKeyHex))
+        pubEncryptionKey = unhexlify(highlevelcrypto.privToPub(
+            privEncryptionKeyHex))
         dataToEncrypt += pubSigningKey[1:]
         dataToEncrypt += pubEncryptionKey[1:]
 
@@ -324,7 +325,7 @@ class singleWorker(threading.Thread, StoppableThread):
         privEncryptionKey = doubleHashOfAddressData[:32]
         pubEncryptionKey = highlevelcrypto.pointMult(privEncryptionKey)
         payload += highlevelcrypto.encrypt(
-            dataToEncrypt, pubEncryptionKey.encode('hex'))
+            dataToEncrypt, hexlify(pubEncryptionKey))
 
         # Do the POW for this pubkey message
         target = 2 ** 64 / (shared.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + shared.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+shared.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
@@ -339,7 +340,7 @@ class singleWorker(threading.Thread, StoppableThread):
         shared.inventory[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, doubleHashOfAddressData[32:])
 
-        logger.info('broadcasting inv with hash: ' + inventoryHash.encode('hex'))
+        logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
@@ -373,15 +374,15 @@ class singleWorker(threading.Thread, StoppableThread):
                     ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                 continue
 
-            privSigningKeyHex = shared.decodeWalletImportFormat(
-                privSigningKeyBase58).encode('hex')
-            privEncryptionKeyHex = shared.decodeWalletImportFormat(
-                privEncryptionKeyBase58).encode('hex')
+            privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
+                privSigningKeyBase58))
+            privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
+                privEncryptionKeyBase58))
 
             pubSigningKey = highlevelcrypto.privToPub(privSigningKeyHex).decode(
                 'hex')  # At this time these pubkeys are 65 bytes long because they include the encoding byte which we won't be sending in the broadcast message.
-            pubEncryptionKey = highlevelcrypto.privToPub(
-                privEncryptionKeyHex).decode('hex')
+            pubEncryptionKey = unhexlify(highlevelcrypto.privToPub(
+                privEncryptionKeyHex))
 
             if TTL > 28 * 24 * 60 * 60:
                 TTL = 28 * 24 * 60 * 60
@@ -437,7 +438,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
             pubEncryptionKey = highlevelcrypto.pointMult(privEncryptionKey)
             payload += highlevelcrypto.encrypt(
-                dataToEncrypt, pubEncryptionKey.encode('hex'))
+                dataToEncrypt, hexlify(pubEncryptionKey))
 
             target = 2 ** 64 / (shared.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + shared.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+shared.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
             logger.info('(For broadcast message) Doing proof of work...')
@@ -460,7 +461,7 @@ class singleWorker(threading.Thread, StoppableThread):
             objectType = 3
             shared.inventory[inventoryHash] = (
                 objectType, streamNumber, payload, embeddedTime, tag)
-            logger.info('sending inv (within sendBroadcast function) for object: ' + inventoryHash.encode('hex'))
+            logger.info('sending inv (within sendBroadcast function) for object: ' + hexlify(inventoryHash))
             shared.broadcastToSendDataQueues((
                 streamNumber, 'advertiseobject', inventoryHash))
 
@@ -553,7 +554,7 @@ class singleWorker(threading.Thread, StoppableThread):
                                 toAddressVersionNumber) + encodeVarint(toStreamNumber) + toRipe).digest()).digest()
                             privEncryptionKey = doubleHashOfToAddressData[:32] # The first half of the sha512 hash.
                             tag = doubleHashOfToAddressData[32:] # The second half of the sha512 hash.
-                            shared.neededPubkeys[tag] = (toaddress, highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex')))
+                            shared.neededPubkeys[tag] = (toaddress, highlevelcrypto.makeCryptor(hexlify(privEncryptionKey)))
 
                             for value in shared.inventory.by_type_and_tag(1, toTag):
                                 if shared.decryptAndCheckPubkeyPayload(value.payload, toaddress) == 'successful': #if valid, this function also puts it in the pubkeys table.
@@ -675,10 +676,10 @@ class singleWorker(threading.Thread, StoppableThread):
                     shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,tr.translateText("MainWindow",'Problem: You are trying to send a message to yourself or a chan but your encryption key could not be found in the keys.dat file. Could not encrypt message. %1').arg(l10n.formatTimestamp()))))
                     logger.error('Error within sendMsg. Could not read the keys from the keys.dat file for our own address. %s\n' % err)
                     continue
-                privEncryptionKeyHex = shared.decodeWalletImportFormat(
-                    privEncryptionKeyBase58).encode('hex')
-                pubEncryptionKeyBase256 = highlevelcrypto.privToPub(
-                    privEncryptionKeyHex).decode('hex')[1:]
+                privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
+                    privEncryptionKeyBase58))
+                pubEncryptionKeyBase256 = unhexlify(highlevelcrypto.privToPub(
+                    privEncryptionKeyHex))[1:]
                 requiredAverageProofOfWorkNonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
                 requiredPayloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
@@ -701,15 +702,15 @@ class singleWorker(threading.Thread, StoppableThread):
                     ackdata, tr.translateText("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                 continue
 
-            privSigningKeyHex = shared.decodeWalletImportFormat(
-                privSigningKeyBase58).encode('hex')
-            privEncryptionKeyHex = shared.decodeWalletImportFormat(
-                privEncryptionKeyBase58).encode('hex')
+            privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
+                privSigningKeyBase58))
+            privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
+                privEncryptionKeyBase58))
 
-            pubSigningKey = highlevelcrypto.privToPub(
-                privSigningKeyHex).decode('hex')
-            pubEncryptionKey = highlevelcrypto.privToPub(
-                privEncryptionKeyHex).decode('hex')
+            pubSigningKey = unhexlify(highlevelcrypto.privToPub(
+                privSigningKeyHex))
+            pubEncryptionKey = unhexlify(highlevelcrypto.privToPub(
+                privEncryptionKeyHex))
 
             payload += pubSigningKey[
                 1:]  # The \x04 on the beginning of the public keys are not sent. This way there is only one acceptable way to encode and send a public key.
@@ -755,7 +756,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
             # We have assembled the data that will be encrypted.
             try:
-                encrypted = highlevelcrypto.encrypt(payload,"04"+pubEncryptionKeyBase256.encode('hex'))
+                encrypted = highlevelcrypto.encrypt(payload,"04"+hexlify(pubEncryptionKeyBase256))
             except:
                 sqlExecute('''UPDATE sent SET status='badkey' WHERE ackdata=?''', ackdata)
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,tr.translateText("MainWindow",'Problem: The recipient\'s encryption key is no good. Could not encrypt message. %1').arg(l10n.formatTimestamp()))))
@@ -795,7 +796,7 @@ class singleWorker(threading.Thread, StoppableThread):
             else:
                 # not sending to a chan or one of my addresses
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr.translateText("MainWindow", "Message sent. Waiting for acknowledgement. Sent on %1").arg(l10n.formatTimestamp()))))
-            logger.info('Broadcasting inv for my msg(within sendmsg function):' + inventoryHash.encode('hex'))
+            logger.info('Broadcasting inv for my msg(within sendmsg function):' + hexlify(inventoryHash))
             shared.broadcastToSendDataQueues((
                 toStreamNumber, 'advertiseobject', inventoryHash))
 
@@ -864,7 +865,7 @@ class singleWorker(threading.Thread, StoppableThread):
             privEncryptionKey = hashlib.sha512(hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()).digest()[:32] # Note that this is the first half of the sha512 hash.
             tag = hashlib.sha512(hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()).digest()[32:] # Note that this is the second half of the sha512 hash.
             if tag not in shared.neededPubkeys:
-                shared.neededPubkeys[tag] = (toAddress, highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
+                shared.neededPubkeys[tag] = (toAddress, highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
         
         if retryNumber == 0:
             TTL = 2.5*24*60*60 # 2.5 days. This was chosen fairly arbitrarily. 
@@ -878,10 +879,10 @@ class singleWorker(threading.Thread, StoppableThread):
         payload += encodeVarint(streamNumber)
         if addressVersionNumber <= 3:
             payload += ripe
-            logger.info('making request for pubkey with ripe: %s', ripe.encode('hex'))
+            logger.info('making request for pubkey with ripe: %s', hexlify(ripe))
         else:
             payload += tag
-            logger.info('making request for v4 pubkey with tag: %s', tag.encode('hex'))
+            logger.info('making request for v4 pubkey with tag: %s', hexlify(tag))
 
         # print 'trial value', trialValue
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'

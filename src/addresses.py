@@ -1,6 +1,7 @@
 import hashlib
 from struct import *
 from pyelliptic import arithmetic
+from binascii import hexlify, unhexlify
 
 
 
@@ -10,9 +11,9 @@ def convertIntToString(n):
     if a[-1:] == 'L':
         a = a[:-1]
     if (len(a) % 2) == 0:
-        return a[2:].decode('hex')
+        return unhexlify(a[2:])
     else:
-        return ('0'+a[2:]).decode('hex')
+        return unhexlify('0'+a[2:])
 
 ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
@@ -142,7 +143,7 @@ def encodeAddress(version,stream,ripe):
     sha.update(currentHash)
     checksum = sha.digest()[0:4]
 
-    asInt = int(storedBinaryData.encode('hex') + checksum.encode('hex'),16)
+    asInt = int(hexlify(storedBinaryData) + hexlify(checksum),16)
     return 'BM-'+ encodeBase58(asInt)
 
 def decodeAddress(address):
@@ -165,7 +166,7 @@ def decodeAddress(address):
 
     #print 'hexdata', hexdata
 
-    data = hexdata.decode('hex')
+    data = unhexlify(hexdata)
     checksum = data[-4:]
 
     sha = hashlib.new('sha512')
@@ -268,7 +269,7 @@ if __name__ == "__main__":
     ripe.update(sha.digest())
     addressVersionNumber = 2
     streamNumber = 1
-    print 'Ripe digest that we will encode in the address:', ripe.digest().encode('hex')
+    print 'Ripe digest that we will encode in the address:', hexlify(ripe.digest())
     returnedAddress = encodeAddress(addressVersionNumber,streamNumber,ripe.digest())
     print 'Encoded address:', returnedAddress
     status,addressVersionNumber,streamNumber,data = decodeAddress(returnedAddress)
@@ -277,5 +278,5 @@ if __name__ == "__main__":
     print 'addressVersionNumber', addressVersionNumber
     print 'streamNumber', streamNumber
     print 'length of data(the ripe hash):', len(data)
-    print 'ripe data:', data.encode('hex')
+    print 'ripe data:', hexlify(data)
 

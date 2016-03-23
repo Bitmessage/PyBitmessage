@@ -15,6 +15,7 @@ import ssl
 from struct import unpack, pack
 import sys
 import traceback
+from binascii import hexlify
 #import string
 #from subprocess import call  # used when the API must execute an outside program
 #from pyelliptic.openssl import OpenSSL
@@ -374,7 +375,7 @@ class receiveDataThread(threading.Thread):
             fatalHumanFriendly = 'Fatal'
         message = '%s message received from %s: %s.' % (fatalHumanFriendly, self.peer, errorText)
         if inventoryVector:
-            message += " This concerns object %s" % inventoryVector.encode('hex')
+            message += " This concerns object %s" % hexlify(inventoryVector)
         if banTime > 0:
             message += " Remote node says that the ban time is %s" % banTime
         logger.error(message)
@@ -447,7 +448,7 @@ class receiveDataThread(threading.Thread):
     # Send a getdata message to our peer to request the object with the given
     # hash
     def sendgetdata(self, hash):
-        logger.debug('sending getdata to retrieve object with hash: ' + hash.encode('hex'))
+        logger.debug('sending getdata to retrieve object with hash: ' + hexlify(hash))
         payload = '\x01' + hash
         self.sendDataThreadQueue.put((0, 'sendRawData', shared.CreatePacket('getdata', payload)))
 
@@ -463,7 +464,7 @@ class receiveDataThread(threading.Thread):
         for i in xrange(numberOfRequestedInventoryItems):
             hash = data[lengthOfVarint + (
                 i * 32):32 + lengthOfVarint + (i * 32)]
-            logger.debug('received getdata request for item:' + hash.encode('hex'))
+            logger.debug('received getdata request for item:' + hexlify(hash))
 
             shared.numberOfInventoryLookupsPerformed += 1
             shared.inventoryLock.acquire()
