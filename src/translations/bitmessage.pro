@@ -42,6 +42,7 @@ FORMS = \
 TRANSLATIONS = \
     bitmessage_ar.ts \
     bitmessage_cs.ts \
+    bitmessage_da.ts \
     bitmessage_de.ts \
     bitmessage_en.ts \
     bitmessage_en_pirate.ts \
