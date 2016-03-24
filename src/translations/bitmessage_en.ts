@@ -180,22 +180,22 @@ Please type the desiged email address (including @mailchuck.com) below:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/blacklist.py" line="121"/>
+        <location filename="../bitmessageqt/blacklist.py" line="122"/>
         <source>Enable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/blacklist.py" line="124"/>
+        <location filename="../bitmessageqt/blacklist.py" line="125"/>
         <source>Disable</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/blacklist.py" line="127"/>
+        <location filename="../bitmessageqt/blacklist.py" line="128"/>
         <source>Set avatar...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/blacklist.py" line="117"/>
+        <location filename="../bitmessageqt/blacklist.py" line="118"/>
         <source>Copy address to clipboard</source>
         <translation type="unfinished"></translation>
     </message>
@@ -210,7 +210,7 @@ Please type the desiged email address (including @mailchuck.com) below:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/blacklist.py" line="114"/>
+        <location filename="../bitmessageqt/blacklist.py" line="115"/>
         <source>Delete</source>
         <translation type="unfinished"></translation>
     </message>
@@ -350,7 +350,7 @@ Please type the desiged email address (including @mailchuck.com) below:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="734"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="736"/>
         <source>Quit</source>
         <translation type="unfinished"></translation>
     </message>
@@ -627,12 +627,12 @@ It is important that you back up this file. Would you like to open the file now?
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/blacklist.py" line="59"/>
+        <location filename="../bitmessageqt/blacklist.py" line="60"/>
         <source>Address is valid.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/blacklist.py" line="93"/>
+        <location filename="../bitmessageqt/blacklist.py" line="94"/>
         <source>The address you entered was invalid. Ignoring it.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1035,62 +1035,62 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="729"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="731"/>
         <source>File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="740"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="742"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="736"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="738"/>
         <source>Help</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="732"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="734"/>
         <source>Import keys</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="733"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="735"/>
         <source>Manage keys</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="735"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="737"/>
         <source>Ctrl+Q</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="737"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="739"/>
         <source>F1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="738"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="740"/>
         <source>Contact support</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="739"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="741"/>
         <source>About</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="741"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="743"/>
         <source>Regenerate deterministic addresses</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="742"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="744"/>
         <source>Delete all trashed messages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="743"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="745"/>
         <source>Join / Create chan</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1105,12 +1105,12 @@ p, li { white-space: pre-wrap; }
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/blacklist.py" line="90"/>
+        <location filename="../bitmessageqt/blacklist.py" line="91"/>
         <source>Error: You cannot add the same address to your list twice. Perhaps rename the existing one if you want.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/blacklist.py" line="111"/>
+        <location filename="../bitmessageqt/blacklist.py" line="112"/>
         <source>Add new entry</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1326,12 +1326,12 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/blacklist.py" line="150"/>
+        <location filename="../bitmessageqt/blacklist.py" line="151"/>
         <source>Blacklist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/blacklist.py" line="152"/>
+        <location filename="../bitmessageqt/blacklist.py" line="153"/>
         <source>Whitelist</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1463,47 +1463,47 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="14"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="15"/>
         <source>Since startup on %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="56"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="57"/>
         <source>Objects to be synced: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="47"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="48"/>
         <source>Processed %1 person-to-person messages.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="52"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="53"/>
         <source>Processed %1 broadcast messages.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="57"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="58"/>
         <source>Processed %1 public keys.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="65"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="66"/>
         <source>Down: %1/s  Total: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="67"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="68"/>
         <source>Up: %1/s  Total: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="114"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="115"/>
         <source>Total Connections: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="123"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="124"/>
         <source>Inventory lookups per second: %1</source>
         <translation type="unfinished"></translation>
     </message>
