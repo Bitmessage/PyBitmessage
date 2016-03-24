@@ -168,7 +168,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
         
     def _getLabel(self):
         if self.address is None:
-            return unicode(str(QtGui.QApplication.translate("MainWindow", "All accounts")), 'utf-8')
+            return unicode(QtGui.QApplication.translate("MainWindow", "All accounts").toUtf8(), 'utf-8', 'ignore')
         else:
             try:
                 return unicode(shared.config.get(self.address, 'label'), 'utf-8', 'ignore')
@@ -196,7 +196,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
                 return self._getLabel() + self._getAddressBracket(False)
             elif role == QtCore.Qt.DecorationRole:
                 if self.address is None:
-                    return avatarize(self._getLabel())
+                    return avatarize(self._getLabel().encode('utf8'))
                 else:
                     return avatarize(self.address)
             elif role == QtCore.Qt.FontRole:
