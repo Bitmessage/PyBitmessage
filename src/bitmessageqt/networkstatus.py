@@ -2,11 +2,12 @@ from PyQt4 import QtCore, QtGui
 import shared
 from tr import _translate
 import l10n
+from retranslateui import RetranslateMixin
 from uisignaler import UISignaler
 import widgets
 
 
-class NetworkStatus(QtGui.QWidget):
+class NetworkStatus(QtGui.QWidget, RetranslateMixin):
     def __init__(self, parent=None):
         super(NetworkStatus, self).__init__(parent)
         widgets.load('networkstatus.ui', self)

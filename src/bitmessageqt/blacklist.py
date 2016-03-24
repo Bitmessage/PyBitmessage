@@ -7,11 +7,12 @@ import widgets
 from addresses import addBMIfNotPresent
 from dialogs import AddAddressDialog
 from helper_sql import sqlExecute, sqlQuery
+from retranslateui import RetranslateMixin
 from utils import avatarize
 from uisignaler import UISignaler
 
 
-class Blacklist(QtGui.QWidget):
+class Blacklist(QtGui.QWidget, RetranslateMixin):
     def __init__(self, parent=None):
         super(Blacklist, self).__init__(parent)
         widgets.load('blacklist.ui', self)
