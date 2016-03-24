@@ -11,7 +11,7 @@ class NetworkStatus(QtGui.QWidget):
         super(NetworkStatus, self).__init__(parent)
         widgets.load('networkstatus.ui', self)
 
-        self.labelStartupTime.setText(_translate("MainWindow", "Since startup on %1").arg(
+        self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
             l10n.formatTimestamp()))
         
         self.UISignalThread = UISignaler.get()
@@ -43,19 +43,19 @@ class NetworkStatus(QtGui.QWidget):
         return "%4.0f KB" % num
 
     def updateNumberOfMessagesProcessed(self):
-        self.labelSyncStatus.setText(_translate("MainWindow", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
+        self.labelSyncStatus.setText(_translate("networkstatus", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
         self.labelMessageCount.setText(_translate(
-            "MainWindow", "Processed %1 person-to-person messages.").arg(str(shared.numberOfMessagesProcessed)))
+            "networkstatus", "Processed %1 person-to-person messages.").arg(str(shared.numberOfMessagesProcessed)))
 
     def updateNumberOfBroadcastsProcessed(self):
-        self.labelSyncStatus.setText(_translate("MainWindow", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
+        self.labelSyncStatus.setText(_translate("networkstatus", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
         self.labelBroadcastCount.setText(_translate(
-            "MainWindow", "Processed %1 broadcast messages.").arg(str(shared.numberOfBroadcastsProcessed)))
+            "networkstatus", "Processed %1 broadcast messages.").arg(str(shared.numberOfBroadcastsProcessed)))
 
     def updateNumberOfPubkeysProcessed(self):
-        self.labelSyncStatus.setText(_translate("MainWindow", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
+        self.labelSyncStatus.setText(_translate("networkstatus", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
         self.labelPubkeyCount.setText(_translate(
-            "MainWindow", "Processed %1 public keys.").arg(str(shared.numberOfPubkeysProcessed)))
+            "networkstatus", "Processed %1 public keys.").arg(str(shared.numberOfPubkeysProcessed)))
 
     def updateNumberOfBytes(self):
         """
@@ -63,9 +63,9 @@ class NetworkStatus(QtGui.QWidget):
         sent and received by 2.
         """
         self.labelBytesRecvCount.setText(_translate(
-            "MainWindow", "Down: %1/s  Total: %2").arg(self.formatByteRate(shared.numberOfBytesReceived/2), self.formatBytes(self.totalNumberOfBytesReceived)))
+            "networkstatus", "Down: %1/s  Total: %2").arg(self.formatByteRate(shared.numberOfBytesReceived/2), self.formatBytes(self.totalNumberOfBytesReceived)))
         self.labelBytesSentCount.setText(_translate(
-            "MainWindow", "Up: %1/s  Total: %2").arg(self.formatByteRate(shared.numberOfBytesSent/2), self.formatBytes(self.totalNumberOfBytesSent)))
+            "networkstatus", "Up: %1/s  Total: %2").arg(self.formatByteRate(shared.numberOfBytesSent/2), self.formatBytes(self.totalNumberOfBytesSent)))
         self.totalNumberOfBytesReceived += shared.numberOfBytesReceived
         self.totalNumberOfBytesSent += shared.numberOfBytesSent
         shared.numberOfBytesReceived = 0
@@ -112,7 +112,7 @@ class NetworkStatus(QtGui.QWidget):
             self.tableWidgetConnectionCount.setItem(0,1,newItem)
             totalNumberOfConnectionsFromAllStreams += connectionCount"""
         self.labelTotalConnections.setText(_translate(
-            "MainWindow", "Total Connections: %1").arg(str(len(shared.connectedHostsList))))
+            "networkstatus", "Total Connections: %1").arg(str(len(shared.connectedHostsList))))
         if len(shared.connectedHostsList) > 0 and shared.statusIconColor == 'red':  # FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
             self.window().setStatusIcon('yellow')
         elif len(shared.connectedHostsList) == 0:
@@ -121,6 +121,6 @@ class NetworkStatus(QtGui.QWidget):
     # timer driven
     def runEveryTwoSeconds(self):
         self.labelLookupsPerSecond.setText(_translate(
-            "MainWindow", "Inventory lookups per second: %1").arg(str(shared.numberOfInventoryLookupsPerformed/2)))
+            "networkstatus", "Inventory lookups per second: %1").arg(str(shared.numberOfInventoryLookupsPerformed/2)))
         shared.numberOfInventoryLookupsPerformed = 0
         self.updateNumberOfBytes()
