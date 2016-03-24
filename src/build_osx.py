@@ -11,6 +11,7 @@ DATA_FILES = [
     ('', ['sslkeys', 'images']),
     ('bitmsghash', ['bitmsghash/bitmsghash.cl', 'bitmsghash/bitmsghash.so']),
     ('translations', glob('translations/*.qm')),
+    ('ui', glob('bitmessageqt/*.ui')),
     ('translations', glob(str(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.TranslationsPath)) + '/qt_??.qm')),
     ('translations', glob(str(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.TranslationsPath)) + '/qt_??_??.qm')),
 ]
