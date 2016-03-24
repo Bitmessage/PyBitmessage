@@ -21,6 +21,7 @@ SOURCES	= 	../addresses.py\
 			../bitmessageqt/account.py\
 			../bitmessageqt/addaddressdialog.py\
 			../bitmessageqt/bitmessageui.py\
+			../bitmessageqt/blacklist.py\
 			../bitmessageqt/connect.py\
 			../bitmessageqt/emailgateway.py\
 			../bitmessageqt/foldertree.py\
@@ -28,6 +29,7 @@ SOURCES	= 	../addresses.py\
 			../bitmessageqt/iconglossary.py\
 			../bitmessageqt/messagecompose.py\
 			../bitmessageqt/messageview.py\
+			../bitmessageqt/networkstatus.py\
 			../bitmessageqt/newaddressdialog.py\
 			../bitmessageqt/newchandialog.py\
 			../bitmessageqt/newsubscriptiondialog.py\
@@ -37,6 +39,7 @@ SOURCES	= 	../addresses.py\
 			../bitmessageqt/specialaddressbehavior.py
 
 FORMS = \
+    ../bitmessageqt/blacklist.ui\
     ../bitmessageqt/networkstatus.ui
 
 TRANSLATIONS = \
