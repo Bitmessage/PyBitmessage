@@ -726,6 +726,8 @@ class Ui_MainWindow(object):
         item.setText(_translate("MainWindow", "Received", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.chans), _translate("MainWindow", "Chans", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.networkstatus), _translate("MainWindow", "Network Status", None))
+        self.blackwhitelist.retranslateUi()
+        self.networkstatus.retranslateUi()
         self.menuFile.setTitle(_translate("MainWindow", "File", None))
         self.menuSettings.setTitle(_translate("MainWindow", "Settings", None))
         self.menuHelp.setTitle(_translate("MainWindow", "Help", None))
