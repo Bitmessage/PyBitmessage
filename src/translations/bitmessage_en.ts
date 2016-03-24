@@ -335,7 +335,7 @@ Please type the desiged email address (including @mailchuck.com) below:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="691"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="683"/>
         <source>Send</source>
         <translation type="unfinished"></translation>
     </message>
@@ -350,7 +350,7 @@ Please type the desiged email address (including @mailchuck.com) below:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="736"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="728"/>
         <source>Quit</source>
         <translation type="unfinished"></translation>
     </message>
@@ -906,37 +906,37 @@ Are you sure you want to delete the channel?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="712"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="704"/>
         <source>Search</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="713"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="705"/>
         <source>All</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="720"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="712"/>
         <source>To</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="722"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="714"/>
         <source>From</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="724"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="716"/>
         <source>Subject</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="717"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="709"/>
         <source>Message</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="726"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="718"/>
         <source>Received</source>
         <translation type="unfinished"></translation>
     </message>
@@ -966,12 +966,12 @@ Are you sure you want to delete the channel?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="681"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="677"/>
         <source>Subject:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="680"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="676"/>
         <source>From:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -981,116 +981,107 @@ Are you sure you want to delete the channel?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="682"/>
-        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
-&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
-p, li { white-space: pre-wrap; }
-&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;Droid Sans&apos;; font-size:9pt; font-weight:400; font-style:normal;&quot;&gt;
-&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px; font-family:&apos;MS Shell Dlg 2&apos;;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="679"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="675"/>
         <source>Send ordinary Message</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="687"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="679"/>
         <source>Send Message to your Subscribers</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="688"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="680"/>
         <source>TTL:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="689"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="681"/>
         <source>X days</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="709"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="701"/>
         <source>Subscriptions</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="693"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="685"/>
         <source>Add new Subscription</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="727"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="719"/>
         <source>Chans</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="711"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="703"/>
         <source>Add Chan</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="728"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="720"/>
         <source>Network Status</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="731"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="723"/>
         <source>File</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="742"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="734"/>
         <source>Settings</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="738"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="730"/>
         <source>Help</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="734"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="726"/>
         <source>Import keys</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="735"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="727"/>
         <source>Manage keys</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="737"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="729"/>
         <source>Ctrl+Q</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="739"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="731"/>
         <source>F1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="740"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="732"/>
         <source>Contact support</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="741"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="733"/>
         <source>About</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="743"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="735"/>
         <source>Regenerate deterministic addresses</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="744"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="736"/>
         <source>Delete all trashed messages</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="745"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="737"/>
         <source>Join / Create chan</source>
         <translation type="unfinished"></translation>
     </message>
