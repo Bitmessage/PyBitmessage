@@ -76,7 +76,7 @@
     <message>
         <location filename="../bitmessageqt/emailgateway.py" line="103"/>
         <source>Email gateway allows you to communicate with email users. Currently, only the Mailchuck email gateway (@mailchuck.com) is available.
-Please type the desiged email address (including @mailchuck.com) below:</source>
+Please type the desired email address (including @mailchuck.com) below:</source>
         <translation type="unfinished"></translation>
     </message>
 </context>

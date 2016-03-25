@@ -100,4 +100,4 @@ class Ui_EmailGatewayRegistrationDialog(object):
 
     def retranslateUi(self, EmailGatewayRegistrationDialog):
         EmailGatewayRegistrationDialog.setWindowTitle(QtGui.QApplication.translate("EmailGatewayRegistrationDialog", "Email gateway registration", None, QtGui.QApplication.UnicodeUTF8))
-        self.label.setText(QtGui.QApplication.translate("EmailGatewayRegistrationDialog", "Email gateway allows you to communicate with email users. Currently, only the Mailchuck email gateway (@mailchuck.com) is available.\nPlease type the desiged email address (including @mailchuck.com) below:", None, QtGui.QApplication.UnicodeUTF8))
+        self.label.setText(QtGui.QApplication.translate("EmailGatewayRegistrationDialog", "Email gateway allows you to communicate with email users. Currently, only the Mailchuck email gateway (@mailchuck.com) is available.\nPlease type the desired email address (including @mailchuck.com) below:", None, QtGui.QApplication.UnicodeUTF8))
