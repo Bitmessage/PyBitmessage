@@ -4200,14 +4200,10 @@ class NewSubscriptionDialog(QtGui.QDialog):
                 if count == 0:
                     self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
                         _translate("MainWindow", "There are no recent broadcasts from this address to display."))
-                elif count == 1:
-                    self.ui.checkBoxDisplayMessagesAlreadyInInventory.setEnabled(True)
-                    self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
-                        _translate("MainWindow", "Display the %1 recent broadcast from this address.").arg(count))
                 else:
                     self.ui.checkBoxDisplayMessagesAlreadyInInventory.setEnabled(True)
                     self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
-                        _translate("MainWindow", "Display the %1 recent broadcasts from this address.").arg(count))
+                        _translate("MainWindow", "Display the %1 recent broadcast(s) from this address.").arg(count))
 
 
 class NewAddressDialog(QtGui.QDialog):
