@@ -1224,7 +1224,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     </message>
     <message>
         <location filename="../bitmessageqt/newsubscriptiondialog.py" line="68"/>
-        <source>CheckBox</source>
+        <source>Enter an address above.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
