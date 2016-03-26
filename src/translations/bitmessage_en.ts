@@ -876,17 +876,7 @@ Are you sure you want to delete the channel?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4213"/>
-        <source>Display the %1 recent broadcast from this address.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../bitmessageqt/__init__.py" line="4217"/>
-        <source>Display the %1 recent broadcasts from this address.</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../bitmessageqt/__init__.py" line="4257"/>
+        <location filename="../bitmessageqt/__init__.py" line="4253"/>
         <source>You are using TCP port %1. (This can be changed in the settings).</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1103,6 +1093,11 @@ Are you sure you want to delete the channel?</source>
     <message>
         <location filename="../bitmessageqt/blacklist.py" line="112"/>
         <source>Add new entry</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="4213"/>
+        <source>Display the %1 recent broadcast(s) from this address.</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
