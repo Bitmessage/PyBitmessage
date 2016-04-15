@@ -2349,10 +2349,10 @@ class MyForm(settingsmixin.SMainWindow):
             shared.config.set('bitmessagesettings', 'replybelow', str(
                 self.settingsDialogInstance.ui.checkBoxReplyBelow.isChecked()))
                 
-            lang_ind = int(self.settingsDialogInstance.ui.languageComboBox.currentIndex())
-            if not languages[lang_ind] == 'other':
-                shared.config.set('bitmessagesettings', 'userlocale', languages[lang_ind])
-                change_translation(languages[lang_ind])
+            lang = str(self.settingsDialogInstance.ui.languageComboBox.itemData(self.settingsDialogInstance.ui.languageComboBox.currentIndex()).toString())
+            shared.config.set('bitmessagesettings', 'userlocale', lang)
+            logger.debug("Setting locale to %s", lang)
+            change_translation(lang)
             
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
@@ -3869,15 +3869,6 @@ class settingsDialog(QtGui.QDialog):
             shared.safeConfigGetBoolean('bitmessagesettings', 'useidenticons'))
         self.ui.checkBoxReplyBelow.setChecked(
             shared.safeConfigGetBoolean('bitmessagesettings', 'replybelow'))
-        
-        global languages 
-        languages = ['system','en','eo','fr','de','es','ru','no','ar','zh_cn','ja','nl','cs','en_pirate','other']
-        user_countrycode = str(shared.config.get('bitmessagesettings', 'userlocale'))
-        if user_countrycode in languages:
-            curr_index = languages.index(user_countrycode)
-        else:
-            curr_index = languages.index('other')
-        self.ui.languageComboBox.setCurrentIndex(curr_index)
         
         if shared.appdata == shared.lookupExeFolder():
             self.ui.checkBoxPortableMode.setChecked(True)
