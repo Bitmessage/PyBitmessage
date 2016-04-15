@@ -2,7 +2,6 @@ import glob
 import os
 from PyQt4 import QtCore, QtGui
 
-from debug import logger
 from shared import codePath, config
 
 class LanguageBox(QtGui.QComboBox):
@@ -33,8 +32,6 @@ class LanguageBox(QtGui.QComboBox):
             else:
                 self.addItem(locale.nativeLanguageName(), localeShort)
         for i in range(self.count()):
-            logger.debug("Checking locale %s at %i", str(self.itemData(i).toString()), i)
             if self.itemData(i) == configuredLocale:
-                logger.debug("Matching locale %s at %i", configuredLocale, i)
                 self.setCurrentIndex(i)
                 break
