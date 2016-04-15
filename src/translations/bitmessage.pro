@@ -27,6 +27,7 @@ SOURCES	= 	../addresses.py\
 			../bitmessageqt/foldertree.py\
 			../bitmessageqt/help.py\
 			../bitmessageqt/iconglossary.py\
+			../bitmessageqt/languagebox.py\
 			../bitmessageqt/messagecompose.py\
 			../bitmessageqt/messageview.py\
 			../bitmessageqt/networkstatus.py\
@@ -54,6 +55,7 @@ TRANSLATIONS = \
     bitmessage_ja.ts \
     bitmessage_nl.ts \
     bitmessage_no.ts \
+    bitmessage_sk.ts \
     bitmessage_ru.ts \
     bitmessage_zh_cn.ts
 
