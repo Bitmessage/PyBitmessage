@@ -29,7 +29,7 @@ def _set_idle():
 def _pool_worker(nonce, initialHash, target, pool_size):
     _set_idle()
     trialValue = float('inf')
-    while trialValue > target:
+    while trialValue > target and shutdown == 0:
         nonce += pool_size
         trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
     return [trialValue, nonce]
@@ -38,9 +38,11 @@ def _doSafePoW(target, initialHash):
     logger.debug("Safe PoW start")
     nonce = 0
     trialValue = float('inf')
-    while trialValue > target:
+    while trialValue > target and shutdown == 0:
         nonce += 1
         trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+    if shutdown != 0:
+        raise Exception("Interrupted")
     logger.debug("Safe PoW done")
     return [trialValue, nonce]
 
@@ -65,9 +67,7 @@ def _doFastPoW(target, initialHash):
     while True:
         if shutdown >= 1:
             pool.terminate()
-            while True:
-                time.sleep(10) # Don't let this thread return here; it will return nothing and cause an exception in bitmessagemain.py
-            return
+            raise Exception("Interrupted")
         for i in range(pool_size):
             if result[i].ready():
                 result = result[i].get()
@@ -85,6 +85,8 @@ def _doCPoW(target, initialHash):
     logger.debug("C PoW start")
     nonce = bmpow(out_h, out_m)
     trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+    if shutdown != 0:
+        raise Exception("Interrupted")
     logger.debug("C PoW done")
     return [trialValue, nonce]
 
@@ -99,6 +101,8 @@ def _doGPUPoW(target, initialHash):
         logger.error("Your GPUs (%s) did not calculate correctly, disabling OpenCL. Please report to the developers.", deviceNames)
         openclpow.ctx = False
         raise Exception("GPU did not calculate correctly.")
+    if shutdown != 0:
+        raise Exception("Interrupted")
     logger.debug("GPU PoW done")
     return [trialValue, nonce]
     
@@ -138,11 +142,15 @@ def run(target, initialHash):
         try:
             return _doGPUPoW(target, initialHash)
         except:
+            if shutdown != 0:
+                raise
             pass # fallback
     if bmpow:
         try:
             return _doCPoW(target, initialHash)
         except:
+            if shutdown != 0:
+                raise
             pass # fallback
     if frozen == "macosx_app" or not frozen:
         # on my (Peter Surda) Windows 10, Windows Defender
@@ -152,8 +160,15 @@ def run(target, initialHash):
         try:
             return _doFastPoW(target, initialHash)
         except:
+            if shutdown != 0:
+                raise
             pass #fallback
-    return _doSafePoW(target, initialHash)
+    try:
+        return _doSafePoW(target, initialHash)
+    except:
+        if shutdown != 0:
+            raise
+        pass #fallback
 
 # init
 bitmsglib = 'bitmsghash.so'
