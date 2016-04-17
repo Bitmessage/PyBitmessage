@@ -89,15 +89,30 @@ class singleWorker(threading.Thread, StoppableThread):
         while shared.shutdown == 0:
             command, data = shared.workerQueue.get()
             if command == 'sendmessage':
-                self.sendMsg()
+                try:
+                    self.sendMsg()
+                except:
+                    pass
             elif command == 'sendbroadcast':
-                self.sendBroadcast()
+                try:
+                    self.sendBroadcast()
+                except:
+                    pass
             elif command == 'doPOWForMyV2Pubkey':
-                self.doPOWForMyV2Pubkey(data)
+                try:
+                    self.doPOWForMyV2Pubkey(data)
+                except:
+                    pass
             elif command == 'sendOutOrStoreMyV3Pubkey':
-                self.sendOutOrStoreMyV3Pubkey(data)
+                try:
+                    self.sendOutOrStoreMyV3Pubkey(data)
+                except:
+                    pass
             elif command == 'sendOutOrStoreMyV4Pubkey':
-                self.sendOutOrStoreMyV4Pubkey(data)
+                try:
+                    self.sendOutOrStoreMyV4Pubkey(data)
+                except:
+                    pass
             elif command == 'stopThread':
                 return
             else:
