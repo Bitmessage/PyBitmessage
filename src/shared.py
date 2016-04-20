@@ -522,6 +522,8 @@ def doCleanShutdown():
         logger.info('Clean shutdown complete.')
         thisapp.cleanup()
         os._exit(0)
+    else:
+        logger.info('Core shutdown complete.')
 
 # If you want to command all of the sendDataThreads to do something, like shutdown or send some data, this
 # function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are
