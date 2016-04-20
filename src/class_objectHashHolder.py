@@ -47,6 +47,9 @@ class objectHashHolder(threading.Thread):
 
     def holdPeer(self,peerDetails):
         self.collectionOfPeerLists[random.randrange(0, self.size)].append(peerDetails)
+        
+    def hashCount(self):
+        return sum([len(x) for x in self.collectionOfHashLists])
 
     def close(self):
         self.shutdown = True

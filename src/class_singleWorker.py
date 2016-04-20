@@ -87,7 +87,9 @@ class singleWorker(threading.Thread, StoppableThread):
             self.sendBroadcast()
 
         while shared.shutdown == 0:
+            self.busy = 0
             command, data = shared.workerQueue.get()
+            self.busy = 1
             if command == 'sendmessage':
                 try:
                     self.sendMsg()
@@ -114,6 +116,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 except:
                     pass
             elif command == 'stopThread':
+                self.busy = 0
                 return
             else:
                 logger.error('Probable programming error: The command sent to the workerThread is weird. It is: %s\n' % command)

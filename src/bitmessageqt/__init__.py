@@ -67,6 +67,8 @@ from utils import *
 from collections import OrderedDict
 from account import *
 from dialogs import AddAddressDialog
+from class_objectHashHolder import objectHashHolder
+from class_singleWorker import singleWorker
 
 def _translate(context, text):
     return QtGui.QApplication.translate(context, text)
@@ -2644,7 +2646,64 @@ class MyForm(settingsmixin.SMainWindow):
         if reply is QtGui.QMessageBox.No:
             return
         '''
+
+        self.statusBar().showMessage(_translate(
+            "MainWindow", "Shutting down PyBitmessage... %1%%").arg(str(0)))
+        
+        # check if PoW queue empty
+        maxWorkerQueue = 0
+        curWorkerQueue = 1
+        while curWorkerQueue > 0:
+            # worker queue size
+            curWorkerQueue = shared.workerQueue.qsize()
+            # if worker is busy add 1
+            for thread in threading.enumerate():
+                try:
+                    if isinstance(thread, singleWorker):
+                        curWorkerQueue += thread.busy
+                except:
+                    pass
+            if curWorkerQueue > maxWorkerQueue:
+                maxWorkerQueue = curWorkerQueue
+            if curWorkerQueue > 0:
+                self.statusBar().showMessage(_translate("MainWindow", "Waiting for PoW to finish... %1%").arg(str(50 * (maxWorkerQueue - curWorkerQueue) / maxWorkerQueue)))
+                time.sleep(0.5)
+                QtCore.QCoreApplication.processEvents()
+
+        self.statusBar().showMessage(_translate("MainWindow", "Shutting down Pybitmessage... %1%").arg(str(50)))
+
+        QtCore.QCoreApplication.processEvents()
+        if maxWorkerQueue > 0:
+            time.sleep(0.5) # a bit of time so that the hashHolder is populated
+        QtCore.QCoreApplication.processEvents()
+
+        # check if objectHashHolder empty
+        self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(50)))
+        maxWaitingObjects = 0
+        curWaitingObjects = 1
+        while curWaitingObjects > 0:
+            curWaitingObjects = 0
+            for thread in threading.enumerate():
+                try:
+                    if isinstance(thread, objectHashHolder):
+                        curWaitingObjects += thread.hashCount()
+                except:
+                    pass
+            if curWaitingObjects > maxWaitingObjects:
+                maxWaitingObjects = curWaitingObjects
+            if curWaitingObjects > 0:
+                self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(50 + 20 * (maxWaitingObjects - curWaitingObjects) / maxWaitingObjects)))
+                time.sleep(0.5)
+                QtCore.QCoreApplication.processEvents()
+
+        QtCore.QCoreApplication.processEvents()
+        if maxWorkerQueue > 0 or maxWaitingObjects > 0:
+            time.sleep(10) # a bit of time so that the other nodes retrieve the objects
+        QtCore.QCoreApplication.processEvents()
+
         # save state and geometry self and all widgets
+        self.statusBar().showMessage(_translate("MainWindow", "Saving settings... %1%").arg(str(70)))
+        QtCore.QCoreApplication.processEvents()
         self.saveSettings()
         for attr, obj in self.ui.__dict__.iteritems():
             if hasattr(obj, "__class__") and isinstance(obj, settingsmixin.SettingsMixin):
@@ -2652,19 +2711,20 @@ class MyForm(settingsmixin.SMainWindow):
                 if callable (saveMethod):
                     obj.saveSettings()
 
+        self.statusBar().showMessage(_translate("MainWindow", "Shutting down core... %1%").arg(str(80)))
+        QtCore.QCoreApplication.processEvents()
         shared.doCleanShutdown()
+        self.statusBar().showMessage(_translate("MainWindow", "Stopping notifications... %1%").arg(str(90)))
+        QtCore.QCoreApplication.processEvents()
         self.tray.hide()
         # unregister the messaging system
         if self.mmapp is not None:
             self.mmapp.unregister()
 
-#        settings = QSettings("Bitmessage", "PyBitmessage")
-#        settings.setValue("geometry", self.saveGeometry())
-#        settings.setValue("state", self.saveState())
-
-        self.statusBar().showMessage(_translate(
-            "MainWindow", "All done. Closing user interface..."))
+        self.statusBar().showMessage(_translate("MainWindow", "Shutdown imminent... %1%").arg(str(100)))
+        QtCore.QCoreApplication.processEvents()
         shared.thisapp.cleanup()
+        logger.info("Shutdown complete")
         os._exit(0)
 
     # window close event
