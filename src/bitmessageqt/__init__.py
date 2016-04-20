@@ -1817,28 +1817,8 @@ class MyForm(settingsmixin.SMainWindow):
                     break
         
     def newVersionAvailable(self, version):
-#        if (not (self.windowState() & QtCore.Qt.WindowActive)) or (self.windowState() & QtCore.Qt.WindowMinimized):
-#            return
-        # only notify once until next restart
-        try:
-            if self.notifiedNewVersion:
-                return
-        except AttributeError:
-            pass
-
         self.notifiedNewVersion = ".".join(str(n) for n in version)
-        message = "New "
-        if version[1] % 2:
-            message += "UNSTABLE"
-        else:
-            message += "stable"
-        message += " version of PyBitmessage is available: " + self.notifiedNewVersion + ". Download it from https://github.com/"
-        if version[0] == 0 and version[1] == 5:
-            message += "mailchuck"
-        else:
-            message += "Bitmessage"
-        message += "/PyBitmessage/releases/latest"
-        self.displayAlert("New release of PyBitmessage available", message, False)
+        self.statusBar().showMessage(_translate("MainWindow", "New version of PyBitmessage is available: %1. Download it from https://github.com/Bitmessage/PyBitmessage/releases/latest").arg(self.notifiedNewVersion))
 
     def displayAlert(self, title, text, exitAfterUserClicksOk):
         self.statusBar().showMessage(text)
