@@ -2668,14 +2668,14 @@ class MyForm(settingsmixin.SMainWindow):
             if curWorkerQueue > 0:
                 self.statusBar().showMessage(_translate("MainWindow", "Waiting for PoW to finish... %1%").arg(str(50 * (maxWorkerQueue - curWorkerQueue) / maxWorkerQueue)))
                 time.sleep(0.5)
-                QtCore.QCoreApplication.processEvents()
+                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
 
         self.statusBar().showMessage(_translate("MainWindow", "Shutting down Pybitmessage... %1%").arg(str(50)))
 
-        QtCore.QCoreApplication.processEvents()
+        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
         if maxWorkerQueue > 0:
             time.sleep(0.5) # a bit of time so that the hashHolder is populated
-        QtCore.QCoreApplication.processEvents()
+        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
 
         # check if objectHashHolder empty
         self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(50)))
@@ -2694,16 +2694,16 @@ class MyForm(settingsmixin.SMainWindow):
             if curWaitingObjects > 0:
                 self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(50 + 20 * (maxWaitingObjects - curWaitingObjects) / maxWaitingObjects)))
                 time.sleep(0.5)
-                QtCore.QCoreApplication.processEvents()
+                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
 
-        QtCore.QCoreApplication.processEvents()
+        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
         if maxWorkerQueue > 0 or maxWaitingObjects > 0:
             time.sleep(10) # a bit of time so that the other nodes retrieve the objects
-        QtCore.QCoreApplication.processEvents()
+        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
 
         # save state and geometry self and all widgets
         self.statusBar().showMessage(_translate("MainWindow", "Saving settings... %1%").arg(str(70)))
-        QtCore.QCoreApplication.processEvents()
+        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
         self.saveSettings()
         for attr, obj in self.ui.__dict__.iteritems():
             if hasattr(obj, "__class__") and isinstance(obj, settingsmixin.SettingsMixin):
@@ -2712,17 +2712,15 @@ class MyForm(settingsmixin.SMainWindow):
                     obj.saveSettings()
 
         self.statusBar().showMessage(_translate("MainWindow", "Shutting down core... %1%").arg(str(80)))
-        QtCore.QCoreApplication.processEvents()
+        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
         shared.doCleanShutdown()
         self.statusBar().showMessage(_translate("MainWindow", "Stopping notifications... %1%").arg(str(90)))
-        QtCore.QCoreApplication.processEvents()
         self.tray.hide()
         # unregister the messaging system
         if self.mmapp is not None:
             self.mmapp.unregister()
 
         self.statusBar().showMessage(_translate("MainWindow", "Shutdown imminent... %1%").arg(str(100)))
-        QtCore.QCoreApplication.processEvents()
         shared.thisapp.cleanup()
         logger.info("Shutdown complete")
         os._exit(0)
