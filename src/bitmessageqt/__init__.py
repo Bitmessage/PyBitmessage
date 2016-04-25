@@ -44,6 +44,7 @@ from about import *
 from help import *
 from iconglossary import *
 from connect import *
+import locale as pythonlocale
 import sys
 from time import strftime, localtime, gmtime
 import time
@@ -98,6 +99,17 @@ def change_translation(locale):
         translationpath = os.path.join (str(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.TranslationsPath)), 'qt_' + locale)
     qsystranslator.load(translationpath)
     QtGui.QApplication.installTranslator(qsystranslator)
+
+    lang = l10n.getTranslationLanguage()
+    if "_" not in lang:
+        lang += "_" + lang.upper()
+    if ".utf8" not in lang.lower():
+        lang += ".utf8"
+    try:
+        pythonlocale.setlocale(pythonlocale.LC_ALL, lang)
+    except:
+        logger.error("Failed to set locale to %s", lang)
+        pass
 
 class MyForm(settingsmixin.SMainWindow):
 
