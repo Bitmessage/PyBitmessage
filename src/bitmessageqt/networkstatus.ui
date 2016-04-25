@@ -6,217 +6,249 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>731</width>
-    <height>493</height>
+    <width>602</width>
+    <height>252</height>
    </rect>
   </property>
-  <widget class="QLabel" name="labelTotalConnections">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>30</y>
-     <width>401</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Total connections:</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="labelStartupTime">
-   <property name="geometry">
-    <rect>
-     <x>320</x>
-     <y>110</y>
-     <width>331</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Since startup:</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="labelMessageCount">
-   <property name="geometry">
-    <rect>
-     <x>350</x>
-     <y>130</y>
-     <width>361</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Processed 0 person-to-person messages.</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="labelPubkeyCount">
-   <property name="geometry">
-    <rect>
-     <x>350</x>
-     <y>170</y>
-     <width>331</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Processed 0 public keys.</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="labelBroadcastCount">
-   <property name="geometry">
-    <rect>
-     <x>350</x>
-     <y>150</y>
-     <width>351</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Processed 0 broadcasts.</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="labelLookupsPerSecond">
-   <property name="geometry">
-    <rect>
-     <x>320</x>
-     <y>270</y>
-     <width>291</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Inventory lookups per second: 0</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="labelBytesRecvCount">
-   <property name="geometry">
-    <rect>
-     <x>350</x>
-     <y>220</y>
-     <width>251</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Down: 0 KB/s</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="labelBytesSentCount">
-   <property name="geometry">
-    <rect>
-     <x>350</x>
-     <y>240</y>
-     <width>251</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Up: 0 KB/s</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="labelSyncStatus">
-   <property name="geometry">
-    <rect>
-     <x>350</x>
-     <y>190</y>
-     <width>331</width>
-     <height>16</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>Objects to be synced:</string>
-   </property>
-  </widget>
-  <widget class="QWidget" name="verticalLayoutWidget">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>70</y>
-     <width>241</width>
-     <height>241</height>
-    </rect>
-   </property>
-   <layout class="QVBoxLayout" name="verticalLayout">
-    <item>
-     <widget class="STableWidget" name="tableWidgetConnectionCount">
-      <property name="palette">
-       <palette>
-        <active>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>212</red>
-            <green>208</green>
-            <blue>200</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </active>
-        <inactive>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>212</red>
-            <green>208</green>
-            <blue>200</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </inactive>
-        <disabled>
-         <colorrole role="Base">
-          <brush brushstyle="SolidPattern">
-           <color alpha="255">
-            <red>212</red>
-            <green>208</green>
-            <blue>200</blue>
-           </color>
-          </brush>
-         </colorrole>
-        </disabled>
-       </palette>
-      </property>
-      <property name="frameShape">
-       <enum>QFrame::Box</enum>
-      </property>
-      <property name="frameShadow">
-       <enum>QFrame::Plain</enum>
-      </property>
-      <property name="showDropIndicator" stdset="0">
-       <bool>false</bool>
-      </property>
-      <property name="alternatingRowColors">
-       <bool>true</bool>
-      </property>
-      <property name="selectionMode">
-       <enum>QAbstractItemView::NoSelection</enum>
-      </property>
-      <attribute name="horizontalHeaderCascadingSectionResizes">
-       <bool>true</bool>
-      </attribute>
-      <attribute name="horizontalHeaderHighlightSections">
-       <bool>false</bool>
-      </attribute>
-      <attribute name="horizontalHeaderStretchLastSection">
-       <bool>true</bool>
-      </attribute>
-      <attribute name="verticalHeaderVisible">
-       <bool>false</bool>
-      </attribute>
-      <column>
-       <property name="text">
-        <string>Stream #</string>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="MinimumExpanding" vsizetype="MinimumExpanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout_3">
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,1">
+     <property name="spacing">
+      <number>20</number>
+     </property>
+     <property name="sizeConstraint">
+      <enum>QLayout::SetDefaultConstraint</enum>
+     </property>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_5">
+       <property name="spacing">
+        <number>20</number>
        </property>
-      </column>
-      <column>
-       <property name="text">
-        <string>Connections</string>
+       <property name="sizeConstraint">
+        <enum>QLayout::SetFixedSize</enum>
        </property>
-      </column>
-     </widget>
-    </item>
-   </layout>
-  </widget>
+       <item>
+        <widget class="QLabel" name="labelTotalConnections">
+         <property name="text">
+          <string>Total connections:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="STableWidget" name="tableWidgetConnectionCount">
+         <property name="palette">
+          <palette>
+           <active>
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>212</red>
+               <green>208</green>
+               <blue>200</blue>
+              </color>
+             </brush>
+            </colorrole>
+           </active>
+           <inactive>
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>212</red>
+               <green>208</green>
+               <blue>200</blue>
+              </color>
+             </brush>
+            </colorrole>
+           </inactive>
+           <disabled>
+            <colorrole role="Base">
+             <brush brushstyle="SolidPattern">
+              <color alpha="255">
+               <red>212</red>
+               <green>208</green>
+               <blue>200</blue>
+              </color>
+             </brush>
+            </colorrole>
+           </disabled>
+          </palette>
+         </property>
+         <property name="frameShape">
+          <enum>QFrame::Box</enum>
+         </property>
+         <property name="frameShadow">
+          <enum>QFrame::Plain</enum>
+         </property>
+         <property name="showDropIndicator" stdset="0">
+          <bool>false</bool>
+         </property>
+         <property name="alternatingRowColors">
+          <bool>true</bool>
+         </property>
+         <property name="selectionMode">
+          <enum>QAbstractItemView::NoSelection</enum>
+         </property>
+         <attribute name="horizontalHeaderCascadingSectionResizes">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="horizontalHeaderHighlightSections">
+          <bool>false</bool>
+         </attribute>
+         <attribute name="horizontalHeaderStretchLastSection">
+          <bool>true</bool>
+         </attribute>
+         <attribute name="verticalHeaderVisible">
+          <bool>false</bool>
+         </attribute>
+         <column>
+          <property name="text">
+           <string>Stream #</string>
+          </property>
+         </column>
+         <column>
+          <property name="text">
+           <string>Connections</string>
+          </property>
+         </column>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QVBoxLayout" name="verticalLayout_6">
+       <property name="spacing">
+        <number>4</number>
+       </property>
+       <item>
+        <widget class="QLabel" name="labelStartupTime">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>9</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>0</width>
+           <height>50</height>
+          </size>
+         </property>
+         <property name="text">
+          <string>Since startup:</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelMessageCount">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Processed 0 person-to-person messages.</string>
+         </property>
+         <property name="margin">
+          <number>0</number>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelBroadcastCount">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Processed 0 broadcasts.</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelPubkeyCount">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Processed 0 public keys.</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelSyncStatus">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Objects to be synced:</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelBytesSentCount">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Up: 0 kB/s</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelBytesRecvCount">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Maximum">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Down: 0 kB/s</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="labelLookupsPerSecond">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Inventory lookups per second: 0</string>
+         </property>
+         <property name="alignment">
+          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+  </layout>
  </widget>
  <customwidgets>
   <customwidget>

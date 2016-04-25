@@ -1,4 +1,5 @@
 from PyQt4 import QtCore, QtGui
+import time
 import shared
 from tr import _translate
 import l10n
@@ -12,8 +13,9 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         super(NetworkStatus, self).__init__(parent)
         widgets.load('networkstatus.ui', self)
 
+        self.startup = time.localtime()
         self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
-            l10n.formatTimestamp()))
+            l10n.formatTimestamp(self.startup)))
         
         self.UISignalThread = UISignaler.get()
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
@@ -33,7 +35,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
     def formatBytes(self, num):
-        for x in ['bytes','KB','MB','GB']:
+        for x in [_translate("networkstatus", "byte(s)"), "kB", "MB", "GB"]:
             if num < 1000.0:
                 return "%3.0f %s" % (num, x)
             num /= 1000.0
@@ -41,7 +43,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
 
     def formatByteRate(self, num):
         num /= 1000
-        return "%4.0f KB" % num
+        return "%4.0f kB" % num
 
     def updateNumberOfMessagesProcessed(self):
         self.labelSyncStatus.setText(_translate("networkstatus", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
@@ -125,3 +127,8 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             "networkstatus", "Inventory lookups per second: %1").arg(str(shared.numberOfInventoryLookupsPerformed/2)))
         shared.numberOfInventoryLookupsPerformed = 0
         self.updateNumberOfBytes()
+
+    def retranslateUi(self):
+        super(QtGui.QWidget, self).retranslateUi()
+        self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
+            l10n.formatTimestamp(self.startup)))
