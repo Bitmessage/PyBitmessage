@@ -59,12 +59,12 @@
 <context>
     <name>EmailGatewayRegistrationDialog</name>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2244"/>
+        <location filename="../bitmessageqt/__init__.py" line="2238"/>
         <source>Registration failed:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2244"/>
+        <location filename="../bitmessageqt/__init__.py" line="2238"/>
         <source>The requested email address is not available, please try a new one. Fill out the new desired email address (including @mailchuck.com) below:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -130,52 +130,52 @@ Please type the desired email address (including @mailchuck.com) below:</source>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="163"/>
+        <location filename="../bitmessageqt/__init__.py" line="177"/>
         <source>Reply to sender</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="165"/>
+        <location filename="../bitmessageqt/__init__.py" line="179"/>
         <source>Reply to channel</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="167"/>
+        <location filename="../bitmessageqt/__init__.py" line="181"/>
         <source>Add sender to your Address Book</source>
         <translation>Přidat odesilatele do Vašeho adresáře</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="171"/>
+        <location filename="../bitmessageqt/__init__.py" line="185"/>
         <source>Add sender to your Blacklist</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="349"/>
+        <location filename="../bitmessageqt/__init__.py" line="363"/>
         <source>Move to Trash</source>
         <translation>Přesunout do koše</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="178"/>
+        <location filename="../bitmessageqt/__init__.py" line="192"/>
         <source>Undelete</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="181"/>
+        <location filename="../bitmessageqt/__init__.py" line="195"/>
         <source>View HTML code as formatted text</source>
         <translation>Zobrazit HTML kód jako formátovaný text</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="185"/>
+        <location filename="../bitmessageqt/__init__.py" line="199"/>
         <source>Save message as...</source>
         <translation>Uložit zprávu jako...</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="189"/>
+        <location filename="../bitmessageqt/__init__.py" line="203"/>
         <source>Mark Unread</source>
         <translation>Označit jako nepřečtené</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="321"/>
+        <location filename="../bitmessageqt/__init__.py" line="335"/>
         <source>New</source>
         <translation>Nové</translation>
     </message>
@@ -200,12 +200,12 @@ Please type the desired email address (including @mailchuck.com) below:</source>
         <translation>Zkopírovat adresu do clipboardu</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="272"/>
+        <location filename="../bitmessageqt/__init__.py" line="286"/>
         <source>Special address behavior...</source>
         <translation>Speciální chování adresy...</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="237"/>
+        <location filename="../bitmessageqt/__init__.py" line="251"/>
         <source>Email gateway</source>
         <translation>Email brána</translation>
     </message>
@@ -215,122 +215,122 @@ Please type the desired email address (including @mailchuck.com) below:</source>
         <translation>Odstranit</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="288"/>
+        <location filename="../bitmessageqt/__init__.py" line="302"/>
         <source>Send message to this address</source>
         <translation>Poslat zprávu na tuto adresu</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="296"/>
+        <location filename="../bitmessageqt/__init__.py" line="310"/>
         <source>Subscribe to this address</source>
         <translation>Přihlásit se k odběru této adresy</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="304"/>
+        <location filename="../bitmessageqt/__init__.py" line="318"/>
         <source>Add New Address</source>
         <translation>Přidat novou adresu</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="352"/>
+        <location filename="../bitmessageqt/__init__.py" line="366"/>
         <source>Copy destination address to clipboard</source>
         <translation>Zkopírovat cílovou adresu do clipboardu</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="356"/>
+        <location filename="../bitmessageqt/__init__.py" line="370"/>
         <source>Force send</source>
         <translation>Přesto odeslat</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="564"/>
+        <location filename="../bitmessageqt/__init__.py" line="578"/>
         <source>One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer supported. May we delete it now?</source>
         <translation>Jedna z Vašich adres, %1, je stará adresa verze 1. Adresy verze 1 již nejsou podporovány. Můžeme ji nyní smazat?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="784"/>
+        <location filename="../bitmessageqt/__init__.py" line="798"/>
         <source>1 hour</source>
         <translation>1 hodina</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="786"/>
+        <location filename="../bitmessageqt/__init__.py" line="800"/>
         <source>%1 hours</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="789"/>
+        <location filename="../bitmessageqt/__init__.py" line="803"/>
         <source>%1 days</source>
         <translation>%1 dní</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="965"/>
+        <location filename="../bitmessageqt/__init__.py" line="979"/>
         <source>Waiting for their encryption key. Will request it again soon.</source>
         <translation>Čekám na šifrovací klíč. Požadavek bude brzy vyslán znovu.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="968"/>
+        <location filename="../bitmessageqt/__init__.py" line="982"/>
         <source>Encryption key request queued.</source>
         <translation>Požadavek na šifrovací klíč zařazen do fronty.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="971"/>
+        <location filename="../bitmessageqt/__init__.py" line="985"/>
         <source>Queued.</source>
         <translation>Zařazeno do fronty.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="974"/>
+        <location filename="../bitmessageqt/__init__.py" line="988"/>
         <source>Message sent. Waiting for acknowledgement. Sent at %1</source>
         <translation>Zpráva odeslána. Čekám na potvrzení. Odesláno v %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="977"/>
+        <location filename="../bitmessageqt/__init__.py" line="991"/>
         <source>Message sent. Sent at %1</source>
         <translation>Zpráva odeslána. Odesláno v %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="980"/>
+        <location filename="../bitmessageqt/__init__.py" line="994"/>
         <source>Need to do work to send message. Work is queued.</source>
         <translation>Pro poslání zprávy musím provést práci. Práce byla zařazena do fronty.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="983"/>
+        <location filename="../bitmessageqt/__init__.py" line="997"/>
         <source>Acknowledgement of the message received %1</source>
         <translation>Potvrzení o přijetí zprávy %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2119"/>
+        <location filename="../bitmessageqt/__init__.py" line="2113"/>
         <source>Broadcast queued.</source>
         <translation>Rozeslání zařazeno do fronty.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="989"/>
+        <location filename="../bitmessageqt/__init__.py" line="1003"/>
         <source>Broadcast on %1</source>
         <translation>Rozesláno v %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="992"/>
+        <location filename="../bitmessageqt/__init__.py" line="1006"/>
         <source>Problem: The work demanded by the recipient is more difficult than you are willing to do. %1</source>
         <translation>Problém: Obtížnost práce požadovaná adresátem je vyšší než Vámi povolené maximum. %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="995"/>
+        <location filename="../bitmessageqt/__init__.py" line="1009"/>
         <source>Problem: The recipient&apos;s encryption key is no good. Could not encrypt message. %1</source>
         <translation>Problém: Šifrovací klíč adresáta je nepoužitelný. Zprávu nelze zašifrovat. %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="998"/>
+        <location filename="../bitmessageqt/__init__.py" line="1012"/>
         <source>Forced difficulty override. Send should start soon.</source>
         <translation>Vyžádáno odeslání navzdory obtížnosti. Zpráva bude brzy odeslána.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1001"/>
+        <location filename="../bitmessageqt/__init__.py" line="1015"/>
         <source>Unknown status: %1 %2</source>
         <translation>Neznámý stav: %1 %2</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1664"/>
+        <location filename="../bitmessageqt/__init__.py" line="1678"/>
         <source>Not Connected</source>
         <translation>Nepřipojeno</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1124"/>
+        <location filename="../bitmessageqt/__init__.py" line="1138"/>
         <source>Show Bitmessage</source>
         <translation>Ukázat Bitmessage</translation>
     </message>
@@ -340,12 +340,12 @@ Please type the desired email address (including @mailchuck.com) below:</source>
         <translation>Poslat</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1139"/>
+        <location filename="../bitmessageqt/__init__.py" line="1153"/>
         <source>Subscribe</source>
         <translation>Přihlásit se k odběru</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1145"/>
+        <location filename="../bitmessageqt/__init__.py" line="1159"/>
         <source>Channel</source>
         <translation type="unfinished"></translation>
     </message>
@@ -355,12 +355,12 @@ Please type the desired email address (including @mailchuck.com) below:</source>
         <translation>Ukončit</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1495"/>
+        <location filename="../bitmessageqt/__init__.py" line="1509"/>
         <source>You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file.</source>
         <translation>Své klíče můžete spravovat editováním souboru keys.dat, který najdete ve stejném adresáři jako tento program. Je důležité si tento soubor zazálohovat.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1499"/>
+        <location filename="../bitmessageqt/__init__.py" line="1513"/>
         <source>You may manage your keys by editing the keys.dat file stored in
  %1 
 It is important that you back up this file.</source>
@@ -369,17 +369,17 @@ It is important that you back up this file.</source>
 Je důležité si tento soubor zazálohovat.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1506"/>
+        <location filename="../bitmessageqt/__init__.py" line="1520"/>
         <source>Open keys.dat?</source>
         <translation>Otevřít soubor keys.dat?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1503"/>
+        <location filename="../bitmessageqt/__init__.py" line="1517"/>
         <source>You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)</source>
         <translation>Své klíče můžete spravovat editováním souboru keys.dat, který najdete ve stejném adresáři jako tento program. Je důležité si tento soubor zazálohovat. Přejete si tento soubor nyní otevřít? (Nezapomeňte zavřít Bitmessage předtím, než provedete jakékoli změny.)</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1506"/>
+        <location filename="../bitmessageqt/__init__.py" line="1520"/>
         <source>You may manage your keys by editing the keys.dat file stored in
  %1 
 It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)</source>
@@ -388,122 +388,122 @@ It is important that you back up this file. Would you like to open the file now?
 Je důležité si tento soubor zazálohovat. Přejete si tento soubor nyní otevřít? (Nezapomeňte zavřít Bitmessage předtím, než provedete jakékoli změny.)</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1513"/>
+        <location filename="../bitmessageqt/__init__.py" line="1527"/>
         <source>Delete trash?</source>
         <translation>Smazat obsah koše?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1513"/>
+        <location filename="../bitmessageqt/__init__.py" line="1527"/>
         <source>Are you sure you want to delete all trashed messages?</source>
         <translation>Opravdu chcete smazat všechny zprávy v koši?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1533"/>
+        <location filename="../bitmessageqt/__init__.py" line="1547"/>
         <source>bad passphrase</source>
         <translation>špatné heslo</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1533"/>
+        <location filename="../bitmessageqt/__init__.py" line="1547"/>
         <source>You must type your passphrase. If you don&apos;t have one then this is not the form for you.</source>
         <translation>Musíte napsat své heslo. Pokud žádné nemáte, pak tento formulář není pro Vás.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1546"/>
+        <location filename="../bitmessageqt/__init__.py" line="1560"/>
         <source>Bad address version number</source>
         <translation>Špatné číslo verze adresy</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1542"/>
+        <location filename="../bitmessageqt/__init__.py" line="1556"/>
         <source>Your address version number must be a number: either 3 or 4.</source>
         <translation>Verze Vaší adresy musí být číslo: buď 3 nebo 4.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1546"/>
+        <location filename="../bitmessageqt/__init__.py" line="1560"/>
         <source>Your address version number must be either 3 or 4.</source>
         <translation>Verze Vaší adresy musí být buď 3 nebo 4.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1576"/>
+        <location filename="../bitmessageqt/__init__.py" line="1590"/>
         <source>Chan name needed</source>
         <translation>Je třeba zadat jméno kanálu</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1576"/>
+        <location filename="../bitmessageqt/__init__.py" line="1590"/>
         <source>You didn&apos;t enter a chan name.</source>
         <translation>Nezadal(a) jste jméno kanálu.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1596"/>
+        <location filename="../bitmessageqt/__init__.py" line="1610"/>
         <source>Address already present</source>
         <translation>Adresa je již přítomna</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1596"/>
+        <location filename="../bitmessageqt/__init__.py" line="1610"/>
         <source>Could not add chan because it appears to already be one of your identities.</source>
         <translation>Nelze přidat kanál. Zdá se, že ho již máte mezi svými identitami.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1600"/>
+        <location filename="../bitmessageqt/__init__.py" line="1614"/>
         <source>Success</source>
         <translation>Úspěch</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1571"/>
+        <location filename="../bitmessageqt/__init__.py" line="1585"/>
         <source>Successfully created chan. To let others join your chan, give them the chan name and this Bitmessage address: %1. This address also appears in &apos;Your Identities&apos;.</source>
         <translation>Kanál byl úspěšně vytvořen. Když chcete jiným lidem povolit připojit se k Vašemu kanálu, řekněte jim jméno kanálu a tuto adresu Bitmessage: %1. Tuto adresu také najdete v sekci &quot;Vaše identity&quot;.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1580"/>
+        <location filename="../bitmessageqt/__init__.py" line="1594"/>
         <source>Address too new</source>
         <translation>Adresa je příliš nová</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1580"/>
+        <location filename="../bitmessageqt/__init__.py" line="1594"/>
         <source>Although that Bitmessage address might be valid, its version number is too new for us to handle. Perhaps you need to upgrade Bitmessage.</source>
         <translation>Tato adresa Bitmessage může být platná, je to však adresa vyšší verze, se kterou neumíme pracovat. Možná byste měl(a) aktualizovat Bitmessage.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1584"/>
+        <location filename="../bitmessageqt/__init__.py" line="1598"/>
         <source>Address invalid</source>
         <translation>Adresa je neplatná</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1584"/>
+        <location filename="../bitmessageqt/__init__.py" line="1598"/>
         <source>That Bitmessage address is not valid.</source>
         <translation>Toto není platná adresa Bitmessage.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1592"/>
+        <location filename="../bitmessageqt/__init__.py" line="1606"/>
         <source>Address does not match chan name</source>
         <translation>Adresa nepatří ke jménu kanálu</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1592"/>
+        <location filename="../bitmessageqt/__init__.py" line="1606"/>
         <source>Although the Bitmessage address you entered was valid, it doesn&apos;t match the chan name.</source>
         <translation>Adresa Bitmessage, kterou jste zadal(a), je sice platná, nepatří však ke kanálu s tímto jménem.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1600"/>
+        <location filename="../bitmessageqt/__init__.py" line="1614"/>
         <source>Successfully joined chan. </source>
         <translation>Úspěšně jste se připojil(a) ke kanálu.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1658"/>
+        <location filename="../bitmessageqt/__init__.py" line="1672"/>
         <source>Connection lost</source>
         <translation>Připojení ztraceno</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1697"/>
+        <location filename="../bitmessageqt/__init__.py" line="1711"/>
         <source>Connected</source>
         <translation>Připojeno</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1814"/>
+        <location filename="../bitmessageqt/__init__.py" line="1828"/>
         <source>Message trashed</source>
         <translation>Zpráva byla vyhozena do koše</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1915"/>
+        <location filename="../bitmessageqt/__init__.py" line="1909"/>
         <source>The TTL, or Time-To-Live is the length of time that the network will hold the message.
  The recipient must get it during this time. If your Bitmessage client does not hear an acknowledgement, it
  will resend the message automatically. The longer the Time-To-Live, the
@@ -511,122 +511,122 @@ Je důležité si tento soubor zazálohovat. Přejete si tento soubor nyní otev
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1951"/>
+        <location filename="../bitmessageqt/__init__.py" line="1945"/>
         <source>Message too long</source>
         <translation>Zpráva je příliš dlouhá</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1951"/>
+        <location filename="../bitmessageqt/__init__.py" line="1945"/>
         <source>The message that you are trying to send is too long by %1 bytes. (The maximum is 261644 bytes). Please cut it down before sending.</source>
         <translation>Zpráva, kterou se snažíte poslat, je o %1 bajtů delší, než je dovoleno. (Maximum je 261644 bajtů). Zkuste ji prosím před odesláním zkrátit.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1979"/>
+        <location filename="../bitmessageqt/__init__.py" line="1973"/>
         <source>Error: Your account wasn&apos;t registered at an email gateway. Sending registration now as %1, please wait for the registration to be processed before retrying sending.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1988"/>
+        <location filename="../bitmessageqt/__init__.py" line="1982"/>
         <source>Error: Bitmessage addresses start with BM-   Please check %1</source>
         <translation>Chyba: Adresy Bitmessage začínají na BM-   Zkontroluje prosím %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1991"/>
+        <location filename="../bitmessageqt/__init__.py" line="1985"/>
         <source>Error: The address %1 is not typed or copied correctly. Please check it.</source>
         <translation>Chyba: Adresa %1 nebyla správně opsána nebo zkopírována. Zkontrolujte ji prosím.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1994"/>
+        <location filename="../bitmessageqt/__init__.py" line="1988"/>
         <source>Error: The address %1 contains invalid characters. Please check it.</source>
         <translation>Chyba: Adresa %1 obsahuje neplatné znaky. Zkontrolujte ji prosím.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1997"/>
+        <location filename="../bitmessageqt/__init__.py" line="1991"/>
         <source>Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.</source>
         <translation>Chyba: Verze adresy %1 je příliš vysoká. Buď používáte starou verzi Bitmessage a je čas na aktualizaci, nebo si Váš známý dělá legraci.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2000"/>
+        <location filename="../bitmessageqt/__init__.py" line="1994"/>
         <source>Error: Some data encoded in the address %1 is too short. There might be something wrong with the software of your acquaintance.</source>
         <translation>Chyba: Některá data zakódovaná v adrese %1 jsou příliš krátká. Možná je to chyba softwaru, který Váš známý používá.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2003"/>
+        <location filename="../bitmessageqt/__init__.py" line="1997"/>
         <source>Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.</source>
         <translation>Chyba: Některá data zakódovaná v adrese %1 jsou příliš dlouhá. Možná je to chyba softwaru, který Váš známý používá.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2006"/>
+        <location filename="../bitmessageqt/__init__.py" line="2000"/>
         <source>Error: Some data encoded in the address %1 is malformed. There might be something wrong with the software of your acquaintance.</source>
         <translation>Chyba: Některá data zakódovaná v adrese %1 mají neplatný formát. Možná je to chyba softwaru, který Váš známý používá.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2009"/>
+        <location filename="../bitmessageqt/__init__.py" line="2003"/>
         <source>Error: Something is wrong with the address %1.</source>
         <translation>Chyba: Nastal problém s adresou %1.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2077"/>
+        <location filename="../bitmessageqt/__init__.py" line="2071"/>
         <source>Error: You must specify a From address. If you don&apos;t have one, go to the &apos;Your Identities&apos; tab.</source>
         <translation>Chyba: V poli &quot;Od&quot; musíte uvést adresu. Pokud žádnou nemáte, klikněte na kartu &quot;Vaše identity&quot;.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2018"/>
+        <location filename="../bitmessageqt/__init__.py" line="2012"/>
         <source>Address version number</source>
         <translation>Číslo verze adresy</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2018"/>
+        <location filename="../bitmessageqt/__init__.py" line="2012"/>
         <source>Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.</source>
         <translation>Co se týče adresy %1, Bitmessage nerozumí jejímu číslu verze &quot;%2&quot;. Možná byste měl(a) aktualizovat Bitmessage na nejnovější verzi.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2022"/>
+        <location filename="../bitmessageqt/__init__.py" line="2016"/>
         <source>Stream number</source>
         <translation>Číslo proudu</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2022"/>
+        <location filename="../bitmessageqt/__init__.py" line="2016"/>
         <source>Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.</source>
         <translation>Co se týče adresy %1, Bitmessage neumí zpracovat její číslo proudu &quot;%2&quot;. Možná byste měl(a) aktualizovat Bitmessage na nejnovější verzi.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2027"/>
+        <location filename="../bitmessageqt/__init__.py" line="2021"/>
         <source>Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won&apos;t send until you connect.</source>
         <translation>Varování: Nyní nejste připojen(a). Bitmessage provede práci potřebnou k pro odeslání zprávy, ale neodešle ji, dokud se nepřipojíte.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2069"/>
+        <location filename="../bitmessageqt/__init__.py" line="2063"/>
         <source>Message queued.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2073"/>
+        <location filename="../bitmessageqt/__init__.py" line="2067"/>
         <source>Your &apos;To&apos; field is empty.</source>
         <translation>Pole &quot;Komu&quot; je prázdné.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2128"/>
+        <location filename="../bitmessageqt/__init__.py" line="2122"/>
         <source>Right click one or more entries in your address book and select &apos;Send message to this address&apos;.</source>
         <translation>Klikněte pravým tlačítkem na jeden nebo více záznamů v adresáři, a vyberte &quot;Poslat zprávu na tuto adresu&quot;.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2139"/>
+        <location filename="../bitmessageqt/__init__.py" line="2133"/>
         <source>Fetched address from namecoin identity.</source>
         <translation>Adresa načtena z namecoinové identity.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2238"/>
+        <location filename="../bitmessageqt/__init__.py" line="2232"/>
         <source>New Message</source>
         <translation>Nová zpráva</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2238"/>
+        <location filename="../bitmessageqt/__init__.py" line="2232"/>
         <source>From </source>
         <translation>Od </translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2617"/>
+        <location filename="../bitmessageqt/__init__.py" line="2611"/>
         <source>Sending email gateway registration request</source>
         <translation type="unfinished"></translation>
     </message>
@@ -641,246 +641,246 @@ Je důležité si tento soubor zazálohovat. Přejete si tento soubor nyní otev
         <translation>Zadaná adresa je neplatná, ignoruji jí.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2902"/>
+        <location filename="../bitmessageqt/__init__.py" line="2952"/>
         <source>Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want.</source>
         <translation>Chyba: Nemůžete do adresáře přidat adresu, která tam již je. Můžete ale tu existující přejmenovat.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3147"/>
+        <location filename="../bitmessageqt/__init__.py" line="3197"/>
         <source>Error: You cannot add the same address to your subscriptions twice. Perhaps rename the existing one if you want.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2377"/>
+        <location filename="../bitmessageqt/__init__.py" line="2371"/>
         <source>Restart</source>
         <translation>Restart</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2363"/>
+        <location filename="../bitmessageqt/__init__.py" line="2357"/>
         <source>You must restart Bitmessage for the port number change to take effect.</source>
         <translation>Je třeba restartovat Bitmessage, aby se změna portu projevila.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2377"/>
+        <location filename="../bitmessageqt/__init__.py" line="2371"/>
         <source>Bitmessage will use your proxy from now on but you may want to manually restart Bitmessage now to close existing connections (if any).</source>
         <translation>Bitmessage bude od teď používat Váš proxy server. Bude ale jistější, když nyní Bitmessage restartujete, abyste zavřel(a) všechna aktivní připojení (pokud nějaká jsou).</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2405"/>
+        <location filename="../bitmessageqt/__init__.py" line="2399"/>
         <source>Number needed</source>
         <translation>Je třeba zadat číslo</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2405"/>
+        <location filename="../bitmessageqt/__init__.py" line="2399"/>
         <source>Your maximum download and upload rate must be numbers. Ignoring what you typed.</source>
         <translation>Limity pro rychlost stahování a odesílání musejí být čísla. Vámi zadané hodnoty nelze použít.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2478"/>
+        <location filename="../bitmessageqt/__init__.py" line="2472"/>
         <source>Will not resend ever</source>
         <translation>Nikdy nebude nic posláno znovu</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2478"/>
+        <location filename="../bitmessageqt/__init__.py" line="2472"/>
         <source>Note that the time limit you entered is less than the amount of time Bitmessage waits for the first resend attempt therefore your messages will never be resent.</source>
         <translation>Všimněte si, že časový limit, který jste zadal(a), je menší, než čas po kterém Bitmessage poprvé zkusí opětovné odeslání, proto Vaše zprávy nebudou nikdy poslány znovu.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2590"/>
+        <location filename="../bitmessageqt/__init__.py" line="2584"/>
         <source>Sending email gateway unregistration request</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2594"/>
+        <location filename="../bitmessageqt/__init__.py" line="2588"/>
         <source>Sending email gateway status request</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2650"/>
+        <location filename="../bitmessageqt/__init__.py" line="2644"/>
         <source>Passphrase mismatch</source>
         <translation>Hesla nejsou stejná</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2650"/>
+        <location filename="../bitmessageqt/__init__.py" line="2644"/>
         <source>The passphrase you entered twice doesn&apos;t match. Try again.</source>
         <translation>Zadaná hesla nejsou stejná. Zkuste to znovu.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2653"/>
+        <location filename="../bitmessageqt/__init__.py" line="2647"/>
         <source>Choose a passphrase</source>
         <translation>Zvolte heslo</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2653"/>
+        <location filename="../bitmessageqt/__init__.py" line="2647"/>
         <source>You really do need a passphrase.</source>
         <translation>Opravdu je nutné zvolit heslo.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2689"/>
         <source>All done. Closing user interface...</source>
-        <translation>Vše hotovo. Zavírám uživatelské rozhraní...</translation>
+        <translation type="obsolete">Vše hotovo. Zavírám uživatelské rozhraní...</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2849"/>
+        <location filename="../bitmessageqt/__init__.py" line="2899"/>
         <source>Address is gone</source>
         <translation>Adresa je pryč</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2849"/>
+        <location filename="../bitmessageqt/__init__.py" line="2899"/>
         <source>Bitmessage cannot find your address %1. Perhaps you removed it?</source>
         <translation>Bitmessage nemůže najít Vaši adresu %1. Možná jste ji odstranil(a)?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2852"/>
+        <location filename="../bitmessageqt/__init__.py" line="2902"/>
         <source>Address disabled</source>
         <translation>Adresa je vypnutá</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2852"/>
+        <location filename="../bitmessageqt/__init__.py" line="2902"/>
         <source>Error: The address from which you are trying to send is disabled. You&apos;ll have to enable it on the &apos;Your Identities&apos; tab before using it.</source>
         <translation>Chyba: Adresa, ze které se snažíte poslat zprávu, je vypnutá. Před použitím ji musíte zapnout na kartě &quot;Vaše identity&quot;.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2899"/>
+        <location filename="../bitmessageqt/__init__.py" line="2949"/>
         <source>Entry added to the Address Book. Edit the label to your liking.</source>
         <translation>Položka byla přidána do adresáře. Popisku můžete upravit dle svého přání.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2924"/>
+        <location filename="../bitmessageqt/__init__.py" line="2974"/>
         <source>Entry added to the blacklist. Edit the label to your liking.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2927"/>
+        <location filename="../bitmessageqt/__init__.py" line="2977"/>
         <source>Error: You cannot add the same address to your blacklist twice. Try renaming the existing one if you want.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3055"/>
+        <location filename="../bitmessageqt/__init__.py" line="3105"/>
         <source>Moved items to trash.</source>
         <translation>Položky byly přesunuty do koše.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2995"/>
+        <location filename="../bitmessageqt/__init__.py" line="3045"/>
         <source>Undeleted item.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3023"/>
+        <location filename="../bitmessageqt/__init__.py" line="3073"/>
         <source>Save As...</source>
         <translation>Uložit jako...</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3032"/>
+        <location filename="../bitmessageqt/__init__.py" line="3082"/>
         <source>Write error.</source>
         <translation>Chyba zápisu.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3133"/>
+        <location filename="../bitmessageqt/__init__.py" line="3183"/>
         <source>No addresses selected.</source>
         <translation>Není vybrána žádná adresa.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3179"/>
+        <location filename="../bitmessageqt/__init__.py" line="3229"/>
         <source>If you delete the subscription, messages that you already received will become inaccessible. Maybe you can consider disabling the subscription instead. Disabled subscriptions will not receive new messages, but you can still view messages you already received.
 
 Are you sure you want to delete the subscription?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3408"/>
+        <location filename="../bitmessageqt/__init__.py" line="3458"/>
         <source>If you delete the channel, messages that you already received will become inaccessible. Maybe you can consider disabling the channel instead. Disabled channels will not receive new messages, but you can still view messages you already received.
 
 Are you sure you want to delete the channel?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3522"/>
+        <location filename="../bitmessageqt/__init__.py" line="3572"/>
         <source>Do you really want to remove this avatar?</source>
         <translation>Opravdu chcete odstranit tento avatar?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3530"/>
+        <location filename="../bitmessageqt/__init__.py" line="3580"/>
         <source>You have already set an avatar for this address. Do you really want to overwrite it?</source>
         <translation>Pro tuto adresu již avatar máte. Opravdu ho chcete přepsat?</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3902"/>
+        <location filename="../bitmessageqt/__init__.py" line="3952"/>
         <source>Start-on-login not yet supported on your OS.</source>
         <translation>Spuštění po přihlášení není zatím na Vašem operačním systému podporováno.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3895"/>
+        <location filename="../bitmessageqt/__init__.py" line="3945"/>
         <source>Minimize-to-tray not yet supported on your OS.</source>
         <translation>Minimalizace na lištu není zatím na Vašem operačním systému podporována.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3898"/>
+        <location filename="../bitmessageqt/__init__.py" line="3948"/>
         <source>Tray notifications not yet supported on your OS.</source>
         <translation>Upozornění v liště nejsou zatím na Vašem operačním systému podporována.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4067"/>
+        <location filename="../bitmessageqt/__init__.py" line="4117"/>
         <source>Testing...</source>
         <translation>Zkouším...</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4107"/>
+        <location filename="../bitmessageqt/__init__.py" line="4157"/>
         <source>This is a chan address. You cannot use it as a pseudo-mailing list.</source>
         <translation>Toto je adresa kanálu. Není možné ji použít jako pseudo-mailing list.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4167"/>
+        <location filename="../bitmessageqt/__init__.py" line="4217"/>
         <source>The address should start with &apos;&apos;BM-&apos;&apos;</source>
         <translation>Adresa by měla začínat &quot;BM-&quot;</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4170"/>
+        <location filename="../bitmessageqt/__init__.py" line="4220"/>
         <source>The address is not typed or copied correctly (the checksum failed).</source>
         <translation>Adresa nebyla správně opsána nebo zkopírována (kontrolní součet nesouhlasí).</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4173"/>
+        <location filename="../bitmessageqt/__init__.py" line="4223"/>
         <source>The version number of this address is higher than this software can support. Please upgrade Bitmessage.</source>
         <translation>Verze této adresy je vyšší než s jakou tento software umí pracovat. Prosím aktualizujte Bitmessage.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4176"/>
+        <location filename="../bitmessageqt/__init__.py" line="4226"/>
         <source>The address contains invalid characters.</source>
         <translation>Adresa obsahuje neplatné znaky.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4179"/>
+        <location filename="../bitmessageqt/__init__.py" line="4229"/>
         <source>Some data encoded in the address is too short.</source>
         <translation>Některá data zakódovaná v této adrese jsou příliš krátká.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4182"/>
+        <location filename="../bitmessageqt/__init__.py" line="4232"/>
         <source>Some data encoded in the address is too long.</source>
         <translation>Některá data zakódovaná v této adrese jsou příliš dlouhá.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4185"/>
+        <location filename="../bitmessageqt/__init__.py" line="4235"/>
         <source>Some data encoded in the address is malformed.</source>
         <translation>Některá data zakódovaná v této adrese mají neplatný formát.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4159"/>
+        <location filename="../bitmessageqt/__init__.py" line="4209"/>
         <source>Enter an address above.</source>
         <translation>Zadejte adresu výše.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4191"/>
+        <location filename="../bitmessageqt/__init__.py" line="4241"/>
         <source>Address is an old type. We cannot display its past broadcasts.</source>
         <translation>Toto je starý typ adresy. Neumíme zobrazit její rozesílané zprávy.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4200"/>
+        <location filename="../bitmessageqt/__init__.py" line="4250"/>
         <source>There are no recent broadcasts from this address to display.</source>
         <translation>Z této adresy nebyly v poslední době rozesílány žádné zprávy.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4244"/>
+        <location filename="../bitmessageqt/__init__.py" line="4294"/>
         <source>You are using TCP port %1. (This can be changed in the settings).</source>
         <translation>Používáte TCP port %1. (To lze změnit v nastavení).</translation>
     </message>
@@ -1100,8 +1100,53 @@ Are you sure you want to delete the channel?</source>
         <translation type="unfinished">Přidat novou položku</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4204"/>
+        <location filename="../bitmessageqt/__init__.py" line="4254"/>
         <source>Display the %1 recent broadcast(s) from this address.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1837"/>
+        <source>New version of PyBitmessage is available: %1. Download it from https://github.com/Bitmessage/PyBitmessage/releases/latest</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2666"/>
+        <source>Shutting down PyBitmessage... %1%%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2685"/>
+        <source>Waiting for PoW to finish... %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2689"/>
+        <source>Shutting down Pybitmessage... %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2711"/>
+        <source>Waiting for objects to be sent... %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2721"/>
+        <source>Saving settings... %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2730"/>
+        <source>Shutting down core... %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2733"/>
+        <source>Stopping notifications... %1%</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2739"/>
+        <source>Shutdown imminent... %1%</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
@@ -1399,103 +1444,108 @@ Možnost &quot;Náhodné číslo&quot; je nastavena jako výchozí, deterministi
 <context>
     <name>networkstatus</name>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="23"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="39"/>
         <source>Total connections:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="36"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="143"/>
         <source>Since startup:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="49"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="159"/>
         <source>Processed 0 person-to-person messages.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="62"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="188"/>
         <source>Processed 0 public keys.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="75"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="175"/>
         <source>Processed 0 broadcasts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="88"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="240"/>
         <source>Inventory lookups per second: 0</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="101"/>
-        <source>Down: 0 KB/s</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="114"/>
-        <source>Up: 0 KB/s</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="127"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="201"/>
         <source>Objects to be synced:</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="208"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="111"/>
         <source>Stream #</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="213"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="116"/>
         <source>Connections</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="15"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="133"/>
         <source>Since startup on %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="57"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="59"/>
         <source>Objects to be synced: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="48"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="50"/>
         <source>Processed %1 person-to-person messages.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="53"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="55"/>
         <source>Processed %1 broadcast messages.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="58"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="60"/>
         <source>Processed %1 public keys.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="66"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="68"/>
         <source>Down: %1/s  Total: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="68"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="70"/>
         <source>Up: %1/s  Total: %2</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="115"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="117"/>
         <source>Total Connections: %1</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="124"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="126"/>
         <source>Inventory lookups per second: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/networkstatus.ui" line="214"/>
+        <source>Up: 0 kB/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/networkstatus.ui" line="227"/>
+        <source>Down: 0 kB/s</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/networkstatus.py" line="38"/>
+        <source>byte(s)</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
