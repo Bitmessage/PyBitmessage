@@ -23,11 +23,17 @@ except AttributeError:
 
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
-    def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig, _encoding)
+    def _translate(context, text, disambig, encoding = QtCore.QCoreApplication.CodecForTr, n = None):
+        if n is None:
+            return QtGui.QApplication.translate(context, text, disambig, _encoding)
+        else:
+            return QtGui.QApplication.translate(context, text, disambig, _encoding, n)
 except AttributeError:
-    def _translate(context, text, disambig):
-        return QtGui.QApplication.translate(context, text, disambig)
+    def _translate(context, text, disambig, encoding = QtCore.QCoreApplication.CodecForTr, n = None):
+        if n is None:
+            return QtGui.QApplication.translate(context, text, disambig)
+        else:
+            return QtGui.QApplication.translate(context, text, disambig, QtCore.QCoreApplication.CodecForTr, n)
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -668,7 +674,12 @@ class Ui_MainWindow(object):
         #self.textEditMessageBroadcast.setHtml("")
         self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendBroadcast), _translate("MainWindow", "Send Message to your Subscribers", None))
         self.pushButtonTTL.setText(_translate("MainWindow", "TTL:", None))
-        self.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "X days", None))
+        hours = 48
+        try:
+            hours = int(shared.config.getint('bitmessagesettings', 'ttl')/60/60)
+        except:
+            pass
+        self.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, hours))
         self.pushButtonSend.setText(_translate("MainWindow", "Send", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send", None))
         self.treeWidgetSubscriptions.headerItem().setText(0, _translate("MainWindow", "Subscriptions", None))
