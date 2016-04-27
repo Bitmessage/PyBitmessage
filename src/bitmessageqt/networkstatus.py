@@ -130,6 +130,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             "networkstatus", "Inventory lookups per second: %1").arg(str(shared.numberOfInventoryLookupsPerformed/2)))
         shared.numberOfInventoryLookupsPerformed = 0
         self.updateNumberOfBytes()
+        self.updateNumberOfObjectsToBeSynced()
 
     def retranslateUi(self):
         super(QtGui.QWidget, self).retranslateUi()
