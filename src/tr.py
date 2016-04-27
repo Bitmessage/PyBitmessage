@@ -12,10 +12,10 @@ class translateClass:
         else:
             return self.text
 
-def _translate(context, text):
-    return translateText(context, text)
+def _translate(context, text, n = None):
+    return translateText(context, text, n)
 
-def translateText(context, text):
+def translateText(context, text, n = None):
     if not shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
         try:
             from PyQt4 import QtCore, QtGui
@@ -23,7 +23,10 @@ def translateText(context, text):
             print 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon'
             print 'Error message:', err
             os._exit(0)
-        return QtGui.QApplication.translate(context, text)
+        if n is None:
+            return QtGui.QApplication.translate(context, text)
+        else:
+            return QtGui.QApplication.translate(context, text, None, QtCore.QCoreApplication.CodecForTr, n)
     else:
         if '%' in text:
             return translateClass(context, text.replace('%','',1))

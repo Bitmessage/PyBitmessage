@@ -35,7 +35,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
     def formatBytes(self, num):
-        for x in [_translate("networkstatus", "byte(s)"), "kB", "MB", "GB"]:
+        for x in [_translate("networkstatus", "byte(s)", num), "kB", "MB", "GB"]:
             if num < 1000.0:
                 return "%3.0f %s" % (num, x)
             num /= 1000.0
@@ -44,21 +44,24 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
     def formatByteRate(self, num):
         num /= 1000
         return "%4.0f kB" % num
+        
+    def updateNumberOfObjectsToBeSynced(self):
+        self.labelSyncStatus.setText(_translate("networkstatus", "Object(s) to be synced: %n", sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues())))
 
     def updateNumberOfMessagesProcessed(self):
-        self.labelSyncStatus.setText(_translate("networkstatus", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
+        self.updateNumberOfObjectsToBeSynced()
         self.labelMessageCount.setText(_translate(
-            "networkstatus", "Processed %1 person-to-person messages.").arg(str(shared.numberOfMessagesProcessed)))
+            "networkstatus", "Processed %n person-to-person message(s).", shared.numberOfMessagesProcessed))
 
     def updateNumberOfBroadcastsProcessed(self):
-        self.labelSyncStatus.setText(_translate("networkstatus", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
+        self.updateNumberOfObjectsToBeSynced()
         self.labelBroadcastCount.setText(_translate(
-            "networkstatus", "Processed %1 broadcast messages.").arg(str(shared.numberOfBroadcastsProcessed)))
+            "networkstatus", "Processed %n broadcast message(s).", shared.numberOfBroadcastsProcessed))
 
     def updateNumberOfPubkeysProcessed(self):
-        self.labelSyncStatus.setText(_translate("networkstatus", "Objects to be synced: %1").arg(str(sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()))))
+        self.updateNumberOfObjectsToBeSynced()
         self.labelPubkeyCount.setText(_translate(
-            "networkstatus", "Processed %1 public keys.").arg(str(shared.numberOfPubkeysProcessed)))
+            "networkstatus", "Processed %n public key(s).", shared.numberOfPubkeysProcessed))
 
     def updateNumberOfBytes(self):
         """

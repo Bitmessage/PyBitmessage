@@ -71,8 +71,11 @@ from dialogs import AddAddressDialog
 from class_objectHashHolder import objectHashHolder
 from class_singleWorker import singleWorker
 
-def _translate(context, text):
-    return QtGui.QApplication.translate(context, text)
+def _translate(context, text, number = None):
+    if number is None:
+        return QtGui.QApplication.translate(context, text)
+    else:
+        return QtGui.QApplication.translate(context, text, None, QtCore.QCoreApplication.CodecForTr, number)
 
 def change_translation(locale):
     global qmytranslator, qsystranslator
@@ -100,16 +103,11 @@ def change_translation(locale):
     qsystranslator.load(translationpath)
     QtGui.QApplication.installTranslator(qsystranslator)
 
-    lang = l10n.getTranslationLanguage()
-    if "_" not in lang:
-        lang += "_" + lang.upper()
-    if ".utf8" not in lang.lower():
-        lang += ".utf8"
+    lang = pythonlocale.normalize(l10n.getTranslationLanguage())
     try:
         pythonlocale.setlocale(pythonlocale.LC_ALL, lang)
     except:
-        logger.error("Failed to set locale to %s", lang)
-        pass
+        logger.error("Failed to set locale to %s", lang, exc_info=True)
 
 class MyForm(settingsmixin.SMainWindow):
 
