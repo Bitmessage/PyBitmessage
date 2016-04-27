@@ -104,9 +104,12 @@ def change_translation(locale):
     QtGui.QApplication.installTranslator(qsystranslator)
 
     lang = pythonlocale.normalize(l10n.getTranslationLanguage())
+    if 'win32' in sys.platform or 'win64' in sys.platform:
+        lang = l10n.getWindowsLocale(lang)
     try:
         pythonlocale.setlocale(pythonlocale.LC_ALL, lang)
-        l10n.encoding = pythonlocale.nl_langinfo(pythonlocale.CODESET)
+        if 'win32' not in sys.platform and 'win64' not in sys.platform:
+            l10n.encoding = pythonlocale.nl_langinfo(pythonlocale.CODESET)
     except:
         logger.error("Failed to set locale to %s", lang, exc_info=True)
 
