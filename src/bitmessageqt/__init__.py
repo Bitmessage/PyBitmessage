@@ -2662,7 +2662,7 @@ class MyForm(settingsmixin.SMainWindow):
         '''
 
         self.statusBar().showMessage(_translate(
-            "MainWindow", "Shutting down PyBitmessage... %1%%").arg(str(0)))
+            "MainWindow", "Shutting down PyBitmessage... %1%").arg(str(0)))
         
         # check if PoW queue empty
         maxWorkerQueue = 0
