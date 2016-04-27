@@ -106,6 +106,7 @@ def change_translation(locale):
     lang = pythonlocale.normalize(l10n.getTranslationLanguage())
     try:
         pythonlocale.setlocale(pythonlocale.LC_ALL, lang)
+        l10n.encoding = pythonlocale.nl_langinfo(pythonlocale.CODESET)
     except:
         logger.error("Failed to set locale to %s", lang, exc_info=True)
 
