@@ -35,7 +35,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
     def formatBytes(self, num):
-        for x in [_translate("networkstatus", "byte(s)", num), "kB", "MB", "GB"]:
+        for x in [_translate("networkstatus", "byte(s)", None, QtCore.QCoreApplication.CodecForTr, num), "kB", "MB", "GB"]:
             if num < 1000.0:
                 return "%3.0f %s" % (num, x)
             num /= 1000.0
@@ -46,22 +46,22 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         return "%4.0f kB" % num
         
     def updateNumberOfObjectsToBeSynced(self):
-        self.labelSyncStatus.setText(_translate("networkstatus", "Object(s) to be synced: %n", sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues())))
+        self.labelSyncStatus.setText(_translate("networkstatus", "Object(s) to be synced: %n", None, QtCore.QCoreApplication.CodecForTr, sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues())))
 
     def updateNumberOfMessagesProcessed(self):
         self.updateNumberOfObjectsToBeSynced()
         self.labelMessageCount.setText(_translate(
-            "networkstatus", "Processed %n person-to-person message(s).", shared.numberOfMessagesProcessed))
+            "networkstatus", "Processed %n person-to-person message(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfMessagesProcessed))
 
     def updateNumberOfBroadcastsProcessed(self):
         self.updateNumberOfObjectsToBeSynced()
         self.labelBroadcastCount.setText(_translate(
-            "networkstatus", "Processed %n broadcast message(s).", shared.numberOfBroadcastsProcessed))
+            "networkstatus", "Processed %n broadcast message(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfBroadcastsProcessed))
 
     def updateNumberOfPubkeysProcessed(self):
         self.updateNumberOfObjectsToBeSynced()
         self.labelPubkeyCount.setText(_translate(
-            "networkstatus", "Processed %n public key(s).", shared.numberOfPubkeysProcessed))
+            "networkstatus", "Processed %n public key(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfPubkeysProcessed))
 
     def updateNumberOfBytes(self):
         """

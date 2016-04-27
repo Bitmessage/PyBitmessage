@@ -71,7 +71,7 @@ from dialogs import AddAddressDialog
 from class_objectHashHolder import objectHashHolder
 from class_singleWorker import singleWorker
 
-def _translate(context, text, number = None):
+def _translate(context, text, disambiguation = None, encoding = None, number = None):
     if number is None:
         return QtGui.QApplication.translate(context, text)
     else:
