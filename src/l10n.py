@@ -16,6 +16,29 @@ DEFAULT_TIME_FORMAT = '%Y-%m-%d %H:%M:%S'
 encoding = DEFAULT_ENCODING
 language = DEFAULT_LANGUAGE
 
+windowsLanguageMap = {
+    "ar": "arabic",
+    "cs": "czech",
+    "da": "danish",
+    "de": "german",
+    "en": "english",
+    "eo": "esperanto",
+    "fr": "french",
+    "it": "italian",
+    "ja": "japanese",
+    "nl": "dutch",
+    "no": "norwegian",
+    "pl": "polish",
+    "pt": "portuguese",
+    "ru": "russian",
+    "sk": "slovak",
+    "zh": "chinese",
+    "zh_CN": "chinese-simplified",
+    "zh_HK": "chinese-traditional",
+    "zh_SG": "chinese-simplified",
+    "zh_TW": "chinese-traditional"
+}
+
 try:
     import locale
     encoding = locale.getpreferredencoding(True) or DEFAULT_ENCODING
@@ -91,3 +114,17 @@ def getTranslationLanguage():
 
     return userlocale
     
+def getWindowsLocale(posixLocale):
+    if posixLocale in windowsLanguageMap:
+        return windowsLanguageMap[posixLocale]
+    if "." in posixLocale:
+        loc = posixLocale.split(".", 1)
+        if loc[0] in windowsLanguageMap:
+            return windowsLanguageMap[loc[0]]
+    if "_" in posixLocale:
+        loc = posixLocale.split("_", 1)
+        if loc[0] in windowsLanguageMap:
+            return windowsLanguageMap[loc[0]]
+    if posixLocale != DEFAULT_LANGUAGE:
+        return getWindowsLocale(DEFAULT_LANGUAGE)
+    return None
