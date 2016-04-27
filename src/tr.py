@@ -15,7 +15,7 @@ class translateClass:
 def _translate(context, text, n = None):
     return translateText(context, text, n)
 
-def translateText(context, text, n = None):
+def translateText(context, text, disambiguation = None, encoding = None, n = None):
     if not shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
         try:
             from PyQt4 import QtCore, QtGui
