@@ -531,7 +531,8 @@ class MyForm(settingsmixin.SMainWindow):
                 subwidget = widget.child(j)
                 try:
                     subwidget.setUnreadCount(db[toAddress][subwidget.folderName])
-                    unread += db[toAddress][subwidget.folderName]
+                    if subwidget.folderName not in ["new", "trash", "sent"]:
+                        unread += db[toAddress][subwidget.folderName]
                     db[toAddress].pop(subwidget.folderName, None)
                 except:
                     widget.takeChild(j)
@@ -544,6 +545,8 @@ class MyForm(settingsmixin.SMainWindow):
                 j = 0
                 for f, c in db[toAddress].iteritems():
                     subwidget = Ui_FolderWidget(widget, j, toAddress, f, c)
+                    if subwidget.folderName not in ["new", "trash", "sent"]:
+                        unread += c
                     j += 1
             widget.setUnreadCount(unread)
             db.pop(toAddress, None)
@@ -558,7 +561,8 @@ class MyForm(settingsmixin.SMainWindow):
                 if toAddress is not None and folder == "new":
                     continue
                 subwidget = Ui_FolderWidget(widget, j, toAddress, folder, db[toAddress][folder])
-                unread += db[toAddress][folder]
+                if subwidget.folderName not in ["new", "trash", "sent"]:
+                    unread += db[toAddress][folder]
                 j += 1
             widget.setUnreadCount(unread)
             i += 1
