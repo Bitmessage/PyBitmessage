@@ -476,4 +476,5 @@ class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
 class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
     def __init__ (self, address, label, type):
         Ui_AddressBookWidgetItem.__init__(self, address, type)
+        self.address = address
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
