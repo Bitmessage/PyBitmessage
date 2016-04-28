@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="2.0" language="en" sourcelanguage="en">
+<!DOCTYPE TS>
+<TS version="2.0" language="en" sourcelanguage="en">
 <context>
     <name>AddAddressDialog</name>
     <message>
@@ -1114,16 +1115,16 @@ Are you sure you want to delete the channel?</source>
         <location filename="../bitmessageqt/bitmessageui.py" line="682"/>
         <source>%n hour(s)</source>
         <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+            <numerusform>%n hour</numerusform>
+            <numerusform>%n hours</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../bitmessageqt/__init__.py" line="802"/>
         <source>%n day(s)</source>
         <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+            <numerusform>%n day</numerusform>
+            <numerusform>%n days</numerusform>
         </translation>
     </message>
     <message>
@@ -1301,7 +1302,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     </message>
     <message>
         <location filename="../bitmessageqt/about.py" line="69"/>
-        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright &#xc2;&#xa9; 2012-2014 Jonathan Warren&lt;br/&gt;Copyright &#xc2;&#xa9; 2013-2014 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright Â© 2012-2014 Jonathan Warren&lt;br/&gt;Copyright Â© 2013-2014 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
@@ -1513,40 +1514,40 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <location filename="../bitmessageqt/networkstatus.py" line="38"/>
         <source>byte(s)</source>
         <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+            <numerusform>byte</numerusform>
+            <numerusform>bytes</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../bitmessageqt/networkstatus.py" line="49"/>
         <source>Object(s) to be synced: %n</source>
         <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+            <numerusform>Object to be synced: %n</numerusform>
+            <numerusform>Objects to be synced: %n</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../bitmessageqt/networkstatus.py" line="53"/>
         <source>Processed %n person-to-person message(s).</source>
         <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+            <numerusform>Processed %n person-to-person message.</numerusform>
+            <numerusform>Processed %n person-to-person messages.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../bitmessageqt/networkstatus.py" line="58"/>
         <source>Processed %n broadcast message(s).</source>
         <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+            <numerusform>Processed %n broadcast message.</numerusform>
+            <numerusform>Processed %n broadcast messages.</numerusform>
         </translation>
     </message>
     <message numerus="yes">
         <location filename="../bitmessageqt/networkstatus.py" line="63"/>
         <source>Processed %n public key(s).</source>
         <translation type="unfinished">
-            <numerusform></numerusform>
-            <numerusform></numerusform>
+            <numerusform>Processed %n public key.</numerusform>
+            <numerusform>Processed %n public keys.</numerusform>
         </translation>
     </message>
 </context>
