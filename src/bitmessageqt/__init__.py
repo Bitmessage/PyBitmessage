@@ -1640,6 +1640,7 @@ class MyForm(settingsmixin.SMainWindow):
         if event.type() == QtCore.QEvent.LanguageChange:
             self.ui.retranslateUi(self)
             self.init_inbox_popup_menu(False)
+            self.init_identities_popup_menu(False)
             self.init_chan_popup_menu(False)
             self.init_addressbook_popup_menu(False)
             self.init_subscriptions_popup_menu(False)
