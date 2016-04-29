@@ -8,6 +8,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt4 import QtCore, QtGui
+from foldertree import AddressBookCompleter
 from messageview import MessageView
 from messagecompose import MessageCompose
 import settingsmixin
@@ -185,6 +186,11 @@ class Ui_MainWindow(object):
         self.tableWidgetAddressBook.horizontalHeader().setStretchLastSection(True)
         self.tableWidgetAddressBook.verticalHeader().setVisible(False)
         self.verticalSplitter_2.addWidget(self.tableWidgetAddressBook)
+        self.addressBookCompleter = AddressBookCompleter()
+        self.addressBookCompleter.setCompletionMode(QtGui.QCompleter.PopupCompletion)
+        self.addressBookCompleter.setCaseSensitivity(QtCore.Qt.CaseInsensitive)
+        self.addressBookCompleterModel = QtGui.QStringListModel()
+        self.addressBookCompleter.setModel(self.addressBookCompleterModel)
         self.pushButtonAddAddressBook = QtGui.QPushButton(self.send)
         self.pushButtonAddAddressBook.setObjectName(_fromUtf8("pushButtonAddAddressBook"))
         self.pushButtonAddAddressBook.resize(200, self.pushButtonAddAddressBook.height())
@@ -239,6 +245,7 @@ class Ui_MainWindow(object):
         self.lineEditTo = QtGui.QLineEdit(self.sendDirect)
         self.lineEditTo.setObjectName(_fromUtf8("lineEditTo"))
         self.gridLayout_2.addWidget(self.lineEditTo, 1, 1, 1, 1)
+        self.lineEditTo.setCompleter(self.addressBookCompleter)
         self.gridLayout_2_Widget = QtGui.QWidget()
         self.gridLayout_2_Widget.setLayout(self.gridLayout_2)
         self.verticalSplitter_5.addWidget(self.gridLayout_2_Widget)
