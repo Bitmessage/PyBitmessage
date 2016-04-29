@@ -1895,13 +1895,13 @@ class MyForm(settingsmixin.SMainWindow):
         completerList = []
         for address in sorted(oldRows, key = lambda x: oldRows[x][2], reverse = True):
             if address in newRows:
-                completerList.append(newRows[address][0] + " <" + address + ">")
+                completerList.append(unicode(newRows[address][0], encoding="UTF-8") + " <" + address + ">")
                 newRows.pop(address)
             else:
                 self.ui.tableWidgetAddressBook.removeRow(oldRows[address][2])
         for address in newRows:
             addRow(address, newRows[address][0], newRows[address][1])
-            completerList.append(newRows[address][0] + " <" + address + ">")
+            completerList.append(unicode(newRows[address][0], encoding="UTF-8") + " <" + address + ">")
 
         # sort
         self.ui.tableWidgetAddressBook.sortByColumn(0, Qt.AscendingOrder)
@@ -3187,8 +3187,8 @@ class MyForm(settingsmixin.SMainWindow):
             if self.ui.lineEditTo.text() == '':
                 self.ui.lineEditTo.setText(stringToAdd)
             else:
-                self.ui.lineEditTo.setText(str(
-                    self.ui.lineEditTo.text()) + '; ' + stringToAdd)
+                self.ui.lineEditTo.setText(unicode(
+                    self.ui.lineEditTo.text().toUtf8(), encoding="UTF-8") + '; ' + stringToAdd)
         if listOfSelectedRows == {}:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "No addresses selected."))

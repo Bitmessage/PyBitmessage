@@ -491,7 +491,7 @@ class AddressBookCompleter(QtGui.QCompleter):
         
     def splitPath(self, path):
         stringList = []
-        text = unicode(path.toUtf8())
+        text = unicode(path.toUtf8(), encoding="UTF-8")
         splitIndex = rfind(text[0:self.widget().cursorPosition()], ";") + 1
         str = text[splitIndex:self.widget().cursorPosition()]
         str = rstrip(lstrip(str))
@@ -499,8 +499,8 @@ class AddressBookCompleter(QtGui.QCompleter):
         return stringList
         
     def pathFromIndex(self, index):
-        autoString = unicode(index.data(QtCore.Qt.EditRole).toString())
-        text = unicode(self.widget().text().toUtf8())
+        autoString = unicode(index.data(QtCore.Qt.EditRole).toString().toUtf8(), encoding="UTF-8")
+        text = unicode(self.widget().text().toUtf8(), encoding="UTF-8")
         
         # If cursor position was saved, restore it, else save it
         if self.cursorPos != -1:
