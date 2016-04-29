@@ -110,6 +110,8 @@ def change_translation(locale):
         pythonlocale.setlocale(pythonlocale.LC_ALL, lang)
         if 'win32' not in sys.platform and 'win64' not in sys.platform:
             l10n.encoding = pythonlocale.nl_langinfo(pythonlocale.CODESET)
+        else:
+            l10n.encoding = pythonlocale.getlocale()[1]
     except:
         logger.error("Failed to set locale to %s", lang, exc_info=True)
 
