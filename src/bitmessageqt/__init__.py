@@ -659,6 +659,9 @@ class MyForm(settingsmixin.SMainWindow):
         # Initialize addressbook
         QtCore.QObject.connect(self.ui.tableWidgetAddressBook, QtCore.SIGNAL(
             "itemChanged(QTableWidgetItem *)"), self.tableWidgetAddressBookItemChanged)
+        # This is necessary for the completer to work if multiple recipients
+        QtCore.QObject.connect(self.ui.lineEditTo, QtCore.SIGNAL(
+            "cursorPositionChanged(int, int)"), self.ui.lineEditTo.completer().onCursorPositionChanged)
 
         # show messages from message list
         QtCore.QObject.connect(self.ui.tableWidgetInbox, QtCore.SIGNAL(
@@ -1889,18 +1892,21 @@ class MyForm(settingsmixin.SMainWindow):
             label, address = row
             newRows[address] = [label, AccountMixin.NORMAL]
 
+        completerList = []
         for address in sorted(oldRows, key = lambda x: oldRows[x][2], reverse = True):
             if address in newRows:
+                completerList.append(newRows[address][0] + " <" + address + ">")
                 newRows.pop(address)
             else:
                 self.ui.tableWidgetAddressBook.removeRow(oldRows[address][2])
         for address in newRows:
             addRow(address, newRows[address][0], newRows[address][1])
+            completerList.append(newRows[address][0] + " <" + address + ">")
 
         # sort
         self.ui.tableWidgetAddressBook.sortByColumn(0, Qt.AscendingOrder)
         self.ui.tableWidgetAddressBook.setSortingEnabled(True)
-
+        self.ui.lineEditTo.completer().model().setStringList(completerList)
 
     def rerenderSubscriptions(self):
         self.rerenderTabTreeSubscriptions()
@@ -1956,7 +1962,11 @@ class MyForm(settingsmixin.SMainWindow):
                 toAddressesList))  # remove duplicate addresses. If the user has one address with a BM- and the same address without the BM-, this will not catch it. They'll send the message to the person twice.
             for toAddress in toAddressesList:
                 if toAddress != '':
-                    if toAddress.find("@") >= 0:
+                    # label plus address
+                    if "<" in toAddress and ">" in toAddress:
+                        toAddress = toAddress.split('<')[1].split('>')[0]
+                    # email address
+                    elif toAddress.find("@") >= 0:
                         if isinstance(acct, GatewayAccount):
                             acct.createMessage(toAddress, fromAddress, subject, message)
                             subject = acct.subject

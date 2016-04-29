@@ -1,4 +1,5 @@
 from PyQt4 import QtCore, QtGui
+from string import find, rfind, rstrip, lstrip
 
 from helper_sql import *
 from utils import *
@@ -478,3 +479,56 @@ class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
         Ui_AddressBookWidgetItem.__init__(self, address, type)
         self.address = address
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
+        
+class AddressBookCompleter(QtGui.QCompleter):
+    def __init__(self):
+        super(QtGui.QCompleter, self).__init__()
+        self.cursorPos = -1
+    
+    def onCursorPositionChanged(self, oldPos, newPos):
+        if oldPos != self.cursorPos:
+            self.cursorPos = -1
+        
+    def splitPath(self, path):
+        stringList = []
+        text = unicode(path.toUtf8())
+        splitIndex = rfind(text[0:self.widget().cursorPosition()], ";") + 1
+        str = text[splitIndex:self.widget().cursorPosition()]
+        str = rstrip(lstrip(str))
+        stringList.append(str)
+        return stringList
+        
+    def pathFromIndex(self, index):
+        autoString = unicode(index.data(QtCore.Qt.EditRole).toString())
+        text = unicode(self.widget().text().toUtf8())
+        
+        # If cursor position was saved, restore it, else save it
+        if self.cursorPos != -1:
+            self.widget().setCursorPosition(self.cursorPos)
+        else:
+            self.cursorPos = self.widget().cursorPosition()
+
+        # Get current prosition
+        curIndex = self.widget().cursorPosition()
+        
+        # prev_delimiter_index should actually point at final white space AFTER the delimiter
+        # Get index of last delimiter before current position
+        prevDelimiterIndex = rfind(text[0:curIndex], ";")
+        while text[prevDelimiterIndex + 1] == " ":
+            prevDelimiterIndex += 1
+            
+        # Get index of first delimiter after current position (or EOL if no delimiter after cursor)
+        nextDelimiterIndex = find(text, ";", curIndex)
+        if nextDelimiterIndex == -1:
+            nextDelimiterIndex = len(text)
+
+        # Get part of string that occurs before cursor
+        part1 = text[0:prevDelimiterIndex + 1]
+
+        # Get string value from before auto finished string is selected
+        pre = text[prevDelimiterIndex + 1:curIndex - 1];
+
+        # Get part of string that occurs AFTER cursor
+        part2 = text[nextDelimiterIndex:]
+
+        return part1 + autoString + part2;
