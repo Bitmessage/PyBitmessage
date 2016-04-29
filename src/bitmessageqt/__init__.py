@@ -1090,6 +1090,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         tableWidget.setSortingEnabled(False)
         tableWidget.horizontalHeader().setSortIndicator(3, Qt.DescendingOrder)
+        tableWidget.horizontalHeaderItem(3).setText(_translate("MainWindow", "Sent", None))
 
     # Load messages from database file
     def loadMessagelist(self, tableWidget, account, folder="inbox", where="", what="", unreadOnly = False):
@@ -1120,6 +1121,7 @@ class MyForm(settingsmixin.SMainWindow):
         tableWidget.horizontalHeader().setSortIndicator(3, Qt.DescendingOrder)
         tableWidget.setSortingEnabled(True)
         tableWidget.selectRow(0)
+        tableWidget.horizontalHeaderItem(3).setText(_translate("MainWindow", "Received", None))
 
     # create application indicator
     def appIndicatorInit(self, app):
