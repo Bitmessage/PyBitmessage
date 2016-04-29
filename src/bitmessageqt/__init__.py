@@ -3180,12 +3180,15 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.tableWidgetAddressBook.selectedIndexes()[i].row()] = 0
         for currentRow in listOfSelectedRows:
             addressAtCurrentRow = self.ui.tableWidgetAddressBook.item(
-                currentRow, 1).text()
+                currentRow, 0).address
+            labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(
+                currentRow, 0).label
+            stringToAdd = labelAtCurrentRow + " <" + addressAtCurrentRow + ">"
             if self.ui.lineEditTo.text() == '':
-                self.ui.lineEditTo.setText(str(addressAtCurrentRow))
+                self.ui.lineEditTo.setText(stringToAdd)
             else:
                 self.ui.lineEditTo.setText(str(
-                    self.ui.lineEditTo.text()) + '; ' + str(addressAtCurrentRow))
+                    self.ui.lineEditTo.text()) + '; ' + stringToAdd)
         if listOfSelectedRows == {}:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "No addresses selected."))
