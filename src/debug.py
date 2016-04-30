@@ -25,8 +25,9 @@ import traceback
 import helper_startup
 helper_startup.loadConfig()
 
-# TODO(xj9): Get from a config file.
-log_level = 'DEBUG'
+# Now can be overriden from a config file, which uses standard python logging.config.fileConfig interface
+# examples are here: https://bitmessage.org/forum/index.php/topic,4820.msg11163.html#msg11163
+log_level = 'WARNING'
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
     logging.critical(''.join(traceback.format_tb(tb)))
