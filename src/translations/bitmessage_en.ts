@@ -622,12 +622,12 @@ It is important that you back up this file. Would you like to open the file now?
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2970"/>
+        <location filename="../bitmessageqt/__init__.py" line="2976"/>
         <source>Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3218"/>
+        <location filename="../bitmessageqt/__init__.py" line="3224"/>
         <source>Error: You cannot add the same address to your subscriptions twice. Perhaps rename the existing one if you want.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -717,146 +717,146 @@ It is important that you back up this file. Would you like to open the file now?
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2967"/>
+        <location filename="../bitmessageqt/__init__.py" line="2973"/>
         <source>Entry added to the Address Book. Edit the label to your liking.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2992"/>
+        <location filename="../bitmessageqt/__init__.py" line="2998"/>
         <source>Entry added to the blacklist. Edit the label to your liking.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2995"/>
+        <location filename="../bitmessageqt/__init__.py" line="3001"/>
         <source>Error: You cannot add the same address to your blacklist twice. Try renaming the existing one if you want.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3123"/>
+        <location filename="../bitmessageqt/__init__.py" line="3129"/>
         <source>Moved items to trash.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3063"/>
+        <location filename="../bitmessageqt/__init__.py" line="3069"/>
         <source>Undeleted item.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3091"/>
+        <location filename="../bitmessageqt/__init__.py" line="3097"/>
         <source>Save As...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3100"/>
+        <location filename="../bitmessageqt/__init__.py" line="3106"/>
         <source>Write error.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3204"/>
+        <location filename="../bitmessageqt/__init__.py" line="3210"/>
         <source>No addresses selected.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3250"/>
+        <location filename="../bitmessageqt/__init__.py" line="3256"/>
         <source>If you delete the subscription, messages that you already received will become inaccessible. Maybe you can consider disabling the subscription instead. Disabled subscriptions will not receive new messages, but you can still view messages you already received.
 
 Are you sure you want to delete the subscription?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3479"/>
+        <location filename="../bitmessageqt/__init__.py" line="3485"/>
         <source>If you delete the channel, messages that you already received will become inaccessible. Maybe you can consider disabling the channel instead. Disabled channels will not receive new messages, but you can still view messages you already received.
 
 Are you sure you want to delete the channel?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3593"/>
+        <location filename="../bitmessageqt/__init__.py" line="3599"/>
         <source>Do you really want to remove this avatar?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3601"/>
+        <location filename="../bitmessageqt/__init__.py" line="3607"/>
         <source>You have already set an avatar for this address. Do you really want to overwrite it?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3973"/>
+        <location filename="../bitmessageqt/__init__.py" line="3979"/>
         <source>Start-on-login not yet supported on your OS.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3966"/>
+        <location filename="../bitmessageqt/__init__.py" line="3972"/>
         <source>Minimize-to-tray not yet supported on your OS.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3969"/>
+        <location filename="../bitmessageqt/__init__.py" line="3975"/>
         <source>Tray notifications not yet supported on your OS.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4138"/>
+        <location filename="../bitmessageqt/__init__.py" line="4144"/>
         <source>Testing...</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4178"/>
+        <location filename="../bitmessageqt/__init__.py" line="4184"/>
         <source>This is a chan address. You cannot use it as a pseudo-mailing list.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4238"/>
+        <location filename="../bitmessageqt/__init__.py" line="4244"/>
         <source>The address should start with &apos;&apos;BM-&apos;&apos;</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4241"/>
+        <location filename="../bitmessageqt/__init__.py" line="4247"/>
         <source>The address is not typed or copied correctly (the checksum failed).</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4244"/>
+        <location filename="../bitmessageqt/__init__.py" line="4250"/>
         <source>The version number of this address is higher than this software can support. Please upgrade Bitmessage.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4247"/>
+        <location filename="../bitmessageqt/__init__.py" line="4253"/>
         <source>The address contains invalid characters.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4250"/>
+        <location filename="../bitmessageqt/__init__.py" line="4256"/>
         <source>Some data encoded in the address is too short.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4253"/>
+        <location filename="../bitmessageqt/__init__.py" line="4259"/>
         <source>Some data encoded in the address is too long.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4256"/>
+        <location filename="../bitmessageqt/__init__.py" line="4262"/>
         <source>Some data encoded in the address is malformed.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4230"/>
+        <location filename="../bitmessageqt/__init__.py" line="4236"/>
         <source>Enter an address above.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4262"/>
+        <location filename="../bitmessageqt/__init__.py" line="4268"/>
         <source>Address is an old type. We cannot display its past broadcasts.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4271"/>
+        <location filename="../bitmessageqt/__init__.py" line="4277"/>
         <source>There are no recent broadcasts from this address to display.</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4315"/>
+        <location filename="../bitmessageqt/__init__.py" line="4321"/>
         <source>You are using TCP port %1. (This can be changed in the settings).</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1066,7 +1066,7 @@ Are you sure you want to delete the channel?</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4275"/>
+        <location filename="../bitmessageqt/__init__.py" line="4281"/>
         <source>Display the %1 recent broadcast(s) from this address.</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1134,6 +1134,128 @@ Are you sure you want to delete the channel?</source>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1096"/>
         <source>Sent</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_addressGenerator.py" line="86"/>
+        <source>Generating one new address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_addressGenerator.py" line="148"/>
+        <source>Done generating address. Doing work necessary to broadcast it...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_addressGenerator.py" line="165"/>
+        <source>Generating %1 new addresses.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_addressGenerator.py" line="242"/>
+        <source>%1 is already in &apos;Your Identities&apos;. Not adding it again.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_addressGenerator.py" line="278"/>
+        <source>Done generating address</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_outgoingSynSender.py" line="210"/>
+        <source>SOCKS5 Authentication problem: %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_sqlThread.py" line="574"/>
+        <source>Disk full</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_sqlThread.py" line="574"/>
+        <source>Alert: Your disk or data storage volume is full. Bitmessage will now exit.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="721"/>
+        <source>Error! Could not find sender address (your address) in the keys.dat file.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="464"/>
+        <source>Doing work necessary to send broadcast...</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="487"/>
+        <source>Broadcast sent on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="559"/>
+        <source>Encryption key was requested earlier.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="596"/>
+        <source>Sending a request for the recipient&apos;s encryption key.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="613"/>
+        <source>Looking up the receiver&apos;s public key</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="647"/>
+        <source>Problem: Destination is a mobile device who requests that the destination be included in the message but this is disallowed in your settings.  %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="661"/>
+        <source>Doing work necessary to send message.
+There is no required difficulty for version 2 addresses like this.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="675"/>
+        <source>Doing work necessary to send message.
+Receiver&apos;s required difficulty: %1 and %2</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="684"/>
+        <source>Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do. %3</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="696"/>
+        <source>Problem: You are trying to send a message to yourself or a chan but your encryption key could not be found in the keys.dat file. Could not encrypt message. %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="705"/>
+        <source>Doing work necessary to send message.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="819"/>
+        <source>Message sent. Waiting for acknowledgement. Sent on %1</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="912"/>
+        <source>Doing work necessary to request encryption key.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="940"/>
+        <source>Broadcasting the public key request. This program will auto-retry if they are offline.</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="../class_singleWorker.py" line="942"/>
+        <source>Sending public key request. Waiting for reply. Requested at %1</source>
         <translation type="unfinished"></translation>
     </message>
 </context>
