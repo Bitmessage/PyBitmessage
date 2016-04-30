@@ -325,7 +325,7 @@ class objectProcessor(threading.Thread):
                        'ackreceived',
                        int(time.time()), 
                        data[-32:])
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[-32:], tr.translateText("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[-32:], tr._translate("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
             return
         else:
             logger.info('This was NOT an acknowledgement bound for me.')

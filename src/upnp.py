@@ -204,7 +204,7 @@ class uPnPThread(threading.Thread, StoppableThread):
                         logger.debug("Found UPnP router at %s", ip)
                         self.routers.append(newRouter)
                         self.createPortMapping(newRouter)
-                        shared.UISignalQueue.put(('updateStatusBar', tr.translateText("MainWindow",'UPnP port mapping established on port %1').arg(str(self.extPort))))
+                        shared.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow",'UPnP port mapping established on port %1').arg(str(self.extPort))))
                         break
             except socket.timeout as e:
                 pass
@@ -228,7 +228,7 @@ class uPnPThread(threading.Thread, StoppableThread):
                 self.deletePortMapping(router)
         shared.extPort = None
         if deleted:
-            shared.UISignalQueue.put(('updateStatusBar', tr.translateText("MainWindow",'UPnP port mapping removed')))
+            shared.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow",'UPnP port mapping removed')))
         logger.debug("UPnP thread done")
 
     def getLocalIP(self):
