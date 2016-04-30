@@ -2925,13 +2925,19 @@ class MyForm(settingsmixin.SMainWindow):
                 }
                 self.ui.tabWidgetSend.setCurrentIndex(1)
                 toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
-
-        self.ui.lineEditTo.setText(str(acct.fromAddress))
+        if fromAddressAtCurrentInboxRow == tableWidget.item(currentInboxRow, 1).label or (
+            isinstance(acct, GatewayAccount) and fromAddressAtCurrentInboxRow == acct.relayAddress):
+            self.ui.lineEditTo.setText(str(acct.fromAddress))
+        else:
+            self.ui.lineEditTo.setText(tableWidget.item(currentInboxRow, 1).label + " <" + str(acct.fromAddress) + ">")
         
         # If the previous message was to a chan then we should send our reply to the chan rather than to the particular person who sent the message.
         if acct.type == AccountMixin.CHAN and replyType == self.REPLY_TYPE_CHAN:
             logger.debug('original sent to a chan. Setting the to address in the reply to the chan address.')
-            self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
+            if toAddressAtCurrentInboxRow == tableWidget.item(currentInboxRow, 0).label:
+                self.ui.lineEditTo.setText(str(toAddressAtCurrentInboxRow))
+            else:
+                self.ui.lineEditTo.setText(tableWidget.item(currentInboxRow, 0).label + " <" + str(acct.toAddress) + ">")
         
         self.setSendFromComboBox(toAddressAtCurrentInboxRow)
         
