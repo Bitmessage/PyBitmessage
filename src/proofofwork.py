@@ -97,7 +97,7 @@ def _doGPUPoW(target, initialHash):
     #print "{} - value {} < {}".format(nonce, trialValue, target)
     if trialValue > target:
         deviceNames = ", ".join(gpu.name for gpu in openclpow.gpus)
-        UISignalQueue.put(('updateStatusBar', tr.translateText("MainWindow",'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.')))
+        UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow",'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.')))
         logger.error("Your GPUs (%s) did not calculate correctly, disabling OpenCL. Please report to the developers.", deviceNames)
         openclpow.ctx = False
         raise Exception("GPU did not calculate correctly.")

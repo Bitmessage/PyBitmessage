@@ -208,7 +208,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
 
             except socks.Socks5AuthError as err:
                 shared.UISignalQueue.put((
-                    'updateStatusBar', tr.translateText(
+                    'updateStatusBar', tr._translate(
                     "MainWindow", "SOCKS5 Authentication problem: %1").arg(str(err))))
             except socks.Socks5Error as err:
                 pass

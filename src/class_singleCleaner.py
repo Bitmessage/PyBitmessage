@@ -90,7 +90,7 @@ class singleCleaner(threading.Thread, StoppableThread):
                 except Exception as err:
                     if "Errno 28" in str(err):
                         logger.fatal('(while receiveDataThread shared.needToWriteKnownNodesToDisk) Alert: Your disk or data storage volume is full. ')
-                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         if shared.daemon:
                             os._exit(0)
                 shared.knownNodesLock.release()

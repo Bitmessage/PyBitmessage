@@ -90,21 +90,21 @@ class namecoinConnection (object):
                 assert False
         except RPCError as exc:
             if exc.error["code"] == -4:
-                return (tr.translateText("MainWindow",'The name %1 was not found.').arg(unicode(string)), None)
+                return (tr._translate("MainWindow",'The name %1 was not found.').arg(unicode(string)), None)
             else:
-                return (tr.translateText("MainWindow",'The namecoin query failed (%1)').arg(unicode(exc.error["message"])), None)
+                return (tr._translate("MainWindow",'The namecoin query failed (%1)').arg(unicode(exc.error["message"])), None)
         except Exception as exc:
             print "Namecoin query exception: %s" % str (exc)
-            return (tr.translateText("MainWindow",'The namecoin query failed.'), None)
+            return (tr._translate("MainWindow",'The namecoin query failed.'), None)
 
         try:
             val = json.loads (res)
         except:
-            return (tr.translateText("MainWindow",'The name %1 has no valid JSON data.').arg(unicode(string)), None)            
+            return (tr._translate("MainWindow",'The name %1 has no valid JSON data.').arg(unicode(string)), None)            
 
         if "bitmessage" in val:
             return (None, val["bitmessage"])
-        return (tr.translateText("MainWindow",'The name %1 has no associated Bitmessage address.').arg(unicode(string)), None) 
+        return (tr._translate("MainWindow",'The name %1 has no associated Bitmessage address.').arg(unicode(string)), None) 
 
     # Test the connection settings.  This routine tries to query a "getinfo"
     # command, and builds either an error message or a success message with
@@ -124,16 +124,16 @@ class namecoinConnection (object):
                   versStr = "0.%d.%d" % (v1, v2)
                 else:
                   versStr = "0.%d.%d.%d" % (v1, v2, v3)
-                return ('success',  tr.translateText("MainWindow",'Success!  Namecoind version %1 running.').arg(unicode(versStr)) )
+                return ('success',  tr._translate("MainWindow",'Success!  Namecoind version %1 running.').arg(unicode(versStr)) )
 
             elif self.nmctype == "nmcontrol":
                 res = self.callRPC ("data", ["status"])
                 prefix = "Plugin data running"
                 if ("reply" in res) and res["reply"][:len(prefix)] == prefix:
-                    return ('success', tr.translateText("MainWindow",'Success!  NMControll is up and running.'))
+                    return ('success', tr._translate("MainWindow",'Success!  NMControll is up and running.'))
 
                 print "Unexpected nmcontrol reply: %s" % res
-                return ('failed',  tr.translateText("MainWindow",'Couldn\'t understand NMControl.'))
+                return ('failed',  tr._translate("MainWindow",'Couldn\'t understand NMControl.'))
 
             else:
                 assert False

@@ -442,7 +442,7 @@ class sqlThread(threading.Thread):
         except Exception as err:
             if str(err) == 'database or disk is full':
                 logger.fatal('(While null value test) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                 if shared.daemon:
                     os._exit(0)
                 else:
@@ -465,7 +465,7 @@ class sqlThread(threading.Thread):
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(While VACUUM) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         if shared.daemon:
                             os._exit(0)
                         else:
@@ -482,7 +482,7 @@ class sqlThread(threading.Thread):
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(While committing) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         if shared.daemon:
                             os._exit(0)
                         else:
@@ -500,7 +500,7 @@ class sqlThread(threading.Thread):
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(while movemessagstoprog) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         if shared.daemon:
                             os._exit(0)
                         else:
@@ -519,7 +519,7 @@ class sqlThread(threading.Thread):
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(while movemessagstoappdata) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         if shared.daemon:
                             os._exit(0)
                         else:
@@ -539,7 +539,7 @@ class sqlThread(threading.Thread):
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(while deleteandvacuume) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         if shared.daemon:
                             os._exit(0)
                         else:
@@ -555,7 +555,7 @@ class sqlThread(threading.Thread):
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(while cur.execute) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         if shared.daemon:
                             os._exit(0)
                         else:
