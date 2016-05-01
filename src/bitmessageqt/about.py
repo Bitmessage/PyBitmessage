@@ -66,7 +66,7 @@ class Ui_aboutDialog(object):
         aboutDialog.setWindowTitle(_translate("aboutDialog", "About", None))
         self.label.setText(_translate("aboutDialog", "PyBitmessage", None))
         self.labelVersion.setText(_translate("aboutDialog", "version ?", None))
-        self.label_2.setText(_translate("aboutDialog", "<html><head/><body><p>Copyright © 2012-2014 Jonathan Warren<br/>Copyright © 2013-2014 The Bitmessage Developers</p></body></html>", None))
+        self.label_2.setText(_translate("aboutDialog", "<html><head/><body><p>Copyright © 2012-2016 Jonathan Warren<br/>Copyright © 2013-2016 The Bitmessage Developers</p></body></html>", None))
         self.label_3.setText(_translate("aboutDialog", "<html><head/><body><p>Distributed under the MIT/X11 software license; see <a href=\"http://www.opensource.org/licenses/mit-license.php\"><span style=\" text-decoration: underline; color:#0000ff;\">http://www.opensource.org/licenses/mit-license.php</span></a></p></body></html>", None))
         self.label_5.setText(_translate("aboutDialog", "This is Beta software.", None))
 
