@@ -35,6 +35,11 @@ def getSortedSubscriptions(count = False):
             GROUP BY inbox.fromaddress, folder''')
         for row in queryreturn:
             address, folder, cnt = row
+            if not folder in ret[address]:
+                ret[address][folder] = {
+                    'label': ret[address]['inbox']['label'],
+                    'enabled': ret[address]['inbox']['enabled']
+                }
             ret[address][folder]['count'] = cnt
     return ret
 
