@@ -16,6 +16,7 @@ SOURCES	= 	../addresses.py\
 			../helper_sent.py\
 			../helper_startup.py\
 			../shared.py\
+			../upnp.py\
 			../bitmessageqt/__init__.py\
 			../bitmessageqt/about.py\
 			../bitmessageqt/account.py\
