@@ -11,10 +11,12 @@ def sqlQuery(sqlStatement, *args):
 
     if args == ():
         sqlSubmitQueue.put('')
+    elif type(args[0]) in [list, tuple]:
+        sqlSubmitQueue.put(args[0])
     else:
         sqlSubmitQueue.put(args)
     
-    queryreturn = sqlReturnQueue.get()
+    queryreturn, rowcount = sqlReturnQueue.get()
     sqlLock.release()
 
     return queryreturn
@@ -28,9 +30,10 @@ def sqlExecute(sqlStatement, *args):
     else:
         sqlSubmitQueue.put(args)
     
-    sqlReturnQueue.get()
+    queryreturn, rowcount = sqlReturnQueue.get()
     sqlSubmitQueue.put('commit')
     sqlLock.release()
+    return rowcount
 
 def sqlStoredProcedure(procName):
     sqlLock.acquire()

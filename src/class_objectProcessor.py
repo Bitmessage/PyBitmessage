@@ -8,6 +8,7 @@ import sys
 import string
 from subprocess import call  # used when the API must execute an outside program
 import traceback
+from binascii import hexlify
 
 from pyelliptic.openssl import OpenSSL
 import highlevelcrypto
@@ -26,10 +27,10 @@ import l10n
 class objectProcessor(threading.Thread):
     """
     The objectProcessor thread, of which there is only one, receives network
-    objecs (msg, broadcast, pubkey, getpubkey) from the receiveDataThreads.
+    objects (msg, broadcast, pubkey, getpubkey) from the receiveDataThreads.
     """
     def __init__(self):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="objectProcessor")
         """
         It may be the case that the last time Bitmessage was running, the user
         closed it before it finished processing everything in the
@@ -39,11 +40,9 @@ class objectProcessor(threading.Thread):
         """
         queryreturn = sqlQuery(
             '''SELECT objecttype, data FROM objectprocessorqueue''')
-        with shared.objectProcessorQueueSizeLock:
-            for row in queryreturn:
-                objectType, data = row
-                shared.objectProcessorQueueSize += len(data)
-                shared.objectProcessorQueue.put((objectType,data))
+        for row in queryreturn:
+            objectType, data = row
+            shared.objectProcessorQueue.put((objectType,data))
         sqlExecute('''DELETE FROM objectprocessorqueue''')
         logger.debug('Loaded %s objects from disk into the objectProcessorQueue.' % str(len(queryreturn)))
 
@@ -70,19 +69,14 @@ class objectProcessor(threading.Thread):
             except Exception as e:
                 logger.critical("Critical error within objectProcessorThread: \n%s" % traceback.format_exc())
 
-            with shared.objectProcessorQueueSizeLock:
-                shared.objectProcessorQueueSize -= len(data) # We maintain objectProcessorQueueSize so that we will slow down requesting objects if too much data accumulates in the queue.
-
             if shared.shutdown:
                 time.sleep(.5) # Wait just a moment for most of the connections to close
                 numberOfObjectsThatWereInTheObjectProcessorQueue = 0
                 with SqlBulkExecute() as sql:
-                    while shared.objectProcessorQueueSize > 1:
+                    while shared.objectProcessorQueue.curSize > 0:
                         objectType, data = shared.objectProcessorQueue.get()
                         sql.execute('''INSERT INTO objectprocessorqueue VALUES (?,?)''',
                                    objectType,data)
-                        with shared.objectProcessorQueueSizeLock:
-                            shared.objectProcessorQueueSize -= len(data) # We maintain objectProcessorQueueSize so that we will slow down requesting objects if too much data accumulates in the queue.
                         numberOfObjectsThatWereInTheObjectProcessorQueue += 1
                 logger.debug('Saved %s objects from the objectProcessorQueue to disk. objectProcessorThread exiting.' % str(numberOfObjectsThatWereInTheObjectProcessorQueue))
                 shared.shutdown = 2
@@ -113,7 +107,7 @@ class objectProcessor(threading.Thread):
             if len(requestedHash) != 20:
                 logger.debug('The length of the requested hash is not 20 bytes. Something is wrong. Ignoring.')
                 return
-            logger.info('the hash requested in this getpubkey request is: %s' % requestedHash.encode('hex'))
+            logger.info('the hash requested in this getpubkey request is: %s' % hexlify(requestedHash))
             if requestedHash in shared.myAddressesByHash:  # if this address hash is one of mine
                 myAddress = shared.myAddressesByHash[requestedHash]
         elif requestedAddressVersionNumber >= 4:
@@ -121,7 +115,7 @@ class objectProcessor(threading.Thread):
             if len(requestedTag) != 32:
                 logger.debug('The length of the requested tag is not 32 bytes. Something is wrong. Ignoring.')
                 return
-            logger.debug('the tag requested in this getpubkey request is: %s' % requestedTag.encode('hex'))
+            logger.debug('the tag requested in this getpubkey request is: %s' % hexlify(requestedTag))
             if requestedTag in shared.myAddressesByTag:
                 myAddress = shared.myAddressesByTag[requestedTag]
 
@@ -206,9 +200,9 @@ class objectProcessor(threading.Thread):
                         publicSigningKey in hex: %s\n\
                         publicEncryptionKey in hex: %s' % (addressVersion, 
                                                            streamNumber, 
-                                                           ripe.encode('hex'), 
-                                                           publicSigningKey.encode('hex'), 
-                                                           publicEncryptionKey.encode('hex')
+                                                           hexlify(ripe),
+                                                           hexlify(publicSigningKey),
+                                                           hexlify(publicEncryptionKey)
                                                            )
                         )
 
@@ -247,7 +241,7 @@ class objectProcessor(threading.Thread):
                 data[readPosition:readPosition + 10])
             readPosition += signatureLengthLength
             signature = data[readPosition:readPosition + signatureLength]
-            if highlevelcrypto.verify(data[8:endOfSignedDataPosition], signature, publicSigningKey.encode('hex')):
+            if highlevelcrypto.verify(data[8:endOfSignedDataPosition], signature, hexlify(publicSigningKey)):
                 logger.debug('ECDSA verify passed (within processpubkey)')
             else:
                 logger.warning('ECDSA verify failed (within processpubkey)')
@@ -265,9 +259,9 @@ class objectProcessor(threading.Thread):
                         publicSigningKey in hex: %s\n\
                         publicEncryptionKey in hex: %s' % (addressVersion, 
                                                            streamNumber, 
-                                                           ripe.encode('hex'), 
-                                                           publicSigningKey.encode('hex'), 
-                                                           publicEncryptionKey.encode('hex')
+                                                           hexlify(ripe),
+                                                           hexlify(publicSigningKey),
+                                                           hexlify(publicEncryptionKey)
                                                            )
                         )
 
@@ -331,7 +325,7 @@ class objectProcessor(threading.Thread):
                        'ackreceived',
                        int(time.time()), 
                        data[-32:])
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[-32:], tr.translateText("MainWindow",'Acknowledgement of the message received. %1').arg(l10n.formatTimestamp()))))
+            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[-32:], tr._translate("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
             return
         else:
             logger.info('This was NOT an acknowledgement bound for me.')
@@ -342,11 +336,13 @@ class objectProcessor(threading.Thread):
         
         for key, cryptorObject in shared.myECCryptorObjects.items():
             try:
-                decryptedData = cryptorObject.decrypt(data[readPosition:])
-                toRipe = key  # This is the RIPE hash of my pubkeys. We need this below to compare to the destination_ripe included in the encrypted data.
-                initialDecryptionSuccessful = True
-                logger.info('EC decryption successful using key associated with ripe hash: %s.' % key.encode('hex'))
-                break
+                if initialDecryptionSuccessful: # continue decryption attempts to avoid timing attacks
+                    cryptorObject.decrypt(data[readPosition:])
+                else:
+                    decryptedData = cryptorObject.decrypt(data[readPosition:])
+                    toRipe = key  # This is the RIPE hash of my pubkeys. We need this below to compare to the destination_ripe included in the encrypted data.
+                    initialDecryptionSuccessful = True
+                    logger.info('EC decryption successful using key associated with ripe hash: %s.' % hexlify(key))
             except Exception as err:
                 pass
         if not initialDecryptionSuccessful:
@@ -398,7 +394,7 @@ class objectProcessor(threading.Thread):
             logger.info('The original sender of this message did not send it to you. Someone is attempting a Surreptitious Forwarding Attack.\n\
                 See: http://world.std.com/~dtd/sign_encrypt/sign_encrypt7.html \n\
                 your toRipe: %s\n\
-                embedded destination toRipe: %s' % (toRipe.encode('hex'), decryptedData[readPosition:readPosition + 20].encode('hex'))
+                embedded destination toRipe: %s' % (hexlify(toRipe), hexlify(decryptedData[readPosition:readPosition + 20]))
                        )
             return
         readPosition += 20
@@ -424,7 +420,7 @@ class objectProcessor(threading.Thread):
             readPosition:readPosition + signatureLength]
         signedData = data[8:20] + encodeVarint(1) + encodeVarint(streamNumberAsClaimedByMsg) + decryptedData[:positionOfBottomOfAckData]
         
-        if not highlevelcrypto.verify(signedData, signature, pubSigningKey.encode('hex')):
+        if not highlevelcrypto.verify(signedData, signature, hexlify(pubSigningKey)):
             logger.debug('ECDSA verify failed')
             return
         logger.debug('ECDSA verify passed')
@@ -531,7 +527,7 @@ class objectProcessor(threading.Thread):
 
             # Let us now check and see whether our receiving address is
             # behaving as a mailing list
-            if shared.safeConfigGetBoolean(toAddress, 'mailinglist'):
+            if shared.safeConfigGetBoolean(toAddress, 'mailinglist') and messageEncodingType != 0:
                 try:
                     mailingListName = shared.config.get(
                         toAddress, 'mailinglistname')
@@ -574,7 +570,12 @@ class objectProcessor(threading.Thread):
                     toAddress, '[Broadcast subscribers]', fromAddress, subject, message, ackdataForBroadcast)))
                 shared.workerQueue.put(('sendbroadcast', ''))
 
-        if self.ackDataHasAVaildHeader(ackData):
+        # Don't send ACK if invalid, blacklisted senders, invisible messages, disabled or chan
+        if self.ackDataHasAValidHeader(ackData) and \
+            not blockMessage and \
+            messageEncodingType != 0 and \
+            not shared.safeConfigGetBoolean(toAddress, 'dontsendack') and \
+            not shared.safeConfigGetBoolean(toAddress, 'chan'):
             shared.checkAndShareObjectWithPeers(ackData[24:])
 
         # Display timing data
@@ -617,11 +618,13 @@ class objectProcessor(threading.Thread):
             initialDecryptionSuccessful = False
             for key, cryptorObject in shared.MyECSubscriptionCryptorObjects.items():
                 try:
-                    decryptedData = cryptorObject.decrypt(data[readPosition:])
-                    toRipe = key  # This is the RIPE hash of the sender's pubkey. We need this below to compare to the RIPE hash of the sender's address to verify that it was encrypted by with their key rather than some other key.
-                    initialDecryptionSuccessful = True
-                    logger.info('EC decryption successful using key associated with ripe hash: %s' % key.encode('hex'))
-                    break
+                    if initialDecryptionSuccessful: # continue decryption attempts to avoid timing attacks
+                        cryptorObject.decrypt(data[readPosition:])
+                    else:
+                        decryptedData = cryptorObject.decrypt(data[readPosition:])
+                        toRipe = key  # This is the RIPE hash of the sender's pubkey. We need this below to compare to the RIPE hash of the sender's address to verify that it was encrypted by with their key rather than some other key.
+                        initialDecryptionSuccessful = True
+                        logger.info('EC decryption successful using key associated with ripe hash: %s' % hexlify(key))
                 except Exception as err:
                     pass
                     # print 'cryptorObject.decrypt Exception:', err
@@ -716,7 +719,7 @@ class objectProcessor(threading.Thread):
         signature = decryptedData[
             readPosition:readPosition + signatureLength]
         signedData += decryptedData[:readPositionAtBottomOfMessage]
-        if not highlevelcrypto.verify(signedData, signature, sendersPubSigningKey.encode('hex')):
+        if not highlevelcrypto.verify(signedData, signature, hexlify(sendersPubSigningKey)):
             logger.debug('ECDSA verify failed')
             return
         logger.debug('ECDSA verify passed')
@@ -741,8 +744,7 @@ class objectProcessor(threading.Thread):
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
-        with shared.printLock:
-            print 'fromAddress:', fromAddress
+        logger.debug('fromAddress: ' + fromAddress)
 
         if messageEncodingType == 2:
             subject, body = self.decodeType2Message(message)
@@ -822,7 +824,7 @@ class objectProcessor(threading.Thread):
             address)
         shared.workerQueue.put(('sendmessage', ''))
 
-    def ackDataHasAVaildHeader(self, ackData):
+    def ackDataHasAValidHeader(self, ackData):
         if len(ackData) < shared.Header.size:
             logger.info('The length of ackData is unreasonably short. Not sending ackData.')
             return False

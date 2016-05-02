@@ -1,6 +1,6 @@
-from __future__ import division
+﻿from __future__ import division
 
-softwareVersion = '0.4.4'
+softwareVersion = '0.6.0'
 verbose = 1
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # This is obsolete with the change to protocol v3 but the singleCleaner thread still hasn't been updated so we need this a little longer.
 lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
@@ -9,6 +9,7 @@ useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the
 
 
 # Libraries.
+import base64
 import collections
 import ConfigParser
 import os
@@ -25,13 +26,16 @@ import datetime
 from os import path, environ
 from struct import Struct
 import traceback
+from binascii import hexlify
 
 # Project imports.
 from addresses import *
+from class_objectProcessorQueue import ObjectProcessorQueue
 import highlevelcrypto
 import shared
 #import helper_startup
 from helper_sql import *
+from helper_threading import *
 
 
 config = ConfigParser.SafeConfigParser()
@@ -46,15 +50,13 @@ addressGeneratorQueue = Queue.Queue()
 knownNodesLock = threading.Lock()
 knownNodes = {}
 sendDataQueues = [] #each sendData thread puts its queue in this list.
-inventory = {} #of objects (like msg payloads and pubkey payloads) Does not include protocol headers (the first 24 bytes of each packet).
-inventoryLock = threading.Lock() #Guarantees that two receiveDataThreads don't receive and process the same message concurrently (probably sent by a malicious individual)
+inventoryLock = threading.RLock() #Guarantees that two receiveDataThreads don't receive and process the same message concurrently (probably sent by a malicious individual)
 printLock = threading.Lock()
-objectProcessorQueueSizeLock = threading.Lock()
-objectProcessorQueueSize = 0 # in Bytes. We maintain this to prevent nodes from flooing us with objects which take up too much memory. If this gets too big we'll sleep before asking for further objects.
 appdata = '' #holds the location of the application data storage directory
 statusIconColor = 'red'
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
 shutdown = 0 #Set to 1 by the doCleanShutdown function. Used to tell the proof of work worker threads to exit.
+thisapp = None # singleton lock instance
 alreadyAttemptedConnectionsList = {
 }  # This is a list of nodes to which we have already attempted a connection
 alreadyAttemptedConnectionsListLock = threading.Lock()
@@ -83,12 +85,14 @@ lastTimeWeResetBytesSent = 0 # used for the bandwidth rate limit
 sendDataLock = threading.Lock() # used for the bandwidth rate limit
 receiveDataLock = threading.Lock() # used for the bandwidth rate limit
 daemon = False
-inventorySets = {} # key = streamNumer, value = a set which holds the inventory object hashes that we are aware of. This is used whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it every couple hours.
 needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it to disk eventually.
 maximumLengthOfTimeToBotherResendingMessages = 0
-objectProcessorQueue = Queue.Queue(
-    )  # receiveDataThreads dump objects they hear on the network into this queue to be processed.
+objectProcessorQueue = ObjectProcessorQueue()  # receiveDataThreads dump objects they hear on the network into this queue to be processed.
 streamsInWhichIAmParticipating = {}
+
+# sanity check, prevent doing ridiculous PoW
+# 20 million PoWs equals approximately 2 days on dev's dual R9 290
+ridiculousDifficulty = 20000000
 
 #If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
 networkDefaultProofOfWorkNonceTrialsPerByte = 1000 #The amount of work that should be performed (and demanded) per byte of the payload.
@@ -116,9 +120,101 @@ frozen = getattr(sys,'frozen', None)
 # security.
 trustedPeer = None
 
+# For UPnP
+extPort = None
+
 #Compiled struct for packing/unpacking headers
 #New code should use CreatePacket instead of Header.pack
 Header = Struct('!L12sL4s')
+
+#Service flags
+NODE_NETWORK = 1
+NODE_SSL = 2
+
+#Bitfield flags
+BITFIELD_DOESACK = 1
+
+import collections
+
+InventoryItem = collections.namedtuple('InventoryItem', 'type stream payload expires tag')
+
+
+class Inventory(collections.MutableMapping):
+    def __init__(self):
+        super(Inventory, self).__init__()
+        self._inventory = {} #of objects (like msg payloads and pubkey payloads) Does not include protocol headers (the first 24 bytes of each packet).
+        self._streams = collections.defaultdict(set) # key = streamNumer, value = a set which holds the inventory object hashes that we are aware of. This is used whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it every couple hours.
+
+    def __contains__(self, hash):
+        global numberOfInventoryLookupsPerformed
+        with inventoryLock:
+            numberOfInventoryLookupsPerformed += 1
+            if hash in self._inventory:
+                return True
+            return bool(sqlQuery('SELECT 1 FROM inventory WHERE hash=?', hash))
+
+    def __getitem__(self, hash):
+        with inventoryLock:
+            if hash in self._inventory:
+                return self._inventory[hash]
+            rows = sqlQuery('SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE hash=?', hash)
+            if not rows:
+                raise KeyError(hash)
+            return InventoryItem(*rows[0])
+
+    def __setitem__(self, hash, value):
+        with inventoryLock:
+            value = InventoryItem(*value)
+            self._inventory[hash] = value
+            self._streams[value.stream].add(hash)
+
+    def __delitem__(self, hash):
+        raise NotImplementedError
+
+    def __iter__(self):
+        with inventoryLock:
+            hashes = self._inventory.keys()[:]
+            hashes += (hash for hash, in sqlQuery('SELECT hash FROM inventory'))
+            return hashes.__iter__()
+
+    def __len__(self):
+        with inventoryLock:
+            return len(self._inventory) + sqlQuery('SELECT count(*) FROM inventory')[0][0]
+
+    def by_type_and_tag(self, type, tag):
+        with inventoryLock:
+            values = [value for value in self._inventory.values() if value.type == type and value.tag == tag]
+            values += (InventoryItem(*value) for value in sqlQuery('SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE objecttype=? AND tag=?', type, tag))
+            return values
+
+    def hashes_by_stream(self, stream):
+        with inventoryLock:
+            return self._streams[stream]
+
+    def unexpired_hashes_by_stream(self, stream):
+        with inventoryLock:
+            t = int(time.time())
+            hashes = [hash for hash, value in self._inventory.items() if value.stream == stream and value.expires > t]
+            hashes += (payload for payload, in sqlQuery('SELECT hash FROM inventory WHERE streamnumber=? AND expirestime>?', stream, t))
+            return hashes
+
+    def flush(self):
+        with inventoryLock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
+            with SqlBulkExecute() as sql:
+                for hash, value in self._inventory.items():
+                    sql.execute('INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?)', hash, *value)
+                self._inventory.clear()
+
+    def clean(self):
+        with inventoryLock:
+            sqlExecute('DELETE FROM inventory WHERE expirestime<?',int(time.time()) - (60 * 60 * 3))
+            self._streams.clear()
+            for hash, value in self.items():
+                self._streams[value.stream].add(hash)
+
+
+inventory = Inventory()
+
 
 #Create a packet
 def CreatePacket(command, payload=''):
@@ -130,21 +226,28 @@ def CreatePacket(command, payload=''):
     b[Header.size:] = payload
     return bytes(b)
 
-def isInSqlInventory(hash):
-    queryreturn = sqlQuery('''select hash from inventory where hash=?''', hash)
-    return queryreturn != []
 
 def encodeHost(host):
-    if host.find(':') == -1:
+    if host.find('.onion') > -1:
+        return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(host.split(".")[0], True)
+    elif host.find(':') == -1:
         return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
             socket.inet_aton(host)
     else:
         return socket.inet_pton(socket.AF_INET6, host)
 
-def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
+def haveSSL(server = False):
+    # python < 2.7.9's ssl library does not support ECDSA server due to missing initialisation of available curves, but client works ok
+    if server == False:
+        return True
+    elif sys.version_info >= (2,7,9):
+        return True
+    return False
+        
+def assembleVersionMessage(remoteHost, remotePort, myStreamNumber, server = False):
     payload = ''
     payload += pack('>L', 3)  # protocol version.
-    payload += pack('>q', 1)  # bitflags of the services I offer.
+    payload += pack('>q', NODE_NETWORK|(NODE_SSL if haveSSL(server) else 0))  # bitflags of the services I offer.
     payload += pack('>q', int(time.time()))
 
     payload += pack(
@@ -155,8 +258,10 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber):
     payload += pack('>q', 1)  # bitflags of the services I offer.
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
         '>L', 2130706433)  # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
-    payload += pack('>H', shared.config.getint(
-        'bitmessagesettings', 'port'))
+    if safeConfigGetBoolean('bitmessagesettings', 'upnp') and extPort:
+        payload += pack('>H', extPort)
+    else:
+        payload += pack('>H', shared.config.getint('bitmessagesettings', 'port'))
 
     random.seed()
     payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
@@ -177,6 +282,19 @@ def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
     payload += encodeVarint(len(errorText))
     payload += errorText
     return CreatePacket('error', payload)
+
+def lookupExeFolder():
+    if frozen:
+        if frozen == "macosx_app":
+            # targetdir/Bitmessage.app/Contents/MacOS/Bitmessage
+            exeFolder = path.dirname(path.dirname(path.dirname(path.dirname(sys.executable)))) + path.sep
+        else:
+            exeFolder = path.dirname(sys.executable) + path.sep
+    elif __file__:
+        exeFolder = path.dirname(__file__) + path.sep
+    else:
+        exeFolder = ''
+    return exeFolder
 
 def lookupAppdataFolder():
     APPNAME = "PyBitmessage"
@@ -217,6 +335,15 @@ def lookupAppdataFolder():
             pass
         dataFolder = dataFolder + '/'
     return dataFolder
+    
+def codePath():
+    if frozen == "macosx_app":
+        codePath = os.environ.get("RESOURCEPATH")
+    elif frozen: # windows
+        codePath = sys._MEIPASS
+    else:    
+        codePath = os.path.dirname(__file__)
+    return codePath
 
 def isAddressInMyAddressBook(address):
     queryreturn = sqlQuery(
@@ -291,8 +418,8 @@ def reloadMyAddressHashes():
                 if addressVersionNumber == 2 or addressVersionNumber == 3 or addressVersionNumber == 4:
                     # Returns a simple 32 bytes of information encoded in 64 Hex characters,
                     # or null if there was an error.
-                    privEncryptionKey = decodeWalletImportFormat(
-                            config.get(addressInKeysFile, 'privencryptionkey')).encode('hex')
+                    privEncryptionKey = hexlify(decodeWalletImportFormat(
+                            config.get(addressInKeysFile, 'privencryptionkey')))
 
                     if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
                         myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
@@ -321,13 +448,13 @@ def reloadBroadcastSendersForWhichImWatching():
         
         if addressVersionNumber <= 3:
             privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).digest()[:32]
-            MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
+            MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
         else:
             doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
                 addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()
             tag = doubleHashOfAddressData[32:]
             privEncryptionKey = doubleHashOfAddressData[:32]
-            MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(privEncryptionKey.encode('hex'))
+            MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
 
 def isProofOfWorkSufficient(data,
                             nonceTrialsPerByte=0,
@@ -345,13 +472,13 @@ def isProofOfWorkSufficient(data,
     return POW <= 2 ** 64 / (nonceTrialsPerByte*(len(data) + payloadLengthExtraBytes + ((TTL*(len(data)+payloadLengthExtraBytes))/(2 ** 16))))
 
 def doCleanShutdown():
-    global shutdown
+    global shutdown, thisapp
     shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
     broadcastToSendDataQueues((0, 'shutdown', 'no data'))   
-    with shared.objectProcessorQueueSizeLock:
-        data = 'no data'
-        shared.objectProcessorQueueSize += len(data)
-        objectProcessorQueue.put(('checkShutdownVariable',data))
+    objectProcessorQueue.put(('checkShutdownVariable', 'no data'))
+    for thread in threading.enumerate():
+        if thread.isAlive() and isinstance(thread, StoppableThread):
+            thread.stopThread()
     
     knownNodesLock.acquire()
     UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
@@ -368,8 +495,8 @@ def doCleanShutdown():
     UISignalQueue.put((
         'updateStatusBar',
         'Flushing inventory in memory out to disk. This should normally only take a second...'))
-    flushInventory()
-    
+    inventory.flush()
+
     # Verify that the objectProcessor has finished exiting. It should have incremented the 
     # shutdown variable from 1 to 2. This must finish before we command the sqlThread to exit.
     while shutdown == 1:
@@ -383,11 +510,20 @@ def doCleanShutdown():
     
     # Wait long enough to guarantee that any running proof of work worker threads will check the
     # shutdown variable and exit. If the main thread closes before they do then they won't stop.
-    time.sleep(.25) 
+    time.sleep(.25)
+    
+    from class_outgoingSynSender import outgoingSynSender
+    for thread in threading.enumerate():
+        if thread is not threading.currentThread() and isinstance(thread, StoppableThread) and not isinstance(thread, outgoingSynSender):
+            logger.debug("Waiting for thread %s", thread.name)
+            thread.join()
 
     if safeConfigGetBoolean('bitmessagesettings','daemon'):
         logger.info('Clean shutdown complete.')
+        thisapp.cleanup()
         os._exit(0)
+    else:
+        logger.info('Core shutdown complete.')
 
 # If you want to command all of the sendDataThreads to do something, like shutdown or send some data, this
 # function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are
@@ -396,15 +532,6 @@ def broadcastToSendDataQueues(data):
     # logger.debug('running broadcastToSendDataQueues')
     for q in sendDataQueues:
         q.put(data)
-        
-def flushInventory():
-    #Note that the singleCleanerThread clears out the inventory dictionary from time to time, although it only clears things that have been in the dictionary for a long time. This clears the inventory dictionary Now.
-    with SqlBulkExecute() as sql:
-        for hash, storedValue in inventory.items():
-            objectType, streamNumber, payload, expiresTime, tag = storedValue
-            sql.execute('''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
-                       hash,objectType,streamNumber,payload,expiresTime,tag)
-            del inventory[hash]
 
 def fixPotentiallyInvalidUTF8Data(text):
     try:
@@ -538,7 +665,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition += signatureLengthLength
         signature = decryptedData[readPosition:readPosition + signatureLength]
         
-        if highlevelcrypto.verify(signedData, signature, publicSigningKey.encode('hex')):
+        if highlevelcrypto.verify(signedData, signature, hexlify(publicSigningKey)):
             logger.info('ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
         else:
             logger.info('ECDSA verify failed (within decryptAndCheckPubkeyPayload)')
@@ -564,9 +691,9 @@ def decryptAndCheckPubkeyPayload(data, address):
                     publicSigningKey in hex: %s\n\
                     publicEncryptionKey in hex: %s' % (addressVersion,
                                                        streamNumber, 
-                                                       ripe.encode('hex'), 
-                                                       publicSigningKey.encode('hex'), 
-                                                       publicEncryptionKey.encode('hex')
+                                                       hexlify(ripe),
+                                                       hexlify(publicSigningKey),
+                                                       hexlify(publicEncryptionKey)
                                                        )
                     )
     
@@ -647,16 +774,11 @@ def _checkAndShareUndefinedObjectWithPeers(data):
         logger.debug('We have already received this undefined object. Ignoring.')
         inventoryLock.release()
         return
-    elif isInSqlInventory(inventoryHash):
-        logger.debug('We have already received this undefined object (it is stored on disk in the SQL inventory). Ignoring it.')
-        inventoryLock.release()
-        return
     objectType, = unpack('>I', data[16:20])
     inventory[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime,'')
-    inventorySets[streamNumber].add(inventoryHash)
     inventoryLock.release()
-    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
+    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
     
     
@@ -679,26 +801,16 @@ def _checkAndShareMsgWithPeers(data):
         logger.debug('We have already received this msg message. Ignoring.')
         inventoryLock.release()
         return
-    elif isInSqlInventory(inventoryHash):
-        logger.debug('We have already received this msg message (it is stored on disk in the SQL inventory). Ignoring it.')
-        inventoryLock.release()
-        return
     # This msg message is valid. Let's let our peers know about it.
     objectType = 2
     inventory[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime,'')
-    inventorySets[streamNumber].add(inventoryHash)
     inventoryLock.release()
-    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
+    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's enqueue it to be processed ourselves.
-    # If we already have too much data in the queue to be processed, just sleep for now.
-    while shared.objectProcessorQueueSize > 120000000:
-        time.sleep(2)
-    with shared.objectProcessorQueueSizeLock:
-        shared.objectProcessorQueueSize += len(data)
-        objectProcessorQueue.put((objectType,data))
+    objectProcessorQueue.put((objectType,data))
 
 def _checkAndShareGetpubkeyWithPeers(data):
     if len(data) < 42:
@@ -725,27 +837,17 @@ def _checkAndShareGetpubkeyWithPeers(data):
         logger.debug('We have already received this getpubkey request. Ignoring it.')
         inventoryLock.release()
         return
-    elif isInSqlInventory(inventoryHash):
-        logger.debug('We have already received this getpubkey request (it is stored on disk in the SQL inventory). Ignoring it.')
-        inventoryLock.release()
-        return
 
     objectType = 0
     inventory[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime,'')
-    inventorySets[streamNumber].add(inventoryHash)
     inventoryLock.release()
     # This getpubkey request is valid. Forward to peers.
-    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
+    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's queue it to be processed ourselves.
-    # If we already have too much data in the queue to be processed, just sleep for now.
-    while shared.objectProcessorQueueSize > 120000000:
-        time.sleep(2)
-    with shared.objectProcessorQueueSizeLock:
-        shared.objectProcessorQueueSize += len(data)
-        objectProcessorQueue.put((objectType,data))
+    objectProcessorQueue.put((objectType,data))
 
 def _checkAndSharePubkeyWithPeers(data):
     if len(data) < 146 or len(data) > 440:  # sanity check
@@ -763,7 +865,7 @@ def _checkAndSharePubkeyWithPeers(data):
         return
     if addressVersion >= 4:
         tag = data[readPosition:readPosition + 32]
-        logger.debug('tag in received pubkey is: %s' % tag.encode('hex'))
+        logger.debug('tag in received pubkey is: %s' % hexlify(tag))
     else:
         tag = ''
 
@@ -774,27 +876,17 @@ def _checkAndSharePubkeyWithPeers(data):
         logger.debug('We have already received this pubkey. Ignoring it.')
         inventoryLock.release()
         return
-    elif isInSqlInventory(inventoryHash):
-        logger.debug('We have already received this pubkey (it is stored on disk in the SQL inventory). Ignoring it.')
-        inventoryLock.release()
-        return
     objectType = 1
     inventory[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime, tag)
-    inventorySets[streamNumber].add(inventoryHash)
     inventoryLock.release()
     # This object is valid. Forward it to peers.
-    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
+    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
 
     # Now let's queue it to be processed ourselves.
-    # If we already have too much data in the queue to be processed, just sleep for now.
-    while shared.objectProcessorQueueSize > 120000000:
-        time.sleep(2)
-    with shared.objectProcessorQueueSizeLock:
-        shared.objectProcessorQueueSize += len(data)
-        objectProcessorQueue.put((objectType,data))
+    objectProcessorQueue.put((objectType,data))
 
 
 def _checkAndShareBroadcastWithPeers(data):
@@ -823,27 +915,17 @@ def _checkAndShareBroadcastWithPeers(data):
         logger.debug('We have already received this broadcast object. Ignoring.')
         inventoryLock.release()
         return
-    elif isInSqlInventory(inventoryHash):
-        logger.debug('We have already received this broadcast object (it is stored on disk in the SQL inventory). Ignoring it.')
-        inventoryLock.release()
-        return
     # It is valid. Let's let our peers know about it.
     objectType = 3
     inventory[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime, tag)
-    inventorySets[streamNumber].add(inventoryHash)
     inventoryLock.release()
     # This object is valid. Forward it to peers.
-    logger.debug('advertising inv with hash: %s' % inventoryHash.encode('hex'))
+    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's queue it to be processed ourselves.
-    # If we already have too much data in the queue to be processed, just sleep for now.
-    while shared.objectProcessorQueueSize > 120000000:
-        time.sleep(2)
-    with shared.objectProcessorQueueSizeLock:
-        shared.objectProcessorQueueSize += len(data)
-        objectProcessorQueue.put((objectType,data))
+    objectProcessorQueue.put((objectType,data))
 
 def openKeysFile():
     if 'linux' in sys.platform:

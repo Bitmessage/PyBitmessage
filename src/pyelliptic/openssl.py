@@ -427,35 +427,44 @@ class _OpenSSL:
             buffer = self.create_string_buffer(size)
         return buffer
 
-try:
-    OpenSSL = _OpenSSL('libcrypto.so')
-except:
-    try:
-        OpenSSL = _OpenSSL('libeay32.dll')
-    except:
+def loadOpenSSL():
+    global OpenSSL
+    from os import path, environ
+    from ctypes.util import find_library
+    
+    libdir = []
+    if getattr(sys,'frozen', None):
+        if 'darwin' in sys.platform:
+            libdir.extend([
+                path.join(environ['RESOURCEPATH'], '..', 'Frameworks','libcrypto.dylib'),
+                path.join(environ['RESOURCEPATH'], '..', 'Frameworks','libcrypto.1.0.0.dylib')
+                ])
+        elif 'win32' in sys.platform or 'win64' in sys.platform:
+            libdir.append(path.join(sys._MEIPASS, 'libeay32.dll'))
+        else:
+            libdir.extend([
+                path.join(sys._MEIPASS, 'libcrypto.so'),
+                path.join(sys._MEIPASS, 'libssl.so'),
+                path.join(sys._MEIPASS, 'libcrypto.so.1.0.0'),
+                path.join(sys._MEIPASS, 'libssl.so.1.0.0'),
+            ])
+    if 'darwin' in sys.platform:
+        libdir.extend(['libcrypto.dylib', '/usr/local/opt/openssl/lib/libcrypto.dylib'])
+    elif 'win32' in sys.platform or 'win64' in sys.platform:
+        libdir.append('libeay32.dll')
+    else:
+        libdir.append('libcrypto.so')
+        libdir.append('libssl.so')
+    if 'linux' in sys.platform or 'darwin' in sys.platform or 'freebsd' in sys.platform:
+        libdir.append(find_library('ssl'))
+    elif 'win32' in sys.platform or 'win64' in sys.platform:
+        libdir.append(find_library('libeay32'))
+    for library in libdir:
         try:
-            OpenSSL = _OpenSSL('libcrypto.dylib')
+            OpenSSL = _OpenSSL(library)
+            return
         except:
-            try:
-                # try homebrew installation
-                OpenSSL = _OpenSSL('/usr/local/opt/openssl/lib/libcrypto.dylib')
-            except:
-                try:
-                  # Load it from an Bitmessage.app on OSX
-                  OpenSSL = _OpenSSL('./../Frameworks/libcrypto.dylib')
-                except:
-                  try:
-                      from os import path
-                      lib_path = path.join(sys._MEIPASS, "libeay32.dll")
-                      OpenSSL = _OpenSSL(lib_path)
-                  except:
-                      if 'linux' in sys.platform or 'darwin' in sys.platform or 'freebsd' in sys.platform:
-                          try:
-                              from ctypes.util import find_library
-                              OpenSSL = _OpenSSL(find_library('ssl'))
-                          except Exception, err:
-                              sys.stderr.write('(On Linux) Couldn\'t find and load the OpenSSL library. You must install it. If you believe that you already have it installed, this exception information might be of use:\n')
-                              from ctypes.util import find_library
-                              OpenSSL = _OpenSSL(find_library('ssl'))
-                      else:
-                          raise Exception("Couldn't find and load the OpenSSL library. You must install it.")
+            pass
+    raise Exception("Couldn't find and load the OpenSSL library. You must install it.")
+
+loadOpenSSL()

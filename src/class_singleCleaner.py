@@ -7,6 +7,7 @@ import pickle
 
 import tr#anslate
 from helper_sql import *
+from helper_threading import *
 from debug import logger
 
 """
@@ -28,10 +29,11 @@ resends msg messages in 5 days (then 10 days, then 20 days, etc...)
 """
 
 
-class singleCleaner(threading.Thread):
+class singleCleaner(threading.Thread, StoppableThread):
 
     def __init__(self):
-        threading.Thread.__init__(self)
+        threading.Thread.__init__(self, name="singleCleaner")
+        self.initStop()
 
     def run(self):
         timeWeLastClearedInventoryAndPubkeysTables = 0
@@ -41,22 +43,10 @@ class singleCleaner(threading.Thread):
             # Either the user hasn't set stopresendingafterxdays and stopresendingafterxmonths yet or the options are missing from the config file.
             shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
 
-        while True:
+        while shared.shutdown == 0:
             shared.UISignalQueue.put((
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
-            with shared.inventoryLock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
-                with SqlBulkExecute() as sql:
-                    for hash, storedValue in shared.inventory.items():
-                        objectType, streamNumber, payload, expiresTime, tag = storedValue
-                        sql.execute(
-                            '''INSERT INTO inventory VALUES (?,?,?,?,?,?)''',
-                            hash,
-                            objectType,
-                            streamNumber,
-                            payload,
-                            expiresTime,
-                            tag)
-                        del shared.inventory[hash]
+            shared.inventory.flush()
             shared.UISignalQueue.put(('updateStatusBar', ''))
             
             shared.broadcastToSendDataQueues((
@@ -68,9 +58,7 @@ class singleCleaner(threading.Thread):
                 shared.UISignalQueue.queue.clear()
             if timeWeLastClearedInventoryAndPubkeysTables < int(time.time()) - 7380:
                 timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
-                sqlExecute(
-                    '''DELETE FROM inventory WHERE expirestime<? ''',
-                    int(time.time()) - (60 * 60 * 3))
+                shared.inventory.clean()
                 # pubkeys
                 sqlExecute(
                     '''DELETE FROM pubkeys WHERE time<? AND usedpersonally='no' ''',
@@ -83,30 +71,14 @@ class singleCleaner(threading.Thread):
                     int(time.time()) - shared.maximumLengthOfTimeToBotherResendingMessages)
                 for row in queryreturn:
                     if len(row) < 2:
-                        with shared.printLock:
-                            sys.stderr.write(
-                                'Something went wrong in the singleCleaner thread: a query did not return the requested fields. ' + repr(row))
-                        time.sleep(3)
+                        logger.error('Something went wrong in the singleCleaner thread: a query did not return the requested fields. ' + repr(row))
+                        self.stop.wait(3)
                         break
                     toAddress, ackData, status = row
                     if status == 'awaitingpubkey':
                         resendPubkeyRequest(toAddress)
                     elif status == 'msgsent':
                         resendMsg(ackData)
-
-                # Let's also clear and reload shared.inventorySets to keep it from
-                # taking up an unnecessary amount of memory.
-                for streamNumber in shared.inventorySets:
-                    shared.inventorySets[streamNumber] = set()
-                    queryData = sqlQuery('''SELECT hash FROM inventory WHERE streamnumber=?''', streamNumber)
-                    for row in queryData:
-                        shared.inventorySets[streamNumber].add(row[0])
-                with shared.inventoryLock:
-                    for hash, storedValue in shared.inventory.items():
-                        objectType, streamNumber, payload, expiresTime, tag = storedValue
-                        if not streamNumber in shared.inventorySets:
-                            shared.inventorySets[streamNumber] = set()
-                        shared.inventorySets[streamNumber].add(hash)
 
             # Let us write out the knowNodes to disk if there is anything new to write out.
             if shared.needToWriteKnownNodesToDisk:
@@ -118,12 +90,12 @@ class singleCleaner(threading.Thread):
                 except Exception as err:
                     if "Errno 28" in str(err):
                         logger.fatal('(while receiveDataThread shared.needToWriteKnownNodesToDisk) Alert: Your disk or data storage volume is full. ')
-                        shared.UISignalQueue.put(('alert', (tr.translateText("MainWindow", "Disk full"), tr.translateText("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         if shared.daemon:
                             os._exit(0)
                 shared.knownNodesLock.release()
                 shared.needToWriteKnownNodesToDisk = False
-            time.sleep(300)
+            self.stop.wait(300)
 
 
 def resendPubkeyRequest(address):

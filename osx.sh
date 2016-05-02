@@ -14,6 +14,8 @@ fi
 
 echo "Creating OS X packages for Bitmessage."
 
+export PYBITMESSAGEVERSION=$1
+
 cd src && python2.7 build_osx.py py2app
 
 if [[ $? = "0" ]]; then

@@ -87,7 +87,7 @@ def check_openssl():
         paths = ['libeay32.dll']
         if getattr(sys, 'frozen', False):
             import os.path
-            paths.append(os.path.join(sys._MEIPASS, 'libeay32.dll'))
+            paths.insert(0, os.path.join(sys._MEIPASS, 'libeay32.dll'))
     else:
         paths = ['libcrypto.so']
     if sys.platform == 'darwin':
