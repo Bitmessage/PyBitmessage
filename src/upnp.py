@@ -1,5 +1,7 @@
 ﻿# A simple upnp module to forward port for BitMessage
 # Reference: http://mattscodecave.com/posts/using-python-and-upnp-to-forward-a-port
+import httplib
+from random import randint
 import socket
 from struct import unpack, pack
 import threading
