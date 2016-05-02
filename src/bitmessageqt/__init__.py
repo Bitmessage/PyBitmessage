@@ -11,6 +11,7 @@ try:
     from PyQt4 import QtCore, QtGui
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
+    from PyQt4.QtNetwork import QLocalSocket, QLocalServer
 
 except Exception as err:
     logmsg = 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
