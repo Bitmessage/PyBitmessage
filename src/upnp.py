@@ -71,6 +71,7 @@ class Router:
         import urllib2
         from xml.dom.minidom import parseString
         from urlparse import urlparse
+        from debug import logger
 
         self.address = address
 
@@ -81,7 +82,12 @@ class Router:
             if len(part) == 2:
                 header[part[0].lower()] = part[1]
 
-        self.routerPath = urlparse(header['location'])
+        try:
+            self.routerPath = urlparse(header['location'])
+            if not self.routerPath or not hasattr(self.routerPath, "hostname"):
+                logger.error ("UPnP: no hostname: %s", header['location'])
+        except KeyError:
+            logger.error ("UPnP: missing location header")
 
         # get the profile xml file and read it into a variable
         directory = urllib2.urlopen(header['location']).read()
