@@ -1,5 +1,6 @@
 APP=pybitmessage
-VERSION=0.4.4
+APPDIR=`basename "\`pwd\`"`
+VERSION=0.6.0
 RELEASE=1
 ARCH_TYPE=`uname -m`
 PREFIX?=/usr/local
@@ -8,7 +9,7 @@ LIBDIR=lib
 all:
 debug:
 source:
-	tar -cvf ../${APP}_${VERSION}.orig.tar ../${APP}-${VERSION} --exclude-vcs
+	tar -cvf ../${APP}_${VERSION}.orig.tar ../${APPDIR} --exclude-vcs
 	gzip -f9n ../${APP}_${VERSION}.orig.tar
 install:
 	mkdir -p ${DESTDIR}/usr
@@ -57,5 +58,5 @@ clean:
 	rm -f puppypackage/*.gz puppypackage/*.pet slackpackage/*.txz
 
 sourcedeb:
-	tar -cvf ../${APP}_${VERSION}.orig.tar ../${APP}-${VERSION} --exclude-vcs --exclude 'debian'
+	tar -cvf ../${APP}_${VERSION}.orig.tar ../${APPDIR} --exclude-vcs --exclude 'debian'
 	gzip -f9n ../${APP}_${VERSION}.orig.tar

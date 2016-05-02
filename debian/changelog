@@ -1,3 +1,12 @@
+pybitmessage (0.6.0-1) trusty; urgency=low
+
+  * Bugfixes
+  * UI improvements
+  * performance and security improvements
+  * integration with email gateway (mailchuck.com)
+
+ -- Peter Surda <dev@mailchuck.com>  Mon, 2 May 2016 16:25:00 +0200
+
 pybitmessage (0.4.4-1) utopic; urgency=low
 
   * Added ability to limit network transfer rate
