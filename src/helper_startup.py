@@ -35,12 +35,12 @@ def loadConfig():
             needToCreateKeysFile = True
 
     else:
-        shared.config.read('keys.dat')
+        shared.config.read(shared.lookupExeFolder() + 'keys.dat')
         try:
             shared.config.get('bitmessagesettings', 'settingsversion')
             print 'Loading config files from same directory as program.'
             needToCreateKeysFile = False
-            shared.appdata = ''
+            shared.appdata = shared.lookupExeFolder()
         except:
             # Could not load the keys.dat file in the program directory. Perhaps it
             # is in the appdata directory.
@@ -145,5 +145,5 @@ def isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
             return StrictVersion("5.1.2600")<=VER_THIS and StrictVersion("6.0.6000")>=VER_THIS
         return False
     except Exception as err:
-        print "Info: we could not tell whether your OS is limited to having very view half open connections because we couldn't interpret the platform version. Don't worry; we'll assume that it is not limited. This tends to occur on Raspberry Pis. :", err
+        print "Info: we could not tell whether your OS is limited to having very few half open connections because we couldn't interpret the platform version. Don't worry; we'll assume that it is not limited. This tends to occur on Raspberry Pis. :", err
         return False

@@ -1,11 +1,13 @@
 #!/bin/bash
 
 APP=pybitmessage
-PREV_VERSION=0.4.2
-VERSION=0.4.4
+PREV_VERSION=0.4.4
+VERSION=0.6.0
 RELEASE=1
 ARCH_TYPE=all
 DIR=${APP}-${VERSION}
+CURDIR=`pwd`
+SHORTDIR=`basename ${CURDIR}`
 
 if [ $ARCH_TYPE == "x86_64" ]; then
     ARCH_TYPE="amd64"
@@ -30,17 +32,17 @@ make clean
 make
 
 # Change the parent directory name to Debian format
-mv ../${APP} ../${DIR}
+mv ../${SHORTDIR} ../${DIR}
 
 # Create a source archive
 make sourcedeb
 
 # Build the package
-dpkg-buildpackage -F
+dpkg-buildpackage -F -us -uc
 
 # Sign files
 gpg -ba ../${APP}_${VERSION}-1_${ARCH_TYPE}.deb
 gpg -ba ../${APP}_${VERSION}.orig.tar.gz
 
 # Restore the parent directory name
-mv ../${DIR} ../${APP}
+mv ../${DIR} ../${SHORTDIR}

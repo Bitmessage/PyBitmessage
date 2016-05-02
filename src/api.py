@@ -1,5 +1,5 @@
-# Copyright (c) 2012-2014 Jonathan Warren
-# Copyright (c) 2012-2014 The Bitmessage developers
+# Copyright (c) 2012-2016 Jonathan Warren
+# Copyright (c) 2012-2016 The Bitmessage developers
 
 comment= """
 This is not what you run to run the Bitmessage API. Instead, enable the API
@@ -12,8 +12,9 @@ if __name__ == "__main__":
     import sys
     sys.exit(0)
 
-from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler
+from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 import json
+from binascii import hexlify
 
 import shared
 import time
@@ -26,7 +27,7 @@ from pyelliptic.openssl import OpenSSL
 from struct import pack
 
 # Classes
-from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute
+from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute,sqlStoredProcedure
 from debug import logger
 
 # Helper Functions
@@ -42,6 +43,13 @@ class APIError(Exception):
         self.error_message = error_message
     def __str__(self):
         return "API Error %04i: %s" % (self.error_number, self.error_message)
+
+
+class StoppableXMLRPCServer(SimpleXMLRPCServer):
+    def serve_forever(self):
+        while shared.shutdown == 0:
+            self.handle_request()
+
 
 # This is one of several classes that constitute the API
 # This class was written by Vaibhav Bhatia. Modified by Jonathan Warren (Atheros).
@@ -174,7 +182,14 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         return data
 
     def HandleListAddressBookEntries(self, params):
-        queryreturn = sqlQuery('''SELECT label, address from addressbook''')
+        if len(params) == 1:
+            label, = params
+            label = self._decode(label, "base64")
+            queryreturn = sqlQuery('''SELECT label, address from addressbook WHERE label = ?''', label)
+        elif len(params) > 1:
+            raise APIError(0, "Too many paremeters, max 1")
+        else:
+            queryreturn = sqlQuery('''SELECT label, address from addressbook''')
         data = '{"addresses":['
         for row in queryreturn:
             label, address = row
@@ -197,8 +212,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(16, 'You already have this address in your address book.')
 
         sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
-        shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-        shared.UISignalQueue.put(('rerenderSentToLabels',''))
+        shared.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
+        shared.UISignalQueue.put(('rerenderMessagelistToLabels',''))
         shared.UISignalQueue.put(('rerenderAddressBook',''))
         return "Added address %s to address book" % address
 
@@ -209,8 +224,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         address = addBMIfNotPresent(address)
         self._verifyAddress(address)
         sqlExecute('DELETE FROM addressbook WHERE address=?', address)
-        shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-        shared.UISignalQueue.put(('rerenderSentToLabels',''))
+        shared.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
+        shared.UISignalQueue.put(('rerenderMessagelistToLabels',''))
         shared.UISignalQueue.put(('rerenderAddressBook',''))
         return "Deleted address book entry for %s if it existed" % address
 
@@ -448,8 +463,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         shared.config.remove_section(address)
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
             shared.config.write(configfile)
-        shared.UISignalQueue.put(('rerenderInboxFromLabels',''))
-        shared.UISignalQueue.put(('rerenderSentToLabels',''))
+        shared.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
+        shared.UISignalQueue.put(('rerenderMessagelistToLabels',''))
         shared.reloadMyAddressHashes()
         return 'success'
 
@@ -463,7 +478,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
                 data += ','
-            data += json.dumps({'msgid': msgid.encode('hex'), 'toAddress': toAddress, 'fromAddress': fromAddress, 'subject': subject.encode(
+            data += json.dumps({'msgid': hexlify(msgid), 'toAddress': toAddress, 'fromAddress': fromAddress, 'subject': subject.encode(
                 'base64'), 'message': message.encode('base64'), 'encodingType': encodingtype, 'receivedTime': received, 'read': read}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
@@ -476,7 +491,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             msgid = row[0]
             if len(data) > 25:
                 data += ','
-            data += json.dumps({'msgid': msgid.encode('hex')}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid': hexlify(msgid)}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -501,7 +516,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received, 'read': read}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received, 'read': read}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
 
@@ -514,7 +529,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
                 data += ','
-            data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':hexlify(ackdata)}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -525,7 +540,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             msgid = row[0]
             if len(data) > 25:
                 data += ','
-            data += json.dumps({'msgid':msgid.encode('hex')}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid)}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -541,7 +556,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
                 data += ','
-            data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -555,7 +570,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':hexlify(ackdata)}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
 
@@ -572,7 +587,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
                 data += ','
-            data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':hexlify(ackdata)}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -587,7 +602,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data += json.dumps({'msgid':msgid.encode('hex'), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':ackdata.encode('hex')}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':hexlify(ackdata)}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -680,7 +695,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
         shared.workerQueue.put(('sendmessage', toAddress))
 
-        return ackdata.encode('hex')
+        return hexlify(ackdata)
 
     def HandleSendBroadcast(self, params):
         if len(params) == 0:
@@ -737,7 +752,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             toAddress, toLabel, fromAddress, subject, message, ackdata)))
         shared.workerQueue.put(('sendbroadcast', ''))
 
-        return ackdata.encode('hex')
+        return hexlify(ackdata)
 
     def HandleGetStatus(self, params):
         if len(params) != 1:
@@ -779,7 +794,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(16, 'You are already subscribed to that address.')
         sqlExecute('''INSERT INTO subscriptions VALUES (?,?,?)''',label, address, True)
         shared.reloadBroadcastSendersForWhichImWatching()
-        shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
+        shared.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         shared.UISignalQueue.put(('rerenderSubscriptions', ''))
         return 'Added subscription.'
 
@@ -790,7 +805,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         address = addBMIfNotPresent(address)
         sqlExecute('''DELETE FROM subscriptions WHERE address=?''', address)
         shared.reloadBroadcastSendersForWhichImWatching()
-        shared.UISignalQueue.put(('rerenderInboxFromLabels', ''))
+        shared.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
         shared.UISignalQueue.put(('rerenderSubscriptions', ''))
         return 'Deleted subscription if it existed.'
 
@@ -836,9 +851,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         TTL = 2.5 * 24 * 60 * 60
         shared.inventory[inventoryHash] = (
             objectType, toStreamNumber, encryptedPayload, int(time.time()) + TTL,'')
-        shared.inventorySets[toStreamNumber].add(inventoryHash)
         with shared.printLock:
-            print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', inventoryHash.encode('hex')
+            print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
         shared.broadcastToSendDataQueues((
             toStreamNumber, 'advertiseobject', inventoryHash))
 
@@ -884,9 +898,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         TTL = 28 * 24 * 60 * 60
         shared.inventory[inventoryHash] = (
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL,'')
-        shared.inventorySets[pubkeyStreamNumber].add(inventoryHash)
         with shared.printLock:
-            print 'broadcasting inv within API command disseminatePubkey with hash:', inventoryHash.encode('hex')
+            print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
         shared.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
 
@@ -921,7 +934,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             payload, = row
             if len(data) > 25:
                 data += ','
-            data += json.dumps({'data':payload.encode('hex')}, indent=4, separators=(',', ': '))
+            data += json.dumps({'data':hexlify(payload)}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -956,6 +969,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         message, = params
         shared.UISignalQueue.put(('updateStatusBar', message))
 
+    def HandleDeleteAndVacuum(self, params):
+        sqlStoredProcedure('deleteandvacuume')
+        return 'done'
 
     handlers = {}
     handlers['helloWorld'] = HandleHelloWorld
@@ -1006,6 +1022,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     handlers['getMessageDataByDestinationTag'] = HandleGetMessageDataByDestinationHash
     handlers['clientStatus'] = HandleClientStatus
     handlers['decodeAddress'] = HandleDecodeAddress
+    handlers['deleteAndVacuum'] = HandleDeleteAndVacuum
 
     def _handle_request(self, method, params):
         if (self.handlers.has_key(method)):

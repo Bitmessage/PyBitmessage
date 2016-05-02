@@ -65,5 +65,5 @@ class Ui_NewSubscriptionDialog(object):
         NewSubscriptionDialog.setWindowTitle(_translate("NewSubscriptionDialog", "Add new entry", None))
         self.label_2.setText(_translate("NewSubscriptionDialog", "Label", None))
         self.label.setText(_translate("NewSubscriptionDialog", "Address", None))
-        self.checkBoxDisplayMessagesAlreadyInInventory.setText(_translate("NewSubscriptionDialog", "CheckBox", None))
+        self.checkBoxDisplayMessagesAlreadyInInventory.setText(_translate("NewSubscriptionDialog", "Enter an address above.", None))
 

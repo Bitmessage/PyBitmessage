@@ -4,6 +4,9 @@ import defaultKnownNodes
 import pickle
 import time
 
+from debug import logger
+import socks
+
 def knownNodes():
     try:
         # We shouldn't have to use the shared.knownNodesLock because this had
@@ -26,7 +29,7 @@ def knownNodes():
     except:
         shared.knownNodes = defaultKnownNodes.createDefaultKnownNodes(shared.appdata)
     if shared.config.getint('bitmessagesettings', 'settingsversion') > 10:
-        print 'Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.'
+        logger.error('Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.')
         raise SystemExit
 
 def dns():
@@ -35,20 +38,53 @@ def dns():
     # defaultKnownNodes.py. Hopefully either they are up to date or the user
     # has run Bitmessage recently without SOCKS turned on and received good
     # bootstrap nodes using that method.
-    with shared.printLock:
-        if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none':
+    if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none':
+        try:
+            for item in socket.getaddrinfo('bootstrap8080.bitmessage.org', 80):
+                logger.info('Adding ' + item[4][0] + ' to knownNodes based on DNS bootstrap method')
+                shared.knownNodes[1][shared.Peer(item[4][0], 8080)] = int(time.time())
+        except:
+            logger.error('bootstrap8080.bitmessage.org DNS bootstrapping failed.')
+        try:
+            for item in socket.getaddrinfo('bootstrap8444.bitmessage.org', 80):
+                logger.info ('Adding ' + item[4][0] + ' to knownNodes based on DNS bootstrap method')
+                shared.knownNodes[1][shared.Peer(item[4][0], 8444)] = int(time.time())
+        except:
+            logger.error('bootstrap8444.bitmessage.org DNS bootstrapping failed.')
+    elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
+        shared.knownNodes[1][shared.Peer('quzwelsuziwqgpt2.onion', 8444)] = int(time.time())
+        logger.debug("Adding quzwelsuziwqgpt2.onion:8444 to knownNodes.")
+        for port in [8080, 8444]:
+            logger.debug("Resolving %i through SOCKS...", port)
+            address_family = socket.AF_INET
+            sock = socks.socksocket(address_family, socket.SOCK_STREAM)
+            sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            sock.settimeout(20)
+            proxytype = socks.PROXY_TYPE_SOCKS5
+            sockshostname = shared.config.get(
+                'bitmessagesettings', 'sockshostname')
+            socksport = shared.config.getint(
+                'bitmessagesettings', 'socksport')
+            rdns = True  # Do domain name lookups through the proxy; though this setting doesn't really matter since we won't be doing any domain name lookups anyway.
+            if shared.config.getboolean('bitmessagesettings', 'socksauthentication'):
+                socksusername = shared.config.get(
+                    'bitmessagesettings', 'socksusername')
+                sockspassword = shared.config.get(
+                    'bitmessagesettings', 'sockspassword')
+                sock.setproxy(
+                    proxytype, sockshostname, socksport, rdns, socksusername, sockspassword)
+            else:
+                sock.setproxy(
+                    proxytype, sockshostname, socksport, rdns)
             try:
-                for item in socket.getaddrinfo('bootstrap8080.bitmessage.org', 80):
-                    print 'Adding', item[4][0], 'to knownNodes based on DNS boostrap method'
-                    shared.knownNodes[1][shared.Peer(item[4][0], 8080)] = int(time.time())
+                ip = sock.resolve("bootstrap" + str(port) + ".bitmessage.org")
+                sock.shutdown(socket.SHUT_RDWR)
+                sock.close()
             except:
-                print 'bootstrap8080.bitmessage.org DNS bootstrapping failed.'
-            try:
-                for item in socket.getaddrinfo('bootstrap8444.bitmessage.org', 80):
-                    print 'Adding', item[4][0], 'to knownNodes based on DNS boostrap method'
-                    shared.knownNodes[1][shared.Peer(item[4][0], 8444)] = int(time.time())
-            except:
-                print 'bootstrap8444.bitmessage.org DNS bootstrapping failed.'
-        else:
-            print 'DNS bootstrap skipped because SOCKS is used.'
+                logger.error("SOCKS DNS resolving failed", exc_info=True)
+            if ip is not None:
+                logger.info ('Adding ' + ip + ' to knownNodes based on SOCKS DNS bootstrap method')
+                shared.knownNodes[1][shared.Peer(ip, port)] = time.time()
+    else:
+        logger.info('DNS bootstrap skipped because the proxy type does not support DNS resolution.')
 

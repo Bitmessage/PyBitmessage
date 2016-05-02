@@ -1,6 +1,7 @@
 import hashlib
 from struct import *
 from pyelliptic import arithmetic
+from binascii import hexlify, unhexlify
 
 
 
@@ -10,9 +11,9 @@ def convertIntToString(n):
     if a[-1:] == 'L':
         a = a[:-1]
     if (len(a) % 2) == 0:
-        return a[2:].decode('hex')
+        return unhexlify(a[2:])
     else:
-        return ('0'+a[2:]).decode('hex')
+        return unhexlify('0'+a[2:])
 
 ALPHABET = "123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz"
 
@@ -55,7 +56,7 @@ def decodeBase58(string, alphabet=ALPHABET):
 
 def encodeVarint(integer):
     if integer < 0:
-        print 'varint cannot be < 0'
+        logger.error('varint cannot be < 0')
         raise SystemExit
     if integer < 253:
         return pack('>B',integer)
@@ -66,7 +67,7 @@ def encodeVarint(integer):
     if integer >= 4294967296 and integer < 18446744073709551616:
         return pack('>B',255) + pack('>Q',integer)
     if integer >= 18446744073709551616:
-        print 'varint cannot be >= 18446744073709551616'
+        logger.error('varint cannot be >= 18446744073709551616')
         raise SystemExit
     
 class varintDecodeError(Exception):
@@ -142,7 +143,7 @@ def encodeAddress(version,stream,ripe):
     sha.update(currentHash)
     checksum = sha.digest()[0:4]
 
-    asInt = int(storedBinaryData.encode('hex') + checksum.encode('hex'),16)
+    asInt = int(hexlify(storedBinaryData) + hexlify(checksum),16)
     return 'BM-'+ encodeBase58(asInt)
 
 def decodeAddress(address):
@@ -165,7 +166,7 @@ def decodeAddress(address):
 
     #print 'hexdata', hexdata
 
-    data = hexdata.decode('hex')
+    data = unhexlify(hexdata)
     checksum = data[-4:]
 
     sha = hashlib.new('sha512')
@@ -185,25 +186,25 @@ def decodeAddress(address):
     try:
         addressVersionNumber, bytesUsedByVersionNumber = decodeVarint(data[:9])
     except varintDecodeError as e:
-        print e
+        logger.error(str(e))
         status = 'varintmalformed'
         return status,0,0,""
     #print 'addressVersionNumber', addressVersionNumber
     #print 'bytesUsedByVersionNumber', bytesUsedByVersionNumber
 
     if addressVersionNumber > 4:
-        print 'cannot decode address version numbers this high'
+        logger.error('cannot decode address version numbers this high')
         status = 'versiontoohigh'
         return status,0,0,""
     elif addressVersionNumber == 0:
-        print 'cannot decode address version numbers of zero.'
+        logger.error('cannot decode address version numbers of zero.')
         status = 'versiontoohigh'
         return status,0,0,""
 
     try:
         streamNumber, bytesUsedByStreamNumber = decodeVarint(data[bytesUsedByVersionNumber:])
     except varintDecodeError as e:
-        print e
+        logger.error(str(e))
         status = 'varintmalformed'
         return status,0,0,""
     #print streamNumber
@@ -268,7 +269,7 @@ if __name__ == "__main__":
     ripe.update(sha.digest())
     addressVersionNumber = 2
     streamNumber = 1
-    print 'Ripe digest that we will encode in the address:', ripe.digest().encode('hex')
+    print 'Ripe digest that we will encode in the address:', hexlify(ripe.digest())
     returnedAddress = encodeAddress(addressVersionNumber,streamNumber,ripe.digest())
     print 'Encoded address:', returnedAddress
     status,addressVersionNumber,streamNumber,data = decodeAddress(returnedAddress)
@@ -277,5 +278,5 @@ if __name__ == "__main__":
     print 'addressVersionNumber', addressVersionNumber
     print 'streamNumber', streamNumber
     print 'length of data(the ripe hash):', len(data)
-    print 'ripe data:', data.encode('hex')
+    print 'ripe data:', hexlify(data)
 
