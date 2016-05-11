@@ -10,7 +10,7 @@ pybitmessage: pybitmessage (Send encrypted messages)
 pybitmessage:
 pybitmessage: Bitmessage is a P2P communications protocol used to send
 pybitmessage: encrypted messages to another person or to many subscribers. It
-pybitmessage: is decentralized and trustless, meaning that you need-not
+pybitmessage: is decentralized and trustless, meaning that you need not
 pybitmessage: inherently trust any entities like root certificate authorities.
 pybitmessage: It uses strong authentication which means that the sender of a
 pybitmessage: message cannot be spoofed, and it aims to hide "non-content"

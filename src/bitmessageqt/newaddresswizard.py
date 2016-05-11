@@ -40,7 +40,7 @@ class NewAddressWizardRngPassphrasePage(QtGui.QWizardPage):
             "The \'Random Number\' option is selected by default but deterministic addresses have several pros and cons:</p>"
             "<table border=0><tr><td><span style=\" font-weight:600;\">Pros:</span></td><td><span style=\" font-weight:600;\">Cons:</span></td></tr>"
             "<tr><td>You can recreate your addresses on any computer from memory. "
-            "You need-not worry about backing up your keys.dat file as long as you can remember your passphrase.</td>"
+            "You need not worry about backing up your keys.dat file as long as you can remember your passphrase.</td>"
             "<td>You must remember (or write down) your passphrase if you expect to be able "
             "to recreate your keys if they are lost. "
 #            "You must remember the address version number and the stream number along with your passphrase. "
