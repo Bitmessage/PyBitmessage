@@ -30,9 +30,9 @@ def getSortedSubscriptions(count = False):
         ret[address]["inbox"]['count'] = 0
     if count:
         queryreturn = sqlQuery('''SELECT fromaddress, folder, count(msgid) as cnt
-            FROM inbox, subscriptions
-            WHERE read = 0 AND subscriptions.address = inbox.fromaddress
-            GROUP BY inbox.fromaddress, folder''')
+            FROM inbox, subscriptions ON subscriptions.address = inbox.fromaddress
+            WHERE read = 0 AND toaddress = ?
+            GROUP BY inbox.fromaddress, folder''', str_broadcast_subscribers)
         for row in queryreturn:
             address, folder, cnt = row
             if not folder in ret[address]:

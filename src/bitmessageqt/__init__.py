@@ -902,65 +902,57 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.tabWidget.setCurrentIndex(3)
         
     def propagateUnreadCount(self, address = None, folder = "inbox", widget = None, type = 1):
-        def updateUnreadCount(item):
-            # if refreshing the account root, we need to rescan folders
-            if type == 0 or (folder is None and isinstance(item, Ui_FolderWidget)):
-                if addressItem.type in [AccountMixin.SUBSCRIPTION, AccountMixin.MAILINGLIST]:
-                    xAddress = "fromaddress"
-                else:
-                    xAddress = "toaddress"
-                xFolder = folder
-                if isinstance(item, Ui_FolderWidget):
-                    xFolder = item.folderName
-                if xFolder == "new":
-                    xFolder = "inbox"
-                if addressItem.type == AccountMixin.ALL:
-                    if xFolder:
-                        queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE folder = ? AND read = 0", xFolder)
-                    else:
-                        queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE read = 0")
-                else:
-                    if address and xFolder:
-                        queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE " + xAddress + " = ? AND folder = ? AND read = 0", address, xFolder)
-                    elif address:
-                        queryreturn = sqlQuery("SELECT COUNT(*) FROM inbox WHERE " + xAddress + " = ? AND read = 0", address)
-                for row in queryreturn:
-                    item.setUnreadCount(int(row[0]))
-                if isinstance(item, Ui_AddressWidget) and item.type == AccountMixin.ALL:
-                    self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount())
-            elif type == 1:
-                item.setUnreadCount(item.unreadCount + 1)
-                if isinstance(item, Ui_AddressWidget) and item.type == AccountMixin.ALL:
-                    self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount(self.unreadCount + 1))
-            elif type == -1:
-                item.setUnreadCount(item.unreadCount - 1)
-                if isinstance(item, Ui_AddressWidget) and item.type == AccountMixin.ALL:
-                    self.drawTrayIcon(self.currentTrayIconFileName, self.findInboxUnreadCount(self.unreadCount -1))
-                
         widgets = [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]
+        queryReturn = sqlQuery("SELECT toaddress, folder, COUNT(msgid) AS cnt FROM inbox WHERE read = 0 GROUP BY toaddress, folder")
+        totalUnread = {}
+        normalUnread = {}
+        for row in queryReturn:
+            normalUnread[row[0]] = {}
+            if row[1] in ["trash"]:
+                continue
+            normalUnread[row[0]][row[1]] = row[2]
+            if row[1] in totalUnread:
+                totalUnread[row[1]] += row[2]
+            else:
+                totalUnread[row[1]] = row[2]
+        queryReturn = sqlQuery("SELECT fromaddress, folder, COUNT(msgid) AS cnt FROM inbox WHERE read = 0 AND toaddress = ? GROUP BY fromaddress, folder", str_broadcast_subscribers)
+        broadcastsUnread = {}
+        for row in queryReturn:
+            broadcastsUnread[row[0]] = {}
+            broadcastsUnread[row[0]][row[1]] = row[2]
+        
         for treeWidget in widgets:
             root = treeWidget.invisibleRootItem()
             for i in range(root.childCount()):
                 addressItem = root.child(i)
-                if addressItem.type != AccountMixin.ALL and address is not None and addressItem.data(0, QtCore.Qt.UserRole) != address:
-                    continue
-                if folder not in ["trash"]:
-                    updateUnreadCount(addressItem)
+                newCount = 0
+                if addressItem.type == AccountMixin.ALL:
+                    newCount = sum(totalUnread.itervalues())
+                    self.drawTrayIcon(self.currentTrayIconFileName, newCount)
+                elif addressItem.type == AccountMixin.SUBSCRIPTION:
+                    if addressItem.address in broadcastsUnread:
+                        newCount = sum(broadcastsUnread[addressItem.address].itervalues())
+                elif addressItem.address in normalUnread:
+                    newCount = sum(normalUnread[addressItem.address].itervalues())
+                if newCount != addressItem.unreadCount:
+                    addressItem.setUnreadCount(newCount)
                 if addressItem.childCount == 0:
                     continue
                 for j in range(addressItem.childCount()):
                     folderItem = addressItem.child(j)
-                    if folderItem.folderName == "new" and (folder is None or folder in ["inbox", "new"]):
-                        updateUnreadCount(folderItem)
-                        continue
-                    if folder is None and folderItem.folderName != "inbox":
-                        continue
-                    if folder is not None and ((folder == "new" and folderItem.folderName != "inbox") or \
-                        (folder != "new" and folderItem.folderName != folder)):
-                        continue
-                    if folder in ["sent", "trash"] and folderItem.folderName != folder:
-                        continue
-                    updateUnreadCount(folderItem)
+                    newCount = 0
+                    folderName = folderItem.folderName
+                    if folderName == "new":
+                        folderName = "inbox"
+                    if addressItem.type == AccountMixin.ALL and folderName in totalUnread:
+                        newCount = totalUnread[folderName]
+                    elif addressItem.type == AccountMixin.SUBSCRIPTION:
+                        if addressItem.address in broadcastsUnread and folderName in broadcastsUnread[addressItem.address]:
+                            newCount = broadcastsUnread[addressItem.address][folderName]
+                    elif addressItem.address in normalUnread and folderName in normalUnread[addressItem.address]:
+                        newCount = normalUnread[addressItem.address][folderName]
+                    if newCount != folderItem.unreadCount:
+                        folderItem.setUnreadCount(newCount)
 
     def addMessageListItem(self, tableWidget, items):
         sortingEnabled = tableWidget.isSortingEnabled()
@@ -3756,6 +3748,9 @@ class MyForm(settingsmixin.SMainWindow):
         if messagelist:
             account = self.getCurrentAccount()
             folder = self.getCurrentFolder()
+            treeWidget = self.getCurrentTreeWidget()
+            # refresh count indicator
+            self.propagateUnreadCount(account.address if hasattr(account, 'address') else None, folder, treeWidget, 0)
             self.loadMessagelist(messagelist, account, folder, searchOption, searchLine)
 
     def treeWidgetItemChanged(self, item, column):
