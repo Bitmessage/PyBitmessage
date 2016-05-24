@@ -105,16 +105,20 @@ def change_translation(locale):
     QtGui.QApplication.installTranslator(qsystranslator)
 
     lang = pythonlocale.normalize(l10n.getTranslationLanguage())
+    langs = [lang.split(".")[0] + "." + l10n.encoding, lang]
     if 'win32' in sys.platform or 'win64' in sys.platform:
-        lang = l10n.getWindowsLocale(lang)
-    try:
-        pythonlocale.setlocale(pythonlocale.LC_ALL, lang)
-        if 'win32' not in sys.platform and 'win64' not in sys.platform:
-            l10n.encoding = pythonlocale.nl_langinfo(pythonlocale.CODESET)
-        else:
-            l10n.encoding = pythonlocale.getlocale()[1]
-    except:
-        logger.error("Failed to set locale to %s", lang, exc_info=True)
+        langs = [l10n.getWindowsLocale(lang)]
+    for lang in langs:
+        try:
+            pythonlocale.setlocale(pythonlocale.LC_ALL, lang)
+            if 'win32' not in sys.platform and 'win64' not in sys.platform:
+                l10n.encoding = pythonlocale.nl_langinfo(pythonlocale.CODESET)
+            else:
+                l10n.encoding = pythonlocale.getlocale()[1]
+            logger.info("Successfully set locale to %s", lang)
+            break
+        except:
+            logger.error("Failed to set locale to %s", lang, exc_info=True)
 
 class MyForm(settingsmixin.SMainWindow):
 
