@@ -11,7 +11,7 @@
 #include <string.h>
 #include <stdio.h>
 #include <stdlib.h>
-#ifdef __APPLE__
+#if defined(__APPLE__) || defined(__FreeBSD__) || defined (__DragonFly__) || defined (__OpenBSD__) || defined (__NetBSD__)
 #include <sys/types.h>
 #include <sys/sysctl.h>
 #endif
@@ -89,18 +89,20 @@ void getnumthreads()
 #else
 	if (sysctlbyname("hw.logicalcpu", &core_count, &len, 0, 0) == 0)
 		numthreads = core_count;
+	else if (sysctlbyname("hw.ncpu", &core_count, &len, 0, 0) == 0)
+		numthreads = core_count;
 #endif
 	for (unsigned int i = 0; i < len * 8; i++)
 #if defined(_WIN32)
-		if (dwProcessAffinity & (1i64 << i)) {
+		if (dwProcessAffinity & (1i64 << i))
 #elif defined __linux__
-		if (CPU_ISSET(i, &dwProcessAffinity)) {
+		if (CPU_ISSET(i, &dwProcessAffinity))
 #else
-		if (dwProcessAffinity & (1 << i)) {
+		if (dwProcessAffinity & (1 << i))
 #endif
 			numthreads++;
-			printf("Detected core on: %u\n", i);
-		}
+	if (numthreads == 0) // something failed
+		numthreads = 1;
 	printf("Number of threads: %i\n", (int)numthreads);
 }
 
