@@ -1301,12 +1301,12 @@ Ricevonto postulas malfacilaĵon: %1 kaj %2</translation>
     <message>
         <location filename="../upnp.py" line="217"/>
         <source>UPnP port mapping established on port %1</source>
-        <translation type="unfinished"/>
+        <translation>UPnP pordo-mapigo farita je pordo %1</translation>
     </message>
     <message>
         <location filename="../upnp.py" line="241"/>
         <source>UPnP port mapping removed</source>
-        <translation type="unfinished"/>
+        <translation>UPnP pordo-mapigo forigita</translation>
     </message>
 </context>
 <context>
@@ -1490,7 +1490,7 @@ La &apos;hazardnombra&apos; adreso estas antaŭagordita, sed determinismaj adres
     <message>
         <location filename="../bitmessageqt/about.py" line="69"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright Â© 2012-2016 Jonathan Warren&lt;br/&gt;Copyright Â© 2013-2016 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"/>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Aŭtorrajto © 2012-2016 Jonathan Warren&lt;br/&gt;Aŭtorrajto © 2013-2016 La Programistoj de Bitmesaĝo&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
 </context>
 <context>
@@ -1582,7 +1582,7 @@ La &apos;hazardnombra&apos; adreso estas antaŭagordita, sed determinismaj adres
     <message>
         <location filename="../bitmessageqt/iconglossary.py" line="83"/>
         <source>You have no connections with other peers. </source>
-        <translation>Vi havas neniun konekton al aliaj samtavolano.</translation>
+        <translation>Vi havas neniajn konektojn al aliaj samtavolanoj.</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/iconglossary.py" line="84"/>
@@ -1738,7 +1738,7 @@ La &apos;hazardnombra&apos; adreso estas antaŭagordita, sed determinismaj adres
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="101"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter a name for your chan. If you choose a sufficiently complex chan name (like a strong and unique passphrase) and none of your friends share it publicly then the chan will be secure and private. If you and someone else both create a chan with the same chan name then it is currently very likely that they will be the same chan.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enmetu nomon por via kanalo. Se vi elektas sufiĉe ampleksan kanalnomon (kiel fortan kaj unikan pasfrazon) kaj neniu el viaj amikoj komunikas ĝin publike la kanalo estos sekura kaj privata. Se vi kaj iu ajn kreas kanalon kun la sama nomo tiam en la momento estas tre verŝajne ke estos la sama kanalo.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enmetu nomon por via kanalo. Se vi elektas sufiĉe ampleksan kanalnomon (kiel fortan kaj unikan pasfrazon) kaj neniu el viaj amikoj komunikas ĝin publike, la kanalo estos sekura kaj privata. Se vi kaj iu ajn kreas kanalon kun la sama nomo, tiam ili iĝos tre verŝajne la saman kanalon.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="105"/>
@@ -1748,7 +1748,7 @@ La &apos;hazardnombra&apos; adreso estas antaŭagordita, sed determinismaj adres
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="104"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A chan exists when a group of people share the same decryption keys. The keys and bitmessage address used by a chan are generated from a human-friendly word or phrase (the chan name). To send a message to everyone in the chan, send a normal person-to-person message to the chan address.&lt;/p&gt;&lt;p&gt;Chans are experimental and completely unmoderatable.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Kanalo ekzistas kiam grupo de personoj havas komunajn malĉifrajn ŝlosilojn. La ŝlosiloj kaj Bitmesaĝa adreso uzita de kanalo estas generita el hom-legebla vorto aŭ frazo (la nomo de la kanalo). Por sendi mesaĝon al ĉiu en la kanalo, sendu normalan inter-personan mesaĝon al la adreso de la kanalo.&lt;/p&gt;&lt;p&gt;Kanaloj estas eksperimentaj kaj tute malkontroleblaj.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Kanalo ekzistas kiam grupo da personoj havas komunajn malĉifrajn ŝlosilojn. La ŝlosiloj kaj Bitmesaĝa adreso uzitaj de kanalo estas generitaj el hom-legebla vorto aŭ frazo (la nomo de la kanalo). Por sendi mesaĝon al ĉiuj en la kanalo, sendu normalan inter-personan mesaĝon al la adreso de la kanalo.&lt;/p&gt;&lt;p&gt;Kanaloj estas eksperimentaj kaj tute malkontroleblaj.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="106"/>
@@ -2035,7 +2035,7 @@ La &apos;hazardnombra&apos; adreso estas antaŭagordita, sed determinismaj adres
     <message>
         <location filename="../bitmessageqt/settings.py" line="474"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitmessage can utilize a different Bitcoin-based program called Namecoin to make addresses human-friendly. For example, instead of having to tell your friend your long Bitmessage address, you can simply tell him to send a message to &lt;span style=&quot; font-style:italic;&quot;&gt;test. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(Getting your own Bitmessage address into Namecoin is still rather difficult).&lt;/p&gt;&lt;p&gt;Bitmessage can use either namecoind directly or a running nmcontrol instance.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitmesaĝo povas apliki alian Bitmono-bazitan programon - Namecoin - por fari adresojn hom-legeblajn. Ekzemple anstataŭ diri al via amiko longan Bitmesaĝan adreson, vi povas simple peti lin pri sendi mesaĝon al &lt;span style=&quot; font-style:italic;&quot;&gt;testo. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(Kreado de sia propra Bitmesaĝa adreso en Namecoin-on estas ankoraŭ ete malfacila).&lt;/p&gt;&lt;p&gt;Bitmesaĝo eblas uzi aŭ na namecoind rekte aŭ jaman aktivan aperon de nmcontrol.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitmesaĝo povas apliki alian Bitmono-bazitan programon - Namecoin - por fari adresojn hom-legeblajn. Ekzemple anstataŭ diri al via amiko longan Bitmesaĝan adreson, vi povas simple peti lin pri sendi mesaĝon al &lt;span style=&quot; font-style:italic;&quot;&gt;id/kashnomo. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(Kreado de sia propra Bitmesaĝa adreso en Namecoin-on estas ankoraŭ ete malfacila).&lt;/p&gt;&lt;p&gt;Bitmesaĝo eblas uzi aŭ na namecoind rekte aŭ jaman aktivan aperon de nmcontrol.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="475"/>
@@ -2050,7 +2050,7 @@ La &apos;hazardnombra&apos; adreso estas antaŭagordita, sed determinismaj adres
     <message>
         <location filename="../bitmessageqt/settings.py" line="479"/>
         <source>Test</source>
-        <translation>Testo</translation>
+        <translation>Testi</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="480"/>
