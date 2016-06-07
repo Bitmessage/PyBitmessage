@@ -35,13 +35,21 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             shared.knownNodes[self.streamNumber][peer] = time.time()
             shared.knownNodesLock.release()
         else:
-            while True:
+            while not shared.shutdown:
                 shared.knownNodesLock.acquire()
                 peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
+                priority = (183600 - (time.time() - shared.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
                 shared.knownNodesLock.release()
-                if shared.config.get('bitmessagesettings', 'socksproxytype') != 'none' or peer.host.find(".onion") == -1:
+                if shared.config.get('bitmessagesettings', 'socksproxytype') != 'none':
+                    if peer.host.find(".onion") == -1:
+                        priority /= 10 # hidden services have 10x priority over plain net
+                elif peer.host.find(".onion") != -1: # onion address and so proxy
+                    continue
+                if priority <= 0.001: # everyone has at least this much priority
+                    priority = 0.001
+                if (random.random() <=  priority):
                     break
-                time.sleep(1)
+                time.sleep(0.01) # prevent CPU hogging if something is broken
         return peer
         
     def stopThread(self):

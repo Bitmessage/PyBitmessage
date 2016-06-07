@@ -757,6 +757,8 @@ class receiveDataThread(threading.Thread):
         if not isHostInPrivateIPRange(self.peer.host):
             with shared.knownNodesLock:
                 shared.knownNodes[self.streamNumber][shared.Peer(self.peer.host, self.remoteNodeIncomingPort)] = int(time.time())
+                if not self.initiatedConnection:
+                    shared.knownNodes[self.streamNumber][shared.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 162000 # penalise inbound, 2 days minus 3 hours
                 shared.needToWriteKnownNodesToDisk = True
 
         self.sendverack()
