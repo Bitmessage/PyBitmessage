@@ -50,7 +50,10 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 if (random.random() <=  priority):
                     break
                 time.sleep(0.01) # prevent CPU hogging if something is broken
-        return peer
+        try:
+            return peer
+        except NameError:
+            return shared.Peer('127.0.0.1', 8444)
         
     def stopThread(self):
         super(outgoingSynSender, self).stopThread()

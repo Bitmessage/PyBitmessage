@@ -21,13 +21,16 @@ def knownNodes():
             shared.knownNodes[stream] = {}
             for node_tuple in nodes.items():
                 try:
-                    host, (port, time) = node_tuple
+                    host, (port, lastseen) = node_tuple
                     peer = shared.Peer(host, port)
                 except:
-                    peer, time = node_tuple
-                shared.knownNodes[stream][peer] = time
+                    peer, lastseen = node_tuple
+                shared.knownNodes[stream][peer] = lastseen
     except:
         shared.knownNodes = defaultKnownNodes.createDefaultKnownNodes(shared.appdata)
+    # your own onion address, if setup
+    if shared.config.has_option('bitmessagesettings', 'onionhostname') and ".onion" in shared.config.get('bitmessagesettings', 'onionhostname'):
+        shared.knownNodes[1][shared.Peer(shared.config.get('bitmessagesettings', 'onionhostname'), shared.config.getint('bitmessagesettings', 'onionport'))] = int(time.time())
     if shared.config.getint('bitmessagesettings', 'settingsversion') > 10:
         logger.error('Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.')
         raise SystemExit

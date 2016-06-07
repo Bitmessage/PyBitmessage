@@ -27,6 +27,9 @@ class singleListener(threading.Thread, StoppableThread):
 
     def _createListenSocket(self, family):
         HOST = ''  # Symbolic name meaning all available interfaces
+        # If not sockslisten, but onionhostname defined, only listen on localhost
+        if not shared.safeConfigGetBoolean('bitmessagesettings', 'sockslisten') and ".onion" in shared.config.get('bitmessagesettings', 'onionhostname'):
+            HOST = shared.config.get('bitmessagesettings', 'onionbindip')
         PORT = shared.config.getint('bitmessagesettings', 'port')
         sock = socket.socket(family, socket.SOCK_STREAM)
         if family == socket.AF_INET6:
@@ -43,12 +46,14 @@ class singleListener(threading.Thread, StoppableThread):
     def stopThread(self):
         super(singleListener, self).stopThread()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        try:
-            s.connect(('127.0.0.1', shared.config.getint('bitmessagesettings', 'port')))
-            s.shutdown(socket.SHUT_RDWR)
-            s.close()
-        except:
-            pass
+        for ip in ('127.0.0.1', shared.config.get('bitmessagesettings', 'onionbindip')):
+            try:
+                s.connect((ip, shared.config.getint('bitmessagesettings', 'port')))
+                s.shutdown(socket.SHUT_RDWR)
+                s.close()
+                break
+            except:
+                pass
 
     def run(self):
         # If there is a trusted peer then we don't want to accept
@@ -62,8 +67,12 @@ class singleListener(threading.Thread, StoppableThread):
         # We typically don't want to accept incoming connections if the user is using a
         # SOCKS proxy, unless they have configured otherwise. If they eventually select
         # proxy 'none' or configure SOCKS listening then this will start listening for
-        # connections.
-        while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not shared.config.getboolean('bitmessagesettings', 'sockslisten') and shared.shutdown == 0:
+        # connections. But if on SOCKS and have an onionhostname, listen
+        # (socket is then only opened for localhost)
+        while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and \
+            (not shared.config.getboolean('bitmessagesettings', 'sockslisten') and \
+            ".onion" not in shared.config.get('bitmessagesettings', 'onionhostname')) and \
+            shared.shutdown == 0:
             self.stop.wait(5)
 
         logger.info('Listening for incoming connections.')
@@ -77,6 +86,7 @@ class singleListener(threading.Thread, StoppableThread):
             if (isinstance(e.args, tuple) and
                 e.args[0] in (errno.EAFNOSUPPORT,
                               errno.EPFNOSUPPORT,
+                              errno.EADDRNOTAVAIL,
                               errno.ENOPROTOOPT)):
                 sock = self._createListenSocket(socket.AF_INET)
             else:
@@ -90,7 +100,7 @@ class singleListener(threading.Thread, StoppableThread):
             # SOCKS proxy, unless they have configured otherwise. If they eventually select
             # proxy 'none' or configure SOCKS listening then this will start listening for
             # connections.
-            while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not shared.config.getboolean('bitmessagesettings', 'sockslisten') and shared.shutdown == 0:
+            while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not shared.config.getboolean('bitmessagesettings', 'sockslisten') and ".onion" not in shared.config.get('bitmessagesettings', 'onionhostname') and shared.shutdown == 0:
                 self.stop.wait(10)
             while len(shared.connectedHostsList) > 220 and shared.shutdown == 0:
                 logger.info('We are connected to too many people. Not accepting further incoming connections for ten seconds.')
@@ -112,7 +122,9 @@ class singleListener(threading.Thread, StoppableThread):
                 # is already connected because the two computers will
                 # share the same external IP. This is here to prevent
                 # connection flooding.
-                if HOST in shared.connectedHostsList:
+                # permit repeated connections from Tor
+                # FIXME: sockshostname may be a hostname rather than IP, in such a case this will break
+                if HOST in shared.connectedHostsList and (".onion" not in shared.config.get('bitmessagesettings', 'onionhostname') or HOST != shared.config.get('bitmessagesettings', 'sockshostname')):
                     socketObject.close()
                     logger.info('We are already connected to ' + str(HOST) + '. Ignoring connection.')
                 else:

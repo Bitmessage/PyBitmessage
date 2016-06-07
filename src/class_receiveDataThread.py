@@ -601,10 +601,19 @@ class receiveDataThread(threading.Thread):
         # the right child stream.
         with shared.knownNodesLock:
             if len(shared.knownNodes[self.streamNumber]) > 0:
+                ownPosition = random.randint(0, 499)
+                sentOwn = False
                 for i in range(500):
-                    peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
+                    # if current connection is over a proxy, sent our own onion address at a random position
+                    if ownPosition == i and ".onion" in shared.config.get("bitmessagesettings", "onionhostname") and self.sock.getproxytype() != 0 and not sentOwn:
+                        peer = shared.Peer(shared.config.get("bitmessagesettings", "onionhostname"), shared.config.getint("bitmessagesettings", "onionport"))
+                    else:
+                    # still may contain own onion address, but we don't change it
+                        peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
                     if isHostInPrivateIPRange(peer.host):
                         continue
+                    if shared.config.get("bitmessagesettings", "onionhostname") == peer.host:
+                        sentOwn = True
                     addrsInMyStream[peer] = shared.knownNodes[
                         self.streamNumber][peer]
             if len(shared.knownNodes[self.streamNumber * 2]) > 0:
