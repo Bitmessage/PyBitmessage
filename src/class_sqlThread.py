@@ -419,6 +419,13 @@ class sqlThread(threading.Thread):
             logger.debug('In messages.dat database, done adding address field to the pubkeys table and removing the hash field.')
             self.cur.execute('''update settings set value=10 WHERE key='version';''')
         
+        if not shared.config.has_option('bitmessagesettings', 'onionhostname'):
+            shared.config.set('bitmessagesettings', 'onionhostname', '')
+        if not shared.config.has_option('bitmessagesettings', 'onionport'):
+            shared.config.set('bitmessagesettings', 'onionport', '8444')
+        if not shared.config.has_option('bitmessagesettings', 'onionbindip'):
+            shared.config.set('bitmessagesettings', 'onionbindip', '127.0.0.1')
+        shared.writeKeysFile()
         
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users or modify the SQLite database? Add it right above this line!

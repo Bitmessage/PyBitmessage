@@ -299,6 +299,9 @@ class socksocket(socket.socket):
         """
         return self.__proxypeername
 
+    def getproxytype(self):
+        return self.__proxy[0]
+
     def __negotiatesocks4(self,destaddr,destport):
         """__negotiatesocks4(self,destaddr,destport)
         Negotiates a connection through a SOCKS4 server.
