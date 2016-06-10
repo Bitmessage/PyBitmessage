@@ -605,14 +605,15 @@ class receiveDataThread(threading.Thread):
                 sentOwn = False
                 for i in range(500):
                     # if current connection is over a proxy, sent our own onion address at a random position
-                    if ownPosition == i and ".onion" in shared.config.get("bitmessagesettings", "onionhostname") and self.sock.getproxytype() != 0 and not sentOwn:
+                    if ownPosition == i and ".onion" in shared.config.get("bitmessagesettings", "onionhostname") and \
+                        hasattr(self.sock, "getproxytype") and self.sock.getproxytype() != "none" and not sentOwn:
                         peer = shared.Peer(shared.config.get("bitmessagesettings", "onionhostname"), shared.config.getint("bitmessagesettings", "onionport"))
                     else:
                     # still may contain own onion address, but we don't change it
                         peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
                     if isHostInPrivateIPRange(peer.host):
                         continue
-                    if shared.config.get("bitmessagesettings", "onionhostname") == peer.host:
+                    if peer.host == shared.config.get("bitmessagesettings", "onionhostname") and peer.port == shared.config.getint("bitmessagesettings", "onionport") :
                         sentOwn = True
                     addrsInMyStream[peer] = shared.knownNodes[
                         self.streamNumber][peer]
