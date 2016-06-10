@@ -63,7 +63,8 @@ _generalerrors = ("success",
     "not connected",
     "not available",
     "bad proxy type",
-    "bad input")
+    "bad input",
+    "timed out")
 
 _socks5errors = ("succeeded",
     "general SOCKS server failure",
@@ -129,7 +130,10 @@ class socksocket(socket.socket):
         Receive EXACTLY the number of bytes requested from the socket.
         Blocks until the required number of bytes have been received.
         """
-        data = self.recv(count)
+        try:
+            data = self.recv(count)
+        except socket.timeout:
+            raise GeneralProxyError((6, "timed out"))
         while len(data) < count:
             d = self.recv(count-len(data))
             if not d: raise GeneralProxyError((0, "connection closed unexpectedly"))
@@ -396,7 +400,14 @@ class socksocket(socket.socket):
                 portnum = self.__proxy[2]
             else:
                 portnum = 1080
-            _orgsocket.connect(self, (self.__proxy[1], portnum))
+            try:
+                _orgsocket.connect(self, (self.__proxy[1], portnum))
+            except socket.error as e:
+                if e[0] == 101:
+                    raise Socks5Error((3, _socks5errors[3]))
+                if e[0] == 111:
+                    raise Socks5Error((5, _socks5errors[5]))
+                raise
             self.__negotiatesocks5()
             self.__connectsocks5(destpair[0], destpair[1])
         elif self.__proxy[0] == PROXY_TYPE_SOCKS4:
