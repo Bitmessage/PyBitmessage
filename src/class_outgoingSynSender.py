@@ -222,8 +222,11 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                     'updateStatusBar', tr._translate(
                     "MainWindow", "SOCKS5 Authentication problem: %1").arg(str(err))))
             except socks.Socks5Error as err:
-                pass
-                logger.error('SOCKS5 error. (It is possible that the server wants authentication).) ' + str(err))
+                if err[0] in [3, 4, 5, 6]:
+                    # this is a more bening "error": host unreachable, network unreachable, connection refused, TTL expired
+                    logger.debug('SOCKS5 error. ' + str(err))
+                else:
+                    logger.error('SOCKS5 error. ' + str(err))
             except socks.Socks4Error as err:
                 logger.error('Socks4Error: ' + str(err))
             except socket.error as err:
