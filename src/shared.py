@@ -263,8 +263,12 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber, server = Fals
 
     payload += pack(
         '>q', 1)  # boolservices of remote connection; ignored by the remote host.
-    payload += encodeHost(remoteHost)
-    payload += pack('>H', remotePort)  # remote IPv6 and port
+    if checkSocksIP(remoteHost) and server: # prevent leaking of tor outbound IP
+        payload += encodeHost('127.0.0.1')
+        payload += pack('>H', 8444)
+    else:
+        payload += encodeHost(remoteHost)
+        payload += pack('>H', remotePort)  # remote IPv6 and port
 
     payload += pack('>q', 1)  # bitflags of the services I offer.
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
