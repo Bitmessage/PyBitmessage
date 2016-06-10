@@ -123,8 +123,7 @@ class singleListener(threading.Thread, StoppableThread):
                 # share the same external IP. This is here to prevent
                 # connection flooding.
                 # permit repeated connections from Tor
-                # FIXME: sockshostname may be a hostname rather than IP, in such a case this will break
-                if HOST in shared.connectedHostsList and (".onion" not in shared.config.get('bitmessagesettings', 'onionhostname') or HOST != shared.config.get('bitmessagesettings', 'sockshostname')):
+                if HOST in shared.connectedHostsList and (".onion" not in shared.config.get('bitmessagesettings', 'onionhostname') or shared.checkSocksIP(HOST)):
                     socketObject.close()
                     logger.info('We are already connected to ' + str(HOST) + '. Ignoring connection.')
                 else:
