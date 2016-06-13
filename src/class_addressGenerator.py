@@ -3,7 +3,6 @@ import threading
 import time
 import sys
 from pyelliptic.openssl import OpenSSL
-import ctypes
 import hashlib
 import highlevelcrypto
 from addresses import *
@@ -13,13 +12,14 @@ from pyelliptic import arithmetic
 import tr
 from binascii import hexlify
 
+
 class addressGenerator(threading.Thread, StoppableThread):
 
     def __init__(self):
         # QThread.__init__(self, parent)
         threading.Thread.__init__(self, name="addressGenerator")
         self.initStop()
-        
+
     def stopThread(self):
         try:
             shared.addressGeneratorQueue.put(("stopThread", "data"))
@@ -53,7 +53,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                     if eighteenByteRipe:
                         numberOfNullBytesDemandedOnFrontOfRipeHash = 2
                     else:
-                        numberOfNullBytesDemandedOnFrontOfRipeHash = 1 # the default
+                        numberOfNullBytesDemandedOnFrontOfRipeHash = 1  # The default
             elif len(queueValue) == 9:
                 command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes = queueValue
                 try:
@@ -63,15 +63,18 @@ class addressGenerator(threading.Thread, StoppableThread):
                     if eighteenByteRipe:
                         numberOfNullBytesDemandedOnFrontOfRipeHash = 2
                     else:
-                        numberOfNullBytesDemandedOnFrontOfRipeHash = 1 # the default
+                        numberOfNullBytesDemandedOnFrontOfRipeHash = 1  # The default
             elif queueValue[0] == 'stopThread':
                 break
             else:
-                sys.stderr.write(
-                    'Programming error: A structure with the wrong number of values was passed into the addressGeneratorQueue. Here is the queueValue: %s\n' % repr(queueValue))
+                sys.stderr.write('Programming error: A structure with the wrong ' +
+                                 'number of values was passed into the addressGeneratorQueue. ' +
+                                 'Here is the queueValue: %s\n' % repr(queueValue))
             if addressVersionNumber < 3 or addressVersionNumber > 4:
                 sys.stderr.write(
-                    'Program error: For some reason the address generator queue has been given a request to create at least one version %s address which it cannot do.\n' % addressVersionNumber)
+                    'Program error: For some reason the address generator queue has ' +
+                    'been given a request to create at least one version %s address ' +
+                    'which it cannot do.\n' % addressVersionNumber)
             if nonceTrialsPerByte == 0:
                 nonceTrialsPerByte = shared.config.getint(
                     'bitmessagesettings', 'defaultnoncetrialsperbyte')
@@ -83,8 +86,9 @@ class addressGenerator(threading.Thread, StoppableThread):
             if payloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
                 payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
             if command == 'createRandomAddress':
-                shared.UISignalQueue.put((
-                    'updateStatusBar', tr._translate("MainWindow", "Generating one new address")))
+                shared.UISignalQueue.put(('updateStatusBar',
+                                          tr._translate("MainWindow",
+                                                        "Generating one new address")))
                 # This next section is a little bit strange. We're going to generate keys over and over until we
                 # find one that starts with either \x00 or \x00\x00. Then when we pack them into a Bitmessage address,
                 # we won't store the \x00 or \x00\x00 bytes thus making the
@@ -145,10 +149,11 @@ class addressGenerator(threading.Thread, StoppableThread):
                 # both need information back from the address generator.
                 shared.apiAddressGeneratorReturnQueue.put(address)
 
-                shared.UISignalQueue.put((
-                    'updateStatusBar', tr._translate("MainWindow", "Done generating address. Doing work necessary to broadcast it...")))
-                shared.UISignalQueue.put(('writeNewAddressToTable', (
-                    label, address, streamNumber)))
+                shared.UISignalQueue.put(('updateStatusBar',
+                                          tr._translate("MainWindow",
+                                                        "Done generating address. Doing work necessary to broadcast it...")))
+                shared.UISignalQueue.put(('writeNewAddressToTable',
+                                         (label, address, streamNumber)))
                 shared.reloadMyAddressHashes()
                 if addressVersionNumber == 3:
                     shared.workerQueue.put((
@@ -159,15 +164,18 @@ class addressGenerator(threading.Thread, StoppableThread):
 
             elif command == 'createDeterministicAddresses' or command == 'getDeterministicAddress' or command == 'createChan' or command == 'joinChan':
                 if len(deterministicPassphrase) == 0:
-                    sys.stderr.write(
-                        'WARNING: You are creating deterministic address(es) using a blank passphrase. Bitmessage will do it but it is rather stupid.')
+                    sys.stderr.write('[WARN]: You are creating deterministic address(es) ' +
+                                     'using a blank passphrase. Bitmessage will do it ' +
+                                     'but it is rather stupid.')
                 if command == 'createDeterministicAddresses':
-                    shared.UISignalQueue.put((
-                                'updateStatusBar', tr._translate("MainWindow","Generating %1 new addresses.").arg(str(numberOfAddressesToMake))))
+                    shared.UISignalQueue.put(('updateStatusBar',
+                                             tr._translate("MainWindow",
+                                                           "Generating %1 new addresses.").arg(str(numberOfAddressesToMake))))
                 signingKeyNonce = 0
                 encryptionKeyNonce = 1
-                listOfNewAddressesToSendOutThroughTheAPI = [
-                ]  # We fill out this list no matter what although we only need it if we end up passing the info to the API.
+
+                # We fill out this list no matter what although we only need it if we end up passing the info to the API.
+                listOfNewAddressesToSendOutThroughTheAPI = []
 
                 for i in range(numberOfAddressesToMake):
                     # This next section is a little bit strange. We're going to generate keys over and over until we
@@ -196,7 +204,6 @@ class addressGenerator(threading.Thread, StoppableThread):
                         if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
                             break
 
-                    
                     logger.info('Generated address with ripe digest: %s' % hexlify(ripe.digest()))
                     try:
                         logger.info('Address generator calculated %s addresses at %s addresses per second before finding one with the correct ripe-prefix.' % (numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime)))
@@ -230,17 +237,17 @@ class addressGenerator(threading.Thread, StoppableThread):
                         privEncryptionKeyWIF = arithmetic.changebase(
                             privEncryptionKey + checksum, 256, 58)
 
-                        
                         try:
                             shared.config.add_section(address)
                             addressAlreadyExists = False
                         except:
                             addressAlreadyExists = True
-                            
+
                         if addressAlreadyExists:
                             logger.info('%s already exists. Not adding it again.' % address)
-                            shared.UISignalQueue.put((
-                                'updateStatusBar', tr._translate("MainWindow","%1 is already in 'Your Identities'. Not adding it again.").arg(address)))
+                            shared.UISignalQueue.put(('updateStatusBar',
+                                                      tr._translate("MainWindow",
+                                                                    "%1 is already in 'Your Identities'. Not adding it again.").arg(address)))
                         else:
                             logger.debug('label: %s' % label)
                             shared.config.set(address, 'label', label)
@@ -248,20 +255,15 @@ class addressGenerator(threading.Thread, StoppableThread):
                             shared.config.set(address, 'decoy', 'false')
                             if command == 'joinChan' or command == 'createChan':
                                 shared.config.set(address, 'chan', 'true')
-                            shared.config.set(address, 'noncetrialsperbyte', str(
-                                nonceTrialsPerByte))
-                            shared.config.set(address, 'payloadlengthextrabytes', str(
-                                payloadLengthExtraBytes))
-                            shared.config.set(
-                                address, 'privSigningKey', privSigningKeyWIF)
-                            shared.config.set(
-                                address, 'privEncryptionKey', privEncryptionKeyWIF)
+                            shared.config.set(address, 'noncetrialsperbyte', str(nonceTrialsPerByte))
+                            shared.config.set(address, 'payloadlengthextrabytes', str(payloadLengthExtraBytes))
+                            shared.config.set(address, 'privSigningKey', privSigningKeyWIF)
+                            shared.config.set(address, 'privEncryptionKey', privEncryptionKeyWIF)
                             shared.writeKeysFile()
 
-                            shared.UISignalQueue.put(('writeNewAddressToTable', (
-                                label, address, str(streamNumber))))
-                            listOfNewAddressesToSendOutThroughTheAPI.append(
-                                address)
+                            shared.UISignalQueue.put(('writeNewAddressToTable',
+                                                     (label, address, str(streamNumber))))
+                            listOfNewAddressesToSendOutThroughTheAPI.append(address)
                             shared.myECCryptorObjects[ripe.digest()] = highlevelcrypto.makeCryptor(
                                 hexlify(potentialPrivEncryptionKey))
                             shared.myAddressesByHash[ripe.digest()] = address
@@ -269,14 +271,14 @@ class addressGenerator(threading.Thread, StoppableThread):
                                 addressVersionNumber) + encodeVarint(streamNumber) + ripe.digest()).digest()).digest()[32:]
                             shared.myAddressesByTag[tag] = address
                             if addressVersionNumber == 3:
-                                shared.workerQueue.put((
-                                    'sendOutOrStoreMyV3Pubkey', ripe.digest())) # If this is a chan address,
-                                        # the worker thread won't send out the pubkey over the network.
+                                # If this is a chan address,
+                                # the worker thread won't send out the pubkey over the network.
+                                shared.workerQueue.put(('sendOutOrStoreMyV3Pubkey', ripe.digest())) 
                             elif addressVersionNumber == 4:
-                                shared.workerQueue.put((
-                                    'sendOutOrStoreMyV4Pubkey', address))
-                            shared.UISignalQueue.put((
-                                'updateStatusBar', tr._translate("MainWindow", "Done generating address")))
+                                shared.workerQueue.put(('sendOutOrStoreMyV4Pubkey', address))
+                            shared.UISignalQueue.put(('updateStatusBar',
+                                                     tr._translate("MainWindow",
+                                                                   "Done generating address")))
 
 
                 # Done generating addresses.
@@ -286,6 +288,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                 elif command == 'getDeterministicAddress':
                     shared.apiAddressGeneratorReturnQueue.put(address)
             else:
-                raise Exception(
-                    "Error in the addressGenerator thread. Thread was given a command it could not understand: " + command)
+                raise Exception("Error in the addressGenerator thread. " +
+                                "Thread was given a command it could not understand: " +
+                                command)
             shared.addressGeneratorQueue.task_done()

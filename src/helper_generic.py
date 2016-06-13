@@ -4,6 +4,7 @@ from binascii import hexlify, unhexlify
 
 import shared
 
+
 def convertIntToString(n):
     a = __builtins__.hex(n)
     if a[-1:] == 'L':
@@ -23,10 +24,12 @@ def signal_handler(signal, frame):
         shared.doCleanShutdown()
         sys.exit(0)
     else:
-        print 'Unfortunately you cannot use Ctrl+C when running the UI because the UI captures the signal.'
+        print('Unfortunately you cannot use Ctrl+C ' +
+              'when running the UI because the UI captures the signal.')
+
 
 def isHostInPrivateIPRange(host):
-    if ":" in host: #IPv6
+    if ":" in host:  # IPv6
         hostAddr = socket.inet_pton(socket.AF_INET6, host)
         if hostAddr == ('\x00' * 15) + '\x01':
             return False
@@ -46,5 +49,6 @@ def isHostInPrivateIPRange(host):
             return True
     return False
 
-def addDataPadding(data, desiredMsgLength = 12, paddingChar = '\x00'):
+
+def addDataPadding(data, desiredMsgLength=12, paddingChar='\x00'):
     return data + paddingChar * (desiredMsgLength - len(data))

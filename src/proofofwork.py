@@ -1,6 +1,3 @@
-#import shared
-#import time
-#from multiprocessing import Pool, cpu_count
 import hashlib
 from struct import unpack, pack
 import sys
@@ -11,6 +8,7 @@ import tr
 import os
 import ctypes
 
+
 def _set_idle():
     if 'linux' in sys.platform:
         import os
@@ -18,7 +16,7 @@ def _set_idle():
     else:
         try:
             sys.getwindowsversion()
-            import win32api,win32process,win32con  # @UnresolvedImport
+            import win32api, win32process, win32con  # @UnresolvedImport
             pid = win32api.GetCurrentProcessId()
             handle = win32api.OpenProcess(win32con.PROCESS_ALL_ACCESS, True, pid)
             win32process.SetPriorityClass(handle, win32process.IDLE_PRIORITY_CLASS)
@@ -26,13 +24,15 @@ def _set_idle():
             #Windows 64-bit
             pass
 
+
 def _pool_worker(nonce, initialHash, target, pool_size):
     _set_idle()
     trialValue = float('inf')
     while trialValue > target and shutdown == 0:
         nonce += pool_size
-        trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+        trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
     return [trialValue, nonce]
+
 
 def _doSafePoW(target, initialHash):
     logger.debug("Safe PoW start")
@@ -40,11 +40,12 @@ def _doSafePoW(target, initialHash):
     trialValue = float('inf')
     while trialValue > target and shutdown == 0:
         nonce += 1
-        trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+        trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
     if shutdown != 0:
         raise Exception("Interrupted")
     logger.debug("Safe PoW done")
     return [trialValue, nonce]
+
 
 def _doFastPoW(target, initialHash):
     logger.debug("Fast PoW start")
@@ -57,13 +58,15 @@ def _doFastPoW(target, initialHash):
     try:
         maxCores = config.getint('bitmessagesettings', 'maxcores')
     except:
+        # FIXME: We aren't using supercomputers with several TFLOPS. Change it to something more realistic.
         maxCores = 99999
     if pool_size > maxCores:
         pool_size = maxCores
     pool = Pool(processes=pool_size)
     result = []
+    # FIXME: pool_worker is undefined
     for i in range(pool_size):
-        result.append(pool.apply_async(_pool_worker, args = (i, initialHash, target, pool_size)))
+        result.append(pool.apply_async(pool_worker, args=(i, initialHash, target, pool_size)))
     while True:
         if shutdown >= 1:
             pool.terminate()
@@ -72,11 +75,12 @@ def _doFastPoW(target, initialHash):
             if result[i].ready():
                 result = result[i].get()
                 pool.terminate()
-                pool.join() #Wait for the workers to exit...
+                pool.join()  # Wait for the workers to exit...
                 logger.debug("Fast PoW done")
                 return result[0], result[1]
         time.sleep(0.2)
-        
+
+
 def _doCPoW(target, initialHash):
     h = initialHash
     m = target
@@ -84,20 +88,21 @@ def _doCPoW(target, initialHash):
     out_m = ctypes.c_ulonglong(m)
     logger.debug("C PoW start")
     nonce = bmpow(out_h, out_m)
-    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+    trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
     if shutdown != 0:
         raise Exception("Interrupted")
     logger.debug("C PoW done")
     return [trialValue, nonce]
 
+
 def _doGPUPoW(target, initialHash):
     logger.debug("GPU PoW start")
     nonce = openclpow.do_opencl_pow(initialHash.encode("hex"), target)
-    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+    trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
     #print "{} - value {} < {}".format(nonce, trialValue, target)
     if trialValue > target:
         deviceNames = ", ".join(gpu.name for gpu in openclpow.gpus)
-        UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow",'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.')))
+        UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow", 'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.')))
         logger.error("Your GPUs (%s) did not calculate correctly, disabling OpenCL. Please report to the developers.", deviceNames)
         openclpow.ctx = False
         raise Exception("GPU did not calculate correctly.")
@@ -105,12 +110,13 @@ def _doGPUPoW(target, initialHash):
         raise Exception("Interrupted")
     logger.debug("GPU PoW done")
     return [trialValue, nonce]
-    
-def estimate(difficulty, format = False):
+
+
+def estimate(difficulty, f=False):
     ret = difficulty / 10
     if ret < 1:
         ret = 1
-    if format:
+    if f:
         out = str(int(ret)) + " seconds"
         if ret > 60:
             ret /= 60
@@ -128,30 +134,32 @@ def estimate(difficulty, format = False):
         if ret > 366:
             ret /= 366
             out = str(int(ret)) + " years"
+        return out
     else:
         return ret
+
 
 def run(target, initialHash):
     target = int(target)
     if safeConfigGetBoolean('bitmessagesettings', 'opencl') and openclpow.has_opencl():
-#        trialvalue1, nonce1 = _doGPUPoW(target, initialHash)
-#        trialvalue, nonce = _doFastPoW(target, initialHash)
-#        print "GPU: %s, %s" % (trialvalue1, nonce1)
-#        print "Fast: %s, %s" % (trialvalue, nonce)
-#        return [trialvalue, nonce]
+        # trialvalue1, nonce1 = _doGPUPoW(target, initialHash)
+        # trialvalue, nonce = _doFastPoW(target, initialHash)
+        # print "GPU: %s, %s" % (trialvalue1, nonce1)
+        # print "Fast: %s, %s" % (trialvalue, nonce)
+        # return [trialvalue, nonce]
         try:
             return _doGPUPoW(target, initialHash)
         except:
             if shutdown != 0:
                 raise
-            pass # fallback
+            pass  # Fallback
     if bmpow:
         try:
             return _doCPoW(target, initialHash)
         except:
             if shutdown != 0:
                 raise
-            pass # fallback
+            pass  # Fallback
     if frozen == "macosx_app" or not frozen:
         # on my (Peter Surda) Windows 10, Windows Defender
         # does not like this and fights with PyBitmessage
@@ -162,15 +170,15 @@ def run(target, initialHash):
         except:
             if shutdown != 0:
                 raise
-            pass #fallback
+            pass  # Fallback
     try:
         return _doSafePoW(target, initialHash)
     except:
         if shutdown != 0:
             raise
-        pass #fallback
+        pass  # Fallback
 
-# init
+# Init
 bitmsglib = 'bitmsghash.so'
 if "win32" == sys.platform:
     if ctypes.sizeof(ctypes.c_voidp) == 4:
@@ -183,7 +191,7 @@ if "win32" == sys.platform:
         logger.info("Loaded C PoW DLL (stdcall) %s", bitmsglib)
         bmpow = bso.BitmessagePOW
         bmpow.restype = ctypes.c_ulonglong
-        _doCPoW(2**63, "")
+        _doCPoW(2 ** 63, "")
         logger.info("Successfully tested C PoW DLL (stdcall) %s", bitmsglib)
     except:
         logger.error("C PoW test fail.", exc_info=True)
@@ -193,7 +201,7 @@ if "win32" == sys.platform:
             logger.info("Loaded C PoW DLL (cdecl) %s", bitmsglib)
             bmpow = bso.BitmessagePOW
             bmpow.restype = ctypes.c_ulonglong
-            _doCPoW(2**63, "")
+            _doCPoW(2 ** 63, "")
             logger.info("Successfully tested C PoW DLL (cdecl) %s", bitmsglib)
         except:
             logger.error("C PoW test fail.", exc_info=True)
@@ -212,4 +220,3 @@ if bso:
         bmpow = None
 else:
     bmpow = None
-

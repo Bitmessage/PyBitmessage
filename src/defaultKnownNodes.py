@@ -1,12 +1,15 @@
+from os import path, environ
 import pickle
-import socket
 from struct import *
 import time
-import random
 import sys
 from time import strftime, localtime
 import shared
 
+
+# TODO: Fully decentralized autonomous multi-stream net. Somewhere. In the future.
+# Also it isn't particullarly secure to hardcode IP address into source.
+# A fix on that would be nice.
 def createDefaultKnownNodes(appdata):
     ############## Stream 1 ################
     stream1 = {}
@@ -21,7 +24,7 @@ def createDefaultKnownNodes(appdata):
     stream1[shared.Peer('24.188.198.204', 8111)] = int(time.time())
     stream1[shared.Peer('109.147.204.113', 1195)] = int(time.time())
     stream1[shared.Peer('178.11.46.221', 8444)] = int(time.time())
-    
+
     ############# Stream 2 #################
     stream2 = {}
     # None yet
@@ -35,21 +38,20 @@ def createDefaultKnownNodes(appdata):
     allKnownNodes[2] = stream2
     allKnownNodes[3] = stream3
 
-    #print stream1
-    #print allKnownNodes
-
     with open(appdata + 'knownnodes.dat', 'wb') as output:
         # Pickle dictionary using protocol 0.
         pickle.dump(allKnownNodes, output)
 
     return allKnownNodes
 
+
 def readDefaultKnownNodes(appdata):
     pickleFile = open(appdata + 'knownnodes.dat', 'rb')
     knownNodes = pickle.load(pickleFile)
     pickleFile.close()
+    # TODO: Horribly inefficient. We must provide some other option to crawl through.
     for stream, storedValue in knownNodes.items():
-        for host,value in storedValue.items():
+        for host, value in storedValue.items():
             try:
                 # Old knownNodes format.
                 port, storedtime = value
@@ -57,12 +59,11 @@ def readDefaultKnownNodes(appdata):
                 # New knownNodes format.
                 host, port = host
                 storedtime = value
-            print host, '\t', port, '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(storedtime)),'utf-8')
+            print(host, '\t', port, '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p', localtime(storedtime)), 'utf-8'))
+
 
 if __name__ == "__main__":
-
     APPNAME = "PyBitmessage"
-    from os import path, environ
     if sys.platform == 'darwin':
         from AppKit import NSSearchPathForDirectoriesInDomains  # @UnresolvedImport
         # http://developer.apple.com/DOCUMENTATION/Cocoa/Reference/Foundation/Miscellaneous/Foundation_Functions/Reference/reference.html#//apple_ref/c/func/NSSearchPathForDirectoriesInDomains
@@ -76,7 +77,5 @@ if __name__ == "__main__":
         appdata = path.expanduser(path.join("~", "." + APPNAME + "/"))
 
 
-    print 'New list of all known nodes:', createDefaultKnownNodes(appdata)
+    print('New list of all known nodes:', createDefaultKnownNodes(appdata))
     readDefaultKnownNodes(appdata)
-
-

@@ -7,6 +7,7 @@ import time
 from debug import logger
 import socks
 
+
 def knownNodes():
     try:
         # We shouldn't have to use the shared.knownNodesLock because this had
@@ -29,8 +30,11 @@ def knownNodes():
     except:
         shared.knownNodes = defaultKnownNodes.createDefaultKnownNodes(shared.appdata)
     if shared.config.getint('bitmessagesettings', 'settingsversion') > 10:
-        logger.error('Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.')
+        logger.error('Bitmessage cannot read future versions ' +
+                     'of the keys file (keys.dat). Run the newer ' +
+                     'version of Bitmessage.')
         raise SystemExit
+
 
 def dns():
     # DNS bootstrap. This could be programmed to use the SOCKS proxy to do the
@@ -38,6 +42,7 @@ def dns():
     # defaultKnownNodes.py. Hopefully either they are up to date or the user
     # has run Bitmessage recently without SOCKS turned on and received good
     # bootstrap nodes using that method.
+    # TODO: Clarify the integrity of DNS data?
     if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none':
         try:
             for item in socket.getaddrinfo('bootstrap8080.bitmessage.org', 80):
@@ -47,7 +52,7 @@ def dns():
             logger.error('bootstrap8080.bitmessage.org DNS bootstrapping failed.')
         try:
             for item in socket.getaddrinfo('bootstrap8444.bitmessage.org', 80):
-                logger.info ('Adding ' + item[4][0] + ' to knownNodes based on DNS bootstrap method')
+                logger.info('Adding ' + item[4][0] + ' to knownNodes based on DNS bootstrap method')
                 shared.knownNodes[1][shared.Peer(item[4][0], 8444)] = int(time.time())
         except:
             logger.error('bootstrap8444.bitmessage.org DNS bootstrapping failed.')
@@ -61,18 +66,18 @@ def dns():
             sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             sock.settimeout(20)
             proxytype = socks.PROXY_TYPE_SOCKS5
-            sockshostname = shared.config.get(
-                'bitmessagesettings', 'sockshostname')
-            socksport = shared.config.getint(
-                'bitmessagesettings', 'socksport')
-            rdns = True  # Do domain name lookups through the proxy; though this setting doesn't really matter since we won't be doing any domain name lookups anyway.
+            sockshostname = shared.config.get('bitmessagesettings', 'sockshostname')
+            socksport = shared.config.getint('bitmessagesettings', 'socksport')
+
+            # Do domain name lookups through the proxy;
+            # though this setting doesn't really matter
+            # since we won't be doing any domain name lookups anyway.
+            rdns = True
+
             if shared.config.getboolean('bitmessagesettings', 'socksauthentication'):
-                socksusername = shared.config.get(
-                    'bitmessagesettings', 'socksusername')
-                sockspassword = shared.config.get(
-                    'bitmessagesettings', 'sockspassword')
-                sock.setproxy(
-                    proxytype, sockshostname, socksport, rdns, socksusername, sockspassword)
+                socksusername = shared.config.get('bitmessagesettings', 'socksusername')
+                sockspassword = shared.config.get('bitmessagesettings', 'sockspassword')
+                sock.setproxy(proxytype, sockshostname, socksport, rdns, socksusername, sockspassword)
             else:
                 sock.setproxy(
                     proxytype, sockshostname, socksport, rdns)
@@ -83,8 +88,7 @@ def dns():
             except:
                 logger.error("SOCKS DNS resolving failed", exc_info=True)
             if ip is not None:
-                logger.info ('Adding ' + ip + ' to knownNodes based on SOCKS DNS bootstrap method')
+                logger.info('Adding ' + ip + ' to knownNodes based on SOCKS DNS bootstrap method')
                 shared.knownNodes[1][shared.Peer(ip, port)] = time.time()
     else:
         logger.info('DNS bootstrap skipped because the proxy type does not support DNS resolution.')
-

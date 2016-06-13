@@ -25,13 +25,17 @@ import traceback
 import helper_startup
 helper_startup.loadConfig()
 
-# Now can be overriden from a config file, which uses standard python logging.config.fileConfig interface
+
+# Now can be overriden from a config file,
+# which uses standard python logging.config.fileConfig interface
 # examples are here: https://bitmessage.org/forum/index.php/topic,4820.msg11163.html#msg11163
 log_level = 'WARNING'
+
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
     logging.critical(''.join(traceback.format_tb(tb)))
     logging.critical('{0}: {1}'.format(ex_cls, ex))
+
 
 def configureLogging():
     have_logging = False
@@ -42,7 +46,7 @@ def configureLogging():
     except:
         print "Failed to load debug config from %s, using default logging config" % (os.path.join(shared.appdata, 'logging.dat'))
         print sys.exc_info()
-    
+
     sys.excepthook = log_uncaught_exceptions
 
     if have_logging:
@@ -67,22 +71,22 @@ def configureLogging():
                 'formatter': 'default',
                 'level': log_level,
                 'filename': shared.appdata + 'debug.log',
-                'maxBytes': 2097152, # 2 MiB
+                'maxBytes': 2097152,  # 2 MiB
                 'backupCount': 1,
             }
         },
         'loggers': {
             'console_only': {
                 'handlers': ['console'],
-                'propagate' : 0
+                'propagate': 0
             },
             'file_only': {
                 'handlers': ['file'],
-                'propagate' : 0
+                'propagate': 0
             },
             'both': {
                 'handlers': ['console', 'file'],
-                'propagate' : 0
+                'propagate': 0
             },
         },
         'root': {
@@ -92,7 +96,7 @@ def configureLogging():
     })
     return True
 
-# TODO (xj9): Get from a config file.
+# TODO: [xj9] -- Get from a config file.
 #logger = logging.getLogger('console_only')
 if configureLogging():
     if '-c' in sys.argv:
@@ -101,6 +105,7 @@ if configureLogging():
         logger = logging.getLogger('both')
 else:
     logger = logging.getLogger('default')
+
 
 def restartLoggingInUpdatedAppdataLocation():
     global logger
@@ -115,4 +120,3 @@ def restartLoggingInUpdatedAppdataLocation():
             logger = logging.getLogger('both')
     else:
         logger = logging.getLogger('default')
-
