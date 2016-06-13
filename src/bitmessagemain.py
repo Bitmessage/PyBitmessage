@@ -45,6 +45,7 @@ import helper_bootstrap
 import helper_generic
 from helper_threading import *
 
+
 def connectToStream(streamNumber):
     shared.streamsInWhichIAmParticipating[streamNumber] = 'no data'
     selfInitiatedConnections[streamNumber] = {}
@@ -65,6 +66,7 @@ def connectToStream(streamNumber):
         a.setup(streamNumber, selfInitiatedConnections)
         a.start()
 
+
 def _fixWinsock():
     if not ('win32' in sys.platform) and not ('win64' in sys.platform):
         return
@@ -73,28 +75,30 @@ def _fixWinsock():
     # socket.inet_ntop but we can make one ourselves using ctypes
     if not hasattr(socket, 'inet_ntop'):
         addressToString = ctypes.windll.ws2_32.WSAAddressToStringA
+
         def inet_ntop(family, host):
             if family == socket.AF_INET:
                 if len(host) != 4:
                     raise ValueError("invalid IPv4 host")
-                host = pack("hH4s8s", socket.AF_INET, 0, host, "\0" * 8)
+                host = pack("hH4s8s", socket.AF_INET, 0, host, '\0' * 8)
             elif family == socket.AF_INET6:
                 if len(host) != 16:
                     raise ValueError("invalid IPv6 host")
                 host = pack("hHL16sL", socket.AF_INET6, 0, 0, host, 0)
             else:
                 raise ValueError("invalid address family")
-            buf = "\0" * 64
+            buf = '\0' * 64
             lengthBuf = pack("I", len(buf))
             addressToString(host, len(host), None, buf, lengthBuf)
-            return buf[0:buf.index("\0")]
+            return buf[0:buf.index('\0')]
         socket.inet_ntop = inet_ntop
 
     # Same for inet_pton
     if not hasattr(socket, 'inet_pton'):
         stringToAddress = ctypes.windll.ws2_32.WSAStringToAddressA
+
         def inet_pton(family, host):
-            buf = "\0" * 28
+            buf = '\0' * 28
             lengthBuf = pack("I", len(buf))
             if stringToAddress(str(host),
                                int(family),
@@ -116,26 +120,28 @@ def _fixWinsock():
     if not hasattr(socket, 'IPV6_V6ONLY'):
         socket.IPV6_V6ONLY = 27
 
+
 # This thread, of which there is only one, runs the API.
 class singleAPI(threading.Thread, StoppableThread):
     def __init__(self):
         threading.Thread.__init__(self, name="singleAPI")
         self.initStop()
-        
+
     def stopThread(self):
         super(singleAPI, self).stopThread()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            s.connect((shared.config.get('bitmessagesettings', 'apiinterface'), shared.config.getint(
-                'bitmessagesettings', 'apiport')))
+            s.connect((shared.config.get('bitmessagesettings', 'apiinterface'),
+                       shared.config.getint('bitmessagesettings', 'apiport')))
             s.shutdown(socket.SHUT_RDWR)
             s.close()
         except:
             pass
 
     def run(self):
-        se = StoppableXMLRPCServer((shared.config.get('bitmessagesettings', 'apiinterface'), shared.config.getint(
-            'bitmessagesettings', 'apiport')), MySimpleXMLRPCRequestHandler, True, True)
+        se = StoppableXMLRPCServer((shared.config.get('bitmessagesettings','apiinterface'),
+                                    shared.config.getint('bitmessagesettings', 'apiport')),
+                                   MySimpleXMLRPCRequestHandler, True, True)
         se.register_introspection_functions()
         se.serve_forever()
 
@@ -147,6 +153,7 @@ if shared.useVeryEasyProofOfWorkForTesting:
         shared.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
     shared.networkDefaultPayloadLengthExtraBytes = int(
         shared.networkDefaultPayloadLengthExtraBytes / 100)
+
 
 class Main:
     def start(self, daemon=False):
@@ -214,8 +221,8 @@ class Main:
         singleListenerThread.setup(selfInitiatedConnections)
         singleListenerThread.daemon = True  # close the main program even if there are threads left
         singleListenerThread.start()
-        
-        if shared.safeConfigGetBoolean('bitmessagesettings','upnp'):
+
+        if shared.safeConfigGetBoolean('bitmessagesettings', 'upnp'):
             import upnp
             upnpThread = upnp.uPnPThread()
             upnpThread.start()
@@ -223,7 +230,10 @@ class Main:
         if daemon == False and shared.safeConfigGetBoolean('bitmessagesettings', 'daemon') == False:
             if curses == False:
                 if not depends.check_pyqt():
-                    print('PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon')
+                    print('PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. ' +
+                          'You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download or ' +
+                          'by installing the \'python-qt4\' package via your package manager. ' +
+                          'If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon')
                     print('You can also run PyBitmessage with the new curses interface by providing \'-c\' as a commandline argument.')
                     sys.exit()
 
@@ -251,14 +261,13 @@ class Main:
             print('Stopping Bitmessage Deamon.')
         shared.doCleanShutdown()
 
-
-    #TODO: nice function but no one is using this 
+    # TODO: nice function but no one is using this
     def getApiAddress(self):
         if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
             return None
         address = shared.config.get('bitmessagesettings', 'apiinterface')
         port = shared.config.getint('bitmessagesettings', 'apiport')
-        return {'address':address,'port':port}
+        return {'address': address, 'port': port}
 
 if __name__ == "__main__":
     mainprogram = Main()
