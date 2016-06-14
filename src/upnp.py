@@ -250,11 +250,7 @@ class uPnPThread(threading.Thread, StoppableThread):
 
     def sendSearchRouter(self):
         from debug import logger
-        ssdpRequest = "M-SEARCH * HTTP/1.1\r\n" +
-                        "HOST: %s:%d\r\n" % (uPnPThread.SSDP_ADDR, uPnPThread.SSDP_PORT) +
-                        "MAN: \"ssdp:discover\"\r\n" +
-                        "MX: %d\r\n" % (uPnPThread.SSDP_MX, ) +
-                        "ST: %s\r\n" % (uPnPThread.SSDP_ST, ) + "\r\n"
+        ssdpRequest = "M-SEARCH * HTTP/1.1\r\n" + "HOST: %s:%d\r\n" % (uPnPThread.SSDP_ADDR, uPnPThread.SSDP_PORT) + "MAN: \"ssdp:discover\"\r\n" + "MX: %d\r\n" % (uPnPThread.SSDP_MX, ) + "ST: %s\r\n" % (uPnPThread.SSDP_ST, ) + "\r\n"
 
         try:
             logger.debug("Sending UPnP query")
