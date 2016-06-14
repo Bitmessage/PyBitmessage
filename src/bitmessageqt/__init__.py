@@ -105,7 +105,7 @@ def change_translation(locale):
     QtGui.QApplication.installTranslator(qsystranslator)
 
     lang = pythonlocale.normalize(l10n.getTranslationLanguage())
-    langs = [lang.split(".")[0] + "." + l10n.encoding, lang]
+    langs = [lang.split(".")[0] + "." + l10n.encoding, lang.split(".")[0] + "." + 'UTF-8', lang]
     if 'win32' in sys.platform or 'win64' in sys.platform:
         langs = [l10n.getWindowsLocale(lang)]
     for lang in langs:
