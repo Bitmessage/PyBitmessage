@@ -3,6 +3,7 @@
 **.DS_Store
 src/build
 src/dist
+src/debug.log
 src/.project
 src/.pydevproject
 src/.settings/

@@ -7,6 +7,7 @@ import helper_bootstrap
 from helper_threading import *
 import errno
 import re
+import Queue
 
 # Only one singleListener thread will ever exist. It creates the
 # receiveDataThread and sendDataThread for each incoming connection. Note
@@ -14,6 +15,8 @@ import re
 # other node will have to tell us its stream number in a version message.
 # If we don't care about their stream, we will close the connection
 # (within the recversion function of the recieveData thread)
+
+MAX_CONN_HOSTS = 255
 
 
 class singleListener(threading.Thread, StoppableThread):
@@ -39,7 +42,7 @@ class singleListener(threading.Thread, StoppableThread):
         sock.bind((HOST, PORT))
         sock.listen(2)
         return sock
-        
+
     def stopThread(self):
         super(singleListener, self).stopThread()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -92,9 +95,8 @@ class singleListener(threading.Thread, StoppableThread):
             # connections.
             while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not shared.config.getboolean('bitmessagesettings', 'sockslisten') and shared.shutdown == 0:
                 self.stop.wait(10)
-            while len(shared.connectedHostsList) > 220 and shared.shutdown == 0:
+            while len(shared.connectedHostsList) > MAX_CONN_HOSTS and shared.shutdown == 0:
                 logger.info('We are connected to too many people. Not accepting further incoming connections for ten seconds.')
-
                 self.stop.wait(10)
 
             while shared.shutdown == 0:
@@ -104,7 +106,7 @@ class singleListener(threading.Thread, StoppableThread):
                 # If the address is an IPv4-mapped IPv6 address then
                 # convert it to just the IPv4 representation
                 md = mappedAddressRegexp.match(HOST)
-                if md != None:
+                if md is not None:
                     HOST = md.group(1)
 
                 # The following code will, unfortunately, block an
@@ -118,20 +120,21 @@ class singleListener(threading.Thread, StoppableThread):
                 else:
                     break
 
-            someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
-            sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection.
+            someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {}  # This is not necessairly a complete list; we clear it from time to time to save memory.
+            sendDataThreadQueue = Queue.Queue()  # Used to submit information to the send data thread for this connection.
             socketObject.settimeout(20)
 
             sd = sendDataThread(sendDataThreadQueue)
-            sd.setup(
-                socketObject, HOST, PORT, -1, someObjectsOfWhichThisRemoteNodeIsAlreadyAware)
+            sd.setup(socketObject, HOST, PORT, -1,
+                     someObjectsOfWhichThisRemoteNodeIsAlreadyAware)
             sd.start()
 
             rd = receiveDataThread()
             rd.daemon = True  # close the main program even if there are threads left
-            rd.setup(
-                socketObject, HOST, PORT, -1, someObjectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections, sendDataThreadQueue, sd.objectHashHolderInstance)
+            rd.setup(socketObject, HOST, PORT, -1,
+                     someObjectsOfWhichThisRemoteNodeIsAlreadyAware,
+                     self.selfInitiatedConnections,
+                     sendDataThreadQueue, sd.objectHashHolderInstance)
             rd.start()
 
             logger.info('connected to ' + HOST + ' during INCOMING request.')
-

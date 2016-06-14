@@ -24,15 +24,13 @@ from binascii import hexlify
 from addresses import *
 from class_objectProcessorQueue import ObjectProcessorQueue
 import highlevelcrypto
-import shared
 from helper_sql import *
 from helper_threading import *
-
-from debug import logger
 
 
 softwareVersion = '0.6.0'
 verbose = 1
+
 # This is obsolete with the change to protocol v3
 # but the singleCleaner thread still hasn't been
 # updated so we need this a little longer.
@@ -78,8 +76,7 @@ alreadyAttemptedConnectionsListResetTime = int(time.time())  # Used to clear out
 numberOfObjectsThatWeHaveYetToGetPerPeer = {}
 neededPubkeys = {}
 # FIXME: Non-CSPRNG!
-eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
-    '>Q', random.randrange(1, 18446744073709551615))
+eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack('>Q', random.randrange(1, 18446744073709551615))
 successfullyDecryptMessageTimings = []  # A list of the amounts of time it took to successfully decrypt msg messages
 apiAddressGeneratorReturnQueue = Queue.Queue()  # The address generator thread uses this queue to get information back to the API thread.
 ackdataForWhichImWatching = {}
@@ -259,6 +256,9 @@ def haveSSL(server=False):
 
 
 def assembleVersionMessage(remoteHost, remotePort, myStreamNumber, server=False):
+    global config
+    global softwareVersion
+
     payload = ''
     payload += pack('>L', 3)  # protocol version.
     payload += pack('>q', NODE_NETWORK | (NODE_SSL if haveSSL(server) else 0))  # bitflags of the services I offer.
@@ -274,11 +274,11 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber, server=False)
     if safeConfigGetBoolean('bitmessagesettings', 'upnp') and extPort:
         payload += pack('>H', extPort)
     else:
-        payload += pack('>H', shared.config.getint('bitmessagesettings', 'port'))
+        payload += pack('>H', config.getint('bitmessagesettings', 'port'))
 
     random.seed()
     payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
-    userAgent = '/PyBitmessage:' + shared.softwareVersion + '/'
+    userAgent = '/PyBitmessage:' + softwareVersion + '/'
     payload += encodeVarint(len(userAgent))
     payload += userAgent
     payload += encodeVarint(1)  # The number of streams about which I care. PyBitmessage currently only supports 1 per connection.
@@ -382,13 +382,13 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
         return True
 
     queryreturn = sqlQuery('''SELECT address FROM whitelist where address=? and enabled = '1' ''', address)
-    if queryreturn is not []:
+    if queryreturn != []:
         return True
 
     queryreturn = sqlQuery(
         '''select address from subscriptions where address=? and enabled = '1' ''',
         address)
-    if queryreturn is not []:
+    if queryreturn != []:
         return True
     return False
 
@@ -431,7 +431,7 @@ def reloadMyAddressHashes():
     configSections = config.sections()
     hasEnabledKeys = False
     for addressInKeysFile in configSections:
-        if addressInKeysFile is not 'bitmessagesettings':
+        if addressInKeysFile != 'bitmessagesettings':
             isEnabled = config.getboolean(addressInKeysFile, 'enabled')
             if isEnabled:
                 hasEnabledKeys = True
@@ -629,6 +629,7 @@ def isBitSetWithinBitfield(fourByteString, n):
 
 
 def decryptAndCheckPubkeyPayload(data, address):
+    global neededPubkeys
     """
     Version 4 pubkeys are encrypted. This function is run when we already have the 
     address to which we want to try to send a message. The 'data' may come either
@@ -654,11 +655,11 @@ def decryptAndCheckPubkeyPayload(data, address):
 
         tag = data[readPosition:readPosition + 32]
         readPosition += 32
-        signedData = data[8:readPosition] # The time through the tag. More data is appended onto signedData below after the decryption. 
+        signedData = data[8:readPosition]  # The time through the tag. More data is appended onto signedData below after the decryption. 
         encryptedData = data[readPosition:]
 
         # Let us try to decrypt the pubkey
-        toAddress, cryptorObject = shared.neededPubkeys[tag]
+        toAddress, cryptorObject = neededPubkeys[tag]
         if toAddress != address:
             logger.critical('decryptAndCheckPubkeyPayload failed due to toAddress mismatch. This is very peculiar. toAddress: %s, address %s' % (toAddress, address))
             # the only way I can think that this could happen is if someone encodes their address data two different ways.
@@ -783,6 +784,7 @@ def checkAndShareObjectWithPeers(data):
 
 
 def _checkAndShareUndefinedObjectWithPeers(data):
+    global numberOfInventoryLookupsPerformed
     embeddedTime, = unpack('>Q', data[8:16])
     readPosition = 20  # Bypass nonce, time, and object type
     objectVersion, objectVersionLength = decodeVarint(
@@ -795,7 +797,7 @@ def _checkAndShareUndefinedObjectWithPeers(data):
         return
 
     inventoryHash = calculateInventoryHash(data)
-    shared.numberOfInventoryLookupsPerformed += 1
+    numberOfInventoryLookupsPerformed += 1
     inventoryLock.acquire()
     if inventoryHash in inventory:
         logger.debug('We have already received this undefined object. Ignoring.')
@@ -809,6 +811,7 @@ def _checkAndShareUndefinedObjectWithPeers(data):
 
 
 def _checkAndShareMsgWithPeers(data):
+    global numberOfInventoryLookupsPerformed
     embeddedTime, = unpack('>Q', data[8:16])
     readPosition = 20  # Bypass nonce, time, and object type
     objectVersion, objectVersionLength = decodeVarint(
@@ -821,7 +824,7 @@ def _checkAndShareMsgWithPeers(data):
         return
     readPosition += streamNumberLength
     inventoryHash = calculateInventoryHash(data)
-    shared.numberOfInventoryLookupsPerformed += 1
+    numberOfInventoryLookupsPerformed += 1
     inventoryLock.acquire()
     if inventoryHash in inventory:
         logger.debug('We have already received this msg message. Ignoring.')
@@ -839,6 +842,7 @@ def _checkAndShareMsgWithPeers(data):
 
 
 def _checkAndShareGetpubkeyWithPeers(data):
+    global numberOfInventoryLookupsPerformed
     if len(data) < 42:
         logger.info('getpubkey message doesn\'t contain enough data. Ignoring.')
         return
@@ -856,7 +860,7 @@ def _checkAndShareGetpubkeyWithPeers(data):
         return
     readPosition += streamNumberLength
 
-    shared.numberOfInventoryLookupsPerformed += 1
+    numberOfInventoryLookupsPerformed += 1
     inventoryHash = calculateInventoryHash(data)
     inventoryLock.acquire()
     if inventoryHash in inventory:
@@ -877,6 +881,7 @@ def _checkAndShareGetpubkeyWithPeers(data):
 
 
 def _checkAndSharePubkeyWithPeers(data):
+    global numberOfInventoryLookupsPerformed
     if len(data) < 146 or len(data) > 440:  # Sanity check
         return
     embeddedTime, = unpack('>Q', data[8:16])
@@ -896,7 +901,7 @@ def _checkAndSharePubkeyWithPeers(data):
     else:
         tag = ''
 
-    shared.numberOfInventoryLookupsPerformed += 1
+    numberOfInventoryLookupsPerformed += 1
     inventoryHash = calculateInventoryHash(data)
     inventoryLock.acquire()
     if inventoryHash in inventory:
@@ -916,6 +921,7 @@ def _checkAndSharePubkeyWithPeers(data):
 
 
 def _checkAndShareBroadcastWithPeers(data):
+    global numberOfInventoryLookupsPerformed
     if len(data) < 180:
         logger.debug('The payload length of this broadcast packet ' +
                      'is unreasonably low. Someone is probably ' +
@@ -935,7 +941,7 @@ def _checkAndShareBroadcastWithPeers(data):
         tag = data[readPosition:readPosition + 32]
     else:
         tag = ''
-    shared.numberOfInventoryLookupsPerformed += 1
+    numberOfInventoryLookupsPerformed += 1
     inventoryLock.acquire()
     inventoryHash = calculateInventoryHash(data)
     if inventoryHash in inventory:
@@ -956,14 +962,17 @@ def _checkAndShareBroadcastWithPeers(data):
 
 
 def openKeysFile():
+    global appdata
     if 'linux' in sys.platform:
-        subprocess.call(["xdg-open", shared.appdata + 'keys.dat'])
+        subprocess.call(["xdg-open", appdata + 'keys.dat'])
     else:
-        os.startfile(shared.appdata + 'keys.dat')
+        os.startfile(appdata + 'keys.dat')
 
 
 def writeKeysFile():
-    fileName = shared.appdata + 'keys.dat'
+    global appdata
+    global config
+    fileName = appdata + 'keys.dat'
     fileNameBak = fileName + "." + datetime.datetime.now().strftime("%Y%j%H%M%S%f") + '.bak'
     # Create a backup copy to prevent the accidental loss due to the disk write failure
     try:
@@ -975,7 +984,9 @@ def writeKeysFile():
         fileNameExisted = False
     # Write the file
     with open(fileName, 'wb') as configfile:
-        shared.config.write(configfile)
+        config.write(configfile)
     # Delete the backup
     if fileNameExisted:
         os.remove(fileNameBak)
+
+from debug import logger

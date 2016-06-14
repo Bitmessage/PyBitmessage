@@ -2,11 +2,10 @@ import threading
 import time
 import random
 import shared
-import select
 import socks
 import socket
-import sys
 import tr
+import Queue
 
 from class_sendDataThread import *
 from class_receiveDataThread import *
@@ -14,6 +13,7 @@ from helper_threading import *
 
 # For each stream to which we connect, several outgoingSynSender threads
 # will exist and will collectively create 8 connections with peers.
+
 
 class outgoingSynSender(threading.Thread, StoppableThread):
 
@@ -43,7 +43,8 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                     break
                 time.sleep(1)
         return peer
-        
+
+
     def stopThread(self):
         super(outgoingSynSender, self).stopThread()
         try:
@@ -140,7 +141,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                         proxytype, sockshostname, socksport, rdns)
             elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
                 if shared.verbose >= 2:
-                    logger.debug ('(Using SOCKS5) Trying an outgoing connection to ' + str(peer))
+                    logger.debug('(Using SOCKS5) Trying an outgoing connection to ' + str(peer))
 
                 proxytype = socks.PROXY_TYPE_SOCKS5
                 sockshostname = shared.config.get(
