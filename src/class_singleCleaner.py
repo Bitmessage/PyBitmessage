@@ -21,6 +21,7 @@ inventorySets (clears then reloads data out of sql database)
 It cleans these tables on the disk:
 inventory (clears expired objects)
 pubkeys (clears pubkeys older than 4 weeks old which we have not used personally)
+knownNodes (clears addresses which have not been online for over 3 days)
 
 It resends messages when there has been no response:
 resends getpubkey messages in 5 days (then 10 days, then 20 days, etc...)
@@ -79,6 +80,17 @@ class singleCleaner(threading.Thread, StoppableThread):
                         resendPubkeyRequest(toAddress)
                     elif status == 'msgsent':
                         resendMsg(ackData)
+
+            # cleanup old nodes
+            now = int(time.time())
+            toDelete = []
+            shared.knownNodesLock.acquire()
+            for stream in shared.knownNodes:
+                for node in shared.knownNodes[stream].keys():
+                    if now - shared.knownNodes[stream][node] > 259200: # 3 days
+                        shared.needToWriteKownNodesToDisk = True
+                        del shared.knownNodes[stream][node]
+            shared.knownNodesLock.release()
 
             # Let us write out the knowNodes to disk if there is anything new to write out.
             if shared.needToWriteKnownNodesToDisk:
