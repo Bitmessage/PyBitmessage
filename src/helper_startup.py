@@ -60,7 +60,7 @@ def loadConfig():
         shared.config.set('bitmessagesettings', 'settingsversion', '10')
         shared.config.set('bitmessagesettings', 'port', '8444')
         shared.config.set(
-            'bitmessagesettings', 'timeformat', '%%a, %%d %%b %%Y  %%I:%%M %%p')
+            'bitmessagesettings', 'timeformat', '%%c')
         shared.config.set('bitmessagesettings', 'blackwhitelist', 'black')
         shared.config.set('bitmessagesettings', 'startonlogon', 'false')
         if 'linux' in sys.platform:
