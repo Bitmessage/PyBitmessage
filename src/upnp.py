@@ -105,10 +105,11 @@ class Router:
             if service.childNodes[0].data.find('WANIPConnection') > 0 or \
                 service.childNodes[0].data.find('WANPPPConnection') > 0:
                 self.path = service.parentNode.getElementsByTagName('controlURL')[0].childNodes[0].data
+                self.upnp_schema = service.childNodes[0].data.split(':')[-2]
 
     def AddPortMapping(self, externalPort, internalPort, internalClient, protocol, description, leaseDuration = 0, enabled = 1):
         from debug import logger
-        resp = self.soapRequest('WANIPConnection:1', 'AddPortMapping', [
+        resp = self.soapRequest(self.upnp_schema + ':1', 'AddPortMapping', [
                 ('NewExternalPort', str(externalPort)),
                 ('NewProtocol', protocol),
                 ('NewInternalPort', str(internalPort)),
@@ -123,7 +124,7 @@ class Router:
 
     def DeletePortMapping(self, externalPort, protocol):
         from debug import logger
-        resp = self.soapRequest('WANIPConnection:1', 'DeletePortMapping', [
+        resp = self.soapRequest(self.upnp_schema + ':1', 'DeletePortMapping', [
                 ('NewExternalPort', str(externalPort)),
                 ('NewProtocol', protocol),
             ])
@@ -132,7 +133,7 @@ class Router:
 
     def GetExternalIPAddress(self):
         from xml.dom.minidom import parseString
-        resp = self.soapRequest('WANIPConnection:1', 'GetExternalIPAddress')
+        resp = self.soapRequest(self.upnp_schema + ':1', 'GetExternalIPAddress')
         dom = parseString(resp)
         return dom.getElementsByTagName('NewExternalIPAddress')[0].childNodes[0].data
     
