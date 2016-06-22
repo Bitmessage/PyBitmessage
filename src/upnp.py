@@ -110,6 +110,7 @@ class Router:
     def AddPortMapping(self, externalPort, internalPort, internalClient, protocol, description, leaseDuration = 0, enabled = 1):
         from debug import logger
         resp = self.soapRequest(self.upnp_schema + ':1', 'AddPortMapping', [
+                ('NewRemoteHost', ''),
                 ('NewExternalPort', str(externalPort)),
                 ('NewProtocol', protocol),
                 ('NewInternalPort', str(internalPort)),
@@ -125,6 +126,7 @@ class Router:
     def DeletePortMapping(self, externalPort, protocol):
         from debug import logger
         resp = self.soapRequest(self.upnp_schema + ':1', 'DeletePortMapping', [
+                ('NewRemoteHost', ''),
                 ('NewExternalPort', str(externalPort)),
                 ('NewProtocol', protocol),
             ])
