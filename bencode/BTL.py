@@ -1,2 +1,0 @@
-class BTFailure(Exception):
-    pass
