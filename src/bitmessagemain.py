@@ -38,6 +38,7 @@ from class_outgoingSynSender import outgoingSynSender
 from class_singleListener import singleListener
 from class_singleWorker import singleWorker
 from class_addressGenerator import addressGenerator
+from class_smtpDeliver import smtpDeliver
 from debug import logger
 
 # Helper Functions
@@ -153,16 +154,21 @@ class Main:
         _fixWinsock()
 
         shared.daemon = daemon
+
+        # get curses flag
+        shared.curses = False
+        if '-c' in sys.argv:
+            shared.curses = True
+
         # is the application already running?  If yes then exit.
         shared.thisapp = singleton.singleinstance("", daemon)
 
-        # get curses flag
-        curses = False
-        if '-c' in sys.argv:
-            curses = True
+        if daemon:
+            with shared.printLock:
+                print('Running as a daemon. Send TERM signal to end.')
+            self.daemonize()
 
-        signal.signal(signal.SIGINT, helper_generic.signal_handler)
-        # signal.signal(signal.SIGINT, signal.SIG_DFL)
+        self.setSignalHandler()
 
         helper_bootstrap.knownNodes()
         # Start the address generation thread
@@ -179,6 +185,11 @@ class Main:
         sqlLookup = sqlThread()
         sqlLookup.daemon = False  # DON'T close the main program even if there are threads left. The closeEvent should command this thread to exit gracefully.
         sqlLookup.start()
+
+        # SMTP delivery thread
+        if daemon and shared.config.get("bitmessagesettings", "smtpdeliver", None):
+            smtpDeliveryThread = smtpDeliver()
+            smtpDeliveryThread.start()
 
         # Start the thread that calculates POWs
         objectProcessorThread = objectProcessor()
@@ -221,7 +232,7 @@ class Main:
             upnpThread.start()
 
         if daemon == False and shared.safeConfigGetBoolean('bitmessagesettings', 'daemon') == False:
-            if curses == False:
+            if shared.curses == False:
                 if not depends.check_pyqt():
                     print('PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon')
                     print('You can also run PyBitmessage with the new curses interface by providing \'-c\' as a commandline argument.')
@@ -230,21 +241,37 @@ class Main:
                 import bitmessageqt
                 bitmessageqt.run()
             else:
-                if depends.check_curses():
+                if True:
+#                if depends.check_curses():
                     print('Running with curses')
                     import bitmessagecurses
                     bitmessagecurses.runwrapper()
         else:
             shared.config.remove_option('bitmessagesettings', 'dontconnect')
 
-            if daemon:
-                with shared.printLock:
-                    print('Running as a daemon. The main program should exit this thread.')
-            else:
-                with shared.printLock:
-                    print('Running as a daemon. You can use Ctrl+C to exit.')
-                while True:
-                    time.sleep(20)
+            while True:
+                time.sleep(20)
+
+    def daemonize(self):
+        if os.fork():
+            exit(0)
+        os.umask(0)
+        os.setsid()
+        if os.fork():
+            exit(0)
+        sys.stdout.flush()
+        sys.stderr.flush()
+        si = file('/dev/null', 'r')
+        so = file('/dev/null', 'a+')
+        se = file('/dev/null', 'a+', 0)
+        os.dup2(si.fileno(), sys.stdin.fileno())
+        os.dup2(so.fileno(), sys.stdout.fileno())
+        os.dup2(se.fileno(), sys.stderr.fileno())
+
+    def setSignalHandler(self):
+        signal.signal(signal.SIGINT, helper_generic.signal_handler)
+        signal.signal(signal.SIGTERM, helper_generic.signal_handler)
+        # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     def stop(self):
         with shared.printLock:
