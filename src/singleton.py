@@ -21,10 +21,11 @@ class singleinstance:
     """
     def __init__(self, flavor_id="", daemon=False):
         self.initialized = False
+        self.counter = 0
         self.daemon = daemon
         self.lockfile = os.path.normpath(os.path.join(shared.appdata, 'singleton%s.lock' % flavor_id))
 
-        if not self.daemon:
+        if not self.daemon and not shared.curses:
             # Tells the already running (if any) application to get focus.
             import bitmessageqt
             bitmessageqt.init()
@@ -54,6 +55,10 @@ class singleinstance:
 
     def cleanup(self):
         if not self.initialized:
+            return
+        self.counter += 1
+        if self.daemon and self.counter < 3:
+            # these are the two initial forks while daemonizing
             return
         print "Cleaning up lockfile"
         try:

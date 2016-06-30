@@ -2,6 +2,7 @@ import socket
 import sys
 from binascii import hexlify, unhexlify
 
+from debug import logger
 import shared
 
 def convertIntToString(n):
@@ -17,11 +18,10 @@ def convertIntToString(n):
 def convertStringToInt(s):
     return int(hexlify(s), 16)
 
-
 def signal_handler(signal, frame):
+    logger.error("Got signal %i", signal)
     if shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
         shared.doCleanShutdown()
-        sys.exit(0)
     else:
         print 'Unfortunately you cannot use Ctrl+C when running the UI because the UI captures the signal.'
 
