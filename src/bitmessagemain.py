@@ -255,10 +255,13 @@ class Main:
     def daemonize(self):
         if os.fork():
             exit(0)
+        shared.thisapp.lock() # relock
         os.umask(0)
         os.setsid()
         if os.fork():
             exit(0)
+        shared.thisapp.lock() # relock
+        shared.thisapp.lockPid = None # indicate we're the final child
         sys.stdout.flush()
         sys.stderr.flush()
         si = file('/dev/null', 'r')
