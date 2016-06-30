@@ -60,10 +60,22 @@ def _doFastPoW(target, initialHash):
         maxCores = 99999
     if pool_size > maxCores:
         pool_size = maxCores
+
+    # temporarily disable handlers
+    int_handler = signal.getsignal(signal.SIGINT)
+    term_handler = signal.getsignal(signal.SIGTERM)
+    signal.signal(signal.SIGINT, signal.SIG_IGN)
+    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+
     pool = Pool(processes=pool_size)
     result = []
     for i in range(pool_size):
         result.append(pool.apply_async(_pool_worker, args = (i, initialHash, target, pool_size)))
+
+    # re-enable handlers
+    signal.signal(signal.SIGINT, int_handler)
+    signal.signal(signal.SIGTERM, term_handler)
+
     while True:
         if shutdown >= 1:
             pool.terminate()
