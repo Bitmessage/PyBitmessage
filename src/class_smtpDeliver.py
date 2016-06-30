@@ -46,8 +46,8 @@ class smtpDeliver(threading.Thread, StoppableThread):
                 pass
             elif command == 'displayNewInboxMessage':
                 inventoryHash, toAddress, fromAddress, subject, body = data
-                dest = shared.config.get("bitmessagesettings", "smtpdeliver", None)
-                if not dest:
+                dest = shared.safeConfigGet("bitmessagesettings", "smtpdeliver", '')
+                if dest == '':
                     continue
                 try:
                     u = urlparse.urlparse(dest)
