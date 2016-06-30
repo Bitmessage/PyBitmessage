@@ -187,7 +187,7 @@ class Main:
         sqlLookup.start()
 
         # SMTP delivery thread
-        if daemon and shared.config.get("bitmessagesettings", "smtpdeliver", None):
+        if daemon and shared.safeConfigGet("bitmessagesettings", "smtpdeliver", '') != '':
             smtpDeliveryThread = smtpDeliver()
             smtpDeliveryThread.start()
 

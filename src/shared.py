@@ -401,6 +401,12 @@ def safeConfigGetBoolean(section,field):
     except Exception, err:
         return False
 
+def safeConfigGet(section, option, default = None):
+    if config.has_option (section, option):
+        return config.get(section, option)
+    else:
+        return default
+
 def decodeWalletImportFormat(WIFstring):
     fullString = arithmetic.changebase(WIFstring,58,256)
     privkey = fullString[:-4]
