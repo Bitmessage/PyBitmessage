@@ -1,4 +1,5 @@
 from email.mime.text import MIMEText
+from email.header import Header
 import smtplib
 import sys
 import threading
@@ -54,9 +55,13 @@ class smtpDeliver(threading.Thread, StoppableThread):
                     to = urlparse.parse_qs(u.query)['to']
                     client = smtplib.SMTP(u.hostname, u.port)
                     msg = MIMEText(body, 'plain', 'utf-8')
-                    msg['Subject'] = subject
+                    msg['Subject'] = Header(subject, 'utf-8')
                     msg['From'] = fromAddress + '@' + SMTPDOMAIN
-                    msg['To'] = toAddress + '@' + SMTPDOMAIN
+                    toLabel = map (lambda y: shared.safeConfigGet(y, "label"), filter(lambda x: x == toAddress, shared.config.sections()))
+                    if len(toLabel) > 0:
+                        msg['To'] = "\"%s\" <%s>" % (Header(toLabel[0], 'utf-8'), toAddress + '@' + SMTPDOMAIN)
+                    else:
+                        msg['To'] = toAddress + '@' + SMTPDOMAIN
                     client.ehlo()
                     client.starttls()
                     client.ehlo()
