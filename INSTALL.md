@@ -71,6 +71,8 @@ If you really want, you can make a package for PyBitmessage, which you may
 install yourself or distribute to friends. This isn't recommended, since
 PyBitmessage is in Beta, and subject to frequent change.
 
+Also, packagemonkey currently does not produce functional output for some distros, e.g. the Arch PKGBUILD is not working at all. Arch users should instead consider https://aur.archlinux.org/packages/pybitmessage-git
+
 ####Linux
 
 First off, since PyBitmessage uses something nifty called
