@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>553</width>
-    <height>422</height>
+    <width>592</width>
+    <height>608</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -20,27 +20,10 @@
    <string>Dialog</string>
   </property>
   <layout class="QFormLayout" name="formLayout">
-   <item row="0" column="0">
-    <widget class="QRadioButton" name="radioButtonCreateChan">
-     <property name="text">
-      <string>Create a new chan</string>
-     </property>
-    </widget>
-   </item>
-   <item row="1" column="0">
-    <widget class="QRadioButton" name="radioButtonJoinChan">
-     <property name="text">
-      <string>Join a chan</string>
-     </property>
-     <property name="checked">
-      <bool>true</bool>
-     </property>
-    </widget>
-   </item>
-   <item row="2" column="0" colspan="2">
+   <item row="3" column="0" colspan="2">
     <widget class="QGroupBox" name="groupBoxCreateChan">
      <property name="title">
-      <string>Create a chan</string>
+      <string>quick + simple join   or   Create a chan</string>
      </property>
      <layout class="QGridLayout" name="gridLayout">
       <item row="0" column="0">
@@ -66,10 +49,10 @@
      </layout>
     </widget>
    </item>
-   <item row="3" column="0" colspan="2">
+   <item row="4" column="0" colspan="2">
     <widget class="QGroupBox" name="groupBoxJoinChan">
      <property name="title">
-      <string>Join a chan</string>
+      <string>Join a chan tediously with addr. entry</string>
      </property>
      <layout class="QGridLayout" name="gridLayout_2">
       <item row="0" column="0">
@@ -105,7 +88,7 @@
      </layout>
     </widget>
    </item>
-   <item row="4" column="1">
+   <item row="5" column="1">
     <spacer name="verticalSpacer">
      <property name="orientation">
       <enum>Qt::Vertical</enum>
@@ -118,7 +101,7 @@
      </property>
     </spacer>
    </item>
-   <item row="5" column="1">
+   <item row="6" column="1">
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="orientation">
       <enum>Qt::Horizontal</enum>
@@ -128,11 +111,35 @@
      </property>
     </widget>
    </item>
+   <item row="1" column="1">
+    <widget class="QRadioButton" name="radioButtonCreateChan">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>Simply &amp;join   or   Create a new chan  </string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="2" column="1">
+    <widget class="QRadioButton" name="radioButtonJoinChan">
+     <property name="enabled">
+      <bool>true</bool>
+     </property>
+     <property name="text">
+      <string>&amp;Tediously join a chan with addr. </string>
+     </property>
+     <property name="checked">
+      <bool>true</bool>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <tabstops>
-  <tabstop>radioButtonJoinChan</tabstop>
-  <tabstop>radioButtonCreateChan</tabstop>
   <tabstop>lineEditChanNameCreate</tabstop>
   <tabstop>lineEditChanNameJoin</tabstop>
   <tabstop>lineEditChanBitmessageAddress</tabstop>
