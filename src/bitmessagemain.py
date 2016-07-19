@@ -39,6 +39,7 @@ from class_singleListener import singleListener
 from class_singleWorker import singleWorker
 from class_addressGenerator import addressGenerator
 from class_smtpDeliver import smtpDeliver
+from class_smtpServer import smtpServer
 from debug import logger
 
 # Helper Functions
@@ -190,6 +191,11 @@ class Main:
         if daemon and shared.safeConfigGet("bitmessagesettings", "smtpdeliver", '') != '':
             smtpDeliveryThread = smtpDeliver()
             smtpDeliveryThread.start()
+
+        # SMTP daemon thread
+        if daemon and shared.safeConfigGetBoolean("bitmessagesettings", "smtpd"):
+            smtpServerThread = smtpServer()
+            smtpServerThread.start()
 
         # Start the thread that calculates POWs
         objectProcessorThread = objectProcessor()
