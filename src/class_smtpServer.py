@@ -1,3 +1,4 @@
+import asyncore
 import base64
 import email
 from email.parser import Parser
