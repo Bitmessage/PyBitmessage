@@ -37,7 +37,12 @@ class outgoingSynSender(threading.Thread, StoppableThread):
         else:
             while not shared.shutdown:
                 shared.knownNodesLock.acquire()
-                peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
+                try:
+                    peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
+                except ValueError: # no known nodes
+                    shared.knownNodesLock.release()
+                    time.sleep(1)
+                    continue
                 priority = (183600 - (time.time() - shared.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
                 shared.knownNodesLock.release()
                 if shared.config.get('bitmessagesettings', 'socksproxytype') != 'none':
