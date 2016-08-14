@@ -1930,7 +1930,7 @@ class MyForm(settingsmixin.SMainWindow):
             fromAddress = str(self.ui.comboBoxSendFrom.itemData(
                 self.ui.comboBoxSendFrom.currentIndex(), 
                 Qt.UserRole).toString())
-            toAddresses = str(self.ui.lineEditTo.text())
+            toAddresses = str(self.ui.lineEditTo.text().toUtf8())
             subject = str(self.ui.lineEditSubject.text().toUtf8())
             message = str(
                 self.ui.textEditMessage.document().toPlainText().toUtf8())
