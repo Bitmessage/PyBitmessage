@@ -2360,8 +2360,7 @@ class MyForm(settingsmixin.SMainWindow):
                 
             lang = str(self.settingsDialogInstance.ui.languageComboBox.itemData(self.settingsDialogInstance.ui.languageComboBox.currentIndex()).toString())
             shared.config.set('bitmessagesettings', 'userlocale', lang)
-            logger.debug("Setting locale to %s", lang)
-            change_translation(lang)
+            change_translation(l10n.getTranslationLanguage())
             
             if int(shared.config.get('bitmessagesettings', 'port')) != int(self.settingsDialogInstance.ui.lineEditTCPPort.text()):
                 if not shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect'):
