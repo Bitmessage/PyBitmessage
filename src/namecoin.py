@@ -118,7 +118,11 @@ class namecoinConnection (object):
             return (tr._translate("MainWindow",'The name %1 has no valid JSON data.').arg(unicode(string)), None)            
 
         if "bitmessage" in val:
-            return (None, val["bitmessage"])
+            if "name" in val:
+                ret = "%s <%s>" % (val["name"], val["bitmessage"])
+            else:
+                ret = val["bitmessage"]
+            return (None, ret)
         return (tr._translate("MainWindow",'The name %1 has no associated Bitmessage address.').arg(unicode(string)), None) 
 
     # Test the connection settings.  This routine tries to query a "getinfo"
@@ -206,7 +210,7 @@ class namecoinConnection (object):
             except:
                 logger.error("HTTP receive error")
         except:
-            logger.error("HTTP connection error")
+            logger.error("HTTP connection error", exc_info=True)
 
         return result
 
