@@ -2135,12 +2135,14 @@ class MyForm(settingsmixin.SMainWindow):
 
     def click_pushButtonFetchNamecoinID(self):
         nc = namecoinConnection()
-        err, addr = nc.query(str(self.ui.lineEditTo.text()))
+        identities = str(self.ui.lineEditTo.text().toUtf8()).split(";")
+        err, addr = nc.query(identities[-1].strip())
         if err is not None:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Error: " + err))
         else:
-            self.ui.lineEditTo.setText(addr)
+            identities[-1] = addr
+            self.ui.lineEditTo.setText("; ".join(identities))
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Fetched address from namecoin identity."))
 
@@ -4137,10 +4139,10 @@ class settingsDialog(QtGui.QDialog):
                 "MainWindow", "Testing..."))
         options = {}
         options["type"] = self.getNamecoinType()
-        options["host"] = self.ui.lineEditNamecoinHost.text()
-        options["port"] = self.ui.lineEditNamecoinPort.text()
-        options["user"] = self.ui.lineEditNamecoinUser.text()
-        options["password"] = self.ui.lineEditNamecoinPassword.text()
+        options["host"] = str(self.ui.lineEditNamecoinHost.text().toUtf8())
+        options["port"] = str(self.ui.lineEditNamecoinPort.text().toUtf8())
+        options["user"] = str(self.ui.lineEditNamecoinUser.text().toUtf8())
+        options["password"] = str(self.ui.lineEditNamecoinPassword.text().toUtf8())
         nc = namecoinConnection(options)
         response = nc.test()
         responseStatus = response[0]
