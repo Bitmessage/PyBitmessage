@@ -260,6 +260,10 @@ class MyForm(settingsmixin.SMainWindow):
             _translate(
                 "MainWindow", "Email gateway"),
             self.on_action_EmailGatewayDialog)
+        self.actionMarkAllRead = self.ui.addressContextMenuToolbarYourIdentities.addAction(
+            _translate(
+                "MainWindow", "Mark all messages as read"),
+            self.on_action_MarkAllRead)
 
         self.ui.treeWidgetYourIdentities.setContextMenuPolicy(
             QtCore.Qt.CustomContextMenu)
@@ -2627,7 +2631,40 @@ class MyForm(settingsmixin.SMainWindow):
                 #print "well nothing"
 #            shared.writeKeysFile()
 #            self.rerenderInboxToLabels()
-    
+
+    def on_action_MarkAllRead(self):
+        if QtGui.QMessageBox.question(self, "Marking all messages as read?", _translate("MainWindow", "Are you sure you would like to mark all messages read?"), QMessageBox.Yes|QMessageBox.No) != QMessageBox.Yes:
+            return
+        addressAtCurrentRow = self.getCurrentAccount()
+        tableWidget = self.getCurrentMessagelist()
+
+        if tableWidget.rowCount() == 0:
+            return
+
+        msgids = []
+        
+        font = QFont()
+        font.setBold(False)
+
+        for i in range(0, tableWidget.rowCount()):
+            msgids.append(str(tableWidget.item(
+                i, 3).data(Qt.UserRole).toPyObject()))
+            tableWidget.item(i, 0).setUnread(False)
+            tableWidget.item(i, 1).setUnread(False)
+            tableWidget.item(i, 2).setUnread(False)
+            tableWidget.item(i, 3).setFont(font)
+
+        markread = 0
+        if self.getCurrentFolder() == 'sent':
+            markread = sqlExecute(
+               "UPDATE sent SET read = 1 WHERE ackdata IN(%s) AND read=0" %(",".join("?"*len(msgids))), *msgids)
+        else:
+            markread = sqlExecute(
+               "UPDATE inbox SET read = 1 WHERE msgid IN(%s) AND read=0" %(",".join("?"*len(msgids))), *msgids)
+
+        if markread > 0:
+            self.propagateUnreadCount(addressAtCurrentRow, self.getCurrentFolder(), None, 0)
+
     def click_NewAddressDialog(self):
         addresses = []
         for addressInKeysFile in getSortedAccounts():
@@ -3282,19 +3319,20 @@ class MyForm(settingsmixin.SMainWindow):
 
     def on_context_menuSubscriptions(self, point):
         currentItem = self.getCurrentItem()
-        if not isinstance(currentItem, Ui_AddressWidget):
-            return
         self.popMenuSubscriptions = QtGui.QMenu(self)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
-        self.popMenuSubscriptions.addSeparator()
-        if currentItem.isEnabled:
-            self.popMenuSubscriptions.addAction(self.actionsubscriptionsDisable)
-        else:
-            self.popMenuSubscriptions.addAction(self.actionsubscriptionsEnable)
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsSetAvatar)
-        self.popMenuSubscriptions.addSeparator()
-        self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
+        if isinstance(currentItem, Ui_AddressWidget):
+            self.popMenuSubscriptions.addAction(self.actionsubscriptionsNew)
+            self.popMenuSubscriptions.addAction(self.actionsubscriptionsDelete)
+            self.popMenuSubscriptions.addSeparator()
+            if currentItem.isEnabled:
+                self.popMenuSubscriptions.addAction(self.actionsubscriptionsDisable)
+            else:
+                self.popMenuSubscriptions.addAction(self.actionsubscriptionsEnable)
+            self.popMenuSubscriptions.addAction(self.actionsubscriptionsSetAvatar)
+            self.popMenuSubscriptions.addSeparator()
+            self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
+            self.popMenuSubscriptions.addSeparator()
+        self.popMenuSubscriptions.addAction(self.actionMarkAllRead)
         self.popMenuSubscriptions.exec_(
             self.ui.treeWidgetSubscriptions.mapToGlobal(point))
 
@@ -3629,39 +3667,41 @@ class MyForm(settingsmixin.SMainWindow):
         
     def on_context_menuYourIdentities(self, point):
         currentItem = self.getCurrentItem()
-        if not isinstance(currentItem, Ui_AddressWidget):
-            return
         self.popMenuYourIdentities = QtGui.QMenu(self)
-        self.popMenuYourIdentities.addAction(self.actionNewYourIdentities)
-        self.popMenuYourIdentities.addSeparator()
-        self.popMenuYourIdentities.addAction(self.actionClipboardYourIdentities)
-        self.popMenuYourIdentities.addSeparator()
-        if currentItem.isEnabled:
-            self.popMenuYourIdentities.addAction(self.actionDisableYourIdentities)
-        else:
-            self.popMenuYourIdentities.addAction(self.actionEnableYourIdentities)
-        self.popMenuYourIdentities.addAction(self.actionSetAvatarYourIdentities)
-        self.popMenuYourIdentities.addAction(self.actionSpecialAddressBehaviorYourIdentities)
-        self.popMenuYourIdentities.addAction(self.actionEmailGateway)
+        if isinstance(currentItem, Ui_AddressWidget):
+            self.popMenuYourIdentities.addAction(self.actionNewYourIdentities)
+            self.popMenuYourIdentities.addSeparator()
+            self.popMenuYourIdentities.addAction(self.actionClipboardYourIdentities)
+            self.popMenuYourIdentities.addSeparator()
+            if currentItem.isEnabled:
+                self.popMenuYourIdentities.addAction(self.actionDisableYourIdentities)
+            else:
+                self.popMenuYourIdentities.addAction(self.actionEnableYourIdentities)
+            self.popMenuYourIdentities.addAction(self.actionSetAvatarYourIdentities)
+            self.popMenuYourIdentities.addAction(self.actionSpecialAddressBehaviorYourIdentities)
+            self.popMenuYourIdentities.addAction(self.actionEmailGateway)
+            self.popMenuYourIdentities.addSeparator()
+        self.popMenuYourIdentities.addAction(self.actionMarkAllRead)
         self.popMenuYourIdentities.exec_(
             self.ui.treeWidgetYourIdentities.mapToGlobal(point))
 
     # TODO make one popMenu
     def on_context_menuChan(self, point):
         currentItem = self.getCurrentItem()
-        if not isinstance(currentItem, Ui_AddressWidget):
-            return
         self.popMenu = QtGui.QMenu(self)
-        self.popMenu.addAction(self.actionNew)
-        self.popMenu.addAction(self.actionDelete)
-        self.popMenu.addSeparator()
-        self.popMenu.addAction(self.actionClipboard)
-        self.popMenu.addSeparator()
-        if currentItem.isEnabled:
-            self.popMenu.addAction(self.actionDisable)
-        else:
-            self.popMenu.addAction(self.actionEnable)
-        self.popMenu.addAction(self.actionSetAvatar)
+        if isinstance(currentItem, Ui_AddressWidget):
+            self.popMenu.addAction(self.actionNew)
+            self.popMenu.addAction(self.actionDelete)
+            self.popMenu.addSeparator()
+            self.popMenu.addAction(self.actionClipboard)
+            self.popMenu.addSeparator()
+            if currentItem.isEnabled:
+                self.popMenu.addAction(self.actionDisable)
+            else:
+                self.popMenu.addAction(self.actionEnable)
+            self.popMenu.addAction(self.actionSetAvatar)
+            self.popMenu.addSeparator()
+        self.popMenu.addAction(self.actionMarkAllRead)
         self.popMenu.exec_(
             self.ui.treeWidgetChans.mapToGlobal(point))
 
