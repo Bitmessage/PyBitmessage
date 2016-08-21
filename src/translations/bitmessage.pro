@@ -57,6 +57,7 @@ TRANSLATIONS = \
     bitmessage_ja.ts \
     bitmessage_nl.ts \
     bitmessage_no.ts \
+    bitmessage_pl.ts \
     bitmessage_pt.ts \
     bitmessage_sk.ts \
     bitmessage_ru.ts \
