@@ -87,7 +87,7 @@ class singleCleaner(threading.Thread, StoppableThread):
             shared.knownNodesLock.acquire()
             for stream in shared.knownNodes:
                 for node in shared.knownNodes[stream].keys():
-                    if now - shared.knownNodes[stream][node] > 259200: # 3 days
+                    if now - shared.knownNodes[stream][node] > 2419200: # 28 days
                         shared.needToWriteKownNodesToDisk = True
                         del shared.knownNodes[stream][node]
             shared.knownNodesLock.release()
