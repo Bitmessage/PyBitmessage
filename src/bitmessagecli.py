@@ -1,4 +1,4 @@
-#!/usr/bin/python2.7
+#!/usr/bin/env python
 # Created by Adam Melton (.dok) referenceing https://bitmessage.org/wiki/API_Reference for API documentation
 # Distributed under the MIT/X11 software license. See http://www.opensource.org/licenses/mit-license.php.
 

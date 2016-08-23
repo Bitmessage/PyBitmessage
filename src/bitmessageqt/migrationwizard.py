@@ -1,4 +1,5 @@
-#!/usr/bin/env python2.7
+#!/usr/bin/env python
+
 from PyQt4 import QtCore, QtGui
 
 class MigrationWizardIntroPage(QtGui.QWizardPage):

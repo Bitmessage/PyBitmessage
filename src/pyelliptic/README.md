@@ -30,7 +30,7 @@ Require OpenSSL
 ## Example
 
 ```python
-#!/usr/bin/python
+#!/usr/bin/env python
 
 import pyelliptic
 
