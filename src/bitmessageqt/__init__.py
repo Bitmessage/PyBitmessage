@@ -1,10 +1,13 @@
 from debug import logger
 withMessagingMenu = False
 try:
+    import gi
+    gi.require_version('MessagingMenu', '1.0')
     from gi.repository import MessagingMenu
+    gi.require_version('Notify', '0.7')
     from gi.repository import Notify
     withMessagingMenu = True
-except ImportError:
+except (ImportError, ValueError):
     MessagingMenu = None
 
 try:
