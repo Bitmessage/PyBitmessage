@@ -38,10 +38,14 @@ def configureLogging():
     try:
         logging.config.fileConfig(os.path.join (shared.appdata, 'logging.dat'))
         have_logging = True
-        print "Loaded debug config from %s" % (os.path.join(shared.appdata, 'logging.dat'))
+        print "Loaded logger configuration from %s" % (os.path.join(shared.appdata, 'logging.dat'))
     except:
-        print "Failed to load debug config from %s, using default logging config" % (os.path.join(shared.appdata, 'logging.dat'))
-        print sys.exc_info()
+        if os.path.isfile(os.path.join(shared.appdata, 'logging.dat')):
+            print "Failed to load logger configuration from %s, using default logging config" % (os.path.join(shared.appdata, 'logging.dat'))
+            print sys.exc_info()
+        else:
+            # no need to confuse the user if the logger config is missing entirely
+            print "Using default logger configuration"
     
     sys.excepthook = log_uncaught_exceptions
 
