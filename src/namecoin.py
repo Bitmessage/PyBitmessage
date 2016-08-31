@@ -273,9 +273,9 @@ def ensureNamecoinOptions ():
     # Try to read user/password from .namecoin configuration file.
     defaultUser = ""
     defaultPass = ""
+    nmcFolder = lookupNamecoinFolder ()
+    nmcConfig = nmcFolder + "namecoin.conf"
     try:
-        nmcFolder = lookupNamecoinFolder ()
-        nmcConfig = nmcFolder + "namecoin.conf"
         nmc = open (nmcConfig, "r")
 
         while True:
@@ -295,7 +295,8 @@ def ensureNamecoinOptions ():
                     shared.namecoinDefaultRpcPort = val
                 
         nmc.close ()
-
+    except IOError:
+        logger.error("%s unreadable or missing, Namecoin support deactivated", nmcConfig)
     except Exception as exc:
         logger.warning("Error processing namecoin.conf", exc_info=True)
 
