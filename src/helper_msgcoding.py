@@ -1,5 +1,6 @@
 #!/usr/bin/python2.7
 
+import string
 import msgpack
 import zlib
 
@@ -8,7 +9,7 @@ from debug import logger
 BITMESSAGE_ENCODING_IGNORE = 0
 BITMESSAGE_ENCODING_TRIVIAL = 1
 BITMESSAGE_ENCODING_SIMPLE = 2
-BITMESSAGE.ENCODING_EXTENDED = 3
+BITMESSAGE_ENCODING_EXTENDED = 3
 
 class MsgEncode(object):
     def __init__(self, message, encoding = BITMESSAGE_ENCODING_SIMPLE):
@@ -71,14 +72,14 @@ class MsgDecode(object):
     def decodeSimple(self, data):
         bodyPositionIndex = string.find(data, '\nBody:')
         if bodyPositionIndex > 1:
-            subject = message[8:bodyPositionIndex]
+            subject = data[8:bodyPositionIndex]
             # Only save and show the first 500 characters of the subject.
             # Any more is probably an attack.
             subject = subject[:500]
-            body = message[bodyPositionIndex + 6:]
+            body = data[bodyPositionIndex + 6:]
         else:
             subject = ''
-            body = message
+            body = data
         # Throw away any extra lines (headers) after the subject.
         if subject:
             subject = subject.splitlines()[0]
