@@ -63,7 +63,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         # Initialize the shared.ackdataForWhichImWatching data structure
         queryreturn = sqlQuery(
-            '''SELECT ackdata FROM sent where (status='msgsent' OR status='doingmsgpow')''')
+            '''SELECT ackdata FROM sent WHERE status = 'msgsent' ''')
         for row in queryreturn:
             ackdata, = row
             logger.info('Watching for ackdata ' + hexlify(ackdata))
@@ -73,18 +73,12 @@ class singleWorker(threading.Thread, StoppableThread):
             10)  # give some time for the GUI to start before we start on existing POW tasks.
 
         if shared.shutdown == 0:
-            queryreturn = sqlQuery(
-                '''SELECT DISTINCT toaddress FROM sent WHERE (status='doingpubkeypow' AND folder='sent')''')
-            for row in queryreturn:
-                toaddress, = row
-                logger.debug("c: %s", shared.shutdown)
-                self.requestPubKey(toaddress)
             # just in case there are any pending tasks for msg
             # messages that have yet to be sent.
-            self.sendMsg()
+            shared.workerQueue.put(('sendmessage', ''))
             # just in case there are any tasks for Broadcasts
             # that have yet to be sent.
-            self.sendBroadcast()
+            shared.workerQueue.put(('sendbroadcast', ''))
 
         while shared.shutdown == 0:
             self.busy = 0
@@ -122,6 +116,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 logger.error('Probable programming error: The command sent to the workerThread is weird. It is: %s\n' % command)
 
             shared.workerQueue.task_done()
+        logger.info("Quitting...")
 
     def doPOWForMyV2Pubkey(self, hash):  # This function also broadcasts out the pubkey message once it is done with the POW
         # Look up my stream number based on my address hash
@@ -371,8 +366,12 @@ class singleWorker(threading.Thread, StoppableThread):
             logger.error('Error: Couldn\'t add the lastpubkeysendtime to the keys.dat file. Error message: %s' % err)
 
     def sendBroadcast(self):
+        # Reset just in case
+        sqlExecute(
+            '''UPDATE sent SET status='broadcastqueued' WHERE status = 'doingbroadcastpow' ''')
         queryreturn = sqlQuery(
             '''SELECT fromaddress, subject, message, ackdata, ttl FROM sent WHERE status=? and folder='sent' ''', 'broadcastqueued')
+
         for row in queryreturn:
             fromaddress, subject, body, ackdata, TTL = row
             status, addressVersionNumber, streamNumber, ripe = decodeAddress(
@@ -391,6 +390,10 @@ class singleWorker(threading.Thread, StoppableThread):
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                     ackdata, tr._translate("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                 continue
+
+            sqlExecute(
+                '''UPDATE sent SET status='doingbroadcastpow' WHERE ackdata=? AND status='broadcastqueued' ''',
+                ackdata)
 
             privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
                 privSigningKeyBase58))
@@ -496,15 +499,12 @@ class singleWorker(threading.Thread, StoppableThread):
         
 
     def sendMsg(self):
-        while True: # while we have a msg that needs some work
-            
-            # Select just one msg that needs work.
-            queryreturn = sqlQuery(
-                '''SELECT toaddress, fromaddress, subject, message, ackdata, status, ttl, retrynumber FROM sent WHERE (status='msgqueued' or status='doingmsgpow' or status='forcepow') and folder='sent' LIMIT 1''')
-            if len(queryreturn) == 0: # if there is no work to do then 
-                break                 # break out of this sendMsg loop and 
-                                      # wait for something to get put in the shared.workerQueue.
-            row = queryreturn[0]
+        # Reset just in case
+        sqlExecute(
+            '''UPDATE sent SET status='msgqueued' WHERE status IN ('doingpubkeypow', 'doingmsgpow')''')
+        queryreturn = sqlQuery(
+            '''SELECT toaddress, fromaddress, subject, message, ackdata, status, ttl, retrynumber FROM sent WHERE (status='msgqueued' or status='forcepow') and folder='sent' ''')
+        for row in queryreturn: # while we have a msg that needs some work
             toaddress, fromaddress, subject, message, ackdata, status, TTL, retryNumber = row
             toStatus, toAddressVersionNumber, toStreamNumber, toRipe = decodeAddress(
                 toaddress)

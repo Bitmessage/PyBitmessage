@@ -16,6 +16,8 @@ import os
 import pickle
 import Queue
 import random
+from multiprocessing import active_children
+from signal import SIGTERM
 import socket
 import sys
 import stat
@@ -502,6 +504,12 @@ def isProofOfWorkSufficient(data,
 def doCleanShutdown():
     global shutdown, thisapp
     shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
+    for child in active_children():
+        try:
+            logger.info("Killing PoW child %i", child.pid)
+            os.kill(child.pid, SIGTERM)
+        except:
+            pass
     broadcastToSendDataQueues((0, 'shutdown', 'no data'))   
     objectProcessorQueue.put(('checkShutdownVariable', 'no data'))
     for thread in threading.enumerate():
