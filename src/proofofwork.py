@@ -2,6 +2,7 @@
 #import time
 #from multiprocessing import Pool, cpu_count
 import hashlib
+import signal
 from struct import unpack, pack
 import sys
 from debug import logger
@@ -42,7 +43,7 @@ def _doSafePoW(target, initialHash):
         nonce += 1
         trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
     if shutdown != 0:
-        raise Exception("Interrupted")
+        raise StopIteration("Interrupted")
     logger.debug("Safe PoW done")
     return [trialValue, nonce]
 
@@ -62,10 +63,10 @@ def _doFastPoW(target, initialHash):
         pool_size = maxCores
 
     # temporarily disable handlers
-    int_handler = signal.getsignal(signal.SIGINT)
-    term_handler = signal.getsignal(signal.SIGTERM)
-    signal.signal(signal.SIGINT, signal.SIG_IGN)
-    signal.signal(signal.SIGTERM, signal.SIG_IGN)
+    #int_handler = signal.getsignal(signal.SIGINT)
+    #term_handler = signal.getsignal(signal.SIGTERM)
+    #signal.signal(signal.SIGINT, signal.SIG_IGN)
+    #signal.signal(signal.SIGTERM, signal.SIG_IGN)
 
     pool = Pool(processes=pool_size)
     result = []
@@ -73,15 +74,19 @@ def _doFastPoW(target, initialHash):
         result.append(pool.apply_async(_pool_worker, args = (i, initialHash, target, pool_size)))
 
     # re-enable handlers
-    signal.signal(signal.SIGINT, int_handler)
-    signal.signal(signal.SIGTERM, term_handler)
+    #signal.signal(signal.SIGINT, int_handler)
+    #signal.signal(signal.SIGTERM, term_handler)
 
     while True:
         if shutdown >= 1:
             pool.terminate()
-            raise Exception("Interrupted")
+            raise StopIteration("Interrupted")
         for i in range(pool_size):
             if result[i].ready():
+                try:
+                    result[i].successful()
+                except AssertionError:
+                    raise StopIteration("Interrupted")
                 result = result[i].get()
                 pool.terminate()
                 pool.join() #Wait for the workers to exit...
@@ -98,7 +103,7 @@ def _doCPoW(target, initialHash):
     nonce = bmpow(out_h, out_m)
     trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
     if shutdown != 0:
-        raise Exception("Interrupted")
+        raise StopIteration("Interrupted")
     logger.debug("C PoW done")
     return [trialValue, nonce]
 
@@ -114,7 +119,7 @@ def _doGPUPoW(target, initialHash):
         openclpow.ctx = False
         raise Exception("GPU did not calculate correctly.")
     if shutdown != 0:
-        raise Exception("Interrupted")
+        raise StopIteration("Interrupted")
     logger.debug("GPU PoW done")
     return [trialValue, nonce]
     
@@ -143,7 +148,16 @@ def estimate(difficulty, format = False):
     else:
         return ret
 
+def getPowType():
+    if safeConfigGetBoolean('bitmessagesettings', 'opencl') and openclpow.has_opencl():
+        return "OpenCL"
+    if bmpow:
+        return "C"
+    return "python"
+
 def run(target, initialHash):
+    if shutdown != 0:
+        raise
     target = int(target)
     if safeConfigGetBoolean('bitmessagesettings', 'opencl') and openclpow.has_opencl():
 #        trialvalue1, nonce1 = _doGPUPoW(target, initialHash)
@@ -153,16 +167,16 @@ def run(target, initialHash):
 #        return [trialvalue, nonce]
         try:
             return _doGPUPoW(target, initialHash)
+        except StopIteration:
+            raise
         except:
-            if shutdown != 0:
-                raise
             pass # fallback
     if bmpow:
         try:
             return _doCPoW(target, initialHash)
+        except StopIteration:
+            raise
         except:
-            if shutdown != 0:
-                raise
             pass # fallback
     if frozen == "macosx_app" or not frozen:
         # on my (Peter Surda) Windows 10, Windows Defender
@@ -171,15 +185,17 @@ def run(target, initialHash):
         # added on 2015-11-29: multiprocesing.freeze_support() doesn't help
         try:
             return _doFastPoW(target, initialHash)
+        except StopIteration:
+            logger.error("Fast PoW got StopIteration")
+            raise
         except:
-            if shutdown != 0:
-                raise
+            logger.error("Fast PoW got exception:", exc_info=True)
             pass #fallback
     try:
         return _doSafePoW(target, initialHash)
+    except StopIteration:
+        raise
     except:
-        if shutdown != 0:
-            raise
         pass #fallback
 
 # init

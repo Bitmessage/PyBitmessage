@@ -74,6 +74,8 @@ from account import *
 from dialogs import AddAddressDialog
 from class_objectHashHolder import objectHashHolder
 from class_singleWorker import singleWorker
+from helper_generic import powQueueSize, invQueueSize
+from proofofwork import getPowType
 
 def _translate(context, text, disambiguation = None, encoding = None, number = None):
     if number is None:
@@ -991,7 +993,7 @@ class MyForm(settingsmixin.SMainWindow):
                 "MainWindow", "Waiting for their encryption key. Will request it again soon.")
         elif status == 'doingpowforpubkey':
             statusText = _translate(
-                "MainWindow", "Encryption key request queued.")
+                "MainWindow", "Doing work necessary to request encryption key.")
         elif status == 'msgqueued':
             statusText = _translate(
                 "MainWindow", "Queued.")
@@ -1003,13 +1005,16 @@ class MyForm(settingsmixin.SMainWindow):
                 l10n.formatTimestamp(lastactiontime))
         elif status == 'doingmsgpow':
             statusText = _translate(
-                "MainWindow", "Need to do work to send message. Work is queued.")
+                "MainWindow", "Doing work necessary to send message.")
         elif status == 'ackreceived':
             statusText = _translate("MainWindow", "Acknowledgement of the message received %1").arg(
                 l10n.formatTimestamp(lastactiontime))
         elif status == 'broadcastqueued':
             statusText = _translate(
                 "MainWindow", "Broadcast queued.")
+        elif status == 'doingbroadcastpow':
+            statusText = _translate(
+                "MainWindow", "Doing work necessary to send broadcast.")
         elif status == 'broadcastsent':
             statusText = _translate("MainWindow", "Broadcast on %1").arg(
                 l10n.formatTimestamp(lastactiontime))
@@ -2715,58 +2720,63 @@ class MyForm(settingsmixin.SMainWindow):
             return
         '''
 
+        self.show()
+        self.raise_()
+        self.activateWindow()
+
         self.statusBar().showMessage(_translate(
             "MainWindow", "Shutting down PyBitmessage... %1%").arg(str(0)))
+
+        waitForPow = True
+
+        # C PoW currently doesn't support interrupting and OpenCL is untested
+        # Since Windows doesn't have UNIX-style signals, it probably doesn't work on Win either, so disabling there
+        if getPowType == "python" and ('win32' in sys.platform or 'win64' in sys.platform) and (ppowQueueSize() > 0 or invQueueSize() > 0):
+            reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Proof of work pending"),
+                    _translate("MainWindow", "%n object(s) pending proof of work", None, powQueueSize()) + ", " +
+                    _translate("MainWindow", "%n object(s) waiting to be distributed", None, invQueueSize()) + "\n\n" + 
+                    _translate("MainWindow", "Wait until these tasks finish?"),
+                    QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+            if reply == QtGui.QMessageBox.No:
+                waitForPow = False
+
+        if waitForPow:
+            # check if PoW queue empty
+            maxWorkerQueue = 0
+            curWorkerQueue = powQueueSize()
+            while curWorkerQueue > 0:
+                # worker queue size
+                curWorkerQueue = powQueueSize()
+                if curWorkerQueue > maxWorkerQueue:
+                    maxWorkerQueue = curWorkerQueue
+                if curWorkerQueue > 0:
+                    self.statusBar().showMessage(_translate("MainWindow", "Waiting for PoW to finish... %1%").arg(str(50 * (maxWorkerQueue - curWorkerQueue) / maxWorkerQueue)))
+                    time.sleep(0.5)
+                    QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
         
-        # check if PoW queue empty
-        maxWorkerQueue = 0
-        curWorkerQueue = 1
-        while curWorkerQueue > 0:
-            # worker queue size
-            curWorkerQueue = shared.workerQueue.qsize()
-            # if worker is busy add 1
-            for thread in threading.enumerate():
-                try:
-                    if isinstance(thread, singleWorker):
-                        curWorkerQueue += thread.busy
-                except:
-                    pass
-            if curWorkerQueue > maxWorkerQueue:
-                maxWorkerQueue = curWorkerQueue
-            if curWorkerQueue > 0:
-                self.statusBar().showMessage(_translate("MainWindow", "Waiting for PoW to finish... %1%").arg(str(50 * (maxWorkerQueue - curWorkerQueue) / maxWorkerQueue)))
-                time.sleep(0.5)
-                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
+            self.statusBar().showMessage(_translate("MainWindow", "Shutting down Pybitmessage... %1%").arg(str(50)))
+        
+            QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
+            if maxWorkerQueue > 0:
+                time.sleep(0.5) # a bit of time so that the hashHolder is populated
+            QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
+        
+            # check if objectHashHolder empty
+            self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(50)))
+            maxWaitingObjects = 0
+            curWaitingObjects = invQueueSize()
+            while curWaitingObjects > 0:
+                curWaitingObjects = invQueueSize()
+                if curWaitingObjects > maxWaitingObjects:
+                    maxWaitingObjects = curWaitingObjects
+                if curWaitingObjects > 0:
+                    self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(50 + 20 * (maxWaitingObjects - curWaitingObjects) / maxWaitingObjects)))
+                    time.sleep(0.5)
+                    QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
 
-        self.statusBar().showMessage(_translate("MainWindow", "Shutting down Pybitmessage... %1%").arg(str(50)))
-
-        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
-        if maxWorkerQueue > 0:
-            time.sleep(0.5) # a bit of time so that the hashHolder is populated
-        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
-
-        # check if objectHashHolder empty
-        self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(50)))
-        maxWaitingObjects = 0
-        curWaitingObjects = 1
-        while curWaitingObjects > 0:
-            curWaitingObjects = 0
-            for thread in threading.enumerate():
-                try:
-                    if isinstance(thread, objectHashHolder):
-                        curWaitingObjects += thread.hashCount()
-                except:
-                    pass
-            if curWaitingObjects > maxWaitingObjects:
-                maxWaitingObjects = curWaitingObjects
-            if curWaitingObjects > 0:
-                self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(50 + 20 * (maxWaitingObjects - curWaitingObjects) / maxWaitingObjects)))
-                time.sleep(0.5)
-                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
-
-        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
-        if maxWorkerQueue > 0 or maxWaitingObjects > 0:
-            time.sleep(10) # a bit of time so that the other nodes retrieve the objects
+            QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
+            if maxWorkerQueue > 0 or maxWaitingObjects > 0:
+                time.sleep(10) # a bit of time so that the other nodes retrieve the objects
         QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
 
         # save state and geometry self and all widgets
