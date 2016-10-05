@@ -1341,15 +1341,21 @@ Receiver&apos;s required difficulty: %1 and %2</translation>
         <source>Proof of work pending</source>
         <translation type="unfinished"></translation>
     </message>
-    <message>
+    <message numerus="yes">
         <location filename="../bitmessageqt/__init__.py" line="2738"/>
         <source>%n object(s) pending proof of work</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
-    <message>
+    <message numerus="yes">
         <location filename="../bitmessageqt/__init__.py" line="2738"/>
         <source>%n object(s) waiting to be distributed</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished">
+            <numerusform></numerusform>
+            <numerusform></numerusform>
+        </translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2738"/>
