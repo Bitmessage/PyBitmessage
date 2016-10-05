@@ -2733,8 +2733,8 @@ class MyForm(settingsmixin.SMainWindow):
         # Since Windows doesn't have UNIX-style signals, it probably doesn't work on Win either, so disabling there
         if getPowType == "python" and ('win32' in sys.platform or 'win64' in sys.platform) and (ppowQueueSize() > 0 or invQueueSize() > 0):
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Proof of work pending"),
-                    _translate("MainWindow", "%n object(s) pending proof of work", None, powQueueSize()) + ", " +
-                    _translate("MainWindow", "%n object(s) waiting to be distributed", None, invQueueSize()) + "\n\n" + 
+                    _translate("MainWindow", "%n object(s) pending proof of work", None, QtCore.QCoreApplication.CodecForTr, powQueueSize()) + ", " +
+                    _translate("MainWindow", "%n object(s) waiting to be distributed", None, QtCore.QCoreApplication.CodecForTr, invQueueSize()) + "\n\n" + 
                     _translate("MainWindow", "Wait until these tasks finish?"),
                     QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.No:
