@@ -1686,7 +1686,7 @@ class MyForm(settingsmixin.SMainWindow):
                 QIcon(":/newPrefix/images/redicon.png"))
             shared.statusIconColor = 'red'
             # if the connection is lost then show a notification
-            if self.connected:
+            if self.connected and not shared.config.getboolean('bitmessagesettings', 'hidetrayconnectionnotifications'):
                 self.notifierShow('Bitmessage', unicode(_translate(
                             "MainWindow", "Connection lost").toUtf8(),'utf-8'),
                                   self.SOUND_DISCONNECTED, None)
@@ -1703,7 +1703,7 @@ class MyForm(settingsmixin.SMainWindow):
                 ":/newPrefix/images/yellowicon.png"))
             shared.statusIconColor = 'yellow'
             # if a new connection has been established then show a notification
-            if not self.connected:
+            if not self.connected and not shared.config.getboolean('bitmessagesettings', 'hidetrayconnectionnotifications'):
                 self.notifierShow('Bitmessage', unicode(_translate(
                             "MainWindow", "Connected").toUtf8(),'utf-8'),
                                   self.SOUND_CONNECTED, None)
@@ -1719,7 +1719,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.pushButtonStatusIcon.setIcon(
                 QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
-            if not self.connected:
+            if not self.connected and not shared.config.getboolean('bitmessagesettings', 'hidetrayconnectionnotifications'):
                 self.notifierShow('Bitmessage', unicode(_translate(
                             "MainWindow", "Connected").toUtf8(),'utf-8'),
                                   self.SOUND_CONNECTION_GREEN, None)
@@ -2361,6 +2361,8 @@ class MyForm(settingsmixin.SMainWindow):
                 self.settingsDialogInstance.ui.checkBoxMinimizeToTray.isChecked()))
             shared.config.set('bitmessagesettings', 'trayonclose', str(
                 self.settingsDialogInstance.ui.checkBoxTrayOnClose.isChecked()))
+            shared.config.set('bitmessagesettings', 'hidetrayconnectionnotifications', str(
+                self.settingsDialogInstance.ui.checkBoxHideTrayConnectionNotifications.isChecked()))
             shared.config.set('bitmessagesettings', 'showtraynotifications', str(
                 self.settingsDialogInstance.ui.checkBoxShowTrayNotifications.isChecked()))
             shared.config.set('bitmessagesettings', 'startintray', str(
@@ -3990,6 +3992,8 @@ class settingsDialog(QtGui.QDialog):
             shared.config.getboolean('bitmessagesettings', 'minimizetotray'))
         self.ui.checkBoxTrayOnClose.setChecked(
             shared.safeConfigGetBoolean('bitmessagesettings', 'trayonclose'))
+        self.ui.checkBoxHideTrayConnectionNotifications.setChecked(
+            shared.config.getboolean("bitmessagesettings", "hidetrayconnectionnotifications"))
         self.ui.checkBoxShowTrayNotifications.setChecked(
             shared.config.getboolean('bitmessagesettings', 'showtraynotifications'))
         self.ui.checkBoxStartInTray.setChecked(
