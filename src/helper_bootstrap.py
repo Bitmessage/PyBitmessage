@@ -85,9 +85,10 @@ def dns():
                 sock.close()
             except:
                 logger.error("SOCKS DNS resolving failed", exc_info=True)
-            if ip is not None:
-                logger.info ('Adding ' + ip + ' to knownNodes based on SOCKS DNS bootstrap method')
-                shared.knownNodes[1][shared.Peer(ip, port)] = time.time()
+            else:
+                if ip is not None:
+                    logger.info ('Adding ' + ip + ' to knownNodes based on SOCKS DNS bootstrap method')
+                    shared.knownNodes[1][shared.Peer(ip, port)] = time.time()
     else:
         logger.info('DNS bootstrap skipped because the proxy type does not support DNS resolution.')
 

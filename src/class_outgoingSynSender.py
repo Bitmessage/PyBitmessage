@@ -203,7 +203,16 @@ class outgoingSynSender(threading.Thread, StoppableThread):
 
                 logger.debug(str(self) + ' connected to ' + str(peer) + ' during an outgoing attempt.')
             except socks.GeneralProxyError as err:
-                if shared.verbose >= 2:
+                if err[0][0] in [7, 8, 9]:
+                    logger.error('Error communicating with proxy: %s', str(err))
+                    shared.UISignalQueue.put((
+                        'updateStatusBar',
+                        tr._translate(
+                            "MainWindow", "Problem communicating with proxy: %1. Please check your network settings.").arg(str(err[0][1]))
+                        ))
+                    self.stop.wait(1)
+                    continue
+                elif shared.verbose >= 2:
                     logger.debug('Could NOT connect to ' + str(peer) + ' during outgoing attempt. ' + str(err))
 
                 deletedPeer = None
@@ -227,13 +236,13 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             except socks.Socks5AuthError as err:
                 shared.UISignalQueue.put((
                     'updateStatusBar', tr._translate(
-                    "MainWindow", "SOCKS5 Authentication problem: %1").arg(str(err))))
+                    "MainWindow", "SOCKS5 Authentication problem: %1. Please check your SOCKS5 settings").arg(str(err))))
             except socks.Socks5Error as err:
-                if err[0] in [3, 4, 5, 6]:
+                if err[0][0] in [3, 4, 5, 6]:
                     # this is a more bening "error": host unreachable, network unreachable, connection refused, TTL expired
-                    logger.debug('SOCKS5 error. ' + str(err))
+                    logger.debug('SOCKS5 error: %s', str(err))
                 else:
-                    logger.error('SOCKS5 error. ' + str(err))
+                    logger.error('SOCKS5 error: %s', str(err))
             except socks.Socks4Error as err:
                 logger.error('Socks4Error: ' + str(err))
             except socket.error as err:
