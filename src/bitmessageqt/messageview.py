@@ -6,10 +6,6 @@ from safehtmlparser import *
 class MessageView(QtGui.QTextBrowser):
     MODE_PLAIN = 0
     MODE_HTML = 1
-    TEXT_PLAIN = "HTML detected, click here to display"
-    TEXT_HTML = "Click here to disable HTML"
-    CONFIRM_TITLE = "Follow external link"
-    CONFIRM_TEXT = "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you or download malicious data. Are you sure?"
     
     def __init__(self, parent = 0):
         super(MessageView, self).__init__(parent)
@@ -66,8 +62,8 @@ class MessageView(QtGui.QTextBrowser):
             QtGui.QApplication.activeWindow().ui.textEditMessage.setFocus()
             return
         reply = QtGui.QMessageBox.warning(self,
-            QtGui.QApplication.translate(type(self).__name__, MessageView.CONFIRM_TITLE),
-            QtGui.QApplication.translate(type(self).__name__, MessageView.CONFIRM_TEXT).arg(str(link.toString())), 
+            QtGui.QApplication.translate("MessageView", "Follow external link"),
+            QtGui.QApplication.translate("MessageView", "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you or download malicious data. Are you sure?").arg(str(link.toString())),
             QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
             QtGui.QDesktopServices.openUrl(link)
@@ -110,7 +106,7 @@ class MessageView(QtGui.QTextBrowser):
         self.mode = MessageView.MODE_PLAIN
         out = self.html.raw
         if self.html.has_html:
-            out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + str(QtGui.QApplication.translate(type(self).__name__, MessageView.TEXT_PLAIN)) + "</b></div><br/>" + out
+            out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + str(QtGui.QApplication.translate("MessageView", "HTML detected, click here to display")) + "</b></div><br/>" + out
         self.out = out
         self.outpos = 0
         self.setHtml("")
@@ -119,7 +115,7 @@ class MessageView(QtGui.QTextBrowser):
     def showHTML(self):
         self.mode = MessageView.MODE_HTML
         out = self.html.sanitised
-        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + str(QtGui.QApplication.translate(type(self).__name__, MessageView.TEXT_HTML)) + "</b></div><br/>" + out
+        out = "<div align=\"center\" style=\"text-decoration: underline;\"><b>" + str(QtGui.QApplication.translate("MessageView", "Click here to disable HTML")) + "</b></div><br/>" + out
         self.out = out
         self.outpos = 0
         self.setHtml("")
