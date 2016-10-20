@@ -2756,7 +2756,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         if shared.statusIconColor == 'red':
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Not connected"),
-                    _translate("MainWindow", "Bitmessage isn't connected to the network. If you quit now, it may cause delivery delays. Wait until connected and the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr,  toBeDownloaded),
+                    _translate("MainWindow", "Bitmessage isn't connected to the network. If you quit now, it may cause delivery delays. Wait until connected and the synchronisation finishes?"),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.Yes:
                 waitForConnection = True
