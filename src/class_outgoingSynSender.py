@@ -104,9 +104,13 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             if shared.shutdown:
                 break
             self.name = "outgoingSynSender-" + peer.host.replace(":", ".") # log parser field separator
-            if peer.host.find(':') == -1:
-                address_family = socket.AF_INET
-            else:
+            address_family = socket.AF_INET
+            # Proxy IP is IPv6. Unlikely but possible
+            if shared.config.get('bitmessagesettings', 'socksproxytype') != 'none':
+                if ":" in shared.config.get('bitmessagesettings', 'sockshostname'):
+                    address_family = socket.AF_INET6
+            # No proxy, and destination is IPv6
+            elif peer.host.find(':') >= 0 :
                 address_family = socket.AF_INET6
             try:
                 self.sock = socks.socksocket(address_family, socket.SOCK_STREAM)
@@ -236,7 +240,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             except socks.Socks5AuthError as err:
                 shared.UISignalQueue.put((
                     'updateStatusBar', tr._translate(
-                    "MainWindow", "SOCKS5 Authentication problem: %1. Please check your SOCKS5 settings").arg(str(err))))
+                    "MainWindow", "SOCKS5 Authentication problem: %1. Please check your SOCKS5 settings.").arg(str(err))))
             except socks.Socks5Error as err:
                 if err[0][0] in [3, 4, 5, 6]:
                     # this is a more bening "error": host unreachable, network unreachable, connection refused, TTL expired
