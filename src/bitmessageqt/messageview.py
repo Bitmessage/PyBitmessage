@@ -24,6 +24,11 @@ class MessageView(QtGui.QTextBrowser):
         self.rendering = False
         self.defaultFontPointSize = self.currentFont().pointSize()
         self.verticalScrollBar().valueChanged.connect(self.lazyRender)
+        self.setWrappingWidth()
+
+    def resizeEvent(self, event):
+        super(MessageView, self).resizeEvent(event)
+        self.setWrappingWidth(event.size().width())
     
     def mousePressEvent(self, event):
         #text = textCursor.block().text()
@@ -41,6 +46,12 @@ class MessageView(QtGui.QTextBrowser):
         if (QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ControlModifier) == QtCore.Qt.ControlModifier and event.orientation() == QtCore.Qt.Vertical:
             zoom = self.currentFont().pointSize() * 100 / self.defaultFontPointSize
             QtGui.QApplication.activeWindow().statusBar().showMessage(QtGui.QApplication.translate("MainWindow", "Zoom level %1%").arg(str(zoom)))
+
+    def setWrappingWidth(self, width=None):
+        self.setLineWrapMode(QtGui.QTextEdit.FixedPixelWidth)
+        if width is None:
+            width = self.width()
+        self.setLineWrapColumnOrWidth(width)
 
     def confirmURL(self, link):
         if link.scheme() == "mailto":
