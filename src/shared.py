@@ -16,7 +16,7 @@ import os
 import pickle
 import Queue
 import random
-from multiprocessing import active_children
+from multiprocessing import active_children, Queue as mpQueue, Lock as mpLock
 from signal import SIGTERM
 import socket
 import sys
@@ -48,6 +48,10 @@ myAddressesByTag = {} # The key in this dictionary is the tag generated from the
 broadcastSendersForWhichImWatching = {}
 workerQueue = Queue.Queue()
 UISignalQueue = Queue.Queue()
+parserInputQueue = mpQueue()
+parserOutputQueue = mpQueue()
+parserProcess = None
+parserLock = mpLock()
 addressGeneratorQueue = Queue.Queue()
 knownNodesLock = threading.Lock()
 knownNodes = {}
@@ -504,6 +508,10 @@ def isProofOfWorkSufficient(data,
 def doCleanShutdown():
     global shutdown, thisapp
     shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
+    try:
+        parserInputQueue.put(None, False)
+    except Queue.Full:
+        pass
     for child in active_children():
         try:
             logger.info("Killing PoW child %i", child.pid)

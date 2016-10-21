@@ -1,24 +1,28 @@
 from HTMLParser import HTMLParser
 import inspect
+import multiprocessing
 import re
+import Queue
 from urllib import quote, quote_plus
 from urlparse import urlparse
-import multiprocessing
-import Queue
 from debug import logger
+from shared import parserInputQueue, parserOutputQueue, parserProcess, parserLock
 
-def regexpSubprocess(queue):
-    try:
-        result = queue.get()
-        result = SafeHTMLParser.uriregex1.sub(
-            r'<a href="\1">\1</a>',
-            result)
-        result = SafeHTMLParser.uriregex2.sub(r'<a href="\1&', result)
-        result = SafeHTMLParser.emailregex.sub(r'<a href="mailto:\1">\1</a>', result)
-    except:
-        pass
-    else:
-        queue.put(result)
+def regexpSubprocess(parserInputQueue, parserOutputQueue):
+    for data in iter(parserInputQueue.get, None):
+        if data is None:
+            break;
+        try:
+            result = SafeHTMLParser.uriregex1.sub(
+                r'<a href="\1">\1</a>',
+                data)
+            result = SafeHTMLParser.uriregex2.sub(r'<a href="\1&', result)
+            result = SafeHTMLParser.emailregex.sub(r'<a href="mailto:\1">\1</a>', result)
+            parserOutputQueue.put(result)
+        except SystemExit:
+            break;
+        except:
+            break;
 
 class SafeHTMLParser(HTMLParser):
     # from html5lib.sanitiser
@@ -106,22 +110,28 @@ class SafeHTMLParser(HTMLParser):
         self.sanitised += "&" + name + ";"
 
     def feed(self, data):
+        global parserLock, parserProcess, parserInputQueue, parserOutputQueue
         HTMLParser.feed(self, data)
         tmp = SafeHTMLParser.multi_replace(data)
         tmp = unicode(tmp, 'utf-8', 'replace')
-
-        queue = multiprocessing.Queue()
-        parser = multiprocessing.Process(target=regexpSubprocess, name="RegExParser", args=(queue,))
-        parser.start()
-        queue.put(tmp)
-        parser.join(1)
-        if parser.is_alive():
-            parser.terminate()
-        parser.join()
+        
+        parserLock.acquire()
+        if parserProcess is None:
+            parserProcess = multiprocessing.Process(target=regexpSubprocess, name="RegExParser", args=(parserInputQueue, parserOutputQueue))
+            parserProcess.start()
+        parserLock.release()
+        parserInputQueue.put(tmp)
         try:
-            tmp = queue.get(False)
-        except (Queue.Empty, StopIteration) as e:
+            tmp = parserOutputQueue.get(True, 1)
+        except Queue.Empty:
             logger.error("Regular expression parsing timed out, not displaying links")
+            parserLock.acquire()
+            parserProcess.terminate()
+            parserProcess = multiprocessing.Process(target=regexpSubprocess, name="RegExParser", args=(parserInputQueue, parserOutputQueue))
+            parserProcess.start()
+            parserLock.release()
+        else:
+            pass
         self.raw += tmp
 
     def is_html(self, text = None, allow_picture = False):
