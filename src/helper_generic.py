@@ -44,7 +44,9 @@ def convertStringToInt(s):
 def signal_handler(signal, frame):
     logger.error("Got signal %i in %s/%s", signal, current_process().name, current_thread().name)
     if current_process().name == "RegExParser":
-        sys.exit(0)
+        # on Windows this isn't triggered, but it's fine, it has its own process termination thing
+        print "RegExParser interrupted"
+        raise SystemExit
     if current_process().name != "MainProcess":
         raise StopIteration("Interrupted")
     if current_thread().name != "MainThread":

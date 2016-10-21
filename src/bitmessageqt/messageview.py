@@ -1,5 +1,7 @@
 from PyQt4 import QtCore, QtGui
 
+import multiprocessing
+import Queue
 from urlparse import urlparse
 from safehtmlparser import *
 
