@@ -3,6 +3,22 @@ import inspect
 import re
 from urllib import quote, quote_plus
 from urlparse import urlparse
+import multiprocessing
+import Queue
+from debug import logger
+
+def regexpSubprocess(queue):
+    try:
+        result = queue.get()
+        result = SafeHTMLParser.uriregex1.sub(
+            r'<a href="\1">\1</a>',
+            result)
+        result = SafeHTMLParser.uriregex2.sub(r'<a href="\1&', result)
+        result = SafeHTMLParser.emailregex.sub(r'<a href="mailto:\1">\1</a>', result)
+    except:
+        pass
+    else:
+        queue.put(result)
 
 class SafeHTMLParser(HTMLParser):
     # from html5lib.sanitiser
@@ -62,7 +78,7 @@ class SafeHTMLParser(HTMLParser):
                         val == ""
                 self.sanitised += " " + quote_plus(attr)
                 if not (val is None):
-                    self.sanitised += "=\"" + val + "\""
+                    self.sanitised += "=\"" + unicode(val, 'utf-8', 'replace') + "\""
         if inspect.stack()[1][3] == "handle_startendtag":
             self.sanitised += "/"
         self.sanitised += ">"
@@ -92,11 +108,20 @@ class SafeHTMLParser(HTMLParser):
     def feed(self, data):
         HTMLParser.feed(self, data)
         tmp = SafeHTMLParser.multi_replace(data)
-        tmp = SafeHTMLParser.uriregex1.sub(
-                r'<a href="\1">\1</a>',
-                unicode(tmp, 'utf-8', 'replace'))
-        tmp = SafeHTMLParser.uriregex2.sub(r'<a href="\1&', tmp)
-        tmp = SafeHTMLParser.emailregex.sub(r'<a href="mailto:\1">\1</a>', tmp)
+        tmp = unicode(tmp, 'utf-8', 'replace')
+
+        queue = multiprocessing.Queue()
+        parser = multiprocessing.Process(target=regexpSubprocess, name="RegExParser", args=(queue,))
+        parser.start()
+        queue.put(tmp)
+        parser.join(1)
+        if parser.is_alive():
+            parser.terminate()
+        parser.join()
+        try:
+            tmp = queue.get(False)
+        except (Queue.Empty, StopIteration) as e:
+            logger.error("Regular expression parsing timed out, not displaying links")
         self.raw += tmp
 
     def is_html(self, text = None, allow_picture = False):
