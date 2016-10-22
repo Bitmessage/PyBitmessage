@@ -17,7 +17,6 @@ import pickle
 import Queue
 import random
 from multiprocessing import active_children, Queue as mpQueue, Lock as mpLock
-from signal import SIGTERM
 import socket
 import sys
 import stat
@@ -512,12 +511,6 @@ def doCleanShutdown():
         parserInputQueue.put(None, False)
     except Queue.Full:
         pass
-    for child in active_children():
-        try:
-            logger.info("Killing PoW child %i", child.pid)
-            os.kill(child.pid, SIGTERM)
-        except:
-            pass
     broadcastToSendDataQueues((0, 'shutdown', 'no data'))   
     objectProcessorQueue.put(('checkShutdownVariable', 'no data'))
     for thread in threading.enumerate():
