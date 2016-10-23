@@ -94,6 +94,7 @@ needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it t
 maximumLengthOfTimeToBotherResendingMessages = 0
 objectProcessorQueue = ObjectProcessorQueue()  # receiveDataThreads dump objects they hear on the network into this queue to be processed.
 streamsInWhichIAmParticipating = {}
+timeOffsetWrongCount = 0
 
 # sanity check, prevent doing ridiculous PoW
 # 20 million PoWs equals approximately 2 days on dev's dual R9 290
