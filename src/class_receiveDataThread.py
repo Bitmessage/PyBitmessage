@@ -1,6 +1,7 @@
 doTimingAttackMitigation = False
 
 import base64
+import datetime
 import errno
 import math
 import time
@@ -26,6 +27,7 @@ from class_objectHashHolder import objectHashHolder
 from helper_generic import addDataPadding, isHostInPrivateIPRange
 from helper_sql import sqlQuery
 from debug import logger
+import tr
 
 # This thread is created either by the synSenderThread(for outgoing
 # connections) or the singleListenerThread(for incoming connections).
@@ -105,10 +107,14 @@ class receiveDataThread(threading.Thread):
                     select.select([self.sslSock], [], [])
                     continue
                 logger.error('sock.recv error. Closing receiveData thread (' + str(self.peer) + ', Thread ID: ' + str(id(self)) + ').' + str(err.errno) + "/" + str(err))
+                if self.initiatedConnection and not self.connectionIsOrWasFullyEstablished:
+                    shared.timeOffsetWrongCount += 1
                 break
             # print 'Received', repr(self.data)
             if len(self.data) == dataLen: # If self.sock.recv returned no data:
                 logger.debug('Connection to ' + str(self.peer) + ' closed. Closing receiveData thread. (ID: ' + str(id(self)) + ')')
+                if self.initiatedConnection and not self.connectionIsOrWasFullyEstablished:
+                    shared.timeOffsetWrongCount += 1
                 break
             else:
                 self.processData()
@@ -130,6 +136,7 @@ class receiveDataThread(threading.Thread):
         except:
             pass
         shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
+        self.checkTimeOffsetNotification()
         logger.debug('receiveDataThread ending. ID ' + str(id(self)) + '. The size of the shared.connectedHostsList is now ' + str(len(shared.connectedHostsList)))
 
     def antiIntersectionDelay(self, initial = False):
@@ -145,6 +152,10 @@ class receiveDataThread(threading.Thread):
         elif not initial:
             logger.debug("Sleeping due to missing object for %.2fs", delay)
             time.sleep(delay)
+
+    def checkTimeOffsetNotification(self):
+        if shared.timeOffsetWrongCount >= 4 and not self.connectionIsOrWasFullyEstablished:
+            shared.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow", "The time on your computer, %1, may be wrong. Please verify your settings.").arg(datetime.datetime.now().strftime("%H:%M:%S"))))
 
     def processData(self):
         if len(self.data) < shared.Header.size:  # if so little of the data has arrived that we can't even read the checksum then wait for more data.
@@ -265,6 +276,7 @@ class receiveDataThread(threading.Thread):
             # there is no reason to run this function a second time
             return
         self.connectionIsOrWasFullyEstablished = True
+        shared.timeOffsetWrongCount = 0
 
         self.sslSock = self.sock
         if ((self.services & shared.NODE_SSL == shared.NODE_SSL) and
@@ -699,15 +711,21 @@ class receiveDataThread(threading.Thread):
         if timeOffset > 3600:
             self.sendDataThreadQueue.put((0, 'sendRawData', shared.assembleErrorMessage(fatal=2, errorText="Your time is too far in the future compared to mine. Closing connection.")))
             logger.info("%s's time is too far in the future (%s seconds). Closing connection to it." % (self.peer, timeOffset))
+            shared.timeOffsetWrongCount += 1
             time.sleep(2)
             self.sendDataThreadQueue.put((0, 'shutdown','no data'))
             return
-        if timeOffset < -3600:
+        elif timeOffset < -3600:
             self.sendDataThreadQueue.put((0, 'sendRawData', shared.assembleErrorMessage(fatal=2, errorText="Your time is too far in the past compared to mine. Closing connection.")))
             logger.info("%s's time is too far in the past (timeOffset %s seconds). Closing connection to it." % (self.peer, timeOffset))
+            shared.timeOffsetWrongCount += 1
             time.sleep(2)
             self.sendDataThreadQueue.put((0, 'shutdown','no data'))
             return 
+        else:
+            shared.timeOffsetWrongCount = 0
+        self.checkTimeOffsetNotification()
+
         self.myExternalIP = socket.inet_ntoa(data[40:44])
         # print 'myExternalIP', self.myExternalIP
         self.remoteNodeIncomingPort, = unpack('>H', data[70:72])
