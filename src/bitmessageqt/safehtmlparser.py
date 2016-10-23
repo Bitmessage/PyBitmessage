@@ -82,7 +82,7 @@ class SafeHTMLParser(HTMLParser):
                         val == ""
                 self.sanitised += " " + quote_plus(attr)
                 if not (val is None):
-                    self.sanitised += "=\"" + val if isinstance(val, unicode) else unicode(val, 'utf-8', 'replace') + "\""
+                    self.sanitised += "=\"" + (val if isinstance(val, unicode) else unicode(val, 'utf-8', 'replace')) + "\""
         if inspect.stack()[1][3] == "handle_startendtag":
             self.sanitised += "/"
         self.sanitised += ">"
