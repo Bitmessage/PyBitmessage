@@ -2006,6 +2006,10 @@ class MyForm(settingsmixin.SMainWindow):
                         toAddress)
                     if status != 'success':
                         logger.error('Error: Could not decode ' + toAddress + ':' + status)
+                        try:
+                            toAddress = unicode(toAddress, 'utf-8', 'ingore')
+                        except:
+                            pass
 
                         if status == 'missingbm':
                             self.statusBar().showMessage(_translate(
