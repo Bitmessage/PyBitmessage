@@ -2181,8 +2181,10 @@ class MyForm(settingsmixin.SMainWindow):
                 addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
             isMaillinglist = shared.safeConfigGetBoolean(addressInKeysFile, 'mailinglist')
             if isEnabled and not isMaillinglist:
-                self.ui.comboBoxSendFrom.addItem(avatarize(addressInKeysFile), unicode(shared.config.get(
-                     addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
+                label = unicode(shared.config.get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
+                if label == "":
+                    label = addressInKeysFile
+                self.ui.comboBoxSendFrom.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
 #        self.ui.comboBoxSendFrom.model().sort(1, Qt.AscendingOrder)
         for i in range(self.ui.comboBoxSendFrom.count()):
             address = str(self.ui.comboBoxSendFrom.itemData(i, Qt.UserRole).toString())
@@ -2200,8 +2202,10 @@ class MyForm(settingsmixin.SMainWindow):
                 addressInKeysFile, 'enabled')  # I realize that this is poor programming practice but I don't care. It's easier for others to read.
             isChan = shared.safeConfigGetBoolean(addressInKeysFile, 'chan')
             if isEnabled and not isChan:
-                self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), unicode(shared.config.get(
-                    addressInKeysFile, 'label'), 'utf-8'), addressInKeysFile)
+                label = unicode(shared.config.get(addressInKeysFile, 'label'), 'utf-8', 'ignore').strip()
+                if label == "":
+                    label = addressInKeysFile
+                self.ui.comboBoxSendFromBroadcast.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
         for i in range(self.ui.comboBoxSendFromBroadcast.count()):
             address = str(self.ui.comboBoxSendFromBroadcast.itemData(i, Qt.UserRole).toString())
             self.ui.comboBoxSendFromBroadcast.setItemData(i, AccountColor(address).accountColor(), Qt.ForegroundRole)
