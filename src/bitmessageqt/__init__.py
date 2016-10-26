@@ -2006,7 +2006,7 @@ class MyForm(settingsmixin.SMainWindow):
                         toAddress)
                     if status != 'success':
                         try:
-                            toAddress = unicode(toAddress, 'utf-8', 'ingore')
+                            toAddress = unicode(toAddress, 'utf-8', 'ignore')
                         except:
                             pass
                         logger.error('Error: Could not decode recipient address ' + toAddress + ':' + status)
