@@ -131,7 +131,14 @@ class SafeHTMLParser(HTMLParser):
             parserProcess.start()
             parserLock.release()
         else:
-            pass
+            # flush queue
+            try:
+                while True:
+                    tmp = parserOutputQueue.get(False)
+            except Queue.Empty:
+                logger.debug("Parser queue flushed")
+                pass
+
         self.raw += tmp
 
     def is_html(self, text = None, allow_picture = False):
