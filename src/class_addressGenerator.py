@@ -32,13 +32,14 @@ class addressGenerator(threading.Thread, StoppableThread):
             queueValue = shared.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0
             payloadLengthExtraBytes = 0
+            live = True
             if queueValue[0] == 'createChan':
-                command, addressVersionNumber, streamNumber, label, deterministicPassphrase = queueValue
+                command, addressVersionNumber, streamNumber, label, deterministicPassphrase, live = queueValue
                 eighteenByteRipe = False
                 numberOfAddressesToMake = 1
                 numberOfNullBytesDemandedOnFrontOfRipeHash = 1
             elif queueValue[0] == 'joinChan':
-                command, chanAddress, label, deterministicPassphrase = queueValue
+                command, chanAddress, label, deterministicPassphrase, live = queueValue
                 eighteenByteRipe = False
                 addressVersionNumber = decodeAddress(chanAddress)[1]
                 streamNumber = decodeAddress(chanAddress)[2]
@@ -209,12 +210,12 @@ class addressGenerator(threading.Thread, StoppableThread):
                     # If we are joining an existing chan, let us check to make sure it matches the provided Bitmessage address
                     if command == 'joinChan':
                         if address != chanAddress:
-                            shared.apiAddressGeneratorReturnQueue.put('chan name does not match address')
+                            listOfNewAddressesToSendOutThroughTheAPI.append('chan name does not match address')
                             saveAddressToDisk = False
                     if command == 'getDeterministicAddress':
                         saveAddressToDisk = False
 
-                    if saveAddressToDisk:
+                    if saveAddressToDisk and live:
                         # An excellent way for us to store our keys is in Wallet Import Format. Let us convert now.
                         # https://en.bitcoin.it/wiki/Wallet_import_format
                         privSigningKey = '\x80' + potentialPrivSigningKey
@@ -277,7 +278,8 @@ class addressGenerator(threading.Thread, StoppableThread):
                                     'sendOutOrStoreMyV4Pubkey', address))
                             shared.UISignalQueue.put((
                                 'updateStatusBar', tr._translate("MainWindow", "Done generating address")))
-
+                    elif saveAddressToDisk and not live and not shared.config.has_section(address):
+                        listOfNewAddressesToSendOutThroughTheAPI.append(address)
 
                 # Done generating addresses.
                 if command == 'createDeterministicAddresses' or command == 'joinChan' or command == 'createChan':
