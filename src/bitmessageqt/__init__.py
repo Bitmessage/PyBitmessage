@@ -1587,55 +1587,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     # opens 'join chan' dialog
     def click_actionJoinChan(self):
-        self.newChanDialogInstance = newChanDialog(self)
-        if self.newChanDialogInstance.exec_():
-            if self.newChanDialogInstance.ui.radioButtonCreateChan.isChecked():
-                if self.newChanDialogInstance.ui.lineEditChanNameCreate.text() == "":
-                    QMessageBox.about(self, _translate("MainWindow", "Chan name needed"), _translate(
-                        "MainWindow", "You didn't enter a chan name."))
-                    return
-                shared.apiAddressGeneratorReturnQueue.queue.clear()
-                shared.addressGeneratorQueue.put(('createChan', 4, 1, self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameCreate.text().toUtf8()))
-                addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
-                logger.debug('addressGeneratorReturnValue ' + str(addressGeneratorReturnValue))
-                if len(addressGeneratorReturnValue) == 0:
-                    QMessageBox.about(self, _translate("MainWindow", "Address already present"), _translate(
-                        "MainWindow", "Could not add chan because it appears to already be one of your identities."))
-                    return
-                createdAddress = addressGeneratorReturnValue[0]
-                QMessageBox.about(self, _translate("MainWindow", "Success"), _translate(
-                    "MainWindow", "Successfully created chan. To let others join your chan, give them the chan name and this Bitmessage address: %1. This address also appears in 'Your Identities'.").arg(createdAddress))
-                self.ui.tabWidget.setCurrentIndex(3)
-            elif self.newChanDialogInstance.ui.radioButtonJoinChan.isChecked():
-                if self.newChanDialogInstance.ui.lineEditChanNameJoin.text() == "":
-                    QMessageBox.about(self, _translate("MainWindow", "Chan name needed"), _translate(
-                        "MainWindow", "You didn't enter a chan name."))
-                    return
-                if decodeAddress(self.newChanDialogInstance.ui.lineEditChanBitmessageAddress.text())[0] == 'versiontoohigh':
-                    QMessageBox.about(self, _translate("MainWindow", "Address too new"), _translate(
-                        "MainWindow", "Although that Bitmessage address might be valid, its version number is too new for us to handle. Perhaps you need to upgrade Bitmessage."))
-                    return
-                if decodeAddress(self.newChanDialogInstance.ui.lineEditChanBitmessageAddress.text())[0] != 'success':
-                    QMessageBox.about(self, _translate("MainWindow", "Address invalid"), _translate(
-                        "MainWindow", "That Bitmessage address is not valid."))
-                    return
-                shared.apiAddressGeneratorReturnQueue.queue.clear()
-                shared.addressGeneratorQueue.put(('joinChan', addBMIfNotPresent(self.newChanDialogInstance.ui.lineEditChanBitmessageAddress.text()), self.str_chan + ' ' + str(self.newChanDialogInstance.ui.lineEditChanNameJoin.text().toUtf8()), self.newChanDialogInstance.ui.lineEditChanNameJoin.text().toUtf8()))
-                addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
-                logger.debug('addressGeneratorReturnValue ' + str(addressGeneratorReturnValue))
-                if addressGeneratorReturnValue == 'chan name does not match address':
-                    QMessageBox.about(self, _translate("MainWindow", "Address does not match chan name"), _translate(
-                        "MainWindow", "Although the Bitmessage address you entered was valid, it doesn\'t match the chan name."))
-                    return
-                if len(addressGeneratorReturnValue) == 0:
-                    QMessageBox.about(self, _translate("MainWindow", "Address already present"), _translate(
-                        "MainWindow", "Could not add chan because it appears to already be one of your identities."))
-                    return
-                createdAddress = addressGeneratorReturnValue[0]
-                QMessageBox.about(self, _translate("MainWindow", "Success"), _translate(
-                    "MainWindow", "Successfully joined chan. "))
-                self.ui.tabWidget.setCurrentIndex(3)
-            self.rerenderAddressBook()
+        NewChanDialog(self)
 
     def showConnectDialog(self):
         self.connectDialogInstance = connectDialog(self)
@@ -4398,16 +4350,6 @@ class NewAddressDialog(QtGui.QDialog):
             row += 1
         self.ui.groupBoxDeterministic.setHidden(True)
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
-
-class newChanDialog(QtGui.QDialog):
-
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_newChanDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        self.ui.groupBoxCreateChan.setHidden(True)
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))     
 
 
 class iconGlossaryDialog(QtGui.QDialog):
