@@ -42,7 +42,8 @@ SOURCES	= 	../addresses.py\
 
 FORMS = \
     ../bitmessageqt/blacklist.ui\
-    ../bitmessageqt/networkstatus.ui
+    ../bitmessageqt/networkstatus.ui\
+    ../bitmessageqt/newchandialog.ui
 
 TRANSLATIONS = \
     bitmessage_ar.ts \
