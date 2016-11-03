@@ -5,14 +5,16 @@ import msgpack
 import zlib
 
 from debug import logger
+import messagetypes
 
 BITMESSAGE_ENCODING_IGNORE = 0
 BITMESSAGE_ENCODING_TRIVIAL = 1
 BITMESSAGE_ENCODING_SIMPLE = 2
 BITMESSAGE_ENCODING_EXTENDED = 3
 
+
 class MsgEncode(object):
-    def __init__(self, message, encoding = BITMESSAGE_ENCODING_SIMPLE):
+    def __init__(self, message, encoding=BITMESSAGE_ENCODING_SIMPLE):
         self.data = None
         self.encoding = encoding
         self.length = 0
@@ -27,10 +29,10 @@ class MsgEncode(object):
         try:
             self.data = zlib.compress(msgpack.dumps({"": "message", "subject": message['subject'], "message": ['body']}), 9)
         except zlib.error:
-            logger.error ("Error compressing message")
+            logger.error("Error compressing message")
             raise
         except msgpack.exceptions.PackException:
-            logger.error ("Error msgpacking message")
+            logger.error("Error msgpacking message")
             raise
         self.length = len(self.data)
 
@@ -55,19 +57,29 @@ class MsgDecode(object):
         try:
             tmp = msgpack.loads(zlib.decompress(data))
         except zlib.error:
-            logger.error ("Error decompressing message")
+            logger.error("Error decompressing message")
             raise
         except (msgpack.exceptions.UnpackException,
                 msgpack.exceptions.ExtraData):
-            logger.error ("Error msgunpacking message")
+            logger.error("Error msgunpacking message")
             raise
+
         try:
-            if tmp[""] == "message":
-                self.body = tmp["body"]
-                self.subject = tmp["subject"]
-        except:
-            logger.error ("Malformed message")
+            msgType = tmp[""]
+        except KeyError:
+            logger.error("Message type missing")
             raise
+
+        msgObj = messagetypes.constructObject(data)
+        if msgObj is None:
+            raise ValueError("Malformed message")
+        try:
+            msgObj.process()
+        except:
+            raise ValueError("Malformed message")
+        if msgType[""] == "message":
+            self.subject = msgObj.subject
+            self.body = msgObj.body
 
     def decodeSimple(self, data):
         bodyPositionIndex = string.find(data, '\nBody:')
