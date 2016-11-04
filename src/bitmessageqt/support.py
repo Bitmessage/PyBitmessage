@@ -31,7 +31,7 @@ Please describe what happens instead:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Please write above this line and if possible, keep the information about your environment below intact.
 
-PyBitmesage version: {}
+PyBitmessage version: {}
 Operating system: {}
 Architecture: {}bit
 Python Version: {}
