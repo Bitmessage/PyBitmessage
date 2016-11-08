@@ -47,6 +47,9 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 shared.knownNodesLock.release()
                 if shared.config.get('bitmessagesettings', 'socksproxytype') != 'none':
                     if peer.host.find(".onion") == -1:
+                        # don't connect to self
+                        if peer.host == shared.config.get('bitmessagesettings', 'onionhostname') and peer.port == shared.config.getint("bitmessagesettings", "onionport"):
+                            continue
                         priority /= 10 # hidden services have 10x priority over plain net
                 elif peer.host.find(".onion") != -1: # onion address and so proxy
                     continue
