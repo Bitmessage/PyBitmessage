@@ -108,10 +108,10 @@ def _doGPUPoW(target, initialHash):
     trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
     #print "{} - value {} < {}".format(nonce, trialValue, target)
     if trialValue > target:
-        deviceNames = ", ".join(gpu.name for gpu in openclpow.gpus)
+        deviceNames = ", ".join(gpu.name for gpu in openclpow.enabledGpus)
         shared.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow",'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.')))
         logger.error("Your GPUs (%s) did not calculate correctly, disabling OpenCL. Please report to the developers.", deviceNames)
-        openclpow.ctx = False
+        openclpow.enabledGpus = []
         raise Exception("GPU did not calculate correctly.")
     if shared.shutdown != 0:
         raise StopIteration("Interrupted")
@@ -144,7 +144,7 @@ def estimate(difficulty, format = False):
         return ret
 
 def getPowType():
-    if shared.safeConfigGetBoolean('bitmessagesettings', 'opencl') and openclpow.has_opencl():
+    if openclpow.openclEnabled():
         return "OpenCL"
     if bmpow:
         return "C"
@@ -154,7 +154,7 @@ def run(target, initialHash):
     if shared.shutdown != 0:
         raise
     target = int(target)
-    if shared.safeConfigGetBoolean('bitmessagesettings', 'opencl') and openclpow.has_opencl():
+    if openclpow.openclEnabled():
 #        trialvalue1, nonce1 = _doGPUPoW(target, initialHash)
 #        trialvalue, nonce = _doFastPoW(target, initialHash)
 #        print "GPU: %s, %s" % (trialvalue1, nonce1)

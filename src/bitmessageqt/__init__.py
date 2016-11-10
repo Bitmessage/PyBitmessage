@@ -2408,8 +2408,8 @@ class MyForm(settingsmixin.SMainWindow):
                 shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
 
-            if openclpow.has_opencl() and self.settingsDialogInstance.ui.checkBoxOpenCL.isChecked() != shared.safeConfigGetBoolean("bitmessagesettings", "opencl"):
-                shared.config.set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.checkBoxOpenCL.isChecked()))
+            if self.settingsDialogInstance.ui.checkBoxOpenCL.currentText().toUtf8() != shared.safeConfigGet("bitmessagesettings", "opencl"):
+                shared.config.set('bitmessagesettings', 'opencl', self.settingsDialogInstance.ui.checkBoxOpenCL.currentText().toUtf8())
 
             acceptableDifficultyChanged = False
             
@@ -4082,14 +4082,18 @@ class settingsDialog(QtGui.QDialog):
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / shared.networkDefaultPayloadLengthExtraBytes)))
 
         # OpenCL
-        if openclpow.has_opencl():
-            self.ui.checkBoxOpenCL.setEnabled(True)
+        if openclpow.openclAvailable():
+            self.ui.comboBoxOpenCL.setEnabled(True)
         else:
-            self.ui.checkBoxOpenCL.setEnabled(False)
-        if shared.safeConfigGetBoolean("bitmessagesettings", "opencl"):
-            self.ui.checkBoxOpenCL.setChecked(True)
-        else:
-            self.ui.checkBoxOpenCL.setChecked(False)
+            self.ui.comboBoxOpenCL.setEnabled(False)
+        self.ui.comboBoxOpenCL.clear()
+        self.ui.comboBoxOpenCL.addItem("None")
+        self.ui.comboBoxOpenCL.addItems(openclpow.vendors)
+        self.ui.comboBoxOpenCL.setCurrentIndex(0)
+        for i in range(self.ui.comboBoxOpenCL.count()):
+            if self.ui.comboBoxOpenCL.itemText(i) == shared.safeConfigGet('bitmessagesettings', 'opencl'):
+                self.ui.comboBoxOpenCL.setCurrentIndex(i)
+                break
 
         # Namecoin integration tab
         nmctype = shared.config.get('bitmessagesettings', 'namecoinrpctype')
