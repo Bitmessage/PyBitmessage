@@ -448,67 +448,67 @@ Zaleca się zrobienie kopii zapasowej tego pliku. Czy chcesz otworzyć ten plik 
         <translation>Twój numer wersji adresu powinien wynosić: 3 lub 4.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1612"/>
+        <location filename="../bitmessageqt/__init__.py" line="1608"/>
         <source>Chan name needed</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1612"/>
+        <location filename="../bitmessageqt/__init__.py" line="1608"/>
         <source>You didn&apos;t enter a chan name.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1632"/>
+        <location filename="../bitmessageqt/__init__.py" line="1628"/>
         <source>Address already present</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1632"/>
+        <location filename="../bitmessageqt/__init__.py" line="1628"/>
         <source>Could not add chan because it appears to already be one of your identities.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1636"/>
+        <location filename="../bitmessageqt/__init__.py" line="1632"/>
         <source>Success</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1607"/>
+        <location filename="../bitmessageqt/__init__.py" line="1603"/>
         <source>Successfully created chan. To let others join your chan, give them the chan name and this Bitmessage address: %1. This address also appears in &apos;Your Identities&apos;.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1616"/>
+        <location filename="../bitmessageqt/__init__.py" line="1612"/>
         <source>Address too new</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1616"/>
+        <location filename="../bitmessageqt/__init__.py" line="1612"/>
         <source>Although that Bitmessage address might be valid, its version number is too new for us to handle. Perhaps you need to upgrade Bitmessage.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1620"/>
+        <location filename="../bitmessageqt/__init__.py" line="1616"/>
         <source>Address invalid</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1620"/>
+        <location filename="../bitmessageqt/__init__.py" line="1616"/>
         <source>That Bitmessage address is not valid.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1628"/>
+        <location filename="../bitmessageqt/__init__.py" line="1624"/>
         <source>Address does not match chan name</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1628"/>
+        <location filename="../bitmessageqt/__init__.py" line="1624"/>
         <source>Although the Bitmessage address you entered was valid, it doesn&apos;t match the chan name.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1636"/>
+        <location filename="../bitmessageqt/__init__.py" line="1632"/>
         <source>Successfully joined chan. </source>
         <translation type="unfinished"/>
     </message>
@@ -847,67 +847,67 @@ Czy na pewno chcesz usunąć ten kanał?</translation>
         <translation>Powiadomienia w zasobniku nie są jeszcze wspierane pod Twoim systemem.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4202"/>
+        <location filename="../bitmessageqt/__init__.py" line="4206"/>
         <source>Testing...</source>
         <translation>Testowanie...</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4242"/>
+        <location filename="../bitmessageqt/__init__.py" line="4246"/>
         <source>This is a chan address. You cannot use it as a pseudo-mailing list.</source>
         <translation>To jest adres kanału. Nie możesz go użyć jako pseudo-listy-dyskusyjnej.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4302"/>
+        <location filename="../bitmessageqt/__init__.py" line="4306"/>
         <source>The address should start with &apos;&apos;BM-&apos;&apos;</source>
         <translation>Adres powinien zaczynać sie od &quot;BM-&quot;</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4305"/>
+        <location filename="../bitmessageqt/__init__.py" line="4309"/>
         <source>The address is not typed or copied correctly (the checksum failed).</source>
         <translation>Adres nie został skopiowany lub przepisany poprawnie (błąd sumy kontrolnej).</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4308"/>
+        <location filename="../bitmessageqt/__init__.py" line="4312"/>
         <source>The version number of this address is higher than this software can support. Please upgrade Bitmessage.</source>
         <translation>Numer wersji tego adresu jest wyższy niż ten program może obsłużyć. Proszę zaktualizować Bitmessage.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4311"/>
+        <location filename="../bitmessageqt/__init__.py" line="4315"/>
         <source>The address contains invalid characters.</source>
         <translation>Adres zawiera nieprawidłowe znaki.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4314"/>
+        <location filename="../bitmessageqt/__init__.py" line="4318"/>
         <source>Some data encoded in the address is too short.</source>
         <translation>Niektóre dane zakodowane w adresie są za krótkie.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4317"/>
+        <location filename="../bitmessageqt/__init__.py" line="4321"/>
         <source>Some data encoded in the address is too long.</source>
         <translation>Niektóre dane zakodowane w adresie są za długie.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4320"/>
+        <location filename="../bitmessageqt/__init__.py" line="4324"/>
         <source>Some data encoded in the address is malformed.</source>
         <translation>Niektóre dane zakodowane w adresie są uszkodzone.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4294"/>
+        <location filename="../bitmessageqt/__init__.py" line="4298"/>
         <source>Enter an address above.</source>
         <translation>Wprowadź adres powyżej.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4326"/>
+        <location filename="../bitmessageqt/__init__.py" line="4330"/>
         <source>Address is an old type. We cannot display its past broadcasts.</source>
         <translation>Adres starego typu</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4335"/>
+        <location filename="../bitmessageqt/__init__.py" line="4339"/>
         <source>There are no recent broadcasts from this address to display.</source>
         <translation>Brak niedawnych wiadomości przekazów do wyświetlenia.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4369"/>
+        <location filename="../bitmessageqt/__init__.py" line="4373"/>
         <source>You are using TCP port %1. (This can be changed in the settings).</source>
         <translation>Btimessage używa portu TCP %1. (Można go zmienić w ustawieniach).</translation>
     </message>
@@ -1117,7 +1117,7 @@ Czy na pewno chcesz usunąć ten kanał?</translation>
         <translation>Dodaj nowy wpis</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4339"/>
+        <location filename="../bitmessageqt/__init__.py" line="4343"/>
         <source>Display the %1 recent broadcast(s) from this address.</source>
         <translation>Pokaż %1 ostatnich wiadomości przekazów z tego adresu.</translation>
     </message>
@@ -1351,12 +1351,12 @@ Odbiorca wymaga trudności: %1 i %2</translation>
         <translation>Czy poczekać aż te zadania zostaną zakończone?</translation>
     </message>
     <message>
-        <location filename="../class_outgoingSynSender.py" line="212"/>
+        <location filename="../class_outgoingSynSender.py" line="215"/>
         <source>Problem communicating with proxy: %1. Please check your network settings.</source>
         <translation>Błąd podczas komunikacji z proxy: %1. Proszę sprawdź swoje ustawienia sieci.</translation>
     </message>
     <message>
-        <location filename="../class_outgoingSynSender.py" line="241"/>
+        <location filename="../class_outgoingSynSender.py" line="244"/>
         <source>SOCKS5 Authentication problem: %1. Please check your SOCKS5 settings.</source>
         <translation>Problem z autoryzacją SOCKS5: %1. Proszę sprawdź swoje ustawienia SOCKS5.</translation>
     </message>
@@ -1865,7 +1865,7 @@ Generowanie adresów &apos;losowych&apos; jest wybrane domyślnie, jednak determ
     <message numerus="yes">
         <location filename="../bitmessageqt/networkstatus.py" line="63"/>
         <source>Processed %n public key(s).</source>
-        <translation><numerusform>Przetworzono %1 klucz publiczny.</numerusform><numerusform>Przetworzono %1 kluczy publicznych.</numerusform><numerusform>Przetworzono %1 kluczy publicznych.</numerusform></translation>
+        <translation><numerusform>Przetworzono %n klucz publiczny.</numerusform><numerusform>Przetworzono %n kluczy publicznych.</numerusform><numerusform>Przetworzono %n kluczy publicznych.</numerusform></translation>
     </message>
 </context>
 <context>
@@ -2032,7 +2032,7 @@ Generowanie adresów &apos;losowych&apos; jest wybrane domyślnie, jednak determ
     <message>
         <location filename="../bitmessageqt/settings.py" line="437"/>
         <source>Start Bitmessage in the tray (don&apos;t show main window)</source>
-        <translation>Uruchom Bitmessage w zasobniku (nie pokazuj tego okna)</translation>
+        <translation>Uruchom Bitmessage w zasobniku (nie pokazuj głównego okna)</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="438"/>
@@ -2231,9 +2231,9 @@ Generowanie adresów &apos;losowych&apos; jest wybrane domyślnie, jednak determ
         <translation>Maksymalna akceptowalna trudność</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="478"/>
+        <location filename="../bitmessageqt/settings.py" line="473"/>
         <source>Hardware GPU acceleration (OpenCL)</source>
-        <translation>Przyspieszenie sprzętowe GPU (OpenCL)</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="479"/>
@@ -2309,6 +2309,11 @@ Generowanie adresów &apos;losowych&apos; jest wybrane domyślnie, jednak determ
         <location filename="../bitmessageqt/settings.py" line="440"/>
         <source>Hide connection notifications</source>
         <translation>Nie pokazuj powiadomień o połączeniu</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/settings.py" line="478"/>
+        <source>Hardware GPU acceleration (OpenCL):</source>
+        <translation>Przyspieszenie sprzętowe GPU (OpenCL):</translation>
     </message>
 </context>
 </TS>
