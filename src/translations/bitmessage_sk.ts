@@ -449,67 +449,67 @@ Tento súbor je dôležité zálohovať. Chcete tento súbor teraz otvoriť? (Ne
         <translation>Vaše číslo verzie adresy musí byť buď 3 alebo 4.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1612"/>
+        <location filename="../bitmessageqt/__init__.py" line="1608"/>
         <source>Chan name needed</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1612"/>
+        <location filename="../bitmessageqt/__init__.py" line="1608"/>
         <source>You didn&apos;t enter a chan name.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1632"/>
+        <location filename="../bitmessageqt/__init__.py" line="1628"/>
         <source>Address already present</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1632"/>
+        <location filename="../bitmessageqt/__init__.py" line="1628"/>
         <source>Could not add chan because it appears to already be one of your identities.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1636"/>
+        <location filename="../bitmessageqt/__init__.py" line="1632"/>
         <source>Success</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1607"/>
+        <location filename="../bitmessageqt/__init__.py" line="1603"/>
         <source>Successfully created chan. To let others join your chan, give them the chan name and this Bitmessage address: %1. This address also appears in &apos;Your Identities&apos;.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1616"/>
+        <location filename="../bitmessageqt/__init__.py" line="1612"/>
         <source>Address too new</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1616"/>
+        <location filename="../bitmessageqt/__init__.py" line="1612"/>
         <source>Although that Bitmessage address might be valid, its version number is too new for us to handle. Perhaps you need to upgrade Bitmessage.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1620"/>
+        <location filename="../bitmessageqt/__init__.py" line="1616"/>
         <source>Address invalid</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1620"/>
+        <location filename="../bitmessageqt/__init__.py" line="1616"/>
         <source>That Bitmessage address is not valid.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1628"/>
+        <location filename="../bitmessageqt/__init__.py" line="1624"/>
         <source>Address does not match chan name</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1628"/>
+        <location filename="../bitmessageqt/__init__.py" line="1624"/>
         <source>Although the Bitmessage address you entered was valid, it doesn&apos;t match the chan name.</source>
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1636"/>
+        <location filename="../bitmessageqt/__init__.py" line="1632"/>
         <source>Successfully joined chan. </source>
         <translation type="unfinished"/>
     </message>
@@ -845,67 +845,67 @@ Ste si istý, že chcete kanál odstrániť?</translation>
         <translation>Oblasť oznámení zatiaľ pre váš operačný systém nie je podporovaná.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4202"/>
+        <location filename="../bitmessageqt/__init__.py" line="4206"/>
         <source>Testing...</source>
         <translation>Testujem...</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4242"/>
+        <location filename="../bitmessageqt/__init__.py" line="4246"/>
         <source>This is a chan address. You cannot use it as a pseudo-mailing list.</source>
         <translation>Toto je adresa kanálu. Nie je možné ju používať ako pseudo poštový zoznam.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4302"/>
+        <location filename="../bitmessageqt/__init__.py" line="4306"/>
         <source>The address should start with &apos;&apos;BM-&apos;&apos;</source>
         <translation>Adresa by mala začínať &apos;&apos;BM-&apos;&apos;</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4305"/>
+        <location filename="../bitmessageqt/__init__.py" line="4309"/>
         <source>The address is not typed or copied correctly (the checksum failed).</source>
         <translation>Nesprávne zadaná alebo skopírovaná adresa (kontrolný súčet zlyhal).</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4308"/>
+        <location filename="../bitmessageqt/__init__.py" line="4312"/>
         <source>The version number of this address is higher than this software can support. Please upgrade Bitmessage.</source>
         <translation>Číslo verzie tejto adresy je vyššie ako tento softvér podporuje. Prosím inovujte Bitmessage.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4311"/>
+        <location filename="../bitmessageqt/__init__.py" line="4315"/>
         <source>The address contains invalid characters.</source>
         <translation>Adresa obsahuje neplatné znaky.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4314"/>
+        <location filename="../bitmessageqt/__init__.py" line="4318"/>
         <source>Some data encoded in the address is too short.</source>
         <translation>Niektoré dáta zakódované v adrese sú príliš krátke.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4317"/>
+        <location filename="../bitmessageqt/__init__.py" line="4321"/>
         <source>Some data encoded in the address is too long.</source>
         <translation>Niektoré dáta zakódované v adrese sú príliš dlhé.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4320"/>
+        <location filename="../bitmessageqt/__init__.py" line="4324"/>
         <source>Some data encoded in the address is malformed.</source>
         <translation>Niektoré dáta zakódované v adrese sú poškodené.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4294"/>
+        <location filename="../bitmessageqt/__init__.py" line="4298"/>
         <source>Enter an address above.</source>
         <translation>Zadajte adresu vyššie.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4326"/>
+        <location filename="../bitmessageqt/__init__.py" line="4330"/>
         <source>Address is an old type. We cannot display its past broadcasts.</source>
         <translation>Starý typ adresy. Nie je možné zobraziť jej predchádzajúce hromadné správy.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4335"/>
+        <location filename="../bitmessageqt/__init__.py" line="4339"/>
         <source>There are no recent broadcasts from this address to display.</source>
         <translation>Neboli nájdené žiadne nedávne hromadé správy z tejto adresy.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4369"/>
+        <location filename="../bitmessageqt/__init__.py" line="4373"/>
         <source>You are using TCP port %1. (This can be changed in the settings).</source>
         <translation>Používate port TCP %1. (Možno zmeniť v nastaveniach).</translation>
     </message>
@@ -1115,7 +1115,7 @@ Ste si istý, že chcete kanál odstrániť?</translation>
         <translation>Pridať nový záznam</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4339"/>
+        <location filename="../bitmessageqt/__init__.py" line="4343"/>
         <source>Display the %1 recent broadcast(s) from this address.</source>
         <translation>Zobraziť posledných %1 hromadných správ z tejto adresy.</translation>
     </message>
@@ -1349,12 +1349,12 @@ Priímcova požadovaná obtiažnosť: %1 a %2</translation>
         <translation>Počkať, kým tieto úlohy skončia?</translation>
     </message>
     <message>
-        <location filename="../class_outgoingSynSender.py" line="212"/>
+        <location filename="../class_outgoingSynSender.py" line="215"/>
         <source>Problem communicating with proxy: %1. Please check your network settings.</source>
         <translation>Problém komunikácie s proxy: %1. Prosím skontrolujte nastavenia siete.</translation>
     </message>
     <message>
-        <location filename="../class_outgoingSynSender.py" line="241"/>
+        <location filename="../class_outgoingSynSender.py" line="244"/>
         <source>SOCKS5 Authentication problem: %1. Please check your SOCKS5 settings.</source>
         <translation>Problém autentikácie SOCKS5: %1. Prosím skontrolujte nastavenia SOCKS5.</translation>
     </message>
@@ -2229,9 +2229,9 @@ Predvoľba je pomocou generátora náhodných čísiel, ale deterministické adr
         <translation>Max. prijateľná obtiažnosť</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="478"/>
+        <location filename="../bitmessageqt/settings.py" line="473"/>
         <source>Hardware GPU acceleration (OpenCL)</source>
-        <translation>Hardvérové GPU urýchľovanie (OpenCL)</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="479"/>
@@ -2307,6 +2307,11 @@ Predvoľba je pomocou generátora náhodných čísiel, ale deterministické adr
         <location filename="../bitmessageqt/settings.py" line="440"/>
         <source>Hide connection notifications</source>
         <translation>Skryť oznámenia o stave pripojenia</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/settings.py" line="478"/>
+        <source>Hardware GPU acceleration (OpenCL):</source>
+        <translation>Hardvérové GPU urýchľovanie (OpenCL):</translation>
     </message>
 </context>
 </TS>
