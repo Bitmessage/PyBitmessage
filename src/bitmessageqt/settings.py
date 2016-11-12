@@ -9,6 +9,7 @@
 
 from PyQt4 import QtCore, QtGui
 from languagebox import LanguageBox
+from sys import platform
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -166,12 +167,17 @@ class Ui_settingsDialog(object):
         self.gridLayout_2.addWidget(self.label_3, 1, 1, 1, 1)
         self.lineEditSocksHostname = QtGui.QLineEdit(self.groupBox_2)
         self.lineEditSocksHostname.setObjectName(_fromUtf8("lineEditSocksHostname"))
+        self.lineEditSocksHostname.setPlaceholderText(_fromUtf8("127.0.0.1"))
         self.gridLayout_2.addWidget(self.lineEditSocksHostname, 1, 2, 1, 2)
         self.label_4 = QtGui.QLabel(self.groupBox_2)
         self.label_4.setObjectName(_fromUtf8("label_4"))
         self.gridLayout_2.addWidget(self.label_4, 1, 4, 1, 1)
         self.lineEditSocksPort = QtGui.QLineEdit(self.groupBox_2)
         self.lineEditSocksPort.setObjectName(_fromUtf8("lineEditSocksPort"))
+        if platform in ['darwin', 'win32', 'win64']:
+            self.lineEditSocksPort.setPlaceholderText(_fromUtf8("9150"))
+        else:
+            self.lineEditSocksPort.setPlaceholderText(_fromUtf8("9050"))
         self.gridLayout_2.addWidget(self.lineEditSocksPort, 1, 5, 1, 1)
         self.checkBoxAuthentication = QtGui.QCheckBox(self.groupBox_2)
         self.checkBoxAuthentication.setObjectName(_fromUtf8("checkBoxAuthentication"))
