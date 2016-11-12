@@ -1,7 +1,13 @@
 from importlib import import_module
-from pprint import pprint
 from os import path, listdir
-import sys
+from string import lower
+
+from debug import logger
+
+
+class MsgBase(object):
+    def encode(self):
+        self.data = {"": lower(type(self).__name__)}
 
 
 def constructObject(data):
@@ -11,13 +17,13 @@ def constructObject(data):
         print "Don't know how to handle message type: \"%s\"" % (data[""])
         return None
     try:
-        returnObj = classBase(data)
+        returnObj = classBase()
+        returnObj.decode(data)
     except KeyError as e:
-        print "Missing mandatory key %s" % (e)
+        logger.error("Missing mandatory key %s", e)
         return None
     except:
-        print "classBase fail:"
-        pprint(sys.exc_info())
+        logger.error("classBase fail", exc_info=True)
         return None
     else:
         return returnObj
@@ -31,7 +37,6 @@ for mod in listdir(path.dirname(__file__)):
     try:
         import_module("." + splitted[0], "messagetypes")
     except ImportError:
-        print "Error importing %s" % (mod)
-        pprint(sys.exc_info())
+        logger.error("Error importing %s", mod, exc_info=True)
     else:
-        print "Imported %s" % (mod)
+        logger.debug("Imported message type module %s", mod)
