@@ -6,6 +6,7 @@ import zlib
 
 import shared
 import messagetypes
+from tr import _translate
 
 BITMESSAGE_ENCODING_IGNORE = 0
 BITMESSAGE_ENCODING_TRIVIAL = 1
@@ -23,6 +24,8 @@ class MsgEncode(object):
             self.encodeSimple(message)
         elif self.encoding == BITMESSAGE_ENCODING_TRIVIAL:
             self.encodeTrivial(message)
+        else:
+            raise ValueError("Unknown encoding %i" % (encoding))
 
     def encodeExtended(self, message):
         try:
@@ -44,6 +47,7 @@ class MsgEncode(object):
         self.data = message['body']
         self.length = len(self.data)
 
+
 class MsgDecode(object):
     def __init__(self, encoding, data):
         self.encoding = encoding
@@ -51,7 +55,9 @@ class MsgDecode(object):
             self.decodeExtended(data)
         elif self.encoding in [BITMESSAGE_ENCODING_SIMPLE, BITMESSAGE_ENCODING_TRIVIAL]:
             self.decodeSimple(data)
-        return
+        else:
+            self.body = _translate("MsgDecode", "The message has an unknown encoding.\nPerhaps you should upgrade Bitmessage.")
+            self.subject = _translate("MsgDecode", "Unknown encoding")
 
     def decodeExtended(self, data):
         try:
