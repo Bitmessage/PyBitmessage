@@ -1890,6 +1890,8 @@ class MyForm(settingsmixin.SMainWindow):
  more work your computer must do to send the message. A Time-To-Live of four or five days is often appropriate."""), QMessageBox.Ok)
 
     def click_pushButtonSend(self):
+        encoding = 3 if QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier else 2
+
         self.statusBar().clearMessage()
 
         if self.ui.tabWidgetSend.currentIndex() == 0:
@@ -2022,7 +2024,7 @@ class MyForm(settingsmixin.SMainWindow):
                             'msgqueued',
                             0, # retryNumber
                             'sent', # folder
-                            2, # encodingtype
+                            encoding, # encodingtype
                             shared.config.getint('bitmessagesettings', 'ttl')
                             )
 
@@ -2075,7 +2077,7 @@ class MyForm(settingsmixin.SMainWindow):
                      'broadcastqueued', 
                      0, # retryNumber
                      'sent', # folder
-                     2, # encoding type
+                     encoding, # encoding type
                      shared.config.getint('bitmessagesettings', 'ttl')
                      )
                 sqlExecute(

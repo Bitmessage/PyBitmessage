@@ -15,6 +15,7 @@ from debug import logger
 from helper_sql import *
 import helper_inbox
 from helper_generic import addDataPadding
+import helper_msgcoding
 from helper_threading import *
 import l10n
 from protocol import *
@@ -370,10 +371,10 @@ class singleWorker(threading.Thread, StoppableThread):
         sqlExecute(
             '''UPDATE sent SET status='broadcastqueued' WHERE status = 'doingbroadcastpow' ''')
         queryreturn = sqlQuery(
-            '''SELECT fromaddress, subject, message, ackdata, ttl FROM sent WHERE status=? and folder='sent' ''', 'broadcastqueued')
+            '''SELECT fromaddress, subject, message, ackdata, ttl, encodingtype FROM sent WHERE status=? and folder='sent' ''', 'broadcastqueued')
 
         for row in queryreturn:
-            fromaddress, subject, body, ackdata, TTL = row
+            fromaddress, subject, body, ackdata, TTL, encoding = row
             status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                 fromaddress)
             if addressVersionNumber <= 1:
@@ -436,9 +437,10 @@ class singleWorker(threading.Thread, StoppableThread):
             if addressVersionNumber >= 3:
                 dataToEncrypt += encodeVarint(shared.config.getint(fromaddress,'noncetrialsperbyte'))
                 dataToEncrypt += encodeVarint(shared.config.getint(fromaddress,'payloadlengthextrabytes'))
-            dataToEncrypt += '\x02' # message encoding type
-            dataToEncrypt += encodeVarint(len('Subject:' + subject + '\n' + 'Body:' + body))  #Type 2 is simple UTF-8 message encoding per the documentation on the wiki.
-            dataToEncrypt += 'Subject:' + subject + '\n' + 'Body:' + body
+            dataToEncrypt += encodeVarint(encoding) # message encoding type
+            encodedMessage = helper_msgcoding.MsgEncode({"subject": subject, "body": body}, encoding)
+            dataToEncrypt += encodeVarint(encodedMessage.length)
+            dataToEncrypt += encodedMessage.data
             dataToSign = payload + dataToEncrypt
             
             signature = highlevelcrypto.sign(
@@ -503,9 +505,9 @@ class singleWorker(threading.Thread, StoppableThread):
         sqlExecute(
             '''UPDATE sent SET status='msgqueued' WHERE status IN ('doingpubkeypow', 'doingmsgpow')''')
         queryreturn = sqlQuery(
-            '''SELECT toaddress, fromaddress, subject, message, ackdata, status, ttl, retrynumber FROM sent WHERE (status='msgqueued' or status='forcepow') and folder='sent' ''')
+            '''SELECT toaddress, fromaddress, subject, message, ackdata, status, ttl, retrynumber, encodingtype FROM sent WHERE (status='msgqueued' or status='forcepow') and folder='sent' ''')
         for row in queryreturn: # while we have a msg that needs some work
-            toaddress, fromaddress, subject, message, ackdata, status, TTL, retryNumber = row
+            toaddress, fromaddress, subject, message, ackdata, status, TTL, retryNumber, encoding = row
             toStatus, toAddressVersionNumber, toStreamNumber, toRipe = decodeAddress(
                 toaddress)
             fromStatus, fromAddressVersionNumber, fromStreamNumber, fromRipe = decodeAddress(
@@ -751,11 +753,10 @@ class singleWorker(threading.Thread, StoppableThread):
                         fromaddress, 'payloadlengthextrabytes'))
 
             payload += toRipe  # This hash will be checked by the receiver of the message to verify that toRipe belongs to them. This prevents a Surreptitious Forwarding Attack.
-            payload += '\x02'  # Type 2 is simple UTF-8 message encoding as specified on the Protocol Specification on the Bitmessage Wiki.
-            messageToTransmit = 'Subject:' + \
-                subject + '\n' + 'Body:' + message
-            payload += encodeVarint(len(messageToTransmit))
-            payload += messageToTransmit
+            payload += encodeVarint(encoding) # message encoding type
+            encodedMessage = helper_msgcoding.MsgEncode({"subject": subject, "body": message}, encoding)
+            payload += encodeVarint(encodedMessage.length)
+            payload += encodedMessage.data
             if shared.config.has_section(toaddress):
                 logger.info('Not bothering to include ackdata because we are sending to ourselves or a chan.')
                 fullAckPayload = ''
