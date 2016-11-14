@@ -17,6 +17,7 @@ import helper_generic
 from helper_generic import addDataPadding
 import helper_bitcoin
 import helper_inbox
+import helper_msgcoding
 import helper_sent
 from helper_sql import *
 import tr
@@ -482,24 +483,15 @@ class objectProcessor(threading.Thread):
             if queryreturn == []:
                 logger.info('Message ignored because address not in whitelist.')
                 blockMessage = True
-        
+
         toLabel = shared.config.get(toAddress, 'label')
         if toLabel == '':
             toLabel = toAddress
 
-        if messageEncodingType == 2:
-            subject, body = self.decodeType2Message(message)
-            logger.info('Message subject (first 100 characters): %s' % repr(subject)[:100])
-        elif messageEncodingType == 1:
-            body = message
-            subject = ''
-        elif messageEncodingType == 0:
-            logger.info('messageEncodingType == 0. Doing nothing with the message. They probably just sent it so that we would store their public key or send their ack data for them.')
-            subject = ''
-            body = '' 
-        else:
-            body = 'Unknown encoding type.\n\n' + repr(message)
-            subject = ''
+        decodedMessage = helper_msgcoding.MsgDecode(messageEncodingType, message)
+        subject = decodedMessage.subject
+        body = decodedMessage.body
+
         # Let us make sure that we haven't already received this message
         if helper_inbox.isMessageAlreadyInInbox(sigHash):
             logger.info('This msg is already in our inbox. Ignoring it.')
@@ -562,7 +554,7 @@ class objectProcessor(threading.Thread):
                      'broadcastqueued', 
                      0, 
                      'sent', 
-                     2, 
+                     messageEncodingType, 
                      TTL)
                 helper_sent.insert(t)
 
@@ -746,18 +738,9 @@ class objectProcessor(threading.Thread):
             sendersAddressVersion, sendersStream, calculatedRipe)
         logger.debug('fromAddress: ' + fromAddress)
 
-        if messageEncodingType == 2:
-            subject, body = self.decodeType2Message(message)
-            logger.info('Broadcast subject (first 100 characters): %s' % repr(subject)[:100])
-        elif messageEncodingType == 1:
-            body = message
-            subject = ''
-        elif messageEncodingType == 0:
-            logger.info('messageEncodingType == 0. Doing nothing with the message.')
-            return
-        else:
-            body = 'Unknown encoding type.\n\n' + repr(message)
-            subject = ''
+        decodedMessage = helper_msgcoding.MsgDecode(messageEncodingType, message)
+        subject = decodedMessage.subject
+        body = decodedMessage.body
 
         toAddress = '[Broadcast subscribers]'
         if helper_inbox.isMessageAlreadyInInbox(sigHash):
