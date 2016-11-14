@@ -24,7 +24,7 @@ except:
     libAvailable = False
 
 def initCL():
-    global ctx, queue, program, gpus, hash_dt, vendors
+    global ctx, queue, program, gpus, enabledGpus, hash_dt, vendors
     try:
         hash_dt = numpy.dtype([('target', numpy.uint64), ('v', numpy.str_, 73)])
         try:
