@@ -120,6 +120,13 @@ class SafeHTMLParser(HTMLParser):
             parserProcess = multiprocessing.Process(target=regexpSubprocess, name="RegExParser", args=(parserInputQueue, parserOutputQueue))
             parserProcess.start()
         parserLock.release()
+        # flush queue
+        try:
+            while True:
+                tmp = parserOutputQueue.get(False)
+        except Queue.Empty:
+            logger.debug("Parser queue flushed")
+            pass
         parserInputQueue.put(tmp)
         try:
             tmp = parserOutputQueue.get(True, 1)
@@ -130,14 +137,6 @@ class SafeHTMLParser(HTMLParser):
             parserProcess = multiprocessing.Process(target=regexpSubprocess, name="RegExParser", args=(parserInputQueue, parserOutputQueue))
             parserProcess.start()
             parserLock.release()
-        else:
-            # flush queue
-            try:
-                while True:
-                    tmp = parserOutputQueue.get(False)
-            except Queue.Empty:
-                logger.debug("Parser queue flushed")
-                pass
 
         self.raw += tmp
 
