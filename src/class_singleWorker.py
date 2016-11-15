@@ -841,7 +841,7 @@ class singleWorker(threading.Thread, StoppableThread):
             if shared.config.has_section(toaddress):
                 sigHash = hashlib.sha512(hashlib.sha512(signature).digest()).digest()[32:] # Used to detect and ignore duplicate messages in our inbox
                 t = (inventoryHash, toaddress, fromaddress, subject, int(
-                    time.time()), message, 'inbox', 2, 0, sigHash)
+                    time.time()), message, 'inbox', encoding, 0, sigHash)
                 helper_inbox.insert(t)
 
                 shared.UISignalQueue.put(('displayNewInboxMessage', (
