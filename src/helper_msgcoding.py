@@ -5,6 +5,7 @@ import string
 import zlib
 
 import shared
+from debug import logger
 import messagetypes
 from tr import _translate
 
@@ -12,6 +13,7 @@ BITMESSAGE_ENCODING_IGNORE = 0
 BITMESSAGE_ENCODING_TRIVIAL = 1
 BITMESSAGE_ENCODING_SIMPLE = 2
 BITMESSAGE_ENCODING_EXTENDED = 3
+
 
 class MsgEncode(object):
     def __init__(self, message, encoding=BITMESSAGE_ENCODING_SIMPLE):
