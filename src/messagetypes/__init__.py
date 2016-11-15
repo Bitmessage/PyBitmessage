@@ -14,7 +14,7 @@ def constructObject(data):
     try:
         classBase = eval(data[""] + "." + data[""].title())
     except NameError:
-        print "Don't know how to handle message type: \"%s\"" % (data[""])
+        logger.error("Don't know how to handle message type: \"%s\"", data[""])
         return None
     try:
         returnObj = classBase()
