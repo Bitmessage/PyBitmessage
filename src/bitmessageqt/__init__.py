@@ -2410,8 +2410,8 @@ class MyForm(settingsmixin.SMainWindow):
                 shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(int(float(
                     self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
 
-            if self.settingsDialogInstance.ui.checkBoxOpenCL.currentText().toUtf8() != shared.safeConfigGet("bitmessagesettings", "opencl"):
-                shared.config.set('bitmessagesettings', 'opencl', self.settingsDialogInstance.ui.checkBoxOpenCL.currentText().toUtf8())
+            if self.settingsDialogInstance.ui.comboBoxOpenCL.currentText().toUtf8() != shared.safeConfigGet("bitmessagesettings", "opencl"):
+                shared.config.set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.comboBoxOpenCL.currentText()))
 
             acceptableDifficultyChanged = False
             
