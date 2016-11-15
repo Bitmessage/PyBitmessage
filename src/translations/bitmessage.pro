@@ -13,6 +13,7 @@ SOURCES	= 	../addresses.py\
 			../helper_bootstrap.py\
 			../helper_generic.py\
 			../helper_inbox.py\
+			../helper_msgcoding.py\
 			../helper_sent.py\
 			../helper_startup.py\
 			../shared.py\
