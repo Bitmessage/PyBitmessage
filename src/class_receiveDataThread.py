@@ -90,9 +90,11 @@ class receiveDataThread(threading.Thread):
                         shared.numberOfBytesReceivedLastSecond = 0
             dataLen = len(self.data)
             try:
+                ssl = False
                 if ((self.services & shared.NODE_SSL == shared.NODE_SSL) and
                     self.connectionIsOrWasFullyEstablished and
                     shared.haveSSL(not self.initiatedConnection)):
+                    ssl = True
                     dataRecv = self.sslSock.recv(1024)
                 else:
                     dataRecv = self.sock.recv(1024)
@@ -103,8 +105,11 @@ class receiveDataThread(threading.Thread):
                 logger.error ('Timeout occurred waiting for data from ' + str(self.peer) + '. Closing receiveData thread. (ID: ' + str(id(self)) + ')')
                 break
             except Exception as err:
-                if (sys.platform == 'win32' and err.errno in ([2, 10035])) or (sys.platform != 'win32' and err.errno == errno.EWOULDBLOCK):
-                    select.select([self.sslSock], [], [])
+                if err.errno == 2 or (sys.platform == 'win32' and err.errno == 10035) or (sys.platform != 'win32' and err.errno == errno.EWOULDBLOCK):
+                    if ssl:
+                        select.select([self.sslSock], [], [])
+                    else:
+                        select.select([self.sock], [], [])
                     continue
                 logger.error('sock.recv error. Closing receiveData thread (' + str(self.peer) + ', Thread ID: ' + str(id(self)) + ').' + str(err.errno) + "/" + str(err))
                 if self.initiatedConnection and not self.connectionIsOrWasFullyEstablished:
