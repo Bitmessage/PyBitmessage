@@ -58,8 +58,9 @@ class receiveDataThread(threading.Thread):
         self.objectsThatWeHaveYetToGetFromThisPeer = {}
         self.selfInitiatedConnections = selfInitiatedConnections
         self.sendDataThreadQueue = sendDataThreadQueue # used to send commands and data to the sendDataThread
+        self.hostIdent = self.peer.port if ".onion" in shared.config.get('bitmessagesettings', 'onionhostname') and shared.checkSocksIP(self.peer.host) else self.peer.host
         shared.connectedHostsList[
-            self.peer.host] = 0  # The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
+            self.hostIdent] = 0  # The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
         self.connectionIsOrWasFullyEstablished = False  # set to true after the remote node and I accept each other's version messages. This is needed to allow the user interface to accurately reflect the current number of connections.
         self.services = 0
         if self.streamNumber == -1:  # This was an incoming connection. Send out a version message if we accept the other node's version message.
@@ -131,9 +132,9 @@ class receiveDataThread(threading.Thread):
             pass
         self.sendDataThreadQueue.put((0, 'shutdown','no data')) # commands the corresponding sendDataThread to shut itself down.
         try:
-            del shared.connectedHostsList[self.peer.host]
+            del shared.connectedHostsList[self.hostIdent]
         except Exception as err:
-            logger.error('Could not delete ' + str(self.peer.host) + ' from shared.connectedHostsList.' + str(err))
+            logger.error('Could not delete ' + str(self.hostIdent) + ' from shared.connectedHostsList.' + str(err))
 
         try:
             del shared.numberOfObjectsThatWeHaveYetToGetPerPeer[
@@ -773,7 +774,7 @@ class receiveDataThread(threading.Thread):
             logger.debug ('Closed connection to ' + str(self.peer) + ' because they are interested in stream ' + str(self.streamNumber) + '.')
             return
         shared.connectedHostsList[
-            self.peer.host] = 1  # We use this data structure to not only keep track of what hosts we are connected to so that we don't try to connect to them again, but also to list the connections count on the Network Status tab.
+            self.hostIdent] = 1  # We use this data structure to not only keep track of what hosts we are connected to so that we don't try to connect to them again, but also to list the connections count on the Network Status tab.
         # If this was an incoming connection, then the sendDataThread
         # doesn't know the stream. We have to set it.
         if not self.initiatedConnection:
