@@ -1,5 +1,4 @@
-<?xml version="1.0" encoding="utf-8"?>
-<!DOCTYPE TS><TS version="2.0" language="ja" sourcelanguage="en">
+<?xml version="1.0" ?><!DOCTYPE TS><TS language="ja" sourcelanguage="en" version="2.0">
 <context>
     <name>AddAddressDialog</name>
     <message>
@@ -23,61 +22,62 @@
     <message>
         <location filename="../bitmessageqt/emailgateway.py" line="67"/>
         <source>Email gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>メールゲートウェイ</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/emailgateway.py" line="68"/>
         <source>Register on email gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>メールゲートウェイで登録</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/emailgateway.py" line="69"/>
         <source>Account status at email gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>メールゲートウェイのアカウント状態</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/emailgateway.py" line="70"/>
         <source>Change account settings at email gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>メールゲートウェイでアカウントの設定を変更</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/emailgateway.py" line="71"/>
         <source>Unregister from email gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>メールゲートウェイから登録抹消</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/emailgateway.py" line="72"/>
         <source>Email gateway allows you to communicate with email users. Currently, only the Mailchuck email gateway (@mailchuck.com) is available.</source>
-        <translation type="unfinished"></translation>
+        <translation>メールゲートウェイを使用すると、メールユーザーと通信できます。 現在、Mailchuck メールゲートウェイ (@mailchuck.com) のみが利用可能です。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/emailgateway.py" line="73"/>
         <source>Desired email address (including @mailchuck.com):</source>
-        <translation type="unfinished"></translation>
+        <translation>希望のメールアドレス (@mailchuck.com を含む):</translation>
     </message>
 </context>
 <context>
     <name>EmailGatewayRegistrationDialog</name>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2258"/>
+        <location filename="../bitmessageqt/__init__.py" line="2232"/>
         <source>Registration failed:</source>
-        <translation type="unfinished"></translation>
+        <translation>登録に失敗しました:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2258"/>
+        <location filename="../bitmessageqt/__init__.py" line="2232"/>
         <source>The requested email address is not available, please try a new one. Fill out the new desired email address (including @mailchuck.com) below:</source>
-        <translation type="unfinished"></translation>
+        <translation>リクエストしたメールアドレスは利用できません。新しいメールアドレスをお試しください。 新しい希望メールアドレス (@mailchuck.com を含む) を次のように記入してください:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/emailgateway.py" line="102"/>
         <source>Email gateway registration</source>
-        <translation type="unfinished"></translation>
+        <translation>メールゲートウェイの登録</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/emailgateway.py" line="103"/>
         <source>Email gateway allows you to communicate with email users. Currently, only the Mailchuck email gateway (@mailchuck.com) is available.
 Please type the desired email address (including @mailchuck.com) below:</source>
-        <translation type="unfinished"></translation>
+        <translation>メールゲートウェイを使用すると、メールユーザーと通信できます。 現在、Mailchuck メールゲートウェイ (@mailchuck.com) のみが利用可能です。
+希望のメールアドレス (@mailchuck.com を含む) を以下に入力してください:</translation>
     </message>
 </context>
 <context>
@@ -124,58 +124,96 @@ Please type the desired email address (including @mailchuck.com) below:</source>
 # the money directly. To turn it off again, set &quot;feeamount&quot; to 0. Requires
 # subscription.
 </source>
-        <translation type="unfinished"></translation>
+        <translation># これを使用して、メールゲートウェイアカウントを設定できます
+# 使用する設定のコメントを外してください
+# オプションは次のとおりです:
+# 
+# pgp: server
+# メールゲートウェイは、あなたのために PGP 鍵を作成および管理し、
+# あなたに代わって署名、検証、暗号化と復号化を行います。 PGPを使用したいが、
+# 面倒なときは、これを使用してください。 サブスクリプションが必要です。
+#
+# pgp: local
+# メールゲートウェイは、あなたに代わって PGP 操作を行いません。
+# PGP をまったく使用しないか、ローカルで使用することができます。
+#
+# attachments: yes
+# 受信メールの添付ファイルは MEGA.nz にアップロードされ、リンクをフォローして
+# そこからダウンロードすることができます。 サブスクリプションが必要です。
+#
+# attachments: no
+# 添付ファイルは無視されます。
+# 
+# archive: yes
+# 受信メールはサーバーにアーカイブされます。 問題のデバッグで支援が必要な場合や、
+# メールの第三者証明が必要な場合に、これを使用してください。 しかし、これは、
+# メールがあなたに配信された後でも、サービスの運営者があなたのメールを
+# 読むことができるということを意味します。
+#
+# archive: no
+# 受信メールは、あなたに中継されるとすぐにサーバーから削除されます。
+#
+# masterpubkey_btc: BIP44 xpub key または electrum v1 public seed
+# offset_btc: 整数 (デフォルトは 0)
+# feeamount: 小数点以下 8 桁までの数字
+# feecurrency: BTC, XBT, USD, EUR または GBP
+# メールを送信した人に請求したい場合に、これらを使用します。 これがオンで、
+# 未知の人があなたにメールを送信した場合、指定された料金を支払うように要求されます。
+# この方式は決定的な公開鍵を使用するため、直接お金を受け取ることになります。
+# もう一度オフにするには、「feeamount」を 0 に設定します。
+# サブスクリプションが必要です。
+</translation>
     </message>
 </context>
 <context>
     <name>MainWindow</name>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="185"/>
+        <location filename="../bitmessageqt/__init__.py" line="190"/>
         <source>Reply to sender</source>
-        <translation type="unfinished"></translation>
+        <translation>送信元に返信</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="187"/>
+        <location filename="../bitmessageqt/__init__.py" line="192"/>
         <source>Reply to channel</source>
-        <translation type="unfinished"></translation>
+        <translation>チャンネルに返信</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="189"/>
+        <location filename="../bitmessageqt/__init__.py" line="194"/>
         <source>Add sender to your Address Book</source>
         <translation>送信元をアドレス帳に追加</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="193"/>
+        <location filename="../bitmessageqt/__init__.py" line="198"/>
         <source>Add sender to your Blacklist</source>
-        <translation type="unfinished"></translation>
+        <translation>送信元をブラックリストに追加</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="375"/>
+        <location filename="../bitmessageqt/__init__.py" line="380"/>
         <source>Move to Trash</source>
         <translation>ゴミ箱へ移動</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="200"/>
+        <location filename="../bitmessageqt/__init__.py" line="205"/>
         <source>Undelete</source>
-        <translation type="unfinished"></translation>
+        <translation>削除を元に戻す</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="203"/>
+        <location filename="../bitmessageqt/__init__.py" line="208"/>
         <source>View HTML code as formatted text</source>
         <translation>HTMLコードを整形したテキストで表示</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="207"/>
+        <location filename="../bitmessageqt/__init__.py" line="212"/>
         <source>Save message as...</source>
         <translation>形式を選択してメッセージを保存</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="211"/>
+        <location filename="../bitmessageqt/__init__.py" line="216"/>
         <source>Mark Unread</source>
         <translation>未読にする</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="347"/>
+        <location filename="../bitmessageqt/__init__.py" line="352"/>
         <source>New</source>
         <translation>新規</translation>
     </message>
@@ -192,7 +230,7 @@ Please type the desired email address (including @mailchuck.com) below:</source>
     <message>
         <location filename="../bitmessageqt/blacklist.py" line="128"/>
         <source>Set avatar...</source>
-        <translation type="unfinished"></translation>
+        <translation>アバターを設定...</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/blacklist.py" line="118"/>
@@ -200,14 +238,14 @@ Please type the desired email address (including @mailchuck.com) below:</source>
         <translation>アドレスをコピー</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="298"/>
+        <location filename="../bitmessageqt/__init__.py" line="303"/>
         <source>Special address behavior...</source>
         <translation>アドレスの特別な動作</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="259"/>
+        <location filename="../bitmessageqt/__init__.py" line="264"/>
         <source>Email gateway</source>
-        <translation type="unfinished"></translation>
+        <translation>メールゲートウェイ</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/blacklist.py" line="115"/>
@@ -215,401 +253,404 @@ Please type the desired email address (including @mailchuck.com) below:</source>
         <translation>削除</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="314"/>
+        <location filename="../bitmessageqt/__init__.py" line="319"/>
         <source>Send message to this address</source>
         <translation>このアドレスへ送信</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="322"/>
+        <location filename="../bitmessageqt/__init__.py" line="327"/>
         <source>Subscribe to this address</source>
         <translation>このアドレスを購読</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="330"/>
+        <location filename="../bitmessageqt/__init__.py" line="335"/>
         <source>Add New Address</source>
         <translation>アドレスを追加</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="378"/>
+        <location filename="../bitmessageqt/__init__.py" line="383"/>
         <source>Copy destination address to clipboard</source>
         <translation>宛先アドレスをコピー</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="382"/>
+        <location filename="../bitmessageqt/__init__.py" line="387"/>
         <source>Force send</source>
         <translation>強制的に送信</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="594"/>
+        <location filename="../bitmessageqt/__init__.py" line="599"/>
         <source>One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer supported. May we delete it now?</source>
         <translation>%1は古いバージョン1のアドレスです。バージョン1のアドレスはサポートが終了しています。すぐに削除しますか？</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="987"/>
+        <location filename="../bitmessageqt/__init__.py" line="992"/>
         <source>Waiting for their encryption key. Will request it again soon.</source>
-        <translation type="unfinished"></translation>
+        <translation>暗号鍵を待っています。 すぐにもう一度リクエストします。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="990"/>
         <source>Encryption key request queued.</source>
-        <translation>暗号鍵のリクエストはキューに入りました。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="993"/>
+        <location filename="../bitmessageqt/__init__.py" line="998"/>
         <source>Queued.</source>
         <translation>キューに入りました。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="996"/>
+        <location filename="../bitmessageqt/__init__.py" line="1001"/>
         <source>Message sent. Waiting for acknowledgement. Sent at %1</source>
-        <translation type="unfinished"></translation>
+        <translation>メッセージを送信しました。 確認応答を待っています。 %1 で送信されました</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="999"/>
+        <location filename="../bitmessageqt/__init__.py" line="1004"/>
         <source>Message sent. Sent at %1</source>
         <translation>メッセージは送信されました。送信先: %1</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1002"/>
         <source>Need to do work to send message. Work is queued.</source>
-        <translation>送信のために処理を行う必要があります。処理はキューに入りました。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1005"/>
+        <location filename="../bitmessageqt/__init__.py" line="1010"/>
         <source>Acknowledgement of the message received %1</source>
         <translation>メッセージの確認を受け取りました %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2131"/>
+        <location filename="../bitmessageqt/__init__.py" line="2101"/>
         <source>Broadcast queued.</source>
-        <translation>Broadcastがキューに入りました。</translation>
+        <translation>配信がキューに入りました。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1011"/>
+        <location filename="../bitmessageqt/__init__.py" line="1019"/>
         <source>Broadcast on %1</source>
-        <translation>Broadcast: %1</translation>
+        <translation>配信: %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1014"/>
+        <location filename="../bitmessageqt/__init__.py" line="1022"/>
         <source>Problem: The work demanded by the recipient is more difficult than you are willing to do. %1</source>
         <translation>問題: 受信者が要求している処理は現在あなたが設定しているよりも高い難易度です。 %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1017"/>
+        <location filename="../bitmessageqt/__init__.py" line="1025"/>
         <source>Problem: The recipient&apos;s encryption key is no good. Could not encrypt message. %1</source>
         <translation>問題: 受信者の暗号鍵は正当でない物です。メッセージを暗号化できません。 %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1020"/>
+        <location filename="../bitmessageqt/__init__.py" line="1028"/>
         <source>Forced difficulty override. Send should start soon.</source>
         <translation>難易度を強制上書きしました。まもなく送信されます。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1023"/>
+        <location filename="../bitmessageqt/__init__.py" line="1031"/>
         <source>Unknown status: %1 %2</source>
         <translation>不明なステータス: %1 %2</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1689"/>
+        <location filename="../bitmessageqt/__init__.py" line="1653"/>
         <source>Not Connected</source>
         <translation>未接続</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1148"/>
+        <location filename="../bitmessageqt/__init__.py" line="1160"/>
         <source>Show Bitmessage</source>
         <translation>Bitmessageを表示</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="691"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="688"/>
         <source>Send</source>
         <translation>送る</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1163"/>
+        <location filename="../bitmessageqt/__init__.py" line="1175"/>
         <source>Subscribe</source>
         <translation>購読</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1169"/>
+        <location filename="../bitmessageqt/__init__.py" line="1181"/>
         <source>Channel</source>
-        <translation type="unfinished"></translation>
+        <translation>チャンネル</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="737"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="734"/>
         <source>Quit</source>
         <translation>終了</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1519"/>
+        <location filename="../bitmessageqt/__init__.py" line="1531"/>
         <source>You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file.</source>
         <translation>プログラムを同じディレクトリに保存されているkeys.datファイルを編集することで鍵を管理できます。ファイルをバックアップしておくことも重要です。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1523"/>
+        <location filename="../bitmessageqt/__init__.py" line="1535"/>
         <source>You may manage your keys by editing the keys.dat file stored in
  %1 
 It is important that you back up this file.</source>
         <translation>%1に保存されているkeys.datファイルを編集することで鍵を管理できます。ファイルをバックアップしておくことも重要です。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1530"/>
+        <location filename="../bitmessageqt/__init__.py" line="1542"/>
         <source>Open keys.dat?</source>
         <translation>keys.datを開きますか？</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1527"/>
+        <location filename="../bitmessageqt/__init__.py" line="1539"/>
         <source>You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)</source>
         <translation>プログラムを同じディレクトリに保存されているkeys.datファイルを編集することで鍵を管理できます。ファイルをバックアップしておくことも重要です。すぐにファイルを開きますか？（必ず編集する前にBitmessageを終了してください）</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1530"/>
+        <location filename="../bitmessageqt/__init__.py" line="1542"/>
         <source>You may manage your keys by editing the keys.dat file stored in
  %1 
 It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)</source>
         <translation>%1に保存されているkeys.datファイルを編集することで鍵を管理できます。ファイルをバックアップしておくことも重要です。すぐにファイルを開きますか？（必ず編集する前にBitmessageを終了してください）</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1537"/>
+        <location filename="../bitmessageqt/__init__.py" line="1549"/>
         <source>Delete trash?</source>
         <translation>ゴミ箱を空にしますか？</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1537"/>
+        <location filename="../bitmessageqt/__init__.py" line="1549"/>
         <source>Are you sure you want to delete all trashed messages?</source>
         <translation>ゴミ箱内のメッセージを全て削除してもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1557"/>
+        <location filename="../bitmessageqt/__init__.py" line="1569"/>
         <source>bad passphrase</source>
         <translation>不正なパスフレーズ</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1557"/>
+        <location filename="../bitmessageqt/__init__.py" line="1569"/>
         <source>You must type your passphrase. If you don&apos;t have one then this is not the form for you.</source>
         <translation>パスフレーズを入力してください。パスフレーズがない場合は入力する必要はありません。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1570"/>
+        <location filename="../bitmessageqt/__init__.py" line="1582"/>
         <source>Bad address version number</source>
-        <translation type="unfinished"></translation>
+        <translation>不正なアドレスのバージョン番号</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1566"/>
+        <location filename="../bitmessageqt/__init__.py" line="1578"/>
         <source>Your address version number must be a number: either 3 or 4.</source>
-        <translation type="unfinished"></translation>
+        <translation>アドレスのバージョン番号は数字にする必要があります: 3 または 4。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1570"/>
+        <location filename="../bitmessageqt/__init__.py" line="1582"/>
         <source>Your address version number must be either 3 or 4.</source>
-        <translation type="unfinished"></translation>
+        <translation>アドレスのバージョン番号は、3 または 4 のどちらかにする必要があります。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1600"/>
+        <location filename="../bitmessageqt/__init__.py" line="1608"/>
         <source>Chan name needed</source>
-        <translation>Chan名が必要です</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1600"/>
+        <location filename="../bitmessageqt/__init__.py" line="1608"/>
         <source>You didn&apos;t enter a chan name.</source>
-        <translation>chan名が入力されていません。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1620"/>
+        <location filename="../bitmessageqt/__init__.py" line="1628"/>
         <source>Address already present</source>
-        <translation>アドレスは既に表示されています</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1620"/>
+        <location filename="../bitmessageqt/__init__.py" line="1628"/>
         <source>Could not add chan because it appears to already be one of your identities.</source>
-        <translation>chanを追加できません。既にアドレス一覧に含まれています。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1624"/>
+        <location filename="../bitmessageqt/__init__.py" line="1632"/>
         <source>Success</source>
-        <translation>成功</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1595"/>
+        <location filename="../bitmessageqt/__init__.py" line="1603"/>
         <source>Successfully created chan. To let others join your chan, give them the chan name and this Bitmessage address: %1. This address also appears in &apos;Your Identities&apos;.</source>
-        <translation>chanの作成に成功しました。他の人がchanに参加できるようにするには、chanの名前とBitmessageアドレスを伝えてください: %1　アドレスは「アドレス一覧」に表示されます。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1604"/>
+        <location filename="../bitmessageqt/__init__.py" line="1612"/>
         <source>Address too new</source>
-        <translation>アドレスが新しすぎます</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1604"/>
+        <location filename="../bitmessageqt/__init__.py" line="1612"/>
         <source>Although that Bitmessage address might be valid, its version number is too new for us to handle. Perhaps you need to upgrade Bitmessage.</source>
-        <translation>このBitmessageアドレスは正当ですが、バージョン番号が現在使用中の物より新しいです。Bitmessageをアップデートしてください。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1608"/>
+        <location filename="../bitmessageqt/__init__.py" line="1616"/>
         <source>Address invalid</source>
-        <translation>アドレスが不正です</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1608"/>
+        <location filename="../bitmessageqt/__init__.py" line="1616"/>
         <source>That Bitmessage address is not valid.</source>
-        <translation>このBitmessageアドレスは不正です。</translation>
-    </message>
-    <message>
-        <location filename="../bitmessageqt/__init__.py" line="1616"/>
-        <source>Address does not match chan name</source>
-        <translation>アドレスがchan名と一致しません</translation>
-    </message>
-    <message>
-        <location filename="../bitmessageqt/__init__.py" line="1616"/>
-        <source>Although the Bitmessage address you entered was valid, it doesn&apos;t match the chan name.</source>
-        <translation>このBitmessageアドレスは正当ですが、chan名と一致していません。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1624"/>
-        <source>Successfully joined chan. </source>
-        <translation>chanに参加しました。</translation>
+        <source>Address does not match chan name</source>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1683"/>
+        <location filename="../bitmessageqt/__init__.py" line="1624"/>
+        <source>Although the Bitmessage address you entered was valid, it doesn&apos;t match the chan name.</source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1632"/>
+        <source>Successfully joined chan. </source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1647"/>
         <source>Connection lost</source>
         <translation>接続が切断されました</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1722"/>
+        <location filename="../bitmessageqt/__init__.py" line="1686"/>
         <source>Connected</source>
         <translation>接続済み</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1839"/>
+        <location filename="../bitmessageqt/__init__.py" line="1803"/>
         <source>Message trashed</source>
         <translation>メッセージが削除されました</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1923"/>
+        <location filename="../bitmessageqt/__init__.py" line="1887"/>
         <source>The TTL, or Time-To-Live is the length of time that the network will hold the message.
  The recipient must get it during this time. If your Bitmessage client does not hear an acknowledgement, it
  will resend the message automatically. The longer the Time-To-Live, the
  more work your computer must do to send the message. A Time-To-Live of four or five days is often appropriate.</source>
-        <translation type="unfinished"></translation>
+        <translation>TTL または Time-To-Live は、ネットワークがメッセージを保持する時間の長さです。
+受信者は、この時間の間に取得する必要があります。 Bitmessage クライアントが確認応答を受け取らないと、
+自動的にメッセージが再送信されます。 TTL（Time-To-Live）が長くなるほど、
+コンピュータがメッセージを送信するために必要な処理が増えます。 多くの場合 4〜5 日のTTL（Time-To-Live）が適切です。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1959"/>
+        <location filename="../bitmessageqt/__init__.py" line="1925"/>
         <source>Message too long</source>
-        <translation type="unfinished"></translation>
+        <translation>メッセージが長すぎます</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1959"/>
+        <location filename="../bitmessageqt/__init__.py" line="1925"/>
         <source>The message that you are trying to send is too long by %1 bytes. (The maximum is 261644 bytes). Please cut it down before sending.</source>
-        <translation type="unfinished"></translation>
+        <translation>送信しようとしているメッセージが %1 バイト長すぎます。  (最大は261644バイトです)。 送信する前に短くしてください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1991"/>
+        <location filename="../bitmessageqt/__init__.py" line="1957"/>
         <source>Error: Your account wasn&apos;t registered at an email gateway. Sending registration now as %1, please wait for the registration to be processed before retrying sending.</source>
-        <translation type="unfinished"></translation>
+        <translation>エラー: アカウントがメールゲートウェイに登録されていません。 今 %1 として登録を送信しています。送信を再試行する前に、登録が処理されるまでお待ちください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2000"/>
+        <location filename="../bitmessageqt/__init__.py" line="2008"/>
         <source>Error: Bitmessage addresses start with BM-   Please check %1</source>
-        <translation>エラー: Bitmessageアドレスは「BM-」で始まります。確認してください %1</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2003"/>
+        <location filename="../bitmessageqt/__init__.py" line="2011"/>
         <source>Error: The address %1 is not typed or copied correctly. Please check it.</source>
-        <translation>エラー: アドレス %1 は正しく入力、またはコピーされていません。確認して下さい。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2006"/>
+        <location filename="../bitmessageqt/__init__.py" line="2014"/>
         <source>Error: The address %1 contains invalid characters. Please check it.</source>
-        <translation>エラー: アドレス %1 は不正な文字を含んでいます。確認して下さい。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2009"/>
+        <location filename="../bitmessageqt/__init__.py" line="2017"/>
         <source>Error: The address version in %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.</source>
-        <translation>エラー: アドレスのバージョン %1 は現在使用中の物より新しいです。Bitmessageをアップデートする必要があるか、連絡先がより賢いです。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2012"/>
+        <location filename="../bitmessageqt/__init__.py" line="2020"/>
         <source>Error: Some data encoded in the address %1 is too short. There might be something wrong with the software of your acquaintance.</source>
-        <translation>エラー: アドレス %1 でエンコードされたデータが短すぎます。連絡先のソフトウェアが何かしら誤っている可能性があります。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2015"/>
+        <location filename="../bitmessageqt/__init__.py" line="2023"/>
         <source>Error: Some data encoded in the address %1 is too long. There might be something wrong with the software of your acquaintance.</source>
-        <translation>エラー: アドレス %1 でエンコードされたデータが長すぎます。連絡先のソフトウェアが何かしら誤っている可能性があります。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2018"/>
+        <location filename="../bitmessageqt/__init__.py" line="2026"/>
         <source>Error: Some data encoded in the address %1 is malformed. There might be something wrong with the software of your acquaintance.</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2021"/>
+        <location filename="../bitmessageqt/__init__.py" line="2029"/>
         <source>Error: Something is wrong with the address %1.</source>
-        <translation>エラー: アドレス %1 には何かしら誤りがあります。</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2089"/>
+        <location filename="../bitmessageqt/__init__.py" line="2059"/>
         <source>Error: You must specify a From address. If you don&apos;t have one, go to the &apos;Your Identities&apos; tab.</source>
         <translation>エラー: 送信元アドレスを指定してください。まだ作成していない場合には「アドレス一覧」のタブを開いてください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2030"/>
+        <location filename="../bitmessageqt/__init__.py" line="2000"/>
         <source>Address version number</source>
         <translation>アドレスのバージョン番号</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2030"/>
+        <location filename="../bitmessageqt/__init__.py" line="2000"/>
         <source>Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.</source>
         <translation>アドレス %1 に接続。%2 のバージョン番号は処理できません。Bitmessageを最新のバージョンへアップデートしてください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2034"/>
+        <location filename="../bitmessageqt/__init__.py" line="2004"/>
         <source>Stream number</source>
         <translation>ストリーム番号</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2034"/>
+        <location filename="../bitmessageqt/__init__.py" line="2004"/>
         <source>Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.</source>
         <translation>アドレス %1 に接続。%2 のストリーム番号は処理できません。Bitmessageを最新のバージョンへアップデートしてください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2039"/>
+        <location filename="../bitmessageqt/__init__.py" line="2009"/>
         <source>Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won&apos;t send until you connect.</source>
         <translation>警告: 接続されていません。Bitmessageはメッセージの処理を行いますが、ネットワークに接続するまで送信はされません。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2081"/>
+        <location filename="../bitmessageqt/__init__.py" line="2051"/>
         <source>Message queued.</source>
-        <translation type="unfinished"></translation>
+        <translation>メッセージがキューに入りました。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2085"/>
+        <location filename="../bitmessageqt/__init__.py" line="2055"/>
         <source>Your &apos;To&apos; field is empty.</source>
         <translation>宛先が指定されていません。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2140"/>
+        <location filename="../bitmessageqt/__init__.py" line="2110"/>
         <source>Right click one or more entries in your address book and select &apos;Send message to this address&apos;.</source>
         <translation>アドレス帳から一つ、または複数のアドレスを右クリックして「このアドレスへ送信」を選んでください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2153"/>
+        <location filename="../bitmessageqt/__init__.py" line="2123"/>
         <source>Fetched address from namecoin identity.</source>
         <translation>namecoin IDからアドレスを取得。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2252"/>
+        <location filename="../bitmessageqt/__init__.py" line="2226"/>
         <source>New Message</source>
         <translation>新規メッセージ</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2252"/>
+        <location filename="../bitmessageqt/__init__.py" line="2226"/>
         <source>From </source>
         <translation>送信元</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2630"/>
+        <location filename="../bitmessageqt/__init__.py" line="2606"/>
         <source>Sending email gateway registration request</source>
-        <translation type="unfinished"></translation>
+        <translation>メールゲートウェイの登録リクエストを送信しています</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/blacklist.py" line="60"/>
@@ -622,659 +663,809 @@ It is important that you back up this file. Would you like to open the file now?
         <translation>入力されたアドレスは不正です。無視されました。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3010"/>
+        <location filename="../bitmessageqt/__init__.py" line="3028"/>
         <source>Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want.</source>
         <translation>エラー: 同じアドレスを複数アドレス帳に追加する事はできません。既存の項目をリネームしてください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3258"/>
+        <location filename="../bitmessageqt/__init__.py" line="3276"/>
         <source>Error: You cannot add the same address to your subscriptions twice. Perhaps rename the existing one if you want.</source>
-        <translation type="unfinished"></translation>
+        <translation>エラー: 購読に、同じアドレスを2回追加することはできません。 必要に応じて、既存の名前を変更してください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2390"/>
+        <location filename="../bitmessageqt/__init__.py" line="2366"/>
         <source>Restart</source>
         <translation>再開</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2376"/>
+        <location filename="../bitmessageqt/__init__.py" line="2352"/>
         <source>You must restart Bitmessage for the port number change to take effect.</source>
         <translation>ポート番号の変更を有効にするにはBitmessageを再起動してください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2390"/>
+        <location filename="../bitmessageqt/__init__.py" line="2366"/>
         <source>Bitmessage will use your proxy from now on but you may want to manually restart Bitmessage now to close existing connections (if any).</source>
         <translation>プロキシの設定を有効にするには手動でBitmessageを再起動してください。既に接続がある場合は切断されます。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2418"/>
+        <location filename="../bitmessageqt/__init__.py" line="2394"/>
         <source>Number needed</source>
-        <translation type="unfinished"></translation>
+        <translation>数字が必要です</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2418"/>
+        <location filename="../bitmessageqt/__init__.py" line="2394"/>
         <source>Your maximum download and upload rate must be numbers. Ignoring what you typed.</source>
-        <translation type="unfinished"></translation>
+        <translation>最大ダウンロード数とアップロード数は数字にする必要があります。 入力されたものを無視します。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2491"/>
+        <location filename="../bitmessageqt/__init__.py" line="2467"/>
         <source>Will not resend ever</source>
-        <translation type="unfinished"></translation>
+        <translation>今後再送信されません</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2491"/>
+        <location filename="../bitmessageqt/__init__.py" line="2467"/>
         <source>Note that the time limit you entered is less than the amount of time Bitmessage waits for the first resend attempt therefore your messages will never be resent.</source>
-        <translation type="unfinished"></translation>
+        <translation>入力した時間制限は、Bitmessageが最初の再送試行を待つ時間よりも短いため、メッセージは再送信されないことにご注意ください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2603"/>
+        <location filename="../bitmessageqt/__init__.py" line="2579"/>
         <source>Sending email gateway unregistration request</source>
-        <translation type="unfinished"></translation>
+        <translation>メールゲートウェイの登録抹消リクエストを送信しています</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2607"/>
+        <location filename="../bitmessageqt/__init__.py" line="2583"/>
         <source>Sending email gateway status request</source>
-        <translation type="unfinished"></translation>
+        <translation>メールゲートウェイの状態リクエストを送信しています</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2696"/>
+        <location filename="../bitmessageqt/__init__.py" line="2672"/>
         <source>Passphrase mismatch</source>
         <translation>パスフレーズが一致しません</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2696"/>
+        <location filename="../bitmessageqt/__init__.py" line="2672"/>
         <source>The passphrase you entered twice doesn&apos;t match. Try again.</source>
         <translation>再度入力されたパスフレーズが一致しません。再入力してください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2699"/>
+        <location filename="../bitmessageqt/__init__.py" line="2675"/>
         <source>Choose a passphrase</source>
         <translation>パスフレーズを選択してください</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2699"/>
+        <location filename="../bitmessageqt/__init__.py" line="2675"/>
         <source>You really do need a passphrase.</source>
         <translation>パスフレーズが必要です。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2951"/>
+        <location filename="../bitmessageqt/__init__.py" line="2969"/>
         <source>Address is gone</source>
         <translation>アドレスが無効になりました</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2951"/>
+        <location filename="../bitmessageqt/__init__.py" line="2969"/>
         <source>Bitmessage cannot find your address %1. Perhaps you removed it?</source>
         <translation>アドレス %1 が見つかりません。既に削除していませんか？</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2954"/>
+        <location filename="../bitmessageqt/__init__.py" line="2972"/>
         <source>Address disabled</source>
         <translation>アドレスが無効になりました</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2954"/>
+        <location filename="../bitmessageqt/__init__.py" line="2972"/>
         <source>Error: The address from which you are trying to send is disabled. You&apos;ll have to enable it on the &apos;Your Identities&apos; tab before using it.</source>
         <translation>エラー: 送信しようとしたアドレスは無効になっています。使用する前に「アドレス一覧」で有効にしてください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3007"/>
+        <location filename="../bitmessageqt/__init__.py" line="3025"/>
         <source>Entry added to the Address Book. Edit the label to your liking.</source>
         <translation>アドレス帳に項目が追加されました。ラベルは自由に編集できます。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3032"/>
+        <location filename="../bitmessageqt/__init__.py" line="3050"/>
         <source>Entry added to the blacklist. Edit the label to your liking.</source>
-        <translation type="unfinished"></translation>
+        <translation>ブラックリストに項目が追加されました。ラベルは自由に編集できます。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3035"/>
+        <location filename="../bitmessageqt/__init__.py" line="3053"/>
         <source>Error: You cannot add the same address to your blacklist twice. Try renaming the existing one if you want.</source>
-        <translation type="unfinished"></translation>
+        <translation>エラー: ブラックリストに同じアドレスを2回追加することはできません。 必要に応じて既存の名前を変更してみてください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3163"/>
+        <location filename="../bitmessageqt/__init__.py" line="3181"/>
         <source>Moved items to trash.</source>
         <translation>アイテムをゴミ箱へ移動。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3103"/>
+        <location filename="../bitmessageqt/__init__.py" line="3121"/>
         <source>Undeleted item.</source>
-        <translation type="unfinished"></translation>
+        <translation>アイテムの削除を元に戻します。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3131"/>
+        <location filename="../bitmessageqt/__init__.py" line="3149"/>
         <source>Save As...</source>
         <translation>形式を選択して保存</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3140"/>
+        <location filename="../bitmessageqt/__init__.py" line="3158"/>
         <source>Write error.</source>
         <translation>書き込みエラー。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3244"/>
+        <location filename="../bitmessageqt/__init__.py" line="3262"/>
         <source>No addresses selected.</source>
         <translation>アドレスが未選択です。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3290"/>
+        <location filename="../bitmessageqt/__init__.py" line="3308"/>
         <source>If you delete the subscription, messages that you already received will become inaccessible. Maybe you can consider disabling the subscription instead. Disabled subscriptions will not receive new messages, but you can still view messages you already received.
 
 Are you sure you want to delete the subscription?</source>
-        <translation type="unfinished"></translation>
+        <translation>購読を削除すると、すでに受信したメッセージにアクセスできなくなります。 代わりに、購読を無効にすることもできます。 無効になった購読は新しいメッセージを受信しませんが、受信したメッセージは表示できます。
+
+購読を削除してもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3520"/>
+        <location filename="../bitmessageqt/__init__.py" line="3538"/>
         <source>If you delete the channel, messages that you already received will become inaccessible. Maybe you can consider disabling the channel instead. Disabled channels will not receive new messages, but you can still view messages you already received.
 
 Are you sure you want to delete the channel?</source>
-        <translation type="unfinished"></translation>
+        <translation>チャンネルを削除すると、すでに受信したメッセージにアクセスできなくなります。 代わりに、チャンネルを無効にすることもできます。 無効になったチャンネルは新しいメッセージを受信しませんが、受信したメッセージは表示できます。
+
+チャンネルを削除してもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3634"/>
+        <location filename="../bitmessageqt/__init__.py" line="3652"/>
         <source>Do you really want to remove this avatar?</source>
-        <translation type="unfinished"></translation>
+        <translation>このアバターを削除してもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="3642"/>
+        <location filename="../bitmessageqt/__init__.py" line="3660"/>
         <source>You have already set an avatar for this address. Do you really want to overwrite it?</source>
-        <translation type="unfinished"></translation>
+        <translation>すでにこのアドレスのアバターを設定しています。 上書きしてもよろしいですか？</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4019"/>
+        <location filename="../bitmessageqt/__init__.py" line="4039"/>
         <source>Start-on-login not yet supported on your OS.</source>
-        <translation type="unfinished"></translation>
+        <translation>ログイン時に開始は、まだお使いのOSでサポートされていません。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4012"/>
+        <location filename="../bitmessageqt/__init__.py" line="4032"/>
         <source>Minimize-to-tray not yet supported on your OS.</source>
-        <translation type="unfinished"></translation>
+        <translation>トレイに最小化は、まだお使いのOSでサポートされていません。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4015"/>
+        <location filename="../bitmessageqt/__init__.py" line="4035"/>
         <source>Tray notifications not yet supported on your OS.</source>
-        <translation type="unfinished"></translation>
+        <translation>トレイ通知は、まだお使いのOSでサポートされていません。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4184"/>
+        <location filename="../bitmessageqt/__init__.py" line="4208"/>
         <source>Testing...</source>
         <translation>テスト中</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4224"/>
+        <location filename="../bitmessageqt/__init__.py" line="4248"/>
         <source>This is a chan address. You cannot use it as a pseudo-mailing list.</source>
         <translation>chanアドレスは仮想メーリングリストのアドレスには使用できません。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4284"/>
+        <location filename="../bitmessageqt/__init__.py" line="4308"/>
         <source>The address should start with &apos;&apos;BM-&apos;&apos;</source>
         <translation>アドレスは「BM-」から始まります</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4287"/>
+        <location filename="../bitmessageqt/__init__.py" line="4311"/>
         <source>The address is not typed or copied correctly (the checksum failed).</source>
         <translation>このアドレスは正しく入力、またはコピーされていません。（チェックサムが一致しません）。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4290"/>
+        <location filename="../bitmessageqt/__init__.py" line="4314"/>
         <source>The version number of this address is higher than this software can support. Please upgrade Bitmessage.</source>
         <translation>このアドレスのバージョン番号はこのプログラムのサポート範囲外です。Bitmessageをアップデートしてください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4293"/>
+        <location filename="../bitmessageqt/__init__.py" line="4317"/>
         <source>The address contains invalid characters.</source>
         <translation>入力されたアドレスは不正な文字を含んでいます。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4296"/>
+        <location filename="../bitmessageqt/__init__.py" line="4320"/>
         <source>Some data encoded in the address is too short.</source>
         <translation>このアドレスでエンコードされたデータが短すぎます。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4299"/>
+        <location filename="../bitmessageqt/__init__.py" line="4323"/>
         <source>Some data encoded in the address is too long.</source>
         <translation>このアドレスでエンコードされたデータが長過ぎます。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4302"/>
+        <location filename="../bitmessageqt/__init__.py" line="4326"/>
         <source>Some data encoded in the address is malformed.</source>
-        <translation type="unfinished"></translation>
+        <translation>このアドレスでエンコードされた一部のデータが不正です。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4276"/>
+        <location filename="../bitmessageqt/__init__.py" line="4300"/>
         <source>Enter an address above.</source>
-        <translation type="unfinished"></translation>
+        <translation>上にアドレスを入力してください。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4308"/>
+        <location filename="../bitmessageqt/__init__.py" line="4332"/>
         <source>Address is an old type. We cannot display its past broadcasts.</source>
-        <translation type="unfinished"></translation>
+        <translation>アドレスが古い形式です。 過去の配信は表示できません。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4317"/>
+        <location filename="../bitmessageqt/__init__.py" line="4341"/>
         <source>There are no recent broadcasts from this address to display.</source>
-        <translation type="unfinished"></translation>
+        <translation>このアドレスから表示する最近の配信はありません。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4361"/>
+        <location filename="../bitmessageqt/__init__.py" line="4375"/>
         <source>You are using TCP port %1. (This can be changed in the settings).</source>
         <translation>使用中のポート %1 （設定で変更できます）。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="648"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="645"/>
         <source>Bitmessage</source>
-        <translation type="unfinished"></translation>
+        <translation>Bitmessage</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="649"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="646"/>
         <source>Identities</source>
-        <translation type="unfinished"></translation>
+        <translation>アドレス一覧</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="650"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="647"/>
         <source>New Identity</source>
-        <translation type="unfinished"></translation>
+        <translation>新しいアドレス</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="712"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="709"/>
         <source>Search</source>
         <translation>検索</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="713"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="710"/>
         <source>All</source>
         <translation>全て</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="720"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="717"/>
         <source>To</source>
         <translation>宛先</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="722"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="719"/>
         <source>From</source>
         <translation>送信元</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="724"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="721"/>
         <source>Subject</source>
         <translation>題名</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="717"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="714"/>
         <source>Message</source>
         <translation>メッセージ</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="726"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="723"/>
         <source>Received</source>
         <translation>受信日時</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="666"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="663"/>
         <source>Messages</source>
-        <translation type="unfinished"></translation>
+        <translation>メッセージ</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="669"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="666"/>
         <source>Address book</source>
-        <translation type="unfinished"></translation>
+        <translation>アドレス帳</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="671"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="668"/>
         <source>Address</source>
         <translation>アドレス</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="672"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="669"/>
         <source>Add Contact</source>
-        <translation type="unfinished"></translation>
+        <translation>連絡先を追加</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="673"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="670"/>
         <source>Fetch Namecoin ID</source>
         <translation>namecoin IDを取得</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="680"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="677"/>
         <source>Subject:</source>
         <translation>題名:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="679"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="676"/>
         <source>From:</source>
         <translation>送信元:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="676"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="673"/>
         <source>To:</source>
         <translation>宛先:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="678"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="675"/>
         <source>Send ordinary Message</source>
-        <translation type="unfinished"></translation>
+        <translation>通常のメッセージを送信</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="682"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="679"/>
         <source>Send Message to your Subscribers</source>
-        <translation type="unfinished"></translation>
+        <translation>購読者にメッセージを送信</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="683"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="680"/>
         <source>TTL:</source>
-        <translation type="unfinished"></translation>
+        <translation>TTL:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="709"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="706"/>
         <source>Subscriptions</source>
         <translation>購読リスト</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="693"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="690"/>
         <source>Add new Subscription</source>
         <translation>購読先を追加</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="727"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="724"/>
         <source>Chans</source>
-        <translation type="unfinished"></translation>
+        <translation>ﾁｬﾝﾈﾙ</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="711"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="708"/>
         <source>Add Chan</source>
-        <translation type="unfinished"></translation>
+        <translation>ﾁｬﾝﾈﾙを追加</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="732"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="729"/>
         <source>File</source>
         <translation>ファイル</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="743"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="740"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="739"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="736"/>
         <source>Help</source>
         <translation>ヘルプ</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="735"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="732"/>
         <source>Import keys</source>
         <translation>鍵をインポート</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="736"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="733"/>
         <source>Manage keys</source>
         <translation>鍵を管理</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="738"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="735"/>
         <source>Ctrl+Q</source>
         <translation>Ctrrl+Q</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="740"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="737"/>
         <source>F1</source>
-        <translation type="unfinished"></translation>
+        <translation>F1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="741"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="738"/>
         <source>Contact support</source>
-        <translation type="unfinished"></translation>
+        <translation>お問い合わせサポート</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="742"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="739"/>
         <source>About</source>
         <translation>概要</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="744"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="741"/>
         <source>Regenerate deterministic addresses</source>
         <translation>deterministiｃアドレスを再生成</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="745"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="742"/>
         <source>Delete all trashed messages</source>
         <translation>ゴミ箱のメッセージを全て削除する</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="746"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="743"/>
         <source>Join / Create chan</source>
-        <translation>chanに参加 / 作成</translation>
+        <translation>ﾁｬﾝﾈﾙに参加 / 作成</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/foldertree.py" line="172"/>
         <source>All accounts</source>
-        <translation type="unfinished"></translation>
+        <translation>すべてのアカウント</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/messageview.py" line="44"/>
+        <location filename="../bitmessageqt/messageview.py" line="47"/>
         <source>Zoom level %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>ズーム レベル %1%</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/blacklist.py" line="91"/>
         <source>Error: You cannot add the same address to your list twice. Perhaps rename the existing one if you want.</source>
-        <translation type="unfinished"></translation>
+        <translation>エラー: 同じアドレスを複数リストに追加する事はできません。既存の項目をリネームしてください。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/blacklist.py" line="112"/>
         <source>Add new entry</source>
-        <translation type="unfinished">新しい項目を追加</translation>
+        <translation>新しい項目を追加</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="4321"/>
+        <location filename="../bitmessageqt/__init__.py" line="4345"/>
         <source>Display the %1 recent broadcast(s) from this address.</source>
-        <translation type="unfinished"></translation>
+        <translation>このアドレスから%1の最新の配信を表示します。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1848"/>
+        <location filename="../bitmessageqt/__init__.py" line="1812"/>
         <source>New version of PyBitmessage is available: %1. Download it from https://github.com/Bitmessage/PyBitmessage/releases/latest</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../bitmessageqt/__init__.py" line="2737"/>
-        <source>Waiting for PoW to finish... %1%</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <location filename="../bitmessageqt/__init__.py" line="2741"/>
-        <source>Shutting down Pybitmessage... %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>新しいバージョンの PyBitmessage が利用可能です: %1。  https://github.com/Bitmessage/PyBitmessage/releases/latest からダウンロードしてください</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2763"/>
+        <source>Waiting for PoW to finish... %1%</source>
+        <translation>PoW（証明）が完了するのを待っています... %1%</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2767"/>
+        <source>Shutting down Pybitmessage... %1%</source>
+        <translation>Pybitmessageをシャットダウンしています... %1%</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2783"/>
         <source>Waiting for objects to be sent... %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>オブジェクトの送信待ち... %1%</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2773"/>
+        <location filename="../bitmessageqt/__init__.py" line="2793"/>
         <source>Saving settings... %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>設定を保存しています... %1%</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2782"/>
+        <location filename="../bitmessageqt/__init__.py" line="2802"/>
         <source>Shutting down core... %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>コアをシャットダウンしています... %1%</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2785"/>
+        <location filename="../bitmessageqt/__init__.py" line="2805"/>
         <source>Stopping notifications... %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>通知を停止しています... %1%</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2791"/>
+        <location filename="../bitmessageqt/__init__.py" line="2811"/>
         <source>Shutdown imminent... %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>すぐにシャットダウンします... %1%</translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/bitmessageui.py" line="689"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="686"/>
         <source>%n hour(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
+        <translation><numerusform>%n 時間</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/__init__.py" line="819"/>
+        <location filename="../bitmessageqt/__init__.py" line="824"/>
         <source>%n day(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
+        <translation><numerusform>%n 日</numerusform></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2718"/>
+        <location filename="../bitmessageqt/__init__.py" line="2735"/>
         <source>Shutting down PyBitmessage... %1%</source>
-        <translation type="unfinished"></translation>
+        <translation>PyBitmessageをシャットダウンしています... %1%</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="1096"/>
+        <location filename="../bitmessageqt/__init__.py" line="1105"/>
         <source>Sent</source>
-        <translation type="unfinished"></translation>
+        <translation>送信済</translation>
     </message>
     <message>
-        <location filename="../class_addressGenerator.py" line="86"/>
+        <location filename="../class_addressGenerator.py" line="87"/>
         <source>Generating one new address</source>
-        <translation type="unfinished"></translation>
+        <translation>新しいアドレスを生成しています</translation>
     </message>
     <message>
-        <location filename="../class_addressGenerator.py" line="148"/>
+        <location filename="../class_addressGenerator.py" line="149"/>
         <source>Done generating address. Doing work necessary to broadcast it...</source>
-        <translation type="unfinished"></translation>
+        <translation>アドレスの生成を完了しました。 配信に必要な処理を行っています...</translation>
     </message>
     <message>
-        <location filename="../class_addressGenerator.py" line="165"/>
+        <location filename="../class_addressGenerator.py" line="166"/>
         <source>Generating %1 new addresses.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1 の新しいアドレスを生成しています。</translation>
     </message>
     <message>
-        <location filename="../class_addressGenerator.py" line="242"/>
+        <location filename="../class_addressGenerator.py" line="243"/>
         <source>%1 is already in &apos;Your Identities&apos;. Not adding it again.</source>
-        <translation type="unfinished"></translation>
+        <translation>%1はすでに「アドレス一覧」にあります。 もう一度追加できません。</translation>
     </message>
     <message>
-        <location filename="../class_addressGenerator.py" line="278"/>
+        <location filename="../class_addressGenerator.py" line="279"/>
         <source>Done generating address</source>
-        <translation type="unfinished"></translation>
+        <translation>アドレスの生成を完了しました</translation>
     </message>
     <message>
         <location filename="../class_outgoingSynSender.py" line="228"/>
         <source>SOCKS5 Authentication problem: %1</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../class_sqlThread.py" line="565"/>
+        <location filename="../class_sqlThread.py" line="567"/>
         <source>Disk full</source>
-        <translation type="unfinished"></translation>
+        <translation>ディスクがいっぱいです</translation>
     </message>
     <message>
-        <location filename="../class_sqlThread.py" line="565"/>
+        <location filename="../class_sqlThread.py" line="567"/>
         <source>Alert: Your disk or data storage volume is full. Bitmessage will now exit.</source>
-        <translation type="unfinished"></translation>
+        <translation>アラート: ディスクまたはデータストレージのボリュームがいっぱいです。 Bitmessageが終了します。</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="721"/>
+        <location filename="../class_singleWorker.py" line="723"/>
         <source>Error! Could not find sender address (your address) in the keys.dat file.</source>
-        <translation type="unfinished"></translation>
+        <translation>エラー！ keys.datファイルで送信元アドレス (あなたのアドレス) を見つけることができませんでした。</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="464"/>
+        <location filename="../class_singleWorker.py" line="469"/>
         <source>Doing work necessary to send broadcast...</source>
-        <translation type="unfinished"></translation>
+        <translation>配信に必要な処理を行っています...</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="487"/>
+        <location filename="../class_singleWorker.py" line="492"/>
         <source>Broadcast sent on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>配信が送信されました %1</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="559"/>
+        <location filename="../class_singleWorker.py" line="561"/>
         <source>Encryption key was requested earlier.</source>
-        <translation type="unfinished"></translation>
+        <translation>暗号鍵は以前にリクエストされました。</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="596"/>
+        <location filename="../class_singleWorker.py" line="598"/>
         <source>Sending a request for the recipient&apos;s encryption key.</source>
-        <translation type="unfinished"></translation>
+        <translation>受信者の暗号鍵のリクエストを送信します。</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="613"/>
+        <location filename="../class_singleWorker.py" line="615"/>
         <source>Looking up the receiver&apos;s public key</source>
-        <translation type="unfinished"></translation>
+        <translation>受信者の公開鍵を探しています</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="647"/>
+        <location filename="../class_singleWorker.py" line="649"/>
         <source>Problem: Destination is a mobile device who requests that the destination be included in the message but this is disallowed in your settings.  %1</source>
-        <translation type="unfinished"></translation>
+        <translation>問題: メッセージに含まれた宛先のリクエストはモバイルデバイスですが、設定では許可されていません。 %1</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="661"/>
+        <location filename="../class_singleWorker.py" line="663"/>
         <source>Doing work necessary to send message.
 There is no required difficulty for version 2 addresses like this.</source>
-        <translation type="unfinished"></translation>
+        <translation>メッセージの送信に必要な処理を行っています。
+このようなバージョン2のアドレスには、必要な難易度はありません。</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="675"/>
+        <location filename="../class_singleWorker.py" line="677"/>
         <source>Doing work necessary to send message.
 Receiver&apos;s required difficulty: %1 and %2</source>
-        <translation type="unfinished"></translation>
+        <translation>メッセージの送信に必要な処理を行っています。
+受信者の必要な難易度: %1 および %2</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="684"/>
+        <location filename="../class_singleWorker.py" line="686"/>
         <source>Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do. %3</source>
-        <translation type="unfinished"></translation>
+        <translation>問題: 受信者が要求している処理 (%1 および %2) は、現在あなたが設定しているよりも高い難易度です。 %3</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="696"/>
+        <location filename="../class_singleWorker.py" line="698"/>
         <source>Problem: You are trying to send a message to yourself or a chan but your encryption key could not be found in the keys.dat file. Could not encrypt message. %1</source>
-        <translation type="unfinished"></translation>
+        <translation>問題: あなた自身またはﾁｬﾝﾈﾙにメッセージを送信しようとしていますが、暗号鍵がkeys.datファイルに見つかりませんでした。 メッセージを暗号化できませんでした。 ％1</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="705"/>
+        <location filename="../bitmessageqt/__init__.py" line="1007"/>
         <source>Doing work necessary to send message.</source>
-        <translation type="unfinished"></translation>
+        <translation>メッセージの送信に必要な処理を行っています。</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="819"/>
+        <location filename="../class_singleWorker.py" line="820"/>
         <source>Message sent. Waiting for acknowledgement. Sent on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>メッセージを送信しました。 確認応答を待っています。 %1 で送信しました</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="912"/>
+        <location filename="../bitmessageqt/__init__.py" line="995"/>
         <source>Doing work necessary to request encryption key.</source>
-        <translation type="unfinished"></translation>
+        <translation>暗号鍵のリクエストに必要な処理を行っています。</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="940"/>
+        <location filename="../class_singleWorker.py" line="941"/>
         <source>Broadcasting the public key request. This program will auto-retry if they are offline.</source>
-        <translation type="unfinished"></translation>
+        <translation>公開鍵のリクエストを配信しています。 このプログラムがオフラインの場合、自動的に再試行されます。</translation>
     </message>
     <message>
-        <location filename="../class_singleWorker.py" line="942"/>
+        <location filename="../class_singleWorker.py" line="943"/>
         <source>Sending public key request. Waiting for reply. Requested at %1</source>
-        <translation type="unfinished"></translation>
+        <translation>公開鍵のリクエストを送信しています。 返信を待っています。 %1 でリクエストしました</translation>
     </message>
     <message>
         <location filename="../upnp.py" line="220"/>
         <source>UPnP port mapping established on port %1</source>
-        <translation type="unfinished"></translation>
+        <translation>ポート%1でUPnPポートマッピングが確立しました</translation>
     </message>
     <message>
         <location filename="../upnp.py" line="244"/>
         <source>UPnP port mapping removed</source>
-        <translation type="unfinished"></translation>
+        <translation>UPnPポートマッピングを削除しました</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="263"/>
+        <location filename="../bitmessageqt/__init__.py" line="268"/>
         <source>Mark all messages as read</source>
-        <translation type="unfinished"></translation>
+        <translation>すべてのメッセージを既読にする</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/__init__.py" line="2639"/>
+        <location filename="../bitmessageqt/__init__.py" line="2615"/>
         <source>Are you sure you would like to mark all messages read?</source>
-        <translation type="unfinished"></translation>
+        <translation>すべてのメッセージを既読にしてもよろしいですか？</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1016"/>
+        <source>Doing work necessary to send broadcast.</source>
+        <translation>配信に必要な処理を行っています。</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2704"/>
+        <source>Proof of work pending</source>
+        <translation>PoW（証明）を待っています</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../bitmessageqt/__init__.py" line="2704"/>
+        <source>%n object(s) pending proof of work</source>
+        <translation><numerusform>%n オブジェクトが証明待ち (PoW)</numerusform></translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../bitmessageqt/__init__.py" line="2704"/>
+        <source>%n object(s) waiting to be distributed</source>
+        <translation><numerusform>%n オブジェクトが配布待ち</numerusform></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2704"/>
+        <source>Wait until these tasks finish?</source>
+        <translation>これらのタスクが完了するまで待ちますか？</translation>
+    </message>
+    <message>
+        <location filename="../class_outgoingSynSender.py" line="216"/>
+        <source>Problem communicating with proxy: %1. Please check your network settings.</source>
+        <translation>プロキシとの通信に問題があります: %1。 ネットワーク設定を確認してください。</translation>
+    </message>
+    <message>
+        <location filename="../class_outgoingSynSender.py" line="245"/>
+        <source>SOCKS5 Authentication problem: %1. Please check your SOCKS5 settings.</source>
+        <translation>SOCKS5認証に問題があります: %1。 SOCKS5の設定を確認してください。</translation>
+    </message>
+    <message>
+        <location filename="../class_receiveDataThread.py" line="165"/>
+        <source>The time on your computer, %1, may be wrong. Please verify your settings.</source>
+        <translation>お使いのコンピュータの時間 %1 は間違っている可能性があります。 設定を確認してください。</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1970"/>
+        <source>Error: Bitmessage addresses start with BM-   Please check the recipient address %1</source>
+        <translation>エラー: BitmessageのアドレスはBM-で始まります。 受信者のアドレス %1 を確認してください</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1973"/>
+        <source>Error: The recipient address %1 is not typed or copied correctly. Please check it.</source>
+        <translation>エラー: 受信者のアドレス %1 は正しく入力、またはコピーされていません。確認して下さい。</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1976"/>
+        <source>Error: The recipient address %1 contains invalid characters. Please check it.</source>
+        <translation>エラー: 受信者のアドレス %1 は不正な文字を含んでいます。確認して下さい。</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1979"/>
+        <source>Error: The version of the recipient address %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.</source>
+        <translation>エラー: 受信者アドレスのバージョン %1 は高すぎます。 Bitmessageソフトウェアをアップグレードする必要があるか、連絡先が賢明になっているかのいずれかです。</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1982"/>
+        <source>Error: Some data encoded in the recipient address %1 is too short. There might be something wrong with the software of your acquaintance.</source>
+        <translation>エラー: アドレス %1 でエンコードされたデータが短すぎます。連絡先のソフトウェアが何かしら誤っている可能性があります。</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1985"/>
+        <source>Error: Some data encoded in the recipient address %1 is too long. There might be something wrong with the software of your acquaintance.</source>
+        <translation>エラー: 受信者のアドレス %1 でエンコードされたデータが短すぎます。連絡先のソフトウェアが何かしら誤っている可能性があります。</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1988"/>
+        <source>Error: Some data encoded in the recipient address %1 is malformed. There might be something wrong with the software of your acquaintance.</source>
+        <translation>エラー: 受信者のアドレス %1 でエンコードされたデータの一部が不正です。連絡先のソフトウェアが何かしら誤っている可能性があります。</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="1991"/>
+        <source>Error: Something is wrong with the recipient address %1.</source>
+        <translation>エラー: 受信者のアドレス %1 には何かしら誤りがあります。</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2717"/>
+        <source>Synchronisation pending</source>
+        <translation>同期を保留しています</translation>
+    </message>
+    <message numerus="yes">
+        <location filename="../bitmessageqt/__init__.py" line="2717"/>
+        <source>Bitmessage hasn&apos;t synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?</source>
+        <translation><numerusform>Bitmessageはネットワークと同期していません。%n のオブジェクトをダウンロードする必要があります。 今、終了すると、配送が遅れることがあります。 同期が完了するまで待ちますか？</numerusform></translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2726"/>
+        <source>Not connected</source>
+        <translation>未接続</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2726"/>
+        <source>Bitmessage isn&apos;t connected to the network. If you quit now, it may cause delivery delays. Wait until connected and the synchronisation finishes?</source>
+        <translation>Bitmessageはネットワークに接続していません。 今、終了すると、配送が遅れることがあります。 接続して、同期が完了するまで待ちますか？</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2739"/>
+        <source>Waiting for network connection...</source>
+        <translation>ネットワーク接続を待っています...</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/__init__.py" line="2747"/>
+        <source>Waiting for finishing synchronisation...</source>
+        <translation>同期の完了を待っています...</translation>
+    </message>
+</context>
+<context>
+    <name>MessageView</name>
+    <message>
+        <location filename="../bitmessageqt/messageview.py" line="67"/>
+        <source>Follow external link</source>
+        <translation>外部リンクをフォロー</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/messageview.py" line="67"/>
+        <source>The link &quot;%1&quot; will open in a browser. It may be a security risk, it could de-anonymise you or download malicious data. Are you sure?</source>
+        <translation>リンク &quot;%1&quot; はブラウザで開きます。 セキュリティリスクの可能性があります。匿名性がなくなったり、悪意のあるデータをダウンロードする可能性があります。 よろしいですか？</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/messageview.py" line="112"/>
+        <source>HTML detected, click here to display</source>
+        <translation>HTMLが検出されました。ここをクリックすると表示します</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/messageview.py" line="121"/>
+        <source>Click here to disable HTML</source>
+        <translation>ここをクリックするとHTMLを無効にします</translation>
+    </message>
+</context>
+<context>
+    <name>MsgDecode</name>
+    <message>
+        <location filename="../helper_msgcoding.py" line="61"/>
+        <source>The message has an unknown encoding.
+Perhaps you should upgrade Bitmessage.</source>
+        <translation>メッセージのエンコードが不明です。
+Bitmessageをアップグレードする必要があるかもしれません。</translation>
+    </message>
+    <message>
+        <location filename="../helper_msgcoding.py" line="62"/>
+        <source>Unknown encoding</source>
+        <translation>不明なエンコード</translation>
     </message>
 </context>
 <context>
@@ -1318,7 +1509,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="181"/>
         <source>Address version number: 4</source>
-        <translation type="unfinished"></translation>
+        <translation>アドレスのバージョン番号: 4</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="182"/>
@@ -1396,7 +1587,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newsubscriptiondialog.py" line="68"/>
         <source>Enter an address above.</source>
-        <translation type="unfinished"></translation>
+        <translation>上にアドレスを入力してください。</translation>
     </message>
 </context>
 <context>
@@ -1427,41 +1618,42 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <translation>仮想メーリングリストの名前:</translation>
     </message>
 </context>
-<context encoding="UTF-8">
-    <name>Ui_aboutDialog</name>
-    <message encoding="UTF-8">
-        <location filename="../bitmessageqt/about.py" line="74"/>
-        <source>aboutDialog</source>
-        <comment>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright © 2012-2016 Jonathan Warren&lt;br/&gt;Copyright © 2013-2016 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</comment>
-        <translation type="unfinished"></translation>
-    </message>
-</context>
 <context>
     <name>aboutDialog</name>
     <message>
-        <location filename="../bitmessageqt/about.py" line="71"/>
+        <location filename="../bitmessageqt/about.py" line="67"/>
         <source>About</source>
         <translation>概要</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/about.py" line="72"/>
+        <location filename="../bitmessageqt/about.py" line="68"/>
         <source>PyBitmessage</source>
-        <translation type="unfinished"></translation>
+        <translation>PyBitmessage</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/about.py" line="73"/>
+        <location filename="../bitmessageqt/about.py" line="69"/>
         <source>version ?</source>
-        <translation>Version ?</translation>
+        <translation>バージョン？</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/about.py" line="75"/>
+        <location filename="../bitmessageqt/about.py" line="71"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Distributed under the MIT/X11 software license; see &lt;a href=&quot;http://www.opensource.org/licenses/mit-license.php&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;http://www.opensource.org/licenses/mit-license.php&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;MIT/X11 ソフトウェアライセンスに基づいて配布されます。  &lt;a href=&quot;http://www.opensource.org/licenses/mit-license.php&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;http://www.opensource.org/licenses/mit-license.php&lt;/span&gt;&lt;/a&gt; をご覧ください&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/about.py" line="76"/>
+        <location filename="../bitmessageqt/about.py" line="72"/>
         <source>This is Beta software.</source>
         <translation>このソフトウェアはベータ版です。</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/about.py" line="70"/>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright Â© 2012-2016 Jonathan Warren&lt;br/&gt;Copyright Â© 2013-2016 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/about.py" line="70"/>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright &amp;copy; 2012-2016 Jonathan Warren&lt;br/&gt;Copyright &amp;copy; 2013-2016 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright &amp;copy; 2012-2016 Jonathan Warren&lt;br/&gt;Copyright &amp;copy; 2013-2016 The Bitmessage 開発者&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
 </context>
 <context>
@@ -1469,37 +1661,37 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/blacklist.ui" line="17"/>
         <source>Use a Blacklist (Allow all incoming messages except those on the Blacklist)</source>
-        <translation type="unfinished"></translation>
+        <translation>ブラックリストを使用（全てのメッセージを受信してブラックリストと一致する物だけ除外）</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/blacklist.ui" line="27"/>
         <source>Use a Whitelist (Block all incoming messages except those on the Whitelist)</source>
-        <translation type="unfinished"></translation>
+        <translation>ホワイトリストを使用（全てのメッセージを受信拒否してホワイトリストと一致する物だけ許可）</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/blacklist.ui" line="34"/>
         <source>Add new entry</source>
-        <translation type="unfinished">新しい項目を追加</translation>
+        <translation>新しい項目を追加</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/blacklist.ui" line="85"/>
         <source>Name or Label</source>
-        <translation type="unfinished"></translation>
+        <translation>名前、ラベル</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/blacklist.ui" line="90"/>
         <source>Address</source>
-        <translation type="unfinished">アドレス</translation>
+        <translation>アドレス</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/blacklist.py" line="151"/>
         <source>Blacklist</source>
-        <translation type="unfinished"></translation>
+        <translation>ブラックリスト</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/blacklist.py" line="153"/>
         <source>Whitelist</source>
-        <translation type="unfinished"></translation>
+        <translation>ホワイトリスト</translation>
     </message>
 </context>
 <context>
@@ -1507,7 +1699,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/connect.py" line="56"/>
         <source>Bitmessage</source>
-        <translation type="unfinished"></translation>
+        <translation>Bitmessage</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/connect.py" line="57"/>
@@ -1535,7 +1727,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/help.py" line="46"/>
         <source>&lt;a href=&quot;https://bitmessage.org/wiki/PyBitmessage_Help&quot;&gt;https://bitmessage.org/wiki/PyBitmessage_Help&lt;/a&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;a href=&quot;https://bitmessage.org/wiki/PyBitmessage_Help&quot;&gt;https://bitmessage.org/wiki/PyBitmessage_Help&lt;/a&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/help.py" line="47"/>
@@ -1576,122 +1768,112 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="39"/>
         <source>Total connections:</source>
-        <translation type="unfinished"></translation>
+        <translation>接続数:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="143"/>
         <source>Since startup:</source>
-        <translation type="unfinished"></translation>
+        <translation>起動日時:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="159"/>
         <source>Processed 0 person-to-person messages.</source>
-        <translation type="unfinished"></translation>
+        <translation>0 通の1対1のメッセージを処理しました。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="188"/>
         <source>Processed 0 public keys.</source>
-        <translation type="unfinished"></translation>
+        <translation>0 件の公開鍵を処理しました。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="175"/>
         <source>Processed 0 broadcasts.</source>
-        <translation type="unfinished"></translation>
+        <translation>0 件の配信を処理しました。</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="240"/>
         <source>Inventory lookups per second: 0</source>
-        <translation type="unfinished"></translation>
+        <translation>毎秒のインベントリ検索: 0</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="201"/>
         <source>Objects to be synced:</source>
-        <translation type="unfinished"></translation>
+        <translation>同期する必要のあるオブジェクト:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="111"/>
         <source>Stream #</source>
-        <translation type="unfinished"></translation>
+        <translation>ストリーム #</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="116"/>
         <source>Connections</source>
-        <translation type="unfinished"></translation>
+        <translation>接続</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="137"/>
         <source>Since startup on %1</source>
-        <translation type="unfinished"></translation>
+        <translation>起動日時 %1</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="71"/>
         <source>Down: %1/s  Total: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>ダウン: %1/秒  合計: %2</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="73"/>
         <source>Up: %1/s  Total: %2</source>
-        <translation type="unfinished"></translation>
+        <translation>アップ: %1/秒  合計: %2</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="120"/>
         <source>Total Connections: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>接続数: %1</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.py" line="129"/>
         <source>Inventory lookups per second: %1</source>
-        <translation type="unfinished"></translation>
+        <translation>毎秒のインベントリ検索: %1</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="214"/>
         <source>Up: 0 kB/s</source>
-        <translation type="unfinished"></translation>
+        <translation>アップ: 0 kB/秒</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="227"/>
         <source>Down: 0 kB/s</source>
-        <translation type="unfinished"></translation>
+        <translation>ダウン: 0 kB/秒</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/bitmessageui.py" line="731"/>
+        <location filename="../bitmessageqt/bitmessageui.py" line="728"/>
         <source>Network Status</source>
-        <translation type="unfinished"></translation>
+        <translation>ネットワークの状態</translation>
     </message>
     <message numerus="yes">
         <location filename="../bitmessageqt/networkstatus.py" line="38"/>
         <source>byte(s)</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
+        <translation><numerusform>バイト</numerusform></translation>
     </message>
     <message numerus="yes">
         <location filename="../bitmessageqt/networkstatus.py" line="49"/>
         <source>Object(s) to be synced: %n</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
+        <translation><numerusform>同期する必要のあるオブジェクト: %n</numerusform></translation>
     </message>
     <message numerus="yes">
         <location filename="../bitmessageqt/networkstatus.py" line="53"/>
         <source>Processed %n person-to-person message(s).</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
+        <translation><numerusform>%n 通の1対1のメッセージを処理しました。</numerusform></translation>
     </message>
     <message numerus="yes">
         <location filename="../bitmessageqt/networkstatus.py" line="58"/>
         <source>Processed %n broadcast message(s).</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
+        <translation><numerusform>%n 件の配信を処理しました。</numerusform></translation>
     </message>
     <message numerus="yes">
         <location filename="../bitmessageqt/networkstatus.py" line="63"/>
         <source>Processed %n public key(s).</source>
-        <translation type="unfinished">
-            <numerusform></numerusform>
-        </translation>
+        <translation><numerusform>%n 件の公開鍵を処理しました。</numerusform></translation>
     </message>
 </context>
 <context>
@@ -1699,42 +1881,90 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="97"/>
         <source>Dialog</source>
-        <translation>ダイアログ</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="98"/>
         <source>Create a new chan</source>
-        <translation>新しいchanを作成</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="103"/>
         <source>Join a chan</source>
-        <translation>chanに参加</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="100"/>
         <source>Create a chan</source>
-        <translation>chanを作成</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="101"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter a name for your chan. If you choose a sufficiently complex chan name (like a strong and unique passphrase) and none of your friends share it publicly then the chan will be secure and private. If you and someone else both create a chan with the same chan name then it is currently very likely that they will be the same chan.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;chan名を入力してください。（強くて一意のパスフレーズのように）十分に複雑なchan名を選び、あなたの友人たちがそれを他人に教えない限りchanはセキュアでプライベートです。あなたと他の誰かが同じ名前のchanを作成した場合、現状では同じchanになる可能性が非常に高い。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="105"/>
         <source>Chan name:</source>
-        <translation>Chan名:</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="104"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A chan exists when a group of people share the same decryption keys. The keys and bitmessage address used by a chan are generated from a human-friendly word or phrase (the chan name). To send a message to everyone in the chan, send a normal person-to-person message to the chan address.&lt;/p&gt;&lt;p&gt;Chans are experimental and completely unmoderatable.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;chanは人々のグループに復号鍵を共有されることで存在します。chanで使われる鍵とBitmessageアドレスは読みやすい単語、またはフレーズ（chan名）から生成されます。chanに居る人たちへメッセージを送るには、通常の一対一のメッセージをchanアドレスへ送ります。&lt;/p&gt;&lt;p&gt;chansは実験的機能で、内容を管理するモデレーターを設けることはできません。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation type="unfinished"/>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.py" line="106"/>
         <source>Chan bitmessage address:</source>
-        <translation>chanのbitmessageアドレス:</translation>
+        <translation type="unfinished"/>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/newchandialog.ui" line="26"/>
+        <source>Create or join a chan</source>
+        <translation>ﾁｬﾝﾈﾙを作成または参加</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/newchandialog.ui" line="41"/>
+        <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A chan exists when a group of people share the same decryption keys. The keys and bitmessage address used by a chan are generated from a human-friendly word or phrase (the chan name). To send a message to everyone in the chan, send a message to the chan address.&lt;/p&gt;&lt;p&gt;Chans are experimental and completely unmoderatable.&lt;/p&gt;&lt;p&gt;Enter a name for your chan. If you choose a sufficiently complex chan name (like a strong and unique passphrase) and none of your friends share it publicly, then the chan will be secure and private. However if you and someone else both create a chan with the same chan name, the same chan will be shared.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;グループの人が同じ復号鍵を共有するときに、チャンネルが存在します。 チャンネルによって使用される鍵と bitmessage アドレスは、人にやさしい単語や語句 (チャンネル名) から生成されます。 チャンネルの全員にメッセージを送信するには、チャンネルのアドレスにメッセージを送信します。&lt;/p&gt;&lt;p&gt;チャンネルは実験的で完全に調整不能です。&lt;/p&gt;&lt;p&gt;あなたのチャンネルの名前を入力してください。 (強くて固有のパスフレーズのような) 十分に複雑なチャンネルの名前を選んで、友人の誰もそれを公に共有しない場合に、そのチャンネルは安全でプライベートになります。 しかし、あなたと他の誰かの両方で同じ名前のチャンネルを作成すると、同じチャンネルが共有されます。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/newchandialog.ui" line="56"/>
+        <source>Chan passhphrase/name:</source>
+        <translation>ﾁｬﾝﾈﾙのパスフレーズ/名前:</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/newchandialog.ui" line="63"/>
+        <source>Optional, for advanced usage</source>
+        <translation>オプション、高度な使い方</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/newchandialog.ui" line="76"/>
+        <source>Chan address</source>
+        <translation>ﾁｬﾝﾈﾙ アドレス</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/newchandialog.ui" line="101"/>
+        <source>Please input chan name/passphrase:</source>
+        <translation>ﾁｬﾝﾈﾙ名/パスフレーズを入力してください:</translation>
+    </message>
+</context>
+<context>
+    <name>newchandialog</name>
+    <message>
+        <location filename="../bitmessageqt/newchandialog.py" line="40"/>
+        <source>Successfully created / joined chan %1</source>
+        <translation>ﾁｬﾝﾈﾙ %1 を正常に作成 / 参加しました</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/newchandialog.py" line="45"/>
+        <source>Chan creation / joining failed</source>
+        <translation>ﾁｬﾝﾈﾙの作成 / 参加に失敗しました</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/newchandialog.py" line="51"/>
+        <source>Chan creation / joining cancelled</source>
+        <translation>ﾁｬﾝﾈﾙの作成 / 参加をキャンセルしました</translation>
     </message>
 </context>
 <context>
@@ -1762,7 +1992,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="118"/>
         <source>Address version number:</source>
-        <translation type="unfinished"></translation>
+        <translation>アドレスのバージョン番号:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="119"/>
@@ -1772,7 +2002,7 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="120"/>
         <source>1</source>
-        <translation type="unfinished"></translation>
+        <translation>1</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/regenerateaddresses.py" line="121"/>
@@ -1793,295 +2023,305 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
 <context>
     <name>settingsDialog</name>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="430"/>
+        <location filename="../bitmessageqt/settings.py" line="440"/>
         <source>Settings</source>
         <translation>設定</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="431"/>
+        <location filename="../bitmessageqt/settings.py" line="441"/>
         <source>Start Bitmessage on user login</source>
         <translation>ユーザのログイン時にBitmessageを起動</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="432"/>
+        <location filename="../bitmessageqt/settings.py" line="442"/>
         <source>Tray</source>
-        <translation type="unfinished"></translation>
+        <translation>トレイ</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="433"/>
+        <location filename="../bitmessageqt/settings.py" line="443"/>
         <source>Start Bitmessage in the tray (don&apos;t show main window)</source>
         <translation>Bitmessageをトレイ内で起動する（メインウィンドウを表示しない）</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="434"/>
+        <location filename="../bitmessageqt/settings.py" line="444"/>
         <source>Minimize to tray</source>
         <translation>タスクトレイへ最小化</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="435"/>
+        <location filename="../bitmessageqt/settings.py" line="445"/>
         <source>Close to tray</source>
-        <translation type="unfinished"></translation>
+        <translation>トレイに閉じる</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="436"/>
+        <location filename="../bitmessageqt/settings.py" line="447"/>
         <source>Show notification when message received</source>
         <translation>メッセージの受信時に通知する</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="437"/>
+        <location filename="../bitmessageqt/settings.py" line="448"/>
         <source>Run in Portable Mode</source>
         <translation>ポータブルモードで実行</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="438"/>
+        <location filename="../bitmessageqt/settings.py" line="449"/>
         <source>In Portable Mode, messages and config files are stored in the same directory as the program rather than the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.</source>
         <translation>ポータブルモード時、メッセージと設定ファイルは通常のアプリケーションデータのフォルダではなく同じディレクトリに保存されます。これによりBitmessageをUSBドライブから実行できます。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="439"/>
+        <location filename="../bitmessageqt/settings.py" line="450"/>
         <source>Willingly include unencrypted destination address when sending to a mobile device</source>
         <translation>携帯端末にメッセージを送る時は暗号化されていないアドレスを許可する</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="440"/>
+        <location filename="../bitmessageqt/settings.py" line="451"/>
         <source>Use Identicons</source>
-        <translation type="unfinished"></translation>
+        <translation>Identiconsを使用する</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="441"/>
+        <location filename="../bitmessageqt/settings.py" line="452"/>
         <source>Reply below Quote</source>
-        <translation type="unfinished"></translation>
+        <translation>下に返信</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="442"/>
+        <location filename="../bitmessageqt/settings.py" line="453"/>
         <source>Interface Language</source>
-        <translation type="unfinished"></translation>
+        <translation>インターフェイス言語</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="443"/>
+        <location filename="../bitmessageqt/settings.py" line="454"/>
         <source>System Settings</source>
         <comment>system</comment>
-        <translation type="unfinished"></translation>
+        <translation>システム設定</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="444"/>
+        <location filename="../bitmessageqt/settings.py" line="455"/>
         <source>User Interface</source>
         <translation>ユーザインターフェース</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="445"/>
+        <location filename="../bitmessageqt/settings.py" line="456"/>
         <source>Listening port</source>
         <translation>リスニングポート</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="446"/>
+        <location filename="../bitmessageqt/settings.py" line="457"/>
         <source>Listen for connections on port:</source>
         <translation>接続を待つポート:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="447"/>
+        <location filename="../bitmessageqt/settings.py" line="458"/>
         <source>UPnP:</source>
-        <translation type="unfinished"></translation>
+        <translation>UPnP:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="448"/>
+        <location filename="../bitmessageqt/settings.py" line="459"/>
         <source>Bandwidth limit</source>
-        <translation type="unfinished"></translation>
+        <translation>帯域幅の制限</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="449"/>
+        <location filename="../bitmessageqt/settings.py" line="460"/>
         <source>Maximum download rate (kB/s): [0: unlimited]</source>
-        <translation type="unfinished"></translation>
+        <translation>最大ダウンロード速度 (kB/秒): [0: 無制限]</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="450"/>
+        <location filename="../bitmessageqt/settings.py" line="461"/>
         <source>Maximum upload rate (kB/s): [0: unlimited]</source>
-        <translation type="unfinished"></translation>
+        <translation>最大アップロード速度 (kB/秒): [0: 無制限]</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="451"/>
+        <location filename="../bitmessageqt/settings.py" line="462"/>
         <source>Proxy server / Tor</source>
         <translation>プロキシサーバー/Tor</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="452"/>
+        <location filename="../bitmessageqt/settings.py" line="463"/>
         <source>Type:</source>
         <translation>タイプ:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="453"/>
+        <location filename="../bitmessageqt/settings.py" line="464"/>
         <source>Server hostname:</source>
         <translation>サーバーホスト名:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="476"/>
+        <location filename="../bitmessageqt/settings.py" line="487"/>
         <source>Port:</source>
         <translation>ポート:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="455"/>
+        <location filename="../bitmessageqt/settings.py" line="466"/>
         <source>Authentication</source>
         <translation>認証</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="477"/>
+        <location filename="../bitmessageqt/settings.py" line="488"/>
         <source>Username:</source>
         <translation>ユーザー名:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="457"/>
+        <location filename="../bitmessageqt/settings.py" line="468"/>
         <source>Pass:</source>
         <translation>パス:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="458"/>
+        <location filename="../bitmessageqt/settings.py" line="469"/>
         <source>Listen for incoming connections when using proxy</source>
         <translation>プロキシ使用時に外部からの接続を待機する</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="459"/>
+        <location filename="../bitmessageqt/settings.py" line="470"/>
         <source>none</source>
         <translation>無し</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="460"/>
+        <location filename="../bitmessageqt/settings.py" line="471"/>
         <source>SOCKS4a</source>
         <translation>SOCKS4a</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="461"/>
+        <location filename="../bitmessageqt/settings.py" line="472"/>
         <source>SOCKS5</source>
         <translation>SOCKS5</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="462"/>
+        <location filename="../bitmessageqt/settings.py" line="473"/>
         <source>Network Settings</source>
         <translation>ネットワーク設定</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="463"/>
+        <location filename="../bitmessageqt/settings.py" line="474"/>
         <source>Total difficulty:</source>
         <translation>全体の難易度:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="464"/>
+        <location filename="../bitmessageqt/settings.py" line="475"/>
         <source>The &apos;Total difficulty&apos; affects the absolute amount of work the sender must complete. Doubling this value doubles the amount of work.</source>
         <translation>「全体の難易度」は完全に全てのメッセージに影響します。この値を二倍にすると処理量も二倍になります。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="465"/>
+        <location filename="../bitmessageqt/settings.py" line="476"/>
         <source>Small message difficulty:</source>
         <translation>小さいメッセージの難易度:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="466"/>
+        <location filename="../bitmessageqt/settings.py" line="477"/>
         <source>When someone sends you a message, their computer must first complete some work. The difficulty of this work, by default, is 1. You may raise this default for new addresses you create by changing the values here. Any new addresses you create will require senders to meet the higher difficulty. There is one exception: if you add a friend or acquaintance to your address book, Bitmessage will automatically notify them when you next send a message that they need only complete the minimum amount of work: difficulty 1. </source>
         <translation>誰かがあなたにメッセージを送る時、相手のコンピューターはいくらか計算処理を行います。処理の難易度はデフォルトでは1です。この値を変更すると新しいアドレスではこのデフォルト値を引き上げることができます。その場合、新しいアドレスはメッセージの送信者により高い難易度を要求します。例外もあります: 友人や知り合いをアドレス帳に登録すると、Bitmessageは次にメッセージを送る際、自動的に要求される処理の難易度を最低限の1で済むように通知します。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="467"/>
+        <location filename="../bitmessageqt/settings.py" line="478"/>
         <source>The &apos;Small message difficulty&apos; mostly only affects the difficulty of sending small messages. Doubling this value makes it almost twice as difficult to send a small message but doesn&apos;t really affect large messages.</source>
         <translation>「小さいメッセージの難易度」は小さいメッセージを行う時にだけ影響します。この値を二倍にすれば小さなメッセージに必要な処理の難易度は二倍になりますが、実際にはデータ量の多いメッセージには影響しません。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="468"/>
+        <location filename="../bitmessageqt/settings.py" line="479"/>
         <source>Demanded difficulty</source>
         <translation>要求される難易度</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="469"/>
+        <location filename="../bitmessageqt/settings.py" line="480"/>
         <source>Here you may set the maximum amount of work you are willing to do to send a message to another person. Setting these values to 0 means that any value is acceptable.</source>
         <translation>ここでは他のユーザーへメッセージを送る際に行うことを許可する処理量の上限を設定します。0を設定するとどんな量でも許容します。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="470"/>
+        <location filename="../bitmessageqt/settings.py" line="481"/>
         <source>Maximum acceptable total difficulty:</source>
         <translation>許可する難易度の上限:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="471"/>
+        <location filename="../bitmessageqt/settings.py" line="482"/>
         <source>Maximum acceptable small message difficulty:</source>
         <translation>小さなメッセージに許可する難易度の上限:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="472"/>
+        <location filename="../bitmessageqt/settings.py" line="483"/>
         <source>Max acceptable difficulty</source>
         <translation>許可する最大の難易度</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/settings.py" line="473"/>
         <source>Hardware GPU acceleration (OpenCL)</source>
-        <translation type="unfinished"></translation>
+        <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="474"/>
+        <location filename="../bitmessageqt/settings.py" line="485"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitmessage can utilize a different Bitcoin-based program called Namecoin to make addresses human-friendly. For example, instead of having to tell your friend your long Bitmessage address, you can simply tell him to send a message to &lt;span style=&quot; font-style:italic;&quot;&gt;test. &lt;/span&gt;&lt;/p&gt;&lt;p&gt;(Getting your own Bitmessage address into Namecoin is still rather difficult).&lt;/p&gt;&lt;p&gt;Bitmessage can use either namecoind directly or a running nmcontrol instance.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
         <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Bitmessageはアドレスを読みやすくするため、NamecoinというBitcoinベースの別のプログラムを利用できます。例えば、あなたの友人に長いBitmessageアドレスを伝える代わりに、単純に&lt;span style=&quot; font-style:italic;&quot;&gt;テスト&lt;/span&gt;でメッセージを送るよう伝えることができます。&lt;/p&gt;&lt;p&gt;（Bitmessageアドレスを独自にNamecoinにするのはかなり難しいです）。&lt;/p&gt;&lt;p&gt;Bitmessageは直接namecoindを使うか、nmcontrolインスタンスを使うことができます。&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="475"/>
+        <location filename="../bitmessageqt/settings.py" line="486"/>
         <source>Host:</source>
         <translation>ホスト:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="478"/>
+        <location filename="../bitmessageqt/settings.py" line="489"/>
         <source>Password:</source>
         <translation>パスワード:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="479"/>
+        <location filename="../bitmessageqt/settings.py" line="490"/>
         <source>Test</source>
         <translation>テスト</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="480"/>
+        <location filename="../bitmessageqt/settings.py" line="491"/>
         <source>Connect to:</source>
         <translation>接続先:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="481"/>
+        <location filename="../bitmessageqt/settings.py" line="492"/>
         <source>Namecoind</source>
         <translation>Namecoind</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="482"/>
+        <location filename="../bitmessageqt/settings.py" line="493"/>
         <source>NMControl</source>
         <translation>NMControl</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="483"/>
+        <location filename="../bitmessageqt/settings.py" line="494"/>
         <source>Namecoin integration</source>
         <translation>Namecoin連携</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="484"/>
+        <location filename="../bitmessageqt/settings.py" line="495"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;By default, if you send a message to someone and he is offline for more than two days, Bitmessage will send the message again after an additional two days. This will be continued with exponential backoff forever; messages will be resent after 5, 10, 20 days ect. until the receiver acknowledges them. Here you may change that behavior by having Bitmessage give up after a certain number of days or months.&lt;/p&gt;&lt;p&gt;Leave these input fields blank for the default behavior. &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation type="unfinished"></translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;デフォルトでは、あなたが誰かにメッセージを送信して、相手が 2 日以上オフラインになっている場合、 Bitmessage はさらに 2 日後にメッセージを再送信します。 これは指数関数的後退で永遠に続きます。 受信者がそれらを確認するまで、メッセージは 5、10、20 日後に再送信されます。 ここで Bitmessage が一定の日数または月数後に諦める数を入力して、その動作を変更することができます。&lt;/p&gt;&lt;p&gt;デフォルトの動作は、この入力フィールドを空白のままにします。 &lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="485"/>
+        <location filename="../bitmessageqt/settings.py" line="496"/>
         <source>Give up after</source>
-        <translation type="unfinished"></translation>
+        <translation>次の期間後に諦める</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="486"/>
+        <location filename="../bitmessageqt/settings.py" line="497"/>
         <source>and</source>
-        <translation type="unfinished"></translation>
+        <translation>と</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="487"/>
+        <location filename="../bitmessageqt/settings.py" line="498"/>
         <source>days</source>
-        <translation type="unfinished"></translation>
+        <translation>日</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="488"/>
+        <location filename="../bitmessageqt/settings.py" line="499"/>
         <source>months.</source>
-        <translation type="unfinished"></translation>
+        <translation>ヶ月。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/settings.py" line="489"/>
+        <location filename="../bitmessageqt/settings.py" line="500"/>
         <source>Resends Expire</source>
-        <translation type="unfinished"></translation>
+        <translation>再送信の期限</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/settings.py" line="446"/>
+        <source>Hide connection notifications</source>
+        <translation>接続通知を非表示</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/settings.py" line="484"/>
+        <source>Hardware GPU acceleration (OpenCL):</source>
+        <translation>ハードウェア GPU アクセラレーション (OpenCL):</translation>
     </message>
 </context>
 </TS>
