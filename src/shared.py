@@ -11,7 +11,6 @@ useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the
 # Libraries.
 import base64
 import collections
-import ConfigParser
 import os
 import pickle
 import Queue
@@ -32,6 +31,7 @@ from binascii import hexlify
 # Project imports.
 from addresses import *
 from class_objectProcessorQueue import ObjectProcessorQueue
+from configparser import BMConfigParser
 import highlevelcrypto
 import shared
 #import helper_startup
@@ -39,7 +39,7 @@ from helper_sql import *
 from helper_threading import *
 
 
-config = ConfigParser.SafeConfigParser()
+config = BMConfigParser()
 myECCryptorObjects = {}
 MyECSubscriptionCryptorObjects = {}
 myAddressesByHash = {} #The key in this dictionary is the RIPE hash which is encoded in an address and value is the address itself.
