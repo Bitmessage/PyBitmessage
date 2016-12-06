@@ -73,6 +73,7 @@ def configureLogging():
                 'filename': shared.appdata + 'debug.log',
                 'maxBytes': 2097152, # 2 MiB
                 'backupCount': 1,
+                'encoding': 'UTF-8',
             }
         },
         'loggers': {
