@@ -140,8 +140,11 @@ def loadConfig():
 
 def isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
     try:
-        VER_THIS=StrictVersion(platform.version())
         if sys.platform[0:3]=="win":
+            # This check won't work on BSD platforms, replacing it with
+            # platform.release() still won't be portable, as e.g. FreeBSD might
+            # return '11.0-CURRENT'. Leave the version check for Windows only.
+            VER_THIS=StrictVersion(platform.version())
             return StrictVersion("5.1.2600")<=VER_THIS and StrictVersion("6.0.6000")>=VER_THIS
         return False
     except Exception as err:
