@@ -48,7 +48,7 @@ from about import *
 from help import *
 from iconglossary import *
 from connect import *
-import locale as pythonlocale
+import locale
 import sys
 from time import strftime, localtime, gmtime
 import time
@@ -83,7 +83,7 @@ def _translate(context, text, disambiguation = None, encoding = None, number = N
     else:
         return QtGui.QApplication.translate(context, text, None, QtCore.QCoreApplication.CodecForTr, number)
 
-def change_translation(locale):
+def change_translation(newlocale):
     global qmytranslator, qsystranslator
     try:
         if not qmytranslator.isEmpty():
@@ -97,29 +97,29 @@ def change_translation(locale):
         pass
 
     qmytranslator = QtCore.QTranslator()
-    translationpath = os.path.join (shared.codePath(), 'translations', 'bitmessage_' + locale)
+    translationpath = os.path.join (shared.codePath(), 'translations', 'bitmessage_' + newlocale)
     qmytranslator.load(translationpath)
     QtGui.QApplication.installTranslator(qmytranslator)
 
     qsystranslator = QtCore.QTranslator()
     if shared.frozen:
-        translationpath = os.path.join (shared.codePath(), 'translations', 'qt_' + locale)
+        translationpath = os.path.join (shared.codePath(), 'translations', 'qt_' + newlocale)
     else:
-        translationpath = os.path.join (str(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.TranslationsPath)), 'qt_' + locale)
+        translationpath = os.path.join (str(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.TranslationsPath)), 'qt_' + newlocale)
     qsystranslator.load(translationpath)
     QtGui.QApplication.installTranslator(qsystranslator)
 
-    lang = pythonlocale.normalize(l10n.getTranslationLanguage())
+    lang = locale.normalize(l10n.getTranslationLanguage())
     langs = [lang.split(".")[0] + "." + l10n.encoding, lang.split(".")[0] + "." + 'UTF-8', lang]
     if 'win32' in sys.platform or 'win64' in sys.platform:
         langs = [l10n.getWindowsLocale(lang)]
     for lang in langs:
         try:
-            pythonlocale.setlocale(pythonlocale.LC_ALL, lang)
+            l10n.setlocale(locale.LC_ALL, lang)
             if 'win32' not in sys.platform and 'win64' not in sys.platform:
-                l10n.encoding = pythonlocale.nl_langinfo(pythonlocale.CODESET)
+                l10n.encoding = locale.nl_langinfo(locale.CODESET)
             else:
-                l10n.encoding = pythonlocale.getlocale()[1]
+                l10n.encoding = locale.getlocale()[1]
             logger.info("Successfully set locale to %s", lang)
             break
         except:
