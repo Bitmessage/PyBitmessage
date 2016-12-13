@@ -1466,12 +1466,13 @@ Receiver&apos;s required difficulty: %1 and %2</source>
         <location filename="../helper_msgcoding.py" line="61"/>
         <source>The message has an unknown encoding.
 Perhaps you should upgrade Bitmessage.</source>
-        <translation>Diese Bitmessage ist unbekannt codiert (msgpack). Am besten pyBitmessage höher als ver. 0.6.1  upgraden.</translation>
+        <translation>Diese Bitmessage verwendtet eine unbekannte codierung.
+Womöglich sollten Sie Bitmessage upgraden.</translation>
     </message>
     <message>
         <location filename="../helper_msgcoding.py" line="62"/>
         <source>Unknown encoding</source>
-        <translation>Codierung unbekannt (msgpack).</translation>
+        <translation>Codierung unbekannt</translation>
     </message>
 </context>
 <context>
@@ -1933,7 +1934,7 @@ Die Zufallszahlen-Option ist standardmässig gewählt, jedoch haben deterministi
     <message>
         <location filename="../bitmessageqt/newchandialog.ui" line="41"/>
         <source>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A chan exists when a group of people share the same decryption keys. The keys and bitmessage address used by a chan are generated from a human-friendly word or phrase (the chan name). To send a message to everyone in the chan, send a message to the chan address.&lt;/p&gt;&lt;p&gt;Chans are experimental and completely unmoderatable.&lt;/p&gt;&lt;p&gt;Enter a name for your chan. If you choose a sufficiently complex chan name (like a strong and unique passphrase) and none of your friends share it publicly, then the chan will be secure and private. However if you and someone else both create a chan with the same chan name, the same chan will be shared.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
-        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Ein Chan existiert, wenn eine Gruppe von Leuten sich den gleichen Entschlüsselungscode teilen. Die Schlüssel und Bitmessage-Adressen werden basierend auf einem lesbaren Wort oder Satz generiert (dem Chan-Namen). Um eine Nachricht an den Chan zu senden, senden Sie eine Nachricht an die Chan-Adresse.&lt;/p&gt;&lt;p&gt;Chans sind experimentell und völlig unmoderierbar.&lt;/p&gt;&lt;p&gt;Geben Sie einen Namen für Ihren Chan ein. Wenn Sie einen ausreichend komplexen Chan-Namen wählen (wie einen starken, einzigartigen Kennwortsatz) und keiner Ihrer Freunde ihn öffentlich weitergibt, wird der Chan sicher und privat bleiben. Wenn eine andere Person einen Chan mit dem gleichen Namen erzeugt, repräsentieren diese denselben Chan, bzw. der Chan wird geteilt.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
+        <translation>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Wenn eine Gruppe von Leuten sich den gleichen Entschlüsselungscode teilen, bilden sie einen &quot;chan&quot;. Die Schlüssel und Bitmessage-Adressen werden basierend auf einem lesbaren Wort oder Satz generiert (dem Chan-Namen). Um eine Nachricht an den Chan zu senden, senden Sie eine Nachricht an die Chan-Adresse.&lt;/p&gt;&lt;p&gt;Chans sind experimentell und völlig zentral unmoderierbar.&lt;/p&gt;&lt;p&gt;Geben Sie einen Namen für Ihren Chan ein. Wenn Sie einen ausreichend komplexen Chan-Namen wählen (wie einen starken, einzigartigen Kennwortsatz) und keiner Ihrer Freunde ihn öffentlich weitergibt, wird der Chan sicher und privat bleiben. Wenn eine andere Person einen Chan mit dem gleichen Namen erzeugt, repräsentieren diese denselben Chan, bzw. der Chan für beide Personen verwendbar.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newchandialog.ui" line="56"/>
