@@ -3,6 +3,7 @@
 #from multiprocessing import Pool, cpu_count
 import hashlib
 from struct import unpack, pack
+from subprocess import call
 import sys
 import time
 from debug import logger
@@ -11,6 +12,8 @@ import openclpow
 import tr
 import os
 import ctypes
+
+bitmsglib = 'bitmsghash.so'
 
 def _set_idle():
     if 'linux' in sys.platform:
@@ -109,7 +112,7 @@ def _doGPUPoW(target, initialHash):
     #print "{} - value {} < {}".format(nonce, trialValue, target)
     if trialValue > target:
         deviceNames = ", ".join(gpu.name for gpu in openclpow.enabledGpus)
-        shared.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow",'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.')))
+        shared.UISignalQueue.put(('updateStatusBar', (tr._translate("MainWindow",'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.'), 1)))
         logger.error("Your GPUs (%s) did not calculate correctly, disabling OpenCL. Please report to the developers.", deviceNames)
         openclpow.enabledGpus = []
         raise Exception("GPU did not calculate correctly.")
@@ -149,6 +152,37 @@ def getPowType():
     if bmpow:
         return "C"
     return "python"
+
+def notifyBuild(tried=False):
+    global bmpow
+
+    if bmpow:
+        shared.UISignalQueue.put(('updateStatusBar', (tr._translate("proofofwork", "C PoW module built successfully."), 1)))
+    elif tried:
+        shared.UISignalQueue.put(('updateStatusBar', (tr._translate("proofofwork", "Failed to build C PoW module. Please build it manually."), 1)))
+    else:
+        shared.UISignalQueue.put(('updateStatusBar', (tr._translate("proofofwork", "C PoW module unavailable. Please build it."), 1)))
+
+def buildCPoW():
+    global bmpow
+
+    if bmpow is not None:
+        return
+    if shared.frozen is not None:
+        notifyBuild(False)
+        return
+    if sys.platform in ["win32", "win64"]:
+        notifyBuild(False)
+        return
+    try:
+        call(["make", "-C", os.path.join(shared.codePath(), "bitmsghash")])
+        if os.path.exists(os.path.join(shared.codePath(), "bitmsghash", "bitmsghash.so")):
+            init()
+            notifyBuild(True)
+        else:
+            notifyBuild(True)
+    except:
+        notifyBuild(True)
 
 def run(target, initialHash):
     if shared.shutdown != 0:
@@ -194,45 +228,49 @@ def run(target, initialHash):
         pass #fallback
 
 # init
-bitmsglib = 'bitmsghash.so'
-if "win32" == sys.platform:
-    if ctypes.sizeof(ctypes.c_voidp) == 4:
-        bitmsglib = 'bitmsghash32.dll'
-    else:
-        bitmsglib = 'bitmsghash64.dll'
-    try:
-        # MSVS
-        bso = ctypes.WinDLL(os.path.join(shared.codePath(), "bitmsghash", bitmsglib))
-        logger.info("Loaded C PoW DLL (stdcall) %s", bitmsglib)
-        bmpow = bso.BitmessagePOW
-        bmpow.restype = ctypes.c_ulonglong
-        _doCPoW(2**63, "")
-        logger.info("Successfully tested C PoW DLL (stdcall) %s", bitmsglib)
-    except:
-        logger.error("C PoW test fail.", exc_info=True)
+def init():
+    global bitmsglib, bso, bmpow
+    if "win32" == sys.platform:
+        if ctypes.sizeof(ctypes.c_voidp) == 4:
+            bitmsglib = 'bitmsghash32.dll'
+        else:
+            bitmsglib = 'bitmsghash64.dll'
         try:
-            # MinGW
-            bso = ctypes.CDLL(os.path.join(shared.codePath(), "bitmsghash", bitmsglib))
-            logger.info("Loaded C PoW DLL (cdecl) %s", bitmsglib)
+            # MSVS
+            bso = ctypes.WinDLL(os.path.join(shared.codePath(), "bitmsghash", bitmsglib))
+            logger.info("Loaded C PoW DLL (stdcall) %s", bitmsglib)
             bmpow = bso.BitmessagePOW
             bmpow.restype = ctypes.c_ulonglong
             _doCPoW(2**63, "")
-            logger.info("Successfully tested C PoW DLL (cdecl) %s", bitmsglib)
+            logger.info("Successfully tested C PoW DLL (stdcall) %s", bitmsglib)
         except:
             logger.error("C PoW test fail.", exc_info=True)
+            try:
+                # MinGW
+                bso = ctypes.CDLL(os.path.join(shared.codePath(), "bitmsghash", bitmsglib))
+                logger.info("Loaded C PoW DLL (cdecl) %s", bitmsglib)
+                bmpow = bso.BitmessagePOW
+                bmpow.restype = ctypes.c_ulonglong
+                _doCPoW(2**63, "")
+                logger.info("Successfully tested C PoW DLL (cdecl) %s", bitmsglib)
+            except:
+                logger.error("C PoW test fail.", exc_info=True)
+                bso = None
+    else:
+        try:
+            bso = ctypes.CDLL(os.path.join(shared.codePath(), "bitmsghash", bitmsglib))
+            logger.info("Loaded C PoW DLL %s", bitmsglib)
+        except:
             bso = None
-else:
-    try:
-        bso = ctypes.CDLL(os.path.join(shared.codePath(), "bitmsghash", bitmsglib))
-        logger.info("Loaded C PoW DLL %s", bitmsglib)
-    except:
-        bso = None
-if bso:
-    try:
-        bmpow = bso.BitmessagePOW
-        bmpow.restype = ctypes.c_ulonglong
-    except:
+    if bso:
+        try:
+            bmpow = bso.BitmessagePOW
+            bmpow.restype = ctypes.c_ulonglong
+        except:
+            bmpow = None
+    else:
         bmpow = None
-else:
-    bmpow = None
 
+init()
+if bmpow is None:
+    buildCPoW()
