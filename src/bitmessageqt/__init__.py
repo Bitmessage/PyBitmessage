@@ -76,6 +76,7 @@ from class_objectHashHolder import objectHashHolder
 from class_singleWorker import singleWorker
 from helper_generic import powQueueSize, invQueueSize
 from proofofwork import getPowType
+from statusbar import BMStatusBar
 
 def _translate(context, text, disambiguation = None, encoding = None, number = None):
     if number is None:
@@ -703,6 +704,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         # Put the colored icon on the status bar
         # self.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
+        self.setStatusBar(BMStatusBar())
         self.statusbar = self.statusBar()
 
         self.pushButtonStatusIcon = QtGui.QPushButton(self)
@@ -3927,10 +3929,19 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderComboBoxSendFromBroadcast()
 
     def updateStatusBar(self, data):
-        if data != "":
-            logger.info('Status bar: ' + data)
+        if type(data) is tuple or type(data) is list:
+            option = data[1]
+            message = data[0]
+        else:
+            option = 0
+            message = data
+        if message != "":
+            logger.info('Status bar: ' + message)
 
-        self.statusBar().showMessage(data, 10000)
+        if option == 1:
+            self.statusBar().addImportant(message)
+        else:
+            self.statusBar().showMessage(message, 10000)
 
     def initSettings(self):
         QtCore.QCoreApplication.setOrganizationName("PyBitmessage")

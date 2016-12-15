@@ -16,6 +16,7 @@ SOURCES	= 	../addresses.py\
 			../helper_msgcoding.py\
 			../helper_sent.py\
 			../helper_startup.py\
+			../proofofwork.py\
 			../shared.py\
 			../upnp.py\
 			../bitmessageqt/__init__.py\
