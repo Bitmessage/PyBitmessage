@@ -294,14 +294,18 @@ class receiveDataThread(threading.Thread):
             while True:
                 try:
                     self.sslSock.do_handshake()
+                    logger.debug("TLS handshake success")
                     break
-                except ssl.SSLError as e:
-                    if e.errno == 2:
-                        select.select([self.sslSock], [self.sslSock], [])
-                    else:
-                        break
+                except ssl.SSLWantReadError:
+                    logger.debug("Waiting for SSL socket handhake read")
+                    select.select([self.sslSock], [], [], 10)
+                except ssl.SSLWantWriteError:
+                    logger.debug("Waiting for SSL socket handhake write")
+                    select.select([], [self.sslSock], [], 10)
                 except:
-                    break
+                    logger.debug("SSL socket handhake failed, shutting down connection")
+                    self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail'))
+                    return
         # Command the corresponding sendDataThread to set its own connectionIsOrWasFullyEstablished variable to True also
         self.sendDataThreadQueue.put((0, 'connectionIsOrWasFullyEstablished', (self.services, self.sslSock)))
 
