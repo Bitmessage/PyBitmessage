@@ -102,6 +102,7 @@ def loadConfig():
         shared.config.set('bitmessagesettings', 'useidenticons', 'True')
         shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
         shared.config.set('bitmessagesettings', 'replybelow', 'False')
+        shared.config.set('bitmessagesettings', 'maxoutboundconnections', '8')
         shared.config.set('bitmessagesettings', 'maxdownloadrate', '0')
         shared.config.set('bitmessagesettings', 'maxuploadrate', '0')
         shared.config.set('bitmessagesettings', 'ttl', '367200')

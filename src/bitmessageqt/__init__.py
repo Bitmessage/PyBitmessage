@@ -2418,6 +2418,8 @@ class MyForm(settingsmixin.SMainWindow):
                 QMessageBox.about(self, _translate("MainWindow", "Number needed"), _translate(
                     "MainWindow", "Your maximum download and upload rate must be numbers. Ignoring what you typed."))
 
+            shared.config.set('bitmessagesettings', 'maxoutboundconnections', str(
+                self.settingsDialogInstance.ui.lineEditMaxOutboundConnections.text()))
             shared.config.set('bitmessagesettings', 'namecoinrpctype',
                 self.settingsDialogInstance.getNamecoinType())
             shared.config.set('bitmessagesettings', 'namecoinrpchost', str(
@@ -4049,6 +4051,8 @@ class settingsDialog(QtGui.QDialog):
             shared.config.get('bitmessagesettings', 'sockspassword')))
         QtCore.QObject.connect(self.ui.comboBoxProxyType, QtCore.SIGNAL(
             "currentIndexChanged(int)"), self.comboBoxProxyTypeChanged)
+        self.ui.lineEditMaxOutboundConnections.setText(str(
+            shared.config.get('bitmessagesettings', 'maxoutboundconnections')))
         self.ui.lineEditMaxDownloadRate.setText(str(
             shared.config.get('bitmessagesettings', 'maxdownloadrate')))
         self.ui.lineEditMaxUploadRate.setText(str(
