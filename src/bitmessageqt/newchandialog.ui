@@ -6,9 +6,15 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>553</width>
-    <height>422</height>
+    <width>473</width>
+    <height>444</height>
    </rect>
+  </property>
+  <property name="sizePolicy">
+   <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+    <horstretch>0</horstretch>
+    <verstretch>0</verstretch>
+   </sizepolicy>
   </property>
   <property name="minimumSize">
    <size>
@@ -17,127 +23,90 @@
    </size>
   </property>
   <property name="windowTitle">
-   <string>Dialog</string>
+   <string>Create or join a chan</string>
   </property>
   <layout class="QFormLayout" name="formLayout">
    <item row="0" column="0">
-    <widget class="QRadioButton" name="radioButtonCreateChan">
-     <property name="text">
-      <string>Create a new chan</string>
-     </property>
-    </widget>
+    <layout class="QVBoxLayout" name="mainLayout"/>
    </item>
-   <item row="1" column="0">
-    <widget class="QRadioButton" name="radioButtonJoinChan">
-     <property name="text">
-      <string>Join a chan</string>
+   <item row="0" column="1">
+    <widget class="QLabel" name="introduction">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Expanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
      </property>
-     <property name="checked">
+     <property name="text">
+      <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A chan exists when a group of people share the same decryption keys. The keys and bitmessage address used by a chan are generated from a human-friendly word or phrase (the chan name). To send a message to everyone in the chan, send a message to the chan address.&lt;/p&gt;&lt;p&gt;Chans are experimental and completely unmoderatable.&lt;/p&gt;&lt;p&gt;Enter a name for your chan. If you choose a sufficiently complex chan name (like a strong and unique passphrase) and none of your friends share it publicly, then the chan will be secure and private. However if you and someone else both create a chan with the same chan name, the same chan will be shared.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+     </property>
+     <property name="wordWrap">
       <bool>true</bool>
      </property>
     </widget>
    </item>
-   <item row="2" column="0" colspan="2">
-    <widget class="QGroupBox" name="groupBoxCreateChan">
-     <property name="title">
-      <string>Create a chan</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label_4">
-        <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Enter a name for your chan. If you choose a sufficiently complex chan name (like a strong and unique passphrase) and none of your friends share it publicly then the chan will be secure and private. If you and someone else both create a chan with the same chan name then it is currently very likely that they will be the same chan.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="wordWrap">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_5">
-        <property name="text">
-         <string>Chan name:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLineEdit" name="lineEditChanNameCreate"/>
-      </item>
-     </layout>
-    </widget>
-   </item>
-   <item row="3" column="0" colspan="2">
-    <widget class="QGroupBox" name="groupBoxJoinChan">
-     <property name="title">
-      <string>Join a chan</string>
-     </property>
-     <layout class="QGridLayout" name="gridLayout_2">
-      <item row="0" column="0">
-       <widget class="QLabel" name="label">
-        <property name="text">
-         <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;A chan exists when a group of people share the same decryption keys. The keys and bitmessage address used by a chan are generated from a human-friendly word or phrase (the chan name). To send a message to everyone in the chan, send a normal person-to-person message to the chan address.&lt;/p&gt;&lt;p&gt;Chans are experimental and completely unmoderatable.&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-        </property>
-        <property name="wordWrap">
-         <bool>true</bool>
-        </property>
-       </widget>
-      </item>
-      <item row="1" column="0">
-       <widget class="QLabel" name="label_2">
-        <property name="text">
-         <string>Chan name:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="2" column="0">
-       <widget class="QLineEdit" name="lineEditChanNameJoin"/>
-      </item>
-      <item row="3" column="0">
-       <widget class="QLabel" name="label_3">
-        <property name="text">
-         <string>Chan bitmessage address:</string>
-        </property>
-       </widget>
-      </item>
-      <item row="4" column="0">
-       <widget class="QLineEdit" name="lineEditChanBitmessageAddress"/>
-      </item>
-     </layout>
-    </widget>
+   <item row="2" column="1">
+    <layout class="QGridLayout" name="formLayout_2">
+     <item row="0" column="1">
+      <widget class="QLineEdit" name="chanPassPhrase"/>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="chanPassPhraseLabel">
+       <property name="text">
+        <string>Chan passhphrase/name:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLineEdit" name="chanAddress">
+       <property name="placeholderText">
+        <string>Optional, for advanced usage</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="chanAddressLabel">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
+       <property name="text">
+        <string>Chan address</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
    </item>
    <item row="4" column="1">
-    <spacer name="verticalSpacer">
-     <property name="orientation">
-      <enum>Qt::Vertical</enum>
-     </property>
-     <property name="sizeHint" stdset="0">
-      <size>
-       <width>389</width>
-       <height>2</height>
-      </size>
-     </property>
-    </spacer>
-   </item>
-   <item row="5" column="1">
     <widget class="QDialogButtonBox" name="buttonBox">
-     <property name="orientation">
-      <enum>Qt::Horizontal</enum>
-     </property>
      <property name="standardButtons">
       <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
+     </property>
+     <property name="centerButtons">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="1" column="1">
+    <widget class="QLabel" name="validatorFeedback">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Preferred" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="text">
+      <string>Please input chan name/passphrase:</string>
+     </property>
+     <property name="wordWrap">
+      <bool>true</bool>
      </property>
     </widget>
    </item>
   </layout>
  </widget>
- <tabstops>
-  <tabstop>radioButtonJoinChan</tabstop>
-  <tabstop>radioButtonCreateChan</tabstop>
-  <tabstop>lineEditChanNameCreate</tabstop>
-  <tabstop>lineEditChanNameJoin</tabstop>
-  <tabstop>lineEditChanBitmessageAddress</tabstop>
-  <tabstop>buttonBox</tabstop>
- </tabstops>
  <resources/>
  <connections>
   <connection>
@@ -147,12 +116,12 @@
    <slot>accept()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>428</x>
-     <y>454</y>
+     <x>240</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>157</x>
-     <y>274</y>
+     <x>236</x>
+     <y>221</y>
     </hint>
    </hints>
   </connection>
@@ -163,44 +132,12 @@
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>430</x>
-     <y>460</y>
+     <x>240</x>
+     <y>372</y>
     </hint>
     <hint type="destinationlabel">
-     <x>286</x>
-     <y>274</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>radioButtonJoinChan</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>groupBoxJoinChan</receiver>
-   <slot>setShown(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>74</x>
-     <y>49</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>96</x>
-     <y>227</y>
-    </hint>
-   </hints>
-  </connection>
-  <connection>
-   <sender>radioButtonCreateChan</sender>
-   <signal>toggled(bool)</signal>
-   <receiver>groupBoxCreateChan</receiver>
-   <slot>setShown(bool)</slot>
-   <hints>
-    <hint type="sourcelabel">
-     <x>72</x>
-     <y>28</y>
-    </hint>
-    <hint type="destinationlabel">
-     <x>65</x>
-     <y>92</y>
+     <x>236</x>
+     <y>221</y>
     </hint>
    </hints>
   </connection>

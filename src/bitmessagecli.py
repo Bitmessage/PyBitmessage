@@ -5,7 +5,6 @@
 # This is an example of a daemon client for PyBitmessage 0.4.2, by .dok (Version 0.3.0)
 
 
-import ConfigParser
 import xmlrpclib
 import datetime
 import hashlib
@@ -16,6 +15,8 @@ import json
 import time
 import sys
 import os
+
+from configparser import BMConfigParser
 
 api = ''
 keysName = 'keys.dat'
@@ -46,7 +47,7 @@ def restartBmNotify(): #Prompts the user to restart Bitmessage.
 
 def safeConfigGetBoolean(section,field):
     global keysPath
-    config = ConfigParser.SafeConfigParser()
+    config = BMConfigParser()
     config.read(keysPath)
     
     try:
@@ -73,7 +74,7 @@ def lookupAppdataFolder(): #gets the appropriate folders for the .dat files depe
 
 def configInit():
     global keysName
-    config = ConfigParser.SafeConfigParser()
+    config = BMConfigParser()
     
     config.add_section('bitmessagesettings')
     config.set('bitmessagesettings', 'port', '8444')  #Sets the bitmessage port to stop the warning about the api not properly being setup. This is in the event that the keys.dat is in a different directory or is created locally to connect to a machine remotely.
@@ -88,7 +89,7 @@ def configInit():
 def apiInit(apiEnabled):
     global keysPath
     global usrPrompt
-    config = ConfigParser.SafeConfigParser()
+    config = BMConfigParser()
     config.read(keysPath)
     
 
@@ -173,7 +174,7 @@ def apiData():
     global keysPath
     global usrPrompt
     
-    config = ConfigParser.SafeConfigParser()    
+    config = BMConfigParser()    
     config.read(keysPath) #First try to load the config file (the keys.dat file) from the program directory
 
     try:
@@ -183,7 +184,7 @@ def apiData():
         #Could not load the keys.dat file in the program directory. Perhaps it is in the appdata directory.
         appDataFolder = lookupAppdataFolder()
         keysPath = appDataFolder + keysPath
-        config = ConfigParser.SafeConfigParser()
+        config = BMConfigParser()
         config.read(keysPath)
 
         try:
@@ -252,7 +253,7 @@ def apiTest(): #Tests the API connection to bitmessage. Returns true if it is co
 def bmSettings(): #Allows the viewing and modification of keys.dat settings. 
     global keysPath
     global usrPrompt
-    config = ConfigParser.SafeConfigParser()
+    config = BMConfigParser()
     keysPath = 'keys.dat'
     
     config.read(keysPath)#Read the keys.dat

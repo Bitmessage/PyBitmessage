@@ -64,7 +64,10 @@ _generalerrors = ("success",
     "not available",
     "bad proxy type",
     "bad input",
-    "timed out")
+    "timed out",
+    "network unreachable",
+    "connection refused",
+    "host unreachable")
 
 _socks5errors = ("succeeded",
     "general SOCKS server failure",
@@ -404,9 +407,11 @@ class socksocket(socket.socket):
                 _orgsocket.connect(self, (self.__proxy[1], portnum))
             except socket.error as e:
                 if e[0] == 101:
-                    raise Socks5Error((3, _socks5errors[3]))
+                    raise GeneralProxyError((7, _generalerrors[7]))
                 if e[0] == 111:
-                    raise Socks5Error((5, _socks5errors[5]))
+                    raise GeneralProxyError((8, _generalerrors[8]))
+                if e[0] == 113:
+                    raise GeneralProxyError((9, _generalerrors[9]))
                 raise
             self.__negotiatesocks5()
             self.__connectsocks5(destpair[0], destpair[1])

@@ -9,6 +9,7 @@
 
 from PyQt4 import QtCore, QtGui
 from languagebox import LanguageBox
+from sys import platform
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -61,6 +62,10 @@ class Ui_settingsDialog(object):
         self.checkBoxTrayOnClose.setObjectName(_fromUtf8("checkBoxTrayOnClose"))
         self.formLayoutTray.setWidget(2, QtGui.QFormLayout.LabelRole, self.checkBoxTrayOnClose)
         self.formLayout.setWidget(1, QtGui.QFormLayout.SpanningRole, self.groupBoxTray)
+        self.checkBoxHideTrayConnectionNotifications = QtGui.QCheckBox(self.tabUserInterface)
+        self.checkBoxHideTrayConnectionNotifications.setChecked(False)
+        self.checkBoxHideTrayConnectionNotifications.setObjectName(_fromUtf8("checkBoxHideTrayConnectionNotifications"))
+        self.formLayout.setWidget(2, QtGui.QFormLayout.LabelRole, self.checkBoxHideTrayConnectionNotifications)
         self.checkBoxShowTrayNotifications = QtGui.QCheckBox(self.tabUserInterface)
         self.checkBoxShowTrayNotifications.setObjectName(_fromUtf8("checkBoxShowTrayNotifications"))
         self.formLayout.setWidget(3, QtGui.QFormLayout.LabelRole, self.checkBoxShowTrayNotifications)
@@ -174,12 +179,17 @@ class Ui_settingsDialog(object):
         self.gridLayout_2.addWidget(self.label_3, 1, 1, 1, 1)
         self.lineEditSocksHostname = QtGui.QLineEdit(self.groupBox_2)
         self.lineEditSocksHostname.setObjectName(_fromUtf8("lineEditSocksHostname"))
+        self.lineEditSocksHostname.setPlaceholderText(_fromUtf8("127.0.0.1"))
         self.gridLayout_2.addWidget(self.lineEditSocksHostname, 1, 2, 1, 2)
         self.label_4 = QtGui.QLabel(self.groupBox_2)
         self.label_4.setObjectName(_fromUtf8("label_4"))
         self.gridLayout_2.addWidget(self.label_4, 1, 4, 1, 1)
         self.lineEditSocksPort = QtGui.QLineEdit(self.groupBox_2)
         self.lineEditSocksPort.setObjectName(_fromUtf8("lineEditSocksPort"))
+        if platform in ['darwin', 'win32', 'win64']:
+            self.lineEditSocksPort.setPlaceholderText(_fromUtf8("9150"))
+        else:
+            self.lineEditSocksPort.setPlaceholderText(_fromUtf8("9050"))
         self.gridLayout_2.addWidget(self.lineEditSocksPort, 1, 5, 1, 1)
         self.checkBoxAuthentication = QtGui.QCheckBox(self.groupBox_2)
         self.checkBoxAuthentication.setObjectName(_fromUtf8("checkBoxAuthentication"))
@@ -306,9 +316,9 @@ class Ui_settingsDialog(object):
         self.labelOpenCL = QtGui.QLabel(self.tabMaxAcceptableDifficulty)
         self.labelOpenCL.setObjectName(_fromUtf8("labelOpenCL"))
         self.gridLayout_7.addWidget(self.labelOpenCL, 4, 0, 1, 1)
-        self.checkBoxOpenCL = QtGui.QCheckBox(self.tabMaxAcceptableDifficulty)
-        self.checkBoxOpenCL.setObjectName = (_fromUtf8("checkBoxOpenCL"))
-        self.gridLayout_7.addWidget(self.checkBoxOpenCL, 4, 1, 1, 1)
+        self.comboBoxOpenCL = QtGui.QComboBox(self.tabMaxAcceptableDifficulty)
+        self.comboBoxOpenCL.setObjectName = (_fromUtf8("comboBoxOpenCL"))
+        self.gridLayout_7.addWidget(self.comboBoxOpenCL, 4, 1, 1, 1)
         self.tabWidgetSettings.addTab(self.tabMaxAcceptableDifficulty, _fromUtf8(""))
         self.tabNamecoin = QtGui.QWidget()
         self.tabNamecoin.setObjectName(_fromUtf8("tabNamecoin"))
@@ -445,6 +455,7 @@ class Ui_settingsDialog(object):
         self.checkBoxStartInTray.setText(_translate("settingsDialog", "Start Bitmessage in the tray (don\'t show main window)", None))
         self.checkBoxMinimizeToTray.setText(_translate("settingsDialog", "Minimize to tray", None))
         self.checkBoxTrayOnClose.setText(_translate("settingsDialog", "Close to tray", None))
+        self.checkBoxHideTrayConnectionNotifications.setText(_translate("settingsDialog", "Hide connection notifications", None))
         self.checkBoxShowTrayNotifications.setText(_translate("settingsDialog", "Show notification when message received", None))
         self.checkBoxPortableMode.setText(_translate("settingsDialog", "Run in Portable Mode", None))
         self.PortableModeDescription.setText(_translate("settingsDialog", "In Portable Mode, messages and config files are stored in the same directory as the program rather than the normal application-data folder. This makes it convenient to run Bitmessage from a USB thumb drive.", None))
@@ -483,7 +494,7 @@ class Ui_settingsDialog(object):
         self.label_13.setText(_translate("settingsDialog", "Maximum acceptable total difficulty:", None))
         self.label_14.setText(_translate("settingsDialog", "Maximum acceptable small message difficulty:", None))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabMaxAcceptableDifficulty), _translate("settingsDialog", "Max acceptable difficulty", None))
-        self.labelOpenCL.setText(_translate("settingsDialog", "Hardware GPU acceleration (OpenCL)", None))
+        self.labelOpenCL.setText(_translate("settingsDialog", "Hardware GPU acceleration (OpenCL):", None))
         self.label_16.setText(_translate("settingsDialog", "<html><head/><body><p>Bitmessage can utilize a different Bitcoin-based program called Namecoin to make addresses human-friendly. For example, instead of having to tell your friend your long Bitmessage address, you can simply tell him to send a message to <span style=\" font-style:italic;\">test. </span></p><p>(Getting your own Bitmessage address into Namecoin is still rather difficult).</p><p>Bitmessage can use either namecoind directly or a running nmcontrol instance.</p></body></html>", None))
         self.label_17.setText(_translate("settingsDialog", "Host:", None))
         self.label_18.setText(_translate("settingsDialog", "Port:", None))

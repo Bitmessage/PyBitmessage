@@ -1,6 +1,7 @@
 doTimingAttackMitigation = False
 
 import base64
+import datetime
 import errno
 import math
 import time
@@ -26,6 +27,7 @@ from class_objectHashHolder import objectHashHolder
 from helper_generic import addDataPadding, isHostInPrivateIPRange
 from helper_sql import sqlQuery
 from debug import logger
+import tr
 
 # This thread is created either by the synSenderThread(for outgoing
 # connections) or the singleListenerThread(for incoming connections).
@@ -56,8 +58,9 @@ class receiveDataThread(threading.Thread):
         self.objectsThatWeHaveYetToGetFromThisPeer = {}
         self.selfInitiatedConnections = selfInitiatedConnections
         self.sendDataThreadQueue = sendDataThreadQueue # used to send commands and data to the sendDataThread
+        self.hostIdent = self.peer.port if ".onion" in shared.config.get('bitmessagesettings', 'onionhostname') and shared.checkSocksIP(self.peer.host) else self.peer.host
         shared.connectedHostsList[
-            self.peer.host] = 0  # The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
+            self.hostIdent] = 0  # The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
         self.connectionIsOrWasFullyEstablished = False  # set to true after the remote node and I accept each other's version messages. This is needed to allow the user interface to accurately reflect the current number of connections.
         self.services = 0
         if self.streamNumber == -1:  # This was an incoming connection. Send out a version message if we accept the other node's version message.
@@ -88,9 +91,11 @@ class receiveDataThread(threading.Thread):
                         shared.numberOfBytesReceivedLastSecond = 0
             dataLen = len(self.data)
             try:
+                ssl = False
                 if ((self.services & shared.NODE_SSL == shared.NODE_SSL) and
                     self.connectionIsOrWasFullyEstablished and
                     shared.haveSSL(not self.initiatedConnection)):
+                    ssl = True
                     dataRecv = self.sslSock.recv(1024)
                 else:
                     dataRecv = self.sock.recv(1024)
@@ -101,14 +106,21 @@ class receiveDataThread(threading.Thread):
                 logger.error ('Timeout occurred waiting for data from ' + str(self.peer) + '. Closing receiveData thread. (ID: ' + str(id(self)) + ')')
                 break
             except Exception as err:
-                if (sys.platform == 'win32' and err.errno in ([2, 10035])) or (sys.platform != 'win32' and err.errno == errno.EWOULDBLOCK):
-                    select.select([self.sslSock], [], [])
+                if err.errno == 2 or (sys.platform == 'win32' and err.errno == 10035) or (sys.platform != 'win32' and err.errno == errno.EWOULDBLOCK):
+                    if ssl:
+                        select.select([self.sslSock], [], [])
+                    else:
+                        select.select([self.sock], [], [])
                     continue
                 logger.error('sock.recv error. Closing receiveData thread (' + str(self.peer) + ', Thread ID: ' + str(id(self)) + ').' + str(err.errno) + "/" + str(err))
+                if self.initiatedConnection and not self.connectionIsOrWasFullyEstablished:
+                    shared.timeOffsetWrongCount += 1
                 break
             # print 'Received', repr(self.data)
             if len(self.data) == dataLen: # If self.sock.recv returned no data:
                 logger.debug('Connection to ' + str(self.peer) + ' closed. Closing receiveData thread. (ID: ' + str(id(self)) + ')')
+                if self.initiatedConnection and not self.connectionIsOrWasFullyEstablished:
+                    shared.timeOffsetWrongCount += 1
                 break
             else:
                 self.processData()
@@ -120,9 +132,9 @@ class receiveDataThread(threading.Thread):
             pass
         self.sendDataThreadQueue.put((0, 'shutdown','no data')) # commands the corresponding sendDataThread to shut itself down.
         try:
-            del shared.connectedHostsList[self.peer.host]
+            del shared.connectedHostsList[self.hostIdent]
         except Exception as err:
-            logger.error('Could not delete ' + str(self.peer.host) + ' from shared.connectedHostsList.' + str(err))
+            logger.error('Could not delete ' + str(self.hostIdent) + ' from shared.connectedHostsList.' + str(err))
 
         try:
             del shared.numberOfObjectsThatWeHaveYetToGetPerPeer[
@@ -130,6 +142,7 @@ class receiveDataThread(threading.Thread):
         except:
             pass
         shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
+        self.checkTimeOffsetNotification()
         logger.debug('receiveDataThread ending. ID ' + str(id(self)) + '. The size of the shared.connectedHostsList is now ' + str(len(shared.connectedHostsList)))
 
     def antiIntersectionDelay(self, initial = False):
@@ -145,6 +158,10 @@ class receiveDataThread(threading.Thread):
         elif not initial:
             logger.debug("Sleeping due to missing object for %.2fs", delay)
             time.sleep(delay)
+
+    def checkTimeOffsetNotification(self):
+        if shared.timeOffsetWrongCount >= 4 and not self.connectionIsOrWasFullyEstablished:
+            shared.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow", "The time on your computer, %1, may be wrong. Please verify your settings.").arg(datetime.datetime.now().strftime("%H:%M:%S"))))
 
     def processData(self):
         if len(self.data) < shared.Header.size:  # if so little of the data has arrived that we can't even read the checksum then wait for more data.
@@ -265,6 +282,7 @@ class receiveDataThread(threading.Thread):
             # there is no reason to run this function a second time
             return
         self.connectionIsOrWasFullyEstablished = True
+        shared.timeOffsetWrongCount = 0
 
         self.sslSock = self.sock
         if ((self.services & shared.NODE_SSL == shared.NODE_SSL) and
@@ -276,14 +294,18 @@ class receiveDataThread(threading.Thread):
             while True:
                 try:
                     self.sslSock.do_handshake()
+                    logger.debug("TLS handshake success")
                     break
-                except ssl.SSLError as e:
-                    if e.errno == 2:
-                        select.select([self.sslSock], [self.sslSock], [])
-                    else:
-                        break
+                except ssl.SSLWantReadError:
+                    logger.debug("Waiting for SSL socket handhake read")
+                    select.select([self.sslSock], [], [], 10)
+                except ssl.SSLWantWriteError:
+                    logger.debug("Waiting for SSL socket handhake write")
+                    select.select([], [self.sslSock], [], 10)
                 except:
-                    break
+                    logger.debug("SSL socket handhake failed, shutting down connection")
+                    self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail'))
+                    return
         # Command the corresponding sendDataThread to set its own connectionIsOrWasFullyEstablished variable to True also
         self.sendDataThreadQueue.put((0, 'connectionIsOrWasFullyEstablished', (self.services, self.sslSock)))
 
@@ -699,15 +721,21 @@ class receiveDataThread(threading.Thread):
         if timeOffset > 3600:
             self.sendDataThreadQueue.put((0, 'sendRawData', shared.assembleErrorMessage(fatal=2, errorText="Your time is too far in the future compared to mine. Closing connection.")))
             logger.info("%s's time is too far in the future (%s seconds). Closing connection to it." % (self.peer, timeOffset))
+            shared.timeOffsetWrongCount += 1
             time.sleep(2)
             self.sendDataThreadQueue.put((0, 'shutdown','no data'))
             return
-        if timeOffset < -3600:
+        elif timeOffset < -3600:
             self.sendDataThreadQueue.put((0, 'sendRawData', shared.assembleErrorMessage(fatal=2, errorText="Your time is too far in the past compared to mine. Closing connection.")))
             logger.info("%s's time is too far in the past (timeOffset %s seconds). Closing connection to it." % (self.peer, timeOffset))
+            shared.timeOffsetWrongCount += 1
             time.sleep(2)
             self.sendDataThreadQueue.put((0, 'shutdown','no data'))
             return 
+        else:
+            shared.timeOffsetWrongCount = 0
+        self.checkTimeOffsetNotification()
+
         self.myExternalIP = socket.inet_ntoa(data[40:44])
         # print 'myExternalIP', self.myExternalIP
         self.remoteNodeIncomingPort, = unpack('>H', data[70:72])
@@ -750,7 +778,7 @@ class receiveDataThread(threading.Thread):
             logger.debug ('Closed connection to ' + str(self.peer) + ' because they are interested in stream ' + str(self.streamNumber) + '.')
             return
         shared.connectedHostsList[
-            self.peer.host] = 1  # We use this data structure to not only keep track of what hosts we are connected to so that we don't try to connect to them again, but also to list the connections count on the Network Status tab.
+            self.hostIdent] = 1  # We use this data structure to not only keep track of what hosts we are connected to so that we don't try to connect to them again, but also to list the connections count on the Network Status tab.
         # If this was an incoming connection, then the sendDataThread
         # doesn't know the stream. We have to set it.
         if not self.initiatedConnection:

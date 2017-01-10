@@ -1,9 +1,32 @@
+import os
 import socket
 import sys
 from binascii import hexlify, unhexlify
+from multiprocessing import current_process
+from threading import current_thread, enumerate
 
 from debug import logger
 import shared
+
+def powQueueSize():
+    curWorkerQueue = shared.workerQueue.qsize()
+    for thread in enumerate():
+        try:
+            if thread.name == "singleWorker":
+                curWorkerQueue += thread.busy
+        except:
+            pass
+    return curWorkerQueue
+
+def invQueueSize():
+    curInvQueue = 0
+    for thread in enumerate():
+        try:
+            if thread.name == "objectHashHolder":
+                curInvQueue += thread.hashCount()
+        except:
+            pass
+    return curInvQueue
 
 def convertIntToString(n):
     a = __builtins__.hex(n)
@@ -19,6 +42,14 @@ def convertStringToInt(s):
     return int(hexlify(s), 16)
 
 def signal_handler(signal, frame):
+    logger.error("Got signal %i in %s/%s", signal, current_process().name, current_thread().name)
+    if current_process().name == "RegExParser":
+        # on Windows this isn't triggered, but it's fine, it has its own process termination thing
+        raise SystemExit
+    if "PoolWorker" in current_process().name:
+        raise SystemExit
+    if current_thread().name != "MainThread":
+        return
     logger.error("Got signal %i", signal)
     if shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
         shared.doCleanShutdown()
