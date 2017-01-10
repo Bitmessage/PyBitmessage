@@ -4428,7 +4428,7 @@ class MySingleApplication(QApplication):
 
         # Checks if there's an instance of the local server id running
         if self.is_running:
-            # This should be ignored, singleton.py will take care of exiting me.
+            # This should be ignored, singleinstance.py will take care of exiting me.
             pass
         else:
             # Nope, create a local server with this id and assign on_new_connection

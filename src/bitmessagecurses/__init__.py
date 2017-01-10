@@ -26,6 +26,7 @@ import ConfigParser
 from addresses import *
 from pyelliptic.openssl import OpenSSL
 import l10n
+from inventory import Inventory
 
 quit = False
 menutab = 1
@@ -108,8 +109,8 @@ def scrollbox(d, text, height=None, width=None):
 
 def resetlookups():
     global inventorydata
-    inventorydata = shared.numberOfInventoryLookupsPerformed
-    shared.numberOfInventoryLookupsPerformed = 0
+    inventorydata = Inventory().numberOfInventoryLookupsPerformed
+    Inventory().numberOfInventoryLookupsPerformed = 0
     Timer(1, resetlookups, ()).start()
 def drawtab(stdscr):
     if menutab in range(1, len(menu)+1):

@@ -8,6 +8,7 @@ import pickle
 import tr#anslate
 from helper_sql import *
 from helper_threading import *
+from inventory import Inventory
 from debug import logger
 
 """
@@ -47,7 +48,7 @@ class singleCleaner(threading.Thread, StoppableThread):
         while shared.shutdown == 0:
             shared.UISignalQueue.put((
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
-            shared.inventory.flush()
+            Inventory().flush()
             shared.UISignalQueue.put(('updateStatusBar', ''))
             
             shared.broadcastToSendDataQueues((
@@ -59,7 +60,7 @@ class singleCleaner(threading.Thread, StoppableThread):
                 shared.UISignalQueue.queue.clear()
             if timeWeLastClearedInventoryAndPubkeysTables < int(time.time()) - 7380:
                 timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
-                shared.inventory.clean()
+                Inventory().clean()
                 # pubkeys
                 sqlExecute(
                     '''DELETE FROM pubkeys WHERE time<? AND usedpersonally='no' ''',

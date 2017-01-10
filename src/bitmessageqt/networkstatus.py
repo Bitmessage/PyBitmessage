@@ -2,6 +2,7 @@ from PyQt4 import QtCore, QtGui
 import time
 import shared
 from tr import _translate
+from inventory import Inventory
 import l10n
 from retranslateui import RetranslateMixin
 from uisignaler import UISignaler
@@ -127,8 +128,8 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
     # timer driven
     def runEveryTwoSeconds(self):
         self.labelLookupsPerSecond.setText(_translate(
-            "networkstatus", "Inventory lookups per second: %1").arg(str(shared.numberOfInventoryLookupsPerformed/2)))
-        shared.numberOfInventoryLookupsPerformed = 0
+            "networkstatus", "Inventory lookups per second: %1").arg(str(Inventory().numberOfInventoryLookupsPerformed/2)))
+        Inventory().numberOfInventoryLookupsPerformed = 0
         self.updateNumberOfBytes()
         self.updateNumberOfObjectsToBeSynced()
 
