@@ -14,7 +14,7 @@ depends.check_dependencies()
 
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
-import singleton
+from singleinstance import singleinstance
 import os
 import socket
 import ctypes
@@ -162,7 +162,7 @@ class Main:
             shared.curses = True
 
         # is the application already running?  If yes then exit.
-        shared.thisapp = singleton.singleinstance("", daemon)
+        shared.thisapp = singleinstance("", daemon)
 
         if daemon:
             with shared.printLock:

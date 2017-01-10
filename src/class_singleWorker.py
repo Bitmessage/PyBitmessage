@@ -17,6 +17,7 @@ import helper_inbox
 from helper_generic import addDataPadding
 import helper_msgcoding
 from helper_threading import *
+from inventory import Inventory
 import l10n
 from protocol import *
 from binascii import hexlify, unhexlify
@@ -171,7 +172,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1
-        shared.inventory[inventoryHash] = (
+        Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime,'')
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
@@ -261,7 +262,7 @@ class singleWorker(threading.Thread, StoppableThread):
         payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1
-        shared.inventory[inventoryHash] = (
+        Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime,'')
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
@@ -351,7 +352,7 @@ class singleWorker(threading.Thread, StoppableThread):
         payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1
-        shared.inventory[inventoryHash] = (
+        Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, doubleHashOfAddressData[32:])
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
@@ -482,7 +483,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
             inventoryHash = calculateInventoryHash(payload)
             objectType = 3
-            shared.inventory[inventoryHash] = (
+            Inventory()[inventoryHash] = (
                 objectType, streamNumber, payload, embeddedTime, tag)
             logger.info('sending inv (within sendBroadcast function) for object: ' + hexlify(inventoryHash))
             shared.broadcastToSendDataQueues((
@@ -576,7 +577,7 @@ class singleWorker(threading.Thread, StoppableThread):
                             tag = doubleHashOfToAddressData[32:] # The second half of the sha512 hash.
                             shared.neededPubkeys[tag] = (toaddress, highlevelcrypto.makeCryptor(hexlify(privEncryptionKey)))
 
-                            for value in shared.inventory.by_type_and_tag(1, toTag):
+                            for value in Inventory().by_type_and_tag(1, toTag):
                                 if shared.decryptAndCheckPubkeyPayload(value.payload, toaddress) == 'successful': #if valid, this function also puts it in the pubkeys table.
                                     needToRequestPubkey = False
                                     sqlExecute(
@@ -808,7 +809,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
             inventoryHash = calculateInventoryHash(encryptedPayload)
             objectType = 2
-            shared.inventory[inventoryHash] = (
+            Inventory()[inventoryHash] = (
                 objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
             if shared.config.has_section(toaddress) or not checkBitfield(behaviorBitfield, shared.BITFIELD_DOESACK):
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Message sent. Sent at %1").arg(l10n.formatTimestamp()))))
@@ -917,7 +918,7 @@ class singleWorker(threading.Thread, StoppableThread):
         payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1
-        shared.inventory[inventoryHash] = (
+        Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
         logger.info('sending inv (for the getpubkey message)')
         shared.broadcastToSendDataQueues((

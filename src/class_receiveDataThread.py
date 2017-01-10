@@ -27,6 +27,7 @@ from class_objectHashHolder import objectHashHolder
 from helper_generic import addDataPadding, isHostInPrivateIPRange
 from helper_sql import sqlQuery
 from debug import logger
+from inventory import Inventory
 import tr
 
 # This thread is created either by the synSenderThread(for outgoing
@@ -230,10 +231,9 @@ class receiveDataThread(threading.Thread):
 
         if self.data == '': # if there are no more messages
             while len(self.objectsThatWeHaveYetToGetFromThisPeer) > 0:
-                shared.numberOfInventoryLookupsPerformed += 1
                 objectHash, = random.sample(
                     self.objectsThatWeHaveYetToGetFromThisPeer, 1)
-                if objectHash in shared.inventory:
+                if objectHash in Inventory():
                     logger.debug('Inventory already has object listed in inv message.')
                     del self.objectsThatWeHaveYetToGetFromThisPeer[objectHash]
                 else:
@@ -336,7 +336,7 @@ class receiveDataThread(threading.Thread):
     def sendBigInv(self):
         # Select all hashes for objects in this stream.
         bigInvList = {}
-        for hash in shared.inventory.unexpired_hashes_by_stream(self.streamNumber):
+        for hash in Inventory().unexpired_hashes_by_stream(self.streamNumber):
             if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware and not self.objectHashHolderInstance.hasHash(hash):
                 bigInvList[hash] = 0
         numberOfObjectsInInvMessage = 0
@@ -442,8 +442,7 @@ class receiveDataThread(threading.Thread):
                 return
             self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[
                 data[lengthOfVarint:32 + lengthOfVarint]] = 0
-            shared.numberOfInventoryLookupsPerformed += 1
-            if data[lengthOfVarint:32 + lengthOfVarint] in shared.inventory:
+            if data[lengthOfVarint:32 + lengthOfVarint] in Inventory():
                 logger.debug('Inventory has inventory item already.')
             else:
                 self.sendgetdata(data[lengthOfVarint:32 + lengthOfVarint])
@@ -455,7 +454,7 @@ class receiveDataThread(threading.Thread):
             advertisedSet = set()
             for i in range(numberOfItemsInInv):
                 advertisedSet.add(data[lengthOfVarint + (32 * i):32 + lengthOfVarint + (32 * i)])
-            objectsNewToMe = advertisedSet - shared.inventory.hashes_by_stream(self.streamNumber)
+            objectsNewToMe = advertisedSet - Inventory().hashes_by_stream(self.streamNumber)
             logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
             for item in objectsNewToMe:  
                 if totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers > 200000 and len(self.objectsThatWeHaveYetToGetFromThisPeer) > 1000 and shared.trustedPeer == None:  # inv flooding attack mitigation
@@ -488,15 +487,11 @@ class receiveDataThread(threading.Thread):
                 i * 32):32 + lengthOfVarint + (i * 32)]
             logger.debug('received getdata request for item:' + hexlify(hash))
 
-            shared.numberOfInventoryLookupsPerformed += 1
-            shared.inventoryLock.acquire()
             if self.objectHashHolderInstance.hasHash(hash):
-                shared.inventoryLock.release()
                 self.antiIntersectionDelay()
             else:
-                shared.inventoryLock.release()
-                if hash in shared.inventory:
-                    self.sendObject(shared.inventory[hash].payload)
+                if hash in Inventory():
+                    self.sendObject(Inventory()[hash].payload)
                 else:
                     self.antiIntersectionDelay()
                     logger.warning('%s asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. We probably cleaned it out after advertising it but before they got around to asking for it.' % (self.peer,))
