@@ -29,6 +29,7 @@ from struct import pack
 # Classes
 from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute,sqlStoredProcedure
 from debug import logger
+from inventory import Inventory
 
 # Helper Functions
 import proofofwork
@@ -849,7 +850,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         inventoryHash = calculateInventoryHash(encryptedPayload)
         objectType = 2
         TTL = 2.5 * 24 * 60 * 60
-        shared.inventory[inventoryHash] = (
+        Inventory()[inventoryHash] = (
             objectType, toStreamNumber, encryptedPayload, int(time.time()) + TTL,'')
         with shared.printLock:
             print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
@@ -896,7 +897,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         objectType = 1
                     #todo: support v4 pubkeys
         TTL = 28 * 24 * 60 * 60
-        shared.inventory[inventoryHash] = (
+        Inventory()[inventoryHash] = (
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL,'')
         with shared.printLock:
             print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
