@@ -4,13 +4,13 @@ import asyncore
 import socket
 import struct
 
+from advanceddispatcher import AdvancedDispatcher
 
-class Proxy(asyncore.dispatcher):
+class Proxy(AdvancedDispatcher):
     # these are global, and if you change config during runtime, all active/new
     # instances should change too
     _proxy = ["", 1080]
     _auth = None
-    _buf_len = 131072
     _remote_dns = True
 
     @property
@@ -34,46 +34,17 @@ class Proxy(asyncore.dispatcher):
     def __init__(self, address=None):
         if (not type(address) in (list,tuple)) or (len(address) < 2) or (type(address[0]) != type('')) or (type(address[1]) != int):
             raise
-        asyncore.dispatcher.__init__(self, self.sock)
+        AdvancedDispatcher.__init__(self, self.sock)
         self.destination = address
-        self.read_buf = ""
-        self.write_buf = ""
-        self.stage = "init"
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sslSocket.setblocking(0)
         self.connect(self.proxy)
-
-    def process(self):
-        try:
-            getattr(self, "state_" + str(self.stage))()
-        except AttributeError:
-            # missing stage
-            raise
-
-    def set_state(self, state):
-        self.state = state
-        self.read_buf = ""
-
-    def writable(self):
-        return len(self.write_buf) > 0
-
-    def readable(self):
-        return len(self.read_buf) < Proxy._buf_len
-
-    def handle_read(self):
-        self.read_buf += self.recv(Proxy._buf_len)
-        self.process()
-
-    def handle_write(self):
-        written = self.send(self.write_buf)
-        self.write_buf = self.write_buf[written:]
-        self.process()
 
 
 class SOCKS5(Proxy):
     def __init__(self, address=None, sock=None):
         Proxy.__init__(self, address)
-        self.state = 0
+        self.state = "init"
 
     def handle_connect(self):
         self.process()
@@ -83,11 +54,11 @@ class SOCKS5(Proxy):
             self.write_buf += struct.pack('BBBB', 0x05, 0x02, 0x00, 0x02)
         else:
             self.write_buf += struct.pack('BBB', 0x05, 0x01, 0x00)
-        self.set_state("auth_1")
+        self.set_state("auth_1", 0)
 
     def state_auth_1(self):
-        if len(self.read_buf) < 2:
-            return
+        if not self.read_buf_sufficient(2):
+            return False
         ret = struct.unpack('BB', self.read_buf)
         self.read_buf = self.read_buf[2:]
         if ret[0] != 5:
@@ -95,13 +66,13 @@ class SOCKS5(Proxy):
             raise
         elif ret[1] == 0:
             # no auth required
-            self.set_state("auth_done")
+            self.set_state("auth_done", 2)
         elif ret[1] == 2:
             # username/password
             self.write_buf += struct.pack('BB', 1, len(self._auth[0])) + \
                 self._auth[0] + struct.pack('B', len(self._auth[1])) + \
                 self._auth[1]
-            self.set_state("auth_1")
+            self.set_state("auth_1", 2)
         else:
             if ret[1] == 0xff:
                 # auth error
@@ -111,8 +82,8 @@ class SOCKS5(Proxy):
                 raise
 
     def state_auth_needed(self):
-        if len(self.read_buf) < 2:
-            return
+        if not self.read_buf_sufficient(2):
+            return False
         ret = struct.unpack('BB', self.read_buf)
         if ret[0] != 1:
             # general error
@@ -121,37 +92,11 @@ class SOCKS5(Proxy):
             # auth error
             raise
         # all ok
-        self.set_state = ("auth_done")
-
-
-class SOCKS5Connection(SOCKS5):
-    def __init__(self, address):
-        SOCKS5.__init__(self, address)
-
-    def state_auth_done(self):
-        # Now we can request the actual connection
-        self.write_buf += struct.pack('BBB', 0x05, 0x01, 0x00)
-        # If the given destination address is an IP address, we'll
-        # use the IPv4 address request even if remote resolving was specified.
-        try:
-            ipaddr = socket.inet_aton(self.destination[0])
-            self.write_buf += chr(0x01).encode() + ipaddr
-        except socket.error:
-            # Well it's not an IP number,  so it's probably a DNS name.
-            if Proxy._remote_dns:
-                # Resolve remotely
-                ipaddr = None
-                self.write_buf += chr(0x03).encode() + chr(len(self.destination[0])).encode() + self.destination[0]
-            else:
-                # Resolve locally
-                ipaddr = socket.inet_aton(socket.gethostbyname(self.destination[0]))
-                self.write_buf += chr(0x01).encode() + ipaddr
-        self.write_buf += struct.pack(">H", self.destination[1])
-        self.set_state = ("pre_connect")
+        self.set_state = ("auth_done", 2)
 
     def state_pre_connect(self):
-        if len(self.read_buf) < 4:
-            return
+        if not self.read_buf_sufficient(4):
+            return False
         # Get the response
         if self.read_buf[0:1] != chr(0x05).encode():
             # general error
@@ -168,74 +113,78 @@ class SOCKS5Connection(SOCKS5):
                 raise
                 #raise Socks5Error((9, _socks5errors[9]))
         # Get the bound address/port
-        elif self_read_buf[3:4] == chr(0x01).encode():
-            self.set_state("proxy_addr_long")
-        elif resp[3:4] == chr(0x03).encode():
-            self.set_state("proxy_addr_short")
+        elif self.read_buf[3:4] == chr(0x01).encode():
+            self.set_state("proxy_addr_1", 4)
+        elif self.read_buf[3:4] == chr(0x03).encode():
+            self.set_state("proxy_addr_2_1", 4)
         else:
             self.close()
             raise GeneralProxyError((1,_generalerrors[1]))
-        boundport = struct.unpack(">H", self.__recvall(2))[0]
-        self.__proxysockname = (boundaddr, boundport)
-        if ipaddr != None:
-            self.__proxypeername = (socket.inet_ntoa(ipaddr), destport)
-        else:
-            self.__proxypeername = (destaddr, destport)
 
-    def state_proxy_addr_long(self):
-        if len(self.read_buf) < 4:
-            return
+    def state_proxy_addr_1(self):
+        if not self.read_buf_sufficient(4):
+            return False
         self.boundaddr = self.read_buf[0:4]
-        self.set_state("proxy_port")
+        self.set_state("proxy_port", 4)
 
-    def state_proxy_addr_short(self):
-        if len(self.read_buf) < 1:
-            return
-        self.boundaddr = self.read_buf[0:1]
-        self.set_state("proxy_port")
+    def state_proxy_addr_2_1(self):
+        if not self.read_buf_sufficient(1):
+            return False
+        self.address_length = ord(self.read_buf[0:1])
+        self.set_state("proxy_addr_2_2", 1)
+
+    def state_proxy_addr_2_2(self):
+        if not self.read_buf_sufficient(self.address_length):
+            return False
+        self.boundaddr = read_buf
+        self.set_state("proxy_port", self.address_length)
 
     def state_proxy_port(self):
-        if len(self.read_buf) < 2:
-            return
+        if not self.read_buf_sufficient(2):
+            return False
         self.boundport = struct.unpack(">H", self.read_buf[0:2])[0]
         self.__proxysockname = (self.boundaddr, self.boundport)
-        if ipaddr != None:
-            self.__proxypeername = (socket.inet_ntoa(ipaddr), destport)
+        if self.ipaddr != None:
+            self.__proxypeername = (socket.inet_ntoa(self.ipaddr), self.destination[1])
         else:
-            self.__proxypeername = (destaddr, destport)
+            self.__proxypeername = (self.destination[1], destport)
 
 
-class SOCKS5Resolver(SOCKS5):
-    def __init__(self, destpair):
-        SOCKS5.__init__(self, destpair)
+class SOCKS5Connection(SOCKS5):
+    def __init__(self, address):
+        SOCKS5.__init__(self, address)
 
     def state_auth_done(self):
         # Now we can request the actual connection
-        req = struct.pack('BBB', 0x05, 0xF0, 0x00)
-        req += chr(0x03).encode() + chr(len(host)).encode() + host
-        req = req + struct.pack(">H", 8444)
-        self.sendall(req)
-        # Get the response
-        ip = ""
-        resp = self.__recvall(4)
-        if resp[0:1] != chr(0x05).encode():
-            self.close()
-            raise GeneralProxyError((1, _generalerrors[1]))
-        elif resp[1:2] != chr(0x00).encode():
-            # Connection failed
-            self.close()
-            if ord(resp[1:2])<=8:
-                raise Socks5Error((ord(resp[1:2]), _socks5errors[ord(resp[1:2])]))
+        self.write_buf += struct.pack('BBB', 0x05, 0x01, 0x00)
+        # If the given destination address is an IP address, we'll
+        # use the IPv4 address request even if remote resolving was specified.
+        try:
+            self.ipaddr = socket.inet_aton(self.destination[0])
+            self.write_buf += chr(0x01).encode() + ipaddr
+        except socket.error:
+            # Well it's not an IP number,  so it's probably a DNS name.
+            if Proxy._remote_dns:
+                # Resolve remotely
+                self.ipaddr = None
+                self.write_buf += chr(0x03).encode() + chr(len(self.destination[0])).encode() + self.destination[0]
             else:
-                raise Socks5Error((9, _socks5errors[9]))
-        # Get the bound address/port
-        elif resp[3:4] == chr(0x01).encode():
-            ip = socket.inet_ntoa(self.__recvall(4))
-        elif resp[3:4] == chr(0x03).encode():
-            resp = resp + self.recv(1)
-            ip = self.__recvall(ord(resp[4:5]))
-        else:
-            self.close()
-            raise GeneralProxyError((1,_generalerrors[1]))
-        boundport = struct.unpack(">H", self.__recvall(2))[0]
-        return ip
+                # Resolve locally
+                self.ipaddr = socket.inet_aton(socket.gethostbyname(self.destination[0]))
+                self.write_buf += chr(0x01).encode() + ipaddr
+        self.write_buf += struct.pack(">H", self.destination[1])
+        self.set_state = ("pre_connect", 0)
+
+
+class SOCKS5Resolver(SOCKS5):
+    def __init__(self, host):
+        self.host = host
+        self.port = 8444
+        SOCKS5.__init__(self, [self.host, self.port])
+
+    def state_auth_done(self):
+        # Now we can request the actual connection
+        self.write_buf += struct.pack('BBB', 0x05, 0xF0, 0x00)
+        self.write_buf += chr(0x03).encode() + chr(len(self.host)).encode() + self.host
+        self.write_buf += struct.pack(">H", self.port)
+        self.state = "pre_connect"
