@@ -19,8 +19,7 @@ bitmsglib = 'bitmsghash.so'
 
 def _set_idle():
     if 'linux' in sys.platform:
-        import os
-        os.nice(20)  # @UndefinedVariable
+        os.nice(20)
     else:
         try:
             sys.getwindowsversion()

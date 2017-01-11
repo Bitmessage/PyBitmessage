@@ -6,6 +6,7 @@ from email.header import decode_header
 import re
 import signal
 import smtpd
+import socket
 import threading
 import time
 
@@ -43,7 +44,7 @@ class smtpServerChannel(smtpd.SMTPChannel):
                 self.auth = True
                 self.push('235 2.7.0 Authentication successful')
             else:
-                raise Error("Auth fail")
+                raise Exception("Auth fail")
         except:
             self.push('501 Authentication fail')
 

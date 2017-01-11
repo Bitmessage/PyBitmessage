@@ -53,16 +53,12 @@ def initCL():
         enabledGpus = []
 
 def openclAvailable():
-    global gpus
     return (len(gpus) > 0)
 
 def openclEnabled():
-    global enabledGpus
     return (len(enabledGpus) > 0)
 
 def do_opencl_pow(hash, target):
-    global ctx, queue, program, enabledGpus, hash_dt
-
     output = numpy.zeros(1, dtype=[('v', numpy.uint64, 1)])
     if (len(enabledGpus) == 0):
         return output[0][0]

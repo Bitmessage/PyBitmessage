@@ -211,7 +211,7 @@ def reloadBroadcastSendersForWhichImWatching():
             MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
 
 def doCleanShutdown():
-    global shutdown, thisapp
+    global shutdown
     shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
     try:
         parserInputQueue.put(None, False)

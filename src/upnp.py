@@ -11,7 +11,7 @@ from helper_threading import *
 import shared
 import tr
 
-def createRequestXML(service, action, arguments=[]):
+def createRequestXML(service, action, arguments=None):
     from xml.dom.minidom import Document
 
     doc = Document()
@@ -37,11 +37,12 @@ def createRequestXML(service, action, arguments=[]):
     # iterate over arguments, create nodes, create text nodes,
     # append text nodes to nodes, and finally add the ready product
     # to argument_list
-    for k, v in arguments:
-        tmp_node = doc.createElement(k)
-        tmp_text_node = doc.createTextNode(v)
-        tmp_node.appendChild(tmp_text_node)
-        argument_list.append(tmp_node)
+    if arguments is not None:
+        for k, v in arguments:
+            tmp_node = doc.createElement(k)
+            tmp_text_node = doc.createTextNode(v)
+            tmp_node.appendChild(tmp_text_node)
+            argument_list.append(tmp_node)
 
     # append the prepared argument nodes to the function element
     for arg in argument_list:
@@ -140,7 +141,7 @@ class Router:
         dom = parseString(resp)
         return dom.getElementsByTagName('NewExternalIPAddress')[0].childNodes[0].data
     
-    def soapRequest(self, service, action, arguments=[]):
+    def soapRequest(self, service, action, arguments=None):
         from xml.dom.minidom import parseString
         from debug import logger
         conn = httplib.HTTPConnection(self.routerPath.hostname, self.routerPath.port)

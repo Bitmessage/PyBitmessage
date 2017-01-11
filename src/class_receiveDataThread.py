@@ -270,9 +270,9 @@ class receiveDataThread(threading.Thread):
         self.processData()
 
 
-    def sendpong(self):
+    def sendpong(self, payload):
         logger.debug('Sending pong')
-        self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('pong')))
+        self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('pong', payload)))
 
 
     def recverack(self):

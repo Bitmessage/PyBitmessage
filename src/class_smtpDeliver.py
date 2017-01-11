@@ -8,6 +8,7 @@ import urlparse
 from configparser import BMConfigParser
 from debug import logger
 from helper_threading import *
+from bitmessageqt.uisignaler import UISignaler
 import shared
 
 SMTPDOMAIN = "bmaddr.lan"
