@@ -147,7 +147,7 @@ class GatewayAccount(BMAccount):
     ALL_OK = 0
     REGISTRATION_DENIED = 1
     def __init__(self, address):
-        super(BMAccount, self).__init__(address)
+        super(GatewayAccount, self).__init__(address)
         
     def send(self):
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
@@ -175,7 +175,7 @@ class GatewayAccount(BMAccount):
         shared.workerQueue.put(('sendmessage', self.toAddress))
     
     def parseMessage(self, toAddress, fromAddress, subject, message):
-        super(BMAccount, self).parseMessage(toAddress, fromAddress, subject, message)
+        super(GatewayAccount, self).parseMessage(toAddress, fromAddress, subject, message)
 
 class MailchuckAccount(GatewayAccount):
     # set "gateway" in keys.dat to this
@@ -186,7 +186,7 @@ class MailchuckAccount(GatewayAccount):
     regExpIncoming = re.compile("(.*)MAILCHUCK-FROM::(\S+) \| (.*)")
     regExpOutgoing = re.compile("(\S+) (.*)")
     def __init__(self, address):
-        super(GatewayAccount, self).__init__(address)
+        super(MailchuckAccount, self).__init__(address)
         self.feedback = self.ALL_OK
         
     def createMessage(self, toAddress, fromAddress, subject, message):
@@ -262,7 +262,7 @@ class MailchuckAccount(GatewayAccount):
         self.fromAddress = self.address
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
-        super(GatewayAccount, self).parseMessage(toAddress, fromAddress, subject, message)
+        super(MailchuckAccount, self).parseMessage(toAddress, fromAddress, subject, message)
         if fromAddress == self.relayAddress:
             matches = self.regExpIncoming.search(subject)
             if not matches is None:

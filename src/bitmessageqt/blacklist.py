@@ -2,7 +2,6 @@ from PyQt4 import QtCore, QtGui
 import shared
 from tr import _translate
 import l10n
-from uisignaler import UISignaler
 import widgets
 from addresses import addBMIfNotPresent
 from configparser import BMConfigParser

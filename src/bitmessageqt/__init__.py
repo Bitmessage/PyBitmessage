@@ -19,6 +19,7 @@ try:
 except Exception as err:
     logmsg = 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
     logger.critical(logmsg, exc_info=True)
+    import sys
     sys.exit()
 
 try:
@@ -1214,8 +1215,6 @@ class MyForm(settingsmixin.SMainWindow):
 
     # When an unread inbox row is selected on then clear the messaging menu
     def ubuntuMessagingMenuClear(self, inventoryHash):
-        global withMessagingMenu
-
         # if this isn't ubuntu then don't do anything
         if not self.isUbuntu():
             return
@@ -1315,8 +1314,6 @@ class MyForm(settingsmixin.SMainWindow):
 
     # update the Ubuntu messaging menu
     def ubuntuMessagingMenuUpdate(self, drawAttention, newItem, toLabel):
-        global withMessagingMenu
-
         # if this isn't ubuntu then don't do anything
         if not self.isUbuntu():
             return
@@ -1440,14 +1437,11 @@ class MyForm(settingsmixin.SMainWindow):
 
     # initialise the message notifier
     def notifierInit(self):
-        global withMessagingMenu
         if withMessagingMenu:
             Notify.init('pybitmessage')
 
     # shows a notification
     def notifierShow(self, title, subtitle, fromCategory, label):
-        global withMessagingMenu
-
         self.playSound(fromCategory, label)
 
         if withMessagingMenu:
@@ -1642,7 +1636,6 @@ class MyForm(settingsmixin.SMainWindow):
     connected = False
 
     def setStatusIcon(self, color):
-        global withMessagingMenu
         # print 'setting status icon color'
         if color == 'red':
             self.pushButtonStatusIcon.setIcon(
@@ -3057,7 +3050,7 @@ class MyForm(settingsmixin.SMainWindow):
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Error: You cannot add the same address to your blacklist twice. Try renaming the existing one if you want."), 10000)
 
-    def deleteRowFromMessagelist(row = None, inventoryHash = None, ackData = None, messageLists = None):
+    def deleteRowFromMessagelist(self, row = None, inventoryHash = None, ackData = None, messageLists = None):
         if messageLists is None:
             messageLists = (self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans, self.ui.tableWidgetInboxSubscriptions)
         elif type(messageLists) not in (list, tuple):
@@ -4447,7 +4440,6 @@ class MySingleApplication(QApplication):
             self.server.close()
 
     def on_new_connection(self):
-        global myapp
         if myapp:
             myapp.appIndicatorShow()
 

@@ -41,7 +41,6 @@ class objectHashHolder(threading.Thread):
 
     def hasHash(self, hash):
         if hash in (hashlist for hashlist in self.collectionOfHashLists):
-            logger.debug("Hash in hashHolder")
             return True
         return False
 

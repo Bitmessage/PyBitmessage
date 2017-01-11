@@ -316,19 +316,19 @@ class NewAddressThread(QtCore.QThread):
     def __del__(self):
         self.wait()
         
-    def createDeterministic():
+    def createDeterministic(self):
         pass
         
-    def createPassphrase():
+    def createPassphrase(self):
         pass
     
-    def broadcastAddress():
+    def broadcastAddress(self):
         pass
     
-    def registerMailchuck():
+    def registerMailchuck(self):
         pass
     
-    def waitRegistration():
+    def waitRegistration(self):
         pass
 
     def run(self):
