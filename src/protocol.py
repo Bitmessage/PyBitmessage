@@ -204,7 +204,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         # Let us try to decrypt the pubkey
         toAddress, cryptorObject = state.neededPubkeys[tag]
         if toAddress != address:
-            logger.critical('decryptAndCheckPubkeyPayload failed due to toAddress mismatch. This is very peculiar. toAddress: %s, address %s' % (toAddress, address))
+            logger.critical('decryptAndCheckPubkeyPayload failed due to toAddress mismatch. This is very peculiar. toAddress: %s, address %s', toAddress, address)
             # the only way I can think that this could happen is if someone encodes their address data two different ways.
             # That sort of address-malleability should have been caught by the UI or API and an error given to the user. 
             return 'failed'
@@ -260,12 +260,11 @@ def decryptAndCheckPubkeyPayload(data, address):
         logger.info('within decryptAndCheckPubkeyPayload, addressVersion: %s, streamNumber: %s \n\
                     ripe %s\n\
                     publicSigningKey in hex: %s\n\
-                    publicEncryptionKey in hex: %s' % (addressVersion,
+                    publicEncryptionKey in hex: %s', addressVersion,
                                                        streamNumber, 
                                                        hexlify(ripe),
                                                        hexlify(publicSigningKey),
                                                        hexlify(publicEncryptionKey)
-                                                       )
                     )
     
         t = (address, addressVersion, storedData, int(time.time()), 'yes')
@@ -275,7 +274,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         logger.info('Pubkey decryption was UNsuccessful due to a malformed varint.')
         return 'failed'
     except Exception as e:
-        logger.critical('Pubkey decryption was UNsuccessful because of an unhandled exception! This is definitely a bug! \n%s' % traceback.format_exc())
+        logger.critical('Pubkey decryption was UNsuccessful because of an unhandled exception! This is definitely a bug! \n%s', traceback.format_exc())
         return 'failed'
 
 def checkAndShareObjectWithPeers(data):
@@ -286,7 +285,7 @@ def checkAndShareObjectWithPeers(data):
     if we are receiving it off of the wire.
     """
     if len(data) > 2 ** 18:
-        logger.info('The payload length of this object is too large (%s bytes). Ignoring it.' % len(data))
+        logger.info('The payload length of this object is too large (%s bytes). Ignoring it.', len(data))
         return 0
     # Let us check to make sure that the proof of work is sufficient.
     if not isProofOfWorkSufficient(data):
@@ -295,10 +294,10 @@ def checkAndShareObjectWithPeers(data):
     
     endOfLifeTime, = unpack('>Q', data[8:16])
     if endOfLifeTime - int(time.time()) > 28 * 24 * 60 * 60 + 10800: # The TTL may not be larger than 28 days + 3 hours of wiggle room
-        logger.info('This object\'s End of Life time is too far in the future. Ignoring it. Time is %s' % endOfLifeTime)
+        logger.info('This object\'s End of Life time is too far in the future. Ignoring it. Time is %s', endOfLifeTime)
         return 0
     if endOfLifeTime - int(time.time()) < - 3600: # The EOL time was more than an hour ago. That's too much.
-        logger.info('This object\'s End of Life time was more than an hour ago. Ignoring the object. Time is %s' % endOfLifeTime)
+        logger.info('This object\'s End of Life time was more than an hour ago. Ignoring the object. Time is %s', endOfLifeTime)
         return 0
     intObjectType, = unpack('>I', data[16:20])
     try:
@@ -318,9 +317,9 @@ def checkAndShareObjectWithPeers(data):
             _checkAndShareUndefinedObjectWithPeers(data)
             return 0.6
     except varintDecodeError as e:
-        logger.debug("There was a problem with a varint while checking to see whether it was appropriate to share an object with peers. Some details: %s" % e)
+        logger.debug("There was a problem with a varint while checking to see whether it was appropriate to share an object with peers. Some details: %s", e)
     except Exception as e:
-        logger.critical('There was a problem while checking to see whether it was appropriate to share an object with peers. This is definitely a bug! \n%s' % traceback.format_exc())
+        logger.critical('There was a problem while checking to see whether it was appropriate to share an object with peers. This is definitely a bug! \n%s', traceback.format_exc())
     return 0
         
 
@@ -333,7 +332,7 @@ def _checkAndShareUndefinedObjectWithPeers(data):
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 9])
     if not streamNumber in state.streamsInWhichIAmParticipating:
-        logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
+        logger.debug('The streamNumber %s isn\'t one we are interested in.', streamNumber)
         return
     
     inventoryHash = calculateInventoryHash(data)
@@ -343,7 +342,7 @@ def _checkAndShareUndefinedObjectWithPeers(data):
     objectType, = unpack('>I', data[16:20])
     Inventory()[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime,'')
-    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
+    logger.debug('advertising inv with hash: %s', hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
     
     
@@ -356,7 +355,7 @@ def _checkAndShareMsgWithPeers(data):
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 9])
     if not streamNumber in state.streamsInWhichIAmParticipating:
-        logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
+        logger.debug('The streamNumber %s isn\'t one we are interested in.', streamNumber)
         return
     readPosition += streamNumberLength
     inventoryHash = calculateInventoryHash(data)
@@ -367,7 +366,7 @@ def _checkAndShareMsgWithPeers(data):
     objectType = 2
     Inventory()[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime,'')
-    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
+    logger.debug('advertising inv with hash: %s', hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's enqueue it to be processed ourselves.
@@ -387,7 +386,7 @@ def _checkAndShareGetpubkeyWithPeers(data):
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 10])
     if not streamNumber in state.streamsInWhichIAmParticipating:
-        logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
+        logger.debug('The streamNumber %s isn\'t one we are interested in.', streamNumber)
         return
     readPosition += streamNumberLength
 
@@ -400,7 +399,7 @@ def _checkAndShareGetpubkeyWithPeers(data):
     Inventory()[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime,'')
     # This getpubkey request is valid. Forward to peers.
-    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
+    logger.debug('advertising inv with hash: %s', hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's queue it to be processed ourselves.
@@ -418,11 +417,11 @@ def _checkAndSharePubkeyWithPeers(data):
         data[readPosition:readPosition + 10])
     readPosition += varintLength
     if not streamNumber in state.streamsInWhichIAmParticipating:
-        logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
+        logger.debug('The streamNumber %s isn\'t one we are interested in.', streamNumber)
         return
     if addressVersion >= 4:
         tag = data[readPosition:readPosition + 32]
-        logger.debug('tag in received pubkey is: %s' % hexlify(tag))
+        logger.debug('tag in received pubkey is: %s', hexlify(tag))
     else:
         tag = ''
 
@@ -434,7 +433,7 @@ def _checkAndSharePubkeyWithPeers(data):
     Inventory()[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime, tag)
     # This object is valid. Forward it to peers.
-    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
+    logger.debug('advertising inv with hash: %s', hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
 
@@ -455,7 +454,7 @@ def _checkAndShareBroadcastWithPeers(data):
         streamNumber, streamNumberLength = decodeVarint(data[readPosition:readPosition + 10])
         readPosition += streamNumberLength
         if not streamNumber in state.streamsInWhichIAmParticipating:
-            logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
+            logger.debug('The streamNumber %s isn\'t one we are interested in.', streamNumber)
             return
     if broadcastVersion >= 3:
         tag = data[readPosition:readPosition+32]
@@ -470,7 +469,7 @@ def _checkAndShareBroadcastWithPeers(data):
     Inventory()[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime, tag)
     # This object is valid. Forward it to peers.
-    logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
+    logger.debug('advertising inv with hash: %s', hexlify(inventoryHash))
     broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's queue it to be processed ourselves.

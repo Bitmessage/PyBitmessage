@@ -9,6 +9,7 @@ import os
 from debug import logger
 from namecoin import ensureNamecoinOptions
 import paths
+import protocol
 import random
 import state
 import string

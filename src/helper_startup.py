@@ -11,6 +11,7 @@ from distutils.version import StrictVersion
 
 from namecoin import ensureNamecoinOptions
 import paths
+import protocol
 import state
 
 storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may de-select Portable Mode in the settings if they want the config files to stay in the application data folder.

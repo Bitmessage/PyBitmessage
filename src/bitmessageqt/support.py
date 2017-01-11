@@ -13,6 +13,7 @@ from l10n import getTranslationLanguage
 from openclpow import openclAvailable, openclEnabled
 import paths
 from proofofwork import bmpow
+import protocol
 from pyelliptic.openssl import OpenSSL
 import shared
 import state
