@@ -430,6 +430,7 @@ class _OpenSSL:
 def loadOpenSSL():
     global OpenSSL
     from os import path, environ
+    from ctypes.util import find_library
     from find_library_version import find_library_version
     
     libdir = []
