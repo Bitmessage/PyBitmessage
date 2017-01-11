@@ -1,6 +1,7 @@
 from PyQt4 import QtCore, QtGui
 from string import find, rfind, rstrip, lstrip
 
+from configparser import BMConfigParser
 from helper_sql import *
 from utils import *
 import shared
@@ -69,9 +70,9 @@ class AccountMixin (object):
         if self.address is None:
             self.type = self.ALL
             self.setFlags(self.flags() & ~QtCore.Qt.ItemIsEditable)
-        elif shared.safeConfigGetBoolean(self.address, 'chan'):
+        elif BMConfigParser().safeGetBoolean(self.address, 'chan'):
             self.type = self.CHAN
-        elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
+        elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
             self.type = self.MAILINGLIST
         elif sqlQuery(
             '''select label from subscriptions where address=?''', self.address):
@@ -84,7 +85,7 @@ class AccountMixin (object):
         retval = None
         if self.type in (AccountMixin.NORMAL, AccountMixin.CHAN, AccountMixin.MAILINGLIST):
             try:
-                retval = unicode(shared.config.get(self.address, 'label'), 'utf-8')
+                retval = unicode(BMConfigParser().get(self.address, 'label'), 'utf-8')
             except Exception as e:
                 queryreturn = sqlQuery(
                     '''select label from addressbook where address=?''', self.address)
@@ -161,7 +162,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
         super(QtGui.QTreeWidgetItem, self).__init__()
         parent.insertTopLevelItem(pos, self)
         # only set default when creating
-        #super(QtGui.QTreeWidgetItem, self).setExpanded(shared.config.getboolean(self.address, 'enabled'))
+        #super(QtGui.QTreeWidgetItem, self).setExpanded(BMConfigParser().getboolean(self.address, 'enabled'))
         self.setAddress(address)
         self.setEnabled(enabled)
         self.setUnreadCount(unreadCount)
@@ -172,7 +173,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
             return unicode(QtGui.QApplication.translate("MainWindow", "All accounts").toUtf8(), 'utf-8', 'ignore')
         else:
             try:
-                return unicode(shared.config.get(self.address, 'label'), 'utf-8', 'ignore')
+                return unicode(BMConfigParser().get(self.address, 'label'), 'utf-8', 'ignore')
             except:
                 return unicode(self.address, 'utf-8')
     
@@ -211,9 +212,9 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
     def setData(self, column, role, value):
         if role == QtCore.Qt.EditRole and self.type != AccountMixin.SUBSCRIPTION:
             if isinstance(value, QtCore.QVariant):
-                shared.config.set(str(self.address), 'label', str(value.toString().toUtf8()))
+                BMConfigParser().set(str(self.address), 'label', str(value.toString().toUtf8()))
             else:
-                shared.config.set(str(self.address), 'label', str(value))
+                BMConfigParser().set(str(self.address), 'label', str(value))
             shared.writeKeysFile()
         return super(Ui_AddressWidget, self).setData(column, role, value)
         
@@ -250,7 +251,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         super(QtGui.QTreeWidgetItem, self).__init__()
         parent.insertTopLevelItem(pos, self)
         # only set default when creating
-        #super(QtGui.QTreeWidgetItem, self).setExpanded(shared.config.getboolean(self.address, 'enabled'))
+        #super(QtGui.QTreeWidgetItem, self).setExpanded(BMConfigParser().getboolean(self.address, 'enabled'))
         self.setAddress(address)
         self.setEnabled(enabled)
         self.setType()
@@ -287,7 +288,7 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
         super(QtGui.QTableWidgetItem, self).__init__()
         #parent.insertTopLevelItem(pos, self)
         # only set default when creating
-        #super(QtGui.QTreeWidgetItem, self).setExpanded(shared.config.getboolean(self.address, 'enabled'))
+        #super(QtGui.QTreeWidgetItem, self).setExpanded(BMConfigParser().getboolean(self.address, 'enabled'))
         self.isEnabled = True
         self.setAddress(address)
         self.setLabel(label)
@@ -302,7 +303,7 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
             queryreturn = None
             if self.type in (AccountMixin.NORMAL, AccountMixin.CHAN, AccountMixin.MAILINGLIST):
                 try:
-                    newLabel = unicode(shared.config.get(self.address, 'label'), 'utf-8', 'ignore')
+                    newLabel = unicode(BMConfigParser().get(self.address, 'label'), 'utf-8', 'ignore')
                 except:
                     queryreturn = sqlQuery(
                     '''select label from addressbook where address=?''', self.address)
@@ -330,7 +331,7 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
         elif role == QtCore.Qt.ToolTipRole:
             return self.label + " (" + self.address + ")"
         elif role == QtCore.Qt.DecorationRole:
-            if shared.safeConfigGetBoolean('bitmessagesettings', 'useidenticons'):
+            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'useidenticons'):
                 if self.address is None:
                     return avatarize(self.label)
                 else:
@@ -362,7 +363,7 @@ class MessageList_SubjectWidget(QtGui.QTableWidgetItem, SettingsMixin):
         super(QtGui.QTableWidgetItem, self).__init__()
         #parent.insertTopLevelItem(pos, self)
         # only set default when creating
-        #super(QtGui.QTreeWidgetItem, self).setExpanded(shared.config.getboolean(self.address, 'enabled'))
+        #super(QtGui.QTreeWidgetItem, self).setExpanded(BMConfigParser().getboolean(self.address, 'enabled'))
         self.setSubject(subject)
         self.setLabel(label)
         self.setUnread(unread)
@@ -418,7 +419,7 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
         elif role == QtCore.Qt.ToolTipRole:
             return self.label + " (" + self.address + ")"
         elif role == QtCore.Qt.DecorationRole:
-            if shared.safeConfigGetBoolean('bitmessagesettings', 'useidenticons'):
+            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'useidenticons'):
                 if self.address is None:
                     return avatarize(self.label)
                 else:
@@ -440,8 +441,8 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
                 self.label = str(value)
             if self.type in (AccountMixin.NORMAL, AccountMixin.MAILINGLIST, AccountMixin.CHAN):
                 try:
-                    a = shared.config.get(self.address, 'label')
-                    shared.config.set(self.address, 'label', self.label)
+                    a = BMConfigParser().get(self.address, 'label')
+                    BMConfigParser().set(self.address, 'label', self.label)
                 except:
                     sqlExecute('''UPDATE addressbook set label=? WHERE address=?''', self.label, self.address)
             elif self.type == AccountMixin.SUBSCRIPTION:

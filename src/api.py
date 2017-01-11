@@ -19,6 +19,7 @@ from binascii import hexlify
 import shared
 import time
 from addresses import decodeAddress,addBMIfNotPresent,decodeVarint,calculateInventoryHash,varintDecodeError
+from configparser import BMConfigParser
 import helper_inbox
 import helper_sent
 import hashlib
@@ -30,6 +31,7 @@ from struct import pack
 from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute,sqlStoredProcedure
 from debug import logger
 from inventory import Inventory
+from version import softwareVersion
 
 # Helper Functions
 import proofofwork
@@ -120,7 +122,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # handle Basic authentication
             (enctype, encstr) = self.headers.get('Authorization').split()
             (emailid, password) = encstr.decode('base64').split(':')
-            if emailid == shared.config.get('bitmessagesettings', 'apiusername') and password == shared.config.get('bitmessagesettings', 'apipassword'):
+            if emailid == BMConfigParser().get('bitmessagesettings', 'apiusername') and password == BMConfigParser().get('bitmessagesettings', 'apipassword'):
                 return True
             else:
                 return False
@@ -163,22 +165,22 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
     def HandleListAddresses(self, method):
         data = '{"addresses":['
-        configSections = shared.config.sections()
+        configSections = BMConfigParser().sections()
         for addressInKeysFile in configSections:
             if addressInKeysFile != 'bitmessagesettings':
                 status, addressVersionNumber, streamNumber, hash01 = decodeAddress(
                     addressInKeysFile)
                 if len(data) > 20:
                     data += ','
-                if shared.config.has_option(addressInKeysFile, 'chan'):
-                    chan = shared.config.getboolean(addressInKeysFile, 'chan')
+                if BMConfigParser().has_option(addressInKeysFile, 'chan'):
+                    chan = BMConfigParser().getboolean(addressInKeysFile, 'chan')
                 else:
                     chan = False
-                label = shared.config.get(addressInKeysFile, 'label')
+                label = BMConfigParser().get(addressInKeysFile, 'label')
                 if method == 'listAddresses2':
                     label = label.encode('base64')
                 data += json.dumps({'label': label, 'address': addressInKeysFile, 'stream':
-                                    streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled'), 'chan': chan}, indent=4, separators=(',', ': '))
+                                    streamNumber, 'enabled': BMConfigParser().getboolean(addressInKeysFile, 'enabled'), 'chan': chan}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -236,21 +238,21 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif len(params) == 1:
             label, = params
             eighteenByteRipe = False
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 2:
             label, eighteenByteRipe = params
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 3:
             label, eighteenByteRipe, totalDifficulty = params
             nonceTrialsPerByte = int(
                 shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 4:
             label, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = params
@@ -280,45 +282,45 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             addressVersionNumber = 0
             streamNumber = 0
             eighteenByteRipe = False
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 2:
             passphrase, numberOfAddresses = params
             addressVersionNumber = 0
             streamNumber = 0
             eighteenByteRipe = False
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 3:
             passphrase, numberOfAddresses, addressVersionNumber = params
             streamNumber = 0
             eighteenByteRipe = False
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 4:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber = params
             eighteenByteRipe = False
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 5:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe = params
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 6:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty = params
             nonceTrialsPerByte = int(
                 shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 7:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = params
@@ -443,13 +445,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             address, = params
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(address)
         address = addBMIfNotPresent(address)
-        if not shared.config.has_section(address):
+        if not BMConfigParser().has_section(address):
             raise APIError(13, 'Could not find this address in your keys.dat file.')
-        if not shared.safeConfigGetBoolean(address, 'chan'):
+        if not BMConfigParser().safeGetBoolean(address, 'chan'):
             raise APIError(25, 'Specified address is not a chan address. Use deleteAddress API call instead.')
-        shared.config.remove_section(address)
+        BMConfigParser().remove_section(address)
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
+            BMConfigParser().write(configfile)
         return 'success'
 
     def HandleDeleteAddress(self, params):
@@ -459,11 +461,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             address, = params
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(address)
         address = addBMIfNotPresent(address)
-        if not shared.config.has_section(address):
+        if not BMConfigParser().has_section(address):
             raise APIError(13, 'Could not find this address in your keys.dat file.')
-        shared.config.remove_section(address)
+        BMConfigParser().remove_section(address)
         with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
+            BMConfigParser().write(configfile)
         shared.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
         shared.UISignalQueue.put(('rerenderMessagelistToLabels',''))
         shared.reloadMyAddressHashes()
@@ -659,7 +661,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(toAddress)
         self._verifyAddress(fromAddress)
         try:
-            fromAddressEnabled = shared.config.getboolean(
+            fromAddressEnabled = BMConfigParser().getboolean(
                 fromAddress, 'enabled')
         except:
             raise APIError(13, 'Could not find your fromAddress in the keys.dat file.')
@@ -723,7 +725,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         fromAddress = addBMIfNotPresent(fromAddress)
         self._verifyAddress(fromAddress)
         try:
-            fromAddressEnabled = shared.config.getboolean(
+            fromAddressEnabled = BMConfigParser().getboolean(
                 fromAddress, 'enabled')
         except:
             raise APIError(13, 'could not find your fromAddress in the keys.dat file.')
@@ -946,7 +948,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
         else:
             networkStatus = 'connectedAndReceivingIncomingConnections'
-        return json.dumps({'networkConnections':len(shared.connectedHostsList),'numberOfMessagesProcessed':shared.numberOfMessagesProcessed, 'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed, 'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed, 'networkStatus':networkStatus, 'softwareName':'PyBitmessage','softwareVersion':shared.softwareVersion}, indent=4, separators=(',', ': '))
+        return json.dumps({'networkConnections':len(shared.connectedHostsList),'numberOfMessagesProcessed':shared.numberOfMessagesProcessed, 'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed, 'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed, 'networkStatus':networkStatus, 'softwareName':'PyBitmessage','softwareVersion':softwareVersion}, indent=4, separators=(',', ': '))
 
     def HandleDecodeAddress(self, params):
         # Return a meaningful decoding of an address.

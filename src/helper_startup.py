@@ -1,5 +1,6 @@
-import shared
 import ConfigParser
+import shared
+from configparser import BMConfigParser
 import sys
 import os
 import locale
@@ -14,7 +15,7 @@ storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may de-sel
 
 def _loadTrustedPeer():
     try:
-        trustedPeer = shared.config.get('bitmessagesettings', 'trustedpeer')
+        trustedPeer = BMConfigParser().get('bitmessagesettings', 'trustedpeer')
     except ConfigParser.Error:
         # This probably means the trusted peer wasn't specified so we
         # can just leave it as None
@@ -25,19 +26,19 @@ def _loadTrustedPeer():
 
 def loadConfig():
     if shared.appdata:
-        shared.config.read(shared.appdata + 'keys.dat')
+        BMConfigParser().read(shared.appdata + 'keys.dat')
         #shared.appdata must have been specified as a startup option.
         try:
-            shared.config.get('bitmessagesettings', 'settingsversion')
+            BMConfigParser().get('bitmessagesettings', 'settingsversion')
             print 'Loading config files from directory specified on startup: ' + shared.appdata
             needToCreateKeysFile = False
         except:
             needToCreateKeysFile = True
 
     else:
-        shared.config.read(shared.lookupExeFolder() + 'keys.dat')
+        BMConfigParser().read(shared.lookupExeFolder() + 'keys.dat')
         try:
-            shared.config.get('bitmessagesettings', 'settingsversion')
+            BMConfigParser().get('bitmessagesettings', 'settingsversion')
             print 'Loading config files from same directory as program.'
             needToCreateKeysFile = False
             shared.appdata = shared.lookupExeFolder()
@@ -45,9 +46,9 @@ def loadConfig():
             # Could not load the keys.dat file in the program directory. Perhaps it
             # is in the appdata directory.
             shared.appdata = shared.lookupAppdataFolder()
-            shared.config.read(shared.appdata + 'keys.dat')
+            BMConfigParser().read(shared.appdata + 'keys.dat')
             try:
-                shared.config.get('bitmessagesettings', 'settingsversion')
+                BMConfigParser().get('bitmessagesettings', 'settingsversion')
                 print 'Loading existing config files from', shared.appdata
                 needToCreateKeysFile = False
             except:
@@ -56,62 +57,62 @@ def loadConfig():
     if needToCreateKeysFile:
         # This appears to be the first time running the program; there is
         # no config file (or it cannot be accessed). Create config file.
-        shared.config.add_section('bitmessagesettings')
-        shared.config.set('bitmessagesettings', 'settingsversion', '10')
-        shared.config.set('bitmessagesettings', 'port', '8444')
-        shared.config.set(
+        BMConfigParser().add_section('bitmessagesettings')
+        BMConfigParser().set('bitmessagesettings', 'settingsversion', '10')
+        BMConfigParser().set('bitmessagesettings', 'port', '8444')
+        BMConfigParser().set(
             'bitmessagesettings', 'timeformat', '%%c')
-        shared.config.set('bitmessagesettings', 'blackwhitelist', 'black')
-        shared.config.set('bitmessagesettings', 'startonlogon', 'false')
+        BMConfigParser().set('bitmessagesettings', 'blackwhitelist', 'black')
+        BMConfigParser().set('bitmessagesettings', 'startonlogon', 'false')
         if 'linux' in sys.platform:
-            shared.config.set(
+            BMConfigParser().set(
                 'bitmessagesettings', 'minimizetotray', 'false')
                               # This isn't implimented yet and when True on
                               # Ubuntu causes Bitmessage to disappear while
                               # running when minimized.
         else:
-            shared.config.set(
+            BMConfigParser().set(
                 'bitmessagesettings', 'minimizetotray', 'true')
-        shared.config.set(
+        BMConfigParser().set(
             'bitmessagesettings', 'showtraynotifications', 'true')
-        shared.config.set('bitmessagesettings', 'startintray', 'false')
-        shared.config.set('bitmessagesettings', 'socksproxytype', 'none')
-        shared.config.set(
+        BMConfigParser().set('bitmessagesettings', 'startintray', 'false')
+        BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'none')
+        BMConfigParser().set(
             'bitmessagesettings', 'sockshostname', 'localhost')
-        shared.config.set('bitmessagesettings', 'socksport', '9050')
-        shared.config.set(
+        BMConfigParser().set('bitmessagesettings', 'socksport', '9050')
+        BMConfigParser().set(
             'bitmessagesettings', 'socksauthentication', 'false')
-        shared.config.set(
+        BMConfigParser().set(
             'bitmessagesettings', 'sockslisten', 'false')
-        shared.config.set('bitmessagesettings', 'socksusername', '')
-        shared.config.set('bitmessagesettings', 'sockspassword', '')
-        shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
-        shared.config.set(
+        BMConfigParser().set('bitmessagesettings', 'socksusername', '')
+        BMConfigParser().set('bitmessagesettings', 'sockspassword', '')
+        BMConfigParser().set('bitmessagesettings', 'keysencrypted', 'false')
+        BMConfigParser().set(
             'bitmessagesettings', 'messagesencrypted', 'false')
-        shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
+        BMConfigParser().set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
             shared.networkDefaultProofOfWorkNonceTrialsPerByte))
-        shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
+        BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
             shared.networkDefaultPayloadLengthExtraBytes))
-        shared.config.set('bitmessagesettings', 'minimizeonclose', 'false')
-        shared.config.set(
+        BMConfigParser().set('bitmessagesettings', 'minimizeonclose', 'false')
+        BMConfigParser().set(
             'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
-        shared.config.set(
+        BMConfigParser().set(
             'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
-        shared.config.set('bitmessagesettings', 'dontconnect', 'true')
-        shared.config.set('bitmessagesettings', 'userlocale', 'system')
-        shared.config.set('bitmessagesettings', 'useidenticons', 'True')
-        shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
-        shared.config.set('bitmessagesettings', 'replybelow', 'False')
-        shared.config.set('bitmessagesettings', 'maxdownloadrate', '0')
-        shared.config.set('bitmessagesettings', 'maxuploadrate', '0')
-        shared.config.set('bitmessagesettings', 'ttl', '367200')
+        BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
+        BMConfigParser().set('bitmessagesettings', 'userlocale', 'system')
+        BMConfigParser().set('bitmessagesettings', 'useidenticons', 'True')
+        BMConfigParser().set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
+        BMConfigParser().set('bitmessagesettings', 'replybelow', 'False')
+        BMConfigParser().set('bitmessagesettings', 'maxdownloadrate', '0')
+        BMConfigParser().set('bitmessagesettings', 'maxuploadrate', '0')
+        BMConfigParser().set('bitmessagesettings', 'ttl', '367200')
         
          #start:UI setting to stop trying to send messages after X days/months
-        shared.config.set(
+        BMConfigParser().set(
             'bitmessagesettings', 'stopresendingafterxdays', '')
-        shared.config.set(
+        BMConfigParser().set(
             'bitmessagesettings', 'stopresendingafterxmonths', '')
-        #shared.config.set(
+        #BMConfigParser().set(
         #    'bitmessagesettings', 'timeperiod', '-1')
         #end
 

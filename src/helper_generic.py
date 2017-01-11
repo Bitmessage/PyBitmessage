@@ -5,6 +5,7 @@ from binascii import hexlify, unhexlify
 from multiprocessing import current_process
 from threading import current_thread, enumerate
 
+from configparser import BMConfigParser
 from debug import logger
 import shared
 
@@ -51,7 +52,7 @@ def signal_handler(signal, frame):
     if current_thread().name != "MainThread":
         return
     logger.error("Got signal %i", signal)
-    if shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
+    if BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'):
         shared.doCleanShutdown()
     else:
         print 'Unfortunately you cannot use Ctrl+C when running the UI because the UI captures the signal.'

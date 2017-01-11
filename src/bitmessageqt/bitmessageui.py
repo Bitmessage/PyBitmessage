@@ -8,6 +8,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt4 import QtCore, QtGui
+from configparser import BMConfigParser
 from foldertree import AddressBookCompleter
 from messageview import MessageView
 from messagecompose import MessageCompose
@@ -556,7 +557,7 @@ class Ui_MainWindow(object):
         self.blackwhitelist = Blacklist()
         self.tabWidget.addTab(self.blackwhitelist, QtGui.QIcon(":/newPrefix/images/blacklist.png"), "")
         # Initialize the Blacklist or Whitelist
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'white':
+        if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'white':
             self.blackwhitelist.radioButtonWhitelist.click()
         self.blackwhitelist.rerenderBlackWhiteList()
 
@@ -680,7 +681,7 @@ class Ui_MainWindow(object):
         self.pushButtonTTL.setText(_translate("MainWindow", "TTL:", None))
         hours = 48
         try:
-            hours = int(shared.config.getint('bitmessagesettings', 'ttl')/60/60)
+            hours = int(BMConfigParser().getint('bitmessagesettings', 'ttl')/60/60)
         except:
             pass
         self.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, hours))

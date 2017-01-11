@@ -5,6 +5,7 @@ import sys
 import time
 
 import account
+from configparser import BMConfigParser
 from debug import logger
 from foldertree import AccountMixin
 from helper_sql import *
@@ -13,6 +14,7 @@ from openclpow import openclAvailable, openclEnabled
 from proofofwork import bmpow
 from pyelliptic.openssl import OpenSSL
 import shared
+from version import softwareVersion
 
 # this is BM support address going to Peter Surda
 SUPPORT_ADDRESS = 'BM-2cTkCtMYkrSPwFTpgcBrMrf5d8oZwvMZWK'
@@ -55,7 +57,7 @@ def checkAddressBook(myapp):
 def checkHasNormalAddress():
     for address in account.getSortedAccounts():
         acct = account.accountClass(address)
-        if acct.type == AccountMixin.NORMAL and shared.safeConfigGetBoolean(address, 'enabled'):
+        if acct.type == AccountMixin.NORMAL and BMConfigParser().safeGetBoolean(address, 'enabled'):
             return address
     return False
 
@@ -80,7 +82,7 @@ def createSupportMessage(myapp):
     myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
     myapp.ui.lineEditTo.setText(SUPPORT_ADDRESS)
     
-    version = shared.softwareVersion
+    version = softwareVersion
     os = sys.platform
     if os == "win32":
         windowsversion = sys.getwindowsversion()
@@ -107,15 +109,15 @@ def createSupportMessage(myapp):
     portablemode = "True" if shared.appdata == shared.lookupExeFolder() else "False"
     cpow = "True" if bmpow else "False"
     #cpow = QtGui.QApplication.translate("Support", cpow)
-    openclpow = str(shared.safeConfigGet('bitmessagesettings', 'opencl')) if openclEnabled() else "None"
+    openclpow = str(BMConfigParser().safeGet('bitmessagesettings', 'opencl')) if openclEnabled() else "None"
     #openclpow = QtGui.QApplication.translate("Support", openclpow)
     locale = getTranslationLanguage()
     try:
-        socks = shared.config.get('bitmessagesettings', 'socksproxytype')
+        socks = BMConfigParser().get('bitmessagesettings', 'socksproxytype')
     except:
         socks = "N/A"
     try:
-        upnp = shared.config.get('bitmessagesettings', 'upnp')
+        upnp = BMConfigParser().get('bitmessagesettings', 'upnp')
     except:
         upnp = "N/A"
     connectedhosts = len(shared.connectedHostsList)
