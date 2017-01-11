@@ -5,6 +5,7 @@ from binascii import hexlify, unhexlify
 from multiprocessing import current_process
 from threading import current_thread, enumerate
 
+from configparser import BMConfigParser
 from debug import logger
 import shared
 
@@ -51,7 +52,7 @@ def signal_handler(signal, frame):
     if current_thread().name != "MainThread":
         return
     logger.error("Got signal %i", signal)
-    if shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
+    if BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'):
         shared.doCleanShutdown()
     else:
         print 'Unfortunately you cannot use Ctrl+C when running the UI because the UI captures the signal.'
@@ -66,7 +67,7 @@ def isHostInPrivateIPRange(host):
         if (ord(hostAddr[0]) & 0xfe) == 0xfc:
             return False
         pass
-    else:
+    elif ".onion" not in host:
         if host[:3] == '10.':
             return True
         if host[:4] == '172.':
@@ -74,6 +75,9 @@ def isHostInPrivateIPRange(host):
                 if int(host[4:6]) >= 16 and int(host[4:6]) <= 31:
                     return True
         if host[:8] == '192.168.':
+            return True
+        # Multicast
+        if host[:3] >= 224 and host[:3] <= 239 and host[4] == '.':
             return True
     return False
 

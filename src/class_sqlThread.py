@@ -1,4 +1,5 @@
 import threading
+from configparser import BMConfigParser
 import shared
 import sqlite3
 import time
@@ -7,7 +8,10 @@ import sys
 import os
 from debug import logger
 from namecoin import ensureNamecoinOptions
+import paths
+import protocol
 import random
+import state
 import string
 import tr#anslate
 
@@ -22,7 +26,7 @@ class sqlThread(threading.Thread):
         threading.Thread.__init__(self, name="SQL")
 
     def run(self):        
-        self.conn = sqlite3.connect(shared.appdata + 'messages.dat')
+        self.conn = sqlite3.connect(state.appdata + 'messages.dat')
         self.conn.text_factory = str
         self.cur = self.conn.cursor()
         
@@ -65,35 +69,35 @@ class sqlThread(threading.Thread):
                     'ERROR trying to create database file (message.dat). Error message: %s\n' % str(err))
                 os._exit(0)
 
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 1:
-            shared.config.set('bitmessagesettings', 'settingsversion', '2')
+        if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 1:
+            BMConfigParser().set('bitmessagesettings', 'settingsversion', '2')
                       # If the settings version is equal to 2 or 3 then the
                       # sqlThread will modify the pubkeys table and change
                       # the settings version to 4.
-            shared.config.set('bitmessagesettings', 'socksproxytype', 'none')
-            shared.config.set('bitmessagesettings', 'sockshostname', 'localhost')
-            shared.config.set('bitmessagesettings', 'socksport', '9050')
-            shared.config.set('bitmessagesettings', 'socksauthentication', 'false')
-            shared.config.set('bitmessagesettings', 'socksusername', '')
-            shared.config.set('bitmessagesettings', 'sockspassword', '')
-            shared.config.set('bitmessagesettings', 'sockslisten', 'false')
-            shared.config.set('bitmessagesettings', 'keysencrypted', 'false')
-            shared.config.set('bitmessagesettings', 'messagesencrypted', 'false')
+            BMConfigParser().set('bitmessagesettings', 'socksproxytype', 'none')
+            BMConfigParser().set('bitmessagesettings', 'sockshostname', 'localhost')
+            BMConfigParser().set('bitmessagesettings', 'socksport', '9050')
+            BMConfigParser().set('bitmessagesettings', 'socksauthentication', 'false')
+            BMConfigParser().set('bitmessagesettings', 'socksusername', '')
+            BMConfigParser().set('bitmessagesettings', 'sockspassword', '')
+            BMConfigParser().set('bitmessagesettings', 'sockslisten', 'false')
+            BMConfigParser().set('bitmessagesettings', 'keysencrypted', 'false')
+            BMConfigParser().set('bitmessagesettings', 'messagesencrypted', 'false')
 
         # People running earlier versions of PyBitmessage do not have the
         # usedpersonally field in their pubkeys table. Let's add it.
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 2:
+        if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 2:
             item = '''ALTER TABLE pubkeys ADD usedpersonally text DEFAULT 'no' '''
             parameters = ''
             self.cur.execute(item, parameters)
             self.conn.commit()
 
-            shared.config.set('bitmessagesettings', 'settingsversion', '3')
+            BMConfigParser().set('bitmessagesettings', 'settingsversion', '3')
 
         # People running earlier versions of PyBitmessage do not have the
         # encodingtype field in their inbox and sent tables or the read field
         # in the inbox table. Let's add them.
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 3:
+        if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 3:
             item = '''ALTER TABLE inbox ADD encodingtype int DEFAULT '2' '''
             parameters = ''
             self.cur.execute(item, parameters)
@@ -107,21 +111,21 @@ class sqlThread(threading.Thread):
             self.cur.execute(item, parameters)
             self.conn.commit()
 
-            shared.config.set('bitmessagesettings', 'settingsversion', '4')
+            BMConfigParser().set('bitmessagesettings', 'settingsversion', '4')
 
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 4:
-            shared.config.set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte))
-            shared.config.set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
-                shared.networkDefaultPayloadLengthExtraBytes))
-            shared.config.set('bitmessagesettings', 'settingsversion', '5')
+        if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 4:
+            BMConfigParser().set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
+                protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
+            BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
+                protocol.networkDefaultPayloadLengthExtraBytes))
+            BMConfigParser().set('bitmessagesettings', 'settingsversion', '5')
 
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 5:
-            shared.config.set(
+        if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 5:
+            BMConfigParser().set(
                 'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
-            shared.config.set(
+            BMConfigParser().set(
                 'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', '0')
-            shared.config.set('bitmessagesettings', 'settingsversion', '6')
+            BMConfigParser().set('bitmessagesettings', 'settingsversion', '6')
 
         # From now on, let us keep a 'version' embedded in the messages.dat
         # file so that when we make changes to the database, the database
@@ -174,8 +178,8 @@ class sqlThread(threading.Thread):
             '''update sent set status='broadcastqueued' where status='broadcastpending'  ''')
         self.conn.commit()
         
-        if not shared.config.has_option('bitmessagesettings', 'sockslisten'):
-            shared.config.set('bitmessagesettings', 'sockslisten', 'false')
+        if not BMConfigParser().has_option('bitmessagesettings', 'sockslisten'):
+            BMConfigParser().set('bitmessagesettings', 'sockslisten', 'false')
             
         ensureNamecoinOptions()
             
@@ -226,18 +230,18 @@ class sqlThread(threading.Thread):
             parameters = (4,)
             self.cur.execute(item, parameters)
 
-        if not shared.config.has_option('bitmessagesettings', 'userlocale'):
-            shared.config.set('bitmessagesettings', 'userlocale', 'system')
-        if not shared.config.has_option('bitmessagesettings', 'sendoutgoingconnections'):
-            shared.config.set('bitmessagesettings', 'sendoutgoingconnections', 'True')
+        if not BMConfigParser().has_option('bitmessagesettings', 'userlocale'):
+            BMConfigParser().set('bitmessagesettings', 'userlocale', 'system')
+        if not BMConfigParser().has_option('bitmessagesettings', 'sendoutgoingconnections'):
+            BMConfigParser().set('bitmessagesettings', 'sendoutgoingconnections', 'True')
 
         # Raise the default required difficulty from 1 to 2
         # With the change to protocol v3, this is obsolete.
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 6:
-            """if int(shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')) == shared.networkDefaultProofOfWorkNonceTrialsPerByte:
-                shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(shared.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
+        if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 6:
+            """if int(shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')) == protocol.networkDefaultProofOfWorkNonceTrialsPerByte:
+                shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(protocol.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
                 """
-            shared.config.set('bitmessagesettings', 'settingsversion', '7')
+            BMConfigParser().set('bitmessagesettings', 'settingsversion', '7')
 
         # Add a new column to the pubkeys table to store the address version.
         # We're going to trash all of our pubkeys and let them be redownloaded.
@@ -255,18 +259,18 @@ class sqlThread(threading.Thread):
             parameters = (5,)
             self.cur.execute(item, parameters)
             
-        if not shared.config.has_option('bitmessagesettings', 'useidenticons'):
-            shared.config.set('bitmessagesettings', 'useidenticons', 'True')
-        if not shared.config.has_option('bitmessagesettings', 'identiconsuffix'): # acts as a salt
-            shared.config.set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
+        if not BMConfigParser().has_option('bitmessagesettings', 'useidenticons'):
+            BMConfigParser().set('bitmessagesettings', 'useidenticons', 'True')
+        if not BMConfigParser().has_option('bitmessagesettings', 'identiconsuffix'): # acts as a salt
+            BMConfigParser().set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
 
         #Add settings to support no longer resending messages after a certain period of time even if we never get an ack
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 7:
-            shared.config.set(
+        if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 7:
+            BMConfigParser().set(
                 'bitmessagesettings', 'stopresendingafterxdays', '')
-            shared.config.set(
+            BMConfigParser().set(
                 'bitmessagesettings', 'stopresendingafterxmonths', '')
-            shared.config.set('bitmessagesettings', 'settingsversion', '8') 
+            BMConfigParser().set('bitmessagesettings', 'settingsversion', '8') 
 
         # Add a new table: objectprocessorqueue with which to hold objects
         # that have yet to be processed if the user shuts down Bitmessage.
@@ -300,39 +304,39 @@ class sqlThread(threading.Thread):
             logger.debug('Finished dropping and recreating the inventory table.')
         
         # With the change to protocol version 3, reset the user-settable difficulties to 1    
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 8:
-            shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(shared.networkDefaultProofOfWorkNonceTrialsPerByte))
-            shared.config.set('bitmessagesettings','defaultpayloadlengthextrabytes', str(shared.networkDefaultPayloadLengthExtraBytes))
-            previousTotalDifficulty = int(shared.config.getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / 320
-            previousSmallMessageDifficulty = int(shared.config.getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / 14000
-            shared.config.set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(previousTotalDifficulty * 1000))
-            shared.config.set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(previousSmallMessageDifficulty * 1000))
-            shared.config.set('bitmessagesettings', 'settingsversion', '9')
+        if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 8:
+            BMConfigParser().set('bitmessagesettings','defaultnoncetrialsperbyte', str(protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
+            BMConfigParser().set('bitmessagesettings','defaultpayloadlengthextrabytes', str(protocol.networkDefaultPayloadLengthExtraBytes))
+            previousTotalDifficulty = int(BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / 320
+            previousSmallMessageDifficulty = int(BMConfigParser().getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / 14000
+            BMConfigParser().set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(previousTotalDifficulty * 1000))
+            BMConfigParser().set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(previousSmallMessageDifficulty * 1000))
+            BMConfigParser().set('bitmessagesettings', 'settingsversion', '9')
                 
         # Adjust the required POW values for each of this user's addresses to conform to protocol v3 norms.
-        if shared.config.getint('bitmessagesettings', 'settingsversion') == 9:
-            for addressInKeysFile in shared.config.sections():
+        if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 9:
+            for addressInKeysFile in BMConfigParser().sections():
                 try:
-                    previousTotalDifficulty = float(shared.config.getint(addressInKeysFile, 'noncetrialsperbyte')) / 320
-                    previousSmallMessageDifficulty = float(shared.config.getint(addressInKeysFile, 'payloadlengthextrabytes')) / 14000
+                    previousTotalDifficulty = float(BMConfigParser().getint(addressInKeysFile, 'noncetrialsperbyte')) / 320
+                    previousSmallMessageDifficulty = float(BMConfigParser().getint(addressInKeysFile, 'payloadlengthextrabytes')) / 14000
                     if previousTotalDifficulty <= 2:
                         previousTotalDifficulty = 1
                     if previousSmallMessageDifficulty < 1:
                         previousSmallMessageDifficulty = 1
-                    shared.config.set(addressInKeysFile,'noncetrialsperbyte', str(int(previousTotalDifficulty * 1000)))
-                    shared.config.set(addressInKeysFile,'payloadlengthextrabytes', str(int(previousSmallMessageDifficulty * 1000)))
+                    BMConfigParser().set(addressInKeysFile,'noncetrialsperbyte', str(int(previousTotalDifficulty * 1000)))
+                    BMConfigParser().set(addressInKeysFile,'payloadlengthextrabytes', str(int(previousSmallMessageDifficulty * 1000)))
                 except:
                     continue
-            shared.config.set('bitmessagesettings', 'maxdownloadrate', '0')
-            shared.config.set('bitmessagesettings', 'maxuploadrate', '0')
-            shared.config.set('bitmessagesettings', 'settingsversion', '10')
+            BMConfigParser().set('bitmessagesettings', 'maxdownloadrate', '0')
+            BMConfigParser().set('bitmessagesettings', 'maxuploadrate', '0')
+            BMConfigParser().set('bitmessagesettings', 'settingsversion', '10')
             shared.writeKeysFile()
             
         # sanity check
-        if shared.config.getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') == 0:
-            shared.config.set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(shared.ridiculousDifficulty * shared.networkDefaultProofOfWorkNonceTrialsPerByte))
-        if shared.config.getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') == 0:
-            shared.config.set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(shared.ridiculousDifficulty * shared.networkDefaultPayloadLengthExtraBytes))
+        if BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') == 0:
+            BMConfigParser().set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(shared.ridiculousDifficulty * protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
+        if BMConfigParser().getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') == 0:
+            BMConfigParser().set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(shared.ridiculousDifficulty * protocol.networkDefaultPayloadLengthExtraBytes))
 
         # The format of data stored in the pubkeys table has changed. Let's
         # clear it, and the pubkeys from inventory, so that they'll be re-downloaded.
@@ -371,8 +375,8 @@ class sqlThread(threading.Thread):
             self.cur.execute(item, parameters)
             
         # TTL is now user-specifiable. Let's add an option to save whatever the user selects. 
-        if not shared.config.has_option('bitmessagesettings', 'ttl'):
-            shared.config.set('bitmessagesettings', 'ttl', '367200')
+        if not BMConfigParser().has_option('bitmessagesettings', 'ttl'):
+            BMConfigParser().set('bitmessagesettings', 'ttl', '367200')
         # We'll also need a `sleeptill` field and a `ttl` field. Also we can combine 
         # the pubkeyretrynumber and msgretrynumber into one.
         item = '''SELECT value FROM settings WHERE key='version';'''
@@ -419,18 +423,18 @@ class sqlThread(threading.Thread):
             logger.debug('In messages.dat database, done adding address field to the pubkeys table and removing the hash field.')
             self.cur.execute('''update settings set value=10 WHERE key='version';''')
         
-        if not shared.config.has_option('bitmessagesettings', 'onionhostname'):
-            shared.config.set('bitmessagesettings', 'onionhostname', '')
-        if not shared.config.has_option('bitmessagesettings', 'onionport'):
-            shared.config.set('bitmessagesettings', 'onionport', '8444')
-        if not shared.config.has_option('bitmessagesettings', 'onionbindip'):
-            shared.config.set('bitmessagesettings', 'onionbindip', '127.0.0.1')
-        if not shared.config.has_option('bitmessagesettings', 'smtpdeliver'):
-            shared.config.set('bitmessagesettings', 'smtpdeliver', '')
-        if not shared.config.has_option('bitmessagesettings', 'hidetrayconnectionnotifications'):
-            shared.config.set('bitmessagesettings', 'hidetrayconnectionnotifications', 'false')
-        if not shared.config.has_option('bitmessagesettings', 'maxoutboundconnections'):
-            shared.config.set('bitmessagesettings', 'maxoutboundconnections', '8')
+        if not BMConfigParser().has_option('bitmessagesettings', 'onionhostname'):
+            BMConfigParser().set('bitmessagesettings', 'onionhostname', '')
+        if not BMConfigParser().has_option('bitmessagesettings', 'onionport'):
+            BMConfigParser().set('bitmessagesettings', 'onionport', '8444')
+        if not BMConfigParser().has_option('bitmessagesettings', 'onionbindip'):
+            BMConfigParser().set('bitmessagesettings', 'onionbindip', '127.0.0.1')
+        if not BMConfigParser().has_option('bitmessagesettings', 'smtpdeliver'):
+            BMConfigParser().set('bitmessagesettings', 'smtpdeliver', '')
+        if not BMConfigParser().has_option('bitmessagesettings', 'hidetrayconnectionnotifications'):
+            BMConfigParser().set('bitmessagesettings', 'hidetrayconnectionnotifications', 'false')
+        if not BMConfigParser().has_option('bitmessagesettings', 'maxoutboundconnections'):
+            BMConfigParser().set('bitmessagesettings', 'maxoutboundconnections', '8')
         shared.writeKeysFile()
         
         # Are you hoping to add a new option to the keys.dat file of existing
@@ -508,8 +512,8 @@ class sqlThread(threading.Thread):
                         os._exit(0)
                 self.conn.close()
                 shutil.move(
-                    shared.lookupAppdataFolder() + 'messages.dat', shared.lookupExeFolder() + 'messages.dat')
-                self.conn = sqlite3.connect(shared.lookupExeFolder() + 'messages.dat')
+                    paths.lookupAppdataFolder() + 'messages.dat', paths.lookupExeFolder() + 'messages.dat')
+                self.conn = sqlite3.connect(paths.lookupExeFolder() + 'messages.dat')
                 self.conn.text_factory = str
                 self.cur = self.conn.cursor()
             elif item == 'movemessagstoappdata':
@@ -524,8 +528,8 @@ class sqlThread(threading.Thread):
                         os._exit(0)
                 self.conn.close()
                 shutil.move(
-                    shared.lookupExeFolder() + 'messages.dat', shared.lookupAppdataFolder() + 'messages.dat')
-                self.conn = sqlite3.connect(shared.lookupAppdataFolder() + 'messages.dat')
+                    paths.lookupExeFolder() + 'messages.dat', paths.lookupAppdataFolder() + 'messages.dat')
+                self.conn = sqlite3.connect(paths.lookupAppdataFolder() + 'messages.dat')
                 self.conn.text_factory = str
                 self.cur = self.conn.cursor()
             elif item == 'deleteandvacuume':

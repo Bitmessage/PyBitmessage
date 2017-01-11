@@ -19,10 +19,10 @@ Use: `from debug import logger` to import this facility into whatever module you
 import logging
 import logging.config
 import os
-import shared
 import sys
 import traceback
 import helper_startup
+import state
 helper_startup.loadConfig()
 
 # Now can be overriden from a config file, which uses standard python logging.config.fileConfig interface
@@ -36,12 +36,12 @@ def log_uncaught_exceptions(ex_cls, ex, tb):
 def configureLogging():
     have_logging = False
     try:
-        logging.config.fileConfig(os.path.join (shared.appdata, 'logging.dat'))
+        logging.config.fileConfig(os.path.join (state.appdata, 'logging.dat'))
         have_logging = True
-        print "Loaded logger configuration from %s" % (os.path.join(shared.appdata, 'logging.dat'))
+        print "Loaded logger configuration from %s" % (os.path.join(state.appdata, 'logging.dat'))
     except:
-        if os.path.isfile(os.path.join(shared.appdata, 'logging.dat')):
-            print "Failed to load logger configuration from %s, using default logging config" % (os.path.join(shared.appdata, 'logging.dat'))
+        if os.path.isfile(os.path.join(state.appdata, 'logging.dat')):
+            print "Failed to load logger configuration from %s, using default logging config" % (os.path.join(state.appdata, 'logging.dat'))
             print sys.exc_info()
         else:
             # no need to confuse the user if the logger config is missing entirely
@@ -70,7 +70,7 @@ def configureLogging():
                 'class': 'logging.handlers.RotatingFileHandler',
                 'formatter': 'default',
                 'level': log_level,
-                'filename': shared.appdata + 'debug.log',
+                'filename': state.appdata + 'debug.log',
                 'maxBytes': 2097152, # 2 MiB
                 'backupCount': 1,
                 'encoding': 'UTF-8',

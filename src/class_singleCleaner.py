@@ -6,9 +6,13 @@ import os
 import pickle
 
 import tr#anslate
+from configparser import BMConfigParser
 from helper_sql import *
 from helper_threading import *
+from inventory import Inventory
 from debug import logger
+import protocol
+import state
 
 """
 The singleCleaner class is a timer-driven thread that cleans data structures 
@@ -39,7 +43,7 @@ class singleCleaner(threading.Thread, StoppableThread):
     def run(self):
         timeWeLastClearedInventoryAndPubkeysTables = 0
         try:
-            shared.maximumLengthOfTimeToBotherResendingMessages = (float(shared.config.get('bitmessagesettings', 'stopresendingafterxdays')) * 24 * 60 * 60) + (float(shared.config.get('bitmessagesettings', 'stopresendingafterxmonths')) * (60 * 60 * 24 *365)/12)
+            shared.maximumLengthOfTimeToBotherResendingMessages = (float(BMConfigParser().get('bitmessagesettings', 'stopresendingafterxdays')) * 24 * 60 * 60) + (float(BMConfigParser().get('bitmessagesettings', 'stopresendingafterxmonths')) * (60 * 60 * 24 *365)/12)
         except:
             # Either the user hasn't set stopresendingafterxdays and stopresendingafterxmonths yet or the options are missing from the config file.
             shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
@@ -47,19 +51,19 @@ class singleCleaner(threading.Thread, StoppableThread):
         while shared.shutdown == 0:
             shared.UISignalQueue.put((
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
-            shared.inventory.flush()
+            Inventory().flush()
             shared.UISignalQueue.put(('updateStatusBar', ''))
             
-            shared.broadcastToSendDataQueues((
+            protocol.broadcastToSendDataQueues((
                 0, 'pong', 'no data')) # commands the sendData threads to send out a pong message if they haven't sent anything else in the last five minutes. The socket timeout-time is 10 minutes.
             # If we are running as a daemon then we are going to fill up the UI
             # queue which will never be handled by a UI. We should clear it to
             # save memory.
-            if shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'):
+            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'):
                 shared.UISignalQueue.queue.clear()
             if timeWeLastClearedInventoryAndPubkeysTables < int(time.time()) - 7380:
                 timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
-                shared.inventory.clean()
+                Inventory().clean()
                 # pubkeys
                 sqlExecute(
                     '''DELETE FROM pubkeys WHERE time<? AND usedpersonally='no' ''',
@@ -95,7 +99,7 @@ class singleCleaner(threading.Thread, StoppableThread):
             # Let us write out the knowNodes to disk if there is anything new to write out.
             if shared.needToWriteKnownNodesToDisk:
                 shared.knownNodesLock.acquire()
-                output = open(shared.appdata + 'knownnodes.dat', 'wb')
+                output = open(state.appdata + 'knownnodes.dat', 'wb')
                 try:
                     pickle.dump(shared.knownNodes, output)
                     output.close()
@@ -113,8 +117,8 @@ class singleCleaner(threading.Thread, StoppableThread):
 def resendPubkeyRequest(address):
     logger.debug('It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.')
     try:
-        del shared.neededPubkeys[
-            address] # We need to take this entry out of the shared.neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
+        del state.neededPubkeys[
+            address] # We need to take this entry out of the neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
     except:
         pass
 

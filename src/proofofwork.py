@@ -6,7 +6,9 @@ from struct import unpack, pack
 from subprocess import call
 import sys
 import time
+from configparser import BMConfigParser
 from debug import logger
+import paths
 import shared
 import openclpow
 import tr
@@ -17,8 +19,7 @@ bitmsglib = 'bitmsghash.so'
 
 def _set_idle():
     if 'linux' in sys.platform:
-        import os
-        os.nice(20)  # @UndefinedVariable
+        os.nice(20)
     else:
         try:
             sys.getwindowsversion()
@@ -58,7 +59,7 @@ def _doFastPoW(target, initialHash):
     except:
         pool_size = 4
     try:
-        maxCores = shared.config.getint('bitmessagesettings', 'maxcores')
+        maxCores = BMConfigParser().getint('bitmessagesettings', 'maxcores')
     except:
         maxCores = 99999
     if pool_size > maxCores:
@@ -168,15 +169,15 @@ def buildCPoW():
 
     if bmpow is not None:
         return
-    if shared.frozen is not None:
+    if paths.frozen is not None:
         notifyBuild(False)
         return
     if sys.platform in ["win32", "win64"]:
         notifyBuild(False)
         return
     try:
-        call(["make", "-C", os.path.join(shared.codePath(), "bitmsghash")])
-        if os.path.exists(os.path.join(shared.codePath(), "bitmsghash", "bitmsghash.so")):
+        call(["make", "-C", os.path.join(paths.codePath(), "bitmsghash")])
+        if os.path.exists(os.path.join(paths.codePath(), "bitmsghash", "bitmsghash.so")):
             init()
             notifyBuild(True)
         else:
@@ -207,7 +208,7 @@ def run(target, initialHash):
             raise
         except:
             pass # fallback
-    if shared.frozen == "macosx_app" or not shared.frozen:
+    if paths.frozen == "macosx_app" or not paths.frozen:
         # on my (Peter Surda) Windows 10, Windows Defender
         # does not like this and fights with PyBitmessage
         # over CPU, resulting in very slow PoW
@@ -237,7 +238,7 @@ def init():
             bitmsglib = 'bitmsghash64.dll'
         try:
             # MSVS
-            bso = ctypes.WinDLL(os.path.join(shared.codePath(), "bitmsghash", bitmsglib))
+            bso = ctypes.WinDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
             logger.info("Loaded C PoW DLL (stdcall) %s", bitmsglib)
             bmpow = bso.BitmessagePOW
             bmpow.restype = ctypes.c_ulonglong
@@ -247,7 +248,7 @@ def init():
             logger.error("C PoW test fail.", exc_info=True)
             try:
                 # MinGW
-                bso = ctypes.CDLL(os.path.join(shared.codePath(), "bitmsghash", bitmsglib))
+                bso = ctypes.CDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
                 logger.info("Loaded C PoW DLL (cdecl) %s", bitmsglib)
                 bmpow = bso.BitmessagePOW
                 bmpow.restype = ctypes.c_ulonglong
@@ -258,7 +259,7 @@ def init():
                 bso = None
     else:
         try:
-            bso = ctypes.CDLL(os.path.join(shared.codePath(), "bitmsghash", bitmsglib))
+            bso = ctypes.CDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
             logger.info("Loaded C PoW DLL %s", bitmsglib)
         except:
             bso = None

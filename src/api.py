@@ -19,16 +19,21 @@ from binascii import hexlify
 import shared
 import time
 from addresses import decodeAddress,addBMIfNotPresent,decodeVarint,calculateInventoryHash,varintDecodeError
+from configparser import BMConfigParser
 import helper_inbox
 import helper_sent
 import hashlib
 
+import protocol
+import state
 from pyelliptic.openssl import OpenSSL
 from struct import pack
 
 # Classes
 from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute,sqlStoredProcedure
 from debug import logger
+from inventory import Inventory
+from version import softwareVersion
 
 # Helper Functions
 import proofofwork
@@ -119,7 +124,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # handle Basic authentication
             (enctype, encstr) = self.headers.get('Authorization').split()
             (emailid, password) = encstr.decode('base64').split(':')
-            if emailid == shared.config.get('bitmessagesettings', 'apiusername') and password == shared.config.get('bitmessagesettings', 'apipassword'):
+            if emailid == BMConfigParser().get('bitmessagesettings', 'apiusername') and password == BMConfigParser().get('bitmessagesettings', 'apipassword'):
                 return True
             else:
                 return False
@@ -162,22 +167,22 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
     def HandleListAddresses(self, method):
         data = '{"addresses":['
-        configSections = shared.config.sections()
+        configSections = BMConfigParser().sections()
         for addressInKeysFile in configSections:
             if addressInKeysFile != 'bitmessagesettings':
                 status, addressVersionNumber, streamNumber, hash01 = decodeAddress(
                     addressInKeysFile)
                 if len(data) > 20:
                     data += ','
-                if shared.config.has_option(addressInKeysFile, 'chan'):
-                    chan = shared.config.getboolean(addressInKeysFile, 'chan')
+                if BMConfigParser().has_option(addressInKeysFile, 'chan'):
+                    chan = BMConfigParser().getboolean(addressInKeysFile, 'chan')
                 else:
                     chan = False
-                label = shared.config.get(addressInKeysFile, 'label')
+                label = BMConfigParser().get(addressInKeysFile, 'label')
                 if method == 'listAddresses2':
                     label = label.encode('base64')
                 data += json.dumps({'label': label, 'address': addressInKeysFile, 'stream':
-                                    streamNumber, 'enabled': shared.config.getboolean(addressInKeysFile, 'enabled'), 'chan': chan}, indent=4, separators=(',', ': '))
+                                    streamNumber, 'enabled': BMConfigParser().getboolean(addressInKeysFile, 'enabled'), 'chan': chan}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -235,28 +240,28 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif len(params) == 1:
             label, = params
             eighteenByteRipe = False
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 2:
             label, eighteenByteRipe = params
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 3:
             label, eighteenByteRipe, totalDifficulty = params
             nonceTrialsPerByte = int(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
-            payloadLengthExtraBytes = shared.config.get(
+                protocol.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 4:
             label, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = params
             nonceTrialsPerByte = int(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                protocol.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = int(
-                shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+                protocol.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
         else:
             raise APIError(0, 'Too many parameters!')
         label = self._decode(label, "base64")
@@ -279,52 +284,52 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             addressVersionNumber = 0
             streamNumber = 0
             eighteenByteRipe = False
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 2:
             passphrase, numberOfAddresses = params
             addressVersionNumber = 0
             streamNumber = 0
             eighteenByteRipe = False
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 3:
             passphrase, numberOfAddresses, addressVersionNumber = params
             streamNumber = 0
             eighteenByteRipe = False
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 4:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber = params
             eighteenByteRipe = False
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 5:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe = params
-            nonceTrialsPerByte = shared.config.get(
+            nonceTrialsPerByte = BMConfigParser().get(
                 'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            payloadLengthExtraBytes = shared.config.get(
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 6:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty = params
             nonceTrialsPerByte = int(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
-            payloadLengthExtraBytes = shared.config.get(
+                protocol.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+            payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 7:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = params
             nonceTrialsPerByte = int(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                protocol.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = int(
-                shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+                protocol.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
         else:
             raise APIError(0, 'Too many parameters!')
         if len(passphrase) == 0:
@@ -442,13 +447,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             address, = params
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(address)
         address = addBMIfNotPresent(address)
-        if not shared.config.has_section(address):
+        if not BMConfigParser().has_section(address):
             raise APIError(13, 'Could not find this address in your keys.dat file.')
-        if not shared.safeConfigGetBoolean(address, 'chan'):
+        if not BMConfigParser().safeGetBoolean(address, 'chan'):
             raise APIError(25, 'Specified address is not a chan address. Use deleteAddress API call instead.')
-        shared.config.remove_section(address)
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
+        BMConfigParser().remove_section(address)
+        with open(state.appdata + 'keys.dat', 'wb') as configfile:
+            BMConfigParser().write(configfile)
         return 'success'
 
     def HandleDeleteAddress(self, params):
@@ -458,11 +463,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             address, = params
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(address)
         address = addBMIfNotPresent(address)
-        if not shared.config.has_section(address):
+        if not BMConfigParser().has_section(address):
             raise APIError(13, 'Could not find this address in your keys.dat file.')
-        shared.config.remove_section(address)
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
-            shared.config.write(configfile)
+        BMConfigParser().remove_section(address)
+        with open(state.appdata + 'keys.dat', 'wb') as configfile:
+            BMConfigParser().write(configfile)
         shared.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
         shared.UISignalQueue.put(('rerenderMessagelistToLabels',''))
         shared.reloadMyAddressHashes()
@@ -658,7 +663,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(toAddress)
         self._verifyAddress(fromAddress)
         try:
-            fromAddressEnabled = shared.config.getboolean(
+            fromAddressEnabled = BMConfigParser().getboolean(
                 fromAddress, 'enabled')
         except:
             raise APIError(13, 'Could not find your fromAddress in the keys.dat file.')
@@ -722,7 +727,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         fromAddress = addBMIfNotPresent(fromAddress)
         self._verifyAddress(fromAddress)
         try:
-            fromAddressEnabled = shared.config.getboolean(
+            fromAddressEnabled = BMConfigParser().getboolean(
                 fromAddress, 'enabled')
         except:
             raise APIError(13, 'could not find your fromAddress in the keys.dat file.')
@@ -834,7 +839,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         # Let us do the POW and attach it to the front
         target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
         with shared.printLock:
-            print '(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes
+            print '(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / protocol.networkDefaultPayloadLengthExtraBytes
         powStartTime = time.time()
         initialHash = hashlib.sha512(encryptedPayload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -849,11 +854,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         inventoryHash = calculateInventoryHash(encryptedPayload)
         objectType = 2
         TTL = 2.5 * 24 * 60 * 60
-        shared.inventory[inventoryHash] = (
+        Inventory()[inventoryHash] = (
             objectType, toStreamNumber, encryptedPayload, int(time.time()) + TTL,'')
         with shared.printLock:
             print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
-        shared.broadcastToSendDataQueues((
+        protocol.broadcastToSendDataQueues((
             toStreamNumber, 'advertiseobject', inventoryHash))
 
     def HandleTrashSentMessageByAckDAta(self, params):
@@ -876,8 +881,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         payload = self._decode(payload, "hex")
 
         # Let us do the POW
-        target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
-                             8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+        target = 2 ** 64 / ((len(payload) + protocol.networkDefaultPayloadLengthExtraBytes +
+                             8) * protocol.networkDefaultProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message via API) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -896,11 +901,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         objectType = 1
                     #todo: support v4 pubkeys
         TTL = 28 * 24 * 60 * 60
-        shared.inventory[inventoryHash] = (
+        Inventory()[inventoryHash] = (
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL,'')
         with shared.printLock:
             print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
-        shared.broadcastToSendDataQueues((
+        protocol.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
 
     def HandleGetMessageDataByDestinationHash(self, params):
@@ -945,7 +950,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
         else:
             networkStatus = 'connectedAndReceivingIncomingConnections'
-        return json.dumps({'networkConnections':len(shared.connectedHostsList),'numberOfMessagesProcessed':shared.numberOfMessagesProcessed, 'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed, 'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed, 'networkStatus':networkStatus, 'softwareName':'PyBitmessage','softwareVersion':shared.softwareVersion}, indent=4, separators=(',', ': '))
+        return json.dumps({'networkConnections':len(shared.connectedHostsList),'numberOfMessagesProcessed':shared.numberOfMessagesProcessed, 'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed, 'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed, 'networkStatus':networkStatus, 'softwareName':'PyBitmessage','softwareVersion':softwareVersion}, indent=4, separators=(',', ': '))
 
     def HandleDecodeAddress(self, params):
         # Return a meaningful decoding of an address.

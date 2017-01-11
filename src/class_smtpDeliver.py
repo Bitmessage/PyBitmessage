@@ -5,8 +5,10 @@ import sys
 import threading
 import urlparse
 
+from configparser import BMConfigParser
 from debug import logger
 from helper_threading import *
+from bitmessageqt.uisignaler import UISignaler
 import shared
 
 SMTPDOMAIN = "bmaddr.lan"
@@ -47,7 +49,7 @@ class smtpDeliver(threading.Thread, StoppableThread):
                 pass
             elif command == 'displayNewInboxMessage':
                 inventoryHash, toAddress, fromAddress, subject, body = data
-                dest = shared.safeConfigGet("bitmessagesettings", "smtpdeliver", '')
+                dest = BMConfigParser().safeGet("bitmessagesettings", "smtpdeliver", '')
                 if dest == '':
                     continue
                 try:
@@ -57,7 +59,7 @@ class smtpDeliver(threading.Thread, StoppableThread):
                     msg = MIMEText(body, 'plain', 'utf-8')
                     msg['Subject'] = Header(subject, 'utf-8')
                     msg['From'] = fromAddress + '@' + SMTPDOMAIN
-                    toLabel = map (lambda y: shared.safeConfigGet(y, "label"), filter(lambda x: x == toAddress, shared.config.sections()))
+                    toLabel = map (lambda y: BMConfigParser().safeGet(y, "label"), filter(lambda x: x == toAddress, BMConfigParser().sections()))
                     if len(toLabel) > 0:
                         msg['To'] = "\"%s\" <%s>" % (Header(toLabel[0], 'utf-8'), toAddress + '@' + SMTPDOMAIN)
                     else:

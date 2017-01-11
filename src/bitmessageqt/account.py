@@ -6,15 +6,16 @@ import sys
 import inspect
 from helper_sql import *
 from addresses import decodeAddress
+from configparser import BMConfigParser
 from foldertree import AccountMixin
 from pyelliptic.openssl import OpenSSL
 from utils import str_broadcast_subscribers
 import time
 
 def getSortedAccounts():
-    configSections = filter(lambda x: x != 'bitmessagesettings', shared.config.sections())
+    configSections = filter(lambda x: x != 'bitmessagesettings', BMConfigParser().sections())
     configSections.sort(cmp = 
-        lambda x,y: cmp(unicode(shared.config.get(x, 'label'), 'utf-8').lower(), unicode(shared.config.get(y, 'label'), 'utf-8').lower())
+        lambda x,y: cmp(unicode(BMConfigParser().get(x, 'label'), 'utf-8').lower(), unicode(BMConfigParser().get(y, 'label'), 'utf-8').lower())
         )
     return configSections
 
@@ -44,7 +45,7 @@ def getSortedSubscriptions(count = False):
     return ret
 
 def accountClass(address):
-    if not shared.config.has_section(address):
+    if not BMConfigParser().has_section(address):
         # FIXME: This BROADCAST section makes no sense
         if address == str_broadcast_subscribers:
             subscription = BroadcastAccount(address)
@@ -56,7 +57,7 @@ def accountClass(address):
                 return None
         return subscription
     try:
-        gateway = shared.config.get(address, "gateway")
+        gateway = BMConfigParser().get(address, "gateway")
         for name, cls in inspect.getmembers(sys.modules[__name__], inspect.isclass):
 #            obj = g(address)
             if issubclass(cls, GatewayAccount) and cls.gatewayName == gateway:
@@ -75,9 +76,9 @@ class AccountColor(AccountMixin):
         if type is None:
             if address is None:
                 self.type = AccountMixin.ALL
-            elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
+            elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
                 self.type = AccountMixin.MAILINGLIST
-            elif shared.safeConfigGetBoolean(self.address, 'chan'):
+            elif BMConfigParser().safeGetBoolean(self.address, 'chan'):
                 self.type = AccountMixin.CHAN
             elif sqlQuery(
                 '''select label from subscriptions where address=?''', self.address):
@@ -92,10 +93,10 @@ class BMAccount(object):
     def __init__(self, address = None):
         self.address = address
         self.type = AccountMixin.NORMAL
-        if shared.config.has_section(address):
-            if shared.safeConfigGetBoolean(self.address, 'chan'):
+        if BMConfigParser().has_section(address):
+            if BMConfigParser().safeGetBoolean(self.address, 'chan'):
                 self.type = AccountMixin.CHAN
-            elif shared.safeConfigGetBoolean(self.address, 'mailinglist'):
+            elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
                 self.type = AccountMixin.MAILINGLIST
         elif self.address == str_broadcast_subscribers:
             self.type = AccountMixin.BROADCAST
@@ -109,8 +110,8 @@ class BMAccount(object):
         if address is None:
             address = self.address
         label = address
-        if shared.config.has_section(address):
-            label = shared.config.get(address, 'label')
+        if BMConfigParser().has_section(address):
+            label = BMConfigParser().get(address, 'label')
         queryreturn = sqlQuery(
             '''select label from addressbook where address=?''', address)
         if queryreturn != []:
@@ -146,7 +147,7 @@ class GatewayAccount(BMAccount):
     ALL_OK = 0
     REGISTRATION_DENIED = 1
     def __init__(self, address):
-        super(BMAccount, self).__init__(address)
+        super(GatewayAccount, self).__init__(address)
         
     def send(self):
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
@@ -168,13 +169,13 @@ class GatewayAccount(BMAccount):
             0, # retryNumber
             'sent', # folder
             2, # encodingtype
-            min(shared.config.getint('bitmessagesettings', 'ttl'), 86400 * 2) # not necessary to have a TTL higher than 2 days
+            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2) # not necessary to have a TTL higher than 2 days
         )
 
         shared.workerQueue.put(('sendmessage', self.toAddress))
     
     def parseMessage(self, toAddress, fromAddress, subject, message):
-        super(BMAccount, self).parseMessage(toAddress, fromAddress, subject, message)
+        super(GatewayAccount, self).parseMessage(toAddress, fromAddress, subject, message)
 
 class MailchuckAccount(GatewayAccount):
     # set "gateway" in keys.dat to this
@@ -185,7 +186,7 @@ class MailchuckAccount(GatewayAccount):
     regExpIncoming = re.compile("(.*)MAILCHUCK-FROM::(\S+) \| (.*)")
     regExpOutgoing = re.compile("(\S+) (.*)")
     def __init__(self, address):
-        super(GatewayAccount, self).__init__(address)
+        super(MailchuckAccount, self).__init__(address)
         self.feedback = self.ALL_OK
         
     def createMessage(self, toAddress, fromAddress, subject, message):
@@ -261,7 +262,7 @@ class MailchuckAccount(GatewayAccount):
         self.fromAddress = self.address
 
     def parseMessage(self, toAddress, fromAddress, subject, message):
-        super(GatewayAccount, self).parseMessage(toAddress, fromAddress, subject, message)
+        super(MailchuckAccount, self).parseMessage(toAddress, fromAddress, subject, message)
         if fromAddress == self.relayAddress:
             matches = self.regExpIncoming.search(subject)
             if not matches is None:

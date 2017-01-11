@@ -1,8 +1,9 @@
 from PyQt4 import QtGui
 import hashlib
 import os
-import shared
 from addresses import addBMIfNotPresent
+from configparser import BMConfigParser
+import state
 
 str_broadcast_subscribers = '[Broadcast subscribers]'
 str_chan = '[chan]'
@@ -15,7 +16,7 @@ def identiconize(address):
     # 3fd4bf901b9d4ea1394f0fb358725b28
     
     try:
-        identicon_lib = shared.config.get('bitmessagesettings', 'identiconlib')
+        identicon_lib = BMConfigParser().get('bitmessagesettings', 'identiconlib')
     except:
         # default to qidenticon_two_x
         identicon_lib = 'qidenticon_two_x'
@@ -23,9 +24,9 @@ def identiconize(address):
     # As an 'identiconsuffix' you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators. (Note however, that E-Mail programs might convert the BM-address to lowercase first.)
     # It can be used as a pseudo-password to salt the generation of the identicons to decrease the risk
     # of attacks where someone creates an address to mimic someone else's identicon.
-    identiconsuffix = shared.config.get('bitmessagesettings', 'identiconsuffix')
+    identiconsuffix = BMConfigParser().get('bitmessagesettings', 'identiconsuffix')
     
-    if not shared.config.getboolean('bitmessagesettings', 'useidenticons'):
+    if not BMConfigParser().getboolean('bitmessagesettings', 'useidenticons'):
         idcon = QtGui.QIcon()
         return idcon
     
@@ -81,8 +82,8 @@ def avatarize(address):
     extensions = ['PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM', 'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
     # try to find a specific avatar
     for ext in extensions:
-        lower_hash = shared.appdata + 'avatars/' + hash + '.' + ext.lower()
-        upper_hash = shared.appdata + 'avatars/' + hash + '.' + ext.upper()
+        lower_hash = state.appdata + 'avatars/' + hash + '.' + ext.lower()
+        upper_hash = state.appdata + 'avatars/' + hash + '.' + ext.upper()
         if os.path.isfile(lower_hash):
             # print 'found avatar of ', address
             idcon.addFile(lower_hash)
@@ -93,8 +94,8 @@ def avatarize(address):
             return idcon
     # if we haven't found any, try to find a default avatar
     for ext in extensions:
-        lower_default = shared.appdata + 'avatars/' + 'default.' + ext.lower()
-        upper_default = shared.appdata + 'avatars/' + 'default.' + ext.upper()
+        lower_default = state.appdata + 'avatars/' + 'default.' + ext.lower()
+        upper_default = state.appdata + 'avatars/' + 'default.' + ext.upper()
         if os.path.isfile(lower_default):
             default = lower_default
             idcon.addFile(lower_default)

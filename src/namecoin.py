@@ -26,6 +26,7 @@ import socket
 import sys
 import os
 
+from configparser import BMConfigParser
 import shared
 import tr # translate
 
@@ -63,11 +64,11 @@ class namecoinConnection (object):
     # actually changing the values (yet).
     def __init__ (self, options = None):
         if options is None:
-          self.nmctype = shared.config.get (configSection, "namecoinrpctype")
-          self.host = shared.config.get (configSection, "namecoinrpchost")
-          self.port = int(shared.config.get (configSection, "namecoinrpcport"))
-          self.user = shared.config.get (configSection, "namecoinrpcuser")
-          self.password = shared.config.get (configSection,
+          self.nmctype = BMConfigParser().get (configSection, "namecoinrpctype")
+          self.host = BMConfigParser().get (configSection, "namecoinrpchost")
+          self.port = int(BMConfigParser().get (configSection, "namecoinrpcport"))
+          self.user = BMConfigParser().get (configSection, "namecoinrpcuser")
+          self.password = BMConfigParser().get (configSection,
                                              "namecoinrpcpassword")
         else:
           self.nmctype = options["type"]
@@ -261,14 +262,14 @@ def lookupNamecoinFolder ():
 # Ensure all namecoin options are set, by setting those to default values
 # that aren't there.
 def ensureNamecoinOptions ():
-    if not shared.config.has_option (configSection, "namecoinrpctype"):
-        shared.config.set (configSection, "namecoinrpctype", "namecoind")
-    if not shared.config.has_option (configSection, "namecoinrpchost"):
-        shared.config.set (configSection, "namecoinrpchost", "localhost")
+    if not BMConfigParser().has_option (configSection, "namecoinrpctype"):
+        BMConfigParser().set (configSection, "namecoinrpctype", "namecoind")
+    if not BMConfigParser().has_option (configSection, "namecoinrpchost"):
+        BMConfigParser().set (configSection, "namecoinrpchost", "localhost")
 
-    hasUser = shared.config.has_option (configSection, "namecoinrpcuser")
-    hasPass = shared.config.has_option (configSection, "namecoinrpcpassword")
-    hasPort = shared.config.has_option (configSection, "namecoinrpcport")
+    hasUser = BMConfigParser().has_option (configSection, "namecoinrpcuser")
+    hasPass = BMConfigParser().has_option (configSection, "namecoinrpcpassword")
+    hasPort = BMConfigParser().has_option (configSection, "namecoinrpcport")
 
     # Try to read user/password from .namecoin configuration file.
     defaultUser = ""
@@ -302,11 +303,11 @@ def ensureNamecoinOptions ():
 
     # If still nothing found, set empty at least.
     if (not hasUser):
-        shared.config.set (configSection, "namecoinrpcuser", defaultUser)
+        BMConfigParser().set (configSection, "namecoinrpcuser", defaultUser)
     if (not hasPass):
-        shared.config.set (configSection, "namecoinrpcpassword", defaultPass)
+        BMConfigParser().set (configSection, "namecoinrpcpassword", defaultPass)
 
     # Set default port now, possibly to found value.
     if (not hasPort):
-        shared.config.set (configSection, "namecoinrpcport",
+        BMConfigParser().set (configSection, "namecoinrpcport",
                            shared.namecoinDefaultRpcPort)

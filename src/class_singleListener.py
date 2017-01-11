@@ -1,10 +1,12 @@
 import threading
 import shared
 import socket
+from configparser import BMConfigParser
 from class_sendDataThread import *
 from class_receiveDataThread import *
 import helper_bootstrap
 from helper_threading import *
+import protocol
 import errno
 import re
 
@@ -28,9 +30,9 @@ class singleListener(threading.Thread, StoppableThread):
     def _createListenSocket(self, family):
         HOST = ''  # Symbolic name meaning all available interfaces
         # If not sockslisten, but onionhostname defined, only listen on localhost
-        if not shared.safeConfigGetBoolean('bitmessagesettings', 'sockslisten') and ".onion" in shared.config.get('bitmessagesettings', 'onionhostname'):
-            HOST = shared.config.get('bitmessagesettings', 'onionbindip')
-        PORT = shared.config.getint('bitmessagesettings', 'port')
+        if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'sockslisten') and ".onion" in BMConfigParser().get('bitmessagesettings', 'onionhostname'):
+            HOST = BMConfigParser().get('bitmessagesettings', 'onionbindip')
+        PORT = BMConfigParser().getint('bitmessagesettings', 'port')
         sock = socket.socket(family, socket.SOCK_STREAM)
         if family == socket.AF_INET6:
             # Make sure we can accept both IPv4 and IPv6 connections.
@@ -46,9 +48,9 @@ class singleListener(threading.Thread, StoppableThread):
     def stopThread(self):
         super(singleListener, self).stopThread()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        for ip in ('127.0.0.1', shared.config.get('bitmessagesettings', 'onionbindip')):
+        for ip in ('127.0.0.1', BMConfigParser().get('bitmessagesettings', 'onionbindip')):
             try:
-                s.connect((ip, shared.config.getint('bitmessagesettings', 'port')))
+                s.connect((ip, BMConfigParser().getint('bitmessagesettings', 'port')))
                 s.shutdown(socket.SHUT_RDWR)
                 s.close()
                 break
@@ -61,7 +63,7 @@ class singleListener(threading.Thread, StoppableThread):
         if shared.trustedPeer:
             return
 
-        while shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect') and shared.shutdown == 0:
+        while BMConfigParser().safeGetBoolean('bitmessagesettings', 'dontconnect') and shared.shutdown == 0:
             self.stop.wait(1)
         helper_bootstrap.dns()
         # We typically don't want to accept incoming connections if the user is using a
@@ -69,9 +71,9 @@ class singleListener(threading.Thread, StoppableThread):
         # proxy 'none' or configure SOCKS listening then this will start listening for
         # connections. But if on SOCKS and have an onionhostname, listen
         # (socket is then only opened for localhost)
-        while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and \
-            (not shared.config.getboolean('bitmessagesettings', 'sockslisten') and \
-            ".onion" not in shared.config.get('bitmessagesettings', 'onionhostname')) and \
+        while BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and \
+            (not BMConfigParser().getboolean('bitmessagesettings', 'sockslisten') and \
+            ".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname')) and \
             shared.shutdown == 0:
             self.stop.wait(5)
 
@@ -100,7 +102,7 @@ class singleListener(threading.Thread, StoppableThread):
             # SOCKS proxy, unless they have configured otherwise. If they eventually select
             # proxy 'none' or configure SOCKS listening then this will start listening for
             # connections.
-            while shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not shared.config.getboolean('bitmessagesettings', 'sockslisten') and ".onion" not in shared.config.get('bitmessagesettings', 'onionhostname') and shared.shutdown == 0:
+            while BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not BMConfigParser().getboolean('bitmessagesettings', 'sockslisten') and ".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname') and shared.shutdown == 0:
                 self.stop.wait(10)
             while len(shared.connectedHostsList) > 220 and shared.shutdown == 0:
                 logger.info('We are connected to too many people. Not accepting further incoming connections for ten seconds.')
@@ -123,7 +125,7 @@ class singleListener(threading.Thread, StoppableThread):
                 # share the same external IP. This is here to prevent
                 # connection flooding.
                 # permit repeated connections from Tor
-                if HOST in shared.connectedHostsList and (".onion" not in shared.config.get('bitmessagesettings', 'onionhostname') or not shared.checkSocksIP(HOST)):
+                if HOST in shared.connectedHostsList and (".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname') or not protocol.checkSocksIP(HOST)):
                     socketObject.close()
                     logger.info('We are already connected to ' + str(HOST) + '. Ignoring connection.')
                 else:

@@ -13,6 +13,7 @@ from binascii import hexlify
 from pyelliptic.openssl import OpenSSL
 import highlevelcrypto
 from addresses import *
+from configparser import BMConfigParser
 import helper_generic
 from helper_generic import addDataPadding
 import helper_bitcoin
@@ -20,6 +21,8 @@ import helper_inbox
 import helper_msgcoding
 import helper_sent
 from helper_sql import *
+import protocol
+from state import neededPubkeys
 import tr
 from debug import logger
 import l10n
@@ -130,11 +133,11 @@ class objectProcessor(threading.Thread):
         if decodeAddress(myAddress)[2] != streamNumber:
             logger.warning('(Within the processgetpubkey function) Someone requested one of my pubkeys but the stream number on which we heard this getpubkey object doesn\'t match this address\' stream number. Ignoring.')
             return
-        if shared.safeConfigGetBoolean(myAddress, 'chan'):
+        if BMConfigParser().safeGetBoolean(myAddress, 'chan'):
             logger.info('Ignoring getpubkey request because it is for one of my chan addresses. The other party should already have the pubkey.')
             return
         try:
-            lastPubkeySendTime = int(shared.config.get(
+            lastPubkeySendTime = int(BMConfigParser().get(
                 myAddress, 'lastpubkeysendtime'))
         except:
             lastPubkeySendTime = 0
@@ -283,12 +286,12 @@ class objectProcessor(threading.Thread):
                 return
 
             tag = data[readPosition:readPosition + 32]
-            if tag not in shared.neededPubkeys:
+            if tag not in neededPubkeys:
                 logger.info('We don\'t need this v4 pubkey. We didn\'t ask for it.')
                 return
             
             # Let us try to decrypt the pubkey
-            toAddress, cryptorObject = shared.neededPubkeys[tag]
+            toAddress, cryptorObject = neededPubkeys[tag]
             if shared.decryptAndCheckPubkeyPayload(data, toAddress) == 'successful':
                 # At this point we know that we have been waiting on this pubkey.
                 # This function will command the workerThread to start work on
@@ -458,17 +461,17 @@ class objectProcessor(threading.Thread):
         # proof of work requirement. If this is bound for one of my chan
         # addresses then we skip this check; the minimum network POW is
         # fine.
-        if decodeAddress(toAddress)[1] >= 3 and not shared.safeConfigGetBoolean(toAddress, 'chan'):  # If the toAddress version number is 3 or higher and not one of my chan addresses:
+        if decodeAddress(toAddress)[1] >= 3 and not BMConfigParser().safeGetBoolean(toAddress, 'chan'):  # If the toAddress version number is 3 or higher and not one of my chan addresses:
             if not shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(fromAddress):  # If I'm not friendly with this person:
-                requiredNonceTrialsPerByte = shared.config.getint(
+                requiredNonceTrialsPerByte = BMConfigParser().getint(
                     toAddress, 'noncetrialsperbyte')
-                requiredPayloadLengthExtraBytes = shared.config.getint(
+                requiredPayloadLengthExtraBytes = BMConfigParser().getint(
                     toAddress, 'payloadlengthextrabytes')
-                if not shared.isProofOfWorkSufficient(data, requiredNonceTrialsPerByte, requiredPayloadLengthExtraBytes):
+                if not protocol.isProofOfWorkSufficient(data, requiredNonceTrialsPerByte, requiredPayloadLengthExtraBytes):
                     logger.info('Proof of work in msg is insufficient only because it does not meet our higher requirement.')
                     return
         blockMessage = False  # Gets set to True if the user shouldn't see the message according to black or white lists.
-        if shared.config.get('bitmessagesettings', 'blackwhitelist') == 'black':  # If we are using a blacklist
+        if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'black':  # If we are using a blacklist
             queryreturn = sqlQuery(
                 '''SELECT label FROM blacklist where address=? and enabled='1' ''',
                 fromAddress)
@@ -484,7 +487,7 @@ class objectProcessor(threading.Thread):
                 logger.info('Message ignored because address not in whitelist.')
                 blockMessage = True
 
-        toLabel = shared.config.get(toAddress, 'label')
+        toLabel = BMConfigParser().get(toAddress, 'label')
         if toLabel == '':
             toLabel = toAddress
 
@@ -508,9 +511,9 @@ class objectProcessor(threading.Thread):
             # If we are behaving as an API then we might need to run an
             # outside command to let some program know that a new message
             # has arrived.
-            if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
                 try:
-                    apiNotifyPath = shared.config.get(
+                    apiNotifyPath = BMConfigParser().get(
                         'bitmessagesettings', 'apinotifypath')
                 except:
                     apiNotifyPath = ''
@@ -519,9 +522,9 @@ class objectProcessor(threading.Thread):
 
             # Let us now check and see whether our receiving address is
             # behaving as a mailing list
-            if shared.safeConfigGetBoolean(toAddress, 'mailinglist') and messageEncodingType != 0:
+            if BMConfigParser().safeGetBoolean(toAddress, 'mailinglist') and messageEncodingType != 0:
                 try:
-                    mailingListName = shared.config.get(
+                    mailingListName = BMConfigParser().get(
                         toAddress, 'mailinglistname')
                 except:
                     mailingListName = ''
@@ -566,8 +569,8 @@ class objectProcessor(threading.Thread):
         if self.ackDataHasAValidHeader(ackData) and \
             not blockMessage and \
             messageEncodingType != 0 and \
-            not shared.safeConfigGetBoolean(toAddress, 'dontsendack') and \
-            not shared.safeConfigGetBoolean(toAddress, 'chan'):
+            not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack') and \
+            not BMConfigParser().safeGetBoolean(toAddress, 'chan'):
             shared.checkAndShareObjectWithPeers(ackData[24:])
 
         # Display timing data
@@ -756,9 +759,9 @@ class objectProcessor(threading.Thread):
         # If we are behaving as an API then we might need to run an
         # outside command to let some program know that a new message
         # has arrived.
-        if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+        if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
             try:
-                apiNotifyPath = shared.config.get(
+                apiNotifyPath = BMConfigParser().get(
                     'bitmessagesettings', 'apinotifypath')
             except:
                 apiNotifyPath = ''
@@ -780,8 +783,8 @@ class objectProcessor(threading.Thread):
         # stream number, and RIPE hash.
         status, addressVersion, streamNumber, ripe = decodeAddress(address)
         if addressVersion <=3:
-            if address in shared.neededPubkeys:
-                del shared.neededPubkeys[address]
+            if address in neededPubkeys:
+                del neededPubkeys[address]
                 self.sendMessages(address)
             else:
                 logger.debug('We don\'t need this pub key. We didn\'t ask for it. For address: %s' % address)
@@ -791,8 +794,8 @@ class objectProcessor(threading.Thread):
         elif addressVersion >= 4:
             tag = hashlib.sha512(hashlib.sha512(encodeVarint(
                 addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()[32:]
-            if tag in shared.neededPubkeys:
-                del shared.neededPubkeys[tag]
+            if tag in neededPubkeys:
+                del neededPubkeys[tag]
                 self.sendMessages(address)
 
     def sendMessages(self, address):
@@ -808,15 +811,15 @@ class objectProcessor(threading.Thread):
         shared.workerQueue.put(('sendmessage', ''))
 
     def ackDataHasAValidHeader(self, ackData):
-        if len(ackData) < shared.Header.size:
+        if len(ackData) < protocol.Header.size:
             logger.info('The length of ackData is unreasonably short. Not sending ackData.')
             return False
         
-        magic,command,payloadLength,checksum = shared.Header.unpack(ackData[:shared.Header.size])
+        magic,command,payloadLength,checksum = protocol.Header.unpack(ackData[:protocol.Header.size])
         if magic != 0xE9BEB4D9:
             logger.info('Ackdata magic bytes were wrong. Not sending ackData.')
             return False
-        payload = ackData[shared.Header.size:]
+        payload = ackData[protocol.Header.size:]
         if len(payload) != payloadLength:
             logger.info('ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.')
             return False

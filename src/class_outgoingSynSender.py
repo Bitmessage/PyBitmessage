@@ -1,3 +1,4 @@
+import errno
 import threading
 import time
 import random
@@ -10,7 +11,9 @@ import tr
 
 from class_sendDataThread import *
 from class_receiveDataThread import *
+from configparser import BMConfigParser
 from helper_threading import *
+import state
 
 # For each stream to which we connect, several outgoingSynSender threads
 # will exist and will collectively create 8 connections with peers.
@@ -45,12 +48,12 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                     continue
                 priority = (183600 - (time.time() - shared.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
                 shared.knownNodesLock.release()
-                if shared.config.get('bitmessagesettings', 'socksproxytype') != 'none':
+                if BMConfigParser().get('bitmessagesettings', 'socksproxytype') != 'none':
                     if peer.host.find(".onion") == -1:
                         priority /= 10 # hidden services have 10x priority over plain net
                     else:
                         # don't connect to self
-                        if peer.host == shared.config.get('bitmessagesettings', 'onionhostname') and peer.port == shared.config.getint("bitmessagesettings", "onionport"):
+                        if peer.host == BMConfigParser().get('bitmessagesettings', 'onionhostname') and peer.port == BMConfigParser().getint("bitmessagesettings", "onionport"):
                             continue
                 elif peer.host.find(".onion") != -1: # onion address and so proxy
                     continue
@@ -72,9 +75,9 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             pass
 
     def run(self):
-        while shared.safeConfigGetBoolean('bitmessagesettings', 'dontconnect') and not self._stopped:
+        while BMConfigParser().safeGetBoolean('bitmessagesettings', 'dontconnect') and not self._stopped:
             self.stop.wait(2)
-        while shared.safeConfigGetBoolean('bitmessagesettings', 'sendoutgoingconnections') and not self._stopped:
+        while BMConfigParser().safeGetBoolean('bitmessagesettings', 'sendoutgoingconnections') and not self._stopped:
             self.name = "outgoingSynSender"
             maximumConnections = 1 if shared.trustedPeer else shared.config.getint('bitmessagesettings', 'maxoutboundconnections')
             while len(self.selfInitiatedConnections[self.streamNumber]) >= maximumConnections:
@@ -110,8 +113,8 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             self.name = "outgoingSynSender-" + peer.host.replace(":", ".") # log parser field separator
             address_family = socket.AF_INET
             # Proxy IP is IPv6. Unlikely but possible
-            if shared.config.get('bitmessagesettings', 'socksproxytype') != 'none':
-                if ":" in shared.config.get('bitmessagesettings', 'sockshostname'):
+            if BMConfigParser().get('bitmessagesettings', 'socksproxytype') != 'none':
+                if ":" in BMConfigParser().get('bitmessagesettings', 'sockshostname'):
                     address_family = socket.AF_INET6
             # No proxy, and destination is IPv6
             elif peer.host.find(':') >= 0 :
@@ -140,44 +143,44 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             # can rebind faster
             self.sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             self.sock.settimeout(20)
-            if shared.config.get('bitmessagesettings', 'socksproxytype') == 'none' and shared.verbose >= 2:
+            if BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'none' and shared.verbose >= 2:
                 logger.debug('Trying an outgoing connection to ' + str(peer))
 
                 # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS4a':
+            elif BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'SOCKS4a':
                 if shared.verbose >= 2:
                     logger.debug ('(Using SOCKS4a) Trying an outgoing connection to ' + str(peer))
 
                 proxytype = socks.PROXY_TYPE_SOCKS4
-                sockshostname = shared.config.get(
+                sockshostname = BMConfigParser().get(
                     'bitmessagesettings', 'sockshostname')
-                socksport = shared.config.getint(
+                socksport = BMConfigParser().getint(
                     'bitmessagesettings', 'socksport')
                 rdns = True  # Do domain name lookups through the proxy; though this setting doesn't really matter since we won't be doing any domain name lookups anyway.
-                if shared.config.getboolean('bitmessagesettings', 'socksauthentication'):
-                    socksusername = shared.config.get(
+                if BMConfigParser().getboolean('bitmessagesettings', 'socksauthentication'):
+                    socksusername = BMConfigParser().get(
                         'bitmessagesettings', 'socksusername')
-                    sockspassword = shared.config.get(
+                    sockspassword = BMConfigParser().get(
                         'bitmessagesettings', 'sockspassword')
                     self.sock.setproxy(
                         proxytype, sockshostname, socksport, rdns, socksusername, sockspassword)
                 else:
                     self.sock.setproxy(
                         proxytype, sockshostname, socksport, rdns)
-            elif shared.config.get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
+            elif BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
                 if shared.verbose >= 2:
                     logger.debug ('(Using SOCKS5) Trying an outgoing connection to ' + str(peer))
 
                 proxytype = socks.PROXY_TYPE_SOCKS5
-                sockshostname = shared.config.get(
+                sockshostname = BMConfigParser().get(
                     'bitmessagesettings', 'sockshostname')
-                socksport = shared.config.getint(
+                socksport = BMConfigParser().getint(
                     'bitmessagesettings', 'socksport')
                 rdns = True  # Do domain name lookups through the proxy; though this setting doesn't really matter since we won't be doing any domain name lookups anyway.
-                if shared.config.getboolean('bitmessagesettings', 'socksauthentication'):
-                    socksusername = shared.config.get(
+                if BMConfigParser().getboolean('bitmessagesettings', 'socksauthentication'):
+                    socksusername = BMConfigParser().get(
                         'bitmessagesettings', 'socksusername')
-                    sockspassword = shared.config.get(
+                    sockspassword = BMConfigParser().get(
                         'bitmessagesettings', 'sockspassword')
                     self.sock.setproxy(
                         proxytype, sockshostname, socksport, rdns, socksusername, sockspassword)
@@ -251,12 +254,16 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                     logger.debug('SOCKS5 error: %s', str(err))
                 else:
                     logger.error('SOCKS5 error: %s', str(err))
+                if err[0][0] == 4 or err[0][0] == 2:
+                    state.networkProtocolLastFailed['IPv6'] = time.time()
             except socks.Socks4Error as err:
                 logger.error('Socks4Error: ' + str(err))
             except socket.error as err:
-                if shared.config.get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
+                if BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
                     logger.error('Bitmessage MIGHT be having trouble connecting to the SOCKS server. ' + str(err))
                 else:
+                    if ":" in peer.host and err[0] == errno.ENETUNREACH:
+                        state.networkProtocolLastFailed['IPv6'] = time.time()
                     if shared.verbose >= 1:
                         logger.debug('Could NOT connect to ' + str(peer) + 'during outgoing attempt. ' + str(err))
 
