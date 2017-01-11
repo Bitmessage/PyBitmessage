@@ -5,7 +5,8 @@ import hashlib
 import random
 import os
 
-from shared import codePath, safeConfigGetBoolean, safeConfigGet, shutdown
+from configparser import BMConfigParser
+from shared import codePath, shutdown
 from debug import logger
 
 libAvailable = True
@@ -30,7 +31,7 @@ def initCL():
         try:
             for platform in cl.get_platforms():
                 gpus.extend(platform.get_devices(device_type=cl.device_type.GPU))
-                if safeConfigGet("bitmessagesettings", "opencl") == platform.vendor:
+                if BMConfigParser().safeGet("bitmessagesettings", "opencl") == platform.vendor:
                     enabledGpus.extend(platform.get_devices(device_type=cl.device_type.GPU))
                 if platform.vendor not in vendors:
                     vendors.append(platform.vendor)

@@ -40,6 +40,7 @@ from class_singleWorker import singleWorker
 from class_addressGenerator import addressGenerator
 from class_smtpDeliver import smtpDeliver
 from class_smtpServer import smtpServer
+from configparser import BMConfigParser
 from debug import logger
 
 # Helper Functions
@@ -58,7 +59,7 @@ def connectToStream(streamNumber):
         maximumNumberOfHalfOpenConnections = 64
     try:
         # don't overload Tor
-        if shared.config.get('bitmessagesettings', 'socksproxytype') != 'none':
+        if BMConfigParser().get('bitmessagesettings', 'socksproxytype') != 'none':
             maximumNumberOfHalfOpenConnections = 4
     except:
         pass
@@ -128,7 +129,7 @@ class singleAPI(threading.Thread, StoppableThread):
         super(singleAPI, self).stopThread()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            s.connect((shared.config.get('bitmessagesettings', 'apiinterface'), shared.config.getint(
+            s.connect((BMConfigParser().get('bitmessagesettings', 'apiinterface'), BMConfigParser().getint(
                 'bitmessagesettings', 'apiport')))
             s.shutdown(socket.SHUT_RDWR)
             s.close()
@@ -136,7 +137,7 @@ class singleAPI(threading.Thread, StoppableThread):
             pass
 
     def run(self):
-        se = StoppableXMLRPCServer((shared.config.get('bitmessagesettings', 'apiinterface'), shared.config.getint(
+        se = StoppableXMLRPCServer((BMConfigParser().get('bitmessagesettings', 'apiinterface'), BMConfigParser().getint(
             'bitmessagesettings', 'apiport')), MySimpleXMLRPCRequestHandler, True, True)
         se.register_introspection_functions()
         se.serve_forever()
@@ -188,12 +189,12 @@ class Main:
         sqlLookup.start()
 
         # SMTP delivery thread
-        if daemon and shared.safeConfigGet("bitmessagesettings", "smtpdeliver", '') != '':
+        if daemon and BMConfigParser().safeGet("bitmessagesettings", "smtpdeliver", '') != '':
             smtpDeliveryThread = smtpDeliver()
             smtpDeliveryThread.start()
 
         # SMTP daemon thread
-        if daemon and shared.safeConfigGetBoolean("bitmessagesettings", "smtpd"):
+        if daemon and BMConfigParser().safeGetBoolean("bitmessagesettings", "smtpd"):
             smtpServerThread = smtpServer()
             smtpServerThread.start()
 
@@ -210,9 +211,9 @@ class Main:
         shared.reloadMyAddressHashes()
         shared.reloadBroadcastSendersForWhichImWatching()
 
-        if shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+        if BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
             try:
-                apiNotifyPath = shared.config.get(
+                apiNotifyPath = BMConfigParser().get(
                     'bitmessagesettings', 'apinotifypath')
             except:
                 apiNotifyPath = ''
@@ -232,12 +233,12 @@ class Main:
         singleListenerThread.daemon = True  # close the main program even if there are threads left
         singleListenerThread.start()
         
-        if shared.safeConfigGetBoolean('bitmessagesettings','upnp'):
+        if BMConfigParser().safeGetBoolean('bitmessagesettings','upnp'):
             import upnp
             upnpThread = upnp.uPnPThread()
             upnpThread.start()
 
-        if daemon == False and shared.safeConfigGetBoolean('bitmessagesettings', 'daemon') == False:
+        if daemon == False and BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon') == False:
             if shared.curses == False:
                 if not depends.check_pyqt():
                     print('PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download PyQt from http://www.riverbankcomputing.com/software/pyqt/download   or by searching Google for \'PyQt Download\'. If you want to run in daemon mode, see https://bitmessage.org/wiki/Daemon')
@@ -253,7 +254,7 @@ class Main:
                     import bitmessagecurses
                     bitmessagecurses.runwrapper()
         else:
-            shared.config.remove_option('bitmessagesettings', 'dontconnect')
+            BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
 
             while True:
                 time.sleep(20)
@@ -290,15 +291,15 @@ class Main:
 
     #TODO: nice function but no one is using this 
     def getApiAddress(self):
-        if not shared.safeConfigGetBoolean('bitmessagesettings', 'apienabled'):
+        if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
             return None
-        address = shared.config.get('bitmessagesettings', 'apiinterface')
-        port = shared.config.getint('bitmessagesettings', 'apiport')
+        address = BMConfigParser().get('bitmessagesettings', 'apiinterface')
+        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
         return {'address':address,'port':port}
 
 if __name__ == "__main__":
     mainprogram = Main()
-    mainprogram.start(shared.safeConfigGetBoolean('bitmessagesettings', 'daemon'))
+    mainprogram.start(BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'))
 
 
 # So far, the creation of and management of the Bitmessage protocol and this

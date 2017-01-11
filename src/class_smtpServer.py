@@ -10,11 +10,13 @@ import threading
 import time
 
 from addresses import decodeAddress
+from configparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlExecute
 from helper_threading import StoppableThread
 from pyelliptic.openssl import OpenSSL
 import shared
+from version import softwareVersion
 
 SMTPDOMAIN = "bmaddr.lan"
 LISTENPORT = 8425
@@ -24,7 +26,7 @@ class smtpServerChannel(smtpd.SMTPChannel):
         if not arg:
             self.push('501 Syntax: HELO hostname')
             return
-        self.push('250-PyBitmessage %s' % shared.softwareVersion)
+        self.push('250-PyBitmessage %s' % softwareVersion)
         self.push('250 AUTH PLAIN')
 
     def smtp_AUTH(self, arg):
@@ -34,8 +36,8 @@ class smtpServerChannel(smtpd.SMTPChannel):
         authstring = arg[6:]
         try:
             decoded = base64.b64decode(authstring)
-            correctauth = "\x00" + shared.safeConfigGet("bitmessagesettings", "smtpdusername", "") + \
-                    "\x00" + shared.safeConfigGet("bitmessagesettings", "smtpdpassword", "")
+            correctauth = "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdusername", "") + \
+                    "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdpassword", "")
             logger.debug("authstring: %s / %s", correctauth, decoded)
             if correctauth == decoded:
                 self.auth = True
@@ -80,7 +82,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
             0, # retryNumber
             'sent', # folder
             2, # encodingtype
-            min(shared.config.getint('bitmessagesettings', 'ttl'), 86400 * 2) # not necessary to have a TTL higher than 2 days
+            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2) # not necessary to have a TTL higher than 2 days
         )
 
         shared.workerQueue.put(('sendmessage', toAddress))
@@ -112,7 +114,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
             sender, domain = p.sub(r'\1', mailfrom).split("@")
             if domain != SMTPDOMAIN:
                 raise Exception("Bad domain %s", domain)
-            if sender not in shared.config.sections():
+            if sender not in BMConfigParser().sections():
                 raise Exception("Nonexisting user %s", sender)
         except Exception as err:
             logger.debug("Bad envelope from %s: %s", mailfrom, repr(err))
@@ -122,7 +124,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
                 sender, domain = msg_from.split("@")
                 if domain != SMTPDOMAIN:
                     raise Exception("Bad domain %s", domain)
-                if sender not in shared.config.sections():
+                if sender not in BMConfigParser().sections():
                     raise Exception("Nonexisting user %s", sender)
             except Exception as err:
                 logger.error("Bad headers from %s: %s", msg_from, repr(err))
@@ -163,7 +165,7 @@ class smtpServer(threading.Thread, StoppableThread):
         self.server.close()
         return
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#        for ip in ('127.0.0.1', shared.config.get('bitmessagesettings', 'onionbindip')):
+#        for ip in ('127.0.0.1', BMConfigParser().get('bitmessagesettings', 'onionbindip')):
         for ip in ('127.0.0.1'):
             try:
                 s.connect((ip, LISTENPORT))

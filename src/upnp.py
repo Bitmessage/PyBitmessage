@@ -6,6 +6,7 @@ import socket
 from struct import unpack, pack
 import threading
 import time
+from configparser import BMConfigParser
 from helper_threading import *
 import shared
 import tr
@@ -175,9 +176,9 @@ class uPnPThread(threading.Thread, StoppableThread):
 
     def __init__ (self):
         threading.Thread.__init__(self, name="uPnPThread")
-        self.localPort = shared.config.getint('bitmessagesettings', 'port')
+        self.localPort = BMConfigParser().getint('bitmessagesettings', 'port')
         try:
-            self.extPort = shared.config.getint('bitmessagesettings', 'extport')
+            self.extPort = BMConfigParser().getint('bitmessagesettings', 'extport')
         except:
             self.extPort = None
         self.localIP = self.getLocalIP()
@@ -195,7 +196,7 @@ class uPnPThread(threading.Thread, StoppableThread):
         logger.debug("Starting UPnP thread")
         logger.debug("Local IP: %s", self.localIP)
         lastSent = 0
-        while shared.shutdown == 0 and shared.safeConfigGetBoolean('bitmessagesettings', 'upnp'):
+        while shared.shutdown == 0 and BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp'):
             if time.time() - lastSent > self.sendSleep and len(self.routers) == 0:
                 try:
                     self.sendSearchRouter()
@@ -203,7 +204,7 @@ class uPnPThread(threading.Thread, StoppableThread):
                     pass
                 lastSent = time.time()
             try:
-                while shared.shutdown == 0 and shared.safeConfigGetBoolean('bitmessagesettings', 'upnp'):
+                while shared.shutdown == 0 and BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp'):
                     resp,(ip,port) = self.sock.recvfrom(1000)
                     if resp is None:
                         continue
@@ -279,7 +280,7 @@ class uPnPThread(threading.Thread, StoppableThread):
                 router.AddPortMapping(extPort, self.localPort, localIP, 'TCP', 'BitMessage')
                 shared.extPort = extPort
                 self.extPort = extPort
-                shared.config.set('bitmessagesettings', 'extport', str(extPort))
+                BMConfigParser().set('bitmessagesettings', 'extport', str(extPort))
                 break
             except UPnPError:
                 logger.debug("UPnP error: ", exc_info=True)

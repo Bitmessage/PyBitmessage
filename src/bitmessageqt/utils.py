@@ -3,6 +3,7 @@ import hashlib
 import os
 import shared
 from addresses import addBMIfNotPresent
+from configparser import BMConfigParser
 
 str_broadcast_subscribers = '[Broadcast subscribers]'
 str_chan = '[chan]'
@@ -15,7 +16,7 @@ def identiconize(address):
     # 3fd4bf901b9d4ea1394f0fb358725b28
     
     try:
-        identicon_lib = shared.config.get('bitmessagesettings', 'identiconlib')
+        identicon_lib = BMConfigParser().get('bitmessagesettings', 'identiconlib')
     except:
         # default to qidenticon_two_x
         identicon_lib = 'qidenticon_two_x'
@@ -23,9 +24,9 @@ def identiconize(address):
     # As an 'identiconsuffix' you could put "@bitmessge.ch" or "@bm.addr" to make it compatible with other identicon generators. (Note however, that E-Mail programs might convert the BM-address to lowercase first.)
     # It can be used as a pseudo-password to salt the generation of the identicons to decrease the risk
     # of attacks where someone creates an address to mimic someone else's identicon.
-    identiconsuffix = shared.config.get('bitmessagesettings', 'identiconsuffix')
+    identiconsuffix = BMConfigParser().get('bitmessagesettings', 'identiconsuffix')
     
-    if not shared.config.getboolean('bitmessagesettings', 'useidenticons'):
+    if not BMConfigParser().getboolean('bitmessagesettings', 'useidenticons'):
         idcon = QtGui.QIcon()
         return idcon
     

@@ -8,10 +8,12 @@ import random
 import sys
 import socket
 
+from configparser import BMConfigParser
 from helper_generic import addDataPadding
 from class_objectHashHolder import *
 from addresses import *
 from debug import logger
+import protocol
 
 # Every connection to a peer has a sendDataThread (and also a
 # receiveDataThread).
@@ -53,7 +55,7 @@ class sendDataThread(threading.Thread):
 
 
     def sendVersionMessage(self):
-        datatosend = shared.assembleVersionMessage(
+        datatosend = protocol.assembleVersionMessage(
             self.peer.host, self.peer.port, self.streamNumber, not self.initiatedConnection)  # the IP and port of the remote host, and my streamNumber.
 
         logger.debug('Sending version packet: ' + repr(datatosend))
@@ -67,10 +69,10 @@ class sendDataThread(threading.Thread):
         self.versionSent = 1
 
     def sendBytes(self, data):
-        if shared.config.getint('bitmessagesettings', 'maxuploadrate') == 0:
+        if BMConfigParser().getint('bitmessagesettings', 'maxuploadrate') == 0:
             uploadRateLimitBytes = 999999999 # float("inf") doesn't work
         else:
-            uploadRateLimitBytes = shared.config.getint('bitmessagesettings', 'maxuploadrate') * 1000
+            uploadRateLimitBytes = BMConfigParser().getint('bitmessagesettings', 'maxuploadrate') * 1000
         with shared.sendDataLock:
             while data:
                 while shared.numberOfBytesSentLastSecond >= uploadRateLimitBytes:
@@ -83,11 +85,11 @@ class sendDataThread(threading.Thread):
                         # If the user raises or lowers the uploadRateLimit then we should make use of
                         # the new setting. If we are hitting the limit then we'll check here about 
                         # once per second.
-                        if shared.config.getint('bitmessagesettings', 'maxuploadrate') == 0:
+                        if BMConfigParser().getint('bitmessagesettings', 'maxuploadrate') == 0:
                             uploadRateLimitBytes = 999999999 # float("inf") doesn't work
                         else:
-                            uploadRateLimitBytes = shared.config.getint('bitmessagesettings', 'maxuploadrate') * 1000
-                if ((self.services & shared.NODE_SSL == shared.NODE_SSL) and
+                            uploadRateLimitBytes = BMConfigParser().getint('bitmessagesettings', 'maxuploadrate') * 1000
+                if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
                     self.connectionIsOrWasFullyEstablished and
                     shared.haveSSL(not self.initiatedConnection)):
                     amountSent = self.sslSock.send(data[:1000])
@@ -134,11 +136,11 @@ class sendDataThread(threading.Thread):
                             payload += pack('>I', streamNumber)
                             payload += pack(
                                 '>q', services)  # service bit flags offered by this node
-                            payload += shared.encodeHost(host)
+                            payload += protocol.encodeHost(host)
                             payload += pack('>H', port)
     
                         payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
-                        packet = shared.CreatePacket('addr', payload)
+                        packet = protocol.CreatePacket('addr', payload)
                         try:
                             self.sendBytes(packet)
                         except:
@@ -154,7 +156,7 @@ class sendDataThread(threading.Thread):
                                 payload += hash
                         if payload != '':
                             payload = encodeVarint(len(payload)/32) + payload
-                            packet = shared.CreatePacket('inv', payload)
+                            packet = protocol.CreatePacket('inv', payload)
                             try:
                                 self.sendBytes(packet)
                             except:
@@ -165,7 +167,7 @@ class sendDataThread(threading.Thread):
                     if self.lastTimeISentData < (int(time.time()) - 298):
                         # Send out a pong message to keep the connection alive.
                         logger.debug('Sending pong to ' + str(self.peer) + ' to keep connection alive.')
-                        packet = shared.CreatePacket('pong')
+                        packet = protocol.CreatePacket('pong')
                         try:
                             self.sendBytes(packet)
                         except:

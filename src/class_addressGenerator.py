@@ -7,6 +7,7 @@ import ctypes
 import hashlib
 import highlevelcrypto
 from addresses import *
+from configparser import BMConfigParser
 from debug import logger
 from helper_threading import *
 from pyelliptic import arithmetic
@@ -48,7 +49,7 @@ class addressGenerator(threading.Thread, StoppableThread):
             elif len(queueValue) == 7:
                 command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe = queueValue
                 try:
-                    numberOfNullBytesDemandedOnFrontOfRipeHash = shared.config.getint(
+                    numberOfNullBytesDemandedOnFrontOfRipeHash = BMConfigParser().getint(
                         'bitmessagesettings', 'numberofnullbytesonaddress')
                 except:
                     if eighteenByteRipe:
@@ -58,7 +59,7 @@ class addressGenerator(threading.Thread, StoppableThread):
             elif len(queueValue) == 9:
                 command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes = queueValue
                 try:
-                    numberOfNullBytesDemandedOnFrontOfRipeHash = shared.config.getint(
+                    numberOfNullBytesDemandedOnFrontOfRipeHash = BMConfigParser().getint(
                         'bitmessagesettings', 'numberofnullbytesonaddress')
                 except:
                     if eighteenByteRipe:
@@ -74,12 +75,12 @@ class addressGenerator(threading.Thread, StoppableThread):
                 sys.stderr.write(
                     'Program error: For some reason the address generator queue has been given a request to create at least one version %s address which it cannot do.\n' % addressVersionNumber)
             if nonceTrialsPerByte == 0:
-                nonceTrialsPerByte = shared.config.getint(
+                nonceTrialsPerByte = BMConfigParser().getint(
                     'bitmessagesettings', 'defaultnoncetrialsperbyte')
             if nonceTrialsPerByte < shared.networkDefaultProofOfWorkNonceTrialsPerByte:
                 nonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
             if payloadLengthExtraBytes == 0:
-                payloadLengthExtraBytes = shared.config.getint(
+                payloadLengthExtraBytes = BMConfigParser().getint(
                     'bitmessagesettings', 'defaultpayloadlengthextrabytes')
             if payloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
                 payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
@@ -128,17 +129,17 @@ class addressGenerator(threading.Thread, StoppableThread):
                 privEncryptionKeyWIF = arithmetic.changebase(
                     privEncryptionKey + checksum, 256, 58)
 
-                shared.config.add_section(address)
-                shared.config.set(address, 'label', label)
-                shared.config.set(address, 'enabled', 'true')
-                shared.config.set(address, 'decoy', 'false')
-                shared.config.set(address, 'noncetrialsperbyte', str(
+                BMConfigParser().add_section(address)
+                BMConfigParser().set(address, 'label', label)
+                BMConfigParser().set(address, 'enabled', 'true')
+                BMConfigParser().set(address, 'decoy', 'false')
+                BMConfigParser().set(address, 'noncetrialsperbyte', str(
                     nonceTrialsPerByte))
-                shared.config.set(address, 'payloadlengthextrabytes', str(
+                BMConfigParser().set(address, 'payloadlengthextrabytes', str(
                     payloadLengthExtraBytes))
-                shared.config.set(
+                BMConfigParser().set(
                     address, 'privSigningKey', privSigningKeyWIF)
-                shared.config.set(
+                BMConfigParser().set(
                     address, 'privEncryptionKey', privEncryptionKeyWIF)
                 shared.writeKeysFile()
 
@@ -233,7 +234,7 @@ class addressGenerator(threading.Thread, StoppableThread):
 
                         
                         try:
-                            shared.config.add_section(address)
+                            BMConfigParser().add_section(address)
                             addressAlreadyExists = False
                         except:
                             addressAlreadyExists = True
@@ -244,18 +245,18 @@ class addressGenerator(threading.Thread, StoppableThread):
                                 'updateStatusBar', tr._translate("MainWindow","%1 is already in 'Your Identities'. Not adding it again.").arg(address)))
                         else:
                             logger.debug('label: %s' % label)
-                            shared.config.set(address, 'label', label)
-                            shared.config.set(address, 'enabled', 'true')
-                            shared.config.set(address, 'decoy', 'false')
+                            BMConfigParser().set(address, 'label', label)
+                            BMConfigParser().set(address, 'enabled', 'true')
+                            BMConfigParser().set(address, 'decoy', 'false')
                             if command == 'joinChan' or command == 'createChan':
-                                shared.config.set(address, 'chan', 'true')
-                            shared.config.set(address, 'noncetrialsperbyte', str(
+                                BMConfigParser().set(address, 'chan', 'true')
+                            BMConfigParser().set(address, 'noncetrialsperbyte', str(
                                 nonceTrialsPerByte))
-                            shared.config.set(address, 'payloadlengthextrabytes', str(
+                            BMConfigParser().set(address, 'payloadlengthextrabytes', str(
                                 payloadLengthExtraBytes))
-                            shared.config.set(
+                            BMConfigParser().set(
                                 address, 'privSigningKey', privSigningKeyWIF)
-                            shared.config.set(
+                            BMConfigParser().set(
                                 address, 'privEncryptionKey', privEncryptionKeyWIF)
                             shared.writeKeysFile()
 
@@ -278,7 +279,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                                     'sendOutOrStoreMyV4Pubkey', address))
                             shared.UISignalQueue.put((
                                 'updateStatusBar', tr._translate("MainWindow", "Done generating address")))
-                    elif saveAddressToDisk and not live and not shared.config.has_section(address):
+                    elif saveAddressToDisk and not live and not BMConfigParser().has_section(address):
                         listOfNewAddressesToSendOutThroughTheAPI.append(address)
 
                 # Done generating addresses.

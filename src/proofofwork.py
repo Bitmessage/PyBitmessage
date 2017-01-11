@@ -6,6 +6,7 @@ from struct import unpack, pack
 from subprocess import call
 import sys
 import time
+from configparser import BMConfigParser
 from debug import logger
 import shared
 import openclpow
@@ -58,7 +59,7 @@ def _doFastPoW(target, initialHash):
     except:
         pool_size = 4
     try:
-        maxCores = shared.config.getint('bitmessagesettings', 'maxcores')
+        maxCores = BMConfigParser().getint('bitmessagesettings', 'maxcores')
     except:
         maxCores = 99999
     if pool_size > maxCores:

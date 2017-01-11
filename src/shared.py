@@ -1,6 +1,5 @@
 ﻿from __future__ import division
 
-softwareVersion = '0.6.1'
 verbose = 1
 maximumAgeOfAnObjectThatIAmWillingToAccept = 216000  # This is obsolete with the change to protocol v3 but the singleCleaner thread still hasn't been updated so we need this a little longer.
 lengthOfTimeToHoldOnToAllPubkeys = 2419200  # Equals 4 weeks. You could make this longer if you want but making it shorter would not be advisable because there is a very small possibility that it could keep you from obtaining a needed pubkey for a period of time.
@@ -24,7 +23,6 @@ import time
 import shutil  # used for moving the data folder and copying keys.dat
 import datetime
 from os import path, environ
-from struct import Struct
 import traceback
 from binascii import hexlify
 
@@ -40,7 +38,6 @@ from helper_threading import *
 from inventory import Inventory
 
 
-config = BMConfigParser()
 myECCryptorObjects = {}
 MyECSubscriptionCryptorObjects = {}
 myAddressesByHash = {} #The key in this dictionary is the RIPE hash which is encoded in an address and value is the address itself.
@@ -68,9 +65,6 @@ alreadyAttemptedConnectionsListLock = threading.Lock()
 alreadyAttemptedConnectionsListResetTime = int(
     time.time())  # used to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
 numberOfObjectsThatWeHaveYetToGetPerPeer = {}
-neededPubkeys = {}
-eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
-    '>Q', random.randrange(1, 18446744073709551615))
 successfullyDecryptMessageTimings = [
     ]  # A list of the amounts of time it took to successfully decrypt msg messages
 apiAddressGeneratorReturnQueue = Queue.Queue(
@@ -124,109 +118,6 @@ frozen = getattr(sys,'frozen', None)
 # it will sync with the network a lot faster without compromising
 # security.
 trustedPeer = None
-
-# For UPnP
-extPort = None
-
-# for Tor hidden service
-socksIP = None
-
-#Compiled struct for packing/unpacking headers
-#New code should use CreatePacket instead of Header.pack
-Header = Struct('!L12sL4s')
-
-#Service flags
-NODE_NETWORK = 1
-NODE_SSL = 2
-
-#Bitfield flags
-BITFIELD_DOESACK = 1
-
-#Create a packet
-def CreatePacket(command, payload=''):
-    payload_length = len(payload)
-    checksum = hashlib.sha512(payload).digest()[0:4]
-    
-    b = bytearray(Header.size + payload_length)
-    Header.pack_into(b, 0, 0xE9BEB4D9, command, payload_length, checksum)
-    b[Header.size:] = payload
-    return bytes(b)
-
-
-def encodeHost(host):
-    if host.find('.onion') > -1:
-        return '\xfd\x87\xd8\x7e\xeb\x43' + base64.b32decode(host.split(".")[0], True)
-    elif host.find(':') == -1:
-        return '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + \
-            socket.inet_aton(host)
-    else:
-        return socket.inet_pton(socket.AF_INET6, host)
-
-def haveSSL(server = False):
-    # python < 2.7.9's ssl library does not support ECDSA server due to missing initialisation of available curves, but client works ok
-    if server == False:
-        return True
-    elif sys.version_info >= (2,7,9):
-        return True
-    return False
-
-def checkSocksIP(host):
-    try:
-        if socksIP is None or not socksIP:
-            socksIP = socket.gethostbyname(config.get("bitmessagesettings", "sockshostname"))
-    except NameError:
-       socksIP = socket.gethostbyname(config.get("bitmessagesettings", "sockshostname"))
-    return socksIP == host
-        
-def assembleVersionMessage(remoteHost, remotePort, myStreamNumber, server = False):
-    payload = ''
-    payload += pack('>L', 3)  # protocol version.
-    payload += pack('>q', NODE_NETWORK|(NODE_SSL if haveSSL(server) else 0))  # bitflags of the services I offer.
-    payload += pack('>q', int(time.time()))
-
-    payload += pack(
-        '>q', 1)  # boolservices of remote connection; ignored by the remote host.
-    if checkSocksIP(remoteHost) and server: # prevent leaking of tor outbound IP
-        payload += encodeHost('127.0.0.1')
-        payload += pack('>H', 8444)
-    else:
-        payload += encodeHost(remoteHost)
-        payload += pack('>H', remotePort)  # remote IPv6 and port
-
-    payload += pack('>q', 1)  # bitflags of the services I offer.
-    payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
-        '>L', 2130706433)  # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
-    # we have a separate extPort and
-    # incoming over clearnet or
-    # outgoing through clearnet
-    if safeConfigGetBoolean('bitmessagesettings', 'upnp') and extPort \
-        and ((server and not checkSocksIP(remoteHost)) or \
-        (config.get("bitmessagesettings", "socksproxytype") == "none" and not server)):
-        payload += pack('>H', extPort)
-    elif checkSocksIP(remoteHost) and server: # incoming connection over Tor
-        payload += pack('>H', shared.config.getint('bitmessagesettings', 'onionport'))
-    else: # no extPort and not incoming over Tor
-        payload += pack('>H', shared.config.getint('bitmessagesettings', 'port'))
-
-    random.seed()
-    payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
-    userAgent = '/PyBitmessage:' + shared.softwareVersion + '/'
-    payload += encodeVarint(len(userAgent))
-    payload += userAgent
-    payload += encodeVarint(
-        1)  # The number of streams about which I care. PyBitmessage currently only supports 1 per connection.
-    payload += encodeVarint(myStreamNumber)
-
-    return CreatePacket('version', payload)
-
-def assembleErrorMessage(fatal=0, banTime=0, inventoryVector='', errorText=''):
-    payload = encodeVarint(fatal)
-    payload += encodeVarint(banTime)
-    payload += encodeVarint(len(inventoryVector))
-    payload += inventoryVector
-    payload += encodeVarint(len(errorText))
-    payload += errorText
-    return CreatePacket('error', payload)
 
 def lookupExeFolder():
     if frozen:
@@ -318,18 +209,6 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
         return True
     return False
 
-def safeConfigGetBoolean(section,field):
-    try:
-        return config.getboolean(section,field)
-    except Exception, err:
-        return False
-
-def safeConfigGet(section, option, default = None):
-    if config.has_option (section, option):
-        return config.get(section, option)
-    else:
-        return default
-
 def decodeWalletImportFormat(WIFstring):
     fullString = arithmetic.changebase(WIFstring,58,256)
     privkey = fullString[:-4]
@@ -358,11 +237,11 @@ def reloadMyAddressHashes():
     #myPrivateKeys.clear()
 
     keyfileSecure = checkSensitiveFilePermissions(appdata + 'keys.dat')
-    configSections = config.sections()
+    configSections = BMConfigParser().sections()
     hasEnabledKeys = False
     for addressInKeysFile in configSections:
         if addressInKeysFile <> 'bitmessagesettings':
-            isEnabled = config.getboolean(addressInKeysFile, 'enabled')
+            isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
             if isEnabled:
                 hasEnabledKeys = True
                 status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
@@ -370,7 +249,7 @@ def reloadMyAddressHashes():
                     # Returns a simple 32 bytes of information encoded in 64 Hex characters,
                     # or null if there was an error.
                     privEncryptionKey = hexlify(decodeWalletImportFormat(
-                            config.get(addressInKeysFile, 'privencryptionkey')))
+                            BMConfigParser().get(addressInKeysFile, 'privencryptionkey')))
 
                     if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
                         myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
@@ -473,7 +352,7 @@ def doCleanShutdown():
             logger.debug("Waiting for thread %s", thread.name)
             thread.join()
 
-    if safeConfigGetBoolean('bitmessagesettings','daemon'):
+    if BMConfigParser().safeGetBoolean('bitmessagesettings','daemon'):
         logger.info('Clean shutdown complete.')
         thisapp.cleanup()
         os._exit(0)
@@ -881,7 +760,7 @@ def writeKeysFile():
         fileNameExisted = False
     # write the file
     with open(fileName, 'wb') as configfile:
-        shared.config.write(configfile)
+        BMConfigParser().write(configfile)
     # delete the backup
     if fileNameExisted:
         os.remove(fileNameBak)
