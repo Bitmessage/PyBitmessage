@@ -7,12 +7,13 @@ import time
 from configparser import BMConfigParser
 from debug import logger
 import socks
+import state
 
 def knownNodes():
     try:
         # We shouldn't have to use the shared.knownNodesLock because this had
         # better be the only thread accessing knownNodes right now.
-        pickleFile = open(shared.appdata + 'knownnodes.dat', 'rb')
+        pickleFile = open(state.appdata + 'knownnodes.dat', 'rb')
         loadedKnownNodes = pickle.load(pickleFile)
         pickleFile.close()
         # The old format of storing knownNodes was as a 'host: (port, time)'
@@ -28,7 +29,7 @@ def knownNodes():
                     peer, lastseen = node_tuple
                 shared.knownNodes[stream][peer] = lastseen
     except:
-        shared.knownNodes = defaultKnownNodes.createDefaultKnownNodes(shared.appdata)
+        shared.knownNodes = defaultKnownNodes.createDefaultKnownNodes(state.appdata)
     # your own onion address, if setup
     if BMConfigParser().has_option('bitmessagesettings', 'onionhostname') and ".onion" in BMConfigParser().get('bitmessagesettings', 'onionhostname'):
         shared.knownNodes[1][shared.Peer(BMConfigParser().get('bitmessagesettings', 'onionhostname'), BMConfigParser().getint('bitmessagesettings', 'onionport'))] = int(time.time())

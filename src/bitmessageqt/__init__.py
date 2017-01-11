@@ -76,7 +76,10 @@ from dialogs import AddAddressDialog
 from class_objectHashHolder import objectHashHolder
 from class_singleWorker import singleWorker
 from helper_generic import powQueueSize, invQueueSize
+import paths
 from proofofwork import getPowType
+import protocol
+import state
 from statusbar import BMStatusBar
 from version import softwareVersion
 
@@ -100,13 +103,13 @@ def change_translation(newlocale):
         pass
 
     qmytranslator = QtCore.QTranslator()
-    translationpath = os.path.join (shared.codePath(), 'translations', 'bitmessage_' + newlocale)
+    translationpath = os.path.join (paths.codePath(), 'translations', 'bitmessage_' + newlocale)
     qmytranslator.load(translationpath)
     QtGui.QApplication.installTranslator(qmytranslator)
 
     qsystranslator = QtCore.QTranslator()
-    if shared.frozen:
-        translationpath = os.path.join (shared.codePath(), 'translations', 'qt_' + newlocale)
+    if paths.frozen:
+        translationpath = os.path.join (paths.codePath(), 'translations', 'qt_' + newlocale)
     else:
         translationpath = os.path.join (str(QtCore.QLibraryInfo.location(QtCore.QLibraryInfo.TranslationsPath)), 'qt_' + newlocale)
     qsystranslator.load(translationpath)
@@ -1360,9 +1363,9 @@ class MyForm(settingsmixin.SMainWindow):
         # if the address had a known label in the address book
         if label is not None:
             # Does a sound file exist for this particular contact?
-            if (os.path.isfile(shared.appdata + 'sounds/' + label + '.wav') or
-                os.path.isfile(shared.appdata + 'sounds/' + label + '.mp3')):
-                soundFilename = shared.appdata + 'sounds/' + label
+            if (os.path.isfile(state.appdata + 'sounds/' + label + '.wav') or
+                os.path.isfile(state.appdata + 'sounds/' + label + '.mp3')):
+                soundFilename = state.appdata + 'sounds/' + label
 
         # Avoid making sounds more frequently than the threshold.
         # This suppresses playing sounds repeatedly when there
@@ -1378,19 +1381,19 @@ class MyForm(settingsmixin.SMainWindow):
         if soundFilename is None:
             # the sound is for an address which exists in the address book
             if category is self.SOUND_KNOWN:
-                soundFilename = shared.appdata + 'sounds/known'
+                soundFilename = state.appdata + 'sounds/known'
             # the sound is for an unknown address
             elif category is self.SOUND_UNKNOWN:
-                soundFilename = shared.appdata + 'sounds/unknown'
+                soundFilename = state.appdata + 'sounds/unknown'
             # initial connection sound
             elif category is self.SOUND_CONNECTED:
-                soundFilename = shared.appdata + 'sounds/connected'
+                soundFilename = state.appdata + 'sounds/connected'
             # disconnected sound
             elif category is self.SOUND_DISCONNECTED:
-                soundFilename = shared.appdata + 'sounds/disconnected'
+                soundFilename = state.appdata + 'sounds/disconnected'
             # sound when the connection status becomes green
             elif category is self.SOUND_CONNECTION_GREEN:
-                soundFilename = shared.appdata + 'sounds/green'            
+                soundFilename = state.appdata + 'sounds/green'            
 
         if soundFilename is not None and play is True:
             if not self.isConnectionSound(category):
@@ -1526,7 +1529,7 @@ class MyForm(settingsmixin.SMainWindow):
     # menu button 'manage keys'
     def click_actionManageKeys(self):
         if 'darwin' in sys.platform or 'linux' in sys.platform:
-            if shared.appdata == '':
+            if state.appdata == '':
                 # reply = QtGui.QMessageBox.information(self, 'keys.dat?','You
                 # may manage your keys by editing the keys.dat file stored in
                 # the same directory as this program. It is important that you
@@ -1536,14 +1539,14 @@ class MyForm(settingsmixin.SMainWindow):
 
             else:
                 QtGui.QMessageBox.information(self, 'keys.dat?', _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file.").arg(shared.appdata), QMessageBox.Ok)
+                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file.").arg(state.appdata), QMessageBox.Ok)
         elif sys.platform == 'win32' or sys.platform == 'win64':
-            if shared.appdata == '':
+            if state.appdata == '':
                 reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open keys.dat?"), _translate(
                     "MainWindow", "You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             else:
                 reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open keys.dat?"), _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)").arg(shared.appdata), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)").arg(state.appdata), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
                 shared.openKeysFile()
 
@@ -2409,10 +2412,10 @@ class MyForm(settingsmixin.SMainWindow):
             # Demanded difficulty tab
             if float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) >= 1:
                 BMConfigParser().set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(int(float(
-                    self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
+                    self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) * protocol.networkDefaultProofOfWorkNonceTrialsPerByte)))
             if float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) >= 1:
                 BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(int(float(
-                    self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
+                    self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * protocol.networkDefaultPayloadLengthExtraBytes)))
 
             if self.settingsDialogInstance.ui.comboBoxOpenCL.currentText().toUtf8() != BMConfigParser().safeGet("bitmessagesettings", "opencl"):
                 BMConfigParser().set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.comboBoxOpenCL.currentText()))
@@ -2421,18 +2424,18 @@ class MyForm(settingsmixin.SMainWindow):
             
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) == 0:
                 if BMConfigParser().get('bitmessagesettings','maxacceptablenoncetrialsperbyte') != str(int(float(
-                    self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)):
+                    self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) * protocol.networkDefaultProofOfWorkNonceTrialsPerByte)):
                     # the user changed the max acceptable total difficulty
                     acceptableDifficultyChanged = True
                     BMConfigParser().set('bitmessagesettings', 'maxacceptablenoncetrialsperbyte', str(int(float(
-                        self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
+                        self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) * protocol.networkDefaultProofOfWorkNonceTrialsPerByte)))
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0:
                 if BMConfigParser().get('bitmessagesettings','maxacceptablepayloadlengthextrabytes') != str(int(float(
-                    self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)):
+                    self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * protocol.networkDefaultPayloadLengthExtraBytes)):
                     # the user changed the max acceptable small message difficulty
                     acceptableDifficultyChanged = True
                     BMConfigParser().set('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', str(int(float(
-                        self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * shared.networkDefaultPayloadLengthExtraBytes)))
+                        self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * protocol.networkDefaultPayloadLengthExtraBytes)))
             if acceptableDifficultyChanged:
                 # It might now be possible to send msgs which were previously marked as toodifficult. 
                 # Let us change them to 'msgqueued'. The singleWorker will try to send them and will again
@@ -2493,21 +2496,21 @@ class MyForm(settingsmixin.SMainWindow):
                 # startup for linux
                 pass
 
-            if shared.appdata != shared.lookupExeFolder() and self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we are NOT using portable mode now but the user selected that we should...
+            if state.appdata != paths.lookupExeFolder() and self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we are NOT using portable mode now but the user selected that we should...
                 # Write the keys.dat file to disk in the new location
                 sqlStoredProcedure('movemessagstoprog')
-                with open(shared.lookupExeFolder() + 'keys.dat', 'wb') as configfile:
+                with open(paths.lookupExeFolder() + 'keys.dat', 'wb') as configfile:
                     BMConfigParser().write(configfile)
                 # Write the knownnodes.dat file to disk in the new location
                 shared.knownNodesLock.acquire()
-                output = open(shared.lookupExeFolder() + 'knownnodes.dat', 'wb')
+                output = open(paths.lookupExeFolder() + 'knownnodes.dat', 'wb')
                 pickle.dump(shared.knownNodes, output)
                 output.close()
                 shared.knownNodesLock.release()
-                os.remove(shared.appdata + 'keys.dat')
-                os.remove(shared.appdata + 'knownnodes.dat')
-                previousAppdataLocation = shared.appdata
-                shared.appdata = shared.lookupExeFolder()
+                os.remove(state.appdata + 'keys.dat')
+                os.remove(state.appdata + 'knownnodes.dat')
+                previousAppdataLocation = state.appdata
+                state.appdata = paths.lookupExeFolder()
                 debug.restartLoggingInUpdatedAppdataLocation()
                 try:
                     os.remove(previousAppdataLocation + 'debug.log')
@@ -2515,25 +2518,25 @@ class MyForm(settingsmixin.SMainWindow):
                 except:
                     pass
 
-            if shared.appdata == shared.lookupExeFolder() and not self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we ARE using portable mode now but the user selected that we shouldn't...
-                shared.appdata = shared.lookupAppdataFolder()
-                if not os.path.exists(shared.appdata):
-                    os.makedirs(shared.appdata)
+            if state.appdata == paths.lookupExeFolder() and not self.settingsDialogInstance.ui.checkBoxPortableMode.isChecked():  # If we ARE using portable mode now but the user selected that we shouldn't...
+                state.appdata = paths.lookupAppdataFolder()
+                if not os.path.exists(state.appdata):
+                    os.makedirs(state.appdata)
                 sqlStoredProcedure('movemessagstoappdata')
                 # Write the keys.dat file to disk in the new location
                 shared.writeKeysFile()
                 # Write the knownnodes.dat file to disk in the new location
                 shared.knownNodesLock.acquire()
-                output = open(shared.appdata + 'knownnodes.dat', 'wb')
+                output = open(state.appdata + 'knownnodes.dat', 'wb')
                 pickle.dump(shared.knownNodes, output)
                 output.close()
                 shared.knownNodesLock.release()
-                os.remove(shared.lookupExeFolder() + 'keys.dat')
-                os.remove(shared.lookupExeFolder() + 'knownnodes.dat')
+                os.remove(paths.lookupExeFolder() + 'keys.dat')
+                os.remove(paths.lookupExeFolder() + 'knownnodes.dat')
                 debug.restartLoggingInUpdatedAppdataLocation()
                 try:
-                    os.remove(shared.lookupExeFolder() + 'debug.log')
-                    os.remove(shared.lookupExeFolder() + 'debug.log.1')
+                    os.remove(paths.lookupExeFolder() + 'debug.log')
+                    os.remove(paths.lookupExeFolder() + 'debug.log.1')
                 except:
                     pass
 
@@ -3621,8 +3624,8 @@ class MyForm(settingsmixin.SMainWindow):
                 currentRow, 0).setIcon(avatarize(addressAtCurrentRow))
 
     def setAvatar(self, addressAtCurrentRow):
-        if not os.path.exists(shared.appdata + 'avatars/'):
-            os.makedirs(shared.appdata + 'avatars/')
+        if not os.path.exists(state.appdata + 'avatars/'):
+            os.makedirs(state.appdata + 'avatars/')
         hash = hashlib.md5(addBMIfNotPresent(addressAtCurrentRow)).hexdigest()
         extensions = ['PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM', 'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
         # http://pyqt.sourceforge.net/Docs/PyQt4/qimagereader.html#supportedImageFormats
@@ -3633,8 +3636,8 @@ class MyForm(settingsmixin.SMainWindow):
         for ext in extensions:
             filters += [ names[ext] + ' (*.' + ext.lower() + ')' ]
             all_images_filter += [ '*.' + ext.lower() ]
-            upper = shared.appdata + 'avatars/' + hash + '.' + ext.upper()
-            lower = shared.appdata + 'avatars/' + hash + '.' + ext.lower()
+            upper = state.appdata + 'avatars/' + hash + '.' + ext.upper()
+            lower = state.appdata + 'avatars/' + hash + '.' + ext.lower()
             if os.path.isfile(lower):
                 current_files += [lower]
             elif os.path.isfile(upper):
@@ -3643,7 +3646,7 @@ class MyForm(settingsmixin.SMainWindow):
         filters[1:1] = ['All files (*.*)']
         sourcefile = QFileDialog.getOpenFileName(self, _translate("MainWindow","Set avatar..."), filter = ';;'.join(filters))
         # determine the correct filename (note that avatars don't use the suffix)
-        destination = shared.appdata + 'avatars/' + hash + '.' + sourcefile.split('.')[-1]
+        destination = state.appdata + 'avatars/' + hash + '.' + sourcefile.split('.')[-1]
         exists = QtCore.QFile.exists(destination)
         if sourcefile == '':
             # ask for removal of avatar
@@ -4021,12 +4024,12 @@ class settingsDialog(QtGui.QDialog):
         self.ui.checkBoxReplyBelow.setChecked(
             BMConfigParser().safeGetBoolean('bitmessagesettings', 'replybelow'))
         
-        if shared.appdata == shared.lookupExeFolder():
+        if state.appdata == paths.lookupExeFolder():
             self.ui.checkBoxPortableMode.setChecked(True)
         else:
             try:
                 import tempfile
-                file = tempfile.NamedTemporaryFile(dir=shared.lookupExeFolder(), delete=True)
+                file = tempfile.NamedTemporaryFile(dir=paths.lookupExeFolder(), delete=True)
                 file.close # should autodelete
             except:
                 self.ui.checkBoxPortableMode.setDisabled(True)
@@ -4086,15 +4089,15 @@ class settingsDialog(QtGui.QDialog):
 
         # Demanded difficulty tab
         self.ui.lineEditTotalDifficulty.setText(str((float(BMConfigParser().getint(
-            'bitmessagesettings', 'defaultnoncetrialsperbyte')) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
+            'bitmessagesettings', 'defaultnoncetrialsperbyte')) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.ui.lineEditSmallMessageDifficulty.setText(str((float(BMConfigParser().getint(
-            'bitmessagesettings', 'defaultpayloadlengthextrabytes')) / shared.networkDefaultPayloadLengthExtraBytes)))
+            'bitmessagesettings', 'defaultpayloadlengthextrabytes')) / protocol.networkDefaultPayloadLengthExtraBytes)))
 
         # Max acceptable difficulty tab
         self.ui.lineEditMaxAcceptableTotalDifficulty.setText(str((float(BMConfigParser().getint(
-            'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / shared.networkDefaultProofOfWorkNonceTrialsPerByte)))
+            'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.ui.lineEditMaxAcceptableSmallMessageDifficulty.setText(str((float(BMConfigParser().getint(
-            'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / shared.networkDefaultPayloadLengthExtraBytes)))
+            'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / protocol.networkDefaultPayloadLengthExtraBytes)))
 
         # OpenCL
         if openclpow.openclAvailable():

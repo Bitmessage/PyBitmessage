@@ -15,7 +15,6 @@ from messagecompose import MessageCompose
 import settingsmixin
 from networkstatus import NetworkStatus
 from blacklist import Blacklist
-import shared
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8

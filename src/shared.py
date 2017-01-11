@@ -8,14 +8,11 @@ useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the
 
 
 # Libraries.
-import base64
 import collections
 import os
 import pickle
 import Queue
-import random
 from multiprocessing import active_children, Queue as mpQueue, Lock as mpLock
-import socket
 import sys
 import stat
 import threading
@@ -36,6 +33,8 @@ import shared
 from helper_sql import *
 from helper_threading import *
 from inventory import Inventory
+import protocol
+import state
 
 
 myECCryptorObjects = {}
@@ -52,9 +51,7 @@ parserLock = mpLock()
 addressGeneratorQueue = Queue.Queue()
 knownNodesLock = threading.Lock()
 knownNodes = {}
-sendDataQueues = [] #each sendData thread puts its queue in this list.
 printLock = threading.Lock()
-appdata = '' #holds the location of the application data storage directory
 statusIconColor = 'red'
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
 shutdown = 0 #Set to 1 by the doCleanShutdown function. Used to tell the proof of work worker threads to exit.
@@ -86,26 +83,16 @@ daemon = False
 needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it to disk eventually.
 maximumLengthOfTimeToBotherResendingMessages = 0
 objectProcessorQueue = ObjectProcessorQueue()  # receiveDataThreads dump objects they hear on the network into this queue to be processed.
-streamsInWhichIAmParticipating = {}
 timeOffsetWrongCount = 0
 
 # sanity check, prevent doing ridiculous PoW
 # 20 million PoWs equals approximately 2 days on dev's dual R9 290
 ridiculousDifficulty = 20000000
 
-#If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
-networkDefaultProofOfWorkNonceTrialsPerByte = 1000 #The amount of work that should be performed (and demanded) per byte of the payload.
-networkDefaultPayloadLengthExtraBytes = 1000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
-
 # Remember here the RPC port read from namecoin.conf so we can restore to
 # it as default whenever the user changes the "method" selection for
 # namecoin integration to "namecoind".
 namecoinDefaultRpcPort = "8336"
-
-# When using py2exe or py2app, the variable frozen is added to the sys
-# namespace.  This can be used to setup a different code path for 
-# binary distributions vs source distributions.
-frozen = getattr(sys,'frozen', None)
 
 # If the trustedpeer option is specified in keys.dat then this will
 # contain a Peer which will be connected to instead of using the
@@ -118,68 +105,6 @@ frozen = getattr(sys,'frozen', None)
 # it will sync with the network a lot faster without compromising
 # security.
 trustedPeer = None
-
-def lookupExeFolder():
-    if frozen:
-        if frozen == "macosx_app":
-            # targetdir/Bitmessage.app/Contents/MacOS/Bitmessage
-            exeFolder = path.dirname(path.dirname(path.dirname(path.dirname(sys.executable)))) + path.sep
-        else:
-            exeFolder = path.dirname(sys.executable) + path.sep
-    elif __file__:
-        exeFolder = path.dirname(__file__) + path.sep
-    else:
-        exeFolder = ''
-    return exeFolder
-
-def lookupAppdataFolder():
-    APPNAME = "PyBitmessage"
-    if "BITMESSAGE_HOME" in environ:
-        dataFolder = environ["BITMESSAGE_HOME"]
-        if dataFolder[-1] not in [os.path.sep, os.path.altsep]:
-            dataFolder += os.path.sep
-    elif sys.platform == 'darwin':
-        if "HOME" in environ:
-            dataFolder = path.join(os.environ["HOME"], "Library/Application Support/", APPNAME) + '/'
-        else:
-            stringToLog = 'Could not find home folder, please report this message and your OS X version to the BitMessage Github.'
-            if 'logger' in globals():
-                logger.critical(stringToLog)
-            else:
-                print stringToLog
-            sys.exit()
-
-    elif 'win32' in sys.platform or 'win64' in sys.platform:
-        dataFolder = path.join(environ['APPDATA'].decode(sys.getfilesystemencoding(), 'ignore'), APPNAME) + path.sep
-    else:
-        from shutil import move
-        try:
-            dataFolder = path.join(environ["XDG_CONFIG_HOME"], APPNAME)
-        except KeyError:
-            dataFolder = path.join(environ["HOME"], ".config", APPNAME)
-
-        # Migrate existing data to the proper location if this is an existing install
-        try:
-            move(path.join(environ["HOME"], ".%s" % APPNAME), dataFolder)
-            stringToLog = "Moving data folder to %s" % (dataFolder)
-            if 'logger' in globals():
-                logger.info(stringToLog)
-            else:
-                print stringToLog
-        except IOError:
-            # Old directory may not exist.
-            pass
-        dataFolder = dataFolder + '/'
-    return dataFolder
-    
-def codePath():
-    if frozen == "macosx_app":
-        codePath = os.environ.get("RESOURCEPATH")
-    elif frozen: # windows
-        codePath = sys._MEIPASS
-    else:    
-        codePath = os.path.dirname(__file__)
-    return codePath
 
 def isAddressInMyAddressBook(address):
     queryreturn = sqlQuery(
@@ -236,7 +161,7 @@ def reloadMyAddressHashes():
     myAddressesByTag.clear()
     #myPrivateKeys.clear()
 
-    keyfileSecure = checkSensitiveFilePermissions(appdata + 'keys.dat')
+    keyfileSecure = checkSensitiveFilePermissions(state.appdata + 'keys.dat')
     configSections = BMConfigParser().sections()
     hasEnabledKeys = False
     for addressInKeysFile in configSections:
@@ -262,7 +187,7 @@ def reloadMyAddressHashes():
                     logger.error('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2, 3, or 4.\n')
 
     if not keyfileSecure:
-        fixSensitiveFilePermissions(appdata + 'keys.dat', hasEnabledKeys)
+        fixSensitiveFilePermissions(state.appdata + 'keys.dat', hasEnabledKeys)
 
 def reloadBroadcastSendersForWhichImWatching():
     broadcastSendersForWhichImWatching.clear()
@@ -286,21 +211,6 @@ def reloadBroadcastSendersForWhichImWatching():
             privEncryptionKey = doubleHashOfAddressData[:32]
             MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
 
-def isProofOfWorkSufficient(data,
-                            nonceTrialsPerByte=0,
-                            payloadLengthExtraBytes=0):
-    if nonceTrialsPerByte < networkDefaultProofOfWorkNonceTrialsPerByte:
-        nonceTrialsPerByte = networkDefaultProofOfWorkNonceTrialsPerByte
-    if payloadLengthExtraBytes < networkDefaultPayloadLengthExtraBytes:
-        payloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
-    endOfLifeTime, = unpack('>Q', data[8:16])
-    TTL = endOfLifeTime - int(time.time())
-    if TTL < 300:
-        TTL = 300
-    POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
-                  :8] + hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
-    return POW <= 2 ** 64 / (nonceTrialsPerByte*(len(data) + payloadLengthExtraBytes + ((TTL*(len(data)+payloadLengthExtraBytes))/(2 ** 16))))
-
 def doCleanShutdown():
     global shutdown, thisapp
     shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
@@ -308,7 +218,7 @@ def doCleanShutdown():
         parserInputQueue.put(None, False)
     except Queue.Full:
         pass
-    broadcastToSendDataQueues((0, 'shutdown', 'no data'))   
+    protocol.broadcastToSendDataQueues((0, 'shutdown', 'no data'))   
     objectProcessorQueue.put(('checkShutdownVariable', 'no data'))
     for thread in threading.enumerate():
         if thread.isAlive() and isinstance(thread, StoppableThread):
@@ -316,7 +226,7 @@ def doCleanShutdown():
     
     knownNodesLock.acquire()
     UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
-    output = open(appdata + 'knownnodes.dat', 'wb')
+    output = open(state.appdata + 'knownnodes.dat', 'wb')
     logger.info('finished opening knownnodes.dat. Now pickle.dump')
     pickle.dump(knownNodes, output)
     logger.info('Completed pickle.dump. Closing output...')
@@ -358,14 +268,6 @@ def doCleanShutdown():
         os._exit(0)
     else:
         logger.info('Core shutdown complete.')
-
-# If you want to command all of the sendDataThreads to do something, like shutdown or send some data, this
-# function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are
-# responsible for putting their queue into (and out of) the sendDataQueues list.
-def broadcastToSendDataQueues(data):
-    # logger.debug('running broadcastToSendDataQueues')
-    for q in sendDataQueues:
-        q.put(data)
 
 def fixPotentiallyInvalidUTF8Data(text):
     try:
@@ -554,7 +456,7 @@ def checkAndShareObjectWithPeers(data):
         logger.info('The payload length of this object is too large (%s bytes). Ignoring it.' % len(data))
         return 0
     # Let us check to make sure that the proof of work is sufficient.
-    if not isProofOfWorkSufficient(data):
+    if not protocol.isProofOfWorkSufficient(data):
         logger.info('Proof of work is insufficient.')
         return 0
     
@@ -597,7 +499,7 @@ def _checkAndShareUndefinedObjectWithPeers(data):
     readPosition += objectVersionLength
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 9])
-    if not streamNumber in streamsInWhichIAmParticipating:
+    if not streamNumber in state.streamsInWhichIAmParticipating:
         logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
         return
     
@@ -609,7 +511,7 @@ def _checkAndShareUndefinedObjectWithPeers(data):
     Inventory()[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime,'')
     logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
-    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+    protocol.broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
     
     
 def _checkAndShareMsgWithPeers(data):
@@ -620,7 +522,7 @@ def _checkAndShareMsgWithPeers(data):
     readPosition += objectVersionLength
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 9])
-    if not streamNumber in streamsInWhichIAmParticipating:
+    if not streamNumber in state.streamsInWhichIAmParticipating:
         logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
         return
     readPosition += streamNumberLength
@@ -633,7 +535,7 @@ def _checkAndShareMsgWithPeers(data):
     Inventory()[inventoryHash] = (
         objectType, streamNumber, data, embeddedTime,'')
     logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
-    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+    protocol.broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's enqueue it to be processed ourselves.
     objectProcessorQueue.put((objectType,data))
@@ -651,7 +553,7 @@ def _checkAndShareGetpubkeyWithPeers(data):
     readPosition += addressVersionLength
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 10])
-    if not streamNumber in streamsInWhichIAmParticipating:
+    if not streamNumber in state.streamsInWhichIAmParticipating:
         logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
         return
     readPosition += streamNumberLength
@@ -666,7 +568,7 @@ def _checkAndShareGetpubkeyWithPeers(data):
         objectType, streamNumber, data, embeddedTime,'')
     # This getpubkey request is valid. Forward to peers.
     logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
-    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+    protocol.broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's queue it to be processed ourselves.
     objectProcessorQueue.put((objectType,data))
@@ -682,7 +584,7 @@ def _checkAndSharePubkeyWithPeers(data):
     streamNumber, varintLength = decodeVarint(
         data[readPosition:readPosition + 10])
     readPosition += varintLength
-    if not streamNumber in streamsInWhichIAmParticipating:
+    if not streamNumber in state.streamsInWhichIAmParticipating:
         logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
         return
     if addressVersion >= 4:
@@ -700,7 +602,7 @@ def _checkAndSharePubkeyWithPeers(data):
         objectType, streamNumber, data, embeddedTime, tag)
     # This object is valid. Forward it to peers.
     logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
-    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+    protocol.broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
 
     # Now let's queue it to be processed ourselves.
@@ -719,7 +621,7 @@ def _checkAndShareBroadcastWithPeers(data):
     if broadcastVersion >= 2:
         streamNumber, streamNumberLength = decodeVarint(data[readPosition:readPosition + 10])
         readPosition += streamNumberLength
-        if not streamNumber in streamsInWhichIAmParticipating:
+        if not streamNumber in state.streamsInWhichIAmParticipating:
             logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
             return
     if broadcastVersion >= 3:
@@ -736,19 +638,19 @@ def _checkAndShareBroadcastWithPeers(data):
         objectType, streamNumber, data, embeddedTime, tag)
     # This object is valid. Forward it to peers.
     logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
-    broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+    protocol.broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's queue it to be processed ourselves.
     objectProcessorQueue.put((objectType,data))
 
 def openKeysFile():
     if 'linux' in sys.platform:
-        subprocess.call(["xdg-open", shared.appdata + 'keys.dat'])
+        subprocess.call(["xdg-open", state.appdata + 'keys.dat'])
     else:
-        os.startfile(shared.appdata + 'keys.dat')
+        os.startfile(state.appdata + 'keys.dat')
 
 def writeKeysFile():
-    fileName = shared.appdata + 'keys.dat'
+    fileName = state.appdata + 'keys.dat'
     fileNameBak = fileName + "." + datetime.datetime.now().strftime("%Y%j%H%M%S%f") + '.bak'
     # create a backup copy to prevent the accidental loss due to the disk write failure
     try:

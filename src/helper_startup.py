@@ -10,6 +10,8 @@ import platform
 from distutils.version import StrictVersion
 
 from namecoin import ensureNamecoinOptions
+import paths
+import state
 
 storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may de-select Portable Mode in the settings if they want the config files to stay in the application data folder.
 
@@ -25,31 +27,31 @@ def _loadTrustedPeer():
     shared.trustedPeer = shared.Peer(host, int(port))
 
 def loadConfig():
-    if shared.appdata:
-        BMConfigParser().read(shared.appdata + 'keys.dat')
-        #shared.appdata must have been specified as a startup option.
+    if state.appdata:
+        BMConfigParser().read(state.appdata + 'keys.dat')
+        #state.appdata must have been specified as a startup option.
         try:
             BMConfigParser().get('bitmessagesettings', 'settingsversion')
-            print 'Loading config files from directory specified on startup: ' + shared.appdata
+            print 'Loading config files from directory specified on startup: ' + state.appdata
             needToCreateKeysFile = False
         except:
             needToCreateKeysFile = True
 
     else:
-        BMConfigParser().read(shared.lookupExeFolder() + 'keys.dat')
+        BMConfigParser().read(paths.lookupExeFolder() + 'keys.dat')
         try:
             BMConfigParser().get('bitmessagesettings', 'settingsversion')
             print 'Loading config files from same directory as program.'
             needToCreateKeysFile = False
-            shared.appdata = shared.lookupExeFolder()
+            state.appdata = paths.lookupExeFolder()
         except:
             # Could not load the keys.dat file in the program directory. Perhaps it
             # is in the appdata directory.
-            shared.appdata = shared.lookupAppdataFolder()
-            BMConfigParser().read(shared.appdata + 'keys.dat')
+            state.appdata = paths.lookupAppdataFolder()
+            BMConfigParser().read(state.appdata + 'keys.dat')
             try:
                 BMConfigParser().get('bitmessagesettings', 'settingsversion')
-                print 'Loading existing config files from', shared.appdata
+                print 'Loading existing config files from', state.appdata
                 needToCreateKeysFile = False
             except:
                 needToCreateKeysFile = True
@@ -90,9 +92,9 @@ def loadConfig():
         BMConfigParser().set(
             'bitmessagesettings', 'messagesencrypted', 'false')
         BMConfigParser().set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
-            shared.networkDefaultProofOfWorkNonceTrialsPerByte))
+            protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
         BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
-            shared.networkDefaultPayloadLengthExtraBytes))
+            protocol.networkDefaultPayloadLengthExtraBytes))
         BMConfigParser().set('bitmessagesettings', 'minimizeonclose', 'false')
         BMConfigParser().set(
             'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')
@@ -127,12 +129,12 @@ def loadConfig():
         if storeConfigFilesInSameDirectoryAsProgramByDefault:
             # Just use the same directory as the program and forget about
             # the appdata folder
-            shared.appdata = ''
+            state.appdata = ''
             print 'Creating new config files in same directory as program.'
         else:
-            print 'Creating new config files in', shared.appdata
-            if not os.path.exists(shared.appdata):
-                os.makedirs(shared.appdata)
+            print 'Creating new config files in', state.appdata
+            if not os.path.exists(state.appdata):
+                os.makedirs(state.appdata)
         if not sys.platform.startswith('win'):
             os.umask(0o077)
         shared.writeKeysFile()

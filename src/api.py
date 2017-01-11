@@ -24,6 +24,7 @@ import helper_inbox
 import helper_sent
 import hashlib
 
+import state
 from pyelliptic.openssl import OpenSSL
 from struct import pack
 
@@ -251,15 +252,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif len(params) == 3:
             label, eighteenByteRipe, totalDifficulty = params
             nonceTrialsPerByte = int(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                protocol.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 4:
             label, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = params
             nonceTrialsPerByte = int(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                protocol.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = int(
-                shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+                protocol.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
         else:
             raise APIError(0, 'Too many parameters!')
         label = self._decode(label, "base64")
@@ -319,15 +320,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif len(params) == 6:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty = params
             nonceTrialsPerByte = int(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                protocol.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 7:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = params
             nonceTrialsPerByte = int(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                protocol.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = int(
-                shared.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+                protocol.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
         else:
             raise APIError(0, 'Too many parameters!')
         if len(passphrase) == 0:
@@ -450,7 +451,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         if not BMConfigParser().safeGetBoolean(address, 'chan'):
             raise APIError(25, 'Specified address is not a chan address. Use deleteAddress API call instead.')
         BMConfigParser().remove_section(address)
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+        with open(state.appdata + 'keys.dat', 'wb') as configfile:
             BMConfigParser().write(configfile)
         return 'success'
 
@@ -464,7 +465,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         if not BMConfigParser().has_section(address):
             raise APIError(13, 'Could not find this address in your keys.dat file.')
         BMConfigParser().remove_section(address)
-        with open(shared.appdata + 'keys.dat', 'wb') as configfile:
+        with open(state.appdata + 'keys.dat', 'wb') as configfile:
             BMConfigParser().write(configfile)
         shared.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
         shared.UISignalQueue.put(('rerenderMessagelistToLabels',''))
@@ -837,7 +838,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         # Let us do the POW and attach it to the front
         target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
         with shared.printLock:
-            print '(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / shared.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / shared.networkDefaultPayloadLengthExtraBytes
+            print '(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / protocol.networkDefaultPayloadLengthExtraBytes
         powStartTime = time.time()
         initialHash = hashlib.sha512(encryptedPayload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -856,7 +857,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType, toStreamNumber, encryptedPayload, int(time.time()) + TTL,'')
         with shared.printLock:
             print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
-        shared.broadcastToSendDataQueues((
+        protocol.broadcastToSendDataQueues((
             toStreamNumber, 'advertiseobject', inventoryHash))
 
     def HandleTrashSentMessageByAckDAta(self, params):
@@ -879,8 +880,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         payload = self._decode(payload, "hex")
 
         # Let us do the POW
-        target = 2 ** 64 / ((len(payload) + shared.networkDefaultPayloadLengthExtraBytes +
-                             8) * shared.networkDefaultProofOfWorkNonceTrialsPerByte)
+        target = 2 ** 64 / ((len(payload) + protocol.networkDefaultPayloadLengthExtraBytes +
+                             8) * protocol.networkDefaultProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message via API) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -903,7 +904,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL,'')
         with shared.printLock:
             print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
-        shared.broadcastToSendDataQueues((
+        protocol.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
 
     def HandleGetMessageDataByDestinationHash(self, params):

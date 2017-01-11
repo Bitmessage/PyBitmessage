@@ -1,4 +1,5 @@
 import base64
+from binascii import hexlify
 import hashlib
 import random
 import socket
@@ -7,9 +8,13 @@ from struct import pack, unpack, Struct
 import sys
 import time
 
-from addresses import encodeVarint, decodeVarint
+from addresses import calculateInventoryHash, encodeVarint, decodeVarint, decodeAddress, varintDecodeError
 from configparser import BMConfigParser
-from state import neededPubkeys, extPort, socksIP
+from debug import logger
+from helper_sql import sqlExecute
+import highlevelcrypto
+from inventory import Inventory
+import state
 from version import softwareVersion
 
 #Service flags
@@ -21,6 +26,10 @@ BITFIELD_DOESACK = 1
 
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
     '>Q', random.randrange(1, 18446744073709551615))
+
+#If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
+networkDefaultProofOfWorkNonceTrialsPerByte = 1000 #The amount of work that should be performed (and demanded) per byte of the payload.
+networkDefaultPayloadLengthExtraBytes = 1000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
 #Compiled struct for packing/unpacking headers
 #New code should use CreatePacket instead of Header.pack
@@ -79,11 +88,26 @@ def sslProtocolVersion():
 
 def checkSocksIP(host):
     try:
-        if socksIP is None or not socksIP:
-            socksIP = socket.gethostbyname(BMConfigParser().get("bitmessagesettings", "sockshostname"))
+        if state.socksIP is None or not state.socksIP:
+            state.socksIP = socket.gethostbyname(BMConfigParser().get("bitmessagesettings", "sockshostname"))
     except NameError:
-       socksIP = socket.gethostbyname(BMConfigParser().get("bitmessagesettings", "sockshostname"))
-    return socksIP == host
+        state.socksIP = socket.gethostbyname(BMConfigParser().get("bitmessagesettings", "sockshostname"))
+    return state.socksIP == host
+
+def isProofOfWorkSufficient(data,
+                            nonceTrialsPerByte=0,
+                            payloadLengthExtraBytes=0):
+    if nonceTrialsPerByte < networkDefaultProofOfWorkNonceTrialsPerByte:
+        nonceTrialsPerByte = networkDefaultProofOfWorkNonceTrialsPerByte
+    if payloadLengthExtraBytes < networkDefaultPayloadLengthExtraBytes:
+        payloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
+    endOfLifeTime, = unpack('>Q', data[8:16])
+    TTL = endOfLifeTime - int(time.time())
+    if TTL < 300:
+        TTL = 300
+    POW, = unpack('>Q', hashlib.sha512(hashlib.sha512(data[
+                  :8] + hashlib.sha512(data[8:]).digest()).digest()).digest()[0:8])
+    return POW <= 2 ** 64 / (nonceTrialsPerByte*(len(data) + payloadLengthExtraBytes + ((TTL*(len(data)+payloadLengthExtraBytes))/(2 ** 16))))
 
 # Packet creation
 
@@ -117,10 +141,10 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber, server = Fals
     # we have a separate extPort and
     # incoming over clearnet or
     # outgoing through clearnet
-    if BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp') and extPort \
+    if BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp') and state.extPort \
         and ((server and not checkSocksIP(remoteHost)) or \
         (BMConfigParser().get("bitmessagesettings", "socksproxytype") == "none" and not server)):
-        payload += pack('>H', extPort)
+        payload += pack('>H', state.extPort)
     elif checkSocksIP(remoteHost) and server: # incoming connection over Tor
         payload += pack('>H', BMConfigParser().getint('bitmessagesettings', 'onionport'))
     else: # no extPort and not incoming over Tor
@@ -178,7 +202,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         encryptedData = data[readPosition:]
     
         # Let us try to decrypt the pubkey
-        toAddress, cryptorObject = neededPubkeys[tag]
+        toAddress, cryptorObject = state.neededPubkeys[tag]
         if toAddress != address:
             logger.critical('decryptAndCheckPubkeyPayload failed due to toAddress mismatch. This is very peculiar. toAddress: %s, address %s' % (toAddress, address))
             # the only way I can think that this could happen is if someone encodes their address data two different ways.
@@ -308,7 +332,7 @@ def _checkAndShareUndefinedObjectWithPeers(data):
     readPosition += objectVersionLength
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 9])
-    if not streamNumber in streamsInWhichIAmParticipating:
+    if not streamNumber in state.streamsInWhichIAmParticipating:
         logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
         return
     
@@ -331,7 +355,7 @@ def _checkAndShareMsgWithPeers(data):
     readPosition += objectVersionLength
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 9])
-    if not streamNumber in streamsInWhichIAmParticipating:
+    if not streamNumber in state.streamsInWhichIAmParticipating:
         logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
         return
     readPosition += streamNumberLength
@@ -362,7 +386,7 @@ def _checkAndShareGetpubkeyWithPeers(data):
     readPosition += addressVersionLength
     streamNumber, streamNumberLength = decodeVarint(
         data[readPosition:readPosition + 10])
-    if not streamNumber in streamsInWhichIAmParticipating:
+    if not streamNumber in state.streamsInWhichIAmParticipating:
         logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
         return
     readPosition += streamNumberLength
@@ -393,7 +417,7 @@ def _checkAndSharePubkeyWithPeers(data):
     streamNumber, varintLength = decodeVarint(
         data[readPosition:readPosition + 10])
     readPosition += varintLength
-    if not streamNumber in streamsInWhichIAmParticipating:
+    if not streamNumber in state.streamsInWhichIAmParticipating:
         logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
         return
     if addressVersion >= 4:
@@ -430,7 +454,7 @@ def _checkAndShareBroadcastWithPeers(data):
     if broadcastVersion >= 2:
         streamNumber, streamNumberLength = decodeVarint(data[readPosition:readPosition + 10])
         readPosition += streamNumberLength
-        if not streamNumber in streamsInWhichIAmParticipating:
+        if not streamNumber in state.streamsInWhichIAmParticipating:
             logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
             return
     if broadcastVersion >= 3:
@@ -452,3 +476,10 @@ def _checkAndShareBroadcastWithPeers(data):
     # Now let's queue it to be processed ourselves.
     objectProcessorQueue.put((objectType,data))
 
+# If you want to command all of the sendDataThreads to do something, like shutdown or send some data, this
+# function puts your data into the queues for each of the sendDataThreads. The sendDataThreads are
+# responsible for putting their queue into (and out of) the sendDataQueues list.
+def broadcastToSendDataQueues(data):
+    # logger.debug('running broadcastToSendDataQueues')
+    for q in state.sendDataQueues:
+        q.put(data)

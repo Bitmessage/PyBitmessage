@@ -11,9 +11,11 @@ from foldertree import AccountMixin
 from helper_sql import *
 from l10n import getTranslationLanguage
 from openclpow import openclAvailable, openclEnabled
+import paths
 from proofofwork import bmpow
 from pyelliptic.openssl import OpenSSL
 import shared
+import state
 from version import softwareVersion
 
 # this is BM support address going to Peter Surda
@@ -63,7 +65,7 @@ def checkHasNormalAddress():
 
 def createAddressIfNeeded(myapp):
     if not checkHasNormalAddress():
-        shared.addressGeneratorQueue.put(('createRandomAddress', 4, 1, str(QtGui.QApplication.translate("Support", SUPPORT_MY_LABEL)), 1, "", False, shared.networkDefaultProofOfWorkNonceTrialsPerByte, shared.networkDefaultPayloadLengthExtraBytes))
+        shared.addressGeneratorQueue.put(('createRandomAddress', 4, 1, str(QtGui.QApplication.translate("Support", SUPPORT_MY_LABEL)), 1, "", False, protocol.networkDefaultProofOfWorkNonceTrialsPerByte, protocol.networkDefaultPayloadLengthExtraBytes))
     while shared.shutdown == 0 and not checkHasNormalAddress():
         time.sleep(.2)
     myapp.rerenderComboBoxSendFrom()
@@ -104,9 +106,9 @@ def createSupportMessage(myapp):
     opensslversion = "%s (Python internal), %s (external for PyElliptic)" % (ssl.OPENSSL_VERSION, OpenSSL._lib.SSLeay_version(SSLEAY_VERSION))
 
     frozen = "N/A"
-    if shared.frozen:
-        frozen = shared.frozen
-    portablemode = "True" if shared.appdata == shared.lookupExeFolder() else "False"
+    if paths.frozen:
+        frozen = paths.frozen
+    portablemode = "True" if state.appdata == paths.lookupExeFolder() else "False"
     cpow = "True" if bmpow else "False"
     #cpow = QtGui.QApplication.translate("Support", cpow)
     openclpow = str(BMConfigParser().safeGet('bitmessagesettings', 'opencl')) if openclEnabled() else "None"

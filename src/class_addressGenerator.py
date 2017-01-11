@@ -77,13 +77,13 @@ class addressGenerator(threading.Thread, StoppableThread):
             if nonceTrialsPerByte == 0:
                 nonceTrialsPerByte = BMConfigParser().getint(
                     'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            if nonceTrialsPerByte < shared.networkDefaultProofOfWorkNonceTrialsPerByte:
-                nonceTrialsPerByte = shared.networkDefaultProofOfWorkNonceTrialsPerByte
+            if nonceTrialsPerByte < protocol.networkDefaultProofOfWorkNonceTrialsPerByte:
+                nonceTrialsPerByte = protocol.networkDefaultProofOfWorkNonceTrialsPerByte
             if payloadLengthExtraBytes == 0:
                 payloadLengthExtraBytes = BMConfigParser().getint(
                     'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-            if payloadLengthExtraBytes < shared.networkDefaultPayloadLengthExtraBytes:
-                payloadLengthExtraBytes = shared.networkDefaultPayloadLengthExtraBytes
+            if payloadLengthExtraBytes < protocol.networkDefaultPayloadLengthExtraBytes:
+                payloadLengthExtraBytes = protocol.networkDefaultPayloadLengthExtraBytes
             if command == 'createRandomAddress':
                 shared.UISignalQueue.put((
                     'updateStatusBar', tr._translate("MainWindow", "Generating one new address")))

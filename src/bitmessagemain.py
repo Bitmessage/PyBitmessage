@@ -28,6 +28,7 @@ from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenCon
 
 import shared
 from helper_sql import sqlQuery
+import state
 import threading
 
 # Classes
@@ -49,7 +50,7 @@ import helper_generic
 from helper_threading import *
 
 def connectToStream(streamNumber):
-    shared.streamsInWhichIAmParticipating[streamNumber] = 'no data'
+    state.streamsInWhichIAmParticipating[streamNumber] = 'no data'
     selfInitiatedConnections[streamNumber] = {}
 
     if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
@@ -146,10 +147,10 @@ class singleAPI(threading.Thread, StoppableThread):
 selfInitiatedConnections = {}
 
 if shared.useVeryEasyProofOfWorkForTesting:
-    shared.networkDefaultProofOfWorkNonceTrialsPerByte = int(
-        shared.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
-    shared.networkDefaultPayloadLengthExtraBytes = int(
-        shared.networkDefaultPayloadLengthExtraBytes / 100)
+    protocol.networkDefaultProofOfWorkNonceTrialsPerByte = int(
+        protocol.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
+    protocol.networkDefaultPayloadLengthExtraBytes = int(
+        protocol.networkDefaultPayloadLengthExtraBytes / 100)
 
 class Main:
     def start(self, daemon=False):

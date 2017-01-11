@@ -467,7 +467,7 @@ class objectProcessor(threading.Thread):
                     toAddress, 'noncetrialsperbyte')
                 requiredPayloadLengthExtraBytes = BMConfigParser().getint(
                     toAddress, 'payloadlengthextrabytes')
-                if not shared.isProofOfWorkSufficient(data, requiredNonceTrialsPerByte, requiredPayloadLengthExtraBytes):
+                if not protocol.isProofOfWorkSufficient(data, requiredNonceTrialsPerByte, requiredPayloadLengthExtraBytes):
                     logger.info('Proof of work in msg is insufficient only because it does not meet our higher requirement.')
                     return
         blockMessage = False  # Gets set to True if the user shouldn't see the message according to black or white lists.
