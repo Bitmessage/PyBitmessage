@@ -19,7 +19,6 @@ Use: `from debug import logger` to import this facility into whatever module you
 import logging
 import logging.config
 import os
-import shared
 import sys
 import traceback
 import helper_startup

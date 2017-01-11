@@ -19,7 +19,6 @@ import threading
 import time
 import shutil  # used for moving the data folder and copying keys.dat
 import datetime
-from os import path, environ
 import traceback
 from binascii import hexlify
 
@@ -645,6 +644,7 @@ def _checkAndShareBroadcastWithPeers(data):
 
 def openKeysFile():
     if 'linux' in sys.platform:
+        import subprocess
         subprocess.call(["xdg-open", state.appdata + 'keys.dat'])
     else:
         os.startfile(state.appdata + 'keys.dat')

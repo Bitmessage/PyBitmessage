@@ -24,6 +24,7 @@ import helper_inbox
 import helper_sent
 import hashlib
 
+import protocol
 import state
 from pyelliptic.openssl import OpenSSL
 from struct import pack

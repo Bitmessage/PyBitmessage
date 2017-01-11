@@ -10,6 +10,7 @@ from addresses import *
 from configparser import BMConfigParser
 from debug import logger
 from helper_threading import *
+import protocol
 from pyelliptic import arithmetic
 import tr
 from binascii import hexlify

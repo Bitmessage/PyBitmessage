@@ -1,7 +1,6 @@
 from PyQt4 import QtGui
 import hashlib
 import os
-import shared
 from addresses import addBMIfNotPresent
 from configparser import BMConfigParser
 import state

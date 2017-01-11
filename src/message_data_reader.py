@@ -6,8 +6,8 @@ import sqlite3
 from time import strftime, localtime
 import sys
 import shared
+import paths
 import state
-import string
 from binascii import hexlify
 
 appdata = paths.lookupAppdataFolder()
