@@ -293,9 +293,17 @@ class receiveDataThread(threading.Thread):
         if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
             protocol.haveSSL(not self.initiatedConnection)):
             logger.debug("Initialising TLS")
-            self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(paths.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(paths.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=ssl.PROTOCOL_TLSv1, do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
-            if hasattr(self.sslSock, "context"):
-                self.sslSock.context.set_ecdh_curve("secp256k1")
+            if sys.version_info >= (2,7,9):
+                context = ssl.create_default_context(purpose = ssl.Purpose.CLIENT_AUTH if self.initiatedConnection else ssl.Purpose.SERVER_AUTH)
+                context.set_ciphers("AECDH-AES256-SHA")
+                context.set_ecdh_curve("secp256k1")
+                context.check_hostname = False
+                context.verify_mode = ssl.CERT_NONE
+                # also exclude TLSv1 and TLSv1.1 in the future
+                context.options |= ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3
+                self.sslSock = context.wrap_socket(self.sock, server_side = not self.initiatedConnection, do_handshake_on_connect=False)
+            else:
+                self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(paths.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(paths.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=protocol.sslProtocolVersion, do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
             while True:
                 try:
                     self.sslSock.do_handshake()

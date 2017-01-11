@@ -77,16 +77,6 @@ def haveSSL(server = False):
         return True
     return False
 
-def sslProtocolVersion():
-    if sys.version_info >= (2,7,13):
-        # in the future once TLS is mandatory, change this to ssl.PROTOCOL_TLS1.2
-        return ssl.PROTOCOL_TLS
-    elif sys.version_info >= (2,7,9):
-        # once TLS is mandatory, add "ssl.OP_NO_TLSv1 |  ssl.OP_NO_TLSv1.1"
-        return ssl.PROTOCOL_SSLv23 | ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3
-    else:
-        return ssl.PROTOCOL_TLS1
-
 def checkSocksIP(host):
     try:
         if state.socksIP is None or not state.socksIP:
@@ -483,3 +473,17 @@ def broadcastToSendDataQueues(data):
     # logger.debug('running broadcastToSendDataQueues')
     for q in state.sendDataQueues:
         q.put(data)
+
+# sslProtocolVersion
+if sys.version_info >= (2,7,13):
+    # this means TLSv1 or higher
+    # in the future change to
+    # ssl.PROTOCOL_TLS1.2
+    sslProtocolVersion = ssl.PROTOCOL_TLS
+elif sys.version_info >= (2,7,9):
+    # this means any SSL/TLS. SSLv2 and 3 are excluded with an option after context is created
+    sslProtocolVersion = ssl.PROTOCOL_SSLv23
+else:
+    # this means TLSv1, there is no way to set "TLSv1 or higher" or
+    # "TLSv1.2" in < 2.7.9
+    sslProtocolVersion = ssl.PROTOCOL_TLSv1
