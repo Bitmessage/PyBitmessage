@@ -67,7 +67,7 @@ def isHostInPrivateIPRange(host):
         if (ord(hostAddr[0]) & 0xfe) == 0xfc:
             return False
         pass
-    else:
+    elif ".onion" not in host:
         if host[:3] == '10.':
             return True
         if host[:4] == '172.':
@@ -75,6 +75,9 @@ def isHostInPrivateIPRange(host):
                 if int(host[4:6]) >= 16 and int(host[4:6]) <= 31:
                     return True
         if host[:8] == '192.168.':
+            return True
+        # Multicast
+        if host[:3] >= 224 and host[:3] <= 239 and host[4] == '.':
             return True
     return False
 
