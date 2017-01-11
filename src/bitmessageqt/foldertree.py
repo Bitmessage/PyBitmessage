@@ -312,7 +312,7 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
             if queryreturn is not None:
                 if queryreturn != []:
                     for row in queryreturn:
-                        newLabel, = row
+                        newLabel = unicode(row[0], 'utf-8', 'ignore')
         else:
             newLabel = label
         if hasattr(self, 'label') and newLabel == self.label:

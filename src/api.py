@@ -398,7 +398,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         streamNumber = 1
         shared.apiAddressGeneratorReturnQueue.queue.clear()
         logger.debug('Requesting that the addressGenerator create chan %s.', passphrase)
-        shared.addressGeneratorQueue.put(('createChan', addressVersionNumber, streamNumber, label, passphrase))
+        shared.addressGeneratorQueue.put(('createChan', addressVersionNumber, streamNumber, label, passphrase, True))
         queueReturn = shared.apiAddressGeneratorReturnQueue.get()
         if len(queueReturn) == 0:
             raise APIError(24, 'Chan address is already present.')
@@ -424,10 +424,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(suppliedAddress)
         suppliedAddress = addBMIfNotPresent(suppliedAddress)
         shared.apiAddressGeneratorReturnQueue.queue.clear()
-        shared.addressGeneratorQueue.put(('joinChan', suppliedAddress, label, passphrase))
+        shared.addressGeneratorQueue.put(('joinChan', suppliedAddress, label, passphrase, True))
         addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
 
-        if addressGeneratorReturnValue == 'chan name does not match address':
+        if addressGeneratorReturnValue[0] == 'chan name does not match address':
             raise APIError(18, 'Chan name does not match address.')
         if len(addressGeneratorReturnValue) == 0:
             raise APIError(24, 'Chan address is already present.')

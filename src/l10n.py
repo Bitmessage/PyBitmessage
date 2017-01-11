@@ -1,5 +1,6 @@
 
 import logging
+import os
 import time
 
 import shared
@@ -78,6 +79,11 @@ if time_format != DEFAULT_TIME_FORMAT:
         time_format = DEFAULT_TIME_FORMAT
         encoding = DEFAULT_ENCODING
 
+def setlocale(category, newlocale):
+    locale.setlocale(category, newlocale)
+    # it looks like some stuff isn't initialised yet when this is called the
+    # first time and its init gets the locale settings from the environment
+    os.environ["LC_ALL"] = newlocale
 
 def formatTimestamp(timestamp = None, as_unicode = True):
     #For some reason some timestamps are strings so we need to sanitize.

@@ -158,7 +158,7 @@ class namecoinConnection (object):
                 assert False
 
         except Exception:
-            logger.exception("Namecoin connection test failure")
+            logger.info("Namecoin connection test failure")
             return ('failed', "The connection to namecoin failed.")
 
     # Helper routine that actually performs an JSON RPC call.
@@ -208,9 +208,9 @@ class namecoinConnection (object):
                 if resp.status != 200:
                     raise Exception ("Namecoin returned status %i: %s", resp.status, resp.reason)
             except:
-                logger.error("HTTP receive error")
+                logger.info("HTTP receive error")
         except:
-            logger.error("HTTP connection error", exc_info=True)
+            logger.info("HTTP connection error")
 
         return result
 
@@ -273,9 +273,9 @@ def ensureNamecoinOptions ():
     # Try to read user/password from .namecoin configuration file.
     defaultUser = ""
     defaultPass = ""
+    nmcFolder = lookupNamecoinFolder ()
+    nmcConfig = nmcFolder + "namecoin.conf"
     try:
-        nmcFolder = lookupNamecoinFolder ()
-        nmcConfig = nmcFolder + "namecoin.conf"
         nmc = open (nmcConfig, "r")
 
         while True:
@@ -295,7 +295,8 @@ def ensureNamecoinOptions ():
                     shared.namecoinDefaultRpcPort = val
                 
         nmc.close ()
-
+    except IOError:
+        logger.error("%s unreadable or missing, Namecoin support deactivated", nmcConfig)
     except Exception as exc:
         logger.warning("Error processing namecoin.conf", exc_info=True)
 

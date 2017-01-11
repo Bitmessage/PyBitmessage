@@ -9,7 +9,7 @@ from debug import logger
 from foldertree import AccountMixin
 from helper_sql import *
 from l10n import getTranslationLanguage
-from openclpow import has_opencl
+from openclpow import openclAvailable, openclEnabled
 from proofofwork import bmpow
 from pyelliptic.openssl import OpenSSL
 import shared
@@ -31,7 +31,7 @@ Please describe what happens instead:
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 Please write above this line and if possible, keep the information about your environment below intact.
 
-PyBitmesage version: {}
+PyBitmessage version: {}
 Operating system: {}
 Architecture: {}bit
 Python Version: {}
@@ -107,7 +107,7 @@ def createSupportMessage(myapp):
     portablemode = "True" if shared.appdata == shared.lookupExeFolder() else "False"
     cpow = "True" if bmpow else "False"
     #cpow = QtGui.QApplication.translate("Support", cpow)
-    openclpow = "True" if shared.safeConfigGetBoolean('bitmessagesettings', 'opencl') and has_opencl() else "False"
+    openclpow = str(shared.safeConfigGet('bitmessagesettings', 'opencl')) if openclEnabled() else "None"
     #openclpow = QtGui.QApplication.translate("Support", openclpow)
     locale = getTranslationLanguage()
     try:

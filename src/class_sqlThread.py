@@ -427,6 +427,8 @@ class sqlThread(threading.Thread):
             shared.config.set('bitmessagesettings', 'onionbindip', '127.0.0.1')
         if not shared.config.has_option('bitmessagesettings', 'smtpdeliver'):
             shared.config.set('bitmessagesettings', 'smtpdeliver', '')
+        if not shared.config.has_option('bitmessagesettings', 'hidetrayconnectionnotifications'):
+            shared.config.set('bitmessagesettings', 'hidetrayconnectionnotifications', 'false')
         if not shared.config.has_option('bitmessagesettings', 'maxoutboundconnections'):
             shared.config.set('bitmessagesettings', 'maxoutboundconnections', '8')
         shared.writeKeysFile()
