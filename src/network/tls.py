@@ -6,6 +6,7 @@ import asyncore
 import socket
 import ssl
 
+import protocol
 
 class TLSHandshake(asyncore.dispatcher):
     """
@@ -42,9 +43,19 @@ class TLSHandshake(asyncore.dispatcher):
     def handle_connect(self):
         # Once the connection has been established, it's safe to wrap the
         # socket.
-        self.sslSocket = ssl.wrap_socket(self.socket,
+        if sys.version_info >= (2,7,9):
+            context = ssl.create_default_context(purpose = ssl.Purpose.SERVER_AUTH if self.server_side else ssl.Purpose.CLIENT_AUTH)
+            context.set_ciphers(ciphers)
+            # context.set_ecdh_curve("secp256k1")
+            context.check_hostname = False
+            context.verify_mode = ssl.CERT_NONE
+            # also exclude TLSv1 and TLSv1.1 in the future
+            context.options |= ssl.OP_NOSSLv2 | ssl.OP_NOSSLv3
+            self.sslSock = context.wrap_socket(self.sock, server_side = self.server_side, do_handshake_on_connect=False)
+        else:
+            self.sslSocket = ssl.wrap_socket(self.socket,
                                          server_side=self.server_side,
-                                         ssl_version=ssl.PROTOCOL_TLSv1,
+                                         ssl_version=protocol.sslProtocolVersion,
                                          certfile=self.certfile,
                                          keyfile=self.keyfile,
                                          ciphers=self.ciphers,
