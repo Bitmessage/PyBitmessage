@@ -7,6 +7,7 @@ import ssl
 from struct import pack, unpack, Struct
 import sys
 import time
+import traceback
 
 from addresses import calculateInventoryHash, encodeVarint, decodeVarint, decodeAddress, varintDecodeError
 from configparser import BMConfigParser
