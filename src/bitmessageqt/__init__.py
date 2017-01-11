@@ -2418,8 +2418,14 @@ class MyForm(settingsmixin.SMainWindow):
                 QMessageBox.about(self, _translate("MainWindow", "Number needed"), _translate(
                     "MainWindow", "Your maximum download and upload rate must be numbers. Ignoring what you typed."))
 
-            shared.config.set('bitmessagesettings', 'maxoutboundconnections', str(
-                self.settingsDialogInstance.ui.lineEditMaxOutboundConnections.text()))
+            try:
+                # Ensure we have an integer
+                shared.config.set('bitmessagesettings', 'maxoutboundconnections', str(
+                    int(float(self.settingsDialogInstance.ui.lineEditMaxOutboundConnections.text()))))
+            except:
+                QMessageBox.about(self, _translate("MainWindow", "Number needed"), _translate(
+                    "MainWindow", "Your maximum outbound connections must be a number. Ignoring what you typed."))
+
             shared.config.set('bitmessagesettings', 'namecoinrpctype',
                 self.settingsDialogInstance.getNamecoinType())
             shared.config.set('bitmessagesettings', 'namecoinrpchost', str(
