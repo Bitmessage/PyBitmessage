@@ -108,6 +108,7 @@ def loadConfig():
         BMConfigParser().set('bitmessagesettings', 'replybelow', 'False')
         BMConfigParser().set('bitmessagesettings', 'maxdownloadrate', '0')
         BMConfigParser().set('bitmessagesettings', 'maxuploadrate', '0')
+        BMConfigParser().set('bitmessagesettings', 'maxoutboundconnections', '8')
         BMConfigParser().set('bitmessagesettings', 'ttl', '367200')
         
          #start:UI setting to stop trying to send messages after X days/months

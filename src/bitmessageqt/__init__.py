@@ -2391,6 +2391,14 @@ class MyForm(settingsmixin.SMainWindow):
                 QMessageBox.about(self, _translate("MainWindow", "Number needed"), _translate(
                     "MainWindow", "Your maximum download and upload rate must be numbers. Ignoring what you typed."))
 
+            try:
+                # Ensure we have an integer
+                BMConfigParser().set('bitmessagesettings', 'maxoutboundconnections', str(
+                    int(float(self.settingsDialogInstance.ui.lineEditMaxOutboundConnections.text()))))
+            except:
+                QMessageBox.about(self, _translate("MainWindow", "Number needed"), _translate(
+                    "MainWindow", "Your maximum outbound connections must be a number. Ignoring what you typed."))
+
             BMConfigParser().set('bitmessagesettings', 'namecoinrpctype',
                 self.settingsDialogInstance.getNamecoinType())
             BMConfigParser().set('bitmessagesettings', 'namecoinrpchost', str(
@@ -4075,6 +4083,8 @@ class settingsDialog(QtGui.QDialog):
             BMConfigParser().get('bitmessagesettings', 'sockspassword')))
         QtCore.QObject.connect(self.ui.comboBoxProxyType, QtCore.SIGNAL(
             "currentIndexChanged(int)"), self.comboBoxProxyTypeChanged)
+        self.ui.lineEditMaxOutboundConnections.setText(str(
+            shared.config.get('bitmessagesettings', 'maxoutboundconnections')))
         self.ui.lineEditMaxDownloadRate.setText(str(
             BMConfigParser().get('bitmessagesettings', 'maxdownloadrate')))
         self.ui.lineEditMaxUploadRate.setText(str(
