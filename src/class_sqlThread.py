@@ -433,8 +433,16 @@ class sqlThread(threading.Thread):
             BMConfigParser().set('bitmessagesettings', 'smtpdeliver', '')
         if not BMConfigParser().has_option('bitmessagesettings', 'hidetrayconnectionnotifications'):
             BMConfigParser().set('bitmessagesettings', 'hidetrayconnectionnotifications', 'false')
-        if not BMConfigParser().has_option('bitmessagesettings', 'maxoutboundconnections'):
+        if BMConfigParser().has_option('bitmessagesettings', 'maxoutboundconnections'):
+            try:
+                # Ensure we have an integer
+                int(float(BMConfigParser().get('bitmessagesettings', 'maxoutboundconnections')))
+            except:
+                logger.fatal('Your maximum outbound connections must be a number.')
+                os._exit(0)
+        else:
             BMConfigParser().set('bitmessagesettings', 'maxoutboundconnections', '8')
+
         shared.writeKeysFile()
         
         # Are you hoping to add a new option to the keys.dat file of existing
