@@ -13,7 +13,7 @@ installed on your system.
 Here's a list of dependencies needed for PyBitmessage
 - python2.7
 - python2-qt4 (python-qt4 on Debian/Ubuntu)
-- openssl
+- openssl 1.0
 - (Fedora & Redhat only) openssl-compat-bitcoin-libs 
 
 ##Running PyBitmessage
