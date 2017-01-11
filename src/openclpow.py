@@ -6,7 +6,8 @@ import random
 import os
 
 from configparser import BMConfigParser
-from shared import codePath, shutdown
+import paths
+from shared import shutdown
 from debug import logger
 
 libAvailable = True
@@ -40,7 +41,7 @@ def initCL():
         if (len(enabledGpus) > 0):
             ctx = cl.Context(devices=enabledGpus)
             queue = cl.CommandQueue(ctx)
-            f = open(os.path.join(codePath(), "bitmsghash", 'bitmsghash.cl'), 'r')
+            f = open(os.path.join(paths.codePath(), "bitmsghash", 'bitmsghash.cl'), 'r')
             fstr = ''.join(f.readlines())
             program = cl.Program(ctx, fstr).build(options="")
             logger.info("Loaded OpenCL kernel")

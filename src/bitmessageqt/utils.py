@@ -4,6 +4,7 @@ import os
 import shared
 from addresses import addBMIfNotPresent
 from configparser import BMConfigParser
+import state
 
 str_broadcast_subscribers = '[Broadcast subscribers]'
 str_chan = '[chan]'
@@ -82,8 +83,8 @@ def avatarize(address):
     extensions = ['PNG', 'GIF', 'JPG', 'JPEG', 'SVG', 'BMP', 'MNG', 'PBM', 'PGM', 'PPM', 'TIFF', 'XBM', 'XPM', 'TGA']
     # try to find a specific avatar
     for ext in extensions:
-        lower_hash = shared.appdata + 'avatars/' + hash + '.' + ext.lower()
-        upper_hash = shared.appdata + 'avatars/' + hash + '.' + ext.upper()
+        lower_hash = state.appdata + 'avatars/' + hash + '.' + ext.lower()
+        upper_hash = state.appdata + 'avatars/' + hash + '.' + ext.upper()
         if os.path.isfile(lower_hash):
             # print 'found avatar of ', address
             idcon.addFile(lower_hash)
@@ -94,8 +95,8 @@ def avatarize(address):
             return idcon
     # if we haven't found any, try to find a default avatar
     for ext in extensions:
-        lower_default = shared.appdata + 'avatars/' + 'default.' + ext.lower()
-        upper_default = shared.appdata + 'avatars/' + 'default.' + ext.upper()
+        lower_default = state.appdata + 'avatars/' + 'default.' + ext.lower()
+        upper_default = state.appdata + 'avatars/' + 'default.' + ext.upper()
         if os.path.isfile(lower_default):
             default = lower_default
             idcon.addFile(lower_default)

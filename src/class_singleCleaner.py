@@ -11,7 +11,8 @@ from helper_sql import *
 from helper_threading import *
 from inventory import Inventory
 from debug import logger
-from state import neededPubkeys
+import protocol
+import state
 
 """
 The singleCleaner class is a timer-driven thread that cleans data structures 
@@ -53,7 +54,7 @@ class singleCleaner(threading.Thread, StoppableThread):
             Inventory().flush()
             shared.UISignalQueue.put(('updateStatusBar', ''))
             
-            shared.broadcastToSendDataQueues((
+            protocol.broadcastToSendDataQueues((
                 0, 'pong', 'no data')) # commands the sendData threads to send out a pong message if they haven't sent anything else in the last five minutes. The socket timeout-time is 10 minutes.
             # If we are running as a daemon then we are going to fill up the UI
             # queue which will never be handled by a UI. We should clear it to
@@ -98,7 +99,7 @@ class singleCleaner(threading.Thread, StoppableThread):
             # Let us write out the knowNodes to disk if there is anything new to write out.
             if shared.needToWriteKnownNodesToDisk:
                 shared.knownNodesLock.acquire()
-                output = open(shared.appdata + 'knownnodes.dat', 'wb')
+                output = open(state.appdata + 'knownnodes.dat', 'wb')
                 try:
                     pickle.dump(shared.knownNodes, output)
                     output.close()
@@ -116,7 +117,7 @@ class singleCleaner(threading.Thread, StoppableThread):
 def resendPubkeyRequest(address):
     logger.debug('It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.')
     try:
-        del neededPubkeys[
+        del state.neededPubkeys[
             address] # We need to take this entry out of the neededPubkeys structure because the shared.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
     except:
         pass

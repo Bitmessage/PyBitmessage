@@ -28,8 +28,10 @@ from class_objectHashHolder import objectHashHolder
 from helper_generic import addDataPadding, isHostInPrivateIPRange
 from helper_sql import sqlQuery
 from debug import logger
+import paths
 import protocol
 from inventory import Inventory
+import state
 import tr
 from version import softwareVersion
 
@@ -291,7 +293,7 @@ class receiveDataThread(threading.Thread):
         if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
             protocol.haveSSL(not self.initiatedConnection)):
             logger.debug("Initialising TLS")
-            self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(shared.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(shared.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=ssl.PROTOCOL_TLSv1, do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
+            self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(paths.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(paths.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=ssl.PROTOCOL_TLSv1, do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
             if hasattr(self.sslSock, "context"):
                 self.sslSock.context.set_ecdh_curve("secp256k1")
             while True:
@@ -320,12 +322,12 @@ class receiveDataThread(threading.Thread):
         shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         logger.debug('Connection fully established with ' + str(self.peer) + "\n" + \
             'The size of the connectedHostsList is now ' + str(len(shared.connectedHostsList)) + "\n" + \
-            'The length of sendDataQueues is now: ' + str(len(shared.sendDataQueues)) + "\n" + \
+            'The length of sendDataQueues is now: ' + str(len(state.sendDataQueues)) + "\n" + \
             'broadcasting addr from within connectionFullyEstablished function.')
 
         # Let all of our peers know about this new node.
         dataToSend = (int(time.time()), self.streamNumber, 1, self.peer.host, self.remoteNodeIncomingPort)
-        shared.broadcastToSendDataQueues((
+        protocol.broadcastToSendDataQueues((
             self.streamNumber, 'advertisepeer', dataToSend))
 
         self.sendaddr()  # This is one large addr message to this one peer.
@@ -594,7 +596,7 @@ class receiveDataThread(threading.Thread):
                     hostDetails = (
                         timeSomeoneElseReceivedMessageFromThisNode,
                         recaddrStream, recaddrServices, hostStandardFormat, recaddrPort)
-                    shared.broadcastToSendDataQueues((
+                    protocol.broadcastToSendDataQueues((
                         self.streamNumber, 'advertisepeer', hostDetails))
             else:
                 timeLastReceivedMessageFromThisNode = shared.knownNodes[recaddrStream][

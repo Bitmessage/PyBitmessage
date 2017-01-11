@@ -4,7 +4,6 @@ import os
 import time
 
 from configparser import BMConfigParser
-import shared
 
 
 #logger = logging.getLogger(__name__)

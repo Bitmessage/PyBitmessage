@@ -22,6 +22,7 @@ from dialog import Dialog
 from helper_sql import *
 
 import shared
+import ConfigParser
 from configparser import BMConfigParser
 from addresses import *
 from pyelliptic.openssl import OpenSSL

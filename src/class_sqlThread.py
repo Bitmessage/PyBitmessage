@@ -8,7 +8,9 @@ import sys
 import os
 from debug import logger
 from namecoin import ensureNamecoinOptions
+import paths
 import random
+import state
 import string
 import tr#anslate
 
@@ -23,7 +25,7 @@ class sqlThread(threading.Thread):
         threading.Thread.__init__(self, name="SQL")
 
     def run(self):        
-        self.conn = sqlite3.connect(shared.appdata + 'messages.dat')
+        self.conn = sqlite3.connect(state.appdata + 'messages.dat')
         self.conn.text_factory = str
         self.cur = self.conn.cursor()
         
@@ -112,9 +114,9 @@ class sqlThread(threading.Thread):
 
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 4:
             BMConfigParser().set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
-                shared.networkDefaultProofOfWorkNonceTrialsPerByte))
+                protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
             BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
-                shared.networkDefaultPayloadLengthExtraBytes))
+                protocol.networkDefaultPayloadLengthExtraBytes))
             BMConfigParser().set('bitmessagesettings', 'settingsversion', '5')
 
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 5:
@@ -235,8 +237,8 @@ class sqlThread(threading.Thread):
         # Raise the default required difficulty from 1 to 2
         # With the change to protocol v3, this is obsolete.
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 6:
-            """if int(shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')) == shared.networkDefaultProofOfWorkNonceTrialsPerByte:
-                shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(shared.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
+            """if int(shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')) == protocol.networkDefaultProofOfWorkNonceTrialsPerByte:
+                shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(protocol.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
                 """
             BMConfigParser().set('bitmessagesettings', 'settingsversion', '7')
 
@@ -302,8 +304,8 @@ class sqlThread(threading.Thread):
         
         # With the change to protocol version 3, reset the user-settable difficulties to 1    
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 8:
-            BMConfigParser().set('bitmessagesettings','defaultnoncetrialsperbyte', str(shared.networkDefaultProofOfWorkNonceTrialsPerByte))
-            BMConfigParser().set('bitmessagesettings','defaultpayloadlengthextrabytes', str(shared.networkDefaultPayloadLengthExtraBytes))
+            BMConfigParser().set('bitmessagesettings','defaultnoncetrialsperbyte', str(protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
+            BMConfigParser().set('bitmessagesettings','defaultpayloadlengthextrabytes', str(protocol.networkDefaultPayloadLengthExtraBytes))
             previousTotalDifficulty = int(BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / 320
             previousSmallMessageDifficulty = int(BMConfigParser().getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / 14000
             BMConfigParser().set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(previousTotalDifficulty * 1000))
@@ -331,9 +333,9 @@ class sqlThread(threading.Thread):
             
         # sanity check
         if BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') == 0:
-            BMConfigParser().set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(shared.ridiculousDifficulty * shared.networkDefaultProofOfWorkNonceTrialsPerByte))
+            BMConfigParser().set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(shared.ridiculousDifficulty * protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
         if BMConfigParser().getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') == 0:
-            BMConfigParser().set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(shared.ridiculousDifficulty * shared.networkDefaultPayloadLengthExtraBytes))
+            BMConfigParser().set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(shared.ridiculousDifficulty * protocol.networkDefaultPayloadLengthExtraBytes))
 
         # The format of data stored in the pubkeys table has changed. Let's
         # clear it, and the pubkeys from inventory, so that they'll be re-downloaded.
@@ -507,8 +509,8 @@ class sqlThread(threading.Thread):
                         os._exit(0)
                 self.conn.close()
                 shutil.move(
-                    shared.lookupAppdataFolder() + 'messages.dat', shared.lookupExeFolder() + 'messages.dat')
-                self.conn = sqlite3.connect(shared.lookupExeFolder() + 'messages.dat')
+                    paths.lookupAppdataFolder() + 'messages.dat', paths.lookupExeFolder() + 'messages.dat')
+                self.conn = sqlite3.connect(paths.lookupExeFolder() + 'messages.dat')
                 self.conn.text_factory = str
                 self.cur = self.conn.cursor()
             elif item == 'movemessagstoappdata':
@@ -523,8 +525,8 @@ class sqlThread(threading.Thread):
                         os._exit(0)
                 self.conn.close()
                 shutil.move(
-                    shared.lookupExeFolder() + 'messages.dat', shared.lookupAppdataFolder() + 'messages.dat')
-                self.conn = sqlite3.connect(shared.lookupAppdataFolder() + 'messages.dat')
+                    paths.lookupExeFolder() + 'messages.dat', paths.lookupAppdataFolder() + 'messages.dat')
+                self.conn = sqlite3.connect(paths.lookupAppdataFolder() + 'messages.dat')
                 self.conn.text_factory = str
                 self.cur = self.conn.cursor()
             elif item == 'deleteandvacuume':

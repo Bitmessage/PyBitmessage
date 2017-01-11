@@ -6,6 +6,7 @@ from multiprocessing import Process
 import os
 import sys
 import shared
+import state
 
 try:
     import fcntl  # @UnresolvedImport
@@ -24,7 +25,7 @@ class singleinstance:
         self.counter = 0
         self.daemon = daemon
         self.lockPid = None
-        self.lockfile = os.path.normpath(os.path.join(shared.appdata, 'singleton%s.lock' % flavor_id))
+        self.lockfile = os.path.normpath(os.path.join(state.appdata, 'singleton%s.lock' % flavor_id))
 
         if not self.daemon and not shared.curses:
             # Tells the already running (if any) application to get focus.

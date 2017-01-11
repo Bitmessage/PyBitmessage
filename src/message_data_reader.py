@@ -6,10 +6,11 @@ import sqlite3
 from time import strftime, localtime
 import sys
 import shared
+import state
 import string
 from binascii import hexlify
 
-appdata = shared.lookupAppdataFolder()
+appdata = paths.lookupAppdataFolder()
 
 conn = sqlite3.connect( appdata + 'messages.dat' )
 conn.text_factory = str

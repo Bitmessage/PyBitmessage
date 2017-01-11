@@ -14,6 +14,7 @@ from class_objectHashHolder import *
 from addresses import *
 from debug import logger
 import protocol
+import state
 
 # Every connection to a peer has a sendDataThread (and also a
 # receiveDataThread).
@@ -22,7 +23,7 @@ class sendDataThread(threading.Thread):
     def __init__(self, sendDataThreadQueue):
         threading.Thread.__init__(self, name="sendData")
         self.sendDataThreadQueue = sendDataThreadQueue
-        shared.sendDataQueues.append(self.sendDataThreadQueue)
+        state.sendDataQueues.append(self.sendDataThreadQueue)
         self.data = ''
         self.objectHashHolderInstance = objectHashHolder(self.sendDataThreadQueue)
         self.objectHashHolderInstance.start()
@@ -102,7 +103,7 @@ class sendDataThread(threading.Thread):
 
 
     def run(self):
-        logger.debug('sendDataThread starting. ID: ' + str(id(self)) + '. Number of queues in sendDataQueues: ' + str(len(shared.sendDataQueues)))
+        logger.debug('sendDataThread starting. ID: ' + str(id(self)) + '. Number of queues in sendDataQueues: ' + str(len(state.sendDataQueues)))
         while True:
             deststream, command, data = self.sendDataThreadQueue.get()
 
@@ -190,6 +191,6 @@ class sendDataThread(threading.Thread):
             self.sock.close()
         except:
             pass
-        shared.sendDataQueues.remove(self.sendDataThreadQueue)
-        logger.info('sendDataThread ending. ID: ' + str(id(self)) + '. Number of queues in sendDataQueues: ' + str(len(shared.sendDataQueues)))
+        state.sendDataQueues.remove(self.sendDataThreadQueue)
+        logger.info('sendDataThread ending. ID: ' + str(id(self)) + '. Number of queues in sendDataQueues: ' + str(len(state.sendDataQueues)))
         self.objectHashHolderInstance.close()
