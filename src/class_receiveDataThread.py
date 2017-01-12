@@ -333,6 +333,9 @@ class receiveDataThread(threading.Thread):
             'The length of sendDataQueues is now: ' + str(len(state.sendDataQueues)) + "\n" + \
             'broadcasting addr from within connectionFullyEstablished function.')
 
+        if self.initiatedConnection:
+            state.networkProtocolAvailability[protocol.networkType(self.peer.host)] = True
+
         # Let all of our peers know about this new node.
         dataToSend = (int(time.time()), self.streamNumber, 1, self.peer.host, self.remoteNodeIncomingPort)
         protocol.broadcastToSendDataQueues((
