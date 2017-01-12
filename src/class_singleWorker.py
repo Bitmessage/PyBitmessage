@@ -713,7 +713,6 @@ class singleWorker(threading.Thread, StoppableThread):
             payload += encodeVarint(fromStreamNumber)
             payload += protocol.getBitfield(fromaddress)  # Bitfield of features and behaviors that can be expected from me. (See https://bitmessage.org/wiki/Protocol_specification#Pubkey_bitfield_features  )
 
-            print("Going to do PoW 4")
             # We need to convert our private keys to public keys in order
             # to include them.
             try:
