@@ -179,7 +179,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
-        shared.broadcastToSendDataQueues((
+        protocol.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
         shared.UISignalQueue.put(('updateStatusBar', ''))
         try:
@@ -269,7 +269,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
-        shared.broadcastToSendDataQueues((
+        protocol.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
         shared.UISignalQueue.put(('updateStatusBar', ''))
         try:
@@ -359,7 +359,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
-        shared.broadcastToSendDataQueues((
+        protocol.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
         shared.UISignalQueue.put(('updateStatusBar', ''))
         try:
@@ -488,7 +488,7 @@ class singleWorker(threading.Thread, StoppableThread):
             Inventory()[inventoryHash] = (
                 objectType, streamNumber, payload, embeddedTime, tag)
             logger.info('sending inv (within sendBroadcast function) for object: ' + hexlify(inventoryHash))
-            shared.broadcastToSendDataQueues((
+            protocol.broadcastToSendDataQueues((
                 streamNumber, 'advertiseobject', inventoryHash))
 
             shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Broadcast sent on %1").arg(l10n.formatTimestamp()))))
@@ -819,7 +819,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 # not sending to a chan or one of my addresses
                 shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Message sent. Waiting for acknowledgement. Sent on %1").arg(l10n.formatTimestamp()))))
             logger.info('Broadcasting inv for my msg(within sendmsg function):' + hexlify(inventoryHash))
-            shared.broadcastToSendDataQueues((
+            protocol.broadcastToSendDataQueues((
                 toStreamNumber, 'advertiseobject', inventoryHash))
 
             # Update the sent message in the sent table with the necessary information.
@@ -923,7 +923,7 @@ class singleWorker(threading.Thread, StoppableThread):
         Inventory()[inventoryHash] = (
             objectType, streamNumber, payload, embeddedTime, '')
         logger.info('sending inv (for the getpubkey message)')
-        shared.broadcastToSendDataQueues((
+        protocol.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
         
         if retryNumber == 0:
