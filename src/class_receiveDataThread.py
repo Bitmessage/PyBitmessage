@@ -58,7 +58,7 @@ class receiveDataThread(threading.Thread):
         objectHashHolderInstance):
         
         self.sock = sock
-        self.peer = shared.Peer(HOST, port)
+        self.peer = state.Peer(HOST, port)
         self.name = "receiveData-" + self.peer.host.replace(":", ".") # ":" log parser field separator
         self.streamNumber = streamNumber
         self.objectsThatWeHaveYetToGetFromThisPeer = {}
@@ -380,7 +380,7 @@ class receiveDataThread(threading.Thread):
         # We don't need to do the timing attack mitigation if we are
         # only connected to the trusted peer because we can trust the
         # peer not to attack
-        if sleepTime > 0 and doTimingAttackMitigation and shared.trustedPeer == None:
+        if sleepTime > 0 and doTimingAttackMitigation and state.trustedPeer == None:
             logger.debug('Timing attack mitigation: Sleeping for ' + str(sleepTime) + ' seconds.')
             time.sleep(sleepTime)
             
@@ -450,7 +450,7 @@ class receiveDataThread(threading.Thread):
             logger.info('inv message doesn\'t contain enough data. Ignoring.')
             return
         if numberOfItemsInInv == 1:  # we'll just request this data from the person who advertised the object.
-            if totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers > 200000 and len(self.objectsThatWeHaveYetToGetFromThisPeer) > 1000 and shared.trustedPeer == None:  # inv flooding attack mitigation
+            if totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers > 200000 and len(self.objectsThatWeHaveYetToGetFromThisPeer) > 1000 and state.trustedPeer == None:  # inv flooding attack mitigation
                 logger.debug('We already have ' + str(totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers) + ' items yet to retrieve from peers and over 1000 from this node in particular. Ignoring this inv message.')
                 return
             self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[
@@ -470,7 +470,7 @@ class receiveDataThread(threading.Thread):
             objectsNewToMe = advertisedSet - Inventory().hashes_by_stream(self.streamNumber)
             logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
             for item in objectsNewToMe:  
-                if totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers > 200000 and len(self.objectsThatWeHaveYetToGetFromThisPeer) > 1000 and shared.trustedPeer == None:  # inv flooding attack mitigation
+                if totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers > 200000 and len(self.objectsThatWeHaveYetToGetFromThisPeer) > 1000 and state.trustedPeer == None:  # inv flooding attack mitigation
                     logger.debug('We already have ' + str(totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers) + ' items yet to retrieve from peers and over ' + str(len(self.objectsThatWeHaveYetToGetFromThisPeer)), ' from this node in particular. Ignoring the rest of this inv message.')
                     break
                 self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[item] = 0 # helps us keep from sending inv messages to peers that already know about the objects listed therein
@@ -593,7 +593,7 @@ class receiveDataThread(threading.Thread):
             if recaddrStream not in shared.knownNodes:  # knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
                 with shared.knownNodesLock:
                     shared.knownNodes[recaddrStream] = {}
-            peerFromAddrMessage = shared.Peer(hostStandardFormat, recaddrPort)
+            peerFromAddrMessage = state.Peer(hostStandardFormat, recaddrPort)
             if peerFromAddrMessage not in shared.knownNodes[recaddrStream]:
                 if len(shared.knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time()) - 10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800):  # If we have more than 20000 nodes in our list already then just forget about adding more. Also, make sure that the time that someone else received a message from this node is within three hours from now.
                     with shared.knownNodesLock:
@@ -637,7 +637,7 @@ class receiveDataThread(threading.Thread):
                     # if current connection is over a proxy, sent our own onion address at a random position
                     if ownPosition == i and ".onion" in BMConfigParser().get("bitmessagesettings", "onionhostname") and \
                         hasattr(self.sock, "getproxytype") and self.sock.getproxytype() != "none" and not sentOwn:
-                        peer = shared.Peer(BMConfigParser().get("bitmessagesettings", "onionhostname"), BMConfigParser().getint("bitmessagesettings", "onionport"))
+                        peer = state.Peer(BMConfigParser().get("bitmessagesettings", "onionhostname"), BMConfigParser().getint("bitmessagesettings", "onionport"))
                     else:
                     # still may contain own onion address, but we don't change it
                         peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
@@ -802,9 +802,9 @@ class receiveDataThread(threading.Thread):
 
         if not isHostInPrivateIPRange(self.peer.host):
             with shared.knownNodesLock:
-                shared.knownNodes[self.streamNumber][shared.Peer(self.peer.host, self.remoteNodeIncomingPort)] = int(time.time())
+                shared.knownNodes[self.streamNumber][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] = int(time.time())
                 if not self.initiatedConnection:
-                    shared.knownNodes[self.streamNumber][shared.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 162000 # penalise inbound, 2 days minus 3 hours
+                    shared.knownNodes[self.streamNumber][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 162000 # penalise inbound, 2 days minus 3 hours
                 shared.needToWriteKnownNodesToDisk = True
 
         self.sendverack()

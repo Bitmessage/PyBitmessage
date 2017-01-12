@@ -93,18 +93,6 @@ ridiculousDifficulty = 20000000
 # namecoin integration to "namecoind".
 namecoinDefaultRpcPort = "8336"
 
-# If the trustedpeer option is specified in keys.dat then this will
-# contain a Peer which will be connected to instead of using the
-# addresses advertised by other peers. The client will only connect to
-# this peer and the timing attack mitigation will be disabled in order
-# to download data faster. The expected use case is where the user has
-# a fast connection to a trusted server where they run a BitMessage
-# daemon permanently. If they then run a second instance of the client
-# on a local machine periodically when they want to check for messages
-# it will sync with the network a lot faster without compromising
-# security.
-trustedPeer = None
-
 def isAddressInMyAddressBook(address):
     queryreturn = sqlQuery(
         '''select address from addressbook where address=?''',
@@ -441,8 +429,6 @@ def decryptAndCheckPubkeyPayload(data, address):
     except Exception as e:
         logger.critical('Pubkey decryption was UNsuccessful because of an unhandled exception! This is definitely a bug! \n%s' % traceback.format_exc())
         return 'failed'
-
-Peer = collections.namedtuple('Peer', ['host', 'port'])
 
 def checkAndShareObjectWithPeers(data):
     """

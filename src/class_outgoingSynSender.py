@@ -32,9 +32,9 @@ class outgoingSynSender(threading.Thread, StoppableThread):
         # If the user has specified a trusted peer then we'll only
         # ever connect to that. Otherwise we'll pick a random one from
         # the known nodes
-        if shared.trustedPeer:
+        if state.trustedPeer:
             shared.knownNodesLock.acquire()
-            peer = shared.trustedPeer
+            peer = state.trustedPeer
             shared.knownNodes[self.streamNumber][peer] = time.time()
             shared.knownNodesLock.release()
         else:
@@ -65,7 +65,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
         try:
             return peer
         except NameError:
-            return shared.Peer('127.0.0.1', 8444)
+            return state.Peer('127.0.0.1', 8444)
         
     def stopThread(self):
         super(outgoingSynSender, self).stopThread()
@@ -79,7 +79,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             self.stop.wait(2)
         while BMConfigParser().safeGetBoolean('bitmessagesettings', 'sendoutgoingconnections') and not self._stopped:
             self.name = "outgoingSynSender"
-            maximumConnections = 1 if shared.trustedPeer else 8 # maximum number of outgoing connections = 8
+            maximumConnections = 1 if state.trustedPeer else 8 # maximum number of outgoing connections = 8
             while len(self.selfInitiatedConnections[self.streamNumber]) >= maximumConnections:
                 self.stop.wait(10)
             if shared.shutdown:
