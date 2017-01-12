@@ -25,7 +25,7 @@ def _loadTrustedPeer():
         return
 
     host, port = trustedPeer.split(':')
-    shared.trustedPeer = shared.Peer(host, int(port))
+    state.trustedPeer = state.Peer(host, int(port))
 
 def loadConfig():
     if state.appdata:

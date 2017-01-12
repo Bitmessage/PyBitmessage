@@ -10,6 +10,8 @@ import protocol
 import errno
 import re
 
+import state
+
 # Only one singleListener thread will ever exist. It creates the
 # receiveDataThread and sendDataThread for each incoming connection. Note
 # that it cannot set the stream number because it is not known yet- the
@@ -60,7 +62,7 @@ class singleListener(threading.Thread, StoppableThread):
     def run(self):
         # If there is a trusted peer then we don't want to accept
         # incoming connections so we'll just abandon the thread
-        if shared.trustedPeer:
+        if state.trustedPeer:
             return
 
         while BMConfigParser().safeGetBoolean('bitmessagesettings', 'dontconnect') and shared.shutdown == 0:
