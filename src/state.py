@@ -10,8 +10,8 @@ extPort = None
 # for Tor hidden service
 socksIP = None
 
-# Network protocols last check failed
-networkProtocolLastFailed = {'IPv4': 0, 'IPv6': 0, 'onion': 0}
+# Network protocols availability, initialised below
+networkProtocolAvailability = None
 
 appdata = '' #holds the location of the application data storage directory
 
@@ -28,3 +28,9 @@ appdata = '' #holds the location of the application data storage directory
 trustedPeer = None
 
 Peer = collections.namedtuple('Peer', ['host', 'port'])
+
+def resetNetworkProtocolAvailability():
+    global networkProtocolAvailability
+    networkProtocolAvailability = {'IPv4': None, 'IPv6': None, 'onion': None}
+
+resetNetworkProtocolAvailability()

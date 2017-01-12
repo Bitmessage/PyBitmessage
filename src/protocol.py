@@ -67,6 +67,14 @@ def encodeHost(host):
     else:
         return socket.inet_pton(socket.AF_INET6, host)
 
+def networkType(host):
+    if host.find('.onion') > -1:
+        return 'onion'
+    elif host.find(':') == -1:
+        return 'IPv4'
+    else:
+        return 'IPv6'
+
 # checks
 
 def haveSSL(server = False):

@@ -255,15 +255,15 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 else:
                     logger.error('SOCKS5 error: %s', str(err))
                 if err[0][0] == 4 or err[0][0] == 2:
-                    state.networkProtocolLastFailed['IPv6'] = time.time()
+                    state.networkProtocolAvailability[protocol.networkType(peer.host)] = False
             except socks.Socks4Error as err:
                 logger.error('Socks4Error: ' + str(err))
             except socket.error as err:
                 if BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS':
                     logger.error('Bitmessage MIGHT be having trouble connecting to the SOCKS server. ' + str(err))
                 else:
-                    if ":" in peer.host and err[0] == errno.ENETUNREACH:
-                        state.networkProtocolLastFailed['IPv6'] = time.time()
+                    if err[0] == errno.ENETUNREACH:
+                        state.networkProtocolAvailability[protocol.networkType(peer.host)] = False
                     if shared.verbose >= 1:
                         logger.debug('Could NOT connect to ' + str(peer) + 'during outgoing attempt. ' + str(err))
 
