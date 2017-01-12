@@ -5,7 +5,6 @@ import time
 import random
 import sys
 from time import strftime, localtime
-import shared
 import state
 
 def createDefaultKnownNodes(appdata):

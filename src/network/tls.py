@@ -5,6 +5,7 @@ SSL/TLS negotiation.
 import asyncore
 import socket
 import ssl
+import sys
 
 import protocol
 
@@ -45,7 +46,7 @@ class TLSHandshake(asyncore.dispatcher):
         # socket.
         if sys.version_info >= (2,7,9):
             context = ssl.create_default_context(purpose = ssl.Purpose.SERVER_AUTH if self.server_side else ssl.Purpose.CLIENT_AUTH)
-            context.set_ciphers(ciphers)
+            context.set_ciphers(self.ciphers)
             # context.set_ecdh_curve("secp256k1")
             context.check_hostname = False
             context.verify_mode = ssl.CERT_NONE

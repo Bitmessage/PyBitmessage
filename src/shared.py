@@ -8,7 +8,6 @@ useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the
 
 
 # Libraries.
-import collections
 import os
 import pickle
 import Queue
