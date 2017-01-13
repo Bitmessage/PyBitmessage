@@ -100,11 +100,7 @@ def createSupportMessage(myapp):
     architecture = "32" if ctypes.sizeof(ctypes.c_voidp) == 4 else "64"
     pythonversion = sys.version
     
-    SSLEAY_VERSION = 0
-    OpenSSL._lib.SSLeay.restype = ctypes.c_long
-    OpenSSL._lib.SSLeay_version.restype = ctypes.c_char_p
-    OpenSSL._lib.SSLeay_version.argtypes = [ctypes.c_int]
-    opensslversion = "%s (Python internal), %s (external for PyElliptic)" % (ssl.OPENSSL_VERSION, OpenSSL._lib.SSLeay_version(SSLEAY_VERSION))
+    opensslversion = "%s (Python internal), %s (external for PyElliptic)" % (ssl.OPENSSL_VERSION, OpenSSL()._version)
 
     frozen = "N/A"
     if paths.frozen:
