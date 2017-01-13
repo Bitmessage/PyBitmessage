@@ -26,7 +26,6 @@ from addresses import *
 from class_objectProcessorQueue import ObjectProcessorQueue
 from configparser import BMConfigParser
 import highlevelcrypto
-import shared
 #import helper_startup
 from helper_sql import *
 from helper_threading import *
