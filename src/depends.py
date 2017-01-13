@@ -99,10 +99,10 @@ def check_openssl():
     import re
     if re.match(r'linux|darwin|freebsd', sys.platform):
         try:
-            import ctypes.util
-            path = ctypes.util.find_library('ssl')
+            from pyelliptic.find_library_version import find_library_version
+            path = find_library_version('ssl', '1.0')
             if path not in paths:
-                paths.append(path)
+                paths.insert(0, path)
         except:
             pass
 
