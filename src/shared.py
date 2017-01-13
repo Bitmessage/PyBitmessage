@@ -353,7 +353,7 @@ def decryptAndCheckPubkeyPayload(data, address):
         encryptedData = data[readPosition:]
     
         # Let us try to decrypt the pubkey
-        toAddress, cryptorObject = shared.neededPubkeys[tag]
+        toAddress, cryptorObject = state.neededPubkeys[tag]
         if toAddress != address:
             logger.critical('decryptAndCheckPubkeyPayload failed due to toAddress mismatch. This is very peculiar. toAddress: %s, address %s' % (toAddress, address))
             # the only way I can think that this could happen is if someone encodes their address data two different ways.
