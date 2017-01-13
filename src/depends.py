@@ -1,6 +1,7 @@
 #! python
 
 import sys
+import pyelliptic.openssl
 
 #Only really old versions of Python don't have sys.hexversion. We don't support
 #them. The logging module was introduced in Python 2.3
@@ -106,8 +107,9 @@ def check_openssl():
         except:
             pass
 
-    SSLEAY_VERSION = 0
-    SSLEAY_CFLAGS = 2
+    openssl_version = None
+    openssl_hexversion = None
+    openssl_cflags = None
 
     cflags_regex = re.compile(r'(?:OPENSSL_NO_)(AES|EC|ECDH|ECDSA)(?!\w)')
 
@@ -118,23 +120,18 @@ def check_openssl():
         except OSError:
             continue
         logger.info('OpenSSL Name: ' + library._name)
-        try:
-            library.SSLeay.restype = ctypes.c_long
-            library.SSLeay_version.restype = ctypes.c_char_p
-            library.SSLeay_version.argtypes = [ctypes.c_int]
-        except AttributeError:
+        openssl_version, openssl_hexversion, openssl_cflags = pyelliptic.openssl.get_version(library)
+        if not openssl_version:
             logger.error('Cannot determine version of this OpenSSL library.')
             return False
-        logger.info('OpenSSL Version: ' + library.SSLeay_version(SSLEAY_VERSION))
-        compile_options = library.SSLeay_version(SSLEAY_CFLAGS)
-        logger.info('OpenSSL Compile Options: ' + compile_options)
-        openssl_hexversion = library.SSLeay()
+        logger.info('OpenSSL Version: ' + openssl_version)
+        logger.info('OpenSSL Compile Options: ' + openssl_cflags)
         #PyElliptic uses EVP_CIPHER_CTX_new and EVP_CIPHER_CTX_free which were
         #introduced in 0.9.8b.
         if openssl_hexversion < 0x90802F:
             logger.error('This OpenSSL library is too old. PyBitmessage requires OpenSSL 0.9.8b or later with AES, Elliptic Curves (EC), ECDH, and ECDSA enabled.')
             return False
-        matches = cflags_regex.findall(compile_options)
+        matches = cflags_regex.findall(openssl_cflags)
         if len(matches) > 0:
             logger.error('This OpenSSL library is missing the following required features: ' + ', '.join(matches) + '. PyBitmessage requires OpenSSL 0.9.8b or later with AES, Elliptic Curves (EC), ECDH, and ECDSA enabled.')
             return False

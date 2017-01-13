@@ -35,7 +35,7 @@ def sign(msg,hexPrivkey):
     # upgrade PyBitmessage gracefully. 
     # https://github.com/yann2192/pyelliptic/pull/33
     # More discussion: https://github.com/yann2192/pyelliptic/issues/32
-    return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_ecdsa) # SHA1
+    return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.digest_ecdsa_sha1) # SHA1
     #return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_sha256) # SHA256. We should switch to this eventually.
 # Verifies with hex public key
 def verify(msg,sig,hexPubkey):
@@ -44,7 +44,7 @@ def verify(msg,sig,hexPubkey):
     # of them passes then we will be satisfied. Eventually this can 
     # be simplified and we'll only check with SHA256. 
     try:
-        sigVerifyPassed = makePubCryptor(hexPubkey).verify(sig,msg,digest_alg=OpenSSL.EVP_ecdsa) # old SHA1 algorithm.
+        sigVerifyPassed = makePubCryptor(hexPubkey).verify(sig,msg,digest_alg=OpenSSL.digest_ecdsa_sha1) # old SHA1 algorithm.
     except:
         sigVerifyPassed = False
     if sigVerifyPassed:
