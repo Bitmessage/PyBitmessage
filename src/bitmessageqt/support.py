@@ -88,7 +88,6 @@ def createSupportMessage(myapp):
     
     version = softwareVersion
     githeadfile = path.join(paths.codePath(), '..', '.git', 'ORIG_HEAD')
-    print "GITHEADFILE %s" % (githeadfile)
     if (path.isfile(githeadfile)):
         try:
           with open(githeadfile, 'rt') as githead:
