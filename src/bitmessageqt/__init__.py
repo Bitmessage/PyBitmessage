@@ -2400,6 +2400,10 @@ class MyForm(settingsmixin.SMainWindow):
             except:
                 QMessageBox.about(self, _translate("MainWindow", "Number needed"), _translate(
                     "MainWindow", "Your maximum download and upload rate must be numbers. Ignoring what you typed."))
+
+            BMConfigParser().set('bitmessagesettings', 'maxoutboundconnections', str(
+                int(float(self.settingsDialogInstance.ui.lineEditMaxOutboundConnections.text()))))
+
             throttle.SendThrottle().resetLimit()
             throttle.ReceiveThrottle().resetLimit()
 
@@ -4108,6 +4112,8 @@ class settingsDialog(QtGui.QDialog):
             BMConfigParser().get('bitmessagesettings', 'maxdownloadrate')))
         self.ui.lineEditMaxUploadRate.setText(str(
             BMConfigParser().get('bitmessagesettings', 'maxuploadrate')))
+        self.ui.lineEditMaxOutboundConnections.setText(str(
+            BMConfigParser().get('bitmessagesettings', 'maxoutboundconnections')))
 
         # Demanded difficulty tab
         self.ui.lineEditTotalDifficulty.setText(str((float(BMConfigParser().getint(

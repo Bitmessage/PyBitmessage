@@ -6,4 +6,6 @@ src/dist
 src/.project
 src/.pydevproject
 src/.settings/
-*.dll
+src/**/.dll
+src/**/*.o
+src/**/*.so

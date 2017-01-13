@@ -78,7 +78,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             self.stop.wait(2)
         while BMConfigParser().safeGetBoolean('bitmessagesettings', 'sendoutgoingconnections') and not self._stopped:
             self.name = "outgoingSynSender"
-            maximumConnections = 1 if state.trustedPeer else 8 # maximum number of outgoing connections = 8
+            maximumConnections = 1 if state.trustedPeer else BMConfigParser().safeGetInt('bitmessagesettings', 'maxoutboundconnections')
             while len(self.selfInitiatedConnections[self.streamNumber]) >= maximumConnections and not self._stopped:
                 self.stop.wait(10)
             if state.shutdown:
