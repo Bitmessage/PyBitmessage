@@ -90,8 +90,8 @@ def createSupportMessage(myapp):
     githeadfile = path.join(paths.codePath(), '..', '.git', 'ORIG_HEAD')
     if (path.isfile(githeadfile)):
         try:
-          with open(githeadfile, 'rt') as githead:
-              version += " GIT " + githead.readline().rstrip()
+            with open(githeadfile, 'rt') as githead:
+                version += " GIT " + githead.readline().rstrip()
         except IOError:
             pass
 
