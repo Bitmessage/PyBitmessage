@@ -1,5 +1,6 @@
 import ctypes
 from PyQt4 import QtCore, QtGui
+from os import path
 import ssl
 import sys
 import time
@@ -86,6 +87,15 @@ def createSupportMessage(myapp):
     myapp.ui.lineEditTo.setText(SUPPORT_ADDRESS)
     
     version = softwareVersion
+    githeadfile = path.join(paths.codePath(), '..', '.git', 'ORIG_HEAD')
+    print "GITHEADFILE %s" % (githeadfile)
+    if (path.isfile(githeadfile)):
+        try:
+          with open(githeadfile, 'rt') as githead:
+              version += " GIT " + githead.readline().rstrip()
+        except IOError:
+            pass
+
     os = sys.platform
     if os == "win32":
         windowsversion = sys.getwindowsversion()
