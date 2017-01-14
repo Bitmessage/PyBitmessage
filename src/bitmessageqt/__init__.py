@@ -82,6 +82,7 @@ from proofofwork import getPowType
 import protocol
 import state
 from statusbar import BMStatusBar
+import throttle
 from version import softwareVersion
 
 def _translate(context, text, disambiguation = None, encoding = None, number = None):
@@ -2391,6 +2392,8 @@ class MyForm(settingsmixin.SMainWindow):
             except:
                 QMessageBox.about(self, _translate("MainWindow", "Number needed"), _translate(
                     "MainWindow", "Your maximum download and upload rate must be numbers. Ignoring what you typed."))
+            throttle.SendThrottle.resetLimit()
+            throttle.ReceiveThrottle.resetLimit()
 
             BMConfigParser().set('bitmessagesettings', 'namecoinrpctype',
                 self.settingsDialogInstance.getNamecoinType())

@@ -1,3 +1,4 @@
+import errno
 import time
 import threading
 import shared
@@ -15,6 +16,7 @@ from addresses import *
 from debug import logger
 import protocol
 import state
+import throttle
 
 # Every connection to a peer has a sendDataThread (and also a
 # receiveDataThread).
@@ -70,36 +72,30 @@ class sendDataThread(threading.Thread):
         self.versionSent = 1
 
     def sendBytes(self, data):
-        if BMConfigParser().getint('bitmessagesettings', 'maxuploadrate') == 0:
-            uploadRateLimitBytes = 999999999 # float("inf") doesn't work
-        else:
-            uploadRateLimitBytes = BMConfigParser().getint('bitmessagesettings', 'maxuploadrate') * 1000
-        with shared.sendDataLock:
-            while data:
-                while shared.numberOfBytesSentLastSecond >= uploadRateLimitBytes:
-                    if int(time.time()) == shared.lastTimeWeResetBytesSent:
-                        time.sleep(0.3)
-                    else:
-                        # It's a new second. Let us clear the shared.numberOfBytesSentLastSecond
-                        shared.lastTimeWeResetBytesSent = int(time.time())
-                        shared.numberOfBytesSentLastSecond = 0
-                        # If the user raises or lowers the uploadRateLimit then we should make use of
-                        # the new setting. If we are hitting the limit then we'll check here about 
-                        # once per second.
-                        if BMConfigParser().getint('bitmessagesettings', 'maxuploadrate') == 0:
-                            uploadRateLimitBytes = 999999999 # float("inf") doesn't work
-                        else:
-                            uploadRateLimitBytes = BMConfigParser().getint('bitmessagesettings', 'maxuploadrate') * 1000
-                if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
-                    self.connectionIsOrWasFullyEstablished and
-                    protocol.haveSSL(not self.initiatedConnection)):
-                    amountSent = self.sslSock.send(data[:1000])
-                else:
-                    amountSent = self.sock.send(data[:1000])
-                shared.numberOfBytesSent += amountSent # used for the 'network status' tab in the UI
-                shared.numberOfBytesSentLastSecond += amountSent
-                self.lastTimeISentData = int(time.time())
-                data = data[amountSent:]
+        while data:
+            if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
+                self.connectionIsOrWasFullyEstablished and
+                protocol.haveSSL(not self.initiatedConnection)):
+                while state.shutdown == 0:
+                    try:
+                        amountSent = self.sslSock.send(data[:4096])
+                        break
+                    except socket.error as e:
+                        if e.errno == errno.EAGAIN:
+                            continue
+                        raise
+            else:
+                while True:
+                    try:
+                        amountSent = self.sock.send(data[:4096])
+                        break
+                    except socket.error as e:
+                        if e.errno == errno.EAGAIN:
+                            continue
+                        raise
+            throttle.SendThrottle().wait(amountSent)
+            self.lastTimeISentData = int(time.time())
+            data = data[amountSent:]
 
 
     def run(self):
@@ -178,7 +174,7 @@ class sendDataThread(threading.Thread):
                     try:
                         self.sendBytes(data)
                     except:
-                        logger.error('Sending of data to ' + str(self.peer) + ' failed. sendDataThread thread ' + str(self) + ' ending now.')
+                        logger.error('Sending of data to ' + str(self.peer) + ' failed. sendDataThread thread ' + str(self) + ' ending now.', exc_info=True)
                         break
                 elif command == 'connectionIsOrWasFullyEstablished':
                     self.connectionIsOrWasFullyEstablished = True

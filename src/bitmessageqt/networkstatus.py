@@ -7,6 +7,7 @@ import l10n
 from retranslateui import RetranslateMixin
 from uisignaler import UISignaler
 import widgets
+import throttle
 
 
 class NetworkStatus(QtGui.QWidget, RetranslateMixin):
@@ -27,9 +28,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             "updateNumberOfBroadcastsProcessed()"), self.updateNumberOfBroadcastsProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateNetworkStatusTab()"), self.updateNetworkStatusTab)
-        
-        self.totalNumberOfBytesReceived = 0
-        self.totalNumberOfBytesSent = 0
         
         self.timer = QtCore.QTimer()
         self.timer.start(2000) # milliseconds
@@ -70,13 +68,9 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         sent and received by 2.
         """
         self.labelBytesRecvCount.setText(_translate(
-            "networkstatus", "Down: %1/s  Total: %2").arg(self.formatByteRate(shared.numberOfBytesReceived/2), self.formatBytes(self.totalNumberOfBytesReceived)))
+            "networkstatus", "Down: %1/s  Total: %2").arg(self.formatByteRate(throttle.ReceiveThrottle().getSpeed()), self.formatBytes(throttle.ReceiveThrottle().total)))
         self.labelBytesSentCount.setText(_translate(
-            "networkstatus", "Up: %1/s  Total: %2").arg(self.formatByteRate(shared.numberOfBytesSent/2), self.formatBytes(self.totalNumberOfBytesSent)))
-        self.totalNumberOfBytesReceived += shared.numberOfBytesReceived
-        self.totalNumberOfBytesSent += shared.numberOfBytesSent
-        shared.numberOfBytesReceived = 0
-        shared.numberOfBytesSent = 0
+            "networkstatus", "Up: %1/s  Total: %2").arg(self.formatByteRate(throttle.SendThrottle().getSpeed()), self.formatBytes(throttle.SendThrottle().total)))
 
     def updateNetworkStatusTab(self):
         totalNumberOfConnectionsFromAllStreams = 0  # One would think we could use len(sendDataQueues) for this but the number doesn't always match: just because we have a sendDataThread running doesn't mean that the connection has been fully established (with the exchange of version messages).
