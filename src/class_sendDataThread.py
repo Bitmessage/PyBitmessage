@@ -92,7 +92,7 @@ class sendDataThread(threading.Thread):
                             uploadRateLimitBytes = BMConfigParser().getint('bitmessagesettings', 'maxuploadrate') * 1000
                 if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
                     self.connectionIsOrWasFullyEstablished and
-                    shared.haveSSL(not self.initiatedConnection)):
+                    protocol.haveSSL(not self.initiatedConnection)):
                     amountSent = self.sslSock.send(data[:1000])
                 else:
                     amountSent = self.sock.send(data[:1000])
