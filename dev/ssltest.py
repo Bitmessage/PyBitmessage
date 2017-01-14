@@ -2,6 +2,7 @@ import select
 import socket
 import ssl
 import sys
+import traceback
 
 HOST = "127.0.0.1"
 PORT = 8912
@@ -55,7 +56,8 @@ def sslHandshake(sock, server=False):
             print "Waiting for SSL socket handhake write"
             select.select([], [self.sslSock], [], 10)
         except Exception as e:
-            print "SSL socket handhake failed, shutting down connection: %s" % (e)
+            print "SSL socket handhake failed, shutting down connection"
+            traceback.print_exc()
             return
     print "Success!"
     return sslSock
@@ -71,13 +73,15 @@ if __name__ == "__main__":
             sock, addr = serversock.accept()
             print "Got connection from %s:%i" % (addr[0], addr[1])
             sslSock = sslHandshake(sock, True)
-            sslSock.shutdown(socket.SHUT_RDWR)
-            sslSock.close()
+            if sslSock:
+                sslSock.shutdown(socket.SHUT_RDWR)
+                sslSock.close()
     elif sys.argv[1] == "client":
         sock = connect()
         sslSock = sslHandshake(sock, False)
-        sslSock.shutdown(socket.SHUT_RDWR)
-        sslSock.close()
+        if sslSock:
+            sslSock.shutdown(socket.SHUT_RDWR)
+            sslSock.close()
     else:
         print "Usage: ssltest.py client|server"
         sys.exit(0)
