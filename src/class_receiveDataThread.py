@@ -294,16 +294,17 @@ class receiveDataThread(threading.Thread):
             protocol.haveSSL(not self.initiatedConnection)):
             logger.debug("Initialising TLS")
             if sys.version_info >= (2,7,9):
-                context = ssl.create_default_context(purpose = ssl.Purpose.CLIENT_AUTH if self.initiatedConnection else ssl.Purpose.SERVER_AUTH)
+                context = ssl.SSLContext(protocol.sslProtocolVersion)
                 context.set_ciphers("AECDH-AES256-SHA")
                 context.set_ecdh_curve("secp256k1")
                 context.check_hostname = False
                 context.verify_mode = ssl.CERT_NONE
                 # also exclude TLSv1 and TLSv1.1 in the future
-                context.options |= ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3
+                context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE | ssl.OP_CIPHER_SERVER_PREFERENCE
                 self.sslSock = context.wrap_socket(self.sock, server_side = not self.initiatedConnection, do_handshake_on_connect=False)
             else:
                 self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(paths.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(paths.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=protocol.sslProtocolVersion, do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
+            self.sendDataThreadQueue.join()
             while True:
                 try:
                     self.sslSock.do_handshake()
@@ -316,7 +317,7 @@ class receiveDataThread(threading.Thread):
                     logger.debug("Waiting for SSL socket handhake write")
                     select.select([], [self.sslSock], [], 10)
                 except:
-                    logger.debug("SSL socket handhake failed, shutting down connection")
+                    logger.error("SSL socket handhake failed, shutting down connection", exc_info=True)
                     self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail'))
                     return
         # Command the corresponding sendDataThread to set its own connectionIsOrWasFullyEstablished variable to True also

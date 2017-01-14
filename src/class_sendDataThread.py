@@ -185,6 +185,8 @@ class sendDataThread(threading.Thread):
                     self.services, self.sslSock = data
             else:
                 logger.error('sendDataThread ID: ' + str(id(self)) + ' ignoring command ' + command + ' because the thread is not in stream' + str(deststream))
+            self.sendDataThreadQueue.task_done()
+        self.sendDataThreadQueue.task_done()
 
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
