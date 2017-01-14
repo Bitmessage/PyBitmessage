@@ -15,6 +15,8 @@ import tr
 import os
 import ctypes
 
+import state
+
 bitmsglib = 'bitmsghash.so'
 
 def _set_idle():
@@ -43,10 +45,10 @@ def _doSafePoW(target, initialHash):
     logger.debug("Safe PoW start")
     nonce = 0
     trialValue = float('inf')
-    while trialValue > target and shared.shutdown == 0:
+    while trialValue > target and state.shutdown == 0:
         nonce += 1
         trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
-    if shared.shutdown != 0:
+    if state.shutdown != 0:
         raise StopIteration("Interrupted")
     logger.debug("Safe PoW done")
     return [trialValue, nonce]
@@ -71,7 +73,7 @@ def _doFastPoW(target, initialHash):
         result.append(pool.apply_async(_pool_worker, args=(i, initialHash, target, pool_size)))
 
     while True:
-        if shared.shutdown > 0:
+        if state.shutdown > 0:
             try:
                 pool.terminate()
                 pool.join()
@@ -101,7 +103,7 @@ def _doCPoW(target, initialHash):
     logger.debug("C PoW start")
     nonce = bmpow(out_h, out_m)
     trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
-    if shared.shutdown != 0:
+    if state.shutdown != 0:
         raise StopIteration("Interrupted")
     logger.debug("C PoW done")
     return [trialValue, nonce]
@@ -117,7 +119,7 @@ def _doGPUPoW(target, initialHash):
         logger.error("Your GPUs (%s) did not calculate correctly, disabling OpenCL. Please report to the developers.", deviceNames)
         openclpow.enabledGpus = []
         raise Exception("GPU did not calculate correctly.")
-    if shared.shutdown != 0:
+    if state.shutdown != 0:
         raise StopIteration("Interrupted")
     logger.debug("GPU PoW done")
     return [trialValue, nonce]
@@ -186,7 +188,7 @@ def buildCPoW():
         notifyBuild(True)
 
 def run(target, initialHash):
-    if shared.shutdown != 0:
+    if state.shutdown != 0:
         raise
     target = int(target)
     if openclpow.openclEnabled():

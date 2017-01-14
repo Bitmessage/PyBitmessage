@@ -68,7 +68,7 @@ def checkHasNormalAddress():
 def createAddressIfNeeded(myapp):
     if not checkHasNormalAddress():
         shared.addressGeneratorQueue.put(('createRandomAddress', 4, 1, str(QtGui.QApplication.translate("Support", SUPPORT_MY_LABEL)), 1, "", False, protocol.networkDefaultProofOfWorkNonceTrialsPerByte, protocol.networkDefaultPayloadLengthExtraBytes))
-    while shared.shutdown == 0 and not checkHasNormalAddress():
+    while state.shutdown == 0 and not checkHasNormalAddress():
         time.sleep(.2)
     myapp.rerenderComboBoxSendFrom()
     return checkHasNormalAddress()
@@ -76,7 +76,7 @@ def createAddressIfNeeded(myapp):
 def createSupportMessage(myapp):
     checkAddressBook(myapp)
     address = createAddressIfNeeded(myapp)
-    if shared.shutdown:
+    if state.shutdown:
         return
 
     myapp.ui.lineEditSubject.setText(str(QtGui.QApplication.translate("Support", SUPPORT_SUBJECT)))

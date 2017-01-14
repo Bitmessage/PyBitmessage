@@ -38,7 +38,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             shared.knownNodes[self.streamNumber][peer] = time.time()
             shared.knownNodesLock.release()
         else:
-            while not shared.shutdown:
+            while not state.shutdown:
                 shared.knownNodesLock.acquire()
                 try:
                     peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
@@ -82,7 +82,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             maximumConnections = 1 if state.trustedPeer else 8 # maximum number of outgoing connections = 8
             while len(self.selfInitiatedConnections[self.streamNumber]) >= maximumConnections:
                 self.stop.wait(10)
-            if shared.shutdown:
+            if state.shutdown:
                 break
             random.seed()
             peer = self._getPeer()
@@ -93,7 +93,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 random.seed()
                 peer = self._getPeer()
                 self.stop.wait(1)
-                if shared.shutdown:
+                if state.shutdown:
                     break
                 # Clear out the shared.alreadyAttemptedConnectionsList every half
                 # hour so that this program will again attempt a connection
@@ -108,7 +108,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 shared.alreadyAttemptedConnectionsListLock.release()
             except threading.ThreadError as e:
                 pass
-            if shared.shutdown:
+            if state.shutdown:
                 break
             self.name = "outgoingSynSender-" + peer.host.replace(":", ".") # log parser field separator
             address_family = socket.AF_INET

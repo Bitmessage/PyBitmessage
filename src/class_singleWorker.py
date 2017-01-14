@@ -21,7 +21,7 @@ from helper_threading import *
 from inventory import Inventory
 import l10n
 import protocol
-from state import neededPubkeys
+import state
 from binascii import hexlify, unhexlify
 
 # This thread, of which there is only one, does the heavy lifting:
@@ -57,13 +57,13 @@ class singleWorker(threading.Thread, StoppableThread):
             toAddress, = row
             toStatus, toAddressVersionNumber, toStreamNumber, toRipe = decodeAddress(toAddress)
             if toAddressVersionNumber <= 3 :
-                neededPubkeys[toAddress] = 0
+                state.neededPubkeys[toAddress] = 0
             elif toAddressVersionNumber >= 4:
                 doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
                     toAddressVersionNumber) + encodeVarint(toStreamNumber) + toRipe).digest()).digest()
                 privEncryptionKey = doubleHashOfAddressData[:32] # Note that this is the first half of the sha512 hash.
                 tag = doubleHashOfAddressData[32:]
-                neededPubkeys[tag] = (toAddress, highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
+                state.neededPubkeys[tag] = (toAddress, highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
 
         # Initialize the shared.ackdataForWhichImWatching data structure
         queryreturn = sqlQuery(
@@ -76,7 +76,7 @@ class singleWorker(threading.Thread, StoppableThread):
         self.stop.wait(
             10)  # give some time for the GUI to start before we start on existing POW tasks.
 
-        if shared.shutdown == 0:
+        if state.shutdown == 0:
             # just in case there are any pending tasks for msg
             # messages that have yet to be sent.
             shared.workerQueue.put(('sendmessage', ''))
@@ -84,7 +84,7 @@ class singleWorker(threading.Thread, StoppableThread):
             # that have yet to be sent.
             shared.workerQueue.put(('sendbroadcast', ''))
 
-        while shared.shutdown == 0:
+        while state.shutdown == 0:
             self.busy = 0
             command, data = shared.workerQueue.get()
             self.busy = 1
@@ -553,7 +553,7 @@ class singleWorker(threading.Thread, StoppableThread):
                         toTag = ''
                     else:
                         toTag = hashlib.sha512(hashlib.sha512(encodeVarint(toAddressVersionNumber)+encodeVarint(toStreamNumber)+toRipe).digest()).digest()[32:]
-                    if toaddress in neededPubkeys or toTag in neededPubkeys:
+                    if toaddress in state.neededPubkeys or toTag in state.neededPubkeys:
                         # We already sent a request for the pubkey
                         sqlExecute(
                             '''UPDATE sent SET status='awaitingpubkey', sleeptill=? WHERE toaddress=? AND status='msgqueued' ''', 
@@ -577,7 +577,7 @@ class singleWorker(threading.Thread, StoppableThread):
                                 toAddressVersionNumber) + encodeVarint(toStreamNumber) + toRipe).digest()).digest()
                             privEncryptionKey = doubleHashOfToAddressData[:32] # The first half of the sha512 hash.
                             tag = doubleHashOfToAddressData[32:] # The second half of the sha512 hash.
-                            neededPubkeys[tag] = (toaddress, highlevelcrypto.makeCryptor(hexlify(privEncryptionKey)))
+                            state.neededPubkeys[tag] = (toaddress, highlevelcrypto.makeCryptor(hexlify(privEncryptionKey)))
 
                             for value in Inventory().by_type_and_tag(1, toTag):
                                 if shared.decryptAndCheckPubkeyPayload(value.payload, toaddress) == 'successful': #if valid, this function also puts it in the pubkeys table.
@@ -585,7 +585,7 @@ class singleWorker(threading.Thread, StoppableThread):
                                     sqlExecute(
                                         '''UPDATE sent SET status='doingmsgpow', retrynumber=0 WHERE toaddress=? AND (status='msgqueued' or status='awaitingpubkey' or status='doingpubkeypow')''',
                                         toaddress)
-                                    del neededPubkeys[tag]
+                                    del state.neededPubkeys[tag]
                                     break
                                 #else:  # There was something wrong with this pubkey object even
                                         # though it had the correct tag- almost certainly because
@@ -879,15 +879,15 @@ class singleWorker(threading.Thread, StoppableThread):
         retryNumber = queryReturn[0][0]
 
         if addressVersionNumber <= 3:
-            neededPubkeys[toAddress] = 0
+            state.neededPubkeys[toAddress] = 0
         elif addressVersionNumber >= 4:
             # If the user just clicked 'send' then the tag (and other information) will already
             # be in the neededPubkeys dictionary. But if we are recovering from a restart
             # of the client then we have to put it in now. 
             privEncryptionKey = hashlib.sha512(hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()).digest()[:32] # Note that this is the first half of the sha512 hash.
             tag = hashlib.sha512(hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+ripe).digest()).digest()[32:] # Note that this is the second half of the sha512 hash.
-            if tag not in neededPubkeys:
-                neededPubkeys[tag] = (toAddress, highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
+            if tag not in state.neededPubkeys:
+                state.neededPubkeys[tag] = (toAddress, highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
         
         if retryNumber == 0:
             TTL = 2.5*24*60*60 # 2.5 days. This was chosen fairly arbitrarily. 
