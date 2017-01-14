@@ -51,7 +51,6 @@ knownNodes = {}
 printLock = threading.Lock()
 statusIconColor = 'red'
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
-shutdown = 0 #Set to 1 by the doCleanShutdown function. Used to tell the proof of work worker threads to exit.
 thisapp = None # singleton lock instance
 alreadyAttemptedConnectionsList = {
 }  # This is a list of nodes to which we have already attempted a connection
@@ -197,8 +196,7 @@ def reloadBroadcastSendersForWhichImWatching():
             MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
 
 def doCleanShutdown():
-    global shutdown
-    shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
+    state.shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
     try:
         parserInputQueue.put(None, False)
     except Queue.Full:
@@ -228,7 +226,7 @@ def doCleanShutdown():
 
     # Verify that the objectProcessor has finished exiting. It should have incremented the 
     # shutdown variable from 1 to 2. This must finish before we command the sqlThread to exit.
-    while shutdown == 1:
+    while state.shutdown == 1:
         time.sleep(.1)
     
     # This one last useless query will guarantee that the previous flush committed and that the

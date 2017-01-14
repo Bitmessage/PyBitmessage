@@ -14,6 +14,7 @@ import protocol
 from pyelliptic import arithmetic
 import tr
 from binascii import hexlify
+import state
 
 class addressGenerator(threading.Thread, StoppableThread):
 
@@ -30,7 +31,7 @@ class addressGenerator(threading.Thread, StoppableThread):
         super(addressGenerator, self).stopThread()
 
     def run(self):
-        while shared.shutdown == 0:
+        while state.shutdown == 0:
             queueValue = shared.addressGeneratorQueue.get()
             nonceTrialsPerByte = 0
             payloadLengthExtraBytes = 0

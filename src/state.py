@@ -15,6 +15,8 @@ networkProtocolAvailability = None
 
 appdata = '' #holds the location of the application data storage directory
 
+shutdown = 0 #Set to 1 by the doCleanShutdown function. Used to tell the proof of work worker threads to exit.
+
 # If the trustedpeer option is specified in keys.dat then this will
 # contain a Peer which will be connected to instead of using the
 # addresses advertised by other peers. The client will only connect to

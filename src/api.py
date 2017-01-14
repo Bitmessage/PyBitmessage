@@ -33,6 +33,7 @@ from struct import pack
 from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute,sqlStoredProcedure
 from debug import logger
 from inventory import Inventory
+import state
 from version import softwareVersion
 
 # Helper Functions
@@ -52,7 +53,7 @@ class APIError(Exception):
 
 class StoppableXMLRPCServer(SimpleXMLRPCServer):
     def serve_forever(self):
-        while shared.shutdown == 0:
+        while state.shutdown == 0:
             self.handle_request()
 
 

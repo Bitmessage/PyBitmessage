@@ -7,7 +7,7 @@ import os
 
 from configparser import BMConfigParser
 import paths
-from shared import shutdown
+from state import shutdown
 from debug import logger
 
 libAvailable = True

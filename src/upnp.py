@@ -9,6 +9,7 @@ import time
 from configparser import BMConfigParser
 from helper_threading import *
 import shared
+import state
 import tr
 
 def createRequestXML(service, action, arguments=None):
@@ -197,7 +198,7 @@ class uPnPThread(threading.Thread, StoppableThread):
         logger.debug("Starting UPnP thread")
         logger.debug("Local IP: %s", self.localIP)
         lastSent = 0
-        while shared.shutdown == 0 and BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp'):
+        while state.shutdown == 0 and BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp'):
             if time.time() - lastSent > self.sendSleep and len(self.routers) == 0:
                 try:
                     self.sendSearchRouter()
@@ -205,7 +206,7 @@ class uPnPThread(threading.Thread, StoppableThread):
                     pass
                 lastSent = time.time()
             try:
-                while shared.shutdown == 0 and BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp'):
+                while state.shutdown == 0 and BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp'):
                     resp,(ip,port) = self.sock.recvfrom(1000)
                     if resp is None:
                         continue

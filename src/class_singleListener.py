@@ -65,7 +65,7 @@ class singleListener(threading.Thread, StoppableThread):
         if state.trustedPeer:
             return
 
-        while BMConfigParser().safeGetBoolean('bitmessagesettings', 'dontconnect') and shared.shutdown == 0:
+        while BMConfigParser().safeGetBoolean('bitmessagesettings', 'dontconnect') and state.shutdown == 0:
             self.stop.wait(1)
         helper_bootstrap.dns()
         # We typically don't want to accept incoming connections if the user is using a
@@ -76,7 +76,7 @@ class singleListener(threading.Thread, StoppableThread):
         while BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and \
             (not BMConfigParser().getboolean('bitmessagesettings', 'sockslisten') and \
             ".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname')) and \
-            shared.shutdown == 0:
+            state.shutdown == 0:
             self.stop.wait(5)
 
         logger.info('Listening for incoming connections.')
@@ -99,19 +99,19 @@ class singleListener(threading.Thread, StoppableThread):
         # regexp to match an IPv4-mapped IPv6 address
         mappedAddressRegexp = re.compile(r'^::ffff:([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)$')
 
-        while shared.shutdown == 0:
+        while state.shutdown == 0:
             # We typically don't want to accept incoming connections if the user is using a
             # SOCKS proxy, unless they have configured otherwise. If they eventually select
             # proxy 'none' or configure SOCKS listening then this will start listening for
             # connections.
-            while BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not BMConfigParser().getboolean('bitmessagesettings', 'sockslisten') and ".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname') and shared.shutdown == 0:
+            while BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not BMConfigParser().getboolean('bitmessagesettings', 'sockslisten') and ".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname') and state.shutdown == 0:
                 self.stop.wait(10)
-            while len(shared.connectedHostsList) > 220 and shared.shutdown == 0:
+            while len(shared.connectedHostsList) > 220 and state.shutdown == 0:
                 logger.info('We are connected to too many people. Not accepting further incoming connections for ten seconds.')
 
                 self.stop.wait(10)
 
-            while shared.shutdown == 0:
+            while state.shutdown == 0:
                 socketObject, sockaddr = sock.accept()
                 (HOST, PORT) = sockaddr[0:2]
 

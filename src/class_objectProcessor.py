@@ -22,7 +22,7 @@ import helper_msgcoding
 import helper_sent
 from helper_sql import *
 import protocol
-from state import neededPubkeys
+import state
 import tr
 from debug import logger
 import l10n
@@ -73,7 +73,7 @@ class objectProcessor(threading.Thread):
             except Exception as e:
                 logger.critical("Critical error within objectProcessorThread: \n%s" % traceback.format_exc())
 
-            if shared.shutdown:
+            if state.shutdown:
                 time.sleep(.5) # Wait just a moment for most of the connections to close
                 numberOfObjectsThatWereInTheObjectProcessorQueue = 0
                 with SqlBulkExecute() as sql:
@@ -83,7 +83,7 @@ class objectProcessor(threading.Thread):
                                    objectType,data)
                         numberOfObjectsThatWereInTheObjectProcessorQueue += 1
                 logger.debug('Saved %s objects from the objectProcessorQueue to disk. objectProcessorThread exiting.' % str(numberOfObjectsThatWereInTheObjectProcessorQueue))
-                shared.shutdown = 2
+                state.shutdown = 2
                 break
     
     def processgetpubkey(self, data):
@@ -286,12 +286,12 @@ class objectProcessor(threading.Thread):
                 return
 
             tag = data[readPosition:readPosition + 32]
-            if tag not in neededPubkeys:
+            if tag not in state.neededPubkeys:
                 logger.info('We don\'t need this v4 pubkey. We didn\'t ask for it.')
                 return
             
             # Let us try to decrypt the pubkey
-            toAddress, cryptorObject = neededPubkeys[tag]
+            toAddress, cryptorObject = state.neededPubkeys[tag]
             if shared.decryptAndCheckPubkeyPayload(data, toAddress) == 'successful':
                 # At this point we know that we have been waiting on this pubkey.
                 # This function will command the workerThread to start work on
@@ -783,8 +783,8 @@ class objectProcessor(threading.Thread):
         # stream number, and RIPE hash.
         status, addressVersion, streamNumber, ripe = decodeAddress(address)
         if addressVersion <=3:
-            if address in neededPubkeys:
-                del neededPubkeys[address]
+            if address in state.neededPubkeys:
+                del state.neededPubkeys[address]
                 self.sendMessages(address)
             else:
                 logger.debug('We don\'t need this pub key. We didn\'t ask for it. For address: %s' % address)
@@ -794,8 +794,8 @@ class objectProcessor(threading.Thread):
         elif addressVersion >= 4:
             tag = hashlib.sha512(hashlib.sha512(encodeVarint(
                 addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()[32:]
-            if tag in neededPubkeys:
-                del neededPubkeys[tag]
+            if tag in state.neededPubkeys:
+                del state.neededPubkeys[tag]
                 self.sendMessages(address)
 
     def sendMessages(self, address):
