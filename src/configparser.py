@@ -27,6 +27,14 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
                 return False
         return False
 
+    def safeGetInt(self, section, field):
+        if self.has_option(section, field):
+            try:
+                return self.getint(section, field)
+            except ValueError:
+                return 0
+        return 0
+
     def safeGet(self, section, option, default = None):
         if self.has_option(section, option):
             return self.get(section, option)
