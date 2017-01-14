@@ -32,6 +32,7 @@ import paths
 import protocol
 from inventory import Inventory
 import state
+import throttle
 import tr
 from version import softwareVersion
 
@@ -82,19 +83,6 @@ class receiveDataThread(threading.Thread):
         logger.debug('receiveDataThread starting. ID ' + str(id(self)) + '. The size of the shared.connectedHostsList is now ' + str(len(shared.connectedHostsList)))
 
         while True:
-            if BMConfigParser().getint('bitmessagesettings', 'maxdownloadrate') == 0:
-                downloadRateLimitBytes = float("inf")
-            else:
-                downloadRateLimitBytes = BMConfigParser().getint('bitmessagesettings', 'maxdownloadrate') * 1000
-            with shared.receiveDataLock:
-                while shared.numberOfBytesReceivedLastSecond >= downloadRateLimitBytes:
-                    if int(time.time()) == shared.lastTimeWeResetBytesReceived:
-                        # If it's still the same second that it was last time then sleep.
-                        time.sleep(0.3)
-                    else:
-                        # It's a new second. Let us clear the shared.numberOfBytesReceivedLastSecond.
-                        shared.lastTimeWeResetBytesReceived = int(time.time())
-                        shared.numberOfBytesReceivedLastSecond = 0
             dataLen = len(self.data)
             try:
                 ssl = False
@@ -102,12 +90,11 @@ class receiveDataThread(threading.Thread):
                     self.connectionIsOrWasFullyEstablished and
                     protocol.haveSSL(not self.initiatedConnection)):
                     ssl = True
-                    dataRecv = self.sslSock.recv(1024)
+                    dataRecv = self.sslSock.recv(4096)
                 else:
-                    dataRecv = self.sock.recv(1024)
+                    dataRecv = self.sock.recv(4096)
                 self.data += dataRecv
-                shared.numberOfBytesReceived += len(dataRecv) # for the 'network status' UI tab. The UI clears this value whenever it updates.
-                shared.numberOfBytesReceivedLastSecond += len(dataRecv) # for the download rate limit
+                throttle.ReceiveThrottle().wait(len(dataRecv))
             except socket.timeout:
                 logger.error ('Timeout occurred waiting for data from ' + str(self.peer) + '. Closing receiveData thread. (ID: ' + str(id(self)) + ')')
                 break
