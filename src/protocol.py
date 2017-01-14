@@ -497,7 +497,7 @@ else:
     sslProtocolVersion = ssl.PROTOCOL_TLSv1
 
 # ciphers
-if ssl.OPENSSL_VERSION_NUMBER >= 0x10100000
+if ssl.OPENSSL_VERSION_NUMBER >= 0x10100000:
     sslProtocolCiphers = "AECDH-AES256-SHA@SECLEVEL=0"
 else:
     sslProtocolCiphers = "AECDH-AES256-SHA"

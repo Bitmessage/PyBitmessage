@@ -295,7 +295,7 @@ class receiveDataThread(threading.Thread):
             logger.debug("Initialising TLS")
             if sys.version_info >= (2,7,9):
                 context = ssl.SSLContext(protocol.sslProtocolVersion)
-                context.set_ciphers("AECDH-AES256-SHA")
+                context.set_ciphers(protocol.sslProtocolCiphers)
                 context.set_ecdh_curve("secp256k1")
                 context.check_hostname = False
                 context.verify_mode = ssl.CERT_NONE
@@ -303,7 +303,7 @@ class receiveDataThread(threading.Thread):
                 context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE | ssl.OP_CIPHER_SERVER_PREFERENCE
                 self.sslSock = context.wrap_socket(self.sock, server_side = not self.initiatedConnection, do_handshake_on_connect=False)
             else:
-                self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(paths.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(paths.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=protocol.sslProtocolVersion, do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
+                self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(paths.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(paths.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=protocol.sslProtocolVersion, do_handshake_on_connect=False, ciphers=protocol.sslProtocolCiphers)
             self.sendDataThreadQueue.join()
             while True:
                 try:
