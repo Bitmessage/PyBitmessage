@@ -130,6 +130,7 @@ class Missing(object):
                         continue
                     if current_thread().peer in self.hashes[objectHash]['peers']:
                         objectHashes.append(objectHash)
+                        self.hashes[objectHash]['requested'] = time.time()
                         self.removeObjectFromCurrentThread(objectHash)
                         if len(objectHashes) >= count:
                             break
