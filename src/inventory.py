@@ -86,6 +86,7 @@ class Inventory(collections.MutableMapping):
 
 @Singleton
 class Missing(object):
+    frequency = 60
     def __init__(self):
         super(self.__class__, self).__init__()
         self.lock = RLock()
@@ -112,7 +113,7 @@ class Missing(object):
                 return
             except ValueError:
                 pass
-            if len(self.hashes[objectHash]['peers']) == 0:
+            if len(self.hashes[objectHash]['peers']) == 0 and self.hashes[objectHash]['requested'] < time.time() - Missing.frequency:
                 self.delete(objectHash)
             else:
                 self.hashes[objectHash]['requested'] = time.time()
@@ -121,11 +122,10 @@ class Missing(object):
         if count < 1:
             raise ValueError("Must be at least one")
         with self.lock:
-            since = time.time() - 60 # once every minute
             objectHashes = []
             try:
                 for objectHash in self.hashes.keys():
-                    if current_thread().peer in self.hashes[objectHash]['peers'] and self.hashes[objectHash]['requested'] < since:
+                    if current_thread().peer in self.hashes[objectHash]['peers'] and self.hashes[objectHash]['requested'] < time.time() - Missing.frequency:
                         objectHashes.append(objectHash)
                         self.removeObjectFromCurrentThread(objectHash)
                         if len(objectHashes) >= count:
