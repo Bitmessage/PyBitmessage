@@ -90,9 +90,9 @@ class receiveDataThread(threading.Thread):
                     self.connectionIsOrWasFullyEstablished and
                     protocol.haveSSL(not self.initiatedConnection)):
                     ssl = True
-                    dataRecv = self.sslSock.recv(4096)
+                    dataRecv = self.sslSock.recv(throttle.ReceiveThrottle().chunkSize)
                 else:
-                    dataRecv = self.sock.recv(4096)
+                    dataRecv = self.sock.recv(throttle.ReceiveThrottle().chunkSize)
                 self.data += dataRecv
                 throttle.ReceiveThrottle().wait(len(dataRecv))
             except socket.timeout:
@@ -222,7 +222,7 @@ class receiveDataThread(threading.Thread):
         self.data = self.data[payloadLength + protocol.Header.size:] # take this message out and then process the next message
 
         if self.data == '': # if there are no more messages
-            while len(self.objectsThatWeHaveYetToGetFromThisPeer) > 0:
+            while len(self.objectsThatWeHaveYetToGetFromThisPeer) > 0 and not self.sendDataThreadQueue.full():
                 objectHash, = random.sample(
                     self.objectsThatWeHaveYetToGetFromThisPeer, 1)
                 if objectHash in Inventory():
@@ -240,7 +240,6 @@ class receiveDataThread(threading.Thread):
                                 self.peer]  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
                         except:
                             pass
-                    break
                 if len(self.objectsThatWeHaveYetToGetFromThisPeer) == 0:
                     # We had objectsThatWeHaveYetToGetFromThisPeer but the loop ran, they were all in our inventory, and now we don't have any to get anymore.
                     logger.debug('(concerning' + str(self.peer) + ') number of objectsThatWeHaveYetToGetFromThisPeer is now 0')
