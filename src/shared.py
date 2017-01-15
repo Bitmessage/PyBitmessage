@@ -27,7 +27,7 @@ import highlevelcrypto
 #import helper_startup
 from helper_sql import *
 from helper_threading import *
-from inventory import Inventory, Missing
+from inventory import Inventory
 import protocol
 import state
 
@@ -474,7 +474,6 @@ def _checkAndShareUndefinedObjectWithPeers(data):
         return
     
     inventoryHash = calculateInventoryHash(data)
-    Missing().delete(inventoryHash)
     if inventoryHash in Inventory():
         logger.debug('We have already received this undefined object. Ignoring.')
         return
@@ -498,7 +497,6 @@ def _checkAndShareMsgWithPeers(data):
         return
     readPosition += streamNumberLength
     inventoryHash = calculateInventoryHash(data)
-    Missing().delete(inventoryHash)
     if inventoryHash in Inventory():
         logger.debug('We have already received this msg message. Ignoring.')
         return
@@ -531,7 +529,6 @@ def _checkAndShareGetpubkeyWithPeers(data):
     readPosition += streamNumberLength
 
     inventoryHash = calculateInventoryHash(data)
-    Missing().delete(inventoryHash)
     if inventoryHash in Inventory():
         logger.debug('We have already received this getpubkey request. Ignoring it.')
         return
@@ -567,7 +564,6 @@ def _checkAndSharePubkeyWithPeers(data):
         tag = ''
 
     inventoryHash = calculateInventoryHash(data)
-    Missing().delete(inventoryHash)
     if inventoryHash in Inventory():
         logger.debug('We have already received this pubkey. Ignoring it.')
         return
@@ -603,7 +599,6 @@ def _checkAndShareBroadcastWithPeers(data):
     else:
         tag = ''
     inventoryHash = calculateInventoryHash(data)
-    Missing().delete(inventoryHash)
     if inventoryHash in Inventory():
         logger.debug('We have already received this broadcast object. Ignoring.')
         return

@@ -1,5 +1,4 @@
 import collections
-import random
 from threading import current_thread, RLock
 import time
 
@@ -38,6 +37,7 @@ class Inventory(collections.MutableMapping):
             value = self.InventoryItem(*value)
             self._inventory[hash] = value
             self._streams[value.stream].add(hash)
+        Missing().delete(hash)
 
     def __delitem__(self, hash):
         raise NotImplementedError
@@ -101,18 +101,27 @@ class Missing(object):
         with self.lock:
             return len(self.hashes)
 
+    def removeObjectFromCurrentThread(self, objectHash):
+        with self.lock:
+            try:
+                self.hashes[objectHash]['peers'].remove(current_thread().peer)
+            except ValueError:
+                pass
+            if len(self.hashes[objectHash]['peers']) == 0:
+                self.delete(objectHash)
+            else:
+                self.hashes[objectHash]['requested'] = time.time()
+
     def pull(self, count=1):
         if count < 1:
             raise ValueError("Must be at least one")
         with self.lock:
-            now = time.time()
-            since = now - 60 # once every minute
+            since = time.time() - 60 # once every minute
             objectHashes = []
             for objectHash in self.hashes.keys():
                 if current_thread().peer in self.hashes[objectHash]['peers'] and self.hashes[objectHash]['requested'] < since:
                     objectHashes.append(objectHash)
-                    self.hashes[objectHash]['peers'].remove(current_thread().peer)
-                    self.hashes[objectHash]['requested'] = now
+                    self.removeObjectFromCurrentThread(objectHash)
                     if len(objectHashes) >= count:
                         break
             return objectHashes
@@ -125,9 +134,4 @@ class Missing(object):
     def threadEnd(self):
         with self.lock:
             for objectHash in self.hashes:
-                try:
-                    self.hashes[objectHash]['peers'].remove(current_thread().peer)
-                except ValueError:
-                    pass
-
-#    current_thread().peer
+                self.removeObjectFromCurrentThread(objectHash)
