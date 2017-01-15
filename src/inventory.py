@@ -123,12 +123,16 @@ class Missing(object):
         with self.lock:
             since = time.time() - 60 # once every minute
             objectHashes = []
-            for objectHash in self.hashes.keys():
-                if current_thread().peer in self.hashes[objectHash]['peers'] and self.hashes[objectHash]['requested'] < since:
-                    objectHashes.append(objectHash)
-                    self.removeObjectFromCurrentThread(objectHash)
-                    if len(objectHashes) >= count:
-                        break
+            try:
+                for objectHash in self.hashes.keys():
+                    if current_thread().peer in self.hashes[objectHash]['peers'] and self.hashes[objectHash]['requested'] < since:
+                        objectHashes.append(objectHash)
+                        self.removeObjectFromCurrentThread(objectHash)
+                        if len(objectHashes) >= count:
+                            break
+            except RuntimeError:
+                # the for cycle sometimes breaks if you remove elements
+                pass
             return objectHashes
 
     def delete(self, objectHash):
