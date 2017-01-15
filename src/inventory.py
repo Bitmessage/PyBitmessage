@@ -86,12 +86,12 @@ class Inventory(collections.MutableMapping):
 
 @Singleton
 class Missing(object):
-    frequency = 60
     def __init__(self):
         super(self.__class__, self).__init__()
         self.lock = RLock()
         self.hashes = {}
         self.stopped = False
+        self.frequency = 60
 
     def add(self, objectHash):
         if self.stopped:
@@ -113,7 +113,7 @@ class Missing(object):
                 return
             except ValueError:
                 pass
-            if len(self.hashes[objectHash]['peers']) == 0 and self.hashes[objectHash]['requested'] < time.time() - Missing.frequency:
+            if len(self.hashes[objectHash]['peers']) == 0 and self.hashes[objectHash]['requested'] < time.time() - self.frequency:
                 self.delete(objectHash)
             else:
                 self.hashes[objectHash]['requested'] = time.time()
@@ -125,11 +125,15 @@ class Missing(object):
             objectHashes = []
             try:
                 for objectHash in self.hashes.keys():
-                    if current_thread().peer in self.hashes[objectHash]['peers'] and self.hashes[objectHash]['requested'] < time.time() - Missing.frequency:
-                        objectHashes.append(objectHash)
-                        self.removeObjectFromCurrentThread(objectHash)
-                        if len(objectHashes) >= count:
-                            break
+                    if self.hashes[objectHash]['requested'] < time.time() - self.frequency:
+                        if len(self.hashes[objectHash]['peers']) == 0:
+                            self.removeObjectFromCurrentThread(objectHash)
+                            continue
+                        if current_thread().peer in self.hashes[objectHash]['peers']:
+                            objectHashes.append(objectHash)
+                            self.removeObjectFromCurrentThread(objectHash)
+                            if len(objectHashes) >= count:
+                                break
             except RuntimeError:
                 # the for cycle sometimes breaks if you remove elements
                 pass
