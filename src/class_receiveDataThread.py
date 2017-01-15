@@ -30,7 +30,7 @@ from helper_sql import sqlQuery
 from debug import logger
 import paths
 import protocol
-from inventory import Inventory
+from inventory import Inventory, Missing
 import state
 import throttle
 import tr
@@ -62,7 +62,6 @@ class receiveDataThread(threading.Thread):
         self.peer = state.Peer(HOST, port)
         self.name = "receiveData-" + self.peer.host.replace(":", ".") # ":" log parser field separator
         self.streamNumber = streamNumber
-        self.objectsThatWeHaveYetToGetFromThisPeer = {}
         self.selfInitiatedConnections = selfInitiatedConnections
         self.sendDataThreadQueue = sendDataThreadQueue # used to send commands and data to the sendDataThread
         self.hostIdent = self.peer.port if ".onion" in BMConfigParser().get('bitmessagesettings', 'onionhostname') and protocol.checkSocksIP(self.peer.host) else self.peer.host
@@ -129,11 +128,7 @@ class receiveDataThread(threading.Thread):
         except Exception as err:
             logger.error('Could not delete ' + str(self.hostIdent) + ' from shared.connectedHostsList.' + str(err))
 
-        try:
-            del shared.numberOfObjectsThatWeHaveYetToGetPerPeer[
-                self.peer]
-        except:
-            pass
+        Missing().threadEnd()
         shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         self.checkTimeOffsetNotification()
         logger.debug('receiveDataThread ending. ID ' + str(id(self)) + '. The size of the shared.connectedHostsList is now ' + str(len(shared.connectedHostsList)))
@@ -222,37 +217,16 @@ class receiveDataThread(threading.Thread):
         self.data = self.data[payloadLength + protocol.Header.size:] # take this message out and then process the next message
 
         if self.data == '': # if there are no more messages
-            while len(self.objectsThatWeHaveYetToGetFromThisPeer) > 0 and not self.sendDataThreadQueue.full():
-                objectHash, = random.sample(
-                    self.objectsThatWeHaveYetToGetFromThisPeer, 1)
+            while Missing().len() > 0 and not self.sendDataThreadQueue.full():
+                objectHash = Missing().pull()
+                if objectHash is None:
+                    break
                 if objectHash in Inventory():
                     logger.debug('Inventory already has object listed in inv message.')
-                    del self.objectsThatWeHaveYetToGetFromThisPeer[objectHash]
+                    Missing().delete(objectHash)
                 else:
                     # We don't have the object in our inventory. Let's request it.
                     self.sendgetdata(objectHash)
-                    del self.objectsThatWeHaveYetToGetFromThisPeer[
-                        objectHash]  # It is possible that the remote node might not respond with the object. In that case, we'll very likely get it from someone else anyway.
-                    if len(self.objectsThatWeHaveYetToGetFromThisPeer) == 0:
-                        logger.debug('(concerning' + str(self.peer) + ') number of objectsThatWeHaveYetToGetFromThisPeer is now 0')
-                        try:
-                            del shared.numberOfObjectsThatWeHaveYetToGetPerPeer[
-                                self.peer]  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
-                        except:
-                            pass
-                if len(self.objectsThatWeHaveYetToGetFromThisPeer) == 0:
-                    # We had objectsThatWeHaveYetToGetFromThisPeer but the loop ran, they were all in our inventory, and now we don't have any to get anymore.
-                    logger.debug('(concerning' + str(self.peer) + ') number of objectsThatWeHaveYetToGetFromThisPeer is now 0')
-                    try:
-                        del shared.numberOfObjectsThatWeHaveYetToGetPerPeer[
-                            self.peer]  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
-                    except:
-                        pass
-            if len(self.objectsThatWeHaveYetToGetFromThisPeer) > 0:
-                logger.debug('(concerning' + str(self.peer) + ') number of objectsThatWeHaveYetToGetFromThisPeer is now ' + str(len(self.objectsThatWeHaveYetToGetFromThisPeer)))
-
-                shared.numberOfObjectsThatWeHaveYetToGetPerPeer[self.peer] = len(
-                    self.objectsThatWeHaveYetToGetFromThisPeer)  # this data structure is maintained so that we can keep track of how many total objects, across all connections, are currently outstanding. If it goes too high it can indicate that we are under attack by multiple nodes working together.
         self.processData()
 
 
@@ -425,13 +399,6 @@ class receiveDataThread(threading.Thread):
 
     # We have received an inv message
     def recinv(self, data):
-        totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers = 0  # this counts duplicates separately because they take up memory
-        if len(shared.numberOfObjectsThatWeHaveYetToGetPerPeer) > 0:
-            for key, value in shared.numberOfObjectsThatWeHaveYetToGetPerPeer.items():
-                totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers += value
-            logger.debug('number of keys(hosts) in shared.numberOfObjectsThatWeHaveYetToGetPerPeer: ' + str(len(shared.numberOfObjectsThatWeHaveYetToGetPerPeer)) + "\n" + \
-                'totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers = ' + str(totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers))
-
         numberOfItemsInInv, lengthOfVarint = decodeVarint(data[:10])
         if numberOfItemsInInv > 50000:
             sys.stderr.write('Too many items in inv message!')
@@ -439,35 +406,16 @@ class receiveDataThread(threading.Thread):
         if len(data) < lengthOfVarint + (numberOfItemsInInv * 32):
             logger.info('inv message doesn\'t contain enough data. Ignoring.')
             return
-        if numberOfItemsInInv == 1:  # we'll just request this data from the person who advertised the object.
-            if totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers > 200000 and len(self.objectsThatWeHaveYetToGetFromThisPeer) > 1000 and state.trustedPeer == None:  # inv flooding attack mitigation
-                logger.debug('We already have ' + str(totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers) + ' items yet to retrieve from peers and over 1000 from this node in particular. Ignoring this inv message.')
-                return
-            self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[
-                data[lengthOfVarint:32 + lengthOfVarint]] = 0
-            if data[lengthOfVarint:32 + lengthOfVarint] in Inventory():
-                logger.debug('Inventory has inventory item already.')
-            else:
-                self.sendgetdata(data[lengthOfVarint:32 + lengthOfVarint])
-        else:
-            # There are many items listed in this inv message. Let us create a
-            # 'set' of objects we are aware of and a set of objects in this inv
-            # message so that we can diff one from the other cheaply.
-            startTime = time.time()
-            advertisedSet = set()
-            for i in range(numberOfItemsInInv):
-                advertisedSet.add(data[lengthOfVarint + (32 * i):32 + lengthOfVarint + (32 * i)])
-            objectsNewToMe = advertisedSet - Inventory().hashes_by_stream(self.streamNumber)
-            logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
-            for item in objectsNewToMe:  
-                if totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers > 200000 and len(self.objectsThatWeHaveYetToGetFromThisPeer) > 1000 and state.trustedPeer == None:  # inv flooding attack mitigation
-                    logger.debug('We already have ' + str(totalNumberOfobjectsThatWeHaveYetToGetFromAllPeers) + ' items yet to retrieve from peers and over ' + str(len(self.objectsThatWeHaveYetToGetFromThisPeer)), ' from this node in particular. Ignoring the rest of this inv message.')
-                    break
-                self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[item] = 0 # helps us keep from sending inv messages to peers that already know about the objects listed therein
-                self.objectsThatWeHaveYetToGetFromThisPeer[item] = 0 # upon finishing dealing with an incoming message, the receiveDataThread will request a random object of from peer out of this data structure. This way if we get multiple inv messages from multiple peers which list mostly the same objects, we will make getdata requests for different random objects from the various peers.
-            if len(self.objectsThatWeHaveYetToGetFromThisPeer) > 0:
-                shared.numberOfObjectsThatWeHaveYetToGetPerPeer[
-                    self.peer] = len(self.objectsThatWeHaveYetToGetFromThisPeer)
+
+        startTime = time.time()
+        advertisedSet = set()
+        for i in range(numberOfItemsInInv):
+            advertisedSet.add(data[lengthOfVarint + (32 * i):32 + lengthOfVarint + (32 * i)])
+        objectsNewToMe = advertisedSet - Inventory().hashes_by_stream(self.streamNumber)
+        logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
+        for item in objectsNewToMe:
+            Missing().add(item)
+            self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[item] = 0 # helps us keep from sending inv messages to peers that already know about the objects listed therein
 
     # Send a getdata message to our peer to request the object with the given
     # hash

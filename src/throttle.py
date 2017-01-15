@@ -68,7 +68,7 @@ class SendThrottle(Throttle):
     def resetLimit(self):
         with self.lock:
             self.limit = BMConfigParser().safeGetInt('bitmessagesettings', 'maxuploadrate')*1024
-        Throttle.resetChunkSize()
+        Throttle.resetChunkSize(self)
 
 @Singleton
 class ReceiveThrottle(Throttle):
@@ -78,4 +78,4 @@ class ReceiveThrottle(Throttle):
     def resetLimit(self):
         with self.lock:
             self.limit = BMConfigParser().safeGetInt('bitmessagesettings', 'maxdownloadrate')*1024
-        Throttle.resetChunkSize()
+        Throttle.resetChunkSize(self)
