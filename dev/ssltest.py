@@ -22,6 +22,12 @@ def sslProtocolVersion():
         # "TLSv1.2" in < 2.7.9
         return ssl.PROTOCOL_TLSv1
 
+def sslProtocolCiphers():
+    if ssl.OPENSSL_VERSION_NUMBER >= 0x10100000:
+        return "AECDH-AES256-SHA@SECLEVEL=0"
+    else:
+        return "AECDH-AES256-SHA"
+
 def connect():
     sock = socket.create_connection((HOST, PORT))
     return sock
@@ -36,14 +42,14 @@ def listen():
 def sslHandshake(sock, server=False):
     if sys.version_info >= (2,7,9):
         context = ssl.SSLContext(sslProtocolVersion())
-        context.set_ciphers("AECDH-AES256-SHA")
+        context.set_ciphers(sslProtocolCiphers())
         context.set_ecdh_curve("secp256k1")
         context.check_hostname = False
         context.verify_mode = ssl.CERT_NONE
         context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE | ssl.OP_CIPHER_SERVER_PREFERENCE
         sslSock = context.wrap_socket(sock, server_side = server, do_handshake_on_connect=False)
     else:
-        sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join('src', 'sslkeys', 'key.pem'), certfile = os.path.join('src', 'sslkeys', 'cert.pem'), server_side = server, ssl_version=sslProtocolVersion(), do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
+        sslSock = ssl.wrap_socket(sock, keyfile = os.path.join('src', 'sslkeys', 'key.pem'), certfile = os.path.join('src', 'sslkeys', 'cert.pem'), server_side = server, ssl_version=sslProtocolVersion(), do_handshake_on_connect=False, ciphers='AECDH-AES256-SHA')
 
     while True:
         try:
@@ -51,11 +57,11 @@ def sslHandshake(sock, server=False):
             break
         except ssl.SSLWantReadError:
             print "Waiting for SSL socket handhake read"
-            select.select([self.sslSock], [], [], 10)
+            select.select([sslSock], [], [], 10)
         except ssl.SSLWantWriteError:
             print "Waiting for SSL socket handhake write"
-            select.select([], [self.sslSock], [], 10)
-        except Exception as e:
+            select.select([], [sslSock], [], 10)
+        except Exception:
             print "SSL socket handhake failed, shutting down connection"
             traceback.print_exc()
             return
