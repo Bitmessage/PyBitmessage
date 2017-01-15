@@ -2721,6 +2721,8 @@ class MyForm(settingsmixin.SMainWindow):
                 waitForSync = True
             elif reply == QtGui.QMessageBox.Cancel:
                 return
+            else:
+                Missing().stop()
 
         if shared.statusIconColor == 'red':
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Not connected"),

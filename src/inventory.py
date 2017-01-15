@@ -90,8 +90,11 @@ class Missing(object):
         super(self.__class__, self).__init__()
         self.lock = RLock()
         self.hashes = {}
+        self.stopped = False
 
     def add(self, objectHash):
+        if self.stopped:
+            return
         with self.lock:
             if not objectHash in self.hashes:
                 self.hashes[objectHash] = {'peers':[], 'requested':0}
@@ -105,6 +108,8 @@ class Missing(object):
         with self.lock:
             try:
                 self.hashes[objectHash]['peers'].remove(current_thread().peer)
+            except KeyError:
+                return
             except ValueError:
                 pass
             if len(self.hashes[objectHash]['peers']) == 0:
@@ -130,6 +135,10 @@ class Missing(object):
         with self.lock:
             if objectHash in self.hashes:
                 del self.hashes[objectHash]
+
+    def stop(self):
+        with self.lock:
+            self.hashes = {}
 
     def threadEnd(self):
         with self.lock:
