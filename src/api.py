@@ -33,7 +33,6 @@ from struct import pack
 from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute,sqlStoredProcedure
 from debug import logger
 from inventory import Inventory
-import state
 from version import softwareVersion
 
 # Helper Functions

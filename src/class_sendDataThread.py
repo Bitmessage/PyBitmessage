@@ -1,7 +1,6 @@
 import errno
 import time
 import threading
-import shared
 import Queue
 from struct import unpack, pack
 import hashlib
@@ -9,7 +8,6 @@ import random
 import sys
 import socket
 
-from configparser import BMConfigParser
 from helper_generic import addDataPadding
 from class_objectHashHolder import *
 from addresses import *
