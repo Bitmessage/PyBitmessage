@@ -27,8 +27,6 @@ class Throttle(object):
 
     def wait(self, dataLen):
         with self.lock:
-            self.waiting = True
-        with self.lock:
             self.txLen += dataLen
             self.total += dataLen
         while state.shutdown == 0:
@@ -38,8 +36,6 @@ class Throttle(object):
             if self.txLen < self.limit:
                 break
             self.timer.wait(0.2)
-        with self.lock:
-            self.waiting = False
 
     def getSpeed(self):
         self.recalculate()
