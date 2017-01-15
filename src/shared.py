@@ -623,22 +623,4 @@ def openKeysFile():
     else:
         os.startfile(state.appdata + 'keys.dat')
 
-def writeKeysFile():
-    fileName = state.appdata + 'keys.dat'
-    fileNameBak = fileName + "." + datetime.datetime.now().strftime("%Y%j%H%M%S%f") + '.bak'
-    # create a backup copy to prevent the accidental loss due to the disk write failure
-    try:
-        shutil.copyfile(fileName, fileNameBak)
-        # The backup succeeded.
-        fileNameExisted = True
-    except:
-        # The backup failed. This can happen if the file didn't exist before.
-        fileNameExisted = False
-    # write the file
-    with open(fileName, 'wb') as configfile:
-        BMConfigParser().write(configfile)
-    # delete the backup
-    if fileNameExisted:
-        os.remove(fileNameBak)
-
 from debug import logger

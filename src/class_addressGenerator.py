@@ -143,7 +143,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                     address, 'privSigningKey', privSigningKeyWIF)
                 BMConfigParser().set(
                     address, 'privEncryptionKey', privEncryptionKeyWIF)
-                shared.writeKeysFile()
+                BMConfigParser().save()
 
                 # The API and the join and create Chan functionality
                 # both need information back from the address generator.
@@ -260,7 +260,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                                 address, 'privSigningKey', privSigningKeyWIF)
                             BMConfigParser().set(
                                 address, 'privEncryptionKey', privEncryptionKeyWIF)
-                            shared.writeKeysFile()
+                            BMConfigParser().save()
 
                             shared.UISignalQueue.put(('writeNewAddressToTable', (
                                 label, address, str(streamNumber))))

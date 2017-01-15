@@ -1,5 +1,4 @@
 import ConfigParser
-import shared
 from configparser import BMConfigParser
 import sys
 import os
@@ -138,7 +137,7 @@ def loadConfig():
                 os.makedirs(state.appdata)
         if not sys.platform.startswith('win'):
             os.umask(0o077)
-        shared.writeKeysFile()
+        BMConfigParser().save()
 
     _loadTrustedPeer()
 

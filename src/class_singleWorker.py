@@ -185,7 +185,7 @@ class singleWorker(threading.Thread, StoppableThread):
         try:
             BMConfigParser().set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
-            shared.writeKeysFile()
+            BMConfigParser().save()
         except:
             # The user deleted the address out of the keys.dat file before this
             # finished.
@@ -275,7 +275,7 @@ class singleWorker(threading.Thread, StoppableThread):
         try:
             BMConfigParser().set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
-            shared.writeKeysFile()
+            BMConfigParser().save()
         except:
             # The user deleted the address out of the keys.dat file before this
             # finished.
@@ -365,7 +365,7 @@ class singleWorker(threading.Thread, StoppableThread):
         try:
             BMConfigParser().set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
-            shared.writeKeysFile()
+            BMConfigParser().save()
         except Exception as err:
             logger.error('Error: Couldn\'t add the lastpubkeysendtime to the keys.dat file. Error message: %s' % err)
 

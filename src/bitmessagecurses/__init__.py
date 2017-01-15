@@ -485,13 +485,13 @@ def handlech(c, stdscr):
                                 label = t
                                 BMConfigParser().set(a, "label", label)
                                 # Write config
-                                shared.writeKeysFile()
+                                BMConfigParser().save()
                                 addresses[addrcur][0] = label
                         elif t == "4": # Enable address
                             a = addresses[addrcur][2]
                             BMConfigParser().set(a, "enabled", "true") # Set config
                             # Write config
-                            shared.writeKeysFile()
+                            BMConfigParser().save()
                             # Change color
                             if BMConfigParser().safeGetBoolean(a, 'chan'):
                                 addresses[addrcur][3] = 9 # orange
@@ -506,14 +506,14 @@ def handlech(c, stdscr):
                             BMConfigParser().set(a, "enabled", "false") # Set config
                             addresses[addrcur][3] = 8 # Set color to gray
                             # Write config
-                            shared.writeKeysFile()
+                            BMConfigParser().save()
                             addresses[addrcur][1] = False
                             shared.reloadMyAddressHashes() # Reload address hashes
                         elif t == "6": # Delete address
                             r, t = d.inputbox("Type in \"I want to delete this address\"", width=50)
                             if r == d.DIALOG_OK and t == "I want to delete this address":
                                     BMConfigParser().remove_section(addresses[addrcur][2])
-                                    shared.writeKeysFile()
+                                    BMConfigParser().save()
                                     del addresses[addrcur]
                         elif t == "7": # Special address behavior
                             a = addresses[addrcur][2]
@@ -544,7 +544,7 @@ def handlech(c, stdscr):
                                             BMConfigParser().set(a, "mailinglistname", mn)
                                             addresses[addrcur][3] = 6 # Set color to magenta
                                     # Write config
-                                    shared.writeKeysFile()
+                                    BMConfigParser().save()
                 elif menutab == 5:
                     set_background_title(d, "Subscriptions Dialog Box")
                     if len(subscriptions) <= subcur:

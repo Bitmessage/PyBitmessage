@@ -330,7 +330,7 @@ class sqlThread(threading.Thread):
             BMConfigParser().set('bitmessagesettings', 'maxdownloadrate', '0')
             BMConfigParser().set('bitmessagesettings', 'maxuploadrate', '0')
             BMConfigParser().set('bitmessagesettings', 'settingsversion', '10')
-            shared.writeKeysFile()
+            BMConfigParser().save()
             
         # sanity check
         if BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') == 0:
@@ -433,7 +433,7 @@ class sqlThread(threading.Thread):
             BMConfigParser().set('bitmessagesettings', 'smtpdeliver', '')
         if not BMConfigParser().has_option('bitmessagesettings', 'hidetrayconnectionnotifications'):
             BMConfigParser().set('bitmessagesettings', 'hidetrayconnectionnotifications', 'false')
-        shared.writeKeysFile()
+        BMConfigParser().save()
         
         # Are you hoping to add a new option to the keys.dat file of existing
         # Bitmessage users or modify the SQLite database? Add it right above this line!
