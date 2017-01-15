@@ -77,6 +77,7 @@ from dialogs import AddAddressDialog
 from class_objectHashHolder import objectHashHolder
 from class_singleWorker import singleWorker
 from helper_generic import powQueueSize, invQueueSize
+from inventory import Missing
 import paths
 from proofofwork import getPowType
 import protocol
@@ -2712,11 +2713,9 @@ class MyForm(settingsmixin.SMainWindow):
             elif reply == QtGui.QMessage.Cancel:
                 return
 
-        toBeDownloaded = sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues())
-
-        if toBeDownloaded > 0:
+        if Missing().len() > 0:
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Synchronisation pending"),
-                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr, toBeDownloaded),
+                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr, Missing().len()),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.Yes:
                 waitForSync = True
@@ -2747,7 +2746,7 @@ class MyForm(settingsmixin.SMainWindow):
         if waitForSync:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Waiting for finishing synchronisation..."))
-            while sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues()) > 0:
+            while Missing().len() > 0:
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
 

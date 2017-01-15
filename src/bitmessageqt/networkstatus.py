@@ -2,7 +2,7 @@ from PyQt4 import QtCore, QtGui
 import time
 import shared
 from tr import _translate
-from inventory import Inventory
+from inventory import Inventory, Missing
 import l10n
 from retranslateui import RetranslateMixin
 from uisignaler import UISignaler
@@ -45,7 +45,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         return "%4.0f kB" % num
         
     def updateNumberOfObjectsToBeSynced(self):
-        self.labelSyncStatus.setText(_translate("networkstatus", "Object(s) to be synced: %n", None, QtCore.QCoreApplication.CodecForTr, sum(shared.numberOfObjectsThatWeHaveYetToGetPerPeer.itervalues())))
+        self.labelSyncStatus.setText(_translate("networkstatus", "Object(s) to be synced: %n", None, QtCore.QCoreApplication.CodecForTr, Missing().len()))
 
     def updateNumberOfMessagesProcessed(self):
         self.updateNumberOfObjectsToBeSynced()
