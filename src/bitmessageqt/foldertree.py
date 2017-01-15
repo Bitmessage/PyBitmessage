@@ -4,7 +4,6 @@ from string import find, rfind, rstrip, lstrip
 from configparser import BMConfigParser
 from helper_sql import *
 from utils import *
-import shared
 from settingsmixin import SettingsMixin
 
 class AccountMixin (object):
@@ -215,7 +214,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
                 BMConfigParser().set(str(self.address), 'label', str(value.toString().toUtf8()))
             else:
                 BMConfigParser().set(str(self.address), 'label', str(value))
-            shared.writeKeysFile()
+            BMConfigParser().save()
         return super(Ui_AddressWidget, self).setData(column, role, value)
         
     def setAddress(self, address):

@@ -611,7 +611,7 @@ class MyForm(settingsmixin.SMainWindow):
                     self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
                 if reply == QtGui.QMessageBox.Yes:
                     BMConfigParser().remove_section(addressInKeysFile)
-                    shared.writeKeysFile()
+                    BMConfigParser().save()
 
         # Configure Bitmessage to start on startup (or remove the
         # configuration) based on the setting in the keys.dat file
@@ -822,7 +822,7 @@ class MyForm(settingsmixin.SMainWindow):
         TTL = int(sliderPosition ** 3.199 + 3600)
         self.updateHumanFriendlyTTLDescription(TTL)
         BMConfigParser().set('bitmessagesettings', 'ttl', str(TTL))
-        shared.writeKeysFile()
+        BMConfigParser().save()
         
     def updateHumanFriendlyTTLDescription(self, TTL):
         numberOfHours = int(round(TTL / (60*60)))
@@ -1596,7 +1596,7 @@ class MyForm(settingsmixin.SMainWindow):
         if self.connectDialogInstance.exec_():
             if self.connectDialogInstance.ui.radioButtonConnectNow.isChecked():
                 BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
-                shared.writeKeysFile()
+                BMConfigParser().save()
             else:
                 self.click_actionSettings()
 
@@ -1953,7 +1953,7 @@ class MyForm(settingsmixin.SMainWindow):
                             acct.register(email)
                             BMConfigParser().set(fromAddress, 'label', email)
                             BMConfigParser().set(fromAddress, 'gateway', 'mailchuck')
-                            shared.writeKeysFile()
+                            BMConfigParser().save()
                             self.statusBar().showMessage(_translate(
                                 "MainWindow", "Error: Your account wasn't registered at an email gateway. Sending registration now as %1, please wait for the registration to be processed before retrying sending.").arg(email), 10000)
                             return
@@ -2236,7 +2236,7 @@ class MyForm(settingsmixin.SMainWindow):
                     acct.register(email)
                     BMConfigParser().set(acct.fromAddress, 'label', email)
                     BMConfigParser().set(acct.fromAddress, 'gateway', 'mailchuck')
-                    shared.writeKeysFile()
+                    BMConfigParser().save()
                     self.statusBar().showMessage(_translate(
                         "MainWindow", "Sending email gateway registration request"), 10000)
 
@@ -2476,7 +2476,7 @@ class MyForm(settingsmixin.SMainWindow):
                         BMConfigParser().set('bitmessagesettings', 'stopresendingafterxmonths', str(float(
                         self.settingsDialogInstance.ui.lineEditMonths.text())))
 
-            shared.writeKeysFile()
+            BMConfigParser().save()
 
             if 'win32' in sys.platform or 'win64' in sys.platform:
             # Auto-startup for Windows
@@ -2521,7 +2521,7 @@ class MyForm(settingsmixin.SMainWindow):
                     os.makedirs(state.appdata)
                 sqlStoredProcedure('movemessagstoappdata')
                 # Write the keys.dat file to disk in the new location
-                shared.writeKeysFile()
+                BMConfigParser().save()
                 # Write the knownnodes.dat file to disk in the new location
                 shared.knownNodesLock.acquire()
                 output = open(state.appdata + 'knownnodes.dat', 'wb')
@@ -2561,7 +2561,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.setCurrentItemColor(QtGui.QColor(137, 04, 177)) #magenta
             self.rerenderComboBoxSendFrom()
             self.rerenderComboBoxSendFromBroadcast()
-            shared.writeKeysFile()
+            BMConfigParser().save()
             self.rerenderMessagelistToLabels()
 
     def on_action_EmailGatewayDialog(self):
@@ -2576,7 +2576,7 @@ class MyForm(settingsmixin.SMainWindow):
             if self.dialog.ui.radioButtonUnregister.isChecked() and isinstance(acct, GatewayAccount):
                 acct.unregister()
                 BMConfigParser().remove_option(addressAtCurrentRow, 'gateway')
-                shared.writeKeysFile()
+                BMConfigParser().save()
                 self.statusBar().showMessage(_translate(
                      "MainWindow", "Sending email gateway unregistration request"), 10000)
             elif self.dialog.ui.radioButtonStatus.isChecked() and isinstance(acct, GatewayAccount):
@@ -2603,7 +2603,7 @@ class MyForm(settingsmixin.SMainWindow):
                 acct.register(email)
                 BMConfigParser().set(addressAtCurrentRow, 'label', email)
                 BMConfigParser().set(addressAtCurrentRow, 'gateway', 'mailchuck')
-                shared.writeKeysFile()
+                BMConfigParser().save()
                 self.statusBar().showMessage(_translate(
                      "MainWindow", "Sending email gateway registration request"), 10000)
             else:
@@ -3540,7 +3540,7 @@ class MyForm(settingsmixin.SMainWindow):
                 return
         else:
             return
-        shared.writeKeysFile()
+        BMConfigParser().save()
         shared.reloadMyAddressHashes()
         self.rerenderAddressBook()
         if account.type == AccountMixin.NORMAL:
@@ -3556,7 +3556,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def enableIdentity(self, address):
         BMConfigParser().set(address, 'enabled', 'true')
-        shared.writeKeysFile()
+        BMConfigParser().save()
         shared.reloadMyAddressHashes()
         self.rerenderAddressBook()
 
@@ -3568,7 +3568,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     def disableIdentity(self, address):
         BMConfigParser().set(str(address), 'enabled', 'false')
-        shared.writeKeysFile()
+        BMConfigParser().save()
         shared.reloadMyAddressHashes()
         self.rerenderAddressBook()
 

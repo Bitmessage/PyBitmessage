@@ -1,6 +1,10 @@
 import ConfigParser
+import datetime
+import shutil
+import os
 
 from singleton import Singleton
+import state
 
 
 @Singleton
@@ -44,3 +48,20 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
     def items(self, section, raw=False, vars=None):
         return ConfigParser.ConfigParser.items(self, section, True, vars)
 
+    def save(self):
+        fileName = os.path.join(state.appdata, 'keys.dat')
+        fileNameBak = fileName + "." + datetime.datetime.now().strftime("%Y%j%H%M%S%f") + '.bak'
+        # create a backup copy to prevent the accidental loss due to the disk write failure
+        try:
+            shutil.copyfile(fileName, fileNameBak)
+            # The backup succeeded.
+            fileNameExisted = True
+        except:
+            # The backup failed. This can happen if the file didn't exist before.
+            fileNameExisted = False
+        # write the file
+        with open(fileName, 'wb') as configfile:
+            self.write(configfile)
+        # delete the backup
+        if fileNameExisted:
+            os.remove(fileNameBak)

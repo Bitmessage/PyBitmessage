@@ -1,5 +1,4 @@
 from PyQt4 import QtCore, QtGui
-import shared
 from tr import _translate
 import l10n
 import widgets
@@ -41,7 +40,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
     def click_radioButtonBlacklist(self):
         if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'white':
             BMConfigParser().set('bitmessagesettings', 'blackwhitelist', 'black')
-            shared.writeKeysFile()
+            BMConfigParser().save()
             # self.tableWidgetBlacklist.clearContents()
             self.tableWidgetBlacklist.setRowCount(0)
             self.rerenderBlackWhiteList()
@@ -49,7 +48,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
     def click_radioButtonWhitelist(self):
         if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'black':
             BMConfigParser().set('bitmessagesettings', 'blackwhitelist', 'white')
-            shared.writeKeysFile()
+            BMConfigParser().save()
             # self.tableWidgetBlacklist.clearContents()
             self.tableWidgetBlacklist.setRowCount(0)
             self.rerenderBlackWhiteList()
