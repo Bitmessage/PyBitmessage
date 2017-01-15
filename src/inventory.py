@@ -101,23 +101,29 @@ class Missing(object):
         with self.lock:
             return len(self.hashes)
 
-    def pull(self):
+    def pull(self, count=1):
+        if count < 1:
+            raise ValueError("Must be at least one")
         with self.lock:
             now = time.time()
             since = now - 300 # once every 5 minutes
             try:
-                objectHash = random.choice({k:v for k, v in self.hashes.iteritems() if current_thread().peer in self.hashes[k]['peers'] and self.hashes[k]['requested'] < since}.keys())
+                matchingHashes = {k:v for k, v in self.hashes.iteritems() if current_thread().peer in self.hashes[k]['peers'] and self.hashes[k]['requested'] < since}
+                if count > len(matchingHashes):
+                    count = len(matchingHashes)
+                objectHashes = random.sample(matchingHashes, count)
             except (IndexError, KeyError): # list is empty
                 return None
-            try:
-                self.hashes[objectHash]['peers'].remove(current_thread().peer)
-            except ValueError:
-                pass
-            if len(self.hashes[objectHash]['peers']) == 0:
-                self.delete(objectHash)
-            else:
-                self.hashes[objectHash]['requested'] = now
-            return objectHash
+            for objectHash in objectHashes:
+                try:
+                    self.hashes[objectHash]['peers'].remove(current_thread().peer)
+                except ValueError:
+                    pass
+                if len(self.hashes[objectHash]['peers']) == 0:
+                    self.delete(objectHash)
+                else:
+                    self.hashes[objectHash]['requested'] = now
+            return objectHashes
 
     def delete(self, objectHash):
         with self.lock:

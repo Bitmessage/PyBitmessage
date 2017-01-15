@@ -217,16 +217,16 @@ class receiveDataThread(threading.Thread):
         self.data = self.data[payloadLength + protocol.Header.size:] # take this message out and then process the next message
 
         if self.data == '': # if there are no more messages
-            while Missing().len() > 0 and not self.sendDataThreadQueue.full():
-                objectHash = Missing().pull()
-                if objectHash is None:
-                    break
-                if objectHash in Inventory():
-                    logger.debug('Inventory already has object listed in inv message.')
-                    Missing().delete(objectHash)
-                else:
-                    # We don't have the object in our inventory. Let's request it.
-                    self.sendgetdata(objectHash)
+            if Missing().len() > 0 and self.sendDataThreadQueue.qsize() < 10:
+                for objectHash in Missing().pull(100):
+                    if self.sendDataThreadQueue.full():
+                        break
+                    if objectHash in Inventory():
+                        logger.debug('Inventory already has object listed in inv message.')
+                        Missing().delete(objectHash)
+                    else:
+                        # We don't have the object in our inventory. Let's request it.
+                        self.sendgetdata(objectHash)
         self.processData()
 
 
