@@ -42,6 +42,7 @@ class sendDataThread(threading.Thread):
         self.name = "sendData-" + self.peer.host.replace(":", ".") # log parser field separator
         self.streamNumber = streamNumber
         self.services = 0
+        self.buffer = ""
         self.initiatedConnection = False
         self.remoteProtocolVersion = - \
             1  # This must be set using setRemoteProtocolVersion command which is sent through the self.sendDataThreadQueue queue.
@@ -69,36 +70,32 @@ class sendDataThread(threading.Thread):
             
         self.versionSent = 1
 
-    def sendBytes(self, data):
-        while data:
-            if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
-                self.connectionIsOrWasFullyEstablished and
-                protocol.haveSSL(not self.initiatedConnection)):
-                while state.shutdown == 0:
-                    try:
-                        amountSent = self.sslSock.send(data[:4096])
-                        break
-                    except socket.error as e:
-                        if e.errno == errno.EAGAIN:
-                            continue
-                        raise
-            else:
-                while True:
-                    try:
-                        amountSent = self.sock.send(data[:4096])
-                        break
-                    except socket.error as e:
-                        if e.errno == errno.EAGAIN:
-                            continue
-                        raise
+    def sendBytes(self, data = ""):
+        self.buffer += data
+        if len(self.buffer) < throttle.SendThrottle().chunkSize and self.sendDataThreadQueue.qsize() > 1:
+            return
+
+        while self.buffer and state.shutdown == 0:
+            try:
+                if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
+                    self.connectionIsOrWasFullyEstablished and
+                    protocol.haveSSL(not self.initiatedConnection)):
+                    amountSent = self.sslSock.send(self.buffer[:throttle.SendThrottle().chunkSize])
+                else:
+                    amountSent = self.sock.send(self.buffer[:throttle.SendThrottle().chunkSize])
+            except socket.error as e:
+                if e.errno == errno.EAGAIN:
+                    continue
+                raise
             throttle.SendThrottle().wait(amountSent)
             self.lastTimeISentData = int(time.time())
-            data = data[amountSent:]
+            self.buffer = self.buffer[amountSent:]
 
 
     def run(self):
         logger.debug('sendDataThread starting. ID: ' + str(id(self)) + '. Number of queues in sendDataQueues: ' + str(len(state.sendDataQueues)))
         while True:
+            self.sendBytes()
             deststream, command, data = self.sendDataThreadQueue.get()
 
             if deststream == self.streamNumber or deststream == 0:
