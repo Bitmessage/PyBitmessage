@@ -16,8 +16,6 @@ import sys
 import stat
 import threading
 import time
-import shutil  # used for moving the data folder and copying keys.dat
-import datetime
 import traceback
 from binascii import hexlify
 
