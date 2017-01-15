@@ -121,23 +121,22 @@ class Missing(object):
     def pull(self, count=1):
         if count < 1:
             raise ValueError("Must be at least one")
-        with self.lock:
-            objectHashes = []
-            try:
-                for objectHash in self.hashes.keys():
-                    if self.hashes[objectHash]['requested'] < time.time() - self.frequency:
-                        if len(self.hashes[objectHash]['peers']) == 0:
-                            self.removeObjectFromCurrentThread(objectHash)
-                            continue
-                        if current_thread().peer in self.hashes[objectHash]['peers']:
-                            objectHashes.append(objectHash)
-                            self.removeObjectFromCurrentThread(objectHash)
-                            if len(objectHashes) >= count:
-                                break
-            except RuntimeError:
-                # the for cycle sometimes breaks if you remove elements
-                pass
-            return objectHashes
+        objectHashes = []
+        try:
+            for objectHash in self.hashes.keys():
+                if self.hashes[objectHash]['requested'] < time.time() - self.frequency:
+                    if len(self.hashes[objectHash]['peers']) == 0:
+                        self.removeObjectFromCurrentThread(objectHash)
+                        continue
+                    if current_thread().peer in self.hashes[objectHash]['peers']:
+                        objectHashes.append(objectHash)
+                        self.removeObjectFromCurrentThread(objectHash)
+                        if len(objectHashes) >= count:
+                            break
+        except (RuntimeError, KeyError, ValueError):
+            # the for cycle sometimes breaks if you remove elements
+            pass
+        return objectHashes
 
     def delete(self, objectHash):
         with self.lock:
