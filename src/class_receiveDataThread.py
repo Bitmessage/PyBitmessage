@@ -415,6 +415,8 @@ class receiveDataThread(threading.Thread):
     # Send a getdata message to our peer to request the object with the given
     # hash
     def sendgetdata(self, hashes):
+        if len(hashes) == 0:
+            return
         logger.debug('sending getdata to retrieve %i objects', len(hashes))
         payload = encodeVarint(len(hashes)) + ''.join(hashes)
         self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('getdata', payload)), False)
