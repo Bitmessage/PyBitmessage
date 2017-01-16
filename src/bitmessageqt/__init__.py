@@ -636,6 +636,9 @@ class MyForm(settingsmixin.SMainWindow):
         
         # switch back to this when replying
         self.replyFromTab = None
+
+        # so that quit won't loop
+        self.quitAccepted = False
         
         self.init_file_menu()
         self.init_inbox_popup_menu()
@@ -2693,6 +2696,9 @@ class MyForm(settingsmixin.SMainWindow):
             return
         '''
 
+        if self.quitAccepted:
+            return
+
         self.show()
         self.raise_()
         self.activateWindow()
@@ -2733,6 +2739,8 @@ class MyForm(settingsmixin.SMainWindow):
                 waitForSync = True
             elif reply == QtGui.QMessageBox.Cancel:
                 return
+
+        self.quitAccepted = True
 
         self.statusBar().showMessage(_translate(
             "MainWindow", "Shutting down PyBitmessage... %1%").arg(str(0)))
@@ -2813,6 +2821,8 @@ class MyForm(settingsmixin.SMainWindow):
         self.statusBar().showMessage(_translate("MainWindow", "Shutdown imminent... %1%").arg(str(100)))
         shared.thisapp.cleanup()
         logger.info("Shutdown complete")
+        super(MyForm, myapp).close()
+        #return
         os._exit(0)
 
     # window close event
@@ -2827,6 +2837,10 @@ class MyForm(settingsmixin.SMainWindow):
             pass
 
         # always ignore, it shuts down by itself
+        if self.quitAccepted:
+            event.accept()
+            return
+
         event.ignore()
         if not trayonclose:
             # quit the application
