@@ -220,7 +220,7 @@ class receiveDataThread(threading.Thread):
         if self.data == '': # if there are no more messages
             try:
                 self.sendgetdata(Missing().pull(100))
-            except Queue.full:
+            except Queue.Full:
                 pass
         self.processData()
 
