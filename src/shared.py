@@ -234,12 +234,23 @@ def doCleanShutdown():
             logger.debug("Waiting for thread %s", thread.name)
             thread.join()
 
+    # flush queued
+    for queue in (workerQueue, UISignalQueue, addressGeneratorQueue, objectProcessorQueue):
+        while True:
+            try:
+                queue.get(False)
+                queue.task_done()
+            except Queue.Empty:
+                break
+
     if BMConfigParser().safeGetBoolean('bitmessagesettings','daemon'):
         logger.info('Clean shutdown complete.')
         thisapp.cleanup()
         os._exit(0)
     else:
         logger.info('Core shutdown complete.')
+    for thread in threading.enumerate():
+        logger.debug("Thread %s still running", thread.name)
 
 def fixPotentiallyInvalidUTF8Data(text):
     try:

@@ -26,6 +26,7 @@ class sendDataThread(threading.Thread):
         state.sendDataQueues.append(self.sendDataThreadQueue)
         self.data = ''
         self.objectHashHolderInstance = objectHashHolder(self.sendDataThreadQueue)
+        self.objectHashHolderInstance.daemon = True
         self.objectHashHolderInstance.start()
         self.connectionIsOrWasFullyEstablished = False
 
@@ -83,6 +84,8 @@ class sendDataThread(threading.Thread):
                     amountSent = self.sslSock.send(self.buffer[:throttle.SendThrottle().chunkSize])
                 else:
                     amountSent = self.sock.send(self.buffer[:throttle.SendThrottle().chunkSize])
+            except socket.timeout:
+                continue
             except socket.error as e:
                 if e.errno == errno.EAGAIN:
                     continue

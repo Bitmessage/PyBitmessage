@@ -44,7 +44,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                     peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
                 except ValueError: # no known nodes
                     shared.knownNodesLock.release()
-                    time.sleep(1)
+                    self.stop.wait(1)
                     continue
                 priority = (183600 - (time.time() - shared.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
                 shared.knownNodesLock.release()
@@ -61,7 +61,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                     priority = 0.001
                 if (random.random() <=  priority):
                     break
-                time.sleep(0.01) # prevent CPU hogging if something is broken
+                self.stop.wait(0.01) # prevent CPU hogging if something is broken
         try:
             return peer
         except NameError:
@@ -190,6 +190,10 @@ class outgoingSynSender(threading.Thread, StoppableThread):
 
             try:
                 self.sock.connect((peer.host, peer.port))
+                if self._stopped:
+                    self.sock.shutdown(socket.SHUT_RDWR)
+                    self.sock.close()
+                    return
                 someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
                 sendDataThreadQueue = Queue.Queue(100) # Used to submit information to the send data thread for this connection. 
 
