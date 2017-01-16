@@ -178,15 +178,11 @@ class Missing(object):
         with self.lock:
             if objectHash in self.hashes:
                 del self.hashes[objectHash]
-            self.pending[current_thread().peer]['received'] = time.time()
-        toDelete = []
+            if current_thread().peer in self.pending:
+                self.pending[current_thread().peer]['received'] = time.time()
         for thread in self.pending.keys():
             with self.lock:
                 if objectHash in self.pending[thread]['objects']:
-                    toDelete.append(objectHash)
-        for thread in toDelete:
-            with self.lock:
-                if thread in self.pending:
                     self.pending[thread]['objects'].remove(objectHash)
 
     def stop(self):
