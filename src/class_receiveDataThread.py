@@ -9,6 +9,7 @@ import threading
 import shared
 import hashlib
 import os
+import Queue
 import select
 import socket
 import random
@@ -217,15 +218,10 @@ class receiveDataThread(threading.Thread):
         self.data = self.data[payloadLength + protocol.Header.size:] # take this message out and then process the next message
 
         if self.data == '': # if there are no more messages
-            for objectHash in Missing().pull(100):
-                if self.sendDataThreadQueue.full():
-                    break
-                if objectHash in Inventory():
-                    logger.debug('Inventory already has object listed in inv message.')
-                    Missing().delete(objectHash)
-                else:
-                    # We don't have the object in our inventory. Let's request it.
-                    self.sendgetdata(objectHash)
+            try:
+                self.sendgetdata(Missing().pull(100))
+            except Queue.full:
+                pass
         self.processData()
 
 
@@ -418,10 +414,10 @@ class receiveDataThread(threading.Thread):
 
     # Send a getdata message to our peer to request the object with the given
     # hash
-    def sendgetdata(self, hash):
-        logger.debug('sending getdata to retrieve object with hash: ' + hexlify(hash))
-        payload = '\x01' + hash
-        self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('getdata', payload)))
+    def sendgetdata(self, hashes):
+        logger.debug('sending getdata to retrieve %i objects', len(hashes))
+        payload = encodeVarint(len(hashes)) + ''.join(hashes)
+        self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('getdata', payload)), False)
 
 
     # We have received a getdata request from our peer
