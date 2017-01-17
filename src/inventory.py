@@ -178,7 +178,7 @@ class Missing(object):
         with self.lock:
             if objectHash in self.hashes:
                 del self.hashes[objectHash]
-            if current_thread().peer in self.pending:
+            if hasattr(current_thread(), 'peer') and current_thread().peer in self.pending:
                 self.pending[current_thread().peer]['received'] = time.time()
         for thread in self.pending.keys():
             with self.lock:
