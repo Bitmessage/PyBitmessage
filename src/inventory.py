@@ -1,5 +1,4 @@
 import collections
-import pprint
 from threading import current_thread, enumerate as threadingEnumerate, RLock
 import time
 
@@ -46,7 +45,7 @@ class Inventory(collections.MutableMapping):
     def __iter__(self):
         with self.lock:
             hashes = self._inventory.keys()[:]
-            hashes += (hash for hash, in sqlQuery('SELECT hash FROM inventory'))
+            hashes += (x for x, in sqlQuery('SELECT hash FROM inventory'))
             return hashes.__iter__()
 
     def __len__(self):
@@ -66,23 +65,23 @@ class Inventory(collections.MutableMapping):
     def unexpired_hashes_by_stream(self, stream):
         with self.lock:
             t = int(time.time())
-            hashes = [hash for hash, value in self._inventory.items() if value.stream == stream and value.expires > t]
+            hashes = [x for x, value in self._inventory.items() if value.stream == stream and value.expires > t]
             hashes += (payload for payload, in sqlQuery('SELECT hash FROM inventory WHERE streamnumber=? AND expirestime>?', stream, t))
             return hashes
 
     def flush(self):
         with self.lock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
             with SqlBulkExecute() as sql:
-                for hash, value in self._inventory.items():
-                    sql.execute('INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?)', hash, *value)
+                for objectHash, value in self._inventory.items():
+                    sql.execute('INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?)', objectHash, *value)
                 self._inventory.clear()
 
     def clean(self):
         with self.lock:
             sqlExecute('DELETE FROM inventory WHERE expirestime<?',int(time.time()) - (60 * 60 * 3))
             self._streams.clear()
-            for hash, value in self.items():
-                self._streams[value.stream].add(hash)
+            for objectHash, value in self.items():
+                self._streams[value.stream].add(objectHash)
 
 
 @Singleton
@@ -238,9 +237,9 @@ class PendingUpload(object):
                         self.hashes[objectHash].append(thread.peer)
             # add all objects into the current thread
             else:
-                for hash in self.hashes:
-                    if current_thread().peer not in self.hashes[hash]:
-                        self.hashes[hash].append(current_thread().peer)
+                for objectHash in self.hashes:
+                    if current_thread().peer not in self.hashes[objectHash]:
+                        self.hashes[objectHash].append(current_thread().peer)
 
 
     def len(self):
