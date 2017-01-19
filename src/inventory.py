@@ -1,5 +1,6 @@
 import collections
-from threading import current_thread, RLock
+import pprint
+from threading import current_thread, enumerate as threadingEnumerate, RLock
 import time
 
 from helper_sql import *
@@ -37,7 +38,7 @@ class Inventory(collections.MutableMapping):
             value = self.InventoryItem(*value)
             self._inventory[hash] = value
             self._streams[value.stream].add(hash)
-        Missing().delete(hash)
+        PendingDownload().delete(hash)
 
     def __delitem__(self, hash):
         raise NotImplementedError
@@ -85,7 +86,8 @@ class Inventory(collections.MutableMapping):
 
 
 @Singleton
-class Missing(object):
+class PendingDownload(object):
+# keep a track of objects that have been advertised to us but we haven't downloaded them yet
     def __init__(self):
         super(self.__class__, self).__init__()
         self.lock = RLock()
@@ -94,7 +96,7 @@ class Missing(object):
         # don't request the same object more frequently than this
         self.frequency = 60
         # after requesting and not receiving an object more than this times, consider it expired
-        self.maxRequestCount = 6
+        self.maxRequestCount = 3
         self.pending = {}
 
     def add(self, objectHash):
@@ -207,3 +209,83 @@ class Missing(object):
                 del self.pending[current_thread().peer]
             except KeyError:
                 pass
+
+
+class PendingUploadDeadlineException(Exception):
+    pass
+
+
+@Singleton
+class PendingUpload(object):
+# keep a track of objects that we have created but haven't distributed yet
+    def __init__(self):
+        super(self.__class__, self).__init__()
+        self.lock = RLock()
+        self.hashes = {}
+        # end by this time in any case
+        self.deadline = 0
+        self.maxLen = 0
+
+    def add(self, objectHash = None):
+        with self.lock:
+            # add a new object into existing thread lists
+            if objectHash:
+                if objectHash not in self.hashes:
+                    self.hashes[objectHash] = []
+                for thread in threadingEnumerate():
+                    if thread.isAlive() and hasattr(thread, 'peer') and \
+                        thread.peer not in self.hashes[objectHash]:
+                        self.hashes[objectHash].append(thread.peer)
+            # add all objects into the current thread
+            else:
+                for hash in self.hashes:
+                    if current_thread().peer not in self.hashes[hash]:
+                        self.hashes[hash].append(current_thread().peer)
+
+
+    def len(self):
+        with self.lock:
+            return sum(len(self.hashes[x]) > 0 for x in self.hashes)
+
+    def _progress(self):
+        with self.lock:
+            return float(sum(len(self.hashes[x]) for x in self.hashes))
+
+    def progress(self, throwDeadline=True):
+        if self.maxLen < self._progress():
+            self.maxLen = self._progress()
+        if self.deadline < time.time():
+            if self.deadline > 0 and throwDeadline:
+                raise PendingUploadDeadlineException
+            self.deadline = time.time() + 20
+        try:
+            return 1.0 - self._progress() / self.maxLen
+        except ZeroDivisionError:
+            return 1.0
+
+    def delete(self, objectHash):
+        if not hasattr(current_thread(), 'peer'):
+            return
+        with self.lock:
+            if objectHash in self.hashes and current_thread().peer in self.hashes[objectHash]:
+                self.hashes[objectHash].remove(current_thread().peer)
+                if len(self.hashes[objectHash]) == 0:
+                    del self.hashes[objectHash]
+
+    def stop(self):
+        with self.lock:
+            self.hashes = {}
+
+    def threadEnd(self):
+        while True:
+            try:
+                with self.lock:
+                    for objectHash in self.hashes:
+                        if current_thread().peer in self.hashes[objectHash]:
+                            self.hashes[objectHash].remove(current_thread().peer)
+                            if len(self.hashes[objectHash]) == 0:
+                                del self.hashes[objectHash]
+            except (KeyError, RuntimeError):
+                pass
+            else:
+                break

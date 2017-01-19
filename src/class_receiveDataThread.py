@@ -31,7 +31,7 @@ from helper_sql import sqlQuery
 from debug import logger
 import paths
 import protocol
-from inventory import Inventory, Missing
+from inventory import Inventory, PendingDownload, PendingUpload
 import state
 import throttle
 import tr
@@ -129,7 +129,7 @@ class receiveDataThread(threading.Thread):
         except Exception as err:
             logger.error('Could not delete ' + str(self.hostIdent) + ' from shared.connectedHostsList.' + str(err))
 
-        Missing().threadEnd()
+        PendingDownload().threadEnd()
         shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         self.checkTimeOffsetNotification()
         logger.debug('receiveDataThread ending. ID ' + str(id(self)) + '. The size of the shared.connectedHostsList is now ' + str(len(shared.connectedHostsList)))
@@ -219,7 +219,7 @@ class receiveDataThread(threading.Thread):
 
         if self.data == '': # if there are no more messages
             try:
-                self.sendgetdata(Missing().pull(100))
+                self.sendgetdata(PendingDownload().pull(100))
             except Queue.Full:
                 pass
         self.processData()
@@ -291,6 +291,9 @@ class receiveDataThread(threading.Thread):
 
         if self.initiatedConnection:
             state.networkProtocolAvailability[protocol.networkType(self.peer.host)] = True
+
+        # we need to send our own objects to this node
+        PendingUpload().add()
 
         # Let all of our peers know about this new node.
         dataToSend = (int(time.time()), self.streamNumber, 1, self.peer.host, self.remoteNodeIncomingPort)
@@ -409,7 +412,7 @@ class receiveDataThread(threading.Thread):
         objectsNewToMe = advertisedSet - Inventory().hashes_by_stream(self.streamNumber)
         logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
         for item in objectsNewToMe:
-            Missing().add(item)
+            PendingDownload().add(item)
             self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[item] = 0 # helps us keep from sending inv messages to peers that already know about the objects listed therein
 
     # Send a getdata message to our peer to request the object with the given
@@ -439,15 +442,15 @@ class receiveDataThread(threading.Thread):
                 self.antiIntersectionDelay()
             else:
                 if hash in Inventory():
-                    self.sendObject(Inventory()[hash].payload)
+                    self.sendObject(hash, Inventory()[hash].payload)
                 else:
                     self.antiIntersectionDelay()
                     logger.warning('%s asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. We probably cleaned it out after advertising it but before they got around to asking for it.' % (self.peer,))
 
     # Our peer has requested (in a getdata message) that we send an object.
-    def sendObject(self, payload):
+    def sendObject(self, hash, payload):
         logger.debug('sending an object.')
-        self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('object',payload)))
+        self.sendDataThreadQueue.put((0, 'sendRawData', (hash, protocol.CreatePacket('object',payload))))
 
     def _checkIPAddress(self, host):
         if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
