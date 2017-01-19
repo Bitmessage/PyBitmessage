@@ -182,8 +182,8 @@ class sendDataThread(threading.Thread):
                 elif command == 'connectionIsOrWasFullyEstablished':
                     self.connectionIsOrWasFullyEstablished = True
                     self.services, self.sslSock = data
-            else:
-                logger.error('sendDataThread ID: ' + str(id(self)) + ' ignoring command ' + command + ' because the thread is not in stream' + str(deststream))
+            elif self.connectionIsOrWasFullyEstablished:
+                logger.error('sendDataThread ID: ' + str(id(self)) + ' ignoring command ' + command + ' because the thread is not in stream ' + str(deststream))
             self.sendDataThreadQueue.task_done()
         self.sendDataThreadQueue.task_done()
 
