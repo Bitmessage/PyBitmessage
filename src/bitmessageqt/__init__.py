@@ -76,8 +76,8 @@ from account import *
 from dialogs import AddAddressDialog
 from class_objectHashHolder import objectHashHolder
 from class_singleWorker import singleWorker
-from helper_generic import powQueueSize, invQueueSize
-from inventory import Missing
+from helper_generic import powQueueSize
+from inventory import PendingDownload, PendingUpload, PendingUploadDeadlineException
 import paths
 from proofofwork import getPowType
 import protocol
@@ -2708,10 +2708,10 @@ class MyForm(settingsmixin.SMainWindow):
         waitForSync = False
 
         # C PoW currently doesn't support interrupting and OpenCL is untested
-        if getPowType() == "python" and (powQueueSize() > 0 or invQueueSize() > 0):
+        if getPowType() == "python" and (powQueueSize() > 0 or PendingUpload().len() > 0):
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Proof of work pending"),
                     _translate("MainWindow", "%n object(s) pending proof of work", None, QtCore.QCoreApplication.CodecForTr, powQueueSize()) + ", " +
-                    _translate("MainWindow", "%n object(s) waiting to be distributed", None, QtCore.QCoreApplication.CodecForTr, invQueueSize()) + "\n\n" + 
+                    _translate("MainWindow", "%n object(s) waiting to be distributed", None, QtCore.QCoreApplication.CodecForTr, PendingUpload().len()) + "\n\n" + 
                     _translate("MainWindow", "Wait until these tasks finish?"),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.No:
@@ -2719,16 +2719,16 @@ class MyForm(settingsmixin.SMainWindow):
             elif reply == QtGui.QMessage.Cancel:
                 return
 
-        if Missing().len() > 0:
+        if PendingDownload().len() > 0:
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Synchronisation pending"),
-                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr, Missing().len()),
+                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr, PendingDownload().len()),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.Yes:
                 waitForSync = True
             elif reply == QtGui.QMessageBox.Cancel:
                 return
             else:
-                Missing().stop()
+                PendingDownload().stop()
 
         if shared.statusIconColor == 'red':
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Not connected"),
@@ -2756,7 +2756,7 @@ class MyForm(settingsmixin.SMainWindow):
         if waitForSync:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Waiting for finishing synchronisation..."))
-            while Missing().len() > 0:
+            while PendingDownload().len() > 0:
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
 
@@ -2781,22 +2781,17 @@ class MyForm(settingsmixin.SMainWindow):
                 time.sleep(0.5) # a bit of time so that the hashHolder is populated
             QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
         
-            # check if objectHashHolder empty
+            # check if upload (of objects created locally) pending
             self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(50)))
-            maxWaitingObjects = 0
-            curWaitingObjects = invQueueSize()
-            while curWaitingObjects > 0:
-                curWaitingObjects = invQueueSize()
-                if curWaitingObjects > maxWaitingObjects:
-                    maxWaitingObjects = curWaitingObjects
-                if curWaitingObjects > 0:
-                    self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(50 + 20 * (maxWaitingObjects - curWaitingObjects) / maxWaitingObjects)))
+            try:
+                while PendingUpload().progress() < 1:
+                    self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(int(50 + 20 * PendingUpload().progress()))))
                     time.sleep(0.5)
                     QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
+            except PendingUploadDeadlineException:
+                pass
 
             QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
-            if maxWorkerQueue > 0 or maxWaitingObjects > 0:
-                time.sleep(10) # a bit of time so that the other nodes retrieve the objects
         QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
 
         # save state and geometry self and all widgets

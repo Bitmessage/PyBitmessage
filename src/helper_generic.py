@@ -19,16 +19,6 @@ def powQueueSize():
             pass
     return curWorkerQueue
 
-def invQueueSize():
-    curInvQueue = 0
-    for thread in enumerate():
-        try:
-            if thread.name == "objectHashHolder":
-                curInvQueue += thread.hashCount()
-        except:
-            pass
-    return curInvQueue
-
 def convertIntToString(n):
     a = __builtins__.hex(n)
     if a[-1:] == 'L':

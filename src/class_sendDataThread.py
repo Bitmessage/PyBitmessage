@@ -12,6 +12,7 @@ from helper_generic import addDataPadding
 from class_objectHashHolder import *
 from addresses import *
 from debug import logger
+from inventory import PendingUpload
 import protocol
 import state
 import throttle
@@ -169,8 +170,12 @@ class sendDataThread(threading.Thread):
                             logger.error('send pong failed')
                             break
                 elif command == 'sendRawData':
+                    hash = None
+                    if type(data) in [list, tuple]:
+                        hash, data = data
                     try:
                         self.sendBytes(data)
+                        PendingUpload().delete(hash)
                     except:
                         logger.error('Sending of data to ' + str(self.peer) + ' failed. sendDataThread thread ' + str(self) + ' ending now.', exc_info=True)
                         break
@@ -188,5 +193,6 @@ class sendDataThread(threading.Thread):
         except:
             pass
         state.sendDataQueues.remove(self.sendDataThreadQueue)
+        PendingUpload().threadEnd()
         logger.info('sendDataThread ending. ID: ' + str(id(self)) + '. Number of queues in sendDataQueues: ' + str(len(state.sendDataQueues)))
         self.objectHashHolderInstance.close()
