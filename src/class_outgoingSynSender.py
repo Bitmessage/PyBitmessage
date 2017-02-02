@@ -195,7 +195,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                     self.sock.close()
                     return
                 someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
-                sendDataThreadQueue = Queue.Queue(100) # Used to submit information to the send data thread for this connection. 
+                sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection. 
 
                 sd = sendDataThread(sendDataThreadQueue)
                 sd.setup(self.sock, peer.host, peer.port, self.streamNumber,

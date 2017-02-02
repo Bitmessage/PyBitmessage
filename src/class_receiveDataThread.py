@@ -82,7 +82,7 @@ class receiveDataThread(threading.Thread):
     def run(self):
         logger.debug('receiveDataThread starting. ID ' + str(id(self)) + '. The size of the shared.connectedHostsList is now ' + str(len(shared.connectedHostsList)))
 
-        while True:
+        while state.shutdown == 0:
             dataLen = len(self.data)
             try:
                 ssl = False
@@ -99,12 +99,13 @@ class receiveDataThread(threading.Thread):
                 logger.error ('Timeout occurred waiting for data from ' + str(self.peer) + '. Closing receiveData thread. (ID: ' + str(id(self)) + ')')
                 break
             except socket.error as err:
-                if err.errno == 2 or (sys.platform == 'win32' and err.errno == 10035) or (sys.platform != 'win32' and err.errno == errno.EWOULDBLOCK):
-                    if ssl:
-                        select.select([self.sslSock], [], [])
-                    else:
-                        select.select([self.sock], [], [])
-                    continue
+#                if err.errno == 2 or (sys.platform == 'win32' and err.errno == 10035) or (sys.platform != 'win32' and err.errno == errno.EWOULDBLOCK):
+#                    if ssl:
+#                        select.select([self.sslSock], [], [])
+#                    else:
+#                        select.select([self.sock], [], [])
+#                    logger.error('sock.recv retriable error')
+#                    continue
                 logger.error('sock.recv error. Closing receiveData thread (' + str(self.peer) + ', Thread ID: ' + str(id(self)) + ').' + str(err.errno) + "/" + str(err))
                 if self.initiatedConnection and not self.connectionIsOrWasFullyEstablished:
                     shared.timeOffsetWrongCount += 1
