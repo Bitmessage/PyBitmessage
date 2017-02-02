@@ -171,7 +171,8 @@ class PendingDownload(object):
             pass
         for objectHash in unreachableObjects:
             with self.lock:
-                del self.hashes[objectHash]
+                if objectHash in self.hashes:
+                    del self.hashes[objectHash]
 #        logger.debug("Pull took %.3f seconds", time.time() - start)
         return objectHashes
 

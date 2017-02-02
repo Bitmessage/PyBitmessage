@@ -134,7 +134,7 @@ class singleListener(threading.Thread, StoppableThread):
                     break
 
             someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
-            sendDataThreadQueue = Queue.Queue(100) # Used to submit information to the send data thread for this connection.
+            sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection.
             socketObject.settimeout(20)
 
             sd = sendDataThread(sendDataThreadQueue)
