@@ -266,17 +266,29 @@ class receiveDataThread(threading.Thread):
                     self.sslSock.do_handshake()
                     logger.debug("TLS handshake success")
                     break
-                except ssl.SSLWantReadError:
-                    logger.debug("Waiting for SSL socket handhake read")
-                    select.select([self.sslSock], [], [], 10)
-                except ssl.SSLWantWriteError:
-                    logger.debug("Waiting for SSL socket handhake write")
-                    select.select([], [self.sslSock], [], 10)
                 except ssl.SSLError as e:
+                    if sys.hexversion >= 0x02070900:
+                        if isinstance (e, ssl.SSLWantReadError):
+                            logger.debug("Waiting for SSL socket handhake read")
+                            select.select([self.sslSock], [], [], 10)
+                            continue
+                        elif isinstance (e, ssl.SSLWantWriteError):
+                            logger.debug("Waiting for SSL socket handhake write")
+                            select.select([], [self.sslSock], [], 10)
+                            continue
+                    else:
+                        if e.args[0] == ssl.SSL_ERROR_WANT_READ:
+                            logger.debug("Waiting for SSL socket handhake read")
+                            select.select([self.sslSock], [], [], 10)
+                            continue
+                        elif e.args[0] == ssl.SSL_ERROR_WANT_WRITE:
+                            logger.debug("Waiting for SSL socket handhake write")
+                            select.select([], [self.sslSock], [], 10)
+                            continue
                     logger.error("SSL socket handhake failed: %s, shutting down connection", str(e))
                     self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail %s' % (str(e))))
                     return
-                except:
+                except Exception:
                     logger.error("SSL socket handhake failed, shutting down connection", exc_info=True)
                     self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail'))
                     return
