@@ -184,7 +184,7 @@ class PendingDownload(object):
                 self.pending[current_thread().peer]['received'] = time.time()
         for thread in self.pending.keys():
             with self.lock:
-                if objectHash in self.pending[thread]['objects']:
+                if thread in self.pending and objectHash in self.pending[thread]['objects']:
                     self.pending[thread]['objects'].remove(objectHash)
 
     def stop(self):
