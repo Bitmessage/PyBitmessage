@@ -119,7 +119,7 @@ def CreatePacket(command, payload=''):
     b[Header.size:] = payload
     return bytes(b)
 
-def assembleVersionMessage(remoteHost, remotePort, myStreamNumber, server = False):
+def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server = False):
     payload = ''
     payload += pack('>L', 3)  # protocol version.
     payload += pack('>q', NODE_NETWORK|(NODE_SSL if haveSSL(server) else 0))  # bitflags of the services I offer.
@@ -154,9 +154,16 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber, server = Fals
     userAgent = '/PyBitmessage:' + softwareVersion + '/'
     payload += encodeVarint(len(userAgent))
     payload += userAgent
-    payload += encodeVarint(
-        1)  # The number of streams about which I care. PyBitmessage currently only supports 1 per connection.
-    payload += encodeVarint(myStreamNumber)
+
+    # Streams
+    payload += encodeVarint(len(participatingStreams))
+    count = 0
+    for stream in sorted(participatingStreams):
+        payload += encodeVarint(stream)
+        count += 1
+        # protocol limit, see specification
+        if count >= 160000:
+            break
 
     return CreatePacket('version', payload)
 

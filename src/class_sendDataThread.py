@@ -42,7 +42,7 @@ class sendDataThread(threading.Thread):
         self.sock = sock
         self.peer = state.Peer(HOST, PORT)
         self.name = "sendData-" + self.peer.host.replace(":", ".") # log parser field separator
-        self.streamNumber = streamNumber
+        self.streamNumber = []
         self.services = 0
         self.buffer = ""
         self.initiatedConnection = False
@@ -51,16 +51,16 @@ class sendDataThread(threading.Thread):
         self.lastTimeISentData = int(
             time.time())  # If this value increases beyond five minutes ago, we'll send a pong message to keep the connection alive.
         self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware = someObjectsOfWhichThisRemoteNodeIsAlreadyAware
-        if self.streamNumber == -1:  # This was an incoming connection.
+        if streamNumber == -1:  # This was an incoming connection.
             self.initiatedConnection = False
         else:
             self.initiatedConnection = True
-        logger.debug('The streamNumber of this sendDataThread (ID: ' + str(id(self)) + ') at setup() is' + str(self.streamNumber))
+        #logger.debug('The streamNumber of this sendDataThread (ID: ' + str(id(self)) + ') at setup() is' + str(self.streamNumber))
 
 
     def sendVersionMessage(self):
         datatosend = protocol.assembleVersionMessage(
-            self.peer.host, self.peer.port, self.streamNumber, not self.initiatedConnection)  # the IP and port of the remote host, and my streamNumber.
+            self.peer.host, self.peer.port, state.streamsInWhichIAmParticipating, not self.initiatedConnection)  # the IP and port of the remote host, and my streamNumber.
 
         logger.debug('Sending version packet: ' + repr(datatosend))
 
@@ -102,7 +102,7 @@ class sendDataThread(threading.Thread):
             self.sendBytes()
             deststream, command, data = self.sendDataThreadQueue.get()
 
-            if deststream == self.streamNumber or deststream == 0:
+            if deststream == 0 or deststream in self.streamNumber:
                 if command == 'shutdown':
                     logger.debug('sendDataThread (associated with ' + str(self.peer) + ') ID: ' + str(id(self)) + ' shutting down now.')
                     break
@@ -114,7 +114,7 @@ class sendDataThread(threading.Thread):
                 # streamNumber of this send data thread here:
                 elif command == 'setStreamNumber':
                     self.streamNumber = data
-                    logger.debug('setting the stream number in the sendData thread (ID: ' + str(id(self)) + ') to ' + str(self.streamNumber))
+                    logger.debug('setting the stream number to %s', ', '.join(str(x) for x in self.streamNumber))
                 elif command == 'setRemoteProtocolVersion':
                     specifiedRemoteProtocolVersion = data
                     logger.debug('setting the remote node\'s protocol version in the sendDataThread (ID: ' + str(id(self)) + ') to ' + str(specifiedRemoteProtocolVersion))
@@ -183,7 +183,7 @@ class sendDataThread(threading.Thread):
                     self.connectionIsOrWasFullyEstablished = True
                     self.services, self.sslSock = data
             elif self.connectionIsOrWasFullyEstablished:
-                logger.error('sendDataThread ID: ' + str(id(self)) + ' ignoring command ' + command + ' because the thread is not in stream ' + str(deststream))
+                logger.error('sendDataThread ID: ' + str(id(self)) + ' ignoring command ' + command + ' because the thread is not in stream ' + str(deststream) + ' but in streams ' + ', '.join(str(x) for x in self.streamNumber))
             self.sendDataThreadQueue.task_done()
         self.sendDataThreadQueue.task_done()
 

@@ -1,7 +1,7 @@
 import collections
 
 neededPubkeys = {}
-streamsInWhichIAmParticipating = {}
+streamsInWhichIAmParticipating = []
 sendDataQueues = [] #each sendData thread puts its queue in this list.
 
 # For UPnP
