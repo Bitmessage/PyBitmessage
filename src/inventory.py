@@ -117,7 +117,7 @@ class PendingDownload(object):
 
     def len(self):
         with self.lock:
-            return len(self.hashes)
+            return sum(1 for x in self.hashes.values() if len(x) > 0)
 
     def pull(self, count=1):
         if count < 1:
@@ -241,7 +241,6 @@ class PendingUpload(object):
                 for objectHash in self.hashes:
                     if current_thread().peer not in self.hashes[objectHash]:
                         self.hashes[objectHash].append(current_thread().peer)
-
 
     def len(self):
         with self.lock:
