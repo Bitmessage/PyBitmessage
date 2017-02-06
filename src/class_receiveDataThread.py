@@ -100,13 +100,13 @@ class receiveDataThread(threading.Thread):
                 logger.error ('Timeout occurred waiting for data from ' + str(self.peer) + '. Closing receiveData thread. (ID: ' + str(id(self)) + ')')
                 break
             except socket.error as err:
-#                if err.errno == 2 or (sys.platform == 'win32' and err.errno == 10035) or (sys.platform != 'win32' and err.errno == errno.EWOULDBLOCK):
-#                    if ssl:
-#                        select.select([self.sslSock], [], [])
-#                    else:
-#                        select.select([self.sock], [], [])
-#                    logger.error('sock.recv retriable error')
-#                    continue
+                if err.errno == errno.EWOULDBLOCK:
+                    if ssl:
+                        select.select([self.sslSock], [], [], 10)
+                    else:
+                        select.select([self.sock], [], [], 10)
+                    logger.error('sock.recv retriable error')
+                    continue
                 logger.error('sock.recv error. Closing receiveData thread (' + str(self.peer) + ', Thread ID: ' + str(id(self)) + ').' + str(err.errno) + "/" + str(err))
                 if self.initiatedConnection and not self.connectionIsOrWasFullyEstablished:
                     shared.timeOffsetWrongCount += 1
