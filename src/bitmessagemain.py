@@ -51,7 +51,7 @@ import helper_generic
 from helper_threading import *
 
 def connectToStream(streamNumber):
-    state.streamsInWhichIAmParticipating[streamNumber] = 'no data'
+    state.streamsInWhichIAmParticipating.append(streamNumber)
     selfInitiatedConnections[streamNumber] = {}
 
     if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():

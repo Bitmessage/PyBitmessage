@@ -62,7 +62,8 @@ class receiveDataThread(threading.Thread):
         self.sock = sock
         self.peer = state.Peer(HOST, port)
         self.name = "receiveData-" + self.peer.host.replace(":", ".") # ":" log parser field separator
-        self.streamNumber = streamNumber
+        self.streamNumber = state.streamsInWhichIAmParticipating
+        self.remoteStreams = []
         self.selfInitiatedConnections = selfInitiatedConnections
         self.sendDataThreadQueue = sendDataThreadQueue # used to send commands and data to the sendDataThread
         self.hostIdent = self.peer.port if ".onion" in BMConfigParser().get('bitmessagesettings', 'onionhostname') and protocol.checkSocksIP(self.peer.host) else self.peer.host
@@ -70,7 +71,7 @@ class receiveDataThread(threading.Thread):
             self.hostIdent] = 0  # The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
         self.connectionIsOrWasFullyEstablished = False  # set to true after the remote node and I accept each other's version messages. This is needed to allow the user interface to accurately reflect the current number of connections.
         self.services = 0
-        if self.streamNumber == -1:  # This was an incoming connection. Send out a version message if we accept the other node's version message.
+        if streamNumber == -1:  # This was an incoming connection. Send out a version message if we accept the other node's version message.
             self.initiatedConnection = False
         else:
             self.initiatedConnection = True
@@ -120,7 +121,11 @@ class receiveDataThread(threading.Thread):
                 self.processData()
 
         try:
-            del self.selfInitiatedConnections[self.streamNumber][self]
+            for stream in self.remoteStreams:
+                try:
+                    del self.selfInitiatedConnections[stream][self]
+                except KeyError:
+                    pass
             logger.debug('removed self (a receiveDataThread) from selfInitiatedConnections')
         except:
             pass
@@ -137,7 +142,8 @@ class receiveDataThread(threading.Thread):
 
     def antiIntersectionDelay(self, initial = False):
         # estimated time for a small object to propagate across the whole network
-        delay = math.ceil(math.log(len(shared.knownNodes[self.streamNumber]) + 2, 20)) * (0.2 + objectHashHolder.size/2)
+        delay = math.ceil(math.log(max(len(shared.knownNodes[x]) for x in shared.knownNodes) + 2, 20)) * (0.2 + objectHashHolder.size/2)
+        # take the stream with maximum amount of nodes
         # +2 is to avoid problems with log(0) and log(1)
         # 20 is avg connected nodes count
         # 0.2 is avg message transmission time
@@ -182,7 +188,8 @@ class receiveDataThread(threading.Thread):
         # that other peers can be made aware of its existance.
         if self.initiatedConnection and self.connectionIsOrWasFullyEstablished:  # The remote port is only something we should share with others if it is the remote node's incoming port (rather than some random operating-system-assigned outgoing port).
             with shared.knownNodesLock:
-                shared.knownNodes[self.streamNumber][self.peer] = int(time.time())
+                for stream in self.streamNumber:
+                    shared.knownNodes[stream][self.peer] = int(time.time())
         
         #Strip the nulls
         command = command.rstrip('\x00')
@@ -313,9 +320,10 @@ class receiveDataThread(threading.Thread):
         PendingUpload().add()
 
         # Let all of our peers know about this new node.
-        dataToSend = (int(time.time()), self.streamNumber, 1, self.peer.host, self.remoteNodeIncomingPort)
-        protocol.broadcastToSendDataQueues((
-            self.streamNumber, 'advertisepeer', dataToSend))
+        for stream in self.remoteStreams:
+            dataToSend = (int(time.time()), stream, self.services, self.peer.host, self.remoteNodeIncomingPort)
+            protocol.broadcastToSendDataQueues((
+                stream, 'advertisepeer', dataToSend))
 
         self.sendaddr()  # This is one large addr message to this one peer.
         if not self.initiatedConnection and len(shared.connectedHostsList) > 200:
@@ -328,9 +336,10 @@ class receiveDataThread(threading.Thread):
     def sendBigInv(self):
         # Select all hashes for objects in this stream.
         bigInvList = {}
-        for hash in Inventory().unexpired_hashes_by_stream(self.streamNumber):
-            if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware and not self.objectHashHolderInstance.hasHash(hash):
-                bigInvList[hash] = 0
+        for stream in self.streamNumber:
+            for hash in Inventory().unexpired_hashes_by_stream(stream):
+                if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware and not self.objectHashHolderInstance.hasHash(hash):
+                    bigInvList[hash] = 0
         numberOfObjectsInInvMessage = 0
         payload = ''
         # Now let us start appending all of these hashes together. They will be
@@ -426,7 +435,9 @@ class receiveDataThread(threading.Thread):
         advertisedSet = set()
         for i in range(numberOfItemsInInv):
             advertisedSet.add(data[lengthOfVarint + (32 * i):32 + lengthOfVarint + (32 * i)])
-        objectsNewToMe = advertisedSet - Inventory().hashes_by_stream(self.streamNumber)
+        objectsNewToMe = advertisedSet
+        for stream in self.streamNumber:
+            objectsNewToMe -= Inventory().hashes_by_stream(stream)
         logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
         for item in objectsNewToMe:
             PendingDownload().add(item)
@@ -532,7 +543,7 @@ class receiveDataThread(threading.Thread):
                 38 * i):12 + lengthOfNumberOfAddresses + (38 * i)])
             if recaddrStream == 0:
                 continue
-            if recaddrStream != self.streamNumber and recaddrStream != (self.streamNumber * 2) and recaddrStream != ((self.streamNumber * 2) + 1):  # if the embedded stream number is not in my stream or either of my child streams then ignore it. Someone might be trying funny business.
+            if recaddrStream not in self.streamNumber and (recaddrStream / 2) not in self.streamNumber:  # if the embedded stream number and its parent are not in my streams then ignore it. Someone might be trying funny business.
                 continue
             recaddrServices, = unpack('>Q', data[12 + lengthOfNumberOfAddresses + (
                 38 * i):20 + lengthOfNumberOfAddresses + (38 * i)])
@@ -560,7 +571,7 @@ class receiveDataThread(threading.Thread):
                         timeSomeoneElseReceivedMessageFromThisNode,
                         recaddrStream, recaddrServices, hostStandardFormat, recaddrPort)
                     protocol.broadcastToSendDataQueues((
-                        self.streamNumber, 'advertisepeer', hostDetails))
+                        self.recaddrStream, 'advertisepeer', hostDetails))
             else:
                 timeLastReceivedMessageFromThisNode = shared.knownNodes[recaddrStream][
                     peerFromAddrMessage]
@@ -568,7 +579,8 @@ class receiveDataThread(threading.Thread):
                     with shared.knownNodesLock:
                         shared.knownNodes[recaddrStream][peerFromAddrMessage] = timeSomeoneElseReceivedMessageFromThisNode
 
-        logger.debug('knownNodes currently has ' +  str(len(shared.knownNodes[self.streamNumber])) + ' nodes for this stream.')
+        for stream in self.streamNumber:
+            logger.debug('knownNodes currently has %i nodes for stream %i', len(shared.knownNodes[stream]), stream)
 
 
     # Send a huge addr message to our peer. This is only used 
@@ -576,87 +588,87 @@ class receiveDataThread(threading.Thread):
     # peer (with the full exchange of version and verack 
     # messages).
     def sendaddr(self):
-        addrsInMyStream = {}
-        addrsInChildStreamLeft = {}
-        addrsInChildStreamRight = {}
-        # print 'knownNodes', shared.knownNodes
+        # We are going to share a maximum number of 1000 addrs (per overlapping
+        # stream) with our peer. 500 from overlapping streams, 250 from the
+        # left child stream, and 250 from the right child stream.
+        for stream in self.streamNumber:
+            addrsInMyStream = {}
+            addrsInChildStreamLeft = {}
+            addrsInChildStreamRight = {}
 
-        # We are going to share a maximum number of 1000 addrs with our peer.
-        # 500 from this stream, 250 from the left child stream, and 250 from
-        # the right child stream.
-        with shared.knownNodesLock:
-            if len(shared.knownNodes[self.streamNumber]) > 0:
-                ownPosition = random.randint(0, 499)
-                sentOwn = False
-                for i in range(500):
-                    # if current connection is over a proxy, sent our own onion address at a random position
-                    if ownPosition == i and ".onion" in BMConfigParser().get("bitmessagesettings", "onionhostname") and \
-                        hasattr(self.sock, "getproxytype") and self.sock.getproxytype() != "none" and not sentOwn:
-                        peer = state.Peer(BMConfigParser().get("bitmessagesettings", "onionhostname"), BMConfigParser().getint("bitmessagesettings", "onionport"))
-                    else:
-                    # still may contain own onion address, but we don't change it
-                        peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
-                    if isHostInPrivateIPRange(peer.host):
-                        continue
-                    if peer.host == BMConfigParser().get("bitmessagesettings", "onionhostname") and peer.port == BMConfigParser().getint("bitmessagesettings", "onionport") :
-                        sentOwn = True
-                    addrsInMyStream[peer] = shared.knownNodes[
-                        self.streamNumber][peer]
-            if len(shared.knownNodes[self.streamNumber * 2]) > 0:
-                for i in range(250):
-                    peer, = random.sample(shared.knownNodes[
-                                          self.streamNumber * 2], 1)
-                    if isHostInPrivateIPRange(peer.host):
-                        continue
-                    addrsInChildStreamLeft[peer] = shared.knownNodes[
-                        self.streamNumber * 2][peer]
-            if len(shared.knownNodes[(self.streamNumber * 2) + 1]) > 0:
-                for i in range(250):
-                    peer, = random.sample(shared.knownNodes[
-                                          (self.streamNumber * 2) + 1], 1)
-                    if isHostInPrivateIPRange(peer.host):
-                        continue
-                    addrsInChildStreamRight[peer] = shared.knownNodes[
-                        (self.streamNumber * 2) + 1][peer]
-        numberOfAddressesInAddrMessage = 0
-        payload = ''
-        # print 'addrsInMyStream.items()', addrsInMyStream.items()
-        for (HOST, PORT), value in addrsInMyStream.items():
-            timeLastReceivedMessageFromThisNode = value
-            if timeLastReceivedMessageFromThisNode > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers):  # If it is younger than 3 hours old..
-                numberOfAddressesInAddrMessage += 1
-                payload += pack(
-                    '>Q', timeLastReceivedMessageFromThisNode)  # 64-bit time
-                payload += pack('>I', self.streamNumber)
-                payload += pack(
-                    '>q', 1)  # service bit flags offered by this node
-                payload += protocol.encodeHost(HOST)
-                payload += pack('>H', PORT)  # remote port
-        for (HOST, PORT), value in addrsInChildStreamLeft.items():
-            timeLastReceivedMessageFromThisNode = value
-            if timeLastReceivedMessageFromThisNode > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers):  # If it is younger than 3 hours old..
-                numberOfAddressesInAddrMessage += 1
-                payload += pack(
-                    '>Q', timeLastReceivedMessageFromThisNode)  # 64-bit time
-                payload += pack('>I', self.streamNumber * 2)
-                payload += pack(
-                    '>q', 1)  # service bit flags offered by this node
-                payload += protocol.encodeHost(HOST)
-                payload += pack('>H', PORT)  # remote port
-        for (HOST, PORT), value in addrsInChildStreamRight.items():
-            timeLastReceivedMessageFromThisNode = value
-            if timeLastReceivedMessageFromThisNode > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers):  # If it is younger than 3 hours old..
-                numberOfAddressesInAddrMessage += 1
-                payload += pack(
-                    '>Q', timeLastReceivedMessageFromThisNode)  # 64-bit time
-                payload += pack('>I', (self.streamNumber * 2) + 1)
-                payload += pack(
-                    '>q', 1)  # service bit flags offered by this node
-                payload += protocol.encodeHost(HOST)
-                payload += pack('>H', PORT)  # remote port
-
-        payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
-        self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('addr', payload)))
+            with shared.knownNodesLock:
+                if len(shared.knownNodes[stream]) > 0:
+                    ownPosition = random.randint(0, 499)
+                    sentOwn = False
+                    for i in range(500):
+                        # if current connection is over a proxy, sent our own onion address at a random position
+                        if ownPosition == i and ".onion" in BMConfigParser().get("bitmessagesettings", "onionhostname") and \
+                            hasattr(self.sock, "getproxytype") and self.sock.getproxytype() != "none" and not sentOwn:
+                            peer = state.Peer(BMConfigParser().get("bitmessagesettings", "onionhostname"), BMConfigParser().getint("bitmessagesettings", "onionport"))
+                        else:
+                        # still may contain own onion address, but we don't change it
+                            peer, = random.sample(shared.knownNodes[stream], 1)
+                        if isHostInPrivateIPRange(peer.host):
+                            continue
+                        if peer.host == BMConfigParser().get("bitmessagesettings", "onionhostname") and peer.port == BMConfigParser().getint("bitmessagesettings", "onionport") :
+                            sentOwn = True
+                        addrsInMyStream[peer] = shared.knownNodes[
+                            stream][peer]
+                # sent 250 only if the remote isn't interested in it
+                if len(shared.knownNodes[stream * 2]) > 0 and stream not in self.streamNumber:
+                    for i in range(250):
+                        peer, = random.sample(shared.knownNodes[
+                                            stream * 2], 1)
+                        if isHostInPrivateIPRange(peer.host):
+                            continue
+                        addrsInChildStreamLeft[peer] = shared.knownNodes[
+                            stream * 2][peer]
+                if len(shared.knownNodes[(stream * 2) + 1]) > 0 and stream not in self.streamNumber:
+                    for i in range(250):
+                        peer, = random.sample(shared.knownNodes[
+                                            (stream * 2) + 1], 1)
+                        if isHostInPrivateIPRange(peer.host):
+                            continue
+                        addrsInChildStreamRight[peer] = shared.knownNodes[
+                            (stream * 2) + 1][peer]
+            numberOfAddressesInAddrMessage = 0
+            payload = ''
+            for (HOST, PORT), value in addrsInMyStream.items():
+                timeLastReceivedMessageFromThisNode = value
+                if timeLastReceivedMessageFromThisNode > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers):  # If it is younger than 3 hours old..
+                    numberOfAddressesInAddrMessage += 1
+                    payload += pack(
+                        '>Q', timeLastReceivedMessageFromThisNode)  # 64-bit time
+                    payload += pack('>I', stream)
+                    payload += pack(
+                        '>q', 1)  # service bit flags offered by this node
+                    payload += protocol.encodeHost(HOST)
+                    payload += pack('>H', PORT)  # remote port
+            for (HOST, PORT), value in addrsInChildStreamLeft.items():
+                timeLastReceivedMessageFromThisNode = value
+                if timeLastReceivedMessageFromThisNode > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers):  # If it is younger than 3 hours old..
+                    numberOfAddressesInAddrMessage += 1
+                    payload += pack(
+                        '>Q', timeLastReceivedMessageFromThisNode)  # 64-bit time
+                    payload += pack('>I', stream * 2)
+                    payload += pack(
+                        '>q', 1)  # service bit flags offered by this node
+                    payload += protocol.encodeHost(HOST)
+                    payload += pack('>H', PORT)  # remote port
+            for (HOST, PORT), value in addrsInChildStreamRight.items():
+                timeLastReceivedMessageFromThisNode = value
+                if timeLastReceivedMessageFromThisNode > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers):  # If it is younger than 3 hours old..
+                    numberOfAddressesInAddrMessage += 1
+                    payload += pack(
+                        '>Q', timeLastReceivedMessageFromThisNode)  # 64-bit time
+                    payload += pack('>I', (stream * 2) + 1)
+                    payload += pack(
+                        '>q', 1)  # service bit flags offered by this node
+                    payload += protocol.encodeHost(HOST)
+                    payload += pack('>H', PORT)  # remote port
+    
+            payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
+            self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('addr', payload)))
 
 
     # We have received a version message
@@ -732,20 +744,24 @@ class receiveDataThread(threading.Thread):
         numberOfStreamsInVersionMessage, lengthOfNumberOfStreamsInVersionMessage = decodeVarint(
             data[readPosition:])
         readPosition += lengthOfNumberOfStreamsInVersionMessage
-        self.streamNumber, lengthOfRemoteStreamNumber = decodeVarint(
-            data[readPosition:])
-        logger.debug('Remote node useragent: ' + useragent + '  stream number:' + str(self.streamNumber) + '  time offset: ' + str(timeOffset) + ' seconds.')
+        self.remoteStreams = []
+        for i in range(numberOfStreamsInVersionMessage):
+            newStreamNumber, lengthOfRemoteStreamNumber = decodeVarint(data[readPosition:])
+            readPosition += lengthOfRemoteStreamNumber
+            self.remoteStreams.append(newStreamNumber)
+        logger.debug('Remote node useragent: %s, streams: (%s), time offset: %is.', useragent, ', '.join(str(x) for x in self.remoteStreams), timeOffset)
 
-        if self.streamNumber != 1:
+        # find shared streams
+        self.streamNumber = sorted(set(state.streamsInWhichIAmParticipating).intersection(self.remoteStreams))
+
+        if len(self.streamNumber) == 0:
             self.sendDataThreadQueue.put((0, 'shutdown','no data'))
-            logger.debug ('Closed connection to ' + str(self.peer) + ' because they are interested in stream ' + str(self.streamNumber) + '.')
+            logger.debug ('Closed connection to ' + str(self.peer) + ' because there is no overlapping interest in streams.')
             return
+        
         shared.connectedHostsList[
             self.hostIdent] = 1  # We use this data structure to not only keep track of what hosts we are connected to so that we don't try to connect to them again, but also to list the connections count on the Network Status tab.
-        # If this was an incoming connection, then the sendDataThread
-        # doesn't know the stream. We have to set it.
-        if not self.initiatedConnection:
-            self.sendDataThreadQueue.put((0, 'setStreamNumber', self.streamNumber))
+        self.sendDataThreadQueue.put((0, 'setStreamNumber', self.remoteStreams))
         if data[72:80] == protocol.eightBytesOfRandomDataUsedToDetectConnectionsToSelf:
             self.sendDataThreadQueue.put((0, 'shutdown','no data'))
             logger.debug('Closing connection to myself: ' + str(self.peer))
@@ -757,10 +773,11 @@ class receiveDataThread(threading.Thread):
 
         if not isHostInPrivateIPRange(self.peer.host):
             with shared.knownNodesLock:
-                shared.knownNodes[self.streamNumber][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] = int(time.time())
-                if not self.initiatedConnection:
-                    shared.knownNodes[self.streamNumber][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 162000 # penalise inbound, 2 days minus 3 hours
-                shared.needToWriteKnownNodesToDisk = True
+                for stream in self.remoteStreams:
+                    shared.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] = int(time.time())
+                    if not self.initiatedConnection:
+                        shared.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 162000 # penalise inbound, 2 days minus 3 hours
+                    shared.needToWriteKnownNodesToDisk = True
 
         self.sendverack()
         if self.initiatedConnection == False:
@@ -770,7 +787,7 @@ class receiveDataThread(threading.Thread):
     def sendversion(self):
         logger.debug('Sending version message')
         self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleVersionMessage(
-                self.peer.host, self.peer.port, self.streamNumber, not self.initiatedConnection)))
+                self.peer.host, self.peer.port, state.streamsInWhichIAmParticipating, not self.initiatedConnection)))
 
 
     # Sends a verack message
