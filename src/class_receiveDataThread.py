@@ -571,7 +571,7 @@ class receiveDataThread(threading.Thread):
                         timeSomeoneElseReceivedMessageFromThisNode,
                         recaddrStream, recaddrServices, hostStandardFormat, recaddrPort)
                     protocol.broadcastToSendDataQueues((
-                        self.recaddrStream, 'advertisepeer', hostDetails))
+                        recaddrStream, 'advertisepeer', hostDetails))
             else:
                 timeLastReceivedMessageFromThisNode = shared.knownNodes[recaddrStream][
                     peerFromAddrMessage]
