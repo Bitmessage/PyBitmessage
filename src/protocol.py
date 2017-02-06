@@ -134,7 +134,7 @@ def assembleVersionMessage(remoteHost, remotePort, myStreamNumber, server = Fals
         payload += encodeHost(remoteHost)
         payload += pack('>H', remotePort)  # remote IPv6 and port
 
-    payload += pack('>q', 1)  # bitflags of the services I offer.
+    payload += pack('>q', NODE_NETWORK|(NODE_SSL if haveSSL(server) else 0))  # bitflags of the services I offer.
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
         '>L', 2130706433)  # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.
     # we have a separate extPort and
