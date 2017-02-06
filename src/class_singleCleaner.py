@@ -111,6 +111,9 @@ class singleCleaner(threading.Thread, StoppableThread):
                             os._exit(0)
                 shared.knownNodesLock.release()
                 shared.needToWriteKnownNodesToDisk = False
+
+            # TODO: cleanup pending upload / download
+
             if state.shutdown == 0:
                 self.stop.wait(300)
 
