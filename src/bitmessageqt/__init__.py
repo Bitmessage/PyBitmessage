@@ -2617,6 +2617,16 @@ class MyForm(settingsmixin.SMainWindow):
 #            self.rerenderInboxToLabels()
 
     def on_action_MarkAllRead(self):
+        def partialUpdate(folder, msgids):
+            if len(msgids) == 0:
+                return 0
+            if folder == 'sent':
+                return sqlExecute(
+                    "UPDATE sent SET read = 1 WHERE ackdata IN(%s) AND read=0" %(",".join("?"*len(msgids))), *msgids)
+            else:
+                return sqlExecute(
+                    "UPDATE inbox SET read = 1 WHERE msgid IN(%s) AND read=0" %(",".join("?"*len(msgids))), *msgids)
+
         if QtGui.QMessageBox.question(self, "Marking all messages as read?", _translate("MainWindow", "Are you sure you would like to mark all messages read?"), QMessageBox.Yes|QMessageBox.No) != QMessageBox.Yes:
             return
         addressAtCurrentRow = self.getCurrentAccount()
@@ -2630,6 +2640,8 @@ class MyForm(settingsmixin.SMainWindow):
         font = QFont()
         font.setBold(False)
 
+        markread = 0
+
         for i in range(0, tableWidget.rowCount()):
             msgids.append(str(tableWidget.item(
                 i, 3).data(Qt.UserRole).toPyObject()))
@@ -2637,14 +2649,13 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.item(i, 1).setUnread(False)
             tableWidget.item(i, 2).setUnread(False)
             tableWidget.item(i, 3).setFont(font)
+            # sqlite default limit, unfortunately getting/setting isn't exposed to python
+            if i % 999 == 999: 
+                markread += partialUpdate(self.getCurrentFolder(), msgids)
+                msgids = []
 
-        markread = 0
-        if self.getCurrentFolder() == 'sent':
-            markread = sqlExecute(
-               "UPDATE sent SET read = 1 WHERE ackdata IN(%s) AND read=0" %(",".join("?"*len(msgids))), *msgids)
-        else:
-            markread = sqlExecute(
-               "UPDATE inbox SET read = 1 WHERE msgid IN(%s) AND read=0" %(",".join("?"*len(msgids))), *msgids)
+        if len(msgids) > 0:
+            markread += partialUpdate(self.getCurrentFolder(), msgids)
 
         if markread > 0:
             self.propagateUnreadCount(addressAtCurrentRow, self.getCurrentFolder(), None, 0)
