@@ -227,9 +227,12 @@ def doCleanShutdown():
     # Wait long enough to guarantee that any running proof of work worker threads will check the
     # shutdown variable and exit. If the main thread closes before they do then they won't stop.
     time.sleep(.25)
-    
+
     from class_outgoingSynSender import outgoingSynSender
+    from class_sendDataThread import sendDataThread
     for thread in threading.enumerate():
+        if isinstance(thread, sendDataThread):
+            thread.sendDataThreadQueue.put((0, 'shutdown','no data'))
         if thread is not threading.currentThread() and isinstance(thread, StoppableThread) and not isinstance(thread, outgoingSynSender):
             logger.debug("Waiting for thread %s", thread.name)
             thread.join()
