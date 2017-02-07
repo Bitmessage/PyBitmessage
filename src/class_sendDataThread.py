@@ -5,8 +5,10 @@ import Queue
 from struct import unpack, pack
 import hashlib
 import random
-import sys
+import select
 import socket
+from ssl import SSLError, SSL_ERROR_WANT_WRITE
+import sys
 
 from helper_generic import addDataPadding
 from class_objectHashHolder import *
@@ -78,17 +80,31 @@ class sendDataThread(threading.Thread):
             return
 
         while self.buffer and state.shutdown == 0:
+            isSSL = False
             try:
                 if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
                     self.connectionIsOrWasFullyEstablished and
                     protocol.haveSSL(not self.initiatedConnection)):
+                    isSSL = True
                     amountSent = self.sslSock.send(self.buffer[:throttle.SendThrottle().chunkSize])
                 else:
                     amountSent = self.sock.send(self.buffer[:throttle.SendThrottle().chunkSize])
             except socket.timeout:
                 continue
+            except SSLError as e:
+                if e.errno == SSL_ERROR_WANT_WRITE:
+                    select.select([], [self.sslSock], [], 10)
+                    logger.debug('sock.recv retriable SSL error')
+                    continue
+                raise
             except socket.error as e:
-                if e.errno == errno.EAGAIN:
+                if e.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
+                    select.select([], [self.sslSock if isSSL else self.sock], [], 10)
+                    logger.debug('sock.recv retriable error')
+                    continue
+                if sys.platform.startswith('win') and e.errno in (errno.WSAEAGAIN, errno.WSAEWOULDBLOCK):
+                    select.select([], [self.sslSock if isSSL else self.sock], [], 10)
+                    logger.debug('sock.recv retriable error')
                     continue
                 raise
             throttle.SendThrottle().wait(amountSent)
