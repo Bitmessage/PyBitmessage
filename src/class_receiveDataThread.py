@@ -313,24 +313,28 @@ class receiveDataThread(threading.Thread):
 
     def peerValidityChecks(self):
         if self.remoteProtocolVersion < 3:
-            self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(fatal=2, errorText="Your is using an old protocol. Closing connection.")))
+            self.sendDataThreadQueue.put((0, 'sendRawData',protocol.assembleErrorMessage(
+                fatal=2, errorText="Your is using an old protocol. Closing connection.")))
             logger.debug ('Closing connection to old protocol version ' + str(self.remoteProtocolVersion) + ' node: ' + str(self.peer))
             return False
         if self.timeOffset > 3600:
-            self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(fatal=2, errorText="Your time is too far in the future compared to mine. Closing connection.")))
-            logger.info("%s's time is too far in the future (%s seconds). Closing connection to it." % (self.peer, self.timeOffset))
+            self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(
+                fatal=2, errorText="Your time is too far in the future compared to mine. Closing connection.")))
+            logger.info("%s's time is too far in the future (%s seconds). Closing connection to it.", self.peer, self.timeOffset)
             shared.timeOffsetWrongCount += 1
             time.sleep(2)
             return False
         elif self.timeOffset < -3600:
-            self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(fatal=2, errorText="Your time is too far in the past compared to mine. Closing connection.")))
-            logger.info("%s's time is too far in the past (timeOffset %s seconds). Closing connection to it." % (self.peer, self.timeOffset))
+            self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(
+                fatal=2, errorText="Your time is too far in the past compared to mine. Closing connection.")))
+            logger.info("%s's time is too far in the past (timeOffset %s seconds). Closing connection to it.", self.peer, self.timeOffset)
             shared.timeOffsetWrongCount += 1
             return False
         else:
             shared.timeOffsetWrongCount = 0
         if len(self.streamNumber) == 0:
-            self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(fatal=2, errorText="We don't have shared stream interests. Closing connection.")))
+            self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(
+                fatal=2, errorText="We don't have shared stream interests. Closing connection.")))
             logger.debug ('Closed connection to ' + str(self.peer) + ' because there is no overlapping interest in streams.')
             return False
         return True
@@ -754,7 +758,7 @@ class receiveDataThread(threading.Thread):
         
         # version check
         try:
-            userAgentName, userAgentVersion = userAgent[1:-1].split(":", 2)
+            userAgentName, userAgentVersion = self.userAgent[1:-1].split(":", 2)
         except:
             userAgentName = self.userAgent
             userAgentVersion = "0.0.0"
@@ -781,7 +785,8 @@ class receiveDataThread(threading.Thread):
             newStreamNumber, lengthOfRemoteStreamNumber = decodeVarint(data[readPosition:])
             readPosition += lengthOfRemoteStreamNumber
             self.remoteStreams.append(newStreamNumber)
-        logger.debug('Remote node useragent: %s, streams: (%s), time offset: %is.', self.userAgent, ', '.join(str(x) for x in self.remoteStreams), self.timeOffset)
+        logger.debug('Remote node useragent: %s, streams: (%s), time offset: %is.',
+            self.userAgent, ', '.join(str(x) for x in self.remoteStreams), self.timeOffset)
 
         # find shared streams
         self.streamNumber = sorted(set(state.streamsInWhichIAmParticipating).intersection(self.remoteStreams))
