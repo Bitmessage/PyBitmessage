@@ -97,14 +97,21 @@ class receiveDataThread(threading.Thread):
                 self.data += dataRecv
                 throttle.ReceiveThrottle().wait(len(dataRecv))
             except socket.timeout:
-                logger.error ('Timeout occurred waiting for data from ' + str(self.peer) + '. Closing receiveData thread. (ID: ' + str(id(self)) + ')')
+                if self.connectionIsOrWasFullyEstablished:
+                    self.sendping("Still around!")
+                    continue
+                logger.error("Timeout during protocol initialisation")
                 break
             except ssl.SSLError as err:
                 if err.errno == ssl.SSL_ERROR_WANT_READ:
                     select.select([self.sslSock], [], [], 10)
                     logger.debug('sock.recv retriable SSL error')
                     continue
-                logger.error ('SSL error: %i/%s', err.errno, str(err))
+                if err.errno is None and 'timed out' in str(err):
+                    if self.connectionIsOrWasFullyEstablished:
+                        self.sendping("Still around!")
+                        continue
+                logger.error ('SSL error: %i/%s', err.errno if err.errno else 0, str(err))
                 break
             except socket.error as err:
                 if err.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
@@ -223,8 +230,10 @@ class receiveDataThread(threading.Thread):
                     self.recobject(payload)
                 elif command == 'ping':
                     self.sendpong(payload)
-                #elif command == 'pong':
-                #    pass
+                elif command == 'pong':
+                    pass
+                else:
+                    logger.info("Unknown command %s, ignoring", command)
         except varintDecodeError as e:
             logger.debug("There was a problem with a varint while processing a message from the wire. Some details: %s" % e)
         except Exception as e:
@@ -240,11 +249,13 @@ class receiveDataThread(threading.Thread):
                 pass
         self.processData()
 
-
     def sendpong(self, payload):
         logger.debug('Sending pong')
         self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('pong', payload)))
 
+    def sendping(self, payload):
+        logger.debug('Sending ping')
+        self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('ping', payload)))
 
     def recverack(self):
         logger.debug('verack received')
@@ -314,7 +325,7 @@ class receiveDataThread(threading.Thread):
             shared.clientHasReceivedIncomingConnections = True
             shared.UISignalQueue.put(('setStatusIcon', 'green'))
         self.sock.settimeout(
-            600)  # We'll send out a pong every 5 minutes to make sure the connection stays alive if there has been no other traffic to send lately.
+            600)  # We'll send out a ping every 5 minutes to make sure the connection stays alive if there has been no other traffic to send lately.
         shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         logger.debug('Connection fully established with ' + str(self.peer) + "\n" + \
             'The size of the connectedHostsList is now ' + str(len(shared.connectedHostsList)) + "\n" + \
