@@ -86,11 +86,11 @@ class receiveDataThread(threading.Thread):
         while state.shutdown == 0:
             dataLen = len(self.data)
             try:
-                ssl = False
+                isSSL = False
                 if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
                     self.connectionIsOrWasFullyEstablished and
                     protocol.haveSSL(not self.initiatedConnection)):
-                    ssl = True
+                    isSSL = True
                     dataRecv = self.sslSock.recv(throttle.ReceiveThrottle().chunkSize)
                 else:
                     dataRecv = self.sock.recv(throttle.ReceiveThrottle().chunkSize)
@@ -99,13 +99,21 @@ class receiveDataThread(threading.Thread):
             except socket.timeout:
                 logger.error ('Timeout occurred waiting for data from ' + str(self.peer) + '. Closing receiveData thread. (ID: ' + str(id(self)) + ')')
                 break
+            except ssl.SSLError as err:
+                if err.errno == ssl.SSL_ERROR_WANT_READ:
+                    select.select([self.sslSock], [], [], 10)
+                    logger.debug('sock.recv retriable SSL error')
+                    continue
+                logger.error ('SSL error: %i/%s', err.errno, str(err))
+                break
             except socket.error as err:
-                if err.errno == errno.EWOULDBLOCK:
-                    if ssl:
-                        select.select([self.sslSock], [], [], 10)
-                    else:
-                        select.select([self.sock], [], [], 10)
-                    logger.error('sock.recv retriable error')
+                if err.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
+                    select.select([self.sslSock if isSSL else self.sock], [], [], 10)
+                    logger.debug('sock.recv retriable error')
+                    continue
+                if sys.platform.startswith('win') and err.errno in (errno.WSAEAGAIN, errno.WSAEWOULDBLOCK):
+                    select.select([self.sslSock if isSSL else self.sock], [], [], 10)
+                    logger.debug('sock.recv retriable error')
                     continue
                 logger.error('sock.recv error. Closing receiveData thread (' + str(self.peer) + ', Thread ID: ' + str(id(self)) + ').' + str(err.errno) + "/" + str(err))
                 if self.initiatedConnection and not self.connectionIsOrWasFullyEstablished:
