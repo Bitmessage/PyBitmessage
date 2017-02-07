@@ -318,6 +318,8 @@ class receiveDataThread(threading.Thread):
                     logger.error("SSL socket handhake failed, shutting down connection", exc_info=True)
                     self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail'))
                     return
+            # SSL in the background should be blocking, otherwise the error handling is difficult
+            self.sslSock.settimeout(None)
         # Command the corresponding sendDataThread to set its own connectionIsOrWasFullyEstablished variable to True also
         self.sendDataThreadQueue.put((0, 'connectionIsOrWasFullyEstablished', (self.services, self.sslSock)))
 
