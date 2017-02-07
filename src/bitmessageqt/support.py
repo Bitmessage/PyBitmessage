@@ -87,13 +87,9 @@ def createSupportMessage(myapp):
     myapp.ui.lineEditTo.setText(SUPPORT_ADDRESS)
     
     version = softwareVersion
-    githeadfile = path.join(paths.codePath(), '..', '.git', 'ORIG_HEAD')
-    if (path.isfile(githeadfile)):
-        try:
-            with open(githeadfile, 'rt') as githead:
-                version += " GIT " + githead.readline().rstrip()
-        except IOError:
-            pass
+    commit = paths.lastCommit()
+    if commit:
+        version += " GIT " + commit
 
     os = sys.platform
     if os == "win32":
