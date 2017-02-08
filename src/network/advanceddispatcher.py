@@ -1,3 +1,5 @@
+import asyncore
+
 class AdvancedDispatcher(asyncore.dispatcher):
     _buf_len = 131072
 
@@ -7,13 +9,13 @@ class AdvancedDispatcher(asyncore.dispatcher):
         self.write_buf = ""
         self.state = "init"
 
-    def slice_read_buf(length=0):
+    def slice_read_buf(self, length=0):
         self.read_buf = self.read_buf[length:]
 
-    def slice_write_buf(length=0):
+    def slice_write_buf(self, length=0):
         self.write_buf = self.read_buf[length:]
 
-    def read_buf_sufficient(length=0):
+    def read_buf_sufficient(self, length=0):
         if len(self.read_buf) < length:
             return False
         else:

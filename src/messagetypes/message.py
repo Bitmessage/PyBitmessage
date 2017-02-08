@@ -23,7 +23,7 @@ class Message(MsgBase):
             self.data["subject"] = data["subject"]
             self.data["body"] = data["body"]
         except KeyError as e:
-            logger.error("Missing key ", e.name)
+            logger.error("Missing key %s", e.name)
         return self.data
 
     def process(self):

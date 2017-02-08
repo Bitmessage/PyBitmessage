@@ -3,7 +3,7 @@ from struct import *
 from pyelliptic import arithmetic
 from binascii import hexlify, unhexlify
 
-
+#from debug import logger
 
 #There is another copy of this function in Bitmessagemain.py
 def convertIntToString(n):

@@ -15,6 +15,7 @@ from debug import logger
 from helper_sql import sqlExecute
 import highlevelcrypto
 from inventory import Inventory
+from queues import objectProcessorQueue
 import state
 from version import softwareVersion
 

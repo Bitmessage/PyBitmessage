@@ -1,4 +1,3 @@
-import shared
 import socket
 import defaultKnownNodes
 import pickle

@@ -157,8 +157,6 @@ def getPowType():
     return "python"
 
 def notifyBuild(tried=False):
-    global bmpow
-
     if bmpow:
         queues.UISignalQueue.put(('updateStatusBar', (tr._translate("proofofwork", "C PoW module built successfully."), 1)))
     elif tried:
@@ -167,8 +165,6 @@ def notifyBuild(tried=False):
         queues.UISignalQueue.put(('updateStatusBar', (tr._translate("proofofwork", "C PoW module unavailable. Please build it."), 1)))
 
 def buildCPoW():
-    global bmpow
-
     if bmpow is not None:
         return
     if paths.frozen is not None:

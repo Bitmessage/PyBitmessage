@@ -907,7 +907,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         with shared.printLock:
             print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
         protocol.broadcastToSendDataQueues((
-            streamNumber, 'advertiseobject', inventoryHash))
+            pubkeyStreamNumber, 'advertiseobject', inventoryHash))
 
     def HandleGetMessageDataByDestinationHash(self, params):
         # Method will eventually be used by a particular Android app to

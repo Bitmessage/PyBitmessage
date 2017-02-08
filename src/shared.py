@@ -9,9 +9,6 @@ useVeryEasyProofOfWorkForTesting = False  # If you set this to True while on the
 
 # Libraries.
 import os
-import pickle
-import Queue
-from multiprocessing import active_children, Queue as mpQueue, Lock as mpLock
 import sys
 import stat
 import threading
@@ -25,7 +22,6 @@ from configparser import BMConfigParser
 import highlevelcrypto
 #import helper_startup
 from helper_sql import *
-from helper_threading import *
 from inventory import Inventory, PendingDownload
 from queues import objectProcessorQueue
 import protocol
