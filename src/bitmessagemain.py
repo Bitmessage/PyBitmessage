@@ -29,6 +29,7 @@ from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenCon
 import defaults
 import shared
 from helper_sql import sqlQuery
+import knownnodes
 import state
 import shutdown
 import threading
@@ -66,6 +67,11 @@ def connectToStream(streamNumber):
             maximumNumberOfHalfOpenConnections = 4
     except:
         pass
+    
+    with knownnodes.knownNodesLock:
+        if streamNumber not in knownnodes.knownNodes:
+            knownnodes.knownNodes[streamNumber] = {}
+
     for i in range(maximumNumberOfHalfOpenConnections):
         a = outgoingSynSender()
         a.setup(streamNumber, selfInitiatedConnections)
