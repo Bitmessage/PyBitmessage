@@ -305,13 +305,16 @@ class receiveDataThread(threading.Thread):
                             continue
                     logger.error("SSL socket handhake failed: %s, shutting down connection", str(e))
                     self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail %s' % (str(e))))
-                    return
+                    return False
                 except Exception:
                     logger.error("SSL socket handhake failed, shutting down connection", exc_info=True)
                     self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail'))
-                    return
+                    return False
             # SSL in the background should be blocking, otherwise the error handling is difficult
             self.sslSock.settimeout(None)
+            return True
+        # no SSL
+        return True
 
     def peerValidityChecks(self):
         if self.remoteProtocolVersion < 3:
@@ -346,7 +349,9 @@ class receiveDataThread(threading.Thread):
             # there is no reason to run this function a second time
             return
 
-        self.sslHandshake()
+        if not self.sslHandshake():
+            return
+
         if self.peerValidityChecks() == False:
             time.sleep(2)
             self.sendDataThreadQueue.put((0, 'shutdown','no data'))
