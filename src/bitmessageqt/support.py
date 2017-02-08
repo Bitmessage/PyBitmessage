@@ -7,13 +7,13 @@ import time
 import account
 from configparser import BMConfigParser
 from debug import logger
+import defaults
 from foldertree import AccountMixin
 from helper_sql import *
 from l10n import getTranslationLanguage
 from openclpow import openclAvailable, openclEnabled
 import paths
 from proofofwork import bmpow
-import protocol
 from pyelliptic.openssl import OpenSSL
 import queues
 import shared
@@ -67,7 +67,7 @@ def checkHasNormalAddress():
 
 def createAddressIfNeeded(myapp):
     if not checkHasNormalAddress():
-        queues.addressGeneratorQueue.put(('createRandomAddress', 4, 1, str(QtGui.QApplication.translate("Support", SUPPORT_MY_LABEL)), 1, "", False, protocol.networkDefaultProofOfWorkNonceTrialsPerByte, protocol.networkDefaultPayloadLengthExtraBytes))
+        queues.addressGeneratorQueue.put(('createRandomAddress', 4, 1, str(QtGui.QApplication.translate("Support", SUPPORT_MY_LABEL)), 1, "", False, defaults.networkDefaultProofOfWorkNonceTrialsPerByte, defaults.networkDefaultPayloadLengthExtraBytes))
     while state.shutdown == 0 and not checkHasNormalAddress():
         time.sleep(.2)
     myapp.rerenderComboBoxSendFrom()

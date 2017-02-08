@@ -10,7 +10,6 @@ import defaults
 import helper_sql
 from namecoin import ensureNamecoinOptions
 import paths
-import protocol
 import queues
 import random
 import state
@@ -117,9 +116,9 @@ class sqlThread(threading.Thread):
 
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 4:
             BMConfigParser().set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
-                protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
+                defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
             BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
-                protocol.networkDefaultPayloadLengthExtraBytes))
+                defaults.networkDefaultPayloadLengthExtraBytes))
             BMConfigParser().set('bitmessagesettings', 'settingsversion', '5')
 
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 5:
@@ -240,8 +239,8 @@ class sqlThread(threading.Thread):
         # Raise the default required difficulty from 1 to 2
         # With the change to protocol v3, this is obsolete.
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 6:
-            """if int(shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')) == protocol.networkDefaultProofOfWorkNonceTrialsPerByte:
-                shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(protocol.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
+            """if int(shared.config.get('bitmessagesettings','defaultnoncetrialsperbyte')) == defaults.networkDefaultProofOfWorkNonceTrialsPerByte:
+                shared.config.set('bitmessagesettings','defaultnoncetrialsperbyte', str(defaults.networkDefaultProofOfWorkNonceTrialsPerByte * 2))
                 """
             BMConfigParser().set('bitmessagesettings', 'settingsversion', '7')
 
@@ -307,8 +306,8 @@ class sqlThread(threading.Thread):
         
         # With the change to protocol version 3, reset the user-settable difficulties to 1    
         if BMConfigParser().getint('bitmessagesettings', 'settingsversion') == 8:
-            BMConfigParser().set('bitmessagesettings','defaultnoncetrialsperbyte', str(protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
-            BMConfigParser().set('bitmessagesettings','defaultpayloadlengthextrabytes', str(protocol.networkDefaultPayloadLengthExtraBytes))
+            BMConfigParser().set('bitmessagesettings','defaultnoncetrialsperbyte', str(defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
+            BMConfigParser().set('bitmessagesettings','defaultpayloadlengthextrabytes', str(defaults.networkDefaultPayloadLengthExtraBytes))
             previousTotalDifficulty = int(BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / 320
             previousSmallMessageDifficulty = int(BMConfigParser().getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / 14000
             BMConfigParser().set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(previousTotalDifficulty * 1000))
@@ -336,9 +335,9 @@ class sqlThread(threading.Thread):
             
         # sanity check
         if BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') == 0:
-            BMConfigParser().set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(defaults.ridiculousDifficulty * protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
+            BMConfigParser().set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(defaults.ridiculousDifficulty * defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
         if BMConfigParser().getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') == 0:
-            BMConfigParser().set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(defaults.ridiculousDifficulty * protocol.networkDefaultPayloadLengthExtraBytes))
+            BMConfigParser().set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(defaults.ridiculousDifficulty * defaults.networkDefaultPayloadLengthExtraBytes))
 
         # The format of data stored in the pubkeys table has changed. Let's
         # clear it, and the pubkeys from inventory, so that they'll be re-downloaded.

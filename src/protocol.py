@@ -12,6 +12,7 @@ import traceback
 from addresses import calculateInventoryHash, encodeVarint, decodeVarint, decodeAddress, varintDecodeError
 from configparser import BMConfigParser
 from debug import logger
+import defaults
 from helper_sql import sqlExecute
 import highlevelcrypto
 from inventory import Inventory
@@ -28,10 +29,6 @@ BITFIELD_DOESACK = 1
 
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
     '>Q', random.randrange(1, 18446744073709551615))
-
-#If changed, these values will cause particularly unexpected behavior: You won't be able to either send or receive messages because the proof of work you do (or demand) won't match that done or demanded by others. Don't change them!
-networkDefaultProofOfWorkNonceTrialsPerByte = 1000 #The amount of work that should be performed (and demanded) per byte of the payload.
-networkDefaultPayloadLengthExtraBytes = 1000 #To make sending short messages a little more difficult, this value is added to the payload length for use in calculating the proof of work target.
 
 #Compiled struct for packing/unpacking headers
 #New code should use CreatePacket instead of Header.pack
@@ -97,10 +94,10 @@ def checkSocksIP(host):
 def isProofOfWorkSufficient(data,
                             nonceTrialsPerByte=0,
                             payloadLengthExtraBytes=0):
-    if nonceTrialsPerByte < networkDefaultProofOfWorkNonceTrialsPerByte:
-        nonceTrialsPerByte = networkDefaultProofOfWorkNonceTrialsPerByte
-    if payloadLengthExtraBytes < networkDefaultPayloadLengthExtraBytes:
-        payloadLengthExtraBytes = networkDefaultPayloadLengthExtraBytes
+    if nonceTrialsPerByte < defaults.networkDefaultProofOfWorkNonceTrialsPerByte:
+        nonceTrialsPerByte = defaults.networkDefaultProofOfWorkNonceTrialsPerByte
+    if payloadLengthExtraBytes < defaults.networkDefaultPayloadLengthExtraBytes:
+        payloadLengthExtraBytes = defaults.networkDefaultPayloadLengthExtraBytes
     endOfLifeTime, = unpack('>Q', data[8:16])
     TTL = endOfLifeTime - int(time.time())
     if TTL < 300:

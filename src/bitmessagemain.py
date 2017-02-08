@@ -26,10 +26,10 @@ import time
 from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
 from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
 
+import defaults
 import shared
 from helper_sql import sqlQuery
 import state
-import protocol
 import shutdown
 import threading
 
@@ -149,10 +149,10 @@ class singleAPI(threading.Thread, StoppableThread):
 selfInitiatedConnections = {}
 
 if shared.useVeryEasyProofOfWorkForTesting:
-    protocol.networkDefaultProofOfWorkNonceTrialsPerByte = int(
-        protocol.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
-    protocol.networkDefaultPayloadLengthExtraBytes = int(
-        protocol.networkDefaultPayloadLengthExtraBytes / 100)
+    defaults.networkDefaultProofOfWorkNonceTrialsPerByte = int(
+        defaults.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
+    defaults.networkDefaultPayloadLengthExtraBytes = int(
+        defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
 class Main:
     def start(self, daemon=False):
