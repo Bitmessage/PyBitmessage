@@ -9,8 +9,8 @@ import highlevelcrypto
 from addresses import *
 from configparser import BMConfigParser
 from debug import logger
+import defaults
 from helper_threading import *
-import protocol
 from pyelliptic import arithmetic
 import tr
 from binascii import hexlify
@@ -80,13 +80,13 @@ class addressGenerator(threading.Thread, StoppableThread):
             if nonceTrialsPerByte == 0:
                 nonceTrialsPerByte = BMConfigParser().getint(
                     'bitmessagesettings', 'defaultnoncetrialsperbyte')
-            if nonceTrialsPerByte < protocol.networkDefaultProofOfWorkNonceTrialsPerByte:
-                nonceTrialsPerByte = protocol.networkDefaultProofOfWorkNonceTrialsPerByte
+            if nonceTrialsPerByte < defaults.networkDefaultProofOfWorkNonceTrialsPerByte:
+                nonceTrialsPerByte = defaults.networkDefaultProofOfWorkNonceTrialsPerByte
             if payloadLengthExtraBytes == 0:
                 payloadLengthExtraBytes = BMConfigParser().getint(
                     'bitmessagesettings', 'defaultpayloadlengthextrabytes')
-            if payloadLengthExtraBytes < protocol.networkDefaultPayloadLengthExtraBytes:
-                payloadLengthExtraBytes = protocol.networkDefaultPayloadLengthExtraBytes
+            if payloadLengthExtraBytes < defaults.networkDefaultPayloadLengthExtraBytes:
+                payloadLengthExtraBytes = defaults.networkDefaultPayloadLengthExtraBytes
             if command == 'createRandomAddress':
                 queues.UISignalQueue.put((
                     'updateStatusBar', tr._translate("MainWindow", "Generating one new address")))

@@ -13,6 +13,7 @@ import sys
 import tr
 from configparser import BMConfigParser
 from debug import logger
+import defaults
 from helper_sql import *
 import helper_inbox
 from helper_generic import addDataPadding
@@ -166,7 +167,7 @@ class singleWorker(threading.Thread, StoppableThread):
         payload += pubEncryptionKey[1:]
 
         # Do the POW for this pubkey message
-        target = 2 ** 64 / (protocol.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + protocol.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+protocol.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
+        target = 2 ** 64 / (defaults.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + defaults.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+defaults.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
         logger.info('(For pubkey message) Doing proof of work...')
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -257,7 +258,7 @@ class singleWorker(threading.Thread, StoppableThread):
         payload += signature
 
         # Do the POW for this pubkey message
-        target = 2 ** 64 / (protocol.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + protocol.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+protocol.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
+        target = 2 ** 64 / (defaults.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + defaults.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+defaults.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
         logger.info('(For pubkey message) Doing proof of work...')
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -348,7 +349,7 @@ class singleWorker(threading.Thread, StoppableThread):
             dataToEncrypt, hexlify(pubEncryptionKey))
 
         # Do the POW for this pubkey message
-        target = 2 ** 64 / (protocol.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + protocol.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+protocol.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
+        target = 2 ** 64 / (defaults.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + defaults.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+defaults.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
         logger.info('(For pubkey message) Doing proof of work...')
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -470,7 +471,7 @@ class singleWorker(threading.Thread, StoppableThread):
             payload += highlevelcrypto.encrypt(
                 dataToEncrypt, hexlify(pubEncryptionKey))
 
-            target = 2 ** 64 / (protocol.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + protocol.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+protocol.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
+            target = 2 ** 64 / (defaults.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + defaults.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+defaults.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
             logger.info('(For broadcast message) Doing proof of work...')
             queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                 ackdata, tr._translate("MainWindow", "Doing work necessary to send broadcast..."))))
@@ -664,8 +665,8 @@ class singleWorker(threading.Thread, StoppableThread):
 
                 # Let us fetch the amount of work required by the recipient.
                 if toAddressVersionNumber == 2:
-                    requiredAverageProofOfWorkNonceTrialsPerByte = protocol.networkDefaultProofOfWorkNonceTrialsPerByte
-                    requiredPayloadLengthExtraBytes = protocol.networkDefaultPayloadLengthExtraBytes
+                    requiredAverageProofOfWorkNonceTrialsPerByte = defaults.networkDefaultProofOfWorkNonceTrialsPerByte
+                    requiredPayloadLengthExtraBytes = defaults.networkDefaultPayloadLengthExtraBytes
                     queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                         ackdata, tr._translate("MainWindow", "Doing work necessary to send message.\nThere is no required difficulty for version 2 addresses like this."))))
                 elif toAddressVersionNumber >= 3:
@@ -675,13 +676,13 @@ class singleWorker(threading.Thread, StoppableThread):
                     requiredPayloadLengthExtraBytes, varintLength = decodeVarint(
                         pubkeyPayload[readPosition:readPosition + 10])
                     readPosition += varintLength
-                    if requiredAverageProofOfWorkNonceTrialsPerByte < protocol.networkDefaultProofOfWorkNonceTrialsPerByte:  # We still have to meet a minimum POW difficulty regardless of what they say is allowed in order to get our message to propagate through the network.
-                        requiredAverageProofOfWorkNonceTrialsPerByte = protocol.networkDefaultProofOfWorkNonceTrialsPerByte
-                    if requiredPayloadLengthExtraBytes < protocol.networkDefaultPayloadLengthExtraBytes:
-                        requiredPayloadLengthExtraBytes = protocol.networkDefaultPayloadLengthExtraBytes
+                    if requiredAverageProofOfWorkNonceTrialsPerByte < defaults.networkDefaultProofOfWorkNonceTrialsPerByte:  # We still have to meet a minimum POW difficulty regardless of what they say is allowed in order to get our message to propagate through the network.
+                        requiredAverageProofOfWorkNonceTrialsPerByte = defaults.networkDefaultProofOfWorkNonceTrialsPerByte
+                    if requiredPayloadLengthExtraBytes < defaults.networkDefaultPayloadLengthExtraBytes:
+                        requiredPayloadLengthExtraBytes = defaults.networkDefaultPayloadLengthExtraBytes
                     logger.debug('Using averageProofOfWorkNonceTrialsPerByte: %s and payloadLengthExtraBytes: %s.' % (requiredAverageProofOfWorkNonceTrialsPerByte, requiredPayloadLengthExtraBytes))
                     queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Doing work necessary to send message.\nReceiver\'s required difficulty: %1 and %2").arg(str(float(
-                        requiredAverageProofOfWorkNonceTrialsPerByte) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(requiredPayloadLengthExtraBytes) / protocol.networkDefaultPayloadLengthExtraBytes)))))
+                        requiredAverageProofOfWorkNonceTrialsPerByte) / defaults.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(requiredPayloadLengthExtraBytes) / defaults.networkDefaultPayloadLengthExtraBytes)))))
                     if status != 'forcepow':
                         if (requiredAverageProofOfWorkNonceTrialsPerByte > BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') and BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') != 0) or (requiredPayloadLengthExtraBytes > BMConfigParser().getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') and BMConfigParser().getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') != 0):
                             # The demanded difficulty is more than we are willing
@@ -689,8 +690,8 @@ class singleWorker(threading.Thread, StoppableThread):
                             sqlExecute(
                                 '''UPDATE sent SET status='toodifficult' WHERE ackdata=? ''',
                                 ackdata)
-                            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do. %3").arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(
-                                requiredPayloadLengthExtraBytes) / protocol.networkDefaultPayloadLengthExtraBytes)).arg(l10n.formatTimestamp()))))
+                            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do. %3").arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte) / defaults.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(
+                                requiredPayloadLengthExtraBytes) / defaults.networkDefaultPayloadLengthExtraBytes)).arg(l10n.formatTimestamp()))))
                             continue
             else: # if we are sending a message to ourselves or a chan..
                 logger.info('Sending a message.')
@@ -708,8 +709,8 @@ class singleWorker(threading.Thread, StoppableThread):
                     privEncryptionKeyBase58))
                 pubEncryptionKeyBase256 = unhexlify(highlevelcrypto.privToPub(
                     privEncryptionKeyHex))[1:]
-                requiredAverageProofOfWorkNonceTrialsPerByte = protocol.networkDefaultProofOfWorkNonceTrialsPerByte
-                requiredPayloadLengthExtraBytes = protocol.networkDefaultPayloadLengthExtraBytes
+                requiredAverageProofOfWorkNonceTrialsPerByte = defaults.networkDefaultProofOfWorkNonceTrialsPerByte
+                requiredPayloadLengthExtraBytes = defaults.networkDefaultPayloadLengthExtraBytes
                 queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                     ackdata, tr._translate("MainWindow", "Doing work necessary to send message."))))
 
@@ -751,9 +752,9 @@ class singleWorker(threading.Thread, StoppableThread):
                 # the receiver is in any of those lists.
                 if shared.isAddressInMyAddressBookSubscriptionsListOrWhitelist(toaddress):
                     payload += encodeVarint(
-                        protocol.networkDefaultProofOfWorkNonceTrialsPerByte)
+                        defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
                     payload += encodeVarint(
-                        protocol.networkDefaultPayloadLengthExtraBytes)
+                        defaults.networkDefaultPayloadLengthExtraBytes)
                 else:
                     payload += encodeVarint(BMConfigParser().getint(
                         fromaddress, 'noncetrialsperbyte'))
@@ -794,7 +795,7 @@ class singleWorker(threading.Thread, StoppableThread):
             encryptedPayload += encodeVarint(1) # msg version
             encryptedPayload += encodeVarint(toStreamNumber) + encrypted
             target = 2 ** 64 / (requiredAverageProofOfWorkNonceTrialsPerByte*(len(encryptedPayload) + 8 + requiredPayloadLengthExtraBytes + ((TTL*(len(encryptedPayload)+8+requiredPayloadLengthExtraBytes))/(2 ** 16))))
-            logger.info('(For msg message) Doing proof of work. Total required difficulty: %f. Required small message difficulty: %f.', float(requiredAverageProofOfWorkNonceTrialsPerByte) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte, float(requiredPayloadLengthExtraBytes) / protocol.networkDefaultPayloadLengthExtraBytes)
+            logger.info('(For msg message) Doing proof of work. Total required difficulty: %f. Required small message difficulty: %f.', float(requiredAverageProofOfWorkNonceTrialsPerByte) / defaults.networkDefaultProofOfWorkNonceTrialsPerByte, float(requiredPayloadLengthExtraBytes) / defaults.networkDefaultPayloadLengthExtraBytes)
 
             powStartTime = time.time()
             initialHash = hashlib.sha512(encryptedPayload).digest()
@@ -918,7 +919,7 @@ class singleWorker(threading.Thread, StoppableThread):
         queues.UISignalQueue.put(('updateSentItemStatusByToAddress', (
             toAddress, tr._translate("MainWindow",'Doing work necessary to request encryption key.'))))
         
-        target = 2 ** 64 / (protocol.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + protocol.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+protocol.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
+        target = 2 ** 64 / (defaults.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + defaults.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+defaults.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
         logger.info('Found proof of work ' + str(trialValue) + ' Nonce: ' + str(nonce))
@@ -972,7 +973,7 @@ class singleWorker(threading.Thread, StoppableThread):
         payload += encodeVarint(1) # msg version
         payload += encodeVarint(toStreamNumber) + ackdata
         
-        target = 2 ** 64 / (protocol.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + protocol.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+protocol.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
+        target = 2 ** 64 / (defaults.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + defaults.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+defaults.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
         logger.info('(For ack message) Doing proof of work. TTL set to ' + str(TTL))
 
         powStartTime = time.time()

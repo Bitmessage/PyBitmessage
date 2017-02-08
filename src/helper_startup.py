@@ -1,5 +1,6 @@
 import ConfigParser
 from configparser import BMConfigParser
+import defaults
 import sys
 import os
 import locale
@@ -10,7 +11,6 @@ from distutils.version import StrictVersion
 
 from namecoin import ensureNamecoinOptions
 import paths
-import protocol
 import state
 
 storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may de-select Portable Mode in the settings if they want the config files to stay in the application data folder.
@@ -92,9 +92,9 @@ def loadConfig():
         BMConfigParser().set(
             'bitmessagesettings', 'messagesencrypted', 'false')
         BMConfigParser().set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(
-            protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte))
         BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(
-            protocol.networkDefaultPayloadLengthExtraBytes))
+            defaults.networkDefaultPayloadLengthExtraBytes))
         BMConfigParser().set('bitmessagesettings', 'minimizeonclose', 'false')
         BMConfigParser().set(
             'bitmessagesettings', 'maxacceptablenoncetrialsperbyte', '0')

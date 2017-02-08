@@ -20,6 +20,7 @@ import shared
 import time
 from addresses import decodeAddress,addBMIfNotPresent,decodeVarint,calculateInventoryHash,varintDecodeError
 from configparser import BMConfigParser
+import defaults
 import helper_inbox
 import helper_sent
 import hashlib
@@ -254,15 +255,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif len(params) == 3:
             label, eighteenByteRipe, totalDifficulty = params
             nonceTrialsPerByte = int(
-                protocol.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                defaults.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 4:
             label, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = params
             nonceTrialsPerByte = int(
-                protocol.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                defaults.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = int(
-                protocol.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+                defaults.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
         else:
             raise APIError(0, 'Too many parameters!')
         label = self._decode(label, "base64")
@@ -322,15 +323,15 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         elif len(params) == 6:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty = params
             nonceTrialsPerByte = int(
-                protocol.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                defaults.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = BMConfigParser().get(
                 'bitmessagesettings', 'defaultpayloadlengthextrabytes')
         elif len(params) == 7:
             passphrase, numberOfAddresses, addressVersionNumber, streamNumber, eighteenByteRipe, totalDifficulty, smallMessageDifficulty = params
             nonceTrialsPerByte = int(
-                protocol.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
+                defaults.networkDefaultProofOfWorkNonceTrialsPerByte * totalDifficulty)
             payloadLengthExtraBytes = int(
-                protocol.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
+                defaults.networkDefaultPayloadLengthExtraBytes * smallMessageDifficulty)
         else:
             raise APIError(0, 'Too many parameters!')
         if len(passphrase) == 0:
@@ -840,7 +841,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         # Let us do the POW and attach it to the front
         target = 2**64 / ((len(encryptedPayload)+requiredPayloadLengthExtraBytes+8) * requiredAverageProofOfWorkNonceTrialsPerByte)
         with shared.printLock:
-            print '(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / protocol.networkDefaultPayloadLengthExtraBytes
+            print '(For msg message via API) Doing proof of work. Total required difficulty:', float(requiredAverageProofOfWorkNonceTrialsPerByte) / defaults.networkDefaultProofOfWorkNonceTrialsPerByte, 'Required small message difficulty:', float(requiredPayloadLengthExtraBytes) / defaults.networkDefaultPayloadLengthExtraBytes
         powStartTime = time.time()
         initialHash = hashlib.sha512(encryptedPayload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)
@@ -882,8 +883,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         payload = self._decode(payload, "hex")
 
         # Let us do the POW
-        target = 2 ** 64 / ((len(payload) + protocol.networkDefaultPayloadLengthExtraBytes +
-                             8) * protocol.networkDefaultProofOfWorkNonceTrialsPerByte)
+        target = 2 ** 64 / ((len(payload) + defaults.networkDefaultPayloadLengthExtraBytes +
+                             8) * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)
         print '(For pubkey message via API) Doing proof of work...'
         initialHash = hashlib.sha512(payload).digest()
         trialValue, nonce = proofofwork.run(target, initialHash)

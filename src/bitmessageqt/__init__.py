@@ -31,6 +31,7 @@ from addresses import *
 import shared
 from bitmessageui import *
 from configparser import BMConfigParser
+import defaults
 from namecoin import namecoinConnection, ensureNamecoinOptions
 from newaddressdialog import *
 from newaddresswizard import *
@@ -82,7 +83,6 @@ from inventory import PendingDownload, PendingUpload, PendingUploadDeadlineExcep
 import knownnodes
 import paths
 from proofofwork import getPowType
-import protocol
 import queues
 import shutdown
 import state
@@ -2417,10 +2417,10 @@ class MyForm(settingsmixin.SMainWindow):
             # Demanded difficulty tab
             if float(self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) >= 1:
                 BMConfigParser().set('bitmessagesettings', 'defaultnoncetrialsperbyte', str(int(float(
-                    self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) * protocol.networkDefaultProofOfWorkNonceTrialsPerByte)))
+                    self.settingsDialogInstance.ui.lineEditTotalDifficulty.text()) * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)))
             if float(self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) >= 1:
                 BMConfigParser().set('bitmessagesettings', 'defaultpayloadlengthextrabytes', str(int(float(
-                    self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * protocol.networkDefaultPayloadLengthExtraBytes)))
+                    self.settingsDialogInstance.ui.lineEditSmallMessageDifficulty.text()) * defaults.networkDefaultPayloadLengthExtraBytes)))
 
             if self.settingsDialogInstance.ui.comboBoxOpenCL.currentText().toUtf8() != BMConfigParser().safeGet("bitmessagesettings", "opencl"):
                 BMConfigParser().set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.comboBoxOpenCL.currentText()))
@@ -2429,18 +2429,18 @@ class MyForm(settingsmixin.SMainWindow):
             
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) == 0:
                 if BMConfigParser().get('bitmessagesettings','maxacceptablenoncetrialsperbyte') != str(int(float(
-                    self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) * protocol.networkDefaultProofOfWorkNonceTrialsPerByte)):
+                    self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)):
                     # the user changed the max acceptable total difficulty
                     acceptableDifficultyChanged = True
                     BMConfigParser().set('bitmessagesettings', 'maxacceptablenoncetrialsperbyte', str(int(float(
-                        self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) * protocol.networkDefaultProofOfWorkNonceTrialsPerByte)))
+                        self.settingsDialogInstance.ui.lineEditMaxAcceptableTotalDifficulty.text()) * defaults.networkDefaultProofOfWorkNonceTrialsPerByte)))
             if float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) >= 1 or float(self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) == 0:
                 if BMConfigParser().get('bitmessagesettings','maxacceptablepayloadlengthextrabytes') != str(int(float(
-                    self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * protocol.networkDefaultPayloadLengthExtraBytes)):
+                    self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * defaults.networkDefaultPayloadLengthExtraBytes)):
                     # the user changed the max acceptable small message difficulty
                     acceptableDifficultyChanged = True
                     BMConfigParser().set('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes', str(int(float(
-                        self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * protocol.networkDefaultPayloadLengthExtraBytes)))
+                        self.settingsDialogInstance.ui.lineEditMaxAcceptableSmallMessageDifficulty.text()) * defaults.networkDefaultPayloadLengthExtraBytes)))
             if acceptableDifficultyChanged:
                 # It might now be possible to send msgs which were previously marked as toodifficult. 
                 # Let us change them to 'msgqueued'. The singleWorker will try to send them and will again
@@ -4112,15 +4112,15 @@ class settingsDialog(QtGui.QDialog):
 
         # Demanded difficulty tab
         self.ui.lineEditTotalDifficulty.setText(str((float(BMConfigParser().getint(
-            'bitmessagesettings', 'defaultnoncetrialsperbyte')) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte)))
+            'bitmessagesettings', 'defaultnoncetrialsperbyte')) / defaults.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.ui.lineEditSmallMessageDifficulty.setText(str((float(BMConfigParser().getint(
-            'bitmessagesettings', 'defaultpayloadlengthextrabytes')) / protocol.networkDefaultPayloadLengthExtraBytes)))
+            'bitmessagesettings', 'defaultpayloadlengthextrabytes')) / defaults.networkDefaultPayloadLengthExtraBytes)))
 
         # Max acceptable difficulty tab
         self.ui.lineEditMaxAcceptableTotalDifficulty.setText(str((float(BMConfigParser().getint(
-            'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte)))
+            'bitmessagesettings', 'maxacceptablenoncetrialsperbyte')) / defaults.networkDefaultProofOfWorkNonceTrialsPerByte)))
         self.ui.lineEditMaxAcceptableSmallMessageDifficulty.setText(str((float(BMConfigParser().getint(
-            'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / protocol.networkDefaultPayloadLengthExtraBytes)))
+            'bitmessagesettings', 'maxacceptablepayloadlengthextrabytes')) / defaults.networkDefaultPayloadLengthExtraBytes)))
 
         # OpenCL
         if openclpow.openclAvailable():
