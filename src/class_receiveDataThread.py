@@ -28,10 +28,12 @@ from configparser import BMConfigParser
 from class_objectHashHolder import objectHashHolder
 from helper_generic import addDataPadding, isHostInPrivateIPRange
 from helper_sql import sqlQuery
+import knownnodes
 from debug import logger
 import paths
 import protocol
 from inventory import Inventory, PendingDownload, PendingUpload
+import queues
 import state
 import throttle
 import tr
@@ -147,13 +149,13 @@ class receiveDataThread(threading.Thread):
             logger.error('Could not delete ' + str(self.hostIdent) + ' from shared.connectedHostsList.' + str(err))
 
         PendingDownload().threadEnd()
-        shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
+        queues.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         self.checkTimeOffsetNotification()
         logger.debug('receiveDataThread ending. ID ' + str(id(self)) + '. The size of the shared.connectedHostsList is now ' + str(len(shared.connectedHostsList)))
 
     def antiIntersectionDelay(self, initial = False):
         # estimated time for a small object to propagate across the whole network
-        delay = math.ceil(math.log(max(len(shared.knownNodes[x]) for x in shared.knownNodes) + 2, 20)) * (0.2 + objectHashHolder.size/2)
+        delay = math.ceil(math.log(max(len(knownnodes.knownNodes[x]) for x in knownnodes.knownNodes) + 2, 20)) * (0.2 + objectHashHolder.size/2)
         # take the stream with maximum amount of nodes
         # +2 is to avoid problems with log(0) and log(1)
         # 20 is avg connected nodes count
@@ -168,7 +170,7 @@ class receiveDataThread(threading.Thread):
 
     def checkTimeOffsetNotification(self):
         if shared.timeOffsetWrongCount >= 4 and not self.connectionIsOrWasFullyEstablished:
-            shared.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow", "The time on your computer, %1, may be wrong. Please verify your settings.").arg(datetime.datetime.now().strftime("%H:%M:%S"))))
+            queues.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow", "The time on your computer, %1, may be wrong. Please verify your settings.").arg(datetime.datetime.now().strftime("%H:%M:%S"))))
 
     def processData(self):
         if len(self.data) < protocol.Header.size:  # if so little of the data has arrived that we can't even read the checksum then wait for more data.
@@ -198,9 +200,9 @@ class receiveDataThread(threading.Thread):
         # just received valid data from it. So update the knownNodes list so
         # that other peers can be made aware of its existance.
         if self.initiatedConnection and self.connectionIsOrWasFullyEstablished:  # The remote port is only something we should share with others if it is the remote node's incoming port (rather than some random operating-system-assigned outgoing port).
-            with shared.knownNodesLock:
+            with knownnodes.knownNodesLock:
                 for stream in self.streamNumber:
-                    shared.knownNodes[stream][self.peer] = int(time.time())
+                    knownnodes.knownNodes[stream][self.peer] = int(time.time())
         
         #Strip the nulls
         command = command.rstrip('\x00')
@@ -359,10 +361,10 @@ class receiveDataThread(threading.Thread):
 
         if not self.initiatedConnection:
             shared.clientHasReceivedIncomingConnections = True
-            shared.UISignalQueue.put(('setStatusIcon', 'green'))
+            queues.UISignalQueue.put(('setStatusIcon', 'green'))
         self.sock.settimeout(
             600)  # We'll send out a ping every 5 minutes to make sure the connection stays alive if there has been no other traffic to send lately.
-        shared.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
+        queues.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         logger.debug('Connection fully established with ' + str(self.peer) + "\n" + \
             'The size of the connectedHostsList is now ' + str(len(shared.connectedHostsList)) + "\n" + \
             'The length of sendDataQueues is now: ' + str(len(state.sendDataQueues)) + "\n" + \
@@ -611,14 +613,14 @@ class receiveDataThread(threading.Thread):
                 continue
             timeSomeoneElseReceivedMessageFromThisNode, = unpack('>Q', data[lengthOfNumberOfAddresses + (
                 38 * i):8 + lengthOfNumberOfAddresses + (38 * i)])  # This is the 'time' value in the received addr message. 64-bit.
-            if recaddrStream not in shared.knownNodes:  # knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
-                with shared.knownNodesLock:
-                    shared.knownNodes[recaddrStream] = {}
+            if recaddrStream not in knownnodes.knownNodes:  # knownNodes is a dictionary of dictionaries with one outer dictionary for each stream. If the outer stream dictionary doesn't exist yet then we must make it.
+                with knownnodes.knownNodesLock:
+                    knownnodes.knownNodes[recaddrStream] = {}
             peerFromAddrMessage = state.Peer(hostStandardFormat, recaddrPort)
-            if peerFromAddrMessage not in shared.knownNodes[recaddrStream]:
-                if len(shared.knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time()) - 10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800):  # If we have more than 20000 nodes in our list already then just forget about adding more. Also, make sure that the time that someone else received a message from this node is within three hours from now.
-                    with shared.knownNodesLock:
-                        shared.knownNodes[recaddrStream][peerFromAddrMessage] = timeSomeoneElseReceivedMessageFromThisNode
+            if peerFromAddrMessage not in knownnodes.knownNodes[recaddrStream]:
+                if len(knownnodes.knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time()) - 10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800):  # If we have more than 20000 nodes in our list already then just forget about adding more. Also, make sure that the time that someone else received a message from this node is within three hours from now.
+                    with knownnodes.knownNodesLock:
+                        knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = timeSomeoneElseReceivedMessageFromThisNode
                     logger.debug('added new node ' + str(peerFromAddrMessage) + ' to knownNodes in stream ' + str(recaddrStream))
 
                     shared.needToWriteKnownNodesToDisk = True
@@ -628,14 +630,14 @@ class receiveDataThread(threading.Thread):
                     protocol.broadcastToSendDataQueues((
                         recaddrStream, 'advertisepeer', hostDetails))
             else:
-                timeLastReceivedMessageFromThisNode = shared.knownNodes[recaddrStream][
+                timeLastReceivedMessageFromThisNode = knownnodes.knownNodes[recaddrStream][
                     peerFromAddrMessage]
                 if (timeLastReceivedMessageFromThisNode < timeSomeoneElseReceivedMessageFromThisNode) and (timeSomeoneElseReceivedMessageFromThisNode < int(time.time())+900): # 900 seconds for wiggle-room in case other nodes' clocks aren't quite right.
-                    with shared.knownNodesLock:
-                        shared.knownNodes[recaddrStream][peerFromAddrMessage] = timeSomeoneElseReceivedMessageFromThisNode
+                    with knownnodes.knownNodesLock:
+                        knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = timeSomeoneElseReceivedMessageFromThisNode
 
         for stream in self.streamNumber:
-            logger.debug('knownNodes currently has %i nodes for stream %i', len(shared.knownNodes[stream]), stream)
+            logger.debug('knownNodes currently has %i nodes for stream %i', len(knownnodes.knownNodes[stream]), stream)
 
 
     # Send a huge addr message to our peer. This is only used 
@@ -651,8 +653,8 @@ class receiveDataThread(threading.Thread):
             addrsInChildStreamLeft = {}
             addrsInChildStreamRight = {}
 
-            with shared.knownNodesLock:
-                if len(shared.knownNodes[stream]) > 0:
+            with knownnodes.knownNodesLock:
+                if len(knownnodes.knownNodes[stream]) > 0:
                     ownPosition = random.randint(0, 499)
                     sentOwn = False
                     for i in range(500):
@@ -662,29 +664,29 @@ class receiveDataThread(threading.Thread):
                             peer = state.Peer(BMConfigParser().get("bitmessagesettings", "onionhostname"), BMConfigParser().getint("bitmessagesettings", "onionport"))
                         else:
                         # still may contain own onion address, but we don't change it
-                            peer, = random.sample(shared.knownNodes[stream], 1)
+                            peer, = random.sample(knownnodes.knownNodes[stream], 1)
                         if isHostInPrivateIPRange(peer.host):
                             continue
                         if peer.host == BMConfigParser().get("bitmessagesettings", "onionhostname") and peer.port == BMConfigParser().getint("bitmessagesettings", "onionport") :
                             sentOwn = True
-                        addrsInMyStream[peer] = shared.knownNodes[
+                        addrsInMyStream[peer] = knownnodes.knownNodes[
                             stream][peer]
                 # sent 250 only if the remote isn't interested in it
-                if len(shared.knownNodes[stream * 2]) > 0 and stream not in self.streamNumber:
+                if len(knownnodes.knownNodes[stream * 2]) > 0 and stream not in self.streamNumber:
                     for i in range(250):
-                        peer, = random.sample(shared.knownNodes[
+                        peer, = random.sample(knownnodes.knownNodes[
                                             stream * 2], 1)
                         if isHostInPrivateIPRange(peer.host):
                             continue
-                        addrsInChildStreamLeft[peer] = shared.knownNodes[
+                        addrsInChildStreamLeft[peer] = knownnodes.knownNodes[
                             stream * 2][peer]
-                if len(shared.knownNodes[(stream * 2) + 1]) > 0 and stream not in self.streamNumber:
+                if len(knownnodes.knownNodes[(stream * 2) + 1]) > 0 and stream not in self.streamNumber:
                     for i in range(250):
-                        peer, = random.sample(shared.knownNodes[
+                        peer, = random.sample(knownnodes.knownNodes[
                                             (stream * 2) + 1], 1)
                         if isHostInPrivateIPRange(peer.host):
                             continue
-                        addrsInChildStreamRight[peer] = shared.knownNodes[
+                        addrsInChildStreamRight[peer] = knownnodes.knownNodes[
                             (stream * 2) + 1][peer]
             numberOfAddressesInAddrMessage = 0
             payload = ''
@@ -772,7 +774,7 @@ class receiveDataThread(threading.Thread):
             try:
                 if cmp(remoteVersion, myVersion) > 0 and \
                     (myVersion[1] % 2 == remoteVersion[1] % 2):
-                    shared.UISignalQueue.put(('newVersionAvailable', remoteVersion))
+                    queues.UISignalQueue.put(('newVersionAvailable', remoteVersion))
             except:
                 pass
                 
@@ -804,11 +806,11 @@ class receiveDataThread(threading.Thread):
         self.sendDataThreadQueue.put((0, 'setRemoteProtocolVersion', self.remoteProtocolVersion))
 
         if not isHostInPrivateIPRange(self.peer.host):
-            with shared.knownNodesLock:
+            with knownnodes.knownNodesLock:
                 for stream in self.remoteStreams:
-                    shared.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] = int(time.time())
+                    knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] = int(time.time())
                     if not self.initiatedConnection:
-                        shared.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 162000 # penalise inbound, 2 days minus 3 hours
+                        knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 162000 # penalise inbound, 2 days minus 3 hours
                     shared.needToWriteKnownNodesToDisk = True
 
         self.sendverack()

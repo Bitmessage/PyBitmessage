@@ -1,6 +1,6 @@
 from PyQt4 import QtCore, QtGui
 
-import shared
+import queues
 import re
 import sys
 import inspect
@@ -172,7 +172,7 @@ class GatewayAccount(BMAccount):
             min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2) # not necessary to have a TTL higher than 2 days
         )
 
-        shared.workerQueue.put(('sendmessage', self.toAddress))
+        queues.workerQueue.put(('sendmessage', self.toAddress))
     
     def parseMessage(self, toAddress, fromAddress, subject, message):
         super(GatewayAccount, self).parseMessage(toAddress, fromAddress, subject, message)

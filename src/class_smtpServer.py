@@ -16,7 +16,7 @@ from debug import logger
 from helper_sql import sqlExecute
 from helper_threading import StoppableThread
 from pyelliptic.openssl import OpenSSL
-import shared
+import queues
 from version import softwareVersion
 
 SMTPDOMAIN = "bmaddr.lan"
@@ -86,7 +86,7 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
             min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2) # not necessary to have a TTL higher than 2 days
         )
 
-        shared.workerQueue.put(('sendmessage', toAddress))
+        queues.workerQueue.put(('sendmessage', toAddress))
 
     def decode_header(self, hdr):
         ret = []

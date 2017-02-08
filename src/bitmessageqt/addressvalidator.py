@@ -3,7 +3,7 @@ from Queue import Empty
 
 from addresses import decodeAddress, addBMIfNotPresent
 from account import getSortedAccounts
-from shared import apiAddressGeneratorReturnQueue, addressGeneratorQueue
+from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue
 from tr import _translate
 from utils import str_chan
 

@@ -21,13 +21,15 @@ import dialog
 from dialog import Dialog
 from helper_sql import *
 
-import shared
+from addresses import *
 import ConfigParser
 from configparser import BMConfigParser
-from addresses import *
-from pyelliptic.openssl import OpenSSL
-import l10n
 from inventory import Inventory
+import l10n
+from pyelliptic.openssl import OpenSSL
+import queues
+import shared
+import shutdown
 
 quit = False
 menutab = 1
@@ -446,7 +448,7 @@ def handlech(c, stdscr):
                                             choices=[("1", "Spend time shortening the address", 1 if shorten else 0)])
                                         if r == d.DIALOG_OK and "1" in t:
                                             shorten = True
-                                        shared.addressGeneratorQueue.put(("createRandomAddress", 4, stream, label, 1, "", shorten))
+                                        queues.addressGeneratorQueue.put(("createRandomAddress", 4, stream, label, 1, "", shorten))
                                 elif t == "2":
                                     set_background_title(d, "Make deterministic addresses")
                                     r, t = d.passwordform("Enter passphrase",
@@ -469,7 +471,7 @@ def handlech(c, stdscr):
                                                 scrollbox(d, unicode("In addition to your passphrase, be sure to remember the following numbers:\n"
                                                     "\n  * Address version number: "+str(4)+"\n"
                                                     "  * Stream number: "+str(stream)))
-                                                shared.addressGeneratorQueue.put(('createDeterministicAddresses', 4, stream, "unused deterministic address", number, str(passphrase), shorten))
+                                                queues.addressGeneratorQueue.put(('createDeterministicAddresses', 4, stream, "unused deterministic address", number, str(passphrase), shorten))
                                         else:
                                             scrollbox(d, unicode("Passphrases do not match"))
                         elif t == "2": # Send a message
@@ -795,7 +797,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                         "sent",
                         2, # encodingType
                         BMConfigParser().getint('bitmessagesettings', 'ttl'))
-                    shared.workerQueue.put(("sendmessage", addr))
+                    queues.workerQueue.put(("sendmessage", addr))
     else: # Broadcast
         if recv == "":
             set_background_title(d, "Empty sender error")
@@ -821,7 +823,7 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                 "sent", # folder
                 2, # encodingType
                 BMConfigParser().getint('bitmessagesettings', 'ttl'))
-            shared.workerQueue.put(('sendbroadcast', ''))
+            queues.workerQueue.put(('sendbroadcast', ''))
 
 def loadInbox():
     sys.stdout = sys.__stdout__
@@ -1052,7 +1054,7 @@ def shutdown():
     sys.stdout = sys.__stdout__
     print("Shutting down...")
     sys.stdout = printlog
-    shared.doCleanShutdown()
+    shutdown.doCleanShutdown()
     sys.stdout = sys.__stdout__
     sys.stderr = sys.__stderr__
     

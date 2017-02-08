@@ -27,7 +27,7 @@ import sys
 import os
 
 from configparser import BMConfigParser
-import shared
+import defaults
 import tr # translate
 
 # FIXME: from debug import logger crashes PyBitmessage due to a circular
@@ -293,7 +293,7 @@ def ensureNamecoinOptions ():
                 if key == "rpcpassword" and not hasPass:
                     defaultPass = val
                 if key == "rpcport":
-                    shared.namecoinDefaultRpcPort = val
+                    defaults.namecoinDefaultRpcPort = val
                 
         nmc.close ()
     except IOError:
@@ -310,4 +310,4 @@ def ensureNamecoinOptions ():
     # Set default port now, possibly to found value.
     if (not hasPort):
         BMConfigParser().set (configSection, "namecoinrpcport",
-                           shared.namecoinDefaultRpcPort)
+                           defaults.namecoinDefaultRpcPort)

@@ -30,6 +30,7 @@ import shared
 from helper_sql import sqlQuery
 import state
 import protocol
+import shutdown
 import threading
 
 # Classes
@@ -287,7 +288,7 @@ class Main:
     def stop(self):
         with shared.printLock:
             print('Stopping Bitmessage Deamon.')
-        shared.doCleanShutdown()
+        shutdown.doCleanShutdown()
 
 
     #TODO: nice function but no one is using this 

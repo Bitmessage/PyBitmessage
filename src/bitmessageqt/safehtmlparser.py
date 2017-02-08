@@ -6,7 +6,7 @@ import Queue
 from urllib import quote, quote_plus
 from urlparse import urlparse
 from debug import logger
-from shared import parserInputQueue, parserOutputQueue, parserProcess, parserLock
+from queues import parserInputQueue, parserOutputQueue, parserProcess, parserLock
 
 def regexpSubprocess(parserInputQueue, parserOutputQueue):
     for data in iter(parserInputQueue.get, None):

@@ -21,6 +21,7 @@ from helper_threading import *
 from inventory import Inventory, PendingUpload
 import l10n
 import protocol
+import queues
 import state
 from binascii import hexlify, unhexlify
 
@@ -43,7 +44,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
     def stopThread(self):
         try:
-            shared.workerQueue.put(("stopThread", "data"))
+            queues.workerQueue.put(("stopThread", "data"))
         except:
             pass
         super(singleWorker, self).stopThread()
@@ -79,14 +80,14 @@ class singleWorker(threading.Thread, StoppableThread):
         if state.shutdown == 0:
             # just in case there are any pending tasks for msg
             # messages that have yet to be sent.
-            shared.workerQueue.put(('sendmessage', ''))
+            queues.workerQueue.put(('sendmessage', ''))
             # just in case there are any tasks for Broadcasts
             # that have yet to be sent.
-            shared.workerQueue.put(('sendbroadcast', ''))
+            queues.workerQueue.put(('sendbroadcast', ''))
 
         while state.shutdown == 0:
             self.busy = 0
-            command, data = shared.workerQueue.get()
+            command, data = queues.workerQueue.get()
             self.busy = 1
             if command == 'sendmessage':
                 try:
@@ -119,7 +120,7 @@ class singleWorker(threading.Thread, StoppableThread):
             else:
                 logger.error('Probable programming error: The command sent to the workerThread is weird. It is: %s\n' % command)
 
-            shared.workerQueue.task_done()
+            queues.workerQueue.task_done()
         logger.info("Quitting...")
 
     def doPOWForMyV2Pubkey(self, hash):  # This function also broadcasts out the pubkey message once it is done with the POW
@@ -182,7 +183,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         protocol.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
-        shared.UISignalQueue.put(('updateStatusBar', ''))
+        queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
             BMConfigParser().set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
@@ -273,7 +274,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         protocol.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
-        shared.UISignalQueue.put(('updateStatusBar', ''))
+        queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
             BMConfigParser().set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
@@ -364,7 +365,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         protocol.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
-        shared.UISignalQueue.put(('updateStatusBar', ''))
+        queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
             BMConfigParser().set(
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
@@ -394,7 +395,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 privEncryptionKeyBase58 = BMConfigParser().get(
                     fromaddress, 'privencryptionkey')
             except:
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
+                queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                     ackdata, tr._translate("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                 continue
 
@@ -471,7 +472,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
             target = 2 ** 64 / (protocol.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + protocol.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+protocol.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
             logger.info('(For broadcast message) Doing proof of work...')
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
+            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                 ackdata, tr._translate("MainWindow", "Doing work necessary to send broadcast..."))))
             initialHash = hashlib.sha512(payload).digest()
             trialValue, nonce = proofofwork.run(target, initialHash)
@@ -495,7 +496,7 @@ class singleWorker(threading.Thread, StoppableThread):
             protocol.broadcastToSendDataQueues((
                 streamNumber, 'advertiseobject', inventoryHash))
 
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Broadcast sent on %1").arg(l10n.formatTimestamp()))))
+            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Broadcast sent on %1").arg(l10n.formatTimestamp()))))
 
             # Update the status of the message in the 'sent' table to have
             # a 'broadcastsent' status
@@ -563,7 +564,7 @@ class singleWorker(threading.Thread, StoppableThread):
                             '''UPDATE sent SET status='awaitingpubkey', sleeptill=? WHERE toaddress=? AND status='msgqueued' ''', 
                             int(time.time()) + 2.5*24*60*60,
                             toaddress)
-                        shared.UISignalQueue.put(('updateSentItemStatusByToAddress', (
+                        queues.UISignalQueue.put(('updateSentItemStatusByToAddress', (
                             toaddress, tr._translate("MainWindow",'Encryption key was requested earlier.'))))
                         continue #on with the next msg on which we can do some work
                     else:
@@ -600,7 +601,7 @@ class singleWorker(threading.Thread, StoppableThread):
                             sqlExecute(
                                 '''UPDATE sent SET status='doingpubkeypow' WHERE toaddress=? AND status='msgqueued' ''',
                                 toaddress)
-                            shared.UISignalQueue.put(('updateSentItemStatusByToAddress', (
+                            queues.UISignalQueue.put(('updateSentItemStatusByToAddress', (
                                 toaddress, tr._translate("MainWindow",'Sending a request for the recipient\'s encryption key.'))))
                             self.requestPubKey(toaddress)
                             continue #on with the next msg on which we can do some work
@@ -617,7 +618,7 @@ class singleWorker(threading.Thread, StoppableThread):
             
             if not BMConfigParser().has_section(toaddress): # if we aren't sending this to ourselves or a chan
                 shared.ackdataForWhichImWatching[ackdata] = 0
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
+                queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                     ackdata, tr._translate("MainWindow", "Looking up the receiver\'s public key"))))
                 logger.info('Sending a message.')
                 logger.debug('First 150 characters of message: ' + repr(message[:150]))
@@ -651,7 +652,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 if shared.isBitSetWithinBitfield(behaviorBitfield,30): # if receiver is a mobile device who expects that their address RIPE is included unencrypted on the front of the message..
                     if not shared.BMConfigParser().safeGetBoolean('bitmessagesettings','willinglysendtomobile'): # if we are Not willing to include the receiver's RIPE hash on the message..
                         logger.info('The receiver is a mobile user but the sender (you) has not selected that you are willing to send to mobiles. Aborting send.')
-                        shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,tr._translate("MainWindow",'Problem: Destination is a mobile device who requests that the destination be included in the message but this is disallowed in your settings.  %1').arg(l10n.formatTimestamp()))))
+                        queues.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,tr._translate("MainWindow",'Problem: Destination is a mobile device who requests that the destination be included in the message but this is disallowed in your settings.  %1').arg(l10n.formatTimestamp()))))
                         # if the human changes their setting and then sends another message or restarts their client, this one will send at that time.
                         continue
                 readPosition += 4  # to bypass the bitfield of behaviors
@@ -665,7 +666,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 if toAddressVersionNumber == 2:
                     requiredAverageProofOfWorkNonceTrialsPerByte = protocol.networkDefaultProofOfWorkNonceTrialsPerByte
                     requiredPayloadLengthExtraBytes = protocol.networkDefaultPayloadLengthExtraBytes
-                    shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
+                    queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                         ackdata, tr._translate("MainWindow", "Doing work necessary to send message.\nThere is no required difficulty for version 2 addresses like this."))))
                 elif toAddressVersionNumber >= 3:
                     requiredAverageProofOfWorkNonceTrialsPerByte, varintLength = decodeVarint(
@@ -679,7 +680,7 @@ class singleWorker(threading.Thread, StoppableThread):
                     if requiredPayloadLengthExtraBytes < protocol.networkDefaultPayloadLengthExtraBytes:
                         requiredPayloadLengthExtraBytes = protocol.networkDefaultPayloadLengthExtraBytes
                     logger.debug('Using averageProofOfWorkNonceTrialsPerByte: %s and payloadLengthExtraBytes: %s.' % (requiredAverageProofOfWorkNonceTrialsPerByte, requiredPayloadLengthExtraBytes))
-                    shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Doing work necessary to send message.\nReceiver\'s required difficulty: %1 and %2").arg(str(float(
+                    queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Doing work necessary to send message.\nReceiver\'s required difficulty: %1 and %2").arg(str(float(
                         requiredAverageProofOfWorkNonceTrialsPerByte) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(requiredPayloadLengthExtraBytes) / protocol.networkDefaultPayloadLengthExtraBytes)))))
                     if status != 'forcepow':
                         if (requiredAverageProofOfWorkNonceTrialsPerByte > BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') and BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') != 0) or (requiredPayloadLengthExtraBytes > BMConfigParser().getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') and BMConfigParser().getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') != 0):
@@ -688,7 +689,7 @@ class singleWorker(threading.Thread, StoppableThread):
                             sqlExecute(
                                 '''UPDATE sent SET status='toodifficult' WHERE ackdata=? ''',
                                 ackdata)
-                            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do. %3").arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(
+                            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Problem: The work demanded by the recipient (%1 and %2) is more difficult than you are willing to do. %3").arg(str(float(requiredAverageProofOfWorkNonceTrialsPerByte) / protocol.networkDefaultProofOfWorkNonceTrialsPerByte)).arg(str(float(
                                 requiredPayloadLengthExtraBytes) / protocol.networkDefaultPayloadLengthExtraBytes)).arg(l10n.formatTimestamp()))))
                             continue
             else: # if we are sending a message to ourselves or a chan..
@@ -700,7 +701,7 @@ class singleWorker(threading.Thread, StoppableThread):
                     privEncryptionKeyBase58 = BMConfigParser().get(
                         toaddress, 'privencryptionkey')
                 except Exception as err:
-                    shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,tr._translate("MainWindow",'Problem: You are trying to send a message to yourself or a chan but your encryption key could not be found in the keys.dat file. Could not encrypt message. %1').arg(l10n.formatTimestamp()))))
+                    queues.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,tr._translate("MainWindow",'Problem: You are trying to send a message to yourself or a chan but your encryption key could not be found in the keys.dat file. Could not encrypt message. %1').arg(l10n.formatTimestamp()))))
                     logger.error('Error within sendMsg. Could not read the keys from the keys.dat file for our own address. %s\n' % err)
                     continue
                 privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
@@ -709,7 +710,7 @@ class singleWorker(threading.Thread, StoppableThread):
                     privEncryptionKeyHex))[1:]
                 requiredAverageProofOfWorkNonceTrialsPerByte = protocol.networkDefaultProofOfWorkNonceTrialsPerByte
                 requiredPayloadLengthExtraBytes = protocol.networkDefaultPayloadLengthExtraBytes
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
+                queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                     ackdata, tr._translate("MainWindow", "Doing work necessary to send message."))))
 
             # Now we can start to assemble our message.
@@ -725,7 +726,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 privEncryptionKeyBase58 = BMConfigParser().get(
                     fromaddress, 'privencryptionkey')
             except:
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
+                queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                     ackdata, tr._translate("MainWindow", "Error! Could not find sender address (your address) in the keys.dat file."))))
                 continue
 
@@ -785,7 +786,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 encrypted = highlevelcrypto.encrypt(payload,"04"+hexlify(pubEncryptionKeyBase256))
             except:
                 sqlExecute('''UPDATE sent SET status='badkey' WHERE ackdata=?''', ackdata)
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,tr._translate("MainWindow",'Problem: The recipient\'s encryption key is no good. Could not encrypt message. %1').arg(l10n.formatTimestamp()))))
+                queues.UISignalQueue.put(('updateSentItemStatusByAckdata',(ackdata,tr._translate("MainWindow",'Problem: The recipient\'s encryption key is no good. Could not encrypt message. %1').arg(l10n.formatTimestamp()))))
                 continue
             
             encryptedPayload = pack('>Q', embeddedTime)
@@ -819,10 +820,10 @@ class singleWorker(threading.Thread, StoppableThread):
                 objectType, toStreamNumber, encryptedPayload, embeddedTime, '')
             PendingUpload().add(inventoryHash)
             if BMConfigParser().has_section(toaddress) or not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Message sent. Sent at %1").arg(l10n.formatTimestamp()))))
+                queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Message sent. Sent at %1").arg(l10n.formatTimestamp()))))
             else:
                 # not sending to a chan or one of my addresses
-                shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Message sent. Waiting for acknowledgement. Sent on %1").arg(l10n.formatTimestamp()))))
+                queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Message sent. Waiting for acknowledgement. Sent on %1").arg(l10n.formatTimestamp()))))
             logger.info('Broadcasting inv for my msg(within sendmsg function):' + hexlify(inventoryHash))
             protocol.broadcastToSendDataQueues((
                 toStreamNumber, 'advertiseobject', inventoryHash))
@@ -852,7 +853,7 @@ class singleWorker(threading.Thread, StoppableThread):
                     time.time()), message, 'inbox', encoding, 0, sigHash)
                 helper_inbox.insert(t)
 
-                shared.UISignalQueue.put(('displayNewInboxMessage', (
+                queues.UISignalQueue.put(('displayNewInboxMessage', (
                     inventoryHash, toaddress, fromaddress, subject, message)))
 
                 # If we are behaving as an API then we might need to run an
@@ -913,8 +914,8 @@ class singleWorker(threading.Thread, StoppableThread):
 
         # print 'trial value', trialValue
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
-        shared.UISignalQueue.put(('updateStatusBar', statusbar))
-        shared.UISignalQueue.put(('updateSentItemStatusByToAddress', (
+        queues.UISignalQueue.put(('updateStatusBar', statusbar))
+        queues.UISignalQueue.put(('updateSentItemStatusByToAddress', (
             toAddress, tr._translate("MainWindow",'Doing work necessary to request encryption key.'))))
         
         target = 2 ** 64 / (protocol.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + protocol.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+protocol.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
@@ -943,9 +944,9 @@ class singleWorker(threading.Thread, StoppableThread):
             sleeptill,
             toAddress)
 
-        shared.UISignalQueue.put((
+        queues.UISignalQueue.put((
             'updateStatusBar', tr._translate("MainWindow",'Broadcasting the public key request. This program will auto-retry if they are offline.')))
-        shared.UISignalQueue.put(('updateSentItemStatusByToAddress', (toAddress, tr._translate("MainWindow",'Sending public key request. Waiting for reply. Requested at %1').arg(l10n.formatTimestamp()))))
+        queues.UISignalQueue.put(('updateSentItemStatusByToAddress', (toAddress, tr._translate("MainWindow",'Sending public key request. Waiting for reply. Requested at %1').arg(l10n.formatTimestamp()))))
 
     def generateFullAckMessage(self, ackdata, toStreamNumber, TTL):
         

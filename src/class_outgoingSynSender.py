@@ -13,6 +13,8 @@ from class_sendDataThread import *
 from class_receiveDataThread import *
 from configparser import BMConfigParser
 from helper_threading import *
+import knownnodes
+import queues
 import state
 
 # For each stream to which we connect, several outgoingSynSender threads
@@ -33,21 +35,21 @@ class outgoingSynSender(threading.Thread, StoppableThread):
         # ever connect to that. Otherwise we'll pick a random one from
         # the known nodes
         if state.trustedPeer:
-            shared.knownNodesLock.acquire()
+            knownnodes.knownNodesLock.acquire()
             peer = state.trustedPeer
-            shared.knownNodes[self.streamNumber][peer] = time.time()
-            shared.knownNodesLock.release()
+            knownnodes.knownNodes[self.streamNumber][peer] = time.time()
+            knownnodes.knownNodesLock.release()
         else:
             while not state.shutdown:
-                shared.knownNodesLock.acquire()
+                knownnodes.knownNodesLock.acquire()
                 try:
-                    peer, = random.sample(shared.knownNodes[self.streamNumber], 1)
+                    peer, = random.sample(knownnodes.knownNodes[self.streamNumber], 1)
                 except ValueError: # no known nodes
-                    shared.knownNodesLock.release()
+                    knownnodes.knownNodesLock.release()
                     self.stop.wait(1)
                     continue
-                priority = (183600 - (time.time() - shared.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
-                shared.knownNodesLock.release()
+                priority = (183600 - (time.time() - knownnodes.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
+                knownnodes.knownNodesLock.release()
                 if BMConfigParser().get('bitmessagesettings', 'socksproxytype') != 'none':
                     if peer.host.find(".onion") == -1:
                         priority /= 10 # hidden services have 10x priority over plain net
@@ -131,13 +133,13 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                       
                 So let us remove the offending address from our knownNodes file.
                 """
-                shared.knownNodesLock.acquire()
+                knownnodes.knownNodesLock.acquire()
                 try:
-                    del shared.knownNodes[self.streamNumber][peer]
+                    del knownnodes.knownNodes[self.streamNumber][peer]
                 except:
                     pass
-                shared.knownNodesLock.release()
-                logger.debug('deleting ' + str(peer) + ' from shared.knownNodes because it caused a socks.socksocket exception. We must not be 64-bit compatible.')
+                knownnodes.knownNodesLock.release()
+                logger.debug('deleting ' + str(peer) + ' from knownnodes.knownNodes because it caused a socks.socksocket exception. We must not be 64-bit compatible.')
                 continue
             # This option apparently avoids the TIME_WAIT state so that we
             # can rebind faster
@@ -220,7 +222,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             except socks.GeneralProxyError as err:
                 if err[0][0] in [7, 8, 9]:
                     logger.error('Error communicating with proxy: %s', str(err))
-                    shared.UISignalQueue.put((
+                    queues.UISignalQueue.put((
                         'updateStatusBar',
                         tr._translate(
                             "MainWindow", "Problem communicating with proxy: %1. Please check your network settings.").arg(str(err[0][1]))
@@ -231,25 +233,25 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                     logger.debug('Could NOT connect to ' + str(peer) + ' during outgoing attempt. ' + str(err))
 
                 deletedPeer = None
-                with shared.knownNodesLock:
+                with knownnodes.knownNodesLock:
                     """
-                    It is remotely possible that peer is no longer in shared.knownNodes.
+                    It is remotely possible that peer is no longer in knownnodes.knownNodes.
                     This could happen if two outgoingSynSender threads both try to 
                     connect to the same peer, both fail, and then both try to remove
-                    it from shared.knownNodes. This is unlikely because of the
+                    it from knownnodes.knownNodes. This is unlikely because of the
                     alreadyAttemptedConnectionsList but because we clear that list once
                     every half hour, it can happen.
                     """
-                    if peer in shared.knownNodes[self.streamNumber]:
-                        timeLastSeen = shared.knownNodes[self.streamNumber][peer]
-                        if (int(time.time()) - timeLastSeen) > 172800 and len(shared.knownNodes[self.streamNumber]) > 1000:  # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the shared.knownNodes data-structure.
-                            del shared.knownNodes[self.streamNumber][peer]
+                    if peer in knownnodes.knownNodes[self.streamNumber]:
+                        timeLastSeen = knownnodes.knownNodes[self.streamNumber][peer]
+                        if (int(time.time()) - timeLastSeen) > 172800 and len(knownnodes.knownNodes[self.streamNumber]) > 1000:  # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownnodes.knownNodes data-structure.
+                            del knownnodes.knownNodes[self.streamNumber][peer]
                             deletedPeer = peer
                 if deletedPeer:
-                    str ('deleting ' + str(peer) + ' from shared.knownNodes because it is more than 48 hours old and we could not connect to it.')
+                    str ('deleting ' + str(peer) + ' from knownnodes.knownNodes because it is more than 48 hours old and we could not connect to it.')
 
             except socks.Socks5AuthError as err:
-                shared.UISignalQueue.put((
+                queues.UISignalQueue.put((
                     'updateStatusBar', tr._translate(
                     "MainWindow", "SOCKS5 Authentication problem: %1. Please check your SOCKS5 settings.").arg(str(err))))
             except socks.Socks5Error as err:
@@ -272,22 +274,22 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                         logger.debug('Could NOT connect to ' + str(peer) + 'during outgoing attempt. ' + str(err))
 
                 deletedPeer = None
-                with shared.knownNodesLock:
+                with knownnodes.knownNodesLock:
                     """
-                    It is remotely possible that peer is no longer in shared.knownNodes.
+                    It is remotely possible that peer is no longer in knownnodes.knownNodes.
                     This could happen if two outgoingSynSender threads both try to 
                     connect to the same peer, both fail, and then both try to remove
-                    it from shared.knownNodes. This is unlikely because of the
+                    it from knownnodes.knownNodes. This is unlikely because of the
                     alreadyAttemptedConnectionsList but because we clear that list once
                     every half hour, it can happen.
                     """
-                    if peer in shared.knownNodes[self.streamNumber]:
-                        timeLastSeen = shared.knownNodes[self.streamNumber][peer]
-                        if (int(time.time()) - timeLastSeen) > 172800 and len(shared.knownNodes[self.streamNumber]) > 1000:  # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the shared.knownNodes data-structure.
-                            del shared.knownNodes[self.streamNumber][peer]
+                    if peer in knownnodes.knownNodes[self.streamNumber]:
+                        timeLastSeen = knownnodes.knownNodes[self.streamNumber][peer]
+                        if (int(time.time()) - timeLastSeen) > 172800 and len(knownnodes.knownNodes[self.streamNumber]) > 1000:  # for nodes older than 48 hours old if we have more than 1000 hosts in our list, delete from the knownnodes.knownNodes data-structure.
+                            del knownnodes.knownNodes[self.streamNumber][peer]
                             deletedPeer = peer
                 if deletedPeer:
-                    logger.debug('deleting ' + str(peer) + ' from shared.knownNodes because it is more than 48 hours old and we could not connect to it.')
+                    logger.debug('deleting ' + str(peer) + ' from knownnodes.knownNodes because it is more than 48 hours old and we could not connect to it.')
 
             except Exception as err:
                 import traceback

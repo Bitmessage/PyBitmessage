@@ -1,7 +1,8 @@
 
 from PyQt4.QtCore import QThread, SIGNAL
-import shared
 import sys
+
+import queues
 
 
 class UISignaler(QThread):
@@ -18,7 +19,7 @@ class UISignaler(QThread):
 
     def run(self):
         while True:
-            command, data = shared.UISignalQueue.get()
+            command, data = queues.UISignalQueue.get()
             if command == 'writeNewAddressToTable':
                 label, address, streamNumber = data
                 self.emit(SIGNAL(

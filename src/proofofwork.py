@@ -9,8 +9,8 @@ import time
 from configparser import BMConfigParser
 from debug import logger
 import paths
-import shared
 import openclpow
+import queues
 import tr
 import os
 import ctypes
@@ -115,7 +115,7 @@ def _doGPUPoW(target, initialHash):
     #print "{} - value {} < {}".format(nonce, trialValue, target)
     if trialValue > target:
         deviceNames = ", ".join(gpu.name for gpu in openclpow.enabledGpus)
-        shared.UISignalQueue.put(('updateStatusBar', (tr._translate("MainWindow",'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.'), 1)))
+        queues.UISignalQueue.put(('updateStatusBar', (tr._translate("MainWindow",'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.'), 1)))
         logger.error("Your GPUs (%s) did not calculate correctly, disabling OpenCL. Please report to the developers.", deviceNames)
         openclpow.enabledGpus = []
         raise Exception("GPU did not calculate correctly.")
@@ -160,11 +160,11 @@ def notifyBuild(tried=False):
     global bmpow
 
     if bmpow:
-        shared.UISignalQueue.put(('updateStatusBar', (tr._translate("proofofwork", "C PoW module built successfully."), 1)))
+        queues.UISignalQueue.put(('updateStatusBar', (tr._translate("proofofwork", "C PoW module built successfully."), 1)))
     elif tried:
-        shared.UISignalQueue.put(('updateStatusBar', (tr._translate("proofofwork", "Failed to build C PoW module. Please build it manually."), 1)))
+        queues.UISignalQueue.put(('updateStatusBar', (tr._translate("proofofwork", "Failed to build C PoW module. Please build it manually."), 1)))
     else:
-        shared.UISignalQueue.put(('updateStatusBar', (tr._translate("proofofwork", "C PoW module unavailable. Please build it."), 1)))
+        queues.UISignalQueue.put(('updateStatusBar', (tr._translate("proofofwork", "C PoW module unavailable. Please build it."), 1)))
 
 def buildCPoW():
     global bmpow
