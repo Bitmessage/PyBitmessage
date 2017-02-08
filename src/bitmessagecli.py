@@ -63,8 +63,6 @@ def lookupAppdataFolder(): #gets the appropriate folders for the .dat files depe
     return dataFolder
 
 def configInit():
-    global keysName
-    
     BMConfigParser().add_section('bitmessagesettings')
     BMConfigParser().set('bitmessagesettings', 'port', '8444')  #Sets the bitmessage port to stop the warning about the api not properly being setup. This is in the event that the keys.dat is in a different directory or is created locally to connect to a machine remotely.
     BMConfigParser().set('bitmessagesettings','apienabled','true') #Sets apienabled to true in keys.dat
@@ -76,7 +74,6 @@ def configInit():
     print '     You will now need to configure the ' + str(keysName) + ' file.\n'
 
 def apiInit(apiEnabled):
-    global keysPath
     global usrPrompt
     BMConfigParser().read(keysPath)
     
@@ -1144,8 +1141,6 @@ def delSentMsg(msgNum): #Deletes a specified message from the outbox
     return msgAck
 
 def getLabelForAddress(address):
-    global usrPrompt
-
     if address in knownAddresses:
         return knownAddresses[address]
     else:

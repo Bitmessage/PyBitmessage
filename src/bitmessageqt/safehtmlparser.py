@@ -110,7 +110,7 @@ class SafeHTMLParser(HTMLParser):
         self.sanitised += "&" + name + ";"
 
     def feed(self, data):
-        global parserLock, parserProcess, parserInputQueue, parserOutputQueue
+        global parserProcess
         HTMLParser.feed(self, data)
         tmp = SafeHTMLParser.multi_replace(data)
         tmp = unicode(tmp, 'utf-8', 'replace')

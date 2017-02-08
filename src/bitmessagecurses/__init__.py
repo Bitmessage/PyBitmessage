@@ -333,7 +333,6 @@ def handlech(c, stdscr):
                             sendMessage(fromaddr, toaddr, ischan, subject, body, True)
                             dialogreset(stdscr)
                         elif t == "4": # Add to Address Book
-                            global addrbook
                             addr = inbox[inboxcur][4]
                             if addr not in [item[1] for i,item in enumerate(addrbook)]:
                                 r, t = d.inputbox("Label for address \""+addr+"\"")
@@ -572,7 +571,7 @@ def handlech(c, stdscr):
                                         subscriptions.append([label, addr, True])
                                         subscriptions.reverse()
 
-                                        sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
+                                        sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, addr, True)
                                         shared.reloadBroadcastSendersForWhichImWatching()
                         elif t == "2":
                             r, t = d.inpuxbox("Type in \"I want to delete this subscription\"")
@@ -611,7 +610,7 @@ def handlech(c, stdscr):
                                 subscriptions.append([label, addr, True])
                                 subscriptions.reverse()
 
-                                sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, address, True)
+                                sqlExecute("INSERT INTO subscriptions VALUES (?,?,?)", label, addr, True)
                                 shared.reloadBroadcastSendersForWhichImWatching()
                         elif t == "3":
                             r, t = d.inputbox("Input new address")
@@ -836,7 +835,6 @@ def loadInbox():
         FROM inbox WHERE folder='inbox' AND %s LIKE ?
         ORDER BY received
         """ % (where,), what)
-    global inbox
     for row in ret:
         msgid, toaddr, fromaddr, subject, received, read = row
         subject = ascii(shared.fixPotentiallyInvalidUTF8Data(subject))
@@ -886,7 +884,6 @@ def loadSent():
         FROM sent WHERE folder='sent' AND %s LIKE ?
         ORDER BY lastactiontime
         """ % (where,), what)
-    global sent
     for row in ret:
         toaddr, fromaddr, subject, status, ackdata, lastactiontime = row
         subject = ascii(shared.fixPotentiallyInvalidUTF8Data(subject))
@@ -958,7 +955,6 @@ def loadAddrBook():
     sys.stdout = printlog
     
     ret = sqlQuery("SELECT label, address FROM addressbook")
-    global addrbook
     for row in ret:
         label, addr = row
         label = shared.fixPotentiallyInvalidUTF8Data(label)
@@ -1003,7 +999,7 @@ def runwrapper():
     stdscr.timeout(1000)
     
     curses.wrapper(run)
-    shutdown()
+    doShutdown()
 
 def run(stdscr):
     # Schedule inventory lookup data
@@ -1050,7 +1046,7 @@ def run(stdscr):
         drawtab(stdscr)
         handlech(stdscr.getch(), stdscr)
 
-def shutdown():
+def doShutdown():
     sys.stdout = sys.__stdout__
     print("Shutting down...")
     sys.stdout = printlog

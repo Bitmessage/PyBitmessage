@@ -56,7 +56,7 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
             shutil.copyfile(fileName, fileNameBak)
             # The backup succeeded.
             fileNameExisted = True
-        except (IOError, Error):
+        except (IOError, Exception):
             # The backup failed. This can happen if the file didn't exist before.
             fileNameExisted = False
         # write the file
