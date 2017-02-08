@@ -73,14 +73,18 @@ import types
 from utils import *
 from collections import OrderedDict
 from account import *
-from dialogs import AddAddressDialog
 from class_objectHashHolder import objectHashHolder
 from class_singleWorker import singleWorker
+import defaults
+from dialogs import AddAddressDialog
 from helper_generic import powQueueSize
 from inventory import PendingDownload, PendingUpload, PendingUploadDeadlineException
+import knownnodes
 import paths
 from proofofwork import getPowType
 import protocol
+import queues
+import shutdown
 import state
 from statusbar import BMStatusBar
 import throttle
@@ -1587,7 +1591,7 @@ class MyForm(settingsmixin.SMainWindow):
                 QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
                     "MainWindow", "Your address version number must be either 3 or 4."))
                 return
-            shared.addressGeneratorQueue.put(('createDeterministicAddresses', addressVersionNumber, streamNumberForAddress, "regenerated deterministic address", self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(
+            queues.addressGeneratorQueue.put(('createDeterministicAddresses', addressVersionNumber, streamNumberForAddress, "regenerated deterministic address", self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(
             ), self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(), self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked()))
             self.ui.tabWidget.setCurrentIndex(3)
 
@@ -2042,7 +2046,7 @@ class MyForm(settingsmixin.SMainWindow):
 
                         self.displayNewSentMessage(
                             toAddress, toLabel, fromAddress, subject, message, ackdata)
-                        shared.workerQueue.put(('sendmessage', toAddress))
+                        queues.workerQueue.put(('sendmessage', toAddress))
 
                         self.ui.comboBoxSendFrom.setCurrentIndex(0)
                         self.ui.lineEditTo.setText('')
@@ -2093,7 +2097,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.displayNewSentMessage(
                     toAddress, toLabel, fromAddress, subject, message, ackdata)
 
-                shared.workerQueue.put(('sendbroadcast', ''))
+                queues.workerQueue.put(('sendbroadcast', ''))
 
                 self.ui.comboBoxSendFromBroadcast.setCurrentIndex(0)
                 self.ui.lineEditSubjectBroadcast.setText('')
@@ -2304,7 +2308,7 @@ class MyForm(settingsmixin.SMainWindow):
                     addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
                 tag = doubleHashOfAddressData[32:]
                 for value in shared.inventory.by_type_and_tag(3, tag):
-                    shared.objectProcessorQueue.put((value.type, value.payload))
+                    queues.objectProcessorQueue.put((value.type, value.payload))
 
     def click_pushButtonStatusIcon(self):
         logger.debug('click_pushButtonStatusIcon')
@@ -2443,7 +2447,7 @@ class MyForm(settingsmixin.SMainWindow):
                 # mark them as toodifficult if the receiver's required difficulty is still higher than
                 # we are willing to do.
                 sqlExecute('''UPDATE sent SET status='msgqueued' WHERE status='toodifficult' ''')
-                shared.workerQueue.put(('sendmessage', ''))
+                queues.workerQueue.put(('sendmessage', ''))
             
             #start:UI setting to stop trying to send messages after X days/months
             # I'm open to changing this UI to something else if someone has a better idea.
@@ -2503,11 +2507,11 @@ class MyForm(settingsmixin.SMainWindow):
                 with open(paths.lookupExeFolder() + 'keys.dat', 'wb') as configfile:
                     BMConfigParser().write(configfile)
                 # Write the knownnodes.dat file to disk in the new location
-                shared.knownNodesLock.acquire()
+                knownnodes.knownNodesLock.acquire()
                 output = open(paths.lookupExeFolder() + 'knownnodes.dat', 'wb')
-                pickle.dump(shared.knownNodes, output)
+                pickle.dump(knownnodes.knownNodes, output)
                 output.close()
-                shared.knownNodesLock.release()
+                knownnodes.knownNodesLock.release()
                 os.remove(state.appdata + 'keys.dat')
                 os.remove(state.appdata + 'knownnodes.dat')
                 previousAppdataLocation = state.appdata
@@ -2527,11 +2531,11 @@ class MyForm(settingsmixin.SMainWindow):
                 # Write the keys.dat file to disk in the new location
                 BMConfigParser().save()
                 # Write the knownnodes.dat file to disk in the new location
-                shared.knownNodesLock.acquire()
+                knownnodes.knownNodesLock.acquire()
                 output = open(state.appdata + 'knownnodes.dat', 'wb')
-                pickle.dump(shared.knownNodes, output)
+                pickle.dump(knownnodes.knownNodes, output)
                 output.close()
-                shared.knownNodesLock.release()
+                knownnodes.knownNodesLock.release()
                 os.remove(paths.lookupExeFolder() + 'keys.dat')
                 os.remove(paths.lookupExeFolder() + 'knownnodes.dat')
                 debug.restartLoggingInUpdatedAppdataLocation()
@@ -2681,7 +2685,7 @@ class MyForm(settingsmixin.SMainWindow):
                     # address.'
                     streamNumberForAddress = decodeAddress(
                         self.dialog.ui.comboBoxExisting.currentText())[2]
-                shared.addressGeneratorQueue.put(('createRandomAddress', 4, streamNumberForAddress, str(
+                queues.addressGeneratorQueue.put(('createRandomAddress', 4, streamNumberForAddress, str(
                     self.dialog.ui.newaddresslabel.text().toUtf8()), 1, "", self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
             else:
                 if self.dialog.ui.lineEditPassphrase.text() != self.dialog.ui.lineEditPassphraseAgain.text():
@@ -2692,7 +2696,7 @@ class MyForm(settingsmixin.SMainWindow):
                         "MainWindow", "Choose a passphrase"), _translate("MainWindow", "You really do need a passphrase."))
                 else:
                     streamNumberForAddress = 1  # this will eventually have to be replaced by logic to determine the most available stream number.
-                    shared.addressGeneratorQueue.put(('createDeterministicAddresses', 4, streamNumberForAddress, "unused deterministic address", self.dialog.ui.spinBoxNumberOfAddressesToMake.value(
+                    queues.addressGeneratorQueue.put(('createDeterministicAddresses', 4, streamNumberForAddress, "unused deterministic address", self.dialog.ui.spinBoxNumberOfAddressesToMake.value(
                     ), self.dialog.ui.lineEditPassphrase.text().toUtf8(), self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
         else:
             logger.debug('new address dialog box rejected')
@@ -2817,7 +2821,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.statusBar().showMessage(_translate("MainWindow", "Shutting down core... %1%").arg(str(80)))
         QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
-        shared.doCleanShutdown()
+        shutdown.doCleanShutdown()
         self.statusBar().showMessage(_translate("MainWindow", "Stopping notifications... %1%").arg(str(90)))
         self.tray.hide()
         # unregister the messaging system
@@ -3217,9 +3221,9 @@ class MyForm(settingsmixin.SMainWindow):
         queryreturn = sqlQuery('''select ackdata FROM sent WHERE status='forcepow' ''')
         for row in queryreturn:
             ackdata, = row
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (
+            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (
                 ackdata, 'Overriding maximum-difficulty setting. Work queued.')))
-        shared.workerQueue.put(('sendmessage', ''))
+        queues.workerQueue.put(('sendmessage', ''))
 
     def on_action_SentClipboard(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
@@ -4228,7 +4232,7 @@ class settingsDialog(QtGui.QDialog):
         self.ui.labelNamecoinPassword.setEnabled(isNamecoind)
 
         if isNamecoind:
-            self.ui.lineEditNamecoinPort.setText(shared.namecoinDefaultRpcPort)
+            self.ui.lineEditNamecoinPort.setText(defaults.namecoinDefaultRpcPort)
         else:
             self.ui.lineEditNamecoinPort.setText("9000")
 

@@ -21,13 +21,13 @@ from binascii import hexlify
 
 # Project imports.
 from addresses import *
-from class_objectProcessorQueue import ObjectProcessorQueue
 from configparser import BMConfigParser
 import highlevelcrypto
 #import helper_startup
 from helper_sql import *
 from helper_threading import *
 from inventory import Inventory, PendingDownload
+from queues import objectProcessorQueue
 import protocol
 import state
 
@@ -37,15 +37,6 @@ MyECSubscriptionCryptorObjects = {}
 myAddressesByHash = {} #The key in this dictionary is the RIPE hash which is encoded in an address and value is the address itself.
 myAddressesByTag = {} # The key in this dictionary is the tag generated from the address.
 broadcastSendersForWhichImWatching = {}
-workerQueue = Queue.Queue()
-UISignalQueue = Queue.Queue()
-parserInputQueue = mpQueue()
-parserOutputQueue = mpQueue()
-parserProcess = None
-parserLock = mpLock()
-addressGeneratorQueue = Queue.Queue()
-knownNodesLock = threading.Lock()
-knownNodes = {}
 printLock = threading.Lock()
 statusIconColor = 'red'
 connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
@@ -57,8 +48,6 @@ alreadyAttemptedConnectionsListResetTime = int(
     time.time())  # used to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
 successfullyDecryptMessageTimings = [
     ]  # A list of the amounts of time it took to successfully decrypt msg messages
-apiAddressGeneratorReturnQueue = Queue.Queue(
-    )  # The address generator thread uses this queue to get information back to the API thread.
 ackdataForWhichImWatching = {}
 clientHasReceivedIncomingConnections = False #used by API command clientStatus
 numberOfMessagesProcessed = 0
@@ -67,17 +56,7 @@ numberOfPubkeysProcessed = 0
 daemon = False
 needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it to disk eventually.
 maximumLengthOfTimeToBotherResendingMessages = 0
-objectProcessorQueue = ObjectProcessorQueue()  # receiveDataThreads dump objects they hear on the network into this queue to be processed.
 timeOffsetWrongCount = 0
-
-# sanity check, prevent doing ridiculous PoW
-# 20 million PoWs equals approximately 2 days on dev's dual R9 290
-ridiculousDifficulty = 20000000
-
-# Remember here the RPC port read from namecoin.conf so we can restore to
-# it as default whenever the user changes the "method" selection for
-# namecoin integration to "namecoind".
-namecoinDefaultRpcPort = "8336"
 
 def isAddressInMyAddressBook(address):
     queryreturn = sqlQuery(
@@ -183,77 +162,6 @@ def reloadBroadcastSendersForWhichImWatching():
             tag = doubleHashOfAddressData[32:]
             privEncryptionKey = doubleHashOfAddressData[:32]
             MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
-
-def doCleanShutdown():
-    state.shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
-    try:
-        parserInputQueue.put(None, False)
-    except Queue.Full:
-        pass
-    protocol.broadcastToSendDataQueues((0, 'shutdown', 'no data'))   
-    objectProcessorQueue.put(('checkShutdownVariable', 'no data'))
-    for thread in threading.enumerate():
-        if thread.isAlive() and isinstance(thread, StoppableThread):
-            thread.stopThread()
-    
-    knownNodesLock.acquire()
-    UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
-    output = open(state.appdata + 'knownnodes.dat', 'wb')
-    logger.info('finished opening knownnodes.dat. Now pickle.dump')
-    pickle.dump(knownNodes, output)
-    logger.info('Completed pickle.dump. Closing output...')
-    output.close()
-    knownNodesLock.release()
-    logger.info('Finished closing knownnodes.dat output file.')
-    UISignalQueue.put(('updateStatusBar','Done saving the knownNodes list of peers to disk.'))
-
-    logger.info('Flushing inventory in memory out to disk...')
-    UISignalQueue.put((
-        'updateStatusBar',
-        'Flushing inventory in memory out to disk. This should normally only take a second...'))
-    Inventory().flush()
-
-    # Verify that the objectProcessor has finished exiting. It should have incremented the 
-    # shutdown variable from 1 to 2. This must finish before we command the sqlThread to exit.
-    while state.shutdown == 1:
-        time.sleep(.1)
-    
-    # This one last useless query will guarantee that the previous flush committed and that the
-    # objectProcessorThread committed before we close the program.
-    sqlQuery('SELECT address FROM subscriptions')
-    logger.info('Finished flushing inventory.')
-    sqlStoredProcedure('exit')
-    
-    # Wait long enough to guarantee that any running proof of work worker threads will check the
-    # shutdown variable and exit. If the main thread closes before they do then they won't stop.
-    time.sleep(.25)
-
-    from class_outgoingSynSender import outgoingSynSender
-    from class_sendDataThread import sendDataThread
-    for thread in threading.enumerate():
-        if isinstance(thread, sendDataThread):
-            thread.sendDataThreadQueue.put((0, 'shutdown','no data'))
-        if thread is not threading.currentThread() and isinstance(thread, StoppableThread) and not isinstance(thread, outgoingSynSender):
-            logger.debug("Waiting for thread %s", thread.name)
-            thread.join()
-
-    # flush queued
-    for queue in (workerQueue, UISignalQueue, addressGeneratorQueue, objectProcessorQueue):
-        while True:
-            try:
-                queue.get(False)
-                queue.task_done()
-            except Queue.Empty:
-                break
-
-    if BMConfigParser().safeGetBoolean('bitmessagesettings','daemon'):
-        logger.info('Clean shutdown complete.')
-        thisapp.cleanup()
-        os._exit(0)
-    else:
-        logger.info('Core shutdown complete.')
-    for thread in threading.enumerate():
-        logger.debug("Thread %s still running", thread.name)
 
 def fixPotentiallyInvalidUTF8Data(text):
     try:

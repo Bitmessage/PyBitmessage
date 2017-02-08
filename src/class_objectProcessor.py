@@ -22,6 +22,7 @@ import helper_msgcoding
 import helper_sent
 from helper_sql import *
 import protocol
+import queues
 import state
 import tr
 from debug import logger
@@ -46,14 +47,14 @@ class objectProcessor(threading.Thread):
             '''SELECT objecttype, data FROM objectprocessorqueue''')
         for row in queryreturn:
             objectType, data = row
-            shared.objectProcessorQueue.put((objectType,data))
+            queues.objectProcessorQueue.put((objectType,data))
         sqlExecute('''DELETE FROM objectprocessorqueue''')
         logger.debug('Loaded %s objects from disk into the objectProcessorQueue.' % str(len(queryreturn)))
 
 
     def run(self):
         while True:
-            objectType, data = shared.objectProcessorQueue.get()
+            objectType, data = queues.objectProcessorQueue.get()
 
             try:
                 if objectType == 0: # getpubkey
@@ -77,8 +78,8 @@ class objectProcessor(threading.Thread):
                 time.sleep(.5) # Wait just a moment for most of the connections to close
                 numberOfObjectsThatWereInTheObjectProcessorQueue = 0
                 with SqlBulkExecute() as sql:
-                    while shared.objectProcessorQueue.curSize > 0:
-                        objectType, data = shared.objectProcessorQueue.get()
+                    while queues.objectProcessorQueue.curSize > 0:
+                        objectType, data = queues.objectProcessorQueue.get()
                         sql.execute('''INSERT INTO objectprocessorqueue VALUES (?,?)''',
                                    objectType,data)
                         numberOfObjectsThatWereInTheObjectProcessorQueue += 1
@@ -146,19 +147,19 @@ class objectProcessor(threading.Thread):
             return
         logger.info('Found getpubkey-requested-hash in my list of EC hashes. Telling Worker thread to do the POW for a pubkey message and send it out.') 
         if requestedAddressVersionNumber == 2:
-            shared.workerQueue.put((
+            queues.workerQueue.put((
                 'doPOWForMyV2Pubkey', requestedHash))
         elif requestedAddressVersionNumber == 3:
-            shared.workerQueue.put((
+            queues.workerQueue.put((
                 'sendOutOrStoreMyV3Pubkey', requestedHash))
         elif requestedAddressVersionNumber == 4:
-            shared.workerQueue.put((
+            queues.workerQueue.put((
                 'sendOutOrStoreMyV4Pubkey', myAddress))
 
     def processpubkey(self, data):
         pubkeyProcessingStartTime = time.time()
         shared.numberOfPubkeysProcessed += 1
-        shared.UISignalQueue.put((
+        queues.UISignalQueue.put((
             'updateNumberOfPubkeysProcessed', 'no data'))
         embeddedTime, = unpack('>Q', data[8:16])
         readPosition = 20  # bypass the nonce, time, and object type
@@ -307,7 +308,7 @@ class objectProcessor(threading.Thread):
     def processmsg(self, data):
         messageProcessingStartTime = time.time()
         shared.numberOfMessagesProcessed += 1
-        shared.UISignalQueue.put((
+        queues.UISignalQueue.put((
             'updateNumberOfMessagesProcessed', 'no data'))
         readPosition = 20 # bypass the nonce, time, and object type
         msgVersion, msgVersionLength = decodeVarint(data[readPosition:readPosition + 9])
@@ -329,7 +330,7 @@ class objectProcessor(threading.Thread):
                        'ackreceived',
                        int(time.time()), 
                        data[-32:])
-            shared.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[-32:], tr._translate("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
+            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[-32:], tr._translate("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
             return
         else:
             logger.info('This was NOT an acknowledgement bound for me.')
@@ -505,7 +506,7 @@ class objectProcessor(threading.Thread):
                     time.time()), body, 'inbox', messageEncodingType, 0, sigHash)
                 helper_inbox.insert(t)
 
-                shared.UISignalQueue.put(('displayNewInboxMessage', (
+                queues.UISignalQueue.put(('displayNewInboxMessage', (
                     inventoryHash, toAddress, fromAddress, subject, body)))
 
             # If we are behaving as an API then we might need to run an
@@ -561,9 +562,9 @@ class objectProcessor(threading.Thread):
                      TTL)
                 helper_sent.insert(t)
 
-                shared.UISignalQueue.put(('displayNewSentMessage', (
+                queues.UISignalQueue.put(('displayNewSentMessage', (
                     toAddress, '[Broadcast subscribers]', fromAddress, subject, message, ackdataForBroadcast)))
-                shared.workerQueue.put(('sendbroadcast', ''))
+                queues.workerQueue.put(('sendbroadcast', ''))
 
         # Don't send ACK if invalid, blacklisted senders, invisible messages, disabled or chan
         if self.ackDataHasAValidHeader(ackData) and \
@@ -590,7 +591,7 @@ class objectProcessor(threading.Thread):
     def processbroadcast(self, data):
         messageProcessingStartTime = time.time()
         shared.numberOfBroadcastsProcessed += 1
-        shared.UISignalQueue.put((
+        queues.UISignalQueue.put((
             'updateNumberOfBroadcastsProcessed', 'no data'))
         inventoryHash = calculateInventoryHash(data)
         readPosition = 20  # bypass the nonce, time, and object type
@@ -753,7 +754,7 @@ class objectProcessor(threading.Thread):
             time.time()), body, 'inbox', messageEncodingType, 0, sigHash)
         helper_inbox.insert(t)
 
-        shared.UISignalQueue.put(('displayNewInboxMessage', (
+        queues.UISignalQueue.put(('displayNewInboxMessage', (
             inventoryHash, toAddress, fromAddress, subject, body)))
 
         # If we are behaving as an API then we might need to run an
@@ -808,7 +809,7 @@ class objectProcessor(threading.Thread):
         sqlExecute(
             '''UPDATE sent SET status='doingmsgpow', retrynumber=0 WHERE toaddress=? AND (status='awaitingpubkey' or status='doingpubkeypow') AND folder='sent' ''',
             address)
-        shared.workerQueue.put(('sendmessage', ''))
+        queues.workerQueue.put(('sendmessage', ''))
 
     def ackDataHasAValidHeader(self, ackData):
         if len(ackData) < protocol.Header.size:

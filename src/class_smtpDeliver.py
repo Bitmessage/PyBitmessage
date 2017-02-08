@@ -9,7 +9,7 @@ from configparser import BMConfigParser
 from debug import logger
 from helper_threading import *
 from bitmessageqt.uisignaler import UISignaler
-import shared
+import queues
 import state
 
 SMTPDOMAIN = "bmaddr.lan"
@@ -23,7 +23,7 @@ class smtpDeliver(threading.Thread, StoppableThread):
         
     def stopThread(self):
         try:
-            shared.UISignallerQueue.put(("stopThread", "data"))
+            queues.UISignallerQueue.put(("stopThread", "data"))
         except:
             pass
         super(smtpDeliver, self).stopThread()
@@ -36,7 +36,7 @@ class smtpDeliver(threading.Thread, StoppableThread):
 
     def run(self):
         while state.shutdown == 0:
-            command, data = shared.UISignalQueue.get()
+            command, data = queues.UISignalQueue.get()
             if command == 'writeNewAddressToTable':
                 label, address, streamNumber = data
                 pass

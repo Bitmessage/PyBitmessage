@@ -27,6 +27,7 @@ import hashlib
 import protocol
 import state
 from pyelliptic.openssl import OpenSSL
+import queues
 from struct import pack
 
 # Classes
@@ -217,9 +218,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(16, 'You already have this address in your address book.')
 
         sqlExecute("INSERT INTO addressbook VALUES(?,?)", label, address)
-        shared.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
-        shared.UISignalQueue.put(('rerenderMessagelistToLabels',''))
-        shared.UISignalQueue.put(('rerenderAddressBook',''))
+        queues.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
+        queues.UISignalQueue.put(('rerenderMessagelistToLabels',''))
+        queues.UISignalQueue.put(('rerenderAddressBook',''))
         return "Added address %s to address book" % address
 
     def HandleDeleteAddressBookEntry(self, params):
@@ -229,9 +230,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         address = addBMIfNotPresent(address)
         self._verifyAddress(address)
         sqlExecute('DELETE FROM addressbook WHERE address=?', address)
-        shared.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
-        shared.UISignalQueue.put(('rerenderMessagelistToLabels',''))
-        shared.UISignalQueue.put(('rerenderAddressBook',''))
+        queues.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
+        queues.UISignalQueue.put(('rerenderMessagelistToLabels',''))
+        queues.UISignalQueue.put(('rerenderAddressBook',''))
         return "Deleted address book entry for %s if it existed" % address
 
     def HandleCreateRandomAddress(self, params):
@@ -269,11 +270,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             unicode(label, 'utf-8')
         except:
             raise APIError(17, 'Label is not valid UTF-8 data.')
-        shared.apiAddressGeneratorReturnQueue.queue.clear()
+        queues.apiAddressGeneratorReturnQueue.queue.clear()
         streamNumberForAddress = 1
-        shared.addressGeneratorQueue.put((
+        queues.addressGeneratorQueue.put((
             'createRandomAddress', 4, streamNumberForAddress, label, 1, "", eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
-        return shared.apiAddressGeneratorReturnQueue.get()
+        return queues.apiAddressGeneratorReturnQueue.get()
 
     def HandleCreateDeterministicAddresses(self, params):
         if len(params) == 0:
@@ -349,13 +350,13 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(4, 'Why would you ask me to generate 0 addresses for you?')
         if numberOfAddresses > 999:
             raise APIError(5, 'You have (accidentally?) specified too many addresses to make. Maximum 999. This check only exists to prevent mischief; if you really want to create more addresses than this, contact the Bitmessage developers and we can modify the check or you can do it yourself by searching the source code for this message.')
-        shared.apiAddressGeneratorReturnQueue.queue.clear()
+        queues.apiAddressGeneratorReturnQueue.queue.clear()
         logger.debug('Requesting that the addressGenerator create %s addresses.', numberOfAddresses)
-        shared.addressGeneratorQueue.put(
+        queues.addressGeneratorQueue.put(
             ('createDeterministicAddresses', addressVersionNumber, streamNumber,
              'unused API address', numberOfAddresses, passphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes))
         data = '{"addresses":['
-        queueReturn = shared.apiAddressGeneratorReturnQueue.get()
+        queueReturn = queues.apiAddressGeneratorReturnQueue.get()
         for item in queueReturn:
             if len(data) > 20:
                 data += ','
@@ -376,12 +377,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(2, 'The address version number currently must be 3 or 4. ' + addressVersionNumber + ' isn\'t supported.')
         if streamNumber != 1:
             raise APIError(3, ' The stream number must be 1. Others aren\'t supported.')
-        shared.apiAddressGeneratorReturnQueue.queue.clear()
+        queues.apiAddressGeneratorReturnQueue.queue.clear()
         logger.debug('Requesting that the addressGenerator create %s addresses.', numberOfAddresses)
-        shared.addressGeneratorQueue.put(
+        queues.addressGeneratorQueue.put(
             ('getDeterministicAddress', addressVersionNumber,
              streamNumber, 'unused API address', numberOfAddresses, passphrase, eighteenByteRipe))
-        return shared.apiAddressGeneratorReturnQueue.get()
+        return queues.apiAddressGeneratorReturnQueue.get()
 
     def HandleCreateChan(self, params):
         if len(params) == 0:
@@ -401,10 +402,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
         addressVersionNumber = 4
         streamNumber = 1
-        shared.apiAddressGeneratorReturnQueue.queue.clear()
+        queues.apiAddressGeneratorReturnQueue.queue.clear()
         logger.debug('Requesting that the addressGenerator create chan %s.', passphrase)
-        shared.addressGeneratorQueue.put(('createChan', addressVersionNumber, streamNumber, label, passphrase, True))
-        queueReturn = shared.apiAddressGeneratorReturnQueue.get()
+        queues.addressGeneratorQueue.put(('createChan', addressVersionNumber, streamNumber, label, passphrase, True))
+        queueReturn = queues.apiAddressGeneratorReturnQueue.get()
         if len(queueReturn) == 0:
             raise APIError(24, 'Chan address is already present.')
         address = queueReturn[0]
@@ -428,9 +429,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
         status, addressVersionNumber, streamNumber, toRipe = self._verifyAddress(suppliedAddress)
         suppliedAddress = addBMIfNotPresent(suppliedAddress)
-        shared.apiAddressGeneratorReturnQueue.queue.clear()
-        shared.addressGeneratorQueue.put(('joinChan', suppliedAddress, label, passphrase, True))
-        addressGeneratorReturnValue = shared.apiAddressGeneratorReturnQueue.get()
+        queues.apiAddressGeneratorReturnQueue.queue.clear()
+        queues.addressGeneratorQueue.put(('joinChan', suppliedAddress, label, passphrase, True))
+        addressGeneratorReturnValue = queues.apiAddressGeneratorReturnQueue.get()
 
         if addressGeneratorReturnValue[0] == 'chan name does not match address':
             raise APIError(18, 'Chan name does not match address.')
@@ -468,8 +469,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         BMConfigParser().remove_section(address)
         with open(state.appdata + 'keys.dat', 'wb') as configfile:
             BMConfigParser().write(configfile)
-        shared.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
-        shared.UISignalQueue.put(('rerenderMessagelistToLabels',''))
+        queues.UISignalQueue.put(('rerenderMessagelistFromLabels',''))
+        queues.UISignalQueue.put(('rerenderMessagelistToLabels',''))
         shared.reloadMyAddressHashes()
         return 'success'
 
@@ -514,7 +515,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             # UPDATE is slow, only update if status is different
             if queryreturn != [] and (queryreturn[0][0] == 1) != readStatus:
                 sqlExecute('''UPDATE inbox set read = ? WHERE msgid=?''', readStatus, msgid)
-                shared.UISignalQueue.put(('changedInboxUnread', None))
+                queues.UISignalQueue.put(('changedInboxUnread', None))
         queryreturn = sqlQuery('''SELECT msgid, toaddress, fromaddress, subject, received, message, encodingtype, read FROM inbox WHERE msgid=?''', msgid)
         data = '{"inboxMessage":['
         for row in queryreturn:
@@ -695,10 +696,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             for row in queryreturn:
                 toLabel, = row
         # apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
-        shared.UISignalQueue.put(('displayNewSentMessage', (
+        queues.UISignalQueue.put(('displayNewSentMessage', (
             toAddress, toLabel, fromAddress, subject, message, ackdata)))
 
-        shared.workerQueue.put(('sendmessage', toAddress))
+        queues.workerQueue.put(('sendmessage', toAddress))
 
         return hexlify(ackdata)
 
@@ -753,9 +754,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         helper_sent.insert(t)
 
         toLabel = '[Broadcast subscribers]'
-        shared.UISignalQueue.put(('displayNewSentMessage', (
+        queues.UISignalQueue.put(('displayNewSentMessage', (
             toAddress, toLabel, fromAddress, subject, message, ackdata)))
-        shared.workerQueue.put(('sendbroadcast', ''))
+        queues.workerQueue.put(('sendbroadcast', ''))
 
         return hexlify(ackdata)
 
@@ -799,8 +800,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             raise APIError(16, 'You are already subscribed to that address.')
         sqlExecute('''INSERT INTO subscriptions VALUES (?,?,?)''',label, address, True)
         shared.reloadBroadcastSendersForWhichImWatching()
-        shared.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
-        shared.UISignalQueue.put(('rerenderSubscriptions', ''))
+        queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
+        queues.UISignalQueue.put(('rerenderSubscriptions', ''))
         return 'Added subscription.'
 
     def HandleDeleteSubscription(self, params):
@@ -810,8 +811,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         address = addBMIfNotPresent(address)
         sqlExecute('''DELETE FROM subscriptions WHERE address=?''', address)
         shared.reloadBroadcastSendersForWhichImWatching()
-        shared.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
-        shared.UISignalQueue.put(('rerenderSubscriptions', ''))
+        queues.UISignalQueue.put(('rerenderMessagelistFromLabels', ''))
+        queues.UISignalQueue.put(('rerenderSubscriptions', ''))
         return 'Deleted subscription if it existed.'
 
     def ListSubscriptions(self, params):
@@ -972,7 +973,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
     def HandleStatusBar(self, params):
         message, = params
-        shared.UISignalQueue.put(('updateStatusBar', message))
+        queues.UISignalQueue.put(('updateStatusBar', message))
 
     def HandleDeleteAndVacuum(self, params):
         sqlStoredProcedure('deleteandvacuume')

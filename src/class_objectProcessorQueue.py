@@ -1,5 +1,3 @@
-import shared
-
 import Queue
 import threading
 import time

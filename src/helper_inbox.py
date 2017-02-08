@@ -1,14 +1,14 @@
 from helper_sql import *
-import shared
+import queues
 
 def insert(t):
     sqlExecute('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?,?)''', *t)
     #shouldn't emit changedInboxUnread and displayNewInboxMessage at the same time
-    #shared.UISignalQueue.put(('changedInboxUnread', None))
+    #queues.UISignalQueue.put(('changedInboxUnread', None))
     
 def trash(msgid):
     sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', msgid)
-    shared.UISignalQueue.put(('removeInboxRowByMsgid',msgid))
+    queues.UISignalQueue.put(('removeInboxRowByMsgid',msgid))
     
 def isMessageAlreadyInInbox(sigHash):
     queryReturn = sqlQuery(

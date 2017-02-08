@@ -7,10 +7,11 @@ from threading import current_thread, enumerate
 
 from configparser import BMConfigParser
 from debug import logger
-import shared
+import queues
+import shutdown
 
 def powQueueSize():
-    curWorkerQueue = shared.workerQueue.qsize()
+    curWorkerQueue = queues.workerQueue.qsize()
     for thread in enumerate():
         try:
             if thread.name == "singleWorker":
@@ -43,7 +44,7 @@ def signal_handler(signal, frame):
         return
     logger.error("Got signal %i", signal)
     if BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'):
-        shared.doCleanShutdown()
+        shutdown.doCleanShutdown()
     else:
         print 'Unfortunately you cannot use Ctrl+C when running the UI because the UI captures the signal.'
 

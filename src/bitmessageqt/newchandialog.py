@@ -2,7 +2,7 @@ from PyQt4 import QtCore, QtGui
 
 from addresses import addBMIfNotPresent
 from addressvalidator import AddressValidator, PassPhraseValidator
-from shared import apiAddressGeneratorReturnQueue, addressGeneratorQueue, UISignalQueue
+from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue, UISignalQueue
 from retranslateui import RetranslateMixin
 from tr import _translate
 from utils import str_chan

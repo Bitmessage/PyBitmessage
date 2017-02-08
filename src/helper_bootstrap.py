@@ -6,12 +6,13 @@ import time
 
 from configparser import BMConfigParser
 from debug import logger
+import knownnodes
 import socks
 import state
 
 def knownNodes():
     try:
-        # We shouldn't have to use the shared.knownNodesLock because this had
+        # We shouldn't have to use the knownnodes.knownNodesLock because this had
         # better be the only thread accessing knownNodes right now.
         pickleFile = open(state.appdata + 'knownnodes.dat', 'rb')
         loadedKnownNodes = pickle.load(pickleFile)
@@ -20,19 +21,19 @@ def knownNodes():
         # mapping. The new format is as 'Peer: time' pairs. If we loaded
         # data in the old format, transform it to the new style.
         for stream, nodes in loadedKnownNodes.items():
-            shared.knownNodes[stream] = {}
+            knownnodes.knownNodes[stream] = {}
             for node_tuple in nodes.items():
                 try:
                     host, (port, lastseen) = node_tuple
                     peer = state.Peer(host, port)
                 except:
                     peer, lastseen = node_tuple
-                shared.knownNodes[stream][peer] = lastseen
+                knownnodes.knownNodes[stream][peer] = lastseen
     except:
-        shared.knownNodes = defaultKnownNodes.createDefaultKnownNodes(state.appdata)
+        knownnodes.knownNodes = defaultKnownNodes.createDefaultKnownNodes(state.appdata)
     # your own onion address, if setup
     if BMConfigParser().has_option('bitmessagesettings', 'onionhostname') and ".onion" in BMConfigParser().get('bitmessagesettings', 'onionhostname'):
-        shared.knownNodes[1][state.Peer(BMConfigParser().get('bitmessagesettings', 'onionhostname'), BMConfigParser().getint('bitmessagesettings', 'onionport'))] = int(time.time())
+        knownnodes.knownNodes[1][state.Peer(BMConfigParser().get('bitmessagesettings', 'onionhostname'), BMConfigParser().getint('bitmessagesettings', 'onionport'))] = int(time.time())
     if BMConfigParser().getint('bitmessagesettings', 'settingsversion') > 10:
         logger.error('Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.')
         raise SystemExit
@@ -47,17 +48,17 @@ def dns():
         try:
             for item in socket.getaddrinfo('bootstrap8080.bitmessage.org', 80):
                 logger.info('Adding ' + item[4][0] + ' to knownNodes based on DNS bootstrap method')
-                shared.knownNodes[1][state.Peer(item[4][0], 8080)] = int(time.time())
+                knownnodes.knownNodes[1][state.Peer(item[4][0], 8080)] = int(time.time())
         except:
             logger.error('bootstrap8080.bitmessage.org DNS bootstrapping failed.')
         try:
             for item in socket.getaddrinfo('bootstrap8444.bitmessage.org', 80):
                 logger.info ('Adding ' + item[4][0] + ' to knownNodes based on DNS bootstrap method')
-                shared.knownNodes[1][state.Peer(item[4][0], 8444)] = int(time.time())
+                knownnodes.knownNodes[1][state.Peer(item[4][0], 8444)] = int(time.time())
         except:
             logger.error('bootstrap8444.bitmessage.org DNS bootstrapping failed.')
     elif BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
-        shared.knownNodes[1][state.Peer('quzwelsuziwqgpt2.onion', 8444)] = int(time.time())
+        knownnodes.knownNodes[1][state.Peer('quzwelsuziwqgpt2.onion', 8444)] = int(time.time())
         logger.debug("Adding quzwelsuziwqgpt2.onion:8444 to knownNodes.")
         for port in [8080, 8444]:
             logger.debug("Resolving %i through SOCKS...", port)
@@ -90,7 +91,7 @@ def dns():
             else:
                 if ip is not None:
                     logger.info ('Adding ' + ip + ' to knownNodes based on SOCKS DNS bootstrap method')
-                    shared.knownNodes[1][state.Peer(ip, port)] = time.time()
+                    knownnodes.knownNodes[1][state.Peer(ip, port)] = time.time()
     else:
         logger.info('DNS bootstrap skipped because the proxy type does not support DNS resolution.')
 

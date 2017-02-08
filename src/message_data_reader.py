@@ -5,8 +5,8 @@
 import sqlite3
 from time import strftime, localtime
 import sys
-import shared
 import paths
+import queues
 import state
 from binascii import hexlify
 
@@ -87,7 +87,7 @@ def markAllInboxMessagesAsUnread():
     cur.execute(item, parameters)
     output = cur.fetchall()
     conn.commit()
-    shared.UISignalQueue.put(('changedInboxUnread', None))
+    queues.UISignalQueue.put(('changedInboxUnread', None))
     print 'done'
 
 def vacuum():

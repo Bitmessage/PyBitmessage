@@ -1,15 +1,17 @@
 import threading
 from configparser import BMConfigParser
-import shared
 import sqlite3
 import time
 import shutil  # used for moving the messages.dat file
 import sys
 import os
 from debug import logger
+import defaults
+import helper_sql
 from namecoin import ensureNamecoinOptions
 import paths
 import protocol
+import queues
 import random
 import state
 import string
@@ -334,9 +336,9 @@ class sqlThread(threading.Thread):
             
         # sanity check
         if BMConfigParser().getint('bitmessagesettings', 'maxacceptablenoncetrialsperbyte') == 0:
-            BMConfigParser().set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(shared.ridiculousDifficulty * protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
+            BMConfigParser().set('bitmessagesettings','maxacceptablenoncetrialsperbyte', str(defaults.ridiculousDifficulty * protocol.networkDefaultProofOfWorkNonceTrialsPerByte))
         if BMConfigParser().getint('bitmessagesettings', 'maxacceptablepayloadlengthextrabytes') == 0:
-            BMConfigParser().set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(shared.ridiculousDifficulty * protocol.networkDefaultPayloadLengthExtraBytes))
+            BMConfigParser().set('bitmessagesettings','maxacceptablepayloadlengthextrabytes', str(defaults.ridiculousDifficulty * protocol.networkDefaultPayloadLengthExtraBytes))
 
         # The format of data stored in the pubkeys table has changed. Let's
         # clear it, and the pubkeys from inventory, so that they'll be re-downloaded.
@@ -457,7 +459,7 @@ class sqlThread(threading.Thread):
         except Exception as err:
             if str(err) == 'database or disk is full':
                 logger.fatal('(While null value test) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                 os._exit(0)
             else:
                 logger.error(err)
@@ -477,21 +479,21 @@ class sqlThread(threading.Thread):
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(While VACUUM) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         os._exit(0)
                 item = '''update settings set value=? WHERE key='lastvacuumtime';'''
                 parameters = (int(time.time()),)
                 self.cur.execute(item, parameters)
 
         while True:
-            item = shared.sqlSubmitQueue.get()
+            item = helper_sql.sqlSubmitQueue.get()
             if item == 'commit':
                 try:
                     self.conn.commit()
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(While committing) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         os._exit(0)
             elif item == 'exit':
                 self.conn.close()
@@ -506,7 +508,7 @@ class sqlThread(threading.Thread):
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(while movemessagstoprog) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         os._exit(0)
                 self.conn.close()
                 shutil.move(
@@ -522,7 +524,7 @@ class sqlThread(threading.Thread):
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(while movemessagstoappdata) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         os._exit(0)
                 self.conn.close()
                 shutil.move(
@@ -539,10 +541,10 @@ class sqlThread(threading.Thread):
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(while deleteandvacuume) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         os._exit(0)
             else:
-                parameters = shared.sqlSubmitQueue.get()
+                parameters = helper_sql.sqlSubmitQueue.get()
                 rowcount = 0
                 # print 'item', item
                 # print 'parameters', parameters
@@ -552,7 +554,7 @@ class sqlThread(threading.Thread):
                 except Exception as err:
                     if str(err) == 'database or disk is full':
                         logger.fatal('(while cur.execute) Alert: Your disk or data storage volume is full. sqlThread will now exit.')
-                        shared.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
+                        queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         os._exit(0)
                     else:
                         logger.fatal('Major error occurred when trying to execute a SQL statement within the sqlThread. Please tell Atheros about this error message or post it in the forum! Error occurred while trying to execute statement: "%s"  Here are the parameters; you might want to censor this data with asterisks (***) as it can contain private information: %s. Here is the actual error message thrown by the sqlThread: %s', str(item), str(repr(parameters)),  str(err))
@@ -560,5 +562,5 @@ class sqlThread(threading.Thread):
 
                     os._exit(0)
 
-                shared.sqlReturnQueue.put((self.cur.fetchall(), rowcount))
-                # shared.sqlSubmitQueue.task_done()
+                helper_sql.sqlReturnQueue.put((self.cur.fetchall(), rowcount))
+                # helper_sql.sqlSubmitQueue.task_done()

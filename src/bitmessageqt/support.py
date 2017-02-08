@@ -1,6 +1,5 @@
 import ctypes
 from PyQt4 import QtCore, QtGui
-from os import path
 import ssl
 import sys
 import time
@@ -16,6 +15,7 @@ import paths
 from proofofwork import bmpow
 import protocol
 from pyelliptic.openssl import OpenSSL
+import queues
 import shared
 import state
 from version import softwareVersion
@@ -67,7 +67,7 @@ def checkHasNormalAddress():
 
 def createAddressIfNeeded(myapp):
     if not checkHasNormalAddress():
-        shared.addressGeneratorQueue.put(('createRandomAddress', 4, 1, str(QtGui.QApplication.translate("Support", SUPPORT_MY_LABEL)), 1, "", False, protocol.networkDefaultProofOfWorkNonceTrialsPerByte, protocol.networkDefaultPayloadLengthExtraBytes))
+        queues.addressGeneratorQueue.put(('createRandomAddress', 4, 1, str(QtGui.QApplication.translate("Support", SUPPORT_MY_LABEL)), 1, "", False, protocol.networkDefaultProofOfWorkNonceTrialsPerByte, protocol.networkDefaultPayloadLengthExtraBytes))
     while state.shutdown == 0 and not checkHasNormalAddress():
         time.sleep(.2)
     myapp.rerenderComboBoxSendFrom()
