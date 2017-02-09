@@ -76,7 +76,6 @@ from collections import OrderedDict
 from account import *
 from class_objectHashHolder import objectHashHolder
 from class_singleWorker import singleWorker
-import defaults
 from dialogs import AddAddressDialog
 from helper_generic import powQueueSize
 from inventory import PendingDownload, PendingUpload, PendingUploadDeadlineException
@@ -2507,11 +2506,7 @@ class MyForm(settingsmixin.SMainWindow):
                 with open(paths.lookupExeFolder() + 'keys.dat', 'wb') as configfile:
                     BMConfigParser().write(configfile)
                 # Write the knownnodes.dat file to disk in the new location
-                knownnodes.knownNodesLock.acquire()
-                output = open(paths.lookupExeFolder() + 'knownnodes.dat', 'wb')
-                pickle.dump(knownnodes.knownNodes, output)
-                output.close()
-                knownnodes.knownNodesLock.release()
+                knownnodes.saveKnownNodes(paths.lookupExeFolder())
                 os.remove(state.appdata + 'keys.dat')
                 os.remove(state.appdata + 'knownnodes.dat')
                 previousAppdataLocation = state.appdata
@@ -2531,11 +2526,7 @@ class MyForm(settingsmixin.SMainWindow):
                 # Write the keys.dat file to disk in the new location
                 BMConfigParser().save()
                 # Write the knownnodes.dat file to disk in the new location
-                knownnodes.knownNodesLock.acquire()
-                output = open(state.appdata + 'knownnodes.dat', 'wb')
-                pickle.dump(knownnodes.knownNodes, output)
-                output.close()
-                knownnodes.knownNodesLock.release()
+                knownnodes.saveKnownNodes(state.appdata)
                 os.remove(paths.lookupExeFolder() + 'keys.dat')
                 os.remove(paths.lookupExeFolder() + 'knownnodes.dat')
                 debug.restartLoggingInUpdatedAppdataLocation()

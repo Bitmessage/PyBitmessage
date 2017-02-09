@@ -35,21 +35,18 @@ class outgoingSynSender(threading.Thread, StoppableThread):
         # ever connect to that. Otherwise we'll pick a random one from
         # the known nodes
         if state.trustedPeer:
-            knownnodes.knownNodesLock.acquire()
-            peer = state.trustedPeer
-            knownnodes.knownNodes[self.streamNumber][peer] = time.time()
-            knownnodes.knownNodesLock.release()
+            with knownnodes.knownNodesLock:
+                peer = state.trustedPeer
+                knownnodes.knownNodes[self.streamNumber][peer] = time.time()
         else:
-            while not state.shutdown:
-                knownnodes.knownNodesLock.acquire()
-                try:
-                    peer, = random.sample(knownnodes.knownNodes[self.streamNumber], 1)
-                except ValueError: # no known nodes
-                    knownnodes.knownNodesLock.release()
-                    self.stop.wait(1)
-                    continue
-                priority = (183600 - (time.time() - knownnodes.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
-                knownnodes.knownNodesLock.release()
+            while not self._stopped:
+                with knownnodes.knownNodesLock:
+                    try:
+                        peer, = random.sample(knownnodes.knownNodes[self.streamNumber], 1)
+                    except ValueError: # no known nodes
+                        self.stop.wait(1)
+                        continue
+                    priority = (183600 - (time.time() - knownnodes.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
                 if BMConfigParser().get('bitmessagesettings', 'socksproxytype') != 'none':
                     if peer.host.find(".onion") == -1:
                         priority /= 10 # hidden services have 10x priority over plain net
@@ -82,7 +79,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
         while BMConfigParser().safeGetBoolean('bitmessagesettings', 'sendoutgoingconnections') and not self._stopped:
             self.name = "outgoingSynSender"
             maximumConnections = 1 if state.trustedPeer else 8 # maximum number of outgoing connections = 8
-            while len(self.selfInitiatedConnections[self.streamNumber]) >= maximumConnections:
+            while len(self.selfInitiatedConnections[self.streamNumber]) >= maximumConnections and not self._stopped:
                 self.stop.wait(10)
             if state.shutdown:
                 break
@@ -95,7 +92,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 random.seed()
                 peer = self._getPeer()
                 self.stop.wait(1)
-                if state.shutdown:
+                if self._stopped:
                     break
                 # Clear out the shared.alreadyAttemptedConnectionsList every half
                 # hour so that this program will again attempt a connection
@@ -110,7 +107,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 shared.alreadyAttemptedConnectionsListLock.release()
             except threading.ThreadError as e:
                 pass
-            if state.shutdown:
+            if self._stopped:
                 break
             self.name = "outgoingSynSender-" + peer.host.replace(":", ".") # log parser field separator
             address_family = socket.AF_INET
@@ -133,12 +130,11 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                       
                 So let us remove the offending address from our knownNodes file.
                 """
-                knownnodes.knownNodesLock.acquire()
-                try:
-                    del knownnodes.knownNodes[self.streamNumber][peer]
-                except:
-                    pass
-                knownnodes.knownNodesLock.release()
+                with knownnodes.knownNodesLock:
+                    try:
+                        del knownnodes.knownNodes[self.streamNumber][peer]
+                    except:
+                        pass
                 logger.debug('deleting ' + str(peer) + ' from knownnodes.knownNodes because it caused a socks.socksocket exception. We must not be 64-bit compatible.')
                 continue
             # This option apparently avoids the TIME_WAIT state so that we
