@@ -1,5 +1,4 @@
 import os
-import pickle
 import Queue
 import threading
 import time
@@ -10,7 +9,7 @@ from configparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlQuery, sqlStoredProcedure
 from helper_threading import StoppableThread
-from knownnodes import knownNodes, knownNodesLock
+from knownnodes import saveKnownNodes
 from inventory import Inventory
 import protocol
 from queues import addressGeneratorQueue, objectProcessorQueue, parserInputQueue, UISignalQueue, workerQueue
@@ -29,17 +28,11 @@ def doCleanShutdown():
         if thread.isAlive() and isinstance(thread, StoppableThread):
             thread.stopThread()
     
-    knownNodesLock.acquire()
     UISignalQueue.put(('updateStatusBar','Saving the knownNodes list of peers to disk...'))
-    output = open(state.appdata + 'knownnodes.dat', 'wb')
-    logger.info('finished opening knownnodes.dat. Now pickle.dump')
-    pickle.dump(knownNodes, output)
-    logger.info('Completed pickle.dump. Closing output...')
-    output.close()
-    knownNodesLock.release()
-    logger.info('Finished closing knownnodes.dat output file.')
+    logger.info('Saving knownNodes list of peers to disk')
+    saveKnownNodes()
+    logger.info('Done saving knownNodes list of peers to disk')
     UISignalQueue.put(('updateStatusBar','Done saving the knownNodes list of peers to disk.'))
-
     logger.info('Flushing inventory in memory out to disk...')
     UISignalQueue.put((
         'updateStatusBar',

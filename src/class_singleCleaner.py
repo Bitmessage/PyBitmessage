@@ -3,7 +3,6 @@ import shared
 import time
 import sys
 import os
-import pickle
 
 import tr#anslate
 from configparser import BMConfigParser
@@ -90,28 +89,23 @@ class singleCleaner(threading.Thread, StoppableThread):
             # cleanup old nodes
             now = int(time.time())
             toDelete = []
-            knownnodes.knownNodesLock.acquire()
-            for stream in knownnodes.knownNodes:
-                for node in knownnodes.knownNodes[stream].keys():
-                    if now - knownnodes.knownNodes[stream][node] > 2419200: # 28 days
-                        shared.needToWriteKownNodesToDisk = True
-                        del knownnodes.knownNodes[stream][node]
-            knownnodes.knownNodesLock.release()
+            with knownnodes.knownNodesLock:
+                for stream in knownnodes.knownNodes:
+                    for node in knownnodes.knownNodes[stream].keys():
+                        if now - knownnodes.knownNodes[stream][node] > 2419200: # 28 days
+                            shared.needToWriteKownNodesToDisk = True
+                            del knownnodes.knownNodes[stream][node]
 
             # Let us write out the knowNodes to disk if there is anything new to write out.
             if shared.needToWriteKnownNodesToDisk:
-                knownnodes.knownNodesLock.acquire()
-                output = open(state.appdata + 'knownnodes.dat', 'wb')
                 try:
-                    pickle.dump(knownnodes.knownNodes, output)
-                    output.close()
+                    knownnodes.saveKnownNodes()
                 except Exception as err:
                     if "Errno 28" in str(err):
                         logger.fatal('(while receiveDataThread knownnodes.needToWriteKnownNodesToDisk) Alert: Your disk or data storage volume is full. ')
                         queues.UISignalQueue.put(('alert', (tr._translate("MainWindow", "Disk full"), tr._translate("MainWindow", 'Alert: Your disk or data storage volume is full. Bitmessage will now exit.'), True)))
                         if shared.daemon:
                             os._exit(0)
-                knownnodes.knownNodesLock.release()
                 shared.needToWriteKnownNodesToDisk = False
 
             # TODO: cleanup pending upload / download
