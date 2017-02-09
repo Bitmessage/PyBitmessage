@@ -133,7 +133,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 with knownnodes.knownNodesLock:
                     try:
                         del knownnodes.knownNodes[self.streamNumber][peer]
-                    except:
+                    except KeyError:
                         pass
                 logger.debug('deleting ' + str(peer) + ' from knownnodes.knownNodes because it caused a socks.socksocket exception. We must not be 64-bit compatible.')
                 continue

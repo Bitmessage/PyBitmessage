@@ -58,7 +58,6 @@ import time
 import os
 import hashlib
 from pyelliptic.openssl import OpenSSL
-import pickle
 import platform
 import textwrap
 import debug
