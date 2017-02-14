@@ -3944,7 +3944,7 @@ class MyForm(settingsmixin.SMainWindow):
         for i in range(len(completerList)):
             if str(completerList[i]).endswith(" <" + item.address + ">"):
                 completerList[i] = item.label + " <" + item.address + ">"
-        stringList = self.ui.lineEditTo.completer().model().setStringList(completerList)
+        self.ui.lineEditTo.completer().model().setStringList(completerList)
 
     def writeNewAddressToTable(self, label, address, streamNumber):
         self.rerenderTabTreeMessages()
