@@ -1,6 +1,7 @@
 #! python
 
 import sys
+import os
 import pyelliptic.openssl
 
 #Only really old versions of Python don't have sys.hexversion. We don't support
@@ -41,6 +42,8 @@ def check_hashlib():
 def check_sqlite():
     if sys.hexversion < 0x020500F0:
         logger.error('The sqlite3 module is not included in this version of Python.')
+        if sys.platform.startswith('freebsd'):
+            logger.error('On FreeBSD, try running "pkg install py27-sqlite3" as root.')
         return False
     try:
         import sqlite3
@@ -167,6 +170,24 @@ def check_pyqt():
         import PyQt4.QtCore
     except ImportError:
         logger.error('The PyQt4 package is not available. PyBitmessage requires PyQt 4.8 or later and Qt 4.7 or later.')
+        if sys.platform.startswith('openbsd'):
+            logger.error('On OpenBSD, try running "pkg_add py-qt4" as root.')
+        elif sys.platform.startswith('freebsd'):
+            logger.error('On FreeBSD, try running "pkg install py27-qt4" as root.')
+        elif os.path.isfile("/etc/os-release"):
+            with open("/etc/os-release", 'rt') as osRelease:
+                for line in osRelease:
+                    if line.startswith("NAME="):
+                        if "fedora" in line.lower():
+                            logger.error('On Fedora, try running "dnf install PyQt4" as root.')
+                        elif "opensuse" in line.lower():
+                            logger.error('On openSUSE, try running "zypper install python-qt" as root.')
+                        elif "ubuntu" in line.lower():
+                            logger.error('On Ubuntu, try running "apt-get install python-qt4" as root.')
+                        elif "debian" in line.lower():
+                            logger.error('On Debian, try running "apt-get install python-qt4" as root.')
+                        else:
+                            logger.error('If your package manager does not have this package, try running "pip install PyQt4".')
         return False
     logger.info('PyQt Version: ' + PyQt4.QtCore.PYQT_VERSION_STR)
     logger.info('Qt Version: ' + PyQt4.QtCore.QT_VERSION_STR)
@@ -178,6 +199,33 @@ def check_pyqt():
         logger.error('This version of Qt is too old. PyBitmessage requries Qt 4.7 or later.')
         passed = False
     return passed
+
+def check_msgpack():
+    try:
+        import msgpack
+    except ImportError:
+        logger.error('The msgpack package is not available. PyBitmessage requires msgpack.')
+        if sys.platform.startswith('openbsd'):
+            logger.error('On OpenBSD, try running "pkg_add py-msgpack" as root.')
+        elif sys.platform.startswith('freebsd'):
+            logger.error('On FreeBSD, try running "pkg install py27-msgpack-python" as root.')
+        elif os.path.isfile("/etc/os-release"):
+            with open("/etc/os-release", 'rt') as osRelease:
+                for line in osRelease:
+                    if line.startswith("NAME="):
+                        if "fedora" in line.lower():
+                            logger.error('On Fedora, try running "dnf install python2-msgpack" as root.')
+                        elif "opensuse" in line.lower():
+                            logger.error('On openSUSE, try running "zypper install python-msgpack-python" as root.')
+                        elif "ubuntu" in line.lower():
+                            logger.error('On Ubuntu, try running "apt-get install python-msgpack" as root.')
+                        elif "debian" in line.lower():
+                            logger.error('On Debian, try running "apt-get install python-msgpack" as root.')
+                        else:
+                            logger.error('If your package manager does not have this package, try running "pip install msgpack-python".')
+
+        return False
+    return True
 
 def check_dependencies(verbose = False, optional = False):
     if verbose:
@@ -195,7 +243,7 @@ def check_dependencies(verbose = False, optional = False):
         logger.error('PyBitmessage does not support Python 3+. Python 2.7.3 or greater is required.')
         has_all_dependencies = False
 
-    check_functions = [check_hashlib, check_sqlite, check_openssl]
+    check_functions = [check_hashlib, check_sqlite, check_openssl, check_msgpack]
     if optional:
         check_functions.extend([check_pyqt, check_curses])
 
