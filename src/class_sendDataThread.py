@@ -98,11 +98,9 @@ class sendDataThread(threading.Thread):
                     continue
                 raise
             except socket.error as e:
-                if e.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
-                    select.select([], [self.sslSock if isSSL else self.sock], [], 10)
-                    logger.debug('sock.recv retriable error')
-                    continue
-                if sys.platform.startswith('win') and e.errno in (errno.WSAEAGAIN, errno.WSAEWOULDBLOCK):
+                if e.errno in (errno.EAGAIN, errno.EWOULDBLOCK) or \
+                    (sys.platform.startswith('win') and \
+                    e.errno in (errno.WSAEWOULDBLOCK)):
                     select.select([], [self.sslSock if isSSL else self.sock], [], 10)
                     logger.debug('sock.recv retriable error')
                     continue

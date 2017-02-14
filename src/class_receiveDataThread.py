@@ -116,11 +116,9 @@ class receiveDataThread(threading.Thread):
                 logger.error ('SSL error: %i/%s', err.errno if err.errno else 0, str(err))
                 break
             except socket.error as err:
-                if err.errno in (errno.EAGAIN, errno.EWOULDBLOCK):
-                    select.select([self.sslSock if isSSL else self.sock], [], [], 10)
-                    logger.debug('sock.recv retriable error')
-                    continue
-                if sys.platform.startswith('win') and err.errno in (errno.WSAEAGAIN, errno.WSAEWOULDBLOCK):
+                if err.errno in (errno.EAGAIN, errno.EWOULDBLOCK) or \
+                    (sys.platform.startswith('win') and \
+                    err.errno in (errno.WSAEWOULDBLOCK)):
                     select.select([self.sslSock if isSSL else self.sock], [], [], 10)
                     logger.debug('sock.recv retriable error')
                     continue
