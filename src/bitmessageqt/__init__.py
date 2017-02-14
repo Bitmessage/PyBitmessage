@@ -571,6 +571,8 @@ class MyForm(settingsmixin.SMainWindow):
             if len(db[toAddress]) > 0:
                 j = 0
                 for f, c in db[toAddress].iteritems():
+                    if toAddress is not None and tab == 'messages' and folder == "new":
+                        continue
                     subwidget = Ui_FolderWidget(widget, j, toAddress, f, c)
                     if subwidget.folderName not in ["new", "trash", "sent"]:
                         unread += c
@@ -585,7 +587,7 @@ class MyForm(settingsmixin.SMainWindow):
             j = 0
             unread = 0
             for folder in folders:
-                if toAddress is not None and folder == "new":
+                if toAddress is not None and tab == 'messages' and folder == "new":
                     continue
                 subwidget = Ui_FolderWidget(widget, j, toAddress, folder, db[toAddress][folder])
                 if subwidget.folderName not in ["new", "trash", "sent"]:
@@ -1115,8 +1117,8 @@ class MyForm(settingsmixin.SMainWindow):
             toAddress, fromAddress, subject, status, ackdata, lastactiontime = row
             self.addMessageListItemSent(tableWidget, toAddress, fromAddress, subject, status, ackdata, lastactiontime)
 
-        tableWidget.setSortingEnabled(False)
         tableWidget.horizontalHeader().setSortIndicator(3, Qt.DescendingOrder)
+        tableWidget.setSortingEnabled(True)
         tableWidget.horizontalHeaderItem(3).setText(_translate("MainWindow", "Sent", None))
         tableWidget.setUpdatesEnabled(True)
 
@@ -3558,6 +3560,7 @@ class MyForm(settingsmixin.SMainWindow):
         BMConfigParser().save()
         shared.reloadMyAddressHashes()
         self.rerenderAddressBook()
+        self.rerenderComboBoxSendFrom()
         if account.type == AccountMixin.NORMAL:
             self.rerenderTabTreeMessages()
         elif account.type == AccountMixin.CHAN:
@@ -3937,6 +3940,11 @@ class MyForm(settingsmixin.SMainWindow):
             self.rerenderComboBoxSendFrom()
         self.rerenderMessagelistFromLabels()
         self.rerenderMessagelistToLabels()
+        completerList = self.ui.lineEditTo.completer().model().stringList()
+        for i in range(len(completerList)):
+            if str(completerList[i]).endswith(" <" + item.address + ">"):
+                completerList[i] = item.label + " <" + item.address + ">"
+        stringList = self.ui.lineEditTo.completer().model().setStringList(completerList)
 
     def writeNewAddressToTable(self, label, address, streamNumber):
         self.rerenderTabTreeMessages()
@@ -3944,6 +3952,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderTabTreeChans()
         self.rerenderComboBoxSendFrom()
         self.rerenderComboBoxSendFromBroadcast()
+        self.rerenderAddressBook()
 
     def updateStatusBar(self, data):
         if type(data) is tuple or type(data) is list:
