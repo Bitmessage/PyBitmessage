@@ -442,6 +442,7 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
                 try:
                     a = BMConfigParser().get(self.address, 'label')
                     BMConfigParser().set(self.address, 'label', self.label)
+                    BMConfigParser().save()
                 except:
                     sqlExecute('''UPDATE addressbook set label=? WHERE address=?''', self.label, self.address)
             elif self.type == AccountMixin.SUBSCRIPTION:
