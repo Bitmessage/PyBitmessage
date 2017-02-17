@@ -100,7 +100,7 @@ class sendDataThread(threading.Thread):
             except socket.error as e:
                 if e.errno in (errno.EAGAIN, errno.EWOULDBLOCK) or \
                     (sys.platform.startswith('win') and \
-                    e.errno in (errno.WSAEWOULDBLOCK)):
+                    e.errno == errno.WSAEWOULDBLOCK):
                     select.select([], [self.sslSock if isSSL else self.sock], [], 10)
                     logger.debug('sock.recv retriable error')
                     continue
