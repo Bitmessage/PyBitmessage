@@ -223,7 +223,7 @@ class ECC:
             if (OpenSSL.EC_KEY_set_private_key(own_key, own_priv_key)) == 0:
                 raise Exception("[OpenSSL] EC_KEY_set_private_key FAIL ...")
 
-            if OpenSSL._hexversion > 0x10100000:
+            if OpenSSL._hexversion > 0x10100000 and not OpenSSL._libreSSL:
                 OpenSSL.EC_KEY_set_method(own_key, OpenSSL.EC_KEY_OpenSSL())
             else:
                 OpenSSL.ECDH_set_method(own_key, OpenSSL.ECDH_OpenSSL())
@@ -310,7 +310,7 @@ class ECC:
             size = len(inputb)
             buff = OpenSSL.malloc(inputb, size)
             digest = OpenSSL.malloc(0, 64)
-            if OpenSSL._hexversion > 0x10100000:
+            if OpenSSL._hexversion > 0x10100000 and not OpenSSL._libreSSL:
                 md_ctx = OpenSSL.EVP_MD_CTX_new()
             else:
                 md_ctx = OpenSSL.EVP_MD_CTX_create()
@@ -343,7 +343,7 @@ class ECC:
             if (OpenSSL.EC_KEY_check_key(key)) == 0:
                 raise Exception("[OpenSSL] EC_KEY_check_key FAIL ...")
 
-            if OpenSSL._hexversion > 0x10100000:
+            if OpenSSL._hexversion > 0x10100000 and not OpenSSL._libreSSL:
                 OpenSSL.EVP_MD_CTX_new(md_ctx)
             else:
                 OpenSSL.EVP_MD_CTX_init(md_ctx)
@@ -365,7 +365,7 @@ class ECC:
             OpenSSL.BN_free(pub_key_y)
             OpenSSL.BN_free(priv_key)
             OpenSSL.EC_POINT_free(pub_key)
-            if OpenSSL._hexversion > 0x10100000:
+            if OpenSSL._hexversion > 0x10100000 and not OpenSSL._libreSSL:
                 OpenSSL.EVP_MD_CTX_free(md_ctx)
             else:
                 OpenSSL.EVP_MD_CTX_destroy(md_ctx)
@@ -381,7 +381,7 @@ class ECC:
             binputb = OpenSSL.malloc(inputb, len(inputb))
             digest = OpenSSL.malloc(0, 64)
             dgst_len = OpenSSL.pointer(OpenSSL.c_int(0))
-            if OpenSSL._hexversion > 0x10100000:
+            if OpenSSL._hexversion > 0x10100000 and not OpenSSL._libreSSL:
                 md_ctx = OpenSSL.EVP_MD_CTX_new()
             else:
                 md_ctx = OpenSSL.EVP_MD_CTX_create()
@@ -405,7 +405,7 @@ class ECC:
                 raise Exception("[OpenSSL] EC_KEY_set_public_key FAIL ...")
             if (OpenSSL.EC_KEY_check_key(key)) == 0:
                 raise Exception("[OpenSSL] EC_KEY_check_key FAIL ...")
-            if OpenSSL._hexversion > 0x10100000:
+            if OpenSSL._hexversion > 0x10100000 and not OpenSSL._libreSSL:
                 OpenSSL.EVP_MD_CTX_new(md_ctx)
             else:
                 OpenSSL.EVP_MD_CTX_init(md_ctx)
@@ -431,7 +431,7 @@ class ECC:
             OpenSSL.BN_free(pub_key_x)
             OpenSSL.BN_free(pub_key_y)
             OpenSSL.EC_POINT_free(pub_key)
-            if OpenSSL._hexversion > 0x10100000:
+            if OpenSSL._hexversion > 0x10100000 and not OpenSSL._libreSSL:
                 OpenSSL.EVP_MD_CTX_free(md_ctx)
             else:
                 OpenSSL.EVP_MD_CTX_destroy(md_ctx)
