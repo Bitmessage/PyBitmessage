@@ -77,7 +77,7 @@ class Cipher:
         return buff + self.final()
 
     def __del__(self):
-        if OpenSSL._hexversion > 0x10100000:
+        if OpenSSL._hexversion > 0x10100000 and not OpenSSL._libreSSL:
             OpenSSL.EVP_CIPHER_CTX_reset(self.ctx)
         else:
             OpenSSL.EVP_CIPHER_CTX_cleanup(self.ctx)

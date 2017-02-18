@@ -72,6 +72,7 @@ class _OpenSSL:
         """
         self._lib = ctypes.CDLL(library)
         self._version, self._hexversion, self._cflags = get_version(self._lib)
+        self._libreSSL = self._version.startswith("LibreSSL")
 
         self.pointer = ctypes.pointer
         self.c_int = ctypes.c_int
@@ -170,7 +171,7 @@ class _OpenSSL:
         self.EC_KEY_set_private_key.argtypes = [ctypes.c_void_p,
                                                 ctypes.c_void_p]
 
-        if self._hexversion >= 0x10100000:
+        if self._hexversion >= 0x10100000 and not self._libreSSL:
             self.EC_KEY_OpenSSL = self._lib.EC_KEY_OpenSSL
             self._lib.EC_KEY_OpenSSL.restype = ctypes.c_void_p
             self._lib.EC_KEY_OpenSSL.argtypes = []
@@ -250,7 +251,7 @@ class _OpenSSL:
         self.EVP_rc4.restype = ctypes.c_void_p
         self.EVP_rc4.argtypes = []
  
-        if self._hexversion >= 0x10100000:
+        if self._hexversion >= 0x10100000 and not self._libreSSL:
             self.EVP_CIPHER_CTX_reset = self._lib.EVP_CIPHER_CTX_reset
             self.EVP_CIPHER_CTX_reset.restype = ctypes.c_int
             self.EVP_CIPHER_CTX_reset.argtypes = [ctypes.c_void_p]
@@ -306,7 +307,7 @@ class _OpenSSL:
         self.ECDSA_verify.argtypes = [ctypes.c_int, ctypes.c_void_p,
                                       ctypes.c_int, ctypes.c_void_p, ctypes.c_int, ctypes.c_void_p]
 
-        if self._hexversion >= 0x10100000:
+        if self._hexversion >= 0x10100000 and not self._libreSSL:
             self.EVP_MD_CTX_new = self._lib.EVP_MD_CTX_new
             self.EVP_MD_CTX_new.restype = ctypes.c_void_p
             self.EVP_MD_CTX_new.argtypes = []
