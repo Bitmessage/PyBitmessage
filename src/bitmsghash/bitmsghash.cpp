@@ -75,6 +75,10 @@ void getnumthreads()
 	DWORD_PTR dwProcessAffinity, dwSystemAffinity;
 #elif __linux__
 	cpu_set_t dwProcessAffinity;
+#elif __OpenBSD__
+	int mib[2], core_count = 0;
+	int dwProcessAffinity = 0;
+	size_t len2;
 #else
 	int dwProcessAffinity = 0;
 	int32_t core_count = 0;
@@ -86,6 +90,12 @@ void getnumthreads()
 	GetProcessAffinityMask(GetCurrentProcess(), &dwProcessAffinity, &dwSystemAffinity);
 #elif __linux__
 	sched_getaffinity(0, len, &dwProcessAffinity);
+#elif __OpenBSD__
+	len2 = sizeof(core_count);
+	mib[0] = CTL_HW;
+	mib[1] = HW_NCPU;
+	if (sysctl(mib, 2, &core_count, &len2, 0, 0) == 0)
+		numthreads = core_count;
 #else
 	if (sysctlbyname("hw.logicalcpu", &core_count, &len, 0, 0) == 0)
 		numthreads = core_count;
