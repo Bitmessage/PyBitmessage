@@ -1,0 +1,14 @@
+all: bitmsghash.so
+
+powtest:
+	./testpow.py
+
+bitmsghash.so: bitmsghash.o
+	${CXX} bitmsghash.o -shared -fPIC -lpthread -lcrypto $(LDFLAGS) -o bitmsghash.so
+
+bitmsghash.o:
+	${CXX} -Wall -O3 -march=native -fPIC $(CCFLAGS) -c bitmsghash.cpp
+
+clean:
+	rm -f bitmsghash.o bitmsghash.so
+
