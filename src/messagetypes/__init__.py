@@ -3,7 +3,7 @@ from os import path, listdir
 from string import lower
 
 from debug import logger
-
+import paths
 
 class MsgBase(object):
     def encode(self):
@@ -28,7 +28,15 @@ def constructObject(data):
     else:
         return returnObj
 
-for mod in listdir(path.dirname(__file__)):
+mods = []
+if paths.frozen is not None:
+    with open(path.join(path.dirname(path.dirname(__file__)), 'messagetypes.txt'), 'rt') as f:
+        for m in f.readline():
+            mods.append(m.rstrip())
+else:
+    mods = listdir(path.dirname(__file__))
+
+for mod in mods:
     if mod == "__init__.py":
         continue
     splitted = path.splitext(mod)
