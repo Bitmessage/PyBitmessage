@@ -6,7 +6,6 @@ qtPath = "C:\\Qt-4.8.7\\"
 openSSLPath = "C:\\OpenSSL-1.0.2j\\"
 outPath = "C:\\src\\PyInstaller-3.2.1\\bitmessagemain"
 
-messagetypes = []
 hiddenimports= []
 
 # manually add messagetypes directory and its listing
@@ -19,7 +18,6 @@ with open(os.path.join(srcPath, 'messagetypes.txt'), 'wt') as f:
 			continue
 		f.write(mt + "\n")
 		hiddenimports.append('messagetypes.' + splitted[0])
-		messagetypes.append(mt)
 
 # -*- mode: python -*-
 a = Analysis([srcPath + 'bitmessagemain.py'],
@@ -27,9 +25,6 @@ a = Analysis([srcPath + 'bitmessagemain.py'],
              hiddenimports=hiddenimports,
              hookspath=None,
              runtime_hooks=None)
-
-for mt in messagetypes:
-	a.scripts.append((os.path.join('messagetypes', mt), os.path.join(srcPath, 'messagetypes', mt), 'PYMODULE'))
 
 a.datas.append(('messagetypes.txt', os.path.join(srcPath, 'messagetypes.txt'), 'DATA'))
 
