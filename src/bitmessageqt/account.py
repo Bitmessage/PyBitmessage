@@ -128,7 +128,10 @@ class BMAccount(object):
     def parseMessage(self, toAddress, fromAddress, subject, message):
         self.toAddress = toAddress
         self.fromAddress = fromAddress
-        self.subject = subject
+        if isinstance(subject, unicode):
+            self.subject = str(subject)
+        else:
+            self.subject = subject
         self.message = message
         self.fromLabel = self.getLabel(fromAddress)
         self.toLabel = self.getLabel(toAddress)

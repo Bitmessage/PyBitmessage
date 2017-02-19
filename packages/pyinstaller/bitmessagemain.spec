@@ -6,12 +6,8 @@ qtPath = "C:\\Qt-4.8.7\\"
 openSSLPath = "C:\\OpenSSL-1.0.2j\\"
 outPath = "C:\\src\\PyInstaller-3.2.1\\bitmessagemain"
 
-# -*- mode: python -*-
-a = Analysis([srcPath + 'bitmessagemain.py'],
-             pathex=[outPath],
-             hiddenimports=['messagetypes'],
-             hookspath=None,
-             runtime_hooks=None)
+messagetypes = []
+hiddenimports= []
 
 # manually add messagetypes directory and its listing
 with open(os.path.join(srcPath, 'messagetypes.txt'), 'wt') as f:
@@ -22,7 +18,19 @@ with open(os.path.join(srcPath, 'messagetypes.txt'), 'wt') as f:
 		if splitted[1] != ".py":
 			continue
 		f.write(mt + "\n")
-		a.scripts.append((os.path.join('messagetypes', mt), os.path.join(srcPath, 'messagetypes', mt), 'PYMODULE'))
+		hiddenimports.append('messagetypes.' + splitted[0])
+		messagetypes.append(mt)
+
+# -*- mode: python -*-
+a = Analysis([srcPath + 'bitmessagemain.py'],
+             pathex=[outPath],
+             hiddenimports=hiddenimports,
+             hookspath=None,
+             runtime_hooks=None)
+
+for mt in messagetypes:
+	a.scripts.append((os.path.join('messagetypes', mt), os.path.join(srcPath, 'messagetypes', mt), 'PYMODULE'))
+
 a.datas.append(('messagetypes.txt', os.path.join(srcPath, 'messagetypes.txt'), 'DATA'))
 
 # fix duplicates
@@ -37,7 +45,7 @@ def addTranslations():
     for file in os.listdir(srcPath + 'translations'):
         if file[-3:] != ".qm":
             continue
-        extraDatas.append((os.path.join('translations', file), os.path.join(srcPath, 'translations', file) 'DATA'))
+        extraDatas.append((os.path.join('translations', file), os.path.join(srcPath, 'translations', file), 'DATA'))
     for file in os.listdir(qtPath + 'translations'):
         if file[0:3] != "qt_" or file[5:8] != ".qm":
             continue
@@ -80,4 +88,4 @@ exe = EXE(pyz,
           debug=False,
           strip=None,
           upx=False,
-          console=False, icon= os.path.join(srcPath, 'images', 'can-icon.ico')
+          console=False, icon= os.path.join(srcPath, 'images', 'can-icon.ico'))
