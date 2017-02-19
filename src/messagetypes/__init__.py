@@ -31,7 +31,7 @@ def constructObject(data):
 mods = []
 if paths.frozen is not None:
     with open(path.join(path.dirname(path.dirname(__file__)), 'messagetypes.txt'), 'rt') as f:
-        for m in f.readline():
+        for m in f.readlines():
             mods.append(m.rstrip())
 else:
     mods = listdir(path.dirname(__file__))

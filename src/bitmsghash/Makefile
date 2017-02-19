@@ -6,7 +6,7 @@ else ifeq ($(UNAME_S),MINGW32_NT-6.1)
 	CCFLAGS += -IC:\OpenSSL-1.0.2j-mingw\include -D_WIN32 -march=native
 	LDFLAGS += -static-libgcc -LC:\OpenSSL-1.0.2j-mingw\lib -lwsock32 -o bitmsghash32.dll -Wl,--out-implib,bitmsghash.a
 else
-	LDFLAGS += -lpthread -o bigmsghash.so
+	LDFLAGS += -lpthread -o bitmsghash.so
 endif
    	
 all: bitmsghash.so
