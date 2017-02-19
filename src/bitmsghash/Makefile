@@ -10,10 +10,10 @@ powtest:
 	./testpow.py
 
 bitmsghash.so: bitmsghash.o
-	g++ bitmsghash.o -shared -fPIC -lpthread -lcrypto $(LDFLAGS) -o bitmsghash.so
+	${CXX} bitmsghash.o -shared -fPIC -lpthread -lcrypto $(LDFLAGS) -o bitmsghash.so
 
 bitmsghash.o:
-	g++ -Wall -O3 -march=native -fPIC $(CCFLAGS) -c bitmsghash.cpp
+	${CXX} -Wall -O3 -march=native -fPIC $(CCFLAGS) -c bitmsghash.cpp
 
 clean:
 	rm -f bitmsghash.o bitmsghash.so
