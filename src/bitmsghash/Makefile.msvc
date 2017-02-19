@@ -1,0 +1,2 @@
+all:
+	cl /I C:\OpenSSL-1.0.2j\include /INCREMENTAL bitmsghash.cpp /MT /link /DLL /OUT:bitmsghash32.dll /LIBPATH:C:\OpenSSL-1.0.2j\lib\ libeay32.lib ws2_32.lib

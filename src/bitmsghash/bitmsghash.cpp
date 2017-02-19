@@ -66,7 +66,11 @@ void * threadfunc(void* param) {
 			successval = tmpnonce;
 		}
 	}
+#ifdef _WIN32
+	return 0;
+#else
 	return NULL;
+#endif
 }
 
 void getnumthreads()
@@ -104,7 +108,11 @@ void getnumthreads()
 #endif
 	for (unsigned int i = 0; i < len * 8; i++)
 #if defined(_WIN32)
+#if defined(_MSC_VER)
 		if (dwProcessAffinity & (1i64 << i))
+#else // CYGWIN/MINGW
+		if (dwProcessAffinity & (1ULL << i))
+#endif
 #elif defined __linux__
 		if (CPU_ISSET(i, &dwProcessAffinity))
 #else
