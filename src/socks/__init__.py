@@ -445,19 +445,7 @@ class socksocket(socket.socket):
                 raise
             self.__negotiatehttp(destpair[0], destpair[1])
         elif self.__proxy[0] == None:
-            try:
-                _orgsocket.connect(self, (destpair[0], destpair[1]))
-            except socket.error as e:
-                # ENETUNREACH, WSAENETUNREACH
-                if e[0] in [101, 10051]:
-                    raise GeneralProxyError((7, _generalerrors[7]))
-                # ECONNREFUSED, WSAECONNREFUSED
-                if e[0] in [111, 10061]:
-                    raise GeneralProxyError((8, _generalerrors[8]))
-                # EHOSTUNREACH, WSAEHOSTUNREACH
-                if e[0] in [113, 10065]:
-                    raise GeneralProxyError((9, _generalerrors[9]))
-                raise
+            _orgsocket.connect(self, (destpair[0], destpair[1]))
         else:
             raise GeneralProxyError((4, _generalerrors[4]))
 
