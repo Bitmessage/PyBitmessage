@@ -658,74 +658,54 @@ class receiveDataThread(threading.Thread):
 
             with knownnodes.knownNodesLock:
                 if len(knownnodes.knownNodes[stream]) > 0:
-                    ownPosition = random.randint(0, 499)
-                    sentOwn = False
-                    for i in range(500):
-                        # if current connection is over a proxy, sent our own onion address at a random position
-                        if ownPosition == i and ".onion" in BMConfigParser().get("bitmessagesettings", "onionhostname") and \
-                            hasattr(self.sock, "getproxytype") and self.sock.getproxytype() != "none" and not sentOwn:
-                            peer = state.Peer(BMConfigParser().get("bitmessagesettings", "onionhostname"), BMConfigParser().getint("bitmessagesettings", "onionport"))
-                        else:
-                        # still may contain own onion address, but we don't change it
-                            peer, = random.sample(knownnodes.knownNodes[stream], 1)
-                        if isHostInPrivateIPRange(peer.host):
-                            continue
-                        if peer.host == BMConfigParser().get("bitmessagesettings", "onionhostname") and peer.port == BMConfigParser().getint("bitmessagesettings", "onionport") :
-                            sentOwn = True
-                        addrsInMyStream[peer] = knownnodes.knownNodes[
-                            stream][peer]
+                    filtered = {k: v for k, v in knownnodes.knownNodes[stream].items() if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                    elemCount = len(filtered)
+                    if elemCount > 500:
+                        elemCount = 500
+                    # only if more recent than 3 hours
+                    addrsInMyStream = random.sample(filtered.items(), elemCount)
                 # sent 250 only if the remote isn't interested in it
                 if len(knownnodes.knownNodes[stream * 2]) > 0 and stream not in self.streamNumber:
-                    for i in range(250):
-                        peer, = random.sample(knownnodes.knownNodes[
-                                            stream * 2], 1)
-                        if isHostInPrivateIPRange(peer.host):
-                            continue
-                        addrsInChildStreamLeft[peer] = knownnodes.knownNodes[
-                            stream * 2][peer]
+                    filtered = {k: v for k, v in knownnodes.knownNodes[stream*2].items() if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                    elemCount = len(filtered)
+                    if elemCount > 250:
+                        elemCount = 250
+                    addrsInMyStreamLeft = random.sample(filtered.items(), elemCount)
                 if len(knownnodes.knownNodes[(stream * 2) + 1]) > 0 and stream not in self.streamNumber:
-                    for i in range(250):
-                        peer, = random.sample(knownnodes.knownNodes[
-                                            (stream * 2) + 1], 1)
-                        if isHostInPrivateIPRange(peer.host):
-                            continue
-                        addrsInChildStreamRight[peer] = knownnodes.knownNodes[
-                            (stream * 2) + 1][peer]
+                    filtered = {k: v for k, v in knownnodes.knownNodes[stream*2+1].items() if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                    elemCount = len(filtered)
+                    if elemCount > 250:
+                        elemCount = 250
+                    addrsInMyStreamRight = random.sample(filtered.items(), elemCount)
             numberOfAddressesInAddrMessage = 0
             payload = ''
-            for (HOST, PORT), value in addrsInMyStream.items():
-                timeLastReceivedMessageFromThisNode = value
-                if timeLastReceivedMessageFromThisNode > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers):  # If it is younger than 3 hours old..
-                    numberOfAddressesInAddrMessage += 1
-                    payload += pack(
-                        '>Q', timeLastReceivedMessageFromThisNode)  # 64-bit time
-                    payload += pack('>I', stream)
-                    payload += pack(
-                        '>q', 1)  # service bit flags offered by this node
-                    payload += protocol.encodeHost(HOST)
-                    payload += pack('>H', PORT)  # remote port
-            for (HOST, PORT), value in addrsInChildStreamLeft.items():
-                timeLastReceivedMessageFromThisNode = value
-                if timeLastReceivedMessageFromThisNode > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers):  # If it is younger than 3 hours old..
-                    numberOfAddressesInAddrMessage += 1
-                    payload += pack(
-                        '>Q', timeLastReceivedMessageFromThisNode)  # 64-bit time
-                    payload += pack('>I', stream * 2)
-                    payload += pack(
-                        '>q', 1)  # service bit flags offered by this node
-                    payload += protocol.encodeHost(HOST)
-                    payload += pack('>H', PORT)  # remote port
-            for (HOST, PORT), value in addrsInChildStreamRight.items():
-                timeLastReceivedMessageFromThisNode = value
-                if timeLastReceivedMessageFromThisNode > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers):  # If it is younger than 3 hours old..
-                    numberOfAddressesInAddrMessage += 1
-                    payload += pack(
-                        '>Q', timeLastReceivedMessageFromThisNode)  # 64-bit time
-                    payload += pack('>I', (stream * 2) + 1)
-                    payload += pack(
-                        '>q', 1)  # service bit flags offered by this node
-                    payload += protocol.encodeHost(HOST)
-                    payload += pack('>H', PORT)  # remote port
+            for (HOST, PORT), timeLastReceivedMessageFromThisNode in addrsInMyStream:
+                numberOfAddressesInAddrMessage += 1
+                payload += pack(
+                    '>Q', timeLastReceivedMessageFromThisNode)  # 64-bit time
+                payload += pack('>I', stream)
+                payload += pack(
+                    '>q', 1)  # service bit flags offered by this node
+                payload += protocol.encodeHost(HOST)
+                payload += pack('>H', PORT)  # remote port
+            for (HOST, PORT), timeLastReceivedMessageFromThisNode in addrsInChildStreamLeft:
+                numberOfAddressesInAddrMessage += 1
+                payload += pack(
+                    '>Q', timeLastReceivedMessageFromThisNode)  # 64-bit time
+                payload += pack('>I', stream * 2)
+                payload += pack(
+                    '>q', 1)  # service bit flags offered by this node
+                payload += protocol.encodeHost(HOST)
+                payload += pack('>H', PORT)  # remote port
+            for (HOST, PORT), timeLastReceivedMessageFromThisNode in addrsInChildStreamRight:
+                numberOfAddressesInAddrMessage += 1
+                payload += pack(
+                    '>Q', timeLastReceivedMessageFromThisNode)  # 64-bit time
+                payload += pack('>I', (stream * 2) + 1)
+                payload += pack(
+                    '>q', 1)  # service bit flags offered by this node
+                payload += protocol.encodeHost(HOST)
+                payload += pack('>H', PORT)  # remote port
     
             payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
             self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('addr', payload)))
