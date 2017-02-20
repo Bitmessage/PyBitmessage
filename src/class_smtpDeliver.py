@@ -8,7 +8,6 @@ import urlparse
 from configparser import BMConfigParser
 from debug import logger
 from helper_threading import *
-from bitmessageqt.uisignaler import UISignaler
 import queues
 import state
 
@@ -31,7 +30,7 @@ class smtpDeliver(threading.Thread, StoppableThread):
     @classmethod
     def get(cls):
         if not cls._instance:
-            cls._instance = UISignaler()
+            cls._instance = smtpDeliver()
         return cls._instance
 
     def run(self):
