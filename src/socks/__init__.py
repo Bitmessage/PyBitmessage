@@ -406,11 +406,14 @@ class socksocket(socket.socket):
             try:
                 _orgsocket.connect(self, (self.__proxy[1], portnum))
             except socket.error as e:
-                if e[0] == 101:
+                # ENETUNREACH, WSAENETUNREACH
+                if e[0] in [101, 10051]:
                     raise GeneralProxyError((7, _generalerrors[7]))
-                if e[0] == 111:
+                # ECONNREFUSED, WSAECONNREFUSED
+                if e[0] in [111, 10061]:
                     raise GeneralProxyError((8, _generalerrors[8]))
-                if e[0] == 113:
+                # EHOSTUNREACH, WSAEHOSTUNREACH
+                if e[0] in [113, 10065]:
                     raise GeneralProxyError((9, _generalerrors[9]))
                 raise
             self.__negotiatesocks5()
@@ -427,10 +430,34 @@ class socksocket(socket.socket):
                 portnum = self.__proxy[2]
             else:
                 portnum = 8080
-            _orgsocket.connect(self,(self.__proxy[1], portnum))
+            try:
+                _orgsocket.connect(self,(self.__proxy[1], portnum))
+            except socket.error as e:
+                # ENETUNREACH, WSAENETUNREACH
+                if e[0] in [101, 10051]:
+                    raise GeneralProxyError((7, _generalerrors[7]))
+                # ECONNREFUSED, WSAECONNREFUSED
+                if e[0] in [111, 10061]:
+                    raise GeneralProxyError((8, _generalerrors[8]))
+                # EHOSTUNREACH, WSAEHOSTUNREACH
+                if e[0] in [113, 10065]:
+                    raise GeneralProxyError((9, _generalerrors[9]))
+                raise
             self.__negotiatehttp(destpair[0], destpair[1])
         elif self.__proxy[0] == None:
-            _orgsocket.connect(self, (destpair[0], destpair[1]))
+            try:
+                _orgsocket.connect(self, (destpair[0], destpair[1]))
+            except socket.error as e:
+                # ENETUNREACH, WSAENETUNREACH
+                if e[0] in [101, 10051]:
+                    raise GeneralProxyError((7, _generalerrors[7]))
+                # ECONNREFUSED, WSAECONNREFUSED
+                if e[0] in [111, 10061]:
+                    raise GeneralProxyError((8, _generalerrors[8]))
+                # EHOSTUNREACH, WSAEHOSTUNREACH
+                if e[0] in [113, 10065]:
+                    raise GeneralProxyError((9, _generalerrors[9]))
+                raise
         else:
             raise GeneralProxyError((4, _generalerrors[4]))
 
