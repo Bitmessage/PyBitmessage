@@ -104,7 +104,7 @@ class sendDataThread(threading.Thread):
                     select.select([], [self.sslSock if isSSL else self.sock], [], 10)
                     logger.debug('sock.recv retriable error')
                     continue
-                if e.errno in (errno.EPIPE):
+                if e.errno == errno.EPIPE:
                     logger.debug('Connection broken')
                     return False
                 raise
