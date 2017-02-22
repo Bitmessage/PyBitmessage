@@ -26,7 +26,7 @@ import socket
 import sys
 import os
 
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 import defaults
 import tr # translate
 

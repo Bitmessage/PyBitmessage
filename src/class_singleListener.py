@@ -1,7 +1,7 @@
 import threading
 import shared
 import socket
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from class_sendDataThread import *
 from class_receiveDataThread import *
 import helper_bootstrap

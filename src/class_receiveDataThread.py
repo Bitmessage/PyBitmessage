@@ -24,7 +24,7 @@ from binascii import hexlify
 
 #import highlevelcrypto
 from addresses import *
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from class_objectHashHolder import objectHashHolder
 from helper_generic import addDataPadding, isHostInPrivateIPRange
 from helper_sql import sqlQuery

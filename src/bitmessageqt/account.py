@@ -6,7 +6,7 @@ import sys
 import inspect
 from helper_sql import *
 from addresses import decodeAddress
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from foldertree import AccountMixin
 from pyelliptic.openssl import OpenSSL
 from utils import str_broadcast_subscribers

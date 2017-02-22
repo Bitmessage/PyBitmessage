@@ -5,7 +5,7 @@ import sys
 import time
 
 import account
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from debug import logger
 import defaults
 from foldertree import AccountMixin

@@ -10,7 +10,7 @@ import time
 import traceback
 
 from addresses import calculateInventoryHash, encodeVarint, decodeVarint, decodeAddress, varintDecodeError
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from debug import logger
 import defaults
 from helper_sql import sqlExecute

@@ -6,7 +6,7 @@ import socket
 from struct import unpack, pack
 import threading
 import time
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from helper_threading import *
 import queues
 import shared

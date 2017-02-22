@@ -13,7 +13,7 @@ from binascii import hexlify
 from pyelliptic.openssl import OpenSSL
 import highlevelcrypto
 from addresses import *
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 import helper_generic
 from helper_generic import addDataPadding
 import helper_bitcoin

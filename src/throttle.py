@@ -2,7 +2,7 @@ import math
 import threading
 import time
 
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from singleton import Singleton
 import state
 

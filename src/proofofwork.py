@@ -6,7 +6,7 @@ from struct import unpack, pack
 from subprocess import call
 import sys
 import time
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from debug import logger
 import paths
 import openclpow

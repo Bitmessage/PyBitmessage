@@ -23,7 +23,7 @@ from helper_sql import *
 
 from addresses import *
 import ConfigParser
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from inventory import Inventory
 import l10n
 from pyelliptic.openssl import OpenSSL

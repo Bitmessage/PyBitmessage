@@ -11,7 +11,7 @@ import threading
 import time
 
 from addresses import decodeAddress
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlExecute
 from helper_threading import StoppableThread

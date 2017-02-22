@@ -11,7 +11,7 @@ import highlevelcrypto
 import proofofwork
 import sys
 import tr
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from debug import logger
 import defaults
 from helper_sql import *

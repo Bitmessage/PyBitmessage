@@ -5,7 +5,7 @@ import hashlib
 import random
 import os
 
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 import paths
 from state import shutdown
 from debug import logger

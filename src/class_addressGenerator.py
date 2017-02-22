@@ -7,7 +7,7 @@ import ctypes
 import hashlib
 import highlevelcrypto
 from addresses import *
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from debug import logger
 import defaults
 from helper_threading import *

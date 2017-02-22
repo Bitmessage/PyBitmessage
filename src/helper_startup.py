@@ -1,5 +1,5 @@
 import ConfigParser
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 import defaults
 import sys
 import os

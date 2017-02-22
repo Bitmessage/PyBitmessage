@@ -19,7 +19,7 @@ from binascii import hexlify
 import shared
 import time
 from addresses import decodeAddress,addBMIfNotPresent,decodeVarint,calculateInventoryHash,varintDecodeError
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 import defaults
 import helper_inbox
 import helper_sent
