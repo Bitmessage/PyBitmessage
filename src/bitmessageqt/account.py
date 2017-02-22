@@ -54,7 +54,8 @@ def accountClass(address):
         else:
             subscription = SubscriptionAccount(address)
             if subscription.type != AccountMixin.SUBSCRIPTION:
-                return None
+                # e.g. deleted chan
+                return NoAccount(address)
         return subscription
     try:
         gateway = BMConfigParser().get(address, "gateway")
@@ -87,7 +88,7 @@ class AccountColor(AccountMixin):
                 self.type = AccountMixin.NORMAL
         else:
             self.type = type
-        
+
     
 class BMAccount(object):
     def __init__(self, address = None):
@@ -135,6 +136,17 @@ class BMAccount(object):
         self.message = message
         self.fromLabel = self.getLabel(fromAddress)
         self.toLabel = self.getLabel(toAddress)
+
+
+class NoAccount(BMAccount):
+    def __init__(self, address = None):
+        self.address = address
+        self.type = AccountMixin.NORMAL
+
+    def getLabel(self, address = None):
+        if address is None:
+            address = self.address
+        return address
 
         
 class SubscriptionAccount(BMAccount):
