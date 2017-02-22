@@ -9,8 +9,3 @@ addressGeneratorQueue = Queue.Queue()
 objectProcessorQueue = ObjectProcessorQueue()
 apiAddressGeneratorReturnQueue = Queue.Queue(
     )  # The address generator thread uses this queue to get information back to the API thread.
-
-parserProcess = None
-parserLock = mpLock()
-parserInputQueue = mpQueue()
-parserOutputQueue = mpQueue()

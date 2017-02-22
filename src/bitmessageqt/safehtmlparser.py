@@ -1,28 +1,9 @@
 from HTMLParser import HTMLParser
 import inspect
-import multiprocessing
 import re
-import Queue
 from urllib import quote, quote_plus
 from urlparse import urlparse
 from debug import logger
-from queues import parserInputQueue, parserOutputQueue, parserProcess, parserLock
-
-def regexpSubprocess(parserInputQueue, parserOutputQueue):
-    for data in iter(parserInputQueue.get, None):
-        if data is None:
-            break;
-        try:
-            result = SafeHTMLParser.uriregex1.sub(
-                r'<a href="\1">\1</a>',
-                data)
-            result = SafeHTMLParser.uriregex2.sub(r'<a href="\1&', result)
-            result = SafeHTMLParser.emailregex.sub(r'<a href="mailto:\1">\1</a>', result)
-            parserOutputQueue.put(result)
-        except SystemExit:
-            break;
-        except:
-            break;
 
 class SafeHTMLParser(HTMLParser):
     # from html5lib.sanitiser
@@ -82,7 +63,7 @@ class SafeHTMLParser(HTMLParser):
                         val == ""
                 self.sanitised += " " + quote_plus(attr)
                 if not (val is None):
-                    self.sanitised += "=\"" + (val if isinstance(val, unicode) else unicode(val, 'utf-8', 'replace')) + "\""
+                    self.sanitised += "=\"" + val + "\""
         if inspect.stack()[1][3] == "handle_startendtag":
             self.sanitised += "/"
         self.sanitised += ">"
@@ -101,7 +82,7 @@ class SafeHTMLParser(HTMLParser):
         self.add_if_acceptable(tag, attrs)
     
     def handle_data(self, data):
-        self.sanitised += unicode(data, 'utf-8', 'replace')
+        self.sanitised += data
         
     def handle_charref(self, name):
         self.sanitised += "&#" + name + ";"
@@ -110,34 +91,17 @@ class SafeHTMLParser(HTMLParser):
         self.sanitised += "&" + name + ";"
 
     def feed(self, data):
-        global parserProcess
+        try:
+            data = unicode(data, 'utf-8')
+        except UnicodeDecodeError:
+            data = unicode(data, 'utf-8', errors='replace')
         HTMLParser.feed(self, data)
         tmp = SafeHTMLParser.multi_replace(data)
-        tmp = unicode(tmp, 'utf-8', 'replace')
-        
-        parserLock.acquire()
-        if parserProcess is None:
-            parserProcess = multiprocessing.Process(target=regexpSubprocess, name="RegExParser", args=(parserInputQueue, parserOutputQueue))
-            parserProcess.start()
-        parserLock.release()
-        # flush queue
-        try:
-            while True:
-                tmp = parserOutputQueue.get(False)
-        except Queue.Empty:
-            logger.debug("Parser queue flushed")
-            pass
-        parserInputQueue.put(tmp)
-        try:
-            tmp = parserOutputQueue.get(True, 1)
-        except Queue.Empty:
-            logger.error("Regular expression parsing timed out, not displaying links")
-            parserLock.acquire()
-            parserProcess.terminate()
-            parserProcess = multiprocessing.Process(target=regexpSubprocess, name="RegExParser", args=(parserInputQueue, parserOutputQueue))
-            parserProcess.start()
-            parserLock.release()
-
+        tmp = SafeHTMLParser.uriregex1.sub(
+            r'<a href="\1">\1</a>',
+            tmp)
+        tmp = SafeHTMLParser.uriregex2.sub(r'<a href="\1&', tmp)
+        tmp = SafeHTMLParser.emailregex.sub(r'<a href="mailto:\1">\1</a>', tmp)
         self.raw += tmp
 
     def is_html(self, text = None, allow_picture = False):
