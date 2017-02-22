@@ -1,5 +1,4 @@
 import Queue
-from multiprocessing import Queue as mpQueue, Lock as mpLock
 from class_objectProcessorQueue import ObjectProcessorQueue
 
 workerQueue = Queue.Queue()
