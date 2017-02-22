@@ -16,7 +16,7 @@ import time
 import sys
 import os
 
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 
 api = ''
 keysName = 'keys.dat'

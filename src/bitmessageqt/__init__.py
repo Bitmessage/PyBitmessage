@@ -30,7 +30,7 @@ except AttributeError:
 from addresses import *
 import shared
 from bitmessageui import *
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 import defaults
 from namecoin import namecoinConnection, ensureNamecoinOptions
 from newaddressdialog import *

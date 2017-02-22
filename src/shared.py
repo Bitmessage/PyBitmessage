@@ -18,7 +18,7 @@ from binascii import hexlify
 
 # Project imports.
 from addresses import *
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 import highlevelcrypto
 #import helper_startup
 from helper_sql import *

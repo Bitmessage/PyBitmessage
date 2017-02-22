@@ -1,5 +1,5 @@
 import threading
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 import sqlite3
 import time
 import shutil  # used for moving the messages.dat file

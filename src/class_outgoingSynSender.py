@@ -11,7 +11,7 @@ import tr
 
 from class_sendDataThread import *
 from class_receiveDataThread import *
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from helper_threading import *
 import knownnodes
 import queues

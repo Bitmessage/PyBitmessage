@@ -1,7 +1,7 @@
 from PyQt4 import QtCore, QtGui
 from string import find, rfind, rstrip, lstrip
 
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from helper_sql import *
 from utils import *
 from settingsmixin import SettingsMixin

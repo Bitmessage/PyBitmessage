@@ -3,7 +3,7 @@ from tr import _translate
 import l10n
 import widgets
 from addresses import addBMIfNotPresent
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from dialogs import AddAddressDialog
 from helper_sql import sqlExecute, sqlQuery
 from retranslateui import RetranslateMixin

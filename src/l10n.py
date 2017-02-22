@@ -3,7 +3,7 @@ import logging
 import os
 import time
 
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 
 
 #logger = logging.getLogger(__name__)

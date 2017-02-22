@@ -2,7 +2,7 @@ from PyQt4 import QtGui
 import hashlib
 import os
 from addresses import addBMIfNotPresent
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 import state
 
 str_broadcast_subscribers = '[Broadcast subscribers]'

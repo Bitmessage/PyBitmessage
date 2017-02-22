@@ -2,7 +2,7 @@ import glob
 import os
 from PyQt4 import QtCore, QtGui
 
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 import paths
 
 class LanguageBox(QtGui.QComboBox):

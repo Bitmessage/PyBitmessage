@@ -8,7 +8,7 @@
 # WARNING! All changes made in this file will be lost!
 
 from PyQt4 import QtCore, QtGui
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from foldertree import AddressBookCompleter
 from messageview import MessageView
 from messagecompose import MessageCompose

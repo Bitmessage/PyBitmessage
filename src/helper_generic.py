@@ -5,7 +5,7 @@ from binascii import hexlify, unhexlify
 from multiprocessing import current_process
 from threading import current_thread, enumerate
 
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from debug import logger
 import queues
 import shutdown

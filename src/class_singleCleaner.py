@@ -5,7 +5,7 @@ import sys
 import os
 
 import tr#anslate
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from helper_sql import *
 from helper_threading import *
 from inventory import Inventory

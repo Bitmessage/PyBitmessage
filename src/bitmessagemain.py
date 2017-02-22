@@ -44,7 +44,7 @@ from class_singleWorker import singleWorker
 from class_addressGenerator import addressGenerator
 from class_smtpDeliver import smtpDeliver
 from class_smtpServer import smtpServer
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from debug import logger
 
 # Helper Functions

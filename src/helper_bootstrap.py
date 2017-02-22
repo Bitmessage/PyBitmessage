@@ -3,7 +3,7 @@ import defaultKnownNodes
 import pickle
 import time
 
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from debug import logger
 import knownnodes
 import socks

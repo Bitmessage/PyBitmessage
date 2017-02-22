@@ -5,7 +5,7 @@ import sys
 import threading
 import urlparse
 
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_threading import *
 import queues

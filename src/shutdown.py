@@ -5,7 +5,7 @@ import time
 
 from class_outgoingSynSender import outgoingSynSender
 from class_sendDataThread import sendDataThread
-from configparser import BMConfigParser
+from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlQuery, sqlStoredProcedure
 from helper_threading import StoppableThread
