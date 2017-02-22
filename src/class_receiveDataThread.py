@@ -796,7 +796,7 @@ class receiveDataThread(threading.Thread):
                 for stream in self.remoteStreams:
                     knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] = int(time.time())
                     if not self.initiatedConnection:
-                        knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 162000 # penalise inbound, 2 days minus 3 hours
+                        knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 7200 # penalise inbound, 2 hours
                     shared.needToWriteKnownNodesToDisk = True
 
         self.sendverack()
