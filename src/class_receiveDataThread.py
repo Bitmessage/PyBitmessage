@@ -658,7 +658,8 @@ class receiveDataThread(threading.Thread):
 
             with knownnodes.knownNodesLock:
                 if len(knownnodes.knownNodes[stream]) > 0:
-                    filtered = {k: v for k, v in knownnodes.knownNodes[stream].items() if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                    filtered = {k: v for k, v in knownnodes.knownNodes[stream].items()
+                        if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > 500:
                         elemCount = 500
@@ -666,17 +667,19 @@ class receiveDataThread(threading.Thread):
                     addrsInMyStream = random.sample(filtered.items(), elemCount)
                 # sent 250 only if the remote isn't interested in it
                 if len(knownnodes.knownNodes[stream * 2]) > 0 and stream not in self.streamNumber:
-                    filtered = {k: v for k, v in knownnodes.knownNodes[stream*2].items() if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                    filtered = {k: v for k, v in knownnodes.knownNodes[stream*2].items()
+                        if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > 250:
                         elemCount = 250
-                    addrsInMyStreamLeft = random.sample(filtered.items(), elemCount)
+                    addrsInChildStreamLeft = random.sample(filtered.items(), elemCount)
                 if len(knownnodes.knownNodes[(stream * 2) + 1]) > 0 and stream not in self.streamNumber:
-                    filtered = {k: v for k, v in knownnodes.knownNodes[stream*2+1].items() if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                    filtered = {k: v for k, v in knownnodes.knownNodes[stream*2+1].items()
+                        if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > 250:
                         elemCount = 250
-                    addrsInMyStreamRight = random.sample(filtered.items(), elemCount)
+                    addrsInChildStreamRight = random.sample(filtered.items(), elemCount)
             numberOfAddressesInAddrMessage = 0
             payload = ''
             for (HOST, PORT), timeLastReceivedMessageFromThisNode in addrsInMyStream:

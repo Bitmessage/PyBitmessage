@@ -3,7 +3,6 @@ import inspect
 import re
 from urllib import quote, quote_plus
 from urlparse import urlparse
-from debug import logger
 
 class SafeHTMLParser(HTMLParser):
     # from html5lib.sanitiser
