@@ -834,11 +834,23 @@ class MyForm(settingsmixin.SMainWindow):
         
     def updateHumanFriendlyTTLDescription(self, TTL):
         numberOfHours = int(round(TTL / (60*60)))
+        font = QtGui.QFont()
+        stylesheet = ""
+
         if numberOfHours < 48:
-            self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, numberOfHours))
+            self.ui.labelHumanFriendlyTTLDescription.setText(
+                _translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, numberOfHours) +
+                ", " +
+                _translate("MainWindow", "not recommended for chans", None, QtCore.QCoreApplication.CodecForTr)
+                )
+            stylesheet = "QLabel { color : red; }"
+            font.setBold(True)
         else:
             numberOfDays = int(round(TTL / (24*60*60)))
             self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n day(s)", None, QtCore.QCoreApplication.CodecForTr, numberOfDays))
+            font.setBold(False)
+        self.ui.labelHumanFriendlyTTLDescription.setStyleSheet(stylesheet)
+        self.ui.labelHumanFriendlyTTLDescription.setFont(font)
 
     # Show or hide the application window after clicking an item within the
     # tray icon or, on Windows, the try icon itself.
