@@ -22,7 +22,7 @@ setup(
     url='https://github.com/Bitmessage/PyBitmessage/',
     # TODO: add keywords
     #keywords='',
-    install_requires = ['hashlib', 'sqlite3', 'ctypes', 'curses', 'dialog', 'PyQt4', 'msgpack-python'],
+    install_requires = ['hashlib', 'sqlite3', 'ctypes', 'curses', 'dialog', 'PyQt4', 'msgpack-python', 'pyopencl'],
     classifiers = [
         "License :: OSI Approved :: MIT License"
         "Operating System :: MacOS :: MacOS X",
