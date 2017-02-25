@@ -609,11 +609,9 @@ class singleWorker(threading.Thread, StoppableThread):
             
             # At this point we know that we have the necessary pubkey in the pubkeys table.
             
-            if retryNumber == 0:
-                if TTL > 28 * 24 * 60 * 60:
-                    TTL = 28 * 24 * 60 * 60
-            else:
-                TTL = 28 * 24 * 60 * 60 
+            TTL *= 2**retryNumber
+            if TTL > 28 * 24 * 60 * 60:
+                TTL = 28 * 24 * 60 * 60
             TTL = int(TTL + random.randrange(-300, 300))# add some randomness to the TTL
             embeddedTime = int(time.time() + TTL)
             
@@ -834,10 +832,8 @@ class singleWorker(threading.Thread, StoppableThread):
                 newStatus = 'msgsentnoackexpected'
             else:
                 newStatus = 'msgsent'
-            if retryNumber == 0:
-                sleepTill = int(time.time()) + TTL
-            else:
-                sleepTill = int(time.time()) + 28*24*60*60 * 2**retryNumber
+            # wait 10% past expiration
+            sleepTill = int(time.time() + TTL * 1.1)
             sqlExecute('''UPDATE sent SET msgid=?, status=?, retrynumber=?, sleeptill=?, lastactiontime=? WHERE ackdata=?''',
                        inventoryHash,
                        newStatus,
@@ -896,9 +892,9 @@ class singleWorker(threading.Thread, StoppableThread):
             if tag not in state.neededPubkeys:
                 state.neededPubkeys[tag] = (toAddress, highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))) # We'll need this for when we receive a pubkey reply: it will be encrypted and we'll need to decrypt it.
         
-        if retryNumber == 0:
-            TTL = 2.5*24*60*60 # 2.5 days. This was chosen fairly arbitrarily. 
-        else:
+        TTL = 2.5*24*60*60 # 2.5 days. This was chosen fairly arbitrarily. 
+        TTL *= 2**retryNumber
+        if TTL > 28*24*60*60:
             TTL = 28*24*60*60
         TTL = TTL + random.randrange(-300, 300) # add some randomness to the TTL
         embeddedTime = int(time.time() + TTL)
@@ -934,10 +930,8 @@ class singleWorker(threading.Thread, StoppableThread):
         protocol.broadcastToSendDataQueues((
             streamNumber, 'advertiseobject', inventoryHash))
         
-        if retryNumber == 0:
-            sleeptill = int(time.time()) + TTL
-        else:
-            sleeptill = int(time.time()) + 28*24*60*60 * 2**retryNumber
+        # wait 10% past expiration
+        sleeptill = int(time.time() + TTL * 1.1)
         sqlExecute(
             '''UPDATE sent SET lastactiontime=?, status='awaitingpubkey', retrynumber=?, sleeptill=? WHERE toaddress=? AND (status='doingpubkeypow' OR status='awaitingpubkey') ''',
             int(time.time()),
