@@ -9,3 +9,5 @@ src/.settings/
 src/**/.dll
 src/**/*.o
 src/**/*.so
+build/lib.*
+build/temp.*
