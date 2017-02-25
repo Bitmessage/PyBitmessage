@@ -104,8 +104,6 @@ if __name__ == "__main__":
     here = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(here, 'README.md')) as f:
         README = f.read()
-    with open(os.path.join(here, 'CHANGES.txt')) as f:
-        CHANGES = f.read()
 
     bitmsghash = Extension('bitmsghash.bitmsghash',
         sources = ['src/bitmsghash/bitmsghash.cpp'],
@@ -152,10 +150,11 @@ if __name__ == "__main__":
         bitmessage = bitmessagemain:Main.start
         """,
     )
-    with open(os.path.join(dist.command_obj['install_scripts'].install_dir, 'bitmessage'), 'wt') as f:
-        f.write("#!/bin/sh\n")
-        f.write(dist.command_obj['build'].executable + " " + \
-            os.path.join(dist.command_obj['install'].install_lib, 
-            os.path.basename(dist.command_obj['bdist_egg'].egg_output),
-            'bitmessagemain.py') + "\n")
-    os.chmod(os.path.join(dist.command_obj['install_scripts'].install_dir, 'bitmessage'), 0555)
+    if (dist.command_obj.get('install_scripts')):
+        with open(os.path.join(dist.command_obj['install_scripts'].install_dir, 'bitmessage'), 'wt') as f:
+            f.write("#!/bin/sh\n")
+            f.write(dist.command_obj['build'].executable + " " + \
+                os.path.join(dist.command_obj['install'].install_lib,
+                os.path.basename(dist.command_obj['bdist_egg'].egg_output),
+                'bitmessagemain.py') + "\n")
+        os.chmod(os.path.join(dist.command_obj['install_scripts'].install_dir, 'bitmessage'), 0555)
