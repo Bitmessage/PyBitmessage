@@ -96,7 +96,8 @@ class sendDataThread(threading.Thread):
                     select.select([], [self.sslSock], [], 10)
                     logger.debug('sock.recv retriable SSL error')
                     continue
-                raise
+                logger.debug('Connection error (SSL)')
+                return False
             except socket.error as e:
                 if e.errno in (errno.EAGAIN, errno.EWOULDBLOCK) or \
                     (sys.platform.startswith('win') and \
@@ -104,8 +105,8 @@ class sendDataThread(threading.Thread):
                     select.select([], [self.sslSock if isSSL else self.sock], [], 10)
                     logger.debug('sock.recv retriable error')
                     continue
-                if e.errno == errno.EPIPE:
-                    logger.debug('Connection broken')
+                if e.errno in (errno.EPIPE, errno.ECONNRESET):
+                    logger.debug('Connection error (EPIPE/ECONNRESET)')
                     return False
                 raise
             throttle.SendThrottle().wait(amountSent)
