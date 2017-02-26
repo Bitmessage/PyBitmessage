@@ -86,7 +86,7 @@ class singleListener(threading.Thread, StoppableThread):
         # we'll fall back to IPv4-only.
         try:
             sock = self._createListenSocket(socket.AF_INET6)
-        except socket.error, e:
+        except socket.error as e:
             if (isinstance(e.args, tuple) and
                 e.args[0] in (errno.EAFNOSUPPORT,
                               errno.EPFNOSUPPORT,
@@ -112,7 +112,15 @@ class singleListener(threading.Thread, StoppableThread):
                 self.stop.wait(10)
 
             while state.shutdown == 0:
-                socketObject, sockaddr = sock.accept()
+                try:
+                    socketObject, sockaddr = sock.accept()
+                except socket.error as e:
+                    if isinstance(e.args, tuple) and
+                        e.args[0] in (errno.EINTR,):
+                        continue
+                    time.wait(1)
+                    continue
+
                 (HOST, PORT) = sockaddr[0:2]
 
                 # If the address is an IPv4-mapped IPv6 address then
