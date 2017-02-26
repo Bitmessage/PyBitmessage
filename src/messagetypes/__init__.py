@@ -28,23 +28,19 @@ def constructObject(data):
     else:
         return returnObj
 
-mods = []
 if paths.frozen is not None:
-    with open(path.join(path.dirname(path.dirname(__file__)), 'messagetypes.txt'), 'rt') as f:
-        for m in f.readlines():
-            mods.append(m.rstrip())
+    import messagetypes.message
+    import messagetypes.vote
 else:
-    mods = listdir(path.dirname(__file__))
-
-for mod in mods:
-    if mod == "__init__.py":
-        continue
-    splitted = path.splitext(mod)
-    if splitted[1] != ".py":
-        continue
-    try:
-        import_module("." + splitted[0], "messagetypes")
-    except ImportError:
-        logger.error("Error importing %s", mod, exc_info=True)
-    else:
-        logger.debug("Imported message type module %s", mod)
+    for mod in listdir(path.dirname(__file__)):
+        if mod == "__init__.py":
+            continue
+        splitted = path.splitext(mod)
+        if splitted[1] != ".py":
+            continue
+        try:
+            import_module("." + splitted[0], "messagetypes")
+        except ImportError:
+            logger.error("Error importing %s", mod, exc_info=True)
+        else:
+            logger.debug("Imported message type module %s", mod)
