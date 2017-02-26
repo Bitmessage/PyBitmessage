@@ -87,8 +87,12 @@ def checkSocksIP(host):
     try:
         if state.socksIP is None or not state.socksIP:
             state.socksIP = socket.gethostbyname(BMConfigParser().get("bitmessagesettings", "sockshostname"))
+    # uninitialised
     except NameError:
         state.socksIP = socket.gethostbyname(BMConfigParser().get("bitmessagesettings", "sockshostname"))
+    # resolving failure
+    except socket.gaierror:
+        state.socksIP = BMConfigParser().get("bitmessagesettings", "sockshostname")
     return state.socksIP == host
 
 def isProofOfWorkSufficient(data,
