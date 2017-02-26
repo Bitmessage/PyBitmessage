@@ -201,7 +201,11 @@ class sendDataThread(threading.Thread):
             elif self.connectionIsOrWasFullyEstablished:
                 logger.error('sendDataThread ID: ' + str(id(self)) + ' ignoring command ' + command + ' because the thread is not in stream ' + str(deststream) + ' but in streams ' + ', '.join(str(x) for x in self.streamNumber))
             self.sendDataThreadQueue.task_done()
-        self.sendDataThreadQueue.task_done()
+        # Flush if the cycle ended with break
+        try:
+            self.sendDataThreadQueue.task_done()
+        except ValueError
+            pass
 
         try:
             self.sock.shutdown(socket.SHUT_RDWR)
