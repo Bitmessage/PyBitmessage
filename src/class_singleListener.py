@@ -91,7 +91,8 @@ class singleListener(threading.Thread, StoppableThread):
                 e.args[0] in (errno.EAFNOSUPPORT,
                               errno.EPFNOSUPPORT,
                               errno.EADDRNOTAVAIL,
-                              errno.ENOPROTOOPT)):
+                              errno.ENOPROTOOPT,
+                              errno.EINVAL)):
                 sock = self._createListenSocket(socket.AF_INET)
             else:
                 raise
