@@ -31,13 +31,13 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
                 return False
         return False
 
-    def safeGetInt(self, section, field):
+    def safeGetInt(self, section, field, default=0):
         if self.has_option(section, field):
             try:
                 return self.getint(section, field)
             except ValueError:
-                return 0
-        return 0
+                return default
+        return default
 
     def safeGet(self, section, option, default = None):
         if self.has_option(section, option):

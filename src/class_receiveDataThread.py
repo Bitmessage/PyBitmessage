@@ -386,7 +386,8 @@ class receiveDataThread(threading.Thread):
                 stream, 'advertisepeer', dataToSend))
 
         self.sendaddr()  # This is one large addr message to this one peer.
-        if not self.initiatedConnection and len(shared.connectedHostsList) > 200:
+        if not self.initiatedConnection and len(shared.connectedHostsList) > \
+            BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections", 200):
             logger.info ('We are connected to too many people. Closing connection.')
             self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(fatal=2, errorText="Server full, please try again later.")))
             self.sendDataThreadQueue.put((0, 'shutdown','no data'))
@@ -648,9 +649,25 @@ class receiveDataThread(threading.Thread):
     # peer (with the full exchange of version and verack 
     # messages).
     def sendaddr(self):
+        def sendChunk():
+            if numberOfAddressesInAddrMessage == 0:
+                return
+            self.sendDataThreadQueue.put((0, 'sendRawData', \
+                protocol.CreatePacket('addr', \
+                encodeVarint(numberOfAddressesInAddrMessage) + payload)))
+
         # We are going to share a maximum number of 1000 addrs (per overlapping
         # stream) with our peer. 500 from overlapping streams, 250 from the
         # left child stream, and 250 from the right child stream.
+        maxAddrCount = BMConfigParser().safeGetInt("bitmessagesettings", "maxaddrperstreamsend", 500)
+
+        # protocol defines this as a maximum in one chunk
+        protocolAddrLimit = 1000
+
+        # init
+        numberOfAddressesInAddrMessage = 0
+        payload = ''
+
         for stream in self.streamNumber:
             addrsInMyStream = {}
             addrsInChildStreamLeft = {}
@@ -661,8 +678,8 @@ class receiveDataThread(threading.Thread):
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream].items()
                         if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
-                    if elemCount > 500:
-                        elemCount = 500
+                    if elemCount > maxAddrCount:
+                        elemCount = maxAddrCount
                     # only if more recent than 3 hours
                     addrsInMyStream = random.sample(filtered.items(), elemCount)
                 # sent 250 only if the remote isn't interested in it
@@ -670,18 +687,16 @@ class receiveDataThread(threading.Thread):
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream*2].items()
                         if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
-                    if elemCount > 250:
-                        elemCount = 250
+                    if elemCount > maxAddrCount / 2:
+                        elemCount = int(maxAddrCount / 2)
                     addrsInChildStreamLeft = random.sample(filtered.items(), elemCount)
                 if len(knownnodes.knownNodes[(stream * 2) + 1]) > 0 and stream not in self.streamNumber:
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream*2+1].items()
                         if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
-                    if elemCount > 250:
-                        elemCount = 250
+                    if elemCount > maxAddrCount / 2:
+                        elemCount = int(maxAddrCount / 2)
                     addrsInChildStreamRight = random.sample(filtered.items(), elemCount)
-            numberOfAddressesInAddrMessage = 0
-            payload = ''
             for (HOST, PORT), timeLastReceivedMessageFromThisNode in addrsInMyStream:
                 numberOfAddressesInAddrMessage += 1
                 payload += pack(
@@ -691,6 +706,10 @@ class receiveDataThread(threading.Thread):
                     '>q', 1)  # service bit flags offered by this node
                 payload += protocol.encodeHost(HOST)
                 payload += pack('>H', PORT)  # remote port
+                if numberOfAddressesInAddrMessage >= protocolAddrLimit:
+                    sendChunk()
+                    payload = ''
+                    numberOfAddressesInAddrMessage = 0
             for (HOST, PORT), timeLastReceivedMessageFromThisNode in addrsInChildStreamLeft:
                 numberOfAddressesInAddrMessage += 1
                 payload += pack(
@@ -700,6 +719,10 @@ class receiveDataThread(threading.Thread):
                     '>q', 1)  # service bit flags offered by this node
                 payload += protocol.encodeHost(HOST)
                 payload += pack('>H', PORT)  # remote port
+                if numberOfAddressesInAddrMessage >= protocolAddrLimit:
+                    sendChunk()
+                    payload = ''
+                    numberOfAddressesInAddrMessage = 0
             for (HOST, PORT), timeLastReceivedMessageFromThisNode in addrsInChildStreamRight:
                 numberOfAddressesInAddrMessage += 1
                 payload += pack(
@@ -709,10 +732,13 @@ class receiveDataThread(threading.Thread):
                     '>q', 1)  # service bit flags offered by this node
                 payload += protocol.encodeHost(HOST)
                 payload += pack('>H', PORT)  # remote port
+                if numberOfAddressesInAddrMessage >= protocolAddrLimit:
+                    sendChunk()
+                    payload = ''
+                    numberOfAddressesInAddrMessage = 0
     
-            payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
-            self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('addr', payload)))
-
+        # flush
+        sendChunk()
 
     # We have received a version message
     def recversion(self, data):

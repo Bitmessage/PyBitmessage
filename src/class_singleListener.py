@@ -107,7 +107,10 @@ class singleListener(threading.Thread, StoppableThread):
             # connections.
             while BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not BMConfigParser().getboolean('bitmessagesettings', 'sockslisten') and ".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname') and state.shutdown == 0:
                 self.stop.wait(10)
-            while len(shared.connectedHostsList) > 220 and state.shutdown == 0:
+            while len(shared.connectedHostsList) > \
+                BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections", 200) + \
+                BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections", 20) \
+                and state.shutdown == 0:
                 logger.info('We are connected to too many people. Not accepting further incoming connections for ten seconds.')
 
                 self.stop.wait(10)
