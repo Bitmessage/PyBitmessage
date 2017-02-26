@@ -115,7 +115,7 @@ class singleListener(threading.Thread, StoppableThread):
                 try:
                     socketObject, sockaddr = sock.accept()
                 except socket.error as e:
-                    if isinstance(e.args, tuple) and
+                    if isinstance(e.args, tuple) and \
                         e.args[0] in (errno.EINTR,):
                         continue
                     time.wait(1)

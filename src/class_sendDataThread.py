@@ -204,7 +204,7 @@ class sendDataThread(threading.Thread):
         # Flush if the cycle ended with break
         try:
             self.sendDataThreadQueue.task_done()
-        except ValueError
+        except ValueError:
             pass
 
         try:
