@@ -494,6 +494,8 @@ class sqlThread(threading.Thread):
                 parameters = (int(time.time()),)
                 self.cur.execute(item, parameters)
 
+        state.sqlReady = True
+
         while True:
             item = helper_sql.sqlSubmitQueue.get()
             if item == 'commit':

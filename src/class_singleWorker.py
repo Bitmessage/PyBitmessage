@@ -51,6 +51,11 @@ class singleWorker(threading.Thread, StoppableThread):
         super(singleWorker, self).stopThread()
 
     def run(self):
+
+        while not state.sqlReady and state.shutdown == 0:
+            self.stop.wait(2)
+        if state.shutdown > 0:
+            return
         
         # Initialize the neededPubkeys dictionary.
         queryreturn = sqlQuery(
