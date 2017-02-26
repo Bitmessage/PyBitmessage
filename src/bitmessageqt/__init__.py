@@ -3309,7 +3309,7 @@ class MyForm(settingsmixin.SMainWindow):
                 continue
             labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
             self.addSubscription(addressAtCurrentRow, labelAtCurrentRow)
-            self.ui.tabWidget.setCurrentIndex(4)
+            self.ui.tabWidget.setCurrentIndex(2)
 
     def on_context_menuAddressBook(self, point):
         self.popMenuAddressBook = QtGui.QMenu(self)
