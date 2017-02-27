@@ -386,10 +386,13 @@ class receiveDataThread(threading.Thread):
                 stream, 'advertisepeer', dataToSend))
 
         self.sendaddr()  # This is one large addr message to this one peer.
-        if not self.initiatedConnection and len(shared.connectedHostsList) > \
+        if len(shared.connectedHostsList) > \
             BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections", 200):
             logger.info ('We are connected to too many people. Closing connection.')
-            self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(fatal=2, errorText="Server full, please try again later.")))
+            if self.initiatedConnection:
+                self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(fatal=2, errorText="Thank you for providing a listening node.")))
+            else:
+                self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(fatal=2, errorText="Server full, please try again later.")))
             self.sendDataThreadQueue.put((0, 'shutdown','no data'))
             return
         self.sendBigInv()
@@ -622,18 +625,28 @@ class receiveDataThread(threading.Thread):
                     knownnodes.knownNodes[recaddrStream] = {}
             peerFromAddrMessage = state.Peer(hostStandardFormat, recaddrPort)
             if peerFromAddrMessage not in knownnodes.knownNodes[recaddrStream]:
-                if len(knownnodes.knownNodes[recaddrStream]) < 20000 and timeSomeoneElseReceivedMessageFromThisNode > (int(time.time()) - 10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800):  # If we have more than 20000 nodes in our list already then just forget about adding more. Also, make sure that the time that someone else received a message from this node is within three hours from now.
-                    with knownnodes.knownNodesLock:
-                        knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = timeSomeoneElseReceivedMessageFromThisNode
+                knownnodes.trimKnownNodes(recAddrStream)
+                # only if recent
+                if timeSomeoneElseReceivedMessageFromThisNode > (int(time.time()) - 10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800):
                     logger.debug('added new node ' + str(peerFromAddrMessage) + ' to knownNodes in stream ' + str(recaddrStream))
-
+                    # bootstrap provider?
+                    if BMConfigParser().safeGetInt('bitmessagesettings', 'maxoutboundconnections') >= \
+                        BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
+                        with knownnodes.knownNodesLock:
+                            knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = int(time.time()) - 10800
+                    # normal mode
+                    else:
+                        with knownnodes.knownNodesLock:
+                            knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = timeSomeoneElseReceivedMessageFromThisNode
+                        hostDetails = (
+                            timeSomeoneElseReceivedMessageFromThisNode,
+                            recaddrStream, recaddrServices, hostStandardFormat, recaddrPort)
+                        protocol.broadcastToSendDataQueues((
+                            recaddrStream, 'advertisepeer', hostDetails))
                     shared.needToWriteKnownNodesToDisk = True
-                    hostDetails = (
-                        timeSomeoneElseReceivedMessageFromThisNode,
-                        recaddrStream, recaddrServices, hostStandardFormat, recaddrPort)
-                    protocol.broadcastToSendDataQueues((
-                        recaddrStream, 'advertisepeer', hostDetails))
-            else:
+            # only update if normal mode
+            elif BMConfigParser().safeGetInt('bitmessagesettings', 'maxoutboundconnections') < \
+                BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
                 timeLastReceivedMessageFromThisNode = knownnodes.knownNodes[recaddrStream][
                     peerFromAddrMessage]
                 if (timeLastReceivedMessageFromThisNode < timeSomeoneElseReceivedMessageFromThisNode) and (timeSomeoneElseReceivedMessageFromThisNode < int(time.time())+900): # 900 seconds for wiggle-room in case other nodes' clocks aren't quite right.
@@ -822,7 +835,12 @@ class receiveDataThread(threading.Thread):
                 for stream in self.remoteStreams:
                     knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] = int(time.time())
                     if not self.initiatedConnection:
-                        knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 7200 # penalise inbound, 2 hours
+                        # bootstrap provider?
+                        if BMConfigParser().safeGetInt('bitmessagesettings', 'maxoutboundconnections') >= \
+                            BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
+                            knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 10800 # penalise inbound, 3 hours
+                        else:
+                            knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 7200 # penalise inbound, 2 hours
                     shared.needToWriteKnownNodesToDisk = True
 
         self.sendverack()
