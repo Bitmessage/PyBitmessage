@@ -284,6 +284,7 @@ class uPnPThread(threading.Thread, StoppableThread):
                 shared.extPort = extPort
                 self.extPort = extPort
                 BMConfigParser().set('bitmessagesettings', 'extport', str(extPort))
+                BMConfigParser().save()
                 break
             except UPnPError:
                 logger.debug("UPnP error: ", exc_info=True)
