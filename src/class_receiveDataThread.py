@@ -625,7 +625,7 @@ class receiveDataThread(threading.Thread):
                     knownnodes.knownNodes[recaddrStream] = {}
             peerFromAddrMessage = state.Peer(hostStandardFormat, recaddrPort)
             if peerFromAddrMessage not in knownnodes.knownNodes[recaddrStream]:
-                knownnodes.trimKnownNodes(recAddrStream)
+                knownnodes.trimKnownNodes(recaddrStream)
                 # only if recent
                 if timeSomeoneElseReceivedMessageFromThisNode > (int(time.time()) - 10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800):
                     logger.debug('added new node ' + str(peerFromAddrMessage) + ' to knownNodes in stream ' + str(recaddrStream))
