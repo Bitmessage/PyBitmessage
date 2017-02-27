@@ -116,7 +116,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             "networkstatus", "Total Connections: %1").arg(str(len(shared.connectedHostsList))))
         if len(shared.connectedHostsList) > 0 and shared.statusIconColor == 'red':  # FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
             self.window().setStatusIcon('yellow')
-        elif len(shared.connectedHostsList) == 0 and shared.statusIconColor != 'red':
+        elif len(shared.connectedHostsList) == 0:
             self.window().setStatusIcon('red')
 
     # timer driven
