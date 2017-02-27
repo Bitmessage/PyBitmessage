@@ -1,39 +1,25 @@
 import ctypes
 import os
+import time
 
 srcPath = "C:\\src\\PyBitmessage\\src\\"
 qtPath = "C:\\Qt-4.8.7\\"
-openSSLPath = "C:\\OpenSSL-1.0.2j\\"
+openSSLPath = "C:\\OpenSSL-1.0.2j\\bin\\"
 outPath = "C:\\src\\PyInstaller-3.2.1\\bitmessagemain"
+today = time.strftime("%Y%m%d")
+snapshot = False
 
-hiddenimports= []
-
-# manually add messagetypes directory and its listing
-with open(os.path.join(srcPath, 'messagetypes.txt'), 'wt') as f:
-	for mt in os.listdir(os.path.join(srcPath, 'messagetypes')):
-		if mt == "__init__.py":
-			continue
-		splitted = os.path.splitext(mt)
-		if splitted[1] != ".py":
-			continue
-		f.write(mt + "\n")
-		hiddenimports.append('messagetypes.' + splitted[0])
+os.rename(os.path.join(srcPath, '__init__.py'), os.path.join(srcPath, '__init__.py.backup'))
 
 # -*- mode: python -*-
 a = Analysis([srcPath + 'bitmessagemain.py'],
              pathex=[outPath],
-             hiddenimports=hiddenimports,
+             hiddenimports=[],
              hookspath=None,
              runtime_hooks=None)
 
-a.datas.append(('messagetypes.txt', os.path.join(srcPath, 'messagetypes.txt'), 'DATA'))
+os.rename(os.path.join(srcPath, '__init__.py.backup'), os.path.join(srcPath, '__init__.py'))
 
-# fix duplicates
-for d in a.datas:
-    if 'pyconfig' in d[0]: 
-        a.datas.remove(d)
-        break
-		
 def addTranslations():
     import os
     extraDatas = []
@@ -72,6 +58,13 @@ a.binaries += [('libeay32.dll', openSSLPath + 'libeay32.dll', 'BINARY'),
 	(os.path.join('sslkeys', 'key.pem'), os.path.join(srcPath, 'sslkeys', 'key.pem'), 'BINARY')
 	]
 
+with open(os.path.join(srcPath, 'version.py'), 'rt') as f:
+    softwareVersion = f.readline().split('\'')[1]
+    
+fname = 'Bitmessage_%s_%s.exe' % ("x86" if arch == 32 else "x64", softwareVersion)
+if snapshot:
+    fname = 'Bitmessagedev_%s_%s.exe' % ("x86" if arch == 32 else "x64", today)
+    
 pyz = PYZ(a.pure)
 exe = EXE(pyz,
           a.scripts,
@@ -79,7 +72,7 @@ exe = EXE(pyz,
           a.zipfiles,
           a.datas,
           a.binaries,
-          name='Bitmessage.exe',
+          name=fname,
           debug=False,
           strip=None,
           upx=False,
