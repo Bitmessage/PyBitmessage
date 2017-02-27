@@ -85,9 +85,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 break
             random.seed()
             peer = self._getPeer()
-            shared.alreadyAttemptedConnectionsListLock.acquire()
             while peer in shared.alreadyAttemptedConnectionsList or peer.host in shared.connectedHostsList:
-                shared.alreadyAttemptedConnectionsListLock.release()
                 # print 'choosing new sample'
                 random.seed()
                 peer = self._getPeer()
@@ -97,16 +95,12 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 # Clear out the shared.alreadyAttemptedConnectionsList every half
                 # hour so that this program will again attempt a connection
                 # to any nodes, even ones it has already tried.
-                if (time.time() - shared.alreadyAttemptedConnectionsListResetTime) > 1800:
-                    shared.alreadyAttemptedConnectionsList.clear()
-                    shared.alreadyAttemptedConnectionsListResetTime = int(
-                        time.time())
-                shared.alreadyAttemptedConnectionsListLock.acquire()
+                with shared.alreadyAttemptedConnectionsListLock:
+                    if (time.time() - shared.alreadyAttemptedConnectionsListResetTime) > 1800:
+                        shared.alreadyAttemptedConnectionsList.clear()
+                        shared.alreadyAttemptedConnectionsListResetTime = int(
+                            time.time())
             shared.alreadyAttemptedConnectionsList[peer] = 0
-            try:
-                shared.alreadyAttemptedConnectionsListLock.release()
-            except threading.ThreadError as e:
-                pass
             if self._stopped:
                 break
             self.name = "outgoingSynSender-" + peer.host.replace(":", ".") # log parser field separator
