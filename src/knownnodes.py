@@ -20,6 +20,6 @@ def trimKnownNodes(recAddrStream = 1):
     if len(knownNodes[recAddrStream]) < knownNodesMax:
         return
     with knownNodesLock:
-        oldestList = sorted(knownNodes[recAddrStream], key=knownNodes[recAddrStream].get)[:knownNodeTrimAmount]
+        oldestList = sorted(knownNodes[recAddrStream], key=knownNodes[recAddrStream].get)[:knownNodesTrimAmount]
         for oldest in oldestList:
             del knownNodes[recAddrStream][oldest]
