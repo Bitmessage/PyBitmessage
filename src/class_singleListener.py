@@ -139,7 +139,12 @@ class singleListener(threading.Thread, StoppableThread):
                 # share the same external IP. This is here to prevent
                 # connection flooding.
                 # permit repeated connections from Tor
-                if HOST in shared.connectedHostsList and (".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname') or not protocol.checkSocksIP(HOST)):
+                if HOST in shared.connectedHostsList and \
+                    (".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname') or not protocol.checkSocksIP(HOST)):
+                    # bootstrap provider? Then accept, we'll most likely drop it a little bit later
+                    if BMConfigParser().safeGetInt('bitmessagesettings', 'maxoutboundconnections') >= \
+                        BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
+                        break
                     socketObject.close()
                     logger.info('We are already connected to ' + str(HOST) + '. Ignoring connection.')
                 else:
