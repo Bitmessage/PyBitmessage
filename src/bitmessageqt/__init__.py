@@ -1667,6 +1667,11 @@ class MyForm(settingsmixin.SMainWindow):
                 self.notifierShow('Bitmessage', unicode(_translate(
                             "MainWindow", "Connection lost").toUtf8(),'utf-8'),
                                   self.SOUND_DISCONNECTED, None)
+            if self.connected and \
+                not BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp') and \
+                BMConfigParser().get('bitmessagesettings', 'socksproxytype') != "none":
+                self.statusBar().showMessage(_translate(
+                    "MainWindow", "Problems connecting? Try enabling UPnP in the Network Settings"), 10000)
             self.connected = False
 
             if self.actionStatus is not None:
