@@ -40,13 +40,13 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 knownnodes.knownNodes[self.streamNumber][peer] = time.time()
         else:
             while not self._stopped:
-                with knownnodes.knownNodesLock:
-                    try:
+                try:
+                    with knownnodes.knownNodesLock:
                         peer, = random.sample(knownnodes.knownNodes[self.streamNumber], 1)
-                    except ValueError: # no known nodes
-                        self.stop.wait(1)
-                        continue
-                    priority = (183600 - (time.time() - knownnodes.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
+                        priority = (183600 - (time.time() - knownnodes.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
+                except ValueError: # no known nodes
+                    self.stop.wait(1)
+                    continue
                 if BMConfigParser().get('bitmessagesettings', 'socksproxytype') != 'none':
                     if peer.host.find(".onion") == -1:
                         priority /= 10 # hidden services have 10x priority over plain net
