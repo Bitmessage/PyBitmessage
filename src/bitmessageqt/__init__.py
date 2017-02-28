@@ -2444,6 +2444,7 @@ class MyForm(settingsmixin.SMainWindow):
 
             if self.settingsDialogInstance.ui.comboBoxOpenCL.currentText().toUtf8() != BMConfigParser().safeGet("bitmessagesettings", "opencl"):
                 BMConfigParser().set('bitmessagesettings', 'opencl', str(self.settingsDialogInstance.ui.comboBoxOpenCL.currentText()))
+                queues.workerQueue.put(('resetPoW', ''))
 
             acceptableDifficultyChanged = False
             

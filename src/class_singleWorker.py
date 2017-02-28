@@ -120,6 +120,11 @@ class singleWorker(threading.Thread, StoppableThread):
                     self.sendOutOrStoreMyV4Pubkey(data)
                 except:
                     pass
+            elif command == 'resetPoW':
+                try:
+                    proofofwork.resetPoW()
+                except:
+                    pass
             elif command == 'stopThread':
                 self.busy = 0
                 return
