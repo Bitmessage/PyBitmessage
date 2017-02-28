@@ -220,6 +220,11 @@ class uPnPThread(threading.Thread, StoppableThread):
                         self.routers.append(newRouter)
                         self.createPortMapping(newRouter)
                         queues.UISignalQueue.put(('updateStatusBar', tr._translate("MainWindow",'UPnP port mapping established on port %1').arg(str(self.extPort))))
+                        # retry connections so that the submitted port is refreshed
+                        with shared.alreadyAttemptedConnectionsListLock:
+                            shared.alreadyAttemptedConnectionsList.clear()
+                            shared.alreadyAttemptedConnectionsListResetTime = int(
+                                time.time())
                         break
             except socket.timeout as e:
                 pass
