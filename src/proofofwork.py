@@ -231,6 +231,9 @@ def run(target, initialHash):
     except:
         pass #fallback
 
+def resetPoW():
+    openclpow.initCL()
+
 # init
 def init():
     global bitmsglib, bso, bmpow
