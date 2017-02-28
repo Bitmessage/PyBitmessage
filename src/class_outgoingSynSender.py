@@ -25,6 +25,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
     def __init__(self):
         threading.Thread.__init__(self, name="outgoingSynSender")
         self.initStop()
+        random.seed()
 
     def setup(self, streamNumber, selfInitiatedConnections):
         self.streamNumber = streamNumber
@@ -83,11 +84,9 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 self.stop.wait(10)
             if state.shutdown:
                 break
-            random.seed()
             peer = self._getPeer()
             while peer in shared.alreadyAttemptedConnectionsList or peer.host in shared.connectedHostsList:
                 # print 'choosing new sample'
-                random.seed()
                 peer = self._getPeer()
                 self.stop.wait(1)
                 if self._stopped:
