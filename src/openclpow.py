@@ -26,12 +26,11 @@ except:
     libAvailable = False
 
 def initCL():
-    global ctx, queue, program, enabledGpus, hash_dt, vendors
-    gpus = []
+    global ctx, queue, program, hash_dt
+    del enabledGpus[:]
+    del vendors[:]
+    del gpus[:]
     ctx = False
-    enabledGpus = []
-    vendors = []
-    hash_dt = None
     try:
         hash_dt = numpy.dtype([('target', numpy.uint64), ('v', numpy.str_, 73)])
         try:
@@ -52,10 +51,10 @@ def initCL():
             logger.info("Loaded OpenCL kernel")
         else:
             logger.info("No OpenCL GPUs found")
-            enabledGpus = []
+            del enabledGpus[:]
     except Exception as e:
         logger.error("OpenCL fail: ", exc_info=True)
-        enabledGpus = []
+        del enabledGpus[:]
 
 def openclAvailable():
     return (len(gpus) > 0)
