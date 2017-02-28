@@ -9,17 +9,22 @@
 
 # The software version variable is now held in shared.py
 
+import os
+import sys
+
+app_dir = os.path.dirname(os.path.abspath(__file__))
+os.chdir(app_dir)
+sys.path.insert(0, app_dir)
+
 import depends
 depends.check_dependencies()
 
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
 from singleinstance import singleinstance
-import os
 import socket
 import ctypes
 from struct import pack
-import sys
 from subprocess import call
 import time
 
@@ -28,7 +33,6 @@ from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenCon
 
 import defaults
 import shared
-from helper_sql import sqlQuery
 import knownnodes
 import state
 import shutdown
@@ -45,12 +49,12 @@ from class_addressGenerator import addressGenerator
 from class_smtpDeliver import smtpDeliver
 from class_smtpServer import smtpServer
 from bmconfigparser import BMConfigParser
-from debug import logger
 
 # Helper Functions
 import helper_bootstrap
 import helper_generic
 from helper_threading import *
+
 
 def connectToStream(streamNumber):
     state.streamsInWhichIAmParticipating.append(streamNumber)
@@ -309,9 +313,14 @@ class Main:
         port = BMConfigParser().getint('bitmessagesettings', 'apiport')
         return {'address':address,'port':port}
 
-if __name__ == "__main__":
+
+def main():
     mainprogram = Main()
-    mainprogram.start(BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'))
+    mainprogram.start(
+        BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'))
+
+if __name__ == "__main__":
+    main()
 
 
 # So far, the creation of and management of the Bitmessage protocol and this
