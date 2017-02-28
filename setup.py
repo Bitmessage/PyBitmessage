@@ -14,7 +14,7 @@ from src.version import softwareVersion
 
 packageManager = {
     "OpenBSD": "pkg_add",
-    "FreeBSD": "pkg_install",
+    "FreeBSD": "pkg install",
     "Debian": "apt-get install",
     "Ubuntu": "apt-get install",
     "openSUSE": "zypper install",
@@ -43,6 +43,13 @@ packageName = {
         "Fedora": "python2-msgpack",
         "Guix": "python2-msgpack",
         "Gentoo": "dev-python/msgpack"
+    },
+    "pyopencl": {
+        "FreeBSD": "py27-pyopencl",
+        "Debian": "python-pyopencl",
+        "Ubuntu": "python-pyopencl",
+        "Fedora": "python2-pyopencl",
+        "Gentoo": "dev-python/pyopencl"
     }
 }
 
@@ -73,6 +80,8 @@ def detectOS():
                         detectOS.result = "Gentoo"
                     else:
                         detectOS.result = None
+    elif os.path.isfile("/etc/config.scm"):
+        detectOS.result = "Guix"
     return detectOS.result
 
 
@@ -92,6 +101,13 @@ def detectPrereqs(missing=False):
     except ImportError:
         if missing:
             available.append("msgpack")
+    try:
+        import_module("pyopencl")
+        if not missing:
+            available.append("pyopencl")
+    except ImportError:
+        if missing:
+            available.append("pyopencl")
     return available
 
 
