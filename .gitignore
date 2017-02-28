@@ -11,3 +11,5 @@ src/**/*.o
 src/**/*.so
 build/lib.*
 build/temp.*
+dist
+*.egg-info
