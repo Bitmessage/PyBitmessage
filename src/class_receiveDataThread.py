@@ -77,7 +77,8 @@ class receiveDataThread(threading.Thread):
             self.initiatedConnection = False
         else:
             self.initiatedConnection = True
-            self.selfInitiatedConnections[streamNumber][self] = 0
+            for stream in self.streamNumber:
+                self.selfInitiatedConnections[stream][self] = 0
         self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware = someObjectsOfWhichThisRemoteNodeIsAlreadyAware
         self.objectHashHolderInstance = objectHashHolderInstance
         self.startTime = time.time()
@@ -132,7 +133,7 @@ class receiveDataThread(threading.Thread):
                 self.processData()
 
         try:
-            for stream in self.remoteStreams:
+            for stream in self.streamNumber:
                 try:
                     del self.selfInitiatedConnections[stream][self]
                 except KeyError:
