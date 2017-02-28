@@ -4109,10 +4109,8 @@ class settingsDialog(QtGui.QDialog):
             self.ui.checkBoxSocksListen.setEnabled(False)
         elif str(BMConfigParser().get('bitmessagesettings', 'socksproxytype')) == 'SOCKS4a':
             self.ui.comboBoxProxyType.setCurrentIndex(1)
-            self.ui.lineEditTCPPort.setEnabled(False)
         elif str(BMConfigParser().get('bitmessagesettings', 'socksproxytype')) == 'SOCKS5':
             self.ui.comboBoxProxyType.setCurrentIndex(2)
-            self.ui.lineEditTCPPort.setEnabled(False)
 
         self.ui.lineEditSocksHostname.setText(str(
             BMConfigParser().get('bitmessagesettings', 'sockshostname')))
@@ -4221,7 +4219,6 @@ class settingsDialog(QtGui.QDialog):
             self.ui.lineEditSocksPassword.setEnabled(False)
             self.ui.checkBoxAuthentication.setEnabled(False)
             self.ui.checkBoxSocksListen.setEnabled(False)
-            self.ui.lineEditTCPPort.setEnabled(True)
         elif comboBoxIndex == 1 or comboBoxIndex == 2:
             self.ui.lineEditSocksHostname.setEnabled(True)
             self.ui.lineEditSocksPort.setEnabled(True)
@@ -4230,7 +4227,6 @@ class settingsDialog(QtGui.QDialog):
             if self.ui.checkBoxAuthentication.isChecked():
                 self.ui.lineEditSocksUsername.setEnabled(True)
                 self.ui.lineEditSocksPassword.setEnabled(True)
-            self.ui.lineEditTCPPort.setEnabled(False)
 
     # Check status of namecoin integration radio buttons and translate
     # it to a string as in the options.
