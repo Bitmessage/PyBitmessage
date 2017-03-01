@@ -78,7 +78,7 @@ packageName = {
 compiling = {
         "Debian": "build-essential libssl-dev",
         "Ubuntu": "build-essential libssl-dev",
-        "Fedora": "gcc-c++ redhat-rpm-config python-devel",
+        "Fedora": "gcc-c++ redhat-rpm-config python-devel openssl-devel",
         "openSUSE": "gcc-c++ libopenssl-devel python-devel",
 }
 
@@ -162,7 +162,7 @@ if __name__ == "__main__":
     if detectPrereqs(True) != []:
         print "Press Return to continue"
         try:
-            nothing = raw_input
+            nothing = raw_input()
         except NameError:
             pass
 
