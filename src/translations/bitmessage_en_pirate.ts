@@ -1435,7 +1435,7 @@ T&apos; &apos;Random Number&apos; option be selected by default but deterministi
     <message encoding="UTF-8">
         <location filename="../bitmessageqt/about.py" line="74"/>
         <source>aboutDialog</source>
-        <comment>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright © 2012-2016 Jonathan Warren&lt;br/&gt;Copyright © 2013-2016 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</comment>
+        <comment>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright © 2012-2017 Jonathan Warren&lt;br/&gt;Copyright © 2013-2017 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</comment>
         <translation type="unfinished"></translation>
     </message>
 </context>
