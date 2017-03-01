@@ -191,6 +191,9 @@ if __name__ == "__main__":
             # TODO: add keywords
             #keywords='',
             install_requires=['msgpack-python'],
+            extras_require={
+                'qrcode': ['qrcode']
+            },
             classifiers=[
                 "License :: OSI Approved :: MIT License"
                 "Operating System :: OS Independent",
@@ -208,6 +211,7 @@ if __name__ == "__main__":
                 'pybitmessage.network',
                 'pybitmessage.pyelliptic',
                 'pybitmessage.socks',
+                'pybitmessage.plugins'
             ],
             package_data={'': [
                 'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem',
@@ -216,11 +220,15 @@ if __name__ == "__main__":
             ]},
             ext_modules=[bitmsghash],
             zip_safe=False,
-            #entry_points={
+            entry_points={
+                'gui.menu': [
+                    'popMenuYourIdentities.qrcode = '
+                    'pybitmessage.plugins.qrcodeui [qrcode]'
+                ],
             #    'console_scripts': [
             #        'pybitmessage = pybitmessage.bitmessagemain:main'
             #    ]
-            #},
+            },
             scripts=['src/pybitmessage']
         )
     except SystemExit:
