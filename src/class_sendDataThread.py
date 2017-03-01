@@ -187,12 +187,12 @@ class sendDataThread(threading.Thread):
                             logger.error('send pong failed')
                             break
                 elif command == 'sendRawData':
-                    hash = None
+                    objectHash = None
                     if type(data) in [list, tuple]:
-                        hash, data = data
+                        objectHash, data = data
                     try:
                         self.sendBytes(data)
-                        PendingUpload().delete(hash)
+                        PendingUpload().delete(objectHash)
                     except:
                         logger.error('Sending of data to ' + str(self.peer) + ' failed. sendDataThread thread ' + str(self) + ' ending now.', exc_info=True)
                         break
