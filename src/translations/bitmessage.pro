@@ -41,7 +41,8 @@ SOURCES	= 	../addresses.py\
 			../bitmessageqt/regenerateaddresses.py\
 			../bitmessageqt/safehtmlparser.py\
 			../bitmessageqt/settings.py\
-			../bitmessageqt/specialaddressbehavior.py
+                        ../bitmessageqt/specialaddressbehavior.py\
+                        ../plugins/qrcodeui.py
 
 FORMS = \
     ../bitmessageqt/blacklist.ui\

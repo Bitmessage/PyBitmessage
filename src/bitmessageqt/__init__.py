@@ -88,6 +88,12 @@ from statusbar import BMStatusBar
 import throttle
 from version import softwareVersion
 
+try:
+    from plugins.plugin import get_plugins
+except ImportError:
+    get_plugins = False
+
+
 def _translate(context, text, disambiguation = None, encoding = None, number = None):
     if number is None:
         return QtGui.QApplication.translate(context, text)
@@ -3613,7 +3619,7 @@ class MyForm(settingsmixin.SMainWindow):
         address = self.getCurrentAccount()
         clipboard = QtGui.QApplication.clipboard()
         clipboard.setText(str(address))
-        
+
     def on_action_ClipboardMessagelist(self):
         tableWidget = self.getCurrentMessagelist()
         currentColumn = tableWidget.currentColumn()
@@ -3741,6 +3747,12 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenuYourIdentities.addAction(self.actionEmailGateway)
             self.popMenuYourIdentities.addSeparator()
         self.popMenuYourIdentities.addAction(self.actionMarkAllRead)
+
+        if get_plugins:
+            for plugin in get_plugins(
+                    'gui.menu', 'popMenuYourIdentities'):
+                plugin(self)
+
         self.popMenuYourIdentities.exec_(
             self.ui.treeWidgetYourIdentities.mapToGlobal(point))
 
