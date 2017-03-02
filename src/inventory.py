@@ -303,7 +303,7 @@ class PendingUpload(object):
                     self.hashes[objectHash]['sendCount'] += 1
                     self.hashes[objectHash]['peers'].remove(current_thread().peer)
             except KeyError:
-                    pass
+                pass
         self.clearHashes(objectHash)
 
     def stop(self):
