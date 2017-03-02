@@ -39,11 +39,9 @@ def sign(msg,hexPrivkey):
     digestAlg = BMConfigParser().safeGet('bitmessagesettings', 'digestalg', 'sha1')
     if digestAlg == "sha1":
         # SHA1, this will eventually be deprecated
-        print "sha1"
         return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.digest_ecdsa_sha1)
     elif digestAlg == "sha256":
         # SHA256. Eventually this will become the default
-        print "sha256"
         return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_sha256)
     else:
         raise ValueError("Unknown digest algorithm %s" % (digestAlgo))
