@@ -659,14 +659,12 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderTabTreeMessages()
 
         # Set welcome message
-        self.ui.textEditInboxMessage.setText(
-        """
+        self.ui.textEditInboxMessage.setText(_translate("MainWindow", """
         Welcome to easy and secure Bitmessage
             * send messages to other people
             * send broadcast messages like twitter or
             * discuss in chan(nel)s with other people
-        """
-        )
+        """))
 
         # Initialize the address book
         self.rerenderAddressBook()
