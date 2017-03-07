@@ -3,12 +3,7 @@
 from PyQt4 import QtGui, QtCore
 import qrcode
 
-from pybitmessage.tr import translateText
-
-try:
-    _fromUtf8 = QtCore.QString.fromUtf8
-except AttributeError:
-    _fromUtf8 = lambda s: s
+from pybitmessage.tr import _translate
 
 
 # http://stackoverflow.com/questions/20452486
@@ -37,65 +32,51 @@ class Image(qrcode.image.base.BaseImage):
         pass
 
 
-class Ui_qrcodeDialog(object):
-    def setupUi(self, qrcodeDialog):
-        qrcodeDialog.setObjectName(_fromUtf8("qrcodeDialog"))
-        self.image = QtGui.QLabel(qrcodeDialog)
-        self.label = QtGui.QLabel(qrcodeDialog)
+class QRCodeDialog(QtGui.QDialog):
+
+    def __init__(self, parent):
+        super(QRCodeDialog, self).__init__(parent)
+        self.image = QtGui.QLabel(self)
+        self.label = QtGui.QLabel(self)
         font = QtGui.QFont()
         font.setBold(True)
         font.setWeight(75)
         self.label.setFont(font)
         self.label.setAlignment(
             QtCore.Qt.AlignCenter | QtCore.Qt.AlignVCenter)
-        self.buttonBox = QtGui.QDialogButtonBox(qrcodeDialog)
-        self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Ok)
-        layout = QtGui.QVBoxLayout(qrcodeDialog)
+        buttonBox = QtGui.QDialogButtonBox(self)
+        buttonBox.setOrientation(QtCore.Qt.Horizontal)
+        buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Ok)
+        buttonBox.accepted.connect(self.accept)
+        layout = QtGui.QVBoxLayout(self)
         layout.addWidget(self.image)
         layout.addWidget(self.label)
-        layout.addWidget(self.buttonBox)
+        layout.addWidget(buttonBox)
+        self.retranslateUi()
 
-        self.retranslateUi(qrcodeDialog)
-        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(
-            _fromUtf8("accepted()")), qrcodeDialog.accept)
-        QtCore.QObject.connect(self.buttonBox, QtCore.SIGNAL(
-            _fromUtf8("rejected()")), qrcodeDialog.reject)
-        QtCore.QMetaObject.connectSlotsByName(qrcodeDialog)
-
-    def retranslateUi(self, qrcodeDialog):
-        qrcodeDialog.setWindowTitle(QtGui.QApplication.translate(
-            "qrcodeDialog", "QR-code",
-            None, QtGui.QApplication.UnicodeUTF8
-        ))
+    def retranslateUi(self):
+        self.setWindowTitle(_translate("QRCodeDialog", "QR-code"))
 
     def render(self, text):
         self.label.setText(text)
         self.image.setPixmap(
             qrcode.make(text, image_factory=Image).pixmap())
-
-
-class qrcodeDialog(QtGui.QDialog):
-
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_qrcodeDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+        self.setFixedSize(QtGui.QWidget.sizeHint(self))
 
 
 def connect_plugin(form):
     def on_action_ShowQR():
-        form.qrcodeDialogInstance = qrcodeDialog(form)
-        form.qrcodeDialogInstance.ui.render(
-            str(form.getCurrentAccount())
-        )
-        form.qrcodeDialogInstance.exec_()
+        try:
+            dialog = form.qrcode_dialog
+        except AttributeError:
+            form.qrcode_dialog = dialog = QRCodeDialog(form)
+        dialog.render(str(form.getCurrentAccount()))
+        dialog.exec_()
 
+    # return
     form.actionShowQRCode = \
         form.ui.addressContextMenuToolbarYourIdentities.addAction(
-            translateText("MainWindow", "Show QR-code"),
+            _translate("MainWindow", "Show QR-code"),
             on_action_ShowQR
         )
     form.popMenuYourIdentities.addAction(form.actionShowQRCode)
