@@ -255,6 +255,18 @@ class MyForm(settingsmixin.SMainWindow):
                 'customContextMenuRequested(const QPoint&)'),
                         self.on_context_menuYourIdentities)
 
+        # load all gui.menu plugins with prefix 'address'
+        self.menu_plugins = {'address': []}
+        for plugin in get_plugins('gui.menu', 'address'):
+            try:
+                handler, title = plugin(self)
+            except TypeError:
+                continue
+            self.menu_plugins['address'].append(
+                self.ui.addressContextMenuToolbarYourIdentities.addAction(
+                    title, handler
+                ))
+
     def init_chan_popup_menu(self, connectSignal=True):
         # Popup menu for the Channels tab
         self.ui.addressContextMenuToolbar = QtGui.QToolBar()
@@ -3421,6 +3433,10 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenuSubscriptions.addSeparator()
             self.popMenuSubscriptions.addAction(self.actionsubscriptionsClipboard)
             self.popMenuSubscriptions.addSeparator()
+            # preloaded gui.menu plugins with prefix 'address'
+            for plugin in self.menu_plugins['address']:
+                self.popMenuSubscriptions.addAction(plugin)
+            self.popMenuSubscriptions.addSeparator()
         self.popMenuSubscriptions.addAction(self.actionMarkAllRead)
         self.popMenuSubscriptions.exec_(
             self.ui.treeWidgetSubscriptions.mapToGlobal(point))
@@ -3831,12 +3847,11 @@ class MyForm(settingsmixin.SMainWindow):
             self.popMenuYourIdentities.addAction(self.actionSpecialAddressBehaviorYourIdentities)
             self.popMenuYourIdentities.addAction(self.actionEmailGateway)
             self.popMenuYourIdentities.addSeparator()
+            # preloaded gui.menu plugins with prefix 'address'
+            for plugin in self.menu_plugins['address']:
+                self.popMenuYourIdentities.addAction(plugin)
+            self.popMenuYourIdentities.addSeparator()
         self.popMenuYourIdentities.addAction(self.actionMarkAllRead)
-
-        if get_plugins:
-            for plugin in get_plugins(
-                    'gui.menu', 'popMenuYourIdentities'):
-                plugin(self)
 
         self.popMenuYourIdentities.exec_(
             self.ui.treeWidgetYourIdentities.mapToGlobal(point))
@@ -3856,6 +3871,10 @@ class MyForm(settingsmixin.SMainWindow):
             else:
                 self.popMenu.addAction(self.actionEnable)
             self.popMenu.addAction(self.actionSetAvatar)
+            self.popMenu.addSeparator()
+            # preloaded gui.menu plugins with prefix 'address'
+            for plugin in self.menu_plugins['address']:
+                self.popMenu.addAction(plugin)
             self.popMenu.addSeparator()
         self.popMenu.addAction(self.actionMarkAllRead)
         self.popMenu.exec_(

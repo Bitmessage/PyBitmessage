@@ -73,10 +73,4 @@ def connect_plugin(form):
         dialog.render(str(form.getCurrentAccount()))
         dialog.exec_()
 
-    # return
-    form.actionShowQRCode = \
-        form.ui.addressContextMenuToolbarYourIdentities.addAction(
-            _translate("MainWindow", "Show QR-code"),
-            on_action_ShowQR
-        )
-    form.popMenuYourIdentities.addAction(form.actionShowQRCode)
+    return on_action_ShowQR, _translate("MainWindow", "Show QR-code")
