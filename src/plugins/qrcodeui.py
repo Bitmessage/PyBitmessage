@@ -3,7 +3,7 @@
 from PyQt4 import QtGui, QtCore
 import qrcode
 
-from pybitmessage.tr import translateText
+from pybitmessage.tr import _translate
 
 try:
     _fromUtf8 = QtCore.QString.fromUtf8
@@ -64,10 +64,8 @@ class Ui_qrcodeDialog(object):
         QtCore.QMetaObject.connectSlotsByName(qrcodeDialog)
 
     def retranslateUi(self, qrcodeDialog):
-        qrcodeDialog.setWindowTitle(QtGui.QApplication.translate(
-            "qrcodeDialog", "QR-code",
-            None, QtGui.QApplication.UnicodeUTF8
-        ))
+        qrcodeDialog.setWindowTitle(
+            _translate("qrcodeDialog", "QR-code"))
 
     def render(self, text):
         self.label.setText(text)
@@ -95,7 +93,7 @@ def connect_plugin(form):
 
     form.actionShowQRCode = \
         form.ui.addressContextMenuToolbarYourIdentities.addAction(
-            translateText("MainWindow", "Show QR-code"),
+            _translate("MainWindow", "Show QR-code"),
             on_action_ShowQR
         )
     form.popMenuYourIdentities.addAction(form.actionShowQRCode)
