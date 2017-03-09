@@ -105,8 +105,8 @@ class sendDataThread(threading.Thread):
                     select.select([], [self.sslSock if isSSL else self.sock], [], 10)
                     logger.debug('sock.recv retriable error')
                     continue
-                if e.errno in (errno.EPIPE, errno.ECONNRESET, errno.EHOSTUNREACH, errno.ETIMEDOUT):
-                    logger.debug('Connection error (EPIPE/ECONNRESET/EHOSTUNREACH/ETIMEDOUT)')
+                if e.errno in (errno.EPIPE, errno.ECONNRESET, errno.EHOSTUNREACH, errno.ETIMEDOUT, errno.ECONNREFUSED):
+                    logger.debug('Connection error: %s', str(e))
                     return False
                 raise
             throttle.SendThrottle().wait(amountSent)
