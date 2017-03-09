@@ -4,8 +4,6 @@ try:
     import gi
     gi.require_version('MessagingMenu', '1.0')
     from gi.repository import MessagingMenu
-    gi.require_version('Notify', '0.7')
-    from gi.repository import Notify
     withMessagingMenu = True
 except (ImportError, ValueError):
     MessagingMenu = None
@@ -62,9 +60,8 @@ import platform
 import textwrap
 import debug
 import random
-import subprocess
 import string
-import datetime
+from datetime import datetime, timedelta
 from helper_sql import *
 import helper_search
 import l10n
@@ -153,7 +150,7 @@ class MyForm(settingsmixin.SMainWindow):
     SOUND_CONNECTION_GREEN = 5
 
     # the last time that a message arrival sound was played
-    lastSoundTime = datetime.datetime.now() - datetime.timedelta(days=1)
+    lastSoundTime = datetime.now() - timedelta(days=1)
 
     # the maximum frequency of message sounds in seconds
     maxSoundFrequencySec = 60
@@ -1368,39 +1365,41 @@ class MyForm(settingsmixin.SMainWindow):
     # returns true if the given sound category is a connection sound
     # rather than a received message sound
     def isConnectionSound(self, category):
-        if (category is self.SOUND_CONNECTED or
-            category is self.SOUND_DISCONNECTED or
-            category is self.SOUND_CONNECTION_GREEN):
-            return True
-        return False
+        return category in (
+            self.SOUND_CONNECTED,
+            self.SOUND_DISCONNECTED,
+            self.SOUND_CONNECTION_GREEN
+        )
 
     # play a sound
     def playSound(self, category, label):
         # filename of the sound to be played
         soundFilename = None
 
-        # whether to play a sound or not
-        play = True
+        def _choose_ext(basename):
+            for ext in ('.wav', '.mp3', '.oga'):
+                if os.path.isfile(basename + ext):
+                    return ext
 
         # if the address had a known label in the address book
-        if label is not None:
+        if label:
             # Does a sound file exist for this particular contact?
-            if (os.path.isfile(state.appdata + 'sounds/' + label + '.wav') or
-                os.path.isfile(state.appdata + 'sounds/' + label + '.mp3')):
-                soundFilename = state.appdata + 'sounds/' + label
-
-        # Avoid making sounds more frequently than the threshold.
-        # This suppresses playing sounds repeatedly when there
-        # are many new messages
-        if (soundFilename is None and
-            not self.isConnectionSound(category)):
-            # elapsed time since the last sound was played
-            dt = datetime.datetime.now() - self.lastSoundTime
-            # suppress sounds which are more frequent than the threshold
-            if dt.total_seconds() < self.maxSoundFrequencySec:
-                play = False
+            soundFilename = state.appdata + 'sounds/' + label
+            ext = _choose_ext(soundFilename)
+            if not ext:
+                soundFilename = None
 
         if soundFilename is None:
+            # Avoid making sounds more frequently than the threshold.
+            # This suppresses playing sounds repeatedly when there
+            # are many new messages
+            if not self.isConnectionSound(category):
+                # elapsed time since the last sound was played
+                dt = datetime.now() - self.lastSoundTime
+                # suppress sounds which are more frequent than the threshold
+                if dt.total_seconds() < self.maxSoundFrequencySec:
+                    return
+
             # the sound is for an address which exists in the address book
             if category is self.SOUND_KNOWN:
                 soundFilename = state.appdata + 'sounds/known'
@@ -1415,74 +1414,54 @@ class MyForm(settingsmixin.SMainWindow):
                 soundFilename = state.appdata + 'sounds/disconnected'
             # sound when the connection status becomes green
             elif category is self.SOUND_CONNECTION_GREEN:
-                soundFilename = state.appdata + 'sounds/green'            
+                soundFilename = state.appdata + 'sounds/green'
 
-        if soundFilename is not None and play is True:
-            if not self.isConnectionSound(category):
-                # record the last time that a received message sound was played
-                self.lastSoundTime = datetime.datetime.now()
+        if soundFilename is None:
+            return
 
-            # if not wav then try mp3 format
-            if not os.path.isfile(soundFilename + '.wav'):
-                soundFilename = soundFilename + '.mp3'
-            else:
-                soundFilename = soundFilename + '.wav'
+        if not self.isConnectionSound(category):
+            # record the last time that a received message sound was played
+            self.lastSoundTime = datetime.now()
 
-            if os.path.isfile(soundFilename):
-                if 'linux' in sys.platform:
-                    # Note: QSound was a nice idea but it didn't work
-                    if '.mp3' in soundFilename:
-                        gst_available=False
-                        try:
-                            subprocess.call(["gst123", soundFilename],
-                                            stdin=subprocess.PIPE, 
-                                            stdout=subprocess.PIPE)
-                            gst_available=True
-                        except:
-                            logger.warning("WARNING: gst123 must be installed in order to play mp3 sounds")
-                        if not gst_available:
-                            try:
-                                subprocess.call(["mpg123", soundFilename],
-                                                stdin=subprocess.PIPE, 
-                                                stdout=subprocess.PIPE)
-                                gst_available=True
-                            except:
-                                logger.warning("WARNING: mpg123 must be installed in order to play mp3 sounds")
-                    else:
-                        try:
-                            subprocess.call(["aplay", soundFilename],
-                                            stdin=subprocess.PIPE, 
-                                            stdout=subprocess.PIPE)
-                        except:
-                            logger.warning("WARNING: aplay must be installed in order to play WAV sounds")
-                elif sys.platform[0:3] == 'win':
-                    # use winsound on Windows
-                    import winsound
-                    winsound.PlaySound(soundFilename, winsound.SND_FILENAME)
+        try:  # try already known format
+            soundFilename += ext
+        except (TypeError, NameError):
+            ext = _choose_ext(soundFilename)
+            if not ext:
+                return
+
+            soundFilename += ext
+
+        self._player(soundFilename)
 
     # initialise the message notifier
     def notifierInit(self):
-        if withMessagingMenu:
-            Notify.init('pybitmessage')
-
-    # shows a notification
-    def notifierShow(self, title, subtitle, fromCategory, label):
-        self.playSound(fromCategory, label)
-
-        if withMessagingMenu:
-            n = Notify.Notification.new(
-                title, subtitle, 'notification-message-email')
-            try:
-                n.show()
-            except:
-                # n.show() has been known to throw this exception:
-                # gi._glib.GError: GDBus.Error:org.freedesktop.Notifications.
-                # MaxNotificationsExceeded: Exceeded maximum number of
-                # notifications
-                pass
-            return
-        else:
+        def _simple_notify(
+                title, subtitle, category, label=None, icon=None):
             self.tray.showMessage(title, subtitle, 1, 2000)
+
+        self._notifier = _simple_notify
+        self._player = QtGui.QSound.play
+
+        if not get_plugins:
+            return
+
+        for plugin in get_plugins('notification.message'):
+            self._notifier = plugin
+            break
+
+        if not QtGui.QSound.isAvailable():
+            for plugin in get_plugins('notification.sound'):
+                self._player = plugin
+                break
+            else:
+                logger.warning("No sound player plugin found!")
+
+    def notifierShow(
+            self, title, subtitle, category, label=None, icon=None):
+        self.playSound(category, label)
+        self._notifier(
+            unicode(title), unicode(subtitle), category, label, icon)
 
     # tree
     def treeWidgetKeyPressEvent(self, event):
@@ -1663,15 +1642,18 @@ class MyForm(settingsmixin.SMainWindow):
 
     def setStatusIcon(self, color):
         # print 'setting status icon color'
+        _notifications_enabled = not BMConfigParser().getboolean(
+            'bitmessagesettings', 'hidetrayconnectionnotifications')
         if color == 'red':
             self.pushButtonStatusIcon.setIcon(
                 QIcon(":/newPrefix/images/redicon.png"))
             shared.statusIconColor = 'red'
             # if the connection is lost then show a notification
-            if self.connected and not BMConfigParser().getboolean('bitmessagesettings', 'hidetrayconnectionnotifications'):
-                self.notifierShow('Bitmessage', unicode(_translate(
-                            "MainWindow", "Connection lost").toUtf8(),'utf-8'),
-                                  self.SOUND_DISCONNECTED, None)
+            if self.connected and _notifications_enabled:
+                self.notifierShow(
+                    'Bitmessage',
+                    _translate("MainWindow", "Connection lost"),
+                    self.SOUND_DISCONNECTED)
             if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp') and \
                 BMConfigParser().get('bitmessagesettings', 'socksproxytype') == "none":
                 self.statusBar().showMessage(_translate(
@@ -1689,10 +1671,11 @@ class MyForm(settingsmixin.SMainWindow):
                 ":/newPrefix/images/yellowicon.png"))
             shared.statusIconColor = 'yellow'
             # if a new connection has been established then show a notification
-            if not self.connected and not BMConfigParser().getboolean('bitmessagesettings', 'hidetrayconnectionnotifications'):
-                self.notifierShow('Bitmessage', unicode(_translate(
-                            "MainWindow", "Connected").toUtf8(),'utf-8'),
-                                  self.SOUND_CONNECTED, None)
+            if not self.connected and _notifications_enabled:
+                self.notifierShow(
+                    'Bitmessage',
+                    _translate("MainWindow", "Connected"),
+                    self.SOUND_CONNECTED)
             self.connected = True
 
             if self.actionStatus is not None:
@@ -1705,10 +1688,11 @@ class MyForm(settingsmixin.SMainWindow):
             self.pushButtonStatusIcon.setIcon(
                 QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
-            if not self.connected and not BMConfigParser().getboolean('bitmessagesettings', 'hidetrayconnectionnotifications'):
-                self.notifierShow('Bitmessage', unicode(_translate(
-                            "MainWindow", "Connected").toUtf8(),'utf-8'),
-                                  self.SOUND_CONNECTION_GREEN, None)
+            if not self.connected and _notifications_enabled:
+                self.notifierShow(
+                    'Bitmessage',
+                    _translate("MainWindow", "Connected"),
+                    self.SOUND_CONNECTION_GREEN)
             self.connected = True
 
             if self.actionStatus is not None:
@@ -2253,8 +2237,14 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             acct = ret
         self.propagateUnreadCount(acct.address)
-        if BMConfigParser().getboolean('bitmessagesettings', 'showtraynotifications'):
-            self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(acct.fromLabel, 'utf-8'), self.SOUND_UNKNOWN, None)
+        if BMConfigParser().getboolean(
+                'bitmessagesettings', 'showtraynotifications'):
+            self.notifierShow(
+                _translate("MainWindow", "New Message"),
+                _translate("MainWindow", "From %1").arg(
+                    unicode(acct.fromLabel, 'utf-8')),
+                self.SOUND_UNKNOWN
+            )
         if self.getCurrentAccount() is not None and ((self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) is not None) or self.getCurrentAccount(treeWidget) != acct.address):
             # Ubuntu should notify of new message irespective of whether it's in current message list or not
             self.ubuntuMessagingMenuUpdate(True, None, acct.toLabel)

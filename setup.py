@@ -254,7 +254,9 @@ if __name__ == "__main__":
             install_requires=installRequires,
             extras_require={
                 'qrcode': ['qrcode'],
-                'pyopencl': ['pyopencl']
+                'pyopencl': ['pyopencl'],
+                'notify2': ['pygobject', 'notify2'],
+                'sound:platform_system=="Windows"': ['winsound']
             },
             classifiers=[
                 "License :: OSI Approved :: MIT License"
@@ -278,9 +280,16 @@ if __name__ == "__main__":
                     'popMenuYourIdentities.qrcode = '
                     'pybitmessage.plugins.qrcodeui [qrcode]'
                 ],
-            #    'console_scripts': [
-            #        'pybitmessage = pybitmessage.bitmessagemain:main'
-            #    ]
+                'notification.message': [
+                    'notify2 = pybitmessage.plugins.notification_notify2'
+                    '[notify2]'
+                ],
+                'notification.sound': [
+                    'fallback = pybitmessage.plugins.sound_playfile [sound]'
+                ],
+                # 'console_scripts': [
+                #        'pybitmessage = pybitmessage.bitmessagemain:main'
+                # ]
             },
             scripts=['src/pybitmessage'],
             cmdclass={'install': InstallCmd}
