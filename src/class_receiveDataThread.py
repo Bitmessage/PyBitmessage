@@ -123,11 +123,11 @@ class receiveDataThread(threading.Thread):
                     select.select([self.sslSock if isSSL else self.sock], [], [], 10)
                     logger.debug('sock.recv retriable error')
                     continue
-                logger.error('sock.recv error. Closing receiveData thread (' + str(self.peer) + ', Thread ID: ' + str(id(self)) + ').' + str(err.errno) + "/" + str(err))
+                logger.error('sock.recv error. Closing receiveData thread, %s', str(err))
                 break
             # print 'Received', repr(self.data)
             if len(self.data) == dataLen: # If self.sock.recv returned no data:
-                logger.debug('Connection to ' + str(self.peer) + ' closed. Closing receiveData thread. (ID: ' + str(id(self)) + ')')
+                logger.debug('Connection to ' + str(self.peer) + ' closed. Closing receiveData thread')
                 break
             else:
                 self.processData()
@@ -302,8 +302,12 @@ class receiveDataThread(threading.Thread):
                             logger.debug("Waiting for SSL socket handhake write")
                             select.select([], [self.sslSock], [], 10)
                             continue
-                    logger.error("SSL socket handhake failed: %s, shutting down connection", str(e))
+                    logger.error("SSL socket handhake failed: shutting down connection, %s", str(e))
                     self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail %s' % (str(e))))
+                    return False
+                except socket.error as err:
+                    logger.debug('SSL socket handshake failed, shutting down connection, %s', str(err))
+                    self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail'))
                     return False
                 except Exception:
                     logger.error("SSL socket handhake failed, shutting down connection", exc_info=True)
