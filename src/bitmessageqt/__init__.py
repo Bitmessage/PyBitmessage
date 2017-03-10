@@ -86,7 +86,7 @@ import throttle
 from version import softwareVersion
 
 try:
-    from plugins.plugin import get_plugins
+    from plugins.plugin import get_plugin, get_plugins
 except ImportError:
     get_plugins = False
 
@@ -1441,19 +1441,21 @@ class MyForm(settingsmixin.SMainWindow):
             self.tray.showMessage(title, subtitle, 1, 2000)
 
         self._notifier = _simple_notify
+        # does nothing if isAvailable returns false
         self._player = QtGui.QSound.play
 
         if not get_plugins:
             return
 
-        for plugin in get_plugins('notification.message'):
-            self._notifier = plugin
-            break
+        _plugin = get_plugin('notification.message')
+        if _plugin:
+            self._notifier = _plugin
 
         if not QtGui.QSound.isAvailable():
-            for plugin in get_plugins('notification.sound'):
-                self._player = plugin
-                break
+            _plugin = get_plugin(
+                'notification.sound', 'file', fallback='file.fallback')
+            if _plugin:
+                self._player = _plugin
             else:
                 logger.warning("No sound player plugin found!")
 
