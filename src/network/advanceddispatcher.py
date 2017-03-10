@@ -1,12 +1,13 @@
-import asyncore
+import asyncore_pollchoose as asyncore
 
 class AdvancedDispatcher(asyncore.dispatcher):
     _buf_len = 131072
 
-    def __init__(self, sock):
-        asyncore.dispatcher.__init__(self, sock)
-        self.read_buf = ""
-        self.write_buf = ""
+    def __init__(self):
+        if not hasattr(self, '_map'):
+            asyncore.dispatcher.__init__(self)
+        self.read_buf = b""
+        self.write_buf = b""
         self.state = "init"
 
     def slice_read_buf(self, length=0):
@@ -22,7 +23,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
             return True
 
     def process(self):
-        if len(self.read_buf) == 0:
+        if self.state != "init" and len(self.read_buf) == 0:
             return
         while True:
             try:
@@ -37,10 +38,10 @@ class AdvancedDispatcher(asyncore.dispatcher):
         self.state = state
 
     def writable(self):
-        return len(self.write_buf) > 0
+        return self.connecting or len(self.write_buf) > 0
 
     def readable(self):
-        return len(self.read_buf) < AdvancedDispatcher._buf_len
+        return self.connecting or len(self.read_buf) < AdvancedDispatcher._buf_len
 
     def handle_read(self):
         self.read_buf += self.recv(AdvancedDispatcher._buf_len)
@@ -49,4 +50,8 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def handle_write(self):
         written = self.send(self.write_buf)
         self.slice_write_buf(written)
-#        self.process()
+
+    def handle_connect(self):
+        self.process()
+
+
