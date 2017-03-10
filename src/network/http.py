@@ -20,13 +20,13 @@ class HttpConnection(AdvancedDispatcher):
 
     def state_init(self):
         self.write_buf += "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n" % (self.path, self.destination[0])
-        print "\"%s\""  % (self.write_buf)
+        print "Sending %ib"  % (len(self.write_buf))
         self.set_state("http_request_sent", 0)
         return False
 
     def state_http_request_sent(self):
         if len(self.read_buf) > 0:
-            print self.read_buf
+            print "Received %ib" % (len(self.read_buf))
             self.read_buf = b""
         if not self.connected:
             self.set_state("close", 0)

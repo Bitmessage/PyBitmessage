@@ -172,7 +172,10 @@ def poll_poller(timeout=0.0, map=None):
     if timeout is not None:
         # timeout is in milliseconds
         timeout = int(timeout*1000)
-    pollster = select.poll()
+    try:
+        poll_poller.pollster
+    except AttributeError:
+        poll_poller.pollster = select.poll()
     if map:
         for fd, obj in list(map.items()):
             flags = 0
@@ -182,9 +185,12 @@ def poll_poller(timeout=0.0, map=None):
             if obj.writable() and not obj.accepting:
                 flags |= select.POLLOUT
             if flags:
-                pollster.register(fd, flags)
+                try:
+                    poll_poller.pollster.modify(fd, flags)
+                except IOError:
+                    poll_poller.pollster.register(fd, flags)
         try:
-            r = pollster.poll(timeout)
+            r = poll_poller.pollster.poll(timeout)
         except KeyboardInterrupt:
             r = []
         for fd, flags in r:
@@ -201,7 +207,10 @@ def epoll_poller(timeout=0.0, map=None):
     """A poller which uses epoll(), supported on Linux 2.5.44 and newer."""
     if map is None:
         map = socket_map
-    pollster = select.epoll()
+    try:
+        epoll_poller.pollster
+    except AttributeError:
+        epoll_poller.pollster = select.epoll()
     if map:
         for fd, obj in map.items():
             flags = 0
@@ -213,9 +222,12 @@ def epoll_poller(timeout=0.0, map=None):
                 # Only check for exceptions if object was either readable
                 # or writable.
                 flags |= select.POLLERR | select.POLLHUP | select.POLLNVAL
-                pollster.register(fd, flags)
+                try:
+                    epoll_poller.pollster.register(fd, flags)
+                except IOError:
+                    epoll_poller.pollster.modify(fd, flags)
         try:
-            r = pollster.poll(timeout)
+            r = epoll_poller.pollster.poll(timeout)
         except select.error, err:
             if err.args[0] != EINTR:
                 raise
@@ -265,9 +277,14 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None,
     # code which grants backward compatibility with "use_poll" 
     # argument which should no longer be used in favor of
     # "poller"
-    if use_poll and hasattr(select, 'poll'):
+
+    if hasattr(select, 'epoll'):
+        poller = epoll_poller
+    elif hasattr(select, 'kqueue'):
+        poller = kqueue_poller
+    elif hasattr(select, 'poll'):
         poller = poll_poller
-    else:
+    elif hasattr(select, 'select'):
         poller = select_poller
 
     if count is None:
@@ -349,6 +366,16 @@ class dispatcher:
             #self.log_info('closing channel %d:%s' % (fd, self))
             del map[fd]
         self._fileno = None
+        try:
+            epoll_poller.pollster.unregister(fd)
+        except (AttributeError, KeyError):
+            # no epoll used, or not registered
+            pass
+        try:
+            poll_poller.pollster.unregister(fd)
+        except (AttributeError, KeyError):
+            # no poll used, or not registered
+            pass
 
     def create_socket(self, family=socket.AF_INET, type=socket.SOCK_STREAM):
         self.family_and_type = family, type
