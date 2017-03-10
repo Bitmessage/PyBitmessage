@@ -22,7 +22,7 @@ except ImportError:
         except (KeyError, AttributeError):
             pass
 
-        programs = ['gst123']
+        programs = ['gst123', 'gst-play-1.0']
         if ext == '.wav':
             programs.append('aplay')
         elif ext == '.mp3':
