@@ -630,17 +630,18 @@ class receiveDataThread(threading.Thread):
                     knownnodes.knownNodes[recaddrStream] = {}
             peerFromAddrMessage = state.Peer(hostStandardFormat, recaddrPort)
             if peerFromAddrMessage not in knownnodes.knownNodes[recaddrStream]:
-                knownnodes.trimKnownNodes(recaddrStream)
                 # only if recent
                 if timeSomeoneElseReceivedMessageFromThisNode > (int(time.time()) - 10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800):
-                    logger.debug('added new node ' + str(peerFromAddrMessage) + ' to knownNodes in stream ' + str(recaddrStream))
                     # bootstrap provider?
                     if BMConfigParser().safeGetInt('bitmessagesettings', 'maxoutboundconnections') >= \
                         BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
+                        knownnodes.trimKnownNodes(recaddrStream)
                         with knownnodes.knownNodesLock:
-                            knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = int(time.time()) - 10800
+                            knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = int(time.time()) - 86400 # penalise initially by 1 day
+                        logger.debug('added new node ' + str(peerFromAddrMessage) + ' to knownNodes in stream ' + str(recaddrStream))
+                        shared.needToWriteKnownNodesToDisk = True
                     # normal mode
-                    else:
+                    elif len(knownnodes.knownNodes[recaddrStream]) < 20000:
                         with knownnodes.knownNodesLock:
                             knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = timeSomeoneElseReceivedMessageFromThisNode
                         hostDetails = (
@@ -648,7 +649,8 @@ class receiveDataThread(threading.Thread):
                             recaddrStream, recaddrServices, hostStandardFormat, recaddrPort)
                         protocol.broadcastToSendDataQueues((
                             recaddrStream, 'advertisepeer', hostDetails))
-                    shared.needToWriteKnownNodesToDisk = True
+                        logger.debug('added new node ' + str(peerFromAddrMessage) + ' to knownNodes in stream ' + str(recaddrStream))
+                        shared.needToWriteKnownNodesToDisk = True
             # only update if normal mode
             elif BMConfigParser().safeGetInt('bitmessagesettings', 'maxoutboundconnections') < \
                 BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
