@@ -285,7 +285,8 @@ if __name__ == "__main__":
                     '[notify2]'
                 ],
                 'notification.sound': [
-                    'fallback = pybitmessage.plugins.sound_playfile [sound]'
+                    'file.fallback = pybitmessage.plugins.sound_playfile'
+                    '[sound]'
                 ],
                 # 'console_scripts': [
                 #        'pybitmessage = pybitmessage.bitmessagemain:main'
