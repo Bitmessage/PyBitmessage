@@ -368,12 +368,12 @@ class dispatcher:
         self._fileno = None
         try:
             epoll_poller.pollster.unregister(fd)
-        except (AttributeError, KeyError):
+        except (AttributeError, KeyError, TypeError):
             # no epoll used, or not registered
             pass
         try:
             poll_poller.pollster.unregister(fd)
-        except (AttributeError, KeyError):
+        except (AttributeError, KeyError, TypeError):
             # no poll used, or not registered
             pass
 
