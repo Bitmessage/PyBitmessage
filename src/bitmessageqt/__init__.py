@@ -1387,6 +1387,7 @@ class MyForm(settingsmixin.SMainWindow):
             soundFilename = state.appdata + 'sounds/' + label
             ext = _choose_ext(soundFilename)
             if not ext:
+                category = self.SOUND_KNOWN
                 soundFilename = None
 
         if soundFilename is None:
@@ -1417,6 +1418,7 @@ class MyForm(settingsmixin.SMainWindow):
                 soundFilename = state.appdata + 'sounds/green'
 
         if soundFilename is None:
+            logger.warning("Probably wrong category number in playSound()")
             return
 
         if not self.isConnectionSound(category):
@@ -1428,7 +1430,10 @@ class MyForm(settingsmixin.SMainWindow):
         except (TypeError, NameError):
             ext = _choose_ext(soundFilename)
             if not ext:
-                return
+                try:  # if no user sound file found try to play from theme
+                    return self._theme_player(category, label)
+                except TypeError:
+                    return
 
             soundFilename += ext
 
@@ -1450,6 +1455,10 @@ class MyForm(settingsmixin.SMainWindow):
         _plugin = get_plugin('notification.message')
         if _plugin:
             self._notifier = _plugin
+        else:
+            logger.warning("No notification.message plugin found")
+
+        self._theme_player = get_plugin('notification.sound', 'theme')
 
         if not QtGui.QSound.isAvailable():
             _plugin = get_plugin(
@@ -1457,7 +1466,7 @@ class MyForm(settingsmixin.SMainWindow):
             if _plugin:
                 self._player = _plugin
             else:
-                logger.warning("No sound player plugin found!")
+                logger.warning("No notification.sound plugin found")
 
     def notifierShow(
             self, title, subtitle, category, label=None, icon=None):
