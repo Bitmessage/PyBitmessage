@@ -1,7 +1,7 @@
 import asyncore_pollchoose as asyncore
 
 class AdvancedDispatcher(asyncore.dispatcher):
-    _buf_len = 131072
+    _buf_len = 2097152 # 2MB
 
     def __init__(self):
         if not hasattr(self, '_map'):
@@ -53,5 +53,3 @@ class AdvancedDispatcher(asyncore.dispatcher):
 
     def handle_connect(self):
         self.process()
-
-

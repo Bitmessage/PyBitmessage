@@ -15,9 +15,6 @@ class Socks5(Proxy):
         self.ipaddr = None
         self.destport = address[1]
 
-    def handle_connect(self):
-        self.process()
-
     def state_init(self):
         if self._auth:
             self.write_buf += struct.pack('BBBB', 0x05, 0x02, 0x00, 0x02)
