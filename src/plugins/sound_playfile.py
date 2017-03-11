@@ -12,13 +12,17 @@ except ImportError:
 
     play_cmd = {}
 
+    def _subprocess(*args):
+        FNULL = open(os.devnull, 'wb')
+        subprocess.call(
+            args, stdout=FNULL, stderr=subprocess.STDOUT, close_fds=True)
+
     def connect_plugin(sound_file):
         global play_cmd
 
         ext = os.path.splitext(sound_file)[-1]
         try:
-            subprocess.call([play_cmd[ext], sound_file])
-            return
+            return _subprocess(play_cmd[ext], sound_file)
         except (KeyError, AttributeError):
             pass
 
@@ -29,7 +33,7 @@ except ImportError:
             programs += ['mpg123', 'mpg321', 'mpg321-mpg123']
         for cmd in programs:
             try:
-                subprocess.call([cmd, sound_file])
+                _subprocess(cmd, sound_file)
             except OSError:
                 pass  # log here!
             else:
