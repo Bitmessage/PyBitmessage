@@ -9,7 +9,7 @@ except Exception as err:
     logger.critical(logmsg, exc_info=True)
     sys.exit()
 
-from tr import _translate
+from tr import _translate, _codec
 from addresses import decodeAddress, addBMIfNotPresent
 import shared
 from bitmessageui import Ui_MainWindow
@@ -585,8 +585,10 @@ class MyForm(settingsmixin.SMainWindow):
                 addressInKeysFile)
             if addressVersionNumber == 1:
                 displayMsg = _translate(
-                    "MainWindow", "One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer supported. "
-                    + "May we delete it now?").arg(addressInKeysFile)
+                    "MainWindow",
+                    "One of your addresses, %1, is an old version 1 address."
+                    " Version 1 addresses are no longer supported."
+                    " May we delete it now?").arg(addressInKeysFile)
                 reply = QtGui.QMessageBox.question(
                     self, 'Message', displayMsg, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
                 if reply == QtGui.QMessageBox.Yes:
@@ -816,16 +818,17 @@ class MyForm(settingsmixin.SMainWindow):
         stylesheet = ""
 
         if numberOfHours < 48:
-            self.ui.labelHumanFriendlyTTLDescription.setText(
-                _translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, numberOfHours) +
-                ", " +
-                _translate("MainWindow", "not recommended for chans", None, QtCore.QCoreApplication.CodecForTr)
-                )
+            self.ui.labelHumanFriendlyTTLDescription.setText(_translate(
+                "MainWindow", "%n hour(s), not recommended for chans",
+                None, _codec, numberOfHours
+            ))
             stylesheet = "QLabel { color : red; }"
             font.setBold(True)
         else:
             numberOfDays = int(round(TTL / (24*60*60)))
-            self.ui.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n day(s)", None, QtCore.QCoreApplication.CodecForTr, numberOfDays))
+            self.ui.labelHumanFriendlyTTLDescription.setText(_translate(
+                "MainWindow", "%n day(s)", None, _codec, numberOfDays
+            ))
             font.setBold(False)
         self.ui.labelHumanFriendlyTTLDescription.setStyleSheet(stylesheet)
         self.ui.labelHumanFriendlyTTLDescription.setFont(font)
@@ -1068,8 +1071,10 @@ class MyForm(settingsmixin.SMainWindow):
             statusText = _translate(
                 "MainWindow", "Forced difficulty override. Send should start soon.")
         else:
-            statusText = _translate("MainWindow", "Unknown status: %1 %2").arg(status).arg(
-                l10n.formatTimestamp(lastactiontime))
+            statusText = _translate(
+                "MainWindow", "Unknown status: %1 %2").arg(
+                    status, l10n.formatTimestamp(lastactiontime)
+                )
         newItem = myTableWidgetItem(statusText)
         newItem.setToolTip(statusText)
         newItem.setData(QtCore.Qt.UserRole, QtCore.QByteArray(ackdata))
@@ -1143,7 +1148,8 @@ class MyForm(settingsmixin.SMainWindow):
         tableWidget.horizontalHeader().setSortIndicator(
             3, QtCore.Qt.DescendingOrder)
         tableWidget.setSortingEnabled(True)
-        tableWidget.horizontalHeaderItem(3).setText(_translate("MainWindow", "Sent", None))
+        tableWidget.horizontalHeaderItem(3).setText(
+            _translate("MainWindow", "Sent"))
         tableWidget.setUpdatesEnabled(True)
 
     # Load messages from database file
@@ -1177,7 +1183,8 @@ class MyForm(settingsmixin.SMainWindow):
             3, QtCore.Qt.DescendingOrder)
         tableWidget.setSortingEnabled(True)
         tableWidget.selectRow(0)
-        tableWidget.horizontalHeaderItem(3).setText(_translate("MainWindow", "Received", None))
+        tableWidget.horizontalHeaderItem(3).setText(
+            _translate("MainWindow", "Received"))
         tableWidget.setUpdatesEnabled(True)
 
     # create application indicator
@@ -2020,12 +2027,28 @@ class MyForm(settingsmixin.SMainWindow):
                         toAddress = addBMIfNotPresent(toAddress)
 
                         if addressVersionNumber > 4 or addressVersionNumber <= 1:
-                            QtGui.QMessageBox.about(self, _translate("MainWindow", "Address version number"), _translate(
-                                "MainWindow", "Concerning the address %1, Bitmessage cannot understand address version numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(addressVersionNumber)))
+                            QtGui.QMessageBox.about(
+                                self, _translate(
+                                    "MainWindow", "Address version number"),
+                                _translate(
+                                    "MainWindow",
+                                    "Concerning the address %1, Bitmessage"
+                                    " cannot understand address version"
+                                    " numbers of %2. Perhaps upgrade"
+                                    " Bitmessage to the latest version."
+                                ).arg(toAddress, str(addressVersionNumber)))
                             continue
                         if streamNumber > 1 or streamNumber == 0:
-                            QtGui.QMessageBox.about(self, _translate("MainWindow", "Stream number"), _translate(
-                                "MainWindow", "Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(streamNumber)))
+                            QtGui.QMessageBox.about(
+                                self, _translate(
+                                    "MainWindow", "Stream number"),
+                                _translate(
+                                    "MainWindow",
+                                    "Concerning the address %1, Bitmessage"
+                                    " cannot handle stream numbers of %2."
+                                    " Perhaps upgrade Bitmessage to the"
+                                    " latest version."
+                                ).arg(toAddress, str(streamNumber)))
                             continue
                         self.statusbar.clearMessage()
                         if shared.statusIconColor == 'red':
@@ -2699,12 +2722,22 @@ class MyForm(settingsmixin.SMainWindow):
         waitForSync = False
 
         # C PoW currently doesn't support interrupting and OpenCL is untested
-        if getPowType() == "python" and (powQueueSize() > 0 or PendingUpload().len() > 0):
-            reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Proof of work pending"),
-                    _translate("MainWindow", "%n object(s) pending proof of work", None, QtCore.QCoreApplication.CodecForTr, powQueueSize()) + ", " +
-                    _translate("MainWindow", "%n object(s) waiting to be distributed", None, QtCore.QCoreApplication.CodecForTr, PendingUpload().len()) + "\n\n" + 
-                    _translate("MainWindow", "Wait until these tasks finish?"),
-                    QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+        if getPowType() == "python" and (
+                powQueueSize() > 0 or PendingUpload().len() > 0
+        ):
+            reply = QtGui.QMessageBox.question(
+                self, _translate("MainWindow", "Proof of work pending"),
+                _translate(
+                    "MainWindow", "%n object(s) pending proof of work",
+                    None, _codec, powQueueSize()) + ", " +
+                _translate(
+                    "MainWindow", "%n object(s) waiting to be distributed",
+                    None, _codec, PendingUpload().len()) + "\n\n" +
+                _translate("MainWindow", "Wait until these tasks finish?"),
+                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No |
+                QtGui.QMessageBox.Cancel,
+                QtGui.QMessageBox.Cancel
+            )
             if reply == QtGui.QMessageBox.No:
                 waitForPow = False
             elif reply == QtGui.QMessageBox.Cancel:
@@ -2712,7 +2745,7 @@ class MyForm(settingsmixin.SMainWindow):
 
         if PendingDownloadQueue.totalSize() > 0:
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Synchronisation pending"),
-                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr, PendingDownloadQueue.totalSize()),
+                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, _codec, PendingDownloadQueue.totalSize()),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.Yes:
                 waitForSync = True
@@ -3884,11 +3917,15 @@ class MyForm(settingsmixin.SMainWindow):
                     self.popMenuInbox.addAction(self.actionReplyChan)
                 self.popMenuInbox.addAction(self.actionReply)
                 self.popMenuInbox.addAction(self.actionAddSenderToAddressBook)
-                self.actionClipboardMessagelist = self.ui.inboxContextMenuToolbar.addAction(
-                    _translate("MainWindow",
-                        "Copy subject to clipboard" if tableWidget.currentColumn() == 2 else "Copy address to clipboard"
-                    ),
-                    self.on_action_ClipboardMessagelist)
+                self.actionClipboardMessagelist = \
+                    self.ui.inboxContextMenuToolbar.addAction(
+                        _translate(
+                            "MainWindow",
+                            "Copy subject to clipboard"
+                            if tableWidget.currentColumn() == 2
+                            else "Copy address to clipboard"),
+                        self.on_action_ClipboardMessagelist
+                )
                 self.popMenuInbox.addAction(self.actionClipboardMessagelist)
                 self.popMenuInbox.addSeparator()
                 self.popMenuInbox.addAction(self.actionAddSenderToBlackList)
