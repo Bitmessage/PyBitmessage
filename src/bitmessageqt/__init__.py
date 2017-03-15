@@ -84,6 +84,7 @@ import state
 from statusbar import BMStatusBar
 import throttle
 from version import softwareVersion
+import sound
 
 try:
     from plugins.plugin import get_plugin, get_plugins
@@ -140,14 +141,6 @@ def change_translation(newlocale):
             logger.error("Failed to set locale to %s", lang, exc_info=True)
 
 class MyForm(settingsmixin.SMainWindow):
-
-    # sound type constants
-    SOUND_NONE = 0
-    SOUND_KNOWN = 1
-    SOUND_UNKNOWN = 2
-    SOUND_CONNECTED = 3
-    SOUND_DISCONNECTED = 4
-    SOUND_CONNECTION_GREEN = 5
 
     # the last time that a message arrival sound was played
     lastSoundTime = datetime.now() - timedelta(days=1)
@@ -1362,15 +1355,6 @@ class MyForm(settingsmixin.SMainWindow):
         # update the menu entries
         self.ubuntuMessagingMenuUnread(drawAttention)
 
-    # returns true if the given sound category is a connection sound
-    # rather than a received message sound
-    def isConnectionSound(self, category):
-        return category in (
-            self.SOUND_CONNECTED,
-            self.SOUND_DISCONNECTED,
-            self.SOUND_CONNECTION_GREEN
-        )
-
     # play a sound
     def playSound(self, category, label):
         # filename of the sound to be played
@@ -1387,14 +1371,14 @@ class MyForm(settingsmixin.SMainWindow):
             soundFilename = state.appdata + 'sounds/' + label
             ext = _choose_ext(soundFilename)
             if not ext:
-                category = self.SOUND_KNOWN
+                category = sound.SOUND_KNOWN
                 soundFilename = None
 
         if soundFilename is None:
             # Avoid making sounds more frequently than the threshold.
             # This suppresses playing sounds repeatedly when there
             # are many new messages
-            if not self.isConnectionSound(category):
+            if not sound.is_connection_sound(category):
                 # elapsed time since the last sound was played
                 dt = datetime.now() - self.lastSoundTime
                 # suppress sounds which are more frequent than the threshold
@@ -1402,26 +1386,26 @@ class MyForm(settingsmixin.SMainWindow):
                     return
 
             # the sound is for an address which exists in the address book
-            if category is self.SOUND_KNOWN:
+            if category is sound.SOUND_KNOWN:
                 soundFilename = state.appdata + 'sounds/known'
             # the sound is for an unknown address
-            elif category is self.SOUND_UNKNOWN:
+            elif category is sound.SOUND_UNKNOWN:
                 soundFilename = state.appdata + 'sounds/unknown'
             # initial connection sound
-            elif category is self.SOUND_CONNECTED:
+            elif category is sound.SOUND_CONNECTED:
                 soundFilename = state.appdata + 'sounds/connected'
             # disconnected sound
-            elif category is self.SOUND_DISCONNECTED:
+            elif category is sound.SOUND_DISCONNECTED:
                 soundFilename = state.appdata + 'sounds/disconnected'
             # sound when the connection status becomes green
-            elif category is self.SOUND_CONNECTION_GREEN:
+            elif category is sound.SOUND_CONNECTION_GREEN:
                 soundFilename = state.appdata + 'sounds/green'
 
         if soundFilename is None:
             logger.warning("Probably wrong category number in playSound()")
             return
 
-        if not self.isConnectionSound(category):
+        if not sound.is_connection_sound(category):
             # record the last time that a received message sound was played
             self.lastSoundTime = datetime.now()
 
@@ -1664,7 +1648,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.notifierShow(
                     'Bitmessage',
                     _translate("MainWindow", "Connection lost"),
-                    self.SOUND_DISCONNECTED)
+                    sound.SOUND_DISCONNECTED)
             if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp') and \
                 BMConfigParser().get('bitmessagesettings', 'socksproxytype') == "none":
                 self.statusBar().showMessage(_translate(
@@ -1686,7 +1670,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.notifierShow(
                     'Bitmessage',
                     _translate("MainWindow", "Connected"),
-                    self.SOUND_CONNECTED)
+                    sound.SOUND_CONNECTED)
             self.connected = True
 
             if self.actionStatus is not None:
@@ -1703,7 +1687,7 @@ class MyForm(settingsmixin.SMainWindow):
                 self.notifierShow(
                     'Bitmessage',
                     _translate("MainWindow", "Connected"),
-                    self.SOUND_CONNECTION_GREEN)
+                    sound.SOUND_CONNECTION_GREEN)
             self.connected = True
 
             if self.actionStatus is not None:
@@ -2254,7 +2238,7 @@ class MyForm(settingsmixin.SMainWindow):
                 _translate("MainWindow", "New Message"),
                 _translate("MainWindow", "From %1").arg(
                     unicode(acct.fromLabel, 'utf-8')),
-                self.SOUND_UNKNOWN
+                sound.SOUND_UNKNOWN
             )
         if self.getCurrentAccount() is not None and ((self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) is not None) or self.getCurrentAccount(treeWidget) != acct.address):
             # Ubuntu should notify of new message irespective of whether it's in current message list or not
