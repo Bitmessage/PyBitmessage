@@ -2744,8 +2744,8 @@ class MyForm(settingsmixin.SMainWindow):
                 return
 
         if PendingDownloadQueue.totalSize() > 0:
-            reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Synchronisation pending"),
-                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, _codec, PendingDownloadQueue.totalSize()),
+            reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Synchronization pending"),
+                    _translate("MainWindow", "Bitmessage hasn't synchronized with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronization finishes?", None, _codec, PendingDownloadQueue.totalSize()),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.Yes:
                 waitForSync = True
@@ -2757,7 +2757,7 @@ class MyForm(settingsmixin.SMainWindow):
         if shared.statusIconColor == 'red' and not BMConfigParser().safeGetBoolean(
                 'bitmessagesettings', 'dontconnect'):
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Not connected"),
-                    _translate("MainWindow", "Bitmessage isn't connected to the network. If you quit now, it may cause delivery delays. Wait until connected and the synchronisation finishes?"),
+                    _translate("MainWindow", "Bitmessage isn't connected to the network. If you quit now, it may cause delivery delays. Wait until connected and the synchronization finishes?"),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.Yes:
                 waitForConnection = True
@@ -2782,7 +2782,7 @@ class MyForm(settingsmixin.SMainWindow):
         # this probably will not work correctly, because there is a delay between the status icon turning red and inventory exchange, but it's better than nothing.
         if waitForSync:
             self.updateStatusBar(_translate(
-                "MainWindow", "Waiting for finishing synchronisation..."))
+                "MainWindow", "Waiting for finishing synchronization..."))
             while PendingDownloadQueue.totalSize() > 0:
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(
