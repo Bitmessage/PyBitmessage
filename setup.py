@@ -17,6 +17,7 @@ packageManager = {
     "FreeBSD": "pkg install",
     "Debian": "apt-get install",
     "Ubuntu": "apt-get install",
+    "Ubuntu 12": "apt-get install",
     "openSUSE": "zypper install",
     "Fedora": "dnf install",
     "Guix": "guix package -i",
@@ -29,6 +30,7 @@ packageName = {
         "FreeBSD": "py27-qt4",
         "Debian": "python-qt4",
         "Ubuntu": "python-qt4",
+        "Ubuntu 12": "python-qt4",
         "openSUSE": "python-qt",
         "Fedora": "PyQt4",
         "Guix": "python2-pyqt@4.11.4",
@@ -44,6 +46,7 @@ packageName = {
         "FreeBSD": "py27-msgpack-python",
         "Debian": "python-msgpack",
         "Ubuntu": "python-msgpack",
+        "Ubuntu 12": "msgpack-python",
         "openSUSE": "python-msgpack-python",
         "Fedora": "python2-msgpack",
         "Guix": "python2-msgpack",
@@ -53,6 +56,7 @@ packageName = {
         "FreeBSD": "py27-pyopencl",
         "Debian": "python-pyopencl",
         "Ubuntu": "python-pyopencl",
+        "Ubuntu 12": "python-pyopencl",
         "Fedora": "python2-pyopencl",
         "openSUSE": "",
         "OpenBSD": "",
@@ -68,6 +72,7 @@ packageName = {
         "FreeBSD": "py27-setuptools",
         "Debian": "python-setuptools",
         "Ubuntu": "python-setuptools",
+        "Ubuntu 12": "python-setuptools",
         "Fedora": "python2-setuptools",
         "openSUSE": "python-setuptools",
         "Guix": "python2-setuptools",
@@ -94,6 +99,7 @@ def detectOS():
         detectOS.result = "Windows"
     elif os.path.isfile("/etc/os-release"):
         with open("/etc/os-release", 'rt') as osRelease:
+            version = None
             for line in osRelease:
                 if line.startswith("NAME="):
                     line = line.lower()
@@ -109,6 +115,13 @@ def detectOS():
                         detectOS.result = "Gentoo"
                     else:
                         detectOS.result = None
+                if line.startswith("VERSION_ID="):
+                    try:
+                        version = float(line.split("\"")[1])
+                    except ValueError:
+                        pass
+            if detectOS.result == "Ubuntu" and version < 14:
+                detectOS.result = "Ubuntu 12"
     elif os.path.isfile("/etc/config.scm"):
         detectOS.result = "Guix"
     return detectOS.result
@@ -133,8 +146,11 @@ def prereqToPackages():
         packageManager[detectOS()], " ".join(
             packageName[x][detectOS()] for x in detectPrereqs(True)))
     for package in detectPrereqs(True):
-        if packageName[package]['optional']:
-            print packageName[package]['description']
+        try:
+            if packageName[package]['optional']:
+                print packageName[package]['description']
+        except KeyError:
+            pass
 
 def compilerToPackages():
     if not detectOS() in compiling:
@@ -159,7 +175,7 @@ if __name__ == "__main__":
         print "It looks like you're missing setuptools."
         sys.exit()
 
-    if detectPrereqs(True) != []:
+    if detectPrereqs(True) != [] and sys.stdin.isatty():
         print "Press Return to continue"
         try:
             nothing = raw_input()
@@ -176,6 +192,11 @@ if __name__ == "__main__":
         libraries=['pthread', 'crypto'],
     )
 
+    installRequires = []
+    # this will silently accept alternative providers of msgpack if they are already installed
+    if "msgpack" in detectPrereqs(True):
+        installRequires.append("msgpack-python")
+
     try:
         dist = setup(
             name='pybitmessage',
@@ -190,9 +211,10 @@ if __name__ == "__main__":
             url='https://bitmessage.org',
             # TODO: add keywords
             #keywords='',
-            install_requires=['msgpack-python'],
+            install_requires=[installRequires],
             extras_require={
-                'qrcode': ['qrcode']
+                'qrcode': ['qrcode'],
+                'pyopencl': ['pyopencl']
             },
             classifiers=[
                 "License :: OSI Approved :: MIT License"
