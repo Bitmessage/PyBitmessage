@@ -1460,19 +1460,50 @@ class MyForm(settingsmixin.SMainWindow):
                 # may manage your keys by editing the keys.dat file stored in
                 # the same directory as this program. It is important that you
                 # back up this file.', QMessageBox.Ok)
-                reply = QtGui.QMessageBox.information(self, 'keys.dat?', _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file."), QtGui.QMessageBox.Ok)
-
+                reply = QtGui.QMessageBox.information(
+                    self, 'keys.dat?', _translate(
+                        "MainWindow",
+                        "You may manage your keys by editing the keys.dat"
+                        " file stored in the same directory as this program."
+                        " It is important that you back up this file."),
+                    QtGui.QMessageBox.Ok)
             else:
-                QtGui.QMessageBox.information(self, 'keys.dat?', _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file.").arg(state.appdata), QtGui.QMessageBox.Ok)
+                QtGui.QMessageBox.information(
+                    self, 'keys.dat?', _translate(
+                        "MainWindow",
+                        "You may manage your keys by editing the keys.dat"
+                        " file stored in\n %1 \n"
+                        "It is important that you back up this file."
+                    ).arg(state.appdata), QtGui.QMessageBox.Ok)
         elif sys.platform == 'win32' or sys.platform == 'win64':
+            _tr_open = _translate(
+                "MainWindow",
+                " Would you like to open the file now?"
+                " (Be sure to close Bitmessage before making"
+                " any changes.)",
+                "The second part of string begining with "
+                "\'You may manage your keys ...\' "
+                "Notice the leading space!"
+            )
             if state.appdata == '':
-                reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open keys.dat?"), _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in the same directory as this program. It is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)"), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                reply = QtGui.QMessageBox.question(
+                    self, _translate("MainWindow", "Open keys.dat?"),
+                    _translate(
+                        "MainWindow",
+                        "You may manage your keys by editing the keys.dat"
+                        " file stored in the same directory as this program."
+                        " It is important that you back up this file."
+                    ) + _tr_open, QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             else:
-                reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Open keys.dat?"), _translate(
-                    "MainWindow", "You may manage your keys by editing the keys.dat file stored in\n %1 \nIt is important that you back up this file. Would you like to open the file now? (Be sure to close Bitmessage before making any changes.)").arg(state.appdata), QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                reply = QtGui.QMessageBox.question(
+                    self, _translate("MainWindow", "Open keys.dat?"),
+                    _translate(
+                        "MainWindow",
+                        "You may manage your keys by editing the keys.dat"
+                        " file stored in\n %1 \n"
+                        "It is important that you back up this file."
+                    ).arg(state.appdata) + _tr_open,
+                    QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
             if reply == QtGui.QMessageBox.Yes:
                 shared.openKeysFile()
 
@@ -1960,24 +1991,32 @@ class MyForm(settingsmixin.SMainWindow):
                             pass
                         logger.error('Error: Could not decode recipient address ' + toAddress + ':' + status)
 
+                        _tr_wrong_soft = _translate(
+                            "MainWindow",
+                            "There might be something wrong with the software"
+                            " of your acquaintance.",
+                            "The second part of string begining with "
+                            "\'Error: Some data encoded in the "
+                            "recipient address...\'"
+                        )
                         if status == 'missingbm':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: Bitmessage addresses start with"
                                 " BM-   Please check the recipient address %1"
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                         elif status == 'checksumfailed':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: The recipient address %1 is not"
                                 " typed or copied correctly. Please check it."
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                         elif status == 'invalidcharacters':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: The recipient address %1 contains"
                                 " invalid characters. Please check it."
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                         elif status == 'versiontoohigh':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
@@ -1985,44 +2024,37 @@ class MyForm(settingsmixin.SMainWindow):
                                 " %1 is too high. Either you need to upgrade"
                                 " your Bitmessage software or your"
                                 " acquaintance is being clever."
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                         elif status == 'ripetooshort':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: Some data encoded in the recipient"
-                                " address %1 is too short. There might be"
-                                " something wrong with the software of"
-                                " your acquaintance."
-                                ).arg(toAddress))
+                                " address %1 is too short. ").arg(toAddress) +
+                                _tr_wrong_soft)
                         elif status == 'ripetoolong':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: Some data encoded in the recipient"
-                                " address %1 is too long. There might be"
-                                " something wrong with the software of"
-                                " your acquaintance."
-                                ).arg(toAddress))
+                                " address %1 is too long. ").arg(toAddress) +
+                                _tr_wrong_soft)
                         elif status == 'varintmalformed':
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: Some data encoded in the recipient"
-                                " address %1 is malformed. There might be"
-                                " something wrong with the software of"
-                                " your acquaintance."
-                                ).arg(toAddress))
+                                " address %1 is malformed. ").arg(toAddress) +
+                                _tr_wrong_soft)
                         else:
                             self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: Something is wrong with the"
                                 " recipient address %1."
-                                ).arg(toAddress))
+                            ).arg(toAddress))
                     elif fromAddress == '':
                         self.updateStatusBar(_translate(
                             "MainWindow",
                             "Error: You must specify a From address. If you"
                             " don\'t have one, go to the"
-                            " \'Your Identities\' tab.")
-                        )
+                            " \'Your Identities\' tab."))
                     else:
                         toAddress = addBMIfNotPresent(toAddress)
 
@@ -2743,10 +2775,27 @@ class MyForm(settingsmixin.SMainWindow):
             elif reply == QtGui.QMessageBox.Cancel:
                 return
 
+        _tr_if_quit = _translate(
+            "MainWindow",
+            " If you quit now, it may cause delivery delays."
+            " Wait until the synchronization finishes?",
+            "The second part of string begining with "
+            "\'Bitmessage hasn't synchronized (connected)...\' "
+            "Notice the leading space!"
+        )
         if PendingDownloadQueue.totalSize() > 0:
-            reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Synchronization pending"),
-                    _translate("MainWindow", "Bitmessage hasn't synchronized with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronization finishes?", None, _codec, PendingDownloadQueue.totalSize()),
-                    QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+            reply = QtGui.QMessageBox.question(
+                self,
+                _translate("MainWindow", "Synchronization pending"),
+                _translate(
+                    "MainWindow",
+                    "Bitmessage hasn't synchronized with the network,"
+                    " %n object(s) to be downloaded.",
+                    None, _codec, PendingDownloadQueue.totalSize()
+                ) + _tr_if_quit,
+                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No |
+                QtGui.QMessageBox.Cancel,
+                QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.Yes:
                 waitForSync = True
             elif reply == QtGui.QMessageBox.Cancel:
@@ -2754,11 +2803,19 @@ class MyForm(settingsmixin.SMainWindow):
             else:
                 PendingDownloadQueue.stop()
 
-        if shared.statusIconColor == 'red' and not BMConfigParser().safeGetBoolean(
-                'bitmessagesettings', 'dontconnect'):
-            reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Not connected"),
-                    _translate("MainWindow", "Bitmessage isn't connected to the network. If you quit now, it may cause delivery delays. Wait until connected and the synchronization finishes?"),
-                    QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
+        if shared.statusIconColor == 'red' \
+            and not BMConfigParser().safeGetBoolean(
+                    'bitmessagesettings', 'dontconnect'):
+            reply = QtGui.QMessageBox.question(
+                self,
+                _translate("MainWindow", "Not connected"),
+                _translate(
+                    "MainWindow",
+                    "Bitmessage isn't connected to the network."
+                ) + _tr_if_quit,
+                QtGui.QMessageBox.Yes | QtGui.QMessageBox.No |
+                QtGui.QMessageBox.Cancel,
+                QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.Yes:
                 waitForConnection = True
                 waitForSync = True

@@ -26,9 +26,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             header.setSortIndicator(0, QtCore.Qt.AscendingOrder)
 
         self.startup = time.localtime()
-        self.labelStartupTime.setText(_translate(
-            "networkstatus", "Since startup on %1"
-            ).arg(l10n.formatTimestamp(self.startup)))
 
         self.UISignalThread = UISignaler.get()
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
