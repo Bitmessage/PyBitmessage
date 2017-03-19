@@ -32,7 +32,7 @@ import knownnodes
 from debug import logger
 import paths
 import protocol
-from inventory import Inventory, PendingDownload, PendingUpload
+from inventory import Inventory, PendingDownloadQueue, PendingUpload
 import queues
 import state
 import throttle
@@ -56,7 +56,6 @@ class receiveDataThread(threading.Thread):
         HOST,
         port,
         streamNumber,
-        someObjectsOfWhichThisRemoteNodeIsAlreadyAware,
         selfInitiatedConnections,
         sendDataThreadQueue,
         objectHashHolderInstance):
@@ -79,8 +78,8 @@ class receiveDataThread(threading.Thread):
             self.initiatedConnection = True
             for stream in self.streamNumber:
                 self.selfInitiatedConnections[stream][self] = 0
-        self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware = someObjectsOfWhichThisRemoteNodeIsAlreadyAware
         self.objectHashHolderInstance = objectHashHolderInstance
+        self.downloadQueue = PendingDownloadQueue()
         self.startTime = time.time()
 
     def run(self):
@@ -147,7 +146,6 @@ class receiveDataThread(threading.Thread):
         except Exception as err:
             logger.error('Could not delete ' + str(self.hostIdent) + ' from shared.connectedHostsList.' + str(err))
 
-        PendingDownload().threadEnd()
         queues.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         self.checkTimeOffsetNotification()
         logger.debug('receiveDataThread ending. ID ' + str(id(self)) + '. The size of the shared.connectedHostsList is now ' + str(len(shared.connectedHostsList)))
@@ -240,10 +238,20 @@ class receiveDataThread(threading.Thread):
         self.data = self.data[payloadLength + protocol.Header.size:] # take this message out and then process the next message
 
         if self.data == '': # if there are no more messages
+            toRequest = []
             try:
-                self.sendgetdata(PendingDownload().pull(100))
-            except Queue.Full:
+                for i in range(self.downloadQueue.pendingSize, 100):
+                    while True:
+                        hashId = self.downloadQueue.get(False)
+                        if not hashId in Inventory():
+                            toRequest.append(hashId)
+                            break
+                        # don't track download for duplicates
+                        self.downloadQueue.task_done()
+            except Queue.Empty:
                 pass
+            if len(toRequest) > 0:
+                self.sendgetdata(toRequest)
         self.processData()
 
     def sendpong(self, payload):
@@ -407,7 +415,7 @@ class receiveDataThread(threading.Thread):
         bigInvList = {}
         for stream in self.streamNumber:
             for hash in Inventory().unexpired_hashes_by_stream(stream):
-                if hash not in self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware and not self.objectHashHolderInstance.hasHash(hash):
+                if not self.objectHashHolderInstance.hasHash(hash):
                     bigInvList[hash] = 0
         numberOfObjectsInInvMessage = 0
         payload = ''
@@ -476,6 +484,7 @@ class receiveDataThread(threading.Thread):
     def recobject(self, data):
         self.messageProcessingStartTime = time.time()
         lengthOfTimeWeShouldUseToProcessThisMessage = shared.checkAndShareObjectWithPeers(data)
+        self.downloadQueue.task_done()
         
         """
         Sleeping will help guarantee that we can process messages faster than a 
@@ -509,8 +518,7 @@ class receiveDataThread(threading.Thread):
             objectsNewToMe -= Inventory().hashes_by_stream(stream)
         logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
         for item in objectsNewToMe:
-            PendingDownload().add(item)
-            self.someObjectsOfWhichThisRemoteNodeIsAlreadyAware[item] = 0 # helps us keep from sending inv messages to peers that already know about the objects listed therein
+            self.downloadQueue.put(item)
 
     # Send a getdata message to our peer to request the object with the given
     # hash

@@ -22,7 +22,7 @@ from bmconfigparser import BMConfigParser
 import highlevelcrypto
 #import helper_startup
 from helper_sql import *
-from inventory import Inventory, PendingDownload
+from inventory import Inventory
 from queues import objectProcessorQueue
 import protocol
 import state
@@ -342,22 +342,18 @@ def checkAndShareObjectWithPeers(data):
     """
     if len(data) > 2 ** 18:
         logger.info('The payload length of this object is too large (%s bytes). Ignoring it.' % len(data))
-        PendingDownload().delete(calculateInventoryHash(data))
         return 0
     # Let us check to make sure that the proof of work is sufficient.
     if not protocol.isProofOfWorkSufficient(data):
         logger.info('Proof of work is insufficient.')
-        PendingDownload().delete(calculateInventoryHash(data))
         return 0
     
     endOfLifeTime, = unpack('>Q', data[8:16])
     if endOfLifeTime - int(time.time()) > 28 * 24 * 60 * 60 + 10800: # The TTL may not be larger than 28 days + 3 hours of wiggle room
         logger.info('This object\'s End of Life time is too far in the future. Ignoring it. Time is %s' % endOfLifeTime)
-        PendingDownload().delete(calculateInventoryHash(data))
         return 0
     if endOfLifeTime - int(time.time()) < - 3600: # The EOL time was more than an hour ago. That's too much.
         logger.info('This object\'s End of Life time was more than an hour ago. Ignoring the object. Time is %s' % endOfLifeTime)
-        PendingDownload().delete(calculateInventoryHash(data))
         return 0
     intObjectType, = unpack('>I', data[16:20])
     try:
