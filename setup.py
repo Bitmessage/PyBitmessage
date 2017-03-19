@@ -168,9 +168,12 @@ if __name__ == "__main__":
                 "It is highly recommended to use the package manager " \
                 "instead of setuptools." % (detectOS())
             prereqToPackages()
-            for module in detectPrereqs(True):
-                if not packageName[module]['optional']:
-                    sys.exit()
+            try:
+                for module in detectPrereqs(True):
+                    if not packageName[module]['optional']:
+                        sys.exit()
+            except KeyError:
+                sys.exit()
     if not haveSetuptools:
         print "It looks like you're missing setuptools."
         sys.exit()
