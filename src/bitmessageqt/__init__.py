@@ -77,7 +77,7 @@ from class_objectHashHolder import objectHashHolder
 from class_singleWorker import singleWorker
 from dialogs import AddAddressDialog
 from helper_generic import powQueueSize
-from inventory import PendingDownload, PendingUpload, PendingUploadDeadlineException
+from inventory import PendingDownloadQueue, PendingUpload, PendingUploadDeadlineException
 import knownnodes
 import paths
 from proofofwork import getPowType
@@ -2751,16 +2751,16 @@ class MyForm(settingsmixin.SMainWindow):
             elif reply == QtGui.QMessage.Cancel:
                 return
 
-        if PendingDownload().len() > 0:
+        if PendingDownloadQueue.totalSize() > 0:
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Synchronisation pending"),
-                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr, PendingDownload().len()),
+                    _translate("MainWindow", "Bitmessage hasn't synchronised with the network, %n object(s) to be downloaded. If you quit now, it may cause delivery delays. Wait until the synchronisation finishes?", None, QtCore.QCoreApplication.CodecForTr, PendingDownloadQueue.totalSize()),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.Yes:
                 waitForSync = True
             elif reply == QtGui.QMessageBox.Cancel:
                 return
             else:
-                PendingDownload().stop()
+                PendingDownloadQueue.stop()
 
         if shared.statusIconColor == 'red':
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Not connected"),
@@ -2788,7 +2788,7 @@ class MyForm(settingsmixin.SMainWindow):
         if waitForSync:
             self.statusBar().showMessage(_translate(
                 "MainWindow", "Waiting for finishing synchronisation..."))
-            while PendingDownload().len() > 0:
+            while PendingDownloadQueue.totalSize() > 0:
                 time.sleep(0.5)
                 QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
 

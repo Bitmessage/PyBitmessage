@@ -185,12 +185,10 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                     self.sock.shutdown(socket.SHUT_RDWR)
                     self.sock.close()
                     return
-                someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
                 sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection. 
 
                 sd = sendDataThread(sendDataThreadQueue)
-                sd.setup(self.sock, peer.host, peer.port, self.streamNumber,
-                         someObjectsOfWhichThisRemoteNodeIsAlreadyAware)
+                sd.setup(self.sock, peer.host, peer.port, self.streamNumber)
                 sd.start()
 
                 rd = receiveDataThread()
@@ -199,7 +197,6 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                          peer.host, 
                          peer.port, 
                          self.streamNumber,
-                         someObjectsOfWhichThisRemoteNodeIsAlreadyAware, 
                          self.selfInitiatedConnections, 
                          sendDataThreadQueue,
                          sd.objectHashHolderInstance)

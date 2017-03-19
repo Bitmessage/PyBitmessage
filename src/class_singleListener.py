@@ -146,19 +146,18 @@ class singleListener(threading.Thread, StoppableThread):
                 else:
                     break
 
-            someObjectsOfWhichThisRemoteNodeIsAlreadyAware = {} # This is not necessairly a complete list; we clear it from time to time to save memory.
             sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection.
             socketObject.settimeout(20)
 
             sd = sendDataThread(sendDataThreadQueue)
             sd.setup(
-                socketObject, HOST, PORT, -1, someObjectsOfWhichThisRemoteNodeIsAlreadyAware)
+                socketObject, HOST, PORT, -1)
             sd.start()
 
             rd = receiveDataThread()
             rd.daemon = True  # close the main program even if there are threads left
             rd.setup(
-                socketObject, HOST, PORT, -1, someObjectsOfWhichThisRemoteNodeIsAlreadyAware, self.selfInitiatedConnections, sendDataThreadQueue, sd.objectHashHolderInstance)
+                socketObject, HOST, PORT, -1, self.selfInitiatedConnections, sendDataThreadQueue, sd.objectHashHolderInstance)
             rd.start()
 
             logger.info('connected to ' + HOST + ' during INCOMING request.')
