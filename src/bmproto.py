@@ -15,91 +15,94 @@ class BMProtoError(ProxyError): pass
 
 
 class BMConnection(AdvancedDispatcher):
-    def __init__(self, address):
-        AdvancedDispatcher.__init__(self)
-        self.destination = address
+    # ~1.6 MB which is the maximum possible size of an inv message.
+    maxMessageSize = 1600100
+
+    def __init__(self, address=None, sock=None):
+        AdvancedDispatcher.__init__(self, sock)
+        self.verackReceived = False
+        self.verackSent = False
+        if address is None and sock is not None:
+            self.destination = self.addr()
+            self.isOutbound = False
+            print "received connection in background from %s:%i" % (self.destination[0], self.destination[1])
+        else:
+            self.destination = address
+            self.isOutbound = True
+            self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.connect(self.destination)
+            print "connecting in background to %s:%i" % (self.destination[0], self.destination[1])
+
+    def bm_proto_reset(self):
+        self.magic = None
+        self.command = None
+        self.payloadLength = None
+        self.checksum = None
         self.payload = None
-        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.connect(self.destination)
-        print "connecting in background to %s:%i" % (self.destination[0], self.destination[1])
-
-    def bm_proto_len_sufficient(self):
-        if len(self.read_buf) < protocol.Header.size:
-            print "Length below header size"
-            return False
-        if not self.payload:
-            self.magic, self.command, self.payloadLength, self.checksum = protocol.Header.unpack(self.read_buf[:protocol.Header.size])
-            self.command = self.command.rstrip('\x00')
-            if self.payloadLength > 1600100:  # ~1.6 MB which is the maximum possible size of an inv message.
-                return False
-        if len(self.read_buf) < self.payloadLength + protocol.Header.size:
-            print "Length below announced object length"
-            return False
-        self.payload = self.read_buf[protocol.Header.size:self.payloadLength + protocol.Header.size]
-        return True
-
-    def bm_check_command(self):
-        if self.magic != 0xE9BEB4D9:
-            self.set_state("crap", protocol.Header.size)
-            print "Bad magic"
-            self.payload = None
-            return False
-        if self.checksum != hashlib.sha512(self.payload).digest()[0:4]:
-            self.set_state("crap", protocol.Header.size)
-            self.payload = None
-            print "Bad checksum"
-            return False
-        print "received %s (%ib)" % (self.command, self.payloadLength)
-        return True
+        self.invalid = False
 
     def state_init(self):
+        self.bm_proto_reset()
         self.write_buf += protocol.assembleVersionMessage(self.destination[0], self.destination[1], (1,), False)
         if True:
             print "Sending version (%ib)"  % len(self.write_buf)
-            self.set_state("bm_reccommand", 0)
+            self.set_state("bm_header", 0)
         return False
 
-    def state_bm_reccommand(self):
-        if not self.bm_proto_len_sufficient():
+    def state_bm_header(self):
+        if len(self.read_buf) < protocol.Header.size:
+            print "Length below header size"
             return False
-        if not self.bm_check_command():
+        self.magic, self.command, self.payloadLength, self.checksum = protocol.Header.unpack(self.read_buf[:protocol.Header.size])
+        self.command = self.command.rstrip('\x00')
+        if self.magic != 0xE9BEB4D9:
+            # skip 1 byte in order to sync
+            self.bm_proto_reset()
+            self.set_state("bm_header", 1)
+            print "Bad magic"
+        if self.payloadLength > BMConnection.maxMessageSize:
+            self.invalid = True
+        self.set_state("bm_command", protocol.Header.size)
+        return True
+        
+    def state_bm_command(self):
+        if len(self.read_buf) < self.payloadLength:
+            print "Length below announced object length"
             return False
-        if self.command == "version":
-            self.bm_recversion()
-        elif self.command == "verack":
-            self.bm_recverack()
+        print "received %s (%ib)" % (self.command, self.payloadLength)
+        self.payload = self.read_buf[:self.payloadLength]
+        if self.checksum != hashlib.sha512(self.payload).digest()[0:4]:
+            print "Bad checksum, ignoring"
+            self.invalid = True
+        if not self.invalid:
+            try:
+                getattr(self, "bm_command_" + str(self.command))()
+            except AttributeError:
+                # unimplemented command
+                print "unimplemented command %s" % (self.command)
         else:
-            print "unimplemented command %s" % (self.command)
-        self.set_state("bm_reccommand", protocol.Header.size + self.payloadLength)
-        self.payload = None
-        print "buffer length = %i" % (len(self.read_buf))
-        return False
+            print "Skipping command %s due to invalid data" % (self.command)
+        self.set_state("bm_header", self.payloadLength)
+        self.bm_proto_reset()
+        return True
 
-    def bm_recverack(self):
+    def bm_command_verack(self):
         self.verackReceived = True
-        return False
+        return True
 
-    def bm_recversion(self):
-        self.remoteProtocolVersion, self.services, timestamp, padding1, self.myExternalIP, padding2, self.remoteNodeIncomingPort = protocol.VersionPacket.unpack(self.payload[:82])
+    def bm_command_version(self):
+        self.remoteProtocolVersion, self.services, self.timestamp, padding1, self.myExternalIP, padding2, self.remoteNodeIncomingPort = protocol.VersionPacket.unpack(self.payload[:protocol.VersionPacket.size])
         print "remoteProtocolVersion: %i" % (self.remoteProtocolVersion)
         print "services: %08X" % (self.services)
-        print "time offset: %i" % (timestamp - int(time.time()))
+        print "time offset: %i" % (self.timestamp - int(time.time()))
         print "my external IP: %s" % (socket.inet_ntoa(self.myExternalIP))
         print "remote node incoming port: %i" % (self.remoteNodeIncomingPort)
-        useragentLength, lengthofUseragentVarint = addresses.decodeVarint(self.payload[80:84])
+        useragentLength, lengthOfUseragentVarint = addresses.decodeVarint(self.payload[80:84])
         readPosition = 80 + lengthOfUseragentVarint
         self.userAgent = self.payload[readPosition:readPosition + useragentLength]
         readPosition += useragentLength
         print "user agent: %s" % (self.userAgent)
-        return False
-
-    def state_http_request_sent(self):
-        if len(self.read_buf) > 0:
-            print self.read_buf
-            self.read_buf = b""
-        if not self.connected:
-            self.set_state("close", 0)
-        return False
+        return True
 
 
 class Socks5BMConnection(Socks5Connection, BMConnection):
@@ -118,6 +121,27 @@ class Socks4aBMConnection(Socks4aConnection, BMConnection):
     def state_socks_handshake_done(self):
         BMConnection.state_init(self)
         return False
+
+
+class BMServer(AdvancedDispatcher):
+    port = 8444
+
+    def __init__(self, port=None):
+        if not hasattr(self, '_map'):
+            AdvancedDispatcher.__init__(self)
+        self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.set_reuse_addr()
+        if port is None:
+            port = BMServer.port
+        self.bind(('127.0.0.1', port))
+        self.connections = 0
+        self.listen(5)
+
+    def handle_accept(self):
+        pair = self.accept()
+        if pair is not None:
+            sock, addr = pair
+            BMConnection(sock=sock)
 
 
 if __name__ == "__main__":

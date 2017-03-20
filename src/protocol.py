@@ -34,7 +34,7 @@ eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
 #New code should use CreatePacket instead of Header.pack
 Header = Struct('!L12sL4s')
 
-VersionPacket = Struct('>LqQ20sI36sH')
+VersionPacket = Struct('>LqQ20s4s36sH')
 
 # Bitfield
 
