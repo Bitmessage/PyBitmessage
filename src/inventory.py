@@ -86,29 +86,44 @@ class Inventory(collections.MutableMapping):
 
 class PendingDownloadQueue(Queue.Queue):
 # keep a track of objects that have been advertised to us but we haven't downloaded them yet
+    maxWait = 300
+
     def __init__(self, maxsize=0):
         Queue.Queue.__init__(self, maxsize)
         self.stopped = False
-        self.pendingSize = 0
+        self.pending = {}
+        self.lock = RLock()
 
-    def task_done(self):
+    def task_done(self, hashId):
         Queue.Queue.task_done(self)
-        if self.pendingSize > 0:
-            self.pendingSize -= 1
+        try:
+            with self.lock:
+                del self.pending[hashId]
+        except KeyError:
+            pass
 
     def get(self, block=True, timeout=None):
         retval = Queue.Queue.get(self, block, timeout)
         # no exception was raised
         if not self.stopped:
-            self.pendingSize += 1
+            with self.lock:
+                self.pending[retval] = time.time()
         return retval
+
+    def clear(self):
+        with self.lock:
+            newPending = {}
+            for hashId in self.pending:
+                if self.pending[hashId] + PendingDownloadQueue.maxWait > time.time():
+                    newPending[hashId] = self.pending[hashId]
+            self.pending = newPending
 
     @staticmethod
     def totalSize():
         size = 0
         for thread in threadingEnumerate():
             if thread.isAlive() and hasattr(thread, 'downloadQueue'):
-                size += thread.downloadQueue.qsize() + thread.downloadQueue.pendingSize
+                size += thread.downloadQueue.qsize() + len(thread.downloadQueue.pending)
         return size
 
     @staticmethod
@@ -116,7 +131,8 @@ class PendingDownloadQueue(Queue.Queue):
         for thread in threadingEnumerate():
             if thread.isAlive() and hasattr(thread, 'downloadQueue'):
                 thread.downloadQueue.stopped = True
-                thread.downloadQueue.pendingSize = 0
+                with thread.downloadQueue.lock:
+                    thread.downloadQueue.pending = {}
 
 
 class PendingUploadDeadlineException(Exception):

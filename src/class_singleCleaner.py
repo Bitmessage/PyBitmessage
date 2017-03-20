@@ -108,6 +108,11 @@ class singleCleaner(threading.Thread, StoppableThread):
                             os._exit(0)
                 shared.needToWriteKnownNodesToDisk = False
 
+            # clear download queues
+            for thread in threading.enumerate():
+                if thread.isAlive() and hasattr(thread, 'downloadQueue'):
+                    thread.downloadQueue.clear()
+
             # TODO: cleanup pending upload / download
 
             if state.shutdown == 0:
