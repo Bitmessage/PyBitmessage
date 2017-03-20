@@ -3,9 +3,9 @@ import asyncore_pollchoose as asyncore
 class AdvancedDispatcher(asyncore.dispatcher):
     _buf_len = 2097152 # 2MB
 
-    def __init__(self):
+    def __init__(self, sock=None):
         if not hasattr(self, '_map'):
-            asyncore.dispatcher.__init__(self)
+            asyncore.dispatcher.__init__(self, sock)
         self.read_buf = b""
         self.write_buf = b""
         self.state = "init"
@@ -27,6 +27,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
             return
         while True:
             try:
+                print "Trying to handle state \"%s\"" % (self.state)
                 if getattr(self, "state_" + str(self.state))() is False:
                     break
             except AttributeError:

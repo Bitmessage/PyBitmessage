@@ -287,6 +287,8 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None,
     elif hasattr(select, 'select'):
         poller = select_poller
 
+    print "Poll loop using %s" % (poller.__name__)
+
     if count is None:
         while map:
             poller(timeout, map)
