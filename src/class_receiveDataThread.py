@@ -240,14 +240,14 @@ class receiveDataThread(threading.Thread):
         if self.data == '': # if there are no more messages
             toRequest = []
             try:
-                for i in range(self.downloadQueue.pendingSize, 100):
+                for i in range(len(self.downloadQueue.pending), 100):
                     while True:
                         hashId = self.downloadQueue.get(False)
                         if not hashId in Inventory():
                             toRequest.append(hashId)
                             break
                         # don't track download for duplicates
-                        self.downloadQueue.task_done()
+                        self.downloadQueue.task_done(hashId)
             except Queue.Empty:
                 pass
             if len(toRequest) > 0:
@@ -484,7 +484,7 @@ class receiveDataThread(threading.Thread):
     def recobject(self, data):
         self.messageProcessingStartTime = time.time()
         lengthOfTimeWeShouldUseToProcessThisMessage = shared.checkAndShareObjectWithPeers(data)
-        self.downloadQueue.task_done()
+        self.downloadQueue.task_done(calculateInventoryHash(data))
         
         """
         Sleeping will help guarantee that we can process messages faster than a 
@@ -517,7 +517,7 @@ class receiveDataThread(threading.Thread):
         for stream in self.streamNumber:
             objectsNewToMe -= Inventory().hashes_by_stream(stream)
         logger.info('inv message lists %s objects. Of those %s are new to me. It took %s seconds to figure that out.', numberOfItemsInInv, len(objectsNewToMe), time.time()-startTime)
-        for item in objectsNewToMe:
+        for item in random.sample(objectsNewToMe, len(objectsNewToMe)):
             self.downloadQueue.put(item)
 
     # Send a getdata message to our peer to request the object with the given
