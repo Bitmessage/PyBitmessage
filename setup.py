@@ -256,7 +256,9 @@ if __name__ == "__main__":
             },
             scripts=['src/pybitmessage']
         )
-    except SystemExit:
+    except SystemExit as err:
+        print err.message
+    except:
         print "It looks like building the package failed.\n" \
             "You may be missing a C++ compiler and the OpenSSL headers."
         compilerToPackages()
