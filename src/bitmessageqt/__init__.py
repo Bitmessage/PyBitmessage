@@ -1,19 +1,10 @@
 from debug import logger
-withMessagingMenu = False
-try:
-    import gi
-    gi.require_version('MessagingMenu', '1.0')
-    from gi.repository import MessagingMenu
-    withMessagingMenu = True
-except (ImportError, ValueError):
-    MessagingMenu = None
 
 try:
     from PyQt4 import QtCore, QtGui
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
     from PyQt4.QtNetwork import QLocalSocket, QLocalServer
-
 except Exception as err:
     logmsg = 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
     logger.critical(logmsg, exc_info=True)
@@ -30,7 +21,7 @@ import shared
 from bitmessageui import *
 from bmconfigparser import BMConfigParser
 import defaults
-from namecoin import namecoinConnection, ensureNamecoinOptions
+from namecoin import namecoinConnection
 from newaddressdialog import *
 from newaddresswizard import *
 from messageview import MessageView
@@ -51,12 +42,10 @@ from iconglossary import *
 from connect import *
 import locale
 import sys
-from time import strftime, localtime, gmtime
 import time
 import os
 import hashlib
 from pyelliptic.openssl import OpenSSL
-import platform
 import textwrap
 import debug
 import random
@@ -66,15 +55,13 @@ from helper_sql import *
 import helper_search
 import l10n
 import openclpow
-import types
-from utils import *
-from collections import OrderedDict
+from utils import str_broadcast_subscribers, avatarize
 from account import *
-from class_objectHashHolder import objectHashHolder
-from class_singleWorker import singleWorker
 from dialogs import AddAddressDialog
 from helper_generic import powQueueSize
-from inventory import Inventory, PendingDownloadQueue, PendingUpload, PendingUploadDeadlineException
+from inventory import (
+    Inventory, PendingDownloadQueue, PendingUpload,
+    PendingUploadDeadlineException)
 import knownnodes
 import paths
 from proofofwork import getPowType
@@ -140,6 +127,7 @@ def change_translation(newlocale):
         except:
             logger.error("Failed to set locale to %s", lang, exc_info=True)
 
+
 class MyForm(settingsmixin.SMainWindow):
 
     # the last time that a message arrival sound was played
@@ -148,8 +136,6 @@ class MyForm(settingsmixin.SMainWindow):
     # the maximum frequency of message sounds in seconds
     maxSoundFrequencySec = 60
 
-    str_chan = '[chan]'
-    
     REPLY_TYPE_SENDER = 0
     REPLY_TYPE_CHAN = 1
 
@@ -858,14 +844,6 @@ class MyForm(settingsmixin.SMainWindow):
             self.raise_()
             self.activateWindow()
 
-    # pointer to the application
-    # app = None
-    # The most recent message
-    newMessageItem = None
-
-    # The most recent broadcast
-    newBroadcastItem = None
-
     # show the application window
     def appIndicatorShow(self):
         if self.actionShow is None:
@@ -895,32 +873,19 @@ class MyForm(settingsmixin.SMainWindow):
             self.appIndicatorShowOrHideWindow()"""
 
     # Show the program window and select inbox tab
-    def appIndicatorInbox(self, mm_app, source_id):
+    def appIndicatorInbox(self, item=None):
         self.appIndicatorShow()
         # select inbox
         self.ui.tabWidget.setCurrentIndex(0)
-        selectedItem = None
-        if source_id == 'Subscriptions':
-            # select unread broadcast
-            if self.newBroadcastItem is not None:
-                selectedItem = self.newBroadcastItem
-                self.newBroadcastItem = None
-        else:
-            # select unread message
-            if self.newMessageItem is not None:
-                selectedItem = self.newMessageItem
-                self.newMessageItem = None
-        # make it the current item
-        if selectedItem is not None:
-            try:
-                self.ui.tableWidgetInbox.setCurrentItem(selectedItem)
-            except Exception:
-                self.ui.tableWidgetInbox.setCurrentCell(0, 0)
+        self.ui.treeWidgetYourIdentities.setCurrentItem(
+            self.ui.treeWidgetYourIdentities.topLevelItem(0).child(0)
+        )
+
+        if item:
+            self.ui.tableWidgetInbox.setCurrentItem(item)
             self.tableWidgetInboxItemClicked()
         else:
-            # just select the first item
             self.ui.tableWidgetInbox.setCurrentCell(0, 0)
-            self.tableWidgetInboxItemClicked()
 
     # Show the program window and select send tab
     def appIndicatorSend(self):
@@ -1218,142 +1183,21 @@ class MyForm(settingsmixin.SMainWindow):
         self.tray.setContextMenu(m)
         self.tray.show()
 
-    # Ubuntu Messaging menu object
-    mmapp = None
-
-    # is the operating system Ubuntu?
-    def isUbuntu(self):
-        for entry in platform.uname():
-            if "Ubuntu" in entry:
-                return True
-        return False
-
-    # When an unread inbox row is selected on then clear the messaging menu
-    def ubuntuMessagingMenuClear(self, inventoryHash):
-        # if this isn't ubuntu then don't do anything
-        if not self.isUbuntu():
-            return
-
-        # has messageing menu been installed
-        if not withMessagingMenu:
-            return
-
-        # if there are no items on the messaging menu then
-        # the subsequent query can be avoided
-        if not (self.mmapp.has_source("Subscriptions") or self.mmapp.has_source("Messages")):
-            return
-
-        queryreturn = sqlQuery(
-            '''SELECT toaddress, read FROM inbox WHERE msgid=?''', inventoryHash)
-        for row in queryreturn:
-            toAddress, read = row
-            if not read:
-                if toAddress == str_broadcast_subscribers:
-                    if self.mmapp.has_source("Subscriptions"):
-                        self.mmapp.remove_source("Subscriptions")
-                else:
-                    if self.mmapp.has_source("Messages"):
-                        self.mmapp.remove_source("Messages")
-
     # returns the number of unread messages and subscriptions
     def getUnread(self):
-        unreadMessages = 0
-        unreadSubscriptions = 0
+        counters = [0, 0]
 
-        queryreturn = sqlQuery(
-            '''SELECT msgid, toaddress, read FROM inbox where folder='inbox' ''')
-        for row in queryreturn:
-            msgid, toAddress, read = row
-
-            try:
-                if toAddress == str_broadcast_subscribers:
-                    toLabel = str_broadcast_subscribers
-                else:
-                    toLabel = BMConfigParser().get(toAddress, 'label')
-            except:
-                toLabel = ''
-            if toLabel == '':
-                toLabel = toAddress
+        queryreturn = sqlQuery('''
+        SELECT msgid, toaddress, read FROM inbox where folder='inbox'
+        ''')
+        for msgid, toAddress, read in queryreturn:
 
             if not read:
-                if toLabel == str_broadcast_subscribers:
-                    # increment the unread subscriptions
-                    unreadSubscriptions = unreadSubscriptions + 1
-                else:
-                    # increment the unread messages
-                    unreadMessages = unreadMessages + 1
-        return unreadMessages, unreadSubscriptions
+                # increment the unread subscriptions if True (1)
+                # else messages (0)
+                counters[toAddress == str_broadcast_subscribers] += 1
 
-    # show the number of unread messages and subscriptions on the messaging
-    # menu
-    def ubuntuMessagingMenuUnread(self, drawAttention):
-        unreadMessages, unreadSubscriptions = self.getUnread()
-        # unread messages
-        if unreadMessages > 0:
-            self.mmapp.append_source(
-                "Messages", None, "Messages (" + str(unreadMessages) + ")")
-            if drawAttention:
-                self.mmapp.draw_attention("Messages")
-
-        # unread subscriptions
-        if unreadSubscriptions > 0:
-            self.mmapp.append_source("Subscriptions", None, "Subscriptions (" + str(
-                unreadSubscriptions) + ")")
-            if drawAttention:
-                self.mmapp.draw_attention("Subscriptions")
-
-    # initialise the Ubuntu messaging menu
-    def ubuntuMessagingMenuInit(self):
-        global withMessagingMenu
-
-        # if this isn't ubuntu then don't do anything
-        if not self.isUbuntu():
-            return
-
-        # has messageing menu been installed
-        if not withMessagingMenu:
-            logger.warning('WARNING: MessagingMenu is not available.  Is libmessaging-menu-dev installed?')
-            return
-
-        # create the menu server
-        if withMessagingMenu:
-            try:
-                self.mmapp = MessagingMenu.App(
-                    desktop_id='pybitmessage.desktop')
-                self.mmapp.register()
-                self.mmapp.connect('activate-source', self.appIndicatorInbox)
-                self.ubuntuMessagingMenuUnread(True)
-            except Exception:
-                withMessagingMenu = False
-                logger.warning('WARNING: messaging menu disabled')
-
-    # update the Ubuntu messaging menu
-    def ubuntuMessagingMenuUpdate(self, drawAttention, newItem, toLabel):
-        # if this isn't ubuntu then don't do anything
-        if not self.isUbuntu():
-            return
-
-        # has messageing menu been installed
-        if not withMessagingMenu:
-            logger.warning('WARNING: messaging menu disabled or libmessaging-menu-dev not installed')
-            return
-
-        # remember this item to that the messaging menu can find it
-        if toLabel == str_broadcast_subscribers:
-            self.newBroadcastItem = newItem
-        else:
-            self.newMessageItem = newItem
-
-        # Remove previous messages and subscriptions entries, then recreate them
-        # There might be a better way to do it than this
-        if self.mmapp.has_source("Messages"):
-            self.mmapp.remove_source("Messages")
-
-        if self.mmapp.has_source("Subscriptions"):
-            self.mmapp.remove_source("Subscriptions")
-
-        # update the menu entries
-        self.ubuntuMessagingMenuUnread(drawAttention)
+        return counters
 
     # play a sound
     def playSound(self, category, label):
@@ -1422,6 +1266,17 @@ class MyForm(settingsmixin.SMainWindow):
             soundFilename += ext
 
         self._player(soundFilename)
+
+    # Try init the distro specific appindicator,
+    # for example the Ubuntu MessagingMenu
+    def indicatorInit(self):
+        def _noop_update(*args, **kwargs):
+            pass
+
+        try:
+            self.indicatorUpdate = get_plugin('indicator')(self)
+        except (NameError, TypeError):
+            self.indicatorUpdate = _noop_update
 
     # initialise the message notifier
     def notifierInit(self):
@@ -2241,8 +2096,10 @@ class MyForm(settingsmixin.SMainWindow):
                 sound.SOUND_UNKNOWN
             )
         if self.getCurrentAccount() is not None and ((self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) is not None) or self.getCurrentAccount(treeWidget) != acct.address):
-            # Ubuntu should notify of new message irespective of whether it's in current message list or not
-            self.ubuntuMessagingMenuUpdate(True, None, acct.toLabel)
+            # Ubuntu should notify of new message irespective of
+            # whether it's in current message list or not
+            self.indicatorUpdate(True, to_label=acct.toLabel)
+            # cannot find item to pass here ):
         if hasattr(acct, "feedback") and acct.feedback != GatewayAccount.ALL_OK:
             if acct.feedback == GatewayAccount.REGISTRATION_DENIED:
                 self.dialog = EmailGatewayRegistrationDialog(self, _translate("EmailGatewayRegistrationDialog", "Registration failed:"), 
@@ -2836,9 +2693,6 @@ class MyForm(settingsmixin.SMainWindow):
         shutdown.doCleanShutdown()
         self.statusBar().showMessage(_translate("MainWindow", "Stopping notifications... %1%").arg(str(90)))
         self.tray.hide()
-        # unregister the messaging system
-        if self.mmapp is not None:
-            self.mmapp.unregister()
 
         self.statusBar().showMessage(_translate("MainWindow", "Shutdown imminent... %1%").arg(str(100)))
         shared.thisapp.cleanup()
@@ -4510,7 +4364,7 @@ def run():
     myapp = MyForm()
 
     myapp.appIndicatorInit(app)
-    myapp.ubuntuMessagingMenuInit()
+    myapp.indicatorInit()
     myapp.notifierInit()
     myapp._firstrun = BMConfigParser().safeGetBoolean(
         'bitmessagesettings', 'dontconnect')
