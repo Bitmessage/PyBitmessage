@@ -276,15 +276,15 @@ if __name__ == "__main__":
             ext_modules=[bitmsghash],
             zip_safe=False,
             entry_points={
-                'gui.menu': [
+                'bitmessage.gui.menu': [
                     'popMenuYourIdentities.qrcode = '
                     'pybitmessage.plugins.qrcodeui [qrcode]'
                 ],
-                'notification.message': [
+                'bitmessage.notification.message': [
                     'notify2 = pybitmessage.plugins.notification_notify2'
                     '[notify2]'
                 ],
-                'notification.sound': [
+                'bitmessage.notification.sound': [
                     'file.fallback = pybitmessage.plugins.sound_playfile'
                     '[sound]'
                 ],
