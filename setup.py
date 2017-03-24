@@ -2,6 +2,7 @@
 
 import os
 import sys
+import shutil
 try:
     from setuptools import setup, Extension
     from setuptools.command.install import install
@@ -167,6 +168,7 @@ def prereqToPackages():
             print packageName[package].get('description')
 
 
+
 def compilerToPackages():
     if not detectOS() in compiling:
         return
@@ -201,6 +203,14 @@ class InstallCmd(install):
                 raw_input()
             except (EOFError, NameError):
                 pass
+
+        # prepare icons directories
+        os.makedirs('desktop/icons/scalable')
+        shutil.copyfile(
+            'desktop/can-icon.svg', 'desktop/icons/scalable/pybitmessage.svg')
+        os.makedirs('desktop/icons/24x24')
+        shutil.copyfile(
+            'desktop/icon24.png', 'desktop/icons/24x24/pybitmessage.png')
 
         return install.run(self)
 
@@ -253,9 +263,10 @@ if __name__ == "__main__":
             #keywords='',
             install_requires=installRequires,
             extras_require={
+                'gir': ['pygobject'],
                 'qrcode': ['qrcode'],
                 'pyopencl': ['pyopencl'],
-                'notify2': ['pygobject', 'notify2'],
+                'notify2': ['notify2'],
                 'sound:platform_system=="Windows"': ['winsound']
             },
             classifiers=[
@@ -273,6 +284,14 @@ if __name__ == "__main__":
                 'translations/*.ts', 'translations/*.qm',
                 'images/*.png', 'images/*.ico', 'images/*.icns'
             ]},
+            data_files=[
+                ('share/applications/',
+                    ['desktop/pybitmessage.desktop']),
+                ('share/icons/hicolor/scalable/apps/',
+                    ['desktop/icons/scalable/pybitmessage.svg']),
+                ('share/icons/hicolor/24x24/apps/',
+                    ['desktop/icons/24x24/pybitmessage.png'])
+            ],
             ext_modules=[bitmsghash],
             zip_safe=False,
             entry_points={
@@ -282,11 +301,15 @@ if __name__ == "__main__":
                 ],
                 'bitmessage.notification.message': [
                     'notify2 = pybitmessage.plugins.notification_notify2'
-                    '[notify2]'
+                    '[gir, notify2]'
                 ],
                 'bitmessage.notification.sound': [
                     'file.fallback = pybitmessage.plugins.sound_playfile'
                     '[sound]'
+                ],
+                'bitmessage.indicator': [
+                    'libmessaging ='
+                    'pybitmessage.plugins.indicator_libmessaging [gir]'
                 ],
                 # 'console_scripts': [
                 #        'pybitmessage = pybitmessage.bitmessagemain:main'
