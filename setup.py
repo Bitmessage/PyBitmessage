@@ -4,8 +4,10 @@ import os
 import sys
 try:
     from setuptools import setup, Extension
+    from setuptools.command.install import install
     haveSetuptools = True
 except ImportError:
+    install = object
     haveSetuptools = False
 
 from importlib import import_module
@@ -127,7 +129,7 @@ def detectOS():
     return detectOS.result
 
 
-def detectPrereqs(missing=False):
+def detectPrereqs(missing=True):
     available = []
     for module in packageName.keys():
         try:
@@ -144,47 +146,51 @@ def prereqToPackages():
     print "You can install the requirements by running, as root:"
     print "%s %s" % (
         packageManager[detectOS()], " ".join(
-            packageName[x][detectOS()] for x in detectPrereqs(True)))
-    for package in detectPrereqs(True):
-        try:
-            if packageName[package]['optional']:
-                print packageName[package]['description']
-        except KeyError:
-            pass
+            packageName[x][detectOS()] for x in detectPrereqs()))
+    for package in detectPrereqs():
+        if packageName[package].get('optional'):
+            print packageName[package].get('description')
+
 
 def compilerToPackages():
     if not detectOS() in compiling:
         return
     print "You can install the requirements by running, as root:"
     print "%s %s" % (
-        packageManager[detectOS()], compiling[detectOS()])
+        packageManager[detectOS.result], compiling[detectOS.result])
 
-if __name__ == "__main__":
-    detectOS.result = None
-    detectPrereqs.result = None
-    if detectPrereqs(True) != [] and detectOS() in packageManager:
-        if detectOS() is not None:
+
+class InstallCmd(install):
+    def run(self):
+        detectOS.result = None
+        prereqs = detectPrereqs()
+        if prereqs and detectOS() in packageManager:
             print "It looks like you're using %s. " \
                 "It is highly recommended to use the package manager " \
-                "instead of setuptools." % (detectOS())
+                "instead of setuptools." % (detectOS.result)
             prereqToPackages()
             try:
-                for module in detectPrereqs(True):
+                for module in prereqs:
                     if not packageName[module]['optional']:
                         sys.exit()
             except KeyError:
                 sys.exit()
-    if not haveSetuptools:
-        print "It looks like you're missing setuptools."
-        sys.exit()
 
-    if detectPrereqs(True) != [] and sys.stdin.isatty():
-        print "Press Return to continue"
-        try:
-            nothing = raw_input()
-        except NameError:
-            pass
+            if not haveSetuptools:
+                print "It looks like you're missing setuptools."
+                sys.exit()
 
+        if prereqs and sys.stdin.isatty():
+            print "Press Return to continue"
+            try:
+                raw_input()
+            except NameError:
+                pass
+
+        return install.run(self)
+
+
+if __name__ == "__main__":
     here = os.path.abspath(os.path.dirname(__file__))
     with open(os.path.join(here, 'README.md')) as f:
         README = f.read()
@@ -197,7 +203,7 @@ if __name__ == "__main__":
 
     installRequires = []
     # this will silently accept alternative providers of msgpack if they are already installed
-    if "msgpack" in detectPrereqs(True):
+    if "msgpack" in detectPrereqs():
         installRequires.append("msgpack-python")
 
     try:
@@ -254,7 +260,8 @@ if __name__ == "__main__":
             #        'pybitmessage = pybitmessage.bitmessagemain:main'
             #    ]
             },
-            scripts=['src/pybitmessage']
+            scripts=['src/pybitmessage'],
+            cmdclass={'install': InstallCmd}
         )
     except SystemExit as err:
         print err.message
@@ -262,4 +269,3 @@ if __name__ == "__main__":
         print "It looks like building the package failed.\n" \
             "You may be missing a C++ compiler and the OpenSSL headers."
         compilerToPackages()
-
