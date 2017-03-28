@@ -1619,7 +1619,8 @@ class MyForm(settingsmixin.SMainWindow):
         self.connectDialogInstance = connectDialog(self)
         if self.connectDialogInstance.exec_():
             if self.connectDialogInstance.ui.radioButtonConnectNow.isChecked():
-                BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
+                BMConfigParser().remove_option(
+                    'bitmessagesettings', 'dontconnect')
                 BMConfigParser().save()
             else:
                 self.click_actionSettings()
@@ -2349,7 +2350,12 @@ class MyForm(settingsmixin.SMainWindow):
 
     def click_actionSettings(self):
         self.settingsDialogInstance = settingsDialog(self)
+        if self._firstrun:
+            self.settingsDialogInstance.ui.tabWidgetSettings.setCurrentIndex(1)
         if self.settingsDialogInstance.exec_():
+            if self._firstrun:
+                BMConfigParser().remove_option(
+                    'bitmessagesettings', 'dontconnect')
             BMConfigParser().set('bitmessagesettings', 'startonlogon', str(
                 self.settingsDialogInstance.ui.checkBoxStartOnLogon.isChecked()))
             BMConfigParser().set('bitmessagesettings', 'minimizetotray', str(
@@ -4517,9 +4523,11 @@ def run():
     myapp.appIndicatorInit(app)
     myapp.ubuntuMessagingMenuInit()
     myapp.notifierInit()
-    if BMConfigParser().safeGetBoolean('bitmessagesettings', 'dontconnect'):
-        myapp.showConnectDialog() # ask the user if we may connect
-    
+    myapp._firstrun = BMConfigParser().safeGetBoolean(
+        'bitmessagesettings', 'dontconnect')
+    if myapp._firstrun:
+        myapp.showConnectDialog()  # ask the user if we may connect
+
 #    try:
 #        if BMConfigParser().get('bitmessagesettings', 'mailchuck') < 1:
 #            myapp.showMigrationWizard(BMConfigParser().get('bitmessagesettings', 'mailchuck'))

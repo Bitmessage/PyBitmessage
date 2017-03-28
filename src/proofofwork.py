@@ -266,9 +266,18 @@ def init():
     else:
         try:
             bso = ctypes.CDLL(os.path.join(paths.codePath(), "bitmsghash", bitmsglib))
-            logger.info("Loaded C PoW DLL %s", bitmsglib)
+        except OSError:
+            import glob
+            try:
+                bso = ctypes.CDLL(glob.glob(os.path.join(
+                    paths.codePath(), "bitmsghash", "bitmsghash*.so"
+                ))[0])
+            except (OSError, IndexError):
+                bso = None
         except:
             bso = None
+        else:
+            logger.info("Loaded C PoW DLL %s", bitmsglib)
     if bso:
         try:
             bmpow = bso.BitmessagePOW
