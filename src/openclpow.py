@@ -26,7 +26,9 @@ except:
     libAvailable = False
 
 def initCL():
-    global ctx, queue, program, hash_dt
+    global ctx, queue, program, hash_dt, libAvailable
+    if libAvailable is False:
+        return
     del enabledGpus[:]
     del vendors[:]
     del gpus[:]
@@ -98,8 +100,7 @@ def do_opencl_pow(hash, target):
 #   logger.debug("Took %d tries.", progress)
     return output[0][0]
 
-if libAvailable:
-    initCL()
+initCL()
 
 if __name__ == "__main__":
     target = 54227212183L
