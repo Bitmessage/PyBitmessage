@@ -432,8 +432,6 @@ def _checkAndShareGetpubkeyWithPeers(data):
     if len(data) < 42:
         logger.info('getpubkey message doesn\'t contain enough data. Ignoring.')
         return
-    if len(data) > 200:
-        logger.info('getpubkey is abnormally long. Sanity check failed. Ignoring object.')
     embeddedTime, = unpack('>Q', data[8:16])
     readPosition = 20  # bypass the nonce, time, and object type
     requestedAddressVersionNumber, addressVersionLength = decodeVarint(

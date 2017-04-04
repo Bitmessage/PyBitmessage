@@ -106,6 +106,9 @@ class objectProcessor(threading.Thread):
 
     
     def processgetpubkey(self, data):
+        if len(data) > 200:
+            logger.info('getpubkey is abnormally long. Sanity check failed. Ignoring object.')
+            return
         readPosition = 20  # bypass the nonce, time, and object type
         requestedAddressVersionNumber, addressVersionLength = decodeVarint(
             data[readPosition:readPosition + 10])
