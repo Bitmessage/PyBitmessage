@@ -220,7 +220,7 @@ if __name__ == "__main__":
             url='https://bitmessage.org',
             # TODO: add keywords
             #keywords='',
-            install_requires=[installRequires],
+            install_requires=installRequires,
             extras_require={
                 'qrcode': ['qrcode'],
                 'pyopencl': ['pyopencl']
