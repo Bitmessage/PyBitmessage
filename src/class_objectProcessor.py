@@ -56,6 +56,8 @@ class objectProcessor(threading.Thread):
         while True:
             objectType, data = queues.objectProcessorQueue.get()
 
+            self.checkackdata(data)
+
             try:
                 if objectType == 0: # getpubkey
                     self.processgetpubkey(data)
@@ -86,6 +88,22 @@ class objectProcessor(threading.Thread):
                 logger.debug('Saved %s objects from the objectProcessorQueue to disk. objectProcessorThread exiting.' % str(numberOfObjectsThatWereInTheObjectProcessorQueue))
                 state.shutdown = 2
                 break
+
+    def checkackdata(self, data):
+        # Let's check whether this is a message acknowledgement bound for us.
+        if len(data) < 32:
+            return
+        if data[-32:] in shared.ackdataForWhichImWatching:
+            logger.info('This object is an acknowledgement bound for me.')
+            del shared.ackdataForWhichImWatching[data[-32:]]
+            sqlExecute('UPDATE sent SET status=?, lastactiontime=? WHERE ackdata=?',
+                       'ackreceived',
+                       int(time.time()), 
+                       data[-32:])
+            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[-32:], tr._translate("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
+        else:
+            logger.debug('This object is not an acknowledgement bound for me.')
+
     
     def processgetpubkey(self, data):
         readPosition = 20  # bypass the nonce, time, and object type
@@ -322,19 +340,6 @@ class objectProcessor(threading.Thread):
         readPosition += streamNumberAsClaimedByMsgLength
         inventoryHash = calculateInventoryHash(data)
         initialDecryptionSuccessful = False
-        # Let's check whether this is a message acknowledgement bound for us.
-        if data[-32:] in shared.ackdataForWhichImWatching:
-            logger.info('This msg IS an acknowledgement bound for me.')
-            del shared.ackdataForWhichImWatching[data[-32:]]
-            sqlExecute('UPDATE sent SET status=?, lastactiontime=? WHERE ackdata=?',
-                       'ackreceived',
-                       int(time.time()), 
-                       data[-32:])
-            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[-32:], tr._translate("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
-            return
-        else:
-            logger.info('This was NOT an acknowledgement bound for me.')
-
 
         # This is not an acknowledgement bound for me. See if it is a message
         # bound for me by trying to decrypt it with my private keys.
