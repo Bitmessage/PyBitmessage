@@ -27,6 +27,11 @@ NODE_SSL = 2
 #Bitfield flags
 BITFIELD_DOESACK = 1
 
+#Error types
+STATUS_WARNING = 0
+STATUS_ERROR = 1
+STATUS_FATAL = 2
+
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
     '>Q', random.randrange(1, 18446744073709551615))
 

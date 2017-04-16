@@ -60,6 +60,9 @@ from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, EINVAL, \
 _DISCONNECTED = frozenset((ECONNRESET, ENOTCONN, ESHUTDOWN, ECONNABORTED, EPIPE,
                            EBADF))
 
+OP_READ = 1
+OP_WRITE = 2
+
 try:
     socket_map
 except NameError:
@@ -178,17 +181,25 @@ def poll_poller(timeout=0.0, map=None):
         poll_poller.pollster = select.poll()
     if map:
         for fd, obj in list(map.items()):
-            flags = 0
+            flags = newflags = 0
             if obj.readable():
                 flags |= select.POLLIN | select.POLLPRI
+                newflags |= OP_READ
+            else:
+                newflags &= ~ OP_READ
             # accepting sockets should not be writable
             if obj.writable() and not obj.accepting:
                 flags |= select.POLLOUT
-            if flags:
-                try:
+                newflags |= OP_WRITE
+            else:
+                newflags &= ~ OP_WRITE
+            if newflags != obj.flags:
+                obj.flags = newflags
+                if obj.poller_registered:
                     poll_poller.pollster.modify(fd, flags)
-                except IOError:
+                else:
                     poll_poller.pollster.register(fd, flags)
+                    obj.poller_registered = True
         try:
             r = poll_poller.pollster.poll(timeout)
         except KeyboardInterrupt:
@@ -213,19 +224,28 @@ def epoll_poller(timeout=0.0, map=None):
         epoll_poller.pollster = select.epoll()
     if map:
         for fd, obj in map.items():
-            flags = 0
+            flags = newflags = 0
             if obj.readable():
                 flags |= select.POLLIN | select.POLLPRI
-            if obj.writable():
+                newflags |= OP_READ
+            else:
+                newflags &= ~ OP_READ
+            # accepting sockets should not be writable
+            if obj.writable() and not obj.accepting:
                 flags |= select.POLLOUT
-            if flags:
+                newflags |= OP_WRITE
+            else:
+                newflags &= ~ OP_WRITE
+            if newflags != obj.flags:
+                obj.flags = newflags
                 # Only check for exceptions if object was either readable
                 # or writable.
                 flags |= select.POLLERR | select.POLLHUP | select.POLLNVAL
-                try:
-                    epoll_poller.pollster.register(fd, flags)
-                except IOError:
+                if obj.poller_registered:
                     epoll_poller.pollster.modify(fd, flags)
+                else:
+                    epoll_poller.pollster.register(fd, flags)
+                    obj.poller_registered = True
         try:
             r = epoll_poller.pollster.poll(timeout)
         except select.error, err:
@@ -306,6 +326,8 @@ class dispatcher:
     closing = False
     addr = None
     ignore_log_types = frozenset(['warning'])
+    poller_registered = False
+    flags = 0
 
     def __init__(self, sock=None, map=None):
         if map is None:

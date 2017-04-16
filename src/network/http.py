@@ -19,7 +19,7 @@ class HttpConnection(AdvancedDispatcher):
         print "connecting in background to %s:%i" % (self.destination[0], self.destination[1])
 
     def state_init(self):
-        self.write_buf += "GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n" % (self.path, self.destination[0])
+        self.append_write_buf("GET %s HTTP/1.1\r\nHost: %s\r\nConnection: close\r\n\r\n" % (self.path, self.destination[0]))
         print "Sending %ib"  % (len(self.write_buf))
         self.set_state("http_request_sent", 0)
         return False

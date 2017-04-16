@@ -10,11 +10,16 @@ class AdvancedDispatcher(asyncore.dispatcher):
         self.write_buf = b""
         self.state = "init"
 
-    def slice_read_buf(self, length=0):
-        self.read_buf = self.read_buf[length:]
+    def append_write_buf(self, string = None):
+        self.write_buf += string
 
     def slice_write_buf(self, length=0):
-        self.write_buf = self.read_buf[length:]
+        if length > 0:
+            self.write_buf = self.write_buf[length:]
+
+    def slice_read_buf(self, length=0):
+        if length > 0:
+            self.read_buf = self.read_buf[length:]
 
     def read_buf_sufficient(self, length=0):
         if len(self.read_buf) < length:
@@ -23,7 +28,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
             return True
 
     def process(self):
-        if self.state != "init" and len(self.read_buf) == 0:
+        if self.state not in ["init", "tls_handshake"] and len(self.read_buf) == 0:
             return
         while True:
             try:
@@ -34,7 +39,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
                 # missing state
                 raise
 
-    def set_state(self, state, length):
+    def set_state(self, state, length=0):
         self.slice_read_buf(length)
         self.state = state
 
@@ -45,6 +50,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         return self.connecting or len(self.read_buf) < AdvancedDispatcher._buf_len
 
     def handle_read(self):
+        print "handle_read"
         self.read_buf += self.recv(AdvancedDispatcher._buf_len)
         self.process()
 
