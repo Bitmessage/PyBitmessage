@@ -1,0 +1,1 @@
+The window installer script is written in Pascal and it can be compiled with open source setup compiler called [INNO] (http://www.jrsoftware.org/) Setup compiler. 
