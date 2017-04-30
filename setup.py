@@ -184,7 +184,7 @@ class InstallCmd(install):
             print "Press Return to continue"
             try:
                 raw_input()
-            except NameError:
+            except EOFError, NameError:
                 pass
 
         return install.run(self)
