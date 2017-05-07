@@ -1,66 +1,66 @@
-import socket
-import protocol
+import time
 
-class Node (object):
-    TYPE_IPV4 = 1
-    TYPE_IPV6 = 2
-    TYPE_ONION = 3
-    TYPE_LOCAL = 4
-    TYPE_LOOPBACK = 8
-    TYPE_UNDEF = 12
+from inventory import PendingDownloadQueue
 
-    def __init__(self, services, address, port):
-        self.services = services
-        self.address, self.addressType = Node.decodeIPAddress(address)
-        self.port = port
+try:
+    # pybloomfiltermmap
+    from pybloomfilter import BloomFilter
+except ImportError:
+    try:
+        # pybloom
+        from pybloom import BloomFilter
+    except ImportError:
+        # bundled pybloom
+        from fallback.pybloom import BloomFilter
 
-    def isLocal(self):
-        return self.addressType | Node.TYPE_LOCAL > 0
 
-    def isGlobal(self):
-        return self.addressType <= Node.TYPE_ONION
+class Node(object):
+    invCleanPeriod = 300
+    invInitialCapacity = 50000
+    invErrorRate = 0.03
 
-    def isOnion(self):
-        return self.addressType | Node.TYPE_ONION > 0
+    def __init__(self):
+        self.initInvBloom()
+        self.initAddrBloom()
 
-    def isLoopback(self):
-        return self.addressType | Node.TYPE_LOOPBACK > 0
+    def initInvBloom(self):
+        # lock?
+        self.invBloom = BloomFilter(capacity=Node.invInitialCapacity,
+                                    error_rate=Node.invErrorRate)
 
-    @staticmethod
-    def decodeIPAddress(host):
-        if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-            hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
-            return Node.decodeIPv4Address(host[12:], hostStandardFormat)
-        elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
-            # Onion, based on BMD/bitcoind
-            hostStandardFormat = base64.b32encode(host[6:]).lower() + ".onion"
-            return hostStandardFormat, Node.TYPE_ONION
-        else:
-            hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
-            if hostStandardFormat == "":
-                # This can happen on Windows systems which are not 64-bit compatible 
-                # so let us drop the IPv6 address. 
-                return hostStandardFormat, Node.TYPE_IPV6|Node.TYPE_UNDEF
-            return Node.decodeIPv6Address(host, hostStandardFormat)
+    def initAddrBloom(self):
+        # lock?
+        self.addrBloom = BloomFilter(capacity=Node.invInitialCapacity,
+                                     error_rate=Node.invErrorRate)
 
-    @staticmethod
-    def decodeIPv4Address(host, hostStandardFormat):
-        if host[0] == '\x7F': # 127/8
-            return hostStandardFormat, Node.TYPE_IPV4|Node.TYPE_LOOPBACK
-        if host[0] == '\x0A': # 10/8
-            return hostStandardFormat, Node.TYPE_IPV4|Node.TYPE_LOCAL
-        if host[0:2] == '\xC0\xA8': # 192.168/16
-            return hostStandardFormat, Node.TYPE_IPV4|Node.TYPE_LOCAL
-        if host[0:2] >= '\xAC\x10' and host[0:2] < '\xAC\x20': # 172.16/12
-            return hostStandardFormat, Node.TYPE_IPV4|Node.TYPE_LOCAL
-        return hostStandardFormat, Node.TYPE_IPV4
+    def cleanBloom(self):
+        if self.lastcleaned < time.time() - Node.invCleanPeriod:
+            if PendingDownloadQueue().size() == 0:
+                self.initInvBloom()
+            self.initAddrBloom()
 
-    @staticmethod
-    def _checkIPv6Address(host, hostStandardFormat):
-        if host == ('\x00' * 15) + '\x01':
-            return hostStandardFormat, Node.TYPE_IPV6|Node.TYPE_LOOPBACK
-        if host[0] == '\xFE' and (ord(host[1]) & 0xc0) == 0x80:
-            return hostStandardFormat, Node.TYPE_IPV6|Node.TYPE_LOCAL
-        if (ord(host[0]) & 0xfe) == 0xfc:
-            return hostStandardFormat, Node.TYPE_IPV6|Node.TYPE_UNDEF
-        return hostStandardFormat, Node.TYPE_IPV6
+    def hasInv(self, hashid):
+        return hashid in self.invBloom
+
+    def addInv(self, hashid):
+        self.invBloom.add(hashid)
+
+    def hasAddr(self, hashid):
+        return hashid in self.invBloom
+
+    def addInv(self, hashid):
+        self.invBloom.add(hashid)
+
+# addr sending -> per node upload queue, and flush every minute or so
+# inv sending -> if not in bloom, inv immediately, otherwise put into a per node upload queue and flush every minute or so
+
+# no bloom
+# - if inv arrives
+#   - if we don't have it, add tracking and download queue
+#   - if we do have it, remove from tracking
+# tracking downloads
+# - per node hash of items the node has but we don't
+# tracking inv
+# - per node hash of items that neither the remote node nor we have
+#
+
