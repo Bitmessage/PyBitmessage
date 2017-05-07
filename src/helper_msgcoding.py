@@ -1,6 +1,9 @@
 #!/usr/bin/python2.7
 
-import msgpack
+try:
+    import msgpack
+except ImportError:
+    import fallback.umsgpack as msgpack
 import string
 import zlib
 
