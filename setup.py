@@ -9,7 +9,6 @@ except ImportError:
     haveSetuptools = False
 
 from importlib import import_module
-
 from src.version import softwareVersion
 
 packageManager = {
@@ -128,13 +127,17 @@ def detectPrereqs(missing=False):
 
 
 def prereqToPackages():
-    print "You can install the requirements by running, as root:"
-    print "%s %s" % (
-        packageManager[detectOS()], " ".join(
-            packageName[x][detectOS()] for x in detectPrereqs(True)))
+    print "You can install the requirements by running, as sudo or root:"
+    if detectPrereqs(True):
+        print "%s %s" % (packageManager[detectOS()],
+                         " ".join(detectPrereqs(True)))
+
     for package in detectPrereqs(True):
-        if packageName[package]['optional']:
-            print packageName[package]['description']
+        try:
+            if packageName[package]['optional']:
+                print packageName[package]['description']
+        except KeyError:
+            pass
 
 def compilerToPackages():
     if not detectOS() in compiling:
@@ -146,20 +149,23 @@ def compilerToPackages():
 if __name__ == "__main__":
     detectOS.result = None
     detectPrereqs.result = None
-    if detectPrereqs(True) != [] and detectOS() in packageManager:
+    if detectPrereqs(True) and detectOS() in packageManager:
         if detectOS() is not None:
             print "It looks like you're using %s. " \
-                "It is highly recommended to use the package manager " \
-                "instead of setuptools." % (detectOS())
+                  "It is highly recommended to use the package manager " \
+                  "instead of setuptools." % (detectOS())
             prereqToPackages()
             for module in detectPrereqs(True):
-                if not packageName[module]['optional']:
-                    sys.exit()
+                try:
+                    if not packageName[module]['optional']:
+                        sys.exit()
+                except KeyError:
+                    print('Checking %s' % module)
     if not haveSetuptools:
         print "It looks like you're missing setuptools."
         sys.exit()
 
-    if detectPrereqs(True) != []:
+    if detectPrereqs(True):
         print "Press Return to continue"
         try:
             nothing = raw_input()
@@ -178,7 +184,7 @@ if __name__ == "__main__":
 
     try:
         dist = setup(
-            name='pybitmessage',
+            name='PyBitmessage',
             version=softwareVersion,
             description="Reference client for Bitmessage: "
             "a P2P communications protocol",
@@ -227,4 +233,3 @@ if __name__ == "__main__":
         print "It looks like building the package failed.\n" \
             "You may be missing a C++ compiler and the OpenSSL headers."
         compilerToPackages()
-
