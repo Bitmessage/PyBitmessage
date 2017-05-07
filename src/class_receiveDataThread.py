@@ -290,6 +290,8 @@ class receiveDataThread(threading.Thread):
                 try:
                     self.sslSock.do_handshake()
                     logger.debug("TLS handshake success")
+                    if sys.version_info >= (2, 7, 9):
+                        logger.debug("TLS protocol version: %s", self.sslSock.version())
                     break
                 except ssl.SSLError as e:
                     if sys.hexversion >= 0x02070900:
