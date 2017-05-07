@@ -131,7 +131,6 @@ def prereqToPackages():
     if detectPrereqs(True):
         print "%s %s" % (packageManager[detectOS()],
                          " ".join(detectPrereqs(True)))
-
     for package in detectPrereqs(True):
         try:
             if packageName[package]['optional']:
@@ -139,28 +138,31 @@ def prereqToPackages():
         except KeyError:
             pass
 
+
 def compilerToPackages():
     if not detectOS() in compiling:
         return
-    print "You can install the requirements by running, as root:"
-    print "%s %s" % (
-        packageManager[detectOS()], compiling[detectOS()])
+    print "You can install the requirements by running, as sudo or root:"
+    if compiling[detectOS()]:
+        print "%s %s" % (packageManager[detectOS()],
+                         compiling[detectOS()])
+
 
 if __name__ == "__main__":
     detectOS.result = None
     detectPrereqs.result = None
     if detectPrereqs(True) and detectOS() in packageManager:
-        if detectOS() is not None:
+        if detectOS() is not None and detectOS.result != "Windows":
             print "It looks like you're using %s. " \
                   "It is highly recommended to use the package manager " \
                   "instead of setuptools." % (detectOS())
-            prereqToPackages()
-            for module in detectPrereqs(True):
-                try:
-                    if not packageName[module]['optional']:
-                        sys.exit()
-                except KeyError:
-                    print('Checking %s' % module)
+        prereqToPackages()
+        for module in detectPrereqs(True):
+            try:
+                if not packageName[module]['optional']:
+                    sys.exit()
+            except KeyError:
+                print 'Checking %s' % module
     if not haveSetuptools:
         print "It looks like you're missing setuptools."
         sys.exit()
