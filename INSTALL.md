@@ -1,4 +1,4 @@
-#PyBitmessage Installation Instructions 
+# PyBitmessage Installation Instructions
 
 For an up-to-date version of these instructions, please visit the
 [Bitmessage Wiki](https://bitmessage.org/wiki/Compiling_instructions).
@@ -6,7 +6,7 @@ For an up-to-date version of these instructions, please visit the
 PyBitmessage can be run either straight from source or from an installed
 package.
 
-##Dependencies
+## Dependencies
 Before running PyBitmessage, make sure you have all the necessary dependencies
 installed on your system.
 
@@ -16,12 +16,12 @@ Here's a list of dependencies needed for PyBitmessage
 - openssl
 - (Fedora & Redhat only) openssl-compat-bitcoin-libs 
 
-##Running PyBitmessage
+## Running PyBitmessage
 PyBitmessage can be run two ways: straight from source or via a package which
 is installed on your system. Since PyBitmessage is Beta, it is best to run
 PyBitmessage from source, so that you may update as needed.
 
-####Updating
+#### Updating
 To update PyBitmessage from source (Linux/OS X), you can do these easy steps:
 ```
 cd PyBitmessage/src/
@@ -31,7 +31,7 @@ python bitmessagemain.py
 ```
 Voilà! Bitmessage is updated!
 
-####Linux
+#### Linux
 To run PyBitmessage from the command-line, you must download the source, then
 run `src/bitmessagemain.py`.
 ```
@@ -41,7 +41,7 @@ cd PyBitmessage/ && python src/bitmessagemain.py
 
 That's it! *Honestly*!
 
-####Windows
+#### Windows
 On Windows you can download an executable for Bitmessage
 [here](https://bitmessage.org/download/windows/Bitmessage.exe).
 
@@ -49,7 +49,7 @@ However, if you would like to run PyBitmessage via Python in Windows, you can
 go [here](https://bitmessage.org/wiki/Compiling_instructions#Windows) for
 information on how to do so.
 
-####OS X
+#### OS X
 First off, install Homebrew.
 ```
 ruby -e "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/master/install)"
@@ -66,13 +66,12 @@ git clone git://github.com/Bitmessage/PyBitmessage.git
 cd PyBitmessage && python src/bitmessagemain.py
 ```
 
-##Creating a package for installation
+## Creating a package for installation
 If you really want, you can make a package for PyBitmessage, which you may
 install yourself or distribute to friends. This isn't recommended, since
 PyBitmessage is in Beta, and subject to frequent change.
 
-####Linux
-
+#### Linux
 First off, since PyBitmessage uses something nifty called
 [packagemonkey](https://github.com/fuzzgun/packagemonkey), go ahead and get
 that installed. You may have to build it from source.
@@ -90,11 +89,12 @@ rpm.sh - create a RPM package
 slack.sh - create a package for Slackware
 ```
 
-####OS X
+#### OS X
 Please refer to
 [this page](https://bitmessage.org/forum/index.php/topic,2761.0.html) on the
 forums for instructions on how to create a package on OS X.
 
 Please note that some versions of OS X don't work.
-###Windows
-#TODO: Create Windows package creation instructions
+
+#### Windows
+## TODO: Create Windows package creation instructions
