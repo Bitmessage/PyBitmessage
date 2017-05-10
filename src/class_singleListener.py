@@ -33,6 +33,10 @@ class singleListener(threading.Thread, StoppableThread):
         HOST = ''  # Symbolic name meaning all available interfaces
         # If not sockslisten, but onionhostname defined, only listen on localhost
         if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'sockslisten') and ".onion" in BMConfigParser().get('bitmessagesettings', 'onionhostname'):
+            if family == socket.AF_INET6 and "." in BMConfigParser().get('bitmessagesettings', 'onionbindip'):
+                raise socket.error(errno.EINVAL, "Invalid mix of IPv4 and IPv6")
+            elif family == socket.AF_INET and ":" in BMConfigParser().get('bitmessagesettings', 'onionbindip'):
+                raise socket.error(errno.EINVAL, "Invalid mix of IPv4 and IPv6")
             HOST = BMConfigParser().get('bitmessagesettings', 'onionbindip')
         PORT = BMConfigParser().getint('bitmessagesettings', 'port')
         sock = socket.socket(family, socket.SOCK_STREAM)
