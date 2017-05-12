@@ -100,7 +100,7 @@ def detectOS():
     elif sys.platform.startswith('win'):
         detectOS.result = "Windows"
     elif os.path.isfile("/etc/os-release"):
-        with open("/etc/os-release", 'rt') as osRelease:
+        with open("/etc/os-release", 'r') as osRelease:
             version = None
             for line in osRelease:
                 if line.startswith("NAME="):
