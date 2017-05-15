@@ -28,7 +28,6 @@ import tr
 from debug import logger
 import l10n
 
-
 class objectProcessor(threading.Thread):
     """
     The objectProcessor thread, of which there is only one, receives network
@@ -71,6 +70,8 @@ class objectProcessor(threading.Thread):
                     pass
                 else:
                     logger.critical('Error! Bug! The class_objectProcessor was passed an object type it doesn\'t recognize: %s' % str(objectType))
+            except helper_msgcoding.DecompressionSizeException as e:
+                logger.error("The object is too big after decompression (stopped decompressing at %ib, your configured limit %ib). Ignoring", e.size, BMConfigParser().safeGetInt("zlib", "maxsize"))
             except varintDecodeError as e:
                 logger.debug("There was a problem with a varint while processing an object. Some details: %s" % e)
             except Exception as e:

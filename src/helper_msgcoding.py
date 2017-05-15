@@ -7,6 +7,7 @@ except ImportError:
 import string
 import zlib
 
+from bmconfigparser import BMConfigParser
 import shared
 from debug import logger
 import messagetypes
@@ -16,6 +17,10 @@ BITMESSAGE_ENCODING_IGNORE = 0
 BITMESSAGE_ENCODING_TRIVIAL = 1
 BITMESSAGE_ENCODING_SIMPLE = 2
 BITMESSAGE_ENCODING_EXTENDED = 3
+
+class DecompressionSizeException(Exception):
+    def __init__(self, size):
+        self.size = size
 
 
 class MsgEncode(object):
@@ -65,11 +70,24 @@ class MsgDecode(object):
             self.subject = _translate("MsgDecode", "Unknown encoding")
 
     def decodeExtended(self, data):
+        dc = zlib.decompressobj()
+        tmp = ""
+        while len(tmp) <= BMConfigParser().safeGetInt("zlib", "maxsize"):
+            try:
+                got = dc.decompress(data, BMConfigParser().safeGetInt("zlib", "maxsize") + 1 - len(tmp))
+                # EOF
+                if got == "":
+                    break
+                tmp += got
+                data = dc.unconsumed_tail
+            except zlib.error:
+                logger.error("Error decompressing message")
+                raise
+        else:
+            raise DecompressionSizeException(len(tmp))
+
         try:
-            tmp = msgpack.loads(zlib.decompress(data))
-        except zlib.error:
-            logger.error("Error decompressing message")
-            raise
+            tmp = msgpack.loads(tmp)
         except (msgpack.exceptions.UnpackException,
                 msgpack.exceptions.ExtraData):
             logger.error("Error msgunpacking message")
