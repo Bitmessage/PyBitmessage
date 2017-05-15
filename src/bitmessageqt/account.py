@@ -13,7 +13,7 @@ from utils import str_broadcast_subscribers
 import time
 
 def getSortedAccounts():
-    configSections = filter(lambda x: x != 'bitmessagesettings', BMConfigParser().sections())
+    configSections = BMConfigParser().addresses()
     configSections.sort(cmp = 
         lambda x,y: cmp(unicode(BMConfigParser().get(x, 'label'), 'utf-8').lower(), unicode(BMConfigParser().get(y, 'label'), 'utf-8').lower())
         )

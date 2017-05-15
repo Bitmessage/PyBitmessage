@@ -59,7 +59,7 @@ class smtpDeliver(threading.Thread, StoppableThread):
                     msg = MIMEText(body, 'plain', 'utf-8')
                     msg['Subject'] = Header(subject, 'utf-8')
                     msg['From'] = fromAddress + '@' + SMTPDOMAIN
-                    toLabel = map (lambda y: BMConfigParser().safeGet(y, "label"), filter(lambda x: x == toAddress, BMConfigParser().sections()))
+                    toLabel = map (lambda y: BMConfigParser().safeGet(y, "label"), filter(lambda x: x == toAddress, BMConfigParser().addresses()))
                     if len(toLabel) > 0:
                         msg['To'] = "\"%s\" <%s>" % (Header(toLabel[0], 'utf-8'), toAddress + '@' + SMTPDOMAIN)
                     else:

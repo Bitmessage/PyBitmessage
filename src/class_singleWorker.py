@@ -136,7 +136,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
     def doPOWForMyV2Pubkey(self, hash):  # This function also broadcasts out the pubkey message once it is done with the POW
         # Look up my stream number based on my address hash
-        """configSections = shared.config.sections()
+        """configSections = shared.config.addresses()
         for addressInKeysFile in configSections:
             if addressInKeysFile <> 'bitmessagesettings':
                 status,addressVersionNumber,streamNumber,hashFromThisParticularAddress = decodeAddress(addressInKeysFile)

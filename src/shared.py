@@ -110,29 +110,27 @@ def reloadMyAddressHashes():
     #myPrivateKeys.clear()
 
     keyfileSecure = checkSensitiveFilePermissions(state.appdata + 'keys.dat')
-    configSections = BMConfigParser().sections()
     hasEnabledKeys = False
-    for addressInKeysFile in configSections:
-        if addressInKeysFile <> 'bitmessagesettings':
-            isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
-            if isEnabled:
-                hasEnabledKeys = True
-                status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
-                if addressVersionNumber == 2 or addressVersionNumber == 3 or addressVersionNumber == 4:
-                    # Returns a simple 32 bytes of information encoded in 64 Hex characters,
-                    # or null if there was an error.
-                    privEncryptionKey = hexlify(decodeWalletImportFormat(
-                            BMConfigParser().get(addressInKeysFile, 'privencryptionkey')))
+    for addressInKeysFile in BMConfigParser().addresses():
+        isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
+        if isEnabled:
+            hasEnabledKeys = True
+            status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
+            if addressVersionNumber == 2 or addressVersionNumber == 3 or addressVersionNumber == 4:
+                # Returns a simple 32 bytes of information encoded in 64 Hex characters,
+                # or null if there was an error.
+                privEncryptionKey = hexlify(decodeWalletImportFormat(
+                        BMConfigParser().get(addressInKeysFile, 'privencryptionkey')))
 
-                    if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
-                        myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
-                        myAddressesByHash[hash] = addressInKeysFile
-                        tag = hashlib.sha512(hashlib.sha512(encodeVarint(
-                            addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()[32:]
-                        myAddressesByTag[tag] = addressInKeysFile
+                if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
+                    myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
+                    myAddressesByHash[hash] = addressInKeysFile
+                    tag = hashlib.sha512(hashlib.sha512(encodeVarint(
+                        addressVersionNumber) + encodeVarint(streamNumber) + hash).digest()).digest()[32:]
+                    myAddressesByTag[tag] = addressInKeysFile
 
-                else:
-                    logger.error('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2, 3, or 4.\n')
+            else:
+                logger.error('Error in reloadMyAddressHashes: Can\'t handle address versions other than 2, 3, or 4.\n')
 
     if not keyfileSecure:
         fixSensitiveFilePermissions(state.appdata + 'keys.dat', hasEnabledKeys)

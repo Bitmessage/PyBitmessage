@@ -169,22 +169,20 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
     def HandleListAddresses(self, method):
         data = '{"addresses":['
-        configSections = BMConfigParser().sections()
-        for addressInKeysFile in configSections:
-            if addressInKeysFile != 'bitmessagesettings':
-                status, addressVersionNumber, streamNumber, hash01 = decodeAddress(
-                    addressInKeysFile)
-                if len(data) > 20:
-                    data += ','
-                if BMConfigParser().has_option(addressInKeysFile, 'chan'):
-                    chan = BMConfigParser().getboolean(addressInKeysFile, 'chan')
-                else:
-                    chan = False
-                label = BMConfigParser().get(addressInKeysFile, 'label')
-                if method == 'listAddresses2':
-                    label = label.encode('base64')
-                data += json.dumps({'label': label, 'address': addressInKeysFile, 'stream':
-                                    streamNumber, 'enabled': BMConfigParser().getboolean(addressInKeysFile, 'enabled'), 'chan': chan}, indent=4, separators=(',', ': '))
+        for addressInKeysFile in BMConfigParser().addresses():
+            status, addressVersionNumber, streamNumber, hash01 = decodeAddress(
+                addressInKeysFile)
+            if len(data) > 20:
+                data += ','
+            if BMConfigParser().has_option(addressInKeysFile, 'chan'):
+                chan = BMConfigParser().getboolean(addressInKeysFile, 'chan')
+            else:
+                chan = False
+            label = BMConfigParser().get(addressInKeysFile, 'label')
+            if method == 'listAddresses2':
+                label = label.encode('base64')
+            data += json.dumps({'label': label, 'address': addressInKeysFile, 'stream':
+                                streamNumber, 'enabled': BMConfigParser().getboolean(addressInKeysFile, 'enabled'), 'chan': chan}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
