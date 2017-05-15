@@ -1024,20 +1024,19 @@ def run(stdscr):
             curses.init_pair(9, curses.COLOR_YELLOW, curses.COLOR_BLACK) # orangish
     
     # Init list of address in 'Your Identities' tab
-    configSections = BMConfigParser().sections()
+    configSections = BMConfigParser().addressses()
     for addressInKeysFile in configSections:
-        if addressInKeysFile != "bitmessagesettings":
-            isEnabled = BMConfigParser().getboolean(addressInKeysFile, "enabled")
-            addresses.append([BMConfigParser().get(addressInKeysFile, "label"), isEnabled, addressInKeysFile])
-            # Set address color
-            if not isEnabled:
-                addresses[len(addresses)-1].append(8) # gray
-            elif BMConfigParser().safeGetBoolean(addressInKeysFile, 'chan'):
-                addresses[len(addresses)-1].append(9) # orange
-            elif BMConfigParser().safeGetBoolean(addressInKeysFile, 'mailinglist'):
-                addresses[len(addresses)-1].append(5) # magenta
-            else:
-                addresses[len(addresses)-1].append(0) # black
+        isEnabled = BMConfigParser().getboolean(addressInKeysFile, "enabled")
+        addresses.append([BMConfigParser().get(addressInKeysFile, "label"), isEnabled, addressInKeysFile])
+        # Set address color
+        if not isEnabled:
+            addresses[len(addresses)-1].append(8) # gray
+        elif BMConfigParser().safeGetBoolean(addressInKeysFile, 'chan'):
+            addresses[len(addresses)-1].append(9) # orange
+        elif BMConfigParser().safeGetBoolean(addressInKeysFile, 'mailinglist'):
+            addresses[len(addresses)-1].append(5) # magenta
+        else:
+            addresses[len(addresses)-1].append(0) # black
     addresses.reverse()
     
     stdscr.clear()

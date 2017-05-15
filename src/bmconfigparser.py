@@ -6,6 +6,17 @@ import os
 from singleton import Singleton
 import state
 
+BMConfigDefaults = {
+    "bitmessagesettings": {
+        "maxaddrperstreamsend": 500,
+        "maxbootstrapconnections": 20,
+        "maxoutboundconnections": 8,
+        "maxtotalconnections": 200,
+    },
+    "zlib": {
+        'maxsize': 1048576
+    }
+}
 
 @Singleton
 class BMConfigParser(ConfigParser.SafeConfigParser):
@@ -21,32 +32,37 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
                 return ConfigParser.ConfigParser.get(self, section, option, raw, vars)
             except ConfigParser.InterpolationError:
                 return ConfigParser.ConfigParser.get(self, section, option, True, vars)
-        return ConfigParser.ConfigParser.get(self, section, option, True, vars)
+        try:
+            return ConfigParser.ConfigParser.get(self, section, option, True, vars)
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
+            try:
+                return BMConfigDefaults[section][option]
+            except KeyError:
+                raise e
 
     def safeGetBoolean(self, section, field):
-        if self.has_option(section, field):
-            try:
-                return self.getboolean(section, field)
-            except ValueError:
-                return False
-        return False
+        try:
+            return self.getboolean(section, field)
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, ValueError):
+            return False
 
     def safeGetInt(self, section, field, default=0):
-        if self.has_option(section, field):
-            try:
-                return self.getint(section, field)
-            except ValueError:
-                return default
-        return default
+        try:
+            return self.getint(section, field)
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, ValueError):
+            return default
 
     def safeGet(self, section, option, default = None):
-        if self.has_option(section, option):
+        try:
             return self.get(section, option)
-        else:
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, ValueError):
             return default
 
     def items(self, section, raw=False, vars=None):
         return ConfigParser.ConfigParser.items(self, section, True, vars)
+
+    def addresses(self):
+        return filter(lambda x: x.startswith('BM-'), BMConfigParser().sections())
 
     def save(self):
         fileName = os.path.join(state.appdata, 'keys.dat')
