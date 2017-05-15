@@ -128,7 +128,6 @@ class MessageView(QtGui.QTextBrowser):
         self.html.reset()
         self.html.reset_safe()
         self.html.allow_picture = True
-        # quick hack to limit excessively compressed messages, limits viewing to first MB of data
-        self.html.feed(data[0:1048576])
+        self.html.feed(data)
         self.html.close()
         self.showPlain()
