@@ -110,7 +110,7 @@ class TLSDispatcher(AdvancedDispatcher):
             if not (self.want_write or self.want_read):
                 raise
         else:
-            print "%s:%i: handshake success" % (self.destination.host, self.destination.port)
+            print "%s:%i: TLS handshake success%s" % (self.destination.host, self.destination.port, ", TLS protocol version: %s" % (self.sslSocket.version()) if sys.version_info >= (2, 7, 9) else "")
             # The handshake has completed, so remove this channel and...
             self.del_channel()
             self.set_socket(self.sslSocket)
