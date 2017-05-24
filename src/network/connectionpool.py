@@ -99,7 +99,6 @@ class BMConnectionPool(object):
             ".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname')):
             acceptConnections = False
 
-        spawnConnections = False
         if spawnConnections:
             if not self.bootstrapped:
                 print "bootstrapping dns"
