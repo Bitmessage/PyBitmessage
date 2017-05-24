@@ -50,6 +50,9 @@ from class_smtpDeliver import smtpDeliver
 from class_smtpServer import smtpServer
 from bmconfigparser import BMConfigParser
 
+from network.connectionpool import BMConnectionPool
+from network.networkthread import BMNetworkThread
+
 # Helper Functions
 import helper_bootstrap
 import helper_generic
@@ -80,10 +83,13 @@ def connectToStream(streamNumber):
         if streamNumber*2+1 not in knownnodes.knownNodes:
             knownnodes.knownNodes[streamNumber*2+1] = {}
 
-    for i in range(maximumNumberOfHalfOpenConnections):
-        a = outgoingSynSender()
-        a.setup(streamNumber, selfInitiatedConnections)
-        a.start()
+    if BMConfigParser().safeGetBoolean("network", "asyncore"):
+        BMConnectionPool().connectToStream(streamNumber)
+    else:
+        for i in range(maximumNumberOfHalfOpenConnections):
+            a = outgoingSynSender()
+            a.setup(streamNumber, selfInitiatedConnections)
+            a.start()
 
 def _fixWinsock():
     if not ('win32' in sys.platform) and not ('win64' in sys.platform):
@@ -242,13 +248,19 @@ class Main:
             singleAPIThread.daemon = True  # close the main program even if there are threads left
             singleAPIThread.start()
 
+        if BMConfigParser().safeGetBoolean("network", "asyncore"):
+            asyncoreThread = BMNetworkThread()
+            asyncoreThread.daemon = False
+            asyncoreThread.start()
+
         connectToStream(1)
 
-        singleListenerThread = singleListener()
-        singleListenerThread.setup(selfInitiatedConnections)
-        singleListenerThread.daemon = True  # close the main program even if there are threads left
-        singleListenerThread.start()
-        
+        if not BMConfigParser().safeGetBoolean("network", "asyncore"):
+            singleListenerThread = singleListener()
+            singleListenerThread.setup(selfInitiatedConnections)
+            singleListenerThread.daemon = True  # close the main program even if there are threads left
+            singleListenerThread.start()
+            
         if BMConfigParser().safeGetBoolean('bitmessagesettings','upnp'):
             import upnp
             upnpThread = upnp.uPnPThread()

@@ -46,6 +46,8 @@ many of the difficult problems for you, making the task of building
 sophisticated high-performance network servers and clients a snap.
 """
 
+# randomise object order for bandwidth balancing
+import random
 import select
 import socket
 import sys
@@ -56,6 +58,11 @@ import os
 from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, EINVAL, \
      ENOTCONN, ESHUTDOWN, EISCONN, EBADF, ECONNABORTED, EPIPE, EAGAIN, \
      errorcode
+try:
+    from errno import WSAEWOULDBLOCK
+except:
+    pass
+from ssl import SSLError, SSL_ERROR_WANT_READ, SSL_ERROR_WANT_WRITE
 
 _DISCONNECTED = frozenset((ECONNRESET, ENOTCONN, ESHUTDOWN, ECONNABORTED, EPIPE,
                            EBADF))
@@ -81,6 +88,15 @@ class ExitNow(Exception):
 
 _reraised_exceptions = (ExitNow, KeyboardInterrupt, SystemExit)
 
+maxDownloadRate = 0
+downloadChunk = 0
+downloadTimestamp = 0
+downloadBucket = 0
+maxUploadRate = 0
+uploadChunk = 0
+uploadTimestamp = 0
+uploadBucket = 0
+
 def read(obj):
     try:
         obj.handle_read_event()
@@ -96,6 +112,44 @@ def write(obj):
         raise
     except:
         obj.handle_error()
+
+def set_rates(download, upload):
+    global maxDownloadRate, maxUploadRate, downloadChunk, uploadChunk, downloadBucket, uploadBucket, downloadTimestamp, uploadTimestamp
+    maxDownloadRate = float(download)
+    if maxDownloadRate > 0:
+        downloadChunk = 1400
+    maxUploadRate = float(upload)
+    if maxUploadRate > 0:
+        uploadChunk = 1400
+    downloadBucket = maxDownloadRate
+    uploadBucket = maxUploadRate
+    downloadTimestamp = time.time()
+    uploadTimestamp = time.time()
+
+def wait_tx_buckets():
+    global downloadBucket, uploadBucket, downloadTimestamp, uploadTimestamp
+    if maxDownloadRate > 0 and maxUploadRate > 0:
+        wait_for_this_long = min(maxDownloadRate / downloadChunk, maxUploadRate / uploadChunk)
+    elif maxDownloadRate > 0:
+        wait_for_this_long = maxDownloadRate / downloadChunk
+    elif maxUploadRate > 0:
+        wait_for_this_long = maxUploadRate / uploadChunk
+    else:
+        return
+    wait_for_this_long /= 2
+    if wait_for_this_long > 1:
+        wait_for_this_long = 1
+    elif wait_for_this_long < 0.1:
+        wait_for_this_long = 0.1
+
+    while downloadBucket < downloadChunk and uploadBucket < uploadChunk:
+        time.sleep(wait_for_this_long)
+        downloadBucket += (time.time() - downloadTimestamp) * maxDownloadRate
+        downloadTimestamp = time.time()
+        uploadBucket += (time.time() - uploadTimestamp) * maxUploadRate
+        uploadTimestamp = time.time()
+
+
 
 def _exception(obj):
     try:
@@ -150,13 +204,13 @@ def select_poller(timeout=0.0, map=None):
         except KeyboardInterrupt:
             return
 
-        for fd in r:
+        for fd in random.sample(r, len(r)):
             obj = map.get(fd)
             if obj is None:
                 continue
             read(obj)
 
-        for fd in w:
+        for fd in random.sample(w, len(w)):
             obj = map.get(fd)
             if obj is None:
                 continue
@@ -204,7 +258,7 @@ def poll_poller(timeout=0.0, map=None):
             r = poll_poller.pollster.poll(timeout)
         except KeyboardInterrupt:
             r = []
-        for fd, flags in r:
+        for fd, flags in random.sample(r, len(r)):
             obj = map.get(fd)
             if obj is None:
                 continue
@@ -252,7 +306,7 @@ def epoll_poller(timeout=0.0, map=None):
             if err.args[0] != EINTR:
                 raise
             r = []
-        for fd, flags in r:
+        for fd, flags in random.sample(r, len(r)):
             obj = map.get(fd)
             if obj is None:
                 continue
@@ -278,7 +332,7 @@ def kqueue_poller(timeout=0.0, map=None):
                 selectables += 1
 
         events = kqueue.control(None, selectables, timeout)
-        for event in events:
+        for event in random.sample(events, len(events)):
             fd = event.ident
             obj = map.get(fd)            
             if obj is None:
@@ -307,13 +361,18 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None,
     elif hasattr(select, 'select'):
         poller = select_poller
 
-    print "Poll loop using %s" % (poller.__name__)
+    poller = select_poller
+
+#    print "Poll loop using %s" % (poller.__name__)
 
     if count is None:
         while map:
+            wait_tx_buckets()
             poller(timeout, map)
     else:
+        timeout /= count
         while map and count > 0:
+            wait_tx_buckets()
             poller(timeout, map)
             count = count - 1
 
@@ -482,10 +541,17 @@ class dispatcher:
         try:
             result = self.socket.send(data)
             return result
-        except socket.error as why:
-            if why.args[0] == EWOULDBLOCK:
+        except SSLError as err:
+            if err.errno == SSL_ERROR_WANT_WRITE:
                 return 0
-            elif why.args[0] in _DISCONNECTED:
+            else:
+                raise
+        except socket.error as why:
+            if why.errno in (errno.EAGAIN, errno.EWOULDBLOCK) or \
+                (sys.platform.startswith('win') and \
+                err.errno == errno.WSAEWOULDBLOCK):
+                    return 0
+            elif why.errno in _DISCONNECTED:
                 self.handle_close()
                 return 0
             else:
@@ -501,9 +567,18 @@ class dispatcher:
                 return b''
             else:
                 return data
+        except SSLError as err:
+            if err.errno == SSL_ERROR_WANT_READ:
+                return b''
+            else:
+                raise
         except socket.error as why:
             # winsock sometimes raises ENOTCONN
-            if why.args[0] in _DISCONNECTED:
+            if why.errno in (errno.EAGAIN, errno.EWOULDBLOCK) or \
+                (sys.platform.startswith('win') and \
+                err.errno == errno.WSAEWOULDBLOCK):
+                    return b''
+            if why.errno in _DISCONNECTED:
                 self.handle_close()
                 return b''
             else:

@@ -32,6 +32,12 @@ STATUS_WARNING = 0
 STATUS_ERROR = 1
 STATUS_FATAL = 2
 
+#Object types
+OBJECT_GETPUBKEY = 0
+OBJECT_PUBKEY = 1
+OBJECT_MSG = 2
+OBJECT_BROADCAST = 3
+
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
     '>Q', random.randrange(1, 18446744073709551615))
 
