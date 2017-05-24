@@ -10,8 +10,13 @@ BMConfigDefaults = {
     "bitmessagesettings": {
         "maxaddrperstreamsend": 500,
         "maxbootstrapconnections": 20,
+        "maxdownloadrate": 0,
         "maxoutboundconnections": 8,
         "maxtotalconnections": 200,
+        "maxuploadrate": 0,
+    },
+    "network": {
+        "asyncore": False
     },
     "zlib": {
         'maxsize': 1048576
@@ -27,35 +32,35 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
         return ConfigParser.ConfigParser.set(self, section, option, value)
 
     def get(self, section, option, raw=False, vars=None):
-        if section == "bitmessagesettings" and option == "timeformat":
-            try: 
-                return ConfigParser.ConfigParser.get(self, section, option, raw, vars)
-            except ConfigParser.InterpolationError:
-                return ConfigParser.ConfigParser.get(self, section, option, True, vars)
         try:
-            return ConfigParser.ConfigParser.get(self, section, option, True, vars)
+            if section == "bitmessagesettings" and option == "timeformat":
+                return ConfigParser.ConfigParser.get(self, section, option, raw, vars)
+            else:
+                return ConfigParser.ConfigParser.get(self, section, option, True, vars)
+        except ConfigParser.InterpolationError:
+                return ConfigParser.ConfigParser.get(self, section, option, True, vars)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
             try:
                 return BMConfigDefaults[section][option]
-            except KeyError:
+            except (KeyError, ValueError, AttributeError):
                 raise e
 
     def safeGetBoolean(self, section, field):
         try:
             return self.getboolean(section, field)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, ValueError):
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, ValueError, AttributeError):
             return False
 
     def safeGetInt(self, section, field, default=0):
         try:
             return self.getint(section, field)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, ValueError):
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, ValueError, AttributeError):
             return default
 
     def safeGet(self, section, option, default = None):
         try:
             return self.get(section, option)
-        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, ValueError):
+        except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, ValueError, AttributeError):
             return default
 
     def items(self, section, raw=False, vars=None):
