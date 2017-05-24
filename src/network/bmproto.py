@@ -295,9 +295,10 @@ class BMConnection(TLSDispatcher, BMQueues):
             if False:
                 self.antiIntersectionDelay()
             else:
-                if i in Inventory():
+                try:
                     self.append_write_buf(protocol.CreatePacket('object', Inventory()[i].payload))
-                else:
+                # this is faster than "if i in Inventory()"
+                except KeyError:
                     self.antiIntersectionDelay()
                     logger.warning('%s asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. We probably cleaned it out after advertising it but before they got around to asking for it.' % (self.peer,))
         return True
