@@ -60,14 +60,14 @@ class TLSDispatcher(AdvancedDispatcher):
 
     def writable(self):
         if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
-            print "tls writable, %r" % (self.want_write)
+            #print "tls writable, %r" % (self.want_write)
             return self.want_write
         else:
             return AdvancedDispatcher.writable(self)
 
     def readable(self):
         if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
-            print "tls readable, %r" % (self.want_read)
+            #print "tls readable, %r" % (self.want_read)
             return self.want_read
         else:
             return AdvancedDispatcher.readable(self)
@@ -75,19 +75,19 @@ class TLSDispatcher(AdvancedDispatcher):
     def handle_read(self):
         # wait for write buffer flush
         if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
-            print "handshaking (read)"
+            #print "handshaking (read)"
             self.state_tls_handshake()
         else:
-            print "not handshaking (read)"
+            #print "not handshaking (read)"
             return AdvancedDispatcher.handle_read(self)
 
     def handle_write(self):
         # wait for write buffer flush
         if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
-            print "handshaking (write)"
+            #print "handshaking (write)"
             self.state_tls_handshake()
         else:
-            print "not handshaking (write)"
+            #print "not handshaking (write)"
             return AdvancedDispatcher.handle_write(self)
 
     def state_tls_handshake(self):
@@ -96,24 +96,25 @@ class TLSDispatcher(AdvancedDispatcher):
             return False
         # Perform the handshake.
         try:
-            print "handshaking (internal)"
+            #print "handshaking (internal)"
             self.sslSocket.do_handshake()
         except ssl.SSLError, err:
-            print "handshake fail"
+            #print "%s:%i: handshake fail" % (self.destination.host, self.destination.port)
             self.want_read = self.want_write = False
             if err.args[0] == ssl.SSL_ERROR_WANT_READ:
-                print "want read"
+                #print "want read"
                 self.want_read = True
-            elif err.args[0] == ssl.SSL_ERROR_WANT_WRITE:
-                print "want write"
+            if err.args[0] == ssl.SSL_ERROR_WANT_WRITE:
+                #print "want write"
                 self.want_write = True
-            else:
+            if not (self.want_write or self.want_read):
                 raise
         else:
-            print "handshake success"
+            print "%s:%i: handshake success" % (self.destination.host, self.destination.port)
             # The handshake has completed, so remove this channel and...
             self.del_channel()
             self.set_socket(self.sslSocket)
             self.tlsDone = True
-            self.state_bm_ready()
+            self.set_state("bm_header")
+            self.set_connection_fully_established()
         return False
