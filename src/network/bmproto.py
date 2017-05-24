@@ -289,7 +289,7 @@ class BMConnection(TLSDispatcher, BMQueues):
 #            print "skipping getdata"
 #            return True
         for i in items:
-            print "received getdata request for item %s" % (hexlify(i))
+            #print "received getdata request for item %s" % (hexlify(i))
             #logger.debug('received getdata request for item:' + hexlify(i))
             #if i in ObjUploadQueue.streamElems(1):
             if False:
@@ -309,7 +309,8 @@ class BMConnection(TLSDispatcher, BMQueues):
             logger.error("Too many items in inv message!")
             raise BMProtoExcessiveDataError()
         else:
-            print "items in inv: %i" % (len(items))
+            pass
+            #print "items in inv: %i" % (len(items))
 
         startTime = time.time()
         #advertisedSet = set()
@@ -609,7 +610,10 @@ class BMConnection(TLSDispatcher, BMQueues):
         else:
             print "%s:%i: closing, %s" % (self.destination.host, self.destination.port, reason)
         network.connectionpool.BMConnectionPool().removeConnection(self)
-        asyncore.dispatcher.close(self)
+        try:
+            asyncore.dispatcher.close(self)
+        except AttributeError:
+            pass
 
 
 class Socks5BMConnection(Socks5Connection, BMConnection):

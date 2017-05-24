@@ -57,6 +57,7 @@ import warnings
 import os
 from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, EINVAL, \
      ENOTCONN, ESHUTDOWN, EISCONN, EBADF, ECONNABORTED, EPIPE, EAGAIN, \
+     ECONNREFUSED, \
      errorcode
 try:
     from errno import WSAEWOULDBLOCK
@@ -65,7 +66,7 @@ except:
 from ssl import SSLError, SSL_ERROR_WANT_READ, SSL_ERROR_WANT_WRITE
 
 _DISCONNECTED = frozenset((ECONNRESET, ENOTCONN, ESHUTDOWN, ECONNABORTED, EPIPE,
-                           EBADF))
+                           EBADF, ECONNREFUSED))
 
 OP_READ = 1
 OP_WRITE = 2
@@ -530,7 +531,7 @@ class dispatcher:
         except TypeError:
             return None
         except socket.error as why:
-            if why.args[0] in (EWOULDBLOCK, ECONNABORTED, EAGAIN):
+            if why.args[0] in (EWOULDBLOCK, ECONNABORTED, EAGAIN, ENOTCONN):
                 return None
             else:
                 raise
@@ -547,11 +548,11 @@ class dispatcher:
             else:
                 raise
         except socket.error as why:
-            if why.errno in (errno.EAGAIN, errno.EWOULDBLOCK) or \
+            if why.args[0] in (EAGAIN, EWOULDBLOCK) or \
                 (sys.platform.startswith('win') and \
-                err.errno == errno.WSAEWOULDBLOCK):
+                err.errno == WSAEWOULDBLOCK):
                     return 0
-            elif why.errno in _DISCONNECTED:
+            elif why.args[0] in _DISCONNECTED:
                 self.handle_close()
                 return 0
             else:
@@ -574,11 +575,11 @@ class dispatcher:
                 raise
         except socket.error as why:
             # winsock sometimes raises ENOTCONN
-            if why.errno in (errno.EAGAIN, errno.EWOULDBLOCK) or \
+            if why.args[0] in (EAGAIN, EWOULDBLOCK) or \
                 (sys.platform.startswith('win') and \
-                err.errno == errno.WSAEWOULDBLOCK):
+                err.errno == WSAEWOULDBLOCK):
                     return b''
-            if why.errno in _DISCONNECTED:
+            if why.args[0] in _DISCONNECTED:
                 self.handle_close()
                 return b''
             else:
