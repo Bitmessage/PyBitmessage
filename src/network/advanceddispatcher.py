@@ -1,4 +1,4 @@
-from threading import RLock
+import Queue
 import time
 
 import asyncore_pollchoose as asyncore
@@ -12,20 +12,16 @@ class AdvancedDispatcher(asyncore.dispatcher):
             asyncore.dispatcher.__init__(self, sock)
         self.read_buf = b""
         self.write_buf = b""
-        self.writeLock = RLock()
+        self.writeQueue = Queue.Queue()
+        self.receiveQueue = Queue.Queue()
         self.state = "init"
         self.lastTx = time.time()
         self.sentBytes = 0
         self.receivedBytes = 0
 
-    def append_write_buf(self, string = None):
-        with self.writeLock:
-            self.write_buf += string
-
     def slice_write_buf(self, length=0):
         if length > 0:
-            with self.writeLock:
-                self.write_buf = self.write_buf[length:]
+            self.write_buf = self.write_buf[length:]
 
     def slice_read_buf(self, length=0):
         if length > 0:
@@ -54,7 +50,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         self.state = state
 
     def writable(self):
-        return self.connecting or len(self.write_buf) > 0
+        return self.connecting or len(self.write_buf) > 0 or not self.writeQueue.empty()
 
     def readable(self):
         return self.connecting or len(self.read_buf) < AdvancedDispatcher._buf_len
@@ -74,17 +70,27 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def handle_write(self):
         self.lastTx = time.time()
         if asyncore.maxUploadRate > 0:
-            written = self.send(self.write_buf[0:asyncore.uploadChunk])
-            asyncore.uploadBucket -= written
+            bufSize = asyncore.uploadChunk
         else:
-            written = self.send(self.write_buf)
-        asyncore.updateSent(written)
-        self.sentBytes += written
-        self.slice_write_buf(written)
+            bufSize = self._buf_len
+        while len(self.write_buf) < bufSize:
+            try:
+                self.write_buf += self.writeQueue.get(False)
+            except Queue.Empty:
+                break
+        if len(self.write_buf) > 0:
+            written = self.send(self.write_buf[0:bufSize])
+            asyncore.uploadBucket -= written
+            asyncore.updateSent(written)
+            self.sentBytes += written
+            self.slice_write_buf(written)
 
     def handle_connect(self):
         self.lastTx = time.time()
         self.process()
+
+    def state_close(self):
+        pass
 
     def close(self):
         self.read_buf = b""

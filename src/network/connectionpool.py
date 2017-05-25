@@ -104,29 +104,32 @@ class BMConnectionPool(object):
                 print "bootstrapping dns"
                 helper_bootstrap.dns()
                 self.bootstrapped = True
-            for i in range(len(self.outboundConnections), BMConfigParser().safeGetInt("bitmessagesettings", "maxoutboundconnections")):
-                chosen = chooseConnection(random.choice(self.streams))
-                if chosen in self.outboundConnections:
-                    continue
-                if chosen.host in self.inboundConnections:
-                    continue
-
-                #for c in self.outboundConnections:
-                #    if chosen == c.destination:
-                #        continue
-                #for c in self.inboundConnections:
-                #    if chosen.host == c.destination.host:
-                #        continue
-                try:
-                    if (BMConfigParser().safeGet("bitmessagesettings", "socksproxytype") == "SOCKS5"):
-                        self.addConnection(network.bmproto.Socks5BMConnection(chosen))
-                    elif (BMConfigParser().safeGet("bitmessagesettings", "socksproxytype") == "SOCKS4a"):
-                        self.addConnection(network.bmproto.Socks4aBMConnection(chosen))
-                    elif not chosen.host.endswith(".onion"):
-                        self.addConnection(network.bmproto.BMConnection(chosen))
-                except socket.error as e:
-                    if e.errno == errno.ENETUNREACH:
+            established = sum(1 for c in self.outboundConnections.values() if (c.connected and c.fullyEstablished))
+            pending = len(self.outboundConnections) - established
+            if established < BMConfigParser().safeGetInt("bitmessagesettings", "maxoutboundconnections"):
+                for i in range(state.maximumNumberOfHalfOpenConnections - pending):
+                    chosen = chooseConnection(random.choice(self.streams))
+                    if chosen in self.outboundConnections:
                         continue
+                    if chosen.host in self.inboundConnections:
+                        continue
+    
+                    #for c in self.outboundConnections:
+                    #    if chosen == c.destination:
+                    #        continue
+                    #for c in self.inboundConnections:
+                    #    if chosen.host == c.destination.host:
+                    #        continue
+                    try:
+                        if (BMConfigParser().safeGet("bitmessagesettings", "socksproxytype") == "SOCKS5"):
+                            self.addConnection(network.bmproto.Socks5BMConnection(chosen))
+                        elif (BMConfigParser().safeGet("bitmessagesettings", "socksproxytype") == "SOCKS4a"):
+                            self.addConnection(network.bmproto.Socks4aBMConnection(chosen))
+                        elif not chosen.host.endswith(".onion"):
+                            self.addConnection(network.bmproto.BMConnection(chosen))
+                    except socket.error as e:
+                        if e.errno == errno.ENETUNREACH:
+                            continue
 
         if acceptConnections and len(self.listeningSockets) == 0:
             self.startListening()
@@ -142,10 +145,10 @@ class BMConnectionPool(object):
 
         for i in self.inboundConnections.values() + self.outboundConnections.values():
             minTx = time.time() - 20
-            if i.connectionFullyEstablished:
+            if i.fullyEstablished:
                 minTx -= 300 - 20
             if i.lastTx < minTx:
-                if i.connectionFullyEstablished:
-                    i.append_write_buf(protocol.CreatePacket('ping'))
+                if i.fullyEstablished:
+                    i.writeQueue.put(protocol.CreatePacket('ping'))
                 else:
                     i.close("Timeout (%is)" % (time.time() - i.lastTx))
