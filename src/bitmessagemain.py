@@ -92,7 +92,7 @@ def connectToStream(streamNumber):
             a.start()
 
 def _fixWinsock():
-    if not ('win32' in sys.platform) and not ('win64' in sys.platform):
+    if not sys.platform.startswith('win'):
         return
 
     # Python 2 on Windows doesn't define a wrapper for
