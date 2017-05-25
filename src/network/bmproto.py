@@ -28,7 +28,7 @@ from network.tls import TLSDispatcher
 
 import addresses
 from bmconfigparser import BMConfigParser
-from queues import objectProcessorQueue
+from queues import objectProcessorQueue, portCheckerQueue, UISignalQueue
 import shared
 import state
 import protocol
@@ -57,6 +57,7 @@ class BMConnection(TLSDispatcher, BMQueues):
         self.verackReceived = False
         self.verackSent = False
         self.lastTx = time.time()
+        self.streams = [0]
         self.connectionFullyEstablished = False
         self.connectedAt = 0
         self.skipUntil = 0
@@ -79,6 +80,7 @@ class BMConnection(TLSDispatcher, BMQueues):
             print "connecting in background to %s:%i" % (self.destination.host, self.destination.port)
         shared.connectedHostsList[self.destination] = 0
         BMQueues.__init__(self)
+        UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
 
     def bm_proto_reset(self):
         self.magic = None
@@ -115,6 +117,7 @@ class BMConnection(TLSDispatcher, BMQueues):
                 self.skipUntil = time.time() + now
 
     def set_connection_fully_established(self):
+        UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         self.antiIntersectionDelay(True)
         self.connectionFullyEstablished = True
         self.sendAddr()
@@ -369,6 +372,10 @@ class BMConnection(TLSDispatcher, BMQueues):
         addresses = self.decode_payload_content("lQIQ16sH")
         return True
 
+    def bm_command_portcheck(self):
+        portCheckerQueue.put(state.Peer(self.destination, self.peerNode.port))
+        return True
+
     def bm_command_ping(self):
         self.append_write_buf(protocol.CreatePacket('pong'))
         return True
@@ -399,10 +406,11 @@ class BMConnection(TLSDispatcher, BMQueues):
         print "my external IP: %s" % (self.sockNode.host)
         print "remote node incoming port: %i" % (self.peerNode.port)
         print "user agent: %s" % (self.userAgent)
+        print "streams: [%s]" % (",".join(map(str,self.streams)))
         if not self.peerValidityChecks():
             # TODO ABORT
             return True
-        shared.connectedHostsList[self.destination] = self.streams[0]
+        #shared.connectedHostsList[self.destination] = self.streams[0]
         self.append_write_buf(protocol.CreatePacket('verack'))
         self.verackSent = True
         if not self.isOutbound:
@@ -611,10 +619,7 @@ class BMConnection(TLSDispatcher, BMQueues):
         else:
             print "%s:%i: closing, %s" % (self.destination.host, self.destination.port, reason)
         network.connectionpool.BMConnectionPool().removeConnection(self)
-        try:
-            asyncore.dispatcher.close(self)
-        except AttributeError:
-            pass
+        asyncore.dispatcher.close(self)
 
 
 class Socks5BMConnection(Socks5Connection, BMConnection):

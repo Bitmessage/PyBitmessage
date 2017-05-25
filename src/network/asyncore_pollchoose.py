@@ -93,10 +93,12 @@ maxDownloadRate = 0
 downloadChunk = 0
 downloadTimestamp = 0
 downloadBucket = 0
+receivedBytes = 0
 maxUploadRate = 0
 uploadChunk = 0
 uploadTimestamp = 0
 uploadBucket = 0
+sentBytes = 0
 
 def read(obj):
     try:
@@ -127,6 +129,14 @@ def set_rates(download, upload):
     downloadTimestamp = time.time()
     uploadTimestamp = time.time()
 
+def updateReceived(download=0):
+    global receivedBytes
+    receivedBytes += download
+
+def updateSent(upload=0):
+    global sentBytes
+    sentBytes += upload
+
 def wait_tx_buckets():
     global downloadBucket, uploadBucket, downloadTimestamp, uploadTimestamp
     if maxDownloadRate > 0 and maxUploadRate > 0:
@@ -149,8 +159,6 @@ def wait_tx_buckets():
         downloadTimestamp = time.time()
         uploadBucket += (time.time() - uploadTimestamp) * maxUploadRate
         uploadTimestamp = time.time()
-
-
 
 def _exception(obj):
     try:
