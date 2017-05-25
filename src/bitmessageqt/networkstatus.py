@@ -5,10 +5,10 @@ import shared
 from tr import _translate
 from inventory import Inventory, PendingDownloadQueue, PendingUpload
 import l10n
+import network.stats
 from retranslateui import RetranslateMixin
 from uisignaler import UISignaler
 import widgets
-import throttle
 
 
 class NetworkStatus(QtGui.QWidget, RetranslateMixin):
@@ -69,14 +69,15 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         sent and received by 2.
         """
         self.labelBytesRecvCount.setText(_translate(
-            "networkstatus", "Down: %1/s  Total: %2").arg(self.formatByteRate(throttle.ReceiveThrottle().getSpeed()), self.formatBytes(throttle.ReceiveThrottle().total)))
+            "networkstatus", "Down: %1/s  Total: %2").arg(self.formatByteRate(network.stats.downloadSpeed()), self.formatBytes(network.stats.receivedBytes())))
         self.labelBytesSentCount.setText(_translate(
-            "networkstatus", "Up: %1/s  Total: %2").arg(self.formatByteRate(throttle.SendThrottle().getSpeed()), self.formatBytes(throttle.SendThrottle().total)))
+            "networkstatus", "Up: %1/s  Total: %2").arg(self.formatByteRate(network.stats.uploadSpeed()), self.formatBytes(network.stats.sentBytes())))
 
     def updateNetworkStatusTab(self):
         totalNumberOfConnectionsFromAllStreams = 0  # One would think we could use len(sendDataQueues) for this but the number doesn't always match: just because we have a sendDataThread running doesn't mean that the connection has been fully established (with the exchange of version messages).
         streamNumberTotals = {}
-        for host, streamNumber in shared.connectedHostsList.items():
+        connectedHosts = network.stats.connectedHostsList()
+        for host, streamNumber in connectedHosts:
             if not streamNumber in streamNumberTotals:
                 streamNumberTotals[streamNumber] = 1
             else:
@@ -114,10 +115,10 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             self.tableWidgetConnectionCount.setItem(0,1,newItem)
             totalNumberOfConnectionsFromAllStreams += connectionCount"""
         self.labelTotalConnections.setText(_translate(
-            "networkstatus", "Total Connections: %1").arg(str(len(shared.connectedHostsList))))
-        if len(shared.connectedHostsList) > 0 and shared.statusIconColor == 'red':  # FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
+            "networkstatus", "Total Connections: %1").arg(str(len(connectedHosts))))
+        if len(connectedHosts) > 0 and shared.statusIconColor == 'red':  # FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
             self.window().setStatusIcon('yellow')
-        elif len(shared.connectedHostsList) == 0:
+        elif len(connectedHosts) == 0:
             self.window().setStatusIcon('red')
 
     # timer driven

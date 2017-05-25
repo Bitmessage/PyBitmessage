@@ -145,4 +145,7 @@ class BMConnectionPool(object):
             if i.connectionFullyEstablished:
                 minTx -= 300 - 20
             if i.lastTx < minTx:
-                i.close("Timeout (%is)" % (time.time() - i.lastTx))
+                if i.connectionFullyEstablished:
+                    i.append_write_buf(protocol.CreatePacket('ping'))
+                else:
+                    i.close("Timeout (%is)" % (time.time() - i.lastTx))

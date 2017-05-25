@@ -1,3 +1,4 @@
+from threading import RLock
 import time
 
 import asyncore_pollchoose as asyncore
@@ -11,15 +12,20 @@ class AdvancedDispatcher(asyncore.dispatcher):
             asyncore.dispatcher.__init__(self, sock)
         self.read_buf = b""
         self.write_buf = b""
+        self.writeLock = RLock()
         self.state = "init"
         self.lastTx = time.time()
+        self.sentBytes = 0
+        self.receivedBytes = 0
 
     def append_write_buf(self, string = None):
-        self.write_buf += string
+        with self.writeLock:
+            self.write_buf += string
 
     def slice_write_buf(self, length=0):
         if length > 0:
-            self.write_buf = self.write_buf[length:]
+            with self.writeLock:
+                self.write_buf = self.write_buf[length:]
 
     def slice_read_buf(self, length=0):
         if length > 0:
@@ -58,9 +64,11 @@ class AdvancedDispatcher(asyncore.dispatcher):
         if asyncore.maxDownloadRate > 0:
             newData = self.recv(asyncore.downloadChunk)
             asyncore.downloadBucket -= len(newData)
-            self.read_buf += newData
         else:
-            self.read_buf += self.recv(AdvancedDispatcher._buf_len)
+            newData = self.recv(AdvancedDispatcher._buf_len)
+        self.receivedBytes += len(newData)
+        asyncore.updateReceived(len(newData))
+        self.read_buf += newData
         self.process()
 
     def handle_write(self):
@@ -70,6 +78,8 @@ class AdvancedDispatcher(asyncore.dispatcher):
             asyncore.uploadBucket -= written
         else:
             written = self.send(self.write_buf)
+        asyncore.updateSent(written)
+        self.sentBytes += written
         self.slice_write_buf(written)
 
     def handle_connect(self):

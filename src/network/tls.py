@@ -59,36 +59,48 @@ class TLSDispatcher(AdvancedDispatcher):
 #            self.socket.context.set_ecdh_curve("secp256k1")
 
     def writable(self):
-        if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
-            #print "tls writable, %r" % (self.want_write)
-            return self.want_write
-        else:
+        try:
+            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
+                #print "tls writable, %r" % (self.want_write)
+                return self.want_write
+            else:
+                return AdvancedDispatcher.writable(self)
+        except AttributeError:
             return AdvancedDispatcher.writable(self)
 
     def readable(self):
-        if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
-            #print "tls readable, %r" % (self.want_read)
-            return self.want_read
-        else:
+        try:
+            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
+                #print "tls readable, %r" % (self.want_read)
+                return self.want_read
+            else:
+                return AdvancedDispatcher.readable(self)
+        except AttributeError:
             return AdvancedDispatcher.readable(self)
 
     def handle_read(self):
-        # wait for write buffer flush
-        if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
-            #print "handshaking (read)"
-            self.state_tls_handshake()
-        else:
-            #print "not handshaking (read)"
+        try:
+            # wait for write buffer flush
+            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
+                #print "handshaking (read)"
+                self.state_tls_handshake()
+            else:
+                #print "not handshaking (read)"
+                return AdvancedDispatcher.handle_read(self)
+        except AttributeError:
             return AdvancedDispatcher.handle_read(self)
 
     def handle_write(self):
-        # wait for write buffer flush
-        if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
-            #print "handshaking (write)"
-            self.state_tls_handshake()
-        else:
-            #print "not handshaking (write)"
-            return AdvancedDispatcher.handle_write(self)
+        try:
+            # wait for write buffer flush
+            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
+                #print "handshaking (write)"
+                self.state_tls_handshake()
+            else:
+                #print "not handshaking (write)"
+                return AdvancedDispatcher.handle_write(self)
+        except AttributeError:
+            return AdvancedDispatcher.handle_read(self)
 
     def state_tls_handshake(self):
         # wait for flush
