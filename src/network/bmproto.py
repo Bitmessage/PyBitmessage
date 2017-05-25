@@ -58,7 +58,7 @@ class BMConnection(TLSDispatcher, BMQueues):
         self.verackSent = False
         self.lastTx = time.time()
         self.streams = [0]
-        self.connectionFullyEstablished = False
+        self.fullyEstablished = False
         self.connectedAt = 0
         self.skipUntil = 0
         if address is None and sock is not None:
@@ -95,8 +95,8 @@ class BMConnection(TLSDispatcher, BMQueues):
     def state_init(self):
         self.bm_proto_reset()
         if self.isOutbound:
-            self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, False))
-            print "%s:%i: Sending version (%ib)"  % (self.destination.host, self.destination.port, len(self.write_buf))
+            self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, False))
+            print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         self.set_state("bm_header")
         return True
 
@@ -114,12 +114,12 @@ class BMConnection(TLSDispatcher, BMQueues):
                     logger.debug("Skipping processing for %.2fs", self.skipUntil - time.time())
             else:
                 logger.debug("Skipping processing due to missing object for %.2fs", self.skipUntil - time.time())
-                self.skipUntil = time.time() + now
+                self.skipUntil = time.time() + delay
 
     def set_connection_fully_established(self):
         UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         self.antiIntersectionDelay(True)
-        self.connectionFullyEstablished = True
+        self.fullyEstablished = True
         self.sendAddr()
         self.sendBigInv()
 
@@ -135,6 +135,8 @@ class BMConnection(TLSDispatcher, BMQueues):
             self.bm_proto_reset()
             self.set_state("bm_header", 1)
             print "Bad magic"
+            self.close()
+            return False
         if self.payloadLength > BMConnection.maxMessageSize:
             self.invalid = True
         self.set_state("bm_command", protocol.Header.size)
@@ -150,7 +152,7 @@ class BMConnection(TLSDispatcher, BMQueues):
             print "Bad checksum, ignoring"
             self.invalid = True
         retval = True
-        if not self.connectionFullyEstablished and self.command not in ("version", "verack"):
+        if not self.fullyEstablished and self.command not in ("version", "verack"):
             logger.error("Received command %s before connection was fully established, ignoring", self.command)
             self.invalid = True
         if not self.invalid:
@@ -178,7 +180,10 @@ class BMConnection(TLSDispatcher, BMQueues):
             except struct.error:
                 print "decoding error, skipping"
         else:
-            print "Skipping command %s due to invalid data" % (self.command)
+            #print "Skipping command %s due to invalid data" % (self.command)
+            print "Closing due to invalid data" % (self.command)
+            self.close()
+            return False
         if retval:
             self.set_state("bm_header", self.payloadLength)
             self.bm_proto_reset()
@@ -298,12 +303,7 @@ class BMConnection(TLSDispatcher, BMQueues):
             if False:
                 self.antiIntersectionDelay()
             else:
-                try:
-                    self.append_write_buf(protocol.CreatePacket('object', Inventory()[i].payload))
-                # this is faster than "if i in Inventory()"
-                except KeyError:
-                    self.antiIntersectionDelay()
-                    logger.warning('%s asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. We probably cleaned it out after advertising it but before they got around to asking for it.' % (self.peer,))
+                self.receiveQueue.put(("object", i))
         return True
 
     def bm_command_inv(self):
@@ -327,7 +327,7 @@ class BMConnection(TLSDispatcher, BMQueues):
         logger.info('inv message lists %i objects. Of those %i are new to me. It took %f seconds to figure that out.', len(items), len(self.objectsNewToMe), time.time()-startTime)
 
         payload = addresses.encodeVarint(len(self.objectsNewToMe)) + ''.join(self.objectsNewToMe.keys())
-        self.append_write_buf(protocol.CreatePacket('getdata', payload))
+        self.writeQueue.put(protocol.CreatePacket('getdata', payload))
 
 #        for i in random.sample(self.objectsNewToMe, len(self.objectsNewToMe)):
 #            DownloadQueue().put(i)
@@ -370,6 +370,18 @@ class BMConnection(TLSDispatcher, BMQueues):
 
     def bm_command_addr(self):
         addresses = self.decode_payload_content("lQIQ16sH")
+        import pprint
+        for i in addresses:
+            seenTime, stream, services, ip, port = i
+            decodedIP = protocol.checkIPAddress(ip)
+            if stream not in state.streamsInWhichIAmParticipating:
+                continue
+            #print "maybe adding %s in stream %i to knownnodes (%i)" % (decodedIP, stream, len(knownnodes.knownNodes[stream]))
+            if decodedIP is not False and seenTime > time.time() - 10800:
+                peer = state.Peer(decodedIP, port)
+                if peer in knownnodes.knownNodes[stream] and knownnodes.knownNodes[stream][peer] > seenTime:
+                    continue
+                knownnodes.knownNodes[stream][peer] = seenTime
         return True
 
     def bm_command_portcheck(self):
@@ -377,7 +389,7 @@ class BMConnection(TLSDispatcher, BMQueues):
         return True
 
     def bm_command_ping(self):
-        self.append_write_buf(protocol.CreatePacket('pong'))
+        self.writeQueue.put(protocol.CreatePacket('pong'))
         return True
 
     def bm_command_pong(self):
@@ -411,11 +423,11 @@ class BMConnection(TLSDispatcher, BMQueues):
             # TODO ABORT
             return True
         #shared.connectedHostsList[self.destination] = self.streams[0]
-        self.append_write_buf(protocol.CreatePacket('verack'))
+        self.writeQueue.put(protocol.CreatePacket('verack'))
         self.verackSent = True
         if not self.isOutbound:
-            self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, True))
-            print "%s:%i: Sending version (%ib)"  % (self.destination.host, self.destination.port, len(self.write_buf))
+            self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, True))
+            print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
                 protocol.haveSSL(not self.isOutbound)):
             self.isSSL = True
@@ -431,20 +443,20 @@ class BMConnection(TLSDispatcher, BMQueues):
 
     def peerValidityChecks(self):
         if self.remoteProtocolVersion < 3:
-            self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
+            self.writeQueue.put(protocol.assembleErrorMessage(fatal=2,
                 errorText="Your is using an old protocol. Closing connection."))
             logger.debug ('Closing connection to old protocol version %s, node: %s',
                 str(self.remoteProtocolVersion), str(self.peer))
             return False
         if self.timeOffset > 3600:
-            self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
+            self.writeQueue.put(protocol.assembleErrorMessage(fatal=2,
                 errorText="Your time is too far in the future compared to mine. Closing connection."))
             logger.info("%s's time is too far in the future (%s seconds). Closing connection to it.",
                 self.peer, self.timeOffset)
             shared.timeOffsetWrongCount += 1
             return False
         elif self.timeOffset < -3600:
-            self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
+            self.writeQueue.put(protocol.assembleErrorMessage(fatal=2,
                 errorText="Your time is too far in the past compared to mine. Closing connection."))
             logger.info("%s's time is too far in the past (timeOffset %s seconds). Closing connection to it.",
                 self.peer, self.timeOffset)
@@ -453,7 +465,7 @@ class BMConnection(TLSDispatcher, BMQueues):
         else:
             shared.timeOffsetWrongCount = 0
         if len(self.streams) == 0:
-            self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
+            self.writeQueue.put(protocol.assembleErrorMessage(fatal=2,
                 errorText="We don't have shared stream interests. Closing connection."))
             logger.debug ('Closed connection to %s because there is no overlapping interest in streams.',
                 str(self.peer))
@@ -461,7 +473,7 @@ class BMConnection(TLSDispatcher, BMQueues):
         if self.destination in network.connectionpool.BMConnectionPool().inboundConnections:
             try:
                 if not protocol.checkSocksIP(self.destination.host):
-                    self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
+                    self.writeQueue.put(protocol.assembleErrorMessage(fatal=2,
                         errorText="Too many connections from your IP. Closing connection."))
                     logger.debug ('Closed connection to %s because we are already connected to that IP.',
                         str(self.peer))
@@ -474,7 +486,7 @@ class BMConnection(TLSDispatcher, BMQueues):
         def sendChunk():
             if addressCount == 0:
                 return
-            self.append_write_buf(protocol.CreatePacket('addr', \
+            self.writeQueue.put(protocol.CreatePacket('addr', \
                 addresses.encodeVarint(addressCount) + payload))
 
         # We are going to share a maximum number of 1000 addrs (per overlapping
@@ -563,7 +575,7 @@ class BMConnection(TLSDispatcher, BMQueues):
             if objectCount == 0:
                 return
             logger.debug('Sending huge inv message with %i objects to just this one peer', objectCount)
-            self.append_write_buf(protocol.CreatePacket('inv', addresses.encodeVarint(objectCount) + payload))
+            self.writeQueue.put(protocol.CreatePacket('inv', addresses.encodeVarint(objectCount) + payload))
 
         # Select all hashes for objects in this stream.
         bigInvList = {}
@@ -613,6 +625,7 @@ class BMConnection(TLSDispatcher, BMQueues):
             self.close()
 
     def close(self, reason=None):
+        self.set_state("close")
         if reason is None:
             print "%s:%i: closing" % (self.destination.host, self.destination.port)
             #traceback.print_stack()
@@ -653,7 +666,10 @@ class BMServer(AdvancedDispatcher):
         pair = self.accept()
         if pair is not None:
             sock, addr = pair
-            network.connectionpool.BMConnectionPool().addConnection(BMConnection(sock=sock))
+            try:
+                network.connectionpool.BMConnectionPool().addConnection(BMConnection(sock=sock))
+            except socket.errno:
+                pass
 
 
 if __name__ == "__main__":

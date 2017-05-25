@@ -8,7 +8,7 @@ from network.connectionpool import BMConnectionPool
 
 class BMNetworkThread(threading.Thread, StoppableThread):
     def __init__(self):
-        threading.Thread.__init__(self, name="BMNetworkThread")
+        threading.Thread.__init__(self, name="AsyncoreThread")
         self.initStop()
         self.name = "AsyncoreThread"
         BMConnectionPool()

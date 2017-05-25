@@ -52,6 +52,7 @@ from bmconfigparser import BMConfigParser
 
 from network.connectionpool import BMConnectionPool
 from network.networkthread import BMNetworkThread
+from network.receivequeuethread import ReceiveQueueThread
 
 # Helper Functions
 import helper_bootstrap
@@ -65,13 +66,13 @@ def connectToStream(streamNumber):
 
     if isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
         # Some XP and Vista systems can only have 10 outgoing connections at a time.
-        maximumNumberOfHalfOpenConnections = 9
+        state.maximumNumberOfHalfOpenConnections = 9
     else:
-        maximumNumberOfHalfOpenConnections = 64
+        state.maximumNumberOfHalfOpenConnections = 64
     try:
         # don't overload Tor
         if BMConfigParser().get('bitmessagesettings', 'socksproxytype') != 'none':
-            maximumNumberOfHalfOpenConnections = 4
+            state.maximumNumberOfHalfOpenConnections = 4
     except:
         pass
     
@@ -86,7 +87,7 @@ def connectToStream(streamNumber):
     if BMConfigParser().safeGetBoolean("network", "asyncore"):
         BMConnectionPool().connectToStream(streamNumber)
     else:
-        for i in range(maximumNumberOfHalfOpenConnections):
+        for i in range(state.maximumNumberOfHalfOpenConnections):
             a = outgoingSynSender()
             a.setup(streamNumber, selfInitiatedConnections)
             a.start()
@@ -252,6 +253,9 @@ class Main:
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = False
             asyncoreThread.start()
+            receiveQueueThread = ReceiveQueueThread()
+            receiveQueueThread.daemon = False
+            receiveQueueThread.start()
 
         connectToStream(1)
 
