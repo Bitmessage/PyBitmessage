@@ -3,7 +3,7 @@ import random
 
 from bmconfigparser import BMConfigParser
 import knownnodes
-from queues import portCheckerQueue
+from queues import portCheckerQueue, peerDiscoveryQueue
 import state
 
 def chooseConnection(stream):
@@ -13,4 +13,7 @@ def chooseConnection(stream):
         try:
             return portCheckerQueue.get(False)
         except Queue.Empty:
-            return random.choice(knownnodes.knownNodes[stream].keys())
+            try:
+                return peerDiscoveryQueue.get(False)
+            except Queue.Empty:
+                return random.choice(knownnodes.knownNodes[stream].keys())

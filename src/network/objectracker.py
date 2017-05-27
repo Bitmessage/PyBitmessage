@@ -1,3 +1,4 @@
+from Queue import Queue
 import time
 
 from inventory import Inventory
@@ -21,7 +22,7 @@ except ImportError:
 # it isn't actually implemented yet so no point in turning it on
 haveBloom = False
 
-class BMQueues(object):
+class ObjectTracker(object):
     invCleanPeriod = 300
     invInitialCapacity = 50000
     invErrorRate = 0.03
@@ -29,20 +30,22 @@ class BMQueues(object):
     def __init__(self):
         self.objectsNewToMe = {}
         self.objectsNewToThem = {}
+        self.downloadPending = 0
+        self.downloadQueue = Queue()
         self.initInvBloom()
         self.initAddrBloom()
 
     def initInvBloom(self):
         if haveBloom:
             # lock?
-            self.invBloom = BloomFilter(capacity=BMQueues.invInitialCapacity,
-                                        error_rate=BMQueues.invErrorRate)
+            self.invBloom = BloomFilter(capacity=ObjectTracker.invInitialCapacity,
+                                        error_rate=ObjectTracker.invErrorRate)
 
     def initAddrBloom(self):
         if haveBloom:
             # lock?
-            self.addrBloom = BloomFilter(capacity=BMQueues.invInitialCapacity,
-                                         error_rate=BMQueues.invErrorRate)
+            self.addrBloom = BloomFilter(capacity=ObjectTracker.invInitialCapacity,
+                                         error_rate=ObjectTracker.invErrorRate)
 
     def clean(self):
         if self.lastcleaned < time.time() - BMQueues.invCleanPeriod:
@@ -61,16 +64,17 @@ class BMQueues(object):
         else:
             return hashid in self.objectsNewToMe
 
-    def handleReceivedObj(self, hashid):
+    def handleReceivedInventory(self, hashId):
         if haveBloom:
-            self.invBloom.add(hashid)
-        elif hashid in Inventory():
+            self.invBloom.add(hashId)
+        elif hashId in Inventory():
             try:
-                del self.objectsNewToThem[hashid]
+                del self.objectsNewToThem[hashId]
             except KeyError:
                 pass
         else:
-            self.objectsNewToMe[hashid] = True
+            self.objectsNewToMe[hashId] = True
+#            self.DownloadQueue.put(hashId)
 
     def hasAddr(self, addr):
         if haveBloom:
@@ -82,6 +86,7 @@ class BMQueues(object):
 
 # addr sending -> per node upload queue, and flush every minute or so
 # inv sending -> if not in bloom, inv immediately, otherwise put into a per node upload queue and flush every minute or so
+# data sending -> a simple queue
 
 # no bloom
 # - if inv arrives

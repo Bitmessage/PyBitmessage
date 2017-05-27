@@ -16,7 +16,11 @@ BMConfigDefaults = {
         "maxuploadrate": 0,
     },
     "network": {
-        "asyncore": False
+        "asyncore": False,
+        "bind": None,
+    },
+    "inventory": {
+        "storage": "sqlite",
     },
     "zlib": {
         'maxsize': 1048576
