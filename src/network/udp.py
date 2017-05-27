@@ -100,7 +100,7 @@ class UDPSocket(BMProto):
             decodedIP = protocol.checkIPAddress(ip)
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
-            if seenTime < time.time() - BMProto.maxtimeOffset or seenTime > time.time() + BMProto.maxTimeOffset:
+            if seenTime < time.time() - BMProto.maxTimeOffset or seenTime > time.time() + BMProto.maxTimeOffset:
                 continue
             if decodedIP is False:
                 # if the address isn't local, interpret it as the hosts' own announcement
@@ -109,7 +109,7 @@ class UDPSocket(BMProto):
             return
         print "received peer discovery from %s:%i (port %i):" % (self.destination.host, self.destination.port, remoteport)
         if self.local:
-            peerDiscoveryQueue.put(state.peer(self.destination.host, remoteport))
+            peerDiscoveryQueue.put(state.Peer(self.destination.host, remoteport))
         return True
 
     def bm_command_portcheck(self):
@@ -138,20 +138,21 @@ class UDPSocket(BMProto):
 
     def handle_read(self):
         try:
-            (addr, recdata) = self.socket.recvfrom(AdvancedDispatcher._buf_len)
+            (recdata, addr) = self.socket.recvfrom(AdvancedDispatcher._buf_len)
         except socket.error as e:
             print "socket error: %s" % (str(e))
             return
 
         self.destination = state.Peer(addr[0], addr[1])
-        encodedAddr = socket.inet_pton(self.socket.family, addr[0])
+        encodedAddr = protocol.encodeHost(addr[0])
         if protocol.checkIPAddress(encodedAddr, True):
             self.local = True
         else:
             self.local = False
         print "read %ib" % (len(recdata))
         # overwrite the old buffer to avoid mixing data and so that self.local works correctly
-        self.read_buf = data
+        self.read_buf = recdata
+        self.bm_proto_reset()
         self.process()
 
     def handle_write(self):
