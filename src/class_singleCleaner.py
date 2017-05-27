@@ -49,6 +49,10 @@ class singleCleaner(threading.Thread, StoppableThread):
             # Either the user hasn't set stopresendingafterxdays and stopresendingafterxmonths yet or the options are missing from the config file.
             shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
 
+        # initial wait
+        if state.shutdown == 0:
+            self.stop.wait(300)
+
         while state.shutdown == 0:
             queues.UISignalQueue.put((
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
