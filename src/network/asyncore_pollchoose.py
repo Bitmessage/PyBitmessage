@@ -57,7 +57,7 @@ import warnings
 import os
 from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, EINVAL, \
      ENOTCONN, ESHUTDOWN, EISCONN, EBADF, ECONNABORTED, EPIPE, EAGAIN, \
-     ECONNREFUSED, \
+     ECONNREFUSED, EHOSTUNREACH, \
      errorcode
 try:
     from errno import WSAEWOULDBLOCK
@@ -66,7 +66,7 @@ except:
 from ssl import SSLError, SSL_ERROR_WANT_READ, SSL_ERROR_WANT_WRITE
 
 _DISCONNECTED = frozenset((ECONNRESET, ENOTCONN, ESHUTDOWN, ECONNABORTED, EPIPE,
-                           EBADF, ECONNREFUSED))
+                           EBADF, ECONNREFUSED, EHOSTUNREACH))
 
 OP_READ = 1
 OP_WRITE = 2

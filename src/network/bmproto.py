@@ -469,28 +469,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             payload += struct.pack('>H', peer.port)  # remote port
         return protocol.CreatePacket('addr', payload)
 
-    def handle_connect_event(self):
-        try:
-            asyncore.dispatcher.handle_connect_event(self)
-            self.connectedAt = time.time()
-        except socket.error as e:
-            #print "%s:%i: socket error: %s" % (self.destination.host, self.destination.port, str(e))
-            self.close()
-
-    def handle_read_event(self):
-        try:
-            asyncore.dispatcher.handle_read_event(self)
-        except socket.error as e:
-            #print "%s:%i: socket error: %s" % (self.destination.host, self.destination.port, str(e))
-            self.close()
-
-    def handle_write_event(self):
-        try:
-            asyncore.dispatcher.handle_write_event(self)
-        except socket.error as e:
-            #print "%s:%i: socket error: %s" % (self.destination.host, self.destination.port, str(e))
-            self.close()
-
     def close(self, reason=None):
         self.set_state("close")
 #        if reason is None:
