@@ -48,7 +48,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             self.isOutbound = False
             TLSDispatcher.__init__(self, sock, server_side=True)
             self.connectedAt = time.time()
-            #print "received connection in background from %s:%i" % (self.destination.host, self.destination.port)
+            logger.debug("Received connection from %s:%i", self.destination.host, self.destination.port)
         else:
             self.destination = address
             self.isOutbound = True
@@ -59,7 +59,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             TLSDispatcher.__init__(self, sock, server_side=False)
             self.connect(self.destination)
-            #print "connecting in background to %s:%i" % (self.destination.host, self.destination.port)
+            logger.debug("Connecting to %s:%i", self.destination.host, self.destination.port)
         shared.connectedHostsList[self.destination] = 0
         ObjectTracker.__init__(self)
         UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
@@ -152,14 +152,14 @@ class TCPConnection(BMProto, TLSDispatcher):
 
     def handle_read(self):
         try:
-            AdvancedDispatcher.handle_read(self)
+            TLSDispatcher.handle_read(self)
         except socket.error as e:
             #print "%s:%i: socket error: %s" % (self.destination.host, self.destination.port, str(e))
             self.close()
 
     def handle_write(self):
         try:
-            AdvancedDispatcher.handle_write(self)
+            TLSDispatcher.handle_write(self)
         except socket.error as e:
             #print "%s:%i: socket error: %s" % (self.destination.host, self.destination.port, str(e))
             self.close()

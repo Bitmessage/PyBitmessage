@@ -91,6 +91,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.payload = None
         self.invalid = False
         self.payloadOffset = 0
+        self.expectBytes = protocol.Header.size
         self.object = None
 
     def state_bm_header(self):
@@ -109,7 +110,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return False
         if self.payloadLength > BMProto.maxMessageSize:
             self.invalid = True
-        self.set_state("bm_command", protocol.Header.size)
+        self.set_state("bm_command", protocol.Header.size, expectBytes=self.payloadLength)
         return True
         
     def state_bm_command(self):
@@ -376,13 +377,13 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.remoteProtocolVersion, self.services, self.timestamp, self.sockNode, self.peerNode, self.nonce, self.userAgent, self.streams = self.decode_payload_content("IQQiiQlslv")
         self.nonce = struct.pack('>Q', self.nonce)
         self.timeOffset = self.timestamp - int(time.time())
-        #print "remoteProtocolVersion: %i" % (self.remoteProtocolVersion)
-        #print "services: %08X" % (self.services)
-        #print "time offset: %i" % (self.timestamp - int(time.time()))
-        #print "my external IP: %s" % (self.sockNode.host)
-        #print "remote node incoming port: %i" % (self.peerNode.port)
-        #print "user agent: %s" % (self.userAgent)
-        #print "streams: [%s]" % (",".join(map(str,self.streams)))
+        logger.debug("remoteProtocolVersion: %i", self.remoteProtocolVersion)
+        logger.debug("services: %08X", self.services)
+        logger.debug("time offset: %i", self.timestamp - int(time.time()))
+        logger.debug("my external IP: %s", self.sockNode.host)
+        logger.debug("remote node incoming port: %i", self.peerNode.port)
+        logger.debug("user agent: %s", self.userAgent)
+        logger.debug("streams: [%s]", ",".join(map(str,self.streams)))
         if not self.peerValidityChecks():
             # TODO ABORT
             return True

@@ -18,6 +18,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         self.lastTx = time.time()
         self.sentBytes = 0
         self.receivedBytes = 0
+        self.expectBytes = 0
 
     def slice_write_buf(self, length=0):
         if length > 0:
@@ -49,24 +50,30 @@ class AdvancedDispatcher(asyncore.dispatcher):
                 raise
             maxLoop -= 1
 
-    def set_state(self, state, length=0):
+    def set_state(self, state, length=0, expectBytes=0):
+        self.expectBytes = expectBytes
         self.slice_read_buf(length)
         self.state = state
 
     def writable(self):
-        return self.connected and (len(self.write_buf) > 0 or not self.writeQueue.empty())
+        return self.connecting or len(self.write_buf) > 0 or not self.writeQueue.empty()
 
     def readable(self):
         return self.connecting or len(self.read_buf) < AdvancedDispatcher._buf_len
 
     def handle_read(self):
         self.lastTx = time.time()
+        downloadBytes = AdvancedDispatcher._buf_len
         if asyncore.maxDownloadRate > 0:
-            newData = self.recv(asyncore.downloadChunk)
+            downloadBytes = asyncore.downloadChunk
+        if self.expectBytes > 0 and downloadBytes > self.expectBytes:
+            downloadBytes = self.expectBytes
+        newData = self.recv(downloadBytes)
+        if asyncore.maxDownloadRate > 0:
             asyncore.downloadBucket -= len(newData)
-        else:
-            newData = self.recv(AdvancedDispatcher._buf_len)
         self.receivedBytes += len(newData)
+        if self.expectBytes > 0:
+            self.expectBytes -= len(newData)
         asyncore.updateReceived(len(newData))
         self.read_buf += newData
         self.process()

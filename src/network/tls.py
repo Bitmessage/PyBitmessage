@@ -54,7 +54,7 @@ class TLSDispatcher(AdvancedDispatcher):
                                          do_handshake_on_connect=False)
         self.sslSocket.setblocking(0)
         self.want_read = self.want_write = True
-        self.set_state("tls_handshake")
+        self.set_state("bm_header")
 #        if hasattr(self.socket, "context"):
 #            self.socket.context.set_ecdh_curve("secp256k1")
 
@@ -83,7 +83,7 @@ class TLSDispatcher(AdvancedDispatcher):
             # wait for write buffer flush
             if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0 and self.writeQueue.empty():
                 #print "handshaking (read)"
-                self.state_tls_handshake()
+                self.tls_handshake()
             else:
                 #print "not handshaking (read)"
                 return AdvancedDispatcher.handle_read(self)
@@ -95,23 +95,23 @@ class TLSDispatcher(AdvancedDispatcher):
             # wait for write buffer flush
             if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0 and self.writeQueue.empty():
                 #print "handshaking (write)"
-                self.state_tls_handshake()
+                self.tls_handshake()
             else:
                 #print "not handshaking (write)"
                 return AdvancedDispatcher.handle_write(self)
         except AttributeError:
             return AdvancedDispatcher.handle_read(self)
 
-    def state_tls_handshake(self):
+    def tls_handshake(self):
         # wait for flush
         if len(self.write_buf) > 0:
             return False
         # Perform the handshake.
         try:
-            #print "handshaking (internal)"
+            print "handshaking (internal)"
             self.sslSocket.do_handshake()
         except ssl.SSLError, err:
-            #print "%s:%i: handshake fail" % (self.destination.host, self.destination.port)
+            print "%s:%i: handshake fail" % (self.destination.host, self.destination.port)
             self.want_read = self.want_write = False
             if err.args[0] == ssl.SSL_ERROR_WANT_READ:
                 #print "want read"
