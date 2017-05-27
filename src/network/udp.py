@@ -127,7 +127,7 @@ class UDPSocket(BMProto):
     def bm_command_version(self):
         return True
 
-    def handle_connect_event(self):
+    def handle_connect(self):
         return
 
     def writable(self):
@@ -167,16 +167,6 @@ class UDPSocket(BMProto):
         except socket.error as e:
             print "socket error on sendato: %s" % (e)
         self.writeQueue.task_done()
-
-    def close(self, reason=None):
-        self.set_state("close")
-#        if reason is None:
-#            print "%s:%i: closing" % (self.destination.host, self.destination.port)
-#            #traceback.print_stack()
-#        else:
-#            print "%s:%i: closing, %s" % (self.destination.host, self.destination.port, reason)
-        network.connectionpool.BMConnectionPool().removeConnection(self)
-        asyncore.dispatcher.close(self)
 
 
 if __name__ == "__main__":

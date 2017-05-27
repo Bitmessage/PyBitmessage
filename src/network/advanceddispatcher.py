@@ -34,7 +34,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
             return True
 
     def process(self):
-        if self.state not in ["init", "tls_handshake"] and len(self.read_buf) == 0:
+        if self.state != "tls_handshake" and len(self.read_buf) == 0:
             return
         if not self.connected:
             return
@@ -54,7 +54,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         self.state = state
 
     def writable(self):
-        return self.connecting or len(self.write_buf) > 0 or not self.writeQueue.empty()
+        return self.connected and (len(self.write_buf) > 0 or not self.writeQueue.empty())
 
     def readable(self):
         return self.connecting or len(self.read_buf) < AdvancedDispatcher._buf_len

@@ -63,14 +63,8 @@ class TCPConnection(BMProto, TLSDispatcher):
         shared.connectedHostsList[self.destination] = 0
         ObjectTracker.__init__(self)
         UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
-
-    def state_init(self):
         self.bm_proto_reset()
-        if self.isOutbound:
-            self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, False))
-            print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         self.set_state("bm_header")
-        return True
 
     def antiIntersectionDelay(self, initial = False):
         # estimated time for a small object to propagate across the whole network
@@ -148,34 +142,27 @@ class TCPConnection(BMProto, TLSDispatcher):
     def handle_connect_event(self):
         try:
             asyncore.dispatcher.handle_connect_event(self)
-            self.connectedAt = time.time()
         except socket.error as e:
-            #print "%s:%i: socket error: %s" % (self.destination.host, self.destination.port, str(e))
-            self.close()
+            if e.errno in asyncore._DISCONNECTED:
+                self.close("Connection failed")
+                return
+        self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, False))
+        #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
+        self.connectedAt = time.time()
 
-    def handle_read_event(self):
+    def handle_read(self):
         try:
-            asyncore.dispatcher.handle_read_event(self)
+            AdvancedDispatcher.handle_read(self)
         except socket.error as e:
             #print "%s:%i: socket error: %s" % (self.destination.host, self.destination.port, str(e))
             self.close()
 
-    def handle_write_event(self):
+    def handle_write(self):
         try:
-            asyncore.dispatcher.handle_write_event(self)
+            AdvancedDispatcher.handle_write(self)
         except socket.error as e:
             #print "%s:%i: socket error: %s" % (self.destination.host, self.destination.port, str(e))
             self.close()
-
-    def close(self, reason=None):
-        self.set_state("close")
-#        if reason is None:
-#            print "%s:%i: closing" % (self.destination.host, self.destination.port)
-#            #traceback.print_stack()
-#        else:
-#            print "%s:%i: closing, %s" % (self.destination.host, self.destination.port, reason)
-        network.connectionpool.BMConnectionPool().removeConnection(self)
-        asyncore.dispatcher.close(self)
 
 
 class Socks5BMConnection(Socks5Connection, TCPConnection):
