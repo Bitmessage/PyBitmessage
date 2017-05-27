@@ -80,6 +80,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         while len(self.write_buf) < bufSize:
             try:
                 self.write_buf += self.writeQueue.get(False)
+                self.writeQueue.task_done()
             except Queue.Empty:
                 break
         if len(self.write_buf) > 0:
@@ -103,11 +104,13 @@ class AdvancedDispatcher(asyncore.dispatcher):
         while True:
             try:
                 self.writeQueue.get(False)
+                self.writeQueue.task_done()
             except Queue.Empty:
                 break
         while True:
             try:
                 self.receiveQueue.get(False)
+                self.receiveQueue.task_done()
             except Queue.Empty:
                 break
         asyncore.dispatcher.close(self)
