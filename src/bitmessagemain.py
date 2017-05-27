@@ -22,6 +22,7 @@ depends.check_dependencies()
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
 from singleinstance import singleinstance
+import errno
 import socket
 import ctypes
 from struct import pack
@@ -92,7 +93,16 @@ def connectToStream(streamNumber):
             a.setup(streamNumber, selfInitiatedConnections)
             a.start()
 
-def _fixWinsock():
+def _fixSocket():
+    if sys.platform.startswith('linux'):
+        socket.SO_BINDTODEVICE = 25
+
+    if not sys.platform.startswith('win'):
+        errno.WSAEWOULDBLOCK = errno.EWOULDBLOCK
+        errno.WSAENETUNREACH = errno.ENETUNREACH
+        errno.WSAECONNREFUSED = errno.ECONNREFUSED
+        errno.WSAEHOSTUNREACH = errno.EHOSTUNREACH
+
     if not sys.platform.startswith('win'):
         return
 
@@ -177,7 +187,7 @@ if shared.useVeryEasyProofOfWorkForTesting:
 
 class Main:
     def start(self, daemon=False):
-        _fixWinsock()
+        _fixSocket()
 
         shared.daemon = daemon
 
