@@ -36,7 +36,10 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def process(self):
         if self.state not in ["init", "tls_handshake"] and len(self.read_buf) == 0:
             return
-        while True:
+        if not self.connected:
+            return
+        maxLoop = 20
+        while maxLoop > 0:
             try:
 #                print "Trying to handle state \"%s\"" % (self.state)
                 if getattr(self, "state_" + str(self.state))() is False:
@@ -44,6 +47,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
             except AttributeError:
                 # missing state
                 raise
+            maxLoop -= 1
 
     def set_state(self, state, length=0):
         self.slice_read_buf(length)
@@ -96,4 +100,14 @@ class AdvancedDispatcher(asyncore.dispatcher):
         self.read_buf = b""
         self.write_buf = b""
         self.state = "shutdown"
+        while True:
+            try:
+                self.writeQueue.get(False)
+            except Queue.Empty:
+                break
+        while True:
+            try:
+                self.receiveQueue.get(False)
+            except Queue.Empty:
+                break
         asyncore.dispatcher.close(self)

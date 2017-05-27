@@ -60,7 +60,7 @@ class TLSDispatcher(AdvancedDispatcher):
 
     def writable(self):
         try:
-            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
+            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0 and self.writeQueue.empty():
                 #print "tls writable, %r" % (self.want_write)
                 return self.want_write
             else:
@@ -70,7 +70,7 @@ class TLSDispatcher(AdvancedDispatcher):
 
     def readable(self):
         try:
-            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
+            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0 and self.writeQueue.empty():
                 #print "tls readable, %r" % (self.want_read)
                 return self.want_read
             else:
@@ -81,7 +81,7 @@ class TLSDispatcher(AdvancedDispatcher):
     def handle_read(self):
         try:
             # wait for write buffer flush
-            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
+            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0 and self.writeQueue.empty():
                 #print "handshaking (read)"
                 self.state_tls_handshake()
             else:
@@ -93,7 +93,7 @@ class TLSDispatcher(AdvancedDispatcher):
     def handle_write(self):
         try:
             # wait for write buffer flush
-            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0:
+            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0 and self.writeQueue.empty():
                 #print "handshaking (write)"
                 self.state_tls_handshake()
             else:

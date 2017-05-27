@@ -51,9 +51,13 @@ from class_smtpDeliver import smtpDeliver
 from class_smtpServer import smtpServer
 from bmconfigparser import BMConfigParser
 
+from inventory import Inventory
+
 from network.connectionpool import BMConnectionPool
 from network.networkthread import BMNetworkThread
 from network.receivequeuethread import ReceiveQueueThread
+from network.announcethread import AnnounceThread
+#from network.downloadthread import DownloadThread
 
 # Helper Functions
 import helper_bootstrap
@@ -221,6 +225,8 @@ class Main:
         sqlLookup.daemon = False  # DON'T close the main program even if there are threads left. The closeEvent should command this thread to exit gracefully.
         sqlLookup.start()
 
+        Inventory() # init
+
         # SMTP delivery thread
         if daemon and BMConfigParser().safeGet("bitmessagesettings", "smtpdeliver", '') != '':
             smtpDeliveryThread = smtpDeliver()
@@ -261,11 +267,14 @@ class Main:
 
         if BMConfigParser().safeGetBoolean("network", "asyncore"):
             asyncoreThread = BMNetworkThread()
-            asyncoreThread.daemon = False
+            asyncoreThread.daemon = True
             asyncoreThread.start()
             receiveQueueThread = ReceiveQueueThread()
-            receiveQueueThread.daemon = False
+            receiveQueueThread.daemon = True
             receiveQueueThread.start()
+            announceThread = AnnounceThread()
+            announceThread.daemon = True
+            announceThread.start()
 
         connectToStream(1)
 

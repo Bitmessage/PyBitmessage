@@ -86,13 +86,15 @@ def networkType(host):
     else:
         return 'IPv6'
 
-def checkIPAddress(host):
+def checkIPAddress(host, private=False):
     if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
         hostStandardFormat = socket.inet_ntop(socket.AF_INET, host[12:])
-        return checkIPv4Address(host[12:], hostStandardFormat)
+        return checkIPv4Address(host[12:], hostStandardFormat, private)
     elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
         # Onion, based on BMD/bitcoind
         hostStandardFormat = base64.b32encode(host[6:]).lower() + ".onion"
+        if private:
+            return False
         return hostStandardFormat
     else:
         hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
@@ -100,34 +102,34 @@ def checkIPAddress(host):
             # This can happen on Windows systems which are not 64-bit compatible 
             # so let us drop the IPv6 address. 
             return False
-        return checkIPv6Address(host, hostStandardFormat)
+        return checkIPv6Address(host, hostStandardFormat, private)
 
-def checkIPv4Address(host, hostStandardFormat):
+def checkIPv4Address(host, hostStandardFormat, private=False):
     if host[0] == '\x7F': # 127/8
         logger.debug('Ignoring IP address in loopback range: ' + hostStandardFormat)
         return False
     if host[0] == '\x0A': # 10/8
         logger.debug('Ignoring IP address in private range: ' + hostStandardFormat)
-        return False
+        return hostStandardFormat if private else False
     if host[0:2] == '\xC0\xA8': # 192.168/16
         logger.debug('Ignoring IP address in private range: ' + hostStandardFormat)
-        return False
+        return hostStandardFormat if private else False
     if host[0:2] >= '\xAC\x10' and host[0:2] < '\xAC\x20': # 172.16/12
         logger.debug('Ignoring IP address in private range:' + hostStandardFormat)
         return False
-    return hostStandardFormat
+    return False if private else hostStandardFormat
 
-def checkIPv6Address(host, hostStandardFormat):
+def checkIPv6Address(host, hostStandardFormat, private=False):
     if host == ('\x00' * 15) + '\x01':
         logger.debug('Ignoring loopback address: ' + hostStandardFormat)
         return False
     if host[0] == '\xFE' and (ord(host[1]) & 0xc0) == 0x80:
         logger.debug ('Ignoring local address: ' + hostStandardFormat)
-        return False
+        return hostStandardFormat if private else False
     if (ord(host[0]) & 0xfe) == 0xfc:
         logger.debug ('Ignoring unique local address: ' + hostStandardFormat)
-        return False
-    return hostStandardFormat
+        return hostStandardFormat if private else False
+    return False if private else hostStandardFormat
 
 # checks
 
