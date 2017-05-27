@@ -11,9 +11,12 @@ def chooseConnection(stream):
         return state.trustedPeer
     else:
         try:
-            return portCheckerQueue.get(False)
+            retval = portCheckerQueue.get(False)
+            portCheckerQueue.task_done()
         except Queue.Empty:
             try:
-                return peerDiscoveryQueue.get(False)
+                retval = peerDiscoveryQueue.get(False)
+                peerDiscoveryQueue.task_done()
             except Queue.Empty:
                 return random.choice(knownnodes.knownNodes[stream].keys())
+        return retval

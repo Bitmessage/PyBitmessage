@@ -35,7 +35,9 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
                 processed += 1
                 try:
                     getattr(self, "command_" + str(command))(i, args)
+                    i.receiveQueue.task_done()
                 except AttributeError:
+                    i.receiveQueue.task_done()
                     # missing command
                     raise
             if processed == 0:

@@ -137,7 +137,6 @@ class UDPSocket(BMProto):
         return len(self.read_buf) < AdvancedDispatcher._buf_len
 
     def handle_read(self):
-        print "read!"
         try:
             (addr, recdata) = self.socket.recvfrom(AdvancedDispatcher._buf_len)
         except socket.error as e:
@@ -150,6 +149,7 @@ class UDPSocket(BMProto):
             self.local = True
         else:
             self.local = False
+        print "read %ib" % (len(recdata))
         # overwrite the old buffer to avoid mixing data and so that self.local works correctly
         self.read_buf = data
         self.process()
@@ -162,9 +162,10 @@ class UDPSocket(BMProto):
             return
         try:
             retval = self.socket.sendto(data, ('<broadcast>', UDPSocket.port))
-#            print "broadcasted %ib" % (retval)
+            print "broadcasted %ib" % (retval)
         except socket.error as e:
             print "socket error on sendato: %s" % (e)
+        self.writeQueue.task_done()
 
     def close(self, reason=None):
         self.set_state("close")
