@@ -714,8 +714,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             TTL = 4*24*60*60
         elif len(params) == 5:
             fromAddress, subject, message, encodingType, TTL = params
-        if encodingType != 2:
-            raise APIError(6, 'The encoding type must be 2 because that is the only one this program currently supports.')
+        if encodingType not in [2, 3]:
+            raise APIError(6, 'The encoding type must be 2 or 3.')
         subject = self._decode(subject, "base64")
         message = self._decode(message, "base64")
         if len(subject + message) > (2 ** 18 - 500):
