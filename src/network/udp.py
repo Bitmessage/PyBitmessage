@@ -3,7 +3,6 @@ from binascii import hexlify
 import hashlib
 import math
 import time
-from pprint import pprint
 import socket
 import struct
 import random
@@ -107,7 +106,7 @@ class UDPSocket(BMProto):
                 remoteport = port
         if remoteport is False:
             return
-        print "received peer discovery from %s:%i (port %i):" % (self.destination.host, self.destination.port, remoteport)
+        logger.debug("received peer discovery from %s:%i (port %i):", self.destination.host, self.destination.port, remoteport)
         if self.local:
             peerDiscoveryQueue.put(state.Peer(self.destination.host, remoteport))
         return True
@@ -140,7 +139,7 @@ class UDPSocket(BMProto):
         try:
             (recdata, addr) = self.socket.recvfrom(AdvancedDispatcher._buf_len)
         except socket.error as e:
-            print "socket error: %s" % (str(e))
+            logger.error("socket error: %s", str(e))
             return
 
         self.destination = state.Peer(addr[0], addr[1])
@@ -149,23 +148,20 @@ class UDPSocket(BMProto):
             self.local = True
         else:
             self.local = False
-        print "read %ib" % (len(recdata))
         # overwrite the old buffer to avoid mixing data and so that self.local works correctly
         self.read_buf = recdata
         self.bm_proto_reset()
         self.process()
 
     def handle_write(self):
-#        print "handling write"
         try:
             data = self.writeQueue.get(False)
         except Queue.Empty:
             return
         try:
             retval = self.socket.sendto(data, ('<broadcast>', UDPSocket.port))
-            #print "broadcasted %ib" % (retval)
         except socket.error as e:
-            print "socket error on sendato: %s" % (e)
+            logger.error("socket error on sendato: %s", str(e))
         self.writeQueue.task_done()
 
 

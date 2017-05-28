@@ -19,7 +19,6 @@ class BMNetworkThread(threading.Thread, StoppableThread):
             BMConnectionPool().loop()
 
     def stopThread(self):
-        super(BMNetworkThread, self).stopThread()
         for i in BMConnectionPool().listeningSockets:
             try:
                 i.close()
@@ -38,3 +37,4 @@ class BMNetworkThread(threading.Thread, StoppableThread):
 
         # just in case
         asyncore.close_all()
+        super(BMNetworkThread, self).stopThread()

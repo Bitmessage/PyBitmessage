@@ -51,18 +51,16 @@ class InvThread(threading.Thread, StoppableThread):
                             continue
                     if len(hashes) > 0:
                         connection.writeQueue.put(protocol.CreatePacket('inv', addresses.encodeVarint(len(hashes)) + b"".join(hashes)))
-                self.collectionOfInvs[iterator] = []
+                self.collectionOfInvs[iterator] = {}
             iterator += 1
             iterator %= InvThread.size
             self.stop.wait(1)
 
     def holdHash(self, stream, hash):
-        iter = random.randrange(0, InvThread.size)
-        try:
-            self.collectionOfInvs[iter][stream].append(hash)
-        except KeyError, IndexError:
-            self.collectionOfInvs[iter][stream] = []
-            self.collectionOfInvs[iter][stream].append(hash)
+        i = random.randrange(0, InvThread.size)
+        if stream not in self.collectionOfInvs[i]:
+            self.collectionOfInvs[i][stream] = []
+        self.collectionOfInvs[i][stream].append(hash)
 
     def hasHash(self, hash):
         for streamlist in self.collectionOfInvs:
