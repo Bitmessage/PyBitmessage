@@ -16,7 +16,7 @@ BMConfigDefaults = {
         "maxuploadrate": 0,
     },
     "network": {
-        "asyncore": False,
+        "asyncore": True,
         "bind": None,
     },
     "inventory": {

@@ -17,7 +17,7 @@ class AnnounceThread(threading.Thread, StoppableThread):
         self.initStop()
         self.name = "AnnounceThread"
         BMConnectionPool()
-        logger.error("init announce thread")
+        logger.info("init announce thread")
 
     def run(self):
         lastSelfAnnounced = 0

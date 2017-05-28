@@ -106,28 +106,35 @@ def checkIPAddress(host, private=False):
 
 def checkIPv4Address(host, hostStandardFormat, private=False):
     if host[0] == '\x7F': # 127/8
-        logger.debug('Ignoring IP address in loopback range: ' + hostStandardFormat)
+        if not private:
+            logger.debug('Ignoring IP address in loopback range: ' + hostStandardFormat)
         return False
     if host[0] == '\x0A': # 10/8
-        logger.debug('Ignoring IP address in private range: ' + hostStandardFormat)
+        if not private:
+            logger.debug('Ignoring IP address in private range: ' + hostStandardFormat)
         return hostStandardFormat if private else False
     if host[0:2] == '\xC0\xA8': # 192.168/16
-        logger.debug('Ignoring IP address in private range: ' + hostStandardFormat)
+        if not private:
+            logger.debug('Ignoring IP address in private range: ' + hostStandardFormat)
         return hostStandardFormat if private else False
     if host[0:2] >= '\xAC\x10' and host[0:2] < '\xAC\x20': # 172.16/12
-        logger.debug('Ignoring IP address in private range:' + hostStandardFormat)
-        return False
+        if not private:
+            logger.debug('Ignoring IP address in private range:' + hostStandardFormat)
+        return hostStandardFormat if private else False
     return False if private else hostStandardFormat
 
 def checkIPv6Address(host, hostStandardFormat, private=False):
     if host == ('\x00' * 15) + '\x01':
-        logger.debug('Ignoring loopback address: ' + hostStandardFormat)
+        if not private:
+            logger.debug('Ignoring loopback address: ' + hostStandardFormat)
         return False
     if host[0] == '\xFE' and (ord(host[1]) & 0xc0) == 0x80:
-        logger.debug ('Ignoring local address: ' + hostStandardFormat)
+        if not private:
+            logger.debug ('Ignoring local address: ' + hostStandardFormat)
         return hostStandardFormat if private else False
     if (ord(host[0]) & 0xfe) == 0xfc:
-        logger.debug ('Ignoring unique local address: ' + hostStandardFormat)
+        if not private:
+            logger.debug ('Ignoring unique local address: ' + hostStandardFormat)
         return hostStandardFormat if private else False
     return False if private else hostStandardFormat
 

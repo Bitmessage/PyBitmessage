@@ -12,7 +12,7 @@ class BMNetworkThread(threading.Thread, StoppableThread):
         self.initStop()
         self.name = "AsyncoreThread"
         BMConnectionPool()
-        logger.error("init asyncore thread")
+        logger.info("init asyncore thread")
 
     def run(self):
         while not self._stopped:

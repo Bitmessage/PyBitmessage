@@ -7,6 +7,7 @@ import socket
 import ssl
 import sys
 
+from debug import logger
 from network.advanceddispatcher import AdvancedDispatcher
 import network.asyncore_pollchoose as asyncore
 import paths
@@ -108,10 +109,10 @@ class TLSDispatcher(AdvancedDispatcher):
             return False
         # Perform the handshake.
         try:
-            print "handshaking (internal)"
+            #print "handshaking (internal)"
             self.sslSocket.do_handshake()
         except ssl.SSLError, err:
-            print "%s:%i: handshake fail" % (self.destination.host, self.destination.port)
+            #print "%s:%i: handshake fail" % (self.destination.host, self.destination.port)
             self.want_read = self.want_write = False
             if err.args[0] == ssl.SSL_ERROR_WANT_READ:
                 #print "want read"
@@ -122,7 +123,7 @@ class TLSDispatcher(AdvancedDispatcher):
             if not (self.want_write or self.want_read):
                 raise
         else:
-            print "%s:%i: TLS handshake success%s" % (self.destination.host, self.destination.port, ", TLS protocol version: %s" % (self.sslSocket.version()) if sys.version_info >= (2, 7, 9) else "")
+            logger.debug("%s:%i: TLS handshake success%s", self.destination.host, self.destination.port, ", TLS protocol version: %s" % (self.sslSocket.version()) if sys.version_info >= (2, 7, 9) else "")
             # The handshake has completed, so remove this channel and...
             self.del_channel()
             self.set_socket(self.sslSocket)

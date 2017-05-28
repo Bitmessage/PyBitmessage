@@ -1,4 +1,5 @@
 import threading
+import resource
 import shared
 import time
 import sys
@@ -9,6 +10,7 @@ from bmconfigparser import BMConfigParser
 from helper_sql import *
 from helper_threading import *
 from inventory import Inventory
+from network.connectionpool import BMConnectionPool
 from debug import logger
 import knownnodes
 import queues
@@ -36,6 +38,7 @@ resends msg messages in 5 days (then 10 days, then 20 days, etc...)
 
 
 class singleCleaner(threading.Thread, StoppableThread):
+    cycleLength = 300
 
     def __init__(self):
         threading.Thread.__init__(self, name="singleCleaner")
@@ -51,7 +54,7 @@ class singleCleaner(threading.Thread, StoppableThread):
 
         # initial wait
         if state.shutdown == 0:
-            self.stop.wait(300)
+            self.stop.wait(singleCleaner.cycleLength)
 
         while state.shutdown == 0:
             queues.UISignalQueue.put((
@@ -119,8 +122,10 @@ class singleCleaner(threading.Thread, StoppableThread):
 
             # TODO: cleanup pending upload / download
 
+            logger.info("Memory usage %s (kB)", resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
+
             if state.shutdown == 0:
-                self.stop.wait(300)
+                self.stop.wait(singleCleaner.cycleLength)
 
 
 def resendPubkeyRequest(address):

@@ -21,8 +21,8 @@ import state
 class BMConnectionPool(object):
     def __init__(self):
         asyncore.set_rates(
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxdownloadrate"),
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxuploadrate"))
+                BMConfigParser().safeGetInt("bitmessagesettings", "maxdownloadrate") * 1024,
+                BMConfigParser().safeGetInt("bitmessagesettings", "maxuploadrate") * 1024)
         self.outboundConnections = {}
         self.inboundConnections = {}
         self.listeningSockets = {}
@@ -117,7 +117,6 @@ class BMConnectionPool(object):
 
         if spawnConnections:
             if not self.bootstrapped:
-                print "bootstrapping dns"
                 helper_bootstrap.dns()
                 self.bootstrapped = True
             established = sum(1 for c in self.outboundConnections.values() if (c.connected and c.fullyEstablished))

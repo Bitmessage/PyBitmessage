@@ -90,12 +90,10 @@ class ExitNow(Exception):
 _reraised_exceptions = (ExitNow, KeyboardInterrupt, SystemExit)
 
 maxDownloadRate = 0
-downloadChunk = 0
 downloadTimestamp = 0
 downloadBucket = 0
 receivedBytes = 0
 maxUploadRate = 0
-uploadChunk = 0
 uploadTimestamp = 0
 uploadBucket = 0
 sentBytes = 0
@@ -117,48 +115,37 @@ def write(obj):
         obj.handle_error()
 
 def set_rates(download, upload):
-    global maxDownloadRate, maxUploadRate, downloadChunk, uploadChunk, downloadBucket, uploadBucket, downloadTimestamp, uploadTimestamp
+    global maxDownloadRate, maxUploadRate, downloadBucket, uploadBucket, downloadTimestamp, uploadTimestamp
     maxDownloadRate = float(download)
-    if maxDownloadRate > 0:
-        downloadChunk = 1400
     maxUploadRate = float(upload)
-    if maxUploadRate > 0:
-        uploadChunk = 1400
     downloadBucket = maxDownloadRate
     uploadBucket = maxUploadRate
     downloadTimestamp = time.time()
     uploadTimestamp = time.time()
 
-def updateReceived(download=0):
-    global receivedBytes
+def update_received(download=0):
+    global receivedBytes, maxDownloadRate, downloadBucket, downloadTimestamp
+    currentTimestamp = time.time()
     receivedBytes += download
+    if maxDownloadRate > 0:
+        bucketIncrease = int(maxDownloadRate * (currentTimestamp - downloadTimestamp))
+        downloadBucket += bucketIncrease
+        if downloadBucket > maxDownloadRate:
+            downloadBucket = int(maxDownloadRate)
+        downloadBucket -= download
+    downloadTimestamp = currentTimestamp
 
-def updateSent(upload=0):
-    global sentBytes
+def update_sent(upload=0):
+    global sentBytes, maxUploadRate, uploadBucket, uploadTimestamp
+    currentTimestamp = time.time()
     sentBytes += upload
-
-def wait_tx_buckets():
-    global downloadBucket, uploadBucket, downloadTimestamp, uploadTimestamp
-    if maxDownloadRate > 0 and maxUploadRate > 0:
-        wait_for_this_long = min(maxDownloadRate / downloadChunk, maxUploadRate / uploadChunk)
-    elif maxDownloadRate > 0:
-        wait_for_this_long = maxDownloadRate / downloadChunk
-    elif maxUploadRate > 0:
-        wait_for_this_long = maxUploadRate / uploadChunk
-    else:
-        return
-    wait_for_this_long /= 2
-    if wait_for_this_long > 1:
-        wait_for_this_long = 1
-    elif wait_for_this_long < 0.1:
-        wait_for_this_long = 0.1
-
-    while downloadBucket < downloadChunk and uploadBucket < uploadChunk:
-        time.sleep(wait_for_this_long)
-        downloadBucket += (time.time() - downloadTimestamp) * maxDownloadRate
-        downloadTimestamp = time.time()
-        uploadBucket += (time.time() - uploadTimestamp) * maxUploadRate
-        uploadTimestamp = time.time()
+    if maxUploadRate > 0:
+        bucketIncrease = int(maxUploadRate * (currentTimestamp - uploadTimestamp))
+        uploadBucket += bucketIncrease
+        if uploadBucket > maxUploadRate:
+            uploadBucket = int(maxUploadRate)
+        uploadBucket -= upload
+    uploadTimestamp = currentTimestamp
 
 def _exception(obj):
     try:
@@ -376,13 +363,19 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None,
 
     if count is None:
         while map:
-            wait_tx_buckets()
+            # fill buckets first
+            update_sent()
+            update_received()
+            # then poll
             poller(timeout, map)
     else:
         timeout /= count
         while map and count > 0:
-            wait_tx_buckets()
+            # fill buckets first
+            update_sent()
+            update_received()
             poller(timeout, map)
+            # then poll
             count = count - 1
 
 class dispatcher:
@@ -396,6 +389,8 @@ class dispatcher:
     ignore_log_types = frozenset(['warning'])
     poller_registered = False
     flags = 0
+    # don't do network IO with a smaller bucket than this
+    minTx = 1500
 
     def __init__(self, sock=None, map=None):
         if map is None:
@@ -499,9 +494,13 @@ class dispatcher:
     # ==================================================
 
     def readable(self):
+        if maxDownloadRate > 0:
+            return downloadBucket > dispatcher.minTx
         return True
 
     def writable(self):
+        if maxUploadRate > 0:
+            return uploadBucket > dispatcher.minTx
         return True
 
     # ==================================================

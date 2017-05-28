@@ -2,6 +2,7 @@ import Queue
 import time
 
 import asyncore_pollchoose as asyncore
+from debug import logger
 from bmconfigparser import BMConfigParser
 
 class AdvancedDispatcher(asyncore.dispatcher):
@@ -56,44 +57,45 @@ class AdvancedDispatcher(asyncore.dispatcher):
         self.state = state
 
     def writable(self):
-        return self.connecting or len(self.write_buf) > 0 or not self.writeQueue.empty()
+        return asyncore.dispatcher.writable(self) and \
+                (self.connecting or len(self.write_buf) > 0 or not self.writeQueue.empty())
 
     def readable(self):
-        return self.connecting or len(self.read_buf) < AdvancedDispatcher._buf_len
+        return asyncore.dispatcher.readable(self) and \
+                (self.connecting or len(self.read_buf) < AdvancedDispatcher._buf_len)
 
     def handle_read(self):
         self.lastTx = time.time()
         downloadBytes = AdvancedDispatcher._buf_len
         if asyncore.maxDownloadRate > 0:
-            downloadBytes = asyncore.downloadChunk
+            downloadBytes = asyncore.downloadBucket
         if self.expectBytes > 0 and downloadBytes > self.expectBytes:
             downloadBytes = self.expectBytes
-        newData = self.recv(downloadBytes)
-        if asyncore.maxDownloadRate > 0:
-            asyncore.downloadBucket -= len(newData)
-        self.receivedBytes += len(newData)
-        if self.expectBytes > 0:
-            self.expectBytes -= len(newData)
-        asyncore.updateReceived(len(newData))
-        self.read_buf += newData
+        if downloadBytes > 0:
+            newData = self.recv(downloadBytes)
+            self.receivedBytes += len(newData)
+            if self.expectBytes > 0:
+                self.expectBytes -= len(newData)
+            asyncore.update_received(len(newData))
+            self.read_buf += newData
         self.process()
 
     def handle_write(self):
         self.lastTx = time.time()
+        bufSize = AdvancedDispatcher._buf_len
         if asyncore.maxUploadRate > 0:
-            bufSize = asyncore.uploadChunk
-        else:
-            bufSize = self._buf_len
+            bufSize = asyncore.uploadBucket
         while len(self.write_buf) < bufSize:
             try:
                 self.write_buf += self.writeQueue.get(False)
                 self.writeQueue.task_done()
             except Queue.Empty:
                 break
+        if bufSize <= 0:
+            return
         if len(self.write_buf) > 0:
             written = self.send(self.write_buf[0:bufSize])
-            asyncore.uploadBucket -= written
-            asyncore.updateSent(written)
+            asyncore.update_sent(written)
             self.sentBytes += written
             self.slice_write_buf(written)
 
@@ -107,7 +109,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def close(self):
         self.read_buf = b""
         self.write_buf = b""
-        self.state = "shutdown"
+        self.state = "close"
         while True:
             try:
                 self.writeQueue.get(False)
