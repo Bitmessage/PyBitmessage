@@ -97,7 +97,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             logger.debug("Bad checksum, ignoring")
             self.invalid = True
         retval = True
-        if not self.fullyEstablished and self.command not in ("version", "verack"):
+        if not self.fullyEstablished and self.command not in ("error", "version", "verack"):
             logger.error("Received command %s before connection was fully established, ignoring", self.command)
             self.invalid = True
         if not self.invalid:
