@@ -17,7 +17,7 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
         self.initStop()
         self.name = "ReceiveQueueThread"
         BMConnectionPool()
-        logger.error("init receive queue thread")
+        logger.info("init receive queue thread")
 
     def run(self):
         lastprinted = int(time.time())

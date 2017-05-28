@@ -858,8 +858,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType, toStreamNumber, encryptedPayload, int(time.time()) + TTL,'')
         with shared.printLock:
             print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
-        protocol.broadcastToSendDataQueues((
-            toStreamNumber, 'advertiseobject', inventoryHash))
+        if BMConfigParser.safeGetBoolean("network", "asyncore"):
+            queues.invQueue.put((toStreamNumber, inventoryHash))
+        else:
+            protocol.broadcastToSendDataQueues((
+                toStreamNumber, 'advertiseobject', inventoryHash))
 
     def HandleTrashSentMessageByAckDAta(self, params):
         # This API method should only be used when msgid is not available
@@ -905,8 +908,11 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL,'')
         with shared.printLock:
             print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
-        protocol.broadcastToSendDataQueues((
-            pubkeyStreamNumber, 'advertiseobject', inventoryHash))
+        if BMConfigParser.safeGetBoolean("network", "asyncore"):
+            queues.invQueue.put((pubkeyStreamNumber, inventoryHash))
+        else:
+            protocol.broadcastToSendDataQueues((
+                pubkeyStreamNumber, 'advertiseobject', inventoryHash))
 
     def HandleGetMessageDataByDestinationHash(self, params):
         # Method will eventually be used by a particular Android app to

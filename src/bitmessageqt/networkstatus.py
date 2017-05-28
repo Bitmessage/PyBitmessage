@@ -46,7 +46,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         return "%4.0f kB" % num
         
     def updateNumberOfObjectsToBeSynced(self):
-        self.labelSyncStatus.setText(_translate("networkstatus", "Object(s) to be synced: %n", None, QtCore.QCoreApplication.CodecForTr, PendingDownloadQueue.totalSize() + PendingUpload().len()))
+        self.labelSyncStatus.setText(_translate("networkstatus", "Object(s) to be synced: %n", None, QtCore.QCoreApplication.CodecForTr, network.stats.pendingDownload() + network.stats.pendingUpload()))
 
     def updateNumberOfMessagesProcessed(self):
         self.updateNumberOfObjectsToBeSynced()

@@ -3,7 +3,6 @@ from binascii import hexlify
 import hashlib
 import math
 import time
-from pprint import pprint
 import socket
 import struct
 import random
@@ -25,7 +24,7 @@ from network.uploadqueue import UploadQueue, UploadElem, AddrUploadQueue, ObjUpl
 
 import addresses
 from bmconfigparser import BMConfigParser
-from queues import objectProcessorQueue, portCheckerQueue, UISignalQueue
+from queues import objectProcessorQueue, portCheckerQueue, UISignalQueue, invQueue
 import shared
 import state
 import protocol
@@ -53,35 +52,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     # maximum time offset
     maxTimeOffset = 3600
 
-#    def __init__(self, address=None, sock=None):
-#        AdvancedDispatcher.__init__(self, sock)
-#        self.verackReceived = False
-#        self.verackSent = False
-#        self.lastTx = time.time()
-#        self.streams = [0]
-#        self.fullyEstablished = False
-#        self.connectedAt = 0
-#        self.skipUntil = 0
-#        if address is None and sock is not None:
-#            self.destination = state.Peer(sock.getpeername()[0], sock.getpeername()[1])
-#            self.isOutbound = False
-#            TLSDispatcher.__init__(self, sock, server_side=True)
-#            self.connectedAt = time.time()
-#            #print "received connection in background from %s:%i" % (self.destination.host, self.destination.port)
-#        else:
-#            self.destination = address
-#            self.isOutbound = True
-#            if ":" in address.host:
-#                self.create_socket(socket.AF_INET6, socket.SOCK_STREAM)
-#            else:
-#                self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
-#            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-#            TLSDispatcher.__init__(self, sock, server_side=False)
-#            self.connect(self.destination)
-#            #print "connecting in background to %s:%i" % (self.destination.host, self.destination.port)
-#        shared.connectedHostsList[self.destination] = 0
-#        ObjectTracker.__init__(self)
-#        UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
+    def __init__(self, address=None, sock=None):
+        AdvancedDispatcher.__init__(self, sock)
+        self.isOutbound = False
+        # packet/connection from a local IP
+        self.local = False
 
     def bm_proto_reset(self):
         self.magic = None
@@ -95,7 +70,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.object = None
 
     def state_bm_header(self):
-        #print "%s:%i: header" % (self.destination.host, self.destination.port)
         if len(self.read_buf) < protocol.Header.size:
             #print "Length below header size"
             return False
@@ -105,7 +79,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             # skip 1 byte in order to sync
             self.bm_proto_reset()
             self.set_state("bm_header", 1)
-            print "Bad magic"
+            logger.debug("Bad magic")
             self.close()
             return False
         if self.payloadLength > BMProto.maxMessageSize:
@@ -117,10 +91,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if len(self.read_buf) < self.payloadLength:
             #print "Length below announced object length"
             return False
-        print "%s:%i: command %s (%ib)" % (self.destination.host, self.destination.port, self.command, self.payloadLength)
+        #logger.debug("%s:%i: command %s (%ib)", self.destination.host, self.destination.port, self.command, self.payloadLength)
         self.payload = self.read_buf[:self.payloadLength]
         if self.checksum != hashlib.sha512(self.payload).digest()[0:4]:
-            print "Bad checksum, ignoring"
+            logger.debug("Bad checksum, ignoring")
             self.invalid = True
         retval = True
         if not self.fullyEstablished and self.command not in ("version", "verack"):
@@ -131,28 +105,28 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 retval = getattr(self, "bm_command_" + str(self.command).lower())()
             except AttributeError:
                 # unimplemented command
-                print "unimplemented command %s" % (self.command)
+                logger.debug("unimplemented command %s", self.command)
             except BMProtoInsufficientDataError:
-                print "packet length too short, skipping"
+                logger.debug("packet length too short, skipping")
             except BMProtoExcessiveDataError:
-                print "too much data, skipping"
+                logger.debug("too much data, skipping")
             except BMObjectInsufficientPOWError:
-                print "insufficient PoW, skipping"
+                logger.debug("insufficient PoW, skipping")
             except BMObjectInvalidDataError:
-                print "object invalid data, skipping"
+                logger.debug("object invalid data, skipping")
             except BMObjectExpiredError:
-                print "object expired, skipping"
+                logger.debug("object expired, skipping")
             except BMObjectUnwantedStreamError:
-                print "object not in wanted stream, skipping"
+                logger.debug("object not in wanted stream, skipping")
             except BMObjectInvalidError:
-                print "object invalid, skipping"
+                logger.debug("object invalid, skipping")
             except BMObjectAlreadyHaveError:
-                print "already got object, skipping"
+                logger.debug("already got object, skipping")
             except struct.error:
-                print "decoding error, skipping"
+                logger.debug("decoding error, skipping")
         else:
             #print "Skipping command %s due to invalid data" % (self.command)
-            print "Closing due to invalid data" % (self.command)
+            logger.debug("Closing due to invalid command %s", self.command)
             self.close()
             return False
         if retval:
@@ -253,13 +227,13 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     self.payloadOffset += 8
                 i += 1
         if self.payloadOffset > self.payloadLength:
-            print "Insufficient data %i/%i" % (self.payloadOffset, self.payloadLength)
+            logger.debug("Insufficient data %i/%i", self.payloadOffset, self.payloadLength)
             raise BMProtoInsufficientDataError()
         return retval
 
     def bm_command_error(self):
         fatalStatus, banTime, inventoryVector, errorText = self.decode_payload_content("vvlsls")
-        print "%s:%i error: %i, %s" % (self.destination.host, self.destination.port, fatalStatus, errorText)
+        logger.error("%s:%i error: %i, %s", self.destination.host, self.destination.port, fatalStatus, errorText)
         return True
 
     def bm_command_getdata(self):
@@ -325,6 +299,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             objectProcessorQueue.put((self.object.objectType,self.object.data))
             #DownloadQueue().task_done(self.object.inventoryHash)
             network.connectionpool.BMConnectionPool().handleReceivedObject(self, self.object.streamNumber, self.object.inventoryHash)
+            invQueue.put((self.object.streamNumber, self.object.inventoryHash))
             #ObjUploadQueue().put(UploadElem(self.object.streamNumber, self.object.inventoryHash))
             #broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
         return True
@@ -344,8 +319,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 peer = state.Peer(decodedIP, port)
                 if peer in knownnodes.knownNodes[stream] and knownnodes.knownNodes[stream][peer] > seenTime:
                     continue
-                knownnodes.knownNodes[stream][peer] = seenTime
-                AddrUploadQueue().put((stream, peer))
+                if len(knownnodes.knownNodes[stream]) < 20000:
+                    with knownnodes.knownNodesLock:
+                        knownnodes.knownNodes[stream][peer] = seenTime
+                #knownnodes.knownNodes[stream][peer] = seenTime
+                #AddrUploadQueue().put((stream, peer))
         return True
 
     def bm_command_portcheck(self):
@@ -392,7 +370,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.verackSent = True
         if not self.isOutbound:
             self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, True))
-            print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
+            #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
                 protocol.haveSSL(not self.isOutbound)):
             self.isSSL = True
@@ -472,10 +450,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def close(self, reason=None):
         self.set_state("close")
-#        if reason is None:
-#            print "%s:%i: closing" % (self.destination.host, self.destination.port)
-#            #traceback.print_stack()
-#        else:
-#            print "%s:%i: closing, %s" % (self.destination.host, self.destination.port, reason)
+        if reason is None:
+            #logger.debug("%s:%i: closing, %s", self.destination.host, self.destination.port, ''.join(traceback.format_stack()))
+            logger.debug("%s:%i: closing", self.destination.host, self.destination.port)
+            #traceback.print_stack()
+        else:
+            logger.debug("%s:%i: closing, %s", self.destination.host, self.destination.port, reason)
         network.connectionpool.BMConnectionPool().removeConnection(self)
         AdvancedDispatcher.close(self)

@@ -23,6 +23,8 @@ sqlReady = False # set to true by sqlTread when ready for processing
 
 maximumNumberOfHalfOpenConnections = 0
 
+invThread = None
+
 # If the trustedpeer option is specified in keys.dat then this will
 # contain a Peer which will be connected to instead of using the
 # addresses advertised by other peers. The client will only connect to

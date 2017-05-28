@@ -57,6 +57,7 @@ from network.connectionpool import BMConnectionPool
 from network.networkthread import BMNetworkThread
 from network.receivequeuethread import ReceiveQueueThread
 from network.announcethread import AnnounceThread
+from network.invthread import InvThread
 #from network.downloadthread import DownloadThread
 
 # Helper Functions
@@ -275,6 +276,9 @@ class Main:
             announceThread = AnnounceThread()
             announceThread.daemon = True
             announceThread.start()
+            state.invThread = InvThread()
+            state.invThread.daemon = True
+            state.invThread.start()
 
         connectToStream(1)
 

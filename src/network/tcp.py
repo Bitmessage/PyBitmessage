@@ -36,7 +36,7 @@ import protocol
 
 class TCPConnection(BMProto, TLSDispatcher):
     def __init__(self, address=None, sock=None):
-        AdvancedDispatcher.__init__(self, sock)
+        BMProto.__init__(self, address=address, sock=sock)
         self.verackReceived = False
         self.verackSent = False
         self.streams = [0]
@@ -60,7 +60,12 @@ class TCPConnection(BMProto, TLSDispatcher):
             TLSDispatcher.__init__(self, sock, server_side=False)
             self.connect(self.destination)
             logger.debug("Connecting to %s:%i", self.destination.host, self.destination.port)
-        shared.connectedHostsList[self.destination] = 0
+        encodedAddr = protocol.encodeHost(self.destination.host)
+        if protocol.checkIPAddress(encodedAddr, True) and not protocol.checkSocksIP(self.destination.host):
+            self.local = True
+        else:
+            self.local = False
+        #shared.connectedHostsList[self.destination] = 0
         ObjectTracker.__init__(self)
         UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         self.bm_proto_reset()
@@ -83,6 +88,9 @@ class TCPConnection(BMProto, TLSDispatcher):
                 self.skipUntil = time.time() + delay
 
     def set_connection_fully_established(self):
+        if not self.isOutbound and not self.local:
+            shared.clientHasReceivedIncomingConnections = True
+            UISignalQueue.put(('setStatusIcon', 'green'))
         UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         self.antiIntersectionDelay(True)
         self.fullyEstablished = True

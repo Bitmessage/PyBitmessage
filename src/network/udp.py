@@ -35,7 +35,7 @@ class UDPSocket(BMProto):
     announceInterval = 60
 
     def __init__(self, host=None, sock=None):
-        AdvancedDispatcher.__init__(self, sock)
+        BMProto.__init__(self, sock)
         self.verackReceived = True
         self.verackSent = True
         # TODO sort out streams
@@ -43,7 +43,6 @@ class UDPSocket(BMProto):
         self.fullyEstablished = True
         self.connectedAt = 0
         self.skipUntil = 0
-        self.isOutbound = False
         if sock is None:
             if host is None:
                 host = ''
@@ -51,7 +50,7 @@ class UDPSocket(BMProto):
                 self.create_socket(socket.AF_INET6, socket.SOCK_DGRAM)
             else:
                 self.create_socket(socket.AF_INET, socket.SOCK_DGRAM)
-            print "binding to %s" % (host)
+            logger.info("Binding UDP socket to %s:%i", host, UDPSocket.port)
             self.socket.bind((host, UDPSocket.port))
             #BINDTODEVICE is only available on linux and requires root
             #try:
@@ -67,9 +66,10 @@ class UDPSocket(BMProto):
         ObjectTracker.__init__(self)
         self.connecting = False
         self.connected = True
-        # packet was received from a local IP
-        self.local = False
         self.set_state("bm_header")
+
+    def state_bm_command(self):
+        BMProto.state_bm_command(self)
 
     # disable most commands before doing research / testing
     # only addr (peer discovery), error and object are implemented
@@ -163,7 +163,7 @@ class UDPSocket(BMProto):
             return
         try:
             retval = self.socket.sendto(data, ('<broadcast>', UDPSocket.port))
-            print "broadcasted %ib" % (retval)
+            #print "broadcasted %ib" % (retval)
         except socket.error as e:
             print "socket error on sendato: %s" % (e)
         self.writeQueue.task_done()
