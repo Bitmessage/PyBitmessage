@@ -1,3 +1,4 @@
+from binascii import hexlify
 import collections
 import Queue
 import random
@@ -35,6 +36,7 @@ class InvThread(threading.Thread, StoppableThread):
                 try:
                     (stream, hash) = invQueue.get(False)
                     self.holdHash (stream, hash)
+                    #print "Holding hash %i, %s" % (stream, hexlify(hash))
                 except Queue.Empty:
                     break
 
@@ -50,6 +52,7 @@ class InvThread(threading.Thread, StoppableThread):
                         except KeyError:
                             continue
                     if len(hashes) > 0:
+                        #print "sending inv of %i" % (len(hashes))
                         connection.writeQueue.put(protocol.CreatePacket('inv', addresses.encodeVarint(len(hashes)) + b"".join(hashes)))
                 self.collectionOfInvs[iterator] = {}
             iterator += 1

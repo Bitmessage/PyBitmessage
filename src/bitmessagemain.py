@@ -103,12 +103,6 @@ def _fixSocket():
         socket.SO_BINDTODEVICE = 25
 
     if not sys.platform.startswith('win'):
-        errno.WSAEWOULDBLOCK = errno.EWOULDBLOCK
-        errno.WSAENETUNREACH = errno.ENETUNREACH
-        errno.WSAECONNREFUSED = errno.ECONNREFUSED
-        errno.WSAEHOSTUNREACH = errno.EHOSTUNREACH
-
-    if not sys.platform.startswith('win'):
         return
 
     # Python 2 on Windows doesn't define a wrapper for
