@@ -63,6 +63,10 @@ try:
     from errno import WSAEWOULDBLOCK
 except (ImportError, AttributeError):
     WSAEWOULDBLOCK = EWOULDBLOCK
+try:
+    from errno import WSAENOTSOCK
+except (ImportError, AttributeError):
+    WSAENOTSOCK = ENOTSOCK
 
 from ssl import SSLError, SSL_ERROR_WANT_READ, SSL_ERROR_WANT_WRITE
 
@@ -201,7 +205,7 @@ def select_poller(timeout=0.0, map=None):
         except KeyboardInterrupt:
             return
         except socket.error as err:
-            if err.args[0] in (EBADF):
+            if err.args[0] in (EBADF, WSAENOTSOCK):
                 return
 
         for fd in random.sample(r, len(r)):
