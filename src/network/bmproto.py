@@ -298,8 +298,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     self.object.objectType, self.object.streamNumber, self.payload[objectOffset:], self.object.expiresTime, self.object.tag)
             objectProcessorQueue.put((self.object.objectType,self.object.data))
             #DownloadQueue().task_done(self.object.inventoryHash)
-            network.connectionpool.BMConnectionPool().handleReceivedObject(self, self.object.streamNumber, self.object.inventoryHash)
-            invQueue.put((self.object.streamNumber, self.object.inventoryHash))
+            invQueue.put((self.object.streamNumber, self.object.inventoryHash, self))
             #ObjUploadQueue().put(UploadElem(self.object.streamNumber, self.object.inventoryHash))
             #broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
         return True
