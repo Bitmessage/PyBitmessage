@@ -10,6 +10,7 @@ from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 from network.bmproto import BMProto
 import protocol
+import state
 
 class ReceiveQueueThread(threading.Thread, StoppableThread):
     def __init__(self):
@@ -21,7 +22,7 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
 
     def run(self):
         lastprinted = int(time.time())
-        while not self._stopped:
+        while not self._stopped and state.shutdown == 0:
             if lastprinted < int(time.time()):
                 lastprinted = int(time.time())
             processed = 0

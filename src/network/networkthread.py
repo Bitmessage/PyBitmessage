@@ -5,6 +5,7 @@ from debug import logger
 from helper_threading import StoppableThread
 import network.asyncore_pollchoose as asyncore
 from network.connectionpool import BMConnectionPool
+import state
 
 class BMNetworkThread(threading.Thread, StoppableThread):
     def __init__(self):
@@ -15,10 +16,11 @@ class BMNetworkThread(threading.Thread, StoppableThread):
         logger.info("init asyncore thread")
 
     def run(self):
-        while not self._stopped:
+        while not self._stopped and state.shutdown == 0:
             BMConnectionPool().loop()
 
     def stopThread(self):
+        super(BMNetworkThread, self).stopThread()
         for i in BMConnectionPool().listeningSockets:
             try:
                 i.close()
@@ -37,4 +39,3 @@ class BMNetworkThread(threading.Thread, StoppableThread):
 
         # just in case
         asyncore.close_all()
-        super(BMNetworkThread, self).stopThread()

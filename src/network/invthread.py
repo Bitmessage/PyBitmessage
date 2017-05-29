@@ -53,7 +53,7 @@ class InvThread(threading.Thread, StoppableThread):
                             continue
                     if len(hashes) > 0:
                         #print "sending inv of %i" % (len(hashes))
-                        connection.writeQueue.put(protocol.CreatePacket('inv', addresses.encodeVarint(len(hashes)) + b"".join(hashes)))
+                        connection.writeQueue.put(protocol.CreatePacket('inv', addresses.encodeVarint(len(hashes)) + "".join(hashes)))
                 self.collectionOfInvs[iterator] = {}
             iterator += 1
             iterator %= InvThread.size
