@@ -39,7 +39,7 @@ class InvThread(threading.Thread, StoppableThread):
                        BMConnectionPool().handleReceivedObject(data[0], data[1])
                     else:
                        BMConnectionPool().handleReceivedObject(data[0], data[1], data[2])
-                    self.holdHash (stream, hash)
+                    self.holdHash (data[0], data[1])
                     #print "Holding hash %i, %s" % (stream, hexlify(hash))
                 except Queue.Empty:
                     break
