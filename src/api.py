@@ -858,7 +858,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType, toStreamNumber, encryptedPayload, int(time.time()) + TTL,'')
         with shared.printLock:
             print 'Broadcasting inv for msg(API disseminatePreEncryptedMsg command):', hexlify(inventoryHash)
-        if BMConfigParser().safeGetBoolean("network", "asyncore"):
+        if BMConfigParser().get("network", "asyncore"):
             queues.invQueue.put((toStreamNumber, inventoryHash))
         else:
             protocol.broadcastToSendDataQueues((
@@ -908,7 +908,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             objectType, pubkeyStreamNumber, payload, int(time.time()) + TTL,'')
         with shared.printLock:
             print 'broadcasting inv within API command disseminatePubkey with hash:', hexlify(inventoryHash)
-        if BMConfigParser().safeGetBoolean("network", "asyncore"):
+        if BMConfigParser().get("network", "asyncore"):
             queues.invQueue.put((pubkeyStreamNumber, inventoryHash))
         else:
             protocol.broadcastToSendDataQueues((

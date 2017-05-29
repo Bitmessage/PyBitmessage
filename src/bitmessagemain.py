@@ -90,7 +90,7 @@ def connectToStream(streamNumber):
         if streamNumber*2+1 not in knownnodes.knownNodes:
             knownnodes.knownNodes[streamNumber*2+1] = {}
 
-    if BMConfigParser().safeGetBoolean("network", "asyncore"):
+    if BMConfigParser().get("network", "asyncore"):
         BMConnectionPool().connectToStream(streamNumber)
     else:
         for i in range(state.maximumNumberOfHalfOpenConnections):
@@ -266,7 +266,7 @@ class Main:
             singleAPIThread.daemon = True  # close the main program even if there are threads left
             singleAPIThread.start()
 
-        if BMConfigParser().safeGetBoolean("network", "asyncore"):
+        if BMConfigParser().get("network", "asyncore"):
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = True
             asyncoreThread.start()
@@ -282,7 +282,7 @@ class Main:
 
         connectToStream(1)
 
-        if not BMConfigParser().safeGetBoolean("network", "asyncore"):
+        if not BMConfigParser().get("network", "asyncore"):
             singleListenerThread = singleListener()
             singleListenerThread.setup(selfInitiatedConnections)
             singleListenerThread.daemon = True  # close the main program even if there are threads left

@@ -192,7 +192,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
-        if BMConfigParser().safeGetBoolean("network", "asyncore"):
+        if BMConfigParser().get("network", "asyncore"):
             queues.invQueue.put((streamNumber, inventoryHash))
         else:
             protocol.broadcastToSendDataQueues((
@@ -286,7 +286,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
-        if BMConfigParser().safeGetBoolean("network", "asyncore"):
+        if BMConfigParser().get("network", "asyncore"):
             queues.invQueue.put((streamNumber, inventoryHash))
         else:
             protocol.broadcastToSendDataQueues((
@@ -380,7 +380,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
-        if BMConfigParser().safeGetBoolean("network", "asyncore"):
+        if BMConfigParser().get("network", "asyncore"):
             queues.invQueue.put((streamNumber, inventoryHash))
         else:
             protocol.broadcastToSendDataQueues((
@@ -513,7 +513,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 objectType, streamNumber, payload, embeddedTime, tag)
             PendingUpload().add(inventoryHash)
             logger.info('sending inv (within sendBroadcast function) for object: ' + hexlify(inventoryHash))
-            if BMConfigParser().safeGetBoolean("network", "asyncore"):
+            if BMConfigParser().get("network", "asyncore"):
                 queues.invQueue.put((streamNumber, inventoryHash))
             else:
                 protocol.broadcastToSendDataQueues((
@@ -846,7 +846,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 # not sending to a chan or one of my addresses
                 queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Message sent. Waiting for acknowledgement. Sent on %1").arg(l10n.formatTimestamp()))))
             logger.info('Broadcasting inv for my msg(within sendmsg function):' + hexlify(inventoryHash))
-            if BMConfigParser().safeGetBoolean("network", "asyncore"):
+            if BMConfigParser().get("network", "asyncore"):
                 queues.invQueue.put((toStreamNumber, inventoryHash))
             else:
                 protocol.broadcastToSendDataQueues((
@@ -952,7 +952,7 @@ class singleWorker(threading.Thread, StoppableThread):
             objectType, streamNumber, payload, embeddedTime, '')
         PendingUpload().add(inventoryHash)
         logger.info('sending inv (for the getpubkey message)')
-        if BMConfigParser().safeGetBoolean("network", "asyncore"):
+        if BMConfigParser().get("network", "asyncore"):
             queues.invQueue.put((streamNumber, inventoryHash))
         else:
             protocol.broadcastToSendDataQueues((
