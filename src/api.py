@@ -141,7 +141,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     def _decode(self, text, decode_type):
         try:
             if decode_type == 'hex':
-                return hexlify(text)
+                return unhexlify(text)
             elif decode_type == 'base64':
                 return base64.b64decode(text)
         except Exception as e:
