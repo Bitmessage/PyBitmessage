@@ -428,6 +428,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 errorText="I'm connected to myself. Closing connection."))
             logger.debug ("Closed connection to %s because I'm connected to myself.",
                 str(self.destination))
+            return False
 
         return True
 
