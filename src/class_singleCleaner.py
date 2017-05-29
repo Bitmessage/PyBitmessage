@@ -1,5 +1,4 @@
 import threading
-import resource
 import shared
 import time
 import sys
@@ -121,8 +120,6 @@ class singleCleaner(threading.Thread, StoppableThread):
                     thread.downloadQueue.clear()
 
             # TODO: cleanup pending upload / download
-
-            logger.info("Memory usage %s (kB)", resource.getrusage(resource.RUSAGE_SELF).ru_maxrss)
 
             if state.shutdown == 0:
                 self.stop.wait(singleCleaner.cycleLength)
