@@ -15,7 +15,7 @@ if __name__ == "__main__":
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
 import base64
 import json
-from binascii import hexlify
+from binascii import hexlify, unhexlify
 
 import shared
 import time
