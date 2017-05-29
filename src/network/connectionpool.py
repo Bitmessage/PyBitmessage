@@ -19,6 +19,7 @@ import state
 
 @Singleton
 class BMConnectionPool(object):
+
     def __init__(self):
         asyncore.set_rates(
                 BMConfigParser().safeGetInt("bitmessagesettings", "maxdownloadrate") * 1024,
@@ -28,6 +29,8 @@ class BMConnectionPool(object):
         self.listeningSockets = {}
         self.udpSockets = {}
         self.streams = []
+        self.lastSpawned = 0
+        self.spawnWait = 0.3
             
         self.bootstrapped = False
 
@@ -146,6 +149,8 @@ class BMConnectionPool(object):
                         if e.errno == errno.ENETUNREACH:
                             continue
 
+                    self.lastSpawned = time.time()
+
         if acceptConnections and len(self.listeningSockets) == 0:
             self.startListening()
             logger.info('Listening for incoming connections.')
@@ -169,7 +174,10 @@ class BMConnectionPool(object):
 
 #        while len(asyncore.socket_map) > 0 and state.shutdown == 0:
 #            print "loop, state = %s" % (proxy.state)
-        asyncore.loop(timeout=2.0, count=1)
+        loopTime = float(self.spawnWait)
+        if self.lastSpawned < time.time() - self.spawnWait:
+            loopTime = 1.0
+        asyncore.loop(timeout=loopTime, count=10)
 
         for i in self.inboundConnections.values() + self.outboundConnections.values():
             minTx = time.time() - 20

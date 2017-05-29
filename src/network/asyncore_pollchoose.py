@@ -61,8 +61,9 @@ from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, EINVAL, \
      errorcode
 try:
     from errno import WSAEWOULDBLOCK
-except:
-    pass
+except (ImportError, AttributeError):
+    WSAEWOULDBLOCK = EWOULDBLOCK
+
 from ssl import SSLError, SSL_ERROR_WANT_READ, SSL_ERROR_WANT_WRITE
 
 _DISCONNECTED = frozenset((ECONNRESET, ENOTCONN, ESHUTDOWN, ECONNABORTED, EPIPE,
@@ -199,6 +200,9 @@ def select_poller(timeout=0.0, map=None):
             r, w, e = select.select(r, w, e, timeout)
         except KeyboardInterrupt:
             return
+        except socket.error as err:
+            if err.args[0] in (EBADF):
+                return
 
         for fd in random.sample(r, len(r)):
             obj = map.get(fd)
@@ -369,12 +373,18 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None,
             # then poll
             poller(timeout, map)
     else:
-        timeout /= count
+        if timeout == 0:
+            deadline = 0
+        else:
+            deadline = time.time() + timeout
         while map and count > 0:
             # fill buckets first
             update_sent()
             update_received()
-            poller(timeout, map)
+            subtimeout = deadline - time.time()
+            if subtimeout <= 0:
+                break
+            poller(subtimeout, map)
             # then poll
             count = count - 1
 
@@ -555,10 +565,8 @@ class dispatcher:
             else:
                 raise
         except socket.error as why:
-            if why.args[0] in (EAGAIN, EWOULDBLOCK) or \
-                (sys.platform.startswith('win') and \
-                err.errno == WSAEWOULDBLOCK):
-                    return 0
+            if why.args[0] in (EAGAIN, EWOULDBLOCK, WSAEWOULDBLOCK):
+                return 0
             elif why.args[0] in _DISCONNECTED:
                 self.handle_close()
                 return 0
@@ -582,10 +590,8 @@ class dispatcher:
                 raise
         except socket.error as why:
             # winsock sometimes raises ENOTCONN
-            if why.args[0] in (EAGAIN, EWOULDBLOCK) or \
-                (sys.platform.startswith('win') and \
-                err.errno == WSAEWOULDBLOCK):
-                    return b''
+            if why.args[0] in (EAGAIN, EWOULDBLOCK, WSAEWOULDBLOCK):
+                return b''
             if why.args[0] in _DISCONNECTED:
                 self.handle_close()
                 return b''
