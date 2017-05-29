@@ -34,7 +34,11 @@ class InvThread(threading.Thread, StoppableThread):
         while not state.shutdown:
             while True:
                 try:
-                    (stream, hash) = invQueue.get(False)
+                    data = invQueue.get(False)
+                    if len(data) == 2:
+                       BMConnectionPool().handleReceivedObject(self, data[0], data[1])
+                    else:
+                       BMConnectionPool().handleReceivedObject(self, data[0], data[1], data[3])
                     self.holdHash (stream, hash)
                     #print "Holding hash %i, %s" % (stream, hexlify(hash))
                 except Queue.Empty:

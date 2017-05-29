@@ -34,7 +34,7 @@ class BMConnectionPool(object):
             
         self.bootstrapped = False
 
-    def handleReceivedObject(self, connection, streamNumber, hashid):
+    def handleReceivedObject(self, streamNumber, hashid, connection = None):
         for i in self.inboundConnections.values() + self.outboundConnections.values():
             if not isinstance(i, network.bmproto.BMProto):
                 continue
