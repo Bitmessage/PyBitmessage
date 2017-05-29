@@ -21,7 +21,7 @@ class AnnounceThread(threading.Thread, StoppableThread):
 
     def run(self):
         lastSelfAnnounced = 0
-        while not self._stopped:
+        while not self._stopped and state.shutdown == 0:
             processed = 0
             if lastSelfAnnounced < time.time() - UDPSocket.announceInterval:
                 self.announceSelf()
