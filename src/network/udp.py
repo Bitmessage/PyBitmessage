@@ -60,7 +60,10 @@ class UDPSocket(BMProto):
             self.socket = sock
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
         self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        try:
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        except AttributeError:
+            pass
         self.destination = state.Peer(self.socket.getsockname()[0], self.socket.getsockname()[1])
         ObjectTracker.__init__(self)
         self.connecting = False
