@@ -13,6 +13,7 @@ if __name__ == "__main__":
     sys.exit(0)
 
 from SimpleXMLRPCServer import SimpleXMLRPCRequestHandler, SimpleXMLRPCServer
+import base64
 import json
 from binascii import hexlify
 
@@ -139,7 +140,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
     def _decode(self, text, decode_type):
         try:
-            return text.decode(decode_type)
+            if decode_type == 'hex':
+                return hexlify(text)
+            elif decode_type == 'base64':
+                return base64.b64decode(text)
         except Exception as e:
             raise APIError(22, "Decode error - " + str(e) + ". Had trouble while decoding string: " + repr(text))
 
@@ -816,15 +820,12 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
     def ListSubscriptions(self, params):
         queryreturn = sqlQuery('''SELECT label, address, enabled FROM subscriptions''')
-        data = '{"subscriptions":['
+        data = {'subscriptions': []}
         for row in queryreturn:
             label, address, enabled = row
             label = shared.fixPotentiallyInvalidUTF8Data(label)
-            if len(data) > 20:
-                data += ','
-            data += json.dumps({'label':label.encode('base64'), 'address': address, 'enabled': enabled == 1}, indent=4, separators=(',',': '))
-        data += ']}'
-        return data
+            data['subscriptions'].append({'label':label.encode('base64'), 'address': address, 'enabled': enabled == 1})
+        return json.dumps(data, indent=4, separators=(',',': '))
 
     def HandleDisseminatePreEncryptedMsg(self, params):
         # The device issuing this command to PyBitmessage supplies a msg object that has
