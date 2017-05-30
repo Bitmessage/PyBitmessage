@@ -3,6 +3,7 @@ import time
 
 from addresses import calculateInventoryHash
 from debug import logger
+from inventory import Inventory
 import protocol
 import state
 
@@ -63,6 +64,10 @@ class BMObject(object):
         if self.streamNumber not in state.streamsInWhichIAmParticipating:
             logger.debug('The streamNumber %s isn\'t one we are interested in.' % self.streamNumber)
             raise BMObjectUnwantedStreamError()
+
+    def checkAlreadyHave(self):
+        if self.inventoryHash in Inventory():
+            raise BMObjectAlreadyHaveError()
 
     def checkMessage(self):
         return

@@ -198,6 +198,7 @@ class TCPServer(AdvancedDispatcher):
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
         self.bind((host, port))
+        self.destination = state.Peer(host, port)
         self.listen(5)
 
     def handle_accept(self):
