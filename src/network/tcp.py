@@ -205,6 +205,7 @@ class TCPServer(AdvancedDispatcher):
         pair = self.accept()
         if pair is not None:
             sock, addr = pair
+            state.ownAddresses[state.Peer(sock.getsockname()[0], sock.getsockname()[1])] = True
             try:
                 network.connectionpool.BMConnectionPool().addConnection(TCPConnection(sock=sock))
             except socket.error:
