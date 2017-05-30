@@ -135,7 +135,7 @@ class BMConnectionPool(object):
                     if chosen.host in self.inboundConnections:
                         continue
                     # don't connect to self
-                    if chosen.host in state.ownAddresses:
+                    if chosen in state.ownAddresses:
                         continue
     
                     #for c in self.outboundConnections:
