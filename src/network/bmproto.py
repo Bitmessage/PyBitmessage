@@ -280,27 +280,24 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.object.checkProofOfWorkSufficient()
         self.object.checkEOLSanity()
         self.object.checkStream()
+        self.object.checkAlreadyHave()
 
-        try:
-            if self.object.objectType == protocol.OBJECT_GETPUBKEY:
-                self.object.checkGetpubkey()
-            elif self.object.objectType == protocol.OBJECT_PUBKEY:
-                self.object.checkPubkey(self.payload[self.payloadOffset:self.payloadOffset+32])
-            elif self.object.objectType == protocol.OBJECT_MSG:
-                self.object.checkMessage()
-            elif self.object.objectType == protocol.OBJECT_BROADCAST:
-                self.object.checkBroadcast(self.payload[self.payloadOffset:self.payloadOffset+32])
-            # other objects don't require other types of tests
-        except BMObjectAlreadyHaveError:
-            pass
-        else:
-            Inventory()[self.object.inventoryHash] = (
-                    self.object.objectType, self.object.streamNumber, self.payload[objectOffset:], self.object.expiresTime, self.object.tag)
-            objectProcessorQueue.put((self.object.objectType,self.object.data))
-            #DownloadQueue().task_done(self.object.inventoryHash)
-            invQueue.put((self.object.streamNumber, self.object.inventoryHash, self))
-            #ObjUploadQueue().put(UploadElem(self.object.streamNumber, self.object.inventoryHash))
-            #broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
+        if self.object.objectType == protocol.OBJECT_GETPUBKEY:
+            self.object.checkGetpubkey()
+        elif self.object.objectType == protocol.OBJECT_PUBKEY:
+            self.object.checkPubkey(self.payload[self.payloadOffset:self.payloadOffset+32])
+        elif self.object.objectType == protocol.OBJECT_MSG:
+            self.object.checkMessage()
+        elif self.object.objectType == protocol.OBJECT_BROADCAST:
+            self.object.checkBroadcast(self.payload[self.payloadOffset:self.payloadOffset+32])
+        # other objects don't require other types of tests
+        Inventory()[self.object.inventoryHash] = (
+                self.object.objectType, self.object.streamNumber, self.payload[objectOffset:], self.object.expiresTime, self.object.tag)
+        objectProcessorQueue.put((self.object.objectType,self.object.data))
+        #DownloadQueue().task_done(self.object.inventoryHash)
+        invQueue.put((self.object.streamNumber, self.object.inventoryHash, self))
+        #ObjUploadQueue().put(UploadElem(self.object.streamNumber, self.object.inventoryHash))
+        #broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
         return True
 
     def _decode_addr(self):
@@ -456,5 +453,4 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             #traceback.print_stack()
         else:
             logger.debug("%s:%i: closing, %s", self.destination.host, self.destination.port, reason)
-        network.connectionpool.BMConnectionPool().removeConnection(self)
         AdvancedDispatcher.close(self)

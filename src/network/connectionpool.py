@@ -64,7 +64,9 @@ class BMConnectionPool(object):
 
     def removeConnection(self, connection):
         if isinstance(connection, network.udp.UDPSocket):
-            return
+            del self.udpSockets[connection.destination.host]
+        if isinstance(connection, network.tcp.TCPServer):
+            del self.listeningSockets[state.Peer(connection.destination.host, connection.destination.port)]
         elif connection.isOutbound:
             try:
                 del self.outboundConnections[connection.destination]
@@ -99,9 +101,10 @@ class BMConnectionPool(object):
     def startUDPSocket(self, bind=None):
         if bind is None:
             host = self.getListeningIP()
-            self.udpSockets[host] = network.udp.UDPSocket(host=host)
+            udpSocket = network.udp.UDPSocket(host=host)
         else:
-            self.udpSockets[bind] = network.udp.UDPSocket(host=bind)
+            udpSocket = network.udp.UDPSocket(host=bind)
+        self.udpSockets[udpSocket.destination.host] = udpSocket
 
     def loop(self):
         # defaults to empty loop if outbound connections are maxed
@@ -164,12 +167,10 @@ class BMConnectionPool(object):
         if len(self.listeningSockets) > 0 and not acceptConnections:
             for i in self.listeningSockets:
                 i.close()
-            self.listeningSockets = {}
             logger.info('Stopped listening for incoming connections.')
         if len(self.udpSockets) > 0 and not acceptConnections:
             for i in self.udpSockets:
                 i.close()
-            self.udpSockets = {}
             logger.info('Stopped udp sockets.')
 
 #        while len(asyncore.socket_map) > 0 and state.shutdown == 0:
@@ -179,6 +180,7 @@ class BMConnectionPool(object):
             loopTime = 1.0
         asyncore.loop(timeout=loopTime, count=10)
 
+        reaper = []
         for i in self.inboundConnections.values() + self.outboundConnections.values():
             minTx = time.time() - 20
             if i.fullyEstablished:
@@ -188,3 +190,8 @@ class BMConnectionPool(object):
                     i.writeQueue.put(protocol.CreatePacket('ping'))
                 else:
                     i.close("Timeout (%is)" % (time.time() - i.lastTx))
+        for i in self.inboundConnections.values() + self.outboundConnections.values() + self.listeningSockets.values() + self.udpSockets.values():
+            if not (i.accepting or i.connecting or i.connected):
+                reaper.append(i)
+        for i in reaper:
+            self.removeConnection(i)
