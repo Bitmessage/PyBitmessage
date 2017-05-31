@@ -184,7 +184,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 chan = False
             label = BMConfigParser().get(addressInKeysFile, 'label')
             if method == 'listAddresses2':
-                label = label.encode('base64')
+                label = base64.b64encode(label)
             data += json.dumps({'label': label, 'address': addressInKeysFile, 'stream':
                                 streamNumber, 'enabled': BMConfigParser().getboolean(addressInKeysFile, 'enabled'), 'chan': chan}, indent=4, separators=(',', ': '))
         data += ']}'
@@ -205,7 +205,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             label = shared.fixPotentiallyInvalidUTF8Data(label)
             if len(data) > 20:
                 data += ','
-            data += json.dumps({'label':label.encode('base64'), 'address': address}, indent=4, separators=(',', ': '))
+            data += json.dumps({'label':base64.b64encode(label), 'address': address}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -487,8 +487,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
                 data += ','
-            data += json.dumps({'msgid': hexlify(msgid), 'toAddress': toAddress, 'fromAddress': fromAddress, 'subject': subject.encode(
-                'base64'), 'message': message.encode('base64'), 'encodingType': encodingtype, 'receivedTime': received, 'read': read}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid': hexlify(msgid), 'toAddress': toAddress,
+                'fromAddress': fromAddress, 'subject': base64.b64encode(subject),
+                'message': base64.b64encode(message), 'encodingType': encodingtype,
+                'receivedTime': received, 'read': read}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -525,7 +527,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             msgid, toAddress, fromAddress, subject, received, message, encodingtype, read = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received, 'read': read}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':base64.b64encode(subject), 'message':base64.b64encode(message), 'encodingType':encodingtype, 'receivedTime':received, 'read': read}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
 
@@ -538,7 +540,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
                 data += ','
-            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':hexlify(ackdata)}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':base64.b64encode(subject), 'message':base64.b64encode(message), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':hexlify(ackdata)}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -565,7 +567,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
                 data += ','
-            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'receivedTime':received}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':base64.b64encode(subject), 'message':base64.b64encode(message), 'encodingType':encodingtype, 'receivedTime':received}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -579,7 +581,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':hexlify(ackdata)}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':base64.b64encode(subject), 'message':base64.b64encode(message), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':hexlify(ackdata)}, indent=4, separators=(',', ': '))
             data += ']}'
             return data
 
@@ -596,7 +598,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             message = shared.fixPotentiallyInvalidUTF8Data(message)
             if len(data) > 25:
                 data += ','
-            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':hexlify(ackdata)}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':base64.b64encode(subject), 'message':base64.b64encode(message), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':hexlify(ackdata)}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -611,7 +613,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             msgid, toAddress, fromAddress, subject, lastactiontime, message, encodingtype, status, ackdata = row
             subject = shared.fixPotentiallyInvalidUTF8Data(subject)
             message = shared.fixPotentiallyInvalidUTF8Data(message)
-            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':subject.encode('base64'), 'message':message.encode('base64'), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':hexlify(ackdata)}, indent=4, separators=(',', ': '))
+            data += json.dumps({'msgid':hexlify(msgid), 'toAddress':toAddress, 'fromAddress':fromAddress, 'subject':base64.b64encode(subject), 'message':base64.b64encode(message), 'encodingType':encodingtype, 'lastActionTime':lastactiontime, 'status':status, 'ackData':hexlify(ackdata)}, indent=4, separators=(',', ': '))
         data += ']}'
         return data
 
@@ -824,7 +826,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         for row in queryreturn:
             label, address, enabled = row
             label = shared.fixPotentiallyInvalidUTF8Data(label)
-            data['subscriptions'].append({'label':label.encode('base64'), 'address': address, 'enabled': enabled == 1})
+            data['subscriptions'].append({'label':base64.b64encode(label), 'address': address, 'enabled': enabled == 1})
         return json.dumps(data, indent=4, separators=(',',': '))
 
     def HandleDisseminatePreEncryptedMsg(self, params):
@@ -966,7 +968,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         address, = params
         status, addressVersion, streamNumber, ripe = decodeAddress(address)
         return json.dumps({'status':status, 'addressVersion':addressVersion,
-                           'streamNumber':streamNumber, 'ripe':ripe.encode('base64')}, indent=4,
+                           'streamNumber':streamNumber, 'ripe':base64.b64encode(ripe)}, indent=4,
                           separators=(',', ': '))
 
     def HandleHelloWorld(self, params):
