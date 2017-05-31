@@ -69,7 +69,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         ObjectTracker.__init__(self)
         UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         self.bm_proto_reset()
-        self.set_state("bm_header")
+        self.set_state("bm_header", expectBytes=protocol.Header.size)
 
     def antiIntersectionDelay(self, initial = False):
         # estimated time for a small object to propagate across the whole network

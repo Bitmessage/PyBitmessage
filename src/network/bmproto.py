@@ -78,13 +78,13 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if self.magic != 0xE9BEB4D9:
             # skip 1 byte in order to sync
             self.bm_proto_reset()
-            self.set_state("bm_header", 1)
+            self.set_state("bm_header", length=1, expectBytes=protocol.Header.size)
             logger.debug("Bad magic")
             self.close()
             return False
         if self.payloadLength > BMProto.maxMessageSize:
             self.invalid = True
-        self.set_state("bm_command", protocol.Header.size, expectBytes=self.payloadLength)
+        self.set_state("bm_command", length=protocol.Header.size, expectBytes=self.payloadLength)
         return True
         
     def state_bm_command(self):
@@ -130,7 +130,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.close()
             return False
         if retval:
-            self.set_state("bm_header", self.payloadLength)
+            self.set_state("bm_header", length=self.payloadLength, expectBytes=protocol.Header.size)
             self.bm_proto_reset()
         # else assume the command requires a different state to follow
         return True
