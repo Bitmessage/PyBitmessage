@@ -23,10 +23,13 @@ class Inventory():
         self._className = "storage." + self._moduleName + "." + self._moduleName.title() + "Inventory"
         self._inventoryClass = eval(self._className)
         self._realInventory = self._inventoryClass()
+        self.numberOfInventoryLookupsPerformed = 0
 
     # cheap inheritance copied from asyncore
     def __getattr__(self, attr):
         try:
+            if attr == "__contains__":
+                self.numberOfInventoryLookupsPerformed += 1
             realRet = getattr(self._realInventory, attr)
         except AttributeError:
             raise AttributeError("%s instance has no attribute '%s'" %(self.__class__.__name__, attr))

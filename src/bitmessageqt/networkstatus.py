@@ -49,17 +49,17 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         self.labelSyncStatus.setText(_translate("networkstatus", "Object(s) to be synced: %n", None, QtCore.QCoreApplication.CodecForTr, network.stats.pendingDownload() + network.stats.pendingUpload()))
 
     def updateNumberOfMessagesProcessed(self):
-        self.updateNumberOfObjectsToBeSynced()
+#        self.updateNumberOfObjectsToBeSynced()
         self.labelMessageCount.setText(_translate(
             "networkstatus", "Processed %n person-to-person message(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfMessagesProcessed))
 
     def updateNumberOfBroadcastsProcessed(self):
-        self.updateNumberOfObjectsToBeSynced()
+#        self.updateNumberOfObjectsToBeSynced()
         self.labelBroadcastCount.setText(_translate(
             "networkstatus", "Processed %n broadcast message(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfBroadcastsProcessed))
 
     def updateNumberOfPubkeysProcessed(self):
-        self.updateNumberOfObjectsToBeSynced()
+#        self.updateNumberOfObjectsToBeSynced()
         self.labelPubkeyCount.setText(_translate(
             "networkstatus", "Processed %n public key(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfPubkeysProcessed))
 
@@ -128,6 +128,9 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         Inventory().numberOfInventoryLookupsPerformed = 0
         self.updateNumberOfBytes()
         self.updateNumberOfObjectsToBeSynced()
+        self.updateNumberOfMessagesProcessed()
+        self.updateNumberOfBroadcastsProcessed()
+        self.updateNumberOfPubkeysProcessed()
 
     def retranslateUi(self):
         super(QtGui.QWidget, self).retranslateUi()
