@@ -38,6 +38,8 @@ class BMConnectionPool(object):
         for i in self.inboundConnections.values() + self.outboundConnections.values():
             if not isinstance(i, network.bmproto.BMProto):
                 continue
+            if not i.fullyEstablished:
+                continue
             try:
                 del i.objectsNewToMe[hashid]
             except KeyError:
