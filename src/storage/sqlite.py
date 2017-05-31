@@ -15,7 +15,6 @@ class SqliteInventory(InventoryStorage):
 
     def __contains__(self, hash):
         with self.lock:
-            self.numberOfInventoryLookupsPerformed += 1
             if hash in self._inventory:
                 return True
             return bool(sqlQuery('SELECT 1 FROM inventory WHERE hash=?', hash))
