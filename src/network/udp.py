@@ -68,7 +68,7 @@ class UDPSocket(BMProto):
         ObjectTracker.__init__(self)
         self.connecting = False
         self.connected = True
-        self.set_state("bm_header")
+        self.set_state("bm_header", expectBytes=protocol.Header.size)
 
     def state_bm_command(self):
         BMProto.state_bm_command(self)
