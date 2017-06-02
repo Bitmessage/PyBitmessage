@@ -106,7 +106,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def state_close(self):
         pass
 
-    def close(self):
+    def handle_close(self):
         self.read_buf = b""
         self.write_buf = b""
         self.state = "close"
