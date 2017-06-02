@@ -31,7 +31,6 @@ class BMConnectionPool(object):
         self.streams = []
         self.lastSpawned = 0
         self.spawnWait = 0.3
-            
         self.bootstrapped = False
 
     def handleReceivedObject(self, streamNumber, hashid, connection = None):
@@ -41,12 +40,15 @@ class BMConnectionPool(object):
             if not i.fullyEstablished:
                 continue
             try:
-                del i.objectsNewToMe[hashid]
+                with i.objectsNewToMeLock:
+                    del i.objectsNewToMe[hashid]
             except KeyError:
-                i.objectsNewToThem[hashid] = True
+                with i.objectsNewToThemLock:
+                    i.objectsNewToThem[hashid] = True
             if i == connection:
                 try:
-                    del i.objectsNewToThem[hashid]
+                    with i.objectsNewToThemLock:
+                        del i.objectsNewToThem[hashid]
                 except KeyError:
                     pass
 
@@ -171,11 +173,11 @@ class BMConnectionPool(object):
             logger.info('Starting UDP socket(s).')
         if len(self.listeningSockets) > 0 and not acceptConnections:
             for i in self.listeningSockets:
-                i.close()
+                i.handle_close()
             logger.info('Stopped listening for incoming connections.')
         if len(self.udpSockets) > 0 and not acceptConnections:
             for i in self.udpSockets:
-                i.close()
+                i.handle_close()
             logger.info('Stopped udp sockets.')
 
 #        while len(asyncore.socket_map) > 0 and state.shutdown == 0:
@@ -194,7 +196,7 @@ class BMConnectionPool(object):
                 if i.fullyEstablished:
                     i.writeQueue.put(protocol.CreatePacket('ping'))
                 else:
-                    i.close("Timeout (%is)" % (time.time() - i.lastTx))
+                    i.handle_close("Timeout (%is)" % (time.time() - i.lastTx))
         for i in self.inboundConnections.values() + self.outboundConnections.values() + self.listeningSockets.values() + self.udpSockets.values():
             if not (i.accepting or i.connecting or i.connected):
                 reaper.append(i)

@@ -1,5 +1,6 @@
 from Queue import Queue
 import time
+from threading import RLock
 
 from inventory import Inventory
 from network.downloadqueue import DownloadQueue
@@ -29,11 +30,14 @@ class ObjectTracker(object):
 
     def __init__(self):
         self.objectsNewToMe = {}
+        self.objectsNewToMeLock = RLock()
         self.objectsNewToThem = {}
+        self.objectsNewToThemLock = RLock()
         self.downloadPending = 0
         self.downloadQueue = Queue()
         self.initInvBloom()
         self.initAddrBloom()
+        self.lastCleaned = time.time()
 
     def initInvBloom(self):
         if haveBloom:
@@ -48,15 +52,20 @@ class ObjectTracker(object):
                                          error_rate=ObjectTracker.invErrorRate)
 
     def clean(self):
-        if self.lastcleaned < time.time() - BMQueues.invCleanPeriod:
+        if self.lastCleaned < time.time() - ObjectTracker.invCleanPeriod:
             if haveBloom:
                 if PendingDownloadQueue().size() == 0:
                     self.initInvBloom()
                 self.initAddrBloom()
-        else:
-            # release memory
-            self.objectsNewToMe = self.objectsNewToMe.copy()
-            self.objectsNewToThem = self.objectsNewToThem.copy()
+            else:
+                # release memory
+                with self.objectsNewToMeLock:
+                    tmp = self.objectsNewToMe.copy()
+                    self.objectsNewToMe = tmp
+                with self.objectsNewToThemLock:
+                    tmp = self.objectsNewToThem.copy()
+                    self.objectsNewToThem = tmp
+            self.lastCleaned = time.time()
 
     def hasObj(self, hashid):
         if haveBloom:
@@ -69,11 +78,13 @@ class ObjectTracker(object):
             self.invBloom.add(hashId)
         elif hashId in Inventory():
             try:
-                del self.objectsNewToThem[hashId]
+                with self.objectsNewToThemLock:
+                    del self.objectsNewToThem[hashId]
             except KeyError:
                 pass
         else:
-            self.objectsNewToMe[hashId] = True
+            with self.objectsNewToMeLock:
+                self.objectsNewToMe[hashId] = True
 #            self.DownloadQueue.put(hashId)
 
     def hasAddr(self, addr):

@@ -119,6 +119,10 @@ class singleCleaner(threading.Thread, StoppableThread):
                 if thread.isAlive() and hasattr(thread, 'downloadQueue'):
                     thread.downloadQueue.clear()
 
+            # inv/object tracking
+            for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+                connection.clean()
+
             # TODO: cleanup pending upload / download
 
             if state.shutdown == 0:

@@ -149,10 +149,10 @@ class TCPConnection(BMProto, TLSDispatcher):
 
     def handle_connect_event(self):
         try:
-            asyncore.dispatcher.handle_connect_event(self)
+            AdvancedDispatcher.handle_connect_event(self)
         except socket.error as e:
             if e.errno in asyncore._DISCONNECTED:
-                self.close("Connection failed")
+                logger.debug("%s:%i: Connection failed: %s" % (self.destination.host, self.destination.port, str(e)))
                 return
         self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, False))
         #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
@@ -162,15 +162,13 @@ class TCPConnection(BMProto, TLSDispatcher):
         try:
             TLSDispatcher.handle_read(self)
         except socket.error as e:
-            #print "%s:%i: socket error: %s" % (self.destination.host, self.destination.port, str(e))
-            self.close()
+            logger.debug("%s:%i: Handle read fail: %s" % (self.destination.host, self.destination.port, str(e)))
 
     def handle_write(self):
         try:
             TLSDispatcher.handle_write(self)
         except socket.error as e:
-            #print "%s:%i: socket error: %s" % (self.destination.host, self.destination.port, str(e))
-            self.close()
+            logger.debug("%s:%i: Handle write fail: %s" % (self.destination.host, self.destination.port, str(e)))
 
 
 class Socks5BMConnection(Socks5Connection, TCPConnection):

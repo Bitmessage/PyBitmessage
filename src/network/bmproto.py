@@ -80,7 +80,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.bm_proto_reset()
             self.set_state("bm_header", length=1, expectBytes=protocol.Header.size)
             logger.debug("Bad magic")
-            self.close()
+            self.handle_close("Bad magic")
             return False
         if self.payloadLength > BMProto.maxMessageSize:
             self.invalid = True
@@ -127,7 +127,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         else:
             #print "Skipping command %s due to invalid data" % (self.command)
             logger.debug("Closing due to invalid command %s", self.command)
-            self.close()
+            self.handle_close("Invalid command %s" % (self.command))
             return False
         if retval:
             self.set_state("bm_header", length=self.payloadLength, expectBytes=protocol.Header.size)
@@ -445,7 +445,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             payload += struct.pack('>H', peer.port)  # remote port
         return protocol.CreatePacket('addr', payload)
 
-    def close(self, reason=None):
+    def handle_close(self, reason=None):
         self.set_state("close")
         if reason is None:
             #logger.debug("%s:%i: closing, %s", self.destination.host, self.destination.port, ''.join(traceback.format_stack()))
@@ -453,4 +453,4 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             #traceback.print_stack()
         else:
             logger.debug("%s:%i: closing, %s", self.destination.host, self.destination.port, reason)
-        AdvancedDispatcher.close(self)
+        AdvancedDispatcher.handle_close(self)
