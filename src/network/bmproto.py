@@ -5,8 +5,6 @@ import math
 import time
 import socket
 import struct
-import random
-import traceback
 
 from addresses import calculateInventoryHash
 from debug import logger
@@ -278,8 +276,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             raise BMProtoExcessiveDataError()
 
         self.object.checkProofOfWorkSufficient()
-        self.object.checkEOLSanity()
-        self.object.checkStream()
+        try:
+            self.object.checkEOLSanity()
+        except BMObjectExpiredError:
+            if not BMConfigParser().get("inventory", "acceptmismatch"):
+                raise
+        try:
+            self.object.checkStream()
+        except BMObjectUnwantedStreamError:
+            if not BMConfigParser().get("inventory", "acceptmismatch"):
+                raise
         self.object.checkAlreadyHave()
 
         if self.object.objectType == protocol.OBJECT_GETPUBKEY:
@@ -448,9 +454,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     def handle_close(self, reason=None):
         self.set_state("close")
         if reason is None:
-            #logger.debug("%s:%i: closing, %s", self.destination.host, self.destination.port, ''.join(traceback.format_stack()))
             logger.debug("%s:%i: closing", self.destination.host, self.destination.port)
-            #traceback.print_stack()
         else:
             logger.debug("%s:%i: closing, %s", self.destination.host, self.destination.port, reason)
         AdvancedDispatcher.handle_close(self)

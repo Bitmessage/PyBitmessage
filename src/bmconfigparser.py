@@ -21,6 +21,7 @@ BMConfigDefaults = {
     },
     "inventory": {
         "storage": "sqlite",
+        "acceptmismatch": False,
     },
     "zlib": {
         'maxsize': 1048576
