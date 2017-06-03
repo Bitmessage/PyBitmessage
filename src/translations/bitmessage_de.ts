@@ -1420,9 +1420,9 @@ Receiver&apos;s required difficulty: %1 and %2</source>
             * discuss in chan(nel)s with other people
         </source>
         <translation>
-Wilkommen zu einfacher und sicherer Bitmessage
+Willkommen zu einfachem und sicherem Bitmessage
 * senden Sie Nachrichten an andere Leute
-* senden Sie Rundruf-Nachrichte wie bei Twitter oder
+* senden Sie Rundruf-Nachrichten wie bei Twitter oder
 * diskutieren Sie mit anderen Leuten in Chans
 </translation>
     </message>
