@@ -278,12 +278,17 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.object.checkProofOfWorkSufficient()
         try:
             self.object.checkEOLSanity()
-        except BMObjectExpiredError:
-            if not BMConfigParser().get("inventory", "acceptmismatch"):
-                raise
-        try:
             self.object.checkStream()
-        except BMObjectUnwantedStreamError:
+        except (BMObjectExpiredError, BMObjectUnwantedStreamError):
+            for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+                try:
+                    del connection.objectsNewtoThem[hashId]
+                except KeyError:
+                    pass
+                try:
+                    del connection.objectsNewToMe[hashId]
+                except KeyError:
+                    pass
             if not BMConfigParser().get("inventory", "acceptmismatch"):
                 raise
         self.object.checkAlreadyHave()
