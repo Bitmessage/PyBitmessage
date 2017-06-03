@@ -147,9 +147,9 @@ class TCPConnection(BMProto, TLSDispatcher):
     def sendBigInv(self):
         self.receiveQueue.put(("biginv", None))
 
-    def handle_connect_event(self):
+    def handle_connect(self):
         try:
-            AdvancedDispatcher.handle_connect_event(self)
+            AdvancedDispatcher.handle_connect(self)
         except socket.error as e:
             if e.errno in asyncore._DISCONNECTED:
                 logger.debug("%s:%i: Connection failed: %s" % (self.destination.host, self.destination.port, str(e)))
