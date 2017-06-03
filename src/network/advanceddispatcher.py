@@ -1,3 +1,4 @@
+import socket
 import Queue
 import time
 
@@ -98,6 +99,13 @@ class AdvancedDispatcher(asyncore.dispatcher):
             asyncore.update_sent(written)
             self.sentBytes += written
             self.slice_write_buf(written)
+
+    def handle_connect_event(self):
+        try:
+            asyncore.dispatcher.handle_connect_event(self)
+        except socket.error as e:
+            if e.args[0] not in asyncore._DISCONNECTED:
+                raise
 
     def handle_connect(self):
         self.lastTx = time.time()
