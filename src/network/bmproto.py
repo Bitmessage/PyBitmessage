@@ -280,7 +280,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.object.checkEOLSanity()
             self.object.checkStream()
         except (BMObjectExpiredError, BMObjectUnwantedStreamError):
-            for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+            for connection in network.connectionpool.BMConnectionPool().inboundConnections.values() + network.connectionpool.BMConnectionPool().outboundConnections.values():
                 try:
                     del connection.objectsNewtoThem[hashId]
                 except KeyError:
