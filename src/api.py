@@ -31,6 +31,7 @@ import state
 from pyelliptic.openssl import OpenSSL
 import queues
 from struct import pack
+import network.stats
 
 # Classes
 from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute,sqlStoredProcedure
@@ -959,7 +960,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
             networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
         else:
             networkStatus = 'connectedAndReceivingIncomingConnections'
-        return json.dumps({'networkConnections':len(shared.connectedHostsList),'numberOfMessagesProcessed':shared.numberOfMessagesProcessed, 'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed, 'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed, 'networkStatus':networkStatus, 'softwareName':'PyBitmessage','softwareVersion':softwareVersion}, indent=4, separators=(',', ': '))
+        return json.dumps({'networkConnections':len(network.stats.connectedHostsList()),'numberOfMessagesProcessed':shared.numberOfMessagesProcessed, 'numberOfBroadcastsProcessed':shared.numberOfBroadcastsProcessed, 'numberOfPubkeysProcessed':shared.numberOfPubkeysProcessed, 'networkStatus':networkStatus, 'softwareName':'PyBitmessage','softwareVersion':softwareVersion}, indent=4, separators=(',', ': '))
 
     def HandleDecodeAddress(self, params):
         # Return a meaningful decoding of an address.
