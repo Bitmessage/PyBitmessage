@@ -3,7 +3,7 @@
 try:
     import msgpack
 except ImportError:
-    import fallback.umsgpack as msgpack
+    import fallback.umsgpack.umsgpack as msgpack
 import string
 import zlib
 
