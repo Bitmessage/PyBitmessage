@@ -954,9 +954,9 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         return data
 
     def HandleClientStatus(self, params):
-        if len(shared.connectedHostsList) == 0:
+        if len(network.stats.connectedHostsList()) == 0:
             networkStatus = 'notConnected'
-        elif len(shared.connectedHostsList) > 0 and not shared.clientHasReceivedIncomingConnections:
+        elif len(network.stats.connectedHostsList()) > 0 and not shared.clientHasReceivedIncomingConnections:
             networkStatus = 'connectedButHaveNotReceivedIncomingConnections'
         else:
             networkStatus = 'connectedAndReceivingIncomingConnections'
