@@ -16,7 +16,7 @@ def createDefaultKnownNodes(appdata):
     stream1[state.Peer('75.167.159.54', 8444)] = int(time.time())
     stream1[state.Peer('95.165.168.168', 8444)] = int(time.time())
     stream1[state.Peer('85.180.139.241', 8444)] = int(time.time())
-    stream1[state.Peer('158.222.211.81', 8080)] = int(time.time())
+    stream1[state.Peer('158.222.217.190', 8080)] = int(time.time())
     stream1[state.Peer('178.62.12.187', 8448)] = int(time.time())
     stream1[state.Peer('24.188.198.204', 8111)] = int(time.time())
     stream1[state.Peer('109.147.204.113', 1195)] = int(time.time())
