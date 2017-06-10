@@ -58,8 +58,8 @@ def identiconize(address):
         idcon_render = Pydenticon(addBMIfNotPresent(address)+identiconsuffix, size*3)
         rendering = idcon_render._render()
         data = rendering.convert("RGBA").tostring("raw", "RGBA")
-        qim = QImage(data, size, size, QImage.Format_ARGB32)
-        pix = QPixmap.fromImage(qim)
+        qim = QtGui.QImage(data, size, size, QtGui.QImage.Format_ARGB32)
+        pix = QtGui.QPixmap.fromImage(qim)
         idcon = QtGui.QIcon()
         idcon.addPixmap(pix, QtGui.QIcon.Normal, QtGui.QIcon.Off)
         return idcon
