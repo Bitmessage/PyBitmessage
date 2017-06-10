@@ -49,6 +49,10 @@ class TCPConnection(BMProto, TLSDispatcher):
             TLSDispatcher.__init__(self, sock, server_side=True)
             self.connectedAt = time.time()
             logger.debug("Received connection from %s:%i", self.destination.host, self.destination.port)
+        elif address is not None and sock is not None:
+            TLSDispatcher.__init__(self, sock, server_side=False)
+            self.isOutbound = True
+            logger.debug("Outbound proxy connection to %s:%i", self.destination.host, self.destination.port)
         else:
             self.destination = address
             self.isOutbound = True
@@ -159,33 +163,37 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.connectedAt = time.time()
 
     def handle_read(self):
-        try:
-            TLSDispatcher.handle_read(self)
-        except socket.error as e:
-            logger.debug("%s:%i: Handle read fail: %s" % (self.destination.host, self.destination.port, str(e)))
+#        try:
+        TLSDispatcher.handle_read(self)
+#        except socket.error as e:
+#            logger.debug("%s:%i: Handle read fail: %s" % (self.destination.host, self.destination.port, str(e)))
 
     def handle_write(self):
-        try:
-            TLSDispatcher.handle_write(self)
-        except socket.error as e:
-            logger.debug("%s:%i: Handle write fail: %s" % (self.destination.host, self.destination.port, str(e)))
+#        try:
+        TLSDispatcher.handle_write(self)
+#        except socket.error as e:
+#            logger.debug("%s:%i: Handle write fail: %s" % (self.destination.host, self.destination.port, str(e)))
 
 
 class Socks5BMConnection(Socks5Connection, TCPConnection):
     def __init__(self, address):
         Socks5Connection.__init__(self, address=address)
+        TCPConnection.__init__(self, address=address, sock=self.socket)
+        self.set_state("init")
 
     def state_socks_handshake_done(self):
-        TCPConnection.state_init(self)
+        self.set_state("bm_header", expectBytes=protocol.Header.size)
         return False
 
 
 class Socks4aBMConnection(Socks4aConnection, TCPConnection):
     def __init__(self, address):
         Socks4aConnection.__init__(self, address=address)
+        TCPConnection.__init__(self, address=address, sock=self.socket)
+        self.set_state("init")
 
     def state_socks_handshake_done(self):
-        TCPConnection.state_init(self)
+        self.set_state("bm_header", expectBytes=protocol.Header.size)
         return False
 
 

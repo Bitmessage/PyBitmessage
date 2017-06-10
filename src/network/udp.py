@@ -3,6 +3,7 @@ from binascii import hexlify
 import hashlib
 import math
 import time
+import Queue
 import socket
 import struct
 import random

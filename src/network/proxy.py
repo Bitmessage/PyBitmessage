@@ -1,7 +1,10 @@
 import socket
 
+import state
+
 from advanceddispatcher import AdvancedDispatcher
 import asyncore_pollchoose as asyncore
+import network.connectionpool
 
 class ProxyError(Exception): pass
 class GeneralProxyError(ProxyError): pass
@@ -32,10 +35,25 @@ class Proxy(AdvancedDispatcher):
         self.__class__._auth = authTuple
 
     def __init__(self, address):
-        if type(address) != tuple or (len(address) < 2) or (type(str(address[0])) != type('')) or (type(address[1]) != int):
+        if not isinstance(address, state.Peer):
             raise ValueError
         AdvancedDispatcher.__init__(self)
         self.destination = address
+        self.isOutbound = True
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect(self.proxy)
         print "connecting in background to %s:%i" % (self.proxy[0], self.proxy[1])
+
+    def handle_connect(self):
+        try:
+            AdvancedDispatcher.handle_connect(self)
+        except socket.error as e:
+            if e.errno in asyncore._DISCONNECTED:
+                logger.debug("%s:%i: Connection failed: %s" % (self.destination.host, self.destination.port, str(e)))
+                return
+
+    def state_proxy_handshake_done(self):
+        self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, False))
+        self.connectedAt = time.time()
+        return False
+
