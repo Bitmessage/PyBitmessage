@@ -44,7 +44,7 @@ def sign(msg,hexPrivkey):
         # SHA256. Eventually this will become the default
         return makeCryptor(hexPrivkey).sign(msg, digest_alg=OpenSSL.EVP_sha256)
     else:
-        raise ValueError("Unknown digest algorithm %s" % (digestAlgo))
+        raise ValueError("Unknown digest algorithm %s" % (digestAlg))
 # Verifies with hex public key
 def verify(msg,sig,hexPubkey):
     # As mentioned above, we must upgrade gracefully to use SHA256. So
