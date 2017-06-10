@@ -927,7 +927,7 @@ def loadSent():
             statstr = "Message sent at "+t+"."
         elif status == "doingmsgpow":
             statstr = "The proof of work required to send the message has been queued."
-        elif status == "askreceived":
+        elif status == "ackreceived":
             t = l10n.formatTimestamp(lastactiontime, False)
             statstr = "Acknowledgment of the message received at "+t+"."
         elif status == "broadcastqueued":
