@@ -77,7 +77,7 @@ from class_objectHashHolder import objectHashHolder
 from class_singleWorker import singleWorker
 from dialogs import AddAddressDialog
 from helper_generic import powQueueSize
-from inventory import PendingDownloadQueue, PendingUpload, PendingUploadDeadlineException
+from inventory import Inventory, PendingDownloadQueue, PendingUpload, PendingUploadDeadlineException
 import knownnodes
 import paths
 from proofofwork import getPowType
@@ -2324,11 +2324,11 @@ class MyForm(settingsmixin.SMainWindow):
             # in the objectProcessorQueue to be processed
             if self.NewSubscriptionDialogInstance.ui.checkBoxDisplayMessagesAlreadyInInventory.isChecked():
                 status, addressVersion, streamNumber, ripe = decodeAddress(address)
-                shared.inventory.flush()
+                Inventory().flush()
                 doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
                     addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
                 tag = doubleHashOfAddressData[32:]
-                for value in shared.inventory.by_type_and_tag(3, tag):
+                for value in Inventory().by_type_and_tag(3, tag):
                     queues.objectProcessorQueue.put((value.type, value.payload))
 
     def click_pushButtonStatusIcon(self):
@@ -4398,11 +4398,11 @@ class NewSubscriptionDialog(QtGui.QDialog):
                 self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
                     _translate("MainWindow", "Address is an old type. We cannot display its past broadcasts."))
             else:
-                shared.inventory.flush()
+                Inventory().flush()
                 doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
                     addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
                 tag = doubleHashOfAddressData[32:]
-                count = len(shared.inventory.by_type_and_tag(3, tag))
+                count = len(Inventory().by_type_and_tag(3, tag))
                 if count == 0:
                     self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
                         _translate("MainWindow", "There are no recent broadcasts from this address to display."))
