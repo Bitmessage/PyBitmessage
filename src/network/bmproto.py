@@ -282,11 +282,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         except (BMObjectExpiredError, BMObjectUnwantedStreamError):
             for connection in network.connectionpool.BMConnectionPool().inboundConnections.values() + network.connectionpool.BMConnectionPool().outboundConnections.values():
                 try:
-                    del connection.objectsNewtoThem[hashId]
+                    del connection.objectsNewtoThem[self.object.inventoryHash]
                 except KeyError:
                     pass
                 try:
-                    del connection.objectsNewToMe[hashId]
+                    del connection.objectsNewToMe[self.object.inventoryHash]
                 except KeyError:
                     pass
             if not BMConfigParser().get("inventory", "acceptmismatch"):
@@ -459,7 +459,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     def handle_close(self, reason=None):
         self.set_state("close")
         if reason is None:
-            logger.debug("%s:%i: closing", self.destination.host, self.destination.port)
+            try:
+                logger.debug("%s:%i: closing", self.destination.host, self.destination.port)
+            except AttributeError:
+                logger.debug("Disconnected socket closing")
         else:
             logger.debug("%s:%i: closing, %s", self.destination.host, self.destination.port, reason)
         AdvancedDispatcher.handle_close(self)

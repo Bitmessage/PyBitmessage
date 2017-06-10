@@ -4,6 +4,7 @@ import struct
 from advanceddispatcher import AdvancedDispatcher
 import asyncore_pollchoose as asyncore
 from proxy import Proxy, ProxyError, GeneralProxyError
+import network.connectionpool
 
 class Socks5AuthError(ProxyError): pass
 class Socks5Error(ProxyError): pass
@@ -103,7 +104,7 @@ class Socks5(Proxy):
     def state_proxy_addr_2_2(self):
         if not self.read_buf_sufficient(self.address_length):
             return False
-        self.boundaddr = read_buf
+        self.boundaddr = self.read_buf
         self.set_state("proxy_port", self.address_length)
 
     def state_proxy_port(self):
@@ -115,13 +116,10 @@ class Socks5(Proxy):
             self.__proxypeername = (socket.inet_ntoa(self.ipaddr), self.destination[1])
         else:
             self.__proxypeername = (self.destination[0], self.destport)
-        self.set_state("socks_handshake_done", 2)
+        self.set_state("proxy_handshake_done", 2)
 
     def proxy_sock_name(self):
        return socket.inet_ntoa(self.__proxysockname[0])
-
-    def state_socks_handshake_done(self):
-        return False
 
 
 class Socks5Connection(Socks5):

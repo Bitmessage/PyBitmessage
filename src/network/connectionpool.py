@@ -7,6 +7,7 @@ import re
 from bmconfigparser import BMConfigParser
 from debug import logger
 import helper_bootstrap
+from network.proxy import Proxy
 import network.bmproto
 import network.tcp
 import network.udp
@@ -129,6 +130,8 @@ class BMConnectionPool(object):
             if not self.bootstrapped:
                 helper_bootstrap.dns()
                 self.bootstrapped = True
+                Proxy.proxy = (BMConfigParser().safeGet("bitmessagesettings", "sockshostname"),
+                        BMConfigParser().safeGetInt("bitmessagesettings", "socksport"))
             established = sum(1 for c in self.outboundConnections.values() if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
             if established < BMConfigParser().safeGetInt("bitmessagesettings", "maxoutboundconnections"):

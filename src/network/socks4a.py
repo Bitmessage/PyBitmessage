@@ -43,7 +43,7 @@ class Socks4a(Proxy):
             self.__proxypeername = (socket.inet_ntoa(self.ipaddr), self.destination[1])
         else:
             self.__proxypeername = (self.destination[0], self.destport)
-        self.set_state("socks_handshake_done", 8)
+        self.set_state("proxy_handshake_done", 8)
 
     def proxy_sock_name(self):
        return socket.inet_ntoa(self.__proxysockname[0])
