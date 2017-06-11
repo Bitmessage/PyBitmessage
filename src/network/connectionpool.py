@@ -69,7 +69,7 @@ class BMConnectionPool(object):
 
     def removeConnection(self, connection):
         if isinstance(connection, network.udp.UDPSocket):
-            del self.udpSockets[connection.destination.host]
+            del self.udpSockets[connection.listening.host]
         if isinstance(connection, network.tcp.TCPServer):
             del self.listeningSockets[state.Peer(connection.destination.host, connection.destination.port)]
         elif connection.isOutbound:
@@ -109,7 +109,7 @@ class BMConnectionPool(object):
             udpSocket = network.udp.UDPSocket(host=host)
         else:
             udpSocket = network.udp.UDPSocket(host=bind)
-        self.udpSockets[udpSocket.destination.host] = udpSocket
+        self.udpSockets[udpSocket.listening.host] = udpSocket
 
     def loop(self):
         # defaults to empty loop if outbound connections are maxed
