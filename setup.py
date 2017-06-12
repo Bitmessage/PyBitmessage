@@ -52,7 +52,22 @@ packageName = {
         "openSUSE": "python-msgpack-python",
         "Fedora": "python2-msgpack",
         "Guix": "python2-msgpack",
-        "Gentoo": "dev-python/msgpack"
+        "Gentoo": "dev-python/msgpack",
+        "optional": True,
+        "description": "python-msgpack is recommended for messages coding"
+    },
+    "umsgpack": {
+        "FreeBSD": "",
+        "OpenBSD": "",
+        "Fedora": "",
+        "openSUSE": "",
+        "Guix": "",
+        "Ubuntu 12": "",
+        "Debian": "python-u-msgpack",
+        "Ubuntu": "python-u-msgpack",
+        "Gentoo": "dev-python/u-msgpack",
+        "optional": True,
+        "description": "umsgpack can be used instead of msgpack"
     },
     "pyopencl": {
         "FreeBSD": "py27-pyopencl",
@@ -202,9 +217,25 @@ if __name__ == "__main__":
     )
 
     installRequires = []
-    # this will silently accept alternative providers of msgpack if they are already installed
+    packages = [
+        'pybitmessage',
+        'pybitmessage.bitmessageqt',
+        'pybitmessage.bitmessagecurses',
+        'pybitmessage.messagetypes',
+        'pybitmessage.network',
+        'pybitmessage.pyelliptic',
+        'pybitmessage.socks',
+        'pybitmessage.storage',
+        'pybitmessage.plugins'
+    ]
+    # this will silently accept alternative providers of msgpack
+    # if they are already installed
     if "msgpack" in detectPrereqs():
         installRequires.append("msgpack-python")
+    elif "umsgpack" in detectPrereqs():
+        installRequires.append("umsgpack")
+    else:
+        packages += ['pybitmessage.fallback', 'pybitmessage.fallback.umsgpack']
 
     try:
         dist = setup(
@@ -234,19 +265,7 @@ if __name__ == "__main__":
                 "Topic :: Software Development :: Libraries :: Python Modules",
             ],
             package_dir={'pybitmessage': 'src'},
-            packages=[
-                'pybitmessage',
-                'pybitmessage.bitmessageqt',
-                'pybitmessage.bitmessagecurses',
-                'pybitmessage.messagetypes',
-                'pybitmessage.network',
-                'pybitmessage.pyelliptic',
-                'pybitmessage.socks',
-                'pybitmessage.storage',
-                'pybitmessage.fallback',
-                'pybitmessage.fallback.umsgpack',
-                'pybitmessage.plugins'
-            ],
+            packages=packages,
             package_data={'': [
                 'bitmessageqt/*.ui', 'bitmsghash/*.cl', 'sslkeys/*.pem',
                 'translations/*.ts', 'translations/*.qm',

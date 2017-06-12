@@ -204,7 +204,9 @@ def check_msgpack():
     try:
         import msgpack
     except ImportError:
-        logger.error('The msgpack package is not available. PyBitmessage requires msgpack.')
+        logger.error(
+            'The msgpack package is not available.'
+            'It is highly recommended for messages coding.')
         if sys.platform.startswith('openbsd'):
             logger.error('On OpenBSD, try running "pkg_add py-msgpack" as root.')
         elif sys.platform.startswith('freebsd'):
@@ -224,7 +226,6 @@ def check_msgpack():
                         else:
                             logger.error('If your package manager does not have this package, try running "pip install msgpack-python".')
 
-        return False
     return True
 
 def check_dependencies(verbose = False, optional = False):
