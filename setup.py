@@ -242,6 +242,9 @@ if __name__ == "__main__":
                 'pybitmessage.network',
                 'pybitmessage.pyelliptic',
                 'pybitmessage.socks',
+                'pybitmessage.storage',
+                'pybitmessage.fallback',
+                'pybitmessage.fallback.umsgpack',
                 'pybitmessage.plugins'
             ],
             package_data={'': [
