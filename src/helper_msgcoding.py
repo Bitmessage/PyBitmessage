@@ -3,12 +3,14 @@
 try:
     import msgpack
 except ImportError:
-    import fallback.umsgpack.umsgpack as msgpack
+    try:
+        import umsgpack as msgpack
+    except ImportError:
+        import fallback.umsgpack.umsgpack as msgpack
 import string
 import zlib
 
 from bmconfigparser import BMConfigParser
-import shared
 from debug import logger
 import messagetypes
 from tr import _translate
@@ -17,6 +19,7 @@ BITMESSAGE_ENCODING_IGNORE = 0
 BITMESSAGE_ENCODING_TRIVIAL = 1
 BITMESSAGE_ENCODING_SIMPLE = 2
 BITMESSAGE_ENCODING_EXTENDED = 3
+
 
 class DecompressionSizeException(Exception):
     def __init__(self, size):
