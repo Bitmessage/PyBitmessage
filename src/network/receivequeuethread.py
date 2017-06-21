@@ -1,4 +1,5 @@
 import Queue
+import sys
 import threading
 import time
 
@@ -17,7 +18,6 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
         threading.Thread.__init__(self, name="ReceiveQueueThread")
         self.initStop()
         self.name = "ReceiveQueueThread"
-        BMConnectionPool()
         logger.info("init receive queue thread")
 
     def run(self):
@@ -25,6 +25,11 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
         while not self._stopped and state.shutdown == 0:
             if lastprinted < int(time.time()):
                 lastprinted = int(time.time())
+            try:
+                sys._getframe(200)
+                logger.error("Stack depth warning")
+            except ValueError:
+                pass
             processed = 0
             for i in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
                 if self._stopped:
@@ -61,9 +66,11 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
         # Select all hashes for objects in this stream.
         bigInvList = {}
         for stream in connection.streams:
-            for objHash in Inventory().unexpired_hashes_by_stream(stream):
-                bigInvList[objHash] = 0
-                connection.objectsNewToThem[objHash] = True
+            # may lock for a long time, but I think it's better than thousands of small locks
+            with connection.objectsNewToThemLock:
+                for objHash in Inventory().unexpired_hashes_by_stream(stream):
+                    bigInvList[objHash] = 0
+                    connection.objectsNewToThem[objHash] = True
         objectCount = 0
         payload = b''
         # Now let us start appending all of these hashes together. They will be

@@ -57,7 +57,7 @@ import warnings
 import os
 from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, EINVAL, \
      ENOTCONN, ESHUTDOWN, EISCONN, EBADF, ECONNABORTED, EPIPE, EAGAIN, \
-     ECONNREFUSED, EHOSTUNREACH, ENETUNREACH, ENOTSOCK, EINTR, \
+     ECONNREFUSED, EHOSTUNREACH, ENETUNREACH, ENOTSOCK, EINTR, ETIMEDOUT, \
      errorcode
 try:
     from errno import WSAEWOULDBLOCK
@@ -68,10 +68,8 @@ try:
 except (ImportError, AttributeError):
     WSAENOTSOCK = ENOTSOCK
 
-from ssl import SSLError, SSL_ERROR_WANT_READ, SSL_ERROR_WANT_WRITE
-
 _DISCONNECTED = frozenset((ECONNRESET, ENOTCONN, ESHUTDOWN, ECONNABORTED, EPIPE,
-                           EBADF, ECONNREFUSED, EHOSTUNREACH, ENETUNREACH))
+                           EBADF, ECONNREFUSED, EHOSTUNREACH, ENETUNREACH, ETIMEDOUT))
 
 OP_READ = 1
 OP_WRITE = 2
@@ -563,11 +561,6 @@ class dispatcher:
         try:
             result = self.socket.send(data)
             return result
-        except SSLError as err:
-            if err.errno == SSL_ERROR_WANT_WRITE:
-                return 0
-            else:
-                raise
         except socket.error as why:
             if why.args[0] in (EAGAIN, EWOULDBLOCK, WSAEWOULDBLOCK):
                 return 0
@@ -587,11 +580,6 @@ class dispatcher:
                 return b''
             else:
                 return data
-        except SSLError as err:
-            if err.errno == SSL_ERROR_WANT_READ:
-                return b''
-            else:
-                raise
         except socket.error as why:
             # winsock sometimes raises ENOTCONN
             if why.args[0] in (EAGAIN, EWOULDBLOCK, WSAEWOULDBLOCK):
@@ -616,6 +604,11 @@ class dispatcher:
     # cheap inheritance, used to pass all other attribute
     # references to the underlying socket object.
     def __getattr__(self, attr):
+        try:
+            sys._getframe(200)
+            logger.error("Stack depth warning")
+        except ValueError:
+            pass
         try:
             retattr = getattr(self.socket, attr)
         except AttributeError:

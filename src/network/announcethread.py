@@ -16,7 +16,6 @@ class AnnounceThread(threading.Thread, StoppableThread):
         threading.Thread.__init__(self, name="AnnounceThread")
         self.initStop()
         self.name = "AnnounceThread"
-        BMConnectionPool()
         logger.info("init announce thread")
 
     def run(self):

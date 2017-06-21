@@ -13,6 +13,8 @@ import network.asyncore_pollchoose as asyncore
 import paths
 import protocol
 
+_DISCONNECTED_SSL = frozenset((ssl.SSL_ERROR_EOF,))
+
 class TLSDispatcher(AdvancedDispatcher):
     def __init__(self, address=None, sock=None,
                  certfile=None, keyfile=None, server_side=False, ciphers=protocol.sslProtocolCiphers):
@@ -90,6 +92,14 @@ class TLSDispatcher(AdvancedDispatcher):
                 return AdvancedDispatcher.handle_read(self)
         except AttributeError:
             return AdvancedDispatcher.handle_read(self)
+        except ssl.SSLError as err:
+            if err.errno == ssl.SSL_ERROR_WANT_READ:
+                return
+            elif err.errno in _DISCONNECTED_SSL:
+                self.handle_close()
+                return
+            else:
+                raise
 
     def handle_write(self):
         try:
@@ -102,6 +112,14 @@ class TLSDispatcher(AdvancedDispatcher):
                 return AdvancedDispatcher.handle_write(self)
         except AttributeError:
             return AdvancedDispatcher.handle_read(self)
+        except ssl.SSLError as err:
+            if err.errno == ssl.SSL_ERROR_WANT_WRITE:
+                return 0
+            elif err.errno in _DISCONNECTED_SSL:
+                self.handle_close()
+                return 0
+            else:
+                raise
 
     def tls_handshake(self):
         # wait for flush
