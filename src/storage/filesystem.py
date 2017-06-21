@@ -65,7 +65,7 @@ class FilesystemInventory(InventoryStorage):
                 self._inventory[value.stream] = {}
                 self._inventory[value.stream][hash] = value
 
-    def __delitem__(self, hash):
+    def delHashId(self, hash):
         for stream in self._inventory.keys():
             try:
                 del self._inventory[stream][hash]
@@ -172,4 +172,4 @@ class FilesystemInventory(InventoryStorage):
                 if item.expires < minTime:
                     deletes.append(hashId)
         for hashId in deletes:
-            del self[hashId]
+            self.delHashId(hashId)
