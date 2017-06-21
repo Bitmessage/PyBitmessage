@@ -58,7 +58,7 @@ from network.networkthread import BMNetworkThread
 from network.receivequeuethread import ReceiveQueueThread
 from network.announcethread import AnnounceThread
 from network.invthread import InvThread
-#from network.downloadthread import DownloadThread
+from network.downloadthread import DownloadThread
 
 # Helper Functions
 import helper_bootstrap
@@ -261,6 +261,7 @@ class Main:
             singleAPIThread.start()
 
         if BMConfigParser().get("network", "asyncore"):
+            BMConnectionPool()
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = True
             asyncoreThread.start()
@@ -273,6 +274,9 @@ class Main:
             state.invThread = InvThread()
             state.invThread.daemon = True
             state.invThread.start()
+            downloadThread = DownloadThread()
+            downloadThread.daemon = True
+            downloadThread.start()
 
         connectToStream(1)
 

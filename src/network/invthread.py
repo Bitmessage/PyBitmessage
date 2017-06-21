@@ -40,7 +40,6 @@ class InvThread(threading.Thread, StoppableThread):
                     else:
                        BMConnectionPool().handleReceivedObject(data[0], data[1], data[2])
                     self.holdHash (data[0], data[1])
-                    #print "Holding hash %i, %s" % (stream, hexlify(hash))
                 except Queue.Empty:
                     break
 
@@ -50,13 +49,15 @@ class InvThread(threading.Thread, StoppableThread):
                     for stream in connection.streams:
                         try:
                             for hashId in self.collectionOfInvs[iterator][stream]:
-                                if hashId in connection.objectsNewToThem:
+                                try:
+                                    with connection.objectsNewToThemLock:
+                                        del connection.objectsNewToThem[hashId]
                                     hashes.append(hashId)
-                                    del connection.objectsNewToThem[hashId]
+                                except KeyError:
+                                    pass
                         except KeyError:
                             continue
                     if len(hashes) > 0:
-                        #print "sending inv of %i" % (len(hashes))
                         connection.writeQueue.put(protocol.CreatePacket('inv', addresses.encodeVarint(len(hashes)) + "".join(hashes)))
                 self.collectionOfInvs[iterator] = {}
             iterator += 1

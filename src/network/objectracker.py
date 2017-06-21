@@ -2,6 +2,7 @@ from Queue import Queue
 import time
 from threading import RLock
 
+from debug import logger
 from inventory import Inventory
 from network.downloadqueue import DownloadQueue
 from network.uploadqueue import UploadQueue
@@ -33,8 +34,6 @@ class ObjectTracker(object):
         self.objectsNewToMeLock = RLock()
         self.objectsNewToThem = {}
         self.objectsNewToThemLock = RLock()
-        self.downloadPending = 0
-        self.downloadQueue = Queue()
         self.initInvBloom()
         self.initAddrBloom()
         self.lastCleaned = time.time()
@@ -77,16 +76,14 @@ class ObjectTracker(object):
     def handleReceivedInventory(self, hashId):
         if haveBloom:
             self.invBloom.add(hashId)
-        elif hashId in Inventory():
-            try:
-                with self.objectsNewToThemLock:
-                    del self.objectsNewToThem[hashId]
-            except KeyError:
-                pass
-        else:
+        try:
+            with self.objectsNewToThemLock:
+                del self.objectsNewToThem[hashId]
+        except KeyError:
+            pass
+        if hashId not in Inventory():
             with self.objectsNewToMeLock:
                 self.objectsNewToMe[hashId] = True
-#            self.DownloadQueue.put(hashId)
 
     def hasAddr(self, addr):
         if haveBloom:

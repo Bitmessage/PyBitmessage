@@ -119,7 +119,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except BMObjectInvalidError:
                 logger.debug("object invalid, skipping")
             except BMObjectAlreadyHaveError:
-                logger.debug("already got object, skipping")
+                logger.debug("%s:%i already got object, skipping", self.destination.host, self.destination.port)
             except struct.error:
                 logger.debug("decoding error, skipping")
         else:
@@ -260,10 +260,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         for i in items:
             self.receiveQueue.put(("inv", i))
-            self.handleReceivedInventory(i)
 
-        payload = addresses.encodeVarint(len(self.objectsNewToMe)) + ''.join(self.objectsNewToMe.keys())
-        self.writeQueue.put(protocol.CreatePacket('getdata', payload))
         return True
 
     def bm_command_object(self):
@@ -279,19 +276,23 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         try:
             self.object.checkEOLSanity()
             self.object.checkStream()
-        except (BMObjectExpiredError, BMObjectUnwantedStreamError):
+            self.object.checkAlreadyHave()
+        except (BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectAlreadyHaveError) as e:
             for connection in network.connectionpool.BMConnectionPool().inboundConnections.values() + network.connectionpool.BMConnectionPool().outboundConnections.values():
                 try:
-                    del connection.objectsNewtoThem[self.object.inventoryHash]
+                    with connection.objectsNewToThemLock:
+                        del connection.objectsNewToThem[self.object.inventoryHash]
                 except KeyError:
                     pass
                 try:
-                    del connection.objectsNewToMe[self.object.inventoryHash]
+                    with connection.objectsNewToMeLock:
+                        del connection.objectsNewToMe[self.object.inventoryHash]
                 except KeyError:
                     pass
-            if not BMConfigParser().get("inventory", "acceptmismatch"):
-                raise
-        self.object.checkAlreadyHave()
+            if not BMConfigParser().get("inventory", "acceptmismatch") or \
+                    isinstance(e, BMObjectAlreadyHaveError) or \
+                    isinstance(e, BMObjectExpiredError):
+                raise e
 
         if self.object.objectType == protocol.OBJECT_GETPUBKEY:
             self.object.checkGetpubkey()

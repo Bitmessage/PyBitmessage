@@ -1,5 +1,6 @@
-import socket
 import Queue
+import socket
+import sys
 import time
 
 import asyncore_pollchoose as asyncore
@@ -42,6 +43,11 @@ class AdvancedDispatcher(asyncore.dispatcher):
         if not self.connected:
             return
         maxLoop = 20
+        try:
+            sys._getframe(200)
+            logger.error("Stack depth warning")
+        except ValueError:
+            pass
         while maxLoop > 0:
             try:
 #                print "Trying to handle state \"%s\"" % (self.state)

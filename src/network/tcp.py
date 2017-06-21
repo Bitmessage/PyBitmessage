@@ -212,6 +212,12 @@ class TCPServer(AdvancedDispatcher):
         if pair is not None:
             sock, addr = pair
             state.ownAddresses[state.Peer(sock.getsockname()[0], sock.getsockname()[1])] = True
+            if len(network.connectionpool.BMConnectionPool().inboundConnections) + \
+                len(network.connectionpool.BMConnectionPool().outboundConnections) > \
+                BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections") + \
+                BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections"):
+                close(sock)
+                return
             try:
                 network.connectionpool.BMConnectionPool().addConnection(TCPConnection(sock=sock))
             except socket.error:
