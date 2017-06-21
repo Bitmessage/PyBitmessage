@@ -309,9 +309,6 @@ class Main:
         else:
             BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
 
-            while True:
-                time.sleep(20)
-
     def daemonize(self):
         if os.fork():
             exit(0)
