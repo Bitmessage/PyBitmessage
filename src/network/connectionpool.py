@@ -69,7 +69,7 @@ class BMConnectionPool(object):
     def removeConnection(self, connection):
         if isinstance(connection, network.udp.UDPSocket):
             del self.udpSockets[connection.listening.host]
-        if isinstance(connection, network.tcp.TCPServer):
+        elif isinstance(connection, network.tcp.TCPServer):
             del self.listeningSockets[state.Peer(connection.destination.host, connection.destination.port)]
         elif connection.isOutbound:
             try:
@@ -163,24 +163,26 @@ class BMConnectionPool(object):
 
                     self.lastSpawned = time.time()
 
-        if acceptConnections and len(self.listeningSockets) == 0:
-            self.startListening()
-            logger.info('Listening for incoming connections.')
-        if acceptConnections and len(self.udpSockets) == 0:
-            if BMConfigParser().safeGet("network", "bind") is None:
-                self.startUDPSocket()
-            else:
-                for bind in re.sub("[^\w.]+", " ", BMConfigParser().safeGet("network", "bind")).split():
-                    self.startUDPSocket(bind)
-            logger.info('Starting UDP socket(s).')
-        if len(self.listeningSockets) > 0 and not acceptConnections:
-            for i in self.listeningSockets:
-                i.handle_close()
-            logger.info('Stopped listening for incoming connections.')
-        if len(self.udpSockets) > 0 and not acceptConnections:
-            for i in self.udpSockets:
-                i.handle_close()
-            logger.info('Stopped udp sockets.')
+        if acceptConnections:
+            if not self.listeningSockets:
+                self.startListening()
+                logger.info('Listening for incoming connections.')
+            if not self.udpSockets:
+                if BMConfigParser().safeGet("network", "bind") is None:
+                    self.startUDPSocket()
+                else:
+                    for bind in re.sub("[^\w.]+", " ", BMConfigParser().safeGet("network", "bind")).split():
+                        self.startUDPSocket(bind)
+                logger.info('Starting UDP socket(s).')
+        else:
+            if self.listeningSockets:
+                for i in self.listeningSockets:
+                    i.handle_close()
+                logger.info('Stopped listening for incoming connections.')
+            if self.udpSockets:
+                for i in self.udpSockets:
+                    i.handle_close()
+                logger.info('Stopped udp sockets.')
 
 #        while len(asyncore.socket_map) > 0 and state.shutdown == 0:
 #            print "loop, state = %s" % (proxy.state)
