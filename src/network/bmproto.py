@@ -263,7 +263,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     def bm_command_object(self):
         objectOffset = self.payloadOffset
         nonce, expiresTime, objectType, version, streamNumber = self.decode_payload_content("QQIvv")
-        self.object = BMObject(nonce, expiresTime, objectType, version, streamNumber, self.payload)
+        self.object = BMObject(nonce, expiresTime, objectType, version, streamNumber, self.payload, self.payloadOffset)
 
         if len(self.payload) - self.payloadOffset > BMProto.maxObjectPayloadSize:
             logger.info('The payload length of this object is too large (%s bytes). Ignoring it.' % len(self.payload) - self.payloadOffset)
@@ -291,15 +291,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     isinstance(e, BMObjectExpiredError):
                 raise e
 
-        if self.object.objectType == protocol.OBJECT_GETPUBKEY:
-            self.object.checkGetpubkey()
-        elif self.object.objectType == protocol.OBJECT_PUBKEY:
-            self.object.checkPubkey(self.payload[self.payloadOffset:self.payloadOffset+32])
-        elif self.object.objectType == protocol.OBJECT_MSG:
-            self.object.checkMessage()
-        elif self.object.objectType == protocol.OBJECT_BROADCAST:
-            self.object.checkBroadcast(self.payload[self.payloadOffset:self.payloadOffset+32])
-        # other objects don't require other types of tests
+        self.object.checkObjectByType()
+
         Inventory()[self.object.inventoryHash] = (
                 self.object.objectType, self.object.streamNumber, self.payload[objectOffset:], self.object.expiresTime, self.object.tag)
         objectProcessorQueue.put((self.object.objectType,self.object.data))
