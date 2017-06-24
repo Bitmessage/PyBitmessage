@@ -1,32 +1,15 @@
-import base64
-from binascii import hexlify
-import hashlib
-import math
 import time
 import Queue
 import socket
-import struct
-import random
-import traceback
 
-from addresses import calculateInventoryHash
 from debug import logger
-from inventory import Inventory
-import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
-from network.bmproto import BMProtoError, BMProtoInsufficientDataError, BMProtoExcessiveDataError, BMProto
-from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
-import network.connectionpool
-from network.downloadqueue import DownloadQueue
-from network.node import Node
+from network.bmproto import BMProtoError, BMProtoInsufficientDataError, BMProto
+from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, BMObjectExpiredError, BMObjectInvalidError, BMObjectAlreadyHaveError
 import network.asyncore_pollchoose as asyncore
 from network.objectracker import ObjectTracker
-from network.uploadqueue import UploadQueue, UploadElem, AddrUploadQueue, ObjUploadQueue
 
-import addresses
-from bmconfigparser import BMConfigParser
-from queues import objectProcessorQueue, peerDiscoveryQueue, portCheckerQueue, UISignalQueue
-import shared
+from queues import objectProcessorQueue, peerDiscoveryQueue, UISignalQueue
 import state
 import protocol
 
@@ -35,7 +18,7 @@ class UDPSocket(BMProto):
     announceInterval = 60
 
     def __init__(self, host=None, sock=None):
-        BMProto.__init__(self, sock)
+        super(BMProto, self).__init__(sock=sock)
         self.verackReceived = True
         self.verackSent = True
         # TODO sort out streams

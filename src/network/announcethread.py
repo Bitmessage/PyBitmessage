@@ -1,4 +1,3 @@
-import Queue
 import threading
 import time
 
@@ -8,7 +7,6 @@ from helper_threading import StoppableThread
 from network.bmproto import BMProto
 from network.connectionpool import BMConnectionPool
 from network.udp import UDPSocket
-import protocol
 import state
 
 class AnnounceThread(threading.Thread, StoppableThread):
@@ -33,6 +31,3 @@ class AnnounceThread(threading.Thread, StoppableThread):
             for stream in state.streamsInWhichIAmParticipating:
                 addr = (stream, state.Peer('127.0.0.1', BMConfigParser().safeGetInt("bitmessagesettings", "port")), time.time())
                 connection.writeQueue.put(BMProto.assembleAddr([addr]))
-
-    def stopThread(self):
-        super(AnnounceThread, self).stopThread()

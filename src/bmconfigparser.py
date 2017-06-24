@@ -36,14 +36,13 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
                 raise TypeError("option values must be strings")
         return ConfigParser.ConfigParser.set(self, section, option, value)
 
-    def get(self, section, option, raw=False, vars=None):
+    def get(self, section, option, raw=False, variables=None):
         try:
             if section == "bitmessagesettings" and option == "timeformat":
-                return ConfigParser.ConfigParser.get(self, section, option, raw, vars)
-            else:
-                return ConfigParser.ConfigParser.get(self, section, option, True, vars)
+                return ConfigParser.ConfigParser.get(self, section, option, raw, variables)
+            return ConfigParser.ConfigParser.get(self, section, option, True, variables)
         except ConfigParser.InterpolationError:
-                return ConfigParser.ConfigParser.get(self, section, option, True, vars)
+            return ConfigParser.ConfigParser.get(self, section, option, True, variables)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError) as e:
             try:
                 return BMConfigDefaults[section][option]
@@ -68,8 +67,8 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, ValueError, AttributeError):
             return default
 
-    def items(self, section, raw=False, vars=None):
-        return ConfigParser.ConfigParser.items(self, section, True, vars)
+    def items(self, section, raw=False, variables=None):
+        return ConfigParser.ConfigParser.items(self, section, True, variables)
 
     def addresses(self):
         return filter(lambda x: x.startswith('BM-'), BMConfigParser().sections())

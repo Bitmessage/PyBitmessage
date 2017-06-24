@@ -36,14 +36,14 @@ class InvThread(threading.Thread, StoppableThread):
                 try:
                     data = invQueue.get(False)
                     if len(data) == 2:
-                       BMConnectionPool().handleReceivedObject(data[0], data[1])
+                        BMConnectionPool().handleReceivedObject(data[0], data[1])
                     else:
-                       BMConnectionPool().handleReceivedObject(data[0], data[1], data[2])
+                        BMConnectionPool().handleReceivedObject(data[0], data[1], data[2])
                     self.holdHash (data[0], data[1])
                 except Queue.Empty:
                     break
 
-            if len(self.collectionOfInvs[iterator]) > 0:
+            if self.collectionOfInvs[iterator]:
                 for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
                     hashes = []
                     for stream in connection.streams:
@@ -57,23 +57,23 @@ class InvThread(threading.Thread, StoppableThread):
                                     pass
                         except KeyError:
                             continue
-                    if len(hashes) > 0:
+                    if hashes:
                         connection.writeQueue.put(protocol.CreatePacket('inv', addresses.encodeVarint(len(hashes)) + "".join(hashes)))
                 self.collectionOfInvs[iterator] = {}
             iterator += 1
             iterator %= InvThread.size
             self.stop.wait(1)
 
-    def holdHash(self, stream, hash):
+    def holdHash(self, stream, hashId):
         i = random.randrange(0, InvThread.size)
         if stream not in self.collectionOfInvs[i]:
             self.collectionOfInvs[i][stream] = []
-        self.collectionOfInvs[i][stream].append(hash)
+        self.collectionOfInvs[i][stream].append(hashId)
 
-    def hasHash(self, hash):
+    def hasHash(self, hashId):
         for streamlist in self.collectionOfInvs:
             for stream in streamlist:
-                if hash in streamlist[stream]:
+                if hashId in streamlist[stream]:
                     return True
         return False
 

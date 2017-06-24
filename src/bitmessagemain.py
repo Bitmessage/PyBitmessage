@@ -27,7 +27,6 @@ import socket
 import ctypes
 from struct import pack
 from subprocess import call
-import time
 
 from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
 from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
