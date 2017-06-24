@@ -21,7 +21,7 @@ def connectedHostsList():
             if not i.fullyEstablished:
                 continue
             try:
-                retval.append((i.destination, i.streams[0]))
+                retval.append(i)
             except AttributeError:
                 pass
         return retval
