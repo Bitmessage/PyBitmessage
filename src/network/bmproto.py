@@ -7,6 +7,7 @@ import socket
 import struct
 
 from addresses import calculateInventoryHash
+from bmconfigparser import BMConfigParser
 from debug import logger
 from inventory import Inventory
 import knownnodes
@@ -272,10 +273,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.object.checkProofOfWorkSufficient()
         try:
             self.object.checkEOLSanity()
-            self.object.checkStream()
             self.object.checkAlreadyHave()
-        except (BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectAlreadyHaveError) as e:
-            for connection in network.connectionpool.BMConnectionPool().inboundConnections.values() + network.connectionpool.BMConnectionPool().outboundConnections.values():
+        except (BMObjectExpiredError, BMObjectAlreadyHaveError) as e:
+            for connection in network.connectionpool.BMConnectionPool().inboundConnections.values() + \
+                    network.connectionpool.BMConnectionPool().outboundConnections.values():
                 try:
                     with connection.objectsNewToThemLock:
                         del connection.objectsNewToThem[self.object.inventoryHash]
@@ -286,9 +287,24 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                         del connection.objectsNewToMe[self.object.inventoryHash]
                 except KeyError:
                     pass
-            if not BMConfigParser().get("inventory", "acceptmismatch") or \
-                    isinstance(e, BMObjectAlreadyHaveError) or \
-                    isinstance(e, BMObjectExpiredError):
+            raise e
+        try:
+            self.object.checkStream()
+        except (BMObjectUnwantedStreamError,) as e:
+            for connection in network.connectionpool.BMConnectionPool().inboundConnections.values() + \
+                    network.connectionpool.BMConnectionPool().outboundConnections.values():
+                try:
+                    with connection.objectsNewToMeLock:
+                        del connection.objectsNewToMe[self.object.inventoryHash]
+                except KeyError:
+                    pass
+                if not BMConfigParser().get("inventory", "acceptmismatch"):
+                    try:
+                        with connection.objectsNewToThemLock:
+                            del connection.objectsNewToThem[self.object.inventoryHash]
+                    except KeyError:
+                        pass
+            if not BMConfigParser().get("inventory", "acceptmismatch"):
                 raise e
 
         self.object.checkObjectByType()
