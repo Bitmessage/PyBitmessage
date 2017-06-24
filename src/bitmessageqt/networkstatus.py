@@ -16,6 +16,8 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         super(NetworkStatus, self).__init__(parent)
         widgets.load('networkstatus.ui', self)
 
+        self.tableWidgetConnectionCount.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+
         self.startup = time.localtime()
         self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
             l10n.formatTimestamp(self.startup)))
@@ -74,51 +76,41 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             "networkstatus", "Up: %1/s  Total: %2").arg(self.formatByteRate(network.stats.uploadSpeed()), self.formatBytes(network.stats.sentBytes())))
 
     def updateNetworkStatusTab(self):
-        totalNumberOfConnectionsFromAllStreams = 0  # One would think we could use len(sendDataQueues) for this but the number doesn't always match: just because we have a sendDataThread running doesn't mean that the connection has been fully established (with the exchange of version messages).
-        streamNumberTotals = {}
         connectedHosts = network.stats.connectedHostsList()
-        for host, streamNumber in connectedHosts:
-            if not streamNumber in streamNumberTotals:
-                streamNumberTotals[streamNumber] = 1
-            else:
-                streamNumberTotals[streamNumber] += 1
 
-        while self.tableWidgetConnectionCount.rowCount() > 0:
-            self.tableWidgetConnectionCount.removeRow(0)
-        for streamNumber, connectionCount in streamNumberTotals.items():
+        self.tableWidgetConnectionCount.setUpdatesEnabled(False)
+        #self.tableWidgetConnectionCount.setSortingEnabled(False)
+        #self.tableWidgetConnectionCount.clearContents()
+        self.tableWidgetConnectionCount.setRowCount(0)
+        for i in connectedHosts:
             self.tableWidgetConnectionCount.insertRow(0)
-            if streamNumber == 0:
-                newItem = QtGui.QTableWidgetItem("?")
+            self.tableWidgetConnectionCount.setItem(0, 0,
+                QtGui.QTableWidgetItem("%s:%i" % (i.destination.host, i.destination.port))
+                )
+            self.tableWidgetConnectionCount.setItem(0, 1,
+                QtGui.QTableWidgetItem("%s" % (i.userAgent))
+                )
+            self.tableWidgetConnectionCount.setItem(0, 2,
+                QtGui.QTableWidgetItem("%s" % (i.tlsVersion))
+                )
+            self.tableWidgetConnectionCount.setItem(0, 3,
+                QtGui.QTableWidgetItem("%s" % (",".join(map(str,i.streams))))
+                )
+            if i.isOutbound:
+                brush = QtGui.QBrush(QtGui.QColor("yellow"), QtCore.Qt.SolidPattern)
             else:
-                newItem = QtGui.QTableWidgetItem(str(streamNumber))
-            newItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.tableWidgetConnectionCount.setItem(0, 0, newItem)
-            newItem = QtGui.QTableWidgetItem(str(connectionCount))
-            newItem.setFlags(
-                QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-            self.tableWidgetConnectionCount.setItem(0, 1, newItem)
-        """for currentRow in range(self.tableWidgetConnectionCount.rowCount()):
-            rowStreamNumber = int(self.tableWidgetConnectionCount.item(currentRow,0).text())
-            if streamNumber == rowStreamNumber:
-                foundTheRowThatNeedsUpdating = True
-                self.tableWidgetConnectionCount.item(currentRow,1).setText(str(connectionCount))
-                #totalNumberOfConnectionsFromAllStreams += connectionCount
-        if foundTheRowThatNeedsUpdating == False:
-            #Add a line to the table for this stream number and update its count with the current connection count.
-            self.tableWidgetConnectionCount.insertRow(0)
-            newItem =  QtGui.QTableWidgetItem(str(streamNumber))
-            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
-            self.tableWidgetConnectionCount.setItem(0,0,newItem)
-            newItem =  QtGui.QTableWidgetItem(str(connectionCount))
-            newItem.setFlags( QtCore.Qt.ItemIsSelectable |  QtCore.Qt.ItemIsEnabled )
-            self.tableWidgetConnectionCount.setItem(0,1,newItem)
-            totalNumberOfConnectionsFromAllStreams += connectionCount"""
+                brush = QtGui.QBrush(QtGui.QColor("green"), QtCore.Qt.SolidPattern)
+            for j in (range(1)):
+                self.tableWidgetConnectionCount.item(0, j).setBackground(brush)
+        self.tableWidgetConnectionCount.setUpdatesEnabled(True)
+        #self.tableWidgetConnectionCount.setSortingEnabled(True)
+        #self.tableWidgetConnectionCount.horizontalHeader().setSortIndicator(1, QtCore.Qt.AscendingOrder)
         self.labelTotalConnections.setText(_translate(
             "networkstatus", "Total Connections: %1").arg(str(len(connectedHosts))))
-        if len(connectedHosts) > 0 and shared.statusIconColor == 'red':  # FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
+       # FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
+        if connectedHosts and shared.statusIconColor == 'red':
             self.window().setStatusIcon('yellow')
-        elif len(connectedHosts) == 0:
+        elif not connectedHosts and shared.statusIconColor != "red":
             self.window().setStatusIcon('red')
 
     # timer driven
@@ -133,6 +125,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         self.updateNumberOfPubkeysProcessed()
 
     def retranslateUi(self):
-        super(QtGui.QWidget, self).retranslateUi()
+        super(NetworkStatus, self).retranslateUi()
         self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
             l10n.formatTimestamp(self.startup)))
