@@ -317,7 +317,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 peer = state.Peer(decodedIP, port)
                 if peer in knownnodes.knownNodes[stream] and knownnodes.knownNodes[stream][peer] > seenTime:
                     continue
-                if len(knownnodes.knownNodes[stream]) < 20000:
+                if len(knownnodes.knownNodes[stream]) < BMConfigParser().get("knownnodes", "maxnodes"):
                     with knownnodes.knownNodesLock:
                         knownnodes.knownNodes[stream][peer] = seenTime
                 #knownnodes.knownNodes[stream][peer] = seenTime
