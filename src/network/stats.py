@@ -18,21 +18,19 @@ def connectedHostsList():
     if BMConfigParser().get("network", "asyncore"):
         retval = []
         for i in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
-            if not i.connected:
+            if not i.fullyEstablished:
                 continue
             try:
                 retval.append((i.destination, i.streams[0]))
             except AttributeError:
                 pass
         return retval
-    else:
-        return shared.connectedHostsList.items()
+    return shared.connectedHostsList.items()
 
 def sentBytes():
     if BMConfigParser().get("network", "asyncore"):
         return asyncore.sentBytes
-    else:
-        return throttle.SendThrottle().total
+    return throttle.SendThrottle().total
 
 def uploadSpeed():
     global lastSentTimestamp, lastSentBytes, currentSentSpeed
@@ -44,14 +42,12 @@ def uploadSpeed():
             lastSentBytes = currentSentBytes
             lastSentTimestamp = currentTimestamp
         return currentSentSpeed
-    else:
-        return throttle.sendThrottle().getSpeed()
+    return throttle.sendThrottle().getSpeed()
 
 def receivedBytes():
     if BMConfigParser().get("network", "asyncore"):
         return asyncore.receivedBytes
-    else:
-        return throttle.ReceiveThrottle().total
+    return throttle.ReceiveThrottle().total
 
 def downloadSpeed():
     global lastReceivedTimestamp, lastReceivedBytes, currentReceivedSpeed
@@ -63,8 +59,7 @@ def downloadSpeed():
             lastReceivedBytes = currentReceivedBytes
             lastReceivedTimestamp = currentTimestamp
         return currentReceivedSpeed
-    else:
-        return throttle.ReceiveThrottle().getSpeed()
+    return throttle.ReceiveThrottle().getSpeed()
 
 def pendingDownload():
     if BMConfigParser().get("network", "asyncore"):
@@ -73,8 +68,7 @@ def pendingDownload():
             for k in connection.objectsNewToMe.keys():
                 tmp[k] = True
         return len(tmp)
-    else:
-        return PendingDownloadQueue.totalSize()
+    return PendingDownloadQueue.totalSize()
 
 def pendingUpload():
     if BMConfigParser().get("network", "asyncore"):
@@ -84,5 +78,4 @@ def pendingUpload():
             for k in connection.objectsNewToThem.keys():
                 tmp[k] = True
         return len(tmp)
-    else:
-        return PendingUpload().len()
+    return PendingUpload().len()

@@ -47,7 +47,7 @@ class SqliteInventory(InventoryStorage):
         with self.lock:
             return len(self._inventory) + sqlQuery('SELECT count(*) FROM inventory')[0][0]
 
-    def by_type_and_tag(self, type, tag):
+    def by_type_and_tag(self, objectType, tag):
         with self.lock:
             values = [value for value in self._inventory.values() if value.type == type and value.tag == tag]
             values += (InventoryItem(*value) for value in sqlQuery('SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE objecttype=? AND tag=?', type, tag))

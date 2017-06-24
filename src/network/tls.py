@@ -63,28 +63,26 @@ class TLSDispatcher(AdvancedDispatcher):
 
     def writable(self):
         try:
-            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0 and self.writeQueue.empty():
+            if self.tlsStarted and not self.tlsDone and not self.write_buf and self.writeQueue.empty():
                 #print "tls writable, %r" % (self.want_write)
                 return self.want_write
-            else:
-                return AdvancedDispatcher.writable(self)
+            return AdvancedDispatcher.writable(self)
         except AttributeError:
             return AdvancedDispatcher.writable(self)
 
     def readable(self):
         try:
-            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0 and self.writeQueue.empty():
+            if self.tlsStarted and not self.tlsDone and not self.write_buf and self.writeQueue.empty():
                 #print "tls readable, %r" % (self.want_read)
                 return self.want_read
-            else:
-                return AdvancedDispatcher.readable(self)
+            return AdvancedDispatcher.readable(self)
         except AttributeError:
             return AdvancedDispatcher.readable(self)
 
     def handle_read(self):
         try:
             # wait for write buffer flush
-            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0 and self.writeQueue.empty():
+            if self.tlsStarted and not self.tlsDone and not self.write_buf and self.writeQueue.empty():
                 #print "handshaking (read)"
                 self.tls_handshake()
             else:
@@ -104,7 +102,7 @@ class TLSDispatcher(AdvancedDispatcher):
     def handle_write(self):
         try:
             # wait for write buffer flush
-            if self.tlsStarted and not self.tlsDone and len(self.write_buf) == 0 and self.writeQueue.empty():
+            if self.tlsStarted and not self.tlsDone and not self.write_buf and self.writeQueue.empty():
                 #print "handshaking (write)"
                 self.tls_handshake()
             else:
@@ -123,13 +121,13 @@ class TLSDispatcher(AdvancedDispatcher):
 
     def tls_handshake(self):
         # wait for flush
-        if len(self.write_buf) > 0:
+        if self.write_buf:
             return False
         # Perform the handshake.
         try:
             #print "handshaking (internal)"
             self.sslSocket.do_handshake()
-        except ssl.SSLError, err:
+        except ssl.SSLError as err:
             #print "%s:%i: handshake fail" % (self.destination.host, self.destination.port)
             self.want_read = self.want_write = False
             if err.args[0] == ssl.SSL_ERROR_WANT_READ:

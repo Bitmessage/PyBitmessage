@@ -5,7 +5,6 @@ import time
 
 import asyncore_pollchoose as asyncore
 from debug import logger
-from bmconfigparser import BMConfigParser
 
 class AdvancedDispatcher(asyncore.dispatcher):
     _buf_len = 2097152 # 2MB
@@ -34,11 +33,10 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def read_buf_sufficient(self, length=0):
         if len(self.read_buf) < length:
             return False
-        else:
-            return True
+        return True
 
     def process(self):
-        if self.state != "tls_handshake" and len(self.read_buf) == 0:
+        if self.state != "tls_handshake" and not self.read_buf:
             return
         if not self.connected:
             return
@@ -100,7 +98,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
                 break
         if bufSize <= 0:
             return
-        if len(self.write_buf) > 0:
+        if self.write_buf:
             written = self.send(self.write_buf[0:bufSize])
             asyncore.update_sent(written)
             self.sentBytes += written

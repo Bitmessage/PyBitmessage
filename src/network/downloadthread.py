@@ -1,4 +1,3 @@
-import Queue
 import threading
 
 import addresses
@@ -30,7 +29,7 @@ class DownloadThread(threading.Thread, StoppableThread):
                         continue
                     # keys with True values in the dict
                     request = list((k for k, v in i.objectsNewToMe.iteritems() if v))
-                    if len(request) == 0:
+                    if not request:
                         continue
                     if len(request) > DownloadThread.requestChunk - downloadPending:
                         request = request[:DownloadThread.requestChunk - downloadPending]
@@ -43,6 +42,3 @@ class DownloadThread(threading.Thread, StoppableThread):
                 logger.debug("%s:%i Requesting %i objects", i.destination.host, i.destination.port, len(request))
                 requested += len(request)
             self.stop.wait(1)
-
-    def stopThread(self):
-        super(DownloadThread, self).stopThread()

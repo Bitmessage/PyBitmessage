@@ -15,14 +15,12 @@ from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInv
 import network.connectionpool
 from network.downloadqueue import DownloadQueue
 from network.node import Node
-import network.asyncore_pollchoose as asyncore
 from network.objectracker import ObjectTracker
 from network.proxy import Proxy, ProxyError, GeneralProxyError
-from network.uploadqueue import UploadQueue, UploadElem, AddrUploadQueue, ObjUploadQueue
 
 import addresses
 from bmconfigparser import BMConfigParser
-from queues import objectProcessorQueue, portCheckerQueue, UISignalQueue, invQueue
+from queues import objectProcessorQueue, portCheckerQueue, invQueue
 import shared
 import state
 import protocol
@@ -173,7 +171,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         retval = []
         size = None
-        insideDigit = False
         i = 0
 
         while i < len(pattern):
@@ -353,14 +350,13 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 self.set_state("tls_init", self.payloadLength)
                 self.bm_proto_reset()
                 return False
-            else:
-                self.set_connection_fully_established()
-                return True
+            self.set_connection_fully_established()
+            return True
         return True
 
     def bm_command_version(self):
-        #self.remoteProtocolVersion, self.services, self.timestamp, padding1, self.myExternalIP, padding2, self.remoteNodeIncomingPort = protocol.VersionPacket.unpack(self.payload[:protocol.VersionPacket.size])
-        self.remoteProtocolVersion, self.services, self.timestamp, self.sockNode, self.peerNode, self.nonce, self.userAgent, self.streams = self.decode_payload_content("IQQiiQlslv")
+        self.remoteProtocolVersion, self.services, self.timestamp, self.sockNode, self.peerNode, self.nonce, \
+            self.userAgent, self.streams = self.decode_payload_content("IQQiiQlslv")
         self.nonce = struct.pack('>Q', self.nonce)
         self.timeOffset = self.timestamp - int(time.time())
         logger.debug("remoteProtocolVersion: %i", self.remoteProtocolVersion)
@@ -377,7 +373,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.writeQueue.put(protocol.CreatePacket('verack'))
         self.verackSent = True
         if not self.isOutbound:
-            self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, True))
+            self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
+                    network.connectionpool.BMConnectionPool().streams, True))
             #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
                 protocol.haveSSL(not self.isOutbound)):
@@ -387,9 +384,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 self.set_state("tls_init", self.payloadLength)
                 self.bm_proto_reset()
                 return False
-            else:
-                self.set_connection_fully_established()
-                return True
+            self.set_connection_fully_established()
+            return True
         return True
 
     def peerValidityChecks(self):
@@ -415,7 +411,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return False
         else:
             shared.timeOffsetWrongCount = 0
-        if len(self.streams) == 0:
+        if not self.streams:
             self.writeQueue.put(protocol.assembleErrorMessage(fatal=2,
                 errorText="We don't have shared stream interests. Closing connection."))
             logger.debug ('Closed connection to %s because there is no overlapping interest in streams.',
@@ -442,7 +438,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     @staticmethod
     def assembleAddr(peerList):
-        if type(peerList) is state.Peer:
+        if isinstance(peerList, state.Peer):
             peerList = (peerList)
         # TODO handle max length, now it's done by upper layers
         payload = addresses.encodeVarint(len(peerList))

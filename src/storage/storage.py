@@ -30,7 +30,7 @@ class InventoryStorage(Storage, collections.MutableMapping):
     def __len__(self):
         raise NotImplementedError
 
-    def by_type_and_tag(self, type, tag):
+    def by_type_and_tag(self, objectType, tag):
         raise NotImplementedError
 
     def hashes_by_stream(self, stream):

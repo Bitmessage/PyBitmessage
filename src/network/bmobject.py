@@ -51,18 +51,18 @@ class BMObject(object):
     def checkEOLSanity(self):
         # EOL sanity check
         if self.expiresTime - int(time.time()) > BMObject.maxTTL:
-            logger.info('This object\'s End of Life time is too far in the future. Ignoring it. Time is %s' % self.expiresTime)
+            logger.info('This object\'s End of Life time is too far in the future. Ignoring it. Time is %i', self.expiresTime)
             # TODO: remove from download queue
             raise BMObjectExpiredError()
 
         if self.expiresTime - int(time.time()) < BMObject.minTTL:
-            logger.info('This object\'s End of Life time was too long ago. Ignoring the object. Time is %s' % self.expiresTime)
+            logger.info('This object\'s End of Life time was too long ago. Ignoring the object. Time is %i', self.expiresTime)
             # TODO: remove from download queue
             raise BMObjectExpiredError()
 
     def checkStream(self):
         if self.streamNumber not in state.streamsInWhichIAmParticipating:
-            logger.debug('The streamNumber %s isn\'t one we are interested in.' % self.streamNumber)
+            logger.debug('The streamNumber %i isn\'t one we are interested in.', self.streamNumber)
             raise BMObjectUnwantedStreamError()
 
     def checkAlreadyHave(self):

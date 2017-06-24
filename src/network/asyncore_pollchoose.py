@@ -605,11 +605,6 @@ class dispatcher:
     # references to the underlying socket object.
     def __getattr__(self, attr):
         try:
-            sys._getframe(200)
-            logger.error("Stack depth warning")
-        except ValueError:
-            pass
-        try:
             retattr = getattr(self.socket, attr)
         except AttributeError:
             raise AttributeError("%s instance has no attribute '%s'"

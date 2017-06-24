@@ -15,7 +15,6 @@ from network.connectionchooser import chooseConnection
 import network.asyncore_pollchoose as asyncore
 import protocol
 from singleton import Singleton
-import shared
 import state
 
 @Singleton

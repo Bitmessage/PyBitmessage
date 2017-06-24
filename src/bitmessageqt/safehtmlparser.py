@@ -53,20 +53,20 @@ class SafeHTMLParser(HTMLParser):
         self.allow_external_src = False
 
     def add_if_acceptable(self, tag, attrs = None):
-        if not tag in SafeHTMLParser.acceptable_elements:
+        if tag not in SafeHTMLParser.acceptable_elements:
             return
         self.sanitised += "<"
         if inspect.stack()[1][3] == "handle_endtag":
             self.sanitised += "/"
         self.sanitised += tag
-        if not attrs is None:
+        if attrs is not None:
             for attr, val in attrs:
                 if tag == "img" and attr == "src" and not self.allow_picture:
                     val = ""
                 elif attr == "src" and not self.allow_external_src:
                     url = urlparse(val)
                     if url.scheme not in SafeHTMLParser.src_schemes:
-                        val == ""
+                        val = ""
                 self.sanitised += " " + quote_plus(attr)
                 if not (val is None):
                     self.sanitised += "=\"" + val + "\""
