@@ -25,11 +25,11 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
         while not self._stopped and state.shutdown == 0:
             if lastprinted < int(time.time()):
                 lastprinted = int(time.time())
-            try:
-                sys._getframe(200)
-                logger.error("Stack depth warning")
-            except ValueError:
-                pass
+#            try:
+#                sys._getframe(200)
+#                logger.error("Stack depth warning")
+#            except ValueError:
+#                pass
             processed = 0
             for i in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
                 if self._stopped:
