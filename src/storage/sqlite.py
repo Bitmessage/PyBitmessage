@@ -49,8 +49,8 @@ class SqliteInventory(InventoryStorage):
 
     def by_type_and_tag(self, objectType, tag):
         with self.lock:
-            values = [value for value in self._inventory.values() if value.type == type and value.tag == tag]
-            values += (InventoryItem(*value) for value in sqlQuery('SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE objecttype=? AND tag=?', type, tag))
+            values = [value for value in self._inventory.values() if value.type == objectType and value.tag == tag]
+            values += (InventoryItem(*value) for value in sqlQuery('SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE objecttype=? AND tag=?', objectType, tag))
             return values
 
     def hashes_by_stream(self, stream):
