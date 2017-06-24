@@ -31,6 +31,7 @@ class TLSDispatcher(AdvancedDispatcher):
         self.ciphers = ciphers
         self.tlsStarted = False
         self.tlsDone = False
+        self.tlsVersion = "N/A"
         self.isSSL = False
 
     def state_tls_init(self):
@@ -96,8 +97,9 @@ class TLSDispatcher(AdvancedDispatcher):
             elif err.errno in _DISCONNECTED_SSL:
                 self.handle_close()
                 return
-            else:
-                raise
+            logger.info("SSL Error: %s", str(err))
+            self.handle_close()
+            return
 
     def handle_write(self):
         try:
@@ -116,8 +118,9 @@ class TLSDispatcher(AdvancedDispatcher):
             elif err.errno in _DISCONNECTED_SSL:
                 self.handle_close()
                 return 0
-            else:
-                raise
+            logger.info("SSL Error: %s", str(err))
+            self.handle_close()
+            return
 
     def tls_handshake(self):
         # wait for flush
@@ -138,8 +141,19 @@ class TLSDispatcher(AdvancedDispatcher):
                 self.want_write = True
             if not (self.want_write or self.want_read):
                 raise
+        except socket.error as err:
+            if err.errno in asyncore._DISCONNECTED:
+                self.handle_close()
+            else:
+                raise
         else:
-            logger.debug("%s:%i: TLS handshake success%s", self.destination.host, self.destination.port, ", TLS protocol version: %s" % (self.sslSocket.version()) if sys.version_info >= (2, 7, 9) else "")
+            if sys.version_info >= (2, 7, 9):
+                self.tlsVersion = self.sslSocket.version()
+                logger.debug("%s:%i: TLS handshake success, TLS protocol version: %s",
+                        self.destination.host, self.destination.port, self.sslSocket.version())
+            else:
+                self.tlsVersion = "TLSv1"
+                logger.debug("%s:%i: TLS handshake success", self.destination.host, self.destination.port)
             # The handshake has completed, so remove this channel and...
             self.del_channel()
             self.set_socket(self.sslSocket)
