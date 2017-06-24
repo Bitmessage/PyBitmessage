@@ -23,6 +23,9 @@ BMConfigDefaults = {
         "storage": "sqlite",
         "acceptmismatch": False,
     },
+    "knownnodes": {
+        "maxnodes": 20000,
+    },
     "zlib": {
         'maxsize': 1048576
     }

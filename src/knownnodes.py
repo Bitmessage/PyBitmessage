@@ -1,12 +1,12 @@
 import pickle
 import threading
 
+from bmconfigparser import BMConfigParser
 import state
 
 knownNodesLock = threading.Lock()
 knownNodes = {}
 
-knownNodesMax = 20000
 knownNodesTrimAmount = 2000
 
 def saveKnownNodes(dirName = None):
@@ -17,7 +17,7 @@ def saveKnownNodes(dirName = None):
             pickle.dump(knownNodes, output)
 
 def trimKnownNodes(recAddrStream = 1):
-    if len(knownNodes[recAddrStream]) < knownNodesMax:
+    if len(knownNodes[recAddrStream]) < BMConfigParser().get("knownnodes", "maxnodes"):
         return
     with knownNodesLock:
         oldestList = sorted(knownNodes[recAddrStream], key=knownNodes[recAddrStream].get)[:knownNodesTrimAmount]
