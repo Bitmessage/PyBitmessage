@@ -1,13 +1,36 @@
 import socket
-
-import state
+import time
 
 from advanceddispatcher import AdvancedDispatcher
 import asyncore_pollchoose as asyncore
+from debug import logger
 import network.connectionpool
+import state
 
-class ProxyError(Exception): pass
-class GeneralProxyError(ProxyError): pass
+class ProxyError(Exception):
+    errorCodes = ("UnknownError")
+
+    def __init__(self, code):
+        self.code = code
+        try:
+            self.message = self.__class__.errorCodes[self.code]
+        except IndexError:
+            self.message = self.__class__.errorCodes[-1]
+        super(ProxyError, self).__init__(self.message)
+
+
+class GeneralProxyError(ProxyError):
+    errorCodes = ("Success",
+        "Invalid data",
+        "Not connected",
+        "Not available",
+        "Bad proxy type",
+        "Bad input",
+        "Timed out",
+        "Network unreachable",
+        "Connection refused",
+        "Host unreachable")
+
 
 class Proxy(AdvancedDispatcher):
     # these are global, and if you change config during runtime, all active/new
@@ -22,7 +45,8 @@ class Proxy(AdvancedDispatcher):
 
     @proxy.setter
     def proxy(self, address):
-        if type(address) != tuple or (len(address) < 2) or (type(str(address[0])) != type('')) or (type(address[1]) != int):
+        if not isinstance(address, tuple) or (len(address) < 2) or \
+                (not isinstance(address[0], str) or not isinstance(address[1], int)):
             raise ValueError
         self.__class__._proxy = address
 
@@ -42,18 +66,17 @@ class Proxy(AdvancedDispatcher):
         self.isOutbound = True
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect(self.proxy)
-        print "connecting in background to %s:%i" % (self.proxy[0], self.proxy[1])
 
     def handle_connect(self):
+        self.set_state("init")
         try:
             AdvancedDispatcher.handle_connect(self)
         except socket.error as e:
             if e.errno in asyncore._DISCONNECTED:
-                logger.debug("%s:%i: Connection failed: %s" % (self.destination.host, self.destination.port, str(e)))
+                logger.debug("%s:%i: Connection failed: %s", self.destination.host, self.destination.port, str(e))
                 return
+        self.state_init()
 
     def state_proxy_handshake_done(self):
-        self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, False))
         self.connectedAt = time.time()
         return False
-

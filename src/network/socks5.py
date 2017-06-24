@@ -1,13 +1,27 @@
 import socket
 import struct
 
-from advanceddispatcher import AdvancedDispatcher
-import asyncore_pollchoose as asyncore
 from proxy import Proxy, ProxyError, GeneralProxyError
-import network.connectionpool
 
-class Socks5AuthError(ProxyError): pass
-class Socks5Error(ProxyError): pass
+class Socks5AuthError(ProxyError):
+    errorCodes = ("Succeeded",
+        "Authentication is required",
+        "All offered authentication methods were rejected",
+        "Unknown username or invalid password",
+        "Unknown error")
+
+
+class Socks5Error(ProxyError):
+    errorCodes = ("Succeeded",
+        "General SOCKS server failure",
+        "Connection not allowed by ruleset",
+        "Network unreachable",
+        "Host unreachable",
+        "Connection refused",
+        "TTL expired",
+        "Command not supported",
+        "Address type not supported",
+        "Unknown error")
 
 
 class Socks5(Proxy):
@@ -30,7 +44,7 @@ class Socks5(Proxy):
         self.read_buf = self.read_buf[2:]
         if ret[0] != 5:
             # general error
-            raise GeneralProxyError
+            raise GeneralProxyError(1)
         elif ret[1] == 0:
             # no auth required
             self.set_state("auth_done", 2)
@@ -39,14 +53,14 @@ class Socks5(Proxy):
             self.writeQueue.put(struct.pack('BB', 1, len(self._auth[0])) + \
                 self._auth[0] + struct.pack('B', len(self._auth[1])) + \
                 self._auth[1])
-            self.set_state("auth_1", 2)
+            self.set_state("auth_needed", 2)
         else:
             if ret[1] == 0xff:
                 # auth error
-                raise Socks5AuthError
+                raise Socks5AuthError(2)
             else:
                 # other error
-                raise Socks5Error
+                raise GeneralProxyError(1)
 
     def state_auth_needed(self):
         if not self.read_buf_sufficient(2):
@@ -54,10 +68,10 @@ class Socks5(Proxy):
         ret = struct.unpack('BB', self.read_buf)
         if ret[0] != 1:
             # general error
-            raise Socks5Error
+            raise GeneralProxyError(1)
         if ret[1] != 0:
             # auth error
-            raise Socks5AuthError
+            raise Socks5AuthError(3)
         # all ok
         self.set_state = ("auth_done", 2)
 
@@ -66,19 +80,15 @@ class Socks5(Proxy):
             return False
         # Get the response
         if self.read_buf[0:1] != chr(0x05).encode():
-            # general error
             self.close()
-            raise Socks5Error
+            raise GeneralProxyError(1)
         elif self.read_buf[1:2] != chr(0x00).encode():
             # Connection failed
             self.close()
             if ord(self.read_buf[1:2])<=8:
-                # socks 5 erro
-                raise Socks5Error
-                #raise Socks5Error((ord(resp[1:2]), _socks5errors[ord(resp[1:2])]))
+                raise Socks5Error(ord(self.read_buf[1:2]))
             else:
-                raise Socks5Error
-                #raise Socks5Error((9, _socks5errors[9]))
+                raise Socks5Error(9)
         # Get the bound address/port
         elif self.read_buf[3:4] == chr(0x01).encode():
             self.set_state("proxy_addr_1", 4)
@@ -86,8 +96,7 @@ class Socks5(Proxy):
             self.set_state("proxy_addr_2_1", 4)
         else:
             self.close()
-            #raise GeneralProxyError((1,_generalerrors[1]))
-            raise GeneralProxyError
+            raise GeneralProxyError(1)
 
     def state_proxy_addr_1(self):
         if not self.read_buf_sufficient(4):
@@ -112,14 +121,14 @@ class Socks5(Proxy):
             return False
         self.boundport = struct.unpack(">H", self.read_buf[0:2])[0]
         self.__proxysockname = (self.boundaddr, self.boundport)
-        if self.ipaddr != None:
+        if self.ipaddr is not None:
             self.__proxypeername = (socket.inet_ntoa(self.ipaddr), self.destination[1])
         else:
             self.__proxypeername = (self.destination[0], self.destport)
         self.set_state("proxy_handshake_done", 2)
 
     def proxy_sock_name(self):
-       return socket.inet_ntoa(self.__proxysockname[0])
+        return socket.inet_ntoa(self.__proxysockname[0])
 
 
 class Socks5Connection(Socks5):

@@ -1,11 +1,14 @@
 import socket
 import struct
 
-from advanceddispatcher import AdvancedDispatcher
-import asyncore_pollchoose as asyncore
 from proxy import Proxy, ProxyError, GeneralProxyError
 
-class Socks4aError(ProxyError): pass
+class Socks4aError(ProxyError):
+    errorCodes = ("Request granted",
+        "Request rejected or failed",
+        "Request rejected because SOCKS server cannot connect to identd on the client",
+        "Request rejected because the client program and identd report different user-ids",
+        "Unknown error")
 
 
 class Socks4a(Proxy):
@@ -24,22 +27,20 @@ class Socks4a(Proxy):
         if self.read_buf[0:1] != chr(0x00).encode():
             # bad data
             self.close()
-            raise Socks4aError
+            raise GeneralProxyError(1)
         elif self.read_buf[1:2] != chr(0x5A).encode():
             # Connection failed
             self.close()
             if ord(self.read_buf[1:2]) in (91, 92, 93):
-                # socks 4 erro
-                raise Socks4aError
-                #raise Socks5Error((ord(resp[1:2]), _socks5errors[ord(resp[1:2])-90]))
+                # socks 4 error
+                raise Socks4aError(ord(self.read_buf[1:2]) - 90)
             else:
-                raise Socks4aError
-                #raise Socks4aError((94, _socks4aerrors[4]))
+                raise Socks4aError(4)
         # Get the bound address/port
         self.boundport = struct.unpack(">H", self.read_buf[2:4])[0]
         self.boundaddr = self.read_buf[4:]
         self.__proxysockname = (self.boundaddr, self.boundport)
-        if self.ipaddr != None:
+        if self.ipaddr:
             self.__proxypeername = (socket.inet_ntoa(self.ipaddr), self.destination[1])
         else:
             self.__proxypeername = (self.destination[0], self.destport)

@@ -181,7 +181,10 @@ class Socks5BMConnection(Socks5Connection, TCPConnection):
         TCPConnection.__init__(self, address=address, sock=self.socket)
         self.set_state("init")
 
-    def state_socks_handshake_done(self):
+    def state_proxy_handshake_done(self):
+        Socks5Connection.state_proxy_handshake_done(self)
+        self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
+                network.connectionpool.BMConnectionPool().streams, False))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return False
 
@@ -192,7 +195,10 @@ class Socks4aBMConnection(Socks4aConnection, TCPConnection):
         TCPConnection.__init__(self, address=address, sock=self.socket)
         self.set_state("init")
 
-    def state_socks_handshake_done(self):
+    def state_proxy_handshake_done(self):
+        Socks4aConnection.state_proxy_handshake_done(self)
+        self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
+                network.connectionpool.BMConnectionPool().streams, False))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return False
 
@@ -216,7 +222,7 @@ class TCPServer(AdvancedDispatcher):
                 len(network.connectionpool.BMConnectionPool().outboundConnections) > \
                 BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections") + \
                 BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections"):
-                close(sock)
+                sock.close()
                 return
             try:
                 network.connectionpool.BMConnectionPool().addConnection(TCPConnection(sock=sock))
