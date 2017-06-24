@@ -32,7 +32,7 @@ class BMObject(object):
     # min TTL, 3 hour (in the past
     minTTL = -3600
 
-    def __init__(self, nonce, expiresTime, objectType, version, streamNumber, data):
+    def __init__(self, nonce, expiresTime, objectType, version, streamNumber, data, payloadOffset):
         self.nonce = nonce
         self.expiresTime = expiresTime
         self.objectType = objectType
@@ -40,7 +40,7 @@ class BMObject(object):
         self.streamNumber = streamNumber
         self.inventoryHash = calculateInventoryHash(data)
         self.data = data
-        self.tag = ''
+        self.tag = data[payloadOffset:payloadOffset+32]
 
     def checkProofOfWorkSufficient(self):
         # Let us check to make sure that the proof of work is sufficient.
@@ -69,6 +69,17 @@ class BMObject(object):
         if self.inventoryHash in Inventory():
             raise BMObjectAlreadyHaveError()
 
+    def checkObjectByType(self):
+        if self.objectType == protocol.OBJECT_GETPUBKEY:
+            self.checkGetpubkey()
+        elif self.objectType == protocol.OBJECT_PUBKEY:
+            self.checkPubkey()
+        elif self.objectType == protocol.OBJECT_MSG:
+            self.checkMessage()
+        elif self.objectType == protocol.OBJECT_BROADCAST:
+            self.checkBroadcast()
+        # other objects don't require other types of tests
+
     def checkMessage(self):
         return
 
@@ -77,15 +88,12 @@ class BMObject(object):
             logger.info('getpubkey message doesn\'t contain enough data. Ignoring.')
             raise BMObjectInvalidError()
 
-    def checkPubkey(self, tag):
+    def checkPubkey(self):
         if len(self.data) < 146 or len(self.data) > 440:  # sanity check
             logger.info('pubkey object too short or too long. Ignoring.')
             raise BMObjectInvalidError()
-        if self.version >= 4:
-            self.tag = tag
-            logger.debug('tag in received pubkey is: %s' % hexlify(tag))
 
-    def checkBroadcast(self, tag):
+    def checkBroadcast(self):
         if len(self.data) < 180:
             logger.debug('The payload length of this broadcast packet is unreasonably low. Someone is probably trying funny business. Ignoring message.')
             raise BMObjectInvalidError()
@@ -93,7 +101,3 @@ class BMObject(object):
         # this isn't supported anymore
         if self.version < 2:
             raise BMObjectInvalidError()
-
-        if self.version >= 3:
-            self.tag = tag
-            logger.debug('tag in received broadcast is: %s' % hexlify(tag))
