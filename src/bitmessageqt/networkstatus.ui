@@ -85,6 +85,9 @@
          <property name="frameShadow">
           <enum>QFrame::Plain</enum>
          </property>
+         <property name="editTriggers">
+          <set>QAbstractItemView::NoEditTriggers</set>
+         </property>
          <property name="showDropIndicator" stdset="0">
           <bool>false</bool>
          </property>
