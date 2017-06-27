@@ -37,6 +37,8 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
         if self._optcre is self.OPTCRE or value:
             if not isinstance(value, basestring):
                 raise TypeError("option values must be strings")
+        if not self.validate(section, option, value):
+            raise ValueError("Invalid value %s" % str(value))
         return ConfigParser.ConfigParser.set(self, section, option, value)
 
     def get(self, section, option, raw=False, variables=None):
@@ -76,6 +78,20 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
     def addresses(self):
         return filter(lambda x: x.startswith('BM-'), BMConfigParser().sections())
 
+    def read(self, filenames):
+        ConfigParser.ConfigParser.read(self, filenames)
+        for section in self.sections():
+            for option in self.options(section):
+                try:
+                    if not self.validate(section, option, ConfigParser.ConfigParser.get(self, section, option)):
+                        try:
+                            newVal = BMConfigDefaults[section][option]
+                        except KeyError:
+                            continue
+                        ConfigParser.ConfigParser.set(self, section, option, newVal)
+                except ConfigParser.InterpolationError:
+                    continue
+
     def save(self):
         fileName = os.path.join(state.appdata, 'keys.dat')
         fileNameBak = fileName + "." + datetime.datetime.now().strftime("%Y%j%H%M%S%f") + '.bak'
@@ -93,3 +109,18 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
         # delete the backup
         if fileNameExisted:
             os.remove(fileNameBak)
+
+    def validate(self, section, option, value):
+        try:
+            return getattr(self, "validate_%s_%s" % (section, option))(value)
+        except AttributeError:
+            return True
+
+    def validate_bitmessagesettings_maxoutboundconnections(self, value):
+        try:
+            value = int(value)
+        except ValueError:
+            return False
+        if value < 0 or value > 8:
+            return False
+        return True
