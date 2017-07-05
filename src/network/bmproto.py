@@ -275,47 +275,24 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.object.checkEOLSanity()
             self.object.checkAlreadyHave()
         except (BMObjectExpiredError, BMObjectAlreadyHaveError) as e:
-            for connection in network.connectionpool.BMConnectionPool().inboundConnections.values() + \
-                    network.connectionpool.BMConnectionPool().outboundConnections.values():
-                try:
-                    with connection.objectsNewToThemLock:
-                        del connection.objectsNewToThem[self.object.inventoryHash]
-                except KeyError:
-                    pass
-                try:
-                    with connection.objectsNewToMeLock:
-                        del connection.objectsNewToMe[self.object.inventoryHash]
-                except KeyError:
-                    pass
+            BMProto.stopDownloadingObject(self.object.inventoryHash)
             raise e
         try:
             self.object.checkStream()
         except (BMObjectUnwantedStreamError,) as e:
-            for connection in network.connectionpool.BMConnectionPool().inboundConnections.values() + \
-                    network.connectionpool.BMConnectionPool().outboundConnections.values():
-                try:
-                    with connection.objectsNewToMeLock:
-                        del connection.objectsNewToMe[self.object.inventoryHash]
-                except KeyError:
-                    pass
-                if not BMConfigParser().get("inventory", "acceptmismatch"):
-                    try:
-                        with connection.objectsNewToThemLock:
-                            del connection.objectsNewToThem[self.object.inventoryHash]
-                    except KeyError:
-                        pass
+            BMProto.stopDownloadingObject(self.object.inventoryHash, BMConfigParser().get("inventory", "acceptmismatch"))
             if not BMConfigParser().get("inventory", "acceptmismatch"):
                 raise e
 
-        self.object.checkObjectByType()
+        try:
+            self.object.checkObjectByType()
+            objectProcessorQueue.put((self.object.objectType, self.object.data))
+        except BMObjectInvalidError as e:
+            BMProto.stopDownloadingObject(self.object.inventoryHash, True)
 
         Inventory()[self.object.inventoryHash] = (
                 self.object.objectType, self.object.streamNumber, self.payload[objectOffset:], self.object.expiresTime, self.object.tag)
-        objectProcessorQueue.put((self.object.objectType,self.object.data))
-        #DownloadQueue().task_done(self.object.inventoryHash)
         invQueue.put((self.object.streamNumber, self.object.inventoryHash, self))
-        #ObjUploadQueue().put(UploadElem(self.object.streamNumber, self.object.inventoryHash))
-        #broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
         return True
 
     def _decode_addr(self):
@@ -470,6 +447,22 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 payload += struct.pack('>H', peer.port)  # remote port
             retval += protocol.CreatePacket('addr', payload)
         return retval
+
+    @staticmethod
+    def stopDownloadingObject(hashId, forwardAnyway=False):
+        for connection in network.connectionpool.BMConnectionPool().inboundConnections.values() + \
+                network.connectionpool.BMConnectionPool().outboundConnections.values():
+            try:
+                with connection.objectsNewToMeLock:
+                    del connection.objectsNewToMe[hashId]
+            except KeyError:
+                pass
+            if not forwardAnyway:
+                try:
+                    with connection.objectsNewToThemLock:
+                        del connection.objectsNewToThem[hashId]
+                except KeyError:
+                    pass
 
     def handle_close(self, reason=None):
         self.set_state("close")
