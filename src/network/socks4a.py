@@ -84,6 +84,12 @@ class Socks4aConnection(Socks4a):
             self.writeQueue.put(self.destination[0] + chr(0x00).encode())
         self.set_state("pre_connect", 0)
 
+    def state_pre_connect(self):
+        try:
+            Socks4a.state_pre_connect(self)
+        except Socks4aError as e:
+            self.handle_close(e.message)
+
 
 class Socks4aResolver(Socks4a):
     def __init__(self, host):

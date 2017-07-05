@@ -156,6 +156,12 @@ class Socks5Connection(Socks5):
         self.writeQueue.put(struct.pack(">H", self.destination[1]))
         self.set_state("pre_connect", 0)
 
+    def state_pre_connect(self):
+        try:
+            Socks5.state_pre_connect(self)
+        except Socks5Error as e:
+            self.handle_close(e.message)
+
 
 class Socks5Resolver(Socks5):
     def __init__(self, host):
