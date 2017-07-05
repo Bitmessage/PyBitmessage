@@ -29,7 +29,7 @@ from network.tls import TLSDispatcher
 
 import addresses
 from bmconfigparser import BMConfigParser
-from queues import objectProcessorQueue, portCheckerQueue, UISignalQueue
+from queues import invQueue, objectProcessorQueue, portCheckerQueue, UISignalQueue
 import shared
 import state
 import protocol
@@ -77,7 +77,7 @@ class TCPConnection(BMProto, TLSDispatcher):
 
     def antiIntersectionDelay(self, initial = False):
         # estimated time for a small object to propagate across the whole network
-        delay = math.ceil(math.log(max(len(knownnodes.knownNodes[x]) for x in knownnodes.knownNodes) + 2, 20)) * (0.2 + UploadQueue.queueCount/2)
+        delay = math.ceil(math.log(max(len(knownnodes.knownNodes[x]) for x in knownnodes.knownNodes) + 2, 20)) * (0.2 + invQueue.queueCount/2.0)
         # take the stream with maximum amount of nodes
         # +2 is to avoid problems with log(0) and log(1)
         # 20 is avg connected nodes count
@@ -86,9 +86,9 @@ class TCPConnection(BMProto, TLSDispatcher):
             if initial:
                 self.skipUntil = self.connectedAt + delay
                 if self.skipUntil > time.time():
-                    logger.debug("Skipping processing for %.2fs", self.skipUntil - time.time())
+                    logger.debug("Initial skipping processing getdata for %.2fs", self.skipUntil - time.time())
             else:
-                logger.debug("Skipping processing due to missing object for %.2fs", self.skipUntil - time.time())
+                logger.debug("Skipping processing getdata due to missing object for %.2fs", self.skipUntil - time.time())
                 self.skipUntil = time.time() + delay
 
     def set_connection_fully_established(self):

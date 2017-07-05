@@ -234,17 +234,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def bm_command_getdata(self):
         items = self.decode_payload_content("L32s")
-#        if time.time() < self.skipUntil:
-#            print "skipping getdata"
-#            return True
+        # skip?
+        if time.time() < self.skipUntil:
+            return True
         for i in items:
-            #print "received getdata request for item %s" % (hexlify(i))
-            #logger.debug('received getdata request for item:' + hexlify(i))
-            #if i in ObjUploadQueue.streamElems(1):
-            if False:
-                self.antiIntersectionDelay()
-            else:
-                self.receiveQueue.put(("object", i))
+            self.receiveQueue.put(("object", i))
         return True
 
     def bm_command_inv(self):
