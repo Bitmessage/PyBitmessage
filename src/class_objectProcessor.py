@@ -69,7 +69,10 @@ class objectProcessor(threading.Thread):
                 elif objectType == 'checkShutdownVariable': # is more of a command, not an object type. Is used to get this thread past the queue.get() so that it will check the shutdown variable.
                     pass
                 else:
-                    logger.critical('Error! Bug! The class_objectProcessor was passed an object type it doesn\'t recognize: %s' % str(objectType))
+                    if isinstance(objectType, int):
+                        logger.info('Don\'t know how to handle object type 0x%08X', objectType)
+                    else:
+                        logger.info('Don\'t know how to handle object type %s', objectType)
             except helper_msgcoding.DecompressionSizeException as e:
                 logger.error("The object is too big after decompression (stopped decompressing at %ib, your configured limit %ib). Ignoring", e.size, BMConfigParser().safeGetInt("zlib", "maxsize"))
             except varintDecodeError as e:
