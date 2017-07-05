@@ -1,4 +1,5 @@
 import threading
+import time
 
 import addresses
 #from bmconfigparser import BMConfigParser
@@ -9,26 +10,38 @@ from network.connectionpool import BMConnectionPool
 import protocol
 
 class DownloadThread(threading.Thread, StoppableThread):
-    maxPending = 500
-    requestChunk = 1000
+    maxPending = 50
+    requestChunk = 100
+    requestTimeout = 60
+    cleanInterval = 60
+    requestExpires = 600
 
     def __init__(self):
         threading.Thread.__init__(self, name="DownloadThread")
         self.initStop()
         self.name = "DownloadThread"
         logger.info("init download thread")
+        self.pending = {}
+        self.lastCleaned = time.time()
+
+    def cleanPending(self):
+        deadline = time.time() - DownloadThread.requestExpires
+        self.pending = {k: v for k, v in self.pending.iteritems() if v >= deadline}
+        self.lastCleaned = time.time()
 
     def run(self):
         while not self._stopped:
             requested = 0
             for i in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
-                # this may take a while, but it needs a consistency so I think it's better
+                now = time.time()
+                timedOut = now - DownloadThread.requestTimeout
+                # this may take a while, but it needs a consistency so I think it's better to lock a bigger chunk
                 with i.objectsNewToMeLock:
-                    downloadPending = len(list((k for k, v in i.objectsNewToMe.iteritems() if not v)))
+                    downloadPending = len(list((k for k, v in i.objectsNewToMe.iteritems() if k in self.pending and self.pending[k] > timedOut)))
                     if downloadPending >= DownloadThread.maxPending:
                         continue
                     # keys with True values in the dict
-                    request = list((k for k, v in i.objectsNewToMe.iteritems() if v))
+                    request = list((k for k, v in i.objectsNewToMe.iteritems() if k not in self.pending or self.pending[k] < timedOut))
                     if not request:
                         continue
                     if len(request) > DownloadThread.requestChunk - downloadPending:
@@ -36,9 +49,13 @@ class DownloadThread(threading.Thread, StoppableThread):
                     # mark them as pending
                     for k in request:
                         i.objectsNewToMe[k] = False
+                        self.pending[k] = now
 
                 payload = addresses.encodeVarint(len(request)) + ''.join(request)
                 i.writeQueue.put(protocol.CreatePacket('getdata', payload))
                 logger.debug("%s:%i Requesting %i objects", i.destination.host, i.destination.port, len(request))
                 requested += len(request)
-            self.stop.wait(1)
+            if time.time() >= self.lastCleaned + DownloadThread.cleanInterval:
+                self.cleanPending()
+            if not requested:
+                self.stop.wait(1)

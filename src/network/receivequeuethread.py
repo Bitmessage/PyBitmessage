@@ -70,7 +70,7 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
             with connection.objectsNewToThemLock:
                 for objHash in Inventory().unexpired_hashes_by_stream(stream):
                     bigInvList[objHash] = 0
-                    connection.objectsNewToThem[objHash] = True
+                    connection.objectsNewToThem[objHash] = time.time()
         objectCount = 0
         payload = b''
         # Now let us start appending all of these hashes together. They will be

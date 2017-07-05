@@ -274,12 +274,12 @@ class Main:
             state.invThread = InvThread()
             state.invThread.daemon = True
             state.invThread.start()
-            downloadThread = DownloadThread()
-            downloadThread.daemon = True
-            downloadThread.start()
             state.addrThread = AddrThread()
             state.addrThread.daemon = True
             state.addrThread.start()
+            state.downloadThread = DownloadThread()
+            state.downloadThread.daemon = True
+            state.downloadThread.start()
 
         connectToStream(1)
 

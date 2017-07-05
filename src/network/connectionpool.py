@@ -44,7 +44,7 @@ class BMConnectionPool(object):
                     del i.objectsNewToMe[hashid]
             except KeyError:
                 with i.objectsNewToThemLock:
-                    i.objectsNewToThem[hashid] = True
+                    i.objectsNewToThem[hashid] = time.time()
             if i == connection:
                 try:
                     with i.objectsNewToThemLock:

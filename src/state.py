@@ -25,6 +25,7 @@ maximumNumberOfHalfOpenConnections = 0
 
 invThread = None
 addrThread = None
+downloadThread = None
 
 ownAddresses = {}
 

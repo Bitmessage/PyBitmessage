@@ -28,6 +28,7 @@ class ObjectTracker(object):
     invCleanPeriod = 300
     invInitialCapacity = 50000
     invErrorRate = 0.03
+    trackingExpires = 3600
 
     def __init__(self):
         self.objectsNewToMe = {}
@@ -62,9 +63,9 @@ class ObjectTracker(object):
                 with self.objectsNewToMeLock:
                     tmp = self.objectsNewToMe.copy()
                     self.objectsNewToMe = tmp
+                deadline = time.time() - ObjectTracker.trackingExpires
                 with self.objectsNewToThemLock:
-                    tmp = self.objectsNewToThem.copy()
-                    self.objectsNewToThem = tmp
+                    self.objectsNewToThem = {k: v for k, v in self.objectsNewToThem.iteritems() if v >= deadline}
             self.lastCleaned = time.time()
 
     def hasObj(self, hashid):
