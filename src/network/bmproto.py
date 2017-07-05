@@ -21,7 +21,7 @@ from network.proxy import Proxy, ProxyError, GeneralProxyError
 
 import addresses
 from bmconfigparser import BMConfigParser
-from queues import objectProcessorQueue, portCheckerQueue, invQueue
+from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
 import shared
 import state
 import protocol
