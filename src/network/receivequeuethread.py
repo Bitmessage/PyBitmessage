@@ -54,7 +54,7 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
             connection.writeQueue.put(protocol.CreatePacket('object', Inventory()[objHash].payload))
         except KeyError:
             connection.antiIntersectionDelay()
-            logger.warning('%s asked for an object with a getdata which is not in either our memory inventory or our SQL inventory. We probably cleaned it out after advertising it but before they got around to asking for it.' % (connection.destination,))
+            logger.info('%s asked for an object we don\'t have.', connection.destination)
 
     def command_biginv(self, connection, dummy):
         def sendChunk():
