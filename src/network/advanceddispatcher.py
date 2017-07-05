@@ -41,11 +41,6 @@ class AdvancedDispatcher(asyncore.dispatcher):
         if not self.connected:
             return
         maxLoop = 20
-#        try:
-#            sys._getframe(200)
-#            logger.error("Stack depth warning")
-#        except ValueError:
-#            pass
         while maxLoop > 0:
             try:
                 if getattr(self, "state_" + str(self.state))() is False:
