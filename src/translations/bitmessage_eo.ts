@@ -131,7 +131,7 @@ Bonvolu entajpi deziratan retpoŝtadreson (kune kun @mailchuck.com) sube:</trans
 # pgp: server
 # La retpoŝta kluzo kreos kaj prizorgos PGP-ŝlosilojn por vi por subskribi,
 # verigi, ĉifri kaj deĉifri kiel vi. Se vi volas uzi PGP-on, sed vi estas laca,
-# uzu tion. Bezonas abonon.
+# uzu tion. Postulas abonon.
 #
 # pgp: local
 # La retpoŝta kluzo ne faros PGP-operaciojn kiel vi. Vi povas aŭ ne uzi PGP-on
@@ -139,7 +139,7 @@ Bonvolu entajpi deziratan retpoŝtadreson (kune kun @mailchuck.com) sube:</trans
 #
 # attachments: yes
 # Alvenaj kunsendaĵoj en retmesaĝoj estos alŝutitaj al MEGA.nz, kaj vi povos
-# elŝuti ilin de tie per alklaki ligilon. Bezonas abonon.
+# elŝuti ilin de tie per alklaki ligilon. Postulas abonon.
 #
 # attachments: no
 # Kunsendaĵoj estos ignorataj.
@@ -159,7 +159,7 @@ Bonvolu entajpi deziratan retpoŝtadreson (kune kun @mailchuck.com) sube:</trans
 # feecurrency: BTC, XBT, USD, EUR aŭ GBP
 # Uzu tiujn se vi volas pagoŝarĝi homojn kiuj sendos al vi retmesaĝojn. Se tiu
 # agordo estas ŝaltita kaj iu ajn sendos al vi retmesaĝon, li devos pagi difinan
-# sendokoston. Por remalaktivigi ĝin, agordu &quot;feeamount&quot; al 0. Bezonas abonon.
+# sendokoston. Por remalaktivigi ĝin, agordu ‘feeamount’ al 0. Postulas abonon.
 </translation>
     </message>
 </context>
@@ -278,7 +278,7 @@ Bonvolu entajpi deziratan retpoŝtadreson (kune kun @mailchuck.com) sube:</trans
     <message>
         <location filename="../bitmessageqt/__init__.py" line="618"/>
         <source>One of your addresses, %1, is an old version 1 address. Version 1 addresses are no longer supported. May we delete it now?</source>
-        <translation>Iu de viaj adresoj, %1, estas malnova versio 1 adreso. Versioj 1 adresoj ne estas jam subtenataj. Ĉu ni povas forviŝi ĝin?</translation>
+        <translation>Iu de viaj adresoj, %1, estas malnova versio 1 adreso. Versioj 1 adresoj ne estas jam subtenataj. Ĉu ni povas forigi ĝin?</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="1026"/>
@@ -977,7 +977,7 @@ Are you sure you want to delete the channel?</source>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="670"/>
         <source>Fetch Namecoin ID</source>
-        <translation>Venigu Namecoin ID</translation>
+        <translation>Venigi Namecoin ID</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/bitmessageui.py" line="677"/>
@@ -1122,7 +1122,7 @@ Are you sure you want to delete the channel?</source>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2815"/>
         <source>Waiting for PoW to finish... %1%</source>
-        <translation>Atendado ĝis laborpruvo finos… %1%</translation>
+        <translation>Atendado ĝis laborpruvo finiĝos… %1%</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/__init__.py" line="2819"/>
@@ -1192,7 +1192,7 @@ Are you sure you want to delete the channel?</source>
     <message>
         <location filename="../class_addressGenerator.py" line="247"/>
         <source>%1 is already in &apos;Your Identities&apos;. Not adding it again.</source>
-        <translation>%1 jam estas en &apos;Viaj Identigoj&apos;. Ĝi ne estos aldonita ree.</translation>
+        <translation>%1 jam estas en ‘Viaj Identigoj’. Ĝi ne estos aldonita ree.</translation>
     </message>
     <message>
         <location filename="../class_addressGenerator.py" line="283"/>
@@ -1547,8 +1547,8 @@ Eble vi devas ĝisdatigi Bitmesaĝon.</translation>
         <location filename="../bitmessageqt/newaddressdialog.py" line="174"/>
         <source>Here you may generate as many addresses as you like. Indeed, creating and abandoning addresses is encouraged. You may generate addresses by using either random numbers or by using a passphrase. If you use a passphrase, the address is called a &quot;deterministic&quot; address.
 The &apos;Random Number&apos; option is selected by default but deterministic addresses have several pros and cons:</source>
-        <translation>Tie ĉi vi povas generi tiom da adresoj, kiom vi volas. Ververe kreado kaj forlasado de adresoj estas konsilinda. Vi povas krei adresojn uzante hazardajn nombrojn aŭ pasfrazon. Se vi uzos pasfrazon, la adreso estas nomita kiel &apos;antaŭkalkulebla&apos; (determinisma) adreso.
-La &apos;hazardnombra&apos; adreso estas antaŭagordita, sed antaŭkalkuleblaj adresoj havas kelkajn bonaĵojn kaj malbonaĵojn:</translation>
+        <translation>Tie ĉi vi povas generi tiom da adresoj, kiom vi volas. Ververe kreado kaj forlasado de adresoj estas konsilinda. Vi povas krei adresojn uzante hazardajn nombrojn aŭ pasfrazon. Se vi uzos pasfrazon, la adreso estas nomita kiel ‘antaŭkalkulebla’ (determinisma) adreso.
+La ‘hazardnombra’ adreso estas antaŭagordita, sed antaŭkalkuleblaj adresoj havas kelkajn bonaĵojn kaj malbonaĵojn:</translation>
     </message>
     <message>
         <location filename="../bitmessageqt/newaddressdialog.py" line="176"/>
@@ -1840,37 +1840,37 @@ La &apos;hazardnombra&apos; adreso estas antaŭagordita, sed antaŭkalkuleblaj a
         <translation>Ĉiuj konektoj:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="159"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="167"/>
         <source>Since startup:</source>
         <translation>Ekde starto:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="175"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="183"/>
         <source>Processed 0 person-to-person messages.</source>
         <translation>Pritraktis 0 inter-personajn mesaĝojn.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="204"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="212"/>
         <source>Processed 0 public keys.</source>
         <translation>Pritraktis 0 publikajn ŝlosilojn.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="191"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="199"/>
         <source>Processed 0 broadcasts.</source>
         <translation>Pritraktis 0 elsendojn.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="256"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="264"/>
         <source>Inventory lookups per second: 0</source>
         <translation>Petoj pri inventaro en sekundo: 0</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="217"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="225"/>
         <source>Objects to be synced:</source>
         <translation>Samtempigotaj eroj:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="129"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="137"/>
         <source>Stream #</source>
         <translation>Fluo #</translation>
     </message>
@@ -1880,37 +1880,37 @@ La &apos;hazardnombra&apos; adreso estas antaŭagordita, sed antaŭkalkuleblaj a
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="129"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="138"/>
         <source>Since startup on %1</source>
         <translation>Ekde lanĉo de la programo je %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="73"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="74"/>
         <source>Down: %1/s  Total: %2</source>
         <translation>Elŝuto: %1/s Sume: %2</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="75"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="76"/>
         <source>Up: %1/s  Total: %2</source>
         <translation>Alŝuto: %1/s Sume: %2</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="108"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="117"/>
         <source>Total Connections: %1</source>
         <translation>Ĉiuj konektoj: %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="118"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="127"/>
         <source>Inventory lookups per second: %1</source>
         <translation>Petoj pri inventaro en sekundo: %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="230"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="238"/>
         <source>Up: 0 kB/s</source>
         <translation>Alŝuto: 0 kB/s</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="243"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="251"/>
         <source>Down: 0 kB/s</source>
         <translation>Elŝuto: 0 kB/s</translation>
     </message>
@@ -1920,42 +1920,47 @@ La &apos;hazardnombra&apos; adreso estas antaŭagordita, sed antaŭkalkuleblaj a
         <translation>Reta stato</translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="40"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="41"/>
         <source>byte(s)</source>
         <translation><numerusform>bitoko</numerusform><numerusform>bitokoj</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="51"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="52"/>
         <source>Object(s) to be synced: %n</source>
         <translation><numerusform>Objekto por samtempigi: %n</numerusform><numerusform>Objektoj por samtempigi: %n</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="55"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="56"/>
         <source>Processed %n person-to-person message(s).</source>
         <translation><numerusform>Pritraktis %n inter-personan mesaĝon.</numerusform><numerusform>Pritraktis %n inter-personajn mesaĝojn.</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="60"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="61"/>
         <source>Processed %n broadcast message(s).</source>
         <translation><numerusform>Pritraktis %n elsendon.</numerusform><numerusform>Pritraktis %n elsendojn.</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="65"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="66"/>
         <source>Processed %n public key(s).</source>
         <translation><numerusform>Pritraktis %n publikan ŝlosilon.</numerusform><numerusform>Pritraktis %n publikajn ŝlosilojn.</numerusform></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="114"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="117"/>
         <source>Peer</source>
         <translation>Samtavolano</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="119"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="122"/>
+        <source>Rating</source>
+        <translation>Takso</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/networkstatus.ui" line="127"/>
         <source>User agent</source>
         <translation>Klienta aplikaĵo</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="124"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="132"/>
         <source>TLS</source>
         <translation>TLS</translation>
     </message>
