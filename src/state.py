@@ -24,6 +24,7 @@ sqlReady = False # set to true by sqlTread when ready for processing
 maximumNumberOfHalfOpenConnections = 0
 
 invThread = None
+addrThread = None
 
 ownAddresses = {}
 
