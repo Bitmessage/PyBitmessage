@@ -98,9 +98,12 @@ class singleCleaner(threading.Thread, StoppableThread):
             with knownnodes.knownNodesLock:
                 for stream in knownnodes.knownNodes:
                     for node in knownnodes.knownNodes[stream].keys():
-                        if now - knownnodes.knownNodes[stream][node] > 2419200: # 28 days
-                            shared.needToWriteKownNodesToDisk = True
-                            del knownnodes.knownNodes[stream][node]
+                        try:
+                            if now - knownnodes.knownNodes[stream][node]["lastseen"] > 2419200: # 28 days
+                                shared.needToWriteKownNodesToDisk = True
+                                del knownnodes.knownNodes[stream][node]
+                        except TypeError:
+                            print "Error in %s" % (str(node))
 
             # Let us write out the knowNodes to disk if there is anything new to write out.
             if shared.needToWriteKnownNodesToDisk:

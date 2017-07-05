@@ -135,7 +135,10 @@ class BMConnectionPool(object):
             pending = len(self.outboundConnections) - established
             if established < BMConfigParser().safeGetInt("bitmessagesettings", "maxoutboundconnections"):
                 for i in range(state.maximumNumberOfHalfOpenConnections - pending):
-                    chosen = chooseConnection(random.choice(self.streams))
+                    try:
+                        chosen = chooseConnection(random.choice(self.streams))
+                    except ValueError:
+                        continue
                     if chosen in self.outboundConnections:
                         continue
                     if chosen.host in self.inboundConnections:

@@ -328,16 +328,21 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             decodedIP = protocol.checkIPAddress(ip)
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
-            #print "maybe adding %s in stream %i to knownnodes (%i)" % (decodedIP, stream, len(knownnodes.knownNodes[stream]))
             if decodedIP is not False and seenTime > time.time() - BMProto.addressAlive:
                 peer = state.Peer(decodedIP, port)
-                if peer in knownnodes.knownNodes[stream] and knownnodes.knownNodes[stream][peer] > seenTime:
+                if peer in knownnodes.knownNodes[stream] and knownnodes.knownNodes[stream][peer]["lastseen"] > seenTime:
                     continue
                 if len(knownnodes.knownNodes[stream]) < BMConfigParser().get("knownnodes", "maxnodes"):
                     with knownnodes.knownNodesLock:
-                        knownnodes.knownNodes[stream][peer] = seenTime
-                #knownnodes.knownNodes[stream][peer] = seenTime
-                #AddrUploadQueue().put((stream, peer))
+                        try:
+                            knownnodes.knownNodes[stream][peer]["lastseen"] = seenTime
+                        except (TypeError, KeyError):
+                            knownnodes.knownNodes[stream][peer] = {
+                                "lastseen": seenTime,
+                                "rating": 0,
+                                "self": False,
+                            }
+                addrQueue.put((stream, peer, self))
         return True
 
     def bm_command_portcheck(self):
@@ -449,18 +454,22 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     def assembleAddr(peerList):
         if isinstance(peerList, state.Peer):
             peerList = (peerList)
-        # TODO handle max length, now it's done by upper layers
-        payload = addresses.encodeVarint(len(peerList))
-        for address in peerList:
-            stream, peer, timestamp = address
-            payload += struct.pack(
-                '>Q', timestamp)  # 64-bit time
-            payload += struct.pack('>I', stream)
-            payload += struct.pack(
-                '>q', 1)  # service bit flags offered by this node
-            payload += protocol.encodeHost(peer.host)
-            payload += struct.pack('>H', peer.port)  # remote port
-        return protocol.CreatePacket('addr', payload)
+        if not peerList:
+            return b''
+        retval = b''
+        for i in range(0, len(peerList), BMProto.maxAddrCount):
+            payload = addresses.encodeVarint(len(peerList[i:i + BMProto.maxAddrCount]))
+            for address in peerList[i:i + BMProto.maxAddrCount]:
+                stream, peer, timestamp = address
+                payload += struct.pack(
+                    '>Q', timestamp)  # 64-bit time
+                payload += struct.pack('>I', stream)
+                payload += struct.pack(
+                    '>q', 1)  # service bit flags offered by this node
+                payload += protocol.encodeHost(peer.host)
+                payload += struct.pack('>H', peer.port)  # remote port
+            retval += protocol.CreatePacket('addr', payload)
+        return retval
 
     def handle_close(self, reason=None):
         self.set_state("close")
