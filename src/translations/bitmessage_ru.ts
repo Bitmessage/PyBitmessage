@@ -1848,37 +1848,37 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <translation>Всего соединений: </translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="162"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="167"/>
         <source>Since startup:</source>
         <translation>С начала работы: </translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="178"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="183"/>
         <source>Processed 0 person-to-person messages.</source>
         <translation>Обработано 0 сообщений.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="207"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="212"/>
         <source>Processed 0 public keys.</source>
         <translation>Обработано 0 открытых ключей.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="194"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="199"/>
         <source>Processed 0 broadcasts.</source>
         <translation>Обработано 0 рассылок.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="259"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="264"/>
         <source>Inventory lookups per second: 0</source>
         <translation>Поисков в каталоге в секунду: 0</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="220"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="225"/>
         <source>Objects to be synced:</source>
         <translation>Несинхронизированные объекты: </translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="132"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="137"/>
         <source>Stream #</source>
         <translation>№ потока</translation>
     </message>
@@ -1888,37 +1888,37 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="129"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="138"/>
         <source>Since startup on %1</source>
         <translation>С начала работы в %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="73"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="74"/>
         <source>Down: %1/s  Total: %2</source>
         <translation>Загрузка: %1/s Всего: %2</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="75"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="76"/>
         <source>Up: %1/s  Total: %2</source>
         <translation>Отправка: %1/s Всего: %2</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="108"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="117"/>
         <source>Total Connections: %1</source>
         <translation>Всего соединений: %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="118"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="127"/>
         <source>Inventory lookups per second: %1</source>
         <translation>Поисков в каталоге в секунду: %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="233"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="238"/>
         <source>Up: 0 kB/s</source>
         <translation>Отправка: 0 кБ/с</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="246"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="251"/>
         <source>Down: 0 kB/s</source>
         <translation>Загрузка: 0 кБ/с</translation>
     </message>
@@ -1928,27 +1928,27 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <translation>Состояние сети</translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="40"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="41"/>
         <source>byte(s)</source>
         <translation><numerusform>байт</numerusform><numerusform>байт</numerusform><numerusform>байт</numerusform><numerusform>байт</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="51"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="52"/>
         <source>Object(s) to be synced: %n</source>
         <translation><numerusform>Несинхронизированные объекты: %n</numerusform><numerusform>Несинхронизированные объекты: %n</numerusform><numerusform>Несинхронизированные объекты: %n</numerusform><numerusform>Несинхронизированные объекты: %n</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="55"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="56"/>
         <source>Processed %n person-to-person message(s).</source>
         <translation><numerusform>Обработано %n сообщение.</numerusform><numerusform>Обработано %n сообщений.</numerusform><numerusform>Обработано %n сообщений.</numerusform><numerusform>Обработано %n сообщений.</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="60"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="61"/>
         <source>Processed %n broadcast message(s).</source>
         <translation><numerusform>Обработана %n рассылка.</numerusform><numerusform>Обработано %n рассылок.</numerusform><numerusform>Обработано %n рассылок.</numerusform><numerusform>Обработано %n рассылок.</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="65"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="66"/>
         <source>Processed %n public key(s).</source>
         <translation><numerusform>Обработан %n открытый ключ.</numerusform><numerusform>Обработано %n открытых ключей.</numerusform><numerusform>Обработано %n открытых ключей.</numerusform><numerusform>Обработано %n открытых ключей.</numerusform></translation>
     </message>
@@ -1959,11 +1959,16 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
     </message>
     <message>
         <location filename="../bitmessageqt/networkstatus.ui" line="122"/>
+        <source>Rating</source>
+        <translation>Рейтинг</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/networkstatus.ui" line="127"/>
         <source>User agent</source>
         <translation>Название приложения</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="127"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="132"/>
         <source>TLS</source>
         <translation>TLS</translation>
     </message>
