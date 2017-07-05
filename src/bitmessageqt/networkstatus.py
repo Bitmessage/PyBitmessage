@@ -4,6 +4,7 @@ import shared
 
 from tr import _translate
 from inventory import Inventory, PendingDownloadQueue, PendingUpload
+import knownnodes
 import l10n
 import network.stats
 from retranslateui import RetranslateMixin
@@ -87,14 +88,22 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             self.tableWidgetConnectionCount.setItem(0, 0,
                 QtGui.QTableWidgetItem("%s:%i" % (i.destination.host, i.destination.port))
                 )
-            self.tableWidgetConnectionCount.setItem(0, 1,
+            self.tableWidgetConnectionCount.setItem(0, 2,
                 QtGui.QTableWidgetItem("%s" % (i.userAgent))
                 )
-            self.tableWidgetConnectionCount.setItem(0, 2,
+            self.tableWidgetConnectionCount.setItem(0, 3,
                 QtGui.QTableWidgetItem("%s" % (i.tlsVersion))
                 )
-            self.tableWidgetConnectionCount.setItem(0, 3,
+            self.tableWidgetConnectionCount.setItem(0, 4,
                 QtGui.QTableWidgetItem("%s" % (",".join(map(str,i.streams))))
+                )
+            try:
+                # FIXME hard coded stream no
+                rating = knownnodes.knownNodes[1][i.destination]['rating']
+            except KeyError:
+                rating = "-"
+            self.tableWidgetConnectionCount.setItem(0, 1,
+                QtGui.QTableWidgetItem("%s" % (rating))
                 )
             if i.isOutbound:
                 brush = QtGui.QBrush(QtGui.QColor("yellow"), QtCore.Qt.SolidPattern)

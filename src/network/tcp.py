@@ -98,6 +98,8 @@ class TCPConnection(BMProto, TLSDispatcher):
         UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         self.antiIntersectionDelay(True)
         self.fullyEstablished = True
+        if self.isOutbound:
+            knownnodes.increaseRating(self.destination)
         self.sendAddr()
         self.sendBigInv()
 
@@ -117,7 +119,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             with knownnodes.knownNodesLock:
                 if len(knownnodes.knownNodes[stream]) > 0:
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream].items()
-                        if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                        if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > maxAddrCount:
                         elemCount = maxAddrCount
@@ -126,25 +128,21 @@ class TCPConnection(BMProto, TLSDispatcher):
                 # sent 250 only if the remote isn't interested in it
                 if len(knownnodes.knownNodes[stream * 2]) > 0 and stream not in self.streams:
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream*2].items()
-                        if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                        if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > maxAddrCount / 2:
                         elemCount = int(maxAddrCount / 2)
                     addrs[stream * 2] = random.sample(filtered.items(), elemCount)
                 if len(knownnodes.knownNodes[(stream * 2) + 1]) > 0 and stream not in self.streams:
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream*2+1].items()
-                        if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                        if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > maxAddrCount / 2:
                         elemCount = int(maxAddrCount / 2)
                     addrs[stream * 2 + 1] = random.sample(filtered.items(), elemCount)
         for substream in addrs.keys():
-            for peer, timestamp in addrs[substream]:
-                templist.append((substream, peer, timestamp))
-                if len(templist) >= BMProto.maxAddrCount:
-                    self.writeQueue.put(BMProto.assembleAddr(templist))
-                    templist = []
-        # flush
+            for peer, params in addrs[substream]:
+                templist.append((substream, peer, params["lastseen"]))
         if len(templist) > 0:
             self.writeQueue.put(BMProto.assembleAddr(templist))
 
@@ -163,16 +161,22 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.connectedAt = time.time()
 
     def handle_read(self):
-#        try:
         TLSDispatcher.handle_read(self)
-#        except socket.error as e:
-#            logger.debug("%s:%i: Handle read fail: %s" % (self.destination.host, self.destination.port, str(e)))
+        if self.isOutbound and self.fullyEstablished:
+            for s in self.streams:
+                try:
+                    with knownnodes.knownNodesLock:
+                        knownnodes.knownNodes[s][self.destination]["lastseen"] = time.time()
+                except KeyError:
+                    pass
 
     def handle_write(self):
-#        try:
         TLSDispatcher.handle_write(self)
-#        except socket.error as e:
-#            logger.debug("%s:%i: Handle write fail: %s" % (self.destination.host, self.destination.port, str(e)))
+
+    def handle_close(self, reason=None):
+        if self.isOutbound and not self.fullyEstablished:
+            knownnodes.decreaseRating(self.destination)
+        BMProto.handle_close(self, reason)
 
 
 class Socks5BMConnection(Socks5Connection, TCPConnection):
