@@ -1841,37 +1841,37 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <translation>接続数:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="159"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="167"/>
         <source>Since startup:</source>
         <translation>起動日時:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="175"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="183"/>
         <source>Processed 0 person-to-person messages.</source>
         <translation>0 通の1対1のメッセージを処理しました。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="204"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="212"/>
         <source>Processed 0 public keys.</source>
         <translation>0 件の公開鍵を処理しました。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="191"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="199"/>
         <source>Processed 0 broadcasts.</source>
         <translation>0 件の配信を処理しました。</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="256"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="264"/>
         <source>Inventory lookups per second: 0</source>
         <translation>毎秒のインベントリ検索: 0</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="217"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="225"/>
         <source>Objects to be synced:</source>
         <translation>同期する必要のあるオブジェクト:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="129"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="137"/>
         <source>Stream #</source>
         <translation>ストリーム #</translation>
     </message>
@@ -1881,37 +1881,37 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <translation type="unfinished"/>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="129"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="138"/>
         <source>Since startup on %1</source>
         <translation>起動日時 %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="73"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="74"/>
         <source>Down: %1/s  Total: %2</source>
         <translation>ダウン: %1/秒  合計: %2</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="75"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="76"/>
         <source>Up: %1/s  Total: %2</source>
         <translation>アップ: %1/秒  合計: %2</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="108"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="117"/>
         <source>Total Connections: %1</source>
         <translation>接続数: %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.py" line="118"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="127"/>
         <source>Inventory lookups per second: %1</source>
         <translation>毎秒のインベントリ検索: %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="230"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="238"/>
         <source>Up: 0 kB/s</source>
         <translation>アップ: 0 kB/秒</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="243"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="251"/>
         <source>Down: 0 kB/s</source>
         <translation>ダウン: 0 kB/秒</translation>
     </message>
@@ -1921,42 +1921,47 @@ The &apos;Random Number&apos; option is selected by default but deterministic ad
         <translation>ネットワークの状態</translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="40"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="41"/>
         <source>byte(s)</source>
         <translation><numerusform>バイト</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="51"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="52"/>
         <source>Object(s) to be synced: %n</source>
         <translation><numerusform>同期する必要のあるオブジェクト: %n</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="55"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="56"/>
         <source>Processed %n person-to-person message(s).</source>
         <translation><numerusform>%n 通の1対1のメッセージを処理しました。</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="60"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="61"/>
         <source>Processed %n broadcast message(s).</source>
         <translation><numerusform>%n 件の配信を処理しました。</numerusform></translation>
     </message>
     <message numerus="yes">
-        <location filename="../bitmessageqt/networkstatus.py" line="65"/>
+        <location filename="../bitmessageqt/networkstatus.py" line="66"/>
         <source>Processed %n public key(s).</source>
         <translation><numerusform>%n 件の公開鍵を処理しました。</numerusform></translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="114"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="117"/>
         <source>Peer</source>
         <translation>ピア</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="119"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="122"/>
+        <source>Rating</source>
+        <translation>評価</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/networkstatus.ui" line="127"/>
         <source>User agent</source>
         <translation>ユーザーエージェント</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="124"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="132"/>
         <source>TLS</source>
         <translation>TLS</translation>
     </message>
