@@ -1,6 +1,7 @@
 import Queue
 import socket
 import sys
+import threading
 import time
 
 import asyncore_pollchoose as asyncore
@@ -14,41 +15,43 @@ class AdvancedDispatcher(asyncore.dispatcher):
             asyncore.dispatcher.__init__(self, sock)
         self.read_buf = b""
         self.write_buf = b""
-        self.writeQueue = Queue.Queue()
-        self.receiveQueue = Queue.Queue()
         self.state = "init"
         self.lastTx = time.time()
         self.sentBytes = 0
         self.receivedBytes = 0
         self.expectBytes = 0
+        self.readLock = threading.RLock()
+        self.writeLock = threading.RLock()
+
+    def append_write_buf(self, data):
+        if data:
+            with self.writeLock:
+                self.write_buf += data
 
     def slice_write_buf(self, length=0):
         if length > 0:
-            self.write_buf = self.write_buf[length:]
+            with self.writeLock:
+                self.write_buf = self.write_buf[length:]
 
     def slice_read_buf(self, length=0):
         if length > 0:
-            self.read_buf = self.read_buf[length:]
-
-    def read_buf_sufficient(self, length=0):
-        if len(self.read_buf) < length:
-            return False
-        return True
+            with self.readLock:
+                self.read_buf = self.read_buf[length:]
 
     def process(self):
-        if self.state != "tls_handshake" and not self.read_buf:
-            return
         if not self.connected:
             return
-        maxLoop = 20
-        while maxLoop > 0:
+        loop = 0
+        while len(self.read_buf) >= self.expectBytes:
+            loop += 1
+            if loop > 1000:
+                logger.error("Stuck at state %s, report this bug please", self.state)
+                break
             try:
                 if getattr(self, "state_" + str(self.state))() is False:
                     break
             except AttributeError:
-                # missing state
                 raise
-            maxLoop -= 1
 
     def set_state(self, state, length=0, expectBytes=0):
         self.expectBytes = expectBytes
@@ -57,7 +60,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
 
     def writable(self):
         return asyncore.dispatcher.writable(self) and \
-                (self.connecting or len(self.write_buf) > 0 or not self.writeQueue.empty())
+                (self.connecting or self.write_buf)
 
     def readable(self):
         return asyncore.dispatcher.readable(self) and \
@@ -68,28 +71,20 @@ class AdvancedDispatcher(asyncore.dispatcher):
         downloadBytes = AdvancedDispatcher._buf_len
         if asyncore.maxDownloadRate > 0:
             downloadBytes = asyncore.downloadBucket
-        if self.expectBytes > 0 and downloadBytes > self.expectBytes:
-            downloadBytes = self.expectBytes
+        if self.expectBytes > 0 and downloadBytes > self.expectBytes - len(self.read_buf):
+            downloadBytes = self.expectBytes - len(self.read_buf)
         if downloadBytes > 0:
             newData = self.recv(downloadBytes)
             self.receivedBytes += len(newData)
-            if self.expectBytes > 0:
-                self.expectBytes -= len(newData)
             asyncore.update_received(len(newData))
-            self.read_buf += newData
-        self.process()
+            with self.readLock:
+                self.read_buf += newData
 
     def handle_write(self):
         self.lastTx = time.time()
         bufSize = AdvancedDispatcher._buf_len
         if asyncore.maxUploadRate > 0:
             bufSize = asyncore.uploadBucket
-        while len(self.write_buf) < bufSize:
-            try:
-                self.write_buf += self.writeQueue.get(False)
-                self.writeQueue.task_done()
-            except Queue.Empty:
-                break
         if bufSize <= 0:
             return
         if self.write_buf:
@@ -107,25 +102,12 @@ class AdvancedDispatcher(asyncore.dispatcher):
 
     def handle_connect(self):
         self.lastTx = time.time()
-        self.process()
 
     def state_close(self):
-        pass
+        return False
 
     def handle_close(self):
         self.read_buf = b""
         self.write_buf = b""
         self.state = "close"
-        while True:
-            try:
-                self.writeQueue.get(False)
-                self.writeQueue.task_done()
-            except Queue.Empty:
-                break
-        while True:
-            try:
-                self.receiveQueue.get(False)
-                self.receiveQueue.task_done()
-            except Queue.Empty:
-                break
         asyncore.dispatcher.close(self)

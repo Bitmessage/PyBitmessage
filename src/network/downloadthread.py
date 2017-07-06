@@ -1,3 +1,4 @@
+import random
 import threading
 import time
 
@@ -32,7 +33,10 @@ class DownloadThread(threading.Thread, StoppableThread):
     def run(self):
         while not self._stopped:
             requested = 0
-            for i in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+            # Choose downloading peers randomly
+            connections = BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values()
+            random.shuffle(connections)
+            for i in connections:
                 now = time.time()
                 timedOut = now - DownloadThread.requestTimeout
                 # this may take a while, but it needs a consistency so I think it's better to lock a bigger chunk
@@ -52,7 +56,7 @@ class DownloadThread(threading.Thread, StoppableThread):
                         self.pending[k] = now
 
                 payload = addresses.encodeVarint(len(request)) + ''.join(request)
-                i.writeQueue.put(protocol.CreatePacket('getdata', payload))
+                i.append_write_buf(protocol.CreatePacket('getdata', payload))
                 logger.debug("%s:%i Requesting %i objects", i.destination.host, i.destination.port, len(request))
                 requested += len(request)
             if time.time() >= self.lastCleaned + DownloadThread.cleanInterval:

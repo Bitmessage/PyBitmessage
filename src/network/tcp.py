@@ -29,7 +29,7 @@ from network.tls import TLSDispatcher
 
 import addresses
 from bmconfigparser import BMConfigParser
-from queues import invQueue, objectProcessorQueue, portCheckerQueue, UISignalQueue
+from queues import invQueue, objectProcessorQueue, portCheckerQueue, UISignalQueue, receiveDataQueue
 import shared
 import state
 import protocol
@@ -91,6 +91,12 @@ class TCPConnection(BMProto, TLSDispatcher):
                 logger.debug("Skipping processing getdata due to missing object for %.2fs", self.skipUntil - time.time())
                 self.skipUntil = time.time() + delay
 
+    def state_connection_fully_established(self):
+        self.set_connection_fully_established()
+        self.set_state("bm_header")
+        self.bm_proto_reset()
+        return True
+
     def set_connection_fully_established(self):
         if not self.isOutbound and not self.local:
             shared.clientHasReceivedIncomingConnections = True
@@ -144,10 +150,37 @@ class TCPConnection(BMProto, TLSDispatcher):
             for peer, params in addrs[substream]:
                 templist.append((substream, peer, params["lastseen"]))
         if len(templist) > 0:
-            self.writeQueue.put(BMProto.assembleAddr(templist))
+            self.append_write_buf(BMProto.assembleAddr(templist))
 
     def sendBigInv(self):
-        self.receiveQueue.put(("biginv", None))
+        def sendChunk():
+            if objectCount == 0:
+                return
+            logger.debug('Sending huge inv message with %i objects to just this one peer', objectCount)
+            self.append_write_buf(protocol.CreatePacket('inv', addresses.encodeVarint(objectCount) + payload))
+
+        # Select all hashes for objects in this stream.
+        bigInvList = {}
+        for stream in self.streams:
+            # may lock for a long time, but I think it's better than thousands of small locks
+            with self.objectsNewToThemLock:
+                for objHash in Inventory().unexpired_hashes_by_stream(stream):
+                    bigInvList[objHash] = 0
+                    self.objectsNewToThem[objHash] = time.time()
+        objectCount = 0
+        payload = b''
+        # Now let us start appending all of these hashes together. They will be
+        # sent out in a big inv message to our new peer.
+        for hash, storedValue in bigInvList.items():
+            payload += hash
+            objectCount += 1
+            if objectCount >= BMProto.maxObjectCount:
+                self.sendChunk()
+                payload = b''
+                objectCount = 0
+
+        # flush
+        sendChunk()
 
     def handle_connect(self):
         try:
@@ -156,9 +189,10 @@ class TCPConnection(BMProto, TLSDispatcher):
             if e.errno in asyncore._DISCONNECTED:
                 logger.debug("%s:%i: Connection failed: %s" % (self.destination.host, self.destination.port, str(e)))
                 return
-        self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, False))
+        self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, False))
         #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         self.connectedAt = time.time()
+        receiveDataQueue.put(self)
 
     def handle_read(self):
         TLSDispatcher.handle_read(self)
@@ -169,6 +203,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                         knownnodes.knownNodes[s][self.destination]["lastseen"] = time.time()
                 except KeyError:
                     pass
+        receiveDataQueue.put(self)
 
     def handle_write(self):
         TLSDispatcher.handle_write(self)
@@ -187,10 +222,10 @@ class Socks5BMConnection(Socks5Connection, TCPConnection):
 
     def state_proxy_handshake_done(self):
         Socks5Connection.state_proxy_handshake_done(self)
-        self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
+        self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
                 network.connectionpool.BMConnectionPool().streams, False))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
-        return False
+        return True
 
 
 class Socks4aBMConnection(Socks4aConnection, TCPConnection):
@@ -201,10 +236,10 @@ class Socks4aBMConnection(Socks4aConnection, TCPConnection):
 
     def state_proxy_handshake_done(self):
         Socks4aConnection.state_proxy_handshake_done(self)
-        self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
+        self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
                 network.connectionpool.BMConnectionPool().streams, False))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
-        return False
+        return True
 
 
 class TCPServer(AdvancedDispatcher):
