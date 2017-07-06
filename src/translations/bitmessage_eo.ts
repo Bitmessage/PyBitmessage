@@ -1840,37 +1840,37 @@ La ‘hazardnombra’ adreso estas antaŭagordita, sed antaŭkalkuleblaj adresoj
         <translation>Ĉiuj konektoj:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="167"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="182"/>
         <source>Since startup:</source>
         <translation>Ekde starto:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="183"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="198"/>
         <source>Processed 0 person-to-person messages.</source>
         <translation>Pritraktis 0 inter-personajn mesaĝojn.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="212"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="227"/>
         <source>Processed 0 public keys.</source>
         <translation>Pritraktis 0 publikajn ŝlosilojn.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="199"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="214"/>
         <source>Processed 0 broadcasts.</source>
         <translation>Pritraktis 0 elsendojn.</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="264"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="279"/>
         <source>Inventory lookups per second: 0</source>
         <translation>Petoj pri inventaro en sekundo: 0</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="225"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="240"/>
         <source>Objects to be synced:</source>
         <translation>Samtempigotaj eroj:</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="137"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="149"/>
         <source>Stream #</source>
         <translation>Fluo #</translation>
     </message>
@@ -1905,12 +1905,12 @@ La ‘hazardnombra’ adreso estas antaŭagordita, sed antaŭkalkuleblaj adresoj
         <translation>Petoj pri inventaro en sekundo: %1</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="238"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="253"/>
         <source>Up: 0 kB/s</source>
         <translation>Alŝuto: 0 kB/s</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="251"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="266"/>
         <source>Down: 0 kB/s</source>
         <translation>Elŝuto: 0 kB/s</translation>
     </message>
@@ -1950,19 +1950,44 @@ La ‘hazardnombra’ adreso estas antaŭagordita, sed antaŭkalkuleblaj adresoj
         <translation>Samtavolano</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="122"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="120"/>
+        <source>IP address or hostname</source>
+        <translation>IP-adreso aŭ gastiga nomo</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/networkstatus.ui" line="125"/>
         <source>Rating</source>
         <translation>Takso</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="127"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="128"/>
+        <source>PyBitmessage tracks the success rate of connection attempts to individual nodes. The rating ranges from -1 to 1 and affects the likelihood of selecting the node in the future</source>
+        <translation>PyBitmessage registras frekvencon de sukcesaj konekt-provoj al aliaj nodoj. Takso varias de -1 ĝis 1 kaj influas probablon por elekti nodon estontece.</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/networkstatus.ui" line="133"/>
         <source>User agent</source>
         <translation>Klienta aplikaĵo</translation>
     </message>
     <message>
-        <location filename="../bitmessageqt/networkstatus.ui" line="132"/>
+        <location filename="../bitmessageqt/networkstatus.ui" line="136"/>
+        <source>Peer&apos;s self-reported software</source>
+        <translation>Anoncata klienta aplikaĵo</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/networkstatus.ui" line="141"/>
         <source>TLS</source>
         <translation>TLS</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/networkstatus.ui" line="144"/>
+        <source>Connection encryption</source>
+        <translation>Konekta ĉifrado</translation>
+    </message>
+    <message>
+        <location filename="../bitmessageqt/networkstatus.ui" line="152"/>
+        <source>List of streams negotiated between you and the peer</source>
+        <translation>Listo de interŝanĝataj fluoj inter vi kaj la samtavolano</translation>
     </message>
 </context>
 <context>
