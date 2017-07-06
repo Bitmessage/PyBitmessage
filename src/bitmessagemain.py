@@ -63,7 +63,7 @@ from network.downloadthread import DownloadThread
 # Helper Functions
 import helper_bootstrap
 import helper_generic
-from helper_threading import *
+import helper_threading
 
 
 def connectToStream(streamNumber):
@@ -153,7 +153,7 @@ def _fixSocket():
         socket.IPV6_V6ONLY = 27
 
 # This thread, of which there is only one, runs the API.
-class singleAPI(threading.Thread, StoppableThread):
+class singleAPI(threading.Thread, helper_threading.StoppableThread):
     def __init__(self):
         threading.Thread.__init__(self, name="singleAPI")
         self.initStop()
@@ -203,6 +203,8 @@ class Main:
             self.daemonize()
 
         self.setSignalHandler()
+
+        helper_threading.set_thread_name("MainThread")
 
         helper_bootstrap.knownNodes()
         # Start the address generation thread
