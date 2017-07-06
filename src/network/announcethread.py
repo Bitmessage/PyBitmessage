@@ -30,4 +30,4 @@ class AnnounceThread(threading.Thread, StoppableThread):
         for connection in BMConnectionPool().udpSockets.values():
             for stream in state.streamsInWhichIAmParticipating:
                 addr = (stream, state.Peer('127.0.0.1', BMConfigParser().safeGetInt("bitmessagesettings", "port")), time.time())
-                connection.writeQueue.put(BMProto.assembleAddr([addr]))
+                connection.append_write_buf(BMProto.assembleAddr([addr]))

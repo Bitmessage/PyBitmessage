@@ -9,7 +9,7 @@ from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInv
 import network.asyncore_pollchoose as asyncore
 from network.objectracker import ObjectTracker
 
-from queues import objectProcessorQueue, peerDiscoveryQueue, UISignalQueue
+from queues import objectProcessorQueue, peerDiscoveryQueue, UISignalQueue, receiveDataQueue
 import state
 import protocol
 
@@ -80,7 +80,7 @@ class UDPSocket(BMProto):
         addresses = self._decode_addr()
         # only allow peer discovery from private IPs in order to avoid attacks from random IPs on the internet
         if not self.local:
-            return
+            return True
         remoteport = False
         for i in addresses:
             seenTime, stream, services, ip, port = i
@@ -93,7 +93,7 @@ class UDPSocket(BMProto):
                 # if the address isn't local, interpret it as the hosts' own announcement
                 remoteport = port
         if remoteport is False:
-            return
+            return True
         logger.debug("received peer discovery from %s:%i (port %i):", self.destination.host, self.destination.port, remoteport)
         if self.local:
             peerDiscoveryQueue.put(state.Peer(self.destination.host, remoteport))
@@ -118,7 +118,7 @@ class UDPSocket(BMProto):
         return
 
     def writable(self):
-        return not self.writeQueue.empty()
+        return self.write_buf
 
     def readable(self):
         return len(self.read_buf) < AdvancedDispatcher._buf_len
@@ -139,18 +139,14 @@ class UDPSocket(BMProto):
         # overwrite the old buffer to avoid mixing data and so that self.local works correctly
         self.read_buf = recdata
         self.bm_proto_reset()
-        self.process()
+        receiveDataQueue.put(self)
 
     def handle_write(self):
         try:
-            data = self.writeQueue.get(False)
-        except Queue.Empty:
-            return
-        try:
-            retval = self.socket.sendto(data, ('<broadcast>', UDPSocket.port))
+            retval = self.socket.sendto(self.write_buf, ('<broadcast>', UDPSocket.port))
         except socket.error as e:
             logger.error("socket error on sendato: %s", str(e))
-        self.writeQueue.task_done()
+        self.slice_write_buf(retval)
 
 
 if __name__ == "__main__":

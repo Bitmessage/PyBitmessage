@@ -5,6 +5,7 @@ import math
 import time
 import socket
 import struct
+import sys
 
 from addresses import calculateInventoryHash
 from bmconfigparser import BMConfigParser
@@ -67,15 +68,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.object = None
 
     def state_bm_header(self):
-        if len(self.read_buf) < protocol.Header.size:
-            #print "Length below header size"
-            return False
         self.magic, self.command, self.payloadLength, self.checksum = protocol.Header.unpack(self.read_buf[:protocol.Header.size])
         self.command = self.command.rstrip('\x00')
         if self.magic != 0xE9BEB4D9:
             # skip 1 byte in order to sync
+            self.set_state("bm_header", length=1)
             self.bm_proto_reset()
-            self.set_state("bm_header", length=1, expectBytes=protocol.Header.size)
             logger.debug("Bad magic")
             self.handle_close("Bad magic")
             return False
@@ -85,10 +83,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         return True
         
     def state_bm_command(self):
-        if len(self.read_buf) < self.payloadLength:
-            #print "Length below announced object length"
-            return False
-        #logger.debug("%s:%i: command %s (%ib)", self.destination.host, self.destination.port, self.command, self.payloadLength)
         self.payload = self.read_buf[:self.payloadLength]
         if self.checksum != hashlib.sha512(self.payload).digest()[0:4]:
             logger.debug("Bad checksum, ignoring")
@@ -127,7 +121,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.handle_close("Invalid command %s" % (self.command))
             return False
         if retval:
-            self.set_state("bm_header", length=self.payloadLength, expectBytes=protocol.Header.size)
+            self.set_state("bm_header", length=self.payloadLength)
             self.bm_proto_reset()
         # else assume the command requires a different state to follow
         return True
@@ -173,6 +167,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         retval = []
         size = None
         i = 0
+        try:
+            sys._getframe(200)
+            logger.error("Stack depth warning, pattern: %s", pattern)
+            return
+        except ValueError:
+            pass
 
         while i < len(pattern):
             if pattern[i] in "0123456789" and (i == 0 or pattern[i-1] not in "lL"):
@@ -237,8 +237,13 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # skip?
         if time.time() < self.skipUntil:
             return True
+        #TODO make this more asynchronous and allow reordering
         for i in items:
-            self.receiveQueue.put(("object", i))
+            try:
+                self.append_write_buf(protocol.CreatePacket('object', Inventory()[i].payload))
+            except KeyError:
+                self.antiIntersectionDelay()
+                logger.info('%s asked for an object we don\'t have.', self.destination)
         return True
 
     def bm_command_inv(self):
@@ -251,7 +256,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             pass
 
         for i in items:
-            self.receiveQueue.put(("inv", i))
+            self.handleReceivedInventory(i)
 
         return True
 
@@ -321,7 +326,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         return True
 
     def bm_command_ping(self):
-        self.writeQueue.put(protocol.CreatePacket('pong'))
+        self.append_write_buf(protocol.CreatePacket('pong'))
         return True
 
     def bm_command_pong(self):
@@ -332,11 +337,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.verackReceived = True
         if self.verackSent:
             if self.isSSL:
-                self.set_state("tls_init", self.payloadLength)
-                self.bm_proto_reset()
+                self.set_state("tls_init", length=self.payloadLength, expectBytes=0)
                 return False
-            self.set_connection_fully_established()
-            return True
+            self.set_state("connection_fully_established", length=self.payloadLength, expectBytes=0)
+            return False
         return True
 
     def bm_command_version(self):
@@ -345,20 +349,20 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.nonce = struct.pack('>Q', self.nonce)
         self.timeOffset = self.timestamp - int(time.time())
         logger.debug("remoteProtocolVersion: %i", self.remoteProtocolVersion)
-        logger.debug("services: %08X", self.services)
+        logger.debug("services: 0x%08X", self.services)
         logger.debug("time offset: %i", self.timestamp - int(time.time()))
         logger.debug("my external IP: %s", self.sockNode.host)
-        logger.debug("remote node incoming port: %i", self.peerNode.port)
+        logger.debug("remote node incoming address: %s:%i", self.destination.host, self.peerNode.port)
         logger.debug("user agent: %s", self.userAgent)
         logger.debug("streams: [%s]", ",".join(map(str,self.streams)))
         if not self.peerValidityChecks():
             # TODO ABORT
             return True
         #shared.connectedHostsList[self.destination] = self.streams[0]
-        self.writeQueue.put(protocol.CreatePacket('verack'))
+        self.append_write_buf(protocol.CreatePacket('verack'))
         self.verackSent = True
         if not self.isOutbound:
-            self.writeQueue.put(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
+            self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
                     network.connectionpool.BMConnectionPool().streams, True))
             #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
@@ -366,29 +370,28 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.isSSL = True
         if self.verackReceived:
             if self.isSSL:
-                self.set_state("tls_init", self.payloadLength)
-                self.bm_proto_reset()
+                self.set_state("tls_init", length=self.payloadLength, expectBytes=0)
                 return False
-            self.set_connection_fully_established()
-            return True
+            self.set_state("connection_fully_established", length=self.payloadLength, expectBytes=0)
+            return False
         return True
 
     def peerValidityChecks(self):
         if self.remoteProtocolVersion < 3:
-            self.writeQueue.put(protocol.assembleErrorMessage(fatal=2,
+            self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
                 errorText="Your is using an old protocol. Closing connection."))
             logger.debug ('Closing connection to old protocol version %s, node: %s',
                 str(self.remoteProtocolVersion), str(self.destination))
             return False
         if self.timeOffset > BMProto.maxTimeOffset:
-            self.writeQueue.put(protocol.assembleErrorMessage(fatal=2,
+            self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
                 errorText="Your time is too far in the future compared to mine. Closing connection."))
             logger.info("%s's time is too far in the future (%s seconds). Closing connection to it.",
                 self.destination, self.timeOffset)
             shared.timeOffsetWrongCount += 1
             return False
         elif self.timeOffset < -BMProto.maxTimeOffset:
-            self.writeQueue.put(protocol.assembleErrorMessage(fatal=2,
+            self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
                 errorText="Your time is too far in the past compared to mine. Closing connection."))
             logger.info("%s's time is too far in the past (timeOffset %s seconds). Closing connection to it.",
                 self.destination, self.timeOffset)
@@ -397,7 +400,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         else:
             shared.timeOffsetWrongCount = 0
         if not self.streams:
-            self.writeQueue.put(protocol.assembleErrorMessage(fatal=2,
+            self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
                 errorText="We don't have shared stream interests. Closing connection."))
             logger.debug ('Closed connection to %s because there is no overlapping interest in streams.',
                 str(self.destination))
@@ -405,7 +408,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if self.destination in network.connectionpool.BMConnectionPool().inboundConnections:
             try:
                 if not protocol.checkSocksIP(self.destination.host):
-                    self.writeQueue.put(protocol.assembleErrorMessage(fatal=2,
+                    self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
                         errorText="Too many connections from your IP. Closing connection."))
                     logger.debug ('Closed connection to %s because we are already connected to that IP.',
                         str(self.destination))
@@ -413,7 +416,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except:
                 pass
         if self.nonce == protocol.eightBytesOfRandomDataUsedToDetectConnectionsToSelf:
-            self.writeQueue.put(protocol.assembleErrorMessage(fatal=2,
+            self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
                 errorText="I'm connected to myself. Closing connection."))
             logger.debug ("Closed connection to %s because I'm connected to myself.",
                 str(self.destination))

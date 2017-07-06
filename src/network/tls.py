@@ -10,6 +10,7 @@ import sys
 from debug import logger
 from network.advanceddispatcher import AdvancedDispatcher
 import network.asyncore_pollchoose as asyncore
+from queues import receiveDataQueue
 import paths
 import protocol
 
@@ -58,14 +59,17 @@ class TLSDispatcher(AdvancedDispatcher):
                                          do_handshake_on_connect=False)
         self.sslSocket.setblocking(0)
         self.want_read = self.want_write = True
-        self.set_state("bm_header")
+        self.set_state("tls_handshake")
+        return False
 #        if hasattr(self.socket, "context"):
 #            self.socket.context.set_ecdh_curve("secp256k1")
 
+    def state_tls_handshake(self):
+        return False
+
     def writable(self):
         try:
-            if self.tlsStarted and not self.tlsDone and not self.write_buf and self.writeQueue.empty():
-                #print "tls writable, %r" % (self.want_write)
+            if self.tlsStarted and not self.tlsDone and not self.write_buf:
                 return self.want_write
             return AdvancedDispatcher.writable(self)
         except AttributeError:
@@ -73,9 +77,13 @@ class TLSDispatcher(AdvancedDispatcher):
 
     def readable(self):
         try:
-            if self.tlsStarted and not self.tlsDone and not self.write_buf and self.writeQueue.empty():
+            # during TLS handshake, and after flushing write buffer, return status of last handshake attempt
+            if self.tlsStarted and not self.tlsDone and not self.write_buf:
                 #print "tls readable, %r" % (self.want_read)
                 return self.want_read
+            # prior to TLS handshake, receiveDataThread should emulate synchronous behaviour
+            elif not self.fullyEstablished and (self.expectBytes == 0 or not self.write_buf_empty()):
+                return False
             return AdvancedDispatcher.readable(self)
         except AttributeError:
             return AdvancedDispatcher.readable(self)
@@ -83,11 +91,11 @@ class TLSDispatcher(AdvancedDispatcher):
     def handle_read(self):
         try:
             # wait for write buffer flush
-            if self.tlsStarted and not self.tlsDone and not self.write_buf and self.writeQueue.empty():
-                #print "handshaking (read)"
+            if self.tlsStarted and not self.tlsDone and not self.write_buf:
+                #logger.debug("%s:%i TLS handshaking (read)", self.destination.host, self.destination.port)
                 self.tls_handshake()
             else:
-                #print "not handshaking (read)"
+                #logger.debug("%s:%i Not TLS handshaking (read)", self.destination.host, self.destination.port)
                 return AdvancedDispatcher.handle_read(self)
         except AttributeError:
             return AdvancedDispatcher.handle_read(self)
@@ -104,14 +112,14 @@ class TLSDispatcher(AdvancedDispatcher):
     def handle_write(self):
         try:
             # wait for write buffer flush
-            if self.tlsStarted and not self.tlsDone and not self.write_buf and self.writeQueue.empty():
-                #print "handshaking (write)"
+            if self.tlsStarted and not self.tlsDone and not self.write_buf:
+                #logger.debug("%s:%i TLS handshaking (write)", self.destination.host, self.destination.port)
                 self.tls_handshake()
             else:
-                #print "not handshaking (write)"
+                #logger.debug("%s:%i Not TLS handshaking (write)", self.destination.host, self.destination.port)
                 return AdvancedDispatcher.handle_write(self)
         except AttributeError:
-            return AdvancedDispatcher.handle_read(self)
+            return AdvancedDispatcher.handle_write(self)
         except ssl.SSLError as err:
             if err.errno == ssl.SSL_ERROR_WANT_WRITE:
                 return 0
@@ -158,6 +166,8 @@ class TLSDispatcher(AdvancedDispatcher):
             self.del_channel()
             self.set_socket(self.sslSocket)
             self.tlsDone = True
-            self.set_state("bm_header")
-            self.set_connection_fully_established()
+
+            self.bm_proto_reset()
+            self.set_state("connection_fully_established")
+            receiveDataQueue.put(self)
         return False

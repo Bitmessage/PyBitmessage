@@ -19,7 +19,6 @@ import state
 
 @Singleton
 class BMConnectionPool(object):
-
     def __init__(self):
         asyncore.set_rates(
                 BMConfigParser().safeGetInt("bitmessagesettings", "maxdownloadrate") * 1024,
@@ -30,7 +29,7 @@ class BMConnectionPool(object):
         self.udpSockets = {}
         self.streams = []
         self.lastSpawned = 0
-        self.spawnWait = 0.3
+        self.spawnWait = 2 
         self.bootstrapped = False
 
     def handleReceivedObject(self, streamNumber, hashid, connection = None):
@@ -187,12 +186,10 @@ class BMConnectionPool(object):
                     i.handle_close()
                 logger.info('Stopped udp sockets.')
 
-#        while len(asyncore.socket_map) > 0 and state.shutdown == 0:
-#            print "loop, state = %s" % (proxy.state)
         loopTime = float(self.spawnWait)
         if self.lastSpawned < time.time() - self.spawnWait:
-            loopTime = 1.0
-        asyncore.loop(timeout=loopTime, count=10)
+            loopTime = 2.0
+        asyncore.loop(timeout=loopTime, count=1000)
 
         reaper = []
         for i in self.inboundConnections.values() + self.outboundConnections.values():
@@ -201,7 +198,7 @@ class BMConnectionPool(object):
                 minTx -= 300 - 20
             if i.lastTx < minTx:
                 if i.fullyEstablished:
-                    i.writeQueue.put(protocol.CreatePacket('ping'))
+                    i.append_write_buf(protocol.CreatePacket('ping'))
                 else:
                     i.handle_close("Timeout (%is)" % (time.time() - i.lastTx))
         for i in self.inboundConnections.values() + self.outboundConnections.values() + self.listeningSockets.values() + self.udpSockets.values():

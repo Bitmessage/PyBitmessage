@@ -19,10 +19,9 @@ class Socks4a(Proxy):
 
     def state_init(self):
         self.set_state("auth_done", 0)
+        return True
 
     def state_pre_connect(self):
-        if not self.read_buf_sufficient(8):
-            return False
         # Get the response
         if self.read_buf[0:1] != chr(0x00).encode():
             # bad data
@@ -44,13 +43,11 @@ class Socks4a(Proxy):
             self.__proxypeername = (socket.inet_ntoa(self.ipaddr), self.destination[1])
         else:
             self.__proxypeername = (self.destination[0], self.destport)
-        self.set_state("proxy_handshake_done", 8)
+        self.set_state("proxy_handshake_done", length=8)
+        return True
 
     def proxy_sock_name(self):
        return socket.inet_ntoa(self.__proxysockname[0])
-
-    def state_socks_handshake_done(self):
-        return False
 
 
 class Socks4aConnection(Socks4a):
@@ -60,33 +57,34 @@ class Socks4aConnection(Socks4a):
     def state_auth_done(self):
         # Now we can request the actual connection
         rmtrslv = False
-        self.writeQueue.put(struct.pack('>BBH', 0x04, 0x01, self.destination[1]))
+        self.append_write_buf(struct.pack('>BBH', 0x04, 0x01, self.destination[1]))
         # If the given destination address is an IP address, we'll
         # use the IPv4 address request even if remote resolving was specified.
         try:
             self.ipaddr = socket.inet_aton(self.destination[0])
-            self.writeQueue.put(self.ipaddr)
+            self.append_write_buf(self.ipaddr)
         except socket.error:
             # Well it's not an IP number,  so it's probably a DNS name.
             if Proxy._remote_dns:
                 # Resolve remotely
                 rmtrslv = True
                 self.ipaddr = None
-                self.writeQueue.put(struct.pack("BBBB", 0x00, 0x00, 0x00, 0x01))
+                self.append_write_buf(struct.pack("BBBB", 0x00, 0x00, 0x00, 0x01))
             else:
                 # Resolve locally
                 self.ipaddr = socket.inet_aton(socket.gethostbyname(self.destination[0]))
-                self.writeQueue.put(self.ipaddr)
+                self.append_write_buf(self.ipaddr)
         if self._auth:
-            self.writeQueue.put(self._auth[0])
-        self.writeQueue.put(chr(0x00).encode())
+            self.append_write_buf(self._auth[0])
+        self.append_write_buf(chr(0x00).encode())
         if rmtrslv:
-            self.writeQueue.put(self.destination[0] + chr(0x00).encode())
-        self.set_state("pre_connect", 0)
+            self.append_write_buf(self.destination[0] + chr(0x00).encode())
+        self.set_state("pre_connect", length=0, expectBytes=8)
+        return True
 
     def state_pre_connect(self):
         try:
-            Socks4a.state_pre_connect(self)
+            return Socks4a.state_pre_connect(self)
         except Socks4aError as e:
             self.handle_close(e.message)
 
@@ -99,13 +97,14 @@ class Socks4aResolver(Socks4a):
 
     def state_auth_done(self):
         # Now we can request the actual connection
-        self.writeQueue.put(struct.pack('>BBH', 0x04, 0xF0, self.destination[1]))
-        self.writeQueue.put(struct.pack("BBBB", 0x00, 0x00, 0x00, 0x01))
+        self.append_write_buf(struct.pack('>BBH', 0x04, 0xF0, self.destination[1]))
+        self.append_write_buf(struct.pack("BBBB", 0x00, 0x00, 0x00, 0x01))
         if self._auth:
-            self.writeQueue.put(self._auth[0])
-        self.writeQueue.put(chr(0x00).encode())
-        self.writeQueue.put(self.host + chr(0x00).encode())
-        self.set_state("pre_connect", 0)
+            self.append_write_buf(self._auth[0])
+        self.append_write_buf(chr(0x00).encode())
+        self.append_write_buf(self.host + chr(0x00).encode())
+        self.set_state("pre_connect", length=0, expectBytes=8)
+        return True
 
     def resolved(self):
         print "Resolved %s as %s" % (self.host, self.proxy_sock_name())

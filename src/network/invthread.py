@@ -42,7 +42,7 @@ class InvThread(threading.Thread, StoppableThread):
                         except KeyError:
                             continue
                     if hashes:
-                        connection.writeQueue.put(protocol.CreatePacket('inv', \
+                        connection.append_write_buf(protocol.CreatePacket('inv', \
                                 addresses.encodeVarint(len(hashes)) + "".join(hashes)))
             invQueue.iterate()
             self.stop.wait(1)

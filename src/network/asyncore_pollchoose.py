@@ -249,13 +249,16 @@ def poll_poller(timeout=0.0, map=None):
                 newflags |= OP_WRITE
             else:
                 newflags &= ~ OP_WRITE
-            if newflags != obj.flags:
-                obj.flags = newflags
-                if obj.poller_registered:
-                    poll_poller.pollster.modify(fd, flags)
-                else:
-                    poll_poller.pollster.register(fd, flags)
-                    obj.poller_registered = True
+            if newflags != obj.poller_flags:
+                obj.poller_flags = newflags
+                try:
+                    if obj.poller_registered:
+                        poll_poller.pollster.modify(fd, flags)
+                    else:
+                        poll_poller.pollster.register(fd, flags)
+                        obj.poller_registered = True
+                except IOError:
+                    pass
         try:
             r = poll_poller.pollster.poll(timeout)
         except KeyboardInterrupt:
@@ -292,16 +295,19 @@ def epoll_poller(timeout=0.0, map=None):
                 newflags |= OP_WRITE
             else:
                 newflags &= ~ OP_WRITE
-            if newflags != obj.flags:
-                obj.flags = newflags
+            if newflags != obj.poller_flags:
+                obj.poller_flags = newflags
                 # Only check for exceptions if object was either readable
                 # or writable.
                 flags |= select.POLLERR | select.POLLHUP | select.POLLNVAL
-                if obj.poller_registered:
-                    epoll_poller.pollster.modify(fd, flags)
-                else:
-                    epoll_poller.pollster.register(fd, flags)
-                    obj.poller_registered = True
+                try:
+                    if obj.poller_registered:
+                        epoll_poller.pollster.modify(fd, flags)
+                    else:
+                        epoll_poller.pollster.register(fd, flags)
+                        obj.poller_registered = True
+                except IOError:
+                    pass
         try:
             r = epoll_poller.pollster.poll(timeout)
         except select.error, err:
@@ -329,9 +335,12 @@ def kqueue_poller(timeout=0.0, map=None):
             if obj.writable():
                 filter |= select.KQ_FILTER_WRITE
             if filter:
-                ev = select.kevent(fd, filter=filter, flags=flags)
-                kqueue.control([ev], 0)
-                selectables += 1
+                try:
+                    ev = select.kevent(fd, filter=filter, flags=flags)
+                    kqueue.control([ev], 0)
+                    selectables += 1
+                except IOError:
+                    pass
 
         events = kqueue.control(None, selectables, timeout)
         for event in random.sample(events, len(events)):
@@ -347,25 +356,23 @@ def kqueue_poller(timeout=0.0, map=None):
 
 
 def loop(timeout=30.0, use_poll=False, map=None, count=None, 
-         poller=select_poller):
+         poller=None):
     if map is None:
         map = socket_map
     # code which grants backward compatibility with "use_poll" 
     # argument which should no longer be used in favor of
     # "poller"
 
-    if hasattr(select, 'epoll'):
-        poller = epoll_poller
-    elif hasattr(select, 'kqueue'):
-        poller = kqueue_poller
-    elif hasattr(select, 'poll'):
-        poller = poll_poller
-    elif hasattr(select, 'select'):
-        poller = select_poller
 
-    poller = select_poller
-
-#    print "Poll loop using %s" % (poller.__name__)
+    if poller is None:
+        if hasattr(select, 'epoll'):
+            poller = epoll_poller
+        elif hasattr(select, 'kqueue'):
+            poller = kqueue_poller
+        elif hasattr(select, 'poll'):
+            poller = poll_poller
+        elif hasattr(select, 'select'):
+            poller = select_poller
 
     if count is None:
         while map:
@@ -400,7 +407,7 @@ class dispatcher:
     addr = None
     ignore_log_types = frozenset(['warning'])
     poller_registered = False
-    flags = 0
+    poller_flags = 0
     # don't do network IO with a smaller bucket than this
     minTx = 1500
 
@@ -456,23 +463,26 @@ class dispatcher:
         if map is None:
             map = self._map
         map[self._fileno] = self
+        self.poller_flags = 0
 
     def del_channel(self, map=None):
         fd = self._fileno
         if map is None:
             map = self._map
+        self.poller_flags = 0
+        self.poller_registered = False
         if fd in map:
             #self.log_info('closing channel %d:%s' % (fd, self))
             del map[fd]
         self._fileno = None
         try:
             epoll_poller.pollster.unregister(fd)
-        except (AttributeError, KeyError, TypeError):
+        except (AttributeError, KeyError, TypeError, IOError):
             # no epoll used, or not registered
             pass
         try:
             poll_poller.pollster.unregister(fd)
-        except (AttributeError, KeyError, TypeError):
+        except (AttributeError, KeyError, TypeError, IOError):
             # no poll used, or not registered
             pass
 
