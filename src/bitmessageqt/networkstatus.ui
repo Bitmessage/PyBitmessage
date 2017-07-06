@@ -116,25 +116,40 @@
           <property name="text">
            <string>Peer</string>
           </property>
+          <property name="toolTip">
+           <string>IP address or hostname</string>
+          </property>
          </column>
          <column>
           <property name="text">
            <string>Rating</string>
+          </property>
+          <property name="toolTip">
+           <string>PyBitmessage tracks the success rate of connection attempts to individual nodes. The rating ranges from -1 to 1 and affects the likelihood of selecting the node in the future</string>
           </property>
          </column>
          <column>
           <property name="text">
            <string>User agent</string>
           </property>
+          <property name="toolTip">
+           <string>Peer's self-reported software</string>
+          </property>
          </column>
          <column>
           <property name="text">
            <string>TLS</string>
           </property>
+          <property name="toolTip">
+           <string>Connection encryption</string>
+          </property>
          </column>
          <column>
           <property name="text">
            <string>Stream #</string>
+          </property>
+          <property name="toolTip">
+           <string>List of streams negotiated between you and the peer</string>
           </property>
          </column>
         </widget>
