@@ -34,11 +34,7 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
             # cycle as long as there is data
             # methods should return False if there isn't enough data, or the connection is to be aborted
             try:
-                while connection.process():
-                    pass
+                connection.process()
             except AttributeError:
                 # missing command
                 logger.error("Unknown state %s, ignoring", connection.state)
-
-    def stopThread(self):
-        super(ReceiveQueueThread, self).stopThread()
