@@ -54,6 +54,17 @@ class BMConnectionPool(object):
     def connectToStream(self, streamNumber):
         self.streams.append(streamNumber)
 
+    def getConnectionByAddr(self, addr):
+        if addr in self.inboundConnections:
+            return self.inboundConnections[addr]
+        if addr.host in self.inboundConnections:
+            return self.inboundConnections[addr.host]
+        if addr in self.outboundConnections:
+            return self.outboundConnections[addr]
+        if addr in self.udpSockets:
+            return self.udpSockets[addr]
+        raise KeyError
+
     def addConnection(self, connection):
         if isinstance(connection, network.udp.UDPSocket):
             return

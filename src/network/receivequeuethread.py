@@ -39,21 +39,8 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
             # or the connection is to be aborted
 
             try:
-                BMConnectionPool().inboundConnections[dest].process()
-            except KeyError:
-                try:
-                    BMConnectionPool().inboundConnections[dest.host].process()
-                except KeyError:
-                    pass
-            except AttributeError:
-                pass
-
-            try:
-                BMConnectionPool().outboundConnections[dest].process()
-            except (KeyError, AttributeError):
-                pass
-
-            try:
-                BMConnectionPool().udpSockets[dest].process()
+                BMConnectionPool().getConnectionByAddr(dest).process()
+            # KeyError = connection object not found
+            # AttributeError = state isn't implemented
             except (KeyError, AttributeError):
                 pass

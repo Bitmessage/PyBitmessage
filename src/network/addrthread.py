@@ -21,8 +21,12 @@ class AddrThread(threading.Thread, StoppableThread):
                 try:
                     data = addrQueue.get(False)
                     chunk.append((data[0], data[1]))
+                    if len(data) > 2:
+                        source = BMConnectionPool().getConnectionByAddr(data[2])
                 except Queue.Empty:
                     break
+                except KeyError:
+                    continue
 
             #finish
 
