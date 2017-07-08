@@ -15,7 +15,6 @@ import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
 from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
 import network.connectionpool
-from network.downloadqueue import DownloadQueue
 from network.node import Node
 from network.objectracker import ObjectTracker
 from network.proxy import Proxy, ProxyError, GeneralProxyError
