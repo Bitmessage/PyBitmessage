@@ -139,7 +139,7 @@ class UDPSocket(BMProto):
         # overwrite the old buffer to avoid mixing data and so that self.local works correctly
         self.read_buf = recdata
         self.bm_proto_reset()
-        receiveDataQueue.put(self)
+        receiveDataQueue.put(self.destination)
 
     def handle_write(self):
         try:

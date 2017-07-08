@@ -11,8 +11,8 @@ from network.connectionpool import BMConnectionPool
 import protocol
 
 class DownloadThread(threading.Thread, StoppableThread):
-    maxPending = 50
-    requestChunk = 100
+    maxPending = 200
+    requestChunk = 1000
     requestTimeout = 60
     cleanInterval = 60
     requestExpires = 600
