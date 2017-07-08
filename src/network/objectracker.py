@@ -4,8 +4,6 @@ from threading import RLock
 
 from debug import logger
 from inventory import Inventory
-from network.downloadqueue import DownloadQueue
-from network.uploadqueue import UploadQueue
 
 haveBloom = False
 

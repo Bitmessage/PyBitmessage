@@ -17,14 +17,12 @@ from network.advanceddispatcher import AdvancedDispatcher
 from network.bmproto import BMProtoError, BMProtoInsufficientDataError, BMProtoExcessiveDataError, BMProto
 from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
 import network.connectionpool
-from network.downloadqueue import DownloadQueue
 from network.node import Node
 import network.asyncore_pollchoose as asyncore
 from network.proxy import Proxy, ProxyError, GeneralProxyError
 from network.objectracker import ObjectTracker
 from network.socks5 import Socks5Connection, Socks5Resolver, Socks5AuthError, Socks5Error
 from network.socks4a import Socks4aConnection, Socks4aResolver, Socks4aError
-from network.uploadqueue import UploadQueue, UploadElem, AddrUploadQueue, ObjUploadQueue
 from network.tls import TLSDispatcher
 
 import addresses
