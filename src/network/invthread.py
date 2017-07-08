@@ -23,10 +23,14 @@ class InvThread(threading.Thread, StoppableThread):
                     if len(data) == 2:
                         BMConnectionPool().handleReceivedObject(data[0], data[1])
                     else:
-                        BMConnectionPool().handleReceivedObject(data[0], data[1], data[2])
+                        source = BMConnectionPool().getConnectionByAddr(data[2])
+                        BMConnectionPool().handleReceivedObject(data[0], data[1], source)
                     chunk.append((data[0], data[1]))
                 except Queue.Empty:
                     break
+                # connection not found, handle it as if generated locally
+                except KeyError:
+                    BMConnectionPool().handleReceivedObject(data[0], data[1])
 
             if chunk:
                 for connection in BMConnectionPool().inboundConnections.values() + \

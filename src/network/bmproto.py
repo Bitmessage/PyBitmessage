@@ -290,7 +290,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         Inventory()[self.object.inventoryHash] = (
                 self.object.objectType, self.object.streamNumber, self.payload[objectOffset:], self.object.expiresTime, self.object.tag)
-        invQueue.put((self.object.streamNumber, self.object.inventoryHash, self))
+        invQueue.put((self.object.streamNumber, self.object.inventoryHash, self.destination))
         return True
 
     def _decode_addr(self):
@@ -317,7 +317,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                                 "rating": 0,
                                 "self": False,
                             }
-                addrQueue.put((stream, peer, self))
+                addrQueue.put((stream, peer, self.destination))
         return True
 
     def bm_command_portcheck(self):
