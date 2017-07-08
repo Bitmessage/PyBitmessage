@@ -35,26 +35,25 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
             # cycle as long as there is data
             # methods should return False if there isn't enough data, or the connection is to be aborted
 
-           # state_* methods should return False if there isn't enough data,
-           # or the connection is to be aborted
+            # state_* methods should return False if there isn't enough data,
+            # or the connection is to be aborted
 
             try:
                 BMConnectionPool().inboundConnections[dest].process()
             except KeyError:
-                pass
+                try:
+                    BMConnectionPool().inboundConnections[dest.host].process()
+                except KeyError:
+                    pass
             except AttributeError:
-                logger.error("Unknown state %s, ignoring", connection.state)
+                pass
 
             try:
                 BMConnectionPool().outboundConnections[dest].process()
-            except KeyError:
+            except (KeyError, AttributeError):
                 pass
-            except AttributeError:
-                logger.error("Unknown state %s, ignoring", connection.state)
 
             try:
                 BMConnectionPool().udpSockets[dest].process()
-            except KeyError:
+            except (KeyError, AttributeError):
                 pass
-            except AttributeError:
-                logger.error("Unknown state %s, ignoring", connection.state)
