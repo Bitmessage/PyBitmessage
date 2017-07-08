@@ -24,17 +24,37 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
     def run(self):
         while not self._stopped and state.shutdown == 0:
             try:
-                connection = receiveDataQueue.get(block=True, timeout=1)
+                dest = receiveDataQueue.get(block=True, timeout=1)
                 receiveDataQueue.task_done()
             except Queue.Empty:
                 continue
 
             if self._stopped:
                 break
+
             # cycle as long as there is data
             # methods should return False if there isn't enough data, or the connection is to be aborted
+
+           # state_* methods should return False if there isn't enough data,
+           # or the connection is to be aborted
+
             try:
-                connection.process()
+                BMConnectionPool().inboundConnections[dest].process()
+            except KeyError:
+                pass
             except AttributeError:
-                # missing command
+                logger.error("Unknown state %s, ignoring", connection.state)
+
+            try:
+                BMConnectionPool().outboundConnections[dest].process()
+            except KeyError:
+                pass
+            except AttributeError:
+                logger.error("Unknown state %s, ignoring", connection.state)
+
+            try:
+                BMConnectionPool().udpSockets[dest].process()
+            except KeyError:
+                pass
+            except AttributeError:
                 logger.error("Unknown state %s, ignoring", connection.state)

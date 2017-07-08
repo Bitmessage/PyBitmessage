@@ -190,7 +190,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, False))
         #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         self.connectedAt = time.time()
-        receiveDataQueue.put(self)
+        receiveDataQueue.put(self.destination)
 
     def handle_read(self):
         TLSDispatcher.handle_read(self)
@@ -201,7 +201,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                         knownnodes.knownNodes[s][self.destination]["lastseen"] = time.time()
                 except KeyError:
                     pass
-        receiveDataQueue.put(self)
+        receiveDataQueue.put(self.destination)
 
     def handle_write(self):
         TLSDispatcher.handle_write(self)

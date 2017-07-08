@@ -169,5 +169,5 @@ class TLSDispatcher(AdvancedDispatcher):
 
             self.bm_proto_reset()
             self.set_state("connection_fully_established")
-            receiveDataQueue.put(self)
+            receiveDataQueue.put(self.destination)
         return False
