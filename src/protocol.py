@@ -186,7 +186,7 @@ def CreatePacket(command, payload=''):
     b[Header.size:] = payload
     return bytes(b)
 
-def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server = False):
+def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server = False, nodeid = None):
     payload = ''
     payload += pack('>L', 3)  # protocol version.
     payload += pack('>q', NODE_NETWORK|(NODE_SSL if haveSSL(server) else 0))  # bitflags of the services I offer.
@@ -217,7 +217,10 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server 
         payload += pack('>H', BMConfigParser().getint('bitmessagesettings', 'port'))
 
     random.seed()
-    payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
+    if nodeid is not None:
+        payload += nodeid[0:8]
+    else:
+        payload += eightBytesOfRandomDataUsedToDetectConnectionsToSelf
     userAgent = '/PyBitmessage:' + softwareVersion + '/'
     payload += encodeVarint(len(userAgent))
     payload += userAgent

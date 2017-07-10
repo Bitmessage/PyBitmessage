@@ -11,6 +11,7 @@ import traceback
 
 from addresses import calculateInventoryHash
 from debug import logger
+from helper_random import randomBytes
 from inventory import Inventory
 import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
@@ -47,6 +48,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             TLSDispatcher.__init__(self, sock, server_side=True)
             self.connectedAt = time.time()
             logger.debug("Received connection from %s:%i", self.destination.host, self.destination.port)
+            self.nodeid = randomBytes(8)
         elif address is not None and sock is not None:
             TLSDispatcher.__init__(self, sock, server_side=False)
             self.isOutbound = True
@@ -187,7 +189,9 @@ class TCPConnection(BMProto, TLSDispatcher):
             if e.errno in asyncore._DISCONNECTED:
                 logger.debug("%s:%i: Connection failed: %s" % (self.destination.host, self.destination.port, str(e)))
                 return
-        self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, network.connectionpool.BMConnectionPool().streams, False))
+        self.nodeid = randomBytes(8)
+        self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
+                network.connectionpool.BMConnectionPool().streams, False, nodeid=self.nodeid))
         #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         self.connectedAt = time.time()
         receiveDataQueue.put(self.destination)
@@ -220,8 +224,9 @@ class Socks5BMConnection(Socks5Connection, TCPConnection):
 
     def state_proxy_handshake_done(self):
         Socks5Connection.state_proxy_handshake_done(self)
+        self.nodeid = randomBytes(8)
         self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
-                network.connectionpool.BMConnectionPool().streams, False))
+                network.connectionpool.BMConnectionPool().streams, False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
 
@@ -234,8 +239,9 @@ class Socks4aBMConnection(Socks4aConnection, TCPConnection):
 
     def state_proxy_handshake_done(self):
         Socks4aConnection.state_proxy_handshake_done(self)
+        self.nodeid = randomBytes(8)
         self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
-                network.connectionpool.BMConnectionPool().streams, False))
+                network.connectionpool.BMConnectionPool().streams, False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
 
