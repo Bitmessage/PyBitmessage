@@ -1,4 +1,6 @@
+from contextlib import contextmanager
 import threading
+
 try:
     import prctl
     def set_thread_name(name): prctl.set_name(name)
@@ -20,3 +22,16 @@ class StoppableThread(object):
     def stopThread(self):
         self._stopped = True
         self.stop.set()
+
+class BusyError(threading.ThreadError):
+    pass
+
+@contextmanager
+def nonBlocking(lock):
+    locked = lock.acquire(False)
+    if not locked:
+        raise BusyError
+    try:
+        yield
+    finally:
+        lock.release()
