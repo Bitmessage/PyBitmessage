@@ -10,9 +10,9 @@ import state
 
 class AddrThread(threading.Thread, StoppableThread):
     def __init__(self):
-        threading.Thread.__init__(self, name="AddrThread")
+        threading.Thread.__init__(self, name="AddrBroadcaster")
         self.initStop()
-        self.name = "AddrThread"
+        self.name = "AddrBroadcaster"
 
     def run(self):
         while not state.shutdown:

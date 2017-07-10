@@ -10,9 +10,9 @@ import state
 
 class InvThread(threading.Thread, StoppableThread):
     def __init__(self):
-        threading.Thread.__init__(self, name="InvThread")
+        threading.Thread.__init__(self, name="InvBroadcaster")
         self.initStop()
-        self.name = "InvThread"
+        self.name = "InvBroadcaster"
 
     def run(self):
         while not state.shutdown:

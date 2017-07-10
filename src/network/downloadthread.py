@@ -18,9 +18,9 @@ class DownloadThread(threading.Thread, StoppableThread):
     requestExpires = 600
 
     def __init__(self):
-        threading.Thread.__init__(self, name="DownloadThread")
+        threading.Thread.__init__(self, name="Downloader")
         self.initStop()
-        self.name = "DownloadThread"
+        self.name = "Downloader"
         logger.info("init download thread")
         self.pending = {}
         self.lastCleaned = time.time()
