@@ -362,7 +362,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.verackSent = True
         if not self.isOutbound:
             self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
-                    network.connectionpool.BMConnectionPool().streams, True))
+                    network.connectionpool.BMConnectionPool().streams, True, nodeid=self.nodeid))
             #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
                 protocol.haveSSL(not self.isOutbound)):
@@ -414,7 +414,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     return False
             except:
                 pass
-        if self.nonce == protocol.eightBytesOfRandomDataUsedToDetectConnectionsToSelf:
+        if network.connectionpool.BMConnectionPool().isAlreadyConnected(self.nonce):
             self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
                 errorText="I'm connected to myself. Closing connection."))
             logger.debug ("Closed connection to %s because I'm connected to myself.",
