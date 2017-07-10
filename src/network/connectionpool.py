@@ -65,6 +65,15 @@ class BMConnectionPool(object):
             return self.udpSockets[addr]
         raise KeyError
 
+    def isAlreadyConnected(self, nodeid):
+        for i in self.inboundConnections.values() + self.outboundConnections.values():
+            try:
+                if nodeid == i.nodeid:
+                    return True
+            except AttributeError:
+                pass
+        return False
+
     def addConnection(self, connection):
         if isinstance(connection, network.udp.UDPSocket):
             return
