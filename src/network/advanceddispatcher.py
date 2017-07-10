@@ -50,6 +50,8 @@ class AdvancedDispatcher(asyncore.dispatcher):
                         break
             except AttributeError:
                 raise
+            except BusyError:
+                return False
         return False
 
     def set_state(self, state, length=0, expectBytes=0):
