@@ -9,9 +9,9 @@ import state
 
 class BMNetworkThread(threading.Thread, StoppableThread):
     def __init__(self):
-        threading.Thread.__init__(self, name="AsyncoreThread")
+        threading.Thread.__init__(self, name="Asyncore")
         self.initStop()
-        self.name = "AsyncoreThread"
+        self.name = "Asyncore"
         logger.info("init asyncore thread")
 
     def run(self):

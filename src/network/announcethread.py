@@ -11,9 +11,9 @@ import state
 
 class AnnounceThread(threading.Thread, StoppableThread):
     def __init__(self):
-        threading.Thread.__init__(self, name="AnnounceThread")
+        threading.Thread.__init__(self, name="Announcer")
         self.initStop()
-        self.name = "AnnounceThread"
+        self.name = "Announcer"
         logger.info("init announce thread")
 
     def run(self):
