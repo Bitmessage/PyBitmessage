@@ -43,9 +43,12 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def process(self):
         if not self.connected:
             return False
-        while len(self.read_buf) >= self.expectBytes:
+        loop = 0
+        while True:
             try:
                 with nonBlocking(self.processingLock):
+                    if len(self.read_buf) < self.expectBytes:
+                        return False
                     if getattr(self, "state_" + str(self.state))() is False:
                         break
             except AttributeError:
