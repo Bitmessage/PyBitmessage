@@ -267,9 +267,10 @@ class Main:
             asyncoreThread = BMNetworkThread()
             asyncoreThread.daemon = True
             asyncoreThread.start()
-            receiveQueueThread = ReceiveQueueThread()
-            receiveQueueThread.daemon = True
-            receiveQueueThread.start()
+            for i in range(BMConfigParser().getint("threads", "receive")):
+                receiveQueueThread = ReceiveQueueThread(i)
+                receiveQueueThread.daemon = True
+                receiveQueueThread.start()
             announceThread = AnnounceThread()
             announceThread.daemon = True
             announceThread.start()

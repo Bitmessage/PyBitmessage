@@ -6,6 +6,7 @@ import time
 
 import asyncore_pollchoose as asyncore
 from debug import logger
+from helper_threading import BusyError, nonBlocking
 
 class AdvancedDispatcher(asyncore.dispatcher):
     _buf_len = 2097152 # 2MB
@@ -22,6 +23,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         self.expectBytes = 0
         self.readLock = threading.RLock()
         self.writeLock = threading.RLock()
+        self.processingLock = threading.RLock()
 
     def append_write_buf(self, data):
         if data:
@@ -43,8 +45,9 @@ class AdvancedDispatcher(asyncore.dispatcher):
             return False
         while len(self.read_buf) >= self.expectBytes:
             try:
-                if getattr(self, "state_" + str(self.state))() is False:
-                    break
+                with nonBlocking(self.processingLock):
+                    if getattr(self, "state_" + str(self.state))() is False:
+                        break
             except AttributeError:
                 raise
         return False

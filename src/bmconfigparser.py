@@ -15,6 +15,9 @@ BMConfigDefaults = {
         "maxtotalconnections": 200,
         "maxuploadrate": 0,
     },
+    "threads": {
+        "receive": 3,
+    },
     "network": {
         "asyncore": True,
         "bind": None,
