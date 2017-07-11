@@ -219,6 +219,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                         if parserStack[-1][3][j] not in "lL0123456789":
                             break
                     parserStack.append([size, size, isArray, parserStack[-1][3][parserStack[-1][4]:j+1], 0, []])
+                    parserStack[-2][4] += len(parserStack[-1][3]) - 1
                 size = None
                 continue
             elif i == "s":
