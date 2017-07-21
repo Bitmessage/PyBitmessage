@@ -1,4 +1,6 @@
+import errno
 import Queue
+import socket
 import sys
 import threading
 import time
@@ -43,4 +45,9 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
             # AttributeError = state isn't implemented
             except (KeyError, AttributeError):
                 pass
+            except socket.error as err:
+                if err.errno == errno.EBADF:
+                    BMConnectionPool().getConnectionByAddr(dest).set_state("close", 0)
+                else:
+                    logger.error("Socket error: %s", str(err))
             receiveDataQueue.task_done()
