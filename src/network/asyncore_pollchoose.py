@@ -310,6 +310,10 @@ def epoll_poller(timeout=0.0, map=None):
                     pass
         try:
             r = epoll_poller.pollster.poll(timeout)
+        except IOError as e:
+            if e.errno != EINTR:
+                raise
+            r = []
         except select.error, err:
             if err.args[0] != EINTR:
                 raise
