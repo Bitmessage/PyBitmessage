@@ -203,7 +203,7 @@ def select_poller(timeout=0.0, map=None):
         except KeyboardInterrupt:
             return
         except socket.error as err:
-            if err.args[0] in (EBADF, WSAENOTSOCK):
+            if err.args[0] in (EBADF, WSAENOTSOCK, EINTR):
                 return
 
         for fd in random.sample(r, len(r)):
@@ -263,6 +263,9 @@ def poll_poller(timeout=0.0, map=None):
             r = poll_poller.pollster.poll(timeout)
         except KeyboardInterrupt:
             r = []
+        except socket.error as err:
+            if err.args[0] in (EBADF, WSAENOTSOCK, EINTR):
+                return
         for fd, flags in random.sample(r, len(r)):
             obj = map.get(fd)
             if obj is None:
