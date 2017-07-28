@@ -316,14 +316,24 @@ class Main:
             BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
 
     def daemonize(self):
-        if os.fork():
-            exit(0)
-        shared.thisapp.lock() # relock
+        try:
+            if os.fork():
+                exit(0)
+        except AttributeError:
+            # fork not implemented
+            pass
+        else:
+            shared.thisapp.lock() # relock
         os.umask(0)
         os.setsid()
-        if os.fork():
-            exit(0)
-        shared.thisapp.lock() # relock
+        try:
+            if os.fork():
+                exit(0)
+        except AttributeError:
+            # fork not implemented
+            pass
+        else:
+            shared.thisapp.lock() # relock
         shared.thisapp.lockPid = None # indicate we're the final child
         sys.stdout.flush()
         sys.stderr.flush()
