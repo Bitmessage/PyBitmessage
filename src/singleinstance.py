@@ -44,7 +44,7 @@ class singleinstance:
                 # file already exists, we try to remove (in case previous execution was interrupted)
                 if os.path.exists(self.lockfile):
                     os.unlink(self.lockfile)
-                self.fd = os.open(self.lockfile, os.O_CREAT | os.O_EXCL | os.O_RDWR)
+                self.fd = os.open(self.lockfile, os.O_CREAT | os.O_EXCL | os.O_RDWR | os.O_TRUNC)
             except OSError:
                 type, e, tb = sys.exc_info()
                 if e.errno == 13:
@@ -52,6 +52,9 @@ class singleinstance:
                     sys.exit(-1)
                 print(e.errno)
                 raise
+            else:
+                pidLine = "%i\n" % self.lockPid
+                self.fd.write(pidLine)
         else:  # non Windows
             self.fp = open(self.lockfile, 'w')
             try:
@@ -63,6 +66,10 @@ class singleinstance:
             except IOError:
                 print 'Another instance of this application is already running'
                 sys.exit(-1)
+            else:
+                pidLine = "%i\n" % self.lockPid
+                self.fp.write(pidLine)
+                self.fp.flush()
 
     def cleanup(self):
         if not self.initialized:
