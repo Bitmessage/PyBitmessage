@@ -325,7 +325,11 @@ class Main:
         else:
             shared.thisapp.lock() # relock
         os.umask(0)
-        os.setsid()
+        try:
+            os.setsid()
+        except AttributeError:
+            # setsid not implemented
+            pass
         try:
             if os.fork():
                 exit(0)
