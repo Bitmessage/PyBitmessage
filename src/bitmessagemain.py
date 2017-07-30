@@ -27,6 +27,7 @@ import socket
 import ctypes
 from struct import pack
 from subprocess import call
+from time import sleep
 
 from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
 from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
@@ -314,6 +315,10 @@ class Main:
                     bitmessagecurses.runwrapper()
         else:
             BMConfigParser().remove_option('bitmessagesettings', 'dontconnect')
+
+        if daemon:
+            while state.shutdown == 0:
+                sleep(1)
 
     def daemonize(self):
         try:
