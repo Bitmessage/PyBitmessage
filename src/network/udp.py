@@ -33,6 +33,7 @@ class UDPSocket(BMProto):
                 self.create_socket(socket.AF_INET6, socket.SOCK_DGRAM)
             else:
                 self.create_socket(socket.AF_INET, socket.SOCK_DGRAM)
+            self.set_socket_reuse()
             logger.info("Binding UDP socket to %s:%i", host, UDPSocket.port)
             self.socket.bind((host, UDPSocket.port))
             #BINDTODEVICE is only available on linux and requires root
@@ -42,18 +43,21 @@ class UDPSocket(BMProto):
             #except AttributeError:
         else:
             self.socket = sock
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
-        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        try:
-            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
-        except AttributeError:
-            pass
+            self.set_socket_reuse()
         self.listening = state.Peer(self.socket.getsockname()[0], self.socket.getsockname()[1])
         self.destination = state.Peer(self.socket.getsockname()[0], self.socket.getsockname()[1])
         ObjectTracker.__init__(self)
         self.connecting = False
         self.connected = True
         self.set_state("bm_header", expectBytes=protocol.Header.size)
+
+    def set_socket_reuse(self):
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BROADCAST, 1)
+        self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        try:
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEPORT, 1)
+        except AttributeError:
+            pass
 
     def state_bm_command(self):
         BMProto.state_bm_command(self)
