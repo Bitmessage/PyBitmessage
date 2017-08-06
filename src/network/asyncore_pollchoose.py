@@ -70,7 +70,7 @@ except (ImportError, AttributeError):
 try:
     from errno import WSAECONNRESET
 except (ImportError, AttributeError):
-    WSEACONNRESET = ECONNRESET
+    WSAECONNRESET = ECONNRESET
 
 _DISCONNECTED = frozenset((ECONNRESET, ENOTCONN, ESHUTDOWN, ECONNABORTED, EPIPE,
                            EBADF, ECONNREFUSED, EHOSTUNREACH, ENETUNREACH, ETIMEDOUT,
