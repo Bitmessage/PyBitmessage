@@ -8,7 +8,7 @@ import state
 
 def getDiscoveredPeer(stream):
     try:
-        peer = random.choice(state.discoveredPeers.keys())
+        return random.choice(state.discoveredPeers.keys())
     except (IndexError, KeyError):
         raise ValueError
 
