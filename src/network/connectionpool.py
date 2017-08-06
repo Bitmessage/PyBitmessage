@@ -61,8 +61,8 @@ class BMConnectionPool(object):
             return self.inboundConnections[addr.host]
         if addr in self.outboundConnections:
             return self.outboundConnections[addr]
-        if addr in self.udpSockets:
-            return self.udpSockets[addr]
+        if addr.host in self.udpSockets:
+            return self.udpSockets[addr.host]
         raise KeyError
 
     def isAlreadyConnected(self, nodeid):

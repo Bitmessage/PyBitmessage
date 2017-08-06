@@ -100,7 +100,7 @@ class UDPSocket(BMProto):
             return True
         logger.debug("received peer discovery from %s:%i (port %i):", self.destination.host, self.destination.port, remoteport)
         if self.local:
-            state.discoveredPeers[state.Peer(self.destination.host, remoteport)] = time.time
+            state.discoveredPeers[state.Peer(self.destination.host, remoteport)] = time.time()
         return True
 
     def bm_command_portcheck(self):
@@ -143,7 +143,7 @@ class UDPSocket(BMProto):
         # overwrite the old buffer to avoid mixing data and so that self.local works correctly
         self.read_buf = recdata
         self.bm_proto_reset()
-        receiveDataQueue.put(self.destination)
+        receiveDataQueue.put(self.listening)
 
     def handle_write(self):
         try:
