@@ -67,9 +67,14 @@ try:
     from errno import WSAENOTSOCK
 except (ImportError, AttributeError):
     WSAENOTSOCK = ENOTSOCK
+try:
+    from errno import WSAECONNRESET
+except (ImportError, AttributeError):
+    WSEACONNRESET = ECONNRESET
 
 _DISCONNECTED = frozenset((ECONNRESET, ENOTCONN, ESHUTDOWN, ECONNABORTED, EPIPE,
-                           EBADF, ECONNREFUSED, EHOSTUNREACH, ENETUNREACH, ETIMEDOUT))
+                           EBADF, ECONNREFUSED, EHOSTUNREACH, ENETUNREACH, ETIMEDOUT,
+                           WSAECONNRESET))
 
 OP_READ = 1
 OP_WRITE = 2
@@ -203,7 +208,10 @@ def select_poller(timeout=0.0, map=None):
         except KeyboardInterrupt:
             return
         except socket.error as err:
-            if err.args[0] in (EBADF, WSAENOTSOCK, EINTR):
+            if err.args[0] in (EBADF EINTR):
+                return
+        except Exception as err:
+            if err.args[0] in (WSAENOTSOCK, ):
                 return
 
         for fd in random.sample(r, len(r)):
@@ -685,6 +693,9 @@ class dispatcher:
             # since there is an error, we'll go ahead and close the socket
             # like we would in a subclassed handle_read() that received no
             # data
+            self.handle_close()
+        elif sys.platform.startswith("win"):
+            # async connect failed
             self.handle_close()
         else:
             self.handle_expt()
