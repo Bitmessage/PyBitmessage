@@ -550,7 +550,7 @@ class dispatcher:
         self.connected = False
         self.connecting = True
         err = self.socket.connect_ex(address)
-        if err in (EINPROGRESS, EALREADY, EWOULDBLOCK) \
+        if err in (EINPROGRESS, EALREADY, EWOULDBLOCK, WSAEWOULDBLOCK) \
         or err == EINVAL and os.name in ('nt', 'ce'):
             self.addr = address
             return
@@ -567,7 +567,7 @@ class dispatcher:
         except TypeError:
             return None
         except socket.error as why:
-            if why.args[0] in (EWOULDBLOCK, ECONNABORTED, EAGAIN, ENOTCONN):
+            if why.args[0] in (EWOULDBLOCK, WSAEWOULDBLOCK, ECONNABORTED, EAGAIN, ENOTCONN):
                 return None
             else:
                 raise
