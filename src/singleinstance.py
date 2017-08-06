@@ -54,8 +54,7 @@ class singleinstance:
                 raise
             else:
                 pidLine = "%i\n" % self.lockPid
-                self.fd.write(pidLine)
-                self.fd.flush()
+                os.write(self.fd, pidLine)
         else:  # non Windows
             self.fp = open(self.lockfile, 'w')
             try:
