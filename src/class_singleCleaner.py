@@ -128,7 +128,7 @@ class singleCleaner(threading.Thread, StoppableThread):
                 connection.clean()
 
             # discovery tracking
-            exp = time.time() - singleCleander.expireDiscoveredPeers
+            exp = time.time() - singleCleaner.expireDiscoveredPeers
             reaper = (k for k, v in state.discoveredPeers.items() if v < exp)
             for k in reaper:
                 try:
