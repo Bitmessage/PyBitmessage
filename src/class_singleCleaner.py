@@ -38,6 +38,7 @@ resends msg messages in 5 days (then 10 days, then 20 days, etc...)
 
 class singleCleaner(threading.Thread, StoppableThread):
     cycleLength = 300
+    expireDiscoveredPeers = 300
 
     def __init__(self):
         threading.Thread.__init__(self, name="singleCleaner")
@@ -126,6 +127,14 @@ class singleCleaner(threading.Thread, StoppableThread):
             for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
                 connection.clean()
 
+            # discovery tracking
+            exp = time.time() - singleCleander.expireDiscoveredPeers
+            reaper = (k for k, v in state.discoveredPeers.items() if v < exp)
+            for k in reaper:
+                try:
+                    del state.discoveredPeers[k]
+                except KeyError:
+                    pass
             # TODO: cleanup pending upload / download
 
             if state.shutdown == 0:

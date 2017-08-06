@@ -9,7 +9,7 @@ from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInv
 import network.asyncore_pollchoose as asyncore
 from network.objectracker import ObjectTracker
 
-from queues import objectProcessorQueue, peerDiscoveryQueue, UISignalQueue, receiveDataQueue
+from queues import objectProcessorQueue, UISignalQueue, receiveDataQueue
 import state
 import protocol
 
@@ -100,7 +100,7 @@ class UDPSocket(BMProto):
             return True
         logger.debug("received peer discovery from %s:%i (port %i):", self.destination.host, self.destination.port, remoteport)
         if self.local:
-            peerDiscoveryQueue.put(state.Peer(self.destination.host, remoteport))
+            state.discoveredPeers[state.Peer(self.destination.host, remoteport)] = time.time
         return True
 
     def bm_command_portcheck(self):
