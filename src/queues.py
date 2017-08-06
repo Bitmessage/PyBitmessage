@@ -11,7 +11,6 @@ objectProcessorQueue = ObjectProcessorQueue()
 invQueue = MultiQueue()
 addrQueue = MultiQueue()
 portCheckerQueue = Queue.Queue()
-peerDiscoveryQueue = Queue.Queue()
 receiveDataQueue = Queue.Queue()
 apiAddressGeneratorReturnQueue = Queue.Queue(
     )  # The address generator thread uses this queue to get information back to the API thread.

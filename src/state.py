@@ -41,6 +41,8 @@ ownAddresses = {}
 # security.
 trustedPeer = None
 
+discoveredPeers = {}
+
 Peer = collections.namedtuple('Peer', ['host', 'port'])
 
 def resetNetworkProtocolAvailability():
