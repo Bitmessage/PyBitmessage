@@ -208,7 +208,7 @@ def select_poller(timeout=0.0, map=None):
         except KeyboardInterrupt:
             return
         except socket.error as err:
-            if err.args[0] in (EBADF EINTR):
+            if err.args[0] in (EBADF, EINTR):
                 return
         except Exception as err:
             if err.args[0] in (WSAENOTSOCK, ):
