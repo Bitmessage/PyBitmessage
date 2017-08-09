@@ -252,9 +252,28 @@ class TCPServer(AdvancedDispatcher):
             AdvancedDispatcher.__init__(self)
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.set_reuse_addr()
-        self.bind((host, port))
+        for attempt in range(50):
+            try:
+                if attempt > 0:
+                    port = random.randint(32767, 65535)
+                self.bind((host, port))
+            except socket.error as e:
+                if e.errno in (asyncore.EADDRINUSE, asyncore.WSAEADDRINUSE):
+                    continue
+            else:
+                if attempt > 0:
+                    BMConfigParser().set("bitmessagesettings", "port", str(port))
+                    BMConfigParser().save()
+                break
         self.destination = state.Peer(host, port)
+        self.bound = True
         self.listen(5)
+
+    def is_bound(self):
+        try:
+            return self.bound
+        except AttributeError:
+            return False
 
     def handle_accept(self):
         pair = self.accept()

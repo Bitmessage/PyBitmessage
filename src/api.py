@@ -55,6 +55,8 @@ class APIError(Exception):
 
 
 class StoppableXMLRPCServer(SimpleXMLRPCServer):
+    allow_reuse_address = True
+
     def serve_forever(self):
         while state.shutdown == 0:
             self.handle_request()
