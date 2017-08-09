@@ -7,6 +7,7 @@ from struct import unpack, pack
 import threading
 import time
 from bmconfigparser import BMConfigParser
+from network.connectionpool import BMConnectionPool
 from helper_threading import *
 import queues
 import shared
@@ -179,7 +180,6 @@ class uPnPThread(threading.Thread, StoppableThread):
 
     def __init__ (self):
         threading.Thread.__init__(self, name="uPnPThread")
-        self.localPort = BMConfigParser().getint('bitmessagesettings', 'port')
         try:
             self.extPort = BMConfigParser().getint('bitmessagesettings', 'extport')
         except:
@@ -199,6 +199,17 @@ class uPnPThread(threading.Thread, StoppableThread):
         logger.debug("Starting UPnP thread")
         logger.debug("Local IP: %s", self.localIP)
         lastSent = 0
+
+        # wait until asyncore binds so that we know the listening port
+        bound = False
+        while state.shutdown == 0 and not self._stopped and not bound:
+            for s in BMConnectionPool().listeningSockets.values():
+                if s.is_bound():
+                    bound = True
+            if not bound:
+                time.sleep(1)
+
+        self.localPort = BMConfigParser().getint('bitmessagesettings', 'port')
         while state.shutdown == 0 and BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp'):
             if time.time() - lastSent > self.sendSleep and len(self.routers) == 0:
                 try:

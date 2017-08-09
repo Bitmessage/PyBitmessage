@@ -28,6 +28,7 @@ import ctypes
 from struct import pack
 from subprocess import call
 from time import sleep
+from random import randint
 
 from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
 from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
@@ -171,8 +172,25 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
             pass
 
     def run(self):
-        se = StoppableXMLRPCServer((BMConfigParser().get('bitmessagesettings', 'apiinterface'), BMConfigParser().getint(
-            'bitmessagesettings', 'apiport')), MySimpleXMLRPCRequestHandler, True, True)
+        port = BMConfigParser().getint('bitmessagesettings', 'apiport')
+        try:
+            from errno import WSAEADDRINUSE
+        except (ImportError, AttributeError):
+            errno.WSAEADDRINUSE = errno.EADDRINUSE
+        for attempt in range(50):
+            try:
+                if attempt > 0:
+                    port = randint(32767, 65535)
+                se = StoppableXMLRPCServer((BMConfigParser().get('bitmessagesettings', 'apiinterface'), port),
+                    MySimpleXMLRPCRequestHandler, True, True)
+            except socket.error as e:
+                if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
+                    continue
+            else:
+                if attempt > 0:
+                    BMConfigParser().set("bitmessagesettings", "apiport", str(port))
+                    BMConfigParser().save()
+                break
         se.register_introspection_functions()
         se.serve_forever()
 
