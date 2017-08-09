@@ -15,67 +15,53 @@ lastSentBytes = 0
 currentSentSpeed = 0
 
 def connectedHostsList():
-    if BMConfigParser().get("network", "asyncore"):
-        retval = []
-        for i in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
-            if not i.fullyEstablished:
-                continue
-            try:
-                retval.append(i)
-            except AttributeError:
-                pass
-        return retval
-    return shared.connectedHostsList.items()
+    retval = []
+    for i in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+        if not i.fullyEstablished:
+            continue
+        try:
+            retval.append(i)
+        except AttributeError:
+            pass
+    return retval
 
 def sentBytes():
-    if BMConfigParser().get("network", "asyncore"):
-        return asyncore.sentBytes
-    return throttle.SendThrottle().total
+    return asyncore.sentBytes
 
 def uploadSpeed():
     global lastSentTimestamp, lastSentBytes, currentSentSpeed
-    if BMConfigParser().get("network", "asyncore"):
-        currentTimestamp = time.time()
-        if int(lastSentTimestamp) < int(currentTimestamp):
-            currentSentBytes = asyncore.sentBytes
-            currentSentSpeed = int((currentSentBytes - lastSentBytes) / (currentTimestamp - lastSentTimestamp))
-            lastSentBytes = currentSentBytes
-            lastSentTimestamp = currentTimestamp
-        return currentSentSpeed
-    return throttle.sendThrottle().getSpeed()
+    currentTimestamp = time.time()
+    if int(lastSentTimestamp) < int(currentTimestamp):
+        currentSentBytes = asyncore.sentBytes
+        currentSentSpeed = int((currentSentBytes - lastSentBytes) / (currentTimestamp - lastSentTimestamp))
+        lastSentBytes = currentSentBytes
+        lastSentTimestamp = currentTimestamp
+    return currentSentSpeed
 
 def receivedBytes():
-    if BMConfigParser().get("network", "asyncore"):
-        return asyncore.receivedBytes
-    return throttle.ReceiveThrottle().total
+    return asyncore.receivedBytes
 
 def downloadSpeed():
     global lastReceivedTimestamp, lastReceivedBytes, currentReceivedSpeed
-    if BMConfigParser().get("network", "asyncore"):
-        currentTimestamp = time.time()
-        if int(lastReceivedTimestamp) < int(currentTimestamp):
-            currentReceivedBytes = asyncore.receivedBytes
-            currentReceivedSpeed = int((currentReceivedBytes - lastReceivedBytes) / (currentTimestamp - lastReceivedTimestamp))
-            lastReceivedBytes = currentReceivedBytes
-            lastReceivedTimestamp = currentTimestamp
-        return currentReceivedSpeed
-    return throttle.ReceiveThrottle().getSpeed()
+    currentTimestamp = time.time()
+    if int(lastReceivedTimestamp) < int(currentTimestamp):
+        currentReceivedBytes = asyncore.receivedBytes
+        currentReceivedSpeed = int((currentReceivedBytes - lastReceivedBytes) / (currentTimestamp - lastReceivedTimestamp))
+        lastReceivedBytes = currentReceivedBytes
+        lastReceivedTimestamp = currentTimestamp
+    return currentReceivedSpeed
 
 def pendingDownload():
-    if BMConfigParser().get("network", "asyncore"):
-        tmp = {}
-        for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
-            for k in connection.objectsNewToMe.keys():
-                tmp[k] = True
-        return len(tmp)
-    return PendingDownloadQueue.totalSize()
+    tmp = {}
+    for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+        for k in connection.objectsNewToMe.keys():
+            tmp[k] = True
+    return len(tmp)
 
 def pendingUpload():
-    if BMConfigParser().get("network", "asyncore"):
-        return 0
-        tmp = {}
-        for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
-            for k in connection.objectsNewToThem.keys():
-                tmp[k] = True
-        return len(tmp)
-    return PendingUpload().len()
+    return 0
+    tmp = {}
+    for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+        for k in connection.objectsNewToThem.keys():
+            tmp[k] = True
+    return len(tmp)

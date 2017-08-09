@@ -19,7 +19,6 @@ BMConfigDefaults = {
         "receive": 3,
     },
     "network": {
-        "asyncore": True,
         "bind": '',
     },
     "inventory": {

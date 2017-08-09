@@ -92,13 +92,7 @@ def connectToStream(streamNumber):
         if streamNumber*2+1 not in knownnodes.knownNodes:
             knownnodes.knownNodes[streamNumber*2+1] = {}
 
-    if BMConfigParser().get("network", "asyncore"):
-        BMConnectionPool().connectToStream(streamNumber)
-    else:
-        for i in range(state.maximumNumberOfHalfOpenConnections):
-            a = outgoingSynSender()
-            a.setup(streamNumber, selfInitiatedConnections)
-            a.start()
+    BMConnectionPool().connectToStream(streamNumber)
 
 def _fixSocket():
     if sys.platform.startswith('linux'):
@@ -281,36 +275,29 @@ class Main:
             singleAPIThread.daemon = True  # close the main program even if there are threads left
             singleAPIThread.start()
 
-        if BMConfigParser().get("network", "asyncore"):
-            BMConnectionPool()
-            asyncoreThread = BMNetworkThread()
-            asyncoreThread.daemon = True
-            asyncoreThread.start()
-            for i in range(BMConfigParser().getint("threads", "receive")):
-                receiveQueueThread = ReceiveQueueThread(i)
-                receiveQueueThread.daemon = True
-                receiveQueueThread.start()
-            announceThread = AnnounceThread()
-            announceThread.daemon = True
-            announceThread.start()
-            state.invThread = InvThread()
-            state.invThread.daemon = True
-            state.invThread.start()
-            state.addrThread = AddrThread()
-            state.addrThread.daemon = True
-            state.addrThread.start()
-            state.downloadThread = DownloadThread()
-            state.downloadThread.daemon = True
-            state.downloadThread.start()
+        BMConnectionPool()
+        asyncoreThread = BMNetworkThread()
+        asyncoreThread.daemon = True
+        asyncoreThread.start()
+        for i in range(BMConfigParser().getint("threads", "receive")):
+            receiveQueueThread = ReceiveQueueThread(i)
+            receiveQueueThread.daemon = True
+            receiveQueueThread.start()
+        announceThread = AnnounceThread()
+        announceThread.daemon = True
+        announceThread.start()
+        state.invThread = InvThread()
+        state.invThread.daemon = True
+        state.invThread.start()
+        state.addrThread = AddrThread()
+        state.addrThread.daemon = True
+        state.addrThread.start()
+        state.downloadThread = DownloadThread()
+        state.downloadThread.daemon = True
+        state.downloadThread.start()
 
         connectToStream(1)
 
-        if not BMConfigParser().get("network", "asyncore"):
-            singleListenerThread = singleListener()
-            singleListenerThread.setup(selfInitiatedConnections)
-            singleListenerThread.daemon = True  # close the main program even if there are threads left
-            singleListenerThread.start()
-            
         if BMConfigParser().safeGetBoolean('bitmessagesettings','upnp'):
             import upnp
             upnpThread = upnp.uPnPThread()
