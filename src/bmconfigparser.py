@@ -20,7 +20,7 @@ BMConfigDefaults = {
     },
     "network": {
         "asyncore": True,
-        "bind": None,
+        "bind": '',
     },
     "inventory": {
         "storage": "sqlite",

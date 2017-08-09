@@ -37,6 +37,8 @@ OBJECT_GETPUBKEY = 0
 OBJECT_PUBKEY = 1
 OBJECT_MSG = 2
 OBJECT_BROADCAST = 3
+OBJECT_I2P = 0x493250
+OBJECT_ADDR = 0x61646472
 
 eightBytesOfRandomDataUsedToDetectConnectionsToSelf = pack(
     '>Q', random.randrange(1, 18446744073709551615))
@@ -108,7 +110,7 @@ def checkIPv4Address(host, hostStandardFormat, private=False):
     if host[0] == '\x7F': # 127/8
         if not private:
             logger.debug('Ignoring IP address in loopback range: ' + hostStandardFormat)
-        return False
+        return hostStandardFormat if private else False
     if host[0] == '\x0A': # 10/8
         if not private:
             logger.debug('Ignoring IP address in private range: ' + hostStandardFormat)

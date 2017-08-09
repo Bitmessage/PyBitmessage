@@ -113,7 +113,7 @@ class BMConnectionPool(object):
                 BMConfigParser().get("bitmessagesettings", "socksproxytype") == "none":
             # python doesn't like bind + INADDR_ANY?
             #host = socket.INADDR_ANY
-            host = ''
+            host = BMConfigParser().get("network", "bind")
         return host
 
     def startListening(self):
@@ -126,9 +126,12 @@ class BMConnectionPool(object):
     def startUDPSocket(self, bind=None):
         if bind is None:
             host = self.getListeningIP()
-            udpSocket = network.udp.UDPSocket(host=host)
+            udpSocket = network.udp.UDPSocket(host=host, announcing=True)
         else:
-            udpSocket = network.udp.UDPSocket(host=bind)
+            if bind is False:
+                udpSocket = network.udp.UDPSocket(announcing=False)
+            else:
+                udpSocket = network.udp.UDPSocket(host=bind, announcing=True)
         self.udpSockets[udpSocket.listening.host] = udpSocket
 
     def loop(self):
@@ -192,19 +195,20 @@ class BMConnectionPool(object):
                 self.startListening()
                 logger.info('Listening for incoming connections.')
             if not self.udpSockets:
-                if BMConfigParser().safeGet("network", "bind") is None:
+                if BMConfigParser().safeGet("network", "bind") == '':
                     self.startUDPSocket()
                 else:
                     for bind in re.sub("[^\w.]+", " ", BMConfigParser().safeGet("network", "bind")).split():
                         self.startUDPSocket(bind)
+                    self.startUDPSocket(False)
                 logger.info('Starting UDP socket(s).')
         else:
             if self.listeningSockets:
-                for i in self.listeningSockets:
+                for i in self.listeningSockets.values():
                     i.handle_close()
                 logger.info('Stopped listening for incoming connections.')
             if self.udpSockets:
-                for i in self.udpSockets:
+                for i in self.udpSockets.values():
                     i.handle_close()
                 logger.info('Stopped udp sockets.')
 

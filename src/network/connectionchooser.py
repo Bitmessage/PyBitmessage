@@ -8,9 +8,14 @@ import state
 
 def getDiscoveredPeer(stream):
     try:
-        return random.choice(state.discoveredPeers.keys())
+        peer = random.choice(state.discoveredPeers.keys())
     except (IndexError, KeyError):
         raise ValueError
+    try:
+        del state.discoveredPeers[peer]
+    except KeyError:
+        pass
+    return peer
 
 def chooseConnection(stream):
     haveOnion = BMConfigParser().safeGet("bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'
