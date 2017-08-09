@@ -17,7 +17,7 @@ class UDPSocket(BMProto):
     port = 8444
     announceInterval = 60
 
-    def __init__(self, host=None, sock=None):
+    def __init__(self, host=None, sock=None, announcing=False):
         super(BMProto, self).__init__(sock=sock)
         self.verackReceived = True
         self.verackSent = True
@@ -49,6 +49,7 @@ class UDPSocket(BMProto):
         ObjectTracker.__init__(self)
         self.connecting = False
         self.connected = True
+        self.announcing = announcing
         self.set_state("bm_header", expectBytes=protocol.Header.size)
 
     def set_socket_reuse(self):

@@ -28,6 +28,8 @@ class AnnounceThread(threading.Thread, StoppableThread):
 
     def announceSelf(self):
         for connection in BMConnectionPool().udpSockets.values():
+            if not connection.announcing:
+                continue
             for stream in state.streamsInWhichIAmParticipating:
                 addr = (stream, state.Peer('127.0.0.1', BMConfigParser().safeGetInt("bitmessagesettings", "port")), time.time())
                 connection.append_write_buf(BMProto.assembleAddr([addr]))
