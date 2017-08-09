@@ -192,11 +192,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
-        if BMConfigParser().get("network", "asyncore"):
-            queues.invQueue.put((streamNumber, inventoryHash))
-        else:
-            protocol.broadcastToSendDataQueues((
-                streamNumber, 'advertiseobject', inventoryHash))
+        queues.invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
             BMConfigParser().set(
@@ -286,11 +282,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
-        if BMConfigParser().get("network", "asyncore"):
-            queues.invQueue.put((streamNumber, inventoryHash))
-        else:
-            protocol.broadcastToSendDataQueues((
-                streamNumber, 'advertiseobject', inventoryHash))
+        queues.invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
             BMConfigParser().set(
@@ -380,11 +372,7 @@ class singleWorker(threading.Thread, StoppableThread):
 
         logger.info('broadcasting inv with hash: ' + hexlify(inventoryHash))
 
-        if BMConfigParser().get("network", "asyncore"):
-            queues.invQueue.put((streamNumber, inventoryHash))
-        else:
-            protocol.broadcastToSendDataQueues((
-                streamNumber, 'advertiseobject', inventoryHash))
+        queues.invQueue.put((streamNumber, inventoryHash))
         queues.UISignalQueue.put(('updateStatusBar', ''))
         try:
             BMConfigParser().set(
@@ -513,11 +501,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 objectType, streamNumber, payload, embeddedTime, tag)
             PendingUpload().add(inventoryHash)
             logger.info('sending inv (within sendBroadcast function) for object: ' + hexlify(inventoryHash))
-            if BMConfigParser().get("network", "asyncore"):
-                queues.invQueue.put((streamNumber, inventoryHash))
-            else:
-                protocol.broadcastToSendDataQueues((
-                    streamNumber, 'advertiseobject', inventoryHash))
+            queues.invQueue.put((streamNumber, inventoryHash))
 
             queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Broadcast sent on %1").arg(l10n.formatTimestamp()))))
 
@@ -846,11 +830,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 # not sending to a chan or one of my addresses
                 queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (ackdata, tr._translate("MainWindow", "Message sent. Waiting for acknowledgement. Sent on %1").arg(l10n.formatTimestamp()))))
             logger.info('Broadcasting inv for my msg(within sendmsg function):' + hexlify(inventoryHash))
-            if BMConfigParser().get("network", "asyncore"):
-                queues.invQueue.put((toStreamNumber, inventoryHash))
-            else:
-                protocol.broadcastToSendDataQueues((
-                    toStreamNumber, 'advertiseobject', inventoryHash))
+            queues.invQueue.put((toStreamNumber, inventoryHash))
 
             # Update the sent message in the sent table with the necessary information.
             if BMConfigParser().has_section(toaddress) or not protocol.checkBitfield(behaviorBitfield, protocol.BITFIELD_DOESACK):
@@ -952,11 +932,7 @@ class singleWorker(threading.Thread, StoppableThread):
             objectType, streamNumber, payload, embeddedTime, '')
         PendingUpload().add(inventoryHash)
         logger.info('sending inv (for the getpubkey message)')
-        if BMConfigParser().get("network", "asyncore"):
-            queues.invQueue.put((streamNumber, inventoryHash))
-        else:
-            protocol.broadcastToSendDataQueues((
-                streamNumber, 'advertiseobject', inventoryHash))
+        queues.invQueue.put((streamNumber, inventoryHash))
         
         # wait 10% past expiration
         sleeptill = int(time.time() + TTL * 1.1)
