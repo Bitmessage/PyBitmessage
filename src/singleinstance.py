@@ -56,7 +56,7 @@ class singleinstance:
                 pidLine = "%i\n" % self.lockPid
                 os.write(self.fd, pidLine)
         else:  # non Windows
-            self.fp = open(self.lockfile, 'w')
+            self.fp = open(self.lockfile, 'a+')
             try:
                 if self.daemon and self.lockPid != os.getpid():
                     fcntl.lockf(self.fp, fcntl.LOCK_EX) # wait for parent to finish
@@ -68,6 +68,7 @@ class singleinstance:
                 sys.exit(-1)
             else:
                 pidLine = "%i\n" % self.lockPid
+                self.fp.truncate(0)
                 self.fp.write(pidLine)
                 self.fp.flush()
 
