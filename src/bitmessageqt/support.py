@@ -13,7 +13,7 @@ from helper_sql import *
 from l10n import getTranslationLanguage
 from openclpow import openclAvailable, openclEnabled
 import paths
-from proofofwork import bmpow
+import proofofwork
 from pyelliptic.openssl import OpenSSL
 import queues
 import shared
@@ -111,7 +111,7 @@ def createSupportMessage(myapp):
     if paths.frozen:
         frozen = paths.frozen
     portablemode = "True" if state.appdata == paths.lookupExeFolder() else "False"
-    cpow = "True" if bmpow else "False"
+    cpow = "True" if proofofwork.bmpow else "False"
     #cpow = QtGui.QApplication.translate("Support", cpow)
     openclpow = str(BMConfigParser().safeGet('bitmessagesettings', 'opencl')) if openclEnabled() else "None"
     #openclpow = QtGui.QApplication.translate("Support", openclpow)
