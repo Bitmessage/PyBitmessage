@@ -237,6 +237,9 @@ def resetPoW():
 # init
 def init():
     global bitmsglib, bso, bmpow
+
+    openclpow.initCL()
+
     if "win32" == sys.platform:
         if ctypes.sizeof(ctypes.c_voidp) == 4:
             bitmsglib = 'bitmsghash32.dll'
@@ -286,7 +289,5 @@ def init():
             bmpow = None
     else:
         bmpow = None
-
-init()
-if bmpow is None:
-    buildCPoW()
+    if bmpow is None:
+        buildCPoW()

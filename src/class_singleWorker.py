@@ -42,6 +42,7 @@ class singleWorker(threading.Thread, StoppableThread):
         # QThread.__init__(self, parent)
         threading.Thread.__init__(self, name="singleWorker")
         self.initStop()
+        proofofwork.init()
 
     def stopThread(self):
         try:
