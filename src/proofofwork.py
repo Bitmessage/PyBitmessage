@@ -19,6 +19,8 @@ import state
 
 bitmsglib = 'bitmsghash.so'
 
+bmpow = None
+
 def _set_idle():
     if 'linux' in sys.platform:
         os.nice(20)
