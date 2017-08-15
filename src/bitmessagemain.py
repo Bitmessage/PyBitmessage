@@ -328,7 +328,7 @@ class Main:
     def daemonize(self):
         try:
             if os.fork():
-                exit(0)
+                os._exit(0)
         except AttributeError:
             # fork not implemented
             pass
@@ -342,7 +342,7 @@ class Main:
             pass
         try:
             if os.fork():
-                exit(0)
+                os._exit(0)
         except AttributeError:
             # fork not implemented
             pass
