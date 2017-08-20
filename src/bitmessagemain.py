@@ -351,18 +351,12 @@ class Main:
         shared.thisapp.lockPid = None # indicate we're the final child
         sys.stdout.flush()
         sys.stderr.flush()
-        try:
-            si = file('/dev/null', 'r')
-            so = file('/dev/null', 'a+')
-            se = file('/dev/null', 'a+', 0)
-            os.dup2(si.fileno(), sys.stdin.fileno())
-            os.dup2(so.fileno(), sys.stdout.fileno())
-            os.dup2(se.fileno(), sys.stderr.fileno())
-        # /dev/null not available
-        except IOError:
-            sys.stdin.close()
-            sys.stdout.close()
-            sys.stderr.close()
+        si = file(os.devnull, 'r')
+        so = file(os.devnull, 'a+')
+        se = file(os.devnull, 'a+', 0)
+        os.dup2(si.fileno(), sys.stdin.fileno())
+        os.dup2(so.fileno(), sys.stdout.fileno())
+        os.dup2(se.fileno(), sys.stderr.fileno())
 
     def setSignalHandler(self):
         signal.signal(signal.SIGINT, helper_generic.signal_handler)
