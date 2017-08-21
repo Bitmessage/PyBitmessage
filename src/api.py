@@ -30,6 +30,7 @@ import protocol
 import state
 from pyelliptic.openssl import OpenSSL
 import queues
+import shutdown
 from struct import pack
 import network.stats
 
@@ -982,6 +983,10 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         sqlStoredProcedure('deleteandvacuume')
         return 'done'
 
+    def HandleShutdown(self, params):
+        shutdown.doCleanShutdown()
+        return 'done'
+
     handlers = {}
     handlers['helloWorld'] = HandleHelloWorld
     handlers['add'] = HandleAdd
@@ -1032,6 +1037,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
     handlers['clientStatus'] = HandleClientStatus
     handlers['decodeAddress'] = HandleDecodeAddress
     handlers['deleteAndVacuum'] = HandleDeleteAndVacuum
+    handlers['shutdown'] = HandleShutdown
 
     def _handle_request(self, method, params):
         if (self.handlers.has_key(method)):
