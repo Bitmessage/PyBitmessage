@@ -1,11 +1,7 @@
 import time
 
-from bmconfigparser import BMConfigParser
 from network.connectionpool import BMConnectionPool
-from inventory import PendingDownloadQueue, PendingUpload
 import asyncore_pollchoose as asyncore
-import shared
-import throttle
 
 lastReceivedTimestamp = time.time()
 lastReceivedBytes = 0
@@ -16,7 +12,8 @@ currentSentSpeed = 0
 
 def connectedHostsList():
     retval = []
-    for i in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+    for i in BMConnectionPool().inboundConnections.values() + \
+            BMConnectionPool().outboundConnections.values():
         if not i.fullyEstablished:
             continue
         try:
@@ -46,22 +43,26 @@ def downloadSpeed():
     currentTimestamp = time.time()
     if int(lastReceivedTimestamp) < int(currentTimestamp):
         currentReceivedBytes = asyncore.receivedBytes
-        currentReceivedSpeed = int((currentReceivedBytes - lastReceivedBytes) / (currentTimestamp - lastReceivedTimestamp))
+        currentReceivedSpeed = int((currentReceivedBytes - lastReceivedBytes) /
+            (currentTimestamp - lastReceivedTimestamp))
         lastReceivedBytes = currentReceivedBytes
         lastReceivedTimestamp = currentTimestamp
     return currentReceivedSpeed
 
 def pendingDownload():
     tmp = {}
-    for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+    for connection in BMConnectionPool().inboundConnections.values() + \
+            BMConnectionPool().outboundConnections.values():
         for k in connection.objectsNewToMe.keys():
             tmp[k] = True
     return len(tmp)
 
 def pendingUpload():
-    return 0
     tmp = {}
-    for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
+    for connection in BMConnectionPool().inboundConnections.values() + \
+            BMConnectionPool().outboundConnections.values():
         for k in connection.objectsNewToThem.keys():
             tmp[k] = True
-    return len(tmp)
+    #This probably isn't the correct logic so it's disabled
+    #return len(tmp)
+    return 0
