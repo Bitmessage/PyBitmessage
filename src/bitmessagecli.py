@@ -12,6 +12,7 @@ import getopt
 import imghdr
 import ntpath
 import json
+import socket
 import time
 import sys
 import os
@@ -1283,6 +1284,13 @@ def clientStatus():
     print "\nnumberOfMessagesProcessed: " + str(clientStatus['numberOfMessagesProcessed']) + "\n"
     print "\nnumberOfBroadcastsProcessed: " + str(clientStatus['numberOfBroadcastsProcessed']) + "\n"
 
+def shutdown():
+    try:
+        api.shutdown()
+    except socket.error:
+        pass
+    print "\nShutdown command relayed\n"
+
 
 def UI(usrInput): #Main user menu
     global usrPrompt
@@ -1702,6 +1710,11 @@ def UI(usrInput): #Main user menu
 
     elif usrInput == "status":
         clientStatus()
+        usrPrompt = 1
+        main()
+
+    elif usrInput == "shutdown":
+        shutdown()
         usrPrompt = 1
         main()
 
