@@ -137,7 +137,7 @@ def set_rates(download, upload):
     uploadTimestamp = time.time()
 
 def update_received(download=0):
-    global receivedBytes, maxDownloadRate, downloadBucket, downloadTimestamp
+    global receivedBytes, downloadBucket, downloadTimestamp
     currentTimestamp = time.time()
     receivedBytes += download
     if maxDownloadRate > 0:
@@ -149,7 +149,7 @@ def update_received(download=0):
     downloadTimestamp = currentTimestamp
 
 def update_sent(upload=0):
-    global sentBytes, maxUploadRate, uploadBucket, uploadTimestamp
+    global sentBytes, uploadBucket, uploadTimestamp
     currentTimestamp = time.time()
     sentBytes += upload
     if maxUploadRate > 0:
@@ -349,14 +349,14 @@ def kqueue_poller(timeout=0.0, map=None):
         flags = select.KQ_EV_ADD | select.KQ_EV_ENABLE
         selectables = 0
         for fd, obj in map.items():
-            filter = 0
+            kq_filter = 0
             if obj.readable():
-                filter |= select.KQ_FILTER_READ
+                kq_filter |= select.KQ_FILTER_READ
             if obj.writable():
-                filter |= select.KQ_FILTER_WRITE
-            if filter:
+                kq_filter |= select.KQ_FILTER_WRITE
+            if kq_filter:
                 try:
-                    ev = select.kevent(fd, filter=filter, flags=flags)
+                    ev = select.kevent(fd, filter=kq_filter, flags=flags)
                     kqueue.control([ev], 0)
                     selectables += 1
                 except IOError:
@@ -383,9 +383,10 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None,
     # argument which should no longer be used in favor of
     # "poller"
 
-
     if poller is None:
-        if hasattr(select, 'epoll'):
+        if use_poll:
+            poller = poll_poller
+        elif hasattr(select, 'epoll'):
             poller = epoll_poller
         elif hasattr(select, 'kqueue'):
             poller = kqueue_poller
@@ -506,9 +507,9 @@ class dispatcher:
             # no poll used, or not registered
             pass
 
-    def create_socket(self, family=socket.AF_INET, type=socket.SOCK_STREAM):
-        self.family_and_type = family, type
-        sock = socket.socket(family, type)
+    def create_socket(self, family=socket.AF_INET, socket_type=socket.SOCK_STREAM):
+        self.family_and_type = family, socket_type
+        sock = socket.socket(family, socket_type)
         sock.setblocking(0)
         self.set_socket(sock)
 
@@ -652,9 +653,9 @@ class dispatcher:
     def log(self, message):
         sys.stderr.write('log: %s\n' % str(message))
 
-    def log_info(self, message, type='info'):
-        if type not in self.ignore_log_types:
-            print('%s: %s' % (type, message))
+    def log_info(self, message, log_type='info'):
+        if log_type not in self.ignore_log_types:
+            print('%s: %s' % (log_type, message))
 
     def handle_read_event(self):
         if self.accepting:
@@ -744,7 +745,7 @@ class dispatcher:
 
     def handle_accepted(self, sock, addr):
         sock.close()
-        self.log_info('unhandled accepted event', 'warning')
+        self.log_info('unhandled accepted event on %s' % (addr), 'warning')
 
     def handle_close(self):
         self.log_info('unhandled close event', 'warning')
@@ -808,8 +809,8 @@ def close_all(map=None, ignore_all=False):
     for x in list(map.values()):
         try:
             x.close()
-        except OSError as x:
-            if x.args[0] == EBADF:
+        except OSError as e:
+            if e.args[0] == EBADF:
                 pass
             elif not ignore_all:
                 raise

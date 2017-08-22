@@ -1,26 +1,22 @@
 import base64
-from binascii import hexlify
 import hashlib
-import math
 import time
 import socket
 import struct
-import sys
 
-from addresses import calculateInventoryHash
 from bmconfigparser import BMConfigParser
 from debug import logger
 from inventory import Inventory
 import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
-from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
+from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, \
+        BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
 import network.connectionpool
 from network.node import Node
 from network.objectracker import ObjectTracker
 from network.proxy import Proxy, ProxyError, GeneralProxyError
 
 import addresses
-from bmconfigparser import BMConfigParser
 from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
 import shared
 import state

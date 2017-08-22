@@ -1,6 +1,4 @@
-import Queue
 import socket
-import sys
 import threading
 import time
 
@@ -43,7 +41,6 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def process(self):
         if not self.connected:
             return False
-        loop = 0
         while True:
             try:
                 with nonBlocking(self.processingLock):

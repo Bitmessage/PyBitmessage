@@ -26,7 +26,6 @@ import helper_inbox
 import helper_sent
 import hashlib
 
-import protocol
 import state
 from pyelliptic.openssl import OpenSSL
 import queues
@@ -980,12 +979,14 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         queues.UISignalQueue.put(('updateStatusBar', message))
 
     def HandleDeleteAndVacuum(self, params):
-        sqlStoredProcedure('deleteandvacuume')
-        return 'done'
+        if not params:
+            sqlStoredProcedure('deleteandvacuume')
+            return 'done'
 
     def HandleShutdown(self, params):
-        shutdown.doCleanShutdown()
-        return 'done'
+        if not params:
+            shutdown.doCleanShutdown()
+            return 'done'
 
     handlers = {}
     handlers['helloWorld'] = HandleHelloWorld
@@ -1041,7 +1042,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
 
     def _handle_request(self, method, params):
         if (self.handlers.has_key(method)):
-            return self.handlers[method](self ,params)
+            return self.handlers[method](self, params)
         else:
             raise APIError(20, 'Invalid method: %s' % method)
 

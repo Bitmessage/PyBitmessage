@@ -6,7 +6,7 @@ import knownnodes
 from queues import portCheckerQueue
 import state
 
-def getDiscoveredPeer(stream):
+def getDiscoveredPeer():
     try:
         peer = random.choice(state.discoveredPeers.keys())
     except (IndexError, KeyError):
@@ -27,9 +27,11 @@ def chooseConnection(stream):
         return retval
     except Queue.Empty:
         pass
-    if random.choice((False, True)):
-        return getDiscoveredPeer(stream)
-    for i in range(50):
+    # with a probability of 0.5, connect to a discovered peer
+    if random.choice((False, True)) and not haveOnion:
+        # discovered peers are already filtered by allowed streams
+        return getDiscoveredPeer()
+    for _ in range(50):
         peer = random.choice(knownnodes.knownNodes[stream].keys())
         try:
             rating = knownnodes.knownNodes[stream][peer]["rating"]

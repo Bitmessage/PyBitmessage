@@ -44,8 +44,6 @@ import threading
 from class_sqlThread import sqlThread
 from class_singleCleaner import singleCleaner
 from class_objectProcessor import objectProcessor
-from class_outgoingSynSender import outgoingSynSender
-from class_singleListener import singleListener
 from class_singleWorker import singleWorker
 from class_addressGenerator import addressGenerator
 from class_smtpDeliver import smtpDeliver
