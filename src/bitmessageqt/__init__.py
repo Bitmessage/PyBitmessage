@@ -1968,12 +1968,16 @@ class MyForm(settingsmixin.SMainWindow):
                     if "<" in toAddress and ">" in toAddress:
                         toAddress = toAddress.split('<')[1].split('>')[0]
                     # email address
-                    elif toAddress.find("@") >= 0:
+                    if toAddress.find("@") >= 0:
                         if isinstance(acct, GatewayAccount):
                             acct.createMessage(toAddress, fromAddress, subject, message)
                             subject = acct.subject
                             toAddress = acct.toAddress
                         else:
+                            if QtGui.QMessageBox.question(self, "Sending an email?", _translate("MainWindow", 
+                                "You are trying to send an email instead of a bitmessage. This requires registering with a gateway. Attempt to register?"),
+                                QtGui.QMessageBox.Yes|QtGui.QMessageBox.No) != QtGui.QMessageBox.Yes:
+                                continue
                             email = acct.getLabel()
                             if email[-14:] != "@mailchuck.com": #attempt register
                                 # 12 character random email address
