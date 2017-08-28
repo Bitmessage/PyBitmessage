@@ -99,7 +99,10 @@ def checkIPAddress(host, private=False):
             return False
         return hostStandardFormat
     else:
-        hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
+        try:
+            hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
+        except ValueError:
+            return False
         if hostStandardFormat == "":
             # This can happen on Windows systems which are not 64-bit compatible 
             # so let us drop the IPv6 address. 
