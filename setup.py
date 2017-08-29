@@ -230,9 +230,9 @@ if __name__ == "__main__":
     ]
     # this will silently accept alternative providers of msgpack
     # if they are already installed
-    if "msgpack" in detectPrereqs():
+    if "msgpack" in detectPrereqs(False):
         installRequires.append("msgpack-python")
-    elif "umsgpack" in detectPrereqs():
+    elif "umsgpack" in detectPrereqs(False):
         installRequires.append("umsgpack")
     else:
         packages += ['pybitmessage.fallback', 'pybitmessage.fallback.umsgpack']
