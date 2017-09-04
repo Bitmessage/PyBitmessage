@@ -325,6 +325,10 @@ class MyForm(settingsmixin.SMainWindow):
             _translate(
                 "MainWindow", "Set avatar..."),
             self.on_action_AddressBookSetAvatar)
+        self.actionAddressBookSetSound = \
+            self.ui.addressBookContextMenuToolbar.addAction(
+                _translate("MainWindow", "Set notification sound..."),
+                self.on_action_AddressBookSetSound)
         self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Add New Address"), self.on_action_AddressBookNew)
@@ -1205,9 +1209,9 @@ class MyForm(settingsmixin.SMainWindow):
         soundFilename = None
 
         def _choose_ext(basename):
-            for ext in ('.wav', '.mp3', '.oga'):
-                if os.path.isfile(basename + ext):
-                    return ext
+            for ext in sound.extensions:
+                if os.path.isfile(os.extsep.join([basename, ext])):
+                    return os.extsep + ext
 
         # if the address had a known label in the address book
         if label:
@@ -3175,6 +3179,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
         self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
         self.popMenuAddressBook.addAction(self.actionAddressBookSetAvatar)
+        self.popMenuAddressBook.addAction(self.actionAddressBookSetSound)
         self.popMenuAddressBook.addSeparator()
         self.popMenuAddressBook.addAction(self.actionAddressBookNew)
         normal = True
@@ -3578,7 +3583,51 @@ class MyForm(settingsmixin.SMainWindow):
             return False
 
         return True
-        
+
+    def on_action_AddressBookSetSound(self):
+        widget = self.ui.tableWidgetAddressBook
+        self.setAddressSound(widget.item(widget.currentRow(), 0).text())
+
+    def setAddressSound(self, addr):
+        filters = [unicode(_translate(
+            "MainWindow", "Sound files (%s)" %
+            ' '.join(['*%s%s' % (os.extsep, ext) for ext in sound.extensions])
+        ))]
+        sourcefile = unicode(QtGui.QFileDialog.getOpenFileName(
+            self, _translate("MainWindow", "Set notification sound..."),
+            filter=';;'.join(filters)
+        ))
+
+        if not sourcefile:
+            return
+
+        destdir = os.path.join(state.appdata, 'sounds')
+        destfile = unicode(addr) + os.path.splitext(sourcefile)[-1]
+        destination = os.path.join(destdir, destfile)
+
+        if sourcefile == destination:
+            return
+
+        pattern = destfile.lower()
+        for item in os.listdir(destdir):
+            if item.lower() == pattern:
+                overwrite = QtGui.QMessageBox.question(
+                    self, _translate("MainWindow", "Message"),
+                    _translate(
+                        "MainWindow",
+                        "You have already set a notification sound"
+                        " for this address book entry."
+                        " Do you really want to overwrite it?"),
+                    QtGui.QMessageBox.Yes, QtGui.QMessageBox.No
+                ) == QtGui.QMessageBox.Yes
+                if overwrite:
+                    QtCore.QFile.remove(os.path.join(destdir, item))
+                break
+
+        if not QtCore.QFile.copy(sourcefile, destination):
+            logger.error(
+                'couldn\'t copy %s to %s', sourcefile, destination)
+
     def on_context_menuYourIdentities(self, point):
         currentItem = self.getCurrentItem()
         self.popMenuYourIdentities = QtGui.QMenu(self)

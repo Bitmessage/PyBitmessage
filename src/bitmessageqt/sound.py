@@ -17,3 +17,5 @@ def is_connection_sound(category):
         SOUND_DISCONNECTED,
         SOUND_CONNECTION_GREEN
     )
+
+extensions = ('wav', 'mp3', 'oga')
