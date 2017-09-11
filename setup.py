@@ -304,6 +304,9 @@ if __name__ == "__main__":
                     '[gir, notify2]'
                 ],
                 'bitmessage.notification.sound': [
+                    'theme.canberra = pybitmessage.plugins.sound_canberra',
+                    'file.gstreamer = pybitmessage.plugins.sound_gstreamer'
+                    '[gir]',
                     'file.fallback = pybitmessage.plugins.sound_playfile'
                     '[sound]'
                 ],
