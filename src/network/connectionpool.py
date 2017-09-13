@@ -106,7 +106,7 @@ class BMConnectionPool(object):
 
     def getListeningIP(self):
         if BMConfigParser().safeGet("bitmessagesettings", "onionhostname").endswith(".onion"):
-            host = BMConfigParser().safeGet("bitmessagesettigns", "onionbindip")
+            host = BMConfigParser().safeGet("bitmessagesettings", "onionbindip")
         else:
             host = '127.0.0.1'
         if BMConfigParser().safeGetBoolean("bitmessagesettings", "sockslisten") or \
