@@ -130,19 +130,15 @@ def decodeWalletImportFormat(WIFstring):
         )
         os._exit(0)
         # return ""
-    else:
-        # checksum passed
-        if privkey[0] == '\x80':
-            return privkey[1:]
-        else:
-            logger.critical(
-                'Major problem! When trying to decode one of your'
-                ' private keys, the checksum passed but the key doesn\'t'
-                ' begin with hex 80. Here is the PRIVATE key: %s',
-                WIFstring
-            )
-            os._exit(0)
-            # return ""
+    elif privkey[0] == '\x80':  # checksum passed
+        return privkey[1:]
+
+    logger.critical(
+        'Major problem! When trying to decode one of your  private keys,'
+        ' the checksum passed but the key doesn\'t begin with hex 80.'
+        ' Here is the PRIVATE key: %s', WIFstring
+    )
+    os._exit(0)
 
 
 def reloadMyAddressHashes():
@@ -383,14 +379,14 @@ def decryptAndCheckPubkeyPayload(data, address):
         readPosition += signatureLengthLength
         signature = decryptedData[readPosition:readPosition + signatureLength]
 
-        if highlevelcrypto.verify(
+        if not highlevelcrypto.verify(
                 signedData, signature, hexlify(publicSigningKey)):
-            logger.info(
-                'ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
-        else:
             logger.info(
                 'ECDSA verify failed (within decryptAndCheckPubkeyPayload)')
             return 'failed'
+
+        logger.info(
+            'ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
 
         sha = hashlib.new('sha512')
         sha.update(publicSigningKey + publicEncryptionKey)
@@ -460,7 +456,7 @@ def checkAndShareObjectWithPeers(data):
         )
         return 0
     # The EOL time was more than an hour ago. That's too much.
-    if endOfLifeTime - int(time.time()) < - 3600:
+    if endOfLifeTime - int(time.time()) < -3600:
         logger.info(
             'This object\'s End of Life time was more than an hour ago.'
             ' Ignoring the object. Time is %s' % endOfLifeTime

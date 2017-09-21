@@ -52,7 +52,7 @@ def decodeBase58(string, alphabet=ALPHABET):
         for char in string:
             num *= base
             num += alphabet.index(char)
-    except:
+    except:  # ValueError
         # character not found (like a space character or a 0)
         return 0
     return num
@@ -279,10 +279,7 @@ def decodeAddress(address):
 
 def addBMIfNotPresent(address):
     address = str(address).strip()
-    if address[:3] != 'BM-':
-        return 'BM-'+address
-    else:
-        return address
+    return address if address[:3] == 'BM-' else 'BM-' + address
 
 
 if __name__ == "__main__":

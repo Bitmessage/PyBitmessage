@@ -34,7 +34,6 @@ from helper_sql import sqlQuery, sqlExecute
 # This thread, of which there is only one, does the heavy lifting:
 # calculating POWs.
 
-
 def sizeof_fmt(num, suffix='h/s'):
     for unit in ['', 'k', 'M', 'G', 'T', 'P', 'E', 'Z']:
         if abs(num) < 1000.0:
@@ -170,6 +169,62 @@ class singleWorker(threading.Thread, StoppableThread):
             queues.workerQueue.task_done()
         logger.info("Quitting...")
 
+    def _getKeysForAddress(self, address):
+        privSigningKeyBase58 = BMConfigParser().get(
+            address, 'privsigningkey')
+        privEncryptionKeyBase58 = BMConfigParser().get(
+            address, 'privencryptionkey')
+
+        privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
+            privSigningKeyBase58))
+        privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
+            privEncryptionKeyBase58))
+
+        # The \x04 on the beginning of the public keys are not sent.
+        # This way there is only one acceptable way to encode
+        # and send a public key.
+        pubSigningKey = unhexlify(highlevelcrypto.privToPub(
+            privSigningKeyHex))[1:]
+        pubEncryptionKey = unhexlify(highlevelcrypto.privToPub(
+            privEncryptionKeyHex))[1:]
+
+        return privSigningKeyHex, privEncryptionKeyHex, \
+            pubSigningKey, pubEncryptionKey
+
+    def _doPOWDefaults(self, payload, TTL,
+                       log_prefix='',
+                       log_time=False):
+        target = 2 ** 64 / (
+            defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
+                len(payload) + 8 +
+                defaults.networkDefaultPayloadLengthExtraBytes + ((
+                    TTL * (
+                        len(payload) + 8 +
+                        defaults.networkDefaultPayloadLengthExtraBytes
+                    )) / (2 ** 16))
+            ))
+        initialHash = hashlib.sha512(payload).digest()
+        logger.info(
+            '%s Doing proof of work... TTL set to %s', log_prefix, TTL)
+        if log_time:
+            start_time = time.time()
+        trialValue, nonce = proofofwork.run(target, initialHash)
+        logger.info(
+            '%s Found proof of work %s Nonce: %s',
+            log_prefix, trialValue, nonce
+        )
+        try:
+            delta = time.time() - start_time
+            logger.info(
+                'PoW took %.1f seconds, speed %s.',
+                delta, sizeof_fmt(nonce / delta)
+            )
+        except:  # NameError
+            pass
+        payload = pack('>Q', nonce) + payload
+        # inventoryHash = calculateInventoryHash(payload)
+        return payload
+
     # This function also broadcasts out the pubkey message
     # once it is done with the POW
     def doPOWForMyV2Pubkey(self, hash):
@@ -198,10 +253,9 @@ class singleWorker(threading.Thread, StoppableThread):
         payload += protocol.getBitfield(myAddress)
 
         try:
-            privSigningKeyBase58 = BMConfigParser().get(
-                myAddress, 'privsigningkey')
-            privEncryptionKeyBase58 = BMConfigParser().get(
-                myAddress, 'privencryptionkey')
+            # privSigningKeyHex, privEncryptionKeyHex
+            _, _, pubSigningKey, pubEncryptionKey = \
+                self._getKeysForAddress(myAddress)
         except Exception as err:
             logger.error(
                 'Error within doPOWForMyV2Pubkey. Could not read'
@@ -210,36 +264,11 @@ class singleWorker(threading.Thread, StoppableThread):
             )
             return
 
-        privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privSigningKeyBase58))
-        privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privEncryptionKeyBase58))
-        pubSigningKey = unhexlify(highlevelcrypto.privToPub(
-            privSigningKeyHex))
-        pubEncryptionKey = unhexlify(highlevelcrypto.privToPub(
-            privEncryptionKeyHex))
-
-        payload += pubSigningKey[1:]
-        payload += pubEncryptionKey[1:]
+        payload += pubSigningKey + pubEncryptionKey
 
         # Do the POW for this pubkey message
-        target = 2 ** 64 / (
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
-                len(payload) + 8 +
-                defaults.networkDefaultPayloadLengthExtraBytes + ((
-                    TTL * (
-                        len(payload) + 8 +
-                        defaults.networkDefaultPayloadLengthExtraBytes
-                    )) / (2 ** 16))
-            ))
-        logger.info('(For pubkey message) Doing proof of work...')
-        initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
-        logger.info(
-            '(For pubkey message) Found proof of work %s Nonce: %s',
-            trialValue, nonce
-        )
-        payload = pack('>Q', nonce) + payload
+        payload = self._doPOWDefaults(
+            payload, TTL, log_prefix='(For pubkey message)')
 
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1
@@ -296,10 +325,9 @@ class singleWorker(threading.Thread, StoppableThread):
         payload += protocol.getBitfield(myAddress)
 
         try:
-            privSigningKeyBase58 = BMConfigParser().get(
-                myAddress, 'privsigningkey')
-            privEncryptionKeyBase58 = BMConfigParser().get(
-                myAddress, 'privencryptionkey')
+            privSigningKeyHex, privEncryptionKeyHex, \
+                pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
+                    myAddress)
         except Exception as err:
             logger.error(
                 'Error within sendOutOrStoreMyV3Pubkey. Could not read'
@@ -308,17 +336,7 @@ class singleWorker(threading.Thread, StoppableThread):
             )
             return
 
-        privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privSigningKeyBase58))
-        privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privEncryptionKeyBase58))
-        pubSigningKey = unhexlify(highlevelcrypto.privToPub(
-            privSigningKeyHex))
-        pubEncryptionKey = unhexlify(highlevelcrypto.privToPub(
-            privEncryptionKeyHex))
-
-        payload += pubSigningKey[1:]
-        payload += pubEncryptionKey[1:]
+        payload += pubSigningKey + pubEncryptionKey
 
         payload += encodeVarint(BMConfigParser().getint(
             myAddress, 'noncetrialsperbyte'))
@@ -330,24 +348,9 @@ class singleWorker(threading.Thread, StoppableThread):
         payload += signature
 
         # Do the POW for this pubkey message
-        target = 2 ** 64 / (
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
-                len(payload) + 8 +
-                defaults.networkDefaultPayloadLengthExtraBytes + ((
-                    TTL * (
-                        len(payload) + 8 +
-                        defaults.networkDefaultPayloadLengthExtraBytes
-                    )) / (2 ** 16))
-            ))
-        logger.info('(For pubkey message) Doing proof of work...')
-        initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
-        logger.info(
-            '(For pubkey message) Found proof of work. Nonce: %s',
-            str(nonce)
-        )
+        payload = self._doPOWDefaults(
+            payload, TTL, log_prefix='(For pubkey message)')
 
-        payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1
         Inventory()[inventoryHash] = (
@@ -362,8 +365,8 @@ class singleWorker(threading.Thread, StoppableThread):
                 myAddress, 'lastpubkeysendtime', str(int(time.time())))
             BMConfigParser().save()
         except:
-            # The user deleted the address out of the keys.dat file before this
-            # finished.
+            # The user deleted the address out of the keys.dat file
+            # before this finished.
             pass
 
     # If this isn't a chan address, this function assembles
@@ -388,10 +391,9 @@ class singleWorker(threading.Thread, StoppableThread):
         dataToEncrypt = protocol.getBitfield(myAddress)
 
         try:
-            privSigningKeyBase58 = BMConfigParser().get(
-                myAddress, 'privsigningkey')
-            privEncryptionKeyBase58 = BMConfigParser().get(
-                myAddress, 'privencryptionkey')
+            privSigningKeyHex, privEncryptionKeyHex, \
+                pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
+                    myAddress)
         except Exception as err:
             logger.error(
                 'Error within sendOutOrStoreMyV4Pubkey. Could not read'
@@ -400,16 +402,7 @@ class singleWorker(threading.Thread, StoppableThread):
             )
             return
 
-        privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privSigningKeyBase58))
-        privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
-            privEncryptionKeyBase58))
-        pubSigningKey = unhexlify(highlevelcrypto.privToPub(
-            privSigningKeyHex))
-        pubEncryptionKey = unhexlify(highlevelcrypto.privToPub(
-            privEncryptionKeyHex))
-        dataToEncrypt += pubSigningKey[1:]
-        dataToEncrypt += pubEncryptionKey[1:]
+        dataToEncrypt += pubSigningKey + pubEncryptionKey
 
         dataToEncrypt += encodeVarint(BMConfigParser().getint(
             myAddress, 'noncetrialsperbyte'))
@@ -440,24 +433,9 @@ class singleWorker(threading.Thread, StoppableThread):
             dataToEncrypt, hexlify(pubEncryptionKey))
 
         # Do the POW for this pubkey message
-        target = 2 ** 64 / (
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
-                len(payload) + 8 +
-                defaults.networkDefaultPayloadLengthExtraBytes + ((
-                    TTL * (
-                        len(payload) + 8 +
-                        defaults.networkDefaultPayloadLengthExtraBytes
-                    )) / (2 ** 16))
-            ))
-        logger.info('(For pubkey message) Doing proof of work...')
-        initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
-        logger.info(
-            '(For pubkey message) Found proof of work %s Nonce: %s',
-            trialValue, nonce
-        )
+        payload = self._doPOWDefaults(
+            payload, TTL, log_prefix='(For pubkey message)')
 
-        payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1
         Inventory()[inventoryHash] = (
@@ -502,10 +480,9 @@ class singleWorker(threading.Thread, StoppableThread):
             # We need to convert our private keys to public keys in order
             # to include them.
             try:
-                privSigningKeyBase58 = BMConfigParser().get(
-                    fromaddress, 'privsigningkey')
-                privEncryptionKeyBase58 = BMConfigParser().get(
-                    fromaddress, 'privencryptionkey')
+                privSigningKeyHex, privEncryptionKeyHex, \
+                    pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
+                        fromaddress)
             except:
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
@@ -522,18 +499,11 @@ class singleWorker(threading.Thread, StoppableThread):
                 ''' WHERE ackdata=? AND status='broadcastqueued' ''',
                 ackdata)
 
-            privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
-                privSigningKeyBase58))
-            privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
-                privEncryptionKeyBase58))
-
             # At this time these pubkeys are 65 bytes long
             # because they include the encoding byte which we won't
             # be sending in the broadcast message.
-            pubSigningKey = \
-                highlevelcrypto.privToPub(privSigningKeyHex).decode('hex')
-            pubEncryptionKey = unhexlify(highlevelcrypto.privToPub(
-                privEncryptionKeyHex))
+            # pubSigningKey = \
+            #     highlevelcrypto.privToPub(privSigningKeyHex).decode('hex')
 
             if TTL > 28 * 24 * 60 * 60:
                 TTL = 28 * 24 * 60 * 60
@@ -565,8 +535,7 @@ class singleWorker(threading.Thread, StoppableThread):
             dataToEncrypt += encodeVarint(streamNumber)
             # behavior bitfield
             dataToEncrypt += protocol.getBitfield(fromaddress)
-            dataToEncrypt += pubSigningKey[1:]
-            dataToEncrypt += pubEncryptionKey[1:]
+            dataToEncrypt += pubSigningKey + pubEncryptionKey
             if addressVersionNumber >= 3:
                 dataToEncrypt += encodeVarint(BMConfigParser().getint(
                     fromaddress, 'noncetrialsperbyte'))
@@ -604,16 +573,6 @@ class singleWorker(threading.Thread, StoppableThread):
             payload += highlevelcrypto.encrypt(
                 dataToEncrypt, hexlify(pubEncryptionKey))
 
-            target = 2 ** 64 / (
-                defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
-                    len(payload) + 8 +
-                    defaults.networkDefaultPayloadLengthExtraBytes + ((
-                        TTL * (
-                            len(payload) + 8 +
-                            defaults.networkDefaultPayloadLengthExtraBytes
-                        )) / (2 ** 16))
-                ))
-            logger.info('(For broadcast message) Doing proof of work...')
             queues.UISignalQueue.put((
                 'updateSentItemStatusByAckdata', (
                     ackdata,
@@ -621,14 +580,8 @@ class singleWorker(threading.Thread, StoppableThread):
                         "MainWindow",
                         "Doing work necessary to send broadcast..."))
             ))
-            initialHash = hashlib.sha512(payload).digest()
-            trialValue, nonce = proofofwork.run(target, initialHash)
-            logger.info(
-                '(For broadcast message) Found proof of work %s Nonce: %s',
-                trialValue, nonce
-            )
-
-            payload = pack('>Q', nonce) + payload
+            payload = self._doPOWDefaults(
+                payload, TTL, log_prefix='(For broadcast message)')
 
             # Sanity check. The payload size should never be larger
             # than 256 KiB. There should be checks elsewhere in the code
@@ -1093,10 +1046,9 @@ class singleWorker(threading.Thread, StoppableThread):
             # We need to convert our private keys to public keys in order
             # to include them.
             try:
-                privSigningKeyBase58 = BMConfigParser().get(
-                    fromaddress, 'privsigningkey')
-                privEncryptionKeyBase58 = BMConfigParser().get(
-                    fromaddress, 'privencryptionkey')
+                privSigningKeyHex, privEncryptionKeyHex, \
+                    pubSigningKey, pubEncryptionKey = self._getKeysForAddress(
+                        fromaddress)
             except:
                 queues.UISignalQueue.put((
                     'updateSentItemStatusByAckdata', (
@@ -1108,21 +1060,7 @@ class singleWorker(threading.Thread, StoppableThread):
                 ))
                 continue
 
-            privSigningKeyHex = hexlify(shared.decodeWalletImportFormat(
-                privSigningKeyBase58))
-            privEncryptionKeyHex = hexlify(shared.decodeWalletImportFormat(
-                privEncryptionKeyBase58))
-
-            pubSigningKey = unhexlify(highlevelcrypto.privToPub(
-                privSigningKeyHex))
-            pubEncryptionKey = unhexlify(highlevelcrypto.privToPub(
-                privEncryptionKeyHex))
-
-            # The \x04 on the beginning of the public keys are not sent.
-            # This way there is only one acceptable way to encode
-            # and send a public key.
-            payload += pubSigningKey[1:]
-            payload += pubEncryptionKey[1:]
+            payload += pubSigningKey + pubEncryptionKey
 
             if fromAddressVersionNumber >= 3:
                 # If the receiver of our message is in our address book,
@@ -1411,23 +1349,8 @@ class singleWorker(threading.Thread, StoppableThread):
                     "Doing work necessary to request encryption key."))
         ))
 
-        target = 2 ** 64 / (
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
-                len(payload) + 8 +
-                defaults.networkDefaultPayloadLengthExtraBytes + ((
-                    TTL * (
-                        len(payload) + 8 +
-                        defaults.networkDefaultPayloadLengthExtraBytes
-                    )) / (2 ** 16))
-            ))
-        initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
-        logger.info(
-            'Found proof of work %s Nonce: %s',
-            trialValue, nonce
-        )
+        payload = self._doPOWDefaults(payload, TTL)
 
-        payload = pack('>Q', nonce) + payload
         inventoryHash = calculateInventoryHash(payload)
         objectType = 1
         Inventory()[inventoryHash] = (
@@ -1484,33 +1407,7 @@ class singleWorker(threading.Thread, StoppableThread):
         # type/version/stream already included
         payload = pack('>Q', (embeddedTime)) + ackdata
 
-        target = 2 ** 64 / (
-            defaults.networkDefaultProofOfWorkNonceTrialsPerByte * (
-                len(payload) + 8 +
-                defaults.networkDefaultPayloadLengthExtraBytes + ((
-                    TTL * (
-                        len(payload) + 8 +
-                        defaults.networkDefaultPayloadLengthExtraBytes
-                    )) / (2 ** 16))
-            ))
-        logger.info(
-            '(For ack message) Doing proof of work. TTL set to %s', TTL)
+        payload = self._doPOWDefaults(
+            payload, TTL, log_prefix='(For ack message)', log_time=True)
 
-        powStartTime = time.time()
-        initialHash = hashlib.sha512(payload).digest()
-        trialValue, nonce = proofofwork.run(target, initialHash)
-        logger.info(
-            '(For ack message) Found proof of work %s Nonce: %s',
-            trialValue, nonce
-        )
-        try:
-            logger.info(
-                'PoW took %.1f seconds, speed %s.',
-                time.time() - powStartTime,
-                sizeof_fmt(nonce / (time.time() - powStartTime))
-            )
-        except:
-            pass
-
-        payload = pack('>Q', nonce) + payload
         return protocol.CreatePacket('object', payload)
