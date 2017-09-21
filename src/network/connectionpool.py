@@ -141,9 +141,7 @@ class BMConnectionPool(object):
         acceptConnections = True
         if BMConfigParser().safeGetBoolean('bitmessagesettings', 'dontconnect'):
             acceptConnections = False
-        else:
-            spawnConnections = True
-        if BMConfigParser().safeGetBoolean('bitmessagesettings', 'sendoutgoingconnections'):
+        elif BMConfigParser().safeGetBoolean('bitmessagesettings', 'sendoutgoingconnections'):
             spawnConnections = True
         if BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and \
             (not BMConfigParser().getboolean('bitmessagesettings', 'sockslisten') and \
