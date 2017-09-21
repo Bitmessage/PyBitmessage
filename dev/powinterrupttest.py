@@ -14,7 +14,7 @@ def signal_handler(signal, frame):
     print "Got signal %i in %s/%s" % (signal, current_process().name, current_thread().name)
     if current_process().name != "MainProcess":
         raise StopIteration("Interrupted")
-    if current_thread().name != "MainThread":
+    if current_thread().name != "PyBitmessage":
         return
     shutdown = 1
 

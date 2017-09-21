@@ -51,7 +51,7 @@ def signal_handler(signal, frame):
         raise SystemExit
     if "PoolWorker" in current_process().name:
         raise SystemExit
-    if current_thread().name != "MainThread":
+    if current_thread().name != "PyBitmessage":
         return
     logger.error("Got signal %i", signal)
     if BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'):

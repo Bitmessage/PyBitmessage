@@ -215,7 +215,7 @@ class Main:
 
         self.setSignalHandler()
 
-        helper_threading.set_thread_name("MainThread")
+        helper_threading.set_thread_name("PyBitmessage")
 
         helper_bootstrap.knownNodes()
         # Start the address generation thread
