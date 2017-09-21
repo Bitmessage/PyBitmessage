@@ -1,21 +1,10 @@
 from debug import logger
-withMessagingMenu = False
-try:
-    import gi
-    gi.require_version('MessagingMenu', '1.0')
-    from gi.repository import MessagingMenu
-    gi.require_version('Notify', '0.7')
-    from gi.repository import Notify
-    withMessagingMenu = True
-except (ImportError, ValueError):
-    MessagingMenu = None
 
 try:
     from PyQt4 import QtCore, QtGui
     from PyQt4.QtCore import *
     from PyQt4.QtGui import *
     from PyQt4.QtNetwork import QLocalSocket, QLocalServer
-
 except Exception as err:
     logmsg = 'PyBitmessage requires PyQt unless you want to run it as a daemon and interact with it using the API. You can download it from http://www.riverbankcomputing.com/software/pyqt/download or by searching Google for \'PyQt Download\' (without quotes).'
     logger.critical(logmsg, exc_info=True)
@@ -32,7 +21,7 @@ import shared
 from bitmessageui import *
 from bmconfigparser import BMConfigParser
 import defaults
-from namecoin import namecoinConnection, ensureNamecoinOptions
+from namecoin import namecoinConnection
 from newaddressdialog import *
 from newaddresswizard import *
 from messageview import MessageView
@@ -53,31 +42,26 @@ from iconglossary import *
 from connect import *
 import locale
 import sys
-from time import strftime, localtime, gmtime
 import time
 import os
 import hashlib
 from pyelliptic.openssl import OpenSSL
-import platform
 import textwrap
 import debug
 import random
-import subprocess
 import string
-import datetime
+from datetime import datetime, timedelta
 from helper_sql import *
 import helper_search
 import l10n
 import openclpow
-import types
-from utils import *
-from collections import OrderedDict
+from utils import str_broadcast_subscribers, avatarize
 from account import *
-from class_objectHashHolder import objectHashHolder
-from class_singleWorker import singleWorker
 from dialogs import AddAddressDialog
 from helper_generic import powQueueSize
-from inventory import Inventory, PendingDownloadQueue, PendingUpload, PendingUploadDeadlineException
+from inventory import (
+    Inventory, PendingDownloadQueue, PendingUpload,
+    PendingUploadDeadlineException)
 import knownnodes
 import paths
 from proofofwork import getPowType
@@ -87,9 +71,10 @@ import state
 from statusbar import BMStatusBar
 import throttle
 from version import softwareVersion
+import sound
 
 try:
-    from plugins.plugin import get_plugins
+    from plugins.plugin import get_plugin, get_plugins
 except ImportError:
     get_plugins = False
 
@@ -142,24 +127,15 @@ def change_translation(newlocale):
         except:
             logger.error("Failed to set locale to %s", lang, exc_info=True)
 
+
 class MyForm(settingsmixin.SMainWindow):
 
-    # sound type constants
-    SOUND_NONE = 0
-    SOUND_KNOWN = 1
-    SOUND_UNKNOWN = 2
-    SOUND_CONNECTED = 3
-    SOUND_DISCONNECTED = 4
-    SOUND_CONNECTION_GREEN = 5
-
     # the last time that a message arrival sound was played
-    lastSoundTime = datetime.datetime.now() - datetime.timedelta(days=1)
+    lastSoundTime = datetime.now() - timedelta(days=1)
 
     # the maximum frequency of message sounds in seconds
     maxSoundFrequencySec = 60
 
-    str_chan = '[chan]'
-    
     REPLY_TYPE_SENDER = 0
     REPLY_TYPE_CHAN = 1
 
@@ -349,6 +325,10 @@ class MyForm(settingsmixin.SMainWindow):
             _translate(
                 "MainWindow", "Set avatar..."),
             self.on_action_AddressBookSetAvatar)
+        self.actionAddressBookSetSound = \
+            self.ui.addressBookContextMenuToolbar.addAction(
+                _translate("MainWindow", "Set notification sound..."),
+                self.on_action_AddressBookSetSound)
         self.actionAddressBookNew = self.ui.addressBookContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Add New Address"), self.on_action_AddressBookNew)
@@ -868,14 +848,6 @@ class MyForm(settingsmixin.SMainWindow):
             self.raise_()
             self.activateWindow()
 
-    # pointer to the application
-    # app = None
-    # The most recent message
-    newMessageItem = None
-
-    # The most recent broadcast
-    newBroadcastItem = None
-
     # show the application window
     def appIndicatorShow(self):
         if self.actionShow is None:
@@ -905,32 +877,19 @@ class MyForm(settingsmixin.SMainWindow):
             self.appIndicatorShowOrHideWindow()"""
 
     # Show the program window and select inbox tab
-    def appIndicatorInbox(self, mm_app, source_id):
+    def appIndicatorInbox(self, item=None):
         self.appIndicatorShow()
         # select inbox
         self.ui.tabWidget.setCurrentIndex(0)
-        selectedItem = None
-        if source_id == 'Subscriptions':
-            # select unread broadcast
-            if self.newBroadcastItem is not None:
-                selectedItem = self.newBroadcastItem
-                self.newBroadcastItem = None
-        else:
-            # select unread message
-            if self.newMessageItem is not None:
-                selectedItem = self.newMessageItem
-                self.newMessageItem = None
-        # make it the current item
-        if selectedItem is not None:
-            try:
-                self.ui.tableWidgetInbox.setCurrentItem(selectedItem)
-            except Exception:
-                self.ui.tableWidgetInbox.setCurrentCell(0, 0)
+        self.ui.treeWidgetYourIdentities.setCurrentItem(
+            self.ui.treeWidgetYourIdentities.topLevelItem(0).child(0)
+        )
+
+        if item:
+            self.ui.tableWidgetInbox.setCurrentItem(item)
             self.tableWidgetInboxItemClicked()
         else:
-            # just select the first item
             self.ui.tableWidgetInbox.setCurrentCell(0, 0)
-            self.tableWidgetInboxItemClicked()
 
     # Show the program window and select send tab
     def appIndicatorSend(self):
@@ -1228,261 +1187,135 @@ class MyForm(settingsmixin.SMainWindow):
         self.tray.setContextMenu(m)
         self.tray.show()
 
-    # Ubuntu Messaging menu object
-    mmapp = None
-
-    # is the operating system Ubuntu?
-    def isUbuntu(self):
-        for entry in platform.uname():
-            if "Ubuntu" in entry:
-                return True
-        return False
-
-    # When an unread inbox row is selected on then clear the messaging menu
-    def ubuntuMessagingMenuClear(self, inventoryHash):
-        # if this isn't ubuntu then don't do anything
-        if not self.isUbuntu():
-            return
-
-        # has messageing menu been installed
-        if not withMessagingMenu:
-            return
-
-        # if there are no items on the messaging menu then
-        # the subsequent query can be avoided
-        if not (self.mmapp.has_source("Subscriptions") or self.mmapp.has_source("Messages")):
-            return
-
-        queryreturn = sqlQuery(
-            '''SELECT toaddress, read FROM inbox WHERE msgid=?''', inventoryHash)
-        for row in queryreturn:
-            toAddress, read = row
-            if not read:
-                if toAddress == str_broadcast_subscribers:
-                    if self.mmapp.has_source("Subscriptions"):
-                        self.mmapp.remove_source("Subscriptions")
-                else:
-                    if self.mmapp.has_source("Messages"):
-                        self.mmapp.remove_source("Messages")
-
     # returns the number of unread messages and subscriptions
     def getUnread(self):
-        unreadMessages = 0
-        unreadSubscriptions = 0
+        counters = [0, 0]
 
-        queryreturn = sqlQuery(
-            '''SELECT msgid, toaddress, read FROM inbox where folder='inbox' ''')
-        for row in queryreturn:
-            msgid, toAddress, read = row
-
-            try:
-                if toAddress == str_broadcast_subscribers:
-                    toLabel = str_broadcast_subscribers
-                else:
-                    toLabel = BMConfigParser().get(toAddress, 'label')
-            except:
-                toLabel = ''
-            if toLabel == '':
-                toLabel = toAddress
+        queryreturn = sqlQuery('''
+        SELECT msgid, toaddress, read FROM inbox where folder='inbox'
+        ''')
+        for msgid, toAddress, read in queryreturn:
 
             if not read:
-                if toLabel == str_broadcast_subscribers:
-                    # increment the unread subscriptions
-                    unreadSubscriptions = unreadSubscriptions + 1
-                else:
-                    # increment the unread messages
-                    unreadMessages = unreadMessages + 1
-        return unreadMessages, unreadSubscriptions
+                # increment the unread subscriptions if True (1)
+                # else messages (0)
+                counters[toAddress == str_broadcast_subscribers] += 1
 
-    # show the number of unread messages and subscriptions on the messaging
-    # menu
-    def ubuntuMessagingMenuUnread(self, drawAttention):
-        unreadMessages, unreadSubscriptions = self.getUnread()
-        # unread messages
-        if unreadMessages > 0:
-            self.mmapp.append_source(
-                "Messages", None, "Messages (" + str(unreadMessages) + ")")
-            if drawAttention:
-                self.mmapp.draw_attention("Messages")
-
-        # unread subscriptions
-        if unreadSubscriptions > 0:
-            self.mmapp.append_source("Subscriptions", None, "Subscriptions (" + str(
-                unreadSubscriptions) + ")")
-            if drawAttention:
-                self.mmapp.draw_attention("Subscriptions")
-
-    # initialise the Ubuntu messaging menu
-    def ubuntuMessagingMenuInit(self):
-        global withMessagingMenu
-
-        # if this isn't ubuntu then don't do anything
-        if not self.isUbuntu():
-            return
-
-        # has messageing menu been installed
-        if not withMessagingMenu:
-            logger.warning('WARNING: MessagingMenu is not available.  Is libmessaging-menu-dev installed?')
-            return
-
-        # create the menu server
-        if withMessagingMenu:
-            try:
-                self.mmapp = MessagingMenu.App(
-                    desktop_id='pybitmessage.desktop')
-                self.mmapp.register()
-                self.mmapp.connect('activate-source', self.appIndicatorInbox)
-                self.ubuntuMessagingMenuUnread(True)
-            except Exception:
-                withMessagingMenu = False
-                logger.warning('WARNING: messaging menu disabled')
-
-    # update the Ubuntu messaging menu
-    def ubuntuMessagingMenuUpdate(self, drawAttention, newItem, toLabel):
-        # if this isn't ubuntu then don't do anything
-        if not self.isUbuntu():
-            return
-
-        # has messageing menu been installed
-        if not withMessagingMenu:
-            logger.warning('WARNING: messaging menu disabled or libmessaging-menu-dev not installed')
-            return
-
-        # remember this item to that the messaging menu can find it
-        if toLabel == str_broadcast_subscribers:
-            self.newBroadcastItem = newItem
-        else:
-            self.newMessageItem = newItem
-
-        # Remove previous messages and subscriptions entries, then recreate them
-        # There might be a better way to do it than this
-        if self.mmapp.has_source("Messages"):
-            self.mmapp.remove_source("Messages")
-
-        if self.mmapp.has_source("Subscriptions"):
-            self.mmapp.remove_source("Subscriptions")
-
-        # update the menu entries
-        self.ubuntuMessagingMenuUnread(drawAttention)
-
-    # returns true if the given sound category is a connection sound
-    # rather than a received message sound
-    def isConnectionSound(self, category):
-        if (category is self.SOUND_CONNECTED or
-            category is self.SOUND_DISCONNECTED or
-            category is self.SOUND_CONNECTION_GREEN):
-            return True
-        return False
+        return counters
 
     # play a sound
     def playSound(self, category, label):
         # filename of the sound to be played
         soundFilename = None
 
-        # whether to play a sound or not
-        play = True
+        def _choose_ext(basename):
+            for ext in sound.extensions:
+                if os.path.isfile(os.extsep.join([basename, ext])):
+                    return os.extsep + ext
 
         # if the address had a known label in the address book
-        if label is not None:
+        if label:
             # Does a sound file exist for this particular contact?
-            if (os.path.isfile(state.appdata + 'sounds/' + label + '.wav') or
-                os.path.isfile(state.appdata + 'sounds/' + label + '.mp3')):
-                soundFilename = state.appdata + 'sounds/' + label
-
-        # Avoid making sounds more frequently than the threshold.
-        # This suppresses playing sounds repeatedly when there
-        # are many new messages
-        if (soundFilename is None and
-            not self.isConnectionSound(category)):
-            # elapsed time since the last sound was played
-            dt = datetime.datetime.now() - self.lastSoundTime
-            # suppress sounds which are more frequent than the threshold
-            if dt.total_seconds() < self.maxSoundFrequencySec:
-                play = False
+            soundFilename = state.appdata + 'sounds/' + label
+            ext = _choose_ext(soundFilename)
+            if not ext:
+                category = sound.SOUND_KNOWN
+                soundFilename = None
 
         if soundFilename is None:
+            # Avoid making sounds more frequently than the threshold.
+            # This suppresses playing sounds repeatedly when there
+            # are many new messages
+            if not sound.is_connection_sound(category):
+                # elapsed time since the last sound was played
+                dt = datetime.now() - self.lastSoundTime
+                # suppress sounds which are more frequent than the threshold
+                if dt.total_seconds() < self.maxSoundFrequencySec:
+                    return
+
             # the sound is for an address which exists in the address book
-            if category is self.SOUND_KNOWN:
+            if category is sound.SOUND_KNOWN:
                 soundFilename = state.appdata + 'sounds/known'
             # the sound is for an unknown address
-            elif category is self.SOUND_UNKNOWN:
+            elif category is sound.SOUND_UNKNOWN:
                 soundFilename = state.appdata + 'sounds/unknown'
             # initial connection sound
-            elif category is self.SOUND_CONNECTED:
+            elif category is sound.SOUND_CONNECTED:
                 soundFilename = state.appdata + 'sounds/connected'
             # disconnected sound
-            elif category is self.SOUND_DISCONNECTED:
+            elif category is sound.SOUND_DISCONNECTED:
                 soundFilename = state.appdata + 'sounds/disconnected'
             # sound when the connection status becomes green
-            elif category is self.SOUND_CONNECTION_GREEN:
-                soundFilename = state.appdata + 'sounds/green'            
+            elif category is sound.SOUND_CONNECTION_GREEN:
+                soundFilename = state.appdata + 'sounds/green'
 
-        if soundFilename is not None and play is True:
-            if not self.isConnectionSound(category):
-                # record the last time that a received message sound was played
-                self.lastSoundTime = datetime.datetime.now()
+        if soundFilename is None:
+            logger.warning("Probably wrong category number in playSound()")
+            return
 
-            # if not wav then try mp3 format
-            if not os.path.isfile(soundFilename + '.wav'):
-                soundFilename = soundFilename + '.mp3'
-            else:
-                soundFilename = soundFilename + '.wav'
+        if not sound.is_connection_sound(category):
+            # record the last time that a received message sound was played
+            self.lastSoundTime = datetime.now()
 
-            if os.path.isfile(soundFilename):
-                if 'linux' in sys.platform:
-                    # Note: QSound was a nice idea but it didn't work
-                    if '.mp3' in soundFilename:
-                        gst_available=False
-                        try:
-                            subprocess.call(["gst123", soundFilename],
-                                            stdin=subprocess.PIPE, 
-                                            stdout=subprocess.PIPE)
-                            gst_available=True
-                        except:
-                            logger.warning("WARNING: gst123 must be installed in order to play mp3 sounds")
-                        if not gst_available:
-                            try:
-                                subprocess.call(["mpg123", soundFilename],
-                                                stdin=subprocess.PIPE, 
-                                                stdout=subprocess.PIPE)
-                                gst_available=True
-                            except:
-                                logger.warning("WARNING: mpg123 must be installed in order to play mp3 sounds")
-                    else:
-                        try:
-                            subprocess.call(["aplay", soundFilename],
-                                            stdin=subprocess.PIPE, 
-                                            stdout=subprocess.PIPE)
-                        except:
-                            logger.warning("WARNING: aplay must be installed in order to play WAV sounds")
-                elif sys.platform[0:3] == 'win':
-                    # use winsound on Windows
-                    import winsound
-                    winsound.PlaySound(soundFilename, winsound.SND_FILENAME)
+        try:  # try already known format
+            soundFilename += ext
+        except (TypeError, NameError):
+            ext = _choose_ext(soundFilename)
+            if not ext:
+                try:  # if no user sound file found try to play from theme
+                    return self._theme_player(category, label)
+                except TypeError:
+                    return
+
+            soundFilename += ext
+
+        self._player(soundFilename)
+
+    # Try init the distro specific appindicator,
+    # for example the Ubuntu MessagingMenu
+    def indicatorInit(self):
+        def _noop_update(*args, **kwargs):
+            pass
+
+        try:
+            self.indicatorUpdate = get_plugin('indicator')(self)
+        except (NameError, TypeError):
+            self.indicatorUpdate = _noop_update
 
     # initialise the message notifier
     def notifierInit(self):
-        if withMessagingMenu:
-            Notify.init('pybitmessage')
-
-    # shows a notification
-    def notifierShow(self, title, subtitle, fromCategory, label):
-        self.playSound(fromCategory, label)
-
-        if withMessagingMenu:
-            n = Notify.Notification.new(
-                title, subtitle, 'notification-message-email')
-            try:
-                n.show()
-            except:
-                # n.show() has been known to throw this exception:
-                # gi._glib.GError: GDBus.Error:org.freedesktop.Notifications.
-                # MaxNotificationsExceeded: Exceeded maximum number of
-                # notifications
-                pass
-            return
-        else:
+        def _simple_notify(
+                title, subtitle, category, label=None, icon=None):
             self.tray.showMessage(title, subtitle, 1, 2000)
+
+        self._notifier = _simple_notify
+        # does nothing if isAvailable returns false
+        self._player = QtGui.QSound.play
+
+        if not get_plugins:
+            return
+
+        _plugin = get_plugin('notification.message')
+        if _plugin:
+            self._notifier = _plugin
+        else:
+            logger.warning("No notification.message plugin found")
+
+        self._theme_player = get_plugin('notification.sound', 'theme')
+
+        if not QtGui.QSound.isAvailable():
+            _plugin = get_plugin(
+                'notification.sound', 'file', fallback='file.fallback')
+            if _plugin:
+                self._player = _plugin
+            else:
+                logger.warning("No notification.sound plugin found")
+
+    def notifierShow(
+            self, title, subtitle, category, label=None, icon=None):
+        self.playSound(category, label)
+        self._notifier(
+            unicode(title), unicode(subtitle), category, label, icon)
 
     # tree
     def treeWidgetKeyPressEvent(self, event):
@@ -1663,15 +1496,18 @@ class MyForm(settingsmixin.SMainWindow):
 
     def setStatusIcon(self, color):
         # print 'setting status icon color'
+        _notifications_enabled = not BMConfigParser().getboolean(
+            'bitmessagesettings', 'hidetrayconnectionnotifications')
         if color == 'red':
             self.pushButtonStatusIcon.setIcon(
                 QIcon(":/newPrefix/images/redicon.png"))
             shared.statusIconColor = 'red'
             # if the connection is lost then show a notification
-            if self.connected and not BMConfigParser().getboolean('bitmessagesettings', 'hidetrayconnectionnotifications'):
-                self.notifierShow('Bitmessage', unicode(_translate(
-                            "MainWindow", "Connection lost").toUtf8(),'utf-8'),
-                                  self.SOUND_DISCONNECTED, None)
+            if self.connected and _notifications_enabled:
+                self.notifierShow(
+                    'Bitmessage',
+                    _translate("MainWindow", "Connection lost"),
+                    sound.SOUND_DISCONNECTED)
             if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp') and \
                 BMConfigParser().get('bitmessagesettings', 'socksproxytype') == "none":
                 self.statusBar().showMessage(_translate(
@@ -1689,10 +1525,11 @@ class MyForm(settingsmixin.SMainWindow):
                 ":/newPrefix/images/yellowicon.png"))
             shared.statusIconColor = 'yellow'
             # if a new connection has been established then show a notification
-            if not self.connected and not BMConfigParser().getboolean('bitmessagesettings', 'hidetrayconnectionnotifications'):
-                self.notifierShow('Bitmessage', unicode(_translate(
-                            "MainWindow", "Connected").toUtf8(),'utf-8'),
-                                  self.SOUND_CONNECTED, None)
+            if not self.connected and _notifications_enabled:
+                self.notifierShow(
+                    'Bitmessage',
+                    _translate("MainWindow", "Connected"),
+                    sound.SOUND_CONNECTED)
             self.connected = True
 
             if self.actionStatus is not None:
@@ -1705,10 +1542,11 @@ class MyForm(settingsmixin.SMainWindow):
             self.pushButtonStatusIcon.setIcon(
                 QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
-            if not self.connected and not BMConfigParser().getboolean('bitmessagesettings', 'hidetrayconnectionnotifications'):
-                self.notifierShow('Bitmessage', unicode(_translate(
-                            "MainWindow", "Connected").toUtf8(),'utf-8'),
-                                  self.SOUND_CONNECTION_GREEN, None)
+            if not self.connected and _notifications_enabled:
+                self.notifierShow(
+                    'Bitmessage',
+                    _translate("MainWindow", "Connected"),
+                    sound.SOUND_CONNECTION_GREEN)
             self.connected = True
 
             if self.actionStatus is not None:
@@ -2253,11 +2091,19 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             acct = ret
         self.propagateUnreadCount(acct.address)
-        if BMConfigParser().getboolean('bitmessagesettings', 'showtraynotifications'):
-            self.notifierShow(unicode(_translate("MainWindow",'New Message').toUtf8(),'utf-8'), unicode(_translate("MainWindow",'From ').toUtf8(),'utf-8') + unicode(acct.fromLabel, 'utf-8'), self.SOUND_UNKNOWN, None)
+        if BMConfigParser().getboolean(
+                'bitmessagesettings', 'showtraynotifications'):
+            self.notifierShow(
+                _translate("MainWindow", "New Message"),
+                _translate("MainWindow", "From %1").arg(
+                    unicode(acct.fromLabel, 'utf-8')),
+                sound.SOUND_UNKNOWN
+            )
         if self.getCurrentAccount() is not None and ((self.getCurrentFolder(treeWidget) != "inbox" and self.getCurrentFolder(treeWidget) is not None) or self.getCurrentAccount(treeWidget) != acct.address):
-            # Ubuntu should notify of new message irespective of whether it's in current message list or not
-            self.ubuntuMessagingMenuUpdate(True, None, acct.toLabel)
+            # Ubuntu should notify of new message irespective of
+            # whether it's in current message list or not
+            self.indicatorUpdate(True, to_label=acct.toLabel)
+            # cannot find item to pass here ):
         if hasattr(acct, "feedback") and acct.feedback != GatewayAccount.ALL_OK:
             if acct.feedback == GatewayAccount.REGISTRATION_DENIED:
                 self.dialog = EmailGatewayRegistrationDialog(self, _translate("EmailGatewayRegistrationDialog", "Registration failed:"), 
@@ -2851,9 +2697,6 @@ class MyForm(settingsmixin.SMainWindow):
         shutdown.doCleanShutdown()
         self.statusBar().showMessage(_translate("MainWindow", "Stopping notifications... %1%").arg(str(90)))
         self.tray.hide()
-        # unregister the messaging system
-        if self.mmapp is not None:
-            self.mmapp.unregister()
 
         self.statusBar().showMessage(_translate("MainWindow", "Shutdown imminent... %1%").arg(str(100)))
         shared.thisapp.cleanup()
@@ -3336,6 +3179,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.popMenuAddressBook.addAction(self.actionAddressBookClipboard)
         self.popMenuAddressBook.addAction(self.actionAddressBookSubscribe)
         self.popMenuAddressBook.addAction(self.actionAddressBookSetAvatar)
+        self.popMenuAddressBook.addAction(self.actionAddressBookSetSound)
         self.popMenuAddressBook.addSeparator()
         self.popMenuAddressBook.addAction(self.actionAddressBookNew)
         normal = True
@@ -3739,7 +3583,51 @@ class MyForm(settingsmixin.SMainWindow):
             return False
 
         return True
-        
+
+    def on_action_AddressBookSetSound(self):
+        widget = self.ui.tableWidgetAddressBook
+        self.setAddressSound(widget.item(widget.currentRow(), 0).text())
+
+    def setAddressSound(self, addr):
+        filters = [unicode(_translate(
+            "MainWindow", "Sound files (%s)" %
+            ' '.join(['*%s%s' % (os.extsep, ext) for ext in sound.extensions])
+        ))]
+        sourcefile = unicode(QtGui.QFileDialog.getOpenFileName(
+            self, _translate("MainWindow", "Set notification sound..."),
+            filter=';;'.join(filters)
+        ))
+
+        if not sourcefile:
+            return
+
+        destdir = os.path.join(state.appdata, 'sounds')
+        destfile = unicode(addr) + os.path.splitext(sourcefile)[-1]
+        destination = os.path.join(destdir, destfile)
+
+        if sourcefile == destination:
+            return
+
+        pattern = destfile.lower()
+        for item in os.listdir(destdir):
+            if item.lower() == pattern:
+                overwrite = QtGui.QMessageBox.question(
+                    self, _translate("MainWindow", "Message"),
+                    _translate(
+                        "MainWindow",
+                        "You have already set a notification sound"
+                        " for this address book entry."
+                        " Do you really want to overwrite it?"),
+                    QtGui.QMessageBox.Yes, QtGui.QMessageBox.No
+                ) == QtGui.QMessageBox.Yes
+                if overwrite:
+                    QtCore.QFile.remove(os.path.join(destdir, item))
+                break
+
+        if not QtCore.QFile.copy(sourcefile, destination):
+            logger.error(
+                'couldn\'t copy %s to %s', sourcefile, destination)
+
     def on_context_menuYourIdentities(self, point):
         currentItem = self.getCurrentItem()
         self.popMenuYourIdentities = QtGui.QMenu(self)
@@ -4525,7 +4413,7 @@ def run():
     myapp = MyForm()
 
     myapp.appIndicatorInit(app)
-    myapp.ubuntuMessagingMenuInit()
+    myapp.indicatorInit()
     myapp.notifierInit()
     myapp._firstrun = BMConfigParser().safeGetBoolean(
         'bitmessagesettings', 'dontconnect')
