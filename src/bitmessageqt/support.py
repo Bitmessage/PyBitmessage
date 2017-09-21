@@ -16,7 +16,7 @@ import paths
 import proofofwork
 from pyelliptic.openssl import OpenSSL
 import queues
-import shared
+import network.stats
 import state
 from version import softwareVersion
 
@@ -124,7 +124,7 @@ def createSupportMessage(myapp):
         upnp = BMConfigParser().get('bitmessagesettings', 'upnp')
     except:
         upnp = "N/A"
-    connectedhosts = len(shared.connectedHostsList)
+    connectedhosts = len(network.stats.connectedHostsList())
 
     myapp.ui.textEditMessage.setText(str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(version, os, architecture, pythonversion, opensslversion, frozen, portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
 
