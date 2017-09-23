@@ -29,6 +29,7 @@ from struct import pack
 from subprocess import call
 from time import sleep
 from random import randint
+import getopt
 
 from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
 from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
@@ -199,11 +200,24 @@ class Main:
     def start(self, daemon=False):
         _fixSocket()
 
-        shared.daemon = daemon
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], "hcd",
+                ["help", "curses", "daemon"])
 
-        # get curses flag
-        if '-c' in sys.argv:
-            state.curses = True
+        except getopt.GetoptError:
+            self.usage()
+            sys.exit(2)
+
+        for opt, arg in opts:
+            if opt in ("-h", "--help"):
+                self.usage()
+                sys.exit()
+            elif opt in ("-d", "--daemon"):
+                daemon = True
+            elif opt in ("-c", "--curses"):
+                state.curses = True
+
+        shared.daemon = daemon
 
         # is the application already running?  If yes then exit.
         shared.thisapp = singleinstance("", daemon)
@@ -361,6 +375,17 @@ class Main:
         signal.signal(signal.SIGINT, helper_generic.signal_handler)
         signal.signal(signal.SIGTERM, helper_generic.signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+    def usage(self):
+        print 'Usage: ' + sys.argv[0] + ' [OPTIONS]'
+        print '''
+Options:
+  -h, --help            show this help message and exit
+  -c, --curses          use curses (text mode) interface
+  -d, --daemon          run in daemon (background) mode
+
+All parameters are optional.
+'''
 
     def stop(self):
         with shared.printLock:
