@@ -1,6 +1,7 @@
 import base64
 import hashlib
 import time
+import random
 import socket
 import struct
 
@@ -9,6 +10,7 @@ from debug import logger
 from inventory import Inventory
 import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
+from network.dandelion import DandelionStems, REASSIGN_INTERVAL
 from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, \
         BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
 import network.connectionpool
@@ -61,6 +63,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.payloadOffset = 0
         self.expectBytes = protocol.Header.size
         self.object = None
+        self.dandelionRoutes = []
+        self.dandelionRefresh = 0
 
     def state_bm_header(self):
         self.magic, self.command, self.payloadLength, self.checksum = protocol.Header.unpack(self.read_buf[:protocol.Header.size])
@@ -266,13 +270,23 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # skip?
         if time.time() < self.skipUntil:
             return True
-        #TODO make this more asynchronous and allow reordering
+        #TODO make this more asynchronous
+        random.shuffle(items)
         for i in items:
-            try:
-                self.append_write_buf(protocol.CreatePacket('object', Inventory()[i].payload))
-            except KeyError:
+            if i in DandelionStems().stem and \
+                    self not in DandelionStems().stem[i]:
                 self.antiIntersectionDelay()
-                logger.info('%s asked for an object we don\'t have.', self.destination)
+                logger.info('%s asked for a stem object we didn\'t offer to it.', self.destination)
+                break
+            else:
+                try:
+                    self.append_write_buf(protocol.CreatePacket('object', Inventory()[i].payload))
+                except KeyError:
+                    self.antiIntersectionDelay()
+                    logger.info('%s asked for an object we don\'t have.', self.destination)
+                    break
+        # I think that aborting after the first missing/stem object is more secure
+        # when using random reordering, as the recipient won't know exactly which objects we refuse to deliver
         return True
 
     def bm_command_inv(self):
@@ -285,6 +299,34 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             pass
 
         for i in items:
+            self.handleReceivedInventory(i)
+
+        return True
+
+    def bm_command_dinv(self):
+        """
+        Dandelion stem announce
+        """
+        items = self.decode_payload_content("l32s")
+
+        if len(items) >= BMProto.maxObjectCount:
+            logger.error("Too many items in dinv message!")
+            raise BMProtoExcessiveDataError()
+        else:
+            pass
+
+        # ignore command if dandelion turned off
+        if BMConfigParser().safeGetBoolean("network", "dandelion") == 0:
+            return True
+
+        if self.dandelionRefresh < time.time():
+            self.dandelionRoutes = network.connectionpool.dandelionRouteSelector(self)
+            self.dandelionRefresh = time.time() + REASSIGN_INTERVAL
+
+        for i in items:
+            # Fluff trigger by RNG, per item
+            if random.randint(1, 100) < BMConfigParser().safeGetBoolean("network", "dandelion"):
+                DandelionStem().add(i, self.dandelionRoutes)
             self.handleReceivedInventory(i)
 
         return True
