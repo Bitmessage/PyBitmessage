@@ -54,6 +54,7 @@ from bmconfigparser import BMConfigParser
 from inventory import Inventory
 
 from network.connectionpool import BMConnectionPool
+from network.dandelion import DandelionStems
 from network.networkthread import BMNetworkThread
 from network.receivequeuethread import ReceiveQueueThread
 from network.announcethread import AnnounceThread
@@ -248,6 +249,7 @@ class Main:
         sqlLookup.start()
 
         Inventory() # init
+        DandelionStems() # init, needs to be early because other thread may access it early
 
         # SMTP delivery thread
         if daemon and BMConfigParser().safeGet("bitmessagesettings", "smtpdeliver", '') != '':

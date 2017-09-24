@@ -4,6 +4,7 @@ import time
 from addresses import calculateInventoryHash
 from debug import logger
 from inventory import Inventory
+from network.dandelion import DandelionStems
 import protocol
 import state
 
@@ -66,6 +67,9 @@ class BMObject(object):
             raise BMObjectUnwantedStreamError()
 
     def checkAlreadyHave(self):
+        # if it's a stem duplicate, pretend we don't have it
+        if self.inventoryHash in DandelionStems().stem:
+            return
         if self.inventoryHash in Inventory():
             raise BMObjectAlreadyHaveError()
 

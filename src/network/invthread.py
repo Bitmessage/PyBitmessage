@@ -4,6 +4,7 @@ import threading
 import addresses
 from helper_threading import StoppableThread
 from network.connectionpool import BMConnectionPool
+from network.dandelion import DandelionStems
 from queues import invQueue
 import protocol
 import state
@@ -38,6 +39,8 @@ class InvThread(threading.Thread, StoppableThread):
                     hashes = []
                     for inv in chunk:
                         if inv[0] not in connection.streams:
+                            continue
+                        if inv in DandelionStems().stem and connection not in DandelionStems().stem[inv]:
                             continue
                         try:
                             with connection.objectsNewToThemLock:
