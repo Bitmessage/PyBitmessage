@@ -61,10 +61,13 @@ class BMConnectionPool(object):
         for i in connections:
             if i == node:
                 continue
-            if i.services | protocol.NODE_DANDELION:
-                peers.append(i)
-                if len(peers) == 2:
-                    break
+            try:
+                if i.services | protocol.NODE_DANDELION:
+                    peers.append(i)
+                    if len(peers) == 2:
+                        break
+            except AttributeError:
+                continue
         return peers
 
     def connectToStream(self, streamNumber):
