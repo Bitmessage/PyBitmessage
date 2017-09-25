@@ -51,12 +51,12 @@ class BMConnectionPool(object):
                 except KeyError:
                     pass
 
-    def dandelionRouteSelector(node):
+    def dandelionRouteSelector(self, node):
         # Choose 2 peers randomly
         # TODO: handle streams
         peers = []
-        connections = BMConnectionPool().inboundConnections.values() + \
-                BMConnectionPool().outboundConnections.values()
+        connections = self.inboundConnections.values() + \
+                self.outboundConnections.values()
         random.shuffle(connections)
         for i in connections:
             if i == node:

@@ -320,7 +320,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return True
 
         if self.dandelionRefresh < time.time():
-            self.dandelionRoutes = network.connectionpool.dandelionRouteSelector(self)
+            self.dandelionRoutes = BMConnectionPool.dandelionRouteSelector(self)
             self.dandelionRefresh = time.time() + REASSIGN_INTERVAL
 
         for i in items:
