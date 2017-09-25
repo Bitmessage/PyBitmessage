@@ -97,14 +97,24 @@ class objectProcessor(threading.Thread):
         # Let's check whether this is a message acknowledgement bound for us.
         if len(data) < 32:
             return
-        if data[-32:] in shared.ackdataForWhichImWatching:
+        readPosition = 20  # bypass the nonce, time, and object type
+        # chomp version number
+        versionNumber, varIntLength = decodeVarint(
+            data[readPosition:readPosition + 10])
+        readPosition += varIntLength
+        # chomp stream number
+        streamNumber, varIntLength = decodeVarint(
+            data[readPosition:readPosition + 10])
+        readPosition += varIntLength
+
+        if data[readPosition:] in shared.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
-            del shared.ackdataForWhichImWatching[data[-32:]]
+            del shared.ackdataForWhichImWatching[data[readPosition:]]
             sqlExecute('UPDATE sent SET status=?, lastactiontime=? WHERE ackdata=?',
                        'ackreceived',
                        int(time.time()), 
-                       data[-32:])
-            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[-32:], tr._translate("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
+                       data[readPosition:])
+            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[readPosition:], tr._translate("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
         else:
             logger.debug('This object is not an acknowledgement bound for me.')
 
