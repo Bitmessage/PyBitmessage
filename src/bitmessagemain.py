@@ -198,8 +198,10 @@ if shared.useVeryEasyProofOfWorkForTesting:
         defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
 class Main:
-    def start(self, daemon=False):
+    def start(self):
         _fixSocket()
+
+        daemon = BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon')
 
         try:
             opts, args = getopt.getopt(sys.argv[1:], "hcd",
@@ -406,8 +408,7 @@ All parameters are optional.
 
 def main():
     mainprogram = Main()
-    mainprogram.start(
-        BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'))
+    mainprogram.start()
 
 if __name__ == "__main__":
     main()
