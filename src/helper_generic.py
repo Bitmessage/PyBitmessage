@@ -1,5 +1,5 @@
 """
-Helper Generic perform generic oprations for threading.
+Helper Generic perform generic operations for threading.
 
 Also perform some conversion operations.
 """
@@ -25,7 +25,7 @@ def powQueueSize():
             if thread.name == "singleWorker":
                 curWorkerQueue += thread.busy
         except Exception as err:
-            logger.info("Thread error %s", err)
+            logger.info('Thread error %s', err)
     return curWorkerQueue
 
 
@@ -47,31 +47,36 @@ def allThreadTraceback(frame):
     id2name = dict([(th.ident, th.name) for th in threading.enumerate()])
     code = []
     for threadId, stack in sys._current_frames().items():
-        code.append("\n# Thread: %s(%d)" % (
-            id2name.get(threadId, ""), threadId))
+        code.append(
+            '\n# Thread: %s(%d)' % (id2name.get(threadId, ''), threadId))
         for filename, lineno, name, line in traceback.extract_stack(stack):
-            code.append('File: "%s", line %d, in %s' % (
-                filename, lineno, name))
+            code.append(
+                'File: "%s", line %d, in %s' % (filename, lineno, name))
             if line:
-                code.append("  %s" % (line.strip()))
-    print "\n".join(code)
+                code.append('  %s' % (line.strip()))
+    print('\n'.join(code))
 
 
 def signal_handler(signal, frame):
-    logger.error("Got signal %i in %s/%s", signal,
-        current_process().name,
-        threading.current_thread().name)
+    logger.error(
+        'Got signal %i in %s/%s',
+        signal, current_process().name, threading.current_thread().name
+    )
+    if current_process().name == "RegExParser":
+        # on Windows this isn't triggered, but it's fine,
+        # it has its own process termination thing
+        raise SystemExit
     if "PoolWorker" in current_process().name:
         raise SystemExit
-    if threading.current_thread().name not in (
-        "PyBitmessage", "MainThread"):
+    if threading.current_thread().name not in ("PyBitmessage", "MainThread"):
         return
     logger.error("Got signal %i", signal)
-    if shared.thisapp.daemon or not state.enableGUI: # FIXME redundant?
+    if shared.thisapp.daemon or not state.enableGUI:  # FIXME redundant?
         shutdown.doCleanShutdown()
     else:
         allThreadTraceback(frame)
-        print 'Unfortunately you cannot use Ctrl+C when running the UI because the UI captures the signal.'
+        print('Unfortunately you cannot use Ctrl+C when running the UI'
+              ' because the UI captures the signal.')
 
 
 def isHostInPrivateIPRange(host):
