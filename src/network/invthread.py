@@ -1,5 +1,5 @@
 import Queue
-from random import randint
+from random import randint, shuffle
 import threading
 from time import time
 
@@ -35,11 +35,8 @@ class InvThread(threading.Thread, StoppableThread):
                     data = invQueue.get(False)
                     # locally generated
                     if len(data) == 2:
+                        DandelionStems.add(data[1], None, self.dandelionRoutes)
                         BMConnectionPool().handleReceivedObject(data[0], data[1])
-                        # Fluff trigger by RNG
-                        # auto-ignore if config set to 0, i.e. dandelion is off
-                        if randint(1, 100) < BMConfigParser().safeGetBoolean("network", "dandelion"):
-                            DandelionStems.add(data[1], self.dandelionRoutes)
                     # came over the network
                     else:
                         source = BMConnectionPool().getConnectionByAddr(data[2])
@@ -59,21 +56,28 @@ class InvThread(threading.Thread, StoppableThread):
                     for inv in chunk:
                         if inv[0] not in connection.streams:
                             continue
-                        if inv[1] in DandelionStems().stem:
-                            if connection in DandelionStems().stem[inv[1]]:
-                                stems.append(inv[1])
-                            continue
-                        # else
                         try:
                             with connection.objectsNewToThemLock:
                                 del connection.objectsNewToThem[inv[1]]
-                            fluffs.append(inv[1])
                         except KeyError:
                             continue
+                        if inv[1] in DandelionStems().stem:
+                            if connection == DandelionStems().stem[inv[1]]:
+                                # Fluff trigger by RNG
+                                # auto-ignore if config set to 0, i.e. dandelion is off
+                                if randint(1, 100) < BMConfigParser().safeGetBoolean("network", "dandelion"):
+                                    stems.append(inv[1])
+                                else:
+                                    fluffs.append(inv[1])
+                            continue
+                        else:
+                            fluffs.append(inv[1])
                     if fluffs:
+                        shuffle(fluffs)
                         connection.append_write_buf(protocol.CreatePacket('inv', \
                                 addresses.encodeVarint(len(fluffs)) + "".join(fluffs)))
                     if stems:
+                        shuffle(stems)
                         connection.append_write_buf(protocol.CreatePacket('dinv', \
                                 addresses.encodeVarint(len(stems)) + "".join(stems)))
             invQueue.iterate()

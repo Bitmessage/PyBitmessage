@@ -274,7 +274,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         random.shuffle(items)
         for i in items:
             if i in DandelionStems().stem and \
-                    self not in DandelionStems().stem[i]:
+                    self != DandelionStems().stem[i]:
                 self.antiIntersectionDelay()
                 logger.info('%s asked for a stem object we didn\'t offer to it.', self.destination)
                 break
@@ -324,9 +324,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.dandelionRefresh = time.time() + REASSIGN_INTERVAL
 
         for i in items:
-            # Fluff trigger by RNG, per item
-            if random.randint(1, 100) < BMConfigParser().safeGetBoolean("network", "dandelion"):
-                DandelionStem().add(i, self.dandelionRoutes)
+            DandelionStems().add(i, self, self.dandelionRoutes)
             self.handleReceivedInventory(i)
 
         return True
