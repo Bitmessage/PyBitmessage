@@ -5,6 +5,7 @@ import re
 import sys
 import inspect
 from helper_sql import *
+from helper_ackPayload import genAckPayload
 from addresses import decodeAddress
 from bmconfigparser import BMConfigParser
 from foldertree import AccountMixin
@@ -166,7 +167,8 @@ class GatewayAccount(BMAccount):
         
     def send(self):
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
-        ackdata = OpenSSL.rand(32)
+        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+        ackdata = genAckPayload(streamNumber, stealthLevel)
         t = ()
         sqlExecute(
             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',

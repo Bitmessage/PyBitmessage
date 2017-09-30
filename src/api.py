@@ -35,6 +35,7 @@ import network.stats
 
 # Classes
 from helper_sql import sqlQuery,sqlExecute,SqlBulkExecute,sqlStoredProcedure
+from helper_ackPayload import genAckPayload
 from debug import logger
 from inventory import Inventory
 from version import softwareVersion
@@ -679,7 +680,8 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         if not fromAddressEnabled:
             raise APIError(14, 'Your fromAddress is disabled. Cannot send.')
 
-        ackdata = OpenSSL.rand(32)
+        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+        ackdata = genAckPayload(streamNumber, stealthLevel)
 
         t = ('', 
              toAddress, 
@@ -740,7 +742,7 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
                 fromAddress, 'enabled')
         except:
             raise APIError(13, 'could not find your fromAddress in the keys.dat file.')
-        ackdata = OpenSSL.rand(32)
+        ackdata = genAckPayload(streamNumber, 0)
         toAddress = '[Broadcast subscribers]'
         ripe = ''
 
