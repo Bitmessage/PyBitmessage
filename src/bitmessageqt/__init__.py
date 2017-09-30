@@ -52,6 +52,7 @@ import random
 import string
 from datetime import datetime, timedelta
 from helper_sql import *
+from helper_ackPayload import genAckPayload
 import helper_search
 import l10n
 import openclpow
@@ -1879,7 +1880,8 @@ class MyForm(settingsmixin.SMainWindow):
                         if shared.statusIconColor == 'red':
                             self.statusBar().showMessage(_translate(
                                 "MainWindow", "Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect."))
-                        ackdata = OpenSSL.rand(32)
+                        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+                        ackdata = genAckPayload(streamNumber, stealthLevel)
                         t = ()
                         sqlExecute(
                             '''INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)''',
@@ -1933,7 +1935,7 @@ class MyForm(settingsmixin.SMainWindow):
                 # We don't actually need the ackdata for acknowledgement since
                 # this is a broadcast message, but we can use it to update the
                 # user interface when the POW is done generating.
-                ackdata = OpenSSL.rand(32)
+                ackdata = genAckPayload(streamNumber, 0)
                 toAddress = str_broadcast_subscribers
                 ripe = ''
                 t = ('', # msgid. We don't know what this will be until the POW is done. 
