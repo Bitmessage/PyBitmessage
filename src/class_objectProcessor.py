@@ -21,6 +21,7 @@ import helper_inbox
 import helper_msgcoding
 import helper_sent
 from helper_sql import *
+from helper_ackPayload import genAckPayload
 import protocol
 import queues
 import state
@@ -97,14 +98,18 @@ class objectProcessor(threading.Thread):
         # Let's check whether this is a message acknowledgement bound for us.
         if len(data) < 32:
             return
-        if data[-32:] in shared.ackdataForWhichImWatching:
+
+        # bypass nonce and time, retain object type/version/stream + body
+        readPosition = 16
+
+        if data[readPosition:] in shared.ackdataForWhichImWatching:
             logger.info('This object is an acknowledgement bound for me.')
-            del shared.ackdataForWhichImWatching[data[-32:]]
+            del shared.ackdataForWhichImWatching[data[readPosition:]]
             sqlExecute('UPDATE sent SET status=?, lastactiontime=? WHERE ackdata=?',
                        'ackreceived',
                        int(time.time()), 
-                       data[-32:])
-            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[-32:], tr._translate("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
+                       data[readPosition:])
+            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[readPosition:], tr._translate("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
         else:
             logger.debug('This object is not an acknowledgement bound for me.')
 
@@ -548,8 +553,8 @@ class objectProcessor(threading.Thread):
                 message = time.strftime("%a, %Y-%m-%d %H:%M:%S UTC", time.gmtime(
                 )) + '   Message ostensibly from ' + fromAddress + ':\n\n' + body
                 fromAddress = toAddress  # The fromAddress for the broadcast that we are about to send is the toAddress (my address) for the msg message we are currently processing.
-                ackdataForBroadcast = OpenSSL.rand(
-                    32)  # We don't actually need the ackdataForBroadcast for acknowledgement since this is a broadcast message but we can use it to update the user interface when the POW is done generating.
+                # We don't actually need the ackdataForBroadcast for acknowledgement since this is a broadcast message but we can use it to update the user interface when the POW is done generating.
+                ackdata = genAckPayload(streamNumber, 0)
                 toAddress = '[Broadcast subscribers]'
                 ripe = ''
 

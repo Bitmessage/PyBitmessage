@@ -29,6 +29,7 @@ from struct import pack
 from subprocess import call
 from time import sleep
 from random import randint
+import getopt
 
 from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
 from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
@@ -53,6 +54,7 @@ from bmconfigparser import BMConfigParser
 from inventory import Inventory
 
 from network.connectionpool import BMConnectionPool
+from network.dandelion import DandelionStems
 from network.networkthread import BMNetworkThread
 from network.receivequeuethread import ReceiveQueueThread
 from network.announcethread import AnnounceThread
@@ -196,14 +198,29 @@ if shared.useVeryEasyProofOfWorkForTesting:
         defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
 class Main:
-    def start(self, daemon=False):
+    def start(self):
         _fixSocket()
 
-        shared.daemon = daemon
+        daemon = BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon')
 
-        # get curses flag
-        if '-c' in sys.argv:
-            state.curses = True
+        try:
+            opts, args = getopt.getopt(sys.argv[1:], "hcd",
+                ["help", "curses", "daemon"])
+
+        except getopt.GetoptError:
+            self.usage()
+            sys.exit(2)
+
+        for opt, arg in opts:
+            if opt in ("-h", "--help"):
+                self.usage()
+                sys.exit()
+            elif opt in ("-d", "--daemon"):
+                daemon = True
+            elif opt in ("-c", "--curses"):
+                state.curses = True
+
+        shared.daemon = daemon
 
         # is the application already running?  If yes then exit.
         shared.thisapp = singleinstance("", daemon)
@@ -215,7 +232,7 @@ class Main:
 
         self.setSignalHandler()
 
-        helper_threading.set_thread_name("MainThread")
+        helper_threading.set_thread_name("PyBitmessage")
 
         helper_bootstrap.knownNodes()
         # Start the address generation thread
@@ -234,6 +251,7 @@ class Main:
         sqlLookup.start()
 
         Inventory() # init
+        DandelionStems() # init, needs to be early because other thread may access it early
 
         # SMTP delivery thread
         if daemon and BMConfigParser().safeGet("bitmessagesettings", "smtpdeliver", '') != '':
@@ -349,17 +367,29 @@ class Main:
         shared.thisapp.lockPid = None # indicate we're the final child
         sys.stdout.flush()
         sys.stderr.flush()
-        si = file(os.devnull, 'r')
-        so = file(os.devnull, 'a+')
-        se = file(os.devnull, 'a+', 0)
-        os.dup2(si.fileno(), sys.stdin.fileno())
-        os.dup2(so.fileno(), sys.stdout.fileno())
-        os.dup2(se.fileno(), sys.stderr.fileno())
+        if not sys.platform.startswith('win'):
+            si = file(os.devnull, 'r')
+            so = file(os.devnull, 'a+')
+            se = file(os.devnull, 'a+', 0)
+            os.dup2(si.fileno(), sys.stdin.fileno())
+            os.dup2(so.fileno(), sys.stdout.fileno())
+            os.dup2(se.fileno(), sys.stderr.fileno())
 
     def setSignalHandler(self):
         signal.signal(signal.SIGINT, helper_generic.signal_handler)
         signal.signal(signal.SIGTERM, helper_generic.signal_handler)
         # signal.signal(signal.SIGINT, signal.SIG_DFL)
+
+    def usage(self):
+        print 'Usage: ' + sys.argv[0] + ' [OPTIONS]'
+        print '''
+Options:
+  -h, --help            show this help message and exit
+  -c, --curses          use curses (text mode) interface
+  -d, --daemon          run in daemon (background) mode
+
+All parameters are optional.
+'''
 
     def stop(self):
         with shared.printLock:
@@ -378,8 +408,7 @@ class Main:
 
 def main():
     mainprogram = Main()
-    mainprogram.start(
-        BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'))
+    mainprogram.start()
 
 if __name__ == "__main__":
     main()

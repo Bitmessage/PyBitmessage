@@ -11,10 +11,16 @@ from src.version import softwareVersion
 class InstallCmd(install):
     def run(self):
         # prepare icons directories
-        os.makedirs('desktop/icons/scalable')
+        try:
+            os.makedirs('desktop/icons/scalable')
+        except os.error:
+            pass
         shutil.copyfile(
             'desktop/can-icon.svg', 'desktop/icons/scalable/pybitmessage.svg')
-        os.makedirs('desktop/icons/24x24')
+        try:
+            os.makedirs('desktop/icons/24x24')
+        except os.error:
+            pass
         shutil.copyfile(
             'desktop/icon24.png', 'desktop/icons/24x24/pybitmessage.png')
 

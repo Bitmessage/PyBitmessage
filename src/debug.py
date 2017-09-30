@@ -64,7 +64,7 @@ def configureLogging():
                 'class': 'logging.StreamHandler',
                 'formatter': 'default',
                 'level': log_level,
-                'stream': 'ext://sys.stdout'
+                'stream': 'ext://sys.stderr'
             },
             'file': {
                 'class': 'logging.handlers.RotatingFileHandler',

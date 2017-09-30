@@ -18,6 +18,7 @@ from network.advanceddispatcher import AdvancedDispatcher
 from network.bmproto import BMProtoError, BMProtoInsufficientDataError, BMProtoExcessiveDataError, BMProto
 from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
 import network.connectionpool
+from network.dandelion import DandelionStems
 from network.node import Node
 import network.asyncore_pollchoose as asyncore
 from network.proxy import Proxy, ProxyError, GeneralProxyError
@@ -88,7 +89,7 @@ class TCPConnection(BMProto, TLSDispatcher):
                 if self.skipUntil > time.time():
                     logger.debug("Initial skipping processing getdata for %.2fs", self.skipUntil - time.time())
             else:
-                logger.debug("Skipping processing getdata due to missing object for %.2fs", self.skipUntil - time.time())
+                logger.debug("Skipping processing getdata due to missing object for %.2fs", delay)
                 self.skipUntil = time.time() + delay
 
     def state_connection_fully_established(self):
@@ -165,6 +166,9 @@ class TCPConnection(BMProto, TLSDispatcher):
             # may lock for a long time, but I think it's better than thousands of small locks
             with self.objectsNewToThemLock:
                 for objHash in Inventory().unexpired_hashes_by_stream(stream):
+                    # don't advertise stem objects on bigInv
+                    if objHash in DandelionStems().stem:
+                        continue
                     bigInvList[objHash] = 0
                     self.objectsNewToThem[objHash] = time.time()
         objectCount = 0

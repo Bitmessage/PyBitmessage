@@ -12,7 +12,7 @@ try:
     threading.Thread.__bootstrap_original__ = threading.Thread._Thread__bootstrap
     threading.Thread._Thread__bootstrap = _thread_name_hack
 except ImportError:
-    def set_thread_name(name): pass
+    def set_thread_name(name): threading.current_thread().name = name
 
 class StoppableThread(object):
     def initStop(self):
