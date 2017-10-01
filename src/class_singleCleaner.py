@@ -66,7 +66,7 @@ class singleCleaner(threading.Thread, StoppableThread):
             # If we are running as a daemon then we are going to fill up the UI
             # queue which will never be handled by a UI. We should clear it to
             # save memory.
-            if BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'):
+            if shared.thisapp.daemon:
                 queues.UISignalQueue.queue.clear()
             if timeWeLastClearedInventoryAndPubkeysTables < int(time.time()) - 7380:
                 timeWeLastClearedInventoryAndPubkeysTables = int(time.time())
