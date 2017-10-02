@@ -35,7 +35,7 @@ class InvThread(threading.Thread, StoppableThread):
                     data = invQueue.get(False)
                     # locally generated
                     if len(data) == 2:
-                        DandelionStems.add(data[1], None, self.dandelionRoutes)
+                        DandelionStems().add(data[1], None, self.dandelionRoutes)
                         BMConnectionPool().handleReceivedObject(data[0], data[1])
                     # came over the network
                     else:
