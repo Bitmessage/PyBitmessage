@@ -37,7 +37,7 @@ class NewChanDialog(QtGui.QDialog, RetranslateMixin):
             addressGeneratorQueue.put(('joinChan', addBMIfNotPresent(self.chanAddress.text().toUtf8()), str_chan + ' ' + str(self.chanPassPhrase.text().toUtf8()), self.chanPassPhrase.text().toUtf8(), True))
         addressGeneratorReturnValue = apiAddressGeneratorReturnQueue.get(True)
         if len(addressGeneratorReturnValue) > 0 and addressGeneratorReturnValue[0] != 'chan name does not match address':
-            UISignalQueue.put(('updateStatusBar', _translate("newchandialog", "Successfully created / joined chan %1").arg(str(self.chanPassPhrase.text().toUtf8()))))
+            UISignalQueue.put(('updateStatusBar', _translate("newchandialog", "Successfully created / joined chan %1").arg(unicode(self.chanPassPhrase.text()))))
             self.parent.ui.tabWidget.setCurrentIndex(3)
             self.done(QtGui.QDialog.Accepted)
         else:
