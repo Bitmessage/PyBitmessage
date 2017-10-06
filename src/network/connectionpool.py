@@ -55,8 +55,7 @@ class BMConnectionPool(object):
         # Choose 2 peers randomly
         # TODO: handle streams
         peers = []
-        connections = self.inboundConnections.values() + \
-                self.outboundConnections.values()
+        connections = self.outboundConnections.values()
         random.shuffle(connections)
         for i in connections:
             if i == node:

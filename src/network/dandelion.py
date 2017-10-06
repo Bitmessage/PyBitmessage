@@ -1,6 +1,8 @@
 from random import choice
 from threading import RLock
+from time import time
 
+from bmconfigparser import BMConfigParser
 from singleton import Singleton
 
 # randomise routes after 600 seconds
@@ -16,10 +18,15 @@ class DandelionStems():
         self.lock = RLock()
 
     def add(self, hashId, source, stems):
+        if BMConfigParser().safeGetInt('network', 'dandelion') == 0:
+            return
         with self.lock:
-            self.stem[hashId] = choice(stems)
+            try:
+                self.stem[hashId] = choice(stems)
+            except IndexError:
+                self.stem = None
             self.source[hashId] = source
-            self.timeouts[hashId] = time.time()
+            self.timeouts[hashId] = time()
 
     def remove(self, hashId):
         with self.lock:
