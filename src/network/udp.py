@@ -151,6 +151,7 @@ class UDPSocket(BMProto):
             retval = self.socket.sendto(self.write_buf, ('<broadcast>', UDPSocket.port))
         except socket.error as e:
             logger.error("socket error on sendato: %s", str(e))
+            retval = 0
         self.slice_write_buf(retval)
 
 
