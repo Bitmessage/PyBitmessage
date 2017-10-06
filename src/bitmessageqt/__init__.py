@@ -2138,25 +2138,31 @@ class MyForm(settingsmixin.SMainWindow):
                     self.statusBar().showMessage(_translate(
                         "MainWindow", "Sending email gateway registration request"), 10000)
 
-    def click_pushButtonAddAddressBook(self):
-        self.AddAddressDialogInstance = AddAddressDialog(self)
-        if self.AddAddressDialogInstance.exec_():
-            if self.AddAddressDialogInstance.ui.labelAddressCheck.text() == _translate("MainWindow", "Address is valid."):
+    def click_pushButtonAddAddressBook(self, dialog=None):
+        if not dialog:
+            dialog = AddAddressDialog(self)
+        if dialog.exec_():
+            if dialog.ui.labelAddressCheck.text() == \
+                    _translate("MainWindow", "Address is valid."):
                 # First we must check to see if the address is already in the
                 # address book. The user cannot add it again or else it will
                 # cause problems when updating and deleting the entry.
-                address = addBMIfNotPresent(str(
-                    self.AddAddressDialogInstance.ui.lineEditAddress.text()))
-                label = self.AddAddressDialogInstance.ui.newAddressLabel.text().toUtf8()
-                self.addEntryToAddressBook(address,label)
+                address = addBMIfNotPresent(
+                    str(dialog.ui.lineEditAddress.text()))
+                label = str(dialog.ui.newAddressLabel.text().toUtf8())
+                self.addEntryToAddressBook(address, label)
             else:
                 self.statusBar().showMessage(_translate(
-                    "MainWindow", "The address you entered was invalid. Ignoring it."), 10000)
+                    "MainWindow",
+                    "The address you entered was invalid. Ignoring it."
+                ), 10000)
 
-    def addEntryToAddressBook(self,address,label):
-        queryreturn = sqlQuery('''select * from addressbook where address=?''', address)
+    def addEntryToAddressBook(self, address, label):
+        queryreturn = sqlQuery(
+            '''select * from addressbook where address=?''', address)
         if queryreturn == []:
-            sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(label), address)
+            sqlExecute('''INSERT INTO addressbook VALUES (?,?)''',
+                       label, address)
             self.rerenderMessagelistFromLabels()
             self.rerenderMessagelistToLabels()
             self.rerenderAddressBook()
@@ -2935,19 +2941,10 @@ class MyForm(settingsmixin.SMainWindow):
         # tableWidget.item(currentRow,1).data(Qt.UserRole).toPyObject()
         addressAtCurrentInboxRow = tableWidget.item(
             currentInboxRow, 1).data(Qt.UserRole)
-        # Let's make sure that it isn't already in the address book
-        queryreturn = sqlQuery('''select * from addressbook where address=?''',
-                               addressAtCurrentInboxRow)
-        if queryreturn == []:
-            sqlExecute('''INSERT INTO addressbook VALUES (?,?)''',
-                       '--New entry. Change label in Address Book.--',
-                       addressAtCurrentInboxRow)
-            self.rerenderAddressBook()
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "Entry added to the Address Book. Edit the label to your liking."), 10000)
-        else:
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."), 10000)
+        self.ui.tabWidget.setCurrentIndex(1)
+        dialog = AddAddressDialog(self)
+        dialog.ui.lineEditAddress.setText(addressAtCurrentInboxRow)
+        self.click_pushButtonAddAddressBook(dialog)
 
     def on_action_InboxAddSenderToBlackList(self):
         tableWidget = self.getCurrentMessagelist()
