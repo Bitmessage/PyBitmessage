@@ -17,7 +17,11 @@ def _translate(context, text, disambiguation = None, encoding = None, n = None):
     return translateText(context, text, n)
 
 def translateText(context, text, n = None):
-    if not shared.thisapp.daemon:
+    try:
+        is_daemon = shared.thisapp.daemon
+    except AttributeError:  # inside the plugin
+        is_daemon = False
+    if not is_daemon:
         try:
             from PyQt4 import QtCore, QtGui
         except Exception as err:
