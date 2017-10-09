@@ -3994,8 +3994,9 @@ class settingsDialog(QtGui.QDialog):
         else:
             try:
                 import tempfile
-                file = tempfile.NamedTemporaryFile(dir=paths.lookupExeFolder(), delete=True)
-                file.close # should autodelete
+                tempfile.NamedTemporaryFile(
+                    dir=paths.lookupExeFolder(), delete=True
+                ).close()  # should autodelete
             except:
                 self.ui.checkBoxPortableMode.setDisabled(True)
 
