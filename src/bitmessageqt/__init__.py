@@ -864,6 +864,12 @@ class MyForm(settingsmixin.SMainWindow):
             self.actionShow.setChecked(False)
             self.appIndicatorShowOrHideWindow()
 
+    def appIndicatorSwitchQuietMode(self):
+        BMConfigParser().set(
+            'bitmessagesettings', 'showtraynotifications',
+            str(not self.actionQuiet.isChecked())
+        )
+
     # application indicator show or hide
     """# application indicator show or hide
     def appIndicatorShowBitmessage(self):
@@ -1156,6 +1162,14 @@ class MyForm(settingsmixin.SMainWindow):
         self.actionShow.triggered.connect(self.appIndicatorShowOrHideWindow)
         if not sys.platform[0:3] == 'win':
             m.addAction(self.actionShow)
+
+        # quiet mode
+        self.actionQuiet = QtGui.QAction(_translate(
+            "MainWindow", "Quiet Mode"), m, checkable=True)
+        self.actionQuiet.setChecked(not BMConfigParser().getboolean(
+            'bitmessagesettings', 'showtraynotifications'))
+        self.actionQuiet.triggered.connect(self.appIndicatorSwitchQuietMode)
+        m.addAction(self.actionQuiet)
 
         # Send
         actionSend = QtGui.QAction(_translate(
