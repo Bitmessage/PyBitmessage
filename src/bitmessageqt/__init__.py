@@ -35,9 +35,7 @@ from emailgateway import *
 from settings import *
 import settingsmixin
 import support
-from about import *
 from help import *
-from iconglossary import *
 from connect import *
 import locale
 import sys
@@ -62,6 +60,7 @@ from helper_generic import powQueueSize
 from inventory import (
     Inventory, PendingDownloadQueue, PendingUpload,
     PendingUploadDeadlineException)
+from uisignaler import UISignaler
 import knownnodes
 import paths
 from proofofwork import getPowType
@@ -70,8 +69,8 @@ import shutdown
 import state
 from statusbar import BMStatusBar
 from network.asyncore_pollchoose import set_rates
-from version import softwareVersion
 import sound
+
 
 try:
     from plugins.plugin import get_plugin, get_plugins
@@ -2220,10 +2219,7 @@ class MyForm(settingsmixin.SMainWindow):
                     ))
 
     def click_pushButtonStatusIcon(self):
-        logger.debug('click_pushButtonStatusIcon')
-        self.iconGlossaryInstance = iconGlossaryDialog(self)
-        if self.iconGlossaryInstance.exec_():
-            pass
+        dialogs.IconGlossaryDialog(self, config=BMConfigParser()).exec_()
 
     def click_actionHelp(self):
         self.helpDialogInstance = helpDialog(self)
@@ -2233,8 +2229,7 @@ class MyForm(settingsmixin.SMainWindow):
         support.createSupportMessage(self)
 
     def click_actionAbout(self):
-        self.aboutDialogInstance = aboutDialog(self)
-        self.aboutDialogInstance.exec_()
+        dialogs.AboutDialog(self).exec_()
 
     def click_actionSettings(self):
         self.settingsDialogInstance = settingsDialog(self)
@@ -3975,16 +3970,6 @@ class connectDialog(QtGui.QDialog):
         self.parent = parent
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
-class aboutDialog(QtGui.QDialog):
-
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_aboutDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        self.ui.label.setText("PyBitmessage " + softwareVersion)
-        self.ui.labelVersion.setText(paths.lastCommit())
-
 
 class regenerateAddressesDialog(QtGui.QDialog):
 
@@ -4312,18 +4297,6 @@ class NewAddressDialog(QtGui.QDialog):
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 
-class iconGlossaryDialog(QtGui.QDialog):
-
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_iconGlossaryDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        self.ui.labelPortNumber.setText(_translate(
-            "MainWindow", "You are using TCP port %1. (This can be changed in the settings).").arg(str(BMConfigParser().getint('bitmessagesettings', 'port'))))
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
-
-
 # In order for the time columns on the Inbox and Sent tabs to be sorted
 # correctly (rather than alphabetically), we need to overload the <
 # operator and use this class instead of QTableWidgetItem.
@@ -4331,8 +4304,6 @@ class myTableWidgetItem(QTableWidgetItem):
 
     def __lt__(self, other):
         return int(self.data(33).toPyObject()) < int(other.data(33).toPyObject())
-
-from uisignaler import UISignaler
 
 
 app = None
