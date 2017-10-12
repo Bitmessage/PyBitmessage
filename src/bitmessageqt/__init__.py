@@ -27,7 +27,6 @@ from newaddresswizard import *
 from messageview import MessageView
 from migrationwizard import *
 from foldertree import *
-from newsubscriptiondialog import *
 from regenerateaddresses import *
 from newchandialog import *
 from safehtmlparser import *
@@ -51,14 +50,14 @@ import debug
 import random
 import string
 from datetime import datetime, timedelta
-from helper_sql import *
 from helper_ackPayload import genAckPayload
+from helper_sql import sqlQuery, sqlExecute, sqlExecuteChunked, sqlStoredProcedure
 import helper_search
 import l10n
 import openclpow
 from utils import str_broadcast_subscribers, avatarize
 from account import *
-from dialogs import AddAddressDialog
+import dialogs
 from helper_generic import powQueueSize
 from inventory import (
     Inventory, PendingDownloadQueue, PendingUpload,
@@ -2140,71 +2139,85 @@ class MyForm(settingsmixin.SMainWindow):
 
     def click_pushButtonAddAddressBook(self, dialog=None):
         if not dialog:
-            dialog = AddAddressDialog(self)
+            dialog = dialogs.AddAddressDialog(self)
         if dialog.exec_():
-            if dialog.ui.labelAddressCheck.text() == \
-                    _translate("MainWindow", "Address is valid."):
-                # First we must check to see if the address is already in the
-                # address book. The user cannot add it again or else it will
-                # cause problems when updating and deleting the entry.
-                address = addBMIfNotPresent(
-                    str(dialog.ui.lineEditAddress.text()))
-                label = str(dialog.ui.newAddressLabel.text().toUtf8())
-                self.addEntryToAddressBook(address, label)
-            else:
+            if not dialog.valid:
                 self.statusBar().showMessage(_translate(
                     "MainWindow",
                     "The address you entered was invalid. Ignoring it."
-                ), 10000)
+                    ), 10000)
+                return
+
+            address = addBMIfNotPresent(str(dialog.lineEditAddress.text()))
+            # First we must check to see if the address is already in the
+            # address book. The user cannot add it again or else it will
+            # cause problems when updating and deleting the entry.
+            if shared.isAddressInMyAddressBook(address):
+                self.statusBar().showMessage(_translate(
+                    "MainWindow",
+                    "Error: You cannot add the same address to your"
+                    " address book twice. Try renaming the existing one"
+                    " if you want."
+                    ), 10000)
+                return
+            label = str(dialog.lineEditLabel.text().toUtf8())
+            self.addEntryToAddressBook(address, label)
 
     def addEntryToAddressBook(self, address, label):
-        queryreturn = sqlQuery(
-            '''select * from addressbook where address=?''', address)
-        if queryreturn == []:
-            sqlExecute('''INSERT INTO addressbook VALUES (?,?)''',
-                       label, address)
-            self.rerenderMessagelistFromLabels()
-            self.rerenderMessagelistToLabels()
-            self.rerenderAddressBook()
-        else:
-            self.statusBar().showMessage(_translate(
-                        "MainWindow", "Error: You cannot add the same address to your address book twice. Try renaming the existing one if you want."), 10000)
+        if shared.isAddressInMyAddressBook(address):
+            return
+        sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', label, address)
+        self.rerenderMessagelistFromLabels()
+        self.rerenderMessagelistToLabels()
+        self.rerenderAddressBook()
 
     def addSubscription(self, address, label):
-        address = addBMIfNotPresent(address)
-        #This should be handled outside of this function, for error displaying and such, but it must also be checked here.
+        # This should be handled outside of this function, for error displaying
+        # and such, but it must also be checked here.
         if shared.isAddressInMySubscriptionsList(address):
             return
-        #Add to database (perhaps this should be separated from the MyForm class)
-        sqlExecute('''INSERT INTO subscriptions VALUES (?,?,?)''',str(label),address,True)
+        # Add to database (perhaps this should be separated from the MyForm class)
+        sqlExecute(
+            '''INSERT INTO subscriptions VALUES (?,?,?)''',
+            label, address, True
+        )
         self.rerenderMessagelistFromLabels()
         shared.reloadBroadcastSendersForWhichImWatching()
         self.rerenderAddressBook()
         self.rerenderTabTreeSubscriptions()
 
     def click_pushButtonAddSubscription(self):
-        self.NewSubscriptionDialogInstance = NewSubscriptionDialog(self)
-        if self.NewSubscriptionDialogInstance.exec_():
-            if self.NewSubscriptionDialogInstance.ui.labelAddressCheck.text() != _translate("MainWindow", "Address is valid."):
-                self.statusBar().showMessage(_translate("MainWindow", "The address you entered was invalid. Ignoring it."), 10000)
+        dialog = dialogs.NewSubscriptionDialog(self)
+        if dialog.exec_():
+            if not dialog.valid:
+                self.statusBar().showMessage(_translate(
+                    "MainWindow",
+                    "The address you entered was invalid. Ignoring it."
+                    ), 10000)
                 return
-            address = addBMIfNotPresent(str(self.NewSubscriptionDialogInstance.ui.lineEditSubscriptionAddress.text()))
-            # We must check to see if the address is already in the subscriptions list. The user cannot add it again or else it will cause problems when updating and deleting the entry.
+
+            address = addBMIfNotPresent(str(dialog.lineEditAddress.text()))
+            # We must check to see if the address is already in the
+            # subscriptions list. The user cannot add it again or else it
+            # will cause problems when updating and deleting the entry.
             if shared.isAddressInMySubscriptionsList(address):
-                self.statusBar().showMessage(_translate("MainWindow", "Error: You cannot add the same address to your subscriptions twice. Perhaps rename the existing one if you want."), 10000)
+                self.statusBar().showMessage(_translate(
+                    "MainWindow",
+                    "Error: You cannot add the same address to your"
+                    " subscriptions twice. Perhaps rename the existing one"
+                    " if you want."
+                    ), 10000)
                 return
-            label = self.NewSubscriptionDialogInstance.ui.newsubscriptionlabel.text().toUtf8()
+            label = str(dialog.lineEditLabel.text().toUtf8())
             self.addSubscription(address, label)
-            # Now, if the user wants to display old broadcasts, let's get them out of the inventory and put them 
-            # in the objectProcessorQueue to be processed
-            if self.NewSubscriptionDialogInstance.ui.checkBoxDisplayMessagesAlreadyInInventory.isChecked():
-                status, addressVersion, streamNumber, ripe = decodeAddress(address)
-                Inventory().flush()
-                doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
-                    addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
-                tag = doubleHashOfAddressData[32:]
-                for value in Inventory().by_type_and_tag(3, tag):
-                    queues.objectProcessorQueue.put((value.type, value.payload))
+            # Now, if the user wants to display old broadcasts, let's get
+            # them out of the inventory and put them
+            # to the objectProcessorQueue to be processed
+            if dialog.checkBoxDisplayMessagesAlreadyInInventory.isChecked():
+                for value in dialog.recent:
+                    queues.objectProcessorQueue.put((
+                        value.type, value.payload
+                    ))
 
     def click_pushButtonStatusIcon(self):
         logger.debug('click_pushButtonStatusIcon')
@@ -2942,8 +2955,8 @@ class MyForm(settingsmixin.SMainWindow):
         addressAtCurrentInboxRow = tableWidget.item(
             currentInboxRow, 1).data(Qt.UserRole)
         self.ui.tabWidget.setCurrentIndex(1)
-        dialog = AddAddressDialog(self)
-        dialog.ui.lineEditAddress.setText(addressAtCurrentInboxRow)
+        dialog = dialogs.AddAddressDialog(self)
+        dialog.lineEditAddress.setText(addressAtCurrentInboxRow)
         self.click_pushButtonAddAddressBook(dialog)
 
     def on_action_InboxAddSenderToBlackList(self):
@@ -4278,64 +4291,6 @@ class EmailGatewayRegistrationDialog(QtGui.QDialog):
         self.ui.label.setText(label)
 
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
-
-
-class NewSubscriptionDialog(QtGui.QDialog):
-
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_NewSubscriptionDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        QtCore.QObject.connect(self.ui.lineEditSubscriptionAddress, QtCore.SIGNAL(
-            "textChanged(QString)"), self.addressChanged)
-        self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
-            _translate("MainWindow", "Enter an address above."))
-
-    def addressChanged(self, QString):
-        self.ui.checkBoxDisplayMessagesAlreadyInInventory.setEnabled(False)
-        self.ui.checkBoxDisplayMessagesAlreadyInInventory.setChecked(False)
-        status, addressVersion, streamNumber, ripe = decodeAddress(str(QString))
-        if status == 'missingbm':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "The address should start with ''BM-''"))
-        elif status == 'checksumfailed':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "The address is not typed or copied correctly (the checksum failed)."))
-        elif status == 'versiontoohigh':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "The version number of this address is higher than this software can support. Please upgrade Bitmessage."))
-        elif status == 'invalidcharacters':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "The address contains invalid characters."))
-        elif status == 'ripetooshort':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "Some data encoded in the address is too short."))
-        elif status == 'ripetoolong':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "Some data encoded in the address is too long."))
-        elif status == 'varintmalformed':
-            self.ui.labelAddressCheck.setText(_translate(
-                "MainWindow", "Some data encoded in the address is malformed."))
-        elif status == 'success':
-            self.ui.labelAddressCheck.setText(
-                _translate("MainWindow", "Address is valid."))
-            if addressVersion <= 3:
-                self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
-                    _translate("MainWindow", "Address is an old type. We cannot display its past broadcasts."))
-            else:
-                Inventory().flush()
-                doubleHashOfAddressData = hashlib.sha512(hashlib.sha512(encodeVarint(
-                    addressVersion) + encodeVarint(streamNumber) + ripe).digest()).digest()
-                tag = doubleHashOfAddressData[32:]
-                count = len(Inventory().by_type_and_tag(3, tag))
-                if count == 0:
-                    self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
-                        _translate("MainWindow", "There are no recent broadcasts from this address to display."))
-                else:
-                    self.ui.checkBoxDisplayMessagesAlreadyInInventory.setEnabled(True)
-                    self.ui.checkBoxDisplayMessagesAlreadyInInventory.setText(
-                        _translate("MainWindow", "Display the %1 recent broadcast(s) from this address.").arg(count))
 
 
 class NewAddressDialog(QtGui.QDialog):
