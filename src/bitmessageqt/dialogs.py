@@ -5,7 +5,9 @@ from retranslateui import RetranslateMixin
 import widgets
 
 import hashlib
+import paths
 from inventory import Inventory
+from version import softwareVersion
 
 
 class AddressCheckMixin(object):
@@ -105,3 +107,27 @@ class NewSubscriptionDialog(
                         "MainWindow",
                         "Display the %1 recent broadcast(s) from this address."
                     ).arg(count))
+
+
+class AboutDialog(QtGui.QDialog, RetranslateMixin):
+    def __init__(self, parent=None):
+        super(AboutDialog, self).__init__(parent)
+        widgets.load('about.ui', self)
+        commit = paths.lastCommit()[:7]
+        label = "PyBitmessage " + softwareVersion
+        if commit:
+            label += '-' + commit
+        self.labelVersion.setText(label)
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+
+
+class IconGlossaryDialog(QtGui.QDialog, RetranslateMixin):
+    def __init__(self, parent=None, config=None):
+        super(IconGlossaryDialog, self).__init__(parent)
+        widgets.load('iconglossary.ui', self)
+
+        self.labelPortNumber.setText(_translate(
+            "iconGlossaryDialog",
+            "You are using TCP port %1. (This can be changed in the settings)."
+            ).arg(config.getint('bitmessagesettings', 'port')))
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
