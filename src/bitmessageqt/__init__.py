@@ -1999,7 +1999,7 @@ class MyForm(settingsmixin.SMainWindow):
         err, addr = nc.query(identities[-1].strip())
         if err is not None:
             self.statusBar().showMessage(_translate(
-                "MainWindow", "Error: " + err), 10000)
+                "MainWindow", "Error: %1").arg(err), 10000)
         else:
             identities[-1] = addr
             self.ui.lineEditTo.setText("; ".join(identities))
