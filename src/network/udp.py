@@ -89,7 +89,7 @@ class UDPSocket(BMProto):
         remoteport = False
         for i in addresses:
             seenTime, stream, services, ip, port = i
-            decodedIP = protocol.checkIPAddress(ip)
+            decodedIP = protocol.checkIPAddress(buffer(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
             if seenTime < time.time() - BMProto.maxTimeOffset or seenTime > time.time() + BMProto.maxTimeOffset:
@@ -142,7 +142,7 @@ class UDPSocket(BMProto):
         else:
             self.local = False
         # overwrite the old buffer to avoid mixing data and so that self.local works correctly
-        self.read_buf = recdata
+        self.read_buf[0:] = recdata
         self.bm_proto_reset()
         receiveDataQueue.put(self.listening)
 

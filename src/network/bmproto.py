@@ -138,16 +138,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     def decode_payload_node(self):
         services, host, port = self.decode_payload_content("Q16sH")
         if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-            host = socket.inet_ntop(socket.AF_INET, host[12:])
+            host = socket.inet_ntop(socket.AF_INET, buffer(host, 12, 4))
         elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
             # Onion, based on BMD/bitcoind
             host = base64.b32encode(host[6:]).lower() + ".onion"
         else:
-            host = socket.inet_ntop(socket.AF_INET6, host)
+            host = socket.inet_ntop(socket.AF_INET6, buffer(host))
         if host == "":
             # This can happen on Windows systems which are not 64-bit compatible 
             # so let us drop the IPv6 address. 
-            host = socket.inet_ntop(socket.AF_INET, host[12:])
+            host = socket.inet_ntop(socket.AF_INET, buffer(host, 12, 4))
 
         return Node(services, host, port)
 
@@ -272,7 +272,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return True
         #TODO make this more asynchronous
         random.shuffle(items)
-        for i in items:
+        for i in map(str, items):
             if i in DandelionStems().stem and \
                     self != DandelionStems().stem[i]:
                 self.antiIntersectionDelay()
@@ -298,7 +298,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         else:
             pass
 
-        for i in items:
+        for i in map(str, items):
             self.handleReceivedInventory(i)
 
         return True
@@ -323,7 +323,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.dandelionRoutes = BMConnectionPool.dandelionRouteSelector(self)
             self.dandelionRefresh = time.time() + REASSIGN_INTERVAL
 
-        for i in items:
+        for i in map(str, items):
             DandelionStems().add(i, self, self.dandelionRoutes)
             self.handleReceivedInventory(i)
 
@@ -354,12 +354,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
         try:
             self.object.checkObjectByType()
-            objectProcessorQueue.put((self.object.objectType, self.object.data))
+            objectProcessorQueue.put((self.object.objectType, buffer(self.object.data)))
         except BMObjectInvalidError as e:
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
 
         Inventory()[self.object.inventoryHash] = (
-                self.object.objectType, self.object.streamNumber, self.payload[objectOffset:], self.object.expiresTime, self.object.tag)
+                self.object.objectType, self.object.streamNumber, buffer(self.payload[objectOffset:]), self.object.expiresTime, buffer(self.object.tag))
         invQueue.put((self.object.streamNumber, self.object.inventoryHash, self.destination))
         return True
 
@@ -370,7 +370,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         addresses = self._decode_addr()
         for i in addresses:
             seenTime, stream, services, ip, port = i
-            decodedIP = protocol.checkIPAddress(ip)
+            decodedIP = protocol.checkIPAddress(buffer(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
             if decodedIP is not False and seenTime > time.time() - BMProto.addressAlive:
