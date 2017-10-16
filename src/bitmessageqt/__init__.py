@@ -35,8 +35,6 @@ from emailgateway import *
 from settings import *
 import settingsmixin
 import support
-from help import *
-from connect import *
 import locale
 import sys
 import time
@@ -1465,13 +1463,13 @@ class MyForm(settingsmixin.SMainWindow):
         NewChanDialog(self)
 
     def showConnectDialog(self):
-        self.connectDialogInstance = connectDialog(self)
-        if self.connectDialogInstance.exec_():
-            if self.connectDialogInstance.ui.radioButtonConnectNow.isChecked():
+        dialog = dialogs.ConnectDialog(self)
+        if dialog.exec_():
+            if dialog.radioButtonConnectNow.isChecked():
                 BMConfigParser().remove_option(
                     'bitmessagesettings', 'dontconnect')
                 BMConfigParser().save()
-            elif self.connectDialogInstance.ui.radioButtonConfigureNetwork.isChecked():
+            elif dialog.radioButtonConfigureNetwork.isChecked():
                 self.click_actionSettings()
 
     def showMigrationWizard(self, level):
@@ -1480,7 +1478,7 @@ class MyForm(settingsmixin.SMainWindow):
             pass
         else:
             pass
-        
+
     def changeEvent(self, event):
         if event.type() == QtCore.QEvent.LanguageChange:
             self.ui.retranslateUi(self)
@@ -2222,8 +2220,7 @@ class MyForm(settingsmixin.SMainWindow):
         dialogs.IconGlossaryDialog(self, config=BMConfigParser()).exec_()
 
     def click_actionHelp(self):
-        self.helpDialogInstance = helpDialog(self)
-        self.helpDialogInstance.exec_()
+        dialogs.HelpDialog(self).exec_()
 
     def click_actionSupport(self):
         support.createSupportMessage(self)
@@ -3949,26 +3946,6 @@ class MyForm(settingsmixin.SMainWindow):
                 loadMethod = getattr(obj, "loadSettings", None)
                 if callable (loadMethod):
                     obj.loadSettings()
-       
-
-class helpDialog(QtGui.QDialog):
-
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_helpDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        self.ui.labelHelpURI.setOpenExternalLinks(True)
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
-        
-class connectDialog(QtGui.QDialog):
-
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_connectDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 
 class regenerateAddressesDialog(QtGui.QDialog):
