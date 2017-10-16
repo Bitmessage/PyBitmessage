@@ -55,7 +55,10 @@ class DownloadThread(threading.Thread, StoppableThread):
                         i.objectsNewToMe[k] = False
                         self.pending[k] = now
 
-                payload = addresses.encodeVarint(len(request)) + ''.join(request)
+                payload = bytearray()
+                payload.extend(addresses.encodeVarint(len(request)))
+                for chunk in request:
+                    payload.extend(chunk)
                 i.append_write_buf(protocol.CreatePacket('getdata', payload))
                 logger.debug("%s:%i Requesting %i objects", i.destination.host, i.destination.port, len(request))
                 requested += len(request)

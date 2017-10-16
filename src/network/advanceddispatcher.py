@@ -12,8 +12,8 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def __init__(self, sock=None):
         if not hasattr(self, '_map'):
             asyncore.dispatcher.__init__(self, sock)
-        self.read_buf = b""
-        self.write_buf = b""
+        self.read_buf = bytearray()
+        self.write_buf = bytearray()
         self.state = "init"
         self.lastTx = time.time()
         self.sentBytes = 0
@@ -25,18 +25,23 @@ class AdvancedDispatcher(asyncore.dispatcher):
 
     def append_write_buf(self, data):
         if data:
-            with self.writeLock:
-                self.write_buf += data
+            if isinstance(data, list):
+                with self.writeLock:
+                    for chunk in data:
+                        self.write_buf.extend(chunk)
+            else:
+                with self.writeLock:
+                    self.write_buf.extend(data)
 
     def slice_write_buf(self, length=0):
         if length > 0:
             with self.writeLock:
-                self.write_buf = self.write_buf[length:]
+                del self.write_buf[0:length]
 
     def slice_read_buf(self, length=0):
         if length > 0:
             with self.readLock:
-                self.read_buf = self.read_buf[length:]
+                del self.read_buf[0:length]
 
     def process(self):
         if not self.connected:
@@ -85,7 +90,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         self.receivedBytes += len(newData)
         asyncore.update_received(len(newData))
         with self.readLock:
-            self.read_buf += newData
+            self.read_buf.extend(newData)
 
     def handle_write(self):
         self.lastTx = time.time()
@@ -108,7 +113,9 @@ class AdvancedDispatcher(asyncore.dispatcher):
         return False
 
     def handle_close(self):
-        self.read_buf = b""
-        self.write_buf = b""
+        with self.readLock:
+            self.read_buf = bytearray()
+        with self.writeLock:
+            self.write_buf = bytearray()
         self.state = "close"
         asyncore.dispatcher.close(self)
