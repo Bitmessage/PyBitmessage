@@ -131,3 +131,17 @@ class IconGlossaryDialog(QtGui.QDialog, RetranslateMixin):
             "You are using TCP port %1. (This can be changed in the settings)."
             ).arg(config.getint('bitmessagesettings', 'port')))
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+
+
+class HelpDialog(QtGui.QDialog, RetranslateMixin):
+    def __init__(self, parent=None):
+        super(HelpDialog, self).__init__(parent)
+        widgets.load('help.ui', self)
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+
+
+class ConnectDialog(QtGui.QDialog, RetranslateMixin):
+    def __init__(self, parent=None):
+        super(ConnectDialog, self).__init__(parent)
+        widgets.load('connect.ui', self)
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
