@@ -30,7 +30,6 @@ from foldertree import *
 from regenerateaddresses import *
 from newchandialog import *
 from safehtmlparser import *
-from specialaddressbehavior import *
 from emailgateway import *
 from settings import *
 import settingsmixin
@@ -2449,31 +2448,7 @@ class MyForm(settingsmixin.SMainWindow):
                     pass
 
     def on_action_SpecialAddressBehaviorDialog(self):
-        self.dialog = SpecialAddressBehaviorDialog(self)
-        # For Modal dialogs
-        if self.dialog.exec_():
-            addressAtCurrentRow = self.getCurrentAccount()
-            if BMConfigParser().safeGetBoolean(addressAtCurrentRow, 'chan'):
-                return
-            if self.dialog.ui.radioButtonBehaveNormalAddress.isChecked():
-                BMConfigParser().set(str(
-                    addressAtCurrentRow), 'mailinglist', 'false')
-                # Set the color to either black or grey
-                if BMConfigParser().getboolean(addressAtCurrentRow, 'enabled'):
-                    self.setCurrentItemColor(QApplication.palette()
-                        .text().color())
-                else:
-                    self.setCurrentItemColor(QtGui.QColor(128, 128, 128))
-            else:
-                BMConfigParser().set(str(
-                    addressAtCurrentRow), 'mailinglist', 'true')
-                BMConfigParser().set(str(addressAtCurrentRow), 'mailinglistname', str(
-                    self.dialog.ui.lineEditMailingListName.text().toUtf8()))
-                self.setCurrentItemColor(QtGui.QColor(137, 04, 177)) #magenta
-            self.rerenderComboBoxSendFrom()
-            self.rerenderComboBoxSendFromBroadcast()
-            BMConfigParser().save()
-            self.rerenderMessagelistToLabels()
+        dialogs.SpecialAddressBehaviorDialog(self, BMConfigParser())
 
     def on_action_EmailGatewayDialog(self):
         self.dialog = EmailGatewayDialog(self)
@@ -4189,33 +4164,6 @@ class settingsDialog(QtGui.QDialog):
         if responseStatus== 'success':
             self.parent.ui.pushButtonFetchNamecoinID.show()
 
-
-class SpecialAddressBehaviorDialog(QtGui.QDialog):
-
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_SpecialAddressBehaviorDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        addressAtCurrentRow = parent.getCurrentAccount()
-        if not BMConfigParser().safeGetBoolean(addressAtCurrentRow, 'chan'):
-            if BMConfigParser().safeGetBoolean(addressAtCurrentRow, 'mailinglist'):
-                self.ui.radioButtonBehaviorMailingList.click()
-            else:
-                self.ui.radioButtonBehaveNormalAddress.click()
-            try:
-                mailingListName = BMConfigParser().get(
-                    addressAtCurrentRow, 'mailinglistname')
-            except:
-                mailingListName = ''
-            self.ui.lineEditMailingListName.setText(
-                unicode(mailingListName, 'utf-8'))
-        else: # if addressAtCurrentRow is a chan address
-            self.ui.radioButtonBehaviorMailingList.setDisabled(True)
-            self.ui.lineEditMailingListName.setText(_translate(
-                "MainWindow", "This is a chan address. You cannot use it as a pseudo-mailing list."))
-
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 class EmailGatewayDialog(QtGui.QDialog):
 
