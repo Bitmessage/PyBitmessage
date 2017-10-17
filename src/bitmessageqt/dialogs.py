@@ -145,3 +145,68 @@ class ConnectDialog(QtGui.QDialog, RetranslateMixin):
         super(ConnectDialog, self).__init__(parent)
         widgets.load('connect.ui', self)
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+
+
+class SpecialAddressBehaviorDialog(QtGui.QDialog, RetranslateMixin):
+
+    def __init__(self, parent=None, config=None):
+        super(SpecialAddressBehaviorDialog, self).__init__(parent)
+        widgets.load('specialaddressbehavior.ui', self)
+        self.address = parent.getCurrentAccount()
+        self.parent = parent
+        self.config = config
+
+        try:
+            self.address_is_chan = config.safeGetBoolean(
+                self.address, 'chan'
+            )
+        except AttributeError:
+            pass
+        else:
+            if self.address_is_chan:  # address is a chan address
+                self.radioButtonBehaviorMailingList.setDisabled(True)
+                self.lineEditMailingListName.setText(_translate(
+                    "MainWindow",
+                    "This is a chan address. You cannot use it as a"
+                    " pseudo-mailing list."
+                ))
+            else:
+                if config.safeGetBoolean(self.address, 'mailinglist'):
+                    self.radioButtonBehaviorMailingList.click()
+                else:
+                    self.radioButtonBehaveNormalAddress.click()
+                try:
+                    mailingListName = config.get(
+                        self.address, 'mailinglistname')
+                except:
+                    mailingListName = ''
+                self.lineEditMailingListName.setText(
+                    unicode(mailingListName, 'utf-8')
+                )
+
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+        self.show()
+
+    def accept(self):
+        self.hide()
+        if self.address_is_chan:
+            return
+        if self.radioButtonBehaveNormalAddress.isChecked():
+            self.config.set(str(self.address), 'mailinglist', 'false')
+            # Set the color to either black or grey
+            if self.config.getboolean(self.address, 'enabled'):
+                self.parent.setCurrentItemColor(
+                    QtGui.QApplication.palette().text().color()
+                )
+            else:
+                self.parent.setCurrentItemColor(QtGui.QColor(128, 128, 128))
+        else:
+            self.config.set(str(self.address), 'mailinglist', 'true')
+            self.config.set(str(self.address), 'mailinglistname', str(
+                self.lineEditMailingListName.text().toUtf8()))
+            self.parent.setCurrentItemColor(
+                QtGui.QColor(137, 04, 177))  # magenta
+        self.parent.rerenderComboBoxSendFrom()
+        self.parent.rerenderComboBoxSendFromBroadcast()
+        self.config.save()
+        self.parent.rerenderMessagelistToLabels()
