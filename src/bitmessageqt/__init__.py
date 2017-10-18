@@ -3885,7 +3885,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.rerenderMessagelistToLabels()
         completerList = self.ui.lineEditTo.completer().model().stringList()
         for i in range(len(completerList)):
-            if str(completerList[i]).endswith(" <" + item.address + ">"):
+            if unicode(completerList[i]).endswith(" <" + item.address + ">"):
                 completerList[i] = item.label + " <" + item.address + ">"
         self.ui.lineEditTo.completer().model().setStringList(completerList)
 
