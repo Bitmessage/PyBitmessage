@@ -114,11 +114,15 @@ class AboutDialog(QtGui.QDialog, RetranslateMixin):
         super(AboutDialog, self).__init__(parent)
         widgets.load('about.ui', self)
         commit = paths.lastCommit()[:7]
-        label = "PyBitmessage " + softwareVersion
+        version = softwareVersion
         if commit:
-            label += '-' + commit
-        self.labelVersion.setText(label)
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+            version += '-' + commit
+        self.labelVersion.setText(
+            self.labelVersion.text().replace(
+                ':version:', version
+                ).replace(':branch:', commit or 'v%s' % version)
+        )
+        self.labelVersion.setOpenExternalLinks(True)
 
 
 class IconGlossaryDialog(QtGui.QDialog, RetranslateMixin):
