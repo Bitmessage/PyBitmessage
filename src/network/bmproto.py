@@ -114,6 +114,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 logger.debug("%s:%i already got object, skipping", self.destination.host, self.destination.port)
             except struct.error:
                 logger.debug("decoding error, skipping")
+        elif self.socket.type == socket.SOCK_DGRAM:
+            # broken read, ignore
+            pass
         else:
             #print "Skipping command %s due to invalid data" % (self.command)
             logger.debug("Closing due to invalid command %s", self.command)
