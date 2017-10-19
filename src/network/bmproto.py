@@ -144,16 +144,16 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     def decode_payload_node(self):
         services, host, port = self.decode_payload_content("Q16sH")
         if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
-            host = socket.inet_ntop(socket.AF_INET, buffer(host, 12, 4))
+            host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
         elif host[0:6] == '\xfd\x87\xd8\x7e\xeb\x43':
             # Onion, based on BMD/bitcoind
             host = base64.b32encode(host[6:]).lower() + ".onion"
         else:
-            host = socket.inet_ntop(socket.AF_INET6, buffer(host))
+            host = socket.inet_ntop(socket.AF_INET6, str(host))
         if host == "":
             # This can happen on Windows systems which are not 64-bit compatible 
             # so let us drop the IPv6 address. 
-            host = socket.inet_ntop(socket.AF_INET, buffer(host, 12, 4))
+            host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
 
         return Node(services, host, port)
 
@@ -376,7 +376,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         addresses = self._decode_addr()
         for i in addresses:
             seenTime, stream, services, ip, port = i
-            decodedIP = protocol.checkIPAddress(buffer(ip))
+            decodedIP = protocol.checkIPAddress(str(ip))
             if stream not in state.streamsInWhichIAmParticipating:
                 continue
             if decodedIP is not False and seenTime > time.time() - BMProto.addressAlive:
