@@ -3,6 +3,7 @@ import random
 
 from bmconfigparser import BMConfigParser
 import knownnodes
+import protocol
 from queues import portCheckerQueue
 import state
 
@@ -38,8 +39,15 @@ def chooseConnection(stream):
         except TypeError:
             print "Error in %s" % (peer)
             rating = 0
-        if haveOnion and peer.host.endswith('.onion') and rating > 0:
-            rating *= 10
+        if haveOnion:
+            # onion addresses have a higher priority when SOCKS
+            if peer.host.endswith('.onion') and rating > 0:
+                rating = 1
+            else:
+                encodedAddr = protocol.encodeHost(peer.host)
+                # don't connect to local IPs when using SOCKS
+                if not protocol.checkIPAddress(encodedAddr, False):
+                    continue
         if rating > 1:
             rating = 1
         try:
