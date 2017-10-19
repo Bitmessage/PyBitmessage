@@ -79,6 +79,8 @@ class AdvancedDispatcher(asyncore.dispatcher):
         try:
             if self.expectBytes > 0 and not self.fullyEstablished:
                 self.downloadChunk = min(self.downloadChunk, self.expectBytes - len(self.read_buf))
+                if self.downloadChunk < 0:
+                    self.downloadChunk = 0
         except AttributeError:
             pass
         return asyncore.dispatcher.readable(self) and \
