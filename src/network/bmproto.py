@@ -1,9 +1,9 @@
 import base64
 import hashlib
-import time
 import random
 import socket
 import struct
+import time
 
 from bmconfigparser import BMConfigParser
 from debug import logger
@@ -122,7 +122,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         else:
             #print "Skipping command %s due to invalid data" % (self.command)
             logger.debug("Closing due to invalid command %s", self.command)
-            self.handle_close("Invalid command %s" % (self.command))
+            self.close_reason = "Invalid command %s" % (self.command)
+            self.set_state("close")
             return False
         if retval:
             self.set_state("bm_header", length=self.payloadLength)
@@ -538,13 +539,13 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 except KeyError:
                     pass
 
-    def handle_close(self, reason=None):
+    def handle_close(self):
         self.set_state("close")
-        if reason is None:
+        try:
+            logger.debug("%s:%i: closing, %s", self.destination.host, self.destination.port, self.close_reason)
+        except AttributeError:
             try:
                 logger.debug("%s:%i: closing", self.destination.host, self.destination.port)
             except AttributeError:
                 logger.debug("Disconnected socket closing")
-        else:
-            logger.debug("%s:%i: closing, %s", self.destination.host, self.destination.port, reason)
         AdvancedDispatcher.handle_close(self)

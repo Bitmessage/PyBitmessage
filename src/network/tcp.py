@@ -213,12 +213,12 @@ class TCPConnection(BMProto, TLSDispatcher):
     def handle_write(self):
         TLSDispatcher.handle_write(self)
 
-    def handle_close(self, reason=None):
+    def handle_close(self):
         if self.isOutbound and not self.fullyEstablished:
             knownnodes.decreaseRating(self.destination)
-        BMProto.handle_close(self, reason)
         if self.fullyEstablished:
             UISignalQueue.put(('updateNetworkStatusTab', (self.isOutbound, False, self.destination)))
+        BMProto.handle_close(self)
 
 
 class Socks5BMConnection(Socks5Connection, TCPConnection):
