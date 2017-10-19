@@ -194,8 +194,8 @@ class objectProcessor(threading.Thread):
     def processpubkey(self, data):
         pubkeyProcessingStartTime = time.time()
         shared.numberOfPubkeysProcessed += 1
-#        queues.UISignalQueue.put((
-#            'updateNumberOfPubkeysProcessed', 'no data'))
+        queues.UISignalQueue.put((
+            'updateNumberOfPubkeysProcessed', 'no data'))
         embeddedTime, = unpack('>Q', data[8:16])
         readPosition = 20  # bypass the nonce, time, and object type
         addressVersion, varintLength = decodeVarint(
@@ -343,8 +343,8 @@ class objectProcessor(threading.Thread):
     def processmsg(self, data):
         messageProcessingStartTime = time.time()
         shared.numberOfMessagesProcessed += 1
-#        queues.UISignalQueue.put((
-#            'updateNumberOfMessagesProcessed', 'no data'))
+        queues.UISignalQueue.put((
+            'updateNumberOfMessagesProcessed', 'no data'))
         readPosition = 20 # bypass the nonce, time, and object type
         msgVersion, msgVersionLength = decodeVarint(data[readPosition:readPosition + 9])
         if msgVersion != 1:
@@ -613,8 +613,8 @@ class objectProcessor(threading.Thread):
     def processbroadcast(self, data):
         messageProcessingStartTime = time.time()
         shared.numberOfBroadcastsProcessed += 1
-#        queues.UISignalQueue.put((
-#            'updateNumberOfBroadcastsProcessed', 'no data'))
+        queues.UISignalQueue.put((
+            'updateNumberOfBroadcastsProcessed', 'no data'))
         inventoryHash = calculateInventoryHash(data)
         readPosition = 20  # bypass the nonce, time, and object type
         broadcastVersion, broadcastVersionLength = decodeVarint(
