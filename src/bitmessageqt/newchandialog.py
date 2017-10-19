@@ -15,8 +15,6 @@ class NewChanDialog(QtGui.QDialog, RetranslateMixin):
         self.parent = parent
         self.chanAddress.setValidator(AddressValidator(self.chanAddress, self.chanPassPhrase, self.validatorFeedback, self.buttonBox, False))
         self.chanPassPhrase.setValidator(PassPhraseValidator(self.chanPassPhrase, self.chanAddress, self.validatorFeedback, self.buttonBox, False))
-        QtCore.QObject.connect(self.chanAddress, QtCore.SIGNAL('textEdited()'), self.chanAddress.validator(), QtCore.SLOT('checkData(self)'))
-        QtCore.QObject.connect(self.chanPassPhrase, QtCore.SIGNAL('textEdited()'), self.chanPassPhrase.validator(), QtCore.SLOT('checkData(self)'))
 
         self.timer = QtCore.QTimer()
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.delayedUpdateStatus)
