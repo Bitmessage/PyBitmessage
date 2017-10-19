@@ -18,7 +18,7 @@ from network.advanceddispatcher import AdvancedDispatcher
 from network.bmproto import BMProtoError, BMProtoInsufficientDataError, BMProtoExcessiveDataError, BMProto
 from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
 import network.connectionpool
-from network.dandelion import DandelionStems
+from network.dandelion import Dandelion
 from network.node import Node
 import network.asyncore_pollchoose as asyncore
 from network.proxy import Proxy, ProxyError, GeneralProxyError
@@ -106,6 +106,8 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.fullyEstablished = True
         if self.isOutbound:
             knownnodes.increaseRating(self.destination)
+        if self.isOutbound:
+            Dandelion().maybeAddStem(self)
         self.sendAddr()
         self.sendBigInv()
 
@@ -166,7 +168,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             with self.objectsNewToThemLock:
                 for objHash in Inventory().unexpired_hashes_by_stream(stream):
                     # don't advertise stem objects on bigInv
-                    if objHash in DandelionStems().stem:
+                    if objHash in Dandelion().hashMap:
                         continue
                     bigInvList[objHash] = 0
                     self.objectsNewToThem[objHash] = time.time()
@@ -218,6 +220,8 @@ class TCPConnection(BMProto, TLSDispatcher):
             knownnodes.decreaseRating(self.destination)
         if self.fullyEstablished:
             UISignalQueue.put(('updateNetworkStatusTab', (self.isOutbound, False, self.destination)))
+            if self.isOutbound:
+                Dandelion().maybeRemoveStem(self)
         BMProto.handle_close(self)
 
 

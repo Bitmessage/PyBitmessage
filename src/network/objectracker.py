@@ -4,7 +4,7 @@ from threading import RLock
 
 from debug import logger
 from inventory import Inventory
-from network.dandelion import DandelionStems
+from network.dandelion import Dandelion
 
 haveBloom = False
 
@@ -84,9 +84,9 @@ class ObjectTracker(object):
         if hashId not in Inventory():
             with self.objectsNewToMeLock:
                 self.objectsNewToMe[hashId] = True
-        elif hashId in DandelionStems().stem:
+        elif hashId in Dandelion().hashMap:
             # Fluff trigger by cycle detection
-            DandelionStems().remove(hashId)
+            Dandelion().removeHash(hashId)
             with self.objectsNewToMeLock:
                 self.objectsNewToMe[hashId] = True
 

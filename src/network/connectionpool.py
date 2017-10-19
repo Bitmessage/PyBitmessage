@@ -9,6 +9,7 @@ from debug import logger
 import helper_bootstrap
 from network.proxy import Proxy
 import network.bmproto
+from network.dandelion import Dandelion
 import network.tcp
 import network.udp
 from network.connectionchooser import chooseConnection
@@ -51,23 +52,10 @@ class BMConnectionPool(object):
                 except KeyError:
                     pass
 
-    def dandelionRouteSelector(self, node):
+    def reRandomiseDandelionStems(self):
         # Choose 2 peers randomly
         # TODO: handle streams
-        peers = []
-        connections = self.outboundConnections.values()
-        random.shuffle(connections)
-        for i in connections:
-            if i == node:
-                continue
-            try:
-                if i.services | protocol.NODE_DANDELION:
-                    peers.append(i)
-                    if len(peers) == 2:
-                        break
-            except AttributeError:
-                continue
-        return peers
+        Dandelion().reRandomiseStems(self.outboundConnections.values())
 
     def connectToStream(self, streamNumber):
         self.streams.append(streamNumber)
