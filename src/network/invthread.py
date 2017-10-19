@@ -33,6 +33,7 @@ class InvThread(threading.Thread, StoppableThread):
                 self.dandelionLocalRouteRefresh()
                 try:
                     data = invQueue.get(False)
+                    chunk.append((data[0], data[1]))
                     # locally generated
                     if len(data) == 2:
                         DandelionStems().add(data[1], None, self.dandelionRoutes)
@@ -41,7 +42,6 @@ class InvThread(threading.Thread, StoppableThread):
                     else:
                         source = BMConnectionPool().getConnectionByAddr(data[2])
                         BMConnectionPool().handleReceivedObject(data[0], data[1], source)
-                    chunk.append((data[0], data[1]))
                 except Queue.Empty:
                     break
                 # connection not found, handle it as if generated locally
@@ -81,4 +81,6 @@ class InvThread(threading.Thread, StoppableThread):
                         connection.append_write_buf(protocol.CreatePacket('dinv', \
                                 addresses.encodeVarint(len(stems)) + "".join(stems)))
             invQueue.iterate()
+            for i in range(len(chunk)):
+                invQueue.task_done()
             self.stop.wait(1)

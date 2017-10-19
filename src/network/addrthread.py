@@ -31,4 +31,6 @@ class AddrThread(threading.Thread, StoppableThread):
             #finish
 
             addrQueue.iterate()
+            for i in range(len(chunk)):
+                addrQueue.task_done()
             self.stop.wait(1)
