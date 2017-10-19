@@ -1,4 +1,3 @@
-import os
 import socket
 import sys
 from binascii import hexlify, unhexlify
@@ -11,6 +10,7 @@ from debug import logger
 import queues
 import shutdown
 
+
 def powQueueSize():
     curWorkerQueue = queues.workerQueue.qsize()
     for thread in enumerate():
@@ -21,6 +21,7 @@ def powQueueSize():
             pass
     return curWorkerQueue
 
+
 def convertIntToString(n):
     a = __builtins__.hex(n)
     if a[-1:] == 'L':
@@ -30,24 +31,33 @@ def convertIntToString(n):
     else:
         return unhexlify('0' + a[2:])
 
+
 def convertStringToInt(s):
     return int(hexlify(s), 16)
+
 
 def allThreadTraceback(frame):
     id2name = dict([(th.ident, th.name) for th in enumerate()])
     code = []
     for threadId, stack in sys._current_frames().items():
-        code.append("\n# Thread: %s(%d)" % (id2name.get(threadId,""), threadId))
+        code.append("\n# Thread: %s(%d)" %
+                    (id2name.get(threadId, ""), threadId))
         for filename, lineno, name, line in traceback.extract_stack(stack):
-            code.append('File: "%s", line %d, in %s' % (filename, lineno, name))
+            code.append('File: "%s", line %d, in %s' %
+                        (filename, lineno, name))
             if line:
                 code.append("  %s" % (line.strip()))
     print "\n".join(code)
 
+
 def signal_handler(signal, frame):
-    logger.error("Got signal %i in %s/%s", signal, current_process().name, current_thread().name)
+    logger.error(
+        "Got signal %i in %s/%s",
+        signal, current_process().name, current_thread().name
+    )
     if current_process().name == "RegExParser":
-        # on Windows this isn't triggered, but it's fine, it has its own process termination thing
+        # on Windows this isn't triggered, but it's fine,
+        # it has its own process termination thing
         raise SystemExit
     if "PoolWorker" in current_process().name:
         raise SystemExit
@@ -58,10 +68,12 @@ def signal_handler(signal, frame):
         shutdown.doCleanShutdown()
     else:
         allThreadTraceback(frame)
-        print 'Unfortunately you cannot use Ctrl+C when running the UI because the UI captures the signal.'
+        print('Unfortunately you cannot use Ctrl+C when running the UI'
+              ' because the UI captures the signal.')
+
 
 def isHostInPrivateIPRange(host):
-    if ":" in host: #IPv6
+    if ":" in host:  # IPv6
         hostAddr = socket.inet_pton(socket.AF_INET6, host)
         if hostAddr == ('\x00' * 15) + '\x01':
             return False
@@ -84,5 +96,6 @@ def isHostInPrivateIPRange(host):
             return True
     return False
 
-def addDataPadding(data, desiredMsgLength = 12, paddingChar = '\x00'):
+
+def addDataPadding(data, desiredMsgLength=12, paddingChar='\x00'):
     return data + paddingChar * (desiredMsgLength - len(data))
