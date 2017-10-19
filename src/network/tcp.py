@@ -72,7 +72,6 @@ class TCPConnection(BMProto, TLSDispatcher):
             self.local = False
         #shared.connectedHostsList[self.destination] = 0
         ObjectTracker.__init__(self)
-        UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
         self.bm_proto_reset()
         self.set_state("bm_header", expectBytes=protocol.Header.size)
 
@@ -102,7 +101,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         if not self.isOutbound and not self.local:
             shared.clientHasReceivedIncomingConnections = True
             UISignalQueue.put(('setStatusIcon', 'green'))
-        UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
+        UISignalQueue.put(('updateNetworkStatusTab', (self.isOutbound, True, self.destination)))
         self.antiIntersectionDelay(True)
         self.fullyEstablished = True
         if self.isOutbound:
@@ -218,6 +217,8 @@ class TCPConnection(BMProto, TLSDispatcher):
         if self.isOutbound and not self.fullyEstablished:
             knownnodes.decreaseRating(self.destination)
         BMProto.handle_close(self, reason)
+        if self.fullyEstablished:
+            UISignalQueue.put(('updateNetworkStatusTab', (self.isOutbound, False, self.destination)))
 
 
 class Socks5BMConnection(Socks5Connection, TCPConnection):

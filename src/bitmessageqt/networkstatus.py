@@ -11,6 +11,7 @@ from retranslateui import RetranslateMixin
 from uisignaler import UISignaler
 import widgets
 
+from network.connectionpool import BMConnectionPool
 
 class NetworkStatus(QtGui.QWidget, RetranslateMixin):
     def __init__(self, parent=None):
@@ -31,7 +32,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateNumberOfBroadcastsProcessed()"), self.updateNumberOfBroadcastsProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
-            "updateNetworkStatusTab()"), self.updateNetworkStatusTab)
+            "updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.updateNetworkStatusTab)
         
         self.timer = QtCore.QTimer()
         self.timer.start(2000) # milliseconds
@@ -52,17 +53,17 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         self.labelSyncStatus.setText(_translate("networkstatus", "Object(s) to be synced: %n", None, QtCore.QCoreApplication.CodecForTr, network.stats.pendingDownload() + network.stats.pendingUpload()))
 
     def updateNumberOfMessagesProcessed(self):
-#        self.updateNumberOfObjectsToBeSynced()
+        self.updateNumberOfObjectsToBeSynced()
         self.labelMessageCount.setText(_translate(
             "networkstatus", "Processed %n person-to-person message(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfMessagesProcessed))
 
     def updateNumberOfBroadcastsProcessed(self):
-#        self.updateNumberOfObjectsToBeSynced()
+        self.updateNumberOfObjectsToBeSynced()
         self.labelBroadcastCount.setText(_translate(
             "networkstatus", "Processed %n broadcast message(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfBroadcastsProcessed))
 
     def updateNumberOfPubkeysProcessed(self):
-#        self.updateNumberOfObjectsToBeSynced()
+        self.updateNumberOfObjectsToBeSynced()
         self.labelPubkeyCount.setText(_translate(
             "networkstatus", "Processed %n public key(s).", None, QtCore.QCoreApplication.CodecForTr, shared.numberOfPubkeysProcessed))
 
@@ -76,50 +77,71 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         self.labelBytesSentCount.setText(_translate(
             "networkstatus", "Up: %1/s  Total: %2").arg(self.formatByteRate(network.stats.uploadSpeed()), self.formatBytes(network.stats.sentBytes())))
 
-    def updateNetworkStatusTab(self):
-        connectedHosts = network.stats.connectedHostsList()
+    def updateNetworkStatusTab(self, outbound, add, destination):
+        if outbound:
+            try:
+                c = BMConnectionPool().outboundConnections[destination]
+            except KeyError:
+                if add:
+                    return
+        else:
+            try:
+                c = BMConnectionPool().inboundConnections[destination]
+            except KeyError:
+                try:
+                    c = BMConnectionPool().inboundConnections[destination.host]
+                except KeyError:
+                    if add:
+                        return
 
         self.tableWidgetConnectionCount.setUpdatesEnabled(False)
-        #self.tableWidgetConnectionCount.setSortingEnabled(False)
-        #self.tableWidgetConnectionCount.clearContents()
-        self.tableWidgetConnectionCount.setRowCount(0)
-        for i in connectedHosts:
+        self.tableWidgetConnectionCount.setSortingEnabled(False)
+        if add:
             self.tableWidgetConnectionCount.insertRow(0)
             self.tableWidgetConnectionCount.setItem(0, 0,
-                QtGui.QTableWidgetItem("%s:%i" % (i.destination.host, i.destination.port))
+                QtGui.QTableWidgetItem("%s:%i" % (destination.host, destination.port))
                 )
             self.tableWidgetConnectionCount.setItem(0, 2,
-                QtGui.QTableWidgetItem("%s" % (i.userAgent))
+                QtGui.QTableWidgetItem("%s" % (c.userAgent))
                 )
             self.tableWidgetConnectionCount.setItem(0, 3,
-                QtGui.QTableWidgetItem("%s" % (i.tlsVersion))
+                QtGui.QTableWidgetItem("%s" % (c.tlsVersion))
                 )
             self.tableWidgetConnectionCount.setItem(0, 4,
-                QtGui.QTableWidgetItem("%s" % (",".join(map(str,i.streams))))
+                QtGui.QTableWidgetItem("%s" % (",".join(map(str,c.streams))))
                 )
             try:
                 # FIXME hard coded stream no
-                rating = knownnodes.knownNodes[1][i.destination]['rating']
+                rating = "%.1f" % (knownnodes.knownNodes[1][destination]['rating'])
             except KeyError:
                 rating = "-"
             self.tableWidgetConnectionCount.setItem(0, 1,
                 QtGui.QTableWidgetItem("%s" % (rating))
                 )
-            if i.isOutbound:
+            if outbound:
                 brush = QtGui.QBrush(QtGui.QColor("yellow"), QtCore.Qt.SolidPattern)
             else:
                 brush = QtGui.QBrush(QtGui.QColor("green"), QtCore.Qt.SolidPattern)
             for j in (range(1)):
                 self.tableWidgetConnectionCount.item(0, j).setBackground(brush)
+            self.tableWidgetConnectionCount.item(0, 0).setData(QtCore.Qt.UserRole, destination)
+            self.tableWidgetConnectionCount.item(0, 1).setData(QtCore.Qt.UserRole, outbound)
+        else:
+            for i in range(self.tableWidgetConnectionCount.rowCount()):
+                if self.tableWidgetConnectionCount.item(i, 0).data(QtCore.Qt.UserRole).toPyObject() != destination:
+                    continue
+                if self.tableWidgetConnectionCount.item(i, 1).data(QtCore.Qt.UserRole).toPyObject() == outbound:
+                    self.tableWidgetConnectionCount.removeRow(i)
+                    break
         self.tableWidgetConnectionCount.setUpdatesEnabled(True)
-        #self.tableWidgetConnectionCount.setSortingEnabled(True)
-        #self.tableWidgetConnectionCount.horizontalHeader().setSortIndicator(1, QtCore.Qt.AscendingOrder)
+        self.tableWidgetConnectionCount.setSortingEnabled(True)
+        self.tableWidgetConnectionCount.horizontalHeader().setSortIndicator(0, QtCore.Qt.AscendingOrder)
         self.labelTotalConnections.setText(_translate(
-            "networkstatus", "Total Connections: %1").arg(str(len(connectedHosts))))
+            "networkstatus", "Total Connections: %1").arg(str(self.tableWidgetConnectionCount.rowCount())))
        # FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
-        if connectedHosts and shared.statusIconColor == 'red':
+        if self.tableWidgetConnectionCount.rowCount() and shared.statusIconColor == 'red':
             self.window().setStatusIcon('yellow')
-        elif not connectedHosts and shared.statusIconColor != "red":
+        elif self.tableWidgetConnectionCount.rowCount() == 0 and shared.statusIconColor != "red":
             self.window().setStatusIcon('red')
 
     # timer driven
@@ -129,9 +151,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         Inventory().numberOfInventoryLookupsPerformed = 0
         self.updateNumberOfBytes()
         self.updateNumberOfObjectsToBeSynced()
-        self.updateNumberOfMessagesProcessed()
-        self.updateNumberOfBroadcastsProcessed()
-        self.updateNumberOfPubkeysProcessed()
 
     def retranslateUi(self):
         super(NetworkStatus, self).retranslateUi()
