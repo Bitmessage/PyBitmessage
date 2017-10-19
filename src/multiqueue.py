@@ -24,8 +24,7 @@ class MultiQueue(Queue.Queue):
     # Put a new item in the queue
     def _put(self, item):
         #self.queue.append(item)
-        i = random.randrange(0, self.queueCount) 
-        self.queues[i].append((item))
+        self.queues[random.randrange(self.queueCount)].append((item))
 
     # Get an item from the queue
     def _get(self):
@@ -33,3 +32,6 @@ class MultiQueue(Queue.Queue):
 
     def iterate(self):
         self.iter = (self.iter + 1) % self.queueCount
+
+    def totalSize(self):
+        return sum(len(x) for x in self.queues)
