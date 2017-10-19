@@ -3,8 +3,6 @@ import Queue
 import threading
 import time
 
-from class_outgoingSynSender import outgoingSynSender
-from class_sendDataThread import sendDataThread
 from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlQuery, sqlStoredProcedure
@@ -51,9 +49,7 @@ def doCleanShutdown():
     time.sleep(.25)
 
     for thread in threading.enumerate():
-        if isinstance(thread, sendDataThread):
-            thread.sendDataThreadQueue.put((0, 'shutdown','no data'))
-        if thread is not threading.currentThread() and isinstance(thread, StoppableThread) and not isinstance(thread, outgoingSynSender):
+        if thread is not threading.currentThread() and isinstance(thread, StoppableThread):
             logger.debug("Waiting for thread %s", thread.name)
             thread.join()
 
