@@ -10,7 +10,7 @@ from debug import logger
 from inventory import Inventory
 import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
-from network.dandelion import DandelionStems, REASSIGN_INTERVAL
+from network.dandelion import Dandelion
 from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, \
         BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
 import network.connectionpool
@@ -279,8 +279,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         #TODO make this more asynchronous
         random.shuffle(items)
         for i in map(str, items):
-            if i in DandelionStems().stem and \
-                    self != DandelionStems().stem[i]:
+            if i in Dandelion().hashMap and \
+                    self != Dandelion().hashMap[i]:
                 self.antiIntersectionDelay()
                 logger.info('%s asked for a stem object we didn\'t offer to it.', self.destination)
                 break
@@ -325,12 +325,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if BMConfigParser().safeGetBoolean("network", "dandelion") == 0:
             return True
 
-        if self.dandelionRefresh < time.time():
-            self.dandelionRoutes = BMConnectionPool.dandelionRouteSelector(self)
-            self.dandelionRefresh = time.time() + REASSIGN_INTERVAL
-
         for i in map(str, items):
-            DandelionStems().add(i, self, self.dandelionRoutes)
+            Dandelion().addHash(i, self)
             self.handleReceivedInventory(i)
 
         return True

@@ -10,7 +10,7 @@ from helper_sql import *
 from helper_threading import *
 from inventory import Inventory
 from network.connectionpool import BMConnectionPool
-from network.dandelion import DandelionStems
+from network.dandelion import Dandelion
 from debug import logger
 import knownnodes
 import queues
@@ -136,9 +136,7 @@ class singleCleaner(threading.Thread, StoppableThread):
             for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
                 connection.clean()
             # dandelion fluff trigger by expiration
-            for h, t in DandelionStems().timeouts:
-                if time.time() > t:
-                    DandelionStems().remove(h)
+            Dandelion().expire()
 
             # discovery tracking
             exp = time.time() - singleCleaner.expireDiscoveredPeers
