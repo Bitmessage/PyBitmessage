@@ -30,7 +30,7 @@ class ReceiveQueueThread(threading.Thread, StoppableThread):
             except Queue.Empty:
                 continue
 
-            if self._stopped:
+            if self._stopped or state.shutdown:
                 break
 
             # cycle as long as there is data

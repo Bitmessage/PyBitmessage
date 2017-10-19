@@ -5,6 +5,7 @@ import time
 import asyncore_pollchoose as asyncore
 from debug import logger
 from helper_threading import BusyError, nonBlocking
+import state
 
 class AdvancedDispatcher(asyncore.dispatcher):
     _buf_len = 2097152 # 2MB
@@ -50,16 +51,17 @@ class AdvancedDispatcher(asyncore.dispatcher):
                     del self.read_buf[0:length]
 
     def process(self):
-        if not self.connected:
-            return False
-        while True:
+        while self.connected and not state.shutdown:
             try:
                 with nonBlocking(self.processingLock):
+                    if not self.connected or state.shutdown:
+                        break
                     if len(self.read_buf) < self.expectBytes:
                         return False
                     if getattr(self, "state_" + str(self.state))() is False:
                         break
             except AttributeError:
+                logger.error("Unknown state %s", self.state)
                 raise
             except BusyError:
                 return False
