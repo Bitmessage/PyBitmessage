@@ -8,7 +8,7 @@ from helper_threading import BusyError, nonBlocking
 import state
 
 class AdvancedDispatcher(asyncore.dispatcher):
-    _buf_len = 2097152 # 2MB
+    _buf_len = 131072 # 128kB
 
     def __init__(self, sock=None):
         if not hasattr(self, '_map'):
@@ -85,7 +85,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         if asyncore.maxDownloadRate > 0:
             self.downloadChunk = asyncore.downloadBucket
         try:
-            if self.expectBytes > 0:
+            if self.expectBytes > 0 and not self.fullyEstablished:
                 self.downloadChunk = min(self.downloadChunk, self.expectBytes - len(self.read_buf))
                 if self.downloadChunk < 0:
                     self.downloadChunk = 0
