@@ -96,16 +96,24 @@ class singleCleaner(threading.Thread, StoppableThread):
 
             # cleanup old nodes
             now = int(time.time())
-            toDelete = []
             with knownnodes.knownNodesLock:
                 for stream in knownnodes.knownNodes:
-                    for node in knownnodes.knownNodes[stream].keys():
+                    keys = knownnodes.knownNodes[stream].keys()
+                    for node in keys:
                         try:
+                            # scrap old nodes
                             if now - knownnodes.knownNodes[stream][node]["lastseen"] > 2419200: # 28 days
-                                shared.needToWriteKownNodesToDisk = True
+                                shared.needToWriteKnownNodesToDisk = True
                                 del knownnodes.knownNodes[stream][node]
+                                continue
+                            # scrap old nodes with low rating
+                            if now - knownnodes.knownNodes[stream][node]["lastseen"] > 10800 and knownnodes.knownNodes[stream][node]["rating"] <= knownnodes.knownNodesForgetRating:
+                                shared.needToWriteKnownNodesToDisk = True
+                                del knownnodes.knownNodes[stream][node]
+                                continue
                         except TypeError:
                             print "Error in %s" % (str(node))
+                    keys = []
 
             # Let us write out the knowNodes to disk if there is anything new to write out.
             if shared.needToWriteKnownNodesToDisk:
