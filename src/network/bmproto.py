@@ -74,7 +74,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.set_state("bm_header", length=1)
             self.bm_proto_reset()
             logger.debug("Bad magic")
-            self.handle_close("Bad magic")
+            if self.socket.type == socket.SOCK_STREAM:
+                self.close_reason = "Bad magic"
+                self.set_state("close")
             return False
         if self.payloadLength > BMProto.maxMessageSize:
             self.invalid = True
