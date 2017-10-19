@@ -36,12 +36,18 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def slice_write_buf(self, length=0):
         if length > 0:
             with self.writeLock:
-                del self.write_buf[0:length]
+                if length >= len(self.write_buf):
+                    del self.write_buf[:]
+                else:
+                    del self.write_buf[0:length]
 
     def slice_read_buf(self, length=0):
         if length > 0:
             with self.readLock:
-                del self.read_buf[0:length]
+                if length >= len(self.read_buf):
+                    del self.read_buf[:]
+                else:
+                    del self.read_buf[0:length]
 
     def process(self):
         if not self.connected:
@@ -77,7 +83,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         if asyncore.maxDownloadRate > 0:
             self.downloadChunk = asyncore.downloadBucket
         try:
-            if self.expectBytes > 0 and not self.fullyEstablished:
+            if self.expectBytes > 0:
                 self.downloadChunk = min(self.downloadChunk, self.expectBytes - len(self.read_buf))
                 if self.downloadChunk < 0:
                     self.downloadChunk = 0
