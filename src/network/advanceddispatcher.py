@@ -126,4 +126,4 @@ class AdvancedDispatcher(asyncore.dispatcher):
         with self.writeLock:
             self.write_buf = bytearray()
         self.state = "close"
-        asyncore.dispatcher.close(self)
+        self.close()

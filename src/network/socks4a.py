@@ -86,7 +86,8 @@ class Socks4aConnection(Socks4a):
         try:
             return Socks4a.state_pre_connect(self)
         except Socks4aError as e:
-            self.handle_close(e.message)
+            self.close_reason = e.message
+            self.set_state("close")
 
 
 class Socks4aResolver(Socks4a):

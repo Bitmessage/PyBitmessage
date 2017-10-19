@@ -154,7 +154,8 @@ class Socks5Connection(Socks5):
         try:
             return Socks5.state_pre_connect(self)
         except Socks5Error as e:
-            self.handle_close(e.message)
+            self.close_reason = e.message
+            self.set_state("close")
 
 
 class Socks5Resolver(Socks5):
