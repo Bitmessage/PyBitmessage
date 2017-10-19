@@ -378,9 +378,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 continue
             if decodedIP is not False and seenTime > time.time() - BMProto.addressAlive:
                 peer = state.Peer(decodedIP, port)
-                if peer in knownnodes.knownNodes[stream] and knownnodes.knownNodes[stream][peer]["lastseen"] > seenTime:
-                    continue
-                if len(knownnodes.knownNodes[stream]) < BMConfigParser().get("knownnodes", "maxnodes"):
+                try:
+                    if knownnodes.knownNodes[stream][peer]["lastseen"] > seenTime:
+                        continue
+                except KeyError:
+                    pass
+                if len(knownnodes.knownNodes[stream]) < int(BMConfigParser().get("knownnodes", "maxnodes")):
                     with knownnodes.knownNodesLock:
                         try:
                             knownnodes.knownNodes[stream][peer]["lastseen"] = seenTime
