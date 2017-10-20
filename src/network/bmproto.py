@@ -359,6 +359,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             objectProcessorQueue.put((self.object.objectType, buffer(self.object.data)))
         except BMObjectInvalidError as e:
             BMProto.stopDownloadingObject(self.object.inventoryHash, True)
+        else:
+            try:
+                del state.missingObjects[self.object.inventoryHash]
+            except KeyError:
+                pass
 
         Inventory()[self.object.inventoryHash] = (
                 self.object.objectType, self.object.streamNumber, buffer(self.payload[objectOffset:]), self.object.expiresTime, buffer(self.object.tag))
