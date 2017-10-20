@@ -340,11 +340,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             logger.info('The payload length of this object is too large (%s bytes). Ignoring it.' % len(self.payload) - self.payloadOffset)
             raise BMProtoExcessiveDataError()
 
-        self.object.checkProofOfWorkSufficient()
         try:
+            self.object.checkProofOfWorkSufficient()
             self.object.checkEOLSanity()
             self.object.checkAlreadyHave()
-        except (BMObjectExpiredError, BMObjectAlreadyHaveError) as e:
+        except (BMObjectExpiredError, BMObjectAlreadyHaveError, BMObjectInsufficientPOWError) as e:
             BMProto.stopDownloadingObject(self.object.inventoryHash)
             raise e
         try:
