@@ -2,6 +2,7 @@ import time
 
 from network.connectionpool import BMConnectionPool
 import asyncore_pollchoose as asyncore
+from state import missingObjects
 
 lastReceivedTimestamp = time.time()
 lastReceivedBytes = 0
@@ -50,19 +51,20 @@ def downloadSpeed():
     return currentReceivedSpeed
 
 def pendingDownload():
-    tmp = {}
-    for connection in BMConnectionPool().inboundConnections.values() + \
-            BMConnectionPool().outboundConnections.values():
-        for k in connection.objectsNewToMe.keys():
-            tmp[k] = True
-    return len(tmp)
+    return len(missingObjects)
+    #tmp = {}
+    #for connection in BMConnectionPool().inboundConnections.values() + \
+    #        BMConnectionPool().outboundConnections.values():
+    #    for k in connection.objectsNewToMe.keys():
+    #        tmp[k] = True
+    #return len(tmp)
 
 def pendingUpload():
-    tmp = {}
-    for connection in BMConnectionPool().inboundConnections.values() + \
-            BMConnectionPool().outboundConnections.values():
-        for k in connection.objectsNewToThem.keys():
-            tmp[k] = True
+    #tmp = {}
+    #for connection in BMConnectionPool().inboundConnections.values() + \
+    #        BMConnectionPool().outboundConnections.values():
+    #    for k in connection.objectsNewToThem.keys():
+    #        tmp[k] = True
     #This probably isn't the correct logic so it's disabled
     #return len(tmp)
     return 0
