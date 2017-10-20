@@ -5,6 +5,7 @@ from threading import RLock
 from debug import logger
 from inventory import Inventory
 from network.dandelion import Dandelion
+from state import missingObjects
 
 haveBloom = False
 
@@ -82,6 +83,7 @@ class ObjectTracker(object):
         except KeyError:
             pass
         if hashId not in Inventory():
+            missingObjects[hashId] = None
             with self.objectsNewToMeLock:
                 self.objectsNewToMe[hashId] = True
         elif hashId in Dandelion().hashMap:

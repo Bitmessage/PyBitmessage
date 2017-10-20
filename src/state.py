@@ -43,6 +43,9 @@ trustedPeer = None
 
 discoveredPeers = {}
 
+# tracking pending downloads globally, for stats
+missingObjects = {}
+
 Peer = collections.namedtuple('Peer', ['host', 'port'])
 
 def resetNetworkProtocolAvailability():

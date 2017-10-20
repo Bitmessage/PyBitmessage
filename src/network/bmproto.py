@@ -534,6 +534,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                         del connection.objectsNewToThem[hashId]
                 except KeyError:
                     pass
+        try:
+            del state.missingObjects[hashId]
+        except KeyError:
+            pass
 
     def handle_close(self):
         self.set_state("close")
