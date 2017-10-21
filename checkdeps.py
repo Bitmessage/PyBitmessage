@@ -111,7 +111,7 @@ def detectOSRelease():
                     detectOS.result = None
             if line.startswith("VERSION_ID="):
                 try:
-                    version = float(line.split("\"")[1])
+                    version = float(line.split("=")[1].replace("\"", ""))
                 except ValueError:
                     pass
         if detectOS.result == "Ubuntu" and version < 14:
