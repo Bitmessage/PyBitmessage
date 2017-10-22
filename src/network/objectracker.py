@@ -83,7 +83,8 @@ class ObjectTracker(object):
         except KeyError:
             pass
         if hashId not in Inventory():
-            missingObjects[hashId] = None
+            if hashId not in missingObjects:
+                missingObjects[hashId] = time.time()
             with self.objectsNewToMeLock:
                 self.objectsNewToMe[hashId] = True
         elif hashId in Dandelion().hashMap:
