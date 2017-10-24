@@ -13,12 +13,18 @@ import widgets
 
 from network.connectionpool import BMConnectionPool
 
+
 class NetworkStatus(QtGui.QWidget, RetranslateMixin):
     def __init__(self, parent=None):
         super(NetworkStatus, self).__init__(parent)
         widgets.load('networkstatus.ui', self)
 
-        self.tableWidgetConnectionCount.horizontalHeader().setResizeMode(QtGui.QHeaderView.ResizeToContents)
+        header = self.tableWidgetConnectionCount.horizontalHeader()
+        header.setResizeMode(QtGui.QHeaderView.ResizeToContents)
+
+        # Somehow this value was 5 when I tested
+        if header.sortIndicatorSection() > 4:
+            header.setSortIndicator(0, QtCore.Qt.AscendingOrder)
 
         self.startup = time.localtime()
         self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
@@ -135,7 +141,6 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
                     break
         self.tableWidgetConnectionCount.setUpdatesEnabled(True)
         self.tableWidgetConnectionCount.setSortingEnabled(True)
-        self.tableWidgetConnectionCount.horizontalHeader().setSortIndicator(0, QtCore.Qt.AscendingOrder)
         self.labelTotalConnections.setText(_translate(
             "networkstatus", "Total Connections: %1").arg(str(self.tableWidgetConnectionCount.rowCount())))
        # FYI: The 'singlelistener' thread sets the icon color to green when it receives an incoming connection, meaning that the user's firewall is configured correctly.
