@@ -130,6 +130,9 @@ class IconGlossaryDialog(QtGui.QDialog, RetranslateMixin):
         super(IconGlossaryDialog, self).__init__(parent)
         widgets.load('iconglossary.ui', self)
 
+        # FIXME: check the window title visibility here
+        self.groupBox.setTitle('')
+
         self.labelPortNumber.setText(_translate(
             "iconGlossaryDialog",
             "You are using TCP port %1. (This can be changed in the settings)."
