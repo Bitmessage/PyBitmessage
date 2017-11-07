@@ -85,9 +85,9 @@ def createSupportMessage(myapp):
         return
     myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
     myapp.ui.lineEditTo.setText(SUPPORT_ADDRESS)
-    
+
     version = softwareVersion
-    commit = paths.lastCommit()
+    commit = paths.lastCommit().get('commit')
     if commit:
         version += " GIT " + commit
 
