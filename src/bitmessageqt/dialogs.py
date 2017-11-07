@@ -113,16 +113,27 @@ class AboutDialog(QtGui.QDialog, RetranslateMixin):
     def __init__(self, parent=None):
         super(AboutDialog, self).__init__(parent)
         widgets.load('about.ui', self)
-        commit = paths.lastCommit()[:7]
+        last_commit = paths.lastCommit()
         version = softwareVersion
+        commit = last_commit.get('commit')
         if commit:
-            version += '-' + commit
+            version += '-' + commit[:7]
         self.labelVersion.setText(
             self.labelVersion.text().replace(
                 ':version:', version
                 ).replace(':branch:', commit or 'v%s' % version)
         )
         self.labelVersion.setOpenExternalLinks(True)
+
+        try:
+            self.label_2.setText(
+                self.label_2.text().replace(
+                    '2017', str(last_commit.get('time').year)
+                ))
+        except AttributeError:
+            pass
+
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 
 class IconGlossaryDialog(QtGui.QDialog, RetranslateMixin):

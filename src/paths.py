@@ -1,5 +1,7 @@
 from os import environ, path
 import sys
+import re
+from datetime import datetime
 
 # When using py2exe or py2app, the variable frozen is added to the sys
 # namespace.  This can be used to setup a different code path for 
@@ -95,13 +97,18 @@ def tail(f, lines=20):
     all_read_text = ''.join(reversed(blocks))
     return '\n'.join(all_read_text.splitlines()[-total_lines_wanted:])
 
+
 def lastCommit():
     githeadfile = path.join(codePath(), '..', '.git', 'logs', 'HEAD')
-    version = ""
-    if (path.isfile(githeadfile)):
+    result = {}
+    if path.isfile(githeadfile):
         try:
             with open(githeadfile, 'rt') as githead:
-                version = tail(githead, 1).split()[1]
-        except IOError:
+                line = tail(githead, 1)
+            result['commit'] = line.split()[1]
+            result['time'] = datetime.fromtimestamp(
+                float(re.search(r'>\s*(.*?)\s', line).group(1))
+            )
+        except (IOError, AttributeError, TypeError):
             pass
-    return version
+    return result
