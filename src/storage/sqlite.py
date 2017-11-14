@@ -75,6 +75,6 @@ class SqliteInventory(InventoryStorage):
         with self.lock:
             sqlExecute('DELETE FROM inventory WHERE expirestime<?',int(time.time()) - (60 * 60 * 3))
             self._streams.clear()
-            for objectHash, value in self.items():
+            for objectHash, value in self._inventory.items():
                 self._streams[value.stream].add(objectHash)
 
