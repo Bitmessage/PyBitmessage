@@ -10,6 +10,6 @@ def connect_plugin(title, subtitle, category, label, icon):
     if not icon:
         icon = 'mail-message-new' if category == 2 else 'pybitmessage'
     connect_plugin.notification.update(title, subtitle, icon)
-    connect_plugin.notification.show.show()
+    connect_plugin.notification.show()
 
 connect_plugin.notification = Notify.Notification.new("Init", "Init")
