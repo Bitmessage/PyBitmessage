@@ -236,7 +236,7 @@ class BMConnectionPool(object):
                     i.append_write_buf(protocol.CreatePacket('ping'))
                 else:
                     i.close_reason = "Timeout (%is)" % (time.time() - i.lastTx) 
-                    i.handle_close()
+                    i.set_state("close")
         for i in self.inboundConnections.values() + self.outboundConnections.values() + self.listeningSockets.values() + self.udpSockets.values():
             if i.state == "close":
                 i.handle_close()
