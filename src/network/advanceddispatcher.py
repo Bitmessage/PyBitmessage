@@ -78,7 +78,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
             self.uploadChunk = asyncore.uploadBucket
         self.uploadChunk = min(self.uploadChunk, len(self.write_buf))
         return asyncore.dispatcher.writable(self) and \
-                (self.connecting or self.uploadChunk > 0)
+                (self.connecting or (self.connected and self.uploadChunk > 0))
 
     def readable(self):
         self.downloadChunk = AdvancedDispatcher._buf_len
@@ -92,7 +92,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         except AttributeError:
             pass
         return asyncore.dispatcher.readable(self) and \
-                (self.connecting or self.downloadChunk > 0)
+                (self.connecting or self.accepting or (self.connected and self.downloadChunk > 0))
 
     def handle_read(self):
         self.lastTx = time.time()
@@ -127,5 +127,5 @@ class AdvancedDispatcher(asyncore.dispatcher):
             self.read_buf = bytearray()
         with self.writeLock:
             self.write_buf = bytearray()
-        self.state = "close"
+        self.set_state("close")
         self.close()

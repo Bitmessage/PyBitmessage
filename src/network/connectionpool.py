@@ -214,11 +214,13 @@ class BMConnectionPool(object):
         else:
             if self.listeningSockets:
                 for i in self.listeningSockets.values():
-                    i.handle_close()
+                    i.close_reason = "Stopping listening"
+                    i.accepting = i.connecting = i.connected = False
                 logger.info('Stopped listening for incoming connections.')
             if self.udpSockets:
                 for i in self.udpSockets.values():
-                    i.handle_close()
+                    i.close_reason = "Stopping UDP socket"
+                    i.accepting = i.connecting = i.connected = False
                 logger.info('Stopped udp sockets.')
 
         loopTime = float(self.spawnWait)
@@ -238,8 +240,6 @@ class BMConnectionPool(object):
                     i.close_reason = "Timeout (%is)" % (time.time() - i.lastTx) 
                     i.set_state("close")
         for i in self.inboundConnections.values() + self.outboundConnections.values() + self.listeningSockets.values() + self.udpSockets.values():
-            if i.state == "close":
-                i.handle_close()
             if not (i.accepting or i.connecting or i.connected):
                 reaper.append(i)
         for i in reaper:
