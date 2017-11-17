@@ -40,8 +40,9 @@ class BMObject(object):
         self.version = version
         self.streamNumber = streamNumber
         self.inventoryHash = calculateInventoryHash(data)
-        self.data = data
-        self.tag = data[payloadOffset:payloadOffset+32]
+        # copy to avoid memory issues
+        self.data = bytearray(data)
+        self.tag = self.data[payloadOffset:payloadOffset+32]
 
     def checkProofOfWorkSufficient(self):
         # Let us check to make sure that the proof of work is sufficient.
