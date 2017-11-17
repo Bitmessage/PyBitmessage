@@ -242,5 +242,11 @@ class BMConnectionPool(object):
         for i in self.inboundConnections.values() + self.outboundConnections.values() + self.listeningSockets.values() + self.udpSockets.values():
             if not (i.accepting or i.connecting or i.connected):
                 reaper.append(i)
+            else:
+                try:
+                    if i.state == "close":
+                        reaper.append(i)
+                except AttributeError:
+                    pass
         for i in reaper:
             self.removeConnection(i)
