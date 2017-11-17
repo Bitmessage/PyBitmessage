@@ -546,6 +546,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
 
     def handle_close(self):
         self.set_state("close")
+        if not (self.accepting or self.connecting or self.connected):
+            # already disconnected
+            return
         try:
             logger.debug("%s:%i: closing, %s", self.destination.host, self.destination.port, self.close_reason)
         except AttributeError:
