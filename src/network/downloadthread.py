@@ -48,7 +48,7 @@ class DownloadThread(threading.Thread, StoppableThread):
                 # this may take a while, but it needs a consistency so I think it's better to lock a bigger chunk
                 with i.objectsNewToMeLock:
                     try:
-                        downloadPending = len(list((k for k, v in i.objectsNewToMe.iteritems() if k in missingObjects and missingObjects[k] > timedOut)))
+                        downloadPending = len(list((k for k, v in i.objectsNewToMe.iteritems() if k in missingObjects and missingObjects[k] > timedOut and not v)))
                     except KeyError:
                         continue
                     if downloadPending >= DownloadThread.minPending:
