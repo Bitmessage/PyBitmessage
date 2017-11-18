@@ -52,7 +52,7 @@ class BMConnectionPool(object):
                 except KeyError:
                     pass
         if hashid in Dandelion().fluff:
-            Dandelion.removeHash(hashid)
+            Dandelion().removeHash(hashid)
 
     def reRandomiseDandelionStems(self):
         # Choose 2 peers randomly
