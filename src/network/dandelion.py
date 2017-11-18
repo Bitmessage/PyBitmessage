@@ -16,6 +16,7 @@ class Dandelion():
         self.stem = []
         self.nodeMap = {}
         self.hashMap = {}
+        self.fluff = {}
         self.timeout = {}
         self.refresh = time() + REASSIGN_INTERVAL
         self.lock = RLock()
@@ -37,6 +38,14 @@ class Dandelion():
                 del self.timeout[hashId]
             except KeyError:
                 pass
+            try:
+                del self.fluff[hashId]
+            except KeyError:
+                pass
+
+    def fluffTrigger(self, hashId):
+        with self.lock:
+            self.fluff[hashId] = None
 
     def maybeAddStem(self, connection):
         # fewer than MAX_STEMS outbound connections at last reshuffle?
