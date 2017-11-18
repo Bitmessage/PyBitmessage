@@ -51,6 +51,8 @@ class BMConnectionPool(object):
                         del i.objectsNewToThem[hashid]
                 except KeyError:
                     pass
+        if hashid in Dandelion().fluff:
+            Dandelion.removeHash(hashid)
 
     def reRandomiseDandelionStems(self):
         # Choose 2 peers randomly

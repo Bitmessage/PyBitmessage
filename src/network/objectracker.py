@@ -82,14 +82,12 @@ class ObjectTracker(object):
                 del self.objectsNewToThem[hashId]
         except KeyError:
             pass
-        if hashId not in Inventory():
+        # Fluff trigger by cycle detection
+        if hashId not in Inventory() or hashId in Dandelion().hashMap:
+            if hashId in Dandelion().hashMap:
+                Dandelion().fluffTrigger(hashId)
             if hashId not in missingObjects:
                 missingObjects[hashId] = time.time()
-            with self.objectsNewToMeLock:
-                self.objectsNewToMe[hashId] = True
-        elif hashId in Dandelion().hashMap:
-            # Fluff trigger by cycle detection
-            Dandelion().removeHash(hashId)
             with self.objectsNewToMeLock:
                 self.objectsNewToMe[hashId] = True
 

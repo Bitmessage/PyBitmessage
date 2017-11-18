@@ -326,8 +326,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             return True
 
         for i in map(str, items):
-            Dandelion().addHash(i, self)
             self.handleReceivedInventory(i)
+            Dandelion().addHash(i, self)
 
         return True
 
