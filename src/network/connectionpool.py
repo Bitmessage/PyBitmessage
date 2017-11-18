@@ -111,6 +111,7 @@ class BMConnectionPool(object):
                     del self.inboundConnections[connection.destination.host]
                 except KeyError:
                     pass
+        connection.close()
 
     def getListeningIP(self):
         if BMConfigParser().safeGet("bitmessagesettings", "onionhostname").endswith(".onion"):
