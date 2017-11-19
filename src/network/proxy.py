@@ -64,6 +64,7 @@ class Proxy(AdvancedDispatcher):
         AdvancedDispatcher.__init__(self)
         self.destination = address
         self.isOutbound = True
+        self.fullyEstablished = False
         self.create_socket(socket.AF_INET, socket.SOCK_STREAM)
         self.connect(self.proxy)
 
