@@ -63,8 +63,6 @@ class singleCleaner(threading.Thread, StoppableThread):
             Inventory().flush()
             queues.UISignalQueue.put(('updateStatusBar', ''))
             
-            protocol.broadcastToSendDataQueues((
-                0, 'pong', 'no data')) # commands the sendData threads to send out a pong message if they haven't sent anything else in the last five minutes. The socket timeout-time is 10 minutes.
             # If we are running as a daemon then we are going to fill up the UI
             # queue which will never be handled by a UI. We should clear it to
             # save memory.
@@ -127,10 +125,10 @@ class singleCleaner(threading.Thread, StoppableThread):
                             os._exit(0)
                 shared.needToWriteKnownNodesToDisk = False
 
-            # clear download queues
-            for thread in threading.enumerate():
-                if thread.isAlive() and hasattr(thread, 'downloadQueue'):
-                    thread.downloadQueue.clear()
+#            # clear download queues
+#            for thread in threading.enumerate():
+#                if thread.isAlive() and hasattr(thread, 'downloadQueue'):
+#                    thread.downloadQueue.clear()
 
             # inv/object tracking
             for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
