@@ -1,7 +1,7 @@
+import gc
 import threading
 import shared
 import time
-import sys
 import os
 
 import tr#anslate
@@ -14,7 +14,6 @@ from network.dandelion import Dandelion
 from debug import logger
 import knownnodes
 import queues
-import protocol
 import state
 
 """
@@ -46,6 +45,7 @@ class singleCleaner(threading.Thread, StoppableThread):
         self.initStop()
 
     def run(self):
+        gc.disable()
         timeWeLastClearedInventoryAndPubkeysTables = 0
         try:
             shared.maximumLengthOfTimeToBotherResendingMessages = (float(BMConfigParser().get('bitmessagesettings', 'stopresendingafterxdays')) * 24 * 60 * 60) + (float(BMConfigParser().get('bitmessagesettings', 'stopresendingafterxmonths')) * (60 * 60 * 24 *365)/12)
@@ -147,6 +147,8 @@ class singleCleaner(threading.Thread, StoppableThread):
                 except KeyError:
                     pass
             # TODO: cleanup pending upload / download
+
+            gc.collect()
 
             if state.shutdown == 0:
                 self.stop.wait(singleCleaner.cycleLength)
