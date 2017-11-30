@@ -33,7 +33,7 @@ def sqlExecuteChunked(sqlStatement, idCount, *args):
         for i in range(len(args)-idCount, len(args), sqlExecuteChunked.chunkSize - (len(args)-idCount)):
             sqlSubmitQueue.put(sqlStatement)
             # first static args, and then iterative chunk
-            sqlSubmitQueue.put(args[0:len(args)-idCount] + args[i:i+sqlExecuteChunked.chunkSize - len(args)-idCount])
+            sqlSubmitQueue.put(args[0:len(args)-idCount] + args[i:i+sqlExecuteChunked.chunkSize - (len(args)-idCount)])
             retVal = sqlReturnQueue.get()
             totalRowCount += retVal[1]
         sqlSubmitQueue.put('commit')
