@@ -2618,7 +2618,7 @@ class MyForm(settingsmixin.SMainWindow):
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.No:
                 waitForPow = False
-            elif reply == QtGui.QMessage.Cancel:
+            elif reply == QtGui.QMessageBox.Cancel:
                 return
 
         if PendingDownloadQueue.totalSize() > 0:
