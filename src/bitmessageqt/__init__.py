@@ -1294,6 +1294,7 @@ class MyForm(settingsmixin.SMainWindow):
         try:
             self.indicatorUpdate = get_plugin('indicator')(self)
         except (NameError, TypeError):
+            logger.warning("No indicator plugin found")
             self.indicatorUpdate = _noop_update
 
     # initialise the message notifier
