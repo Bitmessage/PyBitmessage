@@ -42,7 +42,10 @@ class DownloadThread(threading.Thread, StoppableThread):
             # Choose downloading peers randomly
             connections = BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values()
             random.shuffle(connections)
-            requestChunk =  max(int(DownloadThread.maxRequestChunk / len(connections)), 1)
+            try:
+                requestChunk =  max(int(DownloadThread.maxRequestChunk / len(connections)), 1)
+            except ZeroDivisionError:
+                requestChunk = 1
             for i in connections:
                 now = time.time()
                 timedOut = now - DownloadThread.requestTimeout
