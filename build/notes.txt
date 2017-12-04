@@ -6,3 +6,4 @@ include BM API stuff
 keys.dat example with all switches also from bmcli.py
 
  
+Z9 online Änd. 1
