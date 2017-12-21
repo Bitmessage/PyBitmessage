@@ -363,7 +363,7 @@ class Main:
             # fork not implemented
             pass
         else:
-            shared.thisapp.lock() # relock
+            shared.thisapp.lock(True) # relock and write pid
         shared.thisapp.lockPid = None # indicate we're the final child
         sys.stdout.flush()
         sys.stderr.flush()
