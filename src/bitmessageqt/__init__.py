@@ -1294,7 +1294,6 @@ class MyForm(settingsmixin.SMainWindow):
         try:
             self.indicatorUpdate = get_plugin('indicator')(self)
         except (NameError, TypeError):
-            logger.warning("No indicator plugin found")
             self.indicatorUpdate = _noop_update
 
     # initialise the message notifier
@@ -2619,7 +2618,7 @@ class MyForm(settingsmixin.SMainWindow):
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.No:
                 waitForPow = False
-            elif reply == QtGui.QMessageBox.Cancel:
+            elif reply == QtGui.QMessage.Cancel:
                 return
 
         if PendingDownloadQueue.totalSize() > 0:
@@ -3874,11 +3873,7 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             data = self.getCurrentMessageId()
             if data != False:
-<<<<<<< v0.6
-                message = "Error occurred: could not load message from disk.  THIS IS NOT A BM but an error message."  ## vvvv translate !  _translate 
-=======
-                message = "Error occurred: could not load message from disk." #### TODO: _translate( this ! happens frequently
->>>>>>> bde2d1a translate: could not load message from disk
+                message = "Error occurred: could not load message from disk."
         messageTextedit.setCurrentFont(QtGui.QFont())
         messageTextedit.setTextColor(QtGui.QColor())
         messageTextedit.setContent(message)
