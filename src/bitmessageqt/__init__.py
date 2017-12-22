@@ -3873,7 +3873,7 @@ class MyForm(settingsmixin.SMainWindow):
         else:
             data = self.getCurrentMessageId()
             if data != False:
-                message = "Error occurred: could not load message from disk."
+                message = "Error occurred: could not load message from disk." #### TODO: _translate( this ! happens frequently
         messageTextedit.setCurrentFont(QtGui.QFont())
         messageTextedit.setTextColor(QtGui.QColor())
         messageTextedit.setContent(message)
