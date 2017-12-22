@@ -1,0 +1,18 @@
+[Unit]
+Description=Bitmessage Daemon
+After=network.target auditd.service
+
+[Service]
+ExecStart=/usr/bin/python2 /usr/src/PyBitmessage/src/bitmessagemain.py
+ExecReload=/bin/kill -HUP $MAINPID
+KillMode=process
+Restart=on-failure
+Type=forking
+PIDFile=/var/lib/bitmessage/.config/PyBitmessage/singleton.lock
+User=bitmessage
+Group=nogroup
+WorkingDirectory=/var/lib/bitmessage
+Environment="HOME=/var/lib/bitmessage"
+
+[Install]
+WantedBy=multi-user.target
