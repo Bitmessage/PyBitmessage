@@ -1,6 +1,6 @@
 #!/usr/bin/python2.7
 # Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2016 The Bitmessage developers
+# Copyright (c) 2012-2018 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying
 # file COPYING or http://www.opensource.org/licenses/mit-license.php.
 
