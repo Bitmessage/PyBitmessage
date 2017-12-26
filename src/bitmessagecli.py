@@ -3,7 +3,7 @@
 # Created by Adam Melton (.dok) referenceing https://bitmessage.org/wiki/API_Reference for API documentation
 # Distributed under the MIT/X11 software license. See http://www.opensource.org/licenses/mit-license.php.
 
-# This is an example of a daemon client for PyBitmessage 0.4.3, by .dok (Version 0.3.1)
+# This is an example of a daemon client for PyBitmessage 0.6.2, by .dok (Version 0.3.1) , modified
 
 
 import xmlrpclib
@@ -1320,7 +1320,7 @@ def UI(usrInput): #Main user menu
         print '     |------------------------|----------------------------------------------|'
         print '     | subscribe              | Subscribes to an address                     |'
         print '     | unsubscribe            | Unsubscribes from an address                 |'
-        #print '    | listSubscriptions      | Lists all of the subscriptions.              |'
+        #print'     | listSubscriptions      | Lists all of the subscriptions.              |'
         print '     |------------------------|----------------------------------------------|'
         print '     | create                 | Creates a channel                            |'
         print '     | join                   | Joins a channel                              |'
@@ -1741,7 +1741,7 @@ def main():
     if (usrPrompt == 0):
         print '\n     ------------------------------'
         print '     | Bitmessage Daemon by .dok  |'
-        print '     | Version 0.2.6 for BM 0.3.5 |'
+        print '     | Version 0.3.1 for BM 0.6.2 |'
         print '     ------------------------------'
         api = xmlrpclib.ServerProxy(apiData()) #Connect to BitMessage using these api credentials
 
@@ -1770,4 +1770,4 @@ def main():
         UI("quit")
 
 if __name__ == "__main__":
-    main()
+    main() 
