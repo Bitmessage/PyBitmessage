@@ -1,8 +1,40 @@
+
+
+doc-warnings: true
+test-warnings: false
+strictness: veryhigh
+max-line-length: 120
+uses:
+  - flask
+autodetect: true
+requirements:
+  - deps/core.txt
+#  - deps/test.txt
+ignore-paths:
+  - docs
+  - mypackage/vendor
+ignore-patterns:
+  - ^example/doc_.*\.py$
+  - (^|/)docs(/|$)
+python-targets:
+  - 2
+
+
+
+
+
+
+
+
 pylint:
   disable:
     - eval-used
+    - undefined-variable
 
 pep8:
   disable:
     - E711
     - E712
+    
+    
+    
