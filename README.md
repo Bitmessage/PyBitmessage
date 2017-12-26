@@ -3,7 +3,9 @@ PyBitmessage
 
 <<<<<<< HEAD
 Bitmessage is a P2P communications protocol used to send encrypted messages to
-another person or to many subscribers. It is decentralized and trustless,
+another person or to many subscribers. One program to use the protocol is "pyBitmessage".  
+
+Bitmessage is decentralized and trustless,
 meaning that you need-not inherently trust any entities like root certificate
 authorities. It uses strong authentication, which means that the sender of a
 message cannot be spoofed, and it aims to hide metadata, like the
