@@ -180,7 +180,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             payload += hash
             objectCount += 1
             if objectCount >= BMProto.maxObjectCount:
-                self.sendChunk()
+                sendChunk()
                 payload = b''
                 objectCount = 0
 
