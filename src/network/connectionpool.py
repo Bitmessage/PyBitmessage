@@ -22,8 +22,8 @@ import state
 class BMConnectionPool(object):
     def __init__(self):
         asyncore.set_rates(
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxdownloadrate") * 1024,
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxuploadrate") * 1024)
+                BMConfigParser().safeGetInt("bitmessagesettings", "maxdownloadrate"),
+                BMConfigParser().safeGetInt("bitmessagesettings", "maxuploadrate"))
         self.outboundConnections = {}
         self.inboundConnections = {}
         self.listeningSockets = {}

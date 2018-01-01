@@ -129,8 +129,8 @@ def write(obj):
 
 def set_rates(download, upload):
     global maxDownloadRate, maxUploadRate, downloadBucket, uploadBucket, downloadTimestamp, uploadTimestamp
-    maxDownloadRate = float(download)
-    maxUploadRate = float(upload)
+    maxDownloadRate = float(download) * 1024
+    maxUploadRate = float(upload) * 1024
     downloadBucket = maxDownloadRate
     uploadBucket = maxUploadRate
     downloadTimestamp = time.time()
