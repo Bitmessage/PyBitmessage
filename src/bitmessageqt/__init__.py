@@ -69,7 +69,7 @@ import queues
 import shutdown
 import state
 from statusbar import BMStatusBar
-import throttle
+from network.asyncore_pollchoose import set_rates
 from version import softwareVersion
 import sound
 
@@ -2288,15 +2288,15 @@ class MyForm(settingsmixin.SMainWindow):
                     int(float(self.settingsDialogInstance.ui.lineEditMaxDownloadRate.text()))))
                 BMConfigParser().set('bitmessagesettings', 'maxuploadrate', str(
                     int(float(self.settingsDialogInstance.ui.lineEditMaxUploadRate.text()))))
-            except:
+            except ValueError:
                 QMessageBox.about(self, _translate("MainWindow", "Number needed"), _translate(
                     "MainWindow", "Your maximum download and upload rate must be numbers. Ignoring what you typed."))
+            else:
+                set_rates(BMConfigParser().safeGetInt("bitmessagesettings", "maxdownloadrate"),
+                    BMConfigParser().safeGetInt("bitmessagesettings", "maxuploadrate"))
 
             BMConfigParser().set('bitmessagesettings', 'maxoutboundconnections', str(
                 int(float(self.settingsDialogInstance.ui.lineEditMaxOutboundConnections.text()))))
-
-            throttle.SendThrottle().resetLimit()
-            throttle.ReceiveThrottle().resetLimit()
 
             BMConfigParser().set('bitmessagesettings', 'namecoinrpctype',
                 self.settingsDialogInstance.getNamecoinType())
