@@ -36,7 +36,7 @@ class singleinstance:
         self.initialized = True
         atexit.register(self.cleanup)
 
-    def lock(self, writePid = False):
+    def lock(self):
         if self.lockPid is None:
             self.lockPid = os.getpid()
         if sys.platform == 'win32':
@@ -68,16 +68,24 @@ class singleinstance:
                 sys.exit(-1)
             else:
                 pidLine = "%i\n" % self.lockPid
-                if writePid:
-                    self.fp.truncate(0)
-                    self.fp.write(pidLine)
-                    self.fp.flush()
+                self.fp.truncate(0)
+                self.fp.write(pidLine)
+                self.fp.flush()
 
     def cleanup(self):
         if not self.initialized:
             return
         if self.daemon and self.lockPid == os.getpid():
             # these are the two initial forks while daemonizing
+            try:
+                if sys.platform == 'win32':
+                    if hasattr(self, 'fd'):
+                        os.close(self.fd)
+                else:
+                    fcntl.lockf(self.fp, fcntl.LOCK_UN)
+            except Exception, e:
+                pass
+
             return
         print "Cleaning up lockfile"
         try:
