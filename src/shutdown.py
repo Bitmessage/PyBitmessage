@@ -9,14 +9,12 @@ from helper_sql import sqlQuery, sqlStoredProcedure
 from helper_threading import StoppableThread
 from knownnodes import saveKnownNodes
 from inventory import Inventory
-import protocol
 from queues import addressGeneratorQueue, objectProcessorQueue, UISignalQueue, workerQueue
 import shared
 import state
 
 def doCleanShutdown():
     state.shutdown = 1 #Used to tell proof of work worker threads and the objectProcessorThread to exit.
-    protocol.broadcastToSendDataQueues((0, 'shutdown', 'no data'))   
     objectProcessorQueue.put(('checkShutdownVariable', 'no data'))
     for thread in threading.enumerate():
         if thread.isAlive() and isinstance(thread, StoppableThread):
