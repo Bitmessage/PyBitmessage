@@ -31,7 +31,7 @@ class singleinstance:
             import bitmessageqt
             bitmessageqt.init()
 
-        self.lock(not daemon)
+        self.lock()
 
         self.initialized = True
         atexit.register(self.cleanup)
