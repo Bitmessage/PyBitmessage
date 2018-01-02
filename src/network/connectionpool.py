@@ -65,12 +65,18 @@ class BMConnectionPool(object):
     def getConnectionByAddr(self, addr):
         if addr in self.inboundConnections:
             return self.inboundConnections[addr]
-        if addr.host in self.inboundConnections:
-            return self.inboundConnections[addr.host]
+        try:
+            if addr.host in self.inboundConnections:
+                return self.inboundConnections[addr.host]
+        except AttributeError:
+            pass
         if addr in self.outboundConnections:
             return self.outboundConnections[addr]
-        if addr.host in self.udpSockets:
-            return self.udpSockets[addr.host]
+        try:
+            if addr.host in self.udpSockets:
+                return self.udpSockets[addr.host]
+        except AttributeError:
+            pass
         raise KeyError
 
     def isAlreadyConnected(self, nodeid):
