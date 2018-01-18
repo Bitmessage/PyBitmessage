@@ -27,7 +27,6 @@ from newaddresswizard import *
 from messageview import MessageView
 from migrationwizard import *
 from foldertree import *
-from regenerateaddresses import *
 from newchandialog import *
 from safehtmlparser import *
 from emailgateway import *
@@ -1442,31 +1441,50 @@ class MyForm(settingsmixin.SMainWindow):
         elif self.getCurrentFolder(self.ui.treeWidgetChans) == "trash":
             self.loadMessagelist(self.ui.tableWidgetInboxChans, self.getCurrentAccount(self.ui.treeWidgetChans), "trash")
 
-
-    # menu botton 'regenerate deterministic addresses'
+    # menu button 'regenerate deterministic addresses'
     def click_actionRegenerateDeterministicAddresses(self):
-        self.regenerateAddressesDialogInstance = regenerateAddressesDialog(
-            self)
-        if self.regenerateAddressesDialogInstance.exec_():
-            if self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text() == "":
-                QMessageBox.about(self, _translate("MainWindow", "bad passphrase"), _translate(
-                    "MainWindow", "You must type your passphrase. If you don\'t have one then this is not the form for you."))
+        dialog = dialogs.RegenerateAddressesDialog(self)
+        if dialog.exec_():
+            if dialog.lineEditPassphrase.text() == "":
+                QMessageBox.about(
+                    self, _translate("MainWindow", "bad passphrase"),
+                    _translate(
+                        "MainWindow",
+                        "You must type your passphrase. If you don\'t"
+                        " have one then this is not the form for you."
+                    ))
                 return
-            streamNumberForAddress = int(
-                self.regenerateAddressesDialogInstance.ui.lineEditStreamNumber.text())
+            streamNumberForAddress = int(dialog.lineEditStreamNumber.text())
             try:
                 addressVersionNumber = int(
-                    self.regenerateAddressesDialogInstance.ui.lineEditAddressVersionNumber.text())
+                    dialog.lineEditAddressVersionNumber.text())
             except:
-                QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
-                    "MainWindow", "Your address version number must be a number: either 3 or 4."))
+                QMessageBox.about(
+                    self,
+                    _translate("MainWindow", "Bad address version number"),
+                    _translate(
+                        "MainWindow",
+                        "Your address version number must be a number:"
+                        " either 3 or 4."
+                    ))
                 return
             if addressVersionNumber < 3 or addressVersionNumber > 4:
-                QMessageBox.about(self, _translate("MainWindow", "Bad address version number"), _translate(
-                    "MainWindow", "Your address version number must be either 3 or 4."))
+                QMessageBox.about(
+                    self,
+                    _translate("MainWindow", "Bad address version number"),
+                    _translate(
+                        "MainWindow",
+                        "Your address version number must be either 3 or 4."
+                    ))
                 return
-            queues.addressGeneratorQueue.put(('createDeterministicAddresses', addressVersionNumber, streamNumberForAddress, "regenerated deterministic address", self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(
-            ), self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(), self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked()))
+            queues.addressGeneratorQueue.put((
+                'createDeterministicAddresses',
+                addressVersionNumber, streamNumberForAddress,
+                "regenerated deterministic address",
+                dialog.spinBoxNumberOfAddressesToMake.value(),
+                dialog.lineEditPassphrase.text().toUtf8(),
+                dialog.checkBoxEighteenByteRipe.isChecked()
+            ))
             self.ui.tabWidget.setCurrentIndex(
                 self.ui.tabWidget.indexOf(self.ui.chans)
             )
@@ -3958,15 +3976,6 @@ class MyForm(settingsmixin.SMainWindow):
                 if callable (loadMethod):
                     obj.loadSettings()
 
-
-class regenerateAddressesDialog(QtGui.QDialog):
-
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_regenerateAddressesDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 class settingsDialog(QtGui.QDialog):
 
