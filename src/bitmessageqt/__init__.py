@@ -884,7 +884,9 @@ class MyForm(settingsmixin.SMainWindow):
     def appIndicatorInbox(self, item=None):
         self.appIndicatorShow()
         # select inbox
-        self.ui.tabWidget.setCurrentIndex(0)
+        self.ui.tabWidget.setCurrentIndex(
+            self.ui.tabWidget.indexOf(self.ui.inbox)
+        )
         self.ui.treeWidgetYourIdentities.setCurrentItem(
             self.ui.treeWidgetYourIdentities.topLevelItem(0).child(0)
         )
@@ -898,18 +900,24 @@ class MyForm(settingsmixin.SMainWindow):
     # Show the program window and select send tab
     def appIndicatorSend(self):
         self.appIndicatorShow()
-        self.ui.tabWidget.setCurrentIndex(1)
+        self.ui.tabWidget.setCurrentIndex(
+            self.ui.tabWidget.indexOf(self.ui.send)
+        )
 
     # Show the program window and select subscriptions tab
     def appIndicatorSubscribe(self):
         self.appIndicatorShow()
-        self.ui.tabWidget.setCurrentIndex(2)
+        self.ui.tabWidget.setCurrentIndex(
+            self.ui.tabWidget.indexOf(self.ui.subscriptions)
+        )
 
     # Show the program window and select channels tab
     def appIndicatorChannel(self):
         self.appIndicatorShow()
-        self.ui.tabWidget.setCurrentIndex(3)
-        
+        self.ui.tabWidget.setCurrentIndex(
+            self.ui.tabWidget.indexOf(self.ui.chans)
+        )
+
     def propagateUnreadCount(self, address = None, folder = "inbox", widget = None, type = 1):
         widgets = [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]
         queryReturn = sqlQuery("SELECT toaddress, folder, COUNT(msgid) AS cnt FROM inbox WHERE read = 0 GROUP BY toaddress, folder")
@@ -1373,8 +1381,12 @@ class MyForm(settingsmixin.SMainWindow):
                 currentAddress = self.getCurrentAccount()
                 if currentAddress:
                     self.setSendFromComboBox(currentAddress)
-                self.ui.tabWidgetSend.setCurrentIndex(0)
-                self.ui.tabWidget.setCurrentIndex(1)
+                self.ui.tabWidgetSend.setCurrentIndex(
+                    self.ui.tabWidgetSend.indexOf(self.ui.sendDirect)
+                )
+                self.ui.tabWidget.setCurrentIndex(
+                    self.ui.tabWidget.indexOf(self.ui.send)
+                )
                 self.ui.lineEditTo.setFocus()
                 event.ignore()
             elif event.key() == QtCore.Qt.Key_F:
@@ -1455,7 +1467,9 @@ class MyForm(settingsmixin.SMainWindow):
                 return
             queues.addressGeneratorQueue.put(('createDeterministicAddresses', addressVersionNumber, streamNumberForAddress, "regenerated deterministic address", self.regenerateAddressesDialogInstance.ui.spinBoxNumberOfAddressesToMake.value(
             ), self.regenerateAddressesDialogInstance.ui.lineEditPassphrase.text().toUtf8(), self.regenerateAddressesDialogInstance.ui.checkBoxEighteenByteRipe.isChecked()))
-            self.ui.tabWidget.setCurrentIndex(3)
+            self.ui.tabWidget.setCurrentIndex(
+                self.ui.tabWidget.indexOf(self.ui.chans)
+            )
 
     # opens 'join chan' dialog
     def click_actionJoinChan(self):
@@ -1775,7 +1789,8 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.statusBar().clearMessage()
 
-        if self.ui.tabWidgetSend.currentIndex() == 0:
+        if self.ui.tabWidgetSend.currentIndex() == \
+                self.ui.tabWidgetSend.indexOf(self.ui.sendDirect):
             # message to specific people
             sendMessageToPeople = True
             fromAddress = str(self.ui.comboBoxSendFrom.itemData(
@@ -1979,7 +1994,9 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.comboBoxSendFromBroadcast.setCurrentIndex(0)
                 self.ui.lineEditSubjectBroadcast.setText('')
                 self.ui.textEditMessageBroadcast.reset()
-                self.ui.tabWidget.setCurrentIndex(1)
+                self.ui.tabWidget.setCurrentIndex(
+                    self.ui.tabWidget.indexOf(self.ui.send)
+                )
                 self.ui.tableWidgetInboxSubscriptions.setCurrentCell(0, 0)
                 self.statusBar().showMessage(_translate(
                     "MainWindow", "Broadcast queued."), 10000)
@@ -2009,10 +2026,12 @@ class MyForm(settingsmixin.SMainWindow):
     def setBroadcastEnablementDependingOnWhetherThisIsAMailingListAddress(self, address):
         # If this is a chan then don't let people broadcast because no one
         # should subscribe to chan addresses.
-        if BMConfigParser().safeGetBoolean(str(address), 'mailinglist'):
-            self.ui.tabWidgetSend.setCurrentIndex(1)
-        else:
-            self.ui.tabWidgetSend.setCurrentIndex(0)
+        self.ui.tabWidgetSend.setCurrentIndex(
+            self.ui.tabWidgetSend.indexOf(
+                self.ui.sendBroadcast
+                if BMConfigParser().safeGetBoolean(str(address), 'mailinglist')
+                else self.ui.sendDirect
+            ))
 
     def rerenderComboBoxSendFrom(self):
         self.ui.comboBoxSendFrom.clear()
@@ -2480,8 +2499,12 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.lineEditTo.setText(acct.toAddress)
                 self.ui.lineEditSubject.setText(acct.subject)
                 self.ui.textEditMessage.setText(acct.message)
-                self.ui.tabWidgetSend.setCurrentIndex(0)
-                self.ui.tabWidget.setCurrentIndex(1)
+                self.ui.tabWidgetSend.setCurrentIndex(
+                    self.ui.tabWidgetSend.indexOf(self.ui.sendDirect)
+                )
+                self.ui.tabWidget.setCurrentIndex(
+                    self.ui.tabWidget.indexOf(self.ui.send)
+                )
                 self.ui.textEditMessage.setFocus()
             elif self.dialog.ui.radioButtonRegister.isChecked():
                 email = str(self.dialog.ui.lineEditEmail.text().toUtf8())
@@ -2870,7 +2893,9 @@ class MyForm(settingsmixin.SMainWindow):
             'message': self.ui.textEditMessage
         }
         if toAddressAtCurrentInboxRow == str_broadcast_subscribers:
-            self.ui.tabWidgetSend.setCurrentIndex(0)
+            self.ui.tabWidgetSend.setCurrentIndex(
+                self.ui.tabWidgetSend.indexOf(self.ui.sendDirect)
+            )
 #            toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
         elif not BMConfigParser().has_section(toAddressAtCurrentInboxRow):
             QtGui.QMessageBox.information(self, _translate("MainWindow", "Address is gone"), _translate(
@@ -2880,13 +2905,16 @@ class MyForm(settingsmixin.SMainWindow):
                 "MainWindow", "Error: The address from which you are trying to send is disabled. You\'ll have to enable it on the \'Your Identities\' tab before using it."), QMessageBox.Ok)
         else:
             self.setBroadcastEnablementDependingOnWhetherThisIsAMailingListAddress(toAddressAtCurrentInboxRow)
-            if self.ui.tabWidgetSend.currentIndex() == 1:
+            broadcast_tab_index = self.ui.tabWidgetSend.indexOf(
+                self.ui.sendBroadcast
+            )
+            if self.ui.tabWidgetSend.currentIndex() == broadcast_tab_index:
                 widget = {
                     'subject': self.ui.lineEditSubjectBroadcast,
                     'from': self.ui.comboBoxSendFromBroadcast,
                     'message': self.ui.textEditMessageBroadcast
                 }
-                self.ui.tabWidgetSend.setCurrentIndex(1)
+                self.ui.tabWidgetSend.setCurrentIndex(broadcast_tab_index)
                 toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
         if fromAddressAtCurrentInboxRow == tableWidget.item(currentInboxRow, 1).label or (
             isinstance(acct, GatewayAccount) and fromAddressAtCurrentInboxRow == acct.relayAddress):
@@ -2910,7 +2938,9 @@ class MyForm(settingsmixin.SMainWindow):
             widget['subject'].setText(tableWidget.item(currentInboxRow, 2).label)
         else:
             widget['subject'].setText('Re: ' + tableWidget.item(currentInboxRow, 2).label)
-        self.ui.tabWidget.setCurrentIndex(1)
+        self.ui.tabWidget.setCurrentIndex(
+            self.ui.tabWidget.indexOf(self.ui.send)
+        )
         widget['message'].setFocus()
 
     def on_action_InboxAddSenderToAddressBook(self):
@@ -2921,7 +2951,9 @@ class MyForm(settingsmixin.SMainWindow):
         # tableWidget.item(currentRow,1).data(Qt.UserRole).toPyObject()
         addressAtCurrentInboxRow = tableWidget.item(
             currentInboxRow, 1).data(Qt.UserRole)
-        self.ui.tabWidget.setCurrentIndex(1)
+        self.ui.tabWidget.setCurrentIndex(
+            self.ui.tabWidget.indexOf(self.ui.send)
+        )
         dialog = dialogs.AddAddressDialog(self)
         dialog.lineEditAddress.setText(addressAtCurrentInboxRow)
         self.click_pushButtonAddAddressBook(dialog)
@@ -3170,7 +3202,9 @@ class MyForm(settingsmixin.SMainWindow):
                 "MainWindow", "No addresses selected."), 10000)
         else:
             self.statusBar().clearMessage()
-            self.ui.tabWidget.setCurrentIndex(1)
+            self.ui.tabWidget.setCurrentIndex(
+                self.ui.tabWidget.indexOf(self.ui.send)
+            )
 
     def on_action_AddressBookSubscribe(self):
         listOfSelectedRows = {}
@@ -3184,7 +3218,9 @@ class MyForm(settingsmixin.SMainWindow):
                 continue
             labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
             self.addSubscription(addressAtCurrentRow, labelAtCurrentRow)
-            self.ui.tabWidget.setCurrentIndex(2)
+            self.ui.tabWidget.setCurrentIndex(
+                self.ui.tabWidget.indexOf(self.ui.subscriptions)
+            )
 
     def on_context_menuAddressBook(self, point):
         self.popMenuAddressBook = QtGui.QMenu(self)
