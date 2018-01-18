@@ -109,6 +109,13 @@ class NewSubscriptionDialog(
                     ).arg(count))
 
 
+class RegenerateAddressesDialog(QtGui.QDialog, RetranslateMixin):
+    def __init__(self, parent=None):
+        super(RegenerateAddressesDialog, self).__init__(parent)
+        widgets.load('regenerateaddresses.ui', self)
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+
+
 class AboutDialog(QtGui.QDialog, RetranslateMixin):
     def __init__(self, parent=None):
         super(AboutDialog, self).__init__(parent)
