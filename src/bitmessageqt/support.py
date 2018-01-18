@@ -129,6 +129,10 @@ def createSupportMessage(myapp):
     myapp.ui.textEditMessage.setText(str(QtGui.QApplication.translate("Support", SUPPORT_MESSAGE)).format(version, os, architecture, pythonversion, opensslversion, frozen, portablemode, cpow, openclpow, locale, socks, upnp, connectedhosts))
 
     # single msg tab
-    myapp.ui.tabWidgetSend.setCurrentIndex(0)
+    myapp.ui.tabWidgetSend.setCurrentIndex(
+        myapp.ui.tabWidgetSend.indexOf(myapp.ui.sendDirect)
+    )
     # send tab
-    myapp.ui.tabWidget.setCurrentIndex(1)
+    myapp.ui.tabWidget.setCurrentIndex(
+        myapp.ui.tabWidget.indexOf(myapp.ui.send)
+    )

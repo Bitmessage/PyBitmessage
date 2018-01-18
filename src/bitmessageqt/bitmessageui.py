@@ -634,8 +634,12 @@ class Ui_MainWindow(object):
         self.menubar.addAction(self.menuHelp.menuAction())
 
         self.retranslateUi(MainWindow)
-        self.tabWidget.setCurrentIndex(0)
-        self.tabWidgetSend.setCurrentIndex(0)
+        self.tabWidget.setCurrentIndex(
+            self.tabWidget.indexOf(self.inbox)
+        )
+        self.tabWidgetSend.setCurrentIndex(
+            self.tabWidgetSend.indexOf(self.sendDirect)
+        )
         QtCore.QMetaObject.connectSlotsByName(MainWindow)
         MainWindow.setTabOrder(self.tableWidgetInbox, self.textEditInboxMessage)
         MainWindow.setTabOrder(self.textEditInboxMessage, self.comboBoxSendFrom)
