@@ -1,5 +1,6 @@
 from PyQt4 import QtCore, QtGui
 from addresses import decodeAddress, encodeVarint
+from account import GatewayAccount, MailchuckAccount, AccountMixin, accountClass
 from tr import _translate
 from retranslateui import RetranslateMixin
 import widgets
@@ -235,3 +236,79 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog, RetranslateMixin):
         self.parent.rerenderComboBoxSendFromBroadcast()
         self.config.save()
         self.parent.rerenderMessagelistToLabels()
+
+
+class EmailGatewayDialog(QtGui.QDialog, RetranslateMixin):
+    def __init__(self, parent, title=None, label=None, config=None):
+        super(EmailGatewayDialog, self).__init__(parent)
+        widgets.load('emailgateway.ui', self)
+        self.parent = parent
+        self.config = config
+        if title and label:
+            self.setWindowTitle(title)
+            self.label.setText(label)
+            self.radioButtonRegister.hide()
+            self.radioButtonStatus.hide()
+            self.radioButtonSettings.hide()
+            self.radioButtonUnregister.hide()
+        else:
+            address = parent.getCurrentAccount()
+            self.acct = accountClass(address)
+            try:
+                label = config.get(address, 'label')
+            except AttributeError:
+                pass
+            else:
+                if "@" in label:
+                    self.lineEditEmail.setText(label)
+            if isinstance(self.acct, GatewayAccount):
+                self.radioButtonUnregister.setEnabled(True)
+                self.radioButtonStatus.setEnabled(True)
+                self.radioButtonStatus.setChecked(True)
+                self.radioButtonSettings.setEnabled(True)
+                self.lineEditEmail.setEnabled(False)
+            else:
+                self.acct = MailchuckAccount(address)
+        self.lineEditEmail.setFocus()
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+
+    def register(self, acct=None):
+        email = str(self.lineEditEmail.text().toUtf8())
+        if acct is None:
+            acct = self.acct
+        acct.register(email)
+        self.config.set(acct.fromAddress, 'label', email)
+        self.config.set(acct.fromAddress, 'gateway', 'mailchuck')
+        self.config.save()
+        self.parent.statusBar().showMessage(_translate(
+            "MainWindow",
+            "Sending email gateway registration request"
+        ), 10000)
+
+    def accept(self):
+        self.hide()
+        # no chans / mailinglists
+        if self.acct.type != AccountMixin.NORMAL:
+            return
+
+        if not isinstance(self.acct, GatewayAccount):
+            return
+
+        if self.radioButtonRegister.isChecked():
+            self.register()
+        elif self.radioButtonUnregister.isChecked():
+            self.acct.unregister()
+            self.config.remove_option(self.acct.fromAddress, 'gateway')
+            self.config.save()
+            self.parent.statusBar().showMessage(_translate(
+                "MainWindow",
+                "Sending email gateway unregistration request"
+            ), 10000)
+        elif self.radioButtonStatus.isChecked():
+            self.acct.status()
+            self.parent.statusBar().showMessage(_translate(
+                "MainWindow",
+                "Sending email gateway status request"
+            ), 10000)
+        elif self.radioButtonSettings.isChecked():
+            return self.acct

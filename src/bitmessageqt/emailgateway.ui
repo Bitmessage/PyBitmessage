@@ -7,20 +7,20 @@
     <x>0</x>
     <y>0</y>
     <width>386</width>
-    <height>172</height>
+    <height>240</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>Email gateway</string>
   </property>
   <layout class="QGridLayout" name="gridLayout">
-   <item row="4" column="0">
+   <item row="3" column="0">
     <widget class="QLabel" name="label_2">
      <property name="enabled">
       <bool>true</bool>
      </property>
      <property name="text">
-      <string>Desired email address (including @mailchuck.com)</string>
+      <string>Desired email address (including @mailchuck.com):</string>
      </property>
     </widget>
    </item>
@@ -50,28 +50,60 @@
      </property>
     </widget>
    </item>
-   <item row="6" column="0">
-    <widget class="QLineEdit" name="lineEditEmailAddress">
+   <item row="4" column="0">
+    <widget class="QLineEdit" name="lineEditEmail">
      <property name="enabled">
       <bool>true</bool>
      </property>
      <property name="text">
       <string>@mailchuck.com</string>
      </property>
+     <property name="cursorPosition">
+      <number>0</number>
+     </property>
     </widget>
    </item>
    <item row="0" column="0">
     <widget class="QLabel" name="label">
      <property name="text">
-      <string>Email gateway alows you to communicate with email users. Currently, only the Mailchuck email gateway (@mailchuck.com) is available.</string>
+      <string>Email gateway allows you to communicate with email users. Currently, only the Mailchuck email gateway (@mailchuck.com) is available.</string>
      </property>
      <property name="wordWrap">
       <bool>true</bool>
      </property>
     </widget>
    </item>
+   <item row="5" column="0">
+    <widget class="QRadioButton" name="radioButtonStatus">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>Account status at email gateway</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
+   <item row="6" column="0">
+    <widget class="QRadioButton" name="radioButtonSettings">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
+     <property name="text">
+      <string>Change account settings at email gateway</string>
+     </property>
+     <property name="checked">
+      <bool>false</bool>
+     </property>
+    </widget>
+   </item>
    <item row="7" column="0">
     <widget class="QRadioButton" name="radioButtonUnregister">
+     <property name="enabled">
+      <bool>false</bool>
+     </property>
      <property name="text">
       <string>Unregister from email gateway</string>
      </property>
@@ -84,7 +116,10 @@
  </widget>
  <tabstops>
   <tabstop>radioButtonRegister</tabstop>
-  <tabstop>lineEditEmailAddress</tabstop>
+  <tabstop>lineEditEmail</tabstop>
+  <tabstop>radioButtonStatus</tabstop>
+  <tabstop>radioButtonSettings</tabstop>
+  <tabstop>radioButtonUnregister</tabstop>
   <tabstop>buttonBox</tabstop>
  </tabstops>
  <resources/>
@@ -124,7 +159,7 @@
   <connection>
    <sender>radioButtonRegister</sender>
    <signal>clicked(bool)</signal>
-   <receiver>lineEditEmailAddress</receiver>
+   <receiver>lineEditEmail</receiver>
    <slot>setEnabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -140,7 +175,7 @@
   <connection>
    <sender>radioButtonUnregister</sender>
    <signal>clicked(bool)</signal>
-   <receiver>lineEditEmailAddress</receiver>
+   <receiver>lineEditEmail</receiver>
    <slot>setDisabled(bool)</slot>
    <hints>
     <hint type="sourcelabel">
@@ -150,6 +185,38 @@
     <hint type="destinationlabel">
      <x>187</x>
      <y>123</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonStatus</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>lineEditEmail</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+   </hints>
+  </connection>
+  <connection>
+   <sender>radioButtonSettings</sender>
+   <signal>clicked(bool)</signal>
+   <receiver>lineEditEmail</receiver>
+   <slot>setDisabled(bool)</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>20</x>
+     <y>20</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>20</x>
+     <y>20</y>
     </hint>
    </hints>
   </connection>
