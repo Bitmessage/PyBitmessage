@@ -25,7 +25,6 @@ from namecoin import namecoinConnection
 from messageview import MessageView
 from migrationwizard import *
 from foldertree import *
-from newchandialog import *
 from safehtmlparser import *
 from settings import *
 import settingsmixin
@@ -1488,7 +1487,7 @@ class MyForm(settingsmixin.SMainWindow):
 
     # opens 'join chan' dialog
     def click_actionJoinChan(self):
-        NewChanDialog(self)
+        dialogs.NewChanDialog(self)
 
     def showConnectDialog(self):
         dialog = dialogs.ConnectDialog(self)
