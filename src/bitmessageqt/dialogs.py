@@ -1,6 +1,9 @@
 from PyQt4 import QtCore, QtGui
 from addresses import decodeAddress, encodeVarint
-from account import GatewayAccount, MailchuckAccount, AccountMixin, accountClass
+from account import (
+    GatewayAccount, MailchuckAccount, AccountMixin, accountClass,
+    getSortedAccounts
+)
 from tr import _translate
 from retranslateui import RetranslateMixin
 import widgets
@@ -68,6 +71,21 @@ class AddAddressDialog(QtGui.QDialog, RetranslateMixin, AddressCheckMixin):
         super(AddAddressDialog, self).__init__(parent)
         widgets.load('addaddressdialog.ui', self)
         AddressCheckMixin.__init__(self)
+
+
+class NewAddressDialog(QtGui.QDialog, RetranslateMixin):
+
+    def __init__(self, parent=None):
+        super(NewAddressDialog, self).__init__(parent)
+        widgets.load('newaddressdialog.ui', self)
+
+        # Let's fill out the 'existing address' combo box with addresses
+        # from the 'Your Identities' tab.
+        for address in getSortedAccounts():
+            self.radioButtonExisting.click()
+            self.comboBoxExisting.addItem(address)
+        self.groupBoxDeterministic.setHidden(True)
+        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 
 class NewSubscriptionDialog(
