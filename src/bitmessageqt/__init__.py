@@ -22,8 +22,6 @@ from bitmessageui import *
 from bmconfigparser import BMConfigParser
 import defaults
 from namecoin import namecoinConnection
-from newaddressdialog import *
-from newaddresswizard import *
 from messageview import MessageView
 from migrationwizard import *
 from foldertree import *
@@ -2554,41 +2552,53 @@ class MyForm(settingsmixin.SMainWindow):
                 addressAtCurrentRow, self.getCurrentFolder(), None, 0)
 
     def click_NewAddressDialog(self):
-        addresses = []
-        for addressInKeysFile in getSortedAccounts():
-            addresses.append(addressInKeysFile)
-#        self.dialog = Ui_NewAddressWizard(addresses)
-#        self.dialog.exec_()
-#        print "Name: " + self.dialog.field("name").toString()
-#        print "Email: " + self.dialog.field("email").toString()
-#        return
-        self.dialog = NewAddressDialog(self)
+        dialog = dialogs.NewAddressDialog(self)
         # For Modal dialogs
-        if self.dialog.exec_():
-            # self.dialog.ui.buttonBox.enabled = False
-            if self.dialog.ui.radioButtonRandomAddress.isChecked():
-                if self.dialog.ui.radioButtonMostAvailable.isChecked():
-                    streamNumberForAddress = 1
-                else:
-                    # User selected 'Use the same stream as an existing
-                    # address.'
-                    streamNumberForAddress = decodeAddress(
-                        self.dialog.ui.comboBoxExisting.currentText())[2]
-                queues.addressGeneratorQueue.put(('createRandomAddress', 4, streamNumberForAddress, str(
-                    self.dialog.ui.newaddresslabel.text().toUtf8()), 1, "", self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
-            else:
-                if self.dialog.ui.lineEditPassphrase.text() != self.dialog.ui.lineEditPassphraseAgain.text():
-                    QMessageBox.about(self, _translate("MainWindow", "Passphrase mismatch"), _translate(
-                        "MainWindow", "The passphrase you entered twice doesn\'t match. Try again."))
-                elif self.dialog.ui.lineEditPassphrase.text() == "":
-                    QMessageBox.about(self, _translate(
-                        "MainWindow", "Choose a passphrase"), _translate("MainWindow", "You really do need a passphrase."))
-                else:
-                    streamNumberForAddress = 1  # this will eventually have to be replaced by logic to determine the most available stream number.
-                    queues.addressGeneratorQueue.put(('createDeterministicAddresses', 4, streamNumberForAddress, "unused deterministic address", self.dialog.ui.spinBoxNumberOfAddressesToMake.value(
-                    ), self.dialog.ui.lineEditPassphrase.text().toUtf8(), self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
-        else:
+        if not dialog.exec_():
             logger.debug('new address dialog box rejected')
+            return
+
+        # dialog.buttonBox.enabled = False
+        if dialog.radioButtonRandomAddress.isChecked():
+            if dialog.radioButtonMostAvailable.isChecked():
+                streamNumberForAddress = 1
+            else:
+                # User selected 'Use the same stream as an existing
+                # address.'
+                streamNumberForAddress = decodeAddress(
+                    dialog.comboBoxExisting.currentText())[2]
+            queues.addressGeneratorQueue.put((
+                'createRandomAddress', 4, streamNumberForAddress,
+                str(dialog.newaddresslabel.text().toUtf8()), 1, "",
+                dialog.checkBoxEighteenByteRipe.isChecked()
+            ))
+        else:
+            if dialog.lineEditPassphrase.text() != \
+                    dialog.lineEditPassphraseAgain.text():
+                QMessageBox.about(
+                    self, _translate("MainWindow", "Passphrase mismatch"),
+                    _translate(
+                        "MainWindow",
+                        "The passphrase you entered twice doesn\'t"
+                        " match. Try again.")
+                )
+            elif dialog.lineEditPassphrase.text() == "":
+                QMessageBox.about(
+                    self, _translate("MainWindow", "Choose a passphrase"),
+                    _translate(
+                        "MainWindow", "You really do need a passphrase.")
+                )
+            else:
+                # this will eventually have to be replaced by logic
+                # to determine the most available stream number.
+                streamNumberForAddress = 1
+                queues.addressGeneratorQueue.put((
+                    'createDeterministicAddresses', 4, streamNumberForAddress,
+                    "unused deterministic address",
+                    dialog.spinBoxNumberOfAddressesToMake.value(),
+                    dialog.lineEditPassphrase.text().toUtf8(),
+                    dialog.checkBoxEighteenByteRipe.isChecked()
+                ))
 
     def network_switch(self):
         dontconnect_option = not BMConfigParser().safeGetBoolean(
@@ -4184,25 +4194,6 @@ class settingsDialog(QtGui.QDialog):
         self.ui.labelNamecoinTestResult.setText(responseText)
         if responseStatus== 'success':
             self.parent.ui.pushButtonFetchNamecoinID.show()
-
-
-class NewAddressDialog(QtGui.QDialog):
-
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_NewAddressDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        row = 1
-        # Let's fill out the 'existing address' combo box with addresses from
-        # the 'Your Identities' tab.
-        for addressInKeysFile in getSortedAccounts():
-            self.ui.radioButtonExisting.click()
-            self.ui.comboBoxExisting.addItem(
-                addressInKeysFile)
-            row += 1
-        self.ui.groupBoxDeterministic.setHidden(True)
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 
 # In order for the time columns on the Inbox and Sent tabs to be sorted
