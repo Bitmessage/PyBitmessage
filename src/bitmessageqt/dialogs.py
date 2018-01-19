@@ -8,10 +8,15 @@ from tr import _translate
 from retranslateui import RetranslateMixin
 import widgets
 
+from newchandialog import NewChanDialog
+
 import hashlib
 import paths
 from inventory import Inventory
 from version import softwareVersion
+
+
+__all__ = [NewChanDialog]
 
 
 class AddressCheckMixin(object):
