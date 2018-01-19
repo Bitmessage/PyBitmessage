@@ -29,7 +29,6 @@ from migrationwizard import *
 from foldertree import *
 from newchandialog import *
 from safehtmlparser import *
-from emailgateway import *
 from settings import *
 import settingsmixin
 import support
@@ -2155,20 +2154,22 @@ class MyForm(settingsmixin.SMainWindow):
             # whether it's in current message list or not
             self.indicatorUpdate(True, to_label=acct.toLabel)
             # cannot find item to pass here ):
-        if hasattr(acct, "feedback") and acct.feedback != GatewayAccount.ALL_OK:
+        if hasattr(acct, "feedback") \
+                and acct.feedback != GatewayAccount.ALL_OK:
             if acct.feedback == GatewayAccount.REGISTRATION_DENIED:
-                self.dialog = EmailGatewayRegistrationDialog(self, _translate("EmailGatewayRegistrationDialog", "Registration failed:"), 
-                    _translate("EmailGatewayRegistrationDialog", "The requested email address is not available, please try a new one. Fill out the new desired email address (including @mailchuck.com) below:")
-                    )
-                if self.dialog.exec_():
-                    email = str(self.dialog.ui.lineEditEmail.text().toUtf8())
-                    # register resets address variables
-                    acct.register(email)
-                    BMConfigParser().set(acct.fromAddress, 'label', email)
-                    BMConfigParser().set(acct.fromAddress, 'gateway', 'mailchuck')
-                    BMConfigParser().save()
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Sending email gateway registration request"), 10000)
+                dialog = dialogs.EmailGatewayDialog(
+                    self,
+                    _translate(
+                        "EmailGatewayRegistrationDialog",
+                        "Registration failed:"),
+                    _translate(
+                        "EmailGatewayRegistrationDialog",
+                        "The requested email address is not available,"
+                        " please try a new one."),
+                    config=BMConfigParser()
+                )
+                if dialog.exec_():
+                    dialog.register(acct)
 
     def click_pushButtonAddAddressBook(self, dialog=None):
         if not dialog:
@@ -2488,56 +2489,31 @@ class MyForm(settingsmixin.SMainWindow):
         dialogs.SpecialAddressBehaviorDialog(self, BMConfigParser())
 
     def on_action_EmailGatewayDialog(self):
-        self.dialog = EmailGatewayDialog(self)
+        dialog = dialogs.EmailGatewayDialog(self, config=BMConfigParser())
         # For Modal dialogs
-        if self.dialog.exec_():
-            addressAtCurrentRow = self.getCurrentAccount()
-            acct = accountClass(addressAtCurrentRow)
-            # no chans / mailinglists
-            if acct.type != AccountMixin.NORMAL:
-                return
-            if self.dialog.ui.radioButtonUnregister.isChecked() and isinstance(acct, GatewayAccount):
-                acct.unregister()
-                BMConfigParser().remove_option(addressAtCurrentRow, 'gateway')
-                BMConfigParser().save()
-                self.statusBar().showMessage(_translate(
-                     "MainWindow", "Sending email gateway unregistration request"), 10000)
-            elif self.dialog.ui.radioButtonStatus.isChecked() and isinstance(acct, GatewayAccount):
-                acct.status()
-                self.statusBar().showMessage(_translate(
-                     "MainWindow", "Sending email gateway status request"), 10000)
-            elif self.dialog.ui.radioButtonSettings.isChecked() and isinstance(acct, GatewayAccount):
-                acct.settings()
-                listOfAddressesInComboBoxSendFrom = [str(self.ui.comboBoxSendFrom.itemData(i).toPyObject()) for i in range(self.ui.comboBoxSendFrom.count())]
-                if acct.fromAddress in listOfAddressesInComboBoxSendFrom:
-                    currentIndex = listOfAddressesInComboBoxSendFrom.index(acct.fromAddress)
-                    self.ui.comboBoxSendFrom.setCurrentIndex(currentIndex)
-                else:
-                    self.ui.comboBoxSendFrom.setCurrentIndex(0)
-                self.ui.lineEditTo.setText(acct.toAddress)
-                self.ui.lineEditSubject.setText(acct.subject)
-                self.ui.textEditMessage.setText(acct.message)
-                self.ui.tabWidgetSend.setCurrentIndex(
-                    self.ui.tabWidgetSend.indexOf(self.ui.sendDirect)
-                )
-                self.ui.tabWidget.setCurrentIndex(
-                    self.ui.tabWidget.indexOf(self.ui.send)
-                )
-                self.ui.textEditMessage.setFocus()
-            elif self.dialog.ui.radioButtonRegister.isChecked():
-                email = str(self.dialog.ui.lineEditEmail.text().toUtf8())
-                acct = MailchuckAccount(addressAtCurrentRow)
-                acct.register(email)
-                BMConfigParser().set(addressAtCurrentRow, 'label', email)
-                BMConfigParser().set(addressAtCurrentRow, 'gateway', 'mailchuck')
-                BMConfigParser().save()
-                self.statusBar().showMessage(_translate(
-                     "MainWindow", "Sending email gateway registration request"), 10000)
+        acct = dialog.exec_()
+
+        # Only settings ramain here
+        if acct:
+            acct.settings()
+            for i in range(self.ui.comboBoxSendFrom.count()):
+                if str(self.ui.comboBoxSendFrom.itemData(i).toPyObject()) \
+                        == acct.fromAddress:
+                    self.ui.comboBoxSendFrom.setCurrentIndex(i)
+                    break
             else:
-                pass
-                #print "well nothing"
-#            shared.writeKeysFile()
-#            self.rerenderInboxToLabels()
+                self.ui.comboBoxSendFrom.setCurrentIndex(0)
+
+            self.ui.lineEditTo.setText(acct.toAddress)
+            self.ui.lineEditSubject.setText(acct.subject)
+            self.ui.textEditMessage.setText(acct.message)
+            self.ui.tabWidgetSend.setCurrentIndex(
+                self.ui.tabWidgetSend.indexOf(self.ui.sendDirect)
+            )
+            self.ui.tabWidget.setCurrentIndex(
+                self.ui.tabWidget.indexOf(self.ui.send)
+            )
+            self.ui.textEditMessage.setFocus()
 
     def on_action_MarkAllRead(self):
         if QtGui.QMessageBox.question(
@@ -4208,44 +4184,6 @@ class settingsDialog(QtGui.QDialog):
         self.ui.labelNamecoinTestResult.setText(responseText)
         if responseStatus== 'success':
             self.parent.ui.pushButtonFetchNamecoinID.show()
-
-
-class EmailGatewayDialog(QtGui.QDialog):
-
-    def __init__(self, parent):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_EmailGatewayDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        addressAtCurrentRow = parent.getCurrentAccount()
-        acct = accountClass(addressAtCurrentRow)
-        if isinstance(acct, GatewayAccount):
-            self.ui.radioButtonUnregister.setEnabled(True)
-            self.ui.radioButtonStatus.setEnabled(True)
-            self.ui.radioButtonStatus.setChecked(True)
-            self.ui.radioButtonSettings.setEnabled(True)
-        else:
-            self.ui.radioButtonStatus.setEnabled(False)
-            self.ui.radioButtonSettings.setEnabled(False)
-            self.ui.radioButtonUnregister.setEnabled(False)
-        label = BMConfigParser().get(addressAtCurrentRow, 'label')
-        if label.find("@mailchuck.com") > -1:
-            self.ui.lineEditEmail.setText(label)
-
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
-
-
-class EmailGatewayRegistrationDialog(QtGui.QDialog):
-
-    def __init__(self, parent, title, label):
-        QtGui.QWidget.__init__(self, parent)
-        self.ui = Ui_EmailGatewayRegistrationDialog()
-        self.ui.setupUi(self)
-        self.parent = parent
-        self.setWindowTitle(title)
-        self.ui.label.setText(label)
-
-        QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
 
 class NewAddressDialog(QtGui.QDialog):
