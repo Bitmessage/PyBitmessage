@@ -50,7 +50,7 @@ from account import *
 import dialogs
 from helper_generic import powQueueSize
 from inventory import (
-    Inventory, PendingDownloadQueue, PendingUpload,
+    PendingDownloadQueue, PendingUpload,
     PendingUploadDeadlineException)
 from uisignaler import UISignaler
 import knownnodes
