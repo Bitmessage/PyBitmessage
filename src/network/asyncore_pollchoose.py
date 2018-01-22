@@ -52,6 +52,7 @@ import select
 import socket
 import sys
 import time
+from threading import current_thread
 import warnings
 
 import os
@@ -246,6 +247,8 @@ def select_poller(timeout=0.0, map=None):
             if obj is None:
                 continue
             _exception(obj)
+    else:
+        current_thread().stop.wait(timeout)
 
 def poll_poller(timeout=0.0, map=None):
     """A poller which uses poll(), available on most UNIXen."""
@@ -294,6 +297,8 @@ def poll_poller(timeout=0.0, map=None):
             if obj is None:
                 continue
             readwrite(obj, flags)
+    else:
+        current_thread().stop.wait(timeout)
 
 # Aliases for backward compatibility
 poll = select_poller
@@ -349,6 +354,8 @@ def epoll_poller(timeout=0.0, map=None):
             if obj is None:
                 continue
             readwrite(obj, flags) 
+    else:
+        current_thread().stop.wait(timeout)
 
 def kqueue_poller(timeout=0.0, map=None):
     """A poller which uses kqueue(), BSD specific."""
@@ -383,6 +390,8 @@ def kqueue_poller(timeout=0.0, map=None):
             if event.filter == select.KQ_FILTER_WRITE:
                 write(obj)
         kqueue.close()
+    else:
+        current_thread().stop.wait(timeout)
 
 
 def loop(timeout=30.0, use_poll=False, map=None, count=None, 
