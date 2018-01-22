@@ -112,6 +112,8 @@ uploadBucket = 0
 sentBytes = 0
 
 def read(obj):
+    if not can_receive():
+        return
     try:
         obj.handle_read_event()
     except _reraised_exceptions:
@@ -120,6 +122,8 @@ def read(obj):
         obj.handle_error()
 
 def write(obj):
+    if not can_send():
+        return
     try:
         obj.handle_write_event()
     except _reraised_exceptions:
@@ -129,19 +133,25 @@ def write(obj):
 
 def set_rates(download, upload):
     global maxDownloadRate, maxUploadRate, downloadBucket, uploadBucket, downloadTimestamp, uploadTimestamp
-    maxDownloadRate = float(download)
-    maxUploadRate = float(upload)
+    maxDownloadRate = float(download) * 1024
+    maxUploadRate = float(upload) * 1024
     downloadBucket = maxDownloadRate
     uploadBucket = maxUploadRate
     downloadTimestamp = time.time()
     uploadTimestamp = time.time()
+
+def can_receive():
+    return maxDownloadRate == 0 or downloadBucket > 0
+
+def can_send():
+    return maxUploadRate == 0 or uploadBucket > 0
 
 def update_received(download=0):
     global receivedBytes, downloadBucket, downloadTimestamp
     currentTimestamp = time.time()
     receivedBytes += download
     if maxDownloadRate > 0:
-        bucketIncrease = int(maxDownloadRate * (currentTimestamp - downloadTimestamp))
+        bucketIncrease = maxDownloadRate * (currentTimestamp - downloadTimestamp)
         downloadBucket += bucketIncrease
         if downloadBucket > maxDownloadRate:
             downloadBucket = int(maxDownloadRate)
@@ -153,7 +163,7 @@ def update_sent(upload=0):
     currentTimestamp = time.time()
     sentBytes += upload
     if maxUploadRate > 0:
-        bucketIncrease = int(maxUploadRate * (currentTimestamp - uploadTimestamp))
+        bucketIncrease = maxUploadRate * (currentTimestamp - uploadTimestamp)
         uploadBucket += bucketIncrease
         if uploadBucket > maxUploadRate:
             uploadBucket = int(maxUploadRate)
@@ -170,9 +180,9 @@ def _exception(obj):
 
 def readwrite(obj, flags):
     try:
-        if flags & select.POLLIN:
+        if flags & select.POLLIN and can_receive():
             obj.handle_read_event()
-        if flags & select.POLLOUT:
+        if flags & select.POLLOUT and can_send():
             obj.handle_write_event()
         if flags & select.POLLPRI:
             obj.handle_expt_event()

@@ -8,23 +8,28 @@ from network.dandelion import Dandelion
 import protocol
 import state
 
-class BMObjectInsufficientPOWError(Exception): pass
+class BMObjectInsufficientPOWError(Exception):
+    errorCodes = ("Insufficient proof of work")
 
 
-class BMObjectInvalidDataError(Exception): pass
+class BMObjectInvalidDataError(Exception):
+    errorCodes = ("Data invalid")
 
 
-class BMObjectExpiredError(Exception): pass
+class BMObjectExpiredError(Exception):
+    errorCodes = ("Object expired")
 
 
-class BMObjectUnwantedStreamError(Exception): pass
+class BMObjectUnwantedStreamError(Exception):
+    errorCodes = ("Object in unwanted stream")
 
 
-class BMObjectInvalidError(Exception): pass
+class BMObjectInvalidError(Exception):
+    errorCodes = ("Invalid object")
 
 
 class BMObjectAlreadyHaveError(Exception):
-    pass
+    errorCodes = ("Already have this object")
 
 
 class BMObject(object):
