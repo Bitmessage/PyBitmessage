@@ -11,11 +11,7 @@ except Exception as err:
     import sys
     sys.exit()
 
-try:
-    _encoding = QtGui.QApplication.UnicodeUTF8
-except AttributeError:
-    logger.exception('QtGui.QApplication.UnicodeUTF8 error', exc_info=True)
-
+from tr import _translate
 from addresses import *
 import shared
 from bitmessageui import *
@@ -69,12 +65,6 @@ try:
 except ImportError:
     get_plugins = False
 
-
-def _translate(context, text, disambiguation = None, encoding = None, number = None):
-    if number is None:
-        return QtGui.QApplication.translate(context, text)
-    else:
-        return QtGui.QApplication.translate(context, text, None, QtCore.QCoreApplication.CodecForTr, number)
 
 def change_translation(newlocale):
     global qmytranslator, qsystranslator
