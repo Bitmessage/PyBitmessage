@@ -1,27 +1,19 @@
 #!/usr/bin/python2.7
-# Copyright (c) 2012-2016 Jonathan Warren
-# Copyright (c) 2012-2016 The Bitmessage developers
-# Distributed under the MIT/X11 software license. See the accompanying
-# file COPYING or http://www.opensource.org/licenses/mit-license.php.
-
-# Right now, PyBitmessage only support connecting to stream 1. It doesn't
-# yet contain logic to expand into further streams.
-
+# -*- coding: utf-8 -*-
+# Copyright (c) 2012-2016 Jonathan Warren ; Copyright (c) 2012-2016 The Bitmessage developers
+# Distributed under the MIT/X11 software license. See the accompanying file COPYING or http://www.opensource.org/licenses/mit-license.ph
+# Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams
 # The software version variable is now held in shared.py
-
 import os
 import sys
-
 app_dir = os.path.dirname(os.path.abspath(__file__))
 os.chdir(app_dir)
 sys.path.insert(0, app_dir)
-
 import depends
 depends.check_dependencies()
-
 import signal  # Used to capture a Ctrl-C keypress so that Bitmessage can shutdown gracefully.
 # The next 3 are used for the API
-from singleinstance import singleinstance
+from singleinstance         import singleinstance
 import errno
 import socket
 import ctypes
@@ -30,43 +22,36 @@ from subprocess import call
 from time import sleep
 from random import randint
 import getopt
-
 from api import MySimpleXMLRPCRequestHandler, StoppableXMLRPCServer
 from helper_startup import isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections
-
 import defaults
 import shared
 import knownnodes
 import state
 import shutdown
 import threading
-
 # Classes
-from class_sqlThread import sqlThread
-from class_singleCleaner import singleCleaner
-from class_objectProcessor import objectProcessor
-from class_singleWorker import singleWorker
+from class_sqlThread        import sqlThread
+from class_singleCleaner    import singleCleaner
+from class_objectProcessor  import objectProcessor
+from class_singleWorker     import singleWorker
 from class_addressGenerator import addressGenerator
-from class_smtpDeliver import smtpDeliver
-from class_smtpServer import smtpServer
-from bmconfigparser import BMConfigParser
-
-from inventory import Inventory
-
+from class_smtpDeliver      import smtpDeliver
+from class_smtpServer       import smtpServer
+from bmconfigparser         import BMConfigParser
+from inventory              import Inventory
 from network.connectionpool import BMConnectionPool
-from network.dandelion import Dandelion
-from network.networkthread import BMNetworkThread
+from network.dandelion      import Dandelion
+from network.networkthread  import BMNetworkThread
 from network.receivequeuethread import ReceiveQueueThread
 from network.announcethread import AnnounceThread
-from network.invthread import InvThread
-from network.addrthread import AddrThread
+from network.invthread      import InvThread
+from network.addrthread     import AddrThread
 from network.downloadthread import DownloadThread
-
 # Helper Functions
 import helper_bootstrap
 import helper_generic
 import helper_threading
-
 
 def connectToStream(streamNumber):
     state.streamsInWhichIAmParticipating.append(streamNumber)
@@ -192,10 +177,8 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
 selfInitiatedConnections = {}
 
 if shared.useVeryEasyProofOfWorkForTesting:
-    defaults.networkDefaultProofOfWorkNonceTrialsPerByte = int(
-        defaults.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
-    defaults.networkDefaultPayloadLengthExtraBytes = int(
-        defaults.networkDefaultPayloadLengthExtraBytes / 100)
+    defaults.networkDefaultProofOfWorkNonceTrialsPerByte = int(defaults.networkDefaultProofOfWorkNonceTrialsPerByte / 100)
+    defaults.networkDefaultPayloadLengthExtraBytes       = int(defaults.networkDefaultPayloadLengthExtraBytes       / 100)
 
 class Main:
     def start(self):
@@ -406,14 +389,21 @@ All parameters are optional.
         return {'address':address,'port':port}
 
 
+def emojiLogg():
+    from debug import logger
+    import sys  
+    reload(sys)  
+    sys.setdefaultencoding('utf8')
+    logger.warning(str(     u'exc:äüöß   🤷 🤷  without exception  😃                         '.encode("UTF-8")   )          )
+    logger.warning(          ' äüß      🤷 🤷 🤷   -- just a test emoji warning to demo this  ')
+
 def main():
     mainprogram = Main()
     mainprogram.start()
 
 if __name__ == "__main__":
+    emojiLogg()
     main()
-
-
 # So far, the creation of and management of the Bitmessage protocol and this
 # client is a one-man operation. Bitcoin tips are quite appreciated.
-# 1H5XaDA6fYENLbknwZyjiYXYPQaFjjLX2u
+# 1H5XaDA6fYENLbknwZyjiYXYPQaFjjLX2 
