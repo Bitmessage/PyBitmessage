@@ -13,3 +13,5 @@ build/lib.*
 build/temp.*
 dist
 *.egg-info
+/sloconn.diff
+/.gitignore
