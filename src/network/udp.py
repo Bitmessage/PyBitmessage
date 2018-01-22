@@ -61,7 +61,7 @@ class UDPSocket(BMProto):
             pass
 
     def state_bm_command(self):
-        BMProto.state_bm_command(self)
+        return BMProto.state_bm_command(self)
 
     # disable most commands before doing research / testing
     # only addr (peer discovery), error and object are implemented
