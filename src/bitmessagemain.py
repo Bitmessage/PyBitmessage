@@ -1,4 +1,5 @@
 #!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 # Copyright (c) 2012-2016 Jonathan Warren
 # Copyright (c) 2012-2016 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying
@@ -405,12 +406,22 @@ All parameters are optional.
         port = BMConfigParser().getint('bitmessagesettings', 'apiport')
         return {'address':address,'port':port}
 
+    
+def emojiLogg():
+    from debug import logger
+    reload(sys)  
+    sys.setdefaultencoding(  'utf8')
+    logger.warning(str(     u'exc:äüöß   🤷 🤷  without exception  😃                         '.encode("UTF-8")   )          )
+    logger.warning(          ' äüß      🤷 🤷 🤷   -- just a test emoji warning to demo this  ')
 
+    
+    
 def main():
     mainprogram = Main()
     mainprogram.start()
 
 if __name__ == "__main__":
+    #emojiLogg()                     #  uncomment this to demo utf8, emoji logging without exception 
     main()
 
 
