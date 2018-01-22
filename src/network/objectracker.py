@@ -29,6 +29,7 @@ class ObjectTracker(object):
     invInitialCapacity = 50000
     invErrorRate = 0.03
     trackingExpires = 3600
+    initialTimeOffset = 60
 
     def __init__(self):
         self.objectsNewToMe = {}
@@ -87,7 +88,7 @@ class ObjectTracker(object):
             if hashId in Dandelion().hashMap:
                 Dandelion().fluffTrigger(hashId)
             if hashId not in missingObjects:
-                missingObjects[hashId] = time.time()
+                missingObjects[hashId] = time.time() - ObjectTracker.initialTimeOffset
             with self.objectsNewToMeLock:
                 self.objectsNewToMe[hashId] = True
 

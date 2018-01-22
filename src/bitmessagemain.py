@@ -327,13 +327,21 @@ class Main:
                 sleep(1)
 
     def daemonize(self):
+        grandfatherPid = os.getpid()
+        parentPid = None
         try:
             if os.fork():
+                # unlock
+                shared.thisapp.cleanup()
+                # wait until grandchild ready
+                while True:
+                    sleep(1)
                 os._exit(0)
         except AttributeError:
             # fork not implemented
             pass
         else:
+            parentPid = os.getpid()
             shared.thisapp.lock() # relock
         os.umask(0)
         try:
@@ -343,6 +351,11 @@ class Main:
             pass
         try:
             if os.fork():
+                # unlock
+                shared.thisapp.cleanup()
+                # wait until child ready
+                while True:
+                    sleep(1)
                 os._exit(0)
         except AttributeError:
             # fork not implemented
@@ -359,6 +372,10 @@ class Main:
             os.dup2(si.fileno(), sys.stdin.fileno())
             os.dup2(so.fileno(), sys.stdout.fileno())
             os.dup2(se.fileno(), sys.stderr.fileno())
+        if parentPid:
+            # signal ready
+            os.kill(parentPid, signal.SIGTERM)
+            os.kill(grandfatherPid, signal.SIGTERM)
 
     def setSignalHandler(self):
         signal.signal(signal.SIGINT, helper_generic.signal_handler)

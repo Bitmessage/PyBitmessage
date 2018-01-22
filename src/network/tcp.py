@@ -180,7 +180,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             payload += hash
             objectCount += 1
             if objectCount >= BMProto.maxObjectCount:
-                self.sendChunk()
+                sendChunk()
                 payload = b''
                 objectCount = 0
 
@@ -292,7 +292,10 @@ class TCPServer(AdvancedDispatcher):
             if len(network.connectionpool.BMConnectionPool().inboundConnections) + \
                 len(network.connectionpool.BMConnectionPool().outboundConnections) > \
                 BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections") + \
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections"):
+                BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections") + 10:
+                # 10 is a sort of buffer, in between it will go through the version handshake
+                # and return an error to the peer
+                logger.warning("Server full, dropping connection")
                 sock.close()
                 return
             try:

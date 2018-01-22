@@ -43,7 +43,7 @@ class DownloadThread(threading.Thread, StoppableThread):
             connections = BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values()
             random.shuffle(connections)
             try:
-                requestChunk =  max(int(DownloadThread.maxRequestChunk / len(connections)), 1)
+                requestChunk =  max(int(min(DownloadThread.maxRequestChunk, len(missingObjects)) / len(connections)), 1)
             except ZeroDivisionError:
                 requestChunk = 1
             for i in connections:
@@ -63,15 +63,14 @@ class DownloadThread(threading.Thread, StoppableThread):
                     except KeyError:
                         continue
                     random.shuffle(request)
+                    if len(request) > requestChunk - downloadPending:
+                        request = request[:max(1, requestChunk - downloadPending)]
                     if not request:
                         continue
-                    if len(request) > requestChunk - downloadPending:
-                        request = request[:requestChunk - downloadPending]
                     # mark them as pending
                     for k in request:
                         i.objectsNewToMe[k] = False
                         missingObjects[k] = now
-
                 payload = bytearray()
                 payload.extend(addresses.encodeVarint(len(request)))
                 for chunk in request:

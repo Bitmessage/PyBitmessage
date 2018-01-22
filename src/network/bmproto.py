@@ -24,13 +24,16 @@ import shared
 import state
 import protocol
 
-class BMProtoError(ProxyError): pass
+class BMProtoError(ProxyError):
+    errorCodes = ("Protocol error")
 
 
-class BMProtoInsufficientDataError(BMProtoError): pass
+class BMProtoInsufficientDataError(BMProtoError):
+    errorCodes = ("Insufficient data")
 
 
-class BMProtoExcessiveDataError(BMProtoError): pass
+class BMProtoExcessiveDataError(BMProtoError):
+    errorCodes = ("Too much data")
 
 
 class BMProto(AdvancedDispatcher, ObjectTracker):
@@ -494,6 +497,20 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                     return False
             except:
                 pass
+        if not self.isOutbound:
+            # incoming from a peer we're connected to as outbound, or server full
+            # report the same error to counter deanonymisation
+            if state.Peer(self.destination.host, self.peerNode.port) in \
+                network.connectionpool.BMConnectionPool().inboundConnections or \
+                len(network.connectionpool.BMConnectionPool().inboundConnections) + \
+                len(network.connectionpool.BMConnectionPool().outboundConnections) > \
+                BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections") + \
+                BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections"):
+                self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
+                    errorText="Server full, please try again later."))
+                logger.debug ("Closed connection to %s due to server full or duplicate inbound/outbound.",
+                    str(self.destination))
+                return False
         if network.connectionpool.BMConnectionPool().isAlreadyConnected(self.nonce):
             self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
                 errorText="I'm connected to myself. Closing connection."))

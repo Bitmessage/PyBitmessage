@@ -78,6 +78,15 @@ class singleinstance:
             return
         if self.daemon and self.lockPid == os.getpid():
             # these are the two initial forks while daemonizing
+            try:
+                if sys.platform == 'win32':
+                    if hasattr(self, 'fd'):
+                        os.close(self.fd)
+                else:
+                    fcntl.lockf(self.fp, fcntl.LOCK_UN)
+            except Exception, e:
+                pass
+
             return
         print "Cleaning up lockfile"
         try:

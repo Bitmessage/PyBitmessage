@@ -75,7 +75,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def writable(self):
         self.uploadChunk = AdvancedDispatcher._buf_len
         if asyncore.maxUploadRate > 0:
-            self.uploadChunk = asyncore.uploadBucket
+            self.uploadChunk = int(asyncore.uploadBucket)
         self.uploadChunk = min(self.uploadChunk, len(self.write_buf))
         return asyncore.dispatcher.writable(self) and \
                 (self.connecting or (self.connected and self.uploadChunk > 0))
@@ -83,7 +83,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
     def readable(self):
         self.downloadChunk = AdvancedDispatcher._buf_len
         if asyncore.maxDownloadRate > 0:
-            self.downloadChunk = asyncore.downloadBucket
+            self.downloadChunk = int(asyncore.downloadBucket)
         try:
             if self.expectBytes > 0 and not self.fullyEstablished:
                 self.downloadChunk = min(self.downloadChunk, self.expectBytes - len(self.read_buf))

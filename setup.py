@@ -83,7 +83,7 @@ if __name__ == "__main__":
             'qrcode': ['qrcode'],
             'pyopencl': ['pyopencl'],
             'notify2': ['notify2'],
-            'sound:platform_system=="Windows"': ['winsound']
+            'sound;platform_system=="Windows"': ['winsound']
         },
         classifiers=[
             "License :: OSI Approved :: MIT License"
