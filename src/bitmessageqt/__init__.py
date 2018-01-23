@@ -1522,7 +1522,6 @@ class MyForm(settingsmixin.SMainWindow):
                 pass
         # QtGui.QWidget.changeEvent(self, event)
 
-
     def __icon_activated(self, reason):
         if reason == QtGui.QSystemTrayIcon.Trigger:
             self.actionShow.setChecked(not self.actionShow.isChecked())
@@ -1547,8 +1546,12 @@ class MyForm(settingsmixin.SMainWindow):
                     sound.SOUND_DISCONNECTED)
             if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp') and \
                 BMConfigParser().get('bitmessagesettings', 'socksproxytype') == "none":
-                self.statusBar().showMessage(_translate(
-                    "MainWindow", "Problems connecting? Try enabling UPnP in the Network Settings"), 10000)
+                self.updateStatusBar(
+                    _translate(
+                        "MainWindow",
+                        "Problems connecting? Try enabling UPnP in the Network"
+                        " Settings"
+                    ))
             self.connected = False
 
             if self.actionStatus is not None:
@@ -1556,8 +1559,8 @@ class MyForm(settingsmixin.SMainWindow):
                     "MainWindow", "Not Connected"))
                 self.setTrayIconFile("can-icon-24px-red.png")
         if color == 'yellow':
-            if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
-                self.statusBar().clearMessage()
+            if self.statusbar.currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
+                self.statusbar.clearMessage()
             self.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/yellowicon.png"))
             shared.statusIconColor = 'yellow'
@@ -1574,8 +1577,8 @@ class MyForm(settingsmixin.SMainWindow):
                     "MainWindow", "Connected"))
                 self.setTrayIconFile("can-icon-24px-yellow.png")
         if color == 'green':
-            if self.statusBar().currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
-                self.statusBar().clearMessage()
+            if self.statusbar.currentMessage() == 'Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect.':
+                self.statusbar.clearMessage()
             self.pushButtonStatusIcon.setIcon(
                 QtGui.QIcon(":/newPrefix/images/greenicon.png"))
             shared.statusIconColor = 'green'
@@ -1705,19 +1708,24 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.tableWidgetInboxChans]):
             for i in range(inbox.rowCount()):
                 if msgid == str(inbox.item(i, 3).data(QtCore.Qt.UserRole).toPyObject()):
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Message trashed"), 10000)
+                    self.updateStatusBar(
+                        _translate("MainWindow", "Message trashed"))
                     treeWidget = self.widgetConvert(inbox)
                     self.propagateUnreadCount(inbox.item(i, 1 if inbox.item(i, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), self.getCurrentFolder(treeWidget), treeWidget, 0)
                     inbox.removeRow(i)
                     break
-        
+
     def newVersionAvailable(self, version):
         self.notifiedNewVersion = ".".join(str(n) for n in version)
-        self.statusBar().showMessage(_translate("MainWindow", "New version of PyBitmessage is available: %1. Download it from https://github.com/Bitmessage/PyBitmessage/releases/latest").arg(self.notifiedNewVersion), 10000)
+        self.updateStatusBar(_translate(
+            "MainWindow",
+            "New version of PyBitmessage is available: %1. Download it"
+            " from https://github.com/Bitmessage/PyBitmessage/releases/latest"
+            ).arg(self.notifiedNewVersion)
+        )
 
     def displayAlert(self, title, text, exitAfterUserClicksOk):
-        self.statusBar().showMessage(text)
+        self.updateStatusBar(text)
         QtGui.QMessageBox.critical(self, title, text, QtGui.QMessageBox.Ok)
         if exitAfterUserClicksOk:
             os._exit(0)
@@ -1799,7 +1807,7 @@ class MyForm(settingsmixin.SMainWindow):
     def click_pushButtonSend(self):
         encoding = 3 if QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier else 2
 
-        self.statusBar().clearMessage()
+        self.statusbar.clearMessage()
 
         if self.ui.tabWidgetSend.currentIndex() == \
                 self.ui.tabWidgetSend.indexOf(self.ui.sendDirect):
@@ -1871,8 +1879,14 @@ class MyForm(settingsmixin.SMainWindow):
                             BMConfigParser().set(fromAddress, 'label', email)
                             BMConfigParser().set(fromAddress, 'gateway', 'mailchuck')
                             BMConfigParser().save()
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: Your account wasn't registered at an email gateway. Sending registration now as %1, please wait for the registration to be processed before retrying sending.").arg(email), 10000)
+                            self.updateStatusBar(_translate(
+                                "MainWindow",
+                                "Error: Your account wasn't registered at"
+                                " an email gateway. Sending registration"
+                                " now as %1, please wait for the registration"
+                                " to be processed before retrying sending."
+                                ).arg(email)
+                            )
                             return
                     status, addressVersionNumber, streamNumber, ripe = decodeAddress(
                         toAddress)
@@ -1884,32 +1898,68 @@ class MyForm(settingsmixin.SMainWindow):
                         logger.error('Error: Could not decode recipient address ' + toAddress + ':' + status)
 
                         if status == 'missingbm':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: Bitmessage addresses start with BM-   Please check the recipient address %1").arg(toAddress), 10000)
+                            self.updateStatusBar(_translate(
+                                "MainWindow",
+                                "Error: Bitmessage addresses start with"
+                                " BM-   Please check the recipient address %1"
+                                ).arg(toAddress))
                         elif status == 'checksumfailed':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: The recipient address %1 is not typed or copied correctly. Please check it.").arg(toAddress), 10000)
+                            self.statusbar_message(_translate(
+                                "MainWindow",
+                                "Error: The recipient address %1 is not"
+                                " typed or copied correctly. Please check it."
+                                ).arg(toAddress))
                         elif status == 'invalidcharacters':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: The recipient address %1 contains invalid characters. Please check it.").arg(toAddress), 10000)
+                            self.updateStatusBar(_translate(
+                                "MainWindow",
+                                "Error: The recipient address %1 contains"
+                                " invalid characters. Please check it."
+                                ).arg(toAddress))
                         elif status == 'versiontoohigh':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: The version of the recipient address %1 is too high. Either you need to upgrade your Bitmessage software or your acquaintance is being clever.").arg(toAddress), 10000)
+                            self.updateStatusBar(_translate(
+                                "MainWindow",
+                                "Error: The version of the recipient address"
+                                " %1 is too high. Either you need to upgrade"
+                                " your Bitmessage software or your"
+                                " acquaintance is being clever."
+                                ).arg(toAddress))
                         elif status == 'ripetooshort':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: Some data encoded in the recipient address %1 is too short. There might be something wrong with the software of your acquaintance.").arg(toAddress), 10000)
+                            self.updateStatusBar(_translate(
+                                "MainWindow",
+                                "Error: Some data encoded in the recipient"
+                                " address %1 is too short. There might be"
+                                " something wrong with the software of"
+                                " your acquaintance."
+                                ).arg(toAddress))
                         elif status == 'ripetoolong':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: Some data encoded in the recipient address %1 is too long. There might be something wrong with the software of your acquaintance.").arg(toAddress), 10000)
+                            self.updateStatusBar(_translate(
+                                "MainWindow",
+                                "Error: Some data encoded in the recipient"
+                                " address %1 is too long. There might be"
+                                " something wrong with the software of"
+                                " your acquaintance."
+                                ).arg(toAddress))
                         elif status == 'varintmalformed':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: Some data encoded in the recipient address %1 is malformed. There might be something wrong with the software of your acquaintance.").arg(toAddress), 10000)
+                            self.updateStatusBar(_translate(
+                                "MainWindow",
+                                "Error: Some data encoded in the recipient"
+                                " address %1 is malformed. There might be"
+                                " something wrong with the software of"
+                                " your acquaintance."
+                                ).arg(toAddress))
                         else:
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Error: Something is wrong with the recipient address %1.").arg(toAddress), 10000)
+                            self.updateStatusBar(_translate(
+                                "MainWindow",
+                                "Error: Something is wrong with the"
+                                " recipient address %1."
+                                ).arg(toAddress))
                     elif fromAddress == '':
-                        self.statusBar().showMessage(_translate(
-                            "MainWindow", "Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab."), 10000)
+                        self.updateStatusBar(_translate(
+                            "MainWindow",
+                            "Error: You must specify a From address. If you"
+                            " don\'t have one, go to the"
+                            " \'Your Identities\' tab.")
+                        )
                     else:
                         toAddress = addBMIfNotPresent(toAddress)
 
@@ -1921,11 +1971,17 @@ class MyForm(settingsmixin.SMainWindow):
                             QtGui.QMessageBox.about(self, _translate("MainWindow", "Stream number"), _translate(
                                 "MainWindow", "Concerning the address %1, Bitmessage cannot handle stream numbers of %2. Perhaps upgrade Bitmessage to the latest version.").arg(toAddress).arg(str(streamNumber)))
                             continue
-                        self.statusBar().clearMessage()
+                        self.statusbar.clearMessage()
                         if shared.statusIconColor == 'red':
-                            self.statusBar().showMessage(_translate(
-                                "MainWindow", "Warning: You are currently not connected. Bitmessage will do the work necessary to send the message but it won\'t send until you connect."))
-                        stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+                            self.updateStatusBar(_translate(
+                                "MainWindow",
+                                "Warning: You are currently not connected."
+                                " Bitmessage will do the work necessary to"
+                                " send the message but it won\'t send until"
+                                " you connect.")
+                            )
+                        stealthLevel = BMConfigParser().safeGetInt(
+                            'bitmessagesettings', 'ackstealthlevel')
                         ackdata = genAckPayload(streamNumber, stealthLevel)
                         t = ()
                         sqlExecute(
@@ -1965,18 +2021,21 @@ class MyForm(settingsmixin.SMainWindow):
                         if self.replyFromTab is not None:
                             self.ui.tabWidget.setCurrentIndex(self.replyFromTab)
                             self.replyFromTab = None
-                        self.statusBar().showMessage(_translate(
-                            "MainWindow", "Message queued."), 10000)
-                        #self.ui.tableWidgetInbox.setCurrentCell(0, 0)
+                        self.updateStatusBar(_translate(
+                            "MainWindow", "Message queued."))
+                        # self.ui.tableWidgetInbox.setCurrentCell(0, 0)
                 else:
-                    self.statusBar().showMessage(_translate(
-                        "MainWindow", "Your \'To\' field is empty."), 10000)
+                    self.updateStatusBar(_translate(
+                        "MainWindow", "Your \'To\' field is empty."))
         else:  # User selected 'Broadcast'
             if fromAddress == '':
-                self.statusBar().showMessage(_translate(
-                    "MainWindow", "Error: You must specify a From address. If you don\'t have one, go to the \'Your Identities\' tab."), 10000)
+                self.updateStatusBar(_translate(
+                    "MainWindow",
+                    "Error: You must specify a From address. If you don\'t"
+                    " have one, go to the \'Your Identities\' tab."
+                ))
             else:
-                self.statusBar().clearMessage()
+                self.statusbar.clearMessage()
                 # We don't actually need the ackdata for acknowledgement since
                 # this is a broadcast message, but we can use it to update the
                 # user interface when the POW is done generating.
@@ -2016,30 +2075,32 @@ class MyForm(settingsmixin.SMainWindow):
                     self.ui.tabWidget.indexOf(self.ui.send)
                 )
                 self.ui.tableWidgetInboxSubscriptions.setCurrentCell(0, 0)
-                self.statusBar().showMessage(_translate(
-                    "MainWindow", "Broadcast queued."), 10000)
+                self.updateStatusBar(_translate(
+                    "MainWindow", "Broadcast queued."))
 
     def click_pushButtonLoadFromAddressBook(self):
         self.ui.tabWidget.setCurrentIndex(5)
         for i in range(4):
             time.sleep(0.1)
-            self.statusBar().clearMessage()
+            self.statusbar.clearMessage()
             time.sleep(0.1)
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "Right click one or more entries in your address book and select \'Send message to this address\'."), 10000)
+            self.updateStatusBar(_translate(
+                "MainWindow",
+                "Right click one or more entries in your address book and"
+                " select \'Send message to this address\'."
+            ))
 
     def click_pushButtonFetchNamecoinID(self):
         nc = namecoinConnection()
         identities = str(self.ui.lineEditTo.text().toUtf8()).split(";")
         err, addr = nc.query(identities[-1].strip())
         if err is not None:
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "Error: %1").arg(err), 10000)
+            self.statusbar_message("Error: %1", args=[err])
         else:
             identities[-1] = addr
             self.ui.lineEditTo.setText("; ".join(identities))
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "Fetched address from namecoin identity."), 10000)
+            self.updateStatusBar(_translate(
+                "MainWindow", "Fetched address from namecoin identity."))
 
     def setBroadcastEnablementDependingOnWhetherThisIsAMailingListAddress(self, address):
         # If this is a chan then don't let people broadcast because no one
@@ -2183,23 +2244,22 @@ class MyForm(settingsmixin.SMainWindow):
             dialog = dialogs.AddAddressDialog(self)
         if dialog.exec_():
             if not dialog.valid:
-                self.statusBar().showMessage(_translate(
+                self.updateStatusBar(_translate(
                     "MainWindow",
                     "The address you entered was invalid. Ignoring it."
-                    ), 10000)
+                ))
                 return
-
             address = addBMIfNotPresent(str(dialog.lineEditAddress.text()))
             # First we must check to see if the address is already in the
             # address book. The user cannot add it again or else it will
             # cause problems when updating and deleting the entry.
             if shared.isAddressInMyAddressBook(address):
-                self.statusBar().showMessage(_translate(
+                self.updateStatusBar(_translate(
                     "MainWindow",
                     "Error: You cannot add the same address to your"
                     " address book twice. Try renaming the existing one"
                     " if you want."
-                    ), 10000)
+                ))
                 return
             label = str(dialog.lineEditLabel.text().toUtf8())
             self.addEntryToAddressBook(address, label)
@@ -2231,23 +2291,22 @@ class MyForm(settingsmixin.SMainWindow):
         dialog = dialogs.NewSubscriptionDialog(self)
         if dialog.exec_():
             if not dialog.valid:
-                self.statusBar().showMessage(_translate(
+                self.updateStatusBar(_translate(
                     "MainWindow",
                     "The address you entered was invalid. Ignoring it."
-                    ), 10000)
+                ))
                 return
-
             address = addBMIfNotPresent(str(dialog.lineEditAddress.text()))
             # We must check to see if the address is already in the
             # subscriptions list. The user cannot add it again or else it
             # will cause problems when updating and deleting the entry.
             if shared.isAddressInMySubscriptionsList(address):
-                self.statusBar().showMessage(_translate(
+                self.updateStatusBar(_translate(
                     "MainWindow",
                     "Error: You cannot add the same address to your"
                     " subscriptions twice. Perhaps rename the existing one"
                     " if you want."
-                    ), 10000)
+                ))
                 return
             label = str(dialog.lineEditLabel.text().toUtf8())
             self.addSubscription(address, label)
@@ -2322,7 +2381,7 @@ class MyForm(settingsmixin.SMainWindow):
                     QtGui.QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
                         "MainWindow", "Bitmessage will use your proxy from now on but you may want to manually restart Bitmessage now to close existing connections (if any)."))
             if BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] != 'SOCKS':
-                self.statusBar().clearMessage()
+                self.statusbar.clearMessage()
             state.resetNetworkProtocolAvailability() # just in case we changed something in the network connectivity
             if self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] == 'SOCKS':
                 BMConfigParser().set('bitmessagesettings', 'socksproxytype', str(
@@ -2674,23 +2733,27 @@ class MyForm(settingsmixin.SMainWindow):
 
         self.quitAccepted = True
 
-        self.statusBar().showMessage(_translate(
-            "MainWindow", "Shutting down PyBitmessage... %1%").arg(str(0)))
+        self.updateStatusBar(_translate(
+            "MainWindow", "Shutting down PyBitmessage... %1%").arg(0))
 
         if waitForConnection:
-            self.statusBar().showMessage(_translate(
+            self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for network connection..."))
             while shared.statusIconColor == 'red':
                 time.sleep(0.5)
-                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
+                QtCore.QCoreApplication.processEvents(
+                    QtCore.QEventLoop.AllEvents, 1000
+                )
 
         # this probably will not work correctly, because there is a delay between the status icon turning red and inventory exchange, but it's better than nothing.
         if waitForSync:
-            self.statusBar().showMessage(_translate(
+            self.updateStatusBar(_translate(
                 "MainWindow", "Waiting for finishing synchronisation..."))
             while PendingDownloadQueue.totalSize() > 0:
                 time.sleep(0.5)
-                QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
+                QtCore.QCoreApplication.processEvents(
+                    QtCore.QEventLoop.AllEvents, 1000
+                )
 
         if waitForPow:
             # check if PoW queue empty
@@ -2702,51 +2765,83 @@ class MyForm(settingsmixin.SMainWindow):
                 if curWorkerQueue > maxWorkerQueue:
                     maxWorkerQueue = curWorkerQueue
                 if curWorkerQueue > 0:
-                    self.statusBar().showMessage(_translate("MainWindow", "Waiting for PoW to finish... %1%").arg(str(50 * (maxWorkerQueue - curWorkerQueue) / maxWorkerQueue)))
+                    self.updateStatusBar(_translate(
+                        "MainWindow", "Waiting for PoW to finish... %1%"
+                        ).arg(50 * (maxWorkerQueue - curWorkerQueue)
+                              / maxWorkerQueue)
+                    )
                     time.sleep(0.5)
-                    QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
-        
-            self.statusBar().showMessage(_translate("MainWindow", "Shutting down Pybitmessage... %1%").arg(str(50)))
-        
-            QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
+                    QtCore.QCoreApplication.processEvents(
+                        QtCore.QEventLoop.AllEvents, 1000
+                    )
+
+            self.updateStatusBar(_translate(
+                "MainWindow", "Shutting down Pybitmessage... %1%").arg(50))
+
+            QtCore.QCoreApplication.processEvents(
+                QtCore.QEventLoop.AllEvents, 1000
+            )
             if maxWorkerQueue > 0:
-                time.sleep(0.5) # a bit of time so that the hashHolder is populated
-            QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
-        
+                # a bit of time so that the hashHolder is populated
+                time.sleep(0.5)
+            QtCore.QCoreApplication.processEvents(
+                QtCore.QEventLoop.AllEvents, 1000
+            )
+
             # check if upload (of objects created locally) pending
-            self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(50)))
+            self.updateStatusBar(_translate(
+                "MainWindow", "Waiting for objects to be sent... %1%").arg(50))
             try:
                 while PendingUpload().progress() < 1:
-                    self.statusBar().showMessage(_translate("MainWindow", "Waiting for objects to be sent... %1%").arg(str(int(50 + 20 * PendingUpload().progress()))))
+                    self.updateStatusBar(_translate(
+                        "MainWindow",
+                        "Waiting for objects to be sent... %1%"
+                        ).arg(int(50 + 20 * PendingUpload().progress()))
+                    )
                     time.sleep(0.5)
-                    QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
+                    QtCore.QCoreApplication.processEvents(
+                        QtCore.QEventLoop.AllEvents, 1000
+                    )
             except PendingUploadDeadlineException:
                 pass
 
-            QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
-        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
+            QtCore.QCoreApplication.processEvents(
+                QtCore.QEventLoop.AllEvents, 1000
+            )
+        QtCore.QCoreApplication.processEvents(
+            QtCore.QEventLoop.AllEvents, 1000
+        )
 
         # save state and geometry self and all widgets
-        self.statusBar().showMessage(_translate("MainWindow", "Saving settings... %1%").arg(str(70)))
-        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
+        self.updateStatusBar(_translate(
+            "MainWindow", "Saving settings... %1%").arg(70))
+        QtCore.QCoreApplication.processEvents(
+            QtCore.QEventLoop.AllEvents, 1000
+        )
         self.saveSettings()
         for attr, obj in self.ui.__dict__.iteritems():
-            if hasattr(obj, "__class__") and isinstance(obj, settingsmixin.SettingsMixin):
+            if hasattr(obj, "__class__") \
+                    and isinstance(obj, settingsmixin.SettingsMixin):
                 saveMethod = getattr(obj, "saveSettings", None)
-                if callable (saveMethod):
+                if callable(saveMethod):
                     obj.saveSettings()
 
-        self.statusBar().showMessage(_translate("MainWindow", "Shutting down core... %1%").arg(str(80)))
-        QtCore.QCoreApplication.processEvents(QtCore.QEventLoop.AllEvents, 1000)
+        self.updateStatusBar(_translate(
+            "MainWindow", "Shutting down core... %1%").arg(80))
+        QtCore.QCoreApplication.processEvents(
+            QtCore.QEventLoop.AllEvents, 1000
+        )
         shutdown.doCleanShutdown()
-        self.statusBar().showMessage(_translate("MainWindow", "Stopping notifications... %1%").arg(str(90)))
+        self.updateStatusBar(_translate(
+            "MainWindow", "Stopping notifications... %1%").arg(90))
         self.tray.hide()
 
-        self.statusBar().showMessage(_translate("MainWindow", "Shutdown imminent... %1%").arg(str(100)))
+        self.updateStatusBar(_translate(
+            "MainWindow", "Shutdown imminent... %1%").arg(100))
         shared.thisapp.cleanup()
         logger.info("Shutdown complete")
         super(MyForm, myapp).close()
-        #return
+        # return
         os._exit(0)
 
     # window close event
@@ -2991,11 +3086,15 @@ class MyForm(settingsmixin.SMainWindow):
                        label,
                        addressAtCurrentInboxRow, True)
             self.ui.blackwhitelist.rerenderBlackWhiteList()
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "Entry added to the blacklist. Edit the label to your liking."), 10000)
+            self.updateStatusBar(_translate(
+                "MainWindow",
+                "Entry added to the blacklist. Edit the label to your liking.")
+            )
         else:
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "Error: You cannot add the same address to your blacklist twice. Try renaming the existing one if you want."), 10000)
+            self.updateStatusBar(_translate(
+                "MainWindow",
+                "Error: You cannot add the same address to your blacklist"
+                " twice. Try renaming the existing one if you want."))
 
     def deleteRowFromMessagelist(self, row = None, inventoryHash = None, ackData = None, messageLists = None):
         if messageLists is None:
@@ -3047,9 +3146,9 @@ class MyForm(settingsmixin.SMainWindow):
         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
         tableWidget.setUpdatesEnabled(True)
         self.propagateUnreadCount(self.getCurrentAccount, folder)
-        self.statusBar().showMessage(_translate(
-            "MainWindow", "Moved items to trash."), 10000)
-            
+        self.updateStatusBar(_translate(
+            "MainWindow", "Moved items to trash."))
+
     def on_action_TrashUndelete(self):
         tableWidget = self.getCurrentMessagelist()
         if not tableWidget:
@@ -3078,8 +3177,7 @@ class MyForm(settingsmixin.SMainWindow):
         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
         tableWidget.setUpdatesEnabled(True)
         self.propagateUnreadCount(self.getCurrentAccount)
-        self.statusBar().showMessage(_translate(
-            "MainWindow", "Undeleted items."), 10000)
+        self.updateStatusBar(_translate("MainWindow", "Undeleted item."))
 
     def on_action_InboxSaveMessageAs(self):
         tableWidget = self.getCurrentMessagelist()
@@ -3109,9 +3207,9 @@ class MyForm(settingsmixin.SMainWindow):
             f = open(filename, 'w')
             f.write(message)
             f.close()
-        except Exception, e:
+        except Exception:
             logger.exception('Message not saved', exc_info=True)
-            self.statusBar().showMessage(_translate("MainWindow", "Write error."), 10000)
+            self.updateStatusBar(_translate("MainWindow", "Write error."))
 
     # Send item on the Sent tab to trash
     def on_action_SentTrash(self):
@@ -3134,12 +3232,11 @@ class MyForm(settingsmixin.SMainWindow):
                 self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
             self.getCurrentMessageTextedit().setPlainText("")
             tableWidget.removeRow(currentRow)
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "Moved items to trash."), 10000)
-        if currentRow == 0:
-            self.ui.tableWidgetInbox.selectRow(currentRow)
-        else:
-            self.ui.tableWidgetInbox.selectRow(currentRow - 1)
+            self.updateStatusBar(_translate(
+                "MainWindow", "Moved items to trash."))
+
+        self.ui.tableWidgetInbox.selectRow(
+            currentRow if currentRow == 0 else currentRow - 1)
 
     def on_action_ForceSend(self):
         currentRow = self.ui.tableWidgetInbox.currentRow()
@@ -3214,10 +3311,10 @@ class MyForm(settingsmixin.SMainWindow):
                 self.ui.lineEditTo.setText(unicode(
                     self.ui.lineEditTo.text().toUtf8(), encoding="UTF-8") + '; ' + stringToAdd)
         if listOfSelectedRows == {}:
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "No addresses selected."), 10000)
+            self.updateStatusBar(_translate(
+                "MainWindow", "No addresses selected."))
         else:
-            self.statusBar().clearMessage()
+            self.statusbar.clearMessage()
             self.ui.tabWidget.setCurrentIndex(
                 self.ui.tabWidget.indexOf(self.ui.send)
             )
@@ -3230,11 +3327,11 @@ class MyForm(settingsmixin.SMainWindow):
             addressAtCurrentRow = str(self.ui.tableWidgetAddressBook.item(currentRow,1).text())
             # Then subscribe to it... provided it's not already in the address book
             if shared.isAddressInMySubscriptionsList(addressAtCurrentRow):
-                self.statusBar().showMessage(_translate(
+                self.updateStatusBar(_translate(
                     "MainWindow",
                     "Error: You cannot add the same address to your"
                     " subscriptions twice. Perhaps rename the existing"
-                    " one if you want."), 10000)
+                    " one if you want."))
                 continue
             labelAtCurrentRow = self.ui.tableWidgetAddressBook.item(currentRow,0).text().toUtf8()
             self.addSubscription(addressAtCurrentRow, labelAtCurrentRow)
@@ -3991,9 +4088,9 @@ class MyForm(settingsmixin.SMainWindow):
             logger.info('Status bar: ' + message)
 
         if option == 1:
-            self.statusBar().addImportant(message)
+            self.statusbar.addImportant(message)
         else:
-            self.statusBar().showMessage(message, 10000)
+            self.statusbar.showMessage(message, 10000)
 
     def initSettings(self):
         QtCore.QCoreApplication.setOrganizationName("PyBitmessage")
@@ -4001,9 +4098,10 @@ class MyForm(settingsmixin.SMainWindow):
         QtCore.QCoreApplication.setApplicationName("pybitmessageqt")
         self.loadSettings()
         for attr, obj in self.ui.__dict__.iteritems():
-            if hasattr(obj, "__class__") and isinstance(obj, settingsmixin.SettingsMixin):
+            if hasattr(obj, "__class__") and \
+                    isinstance(obj, settingsmixin.SettingsMixin):
                 loadMethod = getattr(obj, "loadSettings", None)
-                if callable (loadMethod):
+                if callable(loadMethod):
                     obj.loadSettings()
 
 

@@ -8,6 +8,7 @@ from tr import _translate
 from retranslateui import RetranslateMixin
 import widgets
 
+import queues
 import hashlib
 from inventory import Inventory
 
@@ -32,7 +33,9 @@ class AddressCheckMixin(object):
             self._onSuccess(addressVersion, streamNumber, ripe)
         elif status == 'missingbm':
             self.labelAddressCheck.setText(_translate(
-                "MainWindow", "The address should start with ''BM-''"))
+                "MainWindow",  # dialog name should be here
+                "The address should start with ''BM-''"
+            ))
         elif status == 'checksumfailed':
             self.labelAddressCheck.setText(_translate(
                 "MainWindow",
@@ -47,7 +50,9 @@ class AddressCheckMixin(object):
             ))
         elif status == 'invalidcharacters':
             self.labelAddressCheck.setText(_translate(
-                "MainWindow", "The address contains invalid characters."))
+                "MainWindow",
+                "The address contains invalid characters."
+            ))
         elif status == 'ripetooshort':
             self.labelAddressCheck.setText(_translate(
                 "MainWindow",
@@ -55,7 +60,9 @@ class AddressCheckMixin(object):
             ))
         elif status == 'ripetoolong':
             self.labelAddressCheck.setText(_translate(
-                "MainWindow", "Some data encoded in the address is too long."))
+                "MainWindow",
+                "Some data encoded in the address is too long."
+            ))
         elif status == 'varintmalformed':
             self.labelAddressCheck.setText(_translate(
                 "MainWindow",
@@ -152,7 +159,7 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog, RetranslateMixin):
             if self.address_is_chan:  # address is a chan address
                 self.radioButtonBehaviorMailingList.setDisabled(True)
                 self.lineEditMailingListName.setText(_translate(
-                    "MainWindow",
+                    "SpecialAddressBehaviorDialog",
                     "This is a chan address. You cannot use it as a"
                     " pseudo-mailing list."
                 ))
@@ -240,10 +247,8 @@ class EmailGatewayDialog(QtGui.QDialog, RetranslateMixin):
         self.config.set(acct.fromAddress, 'label', email)
         self.config.set(acct.fromAddress, 'gateway', 'mailchuck')
         self.config.save()
-        self.parent.statusBar().showMessage(_translate(
-            "MainWindow",
-            "Sending email gateway registration request"
-        ), 10000)
+        self.parent.statusbar_message(
+            "Sending email gateway registration request")
 
     def accept(self):
         self.hide()
@@ -260,15 +265,15 @@ class EmailGatewayDialog(QtGui.QDialog, RetranslateMixin):
             self.acct.unregister()
             self.config.remove_option(self.acct.fromAddress, 'gateway')
             self.config.save()
-            self.parent.statusBar().showMessage(_translate(
-                "MainWindow",
+            queues.UISignalQueue.put(('updateStatusBar', _translate(
+                "EmailGatewayDialog",
                 "Sending email gateway unregistration request"
-            ), 10000)
+            )))
         elif self.radioButtonStatus.isChecked():
             self.acct.status()
-            self.parent.statusBar().showMessage(_translate(
-                "MainWindow",
+            queues.UISignalQueue.put(('updateStatusBar', _translate(
+                "EmailGatewayDialog",
                 "Sending email gateway status request"
-            ), 10000)
+            )))
         elif self.radioButtonSettings.isChecked():
             return self.acct
