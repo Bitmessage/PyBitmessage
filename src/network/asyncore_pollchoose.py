@@ -398,6 +398,8 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None,
          poller=None):
     if map is None:
         map = socket_map
+    if count is None:
+        count =  True
     # code which grants backward compatibility with "use_poll" 
     # argument which should no longer be used in favor of
     # "poller"
@@ -414,27 +416,20 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None,
         elif hasattr(select, 'select'):
             poller = select_poller
 
-    if count is None:
-        while map:
-            # fill buckets first
-            update_sent()
-            update_received()
-            # then poll
-            poller(timeout, map)
+    if timeout == 0:
+        deadline = 0
     else:
-        if timeout == 0:
-            deadline = 0
-        else:
-            deadline = time.time() + timeout
-        while map and count > 0:
-            # fill buckets first
-            update_sent()
-            update_received()
-            subtimeout = deadline - time.time()
-            if subtimeout <= 0:
-                break
-            poller(subtimeout, map)
-            # then poll
+        deadline = time.time() + timeout
+    while count:
+        # fill buckets first
+        update_sent()
+        update_received()
+        subtimeout = deadline - time.time()
+        if subtimeout <= 0:
+            break
+        # then poll
+        poller(subtimeout, map)
+        if type(count) is int:
             count = count - 1
 
 class dispatcher:
