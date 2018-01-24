@@ -2225,44 +2225,31 @@ class MyForm(settingsmixin.SMainWindow):
         if hasattr(acct, "feedback") \
                 and acct.feedback != GatewayAccount.ALL_OK:
             if acct.feedback == GatewayAccount.REGISTRATION_DENIED:
-                dialog = dialogs.EmailGatewayDialog(
-                    self,
-                    _translate(
-                        "EmailGatewayRegistrationDialog",
-                        "Registration failed:"),
-                    _translate(
-                        "EmailGatewayRegistrationDialog",
-                        "The requested email address is not available,"
-                        " please try a new one."),
-                    config=BMConfigParser()
-                )
-                if dialog.exec_():
-                    dialog.register(acct)
+                dialogs.EmailGatewayDialog(
+                    self, BMConfigParser(), acct).exec_()
 
     def click_pushButtonAddAddressBook(self, dialog=None):
         if not dialog:
             dialog = dialogs.AddAddressDialog(self)
-        if dialog.exec_():
-            if not dialog.valid:
-                self.updateStatusBar(_translate(
-                    "MainWindow",
-                    "The address you entered was invalid. Ignoring it."
-                ))
-                return
-            address = addBMIfNotPresent(str(dialog.lineEditAddress.text()))
-            # First we must check to see if the address is already in the
-            # address book. The user cannot add it again or else it will
-            # cause problems when updating and deleting the entry.
-            if shared.isAddressInMyAddressBook(address):
-                self.updateStatusBar(_translate(
-                    "MainWindow",
-                    "Error: You cannot add the same address to your"
-                    " address book twice. Try renaming the existing one"
-                    " if you want."
-                ))
-                return
-            label = str(dialog.lineEditLabel.text().toUtf8())
-            self.addEntryToAddressBook(address, label)
+        dialog.exec_()
+        try:
+            address, label = dialog.data
+        except AttributeError:
+            return
+
+        # First we must check to see if the address is already in the
+        # address book. The user cannot add it again or else it will
+        # cause problems when updating and deleting the entry.
+        if shared.isAddressInMyAddressBook(address):
+            self.updateStatusBar(_translate(
+                "MainWindow",
+                "Error: You cannot add the same address to your"
+                " address book twice. Try renaming the existing one"
+                " if you want."
+            ))
+            return
+
+        self.addEntryToAddressBook(address, label)
 
     def addEntryToAddressBook(self, address, label):
         if shared.isAddressInMyAddressBook(address):
@@ -2289,35 +2276,33 @@ class MyForm(settingsmixin.SMainWindow):
 
     def click_pushButtonAddSubscription(self):
         dialog = dialogs.NewSubscriptionDialog(self)
-        if dialog.exec_():
-            if not dialog.valid:
-                self.updateStatusBar(_translate(
-                    "MainWindow",
-                    "The address you entered was invalid. Ignoring it."
+        dialog.exec_()
+        try:
+            address, label = dialog.data
+        except AttributeError:
+            return
+
+        # We must check to see if the address is already in the
+        # subscriptions list. The user cannot add it again or else it
+        # will cause problems when updating and deleting the entry.
+        if shared.isAddressInMySubscriptionsList(address):
+            self.updateStatusBar(_translate(
+                "MainWindow",
+                "Error: You cannot add the same address to your"
+                " subscriptions twice. Perhaps rename the existing one"
+                " if you want."
+            ))
+            return
+
+        self.addSubscription(address, label)
+        # Now, if the user wants to display old broadcasts, let's get
+        # them out of the inventory and put them
+        # to the objectProcessorQueue to be processed
+        if dialog.checkBoxDisplayMessagesAlreadyInInventory.isChecked():
+            for value in dialog.recent:
+                queues.objectProcessorQueue.put((
+                    value.type, value.payload
                 ))
-                return
-            address = addBMIfNotPresent(str(dialog.lineEditAddress.text()))
-            # We must check to see if the address is already in the
-            # subscriptions list. The user cannot add it again or else it
-            # will cause problems when updating and deleting the entry.
-            if shared.isAddressInMySubscriptionsList(address):
-                self.updateStatusBar(_translate(
-                    "MainWindow",
-                    "Error: You cannot add the same address to your"
-                    " subscriptions twice. Perhaps rename the existing one"
-                    " if you want."
-                ))
-                return
-            label = str(dialog.lineEditLabel.text().toUtf8())
-            self.addSubscription(address, label)
-            # Now, if the user wants to display old broadcasts, let's get
-            # them out of the inventory and put them
-            # to the objectProcessorQueue to be processed
-            if dialog.checkBoxDisplayMessagesAlreadyInInventory.isChecked():
-                for value in dialog.recent:
-                    queues.objectProcessorQueue.put((
-                        value.type, value.payload
-                    ))
 
     def click_pushButtonStatusIcon(self):
         dialogs.IconGlossaryDialog(self, config=BMConfigParser()).exec_()
@@ -2557,29 +2542,32 @@ class MyForm(settingsmixin.SMainWindow):
     def on_action_EmailGatewayDialog(self):
         dialog = dialogs.EmailGatewayDialog(self, config=BMConfigParser())
         # For Modal dialogs
-        acct = dialog.exec_()
+        dialog.exec_()
+        try:
+            acct = dialog.data
+        except AttributeError:
+            return
 
-        # Only settings ramain here
-        if acct:
-            acct.settings()
-            for i in range(self.ui.comboBoxSendFrom.count()):
-                if str(self.ui.comboBoxSendFrom.itemData(i).toPyObject()) \
-                        == acct.fromAddress:
-                    self.ui.comboBoxSendFrom.setCurrentIndex(i)
-                    break
-            else:
-                self.ui.comboBoxSendFrom.setCurrentIndex(0)
+        # Only settings remain here
+        acct.settings()
+        for i in range(self.ui.comboBoxSendFrom.count()):
+            if str(self.ui.comboBoxSendFrom.itemData(i).toPyObject()) \
+                    == acct.fromAddress:
+                self.ui.comboBoxSendFrom.setCurrentIndex(i)
+                break
+        else:
+            self.ui.comboBoxSendFrom.setCurrentIndex(0)
 
-            self.ui.lineEditTo.setText(acct.toAddress)
-            self.ui.lineEditSubject.setText(acct.subject)
-            self.ui.textEditMessage.setText(acct.message)
-            self.ui.tabWidgetSend.setCurrentIndex(
-                self.ui.tabWidgetSend.indexOf(self.ui.sendDirect)
-            )
-            self.ui.tabWidget.setCurrentIndex(
-                self.ui.tabWidget.indexOf(self.ui.send)
-            )
-            self.ui.textEditMessage.setFocus()
+        self.ui.lineEditTo.setText(acct.toAddress)
+        self.ui.lineEditSubject.setText(acct.subject)
+        self.ui.textEditMessage.setText(acct.message)
+        self.ui.tabWidgetSend.setCurrentIndex(
+            self.ui.tabWidgetSend.indexOf(self.ui.sendDirect)
+        )
+        self.ui.tabWidget.setCurrentIndex(
+            self.ui.tabWidget.indexOf(self.ui.send)
+        )
+        self.ui.textEditMessage.setFocus()
 
     def on_action_MarkAllRead(self):
         if QtGui.QMessageBox.question(
@@ -2621,53 +2609,7 @@ class MyForm(settingsmixin.SMainWindow):
                 addressAtCurrentRow, self.getCurrentFolder(), None, 0)
 
     def click_NewAddressDialog(self):
-        dialog = dialogs.NewAddressDialog(self)
-        # For Modal dialogs
-        if not dialog.exec_():
-            logger.debug('new address dialog box rejected')
-            return
-
-        # dialog.buttonBox.enabled = False
-        if dialog.radioButtonRandomAddress.isChecked():
-            if dialog.radioButtonMostAvailable.isChecked():
-                streamNumberForAddress = 1
-            else:
-                # User selected 'Use the same stream as an existing
-                # address.'
-                streamNumberForAddress = decodeAddress(
-                    dialog.comboBoxExisting.currentText())[2]
-            queues.addressGeneratorQueue.put((
-                'createRandomAddress', 4, streamNumberForAddress,
-                str(dialog.newaddresslabel.text().toUtf8()), 1, "",
-                dialog.checkBoxEighteenByteRipe.isChecked()
-            ))
-        else:
-            if dialog.lineEditPassphrase.text() != \
-                    dialog.lineEditPassphraseAgain.text():
-                QtGui.QMessageBox.about(
-                    self, _translate("MainWindow", "Passphrase mismatch"),
-                    _translate(
-                        "MainWindow",
-                        "The passphrase you entered twice doesn\'t"
-                        " match. Try again.")
-                )
-            elif dialog.lineEditPassphrase.text() == "":
-                QtGui.QMessageBox.about(
-                    self, _translate("MainWindow", "Choose a passphrase"),
-                    _translate(
-                        "MainWindow", "You really do need a passphrase.")
-                )
-            else:
-                # this will eventually have to be replaced by logic
-                # to determine the most available stream number.
-                streamNumberForAddress = 1
-                queues.addressGeneratorQueue.put((
-                    'createDeterministicAddresses', 4, streamNumberForAddress,
-                    "unused deterministic address",
-                    dialog.spinBoxNumberOfAddressesToMake.value(),
-                    dialog.lineEditPassphrase.text().toUtf8(),
-                    dialog.checkBoxEighteenByteRipe.isChecked()
-                ))
+        dialogs.NewAddressDialog(self)
 
     def network_switch(self):
         dontconnect_option = not BMConfigParser().safeGetBoolean(
@@ -3063,9 +3005,8 @@ class MyForm(settingsmixin.SMainWindow):
         self.ui.tabWidget.setCurrentIndex(
             self.ui.tabWidget.indexOf(self.ui.send)
         )
-        dialog = dialogs.AddAddressDialog(self)
-        dialog.lineEditAddress.setText(addressAtCurrentInboxRow)
-        self.click_pushButtonAddAddressBook(dialog)
+        self.click_pushButtonAddAddressBook(
+            dialogs.AddAddressDialog(self, addressAtCurrentInboxRow))
 
     def on_action_InboxAddSenderToBlackList(self):
         tableWidget = self.getCurrentMessagelist()

@@ -1,5 +1,5 @@
 from PyQt4 import QtCore, QtGui
-from addresses import decodeAddress, encodeVarint
+from addresses import decodeAddress, encodeVarint, addBMIfNotPresent
 from account import (
     GatewayAccount, MailchuckAccount, AccountMixin, accountClass,
     getSortedAccounts
@@ -70,12 +70,33 @@ class AddressCheckMixin(object):
             ))
 
 
-class AddAddressDialog(QtGui.QDialog, RetranslateMixin, AddressCheckMixin):
+class AddressDataDialog(QtGui.QDialog, AddressCheckMixin):
+    def __init__(self, parent):
+        super(AddressDataDialog, self).__init__(parent)
+        self.parent = parent
 
-    def __init__(self, parent=None):
+    def accept(self):
+        if self.valid:
+            self.data = (
+                addBMIfNotPresent(str(self.lineEditAddress.text())),
+                str(self.lineEditLabel.text().toUtf8())
+            )
+        else:
+            queues.UISignalQueue.put(('updateStatusBar', _translate(
+                "MainWindow",
+                "The address you entered was invalid. Ignoring it."
+            )))
+        super(AddressDataDialog, self).accept()
+
+
+class AddAddressDialog(AddressDataDialog, RetranslateMixin):
+
+    def __init__(self, parent=None, address=None):
         super(AddAddressDialog, self).__init__(parent)
         widgets.load('addaddressdialog.ui', self)
         AddressCheckMixin.__init__(self)
+        if address:
+            self.lineEditAddress.setText(address)
 
 
 class NewAddressDialog(QtGui.QDialog, RetranslateMixin):
@@ -91,10 +112,54 @@ class NewAddressDialog(QtGui.QDialog, RetranslateMixin):
             self.comboBoxExisting.addItem(address)
         self.groupBoxDeterministic.setHidden(True)
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
+        self.show()
+
+    def accept(self):
+        self.hide()
+        # self.buttonBox.enabled = False
+        if self.radioButtonRandomAddress.isChecked():
+            if self.radioButtonMostAvailable.isChecked():
+                streamNumberForAddress = 1
+            else:
+                # User selected 'Use the same stream as an existing
+                # address.'
+                streamNumberForAddress = decodeAddress(
+                    self.comboBoxExisting.currentText())[2]
+            queues.addressGeneratorQueue.put((
+                'createRandomAddress', 4, streamNumberForAddress,
+                str(self.newaddresslabel.text().toUtf8()), 1, "",
+                self.checkBoxEighteenByteRipe.isChecked()
+            ))
+        else:
+            if self.lineEditPassphrase.text() != \
+                    self.lineEditPassphraseAgain.text():
+                QtGui.QMessageBox.about(
+                    self, _translate("MainWindow", "Passphrase mismatch"),
+                    _translate(
+                        "MainWindow",
+                        "The passphrase you entered twice doesn\'t"
+                        " match. Try again.")
+                )
+            elif self.lineEditPassphrase.text() == "":
+                QtGui.QMessageBox.about(
+                    self, _translate("MainWindow", "Choose a passphrase"),
+                    _translate(
+                        "MainWindow", "You really do need a passphrase.")
+                )
+            else:
+                # this will eventually have to be replaced by logic
+                # to determine the most available stream number.
+                streamNumberForAddress = 1
+                queues.addressGeneratorQueue.put((
+                    'createDeterministicAddresses', 4, streamNumberForAddress,
+                    "unused deterministic address",
+                    self.spinBoxNumberOfAddressesToMake.value(),
+                    self.lineEditPassphrase.text().toUtf8(),
+                    self.checkBoxEighteenByteRipe.isChecked()
+                ))
 
 
-class NewSubscriptionDialog(
-        QtGui.QDialog, RetranslateMixin, AddressCheckMixin):
+class NewSubscriptionDialog(AddressDataDialog, RetranslateMixin):
 
     def __init__(self, parent=None):
         super(NewSubscriptionDialog, self).__init__(parent)
@@ -206,14 +271,20 @@ class SpecialAddressBehaviorDialog(QtGui.QDialog, RetranslateMixin):
 
 
 class EmailGatewayDialog(QtGui.QDialog, RetranslateMixin):
-    def __init__(self, parent, title=None, label=None, config=None):
+    def __init__(self, parent, config=None, account=None):
         super(EmailGatewayDialog, self).__init__(parent)
         widgets.load('emailgateway.ui', self)
         self.parent = parent
         self.config = config
-        if title and label:
-            self.setWindowTitle(title)
-            self.label.setText(label)
+        if account:
+            self.acct = account
+            self.setWindowTitle(_translate(
+                "EmailGatewayDialog", "Registration failed:"))
+            self.label.setText(_translate(
+                "EmailGatewayDialog",
+                "The requested email address is not available,"
+                " please try a new one."
+            ))
             self.radioButtonRegister.hide()
             self.radioButtonStatus.hide()
             self.radioButtonSettings.hide()
@@ -239,17 +310,6 @@ class EmailGatewayDialog(QtGui.QDialog, RetranslateMixin):
         self.lineEditEmail.setFocus()
         QtGui.QWidget.resize(self, QtGui.QWidget.sizeHint(self))
 
-    def register(self, acct=None):
-        email = str(self.lineEditEmail.text().toUtf8())
-        if acct is None:
-            acct = self.acct
-        acct.register(email)
-        self.config.set(acct.fromAddress, 'label', email)
-        self.config.set(acct.fromAddress, 'gateway', 'mailchuck')
-        self.config.save()
-        self.parent.statusbar_message(
-            "Sending email gateway registration request")
-
     def accept(self):
         self.hide()
         # no chans / mailinglists
@@ -259,8 +319,17 @@ class EmailGatewayDialog(QtGui.QDialog, RetranslateMixin):
         if not isinstance(self.acct, GatewayAccount):
             return
 
-        if self.radioButtonRegister.isChecked():
-            self.register()
+        if self.radioButtonRegister.isChecked() \
+                or self.radioButtonRegister.isHidden():
+            email = str(self.lineEditEmail.text().toUtf8())
+            self.acct.register(email)
+            self.config.set(self.acct.fromAddress, 'label', email)
+            self.config.set(self.acct.fromAddress, 'gateway', 'mailchuck')
+            self.config.save()
+            queues.UISignalQueue.put(('updateStatusBar', _translate(
+                "EmailGatewayDialog",
+                "Sending email gateway registration request"
+            )))
         elif self.radioButtonUnregister.isChecked():
             self.acct.unregister()
             self.config.remove_option(self.acct.fromAddress, 'gateway')
@@ -276,4 +345,6 @@ class EmailGatewayDialog(QtGui.QDialog, RetranslateMixin):
                 "Sending email gateway status request"
             )))
         elif self.radioButtonSettings.isChecked():
-            return self.acct
+            self.data = self.acct
+
+        super(EmailGatewayDialog, self).accept()
