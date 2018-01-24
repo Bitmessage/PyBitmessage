@@ -586,6 +586,8 @@ class Ui_MainWindow(object):
         icon = QtGui.QIcon.fromTheme(_fromUtf8("dialog-password"))
         self.actionManageKeys.setIcon(icon)
         self.actionManageKeys.setObjectName(_fromUtf8("actionManageKeys"))
+        self.actionNetworkSwitch = QtGui.QAction(MainWindow)
+        self.actionNetworkSwitch.setObjectName(_fromUtf8("actionNetworkSwitch"))
         self.actionExit = QtGui.QAction(MainWindow)
         icon = QtGui.QIcon.fromTheme(_fromUtf8("application-exit"))
         self.actionExit.setIcon(icon)
@@ -621,6 +623,7 @@ class Ui_MainWindow(object):
         self.menuFile.addAction(self.actionManageKeys)
         self.menuFile.addAction(self.actionDeleteAllTrashedMessages)
         self.menuFile.addAction(self.actionRegenerateDeterministicAddresses)
+        self.menuFile.addAction(self.actionNetworkSwitch)
         self.menuFile.addAction(self.actionExit)
         self.menuSettings.addAction(self.actionSettings)
         self.menuHelp.addAction(self.actionHelp)
@@ -640,6 +643,16 @@ class Ui_MainWindow(object):
         MainWindow.setTabOrder(self.lineEditTo, self.lineEditSubject)
         MainWindow.setTabOrder(self.lineEditSubject, self.textEditMessage)
         MainWindow.setTabOrder(self.textEditMessage, self.pushButtonAddSubscription)
+
+    def updateNetworkSwitchMenuLabel(self, dontconnect=None):
+        if dontconnect is None:
+            dontconnect = BMConfigParser().safeGetBoolean(
+                'bitmessagesettings', 'dontconnect')
+        self.actionNetworkSwitch.setText(
+            _translate("MainWindow", "Go online", None)
+            if dontconnect else
+            _translate("MainWindow", "Go offline", None)
+        )
 
     def retranslateUi(self, MainWindow):
         MainWindow.setWindowTitle(_translate("MainWindow", "Bitmessage", None))

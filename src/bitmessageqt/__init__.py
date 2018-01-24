@@ -143,6 +143,8 @@ class MyForm(settingsmixin.SMainWindow):
     def init_file_menu(self):
         QtCore.QObject.connect(self.ui.actionExit, QtCore.SIGNAL(
             "triggered()"), self.quit)
+        QtCore.QObject.connect(self.ui.actionNetworkSwitch, QtCore.SIGNAL(
+            "triggered()"), self.network_switch)
         QtCore.QObject.connect(self.ui.actionManageKeys, QtCore.SIGNAL(
             "triggered()"), self.click_actionManageKeys)
         QtCore.QObject.connect(self.ui.actionDeleteAllTrashedMessages,
@@ -1471,7 +1473,7 @@ class MyForm(settingsmixin.SMainWindow):
                 BMConfigParser().remove_option(
                     'bitmessagesettings', 'dontconnect')
                 BMConfigParser().save()
-            else:
+            elif self.connectDialogInstance.ui.radioButtonConfigureNetwork.isChecked():
                 self.click_actionSettings()
 
     def showMigrationWizard(self, level):
@@ -2584,6 +2586,14 @@ class MyForm(settingsmixin.SMainWindow):
                     ), self.dialog.ui.lineEditPassphrase.text().toUtf8(), self.dialog.ui.checkBoxEighteenByteRipe.isChecked()))
         else:
             logger.debug('new address dialog box rejected')
+
+    def network_switch(self):
+        dontconnect_option = not BMConfigParser().safeGetBoolean(
+            'bitmessagesettings', 'dontconnect')
+        BMConfigParser().set(
+            'bitmessagesettings', 'dontconnect', str(dontconnect_option))
+        BMConfigParser().save()
+        self.ui.updateNetworkSwitchMenuLabel(dontconnect_option)
 
     # Quit selected from menu or application indicator
     def quit(self):
@@ -4446,6 +4456,7 @@ def run():
         'bitmessagesettings', 'dontconnect')
     if myapp._firstrun:
         myapp.showConnectDialog()  # ask the user if we may connect
+    myapp.ui.updateNetworkSwitchMenuLabel()
 
 #    try:
 #        if BMConfigParser().get('bitmessagesettings', 'mailchuck') < 1:
