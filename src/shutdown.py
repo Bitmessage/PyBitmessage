@@ -3,7 +3,6 @@ import Queue
 import threading
 import time
 
-from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_sql import sqlQuery, sqlStoredProcedure
 from helper_threading import StoppableThread
@@ -60,7 +59,7 @@ def doCleanShutdown():
             except Queue.Empty:
                 break
 
-    if BMConfigParser().safeGetBoolean('bitmessagesettings','daemon'):
+    if shared.thisapp.daemon:
         logger.info('Clean shutdown complete.')
         shared.thisapp.cleanup()
         os._exit(0)

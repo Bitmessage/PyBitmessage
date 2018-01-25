@@ -1,6 +1,6 @@
 import os
 
-from bmconfigparser import BMConfigParser
+import shared
 
 # This is used so that the translateText function can be used when we are in daemon mode and not using any QT functions.
 class translateClass:
@@ -17,7 +17,11 @@ def _translate(context, text, disambiguation = None, encoding = None, n = None):
     return translateText(context, text, n)
 
 def translateText(context, text, n = None):
-    if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'daemon'):
+    try:
+        is_daemon = shared.thisapp.daemon
+    except AttributeError:  # inside the plugin
+        is_daemon = False
+    if not is_daemon:
         try:
             from PyQt4 import QtCore, QtGui
         except Exception as err:
