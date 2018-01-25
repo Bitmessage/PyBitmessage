@@ -220,8 +220,6 @@ class Main:
             elif opt in ("-c", "--curses"):
                 state.curses = True
 
-        shared.daemon = daemon
-
         # is the application already running?  If yes then exit.
         shared.thisapp = singleinstance("", daemon)
 
