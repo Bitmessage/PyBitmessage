@@ -407,12 +407,16 @@ All parameters are optional.
         return {'address':address,'port':port}
 
     
-def emojiLogg():
+def LoggWithUnicode():
     from debug import logger
-    reload(sys)  
-    sys.setdefaultencoding(  'utf8')
-    logger.warning(str(     u'exc:äüöß   🤷 🤷  without exception  😃                         '.encode("UTF-8")   )          )
-    logger.warning(          ' äüß      🤷 🤷 🤷   -- just a test emoji warning to demo this  ')
+    #reload(sys)  
+    #sys.setdefaultencoding(  'utf8')
+    logger.info(str(     u'logger encoding reset '.encode("UTF-8") ))
+    #logger.info('unicode as log output possible: 🤷 ')
+    #logger.info(         ' äüß      🤷 🤷 🤷   -- just a test emoji info to demo the function LoggWithUnicode() , no exception raised  ')
+    # note that .info lines are invisible under standard logging settings, unlike a .warning log
+    # uncomment for demo
+    #  call function     #LoggWithUnicode()       # to demo/test  utf8 / Unicode logging without exception 
 
     
     
@@ -420,8 +424,11 @@ def main():
     mainprogram = Main()
     mainprogram.start()
 
+    
+reload(sys)  
+sys.setdefaultencoding('utf8')    
+    
 if __name__ == "__main__":
-    #emojiLogg()                     #  uncomment this to demo utf8, emoji logging without exception 
     main()
 
 
