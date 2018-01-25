@@ -9,6 +9,7 @@ import knownnodes
 import socks
 import state
 
+
 def addKnownNode(stream, peer, lastseen=None, self=False):
     if lastseen is None:
         lastseen = time.time()
@@ -17,6 +18,7 @@ def addKnownNode(stream, peer, lastseen=None, self=False):
         "rating": 0,
         "self": self,
     }
+
 
 def knownNodes():
     try:
@@ -38,26 +40,37 @@ def knownNodes():
         logger.error('Bitmessage cannot read future versions of the keys file (keys.dat). Run the newer version of Bitmessage.')
         raise SystemExit
 
+
 def dns():
     # DNS bootstrap. This could be programmed to use the SOCKS proxy to do the
     # DNS lookup some day but for now we will just rely on the entries in
     # defaultKnownNodes.py. Hopefully either they are up to date or the user
     # has run Bitmessage recently without SOCKS turned on and received good
     # bootstrap nodes using that method.
-    if BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'none':
+    def try_add_known_node(stream, addr, port, method=''):
         try:
-            for item in socket.getaddrinfo('bootstrap8080.bitmessage.org', 80):
-                logger.info('Adding ' + item[4][0] + ' to knownNodes based on DNS bootstrap method')
-                addKnownNode(1, state.Peer(item[4][0], 8080))
-        except:
-            logger.error('bootstrap8080.bitmessage.org DNS bootstrapping failed.')
-        try:
-            for item in socket.getaddrinfo('bootstrap8444.bitmessage.org', 80):
-                logger.info ('Adding ' + item[4][0] + ' to knownNodes based on DNS bootstrap method')
-                addKnownNode(1, state.Peer(item[4][0], 8444))
-        except:
-            logger.error('bootstrap8444.bitmessage.org DNS bootstrapping failed.')
-    elif BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
+            socket.inet_aton(addr)
+        except (TypeError, socket.error):
+            return
+        logger.info(
+            'Adding %s to knownNodes based on %s DNS bootstrap method',
+            addr, method)
+        addKnownNode(stream, state.Peer(addr, port))
+
+    proxy_type = BMConfigParser().get('bitmessagesettings', 'socksproxytype')
+
+    if proxy_type == 'none':
+        for port in [8080, 8444]:
+            try:
+                for item in socket.getaddrinfo(
+                        'bootstrap%s.bitmessage.org' % port, 80):
+                    try_add_known_node(1, item[4][0], port)
+            except:
+                logger.error(
+                    'bootstrap%s.bitmessage.org DNS bootstrapping failed.',
+                    port, exc_info=True
+                )
+    elif proxy_type == 'SOCKS5':
         addKnownNode(1, state.Peer('quzwelsuziwqgpt2.onion', 8444))
         logger.debug("Adding quzwelsuziwqgpt2.onion:8444 to knownNodes.")
         for port in [8080, 8444]:
@@ -89,8 +102,9 @@ def dns():
             except:
                 logger.error("SOCKS DNS resolving failed", exc_info=True)
             else:
-                if ip is not None:
-                    logger.info ('Adding ' + ip + ' to knownNodes based on SOCKS DNS bootstrap method')
-                    addKnownNode(1, state.Peer(ip, port))
+                try_add_known_node(1, ip, port, 'SOCKS')
     else:
-        logger.info('DNS bootstrap skipped because the proxy type does not support DNS resolution.')
+        logger.info(
+            'DNS bootstrap skipped because the proxy type does not support'
+            ' DNS resolution.'
+        )
