@@ -49,7 +49,7 @@ clientHasReceivedIncomingConnections = False #used by API command clientStatus
 numberOfMessagesProcessed = 0
 numberOfBroadcastsProcessed = 0
 numberOfPubkeysProcessed = 0
-daemon = False
+
 needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it to disk eventually.
 maximumLengthOfTimeToBotherResendingMessages = 0
 timeOffsetWrongCount = 0
