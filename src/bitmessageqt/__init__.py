@@ -2784,9 +2784,13 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.item(currentRow, 1).setUnread(True)
             tableWidget.item(currentRow, 2).setUnread(True)
             tableWidget.item(currentRow, 3).setFont(font)
-        #sqlite requires the exact number of ?s to prevent injection
-        rowcount = sqlExecute('''UPDATE inbox SET read=0 WHERE msgid IN (%s) AND read=1''' % (
-            "?," * len(inventoryHashesToMarkUnread))[:-1], *inventoryHashesToMarkUnread)
+        # for 1081
+        idCount = len(inventoryHashesToMarkUnread)
+        rowcount = sqlExecuteChunked(
+            '''UPDATE inbox SET read=0 WHERE msgid IN ({0}) AND read=1''',
+            idCount, *inventoryHashesToMarkUnread
+        )
+
         if rowcount == 1:
             # performance optimisation
             self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), self.getCurrentFolder())
