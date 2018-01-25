@@ -1,4 +1,5 @@
 #!/usr/bin/python2.7
+# -*- coding: utf-8 -*-
 # Copyright (c) 2012-2016 Jonathan Warren
 # Copyright (c) 2012-2016 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying
@@ -405,11 +406,28 @@ All parameters are optional.
         port = BMConfigParser().getint('bitmessagesettings', 'apiport')
         return {'address':address,'port':port}
 
+    
+def LoggWithUnicode():
+    from debug import logger
+    #reload(sys)  
+    #sys.setdefaultencoding(  'utf8')
+    logger.info(str(     u'logger encoding reset '.encode("UTF-8") ))
+    #logger.info('unicode as log output possible: 🤷 ')
+    #logger.info(         ' äüß      🤷 🤷 🤷   -- just a test emoji info to demo the function LoggWithUnicode() , no exception raised  ')
+    # note that .info lines are invisible under standard logging settings, unlike a .warning log
+    # uncomment for demo
+    #  call function     #LoggWithUnicode()       # to demo/test  utf8 / Unicode logging without exception 
 
+    
+    
 def main():
     mainprogram = Main()
     mainprogram.start()
 
+    
+reload(sys)  
+sys.setdefaultencoding('utf8')    
+    
 if __name__ == "__main__":
     main()
 
