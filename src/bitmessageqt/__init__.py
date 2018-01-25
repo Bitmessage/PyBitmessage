@@ -2509,48 +2509,42 @@ class MyForm(settingsmixin.SMainWindow):
 #            self.rerenderInboxToLabels()
 
     def on_action_MarkAllRead(self):
-        def partialUpdate(folder, msgids):
-            if len(msgids) == 0:
-                return 0
-            if folder == 'sent':
-                return sqlExecute(
-                    "UPDATE sent SET read = 1 WHERE ackdata IN(%s) AND read=0" %(",".join("?"*len(msgids))), *msgids)
-            else:
-                return sqlExecute(
-                    "UPDATE inbox SET read = 1 WHERE msgid IN(%s) AND read=0" %(",".join("?"*len(msgids))), *msgids)
-
-        if QtGui.QMessageBox.question(self, "Marking all messages as read?", _translate("MainWindow", "Are you sure you would like to mark all messages read?"), QMessageBox.Yes|QMessageBox.No) != QMessageBox.Yes:
+        if QtGui.QMessageBox.question(
+                self, "Marking all messages as read?",
+                _translate(
+                    "MainWindow",
+                    "Are you sure you would like to mark all messages read?"
+                ), QMessageBox.Yes | QMessageBox.No) != QMessageBox.Yes:
             return
         addressAtCurrentRow = self.getCurrentAccount()
         tableWidget = self.getCurrentMessagelist()
 
-        if tableWidget.rowCount() == 0:
+        idCount = tableWidget.rowCount()
+        if idCount == 0:
             return
 
-        msgids = []
-        
         font = QFont()
         font.setBold(False)
 
-        markread = 0
-
-        for i in range(0, tableWidget.rowCount()):
+        msgids = []
+        for i in range(0, idCount):
             msgids.append(str(tableWidget.item(
                 i, 3).data(Qt.UserRole).toPyObject()))
             tableWidget.item(i, 0).setUnread(False)
             tableWidget.item(i, 1).setUnread(False)
             tableWidget.item(i, 2).setUnread(False)
             tableWidget.item(i, 3).setFont(font)
-            # sqlite default limit, unfortunately getting/setting isn't exposed to python
-            if i % 999 == 0:
-                markread += partialUpdate(self.getCurrentFolder(), msgids)
-                msgids = []
 
-        if len(msgids) > 0:
-            markread += partialUpdate(self.getCurrentFolder(), msgids)
+        markread = sqlExecuteChunked(
+            "UPDATE %s SET read = 1 WHERE %s IN({0}) AND read=0" % (
+                ('sent', 'ackdata') if self.getCurrentFolder() == 'sent'
+                else ('inbox', 'msgid')
+            ), idCount, *msgids
+        )
 
         if markread > 0:
-            self.propagateUnreadCount(addressAtCurrentRow, self.getCurrentFolder(), None, 0)
+            self.propagateUnreadCount(
+                addressAtCurrentRow, self.getCurrentFolder(), None, 0)
 
     def click_NewAddressDialog(self):
         addresses = []
