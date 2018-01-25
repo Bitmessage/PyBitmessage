@@ -2542,7 +2542,7 @@ class MyForm(settingsmixin.SMainWindow):
             tableWidget.item(i, 2).setUnread(False)
             tableWidget.item(i, 3).setFont(font)
             # sqlite default limit, unfortunately getting/setting isn't exposed to python
-            if i % 999 == 999: 
+            if i % 999 == 0:
                 markread += partialUpdate(self.getCurrentFolder(), msgids)
                 msgids = []
 
