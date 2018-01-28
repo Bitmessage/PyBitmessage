@@ -3001,6 +3001,7 @@ class MyForm(settingsmixin.SMainWindow):
                     continue
                 inventoryHashesToTrash.append(inventoryHashToTrash)
             currentRow = r.topRow()
+            self.getCurrentMessageTextedit().setText("")
             tableWidget.model().removeRows(r.topRow(), r.bottomRow()-r.topRow()+1)
         idCount = len(inventoryHashesToTrash)
         if folder == "trash" or shifted:
@@ -3010,7 +3011,6 @@ class MyForm(settingsmixin.SMainWindow):
             sqlExecuteChunked('''UPDATE inbox SET folder='trash' WHERE msgid IN ({0})''',
                     idCount, *inventoryHashesToTrash)
         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
-        self.getCurrentMessageTextedit().setText("")
         tableWidget.setUpdatesEnabled(True)
         self.propagateUnreadCount(self.getCurrentAccount, folder)
         self.statusBar().showMessage(_translate(
@@ -3032,6 +3032,7 @@ class MyForm(settingsmixin.SMainWindow):
                     continue
                 inventoryHashesToTrash.append(inventoryHashToTrash)
             currentRow = r.topRow()
+            self.getCurrentMessageTextedit().setText("")
             tableWidget.model().removeRows(r.topRow(), r.bottomRow()-r.topRow()+1)
         if currentRow == 0:
             tableWidget.selectRow(currentRow)
@@ -3041,7 +3042,6 @@ class MyForm(settingsmixin.SMainWindow):
         sqlExecuteChunked('''UPDATE inbox SET folder='inbox' WHERE msgid IN({0})''',
                 idCount, *inventoryHashesToTrash)
         tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
-        self.getCurrentMessageTextedit().setText("")
         tableWidget.setUpdatesEnabled(True)
         self.propagateUnreadCount(self.getCurrentAccount)
         self.statusBar().showMessage(_translate(
