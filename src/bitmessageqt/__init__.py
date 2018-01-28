@@ -3000,6 +3000,7 @@ class MyForm(settingsmixin.SMainWindow):
                 if inventoryHashToTrash in inventoryHashesToTrash:
                     continue
                 inventoryHashesToTrash.append(inventoryHashToTrash)
+            currentRow = r.topRow()
             tableWidget.model().removeRows(r.topRow(), r.bottomRow()-r.topRow()+1)
         idCount = len(inventoryHashesToTrash)
         if folder == "trash" or shifted:
@@ -3030,6 +3031,7 @@ class MyForm(settingsmixin.SMainWindow):
                 if inventoryHashToTrash in inventoryHashesToTrash:
                     continue
                 inventoryHashesToTrash.append(inventoryHashToTrash)
+            currentRow = r.topRow()
             tableWidget.model().removeRows(r.topRow(), r.bottomRow()-r.topRow()+1)
         if currentRow == 0:
             tableWidget.selectRow(currentRow)
