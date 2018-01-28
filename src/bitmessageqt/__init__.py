@@ -2990,14 +2990,15 @@ class MyForm(settingsmixin.SMainWindow):
         shifted = QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier
         tableWidget.setUpdatesEnabled(False);
         inventoryHashesToTrash = []
-        for row in tableWidget.selectedIndexes():
-            currentRow = row.row()
-            inventoryHashToTrash = str(tableWidget.item(
-                currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
-            if inventoryHashToTrash in inventoryHashesToTrash:
-                continue
-            inventoryHashesToTrash.append(inventoryHashToTrash)
-            tableWidget.removeRow(currentRow)
+        # ranges in reversed order
+        for r in sorted(tableWidget.selectedRanges(), key=lambda r: r.topRow())[::-1]:
+            for i in range(r.bottomRow()-r.topRow()+1):
+                inventoryHashToTrash = str(tableWidget.item(
+                    r.topRow()+i, 3).data(QtCore.Qt.UserRole).toPyObject())
+                if inventoryHashToTrash in inventoryHashesToTrash:
+                    continue
+                inventoryHashesToTrash.append(inventoryHashToTrash)
+            tableWidget.model().removeRows(r.topRow(), r.bottomRow()-r.topRow()+1)
         idCount = len(inventoryHashesToTrash)
         if folder == "trash" or shifted:
             sqlExecuteChunked('''DELETE FROM inbox WHERE msgid IN ({0})''',
@@ -3019,14 +3020,15 @@ class MyForm(settingsmixin.SMainWindow):
         currentRow = 0
         tableWidget.setUpdatesEnabled(False)
         inventoryHashesToTrash = []
-        for row in tableWidget.selectedIndexes():
-            currentRow = row.row()
-            inventoryHashToTrash = str(tableWidget.item(
-                currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
-            if inventoryHashToTrash in inventoryHashesToTrash:
-                continue
-            inventoryHashesToTrash.append(inventoryHashToTrash)
-            tableWidget.removeRow(currentRow)
+        # ranges in reversed order
+        for r in sorted(tableWidget.selectedRanges(), key=lambda r: r.topRow())[::-1]:
+            for i in range(r.bottomRow()-r.topRow()+1):
+                inventoryHashToTrash = str(tableWidget.item(
+                    r.topRow()+i, 3).data(QtCore.Qt.UserRole).toPyObject())
+                if inventoryHashToTrash in inventoryHashesToTrash:
+                    continue
+                inventoryHashesToTrash.append(inventoryHashToTrash)
+            tableWidget.model().removeRows(r.topRow(), r.bottomRow()-r.topRow()+1)
         if currentRow == 0:
             tableWidget.selectRow(currentRow)
         else:
