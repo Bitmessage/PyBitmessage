@@ -2985,54 +2985,61 @@ class MyForm(settingsmixin.SMainWindow):
         tableWidget = self.getCurrentMessagelist()
         if not tableWidget:
             return
-        unread = False
         currentRow = 0
         folder = self.getCurrentFolder()
         shifted = QtGui.QApplication.queryKeyboardModifiers() & QtCore.Qt.ShiftModifier
-        while tableWidget.selectedIndexes():
-            currentRow = tableWidget.selectedIndexes()[0].row()
+        tableWidget.setUpdatesEnabled(False);
+        inventoryHashesToTrash = []
+        for row in tableWidget.selectedIndexes():
+            currentRow = row.row()
             inventoryHashToTrash = str(tableWidget.item(
-                currentRow, 3).data(Qt.UserRole).toPyObject())
-            if folder == "trash" or shifted:
-                sqlExecute('''DELETE FROM inbox WHERE msgid=?''', inventoryHashToTrash)
-            else:
-                sqlExecute('''UPDATE inbox SET folder='trash' WHERE msgid=?''', inventoryHashToTrash)
-            if tableWidget.item(currentRow, 0).unread:
-                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
-                if folder != "trash" and not shifted:
-                    self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), "trash", self.getCurrentTreeWidget(), 1)
-
-            self.getCurrentMessageTextedit().setText("")
+                currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
+            if inventoryHashToTrash in inventoryHashesToTrash:
+                continue
+            inventoryHashesToTrash.append(inventoryHashToTrash)
             tableWidget.removeRow(currentRow)
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "Moved items to trash."), 10000)
-        if currentRow == 0:
-            tableWidget.selectRow(currentRow)
+        idCount = len(inventoryHashesToTrash)
+        if folder == "trash" or shifted:
+            sqlExecuteChunked('''DELETE FROM inbox WHERE msgid IN ({0})''',
+                    idCount, *inventoryHashesToTrash)
         else:
-            tableWidget.selectRow(currentRow - 1)
+            sqlExecuteChunked('''UPDATE inbox SET folder='trash' WHERE msgid IN ({0})''',
+                    idCount, *inventoryHashesToTrash)
+        tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
+        self.getCurrentMessageTextedit().setText("")
+        tableWidget.setUpdatesEnabled(True)
+        self.propagateUnreadCount(self.getCurrentAccount, folder)
+        self.statusBar().showMessage(_translate(
+            "MainWindow", "Moved items to trash."), 10000)
             
     def on_action_TrashUndelete(self):
         tableWidget = self.getCurrentMessagelist()
         if not tableWidget:
             return
-        unread = False
         currentRow = 0
-        while tableWidget.selectedIndexes():
-            currentRow = tableWidget.selectedIndexes()[0].row()
+        tableWidget.setUpdatesEnabled(False)
+        inventoryHashesToTrash = []
+        for row in tableWidget.selectedIndexes():
+            currentRow = row.row()
             inventoryHashToTrash = str(tableWidget.item(
-                currentRow, 3).data(Qt.UserRole).toPyObject())
-            sqlExecute('''UPDATE inbox SET folder='inbox' WHERE msgid=?''', inventoryHashToTrash)
-            if tableWidget.item(currentRow, 0).unread:
-                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), "inbox", self.getCurrentTreeWidget(), 1)
-                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(Qt.UserRole), "trash", self.getCurrentTreeWidget(), -1)
-            self.getCurrentMessageTextedit().setText("")
+                currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
+            if inventoryHashToTrash in inventoryHashesToTrash:
+                continue
+            inventoryHashesToTrash.append(inventoryHashToTrash)
             tableWidget.removeRow(currentRow)
-            self.statusBar().showMessage(_translate(
-                "MainWindow", "Undeleted item."), 10000)
         if currentRow == 0:
             tableWidget.selectRow(currentRow)
         else:
             tableWidget.selectRow(currentRow - 1)
+        idCount = len(inventoryHashesToTrash)
+        sqlExecuteChunked('''UPDATE inbox SET folder='inbox' WHERE msgid IN({0})''',
+                idCount, *inventoryHashesToTrash)
+        tableWidget.selectRow(0 if currentRow == 0 else currentRow - 1)
+        self.getCurrentMessageTextedit().setText("")
+        tableWidget.setUpdatesEnabled(True)
+        self.propagateUnreadCount(self.getCurrentAccount)
+        self.statusBar().showMessage(_translate(
+            "MainWindow", "Undeleted items."), 10000)
 
     def on_action_InboxSaveMessageAs(self):
         tableWidget = self.getCurrentMessagelist()
