@@ -20,6 +20,7 @@ import curses
 import dialog
 from dialog import Dialog
 from helper_sql import *
+from helper_ackPayload import genAckPayload
 
 from addresses import *
 import ConfigParser
@@ -778,7 +779,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
                     if len(shared.connectedHostsList) == 0:
                         set_background_title(d, "Not connected warning")
                         scrollbox(d, unicode("Because you are not currently connected to the network, "))
-                    ackdata = OpenSSL.rand(32)
+                    stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
+                    ackdata = genAckPayload(streamNumber, stealthLevel)
                     sqlExecute(
                         "INSERT INTO sent VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                         "",
@@ -802,7 +804,8 @@ def sendMessage(sender="", recv="", broadcast=None, subject="", body="", reply=F
             set_background_title(d, "Empty sender error")
             scrollbox(d, unicode("You must specify an address to send the message from."))
         else:
-            ackdata = OpenSSL.rand(32)
+            # dummy ackdata, no need for stealth
+            ackdata = genAckPayload(streamNumber, 0)
             recv = BROADCAST_STR
             ripe = ""
             sqlExecute(

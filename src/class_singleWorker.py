@@ -81,6 +81,16 @@ class singleWorker(threading.Thread, StoppableThread):
             logger.info('Watching for ackdata ' + hexlify(ackdata))
             shared.ackdataForWhichImWatching[ackdata] = 0
 
+        # Fix legacy (headerless) watched ackdata to include header
+        for oldack in shared.ackdataForWhichImWatching.keys():
+            if (len(oldack)==32):
+                # attach legacy header, always constant (msg/1/1)
+                newack = '\x00\x00\x00\x02\x01\x01' + oldack
+                shared.ackdataForWhichImWatching[newack] = 0
+                sqlExecute('UPDATE sent SET ackdata=? WHERE ackdata=?',
+                       newack, oldack )
+                del shared.ackdataForWhichImWatching[oldack]
+
         self.stop.wait(
             10)  # give some time for the GUI to start before we start on existing POW tasks.
 
@@ -967,11 +977,10 @@ class singleWorker(threading.Thread, StoppableThread):
             TTL = 28*24*60*60 # 4 weeks
         TTL = int(TTL + random.randrange(-300, 300)) # Add some randomness to the TTL
         embeddedTime = int(time.time() + TTL)
-        payload = pack('>Q', (embeddedTime))
-        payload += '\x00\x00\x00\x02' # object type: msg
-        payload += encodeVarint(1) # msg version
-        payload += encodeVarint(toStreamNumber) + ackdata
-        
+
+        # type/version/stream already included 
+        payload = pack('>Q', (embeddedTime)) + ackdata
+
         target = 2 ** 64 / (defaults.networkDefaultProofOfWorkNonceTrialsPerByte*(len(payload) + 8 + defaults.networkDefaultPayloadLengthExtraBytes + ((TTL*(len(payload)+8+defaults.networkDefaultPayloadLengthExtraBytes))/(2 ** 16))))
         logger.info('(For ack message) Doing proof of work. TTL set to ' + str(TTL))
 
