@@ -259,3 +259,5 @@ class BMConnectionPool(object):
                     pass
         for i in reaper:
             self.removeConnection(i)
+
+        return bool(self.outboundConnections or self.listeningSockets or self.inboundConnections or self.udpSockets)

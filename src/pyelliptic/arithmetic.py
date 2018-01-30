@@ -57,7 +57,7 @@ def base10_add(a,b):
   y = (m*(a[0]-x)-a[1]) % P
   return (x,y)
   
-def base10_double(a):
+def base10_double(a, var_unused):
   if a == None: return None
   m = ((3*a[0]*a[0]+A)*inv(2*a[1],P)) % P
   x = (m*m-2*a[0]) % P
