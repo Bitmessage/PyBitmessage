@@ -45,17 +45,23 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                     with knownnodes.knownNodesLock:
                         peer, = random.sample(knownnodes.knownNodes[self.streamNumber], 1)
                         priority = (183600 - (time.time() - knownnodes.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
-                except ValueError: # no known nodes
+                except ValueError:  # no known nodes
                     self.stop.wait(1)
                     continue
+
+                try:
+                    peer_is_onion = peer.host.find(".onion") != -1
+                except AttributeError:
+                    logger.error("Peer host is %r!", peer.host)
+                    continue
                 if BMConfigParser().get('bitmessagesettings', 'socksproxytype') != 'none':
-                    if peer.host.find(".onion") == -1:
+                    if not peer_is_onion:
                         priority /= 10 # hidden services have 10x priority over plain net
                     else:
                         # don't connect to self
                         if peer.host == BMConfigParser().get('bitmessagesettings', 'onionhostname') and peer.port == BMConfigParser().getint("bitmessagesettings", "onionport"):
                             continue
-                elif peer.host.find(".onion") != -1: # onion address and so proxy
+                elif peer_is_onion:  # onion address and so proxy
                     continue
                 if priority <= 0.001: # everyone has at least this much priority
                     priority = 0.001

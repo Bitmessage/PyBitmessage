@@ -96,7 +96,8 @@ class singleListener(threading.Thread, StoppableThread):
                               errno.EPFNOSUPPORT,
                               errno.EADDRNOTAVAIL,
                               errno.ENOPROTOOPT,
-                              errno.EINVAL)):
+                              errno.EINVAL,
+                              'getsockaddrarg: bad family')):
                 sock = self._createListenSocket(socket.AF_INET)
             else:
                 raise

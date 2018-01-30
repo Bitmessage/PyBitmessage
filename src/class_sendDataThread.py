@@ -143,6 +143,8 @@ class sendDataThread(threading.Thread):
                         payload = ''
                         for hostDetails in data:
                             timeLastReceivedMessageFromThisNode, streamNumber, services, host, port = hostDetails
+                            if host is None:
+                                break
                             payload += pack(
                                 '>Q', timeLastReceivedMessageFromThisNode)  # now uses 64-bit time
                             payload += pack('>I', streamNumber)
