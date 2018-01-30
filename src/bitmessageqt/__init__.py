@@ -3682,6 +3682,7 @@ class MyForm(settingsmixin.SMainWindow):
         self.popMenuYourIdentities.addAction(self.actionMarkAllRead)
 
         if get_plugins:
+            self.popMenuYourIdentities.addSeparator()
             for plugin in get_plugins(
                     'gui.menu', 'popMenuYourIdentities'):
                 plugin(self)
