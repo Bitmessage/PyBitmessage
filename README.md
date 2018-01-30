@@ -1,18 +1,24 @@
 [![Codacy Badge](https://api.codacy.com/project/badge/Grade/16ab2dd33ae74d12859f329163b58595)](https://www.codacy.com/app/sigoa/PyBitmessage?utm_source=github.com&utm_medium=referral&utm_content=sigoa/PyBitmessage&utm_campaign=badger)
 
 PyBitmessage
------------
+============
 
-Bitmessage is a peer-to-peer communication protocol used to send encrypted messages to another single person or to multiple subscribers. It is decentralized and trustless, meaning that one needs not inherently trust any entities such as root certificate authorities. Bitmessage uses strong authentication, meaning that the sender of a message cannot be spoofed. It aims to hide meta-data, such as the ID of sender and receiver of messages from passive eavesdroppers like those warrantless wiretapping programs which are ongoing. 
+Bitmessage is a P2P communications protocol used to send encrypted messages to
+another person or to many subscribers. It is decentralized and trustless,
+meaning that you need-not inherently trust any entities like root certificate
+authorities. It uses strong authentication, which means that the sender of a
+message cannot be spoofed, and it aims to hide metadata, like the
+sender and receiver of messages, from passive eavesdroppers like those running
+warrantless wiretapping programs.
 
 
 Development
 ----------
-
-Bitmessage is a collaborative project. You are welcome to submit pull requests - although if you plan to put a non-trivial amount of work into coding new features, it is recommended that you first solicit feedback on the DevTalk pseudo-mailing-list ("subscribe"): http://bm6hsivrmdnxmw2f.onion/chan/DevTalk 
-
-Feel welcome to join chan "bitmessage", BM-2cWy7cvHoq3f1rYMerRJp8PT653jjSuEdY 
-which is on preview here: http://beamstat.com/chan/bitmessage
+Bitmessage is a collaborative project. You are welcome to submit pull requests 
+although if you plan to put a non-trivial amount of work into coding new
+features, it is recommended that you first solicit feedback on the DevTalk
+pseudo-mailing list:
+BM-2D9QKN4teYRvoq2fyzpiftPh9WP9qggtzh
 
 
 References
