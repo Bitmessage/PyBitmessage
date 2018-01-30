@@ -1,8 +1,8 @@
 #!/usr/bin/python2.7
 # -*- coding: utf-8 -*-
-
 # Copyright (c) 2012-2016 Jonathan Warren ; Copyright (c) 2012-2016 The Bitmessage developers
 # Distributed under the MIT/X11 software license. See the accompanying file COPYING or http://www.opensource.org/licenses/mit-license.ph
+
 # Right now, PyBitmessage only support connecting to stream 1. It doesn't yet contain logic to expand into further streams
 # The software version variable is now held in shared.py
 
