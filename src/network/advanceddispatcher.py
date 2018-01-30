@@ -57,8 +57,8 @@ class AdvancedDispatcher(asyncore.dispatcher):
                     if not self.connected or state.shutdown:
                         break
                     if len(self.read_buf) < self.expectBytes:
-                        return False 
-                    if not getattr(self, "state_" + str(self.state))():                ###    is False   vs.  not 
+                        return False
+                    if not getattr(self, "state_" + str(self.state))():
                         break
             except AttributeError:
                 logger.error("Unknown state %s", self.state)
