@@ -2663,7 +2663,8 @@ class MyForm(settingsmixin.SMainWindow):
             else:
                 PendingDownloadQueue.stop()
 
-        if shared.statusIconColor == 'red':
+        if shared.statusIconColor == 'red' and not BMConfigParser().safeGetBoolean(
+                'bitmessagesettings', 'dontconnect'):
             reply = QtGui.QMessageBox.question(self, _translate("MainWindow", "Not connected"),
                     _translate("MainWindow", "Bitmessage isn't connected to the network. If you quit now, it may cause delivery delays. Wait until connected and the synchronisation finishes?"),
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
