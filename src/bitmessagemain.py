@@ -407,10 +407,9 @@ All parameters are optional.
 
 
 def emojiLogg():
+    """works with UTF-8 but not with Korean encoding for example -> exception"""
     from debug import logger
     import sys  
-    reload(sys)  
-    sys.setdefaultencoding('utf8')
     logger.warning(str(     u'exc:äüöß   🤷 🤷  without exception  😃                         '.encode("UTF-8")   )          )
     logger.warning(          ' äüß      🤷 🤷 🤷   -- just a test emoji warning to demo this  ')
 
@@ -418,6 +417,10 @@ def main():
     mainprogram = Main()
     mainprogram.start()
 
+reload(sys)  
+sys.setdefaultencoding('utf8')
+    
+    
 if __name__ == "__main__":
     emojiLogg()
     main()
