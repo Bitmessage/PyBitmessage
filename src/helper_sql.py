@@ -21,6 +21,24 @@ def sqlQuery(sqlStatement, *args):
 
     return queryreturn
 
+def sqlExecuteChunked(sqlStatement, idCount, *args):
+    #SQLITE_MAX_VARIABLE_NUMBER, unfortunately getting/setting isn't exposed to python
+    sqlExecuteChunked.chunkSize = 999
+
+    if idCount == 0 or idCount > len(args):
+        return 0
+
+    totalRowCount = 0
+    with sqlLock:
+        for i in range(len(args)-idCount, len(args), sqlExecuteChunked.chunkSize - (len(args)-idCount)):
+            sqlSubmitQueue.put(sqlStatement)
+            # first static args, and then iterative chunk
+            sqlSubmitQueue.put(args[0:len(args)-idCount] + args[i:i+sqlExecuteChunked.chunkSize - (len(args)-idCount)])
+            retVal = sqlReturnQueue.get()
+            totalRowCount += retVal[1]
+        sqlSubmitQueue.put('commit')
+    return totalRowCount
+
 def sqlExecute(sqlStatement, *args):
     sqlLock.acquire()
     sqlSubmitQueue.put(sqlStatement)

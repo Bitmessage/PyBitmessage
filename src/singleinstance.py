@@ -31,12 +31,12 @@ class singleinstance:
             import bitmessageqt
             bitmessageqt.init()
 
-        self.lock()
+        self.lock(not daemon)
 
         self.initialized = True
         atexit.register(self.cleanup)
 
-    def lock(self):
+    def lock(self, writePid = False):
         if self.lockPid is None:
             self.lockPid = os.getpid()
         if sys.platform == 'win32':
@@ -68,9 +68,10 @@ class singleinstance:
                 sys.exit(-1)
             else:
                 pidLine = "%i\n" % self.lockPid
-                self.fp.truncate(0)
-                self.fp.write(pidLine)
-                self.fp.flush()
+                if writePid:
+                    self.fp.truncate(0)
+                    self.fp.write(pidLine)
+                    self.fp.flush()
 
     def cleanup(self):
         if not self.initialized:

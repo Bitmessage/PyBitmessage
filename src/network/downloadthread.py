@@ -13,10 +13,10 @@ from state import missingObjects
 
 class DownloadThread(threading.Thread, StoppableThread):
     minPending = 200
-    requestChunk = 1000
+    maxRequestChunk = 1000
     requestTimeout = 60
     cleanInterval = 60
-    requestExpires = 600
+    requestExpires = 3600
 
     def __init__(self):
         threading.Thread.__init__(self, name="Downloader")
@@ -42,6 +42,10 @@ class DownloadThread(threading.Thread, StoppableThread):
             # Choose downloading peers randomly
             connections = BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values()
             random.shuffle(connections)
+            try:
+                requestChunk =  max(int(DownloadThread.maxRequestChunk / len(connections)), 1)
+            except ZeroDivisionError:
+                requestChunk = 1
             for i in connections:
                 now = time.time()
                 timedOut = now - DownloadThread.requestTimeout
@@ -61,8 +65,8 @@ class DownloadThread(threading.Thread, StoppableThread):
                     random.shuffle(request)
                     if not request:
                         continue
-                    if len(request) > DownloadThread.requestChunk - downloadPending:
-                        request = request[:DownloadThread.requestChunk - downloadPending]
+                    if len(request) > requestChunk - downloadPending:
+                        request = request[:requestChunk - downloadPending]
                     # mark them as pending
                     for k in request:
                         i.objectsNewToMe[k] = False

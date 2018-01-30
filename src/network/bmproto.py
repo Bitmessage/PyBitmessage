@@ -24,13 +24,16 @@ import shared
 import state
 import protocol
 
-class BMProtoError(ProxyError): pass
+class BMProtoError(ProxyError):
+    errorCodes = ("Protocol error")
 
 
-class BMProtoInsufficientDataError(BMProtoError): pass
+class BMProtoInsufficientDataError(BMProtoError):
+    errorCodes = ("Insufficient data")
 
 
-class BMProtoExcessiveDataError(BMProtoError): pass
+class BMProtoExcessiveDataError(BMProtoError):
+    errorCodes = ("Too much data")
 
 
 class BMProto(AdvancedDispatcher, ObjectTracker):

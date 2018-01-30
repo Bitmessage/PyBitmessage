@@ -20,7 +20,6 @@ import logging
 import logging.config
 import os
 import sys
-import traceback
 import helper_startup
 import state
 helper_startup.loadConfig()
@@ -30,8 +29,7 @@ helper_startup.loadConfig()
 log_level = 'WARNING'
 
 def log_uncaught_exceptions(ex_cls, ex, tb):
-    logging.critical(''.join(traceback.format_tb(tb)))
-    logging.critical('{0}: {1}'.format(ex_cls, ex))
+    logging.critical('Unhandled exception', exc_info=(ex_cls, ex, tb))
 
 def configureLogging():
     have_logging = False

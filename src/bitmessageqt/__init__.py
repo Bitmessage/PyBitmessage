@@ -1294,6 +1294,7 @@ class MyForm(settingsmixin.SMainWindow):
         try:
             self.indicatorUpdate = get_plugin('indicator')(self)
         except (NameError, TypeError):
+            logger.warning("No indicator plugin found")
             self.indicatorUpdate = _noop_update
 
     # initialise the message notifier
@@ -2618,7 +2619,7 @@ class MyForm(settingsmixin.SMainWindow):
                     QtGui.QMessageBox.Yes|QtGui.QMessageBox.No|QtGui.QMessageBox.Cancel, QtGui.QMessageBox.Cancel)
             if reply == QtGui.QMessageBox.No:
                 waitForPow = False
-            elif reply == QtGui.QMessage.Cancel:
+            elif reply == QtGui.QMessageBox.Cancel:
                 return
 
         if PendingDownloadQueue.totalSize() > 0:

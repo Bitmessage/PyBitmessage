@@ -10,7 +10,7 @@ import state
 class ProxyError(Exception):
     errorCodes = ("UnknownError")
 
-    def __init__(self, code):
+    def __init__(self, code=-1):
         self.code = code
         try:
             self.message = self.__class__.errorCodes[self.code]

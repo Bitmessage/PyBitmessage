@@ -361,7 +361,7 @@ class objectProcessor(threading.Thread):
         # This is not an acknowledgement bound for me. See if it is a message
         # bound for me by trying to decrypt it with my private keys.
         
-        for key, cryptorObject in shared.myECCryptorObjects.items():
+        for key, cryptorObject in sorted(shared.myECCryptorObjects.items(), key=lambda x: random.random()):
             try:
                 if initialDecryptionSuccessful: # continue decryption attempts to avoid timing attacks
                     cryptorObject.decrypt(data[readPosition:])
@@ -634,7 +634,7 @@ class objectProcessor(threading.Thread):
             """
             signedData = data[8:readPosition]
             initialDecryptionSuccessful = False
-            for key, cryptorObject in shared.MyECSubscriptionCryptorObjects.items():
+            for key, cryptorObject in sorted(shared.MyECSubscriptionCryptorObjects.items(), key=lambda x: random.random()):
                 try:
                     if initialDecryptionSuccessful: # continue decryption attempts to avoid timing attacks
                         cryptorObject.decrypt(data[readPosition:])
