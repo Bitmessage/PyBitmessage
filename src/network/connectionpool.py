@@ -203,6 +203,14 @@ class BMConnectionPool(object):
                             continue
 
                     self.lastSpawned = time.time()
+        else:
+            for i in (
+                    self.inboundConnections.values() +
+                    self.outboundConnections.values()
+            ):
+                i.set_state("close")
+                # FIXME: rating will be increased after next connection
+                i.handle_close()
 
         if acceptConnections:
             if not self.listeningSockets:
