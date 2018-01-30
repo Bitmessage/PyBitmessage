@@ -52,6 +52,7 @@ import select
 import socket
 import sys
 import time
+from threading import current_thread
 import warnings
 
 import os
@@ -246,6 +247,8 @@ def select_poller(timeout=0.0, map=None):
             if obj is None:
                 continue
             _exception(obj)
+    else:
+        current_thread().stop.wait(timeout)
 
 def poll_poller(timeout=0.0, map=None):
     """A poller which uses poll(), available on most UNIXen."""
@@ -294,6 +297,8 @@ def poll_poller(timeout=0.0, map=None):
             if obj is None:
                 continue
             readwrite(obj, flags)
+    else:
+        current_thread().stop.wait(timeout)
 
 # Aliases for backward compatibility
 poll = select_poller
@@ -349,6 +354,8 @@ def epoll_poller(timeout=0.0, map=None):
             if obj is None:
                 continue
             readwrite(obj, flags) 
+    else:
+        current_thread().stop.wait(timeout)
 
 def kqueue_poller(timeout=0.0, map=None):
     """A poller which uses kqueue(), BSD specific."""
@@ -383,12 +390,16 @@ def kqueue_poller(timeout=0.0, map=None):
             if event.filter == select.KQ_FILTER_WRITE:
                 write(obj)
         kqueue.close()
+    else:
+        current_thread().stop.wait(timeout)
 
 
 def loop(timeout=30.0, use_poll=False, map=None, count=None, 
          poller=None):
     if map is None:
         map = socket_map
+    if count is None:
+        count =  True
     # code which grants backward compatibility with "use_poll" 
     # argument which should no longer be used in favor of
     # "poller"
@@ -405,27 +416,20 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None,
         elif hasattr(select, 'select'):
             poller = select_poller
 
-    if count is None:
-        while map:
-            # fill buckets first
-            update_sent()
-            update_received()
-            # then poll
-            poller(timeout, map)
+    if timeout == 0:
+        deadline = 0
     else:
-        if timeout == 0:
-            deadline = 0
-        else:
-            deadline = time.time() + timeout
-        while map and count > 0:
-            # fill buckets first
-            update_sent()
-            update_received()
-            subtimeout = deadline - time.time()
-            if subtimeout <= 0:
-                break
-            poller(subtimeout, map)
-            # then poll
+        deadline = time.time() + timeout
+    while count:
+        # fill buckets first
+        update_sent()
+        update_received()
+        subtimeout = deadline - time.time()
+        if subtimeout <= 0:
+            break
+        # then poll
+        poller(subtimeout, map)
+        if type(count) is int:
             count = count - 1
 
 class dispatcher:
