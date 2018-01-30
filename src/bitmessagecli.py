@@ -1,14 +1,15 @@
-#!/usr/bin/python2.7
+#!/usr/bin/python2.7 
+# -*- coding: utf-8 -*-
 # Created by Adam Melton (.dok) referenceing https://bitmessage.org/wiki/API_Reference for API documentation
 # Distributed under the MIT/X11 software license. See http://www.opensource.org/licenses/mit-license.php.
 
-# This is an example of a daemon client for PyBitmessage 0.4.2, by .dok (Version 0.3.0)
+# This is an example of a daemon client for PyBitmessage 0.6.2, by .dok (Version 0.3.1) , modified
 
 
 import xmlrpclib
 import datetime
-import hashlib
-import getopt
+#import hashlib
+#import getopt
 import imghdr
 import ntpath
 import json
@@ -37,7 +38,7 @@ def userInput(message): #Checks input for exit or quit. Also formats for input, 
     elif (uInput.lower() == 'quit'): #Quits the program
         print '\n     Bye\n'
         sys.exit()
-        os.exit()
+        os._exit()   # _
     else:
         return uInput
     
@@ -55,7 +56,7 @@ def lookupAppdataFolder(): #gets the appropriate folders for the .dat files depe
             dataFolder = path.join(os.environ["HOME"], "Library/Application support/", APPNAME) + '/'
         else:
             print '     Could not find home folder, please report this message and your OS X version to the Daemon Github.'
-            os.exit()
+            os._exit()
 
     elif 'win32' in sys.platform or 'win64' in sys.platform:
         dataFolder = path.join(environ['APPDATA'], APPNAME) + '\\'
@@ -117,7 +118,7 @@ def apiInit(apiEnabled):
             
             apiUsr = userInput("API Username")
             apiPwd = userInput("API Password")
-            apiInterface = userInput("API Interface. (127.0.0.1)")
+            #apiInterface = userInput("API Interface. (127.0.0.1)")
             apiPort = userInput("API Port")
             apiEnabled = userInput("API Enabled? (True) or (False)").lower()
             daemon = userInput("Daemon mode Enabled? (True) or (False)").lower()
@@ -207,7 +208,7 @@ def apiData():
         apiInit("") #Initalize the keys.dat file with API information
 
     #keys.dat file was found or appropriately configured, allow information retrieval
-    apiEnabled = apiInit(BMConfigParser().safeGetBoolean('bitmessagesettings','apienabled')) #if false it will prompt the user, if true it will return true
+    #apiEnabled = apiInit(BMConfigParser().safeGetBoolean('bitmessagesettings','apienabled')) #if false it will prompt the user, if true it will return true
 
     BMConfigParser().read(keysPath)#read again since changes have been made
     apiPort = int(BMConfigParser().get('bitmessagesettings', 'apiport'))
@@ -424,7 +425,7 @@ def unsubscribe():
             break
     
     
-    uInput = userInput("Are you sure, (Y)es or (N)o?").lower()
+    userInput("Are you sure, (Y)es or (N)o?").lower() # #uInput = 
     
     api.deleteSubscription(address)
     print ('\n     You are now unsubscribed from: ' + address + '\n')
@@ -522,9 +523,9 @@ def listAdd(): #Lists all of the addresses and their info
     print '     | # |       Label       |               Address               |S#|Enabled|'
     print '     |---|-------------------|-------------------------------------|--|-------|'
     for addNum in range (0, numAddresses): #processes all of the addresses and lists them out
-        label = str(jsonAddresses['addresses'][addNum]['label'])
+        label   =    (jsonAddresses['addresses'][addNum]['label'  ]).encode('utf')              # may still misdiplay in some consoles
         address = str(jsonAddresses['addresses'][addNum]['address'])
-        stream = str(jsonAddresses['addresses'][addNum]['stream'])
+        stream  = str(jsonAddresses['addresses'][addNum]['stream'])
         enabled = str(jsonAddresses['addresses'][addNum]['enabled'])
 
         if (len(label) > 19):
@@ -593,7 +594,7 @@ def genMilAddr(): #Generate address
         lbl = "random" + str(i)
         addressLabel = lbl.encode('base64')
         try:
-            generatedAddress = api.createRandomAddress(addressLabel)
+            api.createRandomAddress(addressLabel) # generatedAddress = 
         except:
             print '\n     Connection Error\n'
             usrPrompt = 0
@@ -912,7 +913,7 @@ def inbox(unreadOnly = False): #Lists the messages by: Message Number, To Addres
             if not message['read']: messagesUnread += 1
 
         if (messagesPrinted%20 == 0 and messagesPrinted != 0):
-            uInput = userInput('(Press Enter to continue or type (Exit) to return to the main menu.)').lower()
+            userInput('(Press Enter to continue or type (Exit) to return to the main menu.)').lower() # uInput = 
             
     print '\n     -----------------------------------'
     print '     There are %d unread messages of %d messages in the inbox.' % (messagesUnread, numMessages)
@@ -940,7 +941,7 @@ def outbox():
         print '     Last Action Time:', datetime.datetime.fromtimestamp(float(outboxMessages['sentMessages'][msgNum]['lastActionTime'])).strftime('%Y-%m-%d %H:%M:%S')
 
         if (msgNum%20 == 0 and msgNum != 0):
-            uInput = userInput('(Press Enter to continue or type (Exit) to return to the main menu.)').lower()
+            userInput('(Press Enter to continue or type (Exit) to return to the main menu.)').lower() # uInput = 
 
     print '\n     -----------------------------------'
     print '     There are ',numMessages,' messages in the outbox.'
@@ -1319,12 +1320,12 @@ def UI(usrInput): #Main user menu
         print '     |------------------------|----------------------------------------------|'
         print '     | subscribe              | Subscribes to an address                     |'
         print '     | unsubscribe            | Unsubscribes from an address                 |'
-       #print '     | listSubscriptions      | Lists all of the subscriptions.              |'
+        #print'     | listSubscriptions      | Lists all of the subscriptions.              |'
         print '     |------------------------|----------------------------------------------|'
-	print '     | create                 | Creates a channel                            |'
+        print '     | create                 | Creates a channel                            |'
         print '     | join                   | Joins a channel                              |'
         print '     | leave                  | Leaves a channel                             |'
-	print '     |------------------------|----------------------------------------------|'
+        print '     |------------------------|----------------------------------------------|'
         print '     | inbox                  | Lists the message information for the inbox  |'
         print '     | outbox                 | Lists the message information for the outbox |'
         print '     | send                   | Send a new message or broadcast              |'
@@ -1368,7 +1369,7 @@ def UI(usrInput): #Main user menu
     elif usrInput == "quit": #Quits the application
         print '\n     Bye\n'
         sys.exit()
-        os.exit()
+        os._exit()
         
     elif usrInput == "listaddresses": #Lists all of the identities in the addressbook
         listAdd()
@@ -1445,17 +1446,17 @@ def UI(usrInput): #Main user menu
 
     elif usrInput == "create":
         createChan()
-        userPrompt = 1
+        usrPrompt = 1
         main()
 
     elif usrInput == "join":
         joinChan()
-        userPrompt = 1
+        usrPrompt = 1
         main()
         
     elif usrInput == "leave":
         leaveChan()
-        userPrompt = 1
+        usrPrompt = 1
         main()
         
     elif usrInput == "inbox":
@@ -1668,7 +1669,7 @@ def UI(usrInput): #Main user menu
                 usrPrompt = 1
         else:
             print '\n     Invalid Entry.\n'
-            userPrompt = 1
+            usrPrompt = 1
             main()
 
     elif usrInput == "exit":
@@ -1740,7 +1741,7 @@ def main():
     if (usrPrompt == 0):
         print '\n     ------------------------------'
         print '     | Bitmessage Daemon by .dok  |'
-        print '     | Version 0.2.6 for BM 0.3.5 |'
+        print '     | Version 0.3.1 for BM 0.6.2 |'
         print '     ------------------------------'
         api = xmlrpclib.ServerProxy(apiData()) #Connect to BitMessage using these api credentials
 
@@ -1769,4 +1770,4 @@ def main():
         UI("quit")
 
 if __name__ == "__main__":
-    main()
+    main() 
