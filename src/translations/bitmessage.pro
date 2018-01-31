@@ -68,6 +68,7 @@ TRANSLATIONS = \
     bitmessage_pt.ts \
     bitmessage_sk.ts \
     bitmessage_ru.ts \
+    bitmessage_uk.ts \
     bitmessage_zh_cn.ts
 
 CODECFORTR      = UTF-8
