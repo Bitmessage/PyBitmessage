@@ -1904,7 +1904,7 @@ class MyForm(settingsmixin.SMainWindow):
                                 " BM-   Please check the recipient address %1"
                                 ).arg(toAddress))
                         elif status == 'checksumfailed':
-                            self.statusbar_message(_translate(
+                            self.updateStatusBar(_translate(
                                 "MainWindow",
                                 "Error: The recipient address %1 is not"
                                 " typed or copied correctly. Please check it."
@@ -2095,7 +2095,8 @@ class MyForm(settingsmixin.SMainWindow):
         identities = str(self.ui.lineEditTo.text().toUtf8()).split(";")
         err, addr = nc.query(identities[-1].strip())
         if err is not None:
-            self.statusbar_message("Error: %1", args=[err])
+            self.updateStatusBar(
+                _translate("MainWindow", "Error: %1").arg(err))
         else:
             identities[-1] = addr
             self.ui.lineEditTo.setText("; ".join(identities))
