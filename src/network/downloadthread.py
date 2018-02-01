@@ -55,7 +55,7 @@ class DownloadThread(threading.Thread, StoppableThread):
                 payload.extend(addresses.encodeVarint(len(request)))
                 for chunk in request:
                     payload.extend(chunk)
-                    missingObjects[k] = now
+                    missingObjects[chunk] = now
                 i.append_write_buf(protocol.CreatePacket('getdata', payload))
                 logger.debug("%s:%i Requesting %i objects", i.destination.host, i.destination.port, len(request))
                 requested += len(request)
