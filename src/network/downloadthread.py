@@ -5,6 +5,7 @@ import time
 import addresses
 from debug import logger
 from helper_threading import StoppableThread
+from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 import protocol
 from state import missingObjects
@@ -53,6 +54,9 @@ class DownloadThread(threading.Thread, StoppableThread):
                 payload = bytearray()
                 payload.extend(addresses.encodeVarint(len(request)))
                 for chunk in request:
+                    if chunk in Inventory():
+                        del i.objectsNewToMe[chunk]
+                        continue
                     payload.extend(chunk)
                     missingObjects[chunk] = now
                 i.append_write_buf(protocol.CreatePacket('getdata', payload))
