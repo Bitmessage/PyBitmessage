@@ -55,7 +55,10 @@ class DownloadThread(threading.Thread, StoppableThread):
                 payload.extend(addresses.encodeVarint(len(request)))
                 for chunk in request:
                     if chunk in Inventory():
-                        del i.objectsNewToMe[chunk]
+                        try:
+                            del i.objectsNewToMe[chunk]
+                        except KeyError:
+                            pass
                         continue
                     payload.extend(chunk)
                     missingObjects[chunk] = now
