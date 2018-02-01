@@ -85,7 +85,7 @@ class ObjectTracker(object):
             if hashId in Dandelion().hashMap:
                 Dandelion().fluffTrigger(hashId)
             if hashId not in missingObjects:
-                missingObjects[hashId] = True
+                missingObjects[hashId] = time.time()
             self.objectsNewToMe[hashId] = True
 
     def hasAddr(self, addr):

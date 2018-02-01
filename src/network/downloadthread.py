@@ -38,7 +38,7 @@ class DownloadThread(threading.Thread, StoppableThread):
         while not self._stopped:
             requested = 0
             # Choose downloading peers randomly
-            connections = BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values()
+            connections = [x for x in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values() if x.fullyEstablished]
             random.shuffle(connections)
             try:
                 requestChunk =  max(int(min(DownloadThread.maxRequestChunk, len(missingObjects)) / len(connections)), 1)
@@ -46,7 +46,6 @@ class DownloadThread(threading.Thread, StoppableThread):
                 requestChunk = 1
             for i in connections:
                 now = time.time()
-                timedOut = now - DownloadThread.requestTimeout
                 try:
                     request = i.objectsNewToMe.randomKeys(requestChunk)
                 except KeyError:
