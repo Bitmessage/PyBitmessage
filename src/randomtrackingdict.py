@@ -72,7 +72,7 @@ class RandomTrackingDict(object):
 
     def randomKeys(self, count=1):
         if self.len == 0 or (self.pendingLen >= self.maxPending and
-                self.lastPoll + self.pendingTimeout > time():
+                self.lastPoll + self.pendingTimeout > time()):
             raise KeyError
         # reset if we've requested all
         with self.lock:
