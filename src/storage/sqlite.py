@@ -18,13 +18,13 @@ class SqliteInventory(InventoryStorage):
         with self.lock:
             if hash in self._inventory:
                 return True
-            return bool(sqlQuery('SELECT 1 FROM inventory WHERE hash=?', hash))
+            return bool(sqlQuery('SELECT 1 FROM inventory WHERE hash=?', sqlite3.Binary(hash)))
 
     def __getitem__(self, hash):
         with self.lock:
             if hash in self._inventory:
                 return self._inventory[hash]
-            rows = sqlQuery('SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE hash=?', hash)
+            rows = sqlQuery('SELECT objecttype, streamnumber, payload, expirestime, tag FROM inventory WHERE hash=?', sqlite3.Binary(hash))
             if not rows:
                 raise KeyError(hash)
             return InventoryItem(*rows[0])
@@ -62,14 +62,14 @@ class SqliteInventory(InventoryStorage):
         with self.lock:
             t = int(time.time())
             hashes = [x for x, value in self._inventory.items() if value.stream == stream and value.expires > t]
-            hashes += (payload for payload, in sqlQuery('SELECT hash FROM inventory WHERE streamnumber=? AND expirestime>?', stream, t))
+            hashes += (str(payload) for payload, in sqlQuery('SELECT hash FROM inventory WHERE streamnumber=? AND expirestime>?', stream, t))
             return hashes
 
     def flush(self):
         with self.lock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
             with SqlBulkExecute() as sql:
                 for objectHash, value in self._inventory.items():
-                    sql.execute('INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?)', objectHash, *value)
+                    sql.execute('INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?)', sqlite3.Binary(objectHash), *value)
                 self._inventory.clear()
 
     def clean(self):
