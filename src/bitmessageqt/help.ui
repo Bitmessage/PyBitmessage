@@ -17,7 +17,7 @@
    <item row="1" column="0">
     <widget class="QLabel" name="labelHelpURI">
      <property name="text">
-      <string>&lt;a href=&quot;https://bitmessage.org/wiki/PyBitmessage_Help&quot;&gt;https://bitmessage.org/wiki/PyBitmessage_Help&lt;/a&gt;</string>
+      <string notr="true">&lt;a href=&quot;https://bitmessage.org/wiki/PyBitmessage_Help&quot;&gt;https://bitmessage.org/wiki/PyBitmessage_Help&lt;/a&gt;</string>
      </property>
      <property name="openExternalLinks">
       <bool>true</bool>

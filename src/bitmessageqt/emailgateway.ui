@@ -56,7 +56,7 @@
       <bool>true</bool>
      </property>
      <property name="text">
-      <string>@mailchuck.com</string>
+      <string notr="true">@mailchuck.com</string>
      </property>
      <property name="cursorPosition">
       <number>0</number>
