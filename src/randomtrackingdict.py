@@ -31,21 +31,37 @@ class RandomTrackingDict(object):
                 self.dictionary[key] = [self.len, value]
                 self.len += 1
 
+    def _swap(self, i1, i2):
+        with self.lock:
+            key1 = self.indexDict[i1]
+            key2 = self.indexDict[i2]
+            self.indexDict[i1] = key2
+            self.indexDict[i2] = key1
+            self.dictionary[key1][0] = i2
+            self.dictionary[key2][0] = i1
+        # for quick reassignment
+        return i2
+
     def __delitem__(self, key):
         if not key in self.dictionary:
             raise KeyError
         with self.lock:
             index = self.dictionary[key][0]
-            self.indexDict[index] = self.indexDict[self.len - 1]
-            self.dictionary[self.indexDict[index]][0] = index
+            # not pending
+            if index < self.len - self.pendingLen:
+                # left of pending part
+                index = self._swap(index, self.len - self.pendingLen - 1)
+            # pending
+            else:
+                self.pendingLen -= 1
+            # end
+            self._swap(index, self.len - 1)
             # if the following del is batched, performance of this single
             # operation can improve 4x, but it's already very fast so we'll
             # ignore it for the time being
             del self.indexDict[-1]
             del self.dictionary[key]
             self.len -= 1
-            if index >= self.len - self.pendingLen:
-                self.pendingLen -= 1
 
     def setMaxPending(self, maxPending):
         self.maxPending = maxPending
@@ -63,16 +79,13 @@ class RandomTrackingDict(object):
             available = self.len - self.pendingLen
             if count > available:
                 count = available
-            retval = random.sample(self.indexDict[:self.len - self.pendingLen], count)
-            for i in retval[::-1]:
+            randomIndex = random.sample(range(self.len - self.pendingLen), count)
+            retval = [self.indexDict[i] for i in randomIndex]
+
+            for i in sorted(randomIndex, reverse=True):
                 # swap with one below lowest pending
+                self._swap(i, self.len - self.pendingLen - 1)
                 self.pendingLen += 1
-                swapKey = self.indexDict[-self.pendingLen]
-                curIndex = self.dictionary[i][0]
-                self.indexDict[-self.pendingLen] = i
-                self.indexDict[curIndex] = swapKey
-                self.dictionary[i][0] = self.len - self.pendingLen
-                self.dictionary[swapKey][0] = curIndex
             self.lastPoll = time()
             return retval
 
