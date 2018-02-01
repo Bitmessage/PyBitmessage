@@ -22,15 +22,6 @@ class RandomTrackingDict(object):
     def __getitem__(self, key):
         return self.dictionary[key][1]
 
-    def __setitem__(self, key, value):
-        with self.lock:
-            if key in self.dictionary:
-                self.dictionary[key][1] = value
-            else:
-                self.indexDict.append(key)
-                self.dictionary[key] = [self.len, value]
-                self.len += 1
-
     def _swap(self, i1, i2):
         with self.lock:
             key1 = self.indexDict[i1]
@@ -41,6 +32,16 @@ class RandomTrackingDict(object):
             self.dictionary[key2][0] = i1
         # for quick reassignment
         return i2
+
+    def __setitem__(self, key, value):
+        with self.lock:
+            if key in self.dictionary:
+                self.dictionary[key][1] = value
+            else:
+                self.indexDict.append(key)
+                self.dictionary[key] = [self.len, value]
+                self._swap(self.len, self.len - self.pendingLen)
+                self.len += 1
 
     def __delitem__(self, key):
         if not key in self.dictionary:
@@ -70,12 +71,13 @@ class RandomTrackingDict(object):
         self.pendingTimeout = pendingTimeout
 
     def randomKeys(self, count=1):
-        if self.lastPoll + self.pendingTimeout < time():
-            with self.lock:
-                self.pendingLen = 0
-        if self.len == 0 or self.pendingLen >= self.maxPending:
+        if self.len == 0 or (self.pendingLen >= self.maxPending and
+                self.lastPoll + self.pendingTimeout > time():
             raise KeyError
+        # reset if we've requested all
         with self.lock:
+            if self.pendingLen == self.len:
+                self.pendingLen = 0
             available = self.len - self.pendingLen
             if count > available:
                 count = available
