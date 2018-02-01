@@ -40,8 +40,7 @@ class BMConnectionPool(object):
             if not i.fullyEstablished:
                 continue
             try:
-                with i.objectsNewToMeLock:
-                    del i.objectsNewToMe[hashid]
+                del i.objectsNewToMe[hashid]
             except KeyError:
                 with i.objectsNewToThemLock:
                     i.objectsNewToThem[hashid] = time.time()

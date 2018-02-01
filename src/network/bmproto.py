@@ -546,8 +546,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         for connection in network.connectionpool.BMConnectionPool().inboundConnections.values() + \
                 network.connectionpool.BMConnectionPool().outboundConnections.values():
             try:
-                with connection.objectsNewToMeLock:
-                    del connection.objectsNewToMe[hashId]
+                del connection.objectsNewToMe[hashId]
             except KeyError:
                 pass
             if not forwardAnyway:
