@@ -5,6 +5,7 @@ from threading import RLock
 from debug import logger
 from inventory import Inventory
 from network.dandelion import Dandelion
+from randomtrakcingdict import RandomTrackingDict
 from state import missingObjects
 
 haveBloom = False
@@ -32,8 +33,7 @@ class ObjectTracker(object):
     initialTimeOffset = 60
 
     def __init__(self):
-        self.objectsNewToMe = {}
-        self.objectsNewToMeLock = RLock()
+        self.objectsNewToMe = RandomTrackingDict()
         self.objectsNewToThem = {}
         self.objectsNewToThemLock = RLock()
         self.initInvBloom()
@@ -61,9 +61,6 @@ class ObjectTracker(object):
                 self.initAddrBloom()
             else:
                 # release memory
-                with self.objectsNewToMeLock:
-                    tmp = self.objectsNewToMe.copy()
-                    self.objectsNewToMe = tmp
                 deadline = time.time() - ObjectTracker.trackingExpires
                 with self.objectsNewToThemLock:
                     self.objectsNewToThem = {k: v for k, v in self.objectsNewToThem.iteritems() if v >= deadline}
@@ -88,9 +85,8 @@ class ObjectTracker(object):
             if hashId in Dandelion().hashMap:
                 Dandelion().fluffTrigger(hashId)
             if hashId not in missingObjects:
-                missingObjects[hashId] = time.time() - ObjectTracker.initialTimeOffset
-            with self.objectsNewToMeLock:
-                self.objectsNewToMe[hashId] = True
+                missingObjects[hashId] = True
+            self.objectsNewToMe[hashId] = True
 
     def hasAddr(self, addr):
         if haveBloom:

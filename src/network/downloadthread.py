@@ -3,10 +3,8 @@ import threading
 import time
 
 import addresses
-#from bmconfigparser import BMConfigParser
 from debug import logger
 from helper_threading import StoppableThread
-#from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 import protocol
 from state import missingObjects
@@ -49,32 +47,15 @@ class DownloadThread(threading.Thread, StoppableThread):
             for i in connections:
                 now = time.time()
                 timedOut = now - DownloadThread.requestTimeout
-                # this may take a while, but it needs a consistency so I think it's better to lock a bigger chunk
-                with i.objectsNewToMeLock:
-                    try:
-                        downloadPending = len(list((k for k, v in i.objectsNewToMe.iteritems() if k in missingObjects and missingObjects[k] > timedOut and not v)))
-                    except KeyError:
-                        continue
-                    if downloadPending >= DownloadThread.minPending:
-                        continue
-                    # keys with True values in the dict
-                    try:
-                        request = list((k for k, v in i.objectsNewToMe.iteritems() if k not in missingObjects or missingObjects[k] < timedOut))
-                    except KeyError:
-                        continue
-                    random.shuffle(request)
-                    if len(request) > requestChunk - downloadPending:
-                        request = request[:max(1, requestChunk - downloadPending)]
-                    if not request:
-                        continue
-                    # mark them as pending
-                    for k in request:
-                        i.objectsNewToMe[k] = False
-                        missingObjects[k] = now
+                try:
+                    request = i.objectsNewToMe.randomKeys(requestChunk)
+                except KeyError:
+                    continue
                 payload = bytearray()
                 payload.extend(addresses.encodeVarint(len(request)))
                 for chunk in request:
                     payload.extend(chunk)
+                    missingObjects[k] = now
                 i.append_write_buf(protocol.CreatePacket('getdata', payload))
                 logger.debug("%s:%i Requesting %i objects", i.destination.host, i.destination.port, len(request))
                 requested += len(request)
