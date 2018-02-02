@@ -22,9 +22,6 @@
 	<property name="pixmap">
 	  <pixmap resource="bitmessage_icons.qrc">:/newPrefix/images/can-icon-24px.png</pixmap>
 	</property>
-	<property name="scaledContents">
-	  <bool>true</bool>
-	</property>
 	<property name="alignment">
 	  <set>Qt::AlignCenter</set>
 	</property>
@@ -42,7 +39,7 @@
 	  <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/Bitmessage/PyBitmessage/tree/:branch:&quot;&gt;&lt;span style=&quot;text-decoration:none; color:#0000ff;&quot;&gt;PyBitmessage :version:&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
 	</property>
 	<property name="alignment">
-	  <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+	  <set>Qt::AlignCenter</set>
 	</property>
       </widget>
     </item>
