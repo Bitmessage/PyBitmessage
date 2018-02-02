@@ -62,6 +62,8 @@ class DownloadThread(threading.Thread, StoppableThread):
                         continue
                     payload.extend(chunk)
                     missingObjects[chunk] = now
+                if not payload:
+                    continue
                 i.append_write_buf(protocol.CreatePacket('getdata', payload))
                 logger.debug("%s:%i Requesting %i objects", i.destination.host, i.destination.port, len(request))
                 requested += len(request)
