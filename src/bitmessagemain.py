@@ -232,6 +232,11 @@ class Main:
 
         helper_threading.set_thread_name("PyBitmessage")
 
+        state.dandelion = BMConfigParser().safeGetInt('network', 'dandelion')
+        # dandelion requires outbound connections, without them, stem objects will get stuck forever
+        if state.dandelion and not BMConfigParser().safeGetBoolean('bitmessagesettings', 'sendoutgoingconnections'):
+            state.dandelion = 0
+
         helper_bootstrap.knownNodes()
         # Start the address generation thread
         addressGeneratorThread = addressGenerator()

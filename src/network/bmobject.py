@@ -74,7 +74,7 @@ class BMObject(object):
 
     def checkAlreadyHave(self):
         # if it's a stem duplicate, pretend we don't have it
-        if self.inventoryHash in Dandelion().hashMap:
+        if Dandelion().hasHash(self.inventoryHash):
             return
         if self.inventoryHash in Inventory():
             raise BMObjectAlreadyHaveError()

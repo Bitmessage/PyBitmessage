@@ -3,6 +3,7 @@ import threading
 import time
 
 import addresses
+from dandelion import Dandelion
 from debug import logger
 from helper_threading import StoppableThread
 from inventory import Inventory
@@ -54,7 +55,7 @@ class DownloadThread(threading.Thread, StoppableThread):
                 payload = bytearray()
                 payload.extend(addresses.encodeVarint(len(request)))
                 for chunk in request:
-                    if chunk in Inventory():
+                    if chunk in Inventory() and not Dandelion().hasHash(chunk):
                         try:
                             del i.objectsNewToMe[chunk]
                         except KeyError:
@@ -70,4 +71,4 @@ class DownloadThread(threading.Thread, StoppableThread):
             if time.time() >= self.lastCleaned + DownloadThread.cleanInterval:
                 self.cleanPending()
             if not requested:
-                self.stop.wait(5)
+                self.stop.wait(1)

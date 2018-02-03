@@ -196,7 +196,7 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server 
     payload += pack('>q', 
             NODE_NETWORK |
             (NODE_SSL if haveSSL(server) else 0) |
-            (NODE_DANDELION if BMConfigParser().safeGetInt('network', 'dandelion') > 0 else 0)
+            (NODE_DANDELION if state.dandelion else 0)
             )
     payload += pack('>q', int(time.time()))
 
@@ -213,7 +213,7 @@ def assembleVersionMessage(remoteHost, remotePort, participatingStreams, server 
     payload += pack('>q',
             NODE_NETWORK |
             (NODE_SSL if haveSSL(server) else 0) |
-            (NODE_DANDELION if BMConfigParser().safeGetInt('network', 'dandelion') > 0 else 0)
+            (NODE_DANDELION if state.dandelion else 0)
             )
     payload += '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF' + pack(
         '>L', 2130706433)  # = 127.0.0.1. This will be ignored by the remote host. The actual remote connected IP will be used.

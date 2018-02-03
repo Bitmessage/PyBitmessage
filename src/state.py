@@ -53,3 +53,5 @@ def resetNetworkProtocolAvailability():
     networkProtocolAvailability = {'IPv4': None, 'IPv6': None, 'onion': None}
 
 resetNetworkProtocolAvailability()
+
+dandelion = 0
