@@ -18,26 +18,28 @@ class InvThread(threading.Thread, StoppableThread):
         self.initStop()
         self.name = "InvBroadcaster"
 
+    def handleLocallyGenerated(self, stream, hashId):
+        Dandelion().addHash(hashId, stream=stream)
+        for connection in BMConnectionPool().inboundConnections.values() + \
+            BMConnectionPool().outboundConnections.values():
+                if state.dandelion and connection != Dandelion().objectChildStem(hashId):
+                    continue
+                connection.objectsNewToThem[hashId] = time()
+
     def run(self):
         while not state.shutdown:
             chunk = []
             while True:
+                # Dandelion fluff trigger by expiration
+                Dandelion().expire()
                 try:
                     data = invQueue.get(False)
                     chunk.append((data[0], data[1]))
                     # locally generated
-                    if len(data) == 2:
-                        Dandelion().addHash(data[1], None)
-                        BMConnectionPool().handleReceivedObject(data[0], data[1])
-                    # came over the network
-                    else:
-                        source = BMConnectionPool().getConnectionByAddr(data[2])
-                        BMConnectionPool().handleReceivedObject(data[0], data[1], source)
+                    if len(data) == 2 or data[2] is None:
+                        self.handleLocallyGenerated(data[0], data[1])
                 except Queue.Empty:
                     break
-                # connection not found, handle it as if generated locally
-                except KeyError:
-                    BMConnectionPool().handleReceivedObject(data[0], data[1])
 
             if chunk:
                 for connection in BMConnectionPool().inboundConnections.values() + \
@@ -53,12 +55,13 @@ class InvThread(threading.Thread, StoppableThread):
                         except KeyError:
                             continue
                         try:
-                            if connection == Dandelion().hashMap[inv[1]]:
+                            if connection == Dandelion().objectChildStem(inv[1]):
                                 # Fluff trigger by RNG
                                 # auto-ignore if config set to 0, i.e. dandelion is off
-                                # send a normal inv if stem node doesn't support dandelion
-                                if randint(1, 100) < BMConfigParser().safeGetBoolean("network", "dandelion") and \
-                                        connection.services | protocol.NODE_DANDELION > 0:
+                                if randint(1, 100) >= state.dandelion:
+                                    fluffs.append(inv[1])
+                                # send a dinv only if the stem node supports dandelion
+                                elif connection.services & protocol.NODE_DANDELION > 0:
                                     stems.append(inv[1])
                                 else:
                                     fluffs.append(inv[1])
@@ -79,6 +82,6 @@ class InvThread(threading.Thread, StoppableThread):
                 invQueue.task_done()
 
             if Dandelion().refresh < time():
-                BMConnectionPool().reRandomiseDandelionStems()
+                Dandelion().reRandomiseStems()
 
             self.stop.wait(1)

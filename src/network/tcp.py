@@ -168,7 +168,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             with self.objectsNewToThemLock:
                 for objHash in Inventory().unexpired_hashes_by_stream(stream):
                     # don't advertise stem objects on bigInv
-                    if objHash in Dandelion().hashMap:
+                    if Dandelion().hasHash(objHash):
                         continue
                     bigInvList[objHash] = 0
                     self.objectsNewToThem[objHash] = time.time()
