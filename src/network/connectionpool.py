@@ -145,7 +145,7 @@ class BMConnectionPool(object):
                 # TODO AUTH
                 # TODO reset based on GUI settings changes
                 try:
-                    if not BMConfigParser().get("network", "onionsocksproxytype").beginswith("SOCKS"):
+                    if not BMConfigParser().get("network", "onionsocksproxytype").startswith("SOCKS"):
                         raise NoOptionError
                     Proxy.onionproxy = (BMConfigParser().get("network", "onionsockshostname"),
                         BMConfigParser().getint("network", "onionsocksport"))
