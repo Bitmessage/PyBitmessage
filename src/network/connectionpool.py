@@ -1,3 +1,4 @@
+from ConfigParser import NoOptionError, NoSectionError
 import errno
 import socket
 import time
@@ -8,8 +9,6 @@ from bmconfigparser import BMConfigParser
 from debug import logger
 import helper_bootstrap
 from network.proxy import Proxy
-from network.bmproto import BMProto
-from network.dandelion import Dandelion
 from network.tcp import TCPServer, Socks5BMConnection, Socks4aBMConnection, TCPConnection
 from network.udp import UDPSocket
 from network.connectionchooser import chooseConnection
@@ -143,6 +142,15 @@ class BMConnectionPool(object):
                 self.bootstrapped = True
                 Proxy.proxy = (BMConfigParser().safeGet("bitmessagesettings", "sockshostname"),
                         BMConfigParser().safeGetInt("bitmessagesettings", "socksport"))
+                # TODO AUTH
+                # TODO reset based on GUI settings changes
+                try:
+                    if not BMConfigParser().get("network", "onionsocksproxytype").beginswith("SOCKS"):
+                        raise NoOptionError
+                    Proxy.onionproxy = (BMConfigParser().get("network", "onionsockshostname"),
+                        BMConfigParser().getint("network", "onionsocksport"))
+                except (NoOptionError, NoSectionError):
+                    Proxy.onionproxy = None
             established = sum(1 for c in self.outboundConnections.values() if (c.connected and c.fullyEstablished))
             pending = len(self.outboundConnections) - established
             if established < BMConfigParser().safeGetInt("bitmessagesettings", "maxoutboundconnections"):
@@ -166,15 +174,23 @@ class BMConnectionPool(object):
                     #    if chosen.host == c.destination.host:
                     #        continue
                     try:
-                        if (BMConfigParser().safeGet("bitmessagesettings", "socksproxytype") == "SOCKS5"):
+                        if chosen.host.endswith(".onion") and Proxy.onionproxy is not None:
+                            if BMConfigParser().get("network", "onionsocksproxytype") == "SOCKS5":
+                                self.addConnection(Socks5BMConnection(chosen))
+                            elif BMConfigParser().get("network", "onionsocksproxytype") == "SOCKS4a":
+                                self.addConnection(Socks4aBMConnection(chosen))
+                        elif BMConfigParser().safeGet("bitmessagesettings", "socksproxytype") == "SOCKS5":
                             self.addConnection(Socks5BMConnection(chosen))
-                        elif (BMConfigParser().safeGet("bitmessagesettings", "socksproxytype") == "SOCKS4a"):
+                        elif BMConfigParser().safeGet("bitmessagesettings", "socksproxytype") == "SOCKS4a":
                             self.addConnection(Socks4aBMConnection(chosen))
-                        elif not chosen.host.endswith(".onion"):
+                        else:
                             self.addConnection(TCPConnection(chosen))
                     except socket.error as e:
                         if e.errno == errno.ENETUNREACH:
                             continue
+                    except (NoSectionError, NoOptionError):
+                        # shouldn't happen
+                        pass
 
                     self.lastSpawned = time.time()
         else:
