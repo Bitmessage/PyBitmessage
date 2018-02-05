@@ -337,6 +337,9 @@ class Ui_MainWindow(object):
         self.labelHumanFriendlyTTLDescription.setMinimumSize(QtCore.QSize(45, 0))
         self.labelHumanFriendlyTTLDescription.setObjectName(_fromUtf8("labelHumanFriendlyTTLDescription"))
         self.horizontalLayout_5.addWidget(self.labelHumanFriendlyTTLDescription, 1, QtCore.Qt.AlignLeft)
+        self.pushButtonClear = QtGui.QPushButton(self.send)
+        self.pushButtonClear.setObjectName(_fromUtf8("pushButtonClear"))
+        self.horizontalLayout_5.addWidget(self.pushButtonClear, 0, QtCore.Qt.AlignRight)
         self.pushButtonSend = QtGui.QPushButton(self.send)
         self.pushButtonSend.setObjectName(_fromUtf8("pushButtonSend"))
         self.horizontalLayout_5.addWidget(self.pushButtonSend, 0, QtCore.Qt.AlignRight)
@@ -701,6 +704,7 @@ class Ui_MainWindow(object):
         except:
             pass
         self.labelHumanFriendlyTTLDescription.setText(_translate("MainWindow", "%n hour(s)", None, QtCore.QCoreApplication.CodecForTr, hours))
+        self.pushButtonClear.setText(_translate("MainWindow", "Clear", None))
         self.pushButtonSend.setText(_translate("MainWindow", "Send", None))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.send), _translate("MainWindow", "Send", None))
         self.treeWidgetSubscriptions.headerItem().setText(0, _translate("MainWindow", "Subscriptions", None))
