@@ -13,12 +13,14 @@ knownNodesTrimAmount = 2000
 # forget a node after rating is this low
 knownNodesForgetRating = -0.5
 
-def saveKnownNodes(dirName = None):
+
+def saveKnownNodes(dirName=None):
     if dirName is None:
         dirName = state.appdata
     with knownNodesLock:
         with open(os.path.join(dirName, 'knownnodes.dat'), 'wb') as output:
             pickle.dump(knownNodes, output)
+
 
 def increaseRating(peer):
     increaseAmount = 0.1
@@ -30,6 +32,7 @@ def increaseRating(peer):
             except KeyError:
                 pass
 
+
 def decreaseRating(peer):
     decreaseAmount = 0.1
     minRating = -1
@@ -40,7 +43,8 @@ def decreaseRating(peer):
             except KeyError:
                 pass
 
-def trimKnownNodes(recAddrStream = 1):
+
+def trimKnownNodes(recAddrStream=1):
     if len(knownNodes[recAddrStream]) < int(BMConfigParser().get("knownnodes", "maxnodes")):
         return
     with knownNodesLock:

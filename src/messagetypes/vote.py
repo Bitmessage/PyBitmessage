@@ -1,6 +1,7 @@
 from debug import logger
 from messagetypes import MsgBase
 
+
 class Vote(MsgBase):
     def __init__(self):
         return

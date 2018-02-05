@@ -50,7 +50,7 @@ class singleListener(threading.Thread, StoppableThread):
         sock.bind((HOST, PORT))
         sock.listen(2)
         return sock
-        
+
     def stopThread(self):
         super(singleListener, self).stopThread()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -78,9 +78,9 @@ class singleListener(threading.Thread, StoppableThread):
         # connections. But if on SOCKS and have an onionhostname, listen
         # (socket is then only opened for localhost)
         while BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and \
-            (not BMConfigParser().getboolean('bitmessagesettings', 'sockslisten') and \
-            ".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname')) and \
-            state.shutdown == 0:
+            (not BMConfigParser().getboolean('bitmessagesettings', 'sockslisten') and
+             ".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname')) and \
+                state.shutdown == 0:
             self.stop.wait(5)
 
         logger.info('Listening for incoming connections.')
@@ -112,9 +112,9 @@ class singleListener(threading.Thread, StoppableThread):
             while BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and not BMConfigParser().getboolean('bitmessagesettings', 'sockslisten') and ".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname') and state.shutdown == 0:
                 self.stop.wait(10)
             while len(shared.connectedHostsList) > \
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections", 200) + \
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections", 20) \
-                and state.shutdown == 0:
+                    BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections", 200) + \
+                    BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections", 20) \
+                    and state.shutdown == 0:
                 logger.info('We are connected to too many people. Not accepting further incoming connections for ten seconds.')
 
                 self.stop.wait(10)
@@ -124,7 +124,7 @@ class singleListener(threading.Thread, StoppableThread):
                     socketObject, sockaddr = sock.accept()
                 except socket.error as e:
                     if isinstance(e.args, tuple) and \
-                        e.args[0] in (errno.EINTR,):
+                            e.args[0] in (errno.EINTR,):
                         continue
                     time.wait(1)
                     continue
@@ -144,13 +144,13 @@ class singleListener(threading.Thread, StoppableThread):
                 # connection flooding.
                 # permit repeated connections from Tor
                 if HOST in shared.connectedHostsList and \
-                    (".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname') or not protocol.checkSocksIP(HOST)):
+                        (".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname') or not protocol.checkSocksIP(HOST)):
                     socketObject.close()
                     logger.info('We are already connected to ' + str(HOST) + '. Ignoring connection.')
                 else:
                     break
 
-            sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection.
+            sendDataThreadQueue = Queue.Queue()  # Used to submit information to the send data thread for this connection.
             socketObject.settimeout(20)
 
             sd = sendDataThread(sendDataThreadQueue)
@@ -165,4 +165,3 @@ class singleListener(threading.Thread, StoppableThread):
             rd.start()
 
             logger.info('connected to ' + HOST + ' during INCOMING request.')
-

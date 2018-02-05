@@ -23,6 +23,7 @@ from version import softwareVersion
 SMTPDOMAIN = "bmaddr.lan"
 LISTENPORT = 8425
 
+
 class smtpServerChannel(smtpd.SMTPChannel):
     def smtp_EHLO(self, arg):
         if not arg:
@@ -39,7 +40,7 @@ class smtpServerChannel(smtpd.SMTPChannel):
         try:
             decoded = base64.b64decode(authstring)
             correctauth = "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdusername", "") + \
-                    "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdpassword", "")
+                "\x00" + BMConfigParser().safeGet("bitmessagesettings", "smtpdpassword", "")
             logger.debug("authstring: %s / %s", correctauth, decoded)
             if correctauth == decoded:
                 self.auth = True
@@ -51,7 +52,7 @@ class smtpServerChannel(smtpd.SMTPChannel):
 
     def smtp_DATA(self, arg):
         if not hasattr(self, "auth") or not self.auth:
-            self.push ("530 Authentication required")
+            self.push("530 Authentication required")
             return
         smtpd.SMTPChannel.smtp_DATA(self, arg)
 
@@ -78,14 +79,14 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
             subject,
             message,
             ackdata,
-            int(time.time()), # sentTime (this will never change)
-            int(time.time()), # lastActionTime
-            0, # sleepTill time. This will get set when the POW gets done.
+            int(time.time()),  # sentTime (this will never change)
+            int(time.time()),  # lastActionTime
+            0,  # sleepTill time. This will get set when the POW gets done.
             'msgqueued',
-            0, # retryNumber
-            'sent', # folder
-            2, # encodingtype
-            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2) # not necessary to have a TTL higher than 2 days
+            0,  # retryNumber
+            'sent',  # folder
+            2,  # encodingtype
+            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2)  # not necessary to have a TTL higher than 2 days
         )
 
         queues.workerQueue.put(('sendmessage', toAddress))
@@ -97,12 +98,11 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
                 ret.append(unicode(h[0], h[1]))
             else:
                 ret.append(h[0].decode("utf-8", errors='replace'))
-            
+
         return ret
 
-
     def process_message(self, peer, mailfrom, rcpttos, data):
-#        print 'Receiving message from:', peer
+        #        print 'Receiving message from:', peer
         p = re.compile(".*<([^>]+)>")
         if not hasattr(self.channel, "auth") or not self.channel.auth:
             logger.error("Missing or invalid auth")
@@ -151,18 +151,19 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
                     raise Exception("Bad domain %s", domain)
                 logger.debug("Sending %s to %s about %s", sender, rcpt, msg_subject)
                 self.send(sender, rcpt, msg_subject, body)
-                logger.info("Relayed %s to %s", sender, rcpt) 
+                logger.info("Relayed %s to %s", sender, rcpt)
             except Exception as err:
-                logger.error( "Bad to %s: %s", to, repr(err))
+                logger.error("Bad to %s: %s", to, repr(err))
                 continue
         return
+
 
 class smtpServer(threading.Thread, StoppableThread):
     def __init__(self, parent=None):
         threading.Thread.__init__(self, name="smtpServerThread")
         self.initStop()
         self.server = smtpServerPyBitmessage(('127.0.0.1', LISTENPORT), None)
-        
+
     def stopThread(self):
         super(smtpServer, self).stopThread()
         self.server.close()
@@ -181,11 +182,13 @@ class smtpServer(threading.Thread, StoppableThread):
     def run(self):
         asyncore.loop(1)
 
+
 def signals(signal, frame):
     print "Got signal, terminating"
     for thread in threading.enumerate():
         if thread.isAlive() and isinstance(thread, StoppableThread):
             thread.stopThread()
+
 
 def runServer():
     print "Running SMTPd thread"
@@ -196,6 +199,7 @@ def runServer():
     print "Processing"
     smtpThread.join()
     print "The end"
+
 
 if __name__ == "__main__":
     runServer()

@@ -12,7 +12,7 @@ import knownnodes
 from network.advanceddispatcher import AdvancedDispatcher
 from network.dandelion import Dandelion
 from network.bmobject import BMObject, BMObjectInsufficientPOWError, BMObjectInvalidDataError, \
-        BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
+    BMObjectExpiredError, BMObjectUnwantedStreamError, BMObjectInvalidError, BMObjectAlreadyHaveError
 import network.connectionpool
 from network.node import Node
 from network.objectracker import ObjectTracker
@@ -23,6 +23,7 @@ from queues import objectProcessorQueue, portCheckerQueue, invQueue, addrQueue
 import shared
 import state
 import protocol
+
 
 class BMProtoError(ProxyError):
     errorCodes = ("Protocol error")
@@ -83,7 +84,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             self.invalid = True
         self.set_state("bm_command", length=protocol.Header.size, expectBytes=self.payloadLength)
         return True
-        
+
     def state_bm_command(self):
         self.payload = self.read_buf[:self.payloadLength]
         if self.checksum != hashlib.sha512(self.payload).digest()[0:4]:
@@ -121,7 +122,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             # broken read, ignore
             pass
         else:
-            #print "Skipping command %s due to invalid data" % (self.command)
+            # print "Skipping command %s due to invalid data" % (self.command)
             logger.debug("Closing due to invalid command %s", self.command)
             self.close_reason = "Invalid command %s" % (self.command)
             self.set_state("close")
@@ -152,13 +153,13 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         else:
             host = socket.inet_ntop(socket.AF_INET6, str(host))
         if host == "":
-            # This can happen on Windows systems which are not 64-bit compatible 
-            # so let us drop the IPv6 address. 
+            # This can happen on Windows systems which are not 64-bit compatible
+            # so let us drop the IPv6 address.
             host = socket.inet_ntop(socket.AF_INET, str(host[12:16]))
 
         return Node(services, host, port)
 
-    def decode_payload_content(self, pattern = "v"):
+    def decode_payload_content(self, pattern="v"):
         # L = varint indicating the length of the next array
         # l = varint indicating the length of the next item
         # v = varint (or array)
@@ -196,11 +197,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # retval (array)
         parserStack = [[1, 1, False, pattern, 0, []]]
 
-        #try:
+        # try:
         #    sys._getframe(200)
         #    logger.error("Stack depth warning, pattern: %s", pattern)
         #    return
-        #except ValueError:
+        # except ValueError:
         #    pass
 
         while True:
@@ -230,9 +231,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 size = None
                 continue
             elif i == "s":
-                #if parserStack[-2][2]:
+                # if parserStack[-2][2]:
                 #    parserStack[-1][5].append(self.payload[self.payloadOffset:self.payloadOffset + parserStack[-1][0]])
-                #else:
+                # else:
                 parserStack[-1][5] = self.payload[self.payloadOffset:self.payloadOffset + parserStack[-1][0]]
                 self.payloadOffset += parserStack[-1][0]
                 parserStack[-1][1] = 0
@@ -277,7 +278,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # skip?
         if time.time() < self.skipUntil:
             return True
-        #TODO make this more asynchronous
+        # TODO make this more asynchronous
         random.shuffle(items)
         for i in map(str, items):
             if Dandelion().hasHash(i) and \
@@ -365,7 +366,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             Dandelion().removeHash(self.object.inventoryHash, "cycle detection")
 
         Inventory()[self.object.inventoryHash] = (
-                self.object.objectType, self.object.streamNumber, buffer(self.payload[objectOffset:]), self.object.expiresTime, buffer(self.object.tag))
+            self.object.objectType, self.object.streamNumber, buffer(self.payload[objectOffset:]), self.object.expiresTime, buffer(self.object.tag))
         self.handleReceivedObject(self.object.streamNumber, self.object.inventoryHash)
         invQueue.put((self.object.streamNumber, self.object.inventoryHash, self.destination))
         return True
@@ -433,7 +434,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         logger.debug("my external IP: %s", self.sockNode.host)
         logger.debug("remote node incoming address: %s:%i", self.destination.host, self.peerNode.port)
         logger.debug("user agent: %s", self.userAgent)
-        logger.debug("streams: [%s]", ",".join(map(str,self.streams)))
+        logger.debug("streams: [%s]", ",".join(map(str, self.streams)))
         if not self.peerValidityChecks():
             # TODO ABORT
             return True
@@ -441,9 +442,9 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.append_write_buf(protocol.CreatePacket('verack'))
         self.verackSent = True
         if not self.isOutbound:
-            self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
-                    network.connectionpool.BMConnectionPool().streams, True, nodeid=self.nodeid))
-            #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
+            self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port,
+                                                                  network.connectionpool.BMConnectionPool().streams, True, nodeid=self.nodeid))
+            # print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
                 protocol.haveSSL(not self.isOutbound)):
             self.isSSL = True
@@ -458,39 +459,39 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
     def peerValidityChecks(self):
         if self.remoteProtocolVersion < 3:
             self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
-                errorText="Your is using an old protocol. Closing connection."))
-            logger.debug ('Closing connection to old protocol version %s, node: %s',
-                str(self.remoteProtocolVersion), str(self.destination))
+                                                                errorText="Your is using an old protocol. Closing connection."))
+            logger.debug('Closing connection to old protocol version %s, node: %s',
+                         str(self.remoteProtocolVersion), str(self.destination))
             return False
         if self.timeOffset > BMProto.maxTimeOffset:
             self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
-                errorText="Your time is too far in the future compared to mine. Closing connection."))
+                                                                errorText="Your time is too far in the future compared to mine. Closing connection."))
             logger.info("%s's time is too far in the future (%s seconds). Closing connection to it.",
-                self.destination, self.timeOffset)
+                        self.destination, self.timeOffset)
             shared.timeOffsetWrongCount += 1
             return False
         elif self.timeOffset < -BMProto.maxTimeOffset:
             self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
-                errorText="Your time is too far in the past compared to mine. Closing connection."))
+                                                                errorText="Your time is too far in the past compared to mine. Closing connection."))
             logger.info("%s's time is too far in the past (timeOffset %s seconds). Closing connection to it.",
-                self.destination, self.timeOffset)
+                        self.destination, self.timeOffset)
             shared.timeOffsetWrongCount += 1
             return False
         else:
             shared.timeOffsetWrongCount = 0
         if not self.streams:
             self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
-                errorText="We don't have shared stream interests. Closing connection."))
-            logger.debug ('Closed connection to %s because there is no overlapping interest in streams.',
-                str(self.destination))
+                                                                errorText="We don't have shared stream interests. Closing connection."))
+            logger.debug('Closed connection to %s because there is no overlapping interest in streams.',
+                         str(self.destination))
             return False
         if self.destination in network.connectionpool.BMConnectionPool().inboundConnections:
             try:
                 if not protocol.checkSocksIP(self.destination.host):
                     self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
-                        errorText="Too many connections from your IP. Closing connection."))
-                    logger.debug ('Closed connection to %s because we are already connected to that IP.',
-                        str(self.destination))
+                                                                        errorText="Too many connections from your IP. Closing connection."))
+                    logger.debug('Closed connection to %s because we are already connected to that IP.',
+                                 str(self.destination))
                     return False
             except:
                 pass
@@ -498,21 +499,21 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             # incoming from a peer we're connected to as outbound, or server full
             # report the same error to counter deanonymisation
             if state.Peer(self.destination.host, self.peerNode.port) in \
-                network.connectionpool.BMConnectionPool().inboundConnections or \
-                len(network.connectionpool.BMConnectionPool().inboundConnections) + \
-                len(network.connectionpool.BMConnectionPool().outboundConnections) > \
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections") + \
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections"):
+                    network.connectionpool.BMConnectionPool().inboundConnections or \
+                    len(network.connectionpool.BMConnectionPool().inboundConnections) + \
+                    len(network.connectionpool.BMConnectionPool().outboundConnections) > \
+                    BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections") + \
+                    BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections"):
                 self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
-                    errorText="Server full, please try again later."))
-                logger.debug ("Closed connection to %s due to server full or duplicate inbound/outbound.",
-                    str(self.destination))
+                                                                    errorText="Server full, please try again later."))
+                logger.debug("Closed connection to %s due to server full or duplicate inbound/outbound.",
+                             str(self.destination))
                 return False
         if network.connectionpool.BMConnectionPool().isAlreadyConnected(self.nonce):
             self.append_write_buf(protocol.assembleErrorMessage(fatal=2,
-                errorText="I'm connected to myself. Closing connection."))
-            logger.debug ("Closed connection to %s because I'm connected to myself.",
-                str(self.destination))
+                                                                errorText="I'm connected to myself. Closing connection."))
+            logger.debug("Closed connection to %s because I'm connected to myself.",
+                         str(self.destination))
             return False
 
         return True

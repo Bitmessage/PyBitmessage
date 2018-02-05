@@ -8,13 +8,14 @@ import state
 str_broadcast_subscribers = '[Broadcast subscribers]'
 str_chan = '[chan]'
 
+
 def identiconize(address):
     size = 48
-    
-    # If you include another identicon library, please generate an 
+
+    # If you include another identicon library, please generate an
     # example identicon with the following md5 hash:
     # 3fd4bf901b9d4ea1394f0fb358725b28
-    
+
     try:
         identicon_lib = BMConfigParser().get('bitmessagesettings', 'identiconlib')
     except:
@@ -25,11 +26,11 @@ def identiconize(address):
     # It can be used as a pseudo-password to salt the generation of the identicons to decrease the risk
     # of attacks where someone creates an address to mimic someone else's identicon.
     identiconsuffix = BMConfigParser().get('bitmessagesettings', 'identiconsuffix')
-    
+
     if not BMConfigParser().getboolean('bitmessagesettings', 'useidenticons'):
         idcon = QtGui.QIcon()
         return idcon
-    
+
     if (identicon_lib[:len('qidenticon')] == 'qidenticon'):
         # print identicon_lib
         # originally by:
@@ -63,6 +64,7 @@ def identiconize(address):
         idcon = QtGui.QIcon()
         idcon.addPixmap(pix, QtGui.QIcon.Normal, QtGui.QIcon.Off)
         return idcon
+
 
 def avatarize(address):
     """

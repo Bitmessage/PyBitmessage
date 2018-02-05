@@ -17,19 +17,20 @@ import protocol
 from singleton import Singleton
 import state
 
+
 @Singleton
 class BMConnectionPool(object):
     def __init__(self):
         asyncore.set_rates(
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxdownloadrate"),
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxuploadrate"))
+            BMConfigParser().safeGetInt("bitmessagesettings", "maxdownloadrate"),
+            BMConfigParser().safeGetInt("bitmessagesettings", "maxuploadrate"))
         self.outboundConnections = {}
         self.inboundConnections = {}
         self.listeningSockets = {}
         self.udpSockets = {}
         self.streams = []
         self.lastSpawned = 0
-        self.spawnWait = 2 
+        self.spawnWait = 2
         self.bootstrapped = False
 
     def connectToStream(self, streamNumber):
@@ -132,8 +133,8 @@ class BMConnectionPool(object):
         elif BMConfigParser().safeGetBoolean('bitmessagesettings', 'sendoutgoingconnections'):
             spawnConnections = True
         if BMConfigParser().get('bitmessagesettings', 'socksproxytype')[0:5] == 'SOCKS' and \
-            (not BMConfigParser().getboolean('bitmessagesettings', 'sockslisten') and \
-            ".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname')):
+            (not BMConfigParser().getboolean('bitmessagesettings', 'sockslisten') and
+             ".onion" not in BMConfigParser().get('bitmessagesettings', 'onionhostname')):
             acceptConnections = False
 
         if spawnConnections:
@@ -141,14 +142,14 @@ class BMConnectionPool(object):
                 helper_bootstrap.dns()
                 self.bootstrapped = True
                 Proxy.proxy = (BMConfigParser().safeGet("bitmessagesettings", "sockshostname"),
-                        BMConfigParser().safeGetInt("bitmessagesettings", "socksport"))
+                               BMConfigParser().safeGetInt("bitmessagesettings", "socksport"))
                 # TODO AUTH
                 # TODO reset based on GUI settings changes
                 try:
                     if not BMConfigParser().get("network", "onionsocksproxytype").startswith("SOCKS"):
                         raise NoOptionError
                     Proxy.onionproxy = (BMConfigParser().get("network", "onionsockshostname"),
-                        BMConfigParser().getint("network", "onionsocksport"))
+                                        BMConfigParser().getint("network", "onionsocksport"))
                 except (NoOptionError, NoSectionError):
                     Proxy.onionproxy = None
             established = sum(1 for c in self.outboundConnections.values() if (c.connected and c.fullyEstablished))
@@ -166,11 +167,11 @@ class BMConnectionPool(object):
                     # don't connect to self
                     if chosen in state.ownAddresses:
                         continue
-    
-                    #for c in self.outboundConnections:
+
+                    # for c in self.outboundConnections:
                     #    if chosen == c.destination:
                     #        continue
-                    #for c in self.inboundConnections:
+                    # for c in self.inboundConnections:
                     #    if chosen.host == c.destination.host:
                     #        continue
                     try:
@@ -244,7 +245,7 @@ class BMConnectionPool(object):
                 if i.fullyEstablished:
                     i.append_write_buf(protocol.CreatePacket('ping'))
                 else:
-                    i.close_reason = "Timeout (%is)" % (time.time() - i.lastTx) 
+                    i.close_reason = "Timeout (%is)" % (time.time() - i.lastTx)
                     i.set_state("close")
         for i in self.inboundConnections.values() + self.outboundConnections.values() + self.listeningSockets.values() + self.udpSockets.values():
             if not (i.accepting or i.connecting or i.connected):

@@ -13,14 +13,15 @@ from pyelliptic.openssl import OpenSSL
 from utils import str_broadcast_subscribers
 import time
 
+
 def getSortedAccounts():
     configSections = BMConfigParser().addresses()
-    configSections.sort(cmp = 
-        lambda x,y: cmp(unicode(BMConfigParser().get(x, 'label'), 'utf-8').lower(), unicode(BMConfigParser().get(y, 'label'), 'utf-8').lower())
-        )
+    configSections.sort(cmp=lambda x, y: cmp(unicode(BMConfigParser().get(x, 'label'), 'utf-8').lower(), unicode(BMConfigParser().get(y, 'label'), 'utf-8').lower())
+                        )
     return configSections
 
-def getSortedSubscriptions(count = False):
+
+def getSortedSubscriptions(count=False):
     queryreturn = sqlQuery('SELECT label, address, enabled FROM subscriptions ORDER BY label COLLATE NOCASE ASC')
     ret = {}
     for row in queryreturn:
@@ -45,6 +46,7 @@ def getSortedSubscriptions(count = False):
             ret[address][folder]['count'] = cnt
     return ret
 
+
 def accountClass(address):
     if not BMConfigParser().has_section(address):
         # FIXME: This BROADCAST section makes no sense
@@ -61,7 +63,7 @@ def accountClass(address):
     try:
         gateway = BMConfigParser().get(address, "gateway")
         for name, cls in inspect.getmembers(sys.modules[__name__], inspect.isclass):
-#            obj = g(address)
+            #            obj = g(address)
             if issubclass(cls, GatewayAccount) and cls.gatewayName == gateway:
                 return cls(address)
         # general gateway
@@ -70,9 +72,10 @@ def accountClass(address):
         pass
     # no gateway
     return BMAccount(address)
-    
+
+
 class AccountColor(AccountMixin):
-    def __init__(self, address, type = None):
+    def __init__(self, address, type=None):
         self.isEnabled = True
         self.address = address
         if type is None:
@@ -83,16 +86,16 @@ class AccountColor(AccountMixin):
             elif BMConfigParser().safeGetBoolean(self.address, 'chan'):
                 self.type = AccountMixin.CHAN
             elif sqlQuery(
-                '''select label from subscriptions where address=?''', self.address):
+                    '''select label from subscriptions where address=?''', self.address):
                 self.type = AccountMixin.SUBSCRIPTION
             else:
                 self.type = AccountMixin.NORMAL
         else:
             self.type = type
 
-    
+
 class BMAccount(object):
-    def __init__(self, address = None):
+    def __init__(self, address=None):
         self.address = address
         self.type = AccountMixin.NORMAL
         if BMConfigParser().has_section(address):
@@ -108,7 +111,7 @@ class BMAccount(object):
             if queryreturn:
                 self.type = AccountMixin.SUBSCRIPTION
 
-    def getLabel(self, address = None):
+    def getLabel(self, address=None):
         if address is None:
             address = self.address
         label = address
@@ -126,7 +129,7 @@ class BMAccount(object):
                 for row in queryreturn:
                     label, = row
         return label
-        
+
     def parseMessage(self, toAddress, fromAddress, subject, message):
         self.toAddress = toAddress
         self.fromAddress = fromAddress
@@ -140,31 +143,32 @@ class BMAccount(object):
 
 
 class NoAccount(BMAccount):
-    def __init__(self, address = None):
+    def __init__(self, address=None):
         self.address = address
         self.type = AccountMixin.NORMAL
 
-    def getLabel(self, address = None):
+    def getLabel(self, address=None):
         if address is None:
             address = self.address
         return address
 
-        
+
 class SubscriptionAccount(BMAccount):
     pass
-    
+
 
 class BroadcastAccount(BMAccount):
     pass
-        
-        
+
+
 class GatewayAccount(BMAccount):
     gatewayName = None
     ALL_OK = 0
     REGISTRATION_DENIED = 1
+
     def __init__(self, address):
         super(GatewayAccount, self).__init__(address)
-        
+
     def send(self):
         status, addressVersionNumber, streamNumber, ripe = decodeAddress(self.toAddress)
         stealthLevel = BMConfigParser().safeGetInt('bitmessagesettings', 'ackstealthlevel')
@@ -179,20 +183,21 @@ class GatewayAccount(BMAccount):
             self.subject,
             self.message,
             ackdata,
-            int(time.time()), # sentTime (this will never change)
-            int(time.time()), # lastActionTime
-            0, # sleepTill time. This will get set when the POW gets done.
+            int(time.time()),  # sentTime (this will never change)
+            int(time.time()),  # lastActionTime
+            0,  # sleepTill time. This will get set when the POW gets done.
             'msgqueued',
-            0, # retryNumber
-            'sent', # folder
-            2, # encodingtype
-            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2) # not necessary to have a TTL higher than 2 days
+            0,  # retryNumber
+            'sent',  # folder
+            2,  # encodingtype
+            min(BMConfigParser().getint('bitmessagesettings', 'ttl'), 86400 * 2)  # not necessary to have a TTL higher than 2 days
         )
 
         queues.workerQueue.put(('sendmessage', self.toAddress))
-    
+
     def parseMessage(self, toAddress, fromAddress, subject, message):
         super(GatewayAccount, self).parseMessage(toAddress, fromAddress, subject, message)
+
 
 class MailchuckAccount(GatewayAccount):
     # set "gateway" in keys.dat to this
@@ -202,23 +207,24 @@ class MailchuckAccount(GatewayAccount):
     relayAddress = "BM-2cWim8aZwUNqxzjMxstnUMtVEUQJeezstf"
     regExpIncoming = re.compile("(.*)MAILCHUCK-FROM::(\S+) \| (.*)")
     regExpOutgoing = re.compile("(\S+) (.*)")
+
     def __init__(self, address):
         super(MailchuckAccount, self).__init__(address)
         self.feedback = self.ALL_OK
-        
+
     def createMessage(self, toAddress, fromAddress, subject, message):
         self.subject = toAddress + " " + subject
         self.toAddress = self.relayAddress
         self.fromAddress = fromAddress
         self.message = message
-        
+
     def register(self, email):
         self.toAddress = self.registrationAddress
         self.subject = email
         self.message = ""
         self.fromAddress = self.address
         self.send()
-        
+
     def unregister(self):
         self.toAddress = self.unregistrationAddress
         self.subject = ""

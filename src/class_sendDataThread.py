@@ -21,6 +21,8 @@ import throttle
 
 # Every connection to a peer has a sendDataThread (and also a
 # receiveDataThread).
+
+
 class sendDataThread(threading.Thread):
 
     def __init__(self, sendDataThreadQueue):
@@ -33,17 +35,16 @@ class sendDataThread(threading.Thread):
         self.objectHashHolderInstance.start()
         self.connectionIsOrWasFullyEstablished = False
 
-
     def setup(
         self,
         sock,
         HOST,
         PORT,
         streamNumber
-        ):
+    ):
         self.sock = sock
         self.peer = state.Peer(HOST, PORT)
-        self.name = "sendData-" + self.peer.host.replace(":", ".") # log parser field separator
+        self.name = "sendData-" + self.peer.host.replace(":", ".")  # log parser field separator
         self.streamNumber = []
         self.services = 0
         self.buffer = ""
@@ -58,7 +59,6 @@ class sendDataThread(threading.Thread):
             self.initiatedConnection = True
         #logger.debug('The streamNumber of this sendDataThread (ID: ' + str(id(self)) + ') at setup() is' + str(self.streamNumber))
 
-
     def sendVersionMessage(self):
         datatosend = protocol.assembleVersionMessage(
             self.peer.host, self.peer.port, state.streamsInWhichIAmParticipating, not self.initiatedConnection)  # the IP and port of the remote host, and my streamNumber.
@@ -70,10 +70,10 @@ class sendDataThread(threading.Thread):
         except Exception as err:
             # if not 'Bad file descriptor' in err:
             logger.error('sock.sendall error: %s\n' % err)
-            
+
         self.versionSent = 1
 
-    def sendBytes(self, data = ""):
+    def sendBytes(self, data=""):
         self.buffer += data
         if len(self.buffer) < throttle.SendThrottle().chunkSize and self.sendDataThreadQueue.qsize() > 1:
             return True
@@ -83,7 +83,7 @@ class sendDataThread(threading.Thread):
             try:
                 if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
                     self.connectionIsOrWasFullyEstablished and
-                    protocol.haveSSL(not self.initiatedConnection)):
+                        protocol.haveSSL(not self.initiatedConnection)):
                     isSSL = True
                     amountSent = self.sslSock.send(self.buffer[:throttle.SendThrottle().chunkSize])
                 else:
@@ -99,8 +99,8 @@ class sendDataThread(threading.Thread):
                 return False
             except socket.error as e:
                 if e.errno in (errno.EAGAIN, errno.EWOULDBLOCK) or \
-                    (sys.platform.startswith('win') and \
-                    e.errno == errno.WSAEWOULDBLOCK):
+                    (sys.platform.startswith('win') and
+                     e.errno == errno.WSAEWOULDBLOCK):
                     select.select([], [self.sslSock if isSSL else self.sock], [], 10)
                     logger.debug('sock.recv retriable error')
                     continue
@@ -138,7 +138,7 @@ class sendDataThread(threading.Thread):
                 elif command == 'advertisepeer':
                     self.objectHashHolderInstance.holdPeer(data)
                 elif command == 'sendaddr':
-                    if self.connectionIsOrWasFullyEstablished: # only send addr messages if we have sent and heard a verack from the remote node
+                    if self.connectionIsOrWasFullyEstablished:  # only send addr messages if we have sent and heard a verack from the remote node
                         numberOfAddressesInAddrMessage = len(data)
                         payload = ''
                         for hostDetails in data:
@@ -150,7 +150,7 @@ class sendDataThread(threading.Thread):
                                 '>q', services)  # service bit flags offered by this node
                             payload += protocol.encodeHost(host)
                             payload += pack('>H', port)
-    
+
                         payload = encodeVarint(numberOfAddressesInAddrMessage) + payload
                         packet = protocol.CreatePacket('addr', payload)
                         try:
@@ -161,7 +161,7 @@ class sendDataThread(threading.Thread):
                 elif command == 'advertiseobject':
                     self.objectHashHolderInstance.holdHash(data)
                 elif command == 'sendinv':
-                    if self.connectionIsOrWasFullyEstablished: # only send inv messages if we have send and heard a verack from the remote node
+                    if self.connectionIsOrWasFullyEstablished:  # only send inv messages if we have send and heard a verack from the remote node
                         payload = ''
                         for hash in data:
                             payload += hash

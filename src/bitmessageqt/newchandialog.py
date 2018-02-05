@@ -8,6 +8,7 @@ from tr import _translate
 from utils import str_chan
 import widgets
 
+
 class NewChanDialog(QtGui.QDialog, RetranslateMixin):
     def __init__(self, parent=None):
         super(NewChanDialog, self).__init__(parent)
@@ -18,7 +19,7 @@ class NewChanDialog(QtGui.QDialog, RetranslateMixin):
 
         self.timer = QtCore.QTimer()
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.delayedUpdateStatus)
-        self.timer.start(500) # milliseconds
+        self.timer.start(500)  # milliseconds
         self.setAttribute(QtCore.Qt.WA_DeleteOnClose)
         self.show()
 

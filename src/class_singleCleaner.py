@@ -4,7 +4,7 @@ import shared
 import time
 import os
 
-import tr#anslate
+import tr  # anslate
 from bmconfigparser import BMConfigParser
 from helper_sql import *
 from helper_threading import *
@@ -47,7 +47,7 @@ class singleCleaner(threading.Thread, StoppableThread):
         gc.disable()
         timeWeLastClearedInventoryAndPubkeysTables = 0
         try:
-            shared.maximumLengthOfTimeToBotherResendingMessages = (float(BMConfigParser().get('bitmessagesettings', 'stopresendingafterxdays')) * 24 * 60 * 60) + (float(BMConfigParser().get('bitmessagesettings', 'stopresendingafterxmonths')) * (60 * 60 * 24 *365)/12)
+            shared.maximumLengthOfTimeToBotherResendingMessages = (float(BMConfigParser().get('bitmessagesettings', 'stopresendingafterxdays')) * 24 * 60 * 60) + (float(BMConfigParser().get('bitmessagesettings', 'stopresendingafterxmonths')) * (60 * 60 * 24 * 365)/12)
         except:
             # Either the user hasn't set stopresendingafterxdays and stopresendingafterxmonths yet or the options are missing from the config file.
             shared.maximumLengthOfTimeToBotherResendingMessages = float('inf')
@@ -61,7 +61,7 @@ class singleCleaner(threading.Thread, StoppableThread):
                 'updateStatusBar', 'Doing housekeeping (Flushing inventory in memory to disk...)'))
             Inventory().flush()
             queues.UISignalQueue.put(('updateStatusBar', ''))
-            
+
             # If we are running as a daemon then we are going to fill up the UI
             # queue which will never be handled by a UI. We should clear it to
             # save memory.
@@ -99,7 +99,7 @@ class singleCleaner(threading.Thread, StoppableThread):
                     for node in keys:
                         try:
                             # scrap old nodes
-                            if now - knownnodes.knownNodes[stream][node]["lastseen"] > 2419200: # 28 days
+                            if now - knownnodes.knownNodes[stream][node]["lastseen"] > 2419200:  # 28 days
                                 shared.needToWriteKnownNodesToDisk = True
                                 del knownnodes.knownNodes[stream][node]
                                 continue
@@ -153,16 +153,17 @@ def resendPubkeyRequest(address):
     logger.debug('It has been a long time and we haven\'t heard a response to our getpubkey request. Sending again.')
     try:
         del state.neededPubkeys[
-            address] # We need to take this entry out of the neededPubkeys structure because the queues.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
+            address]  # We need to take this entry out of the neededPubkeys structure because the queues.workerQueue checks to see whether the entry is already present and will not do the POW and send the message because it assumes that it has already done it recently.
     except:
         pass
 
     queues.UISignalQueue.put((
-         'updateStatusBar', 'Doing work necessary to again attempt to request a public key...'))
+        'updateStatusBar', 'Doing work necessary to again attempt to request a public key...'))
     sqlExecute(
         '''UPDATE sent SET status='msgqueued' WHERE toaddress=?''',
         address)
     queues.workerQueue.put(('sendmessage', ''))
+
 
 def resendMsg(ackdata):
     logger.debug('It has been a long time and we haven\'t heard an acknowledgement to our msg. Sending again.')
@@ -171,4 +172,4 @@ def resendMsg(ackdata):
         ackdata)
     queues.workerQueue.put(('sendmessage', ''))
     queues.UISignalQueue.put((
-    'updateStatusBar', 'Doing work necessary to again attempt to deliver a message...'))
+        'updateStatusBar', 'Doing work necessary to again attempt to deliver a message...'))

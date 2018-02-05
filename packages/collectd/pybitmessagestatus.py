@@ -7,10 +7,12 @@ import xmlrpclib
 pybmurl = ""
 api = ""
 
+
 def init_callback():
     global api
     api = xmlrpclib.ServerProxy(pybmurl)
     collectd.info('pybitmessagestatus.py init done')
+
 
 def config_callback(ObjConfiguration):
     global pybmurl
@@ -28,8 +30,9 @@ def config_callback(ObjConfiguration):
             apiInterface = node.values[0]
         elif key.lower() == "apiport" and node.values:
             apiPort = node.values[0]
-    pybmurl = "http://" + apiUsername + ":" + apiPassword + "@" + apiInterface+ ":" + str(int(apiPort)) + "/"
+    pybmurl = "http://" + apiUsername + ":" + apiPassword + "@" + apiInterface + ":" + str(int(apiPort)) + "/"
     collectd.info('pybitmessagestatus.py config done')
+
 
 def read_callback():
     try:
@@ -51,6 +54,7 @@ def read_callback():
         except:
             collectd.info("Value for %s missing" % (i))
         metric.dispatch()
+
 
 if __name__ == "__main__":
     main()

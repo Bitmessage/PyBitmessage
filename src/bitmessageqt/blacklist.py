@@ -21,7 +21,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         QtCore.QObject.connect(self.radioButtonWhitelist, QtCore.SIGNAL(
             "clicked()"), self.click_radioButtonWhitelist)
         QtCore.QObject.connect(self.pushButtonAddBlacklist, QtCore.SIGNAL(
-        "clicked()"), self.click_pushButtonAddBlacklist)
+            "clicked()"), self.click_pushButtonAddBlacklist)
 
         self.init_blacklist_popup_menu()
 
@@ -67,7 +67,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                     sql = '''select * from blacklist where address=?'''
                 else:
                     sql = '''select * from whitelist where address=?'''
-                queryreturn = sqlQuery(sql,*t)
+                queryreturn = sqlQuery(sql, *t)
                 if queryreturn == []:
                     self.tableWidgetBlacklist.setSortingEnabled(False)
                     self.tableWidgetBlacklist.insertRow(0)
@@ -99,10 +99,10 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
             if isinstance(addressitem, QtGui.QTableWidgetItem):
                 if self.radioButtonBlacklist.isChecked():
                     sqlExecute('''UPDATE blacklist SET label=? WHERE address=?''',
-                            str(item.text()), str(addressitem.text()))
+                               str(item.text()), str(addressitem.text()))
                 else:
                     sqlExecute('''UPDATE whitelist SET label=? WHERE address=?''',
-                            str(item.text()), str(addressitem.text()))
+                               str(item.text()), str(addressitem.text()))
 
     def init_blacklist_popup_menu(self, connectSignal=True):
         # Popup menu for the Blacklist page
@@ -133,7 +133,7 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         if connectSignal:
             self.connect(self.tableWidgetBlacklist, QtCore.SIGNAL(
                 'customContextMenuRequested(const QPoint&)'),
-                        self.on_context_menuBlacklist)
+                self.on_context_menuBlacklist)
         self.popMenuBlacklist = QtGui.QMenu(self)
         # self.popMenuBlacklist.addAction( self.actionBlacklistNew )
         self.popMenuBlacklist.addAction(self.actionBlacklistDelete)
@@ -238,4 +238,3 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
 
     def on_action_BlacklistSetAvatar(self):
         self.window().on_action_SetAvatar(self.tableWidgetBlacklist)
-

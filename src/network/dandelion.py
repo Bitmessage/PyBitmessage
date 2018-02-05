@@ -18,6 +18,7 @@ MAX_STEMS = 2
 
 Stem = namedtuple('Stem', ['child', 'stream', 'timeout'])
 
+
 @Singleton
 class Dandelion():
     def __init__(self):
@@ -36,20 +37,20 @@ class Dandelion():
             return
         with self.lock:
             self.hashMap[hashId] = Stem(
-                    self.getNodeStem(source),
-                    stream,
-                    time() + FLUFF_TRIGGER_TIMEOUT)
+                self.getNodeStem(source),
+                stream,
+                time() + FLUFF_TRIGGER_TIMEOUT)
 
     def setHashStream(self, hashId, stream=1):
         with self.lock:
             if hashId in self.hashMap:
                 self.hashMap[hashId] = Stem(
-                        self.hashMap[hashId].child,
-                        stream,
-                        time() + FLUFF_TRIGGER_TIMEOUT)
+                    self.hashMap[hashId].child,
+                    stream,
+                    time() + FLUFF_TRIGGER_TIMEOUT)
 
     def removeHash(self, hashId, reason="no reason specified"):
-        logging.debug("%s entering fluff mode due to %s.", ''.join('%02x'%ord(i) for i in hashId), reason)
+        logging.debug("%s entering fluff mode due to %s.", ''.join('%02x' % ord(i) for i in hashId), reason)
         with self.lock:
             try:
                 del self.hashMap[hashId]
@@ -72,7 +73,6 @@ class Dandelion():
                 for k, v in {k: v for k, v in self.hashMap.iteritems() if v.child is None}.iteritems():
                     self.hashMap[k] = Stem(connection, v.stream, time() + FLUFF_TRIGGER_TIMEOUT)
                     invQueue.put((v.stream, k, v.child))
-
 
     def maybeRemoveStem(self, connection):
         # is the stem active?

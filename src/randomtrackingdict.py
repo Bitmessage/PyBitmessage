@@ -2,10 +2,12 @@ import random
 from threading import RLock
 from time import time
 
+
 class RandomTrackingDict(object):
     maxPending = 10
     pendingTimeout = 60
-    def __init__(self): # O(1)
+
+    def __init__(self):  # O(1)
         self.dictionary = {}
         self.indexDict = []
         self.len = 0
@@ -72,8 +74,8 @@ class RandomTrackingDict(object):
 
     def randomKeys(self, count=1):
         if self.len == 0 or ((self.pendingLen >= self.maxPending or
-            self.pendingLen == self.len) and self.lastPoll +
-            self.pendingTimeout > time()):
+                              self.pendingLen == self.len) and self.lastPoll +
+                             self.pendingTimeout > time()):
             raise KeyError
         # reset if we've requested all
         with self.lock:
@@ -92,17 +94,18 @@ class RandomTrackingDict(object):
             self.lastPoll = time()
             return retval
 
+
 if __name__ == '__main__':
     def randString():
         retval = b''
         for _ in range(32):
-            retval += chr(random.randint(0,255))
+            retval += chr(random.randint(0, 255))
         return retval
 
     a = []
     k = RandomTrackingDict()
     d = {}
-    
+
 #    print "populating normal dict"
 #    a.append(time())
 #    for i in range(50000):
@@ -118,16 +121,16 @@ if __name__ == '__main__':
         retval = k.randomKeys(1000)
         if not retval:
             print "error getting random keys"
-        #a.append(time())
+        # a.append(time())
         try:
             k.randomKeys(100)
             print "bad"
         except KeyError:
             pass
-        #a.append(time())
+        # a.append(time())
         for i in retval:
             del k[i]
-        #a.append(time())
+        # a.append(time())
     a.append(time())
 
     for x in range(len(a) - 1):

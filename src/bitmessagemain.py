@@ -83,7 +83,7 @@ def connectToStream(streamNumber):
             state.maximumNumberOfHalfOpenConnections = 4
     except:
         pass
-    
+
     with knownnodes.knownNodesLock:
         if streamNumber not in knownnodes.knownNodes:
             knownnodes.knownNodes[streamNumber] = {}
@@ -93,6 +93,7 @@ def connectToStream(streamNumber):
             knownnodes.knownNodes[streamNumber*2+1] = {}
 
     BMConnectionPool().connectToStream(streamNumber)
+
 
 def _fixSocket():
     if sys.platform.startswith('linux'):
@@ -105,6 +106,7 @@ def _fixSocket():
     # socket.inet_ntop but we can make one ourselves using ctypes
     if not hasattr(socket, 'inet_ntop'):
         addressToString = ctypes.windll.ws2_32.WSAAddressToStringA
+
         def inet_ntop(family, host):
             if family == socket.AF_INET:
                 if len(host) != 4:
@@ -125,6 +127,7 @@ def _fixSocket():
     # Same for inet_pton
     if not hasattr(socket, 'inet_pton'):
         stringToAddress = ctypes.windll.ws2_32.WSAStringToAddressA
+
         def inet_pton(family, host):
             buf = "\0" * 28
             lengthBuf = pack("I", len(buf))
@@ -149,11 +152,13 @@ def _fixSocket():
         socket.IPV6_V6ONLY = 27
 
 # This thread, of which there is only one, runs the API.
+
+
 class singleAPI(threading.Thread, helper_threading.StoppableThread):
     def __init__(self):
         threading.Thread.__init__(self, name="singleAPI")
         self.initStop()
-        
+
     def stopThread(self):
         super(singleAPI, self).stopThread()
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -176,7 +181,7 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
                 if attempt > 0:
                     port = randint(32767, 65535)
                 se = StoppableXMLRPCServer((BMConfigParser().get('bitmessagesettings', 'apiinterface'), port),
-                    MySimpleXMLRPCRequestHandler, True, True)
+                                           MySimpleXMLRPCRequestHandler, True, True)
             except socket.error as e:
                 if e.errno in (errno.EADDRINUSE, errno.WSAEADDRINUSE):
                     continue
@@ -188,6 +193,7 @@ class singleAPI(threading.Thread, helper_threading.StoppableThread):
         se.register_introspection_functions()
         se.serve_forever()
 
+
 # This is a list of current connections (the thread pointers at least)
 selfInitiatedConnections = {}
 
@@ -197,6 +203,7 @@ if shared.useVeryEasyProofOfWorkForTesting:
     defaults.networkDefaultPayloadLengthExtraBytes = int(
         defaults.networkDefaultPayloadLengthExtraBytes / 100)
 
+
 class Main:
     def start(self):
         _fixSocket()
@@ -205,7 +212,7 @@ class Main:
 
         try:
             opts, args = getopt.getopt(sys.argv[1:], "hcd",
-                ["help", "curses", "daemon"])
+                                       ["help", "curses", "daemon"])
 
         except getopt.GetoptError:
             self.usage()
@@ -253,8 +260,8 @@ class Main:
         sqlLookup.daemon = False  # DON'T close the main program even if there are threads left. The closeEvent should command this thread to exit gracefully.
         sqlLookup.start()
 
-        Inventory() # init
-        Dandelion() # init, needs to be early because other thread may access it early
+        Inventory()  # init
+        Dandelion()  # init, needs to be early because other thread may access it early
 
         # SMTP delivery thread
         if daemon and BMConfigParser().safeGet("bitmessagesettings", "smtpdeliver", '') != '':
@@ -317,7 +324,7 @@ class Main:
 
         connectToStream(1)
 
-        if BMConfigParser().safeGetBoolean('bitmessagesettings','upnp'):
+        if BMConfigParser().safeGetBoolean('bitmessagesettings', 'upnp'):
             import upnp
             upnpThread = upnp.uPnPThread()
             upnpThread.start()
@@ -333,7 +340,7 @@ class Main:
                 bitmessageqt.run()
             else:
                 if True:
-#                if depends.check_curses():
+                    #                if depends.check_curses():
                     print('Running with curses')
                     import bitmessagecurses
                     bitmessagecurses.runwrapper()
@@ -360,7 +367,7 @@ class Main:
             pass
         else:
             parentPid = os.getpid()
-            shared.thisapp.lock() # relock
+            shared.thisapp.lock()  # relock
         os.umask(0)
         try:
             os.setsid()
@@ -379,8 +386,8 @@ class Main:
             # fork not implemented
             pass
         else:
-            shared.thisapp.lock() # relock
-        shared.thisapp.lockPid = None # indicate we're the final child
+            shared.thisapp.lock()  # relock
+        shared.thisapp.lockPid = None  # indicate we're the final child
         sys.stdout.flush()
         sys.stderr.flush()
         if not sys.platform.startswith('win'):
@@ -416,19 +423,19 @@ All parameters are optional.
             print('Stopping Bitmessage Deamon.')
         shutdown.doCleanShutdown()
 
-
-    #TODO: nice function but no one is using this 
+    # TODO: nice function but no one is using this
     def getApiAddress(self):
         if not BMConfigParser().safeGetBoolean('bitmessagesettings', 'apienabled'):
             return None
         address = BMConfigParser().get('bitmessagesettings', 'apiinterface')
         port = BMConfigParser().getint('bitmessagesettings', 'apiport')
-        return {'address':address,'port':port}
+        return {'address': address, 'port': port}
 
 
 def main():
     mainprogram = Main()
     mainprogram.start()
+
 
 if __name__ == "__main__":
     main()

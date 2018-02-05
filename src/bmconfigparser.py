@@ -34,6 +34,7 @@ BMConfigDefaults = {
     }
 }
 
+
 @Singleton
 class BMConfigParser(ConfigParser.SafeConfigParser):
     def set(self, section, option, value=None):
@@ -69,7 +70,7 @@ class BMConfigParser(ConfigParser.SafeConfigParser):
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, ValueError, AttributeError):
             return default
 
-    def safeGet(self, section, option, default = None):
+    def safeGet(self, section, option, default=None):
         try:
             return self.get(section, option)
         except (ConfigParser.NoSectionError, ConfigParser.NoOptionError, ValueError, AttributeError):

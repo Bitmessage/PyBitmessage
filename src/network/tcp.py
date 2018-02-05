@@ -34,6 +34,7 @@ import shared
 import state
 import protocol
 
+
 class TCPConnection(BMProto, TLSDispatcher):
     def __init__(self, address=None, sock=None):
         BMProto.__init__(self, address=address, sock=sock)
@@ -75,7 +76,7 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.bm_proto_reset()
         self.set_state("bm_header", expectBytes=protocol.Header.size)
 
-    def antiIntersectionDelay(self, initial = False):
+    def antiIntersectionDelay(self, initial=False):
         # estimated time for a small object to propagate across the whole network
         delay = math.ceil(math.log(max(len(knownnodes.knownNodes[x]) for x in knownnodes.knownNodes) + 2, 20)) * (0.2 + invQueue.queueCount/2.0)
         # take the stream with maximum amount of nodes
@@ -127,7 +128,7 @@ class TCPConnection(BMProto, TLSDispatcher):
             with knownnodes.knownNodesLock:
                 if len(knownnodes.knownNodes[stream]) > 0:
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream].items()
-                        if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                                if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > maxAddrCount:
                         elemCount = maxAddrCount
@@ -136,14 +137,14 @@ class TCPConnection(BMProto, TLSDispatcher):
                 # sent 250 only if the remote isn't interested in it
                 if len(knownnodes.knownNodes[stream * 2]) > 0 and stream not in self.streams:
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream*2].items()
-                        if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                                if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > maxAddrCount / 2:
                         elemCount = int(maxAddrCount / 2)
                     addrs[stream * 2] = random.sample(filtered.items(), elemCount)
                 if len(knownnodes.knownNodes[(stream * 2) + 1]) > 0 and stream not in self.streams:
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream*2+1].items()
-                        if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                                if v["lastseen"] > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > maxAddrCount / 2:
                         elemCount = int(maxAddrCount / 2)
@@ -195,9 +196,9 @@ class TCPConnection(BMProto, TLSDispatcher):
                 logger.debug("%s:%i: Connection failed: %s" % (self.destination.host, self.destination.port, str(e)))
                 return
         self.nodeid = randomBytes(8)
-        self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
-                network.connectionpool.BMConnectionPool().streams, False, nodeid=self.nodeid))
-        #print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
+        self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port,
+                                                              network.connectionpool.BMConnectionPool().streams, False, nodeid=self.nodeid))
+        # print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         self.connectedAt = time.time()
         receiveDataQueue.put(self.destination)
 
@@ -234,8 +235,8 @@ class Socks5BMConnection(Socks5Connection, TCPConnection):
     def state_proxy_handshake_done(self):
         Socks5Connection.state_proxy_handshake_done(self)
         self.nodeid = randomBytes(8)
-        self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
-                network.connectionpool.BMConnectionPool().streams, False, nodeid=self.nodeid))
+        self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port,
+                                                              network.connectionpool.BMConnectionPool().streams, False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
 
@@ -249,8 +250,8 @@ class Socks4aBMConnection(Socks4aConnection, TCPConnection):
     def state_proxy_handshake_done(self):
         Socks4aConnection.state_proxy_handshake_done(self)
         self.nodeid = randomBytes(8)
-        self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port, \
-                network.connectionpool.BMConnectionPool().streams, False, nodeid=self.nodeid))
+        self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port,
+                                                              network.connectionpool.BMConnectionPool().streams, False, nodeid=self.nodeid))
         self.set_state("bm_header", expectBytes=protocol.Header.size)
         return True
 
@@ -290,9 +291,9 @@ class TCPServer(AdvancedDispatcher):
             sock, addr = pair
             state.ownAddresses[state.Peer(sock.getsockname()[0], sock.getsockname()[1])] = True
             if len(network.connectionpool.BMConnectionPool().inboundConnections) + \
-                len(network.connectionpool.BMConnectionPool().outboundConnections) > \
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections") + \
-                BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections") + 10:
+                    len(network.connectionpool.BMConnectionPool().outboundConnections) > \
+                    BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections") + \
+                    BMConfigParser().safeGetInt("bitmessagesettings", "maxbootstrapconnections") + 10:
                 # 10 is a sort of buffer, in between it will go through the version handshake
                 # and return an error to the peer
                 logger.warning("Server full, dropping connection")
@@ -316,10 +317,10 @@ if __name__ == "__main__":
 
         proxy = Socks5BMConnection(host)
         while len(asyncore.socket_map) > 0:
-#            print "loop, state = %s" % (proxy.state)
+            #            print "loop, state = %s" % (proxy.state)
             asyncore.loop(timeout=10, count=1)
 
         proxy = Socks4aBMConnection(host)
         while len(asyncore.socket_map) > 0:
-#            print "loop, state = %s" % (proxy.state)
+            #            print "loop, state = %s" % (proxy.state)
             asyncore.loop(timeout=10, count=1)

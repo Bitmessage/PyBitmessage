@@ -24,7 +24,7 @@ class HTTPClient(asyncore.dispatcher):
         self.close()
 
     def handle_read(self):
-#        print self.recv(8192)
+        #        print self.recv(8192)
         self.recv(8192)
 
     def writable(self):
@@ -33,6 +33,7 @@ class HTTPClient(asyncore.dispatcher):
     def handle_write(self):
         sent = self.send(self.buffer)
         self.buffer = self.buffer[sent:]
+
 
 if __name__ == "__main__":
     # initial fill

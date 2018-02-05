@@ -40,6 +40,7 @@ class ECC:
         print bob.get_ecdh_key(alice.get_pubkey()).encode('hex')
 
     """
+
     def __init__(self, pubkey=None, privkey=None, pubkey_x=None,
                  pubkey_y=None, raw_privkey=None, curve='sect283r1'):
         """

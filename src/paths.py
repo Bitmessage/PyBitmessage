@@ -4,9 +4,10 @@ import re
 from datetime import datetime
 
 # When using py2exe or py2app, the variable frozen is added to the sys
-# namespace.  This can be used to setup a different code path for 
+# namespace.  This can be used to setup a different code path for
 # binary distributions vs source distributions.
-frozen = getattr(sys,'frozen', None)
+frozen = getattr(sys, 'frozen', None)
+
 
 def lookupExeFolder():
     if frozen:
@@ -20,6 +21,7 @@ def lookupExeFolder():
     else:
         exeFolder = ''
     return exeFolder
+
 
 def lookupAppdataFolder():
     APPNAME = "PyBitmessage"
@@ -60,15 +62,17 @@ def lookupAppdataFolder():
             pass
         dataFolder = dataFolder + '/'
     return dataFolder
-    
+
+
 def codePath():
     if frozen == "macosx_app":
         codePath = environ.get("RESOURCEPATH")
-    elif frozen: # windows
+    elif frozen:  # windows
         codePath = sys._MEIPASS
-    else:    
+    else:
         codePath = path.dirname(__file__)
     return codePath
+
 
 def tail(f, lines=20):
     total_lines_wanted = lines
@@ -78,8 +82,8 @@ def tail(f, lines=20):
     block_end_byte = f.tell()
     lines_to_go = total_lines_wanted
     block_number = -1
-    blocks = [] # blocks of size BLOCK_SIZE, in reverse order starting
-                # from the end of the file
+    blocks = []  # blocks of size BLOCK_SIZE, in reverse order starting
+    # from the end of the file
     while lines_to_go > 0 and block_end_byte > 0:
         if (block_end_byte - BLOCK_SIZE > 0):
             # read the last block we haven't yet read
@@ -87,7 +91,7 @@ def tail(f, lines=20):
             blocks.append(f.read(BLOCK_SIZE))
         else:
             # file too small, start from begining
-            f.seek(0,0)
+            f.seek(0, 0)
             # only read what was not read
             blocks.append(f.read(block_end_byte))
         lines_found = blocks[-1].count('\n')

@@ -8,6 +8,7 @@ import traceback
 from paths import lookupAppdataFolder
 from storage import InventoryStorage, InventoryItem
 
+
 class FilesystemInventory(InventoryStorage):
     topDir = "inventory"
     objectDir = "objects"
@@ -23,7 +24,7 @@ class FilesystemInventory(InventoryStorage):
                     raise IOError("%s exists but it's not a directory" % (createDir))
             else:
                 makedirs(createDir)
-        self.lock = RLock() # Guarantees that two receiveDataThreads don't receive and process the same message concurrently (probably sent by a malicious individual)
+        self.lock = RLock()  # Guarantees that two receiveDataThreads don't receive and process the same message concurrently (probably sent by a malicious individual)
         self._inventory = {}
         self._load()
 
@@ -88,7 +89,7 @@ class FilesystemInventory(InventoryStorage):
     def __iter__(self):
         elems = []
         for streamDict in self._inventory.values():
-            elems.extend (streamDict.keys())
+            elems.extend(streamDict.keys())
         return elems.__iter__()
 
     def __len__(self):
@@ -140,7 +141,7 @@ class FilesystemInventory(InventoryStorage):
         for stream, streamDict in self._inventory:
             for hashId, item in streamDict:
                 if item.type == objectType and item.tag == tag:
-                    try: 
+                    try:
                         if item.payload is None:
                             item.payload = self.getData(hashId)
                     except IOError:

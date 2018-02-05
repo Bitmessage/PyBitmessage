@@ -30,29 +30,30 @@ import state
 
 myECCryptorObjects = {}
 MyECSubscriptionCryptorObjects = {}
-myAddressesByHash = {} #The key in this dictionary is the RIPE hash which is encoded in an address and value is the address itself.
-myAddressesByTag = {} # The key in this dictionary is the tag generated from the address.
+myAddressesByHash = {}  # The key in this dictionary is the RIPE hash which is encoded in an address and value is the address itself.
+myAddressesByTag = {}  # The key in this dictionary is the tag generated from the address.
 broadcastSendersForWhichImWatching = {}
 printLock = threading.Lock()
 statusIconColor = 'red'
-connectedHostsList = {} #List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
-thisapp = None # singleton lock instance
+connectedHostsList = {}  # List of hosts to which we are connected. Used to guarantee that the outgoingSynSender threads won't connect to the same remote node twice.
+thisapp = None  # singleton lock instance
 alreadyAttemptedConnectionsList = {
 }  # This is a list of nodes to which we have already attempted a connection
 alreadyAttemptedConnectionsListLock = threading.Lock()
 alreadyAttemptedConnectionsListResetTime = int(
     time.time())  # used to clear out the alreadyAttemptedConnectionsList periodically so that we will retry connecting to hosts to which we have already tried to connect.
 successfullyDecryptMessageTimings = [
-    ]  # A list of the amounts of time it took to successfully decrypt msg messages
+]  # A list of the amounts of time it took to successfully decrypt msg messages
 ackdataForWhichImWatching = {}
-clientHasReceivedIncomingConnections = False #used by API command clientStatus
+clientHasReceivedIncomingConnections = False  # used by API command clientStatus
 numberOfMessagesProcessed = 0
 numberOfBroadcastsProcessed = 0
 numberOfPubkeysProcessed = 0
 
-needToWriteKnownNodesToDisk = False # If True, the singleCleaner will write it to disk eventually.
+needToWriteKnownNodesToDisk = False  # If True, the singleCleaner will write it to disk eventually.
 maximumLengthOfTimeToBotherResendingMessages = 0
 timeOffsetWrongCount = 0
+
 
 def isAddressInMyAddressBook(address):
     queryreturn = sqlQuery(
@@ -60,12 +61,15 @@ def isAddressInMyAddressBook(address):
         address)
     return queryreturn != []
 
-#At this point we should really just have a isAddressInMy(book, address)...
+# At this point we should really just have a isAddressInMy(book, address)...
+
+
 def isAddressInMySubscriptionsList(address):
     queryreturn = sqlQuery(
         '''select * from subscriptions where address=?''',
         str(address))
     return queryreturn != []
+
 
 def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
     if isAddressInMyAddressBook(address):
@@ -82,22 +86,23 @@ def isAddressInMyAddressBookSubscriptionsListOrWhitelist(address):
         return True
     return False
 
+
 def decodeWalletImportFormat(WIFstring):
-    fullString = arithmetic.changebase(WIFstring,58,256)
+    fullString = arithmetic.changebase(WIFstring, 58, 256)
     privkey = fullString[:-4]
     if fullString[-4:] != hashlib.sha256(hashlib.sha256(privkey).digest()).digest()[:4]:
         logger.critical('Major problem! When trying to decode one of your private keys, the checksum '
-                     'failed. Here are the first 6 characters of the PRIVATE key: %s' % str(WIFstring)[:6])
+                        'failed. Here are the first 6 characters of the PRIVATE key: %s' % str(WIFstring)[:6])
         os._exit(0)
         return ""
     else:
-        #checksum passed
+        # checksum passed
         if privkey[0] == '\x80':
             return privkey[1:]
         else:
             logger.critical('Major problem! When trying to decode one of your private keys, the '
-                         'checksum passed but the key doesn\'t begin with hex 80. Here is the '
-                         'PRIVATE key: %s' % str(WIFstring))
+                            'checksum passed but the key doesn\'t begin with hex 80. Here is the '
+                            'PRIVATE key: %s' % str(WIFstring))
             os._exit(0)
             return ""
 
@@ -107,7 +112,7 @@ def reloadMyAddressHashes():
     myECCryptorObjects.clear()
     myAddressesByHash.clear()
     myAddressesByTag.clear()
-    #myPrivateKeys.clear()
+    # myPrivateKeys.clear()
 
     keyfileSecure = checkSensitiveFilePermissions(state.appdata + 'keys.dat')
     hasEnabledKeys = False
@@ -115,14 +120,14 @@ def reloadMyAddressHashes():
         isEnabled = BMConfigParser().getboolean(addressInKeysFile, 'enabled')
         if isEnabled:
             hasEnabledKeys = True
-            status,addressVersionNumber,streamNumber,hash = decodeAddress(addressInKeysFile)
+            status, addressVersionNumber, streamNumber, hash = decodeAddress(addressInKeysFile)
             if addressVersionNumber == 2 or addressVersionNumber == 3 or addressVersionNumber == 4:
                 # Returns a simple 32 bytes of information encoded in 64 Hex characters,
                 # or null if there was an error.
                 privEncryptionKey = hexlify(decodeWalletImportFormat(
-                        BMConfigParser().get(addressInKeysFile, 'privencryptionkey')))
+                    BMConfigParser().get(addressInKeysFile, 'privencryptionkey')))
 
-                if len(privEncryptionKey) == 64:#It is 32 bytes encoded as 64 hex characters
+                if len(privEncryptionKey) == 64:  # It is 32 bytes encoded as 64 hex characters
                     myECCryptorObjects[hash] = highlevelcrypto.makeCryptor(privEncryptionKey)
                     myAddressesByHash[hash] = addressInKeysFile
                     tag = hashlib.sha512(hashlib.sha512(encodeVarint(
@@ -135,6 +140,7 @@ def reloadMyAddressHashes():
     if not keyfileSecure:
         fixSensitiveFilePermissions(state.appdata + 'keys.dat', hasEnabledKeys)
 
+
 def reloadBroadcastSendersForWhichImWatching():
     broadcastSendersForWhichImWatching.clear()
     MyECSubscriptionCryptorObjects.clear()
@@ -142,11 +148,11 @@ def reloadBroadcastSendersForWhichImWatching():
     logger.debug('reloading subscriptions...')
     for row in queryreturn:
         address, = row
-        status,addressVersionNumber,streamNumber,hash = decodeAddress(address)
+        status, addressVersionNumber, streamNumber, hash = decodeAddress(address)
         if addressVersionNumber == 2:
             broadcastSendersForWhichImWatching[hash] = 0
-        #Now, for all addresses, even version 2 addresses, we should create Cryptor objects in a dictionary which we will use to attempt to decrypt encrypted broadcast messages.
-        
+        # Now, for all addresses, even version 2 addresses, we should create Cryptor objects in a dictionary which we will use to attempt to decrypt encrypted broadcast messages.
+
         if addressVersionNumber <= 3:
             privEncryptionKey = hashlib.sha512(encodeVarint(addressVersionNumber)+encodeVarint(streamNumber)+hash).digest()[:32]
             MyECSubscriptionCryptorObjects[hash] = highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
@@ -157,9 +163,10 @@ def reloadBroadcastSendersForWhichImWatching():
             privEncryptionKey = doubleHashOfAddressData[:32]
             MyECSubscriptionCryptorObjects[tag] = highlevelcrypto.makeCryptor(hexlify(privEncryptionKey))
 
+
 def fixPotentiallyInvalidUTF8Data(text):
     try:
-        unicode(text,'utf-8')
+        unicode(text, 'utf-8')
         return text
     except:
         output = 'Part of the message is corrupt. The message cannot be displayed the normal way.\n\n' + repr(text)
@@ -169,6 +176,8 @@ def fixPotentiallyInvalidUTF8Data(text):
 # (Or unwise subsequent chmod.)
 #
 # Returns true iff file appears to have appropriate permissions.
+
+
 def checkSensitiveFilePermissions(filename):
     if sys.platform == 'win32':
         # TODO: This might deserve extra checks by someone familiar with
@@ -198,6 +207,8 @@ def checkSensitiveFilePermissions(filename):
         return present_permissions & disallowed_permissions == 0
 
 # Fixes permissions on a sensitive file.
+
+
 def fixSensitiveFilePermissions(filename, hasEnabledKeys):
     if hasEnabledKeys:
         logger.warning('Keyfile had insecure permissions, and there were enabled keys. '
@@ -207,7 +218,7 @@ def fixSensitiveFilePermissions(filename, hasEnabledKeys):
     try:
         present_permissions = os.stat(filename)[0]
         disallowed_permissions = stat.S_IRWXG | stat.S_IRWXO
-        allowed_permissions = ((1<<32)-1) ^ disallowed_permissions
+        allowed_permissions = ((1 << 32)-1) ^ disallowed_permissions
         new_permissions = (
             allowed_permissions & present_permissions)
         os.chmod(filename, new_permissions)
@@ -217,7 +228,8 @@ def fixSensitiveFilePermissions(filename, hasEnabledKeys):
     except Exception, e:
         logger.exception('Keyfile permissions could not be fixed.')
         raise
-    
+
+
 def isBitSetWithinBitfield(fourByteString, n):
     # Uses MSB 0 bit numbering across 4 bytes of data
     n = 31 - n
@@ -234,32 +246,32 @@ def decryptAndCheckPubkeyPayload(data, address):
     """
     try:
         status, addressVersion, streamNumber, ripe = decodeAddress(address)
-        
+
         readPosition = 20  # bypass the nonce, time, and object type
         embeddedAddressVersion, varintLength = decodeVarint(data[readPosition:readPosition + 10])
         readPosition += varintLength
         embeddedStreamNumber, varintLength = decodeVarint(data[readPosition:readPosition + 10])
         readPosition += varintLength
-        storedData = data[20:readPosition] # We'll store the address version and stream number (and some more) in the pubkeys table.
-        
+        storedData = data[20:readPosition]  # We'll store the address version and stream number (and some more) in the pubkeys table.
+
         if addressVersion != embeddedAddressVersion:
             logger.info('Pubkey decryption was UNsuccessful due to address version mismatch.')
             return 'failed'
         if streamNumber != embeddedStreamNumber:
             logger.info('Pubkey decryption was UNsuccessful due to stream number mismatch.')
             return 'failed'
-        
+
         tag = data[readPosition:readPosition + 32]
         readPosition += 32
-        signedData = data[8:readPosition] # the time through the tag. More data is appended onto signedData below after the decryption. 
+        signedData = data[8:readPosition]  # the time through the tag. More data is appended onto signedData below after the decryption.
         encryptedData = data[readPosition:]
-    
+
         # Let us try to decrypt the pubkey
         toAddress, cryptorObject = state.neededPubkeys[tag]
         if toAddress != address:
             logger.critical('decryptAndCheckPubkeyPayload failed due to toAddress mismatch. This is very peculiar. toAddress: %s, address %s' % (toAddress, address))
             # the only way I can think that this could happen is if someone encodes their address data two different ways.
-            # That sort of address-malleability should have been caught by the UI or API and an error given to the user. 
+            # That sort of address-malleability should have been caught by the UI or API and an error given to the user.
             return 'failed'
         try:
             decryptedData = cryptorObject.decrypt(encryptedData)
@@ -268,7 +280,7 @@ def decryptAndCheckPubkeyPayload(data, address):
             # but tagged it with a tag for which we are watching.
             logger.info('Pubkey decryption was unsuccessful.')
             return 'failed'
-        
+
         readPosition = 0
         bitfieldBehaviors = decryptedData[readPosition:readPosition + 4]
         readPosition += 4
@@ -288,39 +300,39 @@ def decryptAndCheckPubkeyPayload(data, address):
             decryptedData[readPosition:readPosition + 10])
         readPosition += signatureLengthLength
         signature = decryptedData[readPosition:readPosition + signatureLength]
-        
+
         if highlevelcrypto.verify(signedData, signature, hexlify(publicSigningKey)):
             logger.info('ECDSA verify passed (within decryptAndCheckPubkeyPayload)')
         else:
             logger.info('ECDSA verify failed (within decryptAndCheckPubkeyPayload)')
             return 'failed'
-    
+
         sha = hashlib.new('sha512')
         sha.update(publicSigningKey + publicEncryptionKey)
         ripeHasher = hashlib.new('ripemd160')
         ripeHasher.update(sha.digest())
         embeddedRipe = ripeHasher.digest()
-    
+
         if embeddedRipe != ripe:
             # Although this pubkey object had the tag were were looking for and was
             # encrypted with the correct encryption key, it doesn't contain the
             # correct pubkeys. Someone is either being malicious or using buggy software.
             logger.info('Pubkey decryption was UNsuccessful due to RIPE mismatch.')
             return 'failed'
-        
+
         # Everything checked out. Insert it into the pubkeys table.
-        
+
         logger.info('within decryptAndCheckPubkeyPayload, addressVersion: %s, streamNumber: %s \n\
                     ripe %s\n\
                     publicSigningKey in hex: %s\n\
                     publicEncryptionKey in hex: %s' % (addressVersion,
-                                                       streamNumber, 
+                                                       streamNumber,
                                                        hexlify(ripe),
                                                        hexlify(publicSigningKey),
                                                        hexlify(publicEncryptionKey)
                                                        )
                     )
-    
+
         t = (address, addressVersion, storedData, int(time.time()), 'yes')
         sqlExecute('''INSERT INTO pubkeys VALUES (?,?,?,?,?)''', *t)
         return 'successful'
@@ -330,6 +342,7 @@ def decryptAndCheckPubkeyPayload(data, address):
     except Exception as e:
         logger.critical('Pubkey decryption was UNsuccessful because of an unhandled exception! This is definitely a bug! \n%s' % traceback.format_exc())
         return 'failed'
+
 
 def checkAndShareObjectWithPeers(data):
     """
@@ -345,12 +358,12 @@ def checkAndShareObjectWithPeers(data):
     if not protocol.isProofOfWorkSufficient(data):
         logger.info('Proof of work is insufficient.')
         return 0
-    
+
     endOfLifeTime, = unpack('>Q', data[8:16])
-    if endOfLifeTime - int(time.time()) > 28 * 24 * 60 * 60 + 10800: # The TTL may not be larger than 28 days + 3 hours of wiggle room
+    if endOfLifeTime - int(time.time()) > 28 * 24 * 60 * 60 + 10800:  # The TTL may not be larger than 28 days + 3 hours of wiggle room
         logger.info('This object\'s End of Life time is too far in the future. Ignoring it. Time is %s' % endOfLifeTime)
         return 0
-    if endOfLifeTime - int(time.time()) < - 3600: # The EOL time was more than an hour ago. That's too much.
+    if endOfLifeTime - int(time.time()) < - 3600:  # The EOL time was more than an hour ago. That's too much.
         logger.info('This object\'s End of Life time was more than an hour ago. Ignoring the object. Time is %s' % endOfLifeTime)
         return 0
     intObjectType, = unpack('>I', data[16:20])
@@ -375,11 +388,11 @@ def checkAndShareObjectWithPeers(data):
     except Exception as e:
         logger.critical('There was a problem while checking to see whether it was appropriate to share an object with peers. This is definitely a bug! \n%s' % traceback.format_exc())
     return 0
-        
+
 
 def _checkAndShareUndefinedObjectWithPeers(data):
     embeddedTime, = unpack('>Q', data[8:16])
-    readPosition = 20 # bypass nonce, time, and object type
+    readPosition = 20  # bypass nonce, time, and object type
     objectVersion, objectVersionLength = decodeVarint(
         data[readPosition:readPosition + 9])
     readPosition += objectVersionLength
@@ -388,21 +401,21 @@ def _checkAndShareUndefinedObjectWithPeers(data):
     if not streamNumber in state.streamsInWhichIAmParticipating:
         logger.debug('The streamNumber %s isn\'t one we are interested in.' % streamNumber)
         return
-    
+
     inventoryHash = calculateInventoryHash(data)
     if inventoryHash in Inventory():
         logger.debug('We have already received this undefined object. Ignoring.')
         return
     objectType, = unpack('>I', data[16:20])
     Inventory()[inventoryHash] = (
-        objectType, streamNumber, data, embeddedTime,'')
+        objectType, streamNumber, data, embeddedTime, '')
     logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     protocol.broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
-    
-    
+
+
 def _checkAndShareMsgWithPeers(data):
     embeddedTime, = unpack('>Q', data[8:16])
-    readPosition = 20 # bypass nonce, time, and object type
+    readPosition = 20  # bypass nonce, time, and object type
     objectVersion, objectVersionLength = decodeVarint(
         data[readPosition:readPosition + 9])
     readPosition += objectVersionLength
@@ -419,12 +432,13 @@ def _checkAndShareMsgWithPeers(data):
     # This msg message is valid. Let's let our peers know about it.
     objectType = 2
     Inventory()[inventoryHash] = (
-        objectType, streamNumber, data, embeddedTime,'')
+        objectType, streamNumber, data, embeddedTime, '')
     logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     protocol.broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's enqueue it to be processed ourselves.
-    objectProcessorQueue.put((objectType,data))
+    objectProcessorQueue.put((objectType, data))
+
 
 def _checkAndShareGetpubkeyWithPeers(data):
     if len(data) < 42:
@@ -449,13 +463,14 @@ def _checkAndShareGetpubkeyWithPeers(data):
 
     objectType = 0
     Inventory()[inventoryHash] = (
-        objectType, streamNumber, data, embeddedTime,'')
+        objectType, streamNumber, data, embeddedTime, '')
     # This getpubkey request is valid. Forward to peers.
     logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     protocol.broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's queue it to be processed ourselves.
-    objectProcessorQueue.put((objectType,data))
+    objectProcessorQueue.put((objectType, data))
+
 
 def _checkAndSharePubkeyWithPeers(data):
     if len(data) < 146 or len(data) > 440:  # sanity check
@@ -488,9 +503,8 @@ def _checkAndSharePubkeyWithPeers(data):
     logger.debug('advertising inv with hash: %s' % hexlify(inventoryHash))
     protocol.broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
-
     # Now let's queue it to be processed ourselves.
-    objectProcessorQueue.put((objectType,data))
+    objectProcessorQueue.put((objectType, data))
 
 
 def _checkAndShareBroadcastWithPeers(data):
@@ -525,7 +539,8 @@ def _checkAndShareBroadcastWithPeers(data):
     protocol.broadcastToSendDataQueues((streamNumber, 'advertiseobject', inventoryHash))
 
     # Now let's queue it to be processed ourselves.
-    objectProcessorQueue.put((objectType,data))
+    objectProcessorQueue.put((objectType, data))
+
 
 def openKeysFile():
     if 'linux' in sys.platform:
@@ -533,5 +548,6 @@ def openKeysFile():
         subprocess.call(["xdg-open", state.appdata + 'keys.dat'])
     else:
         os.startfile(state.appdata + 'keys.dat')
+
 
 from debug import logger

@@ -7,6 +7,7 @@ import protocol
 from queues import portCheckerQueue
 import state
 
+
 def getDiscoveredPeer():
     try:
         peer = random.choice(state.discoveredPeers.keys())
@@ -17,6 +18,7 @@ def getDiscoveredPeer():
     except KeyError:
         pass
     return peer
+
 
 def chooseConnection(stream):
     haveOnion = BMConfigParser().safeGet("bitmessagesettings", "socksproxytype")[0:5] == 'SOCKS'

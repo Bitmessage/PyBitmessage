@@ -5,16 +5,18 @@ from PyQt4 import QtCore, QtGui
 from bmconfigparser import BMConfigParser
 import paths
 
+
 class LanguageBox(QtGui.QComboBox):
     languageName = {"system": "System Settings", "eo": "Esperanto", "en_pirate": "Pirate English"}
-    def __init__(self, parent = None):
+
+    def __init__(self, parent=None):
         super(QtGui.QComboBox, self).__init__(parent)
         self.populate()
 
     def populate(self):
         self.languages = []
         self.clear()
-        localesPath = os.path.join (paths.codePath(), 'translations')
+        localesPath = os.path.join(paths.codePath(), 'translations')
         configuredLocale = "system"
         try:
             configuredLocale = BMConfigParser().get('bitmessagesettings', 'userlocale', "system")

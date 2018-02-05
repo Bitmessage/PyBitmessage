@@ -11,6 +11,7 @@ from network.connectionpool import BMConnectionPool
 import protocol
 from state import missingObjects
 
+
 class DownloadThread(threading.Thread, StoppableThread):
     minPending = 200
     maxRequestChunk = 1000
@@ -43,7 +44,7 @@ class DownloadThread(threading.Thread, StoppableThread):
             connections = [x for x in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values() if x.fullyEstablished]
             random.shuffle(connections)
             try:
-                requestChunk =  max(int(min(DownloadThread.maxRequestChunk, len(missingObjects)) / len(connections)), 1)
+                requestChunk = max(int(min(DownloadThread.maxRequestChunk, len(missingObjects)) / len(connections)), 1)
             except ZeroDivisionError:
                 requestChunk = 1
             for i in connections:

@@ -8,6 +8,7 @@ from network.dandelion import Dandelion
 import protocol
 import state
 
+
 class BMObjectInsufficientPOWError(Exception):
     errorCodes = ("Insufficient proof of work")
 

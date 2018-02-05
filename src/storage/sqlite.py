@@ -7,12 +7,13 @@ import time
 from helper_sql import *
 from storage import InventoryStorage, InventoryItem
 
+
 class SqliteInventory(InventoryStorage):
     def __init__(self):
         super(self.__class__, self).__init__()
-        self._inventory = {} #of objects (like msg payloads and pubkey payloads) Does not include protocol headers (the first 24 bytes of each packet).
-        self._objects = {} # cache for existing objects, used for quick lookups if we have an object. This is used for example whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it.
-        self.lock = RLock() # Guarantees that two receiveDataThreads don't receive and process the same message concurrently (probably sent by a malicious individual)
+        self._inventory = {}  # of objects (like msg payloads and pubkey payloads) Does not include protocol headers (the first 24 bytes of each packet).
+        self._objects = {}  # cache for existing objects, used for quick lookups if we have an object. This is used for example whenever we receive an inv message from a peer to check to see what items are new to us. We don't delete things out of it; instead, the singleCleaner thread clears and refills it.
+        self.lock = RLock()  # Guarantees that two receiveDataThreads don't receive and process the same message concurrently (probably sent by a malicious individual)
 
     def __contains__(self, hash):
         with self.lock:
@@ -66,7 +67,7 @@ class SqliteInventory(InventoryStorage):
             return hashes
 
     def flush(self):
-        with self.lock: # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
+        with self.lock:  # If you use both the inventoryLock and the sqlLock, always use the inventoryLock OUTSIDE of the sqlLock.
             with SqlBulkExecute() as sql:
                 for objectHash, value in self._inventory.items():
                     sql.execute('INSERT INTO inventory VALUES (?, ?, ?, ?, ?, ?)', sqlite3.Binary(objectHash), *value)
@@ -74,8 +75,7 @@ class SqliteInventory(InventoryStorage):
 
     def clean(self):
         with self.lock:
-            sqlExecute('DELETE FROM inventory WHERE expirestime<?',int(time.time()) - (60 * 60 * 3))
+            sqlExecute('DELETE FROM inventory WHERE expirestime<?', int(time.time()) - (60 * 60 * 3))
             self._objects.clear()
             for objectHash, value in self._inventory.items():
                 self._objects[objectHash] = value.stream
-

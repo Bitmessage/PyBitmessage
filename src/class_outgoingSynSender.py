@@ -20,6 +20,7 @@ import state
 # For each stream to which we connect, several outgoingSynSender threads
 # will exist and will collectively create 8 connections with peers.
 
+
 class outgoingSynSender(threading.Thread, StoppableThread):
 
     def __init__(self):
@@ -44,29 +45,29 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 try:
                     with knownnodes.knownNodesLock:
                         peer, = random.sample(knownnodes.knownNodes[self.streamNumber], 1)
-                        priority = (183600 - (time.time() - knownnodes.knownNodes[self.streamNumber][peer])) / 183600 # 2 days and 3 hours
-                except ValueError: # no known nodes
+                        priority = (183600 - (time.time() - knownnodes.knownNodes[self.streamNumber][peer])) / 183600  # 2 days and 3 hours
+                except ValueError:  # no known nodes
                     self.stop.wait(1)
                     continue
                 if BMConfigParser().get('bitmessagesettings', 'socksproxytype') != 'none':
                     if peer.host.find(".onion") == -1:
-                        priority /= 10 # hidden services have 10x priority over plain net
+                        priority /= 10  # hidden services have 10x priority over plain net
                     else:
                         # don't connect to self
                         if peer.host == BMConfigParser().get('bitmessagesettings', 'onionhostname') and peer.port == BMConfigParser().getint("bitmessagesettings", "onionport"):
                             continue
-                elif peer.host.find(".onion") != -1: # onion address and so proxy
+                elif peer.host.find(".onion") != -1:  # onion address and so proxy
                     continue
-                if priority <= 0.001: # everyone has at least this much priority
+                if priority <= 0.001:  # everyone has at least this much priority
                     priority = 0.001
-                if (random.random() <=  priority):
+                if (random.random() <= priority):
                     break
-                self.stop.wait(0.01) # prevent CPU hogging if something is broken
+                self.stop.wait(0.01)  # prevent CPU hogging if something is broken
         try:
             return peer
         except NameError:
             return state.Peer('127.0.0.1', 8444)
-        
+
     def stopThread(self):
         super(outgoingSynSender, self).stopThread()
         try:
@@ -102,14 +103,14 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             shared.alreadyAttemptedConnectionsList[peer] = 0
             if self._stopped:
                 break
-            self.name = "outgoingSynSender-" + peer.host.replace(":", ".") # log parser field separator
+            self.name = "outgoingSynSender-" + peer.host.replace(":", ".")  # log parser field separator
             address_family = socket.AF_INET
             # Proxy IP is IPv6. Unlikely but possible
             if BMConfigParser().get('bitmessagesettings', 'socksproxytype') != 'none':
                 if ":" in BMConfigParser().get('bitmessagesettings', 'sockshostname'):
                     address_family = socket.AF_INET6
             # No proxy, and destination is IPv6
-            elif peer.host.find(':') >= 0 :
+            elif peer.host.find(':') >= 0:
                 address_family = socket.AF_INET6
             try:
                 self.sock = socks.socksocket(address_family, socket.SOCK_STREAM)
@@ -120,7 +121,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                       File "C:\Python27\lib\socket.py", line 187, in __init__
                         _sock = _realsocket(family, type, proto)
                       error: [Errno 10047] An address incompatible with the requested protocol was used
-                      
+
                 So let us remove the offending address from our knownNodes file.
                 """
                 with knownnodes.knownNodesLock:
@@ -140,7 +141,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             elif BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'SOCKS4a':
                 if shared.verbose >= 2:
-                    logger.debug ('(Using SOCKS4a) Trying an outgoing connection to ' + str(peer))
+                    logger.debug('(Using SOCKS4a) Trying an outgoing connection to ' + str(peer))
 
                 proxytype = socks.PROXY_TYPE_SOCKS4
                 sockshostname = BMConfigParser().get(
@@ -160,7 +161,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                         proxytype, sockshostname, socksport, rdns)
             elif BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'SOCKS5':
                 if shared.verbose >= 2:
-                    logger.debug ('(Using SOCKS5) Trying an outgoing connection to ' + str(peer))
+                    logger.debug('(Using SOCKS5) Trying an outgoing connection to ' + str(peer))
 
                 proxytype = socks.PROXY_TYPE_SOCKS5
                 sockshostname = BMConfigParser().get(
@@ -185,7 +186,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                     self.sock.shutdown(socket.SHUT_RDWR)
                     self.sock.close()
                     return
-                sendDataThreadQueue = Queue.Queue() # Used to submit information to the send data thread for this connection. 
+                sendDataThreadQueue = Queue.Queue()  # Used to submit information to the send data thread for this connection.
 
                 sd = sendDataThread(sendDataThreadQueue)
                 sd.setup(self.sock, peer.host, peer.port, self.streamNumber)
@@ -193,11 +194,11 @@ class outgoingSynSender(threading.Thread, StoppableThread):
 
                 rd = receiveDataThread()
                 rd.daemon = True  # close the main program even if there are threads left
-                rd.setup(self.sock, 
-                         peer.host, 
-                         peer.port, 
+                rd.setup(self.sock,
+                         peer.host,
+                         peer.port,
                          self.streamNumber,
-                         self.selfInitiatedConnections, 
+                         self.selfInitiatedConnections,
                          sendDataThreadQueue,
                          sd.objectHashHolderInstance)
                 rd.start()
@@ -212,7 +213,7 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                         'updateStatusBar',
                         tr._translate(
                             "MainWindow", "Problem communicating with proxy: %1. Please check your network settings.").arg(str(err[0][1]))
-                        ))
+                    ))
                     self.stop.wait(1)
                     continue
                 elif shared.verbose >= 2:
@@ -234,12 +235,12 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                             del knownnodes.knownNodes[self.streamNumber][peer]
                             deletedPeer = peer
                 if deletedPeer:
-                    str ('deleting ' + str(peer) + ' from knownnodes.knownNodes because it is more than 48 hours old and we could not connect to it.')
+                    str('deleting ' + str(peer) + ' from knownnodes.knownNodes because it is more than 48 hours old and we could not connect to it.')
 
             except socks.Socks5AuthError as err:
                 queues.UISignalQueue.put((
                     'updateStatusBar', tr._translate(
-                    "MainWindow", "SOCKS5 Authentication problem: %1. Please check your SOCKS5 settings.").arg(str(err))))
+                        "MainWindow", "SOCKS5 Authentication problem: %1. Please check your SOCKS5 settings.").arg(str(err))))
             except socks.Socks5Error as err:
                 if err[0][0] in [3, 4, 5, 6]:
                     # this is a more bening "error": host unreachable, network unreachable, connection refused, TTL expired

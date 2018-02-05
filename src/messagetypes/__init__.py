@@ -5,6 +5,7 @@ from string import lower
 from debug import logger
 import paths
 
+
 class MsgBase(object):
     def encode(self):
         self.data = {"": lower(type(self).__name__)}
@@ -27,6 +28,7 @@ def constructObject(data):
         return None
     else:
         return returnObj
+
 
 if paths.frozen is not None:
     import messagetypes.message

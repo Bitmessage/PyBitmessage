@@ -2,14 +2,16 @@ import collections
 
 InventoryItem = collections.namedtuple('InventoryItem', 'type stream payload expires tag')
 
+
 class Storage(object):
     pass
 #    def __init__(self):
 #        super(self.__class__, self).__init__()
 
+
 class InventoryStorage(Storage, collections.MutableMapping):
     def __init__(self):
-#        super(self.__class__, self).__init__()
+        #        super(self.__class__, self).__init__()
         self.numberOfInventoryLookupsPerformed = 0
 
     def __contains__(self, hash):
@@ -42,7 +44,8 @@ class InventoryStorage(Storage, collections.MutableMapping):
     def clean(self):
         raise NotImplementedError
 
+
 class MailboxStorage(Storage, collections.MutableMapping):
     def __init__(self):
-#        super(self.__class__, self).__init__()
+        #        super(self.__class__, self).__init__()
         pass

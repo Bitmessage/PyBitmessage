@@ -16,9 +16,10 @@ from queues import receiveDataQueue
 import protocol
 import state
 
+
 class ReceiveQueueThread(threading.Thread, StoppableThread):
     def __init__(self, num=0):
-        threading.Thread.__init__(self, name="ReceiveQueue_%i" %(num))
+        threading.Thread.__init__(self, name="ReceiveQueue_%i" % (num))
         self.initStop()
         self.name = "ReceiveQueue_%i" % (num)
         logger.info("init receive queue thread %i", num)

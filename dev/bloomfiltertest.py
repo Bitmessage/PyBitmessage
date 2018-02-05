@@ -42,8 +42,8 @@ for row in cur.fetchall():
         pass
 
 #f = open("/home/shurdeek/tmp/bloom.dat", "wb")
-#sb1.tofile(f)
-#f.close()
+# sb1.tofile(f)
+# f.close()
 
 
 print "Item count: %i" % (itemcount)

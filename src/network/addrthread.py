@@ -8,6 +8,7 @@ from queues import addrQueue
 import protocol
 import state
 
+
 class AddrThread(threading.Thread, StoppableThread):
     def __init__(self):
         threading.Thread.__init__(self, name="AddrBroadcaster")
@@ -28,7 +29,7 @@ class AddrThread(threading.Thread, StoppableThread):
                 except KeyError:
                     continue
 
-            #finish
+            # finish
 
             addrQueue.iterate()
             for i in range(len(chunk)):

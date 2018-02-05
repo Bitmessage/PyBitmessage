@@ -57,10 +57,10 @@ import warnings
 
 import os
 from errno import EALREADY, EINPROGRESS, EWOULDBLOCK, ECONNRESET, EINVAL, \
-     ENOTCONN, ESHUTDOWN, EISCONN, EBADF, ECONNABORTED, EPIPE, EAGAIN, \
-     ECONNREFUSED, EHOSTUNREACH, ENETUNREACH, ENOTSOCK, EINTR, ETIMEDOUT, \
-     EADDRINUSE, \
-     errorcode
+    ENOTCONN, ESHUTDOWN, EISCONN, EBADF, ECONNABORTED, EPIPE, EAGAIN, \
+    ECONNREFUSED, EHOSTUNREACH, ENETUNREACH, ENOTSOCK, EINTR, ETIMEDOUT, \
+    EADDRINUSE, \
+    errorcode
 try:
     from errno import WSAEWOULDBLOCK
 except (ImportError, AttributeError):
@@ -90,16 +90,19 @@ try:
 except NameError:
     socket_map = {}
 
+
 def _strerror(err):
     try:
         return os.strerror(err)
     except (ValueError, OverflowError, NameError):
         if err in errorcode:
             return errorcode[err]
-        return "Unknown error %s" %err
+        return "Unknown error %s" % err
+
 
 class ExitNow(Exception):
     pass
+
 
 _reraised_exceptions = (ExitNow, KeyboardInterrupt, SystemExit)
 
@@ -112,6 +115,7 @@ uploadTimestamp = 0
 uploadBucket = 0
 sentBytes = 0
 
+
 def read(obj):
     if not can_receive():
         return
@@ -121,6 +125,7 @@ def read(obj):
         raise
     except:
         obj.handle_error()
+
 
 def write(obj):
     if not can_send():
@@ -132,6 +137,7 @@ def write(obj):
     except:
         obj.handle_error()
 
+
 def set_rates(download, upload):
     global maxDownloadRate, maxUploadRate, downloadBucket, uploadBucket, downloadTimestamp, uploadTimestamp
     maxDownloadRate = float(download) * 1024
@@ -141,11 +147,14 @@ def set_rates(download, upload):
     downloadTimestamp = time.time()
     uploadTimestamp = time.time()
 
+
 def can_receive():
     return maxDownloadRate == 0 or downloadBucket > 0
 
+
 def can_send():
     return maxUploadRate == 0 or uploadBucket > 0
+
 
 def update_received(download=0):
     global receivedBytes, downloadBucket, downloadTimestamp
@@ -159,6 +168,7 @@ def update_received(download=0):
         downloadBucket -= download
     downloadTimestamp = currentTimestamp
 
+
 def update_sent(upload=0):
     global sentBytes, uploadBucket, uploadTimestamp
     currentTimestamp = time.time()
@@ -171,6 +181,7 @@ def update_sent(upload=0):
         uploadBucket -= upload
     uploadTimestamp = currentTimestamp
 
+
 def _exception(obj):
     try:
         obj.handle_expt_event()
@@ -178,6 +189,7 @@ def _exception(obj):
         raise
     except:
         obj.handle_error()
+
 
 def readwrite(obj, flags):
     try:
@@ -199,12 +211,15 @@ def readwrite(obj, flags):
     except:
         obj.handle_error()
 
+
 def select_poller(timeout=0.0, map=None):
     """A poller which uses select(), available on most platforms."""
     if map is None:
         map = socket_map
     if map:
-        r = []; w = []; e = []
+        r = []
+        w = []
+        e = []
         for fd, obj in list(map.items()):
             is_r = obj.readable()
             is_w = obj.writable()
@@ -249,6 +264,7 @@ def select_poller(timeout=0.0, map=None):
             _exception(obj)
     else:
         current_thread().stop.wait(timeout)
+
 
 def poll_poller(timeout=0.0, map=None):
     """A poller which uses poll(), available on most UNIXen."""
@@ -300,9 +316,11 @@ def poll_poller(timeout=0.0, map=None):
     else:
         current_thread().stop.wait(timeout)
 
+
 # Aliases for backward compatibility
 poll = select_poller
 poll2 = poll3 = poll_poller
+
 
 def epoll_poller(timeout=0.0, map=None):
     """A poller which uses epoll(), supported on Linux 2.5.44 and newer."""
@@ -353,9 +371,10 @@ def epoll_poller(timeout=0.0, map=None):
             obj = map.get(fd)
             if obj is None:
                 continue
-            readwrite(obj, flags) 
+            readwrite(obj, flags)
     else:
         current_thread().stop.wait(timeout)
+
 
 def kqueue_poller(timeout=0.0, map=None):
     """A poller which uses kqueue(), BSD specific."""
@@ -407,7 +426,7 @@ def kqueue_poller(timeout=0.0, map=None):
 
         for event in events:
             fd = event.ident
-            obj = map.get(fd)            
+            obj = map.get(fd)
             if obj is None:
                 continue
             if event.flags & select.KQ_EV_ERROR:
@@ -424,13 +443,13 @@ def kqueue_poller(timeout=0.0, map=None):
         current_thread().stop.wait(timeout)
 
 
-def loop(timeout=30.0, use_poll=False, map=None, count=None, 
+def loop(timeout=30.0, use_poll=False, map=None, count=None,
          poller=None):
     if map is None:
         map = socket_map
     if count is None:
-        count =  True
-    # code which grants backward compatibility with "use_poll" 
+        count = True
+    # code which grants backward compatibility with "use_poll"
     # argument which should no longer be used in favor of
     # "poller"
 
@@ -461,6 +480,7 @@ def loop(timeout=30.0, use_poll=False, map=None, count=None,
         poller(subtimeout, map)
         if type(count) is int:
             count = count - 1
+
 
 class dispatcher:
 
@@ -581,7 +601,7 @@ class dispatcher:
                 socket.SOL_SOCKET, socket.SO_REUSEADDR,
                 self.socket.getsockopt(socket.SOL_SOCKET,
                                        socket.SO_REUSEADDR) | 1
-                )
+            )
         except socket.error:
             pass
 
@@ -620,7 +640,7 @@ class dispatcher:
         self.connecting = True
         err = self.socket.connect_ex(address)
         if err in (EINPROGRESS, EALREADY, EWOULDBLOCK, WSAEWOULDBLOCK) \
-        or err == EINVAL and os.name in ('nt', 'ce'):
+                or err == EINVAL and os.name in ('nt', 'ce'):
             self.addr = address
             return
         if err in (0, EISCONN):
@@ -694,10 +714,10 @@ class dispatcher:
             retattr = getattr(self.socket, attr)
         except AttributeError:
             raise AttributeError("%s instance has no attribute '%s'"
-                                 %(self.__class__.__name__, attr))
+                                 % (self.__class__.__name__, attr))
         else:
             msg = "%(me)s.%(attr)s is deprecated; use %(me)s.socket.%(attr)s " \
-                  "instead" % {'me' : self.__class__.__name__, 'attr' : attr}
+                  "instead" % {'me': self.__class__.__name__, 'attr': attr}
             warnings.warn(msg, DeprecationWarning, stacklevel=2)
             return retattr
 
@@ -776,9 +796,9 @@ class dispatcher:
                 t,
                 v,
                 tbinfo
-                ),
+            ),
             'error'
-            )
+        )
         self.handle_close()
 
     def handle_expt(self):
@@ -811,6 +831,7 @@ class dispatcher:
 # [for more sophisticated usage use asynchat.async_chat]
 # ---------------------------------------------------------------------------
 
+
 class dispatcher_with_send(dispatcher):
 
     def __init__(self, sock=None, map=None):
@@ -838,17 +859,18 @@ class dispatcher_with_send(dispatcher):
 # used for debugging.
 # ---------------------------------------------------------------------------
 
+
 def compact_traceback():
     t, v, tb = sys.exc_info()
     tbinfo = []
-    if not tb: # Must have a traceback
+    if not tb:  # Must have a traceback
         raise AssertionError("traceback does not exist")
     while tb:
         tbinfo.append((
             tb.tb_frame.f_code.co_filename,
             tb.tb_frame.f_code.co_name,
             str(tb.tb_lineno)
-            ))
+        ))
         tb = tb.tb_next
 
     # just to be safe
@@ -857,6 +879,7 @@ def compact_traceback():
     file, function, line = tbinfo[-1]
     info = ' '.join(['[%s|%s|%s]' % x for x in tbinfo])
     return (file, function, line), t, v, info
+
 
 def close_all(map=None, ignore_all=False):
     if map is None:
@@ -889,6 +912,7 @@ def close_all(map=None, ignore_all=False):
 #
 # Regardless, this is useful for pipes, and stdin/stdout...
 
+
 if os.name == 'posix':
     import fcntl
 
@@ -909,7 +933,7 @@ if os.name == 'posix':
         def getsockopt(self, level, optname, buflen=None):
             if (level == socket.SOL_SOCKET and
                 optname == socket.SO_ERROR and
-                not buflen):
+                    not buflen):
                 return 0
             raise NotImplementedError("Only asyncore specific behaviour "
                                       "implemented.")

@@ -6,6 +6,7 @@ from helper_sql import *
 from utils import *
 from settingsmixin import SettingsMixin
 
+
 class AccountMixin (object):
     ALL = 0
     NORMAL = 1
@@ -14,7 +15,7 @@ class AccountMixin (object):
     SUBSCRIPTION = 4
     BROADCAST = 5
 
-    def accountColor (self):
+    def accountColor(self):
         if not self.isEnabled:
             return QtGui.QColor(128, 128, 128)
         elif self.type == self.CHAN:
@@ -23,18 +24,18 @@ class AccountMixin (object):
             return QtGui.QColor(137, 04, 177)
         else:
             return QtGui.QApplication.palette().text().color()
-            
-    def folderColor (self):
+
+    def folderColor(self):
         if not self.parent().isEnabled:
             return QtGui.QColor(128, 128, 128)
         else:
             return QtGui.QApplication.palette().text().color()
-            
+
     def accountBrush(self):
         brush = QtGui.QBrush(self.accountColor())
         brush.setStyle(QtCore.Qt.NoBrush)
         return brush
-        
+
     def folderBrush(self):
         brush = QtGui.QBrush(self.folderColor())
         brush.setStyle(QtCore.Qt.NoBrush)
@@ -45,7 +46,7 @@ class AccountMixin (object):
             self.address = None
         else:
             self.address = str(address)
-    
+
     def setUnreadCount(self, cnt):
         if hasattr(self, "unreadCount") and self.unreadCount == int(cnt):
             return
@@ -74,11 +75,11 @@ class AccountMixin (object):
         elif BMConfigParser().safeGetBoolean(self.address, 'mailinglist'):
             self.type = self.MAILINGLIST
         elif sqlQuery(
-            '''select label from subscriptions where address=?''', self.address):
+                '''select label from subscriptions where address=?''', self.address):
             self.type = AccountMixin.SUBSCRIPTION
         else:
             self.type = self.NORMAL
-            
+
     def defaultLabel(self):
         queryreturn = None
         retval = None
@@ -106,7 +107,8 @@ class AccountMixin (object):
 
 class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
     folderWeight = {"inbox": 1, "new": 2, "sent": 3, "trash": 4}
-    def __init__(self, parent, pos = 0, address = "", folderName = "", unreadCount = 0):
+
+    def __init__(self, parent, pos=0, address="", folderName="", unreadCount=0):
         super(QtGui.QTreeWidgetItem, self).__init__()
         self.setAddress(address)
         self.setFolderName(folderName)
@@ -115,14 +117,14 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
 
     def setFolderName(self, fname):
         self.folderName = str(fname)
-        
+
     def data(self, column, role):
         if column == 0:
             if role == QtCore.Qt.DisplayRole:
                 return QtGui.QApplication.translate("MainWindow", self.folderName) + (" (" + str(self.unreadCount) + ")" if self.unreadCount > 0 else "")
             elif role == QtCore.Qt.EditRole:
                 return QtGui.QApplication.translate("MainWindow", self.folderName)
-            elif role == QtCore.Qt.ToolTipRole:    
+            elif role == QtCore.Qt.ToolTipRole:
                 return QtGui.QApplication.translate("MainWindow", self.folderName)
             elif role == QtCore.Qt.DecorationRole:
                 pass
@@ -154,10 +156,10 @@ class Ui_FolderWidget(QtGui.QTreeWidgetItem, AccountMixin):
                 return (x >= y if reverse else x < y)
 
         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
-    
+
 
 class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
-    def __init__(self, parent, pos = 0, address = None, unreadCount = 0, enabled = True):
+    def __init__(self, parent, pos=0, address=None, unreadCount=0, enabled=True):
         super(QtGui.QTreeWidgetItem, self).__init__()
         parent.insertTopLevelItem(pos, self)
         # only set default when creating
@@ -166,7 +168,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
         self.setEnabled(enabled)
         self.setUnreadCount(unreadCount)
         self.setType()
-        
+
     def _getLabel(self):
         if self.address is None:
             return unicode(QtGui.QApplication.translate("MainWindow", "All accounts").toUtf8(), 'utf-8', 'ignore')
@@ -175,15 +177,15 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
                 return unicode(BMConfigParser().get(self.address, 'label'), 'utf-8', 'ignore')
             except:
                 return unicode(self.address, 'utf-8')
-    
-    def _getAddressBracket(self, unreadCount = False):
+
+    def _getAddressBracket(self, unreadCount=False):
         ret = ""
         if unreadCount:
             ret += " (" + str(self.unreadCount) + ")"
         if self.address is not None:
             ret += " (" + self.address + ")"
         return ret
-        
+
     def data(self, column, role):
         if column == 0:
             if role == QtCore.Qt.DisplayRole:
@@ -193,7 +195,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
                     return self._getLabel() + self._getAddressBracket(False)
             elif role == QtCore.Qt.EditRole:
                 return self._getLabel()
-            elif role == QtCore.Qt.ToolTipRole:    
+            elif role == QtCore.Qt.ToolTipRole:
                 return self._getLabel() + self._getAddressBracket(False)
             elif role == QtCore.Qt.DecorationRole:
                 if self.address is None:
@@ -207,7 +209,7 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
             elif role == QtCore.Qt.ForegroundRole:
                 return self.accountBrush()
         return super(Ui_AddressWidget, self).data(column, role)
-        
+
     def setData(self, column, role, value):
         if role == QtCore.Qt.EditRole and self.type != AccountMixin.SUBSCRIPTION:
             if isinstance(value, QtCore.QVariant):
@@ -216,14 +218,14 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
                 BMConfigParser().set(str(self.address), 'label', str(value))
             BMConfigParser().save()
         return super(Ui_AddressWidget, self).setData(column, role, value)
-        
+
     def setAddress(self, address):
         super(Ui_AddressWidget, self).setAddress(address)
         self.setData(0, QtCore.Qt.UserRole, self.address)
-    
+
     def setExpanded(self, expand):
         super(Ui_AddressWidget, self).setExpanded(expand)
-    
+
     def _getSortRank(self):
         ret = self.type
         if not self.isEnabled:
@@ -244,9 +246,9 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
 
         return super(QtGui.QTreeWidgetItem, self).__lt__(other)
 
-        
+
 class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
-    def __init__(self, parent, pos = 0, address = "", unreadCount = 0, label = "", enabled = True):
+    def __init__(self, parent, pos=0, address="", unreadCount=0, label="", enabled=True):
         super(QtGui.QTreeWidgetItem, self).__init__()
         parent.insertTopLevelItem(pos, self)
         # only set default when creating
@@ -255,7 +257,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         self.setEnabled(enabled)
         self.setType()
         self.setUnreadCount(unreadCount)
-    
+
     def _getLabel(self):
         queryreturn = sqlQuery(
             '''select label from subscriptions where address=?''', self.address)
@@ -264,11 +266,11 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
                 retval, = row
             return unicode(retval, 'utf-8', 'ignore')
         return unicode(self.address, 'utf-8')
-        
+
     def setType(self):
-        super(Ui_SubscriptionWidget, self).setType() # sets it editable
-        self.type = AccountMixin.SUBSCRIPTION # overrides type
-        
+        super(Ui_SubscriptionWidget, self).setType()  # sets it editable
+        self.type = AccountMixin.SUBSCRIPTION  # overrides type
+
     def setData(self, column, role, value):
         if role == QtCore.Qt.EditRole:
             from debug import logger
@@ -283,7 +285,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
 
 
 class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMixin):
-    def __init__(self, parent, address = None, label = None, unread = False):
+    def __init__(self, parent, address=None, label=None, unread=False):
         super(QtGui.QTableWidgetItem, self).__init__()
         #parent.insertTopLevelItem(pos, self)
         # only set default when creating
@@ -296,7 +298,7 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
         self.setType()
         parent.append(self)
 
-    def setLabel(self, label = None):
+    def setLabel(self, label=None):
         newLabel = self.address
         if label is None:
             queryreturn = None
@@ -305,7 +307,7 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
                     newLabel = unicode(BMConfigParser().get(self.address, 'label'), 'utf-8', 'ignore')
                 except:
                     queryreturn = sqlQuery(
-                    '''select label from addressbook where address=?''', self.address)
+                        '''select label from addressbook where address=?''', self.address)
             elif self.type == AccountMixin.SUBSCRIPTION:
                 queryreturn = sqlQuery(
                     '''select label from subscriptions where address=?''', self.address)
@@ -344,7 +346,7 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
         elif role == QtCore.Qt.UserRole:
             return self.address
         return super(MessageList_AddressWidget, self).data(role)
-        
+
     def setData(self, role, value):
         if role == QtCore.Qt.EditRole:
             self.setLabel()
@@ -358,7 +360,7 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
 
 
 class MessageList_SubjectWidget(QtGui.QTableWidgetItem, SettingsMixin):
-    def __init__(self, parent, subject = None, label = None, unread = False):
+    def __init__(self, parent, subject=None, label=None, unread=False):
         super(QtGui.QTableWidgetItem, self).__init__()
         #parent.insertTopLevelItem(pos, self)
         # only set default when creating
@@ -371,7 +373,7 @@ class MessageList_SubjectWidget(QtGui.QTableWidgetItem, SettingsMixin):
 
     def setLabel(self, label):
         self.label = label
-        
+
     def setSubject(self, subject):
         self.subject = subject
 
@@ -392,7 +394,7 @@ class MessageList_SubjectWidget(QtGui.QTableWidgetItem, SettingsMixin):
         elif role == QtCore.Qt.UserRole:
             return self.subject
         return super(MessageList_SubjectWidget, self).data(role)
-        
+
     def setData(self, role, value):
         return super(MessageList_SubjectWidget, self).setData(role, value)
 
@@ -404,7 +406,7 @@ class MessageList_SubjectWidget(QtGui.QTableWidgetItem, SettingsMixin):
 
 
 class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
-    def __init__ (self, text, type = AccountMixin.NORMAL):
+    def __init__(self, text, type=AccountMixin.NORMAL):
         super(QtGui.QTableWidgetItem, self).__init__(text)
         self.label = text
         self.type = type
@@ -450,9 +452,9 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
                 sqlExecute('''UPDATE subscriptions set label=? WHERE address=?''', self.label, self.address)
             else:
                 pass
-        return super(Ui_AddressBookWidgetItem, self).setData(role, value)    
+        return super(Ui_AddressBookWidgetItem, self).setData(role, value)
 
-    def __lt__ (self, other):
+    def __lt__(self, other):
         if (isinstance(other, Ui_AddressBookWidgetItem)):
             reverse = False
             if self.tableWidget().horizontalHeader().sortIndicatorOrder() == QtCore.Qt.DescendingOrder:
@@ -465,7 +467,7 @@ class Ui_AddressBookWidgetItem(QtGui.QTableWidgetItem, AccountMixin):
 
 
 class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
-    def __init__ (self, address, label, type):
+    def __init__(self, address, label, type):
         Ui_AddressBookWidgetItem.__init__(self, label, type)
         self.address = address
         self.label = label
@@ -476,20 +478,21 @@ class Ui_AddressBookWidgetItemLabel(Ui_AddressBookWidgetItem):
 
 
 class Ui_AddressBookWidgetItemAddress(Ui_AddressBookWidgetItem):
-    def __init__ (self, address, label, type):
+    def __init__(self, address, label, type):
         Ui_AddressBookWidgetItem.__init__(self, address, type)
         self.address = address
         self.setFlags(QtCore.Qt.ItemIsSelectable | QtCore.Qt.ItemIsEnabled)
-        
+
+
 class AddressBookCompleter(QtGui.QCompleter):
     def __init__(self):
         super(QtGui.QCompleter, self).__init__()
         self.cursorPos = -1
-    
+
     def onCursorPositionChanged(self, oldPos, newPos):
         if oldPos != self.cursorPos:
             self.cursorPos = -1
-        
+
     def splitPath(self, path):
         stringList = []
         text = unicode(path.toUtf8(), encoding="UTF-8")
@@ -498,11 +501,11 @@ class AddressBookCompleter(QtGui.QCompleter):
         str = rstrip(lstrip(str))
         stringList.append(str)
         return stringList
-        
+
     def pathFromIndex(self, index):
         autoString = unicode(index.data(QtCore.Qt.EditRole).toString().toUtf8(), encoding="UTF-8")
         text = unicode(self.widget().text().toUtf8(), encoding="UTF-8")
-        
+
         # If cursor position was saved, restore it, else save it
         if self.cursorPos != -1:
             self.widget().setCursorPosition(self.cursorPos)
@@ -511,13 +514,13 @@ class AddressBookCompleter(QtGui.QCompleter):
 
         # Get current prosition
         curIndex = self.widget().cursorPosition()
-        
+
         # prev_delimiter_index should actually point at final white space AFTER the delimiter
         # Get index of last delimiter before current position
         prevDelimiterIndex = rfind(text[0:curIndex], ";")
         while text[prevDelimiterIndex + 1] == " ":
             prevDelimiterIndex += 1
-            
+
         # Get index of first delimiter after current position (or EOL if no delimiter after cursor)
         nextDelimiterIndex = find(text, ";", curIndex)
         if nextDelimiterIndex == -1:
@@ -527,9 +530,9 @@ class AddressBookCompleter(QtGui.QCompleter):
         part1 = text[0:prevDelimiterIndex + 1]
 
         # Get string value from before auto finished string is selected
-        pre = text[prevDelimiterIndex + 1:curIndex - 1];
+        pre = text[prevDelimiterIndex + 1:curIndex - 1]
 
         # Get part of string that occurs AFTER cursor
         part2 = text[nextDelimiterIndex:]
 
-        return part1 + autoString + part2;
+        return part1 + autoString + part2

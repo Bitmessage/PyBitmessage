@@ -52,11 +52,13 @@ UPnP: {}
 Connected hosts: {}
 '''
 
+
 def checkAddressBook(myapp):
     queryreturn = sqlQuery('''SELECT * FROM addressbook WHERE address=?''', SUPPORT_ADDRESS)
     if queryreturn == []:
         sqlExecute('''INSERT INTO addressbook VALUES (?,?)''', str(QtGui.QApplication.translate("Support", SUPPORT_LABEL)), SUPPORT_ADDRESS)
         myapp.rerenderAddressBook()
+
 
 def checkHasNormalAddress():
     for address in account.getSortedAccounts():
@@ -64,6 +66,7 @@ def checkHasNormalAddress():
         if acct.type == AccountMixin.NORMAL and BMConfigParser().safeGetBoolean(address, 'enabled'):
             return address
     return False
+
 
 def createAddressIfNeeded(myapp):
     if not checkHasNormalAddress():
@@ -73,6 +76,7 @@ def createAddressIfNeeded(myapp):
     myapp.rerenderComboBoxSendFrom()
     return checkHasNormalAddress()
 
+
 def createSupportMessage(myapp):
     checkAddressBook(myapp)
     address = createAddressIfNeeded(myapp)
@@ -81,7 +85,7 @@ def createSupportMessage(myapp):
 
     myapp.ui.lineEditSubject.setText(str(QtGui.QApplication.translate("Support", SUPPORT_SUBJECT)))
     addrIndex = myapp.ui.comboBoxSendFrom.findData(address, QtCore.Qt.UserRole, QtCore.Qt.MatchFixedString | QtCore.Qt.MatchCaseSensitive)
-    if addrIndex == -1: # something is very wrong
+    if addrIndex == -1:  # something is very wrong
         return
     myapp.ui.comboBoxSendFrom.setCurrentIndex(addrIndex)
     myapp.ui.lineEditTo.setText(SUPPORT_ADDRESS)
@@ -104,7 +108,7 @@ def createSupportMessage(myapp):
             pass
     architecture = "32" if ctypes.sizeof(ctypes.c_voidp) == 4 else "64"
     pythonversion = sys.version
-    
+
     opensslversion = "%s (Python internal), %s (external for PyElliptic)" % (ssl.OPENSSL_VERSION, OpenSSL._version)
 
     frozen = "N/A"

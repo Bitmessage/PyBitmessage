@@ -29,7 +29,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         self.startup = time.localtime()
         self.labelStartupTime.setText(_translate("networkstatus", "Since startup on %1").arg(
             l10n.formatTimestamp(self.startup)))
-        
+
         self.UISignalThread = UISignaler.get()
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateNumberOfMessagesProcessed()"), self.updateNumberOfMessagesProcessed)
@@ -39,9 +39,9 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             "updateNumberOfBroadcastsProcessed()"), self.updateNumberOfBroadcastsProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.updateNetworkStatusTab)
-        
+
         self.timer = QtCore.QTimer()
-        self.timer.start(2000) # milliseconds
+        self.timer.start(2000)  # milliseconds
         QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
     def formatBytes(self, num):
@@ -54,7 +54,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
     def formatByteRate(self, num):
         num /= 1000
         return "%4.0f kB" % num
-        
+
     def updateNumberOfObjectsToBeSynced(self):
         self.labelSyncStatus.setText(_translate("networkstatus", "Object(s) to be synced: %n", None, QtCore.QCoreApplication.CodecForTr, network.stats.pendingDownload() + network.stats.pendingUpload()))
 
@@ -105,25 +105,25 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
         if add:
             self.tableWidgetConnectionCount.insertRow(0)
             self.tableWidgetConnectionCount.setItem(0, 0,
-                QtGui.QTableWidgetItem("%s:%i" % (destination.host, destination.port))
-                )
+                                                    QtGui.QTableWidgetItem("%s:%i" % (destination.host, destination.port))
+                                                    )
             self.tableWidgetConnectionCount.setItem(0, 2,
-                QtGui.QTableWidgetItem("%s" % (c.userAgent))
-                )
+                                                    QtGui.QTableWidgetItem("%s" % (c.userAgent))
+                                                    )
             self.tableWidgetConnectionCount.setItem(0, 3,
-                QtGui.QTableWidgetItem("%s" % (c.tlsVersion))
-                )
+                                                    QtGui.QTableWidgetItem("%s" % (c.tlsVersion))
+                                                    )
             self.tableWidgetConnectionCount.setItem(0, 4,
-                QtGui.QTableWidgetItem("%s" % (",".join(map(str,c.streams))))
-                )
+                                                    QtGui.QTableWidgetItem("%s" % (",".join(map(str, c.streams))))
+                                                    )
             try:
                 # FIXME hard coded stream no
                 rating = "%.1f" % (knownnodes.knownNodes[1][destination]['rating'])
             except KeyError:
                 rating = "-"
             self.tableWidgetConnectionCount.setItem(0, 1,
-                QtGui.QTableWidgetItem("%s" % (rating))
-                )
+                                                    QtGui.QTableWidgetItem("%s" % (rating))
+                                                    )
             if outbound:
                 brush = QtGui.QBrush(QtGui.QColor("yellow"), QtCore.Qt.SolidPattern)
             else:

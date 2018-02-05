@@ -3,25 +3,26 @@ import struct
 
 from proxy import Proxy, ProxyError, GeneralProxyError
 
+
 class Socks5AuthError(ProxyError):
     errorCodes = ("Succeeded",
-        "Authentication is required",
-        "All offered authentication methods were rejected",
-        "Unknown username or invalid password",
-        "Unknown error")
+                  "Authentication is required",
+                  "All offered authentication methods were rejected",
+                  "Unknown username or invalid password",
+                  "Unknown error")
 
 
 class Socks5Error(ProxyError):
     errorCodes = ("Succeeded",
-        "General SOCKS server failure",
-        "Connection not allowed by ruleset",
-        "Network unreachable",
-        "Host unreachable",
-        "Connection refused",
-        "TTL expired",
-        "Command not supported",
-        "Address type not supported",
-        "Unknown error")
+                  "General SOCKS server failure",
+                  "Connection not allowed by ruleset",
+                  "Network unreachable",
+                  "Host unreachable",
+                  "Connection refused",
+                  "TTL expired",
+                  "Command not supported",
+                  "Address type not supported",
+                  "Unknown error")
 
 
 class Socks5(Proxy):
@@ -48,9 +49,9 @@ class Socks5(Proxy):
             self.set_state("auth_done", length=2)
         elif ret[1] == 2:
             # username/password
-            self.append_write_buf(struct.pack('BB', 1, len(self._auth[0])) + \
-                self._auth[0] + struct.pack('B', len(self._auth[1])) + \
-                self._auth[1])
+            self.append_write_buf(struct.pack('BB', 1, len(self._auth[0])) +
+                                  self._auth[0] + struct.pack('B', len(self._auth[1])) +
+                                  self._auth[1])
             self.set_state("auth_needed", length=2, expectBytes=2)
         else:
             if ret[1] == 0xff:
@@ -81,7 +82,7 @@ class Socks5(Proxy):
         elif self.read_buf[1:2] != chr(0x00).encode():
             # Connection failed
             self.close()
-            if ord(self.read_buf[1:2])<=8:
+            if ord(self.read_buf[1:2]) <= 8:
                 raise Socks5Error(ord(self.read_buf[1:2]))
             else:
                 raise Socks5Error(9)

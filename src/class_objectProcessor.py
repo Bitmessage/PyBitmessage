@@ -29,11 +29,13 @@ import tr
 from debug import logger
 import l10n
 
+
 class objectProcessor(threading.Thread):
     """
     The objectProcessor thread, of which there is only one, receives network
     objects (msg, broadcast, pubkey, getpubkey) from the receiveDataThreads.
     """
+
     def __init__(self):
         threading.Thread.__init__(self, name="objectProcessor")
         """
@@ -47,10 +49,9 @@ class objectProcessor(threading.Thread):
             '''SELECT objecttype, data FROM objectprocessorqueue''')
         for row in queryreturn:
             objectType, data = row
-            queues.objectProcessorQueue.put((objectType,data))
+            queues.objectProcessorQueue.put((objectType, data))
         sqlExecute('''DELETE FROM objectprocessorqueue''')
         logger.debug('Loaded %s objects from disk into the objectProcessorQueue.' % str(len(queryreturn)))
-
 
     def run(self):
         while True:
@@ -59,15 +60,15 @@ class objectProcessor(threading.Thread):
             self.checkackdata(data)
 
             try:
-                if objectType == 0: # getpubkey
+                if objectType == 0:  # getpubkey
                     self.processgetpubkey(data)
-                elif objectType == 1: #pubkey
+                elif objectType == 1:  # pubkey
                     self.processpubkey(data)
-                elif objectType == 2: #msg
+                elif objectType == 2:  # msg
                     self.processmsg(data)
-                elif objectType == 3: #broadcast
+                elif objectType == 3:  # broadcast
                     self.processbroadcast(data)
-                elif objectType == 'checkShutdownVariable': # is more of a command, not an object type. Is used to get this thread past the queue.get() so that it will check the shutdown variable.
+                elif objectType == 'checkShutdownVariable':  # is more of a command, not an object type. Is used to get this thread past the queue.get() so that it will check the shutdown variable.
                     pass
                 else:
                     if isinstance(objectType, int):
@@ -82,13 +83,13 @@ class objectProcessor(threading.Thread):
                 logger.critical("Critical error within objectProcessorThread: \n%s" % traceback.format_exc())
 
             if state.shutdown:
-                time.sleep(.5) # Wait just a moment for most of the connections to close
+                time.sleep(.5)  # Wait just a moment for most of the connections to close
                 numberOfObjectsThatWereInTheObjectProcessorQueue = 0
                 with SqlBulkExecute() as sql:
                     while queues.objectProcessorQueue.curSize > 0:
                         objectType, data = queues.objectProcessorQueue.get()
                         sql.execute('''INSERT INTO objectprocessorqueue VALUES (?,?)''',
-                                   objectType,data)
+                                    objectType, data)
                         numberOfObjectsThatWereInTheObjectProcessorQueue += 1
                 logger.debug('Saved %s objects from the objectProcessorQueue to disk. objectProcessorThread exiting.' % str(numberOfObjectsThatWereInTheObjectProcessorQueue))
                 state.shutdown = 2
@@ -107,13 +108,12 @@ class objectProcessor(threading.Thread):
             del shared.ackdataForWhichImWatching[data[readPosition:]]
             sqlExecute('UPDATE sent SET status=?, lastactiontime=? WHERE ackdata=?',
                        'ackreceived',
-                       int(time.time()), 
+                       int(time.time()),
                        data[readPosition:])
-            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[readPosition:], tr._translate("MainWindow",'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
+            queues.UISignalQueue.put(('updateSentItemStatusByAckdata', (data[readPosition:], tr._translate("MainWindow", 'Acknowledgement of the message received %1').arg(l10n.formatTimestamp()))))
         else:
             logger.debug('This object is not an acknowledgement bound for me.')
 
-    
     def processgetpubkey(self, data):
         if len(data) > 200:
             logger.info('getpubkey is abnormally long. Sanity check failed. Ignoring object.')
@@ -137,7 +137,7 @@ class objectProcessor(threading.Thread):
             return
 
         myAddress = ''
-        if requestedAddressVersionNumber <= 3 :
+        if requestedAddressVersionNumber <= 3:
             requestedHash = data[readPosition:readPosition + 20]
             if len(requestedHash) != 20:
                 logger.debug('The length of the requested hash is not 20 bytes. Something is wrong. Ignoring.')
@@ -173,9 +173,9 @@ class objectProcessor(threading.Thread):
         except:
             lastPubkeySendTime = 0
         if lastPubkeySendTime > time.time() - 2419200:  # If the last time we sent our pubkey was more recent than 28 days ago...
-            logger.info('Found getpubkey-requested-item in my list of EC hashes BUT we already sent it recently. Ignoring request. The lastPubkeySendTime is: %s' % lastPubkeySendTime) 
+            logger.info('Found getpubkey-requested-item in my list of EC hashes BUT we already sent it recently. Ignoring request. The lastPubkeySendTime is: %s' % lastPubkeySendTime)
             return
-        logger.info('Found getpubkey-requested-hash in my list of EC hashes. Telling Worker thread to do the POW for a pubkey message and send it out.') 
+        logger.info('Found getpubkey-requested-hash in my list of EC hashes. Telling Worker thread to do the POW for a pubkey message and send it out.')
         if requestedAddressVersionNumber == 2:
             queues.workerQueue.put((
                 'doPOWForMyV2Pubkey', requestedHash))
@@ -221,7 +221,7 @@ class objectProcessor(threading.Thread):
                 logger.debug('publicEncryptionKey length less than 64. Sanity check failed.')
                 return
             readPosition += 64
-            dataToStore = data[20:readPosition] # The data we'll store in the pubkeys table.
+            dataToStore = data[20:readPosition]  # The data we'll store in the pubkeys table.
             sha = hashlib.new('sha512')
             sha.update(
                 '\x04' + publicSigningKey + '\x04' + publicEncryptionKey)
@@ -229,21 +229,19 @@ class objectProcessor(threading.Thread):
             ripeHasher.update(sha.digest())
             ripe = ripeHasher.digest()
 
-
             logger.debug('within recpubkey, addressVersion: %s, streamNumber: %s \n\
                         ripe %s\n\
                         publicSigningKey in hex: %s\n\
-                        publicEncryptionKey in hex: %s' % (addressVersion, 
-                                                           streamNumber, 
+                        publicEncryptionKey in hex: %s' % (addressVersion,
+                                                           streamNumber,
                                                            hexlify(ripe),
                                                            hexlify(publicSigningKey),
                                                            hexlify(publicEncryptionKey)
                                                            )
-                        )
+                         )
 
-            
             address = encodeAddress(addressVersion, streamNumber, ripe)
-            
+
             queryreturn = sqlQuery(
                 '''SELECT usedpersonally FROM pubkeys WHERE address=? AND usedpersonally='yes' ''', address)
             if queryreturn != []:  # if this pubkey is already in our database and if we have used it personally:
@@ -271,7 +269,7 @@ class objectProcessor(threading.Thread):
                 data[readPosition:readPosition + 10])
             readPosition += specifiedPayloadLengthExtraBytesLength
             endOfSignedDataPosition = readPosition
-            dataToStore = data[20:readPosition] # The data we'll store in the pubkeys table.
+            dataToStore = data[20:readPosition]  # The data we'll store in the pubkeys table.
             signatureLength, signatureLengthLength = decodeVarint(
                 data[readPosition:readPosition + 10])
             readPosition += signatureLengthLength
@@ -287,18 +285,17 @@ class objectProcessor(threading.Thread):
             ripeHasher = hashlib.new('ripemd160')
             ripeHasher.update(sha.digest())
             ripe = ripeHasher.digest()
-            
 
             logger.debug('within recpubkey, addressVersion: %s, streamNumber: %s \n\
                         ripe %s\n\
                         publicSigningKey in hex: %s\n\
-                        publicEncryptionKey in hex: %s' % (addressVersion, 
-                                                           streamNumber, 
+                        publicEncryptionKey in hex: %s' % (addressVersion,
+                                                           streamNumber,
                                                            hexlify(ripe),
                                                            hexlify(publicSigningKey),
                                                            hexlify(publicEncryptionKey)
                                                            )
-                        )
+                         )
 
             address = encodeAddress(addressVersion, streamNumber, ripe)
             queryreturn = sqlQuery('''SELECT usedpersonally FROM pubkeys WHERE address=? AND usedpersonally='yes' ''', address)
@@ -320,7 +317,7 @@ class objectProcessor(threading.Thread):
             if tag not in state.neededPubkeys:
                 logger.info('We don\'t need this v4 pubkey. We didn\'t ask for it.')
                 return
-            
+
             # Let us try to decrypt the pubkey
             toAddress, cryptorObject = state.neededPubkeys[tag]
             if shared.decryptAndCheckPubkeyPayload(data, toAddress) == 'successful':
@@ -334,19 +331,18 @@ class objectProcessor(threading.Thread):
         ) - pubkeyProcessingStartTime
         logger.debug('Time required to process this pubkey: %s' % timeRequiredToProcessPubkey)
 
-
     def processmsg(self, data):
         messageProcessingStartTime = time.time()
         shared.numberOfMessagesProcessed += 1
         queues.UISignalQueue.put((
             'updateNumberOfMessagesProcessed', 'no data'))
-        readPosition = 20 # bypass the nonce, time, and object type
+        readPosition = 20  # bypass the nonce, time, and object type
         msgVersion, msgVersionLength = decodeVarint(data[readPosition:readPosition + 9])
         if msgVersion != 1:
-            logger.info('Cannot understand message versions other than one. Ignoring message.') 
+            logger.info('Cannot understand message versions other than one. Ignoring message.')
             return
         readPosition += msgVersionLength
-        
+
         streamNumberAsClaimedByMsg, streamNumberAsClaimedByMsgLength = decodeVarint(
             data[readPosition:readPosition + 9])
         readPosition += streamNumberAsClaimedByMsgLength
@@ -355,10 +351,10 @@ class objectProcessor(threading.Thread):
 
         # This is not an acknowledgement bound for me. See if it is a message
         # bound for me by trying to decrypt it with my private keys.
-        
+
         for key, cryptorObject in sorted(shared.myECCryptorObjects.items(), key=lambda x: random.random()):
             try:
-                if initialDecryptionSuccessful: # continue decryption attempts to avoid timing attacks
+                if initialDecryptionSuccessful:  # continue decryption attempts to avoid timing attacks
                     cryptorObject.decrypt(data[readPosition:])
                 else:
                     decryptedData = cryptorObject.decrypt(data[readPosition:])
@@ -369,7 +365,7 @@ class objectProcessor(threading.Thread):
                 pass
         if not initialDecryptionSuccessful:
             # This is not a message bound for me.
-            logger.info('Length of time program spent failing to decrypt this message: %s seconds.' % (time.time() - messageProcessingStartTime,)) 
+            logger.info('Length of time program spent failing to decrypt this message: %s seconds.' % (time.time() - messageProcessingStartTime,))
             return
 
         # This is a message bound for me.
@@ -380,10 +376,10 @@ class objectProcessor(threading.Thread):
             decryptedData[readPosition:readPosition + 10])
         readPosition += sendersAddressVersionNumberLength
         if sendersAddressVersionNumber == 0:
-            logger.info('Cannot understand sendersAddressVersionNumber = 0. Ignoring message.') 
+            logger.info('Cannot understand sendersAddressVersionNumber = 0. Ignoring message.')
             return
         if sendersAddressVersionNumber > 4:
-            logger.info('Sender\'s address version number %s not yet supported. Ignoring message.' % sendersAddressVersionNumber)  
+            logger.info('Sender\'s address version number %s not yet supported. Ignoring message.' % sendersAddressVersionNumber)
             return
         if len(decryptedData) < 170:
             logger.info('Length of the unencrypted data is unreasonably short. Sanity check failed. Ignoring message.')
@@ -417,7 +413,7 @@ class objectProcessor(threading.Thread):
                 See: http://world.std.com/~dtd/sign_encrypt/sign_encrypt7.html \n\
                 your toRipe: %s\n\
                 embedded destination toRipe: %s' % (hexlify(toRipe), hexlify(decryptedData[readPosition:readPosition + 20]))
-                       )
+                        )
             return
         readPosition += 20
         messageEncodingType, messageEncodingTypeLength = decodeVarint(
@@ -441,7 +437,7 @@ class objectProcessor(threading.Thread):
         signature = decryptedData[
             readPosition:readPosition + signatureLength]
         signedData = data[8:20] + encodeVarint(1) + encodeVarint(streamNumberAsClaimedByMsg) + decryptedData[:positionOfBottomOfAckData]
-        
+
         if not highlevelcrypto.verify(signedData, signature, hexlify(pubSigningKey)):
             logger.debug('ECDSA verify failed')
             return
@@ -449,7 +445,7 @@ class objectProcessor(threading.Thread):
         logger.debug('As a matter of intellectual curiosity, here is the Bitcoin address associated with the keys owned by the other person: %s  ..and here is the testnet address: %s. The other person must take their private signing key from Bitmessage and import it into Bitcoin (or a service like Blockchain.info) for it to be of any use. Do not use this unless you know what you are doing.' %
                      (helper_bitcoin.calculateBitcoinAddressFromPubkey(pubSigningKey), helper_bitcoin.calculateTestnetAddressFromPubkey(pubSigningKey))
                      )
-        sigHash = hashlib.sha512(hashlib.sha512(signature).digest()).digest()[32:] # Used to detect and ignore duplicate messages in our inbox
+        sigHash = hashlib.sha512(hashlib.sha512(signature).digest()).digest()[32:]  # Used to detect and ignore duplicate messages in our inbox
 
         # calculate the fromRipe.
         sha = hashlib.new('sha512')
@@ -458,7 +454,7 @@ class objectProcessor(threading.Thread):
         ripe.update(sha.digest())
         fromAddress = encodeAddress(
             sendersAddressVersionNumber, sendersStreamNumber, ripe.digest())
-        
+
         # Let's store the public key in case we want to reply to this
         # person.
         sqlExecute(
@@ -468,12 +464,12 @@ class objectProcessor(threading.Thread):
             decryptedData[:endOfThePublicKeyPosition],
             int(time.time()),
             'yes')
-        
+
         # Check to see whether we happen to be awaiting this
         # pubkey in order to send a message. If we are, it will do the POW
         # and send it.
         self.possibleNewPubkey(fromAddress)
-        
+
         # If this message is bound for one of my version 3 addresses (or
         # higher), then we must check to make sure it meets our demanded
         # proof of work requirement. If this is bound for one of my chan
@@ -560,22 +556,22 @@ class objectProcessor(threading.Thread):
 
                 # We really should have a discussion about how to
                 # set the TTL for mailing list broadcasts. This is obviously
-                # hard-coded. 
-                TTL = 2*7*24*60*60 # 2 weeks
-                t = ('', 
-                     toAddress, 
-                     ripe, 
-                     fromAddress, 
-                     subject, 
-                     message, 
-                     ackdataForBroadcast, 
-                     int(time.time()), # sentTime (this doesn't change)
-                     int(time.time()), # lastActionTime
-                     0, 
-                     'broadcastqueued', 
-                     0, 
-                     'sent', 
-                     messageEncodingType, 
+                # hard-coded.
+                TTL = 2*7*24*60*60  # 2 weeks
+                t = ('',
+                     toAddress,
+                     ripe,
+                     fromAddress,
+                     subject,
+                     message,
+                     ackdataForBroadcast,
+                     int(time.time()),  # sentTime (this doesn't change)
+                     int(time.time()),  # lastActionTime
+                     0,
+                     'broadcastqueued',
+                     0,
+                     'sent',
+                     messageEncodingType,
                      TTL)
                 helper_sent.insert(t)
 
@@ -585,10 +581,10 @@ class objectProcessor(threading.Thread):
 
         # Don't send ACK if invalid, blacklisted senders, invisible messages, disabled or chan
         if self.ackDataHasAValidHeader(ackData) and \
-            not blockMessage and \
-            messageEncodingType != 0 and \
-            not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack') and \
-            not BMConfigParser().safeGetBoolean(toAddress, 'chan'):
+                not blockMessage and \
+                messageEncodingType != 0 and \
+                not BMConfigParser().safeGetBoolean(toAddress, 'dontsendack') and \
+                not BMConfigParser().safeGetBoolean(toAddress, 'chan'):
             shared.checkAndShareObjectWithPeers(ackData[24:])
 
         # Display timing data
@@ -601,9 +597,8 @@ class objectProcessor(threading.Thread):
             sum += item
         logger.debug('Time to decrypt this message successfully: %s\n\
                      Average time for all message decryption successes since startup: %s.' %
-                     (timeRequiredToAttemptToDecryptMessage, sum / len(shared.successfullyDecryptMessageTimings)) 
+                     (timeRequiredToAttemptToDecryptMessage, sum / len(shared.successfullyDecryptMessageTimings))
                      )
-
 
     def processbroadcast(self, data):
         messageProcessingStartTime = time.time()
@@ -616,7 +611,7 @@ class objectProcessor(threading.Thread):
             data[readPosition:readPosition + 9])
         readPosition += broadcastVersionLength
         if broadcastVersion < 4 or broadcastVersion > 5:
-            logger.info('Cannot decode incoming broadcast versions less than 4 or higher than 5. Assuming the sender isn\'t being silly, you should upgrade Bitmessage because this message shall be ignored.') 
+            logger.info('Cannot decode incoming broadcast versions less than 4 or higher than 5. Assuming the sender isn\'t being silly, you should upgrade Bitmessage because this message shall be ignored.')
             return
         cleartextStreamNumber, cleartextStreamNumberLength = decodeVarint(
             data[readPosition:readPosition + 10])
@@ -631,7 +626,7 @@ class objectProcessor(threading.Thread):
             initialDecryptionSuccessful = False
             for key, cryptorObject in sorted(shared.MyECSubscriptionCryptorObjects.items(), key=lambda x: random.random()):
                 try:
-                    if initialDecryptionSuccessful: # continue decryption attempts to avoid timing attacks
+                    if initialDecryptionSuccessful:  # continue decryption attempts to avoid timing attacks
                         cryptorObject.decrypt(data[readPosition:])
                     else:
                         decryptedData = cryptorObject.decrypt(data[readPosition:])
@@ -649,16 +644,16 @@ class objectProcessor(threading.Thread):
             embeddedTag = data[readPosition:readPosition+32]
             readPosition += 32
             if embeddedTag not in shared.MyECSubscriptionCryptorObjects:
-                logger.debug('We\'re not interested in this broadcast.') 
+                logger.debug('We\'re not interested in this broadcast.')
                 return
             # We are interested in this broadcast because of its tag.
-            signedData = data[8:readPosition] # We're going to add some more data which is signed further down.
+            signedData = data[8:readPosition]  # We're going to add some more data which is signed further down.
             cryptorObject = shared.MyECSubscriptionCryptorObjects[embeddedTag]
             try:
                 decryptedData = cryptorObject.decrypt(data[readPosition:])
                 logger.debug('EC decryption successful')
             except Exception as err:
-                logger.debug('Broadcast version %s decryption Unsuccessful.' % broadcastVersion) 
+                logger.debug('Broadcast version %s decryption Unsuccessful.' % broadcastVersion)
                 return
         # At this point this is a broadcast I have decrypted and am
         # interested in.
@@ -671,13 +666,13 @@ class objectProcessor(threading.Thread):
                 return
         elif broadcastVersion == 5:
             if sendersAddressVersion < 4:
-                logger.info('Cannot decode senderAddressVersion less than 4 for broadcast version number 5. Assuming the sender isn\'t being silly, you should upgrade Bitmessage because this message shall be ignored.') 
+                logger.info('Cannot decode senderAddressVersion less than 4 for broadcast version number 5. Assuming the sender isn\'t being silly, you should upgrade Bitmessage because this message shall be ignored.')
                 return
         readPosition += sendersAddressVersionLength
         sendersStream, sendersStreamLength = decodeVarint(
             decryptedData[readPosition:readPosition + 9])
         if sendersStream != cleartextStreamNumber:
-            logger.info('The stream number outside of the encryption on which the POW was completed doesn\'t match the stream number inside the encryption. Ignoring broadcast.') 
+            logger.info('The stream number outside of the encryption on which the POW was completed doesn\'t match the stream number inside the encryption. Ignoring broadcast.')
             return
         readPosition += sendersStreamLength
         behaviorBitfield = decryptedData[readPosition:readPosition + 4]
@@ -707,13 +702,13 @@ class objectProcessor(threading.Thread):
 
         if broadcastVersion == 4:
             if toRipe != calculatedRipe:
-                logger.info('The encryption key used to encrypt this message doesn\'t match the keys inbedded in the message itself. Ignoring message.') 
+                logger.info('The encryption key used to encrypt this message doesn\'t match the keys inbedded in the message itself. Ignoring message.')
                 return
         elif broadcastVersion == 5:
             calculatedTag = hashlib.sha512(hashlib.sha512(encodeVarint(
                 sendersAddressVersion) + encodeVarint(sendersStream) + calculatedRipe).digest()).digest()[32:]
             if calculatedTag != embeddedTag:
-                logger.debug('The tag and encryption key used to encrypt this message doesn\'t match the keys inbedded in the message itself. Ignoring message.') 
+                logger.debug('The tag and encryption key used to encrypt this message doesn\'t match the keys inbedded in the message itself. Ignoring message.')
                 return
         messageEncodingType, messageEncodingTypeLength = decodeVarint(
             decryptedData[readPosition:readPosition + 9])
@@ -736,7 +731,7 @@ class objectProcessor(threading.Thread):
             logger.debug('ECDSA verify failed')
             return
         logger.debug('ECDSA verify passed')
-        sigHash = hashlib.sha512(hashlib.sha512(signature).digest()).digest()[32:] # Used to detect and ignore duplicate messages in our inbox
+        sigHash = hashlib.sha512(hashlib.sha512(signature).digest()).digest()[32:]  # Used to detect and ignore duplicate messages in our inbox
 
         fromAddress = encodeAddress(
             sendersAddressVersion, sendersStream, calculatedRipe)
@@ -789,18 +784,17 @@ class objectProcessor(threading.Thread):
         # Display timing data
         logger.info('Time spent processing this interesting broadcast: %s' % (time.time() - messageProcessingStartTime,))
 
-
     def possibleNewPubkey(self, address):
         """
         We have inserted a pubkey into our pubkey table which we received from a
         pubkey, msg, or broadcast message. It might be one that we have been
         waiting for. Let's check.
         """
-        
+
         # For address versions <= 3, we wait on a key with the correct address version,
         # stream number, and RIPE hash.
         status, addressVersion, streamNumber, ripe = decodeAddress(address)
-        if addressVersion <=3:
+        if addressVersion <= 3:
             if address in state.neededPubkeys:
                 del state.neededPubkeys[address]
                 self.sendMessages(address)
@@ -832,8 +826,8 @@ class objectProcessor(threading.Thread):
         if len(ackData) < protocol.Header.size:
             logger.info('The length of ackData is unreasonably short. Not sending ackData.')
             return False
-        
-        magic,command,payloadLength,checksum = protocol.Header.unpack(ackData[:protocol.Header.size])
+
+        magic, command, payloadLength, checksum = protocol.Header.unpack(ackData[:protocol.Header.size])
         if magic != 0xE9BEB4D9:
             logger.info('Ackdata magic bytes were wrong. Not sending ackData.')
             return False
@@ -841,7 +835,7 @@ class objectProcessor(threading.Thread):
         if len(payload) != payloadLength:
             logger.info('ackData payload length doesn\'t match the payload length specified in the header. Not sending ackdata.')
             return False
-        if payloadLength > 1600100: # ~1.6 MB which is the maximum possible size of an inv message.
+        if payloadLength > 1600100:  # ~1.6 MB which is the maximum possible size of an inv message.
             """
             The largest message should be either an inv or a getdata message at 1.6 MB in size. 
             That doesn't mean that the object may be that big. The 

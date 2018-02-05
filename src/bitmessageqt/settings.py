@@ -19,11 +19,13 @@ except AttributeError:
 
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
+
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig, _encoding)
 except AttributeError:
     def _translate(context, text, disambig):
         return QtGui.QApplication.translate(context, text, disambig)
+
 
 class Ui_settingsDialog(object):
     def setupUi(self, settingsDialog):
@@ -33,7 +35,7 @@ class Ui_settingsDialog(object):
         self.gridLayout.setObjectName(_fromUtf8("gridLayout"))
         self.buttonBox = QtGui.QDialogButtonBox(settingsDialog)
         self.buttonBox.setOrientation(QtCore.Qt.Horizontal)
-        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel|QtGui.QDialogButtonBox.Ok)
+        self.buttonBox.setStandardButtons(QtGui.QDialogButtonBox.Cancel | QtGui.QDialogButtonBox.Ok)
         self.buttonBox.setObjectName(_fromUtf8("buttonBox"))
         self.gridLayout.addWidget(self.buttonBox, 1, 0, 1, 1)
         self.tabWidgetSettings = QtGui.QTabWidget(settingsDialog)
@@ -207,7 +209,7 @@ class Ui_settingsDialog(object):
         self.gridLayout_2.addWidget(self.label_6, 2, 4, 1, 1)
         self.lineEditSocksPassword = QtGui.QLineEdit(self.groupBox_2)
         self.lineEditSocksPassword.setEnabled(False)
-        self.lineEditSocksPassword.setInputMethodHints(QtCore.Qt.ImhHiddenText|QtCore.Qt.ImhNoAutoUppercase|QtCore.Qt.ImhNoPredictiveText)
+        self.lineEditSocksPassword.setInputMethodHints(QtCore.Qt.ImhHiddenText | QtCore.Qt.ImhNoAutoUppercase | QtCore.Qt.ImhNoPredictiveText)
         self.lineEditSocksPassword.setEchoMode(QtGui.QLineEdit.Password)
         self.lineEditSocksPassword.setObjectName(_fromUtf8("lineEditSocksPassword"))
         self.gridLayout_2.addWidget(self.lineEditSocksPassword, 2, 5, 1, 1)
@@ -229,7 +231,7 @@ class Ui_settingsDialog(object):
         self.gridLayout_6 = QtGui.QGridLayout(self.tabDemandedDifficulty)
         self.gridLayout_6.setObjectName(_fromUtf8("gridLayout_6"))
         self.label_9 = QtGui.QLabel(self.tabDemandedDifficulty)
-        self.label_9.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_9.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.label_9.setObjectName(_fromUtf8("label_9"))
         self.gridLayout_6.addWidget(self.label_9, 1, 1, 1, 1)
         self.label_10 = QtGui.QLabel(self.tabDemandedDifficulty)
@@ -237,7 +239,7 @@ class Ui_settingsDialog(object):
         self.label_10.setObjectName(_fromUtf8("label_10"))
         self.gridLayout_6.addWidget(self.label_10, 2, 0, 1, 3)
         self.label_11 = QtGui.QLabel(self.tabDemandedDifficulty)
-        self.label_11.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_11.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.label_11.setObjectName(_fromUtf8("label_11"))
         self.gridLayout_6.addWidget(self.label_11, 3, 1, 1, 1)
         self.label_8 = QtGui.QLabel(self.tabDemandedDifficulty)
@@ -285,7 +287,7 @@ class Ui_settingsDialog(object):
         self.gridLayout_7.addItem(spacerItem6, 1, 0, 1, 1)
         self.label_13 = QtGui.QLabel(self.tabMaxAcceptableDifficulty)
         self.label_13.setLayoutDirection(QtCore.Qt.LeftToRight)
-        self.label_13.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_13.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.label_13.setObjectName(_fromUtf8("label_13"))
         self.gridLayout_7.addWidget(self.label_13, 1, 1, 1, 1)
         self.lineEditMaxAcceptableTotalDifficulty = QtGui.QLineEdit(self.tabMaxAcceptableDifficulty)
@@ -300,7 +302,7 @@ class Ui_settingsDialog(object):
         spacerItem7 = QtGui.QSpacerItem(102, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.gridLayout_7.addItem(spacerItem7, 2, 0, 1, 1)
         self.label_14 = QtGui.QLabel(self.tabMaxAcceptableDifficulty)
-        self.label_14.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_14.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.label_14.setObjectName(_fromUtf8("label_14"))
         self.gridLayout_7.addWidget(self.label_14, 2, 1, 1, 1)
         self.lineEditMaxAcceptableSmallMessageDifficulty = QtGui.QLineEdit(self.tabMaxAcceptableDifficulty)
@@ -332,7 +334,7 @@ class Ui_settingsDialog(object):
         self.label_16.setObjectName(_fromUtf8("label_16"))
         self.gridLayout_8.addWidget(self.label_16, 0, 0, 1, 3)
         self.label_17 = QtGui.QLabel(self.tabNamecoin)
-        self.label_17.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_17.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.label_17.setObjectName(_fromUtf8("label_17"))
         self.gridLayout_8.addWidget(self.label_17, 2, 1, 1, 1)
         self.lineEditNamecoinHost = QtGui.QLineEdit(self.tabNamecoin)
@@ -344,7 +346,7 @@ class Ui_settingsDialog(object):
         self.gridLayout_8.addItem(spacerItem11, 4, 0, 1, 1)
         self.label_18 = QtGui.QLabel(self.tabNamecoin)
         self.label_18.setEnabled(True)
-        self.label_18.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_18.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.label_18.setObjectName(_fromUtf8("label_18"))
         self.gridLayout_8.addWidget(self.label_18, 3, 1, 1, 1)
         self.lineEditNamecoinPort = QtGui.QLineEdit(self.tabNamecoin)
@@ -353,7 +355,7 @@ class Ui_settingsDialog(object):
         spacerItem12 = QtGui.QSpacerItem(20, 40, QtGui.QSizePolicy.Minimum, QtGui.QSizePolicy.Expanding)
         self.gridLayout_8.addItem(spacerItem12, 8, 1, 1, 1)
         self.labelNamecoinUser = QtGui.QLabel(self.tabNamecoin)
-        self.labelNamecoinUser.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.labelNamecoinUser.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.labelNamecoinUser.setObjectName(_fromUtf8("labelNamecoinUser"))
         self.gridLayout_8.addWidget(self.labelNamecoinUser, 4, 1, 1, 1)
         self.lineEditNamecoinUser = QtGui.QLineEdit(self.tabNamecoin)
@@ -362,11 +364,11 @@ class Ui_settingsDialog(object):
         spacerItem13 = QtGui.QSpacerItem(40, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
         self.gridLayout_8.addItem(spacerItem13, 5, 0, 1, 1)
         self.labelNamecoinPassword = QtGui.QLabel(self.tabNamecoin)
-        self.labelNamecoinPassword.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.labelNamecoinPassword.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.labelNamecoinPassword.setObjectName(_fromUtf8("labelNamecoinPassword"))
         self.gridLayout_8.addWidget(self.labelNamecoinPassword, 5, 1, 1, 1)
         self.lineEditNamecoinPassword = QtGui.QLineEdit(self.tabNamecoin)
-        self.lineEditNamecoinPassword.setInputMethodHints(QtCore.Qt.ImhHiddenText|QtCore.Qt.ImhNoAutoUppercase|QtCore.Qt.ImhNoPredictiveText)
+        self.lineEditNamecoinPassword.setInputMethodHints(QtCore.Qt.ImhHiddenText | QtCore.Qt.ImhNoAutoUppercase | QtCore.Qt.ImhNoPredictiveText)
         self.lineEditNamecoinPassword.setEchoMode(QtGui.QLineEdit.Password)
         self.lineEditNamecoinPassword.setObjectName(_fromUtf8("lineEditNamecoinPassword"))
         self.gridLayout_8.addWidget(self.lineEditNamecoinPassword, 5, 2, 1, 1)
@@ -405,11 +407,11 @@ class Ui_settingsDialog(object):
         self.widget.setObjectName(_fromUtf8("widget"))
         self.label_19 = QtGui.QLabel(self.widget)
         self.label_19.setGeometry(QtCore.QRect(10, 20, 101, 20))
-        self.label_19.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_19.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.label_19.setObjectName(_fromUtf8("label_19"))
         self.label_20 = QtGui.QLabel(self.widget)
         self.label_20.setGeometry(QtCore.QRect(30, 40, 80, 16))
-        self.label_20.setAlignment(QtCore.Qt.AlignRight|QtCore.Qt.AlignTrailing|QtCore.Qt.AlignVCenter)
+        self.label_20.setAlignment(QtCore.Qt.AlignRight | QtCore.Qt.AlignTrailing | QtCore.Qt.AlignVCenter)
         self.label_20.setObjectName(_fromUtf8("label_20"))
         self.lineEditDays = QtGui.QLineEdit(self.widget)
         self.lineEditDays.setGeometry(QtCore.QRect(113, 20, 51, 20))
@@ -512,5 +514,6 @@ class Ui_settingsDialog(object):
         self.label_22.setText(_translate("settingsDialog", "days", None))
         self.label_23.setText(_translate("settingsDialog", "months.", None))
         self.tabWidgetSettings.setTabText(self.tabWidgetSettings.indexOf(self.tabResendsExpire), _translate("settingsDialog", "Resends Expire", None))
+
 
 import bitmessage_icons_rc

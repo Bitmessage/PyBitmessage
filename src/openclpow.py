@@ -25,6 +25,7 @@ try:
 except:
     libAvailable = False
 
+
 def initCL():
     global ctx, queue, program, hash_dt, libAvailable
     if libAvailable is False:
@@ -58,11 +59,14 @@ def initCL():
         logger.error("OpenCL fail: ", exc_info=True)
         del enabledGpus[:]
 
+
 def openclAvailable():
     return (len(gpus) > 0)
 
+
 def openclEnabled():
     return (len(enabledGpus) > 0)
+
 
 def do_opencl_pow(hash, target):
     output = numpy.zeros(1, dtype=[('v', numpy.uint64, 1)])
@@ -95,17 +99,17 @@ def do_opencl_pow(hash, target):
         sofar = time.time() - start
 #       logger.debug("Working for %.3fs, %.2f Mh/s", sofar, (progress / sofar) / 1000000)
     if shutdown != 0:
-        raise Exception ("Interrupted")
+        raise Exception("Interrupted")
     taken = time.time() - start
 #   logger.debug("Took %d tries.", progress)
     return output[0][0]
 
-#initCL()
+# initCL()
+
 
 if __name__ == "__main__":
     target = 54227212183L
     initialHash = "3758f55b5a8d902fd3597e4ce6a2d3f23daff735f65d9698c270987f4e67ad590b93f3ffeba0ef2fd08a8dc2f87b68ae5a0dc819ab57f22ad2c4c9c8618a43b3".decode("hex")
     nonce = do_opencl_pow(initialHash.encode("hex"), target)
-    trialValue, = unpack('>Q',hashlib.sha512(hashlib.sha512(pack('>Q',nonce) + initialHash).digest()).digest()[0:8])
+    trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
     print "{} - value {} < {}".format(nonce, trialValue, target)
-

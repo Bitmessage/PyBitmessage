@@ -24,17 +24,19 @@ except AttributeError:
 
 try:
     _encoding = QtGui.QApplication.UnicodeUTF8
-    def _translate(context, text, disambig, encoding = QtCore.QCoreApplication.CodecForTr, n = None):
+
+    def _translate(context, text, disambig, encoding=QtCore.QCoreApplication.CodecForTr, n=None):
         if n is None:
             return QtGui.QApplication.translate(context, text, disambig, _encoding)
         else:
             return QtGui.QApplication.translate(context, text, disambig, _encoding, n)
 except AttributeError:
-    def _translate(context, text, disambig, encoding = QtCore.QCoreApplication.CodecForTr, n = None):
+    def _translate(context, text, disambig, encoding=QtCore.QCoreApplication.CodecForTr, n=None):
         if n is None:
             return QtGui.QApplication.translate(context, text, disambig)
         else:
             return QtGui.QApplication.translate(context, text, disambig, QtCore.QCoreApplication.CodecForTr, n)
+
 
 class Ui_MainWindow(object):
     def setupUi(self, MainWindow):
@@ -688,11 +690,11 @@ class Ui_MainWindow(object):
         self.label_3.setText(_translate("MainWindow", "Subject:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.label.setText(_translate("MainWindow", "To:", None))
-        #self.textEditMessage.setHtml("")
+        # self.textEditMessage.setHtml("")
         self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendDirect), _translate("MainWindow", "Send ordinary Message", None))
         self.label_8.setText(_translate("MainWindow", "From:", None))
         self.label_7.setText(_translate("MainWindow", "Subject:", None))
-        #self.textEditMessageBroadcast.setHtml("")
+        # self.textEditMessageBroadcast.setHtml("")
         self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendBroadcast), _translate("MainWindow", "Send Message to your Subscribers", None))
         self.pushButtonTTL.setText(_translate("MainWindow", "TTL:", None))
         hours = 48
@@ -759,15 +761,15 @@ class Ui_MainWindow(object):
         self.actionDeleteAllTrashedMessages.setText(_translate("MainWindow", "Delete all trashed messages", None))
         self.actionJoinChan.setText(_translate("MainWindow", "Join / Create chan", None))
 
+
 import bitmessage_icons_rc
 
 if __name__ == "__main__":
     import sys
-    
+
     app = QtGui.QApplication(sys.argv)
     MainWindow = settingsmixin.SMainWindow()
     ui = Ui_MainWindow()
     ui.setupUi(MainWindow)
     MainWindow.show()
     sys.exit(app.exec_())
-

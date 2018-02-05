@@ -7,8 +7,9 @@ from debug import logger
 from helper_threading import BusyError, nonBlocking
 import state
 
+
 class AdvancedDispatcher(asyncore.dispatcher):
-    _buf_len = 131072 # 128kB
+    _buf_len = 131072  # 128kB
 
     def __init__(self, sock=None):
         if not hasattr(self, '_map'):
@@ -78,7 +79,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
             self.uploadChunk = int(asyncore.uploadBucket)
         self.uploadChunk = min(self.uploadChunk, len(self.write_buf))
         return asyncore.dispatcher.writable(self) and \
-                (self.connecting or (self.connected and self.uploadChunk > 0))
+            (self.connecting or (self.connected and self.uploadChunk > 0))
 
     def readable(self):
         self.downloadChunk = AdvancedDispatcher._buf_len
@@ -92,7 +93,7 @@ class AdvancedDispatcher(asyncore.dispatcher):
         except AttributeError:
             pass
         return asyncore.dispatcher.readable(self) and \
-                (self.connecting or self.accepting or (self.connected and self.downloadChunk > 0))
+            (self.connecting or self.accepting or (self.connected and self.downloadChunk > 0))
 
     def handle_read(self):
         self.lastTx = time.time()

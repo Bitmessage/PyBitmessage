@@ -19,7 +19,7 @@ import sys
 import traceback
 from binascii import hexlify
 #import string
-#from subprocess import call  # used when the API must execute an outside program
+# from subprocess import call  # used when the API must execute an outside program
 #from pyelliptic.openssl import OpenSSL
 
 #import highlevelcrypto
@@ -42,6 +42,7 @@ from version import softwareVersion
 # This thread is created either by the synSenderThread(for outgoing
 # connections) or the singleListenerThread(for incoming connections).
 
+
 class receiveDataThread(threading.Thread):
 
     def __init__(self):
@@ -51,22 +52,22 @@ class receiveDataThread(threading.Thread):
         self.verackReceived = False
 
     def setup(
-        self,
-        sock,
-        HOST,
-        port,
-        streamNumber,
-        selfInitiatedConnections,
-        sendDataThreadQueue,
-        objectHashHolderInstance):
-        
+            self,
+            sock,
+            HOST,
+            port,
+            streamNumber,
+            selfInitiatedConnections,
+            sendDataThreadQueue,
+            objectHashHolderInstance):
+
         self.sock = sock
         self.peer = state.Peer(HOST, port)
-        self.name = "receiveData-" + self.peer.host.replace(":", ".") # ":" log parser field separator
+        self.name = "receiveData-" + self.peer.host.replace(":", ".")  # ":" log parser field separator
         self.streamNumber = state.streamsInWhichIAmParticipating
         self.remoteStreams = []
         self.selfInitiatedConnections = selfInitiatedConnections
-        self.sendDataThreadQueue = sendDataThreadQueue # used to send commands and data to the sendDataThread
+        self.sendDataThreadQueue = sendDataThreadQueue  # used to send commands and data to the sendDataThread
         self.hostIdent = self.peer.port if ".onion" in BMConfigParser().get('bitmessagesettings', 'onionhostname') and protocol.checkSocksIP(self.peer.host) else self.peer.host
         shared.connectedHostsList[
             self.hostIdent] = 0  # The very fact that this receiveData thread exists shows that we are connected to the remote host. Let's add it to this list so that an outgoingSynSender thread doesn't try to connect to it.
@@ -91,7 +92,7 @@ class receiveDataThread(threading.Thread):
                 isSSL = False
                 if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
                     self.connectionIsOrWasFullyEstablished and
-                    protocol.haveSSL(not self.initiatedConnection)):
+                        protocol.haveSSL(not self.initiatedConnection)):
                     isSSL = True
                     dataRecv = self.sslSock.recv(throttle.ReceiveThrottle().chunkSize)
                 else:
@@ -113,19 +114,19 @@ class receiveDataThread(threading.Thread):
                     if self.connectionIsOrWasFullyEstablished:
                         self.sendping("Still around!")
                         continue
-                logger.error ('SSL error: %i/%s', err.errno if err.errno else 0, str(err))
+                logger.error('SSL error: %i/%s', err.errno if err.errno else 0, str(err))
                 break
             except socket.error as err:
                 if err.errno in (errno.EAGAIN, errno.EWOULDBLOCK) or \
-                    (sys.platform.startswith('win') and \
-                    err.errno == errno.WSAEWOULDBLOCK):
+                    (sys.platform.startswith('win') and
+                     err.errno == errno.WSAEWOULDBLOCK):
                     select.select([self.sslSock if isSSL else self.sock], [], [], 10)
                     logger.debug('sock.recv retriable error')
                     continue
                 logger.error('sock.recv error. Closing receiveData thread, %s', str(err))
                 break
             # print 'Received', repr(self.data)
-            if len(self.data) == dataLen: # If self.sock.recv returned no data:
+            if len(self.data) == dataLen:  # If self.sock.recv returned no data:
                 logger.debug('Connection to ' + str(self.peer) + ' closed. Closing receiveData thread')
                 break
             else:
@@ -140,7 +141,7 @@ class receiveDataThread(threading.Thread):
             logger.debug('removed self (a receiveDataThread) from selfInitiatedConnections')
         except:
             pass
-        self.sendDataThreadQueue.put((0, 'shutdown','no data')) # commands the corresponding sendDataThread to shut itself down.
+        self.sendDataThreadQueue.put((0, 'shutdown', 'no data'))  # commands the corresponding sendDataThread to shut itself down.
         try:
             del shared.connectedHostsList[self.hostIdent]
         except Exception as err:
@@ -150,7 +151,7 @@ class receiveDataThread(threading.Thread):
         self.checkTimeOffsetNotification()
         logger.debug('receiveDataThread ending. ID ' + str(id(self)) + '. The size of the shared.connectedHostsList is now ' + str(len(shared.connectedHostsList)))
 
-    def antiIntersectionDelay(self, initial = False):
+    def antiIntersectionDelay(self, initial=False):
         # estimated time for a small object to propagate across the whole network
         delay = math.ceil(math.log(max(len(knownnodes.knownNodes[x]) for x in knownnodes.knownNodes) + 2, 20)) * (0.2 + objectHashHolder.size/2)
         # take the stream with maximum amount of nodes
@@ -172,15 +173,15 @@ class receiveDataThread(threading.Thread):
     def processData(self):
         if len(self.data) < protocol.Header.size:  # if so little of the data has arrived that we can't even read the checksum then wait for more data.
             return
-        
-        magic,command,payloadLength,checksum = protocol.Header.unpack(self.data[:protocol.Header.size])
+
+        magic, command, payloadLength, checksum = protocol.Header.unpack(self.data[:protocol.Header.size])
         if magic != 0xE9BEB4D9:
             self.data = ""
             return
-        if payloadLength > 1600100: # ~1.6 MB which is the maximum possible size of an inv message.
+        if payloadLength > 1600100:  # ~1.6 MB which is the maximum possible size of an inv message.
             logger.info('The incoming message, which we have not yet download, is too large. Ignoring it. (unfortunately there is no way to tell the other node to stop sending it except to disconnect.) Message size: %s' % payloadLength)
             self.data = self.data[payloadLength + protocol.Header.size:]
-            del magic,command,payloadLength,checksum # we don't need these anymore and better to clean them now before the recursive call rather than after
+            del magic, command, payloadLength, checksum  # we don't need these anymore and better to clean them now before the recursive call rather than after
             self.processData()
             return
         if len(self.data) < payloadLength + protocol.Header.size:  # check if the whole message has arrived yet.
@@ -189,7 +190,7 @@ class receiveDataThread(threading.Thread):
         if checksum != hashlib.sha512(payload).digest()[0:4]:  # test the checksum in the message.
             logger.error('Checksum incorrect. Clearing this message.')
             self.data = self.data[payloadLength + protocol.Header.size:]
-            del magic,command,payloadLength,checksum,payload # better to clean up before the recursive call
+            del magic, command, payloadLength, checksum, payload  # better to clean up before the recursive call
             self.processData()
             return
 
@@ -200,13 +201,13 @@ class receiveDataThread(threading.Thread):
             with knownnodes.knownNodesLock:
                 for stream in self.streamNumber:
                     knownnodes.knownNodes[stream][self.peer] = int(time.time())
-        
-        #Strip the nulls
+
+        # Strip the nulls
         command = command.rstrip('\x00')
         logger.debug('remoteCommand ' + repr(command) + ' from ' + str(self.peer))
-        
+
         try:
-            #TODO: Use a dispatcher here
+            # TODO: Use a dispatcher here
             if command == 'error':
                 self.recerror(payload)
             elif not self.connectionIsOrWasFullyEstablished:
@@ -233,11 +234,11 @@ class receiveDataThread(threading.Thread):
             logger.debug("There was a problem with a varint while processing a message from the wire. Some details: %s" % e)
         except Exception as e:
             logger.critical("Critical error in a receiveDataThread: \n%s" % traceback.format_exc())
-        
-        del payload
-        self.data = self.data[payloadLength + protocol.Header.size:] # take this message out and then process the next message
 
-        if self.data == '': # if there are no more messages
+        del payload
+        self.data = self.data[payloadLength + protocol.Header.size:]  # take this message out and then process the next message
+
+        if self.data == '':  # if there are no more messages
             toRequest = []
             try:
                 for i in range(len(self.downloadQueue.pending), 100):
@@ -272,9 +273,9 @@ class receiveDataThread(threading.Thread):
     def sslHandshake(self):
         self.sslSock = self.sock
         if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
-            protocol.haveSSL(not self.initiatedConnection)):
+                protocol.haveSSL(not self.initiatedConnection)):
             logger.debug("Initialising TLS")
-            if sys.version_info >= (2,7,9):
+            if sys.version_info >= (2, 7, 9):
                 context = ssl.SSLContext(protocol.sslProtocolVersion)
                 context.set_ciphers(protocol.sslProtocolCiphers)
                 context.set_ecdh_curve("secp256k1")
@@ -282,9 +283,9 @@ class receiveDataThread(threading.Thread):
                 context.verify_mode = ssl.CERT_NONE
                 # also exclude TLSv1 and TLSv1.1 in the future
                 context.options = ssl.OP_ALL | ssl.OP_NO_SSLv2 | ssl.OP_NO_SSLv3 | ssl.OP_SINGLE_ECDH_USE | ssl.OP_CIPHER_SERVER_PREFERENCE
-                self.sslSock = context.wrap_socket(self.sock, server_side = not self.initiatedConnection, do_handshake_on_connect=False)
+                self.sslSock = context.wrap_socket(self.sock, server_side=not self.initiatedConnection, do_handshake_on_connect=False)
             else:
-                self.sslSock = ssl.wrap_socket(self.sock, keyfile = os.path.join(paths.codePath(), 'sslkeys', 'key.pem'), certfile = os.path.join(paths.codePath(), 'sslkeys', 'cert.pem'), server_side = not self.initiatedConnection, ssl_version=protocol.sslProtocolVersion, do_handshake_on_connect=False, ciphers=protocol.sslProtocolCiphers)
+                self.sslSock = ssl.wrap_socket(self.sock, keyfile=os.path.join(paths.codePath(), 'sslkeys', 'key.pem'), certfile=os.path.join(paths.codePath(), 'sslkeys', 'cert.pem'), server_side=not self.initiatedConnection, ssl_version=protocol.sslProtocolVersion, do_handshake_on_connect=False, ciphers=protocol.sslProtocolCiphers)
             self.sendDataThreadQueue.join()
             while True:
                 try:
@@ -295,11 +296,11 @@ class receiveDataThread(threading.Thread):
                     break
                 except ssl.SSLError as e:
                     if sys.hexversion >= 0x02070900:
-                        if isinstance (e, ssl.SSLWantReadError):
+                        if isinstance(e, ssl.SSLWantReadError):
                             logger.debug("Waiting for SSL socket handhake read")
                             select.select([self.sslSock], [], [], 10)
                             continue
-                        elif isinstance (e, ssl.SSLWantWriteError):
+                        elif isinstance(e, ssl.SSLWantWriteError):
                             logger.debug("Waiting for SSL socket handhake write")
                             select.select([], [self.sslSock], [], 10)
                             continue
@@ -313,15 +314,15 @@ class receiveDataThread(threading.Thread):
                             select.select([], [self.sslSock], [], 10)
                             continue
                     logger.error("SSL socket handhake failed: shutting down connection, %s", str(e))
-                    self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail %s' % (str(e))))
+                    self.sendDataThreadQueue.put((0, 'shutdown', 'tls handshake fail %s' % (str(e))))
                     return False
                 except socket.error as err:
                     logger.debug('SSL socket handshake failed, shutting down connection, %s', str(err))
-                    self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail'))
+                    self.sendDataThreadQueue.put((0, 'shutdown', 'tls handshake fail'))
                     return False
                 except Exception:
                     logger.error("SSL socket handhake failed, shutting down connection", exc_info=True)
-                    self.sendDataThreadQueue.put((0, 'shutdown','tls handshake fail'))
+                    self.sendDataThreadQueue.put((0, 'shutdown', 'tls handshake fail'))
                     return False
             # SSL in the background should be blocking, otherwise the error handling is difficult
             self.sslSock.settimeout(None)
@@ -331,9 +332,9 @@ class receiveDataThread(threading.Thread):
 
     def peerValidityChecks(self):
         if self.remoteProtocolVersion < 3:
-            self.sendDataThreadQueue.put((0, 'sendRawData',protocol.assembleErrorMessage(
+            self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(
                 fatal=2, errorText="Your is using an old protocol. Closing connection.")))
-            logger.debug ('Closing connection to old protocol version ' + str(self.remoteProtocolVersion) + ' node: ' + str(self.peer))
+            logger.debug('Closing connection to old protocol version ' + str(self.remoteProtocolVersion) + ' node: ' + str(self.peer))
             return False
         if self.timeOffset > 3600:
             self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(
@@ -353,10 +354,10 @@ class receiveDataThread(threading.Thread):
         if len(self.streamNumber) == 0:
             self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(
                 fatal=2, errorText="We don't have shared stream interests. Closing connection.")))
-            logger.debug ('Closed connection to ' + str(self.peer) + ' because there is no overlapping interest in streams.')
+            logger.debug('Closed connection to ' + str(self.peer) + ' because there is no overlapping interest in streams.')
             return False
         return True
-        
+
     def connectionFullyEstablished(self):
         if self.connectionIsOrWasFullyEstablished:
             # there is no reason to run this function a second time
@@ -367,7 +368,7 @@ class receiveDataThread(threading.Thread):
 
         if self.peerValidityChecks() == False:
             time.sleep(2)
-            self.sendDataThreadQueue.put((0, 'shutdown','no data'))
+            self.sendDataThreadQueue.put((0, 'shutdown', 'no data'))
             self.checkTimeOffsetNotification()
             return
 
@@ -383,10 +384,10 @@ class receiveDataThread(threading.Thread):
         self.sock.settimeout(
             600)  # We'll send out a ping every 5 minutes to make sure the connection stays alive if there has been no other traffic to send lately.
         queues.UISignalQueue.put(('updateNetworkStatusTab', 'no data'))
-        logger.debug('Connection fully established with ' + str(self.peer) + "\n" + \
-            'The size of the connectedHostsList is now ' + str(len(shared.connectedHostsList)) + "\n" + \
-            'The length of sendDataQueues is now: ' + str(len(state.sendDataQueues)) + "\n" + \
-            'broadcasting addr from within connectionFullyEstablished function.')
+        logger.debug('Connection fully established with ' + str(self.peer) + "\n" +
+                     'The size of the connectedHostsList is now ' + str(len(shared.connectedHostsList)) + "\n" +
+                     'The length of sendDataQueues is now: ' + str(len(state.sendDataQueues)) + "\n" +
+                     'broadcasting addr from within connectionFullyEstablished function.')
 
         if self.initiatedConnection:
             state.networkProtocolAvailability[protocol.networkType(self.peer.host)] = True
@@ -402,13 +403,13 @@ class receiveDataThread(threading.Thread):
 
         self.sendaddr()  # This is one large addr message to this one peer.
         if len(shared.connectedHostsList) > \
-            BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections", 200):
-            logger.info ('We are connected to too many people. Closing connection.')
+                BMConfigParser().safeGetInt("bitmessagesettings", "maxtotalconnections", 200):
+            logger.info('We are connected to too many people. Closing connection.')
             if self.initiatedConnection:
                 self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(fatal=2, errorText="Thank you for providing a listening node.")))
             else:
                 self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleErrorMessage(fatal=2, errorText="Server full, please try again later.")))
-            self.sendDataThreadQueue.put((0, 'shutdown','no data'))
+            self.sendDataThreadQueue.put((0, 'shutdown', 'no data'))
             return
         self.sendBigInv()
 
@@ -435,8 +436,8 @@ class receiveDataThread(threading.Thread):
             self.sendinvMessageToJustThisOnePeer(
                 numberOfObjectsInInvMessage, payload)
 
-    # Used to send a big inv message when the connection with a node is 
-    # first fully established. Notice that there is also a broadcastinv 
+    # Used to send a big inv message when the connection with a node is
+    # first fully established. Notice that there is also a broadcastinv
     # function for broadcasting invs to everyone in our stream.
     def sendinvMessageToJustThisOnePeer(self, numberOfObjects, payload):
         payload = encodeVarint(numberOfObjects) + payload
@@ -450,7 +451,7 @@ class receiveDataThread(threading.Thread):
         if sleepTime > 0 and doTimingAttackMitigation and state.trustedPeer == None:
             logger.debug('Timing attack mitigation: Sleeping for ' + str(sleepTime) + ' seconds.')
             time.sleep(sleepTime)
-            
+
     def recerror(self, data):
         """
         The remote node has been polite enough to send you an error message.
@@ -466,7 +467,7 @@ class receiveDataThread(threading.Thread):
         readPosition += inventoryVectorLength
         errorTextLength, errorTextLengthLength = decodeVarint(data[readPosition:readPosition+10])
         if errorTextLength > 1000:
-            return 
+            return
         readPosition += errorTextLengthLength
         errorText = data[readPosition:readPosition+errorTextLength]
         if fatalStatus == 0:
@@ -482,12 +483,11 @@ class receiveDataThread(threading.Thread):
             message += " Remote node says that the ban time is %s" % banTime
         logger.error(message)
 
-
     def recobject(self, data):
         self.messageProcessingStartTime = time.time()
         lengthOfTimeWeShouldUseToProcessThisMessage = shared.checkAndShareObjectWithPeers(data)
         self.downloadQueue.task_done(calculateInventoryHash(data))
-        
+
         """
         Sleeping will help guarantee that we can process messages faster than a 
         remote node can send them. If we fall behind, the attacker could observe 
@@ -499,7 +499,6 @@ class receiveDataThread(threading.Thread):
         """
         sleepTime = lengthOfTimeWeShouldUseToProcessThisMessage - (time.time() - self.messageProcessingStartTime)
         self._sleepForTimingAttackMitigation(sleepTime)
-    
 
     # We have received an inv message
     def recinv(self, data):
@@ -531,7 +530,6 @@ class receiveDataThread(threading.Thread):
         payload = encodeVarint(len(hashes)) + ''.join(hashes)
         self.sendDataThreadQueue.put((0, 'sendRawData', protocol.CreatePacket('getdata', payload)), False)
 
-
     # We have received a getdata request from our peer
     def recgetdata(self, data):
         numberOfRequestedInventoryItems, lengthOfVarint = decodeVarint(
@@ -539,7 +537,7 @@ class receiveDataThread(threading.Thread):
         if len(data) < lengthOfVarint + (32 * numberOfRequestedInventoryItems):
             logger.debug('getdata message does not contain enough data. Ignoring.')
             return
-        self.antiIntersectionDelay(True) # only handle getdata requests if we have been connected long enough
+        self.antiIntersectionDelay(True)  # only handle getdata requests if we have been connected long enough
         for i in xrange(numberOfRequestedInventoryItems):
             hash = data[lengthOfVarint + (
                 i * 32):32 + lengthOfVarint + (i * 32)]
@@ -557,7 +555,7 @@ class receiveDataThread(threading.Thread):
     # Our peer has requested (in a getdata message) that we send an object.
     def sendObject(self, hash, payload):
         logger.debug('sending an object.')
-        self.sendDataThreadQueue.put((0, 'sendRawData', (hash, protocol.CreatePacket('object',payload))))
+        self.sendDataThreadQueue.put((0, 'sendRawData', (hash, protocol.CreatePacket('object', payload))))
 
     def _checkIPAddress(self, host):
         if host[0:12] == '\x00\x00\x00\x00\x00\x00\x00\x00\x00\x00\xFF\xFF':
@@ -570,22 +568,22 @@ class receiveDataThread(threading.Thread):
         else:
             hostStandardFormat = socket.inet_ntop(socket.AF_INET6, host)
             if hostStandardFormat == "":
-                # This can happen on Windows systems which are not 64-bit compatible 
-                # so let us drop the IPv6 address. 
+                # This can happen on Windows systems which are not 64-bit compatible
+                # so let us drop the IPv6 address.
                 return False
             return self._checkIPv6Address(host, hostStandardFormat)
 
     def _checkIPv4Address(self, host, hostStandardFormat):
-        if host[0] == '\x7F': # 127/8
+        if host[0] == '\x7F':  # 127/8
             logger.debug('Ignoring IP address in loopback range: ' + hostStandardFormat)
             return False
-        if host[0] == '\x0A': # 10/8
+        if host[0] == '\x0A':  # 10/8
             logger.debug('Ignoring IP address in private range: ' + hostStandardFormat)
             return False
-        if host[0:2] == '\xC0\xA8': # 192.168/16
+        if host[0:2] == '\xC0\xA8':  # 192.168/16
             logger.debug('Ignoring IP address in private range: ' + hostStandardFormat)
             return False
-        if host[0:2] >= '\xAC\x10' and host[0:2] < '\xAC\x20': # 172.16/12
+        if host[0:2] >= '\xAC\x10' and host[0:2] < '\xAC\x20':  # 172.16/12
             logger.debug('Ignoring IP address in private range:' + hostStandardFormat)
             return False
         return hostStandardFormat
@@ -595,10 +593,10 @@ class receiveDataThread(threading.Thread):
             logger.debug('Ignoring loopback address: ' + hostStandardFormat)
             return False
         if host[0] == '\xFE' and (ord(host[1]) & 0xc0) == 0x80:
-            logger.debug ('Ignoring local address: ' + hostStandardFormat)
+            logger.debug('Ignoring local address: ' + hostStandardFormat)
             return False
         if (ord(host[0]) & 0xfe) == 0xfc:
-            logger.debug ('Ignoring unique local address: ' + hostStandardFormat)
+            logger.debug('Ignoring unique local address: ' + hostStandardFormat)
             return False
         return hostStandardFormat
 
@@ -644,10 +642,10 @@ class receiveDataThread(threading.Thread):
                 if timeSomeoneElseReceivedMessageFromThisNode > (int(time.time()) - 10800) and timeSomeoneElseReceivedMessageFromThisNode < (int(time.time()) + 10800):
                     # bootstrap provider?
                     if BMConfigParser().safeGetInt('bitmessagesettings', 'maxoutboundconnections') >= \
-                        BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
+                            BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
                         knownnodes.trimKnownNodes(recaddrStream)
                         with knownnodes.knownNodesLock:
-                            knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = int(time.time()) - 86400 # penalise initially by 1 day
+                            knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = int(time.time()) - 86400  # penalise initially by 1 day
                         logger.debug('added new node ' + str(peerFromAddrMessage) + ' to knownNodes in stream ' + str(recaddrStream))
                         shared.needToWriteKnownNodesToDisk = True
                     # normal mode
@@ -663,28 +661,27 @@ class receiveDataThread(threading.Thread):
                         shared.needToWriteKnownNodesToDisk = True
             # only update if normal mode
             elif BMConfigParser().safeGetInt('bitmessagesettings', 'maxoutboundconnections') < \
-                BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
+                    BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
                 timeLastReceivedMessageFromThisNode = knownnodes.knownNodes[recaddrStream][
                     peerFromAddrMessage]
-                if (timeLastReceivedMessageFromThisNode < timeSomeoneElseReceivedMessageFromThisNode) and (timeSomeoneElseReceivedMessageFromThisNode < int(time.time())+900): # 900 seconds for wiggle-room in case other nodes' clocks aren't quite right.
+                if (timeLastReceivedMessageFromThisNode < timeSomeoneElseReceivedMessageFromThisNode) and (timeSomeoneElseReceivedMessageFromThisNode < int(time.time())+900):  # 900 seconds for wiggle-room in case other nodes' clocks aren't quite right.
                     with knownnodes.knownNodesLock:
                         knownnodes.knownNodes[recaddrStream][peerFromAddrMessage] = timeSomeoneElseReceivedMessageFromThisNode
 
         for stream in self.streamNumber:
             logger.debug('knownNodes currently has %i nodes for stream %i', len(knownnodes.knownNodes[stream]), stream)
 
-
-    # Send a huge addr message to our peer. This is only used 
-    # when we fully establish a connection with a 
-    # peer (with the full exchange of version and verack 
+    # Send a huge addr message to our peer. This is only used
+    # when we fully establish a connection with a
+    # peer (with the full exchange of version and verack
     # messages).
     def sendaddr(self):
         def sendChunk():
             if numberOfAddressesInAddrMessage == 0:
                 return
-            self.sendDataThreadQueue.put((0, 'sendRawData', \
-                protocol.CreatePacket('addr', \
-                encodeVarint(numberOfAddressesInAddrMessage) + payload)))
+            self.sendDataThreadQueue.put((0, 'sendRawData',
+                                          protocol.CreatePacket('addr',
+                                                                encodeVarint(numberOfAddressesInAddrMessage) + payload)))
 
         # We are going to share a maximum number of 1000 addrs (per overlapping
         # stream) with our peer. 500 from overlapping streams, 250 from the
@@ -706,7 +703,7 @@ class receiveDataThread(threading.Thread):
             with knownnodes.knownNodesLock:
                 if len(knownnodes.knownNodes[stream]) > 0:
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream].items()
-                        if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                                if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > maxAddrCount:
                         elemCount = maxAddrCount
@@ -715,14 +712,14 @@ class receiveDataThread(threading.Thread):
                 # sent 250 only if the remote isn't interested in it
                 if len(knownnodes.knownNodes[stream * 2]) > 0 and stream not in self.streamNumber:
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream*2].items()
-                        if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                                if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > maxAddrCount / 2:
                         elemCount = int(maxAddrCount / 2)
                     addrsInChildStreamLeft = random.sample(filtered.items(), elemCount)
                 if len(knownnodes.knownNodes[(stream * 2) + 1]) > 0 and stream not in self.streamNumber:
                     filtered = {k: v for k, v in knownnodes.knownNodes[stream*2+1].items()
-                        if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
+                                if v > (int(time.time()) - shared.maximumAgeOfNodesThatIAdvertiseToOthers)}
                     elemCount = len(filtered)
                     if elemCount > maxAddrCount / 2:
                         elemCount = int(maxAddrCount / 2)
@@ -766,7 +763,7 @@ class receiveDataThread(threading.Thread):
                     sendChunk()
                     payload = ''
                     numberOfAddressesInAddrMessage = 0
-    
+
         # flush
         sendChunk()
 
@@ -782,7 +779,7 @@ class receiveDataThread(threading.Thread):
             a new version message, like if the remote node wants to update
             the streams in which they are interested. But for now we'll
             ignore this version message
-            """ 
+            """
             return
 
         self.remoteProtocolVersion, = unpack('>L', data[:4])
@@ -799,7 +796,7 @@ class receiveDataThread(threading.Thread):
             data[80:84])
         readPosition = 80 + lengthOfUseragentVarint
         self.userAgent = data[readPosition:readPosition + useragentLength]
-        
+
         # version check
         try:
             userAgentName, userAgentVersion = self.userAgent[1:-1].split(":", 2)
@@ -815,11 +812,11 @@ class receiveDataThread(threading.Thread):
             # remote is newer, but do not cross between stable and unstable
             try:
                 if cmp(remoteVersion, myVersion) > 0 and \
-                    (myVersion[1] % 2 == remoteVersion[1] % 2):
+                        (myVersion[1] % 2 == remoteVersion[1] % 2):
                     queues.UISignalQueue.put(('newVersionAvailable', remoteVersion))
             except:
                 pass
-                
+
         readPosition += useragentLength
         numberOfStreamsInVersionMessage, lengthOfNumberOfStreamsInVersionMessage = decodeVarint(
             data[readPosition:])
@@ -830,7 +827,7 @@ class receiveDataThread(threading.Thread):
             readPosition += lengthOfRemoteStreamNumber
             self.remoteStreams.append(newStreamNumber)
         logger.debug('Remote node useragent: %s, streams: (%s), time offset: %is.',
-            self.userAgent, ', '.join(str(x) for x in self.remoteStreams), self.timeOffset)
+                     self.userAgent, ', '.join(str(x) for x in self.remoteStreams), self.timeOffset)
 
         # find shared streams
         self.streamNumber = sorted(set(state.streamsInWhichIAmParticipating).intersection(self.remoteStreams))
@@ -839,10 +836,10 @@ class receiveDataThread(threading.Thread):
             self.hostIdent] = 1  # We use this data structure to not only keep track of what hosts we are connected to so that we don't try to connect to them again, but also to list the connections count on the Network Status tab.
         self.sendDataThreadQueue.put((0, 'setStreamNumber', self.remoteStreams))
         if data[72:80] == protocol.eightBytesOfRandomDataUsedToDetectConnectionsToSelf:
-            self.sendDataThreadQueue.put((0, 'shutdown','no data'))
+            self.sendDataThreadQueue.put((0, 'shutdown', 'no data'))
             logger.debug('Closing connection to myself: ' + str(self.peer))
             return
-        
+
         # The other peer's protocol version is of interest to the sendDataThread but we learn of it
         # in this version message. Let us inform the sendDataThread.
         self.sendDataThreadQueue.put((0, 'setRemoteProtocolVersion', self.remoteProtocolVersion))
@@ -854,10 +851,10 @@ class receiveDataThread(threading.Thread):
                     if not self.initiatedConnection:
                         # bootstrap provider?
                         if BMConfigParser().safeGetInt('bitmessagesettings', 'maxoutboundconnections') >= \
-                            BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
-                            knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 10800 # penalise inbound, 3 hours
+                                BMConfigParser().safeGetInt('bitmessagesettings', 'maxtotalconnections', 200):
+                            knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 10800  # penalise inbound, 3 hours
                         else:
-                            knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 7200 # penalise inbound, 2 hours
+                            knownnodes.knownNodes[stream][state.Peer(self.peer.host, self.remoteNodeIncomingPort)] -= 7200  # penalise inbound, 2 hours
                     shared.needToWriteKnownNodesToDisk = True
 
         self.sendverack()
@@ -868,7 +865,7 @@ class receiveDataThread(threading.Thread):
     def sendversion(self):
         logger.debug('Sending version message')
         self.sendDataThreadQueue.put((0, 'sendRawData', protocol.assembleVersionMessage(
-                self.peer.host, self.peer.port, state.streamsInWhichIAmParticipating, not self.initiatedConnection)))
+            self.peer.host, self.peer.port, state.streamsInWhichIAmParticipating, not self.initiatedConnection)))
 
     # Sends a verack message
     def sendverack(self):

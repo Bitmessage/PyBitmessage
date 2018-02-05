@@ -7,6 +7,7 @@ from debug import logger
 import network.connectionpool
 import state
 
+
 class ProxyError(Exception):
     errorCodes = ("UnknownError")
 
@@ -21,15 +22,15 @@ class ProxyError(Exception):
 
 class GeneralProxyError(ProxyError):
     errorCodes = ("Success",
-        "Invalid data",
-        "Not connected",
-        "Not available",
-        "Bad proxy type",
-        "Bad input",
-        "Timed out",
-        "Network unreachable",
-        "Connection refused",
-        "Host unreachable")
+                  "Invalid data",
+                  "Not connected",
+                  "Not available",
+                  "Bad proxy type",
+                  "Bad input",
+                  "Timed out",
+                  "Network unreachable",
+                  "Connection refused",
+                  "Host unreachable")
 
 
 class Proxy(AdvancedDispatcher):
@@ -66,8 +67,8 @@ class Proxy(AdvancedDispatcher):
 
     @onion_proxy.setter
     def onion_proxy(self, address):
-        if address is not None and (not isinstance(address, tuple) or (len(address) < 2) or \
-                (not isinstance(address[0], str) or not isinstance(address[1], int))):
+        if address is not None and (not isinstance(address, tuple) or (len(address) < 2) or
+                                    (not isinstance(address[0], str) or not isinstance(address[1], int))):
             raise ValueError
         self.__class__._onion_proxy = address
 

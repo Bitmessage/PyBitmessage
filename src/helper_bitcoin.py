@@ -2,6 +2,8 @@ import hashlib
 from pyelliptic import arithmetic
 
 # This function expects that pubkey begin with \x04
+
+
 def calculateBitcoinAddressFromPubkey(pubkey):
     if len(pubkey) != 65:
         print 'Could not calculate Bitcoin address from pubkey because function was passed a pubkey that was', len(pubkey), 'bytes long rather than 65.'

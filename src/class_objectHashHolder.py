@@ -11,12 +11,14 @@ import random
 import time
 import threading
 
+
 class objectHashHolder(threading.Thread):
     size = 10
+
     def __init__(self, sendDataThreadMailbox):
         threading.Thread.__init__(self, name="objectHashHolder")
         self.shutdown = False
-        self.sendDataThreadMailbox = sendDataThreadMailbox # This queue is used to submit data back to our associated sendDataThread.
+        self.sendDataThreadMailbox = sendDataThreadMailbox  # This queue is used to submit data back to our associated sendDataThread.
         self.collectionOfHashLists = []
         self.collectionOfPeerLists = []
         for i in range(objectHashHolder.size):
@@ -36,7 +38,7 @@ class objectHashHolder(threading.Thread):
             iterator %= objectHashHolder.size
             time.sleep(1)
 
-    def holdHash(self,hash):
+    def holdHash(self, hash):
         self.collectionOfHashLists[random.randrange(0, objectHashHolder.size)].append(hash)
 
     def hasHash(self, hash):
@@ -44,9 +46,9 @@ class objectHashHolder(threading.Thread):
             return True
         return False
 
-    def holdPeer(self,peerDetails):
+    def holdPeer(self, peerDetails):
         self.collectionOfPeerLists[random.randrange(0, objectHashHolder.size)].append(peerDetails)
-        
+
     def hashCount(self):
         return sum([len(x) for x in self.collectionOfHashLists if type(x) is list])
 

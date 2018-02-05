@@ -12,6 +12,7 @@ from queues import invQueue
 import protocol
 import state
 
+
 class InvThread(threading.Thread, StoppableThread):
     def __init__(self):
         threading.Thread.__init__(self, name="InvBroadcaster")
@@ -21,10 +22,10 @@ class InvThread(threading.Thread, StoppableThread):
     def handleLocallyGenerated(self, stream, hashId):
         Dandelion().addHash(hashId, stream=stream)
         for connection in BMConnectionPool().inboundConnections.values() + \
-            BMConnectionPool().outboundConnections.values():
-                if state.dandelion and connection != Dandelion().objectChildStem(hashId):
-                    continue
-                connection.objectsNewToThem[hashId] = time()
+                BMConnectionPool().outboundConnections.values():
+            if state.dandelion and connection != Dandelion().objectChildStem(hashId):
+                continue
+            connection.objectsNewToThem[hashId] = time()
 
     def run(self):
         while not state.shutdown:
@@ -70,12 +71,12 @@ class InvThread(threading.Thread, StoppableThread):
 
                     if fluffs:
                         shuffle(fluffs)
-                        connection.append_write_buf(protocol.CreatePacket('inv', \
-                                addresses.encodeVarint(len(fluffs)) + "".join(fluffs)))
+                        connection.append_write_buf(protocol.CreatePacket('inv',
+                                                                          addresses.encodeVarint(len(fluffs)) + "".join(fluffs)))
                     if stems:
                         shuffle(stems)
-                        connection.append_write_buf(protocol.CreatePacket('dinv', \
-                                addresses.encodeVarint(len(stems)) + "".join(stems)))
+                        connection.append_write_buf(protocol.CreatePacket('dinv',
+                                                                          addresses.encodeVarint(len(stems)) + "".join(stems)))
 
             invQueue.iterate()
             for i in range(len(chunk)):

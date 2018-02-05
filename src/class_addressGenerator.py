@@ -17,13 +17,14 @@ from binascii import hexlify
 import queues
 import state
 
+
 class addressGenerator(threading.Thread, StoppableThread):
 
     def __init__(self):
         # QThread.__init__(self, parent)
         threading.Thread.__init__(self, name="addressGenerator")
         self.initStop()
-        
+
     def stopThread(self):
         try:
             queues.addressGeneratorQueue.put(("stopThread", "data"))
@@ -58,7 +59,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                     if eighteenByteRipe:
                         numberOfNullBytesDemandedOnFrontOfRipeHash = 2
                     else:
-                        numberOfNullBytesDemandedOnFrontOfRipeHash = 1 # the default
+                        numberOfNullBytesDemandedOnFrontOfRipeHash = 1  # the default
             elif len(queueValue) == 9:
                 command, addressVersionNumber, streamNumber, label, numberOfAddressesToMake, deterministicPassphrase, eighteenByteRipe, nonceTrialsPerByte, payloadLengthExtraBytes = queueValue
                 try:
@@ -68,7 +69,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                     if eighteenByteRipe:
                         numberOfNullBytesDemandedOnFrontOfRipeHash = 2
                     else:
-                        numberOfNullBytesDemandedOnFrontOfRipeHash = 1 # the default
+                        numberOfNullBytesDemandedOnFrontOfRipeHash = 1  # the default
             elif queueValue[0] == 'stopThread':
                 break
             else:
@@ -168,7 +169,7 @@ class addressGenerator(threading.Thread, StoppableThread):
                         'WARNING: You are creating deterministic address(es) using a blank passphrase. Bitmessage will do it but it is rather stupid.')
                 if command == 'createDeterministicAddresses':
                     queues.UISignalQueue.put((
-                                'updateStatusBar', tr._translate("MainWindow","Generating %1 new addresses.").arg(str(numberOfAddressesToMake))))
+                        'updateStatusBar', tr._translate("MainWindow", "Generating %1 new addresses.").arg(str(numberOfAddressesToMake))))
                 signingKeyNonce = 0
                 encryptionKeyNonce = 1
                 listOfNewAddressesToSendOutThroughTheAPI = [
@@ -201,7 +202,6 @@ class addressGenerator(threading.Thread, StoppableThread):
                         if ripe.digest()[:numberOfNullBytesDemandedOnFrontOfRipeHash] == '\x00' * numberOfNullBytesDemandedOnFrontOfRipeHash:
                             break
 
-                    
                     logger.info('Generated address with ripe digest: %s' % hexlify(ripe.digest()))
                     try:
                         logger.info('Address generator calculated %s addresses at %s addresses per second before finding one with the correct ripe-prefix.' % (numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix, numberOfAddressesWeHadToMakeBeforeWeFoundOneWithTheCorrectRipePrefix / (time.time() - startTime)))
@@ -235,17 +235,16 @@ class addressGenerator(threading.Thread, StoppableThread):
                         privEncryptionKeyWIF = arithmetic.changebase(
                             privEncryptionKey + checksum, 256, 58)
 
-                        
                         try:
                             BMConfigParser().add_section(address)
                             addressAlreadyExists = False
                         except:
                             addressAlreadyExists = True
-                            
+
                         if addressAlreadyExists:
                             logger.info('%s already exists. Not adding it again.' % address)
                             queues.UISignalQueue.put((
-                                'updateStatusBar', tr._translate("MainWindow","%1 is already in 'Your Identities'. Not adding it again.").arg(address)))
+                                'updateStatusBar', tr._translate("MainWindow", "%1 is already in 'Your Identities'. Not adding it again.").arg(address)))
                         else:
                             logger.debug('label: %s' % label)
                             BMConfigParser().set(address, 'label', label)
@@ -275,8 +274,8 @@ class addressGenerator(threading.Thread, StoppableThread):
                             shared.myAddressesByTag[tag] = address
                             if addressVersionNumber == 3:
                                 queues.workerQueue.put((
-                                    'sendOutOrStoreMyV3Pubkey', ripe.digest())) # If this is a chan address,
-                                        # the worker thread won't send out the pubkey over the network.
+                                    'sendOutOrStoreMyV3Pubkey', ripe.digest()))  # If this is a chan address,
+                                # the worker thread won't send out the pubkey over the network.
                             elif addressVersionNumber == 4:
                                 queues.workerQueue.put((
                                     'sendOutOrStoreMyV4Pubkey', address))

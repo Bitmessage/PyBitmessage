@@ -32,7 +32,7 @@ class AboutDialog(QtGui.QDialog, RetranslateMixin):
         self.labelVersion.setText(
             self.labelVersion.text().replace(
                 ':version:', version
-                ).replace(':branch:', commit or 'v%s' % version)
+            ).replace(':branch:', commit or 'v%s' % version)
         )
         self.labelVersion.setOpenExternalLinks(True)
 
@@ -58,7 +58,7 @@ class IconGlossaryDialog(QtGui.QDialog, RetranslateMixin):
         self.labelPortNumber.setText(_translate(
             "iconGlossaryDialog",
             "You are using TCP port %1. (This can be changed in the settings)."
-            ).arg(config.getint('bitmessagesettings', 'port')))
+        ).arg(config.getint('bitmessagesettings', 'port')))
         self.setFixedSize(QtGui.QWidget.sizeHint(self))
 
 

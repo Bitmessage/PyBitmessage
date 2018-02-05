@@ -6,6 +6,7 @@ from bmconfigparser import BMConfigParser
 from singleton import Singleton
 import state
 
+
 class Throttle(object):
     minChunkSize = 4096
     maxChunkSize = 131072
@@ -51,7 +52,7 @@ class Throttle(object):
         with self.lock:
             # power of two smaller or equal to speed limit
             try:
-                self.chunkSize = int(math.pow(2, int(math.log(self.limit,2))))
+                self.chunkSize = int(math.pow(2, int(math.log(self.limit, 2))))
             except ValueError:
                 self.chunkSize = Throttle.maxChunkSize
             # range check
@@ -60,15 +61,17 @@ class Throttle(object):
             elif self.chunkSize > Throttle.maxChunkSize:
                 self.chunkSize = Throttle.maxChunkSize
 
+
 @Singleton
 class SendThrottle(Throttle):
     def __init__(self):
         Throttle.__init__(self, BMConfigParser().safeGetInt('bitmessagesettings', 'maxuploadrate')*1024)
-    
+
     def resetLimit(self):
         with self.lock:
             self.limit = BMConfigParser().safeGetInt('bitmessagesettings', 'maxuploadrate')*1024
         Throttle.resetChunkSize(self)
+
 
 @Singleton
 class ReceiveThrottle(Throttle):

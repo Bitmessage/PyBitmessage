@@ -4,14 +4,14 @@ import sys
 import os
 import pyelliptic.openssl
 
-#Only really old versions of Python don't have sys.hexversion. We don't support
-#them. The logging module was introduced in Python 2.3
+# Only really old versions of Python don't have sys.hexversion. We don't support
+# them. The logging module was introduced in Python 2.3
 if not hasattr(sys, 'hexversion') or sys.hexversion < 0x20300F0:
     sys.stdout.write('Python version: ' + sys.version)
     sys.stdout.write('PyBitmessage requires Python 2.7.3 or greater (but not Python 3)')
     sys.exit()
 
-#We can now use logging so set up a simple configuration
+# We can now use logging so set up a simple configuration
 import logging
 formatter = logging.Formatter(
     '%(levelname)s: %(message)s'
@@ -22,8 +22,10 @@ logger = logging.getLogger(__name__)
 logger.addHandler(handler)
 logger.setLevel(logging.ERROR)
 
-#We need to check hashlib for RIPEMD-160, as it won't be available if OpenSSL is
-#not linked against or the linked OpenSSL has RIPEMD disabled.
+# We need to check hashlib for RIPEMD-160, as it won't be available if OpenSSL is
+# not linked against or the linked OpenSSL has RIPEMD disabled.
+
+
 def check_hashlib():
     if sys.hexversion < 0x020500F0:
         logger.error('The hashlib module is not included in this version of Python.')
@@ -39,6 +41,7 @@ def check_hashlib():
         return False
     return True
 
+
 def check_sqlite():
     if sys.hexversion < 0x020500F0:
         logger.error('The sqlite3 module is not included in this version of Python.')
@@ -53,7 +56,7 @@ def check_sqlite():
 
     logger.info('sqlite3 Module Version: ' + sqlite3.version)
     logger.info('SQLite Library Version: ' + sqlite3.sqlite_version)
-    #sqlite_version_number formula: https://sqlite.org/c3ref/c_source_id.html
+    # sqlite_version_number formula: https://sqlite.org/c3ref/c_source_id.html
     sqlite_version_number = sqlite3.sqlite_version_info[0] * 1000000 + sqlite3.sqlite_version_info[1] * 1000 + sqlite3.sqlite_version_info[2]
 
     conn = None
@@ -66,8 +69,8 @@ def check_sqlite():
             if sqlite_version_number >= 3006023:
                 compile_options = ', '.join(map(lambda row: row[0], conn.execute('PRAGMA compile_options;')))
                 logger.info('SQLite Library Compile Options: ' + compile_options)
-            #There is no specific version requirement as yet, so we just use the
-            #first version that was included with Python.
+            # There is no specific version requirement as yet, so we just use the
+            # first version that was included with Python.
             if sqlite_version_number < 3000008:
                 logger.error('This version of SQLite is too old. PyBitmessage requires SQLite 3.0.8 or later')
                 return False
@@ -79,6 +82,7 @@ def check_sqlite():
         if conn:
             conn.close()
 
+
 def check_openssl():
     try:
         import ctypes
@@ -86,7 +90,7 @@ def check_openssl():
         logger.error('Unable to check OpenSSL. The ctypes module is not available.')
         return False
 
-    #We need to emulate the way PyElliptic searches for OpenSSL.
+    # We need to emulate the way PyElliptic searches for OpenSSL.
     if sys.platform == 'win32':
         paths = ['libeay32.dll']
         if getattr(sys, 'frozen', False):
@@ -129,8 +133,8 @@ def check_openssl():
             return False
         logger.info('OpenSSL Version: ' + openssl_version)
         logger.info('OpenSSL Compile Options: ' + openssl_cflags)
-        #PyElliptic uses EVP_CIPHER_CTX_new and EVP_CIPHER_CTX_free which were
-        #introduced in 0.9.8b.
+        # PyElliptic uses EVP_CIPHER_CTX_new and EVP_CIPHER_CTX_free which were
+        # introduced in 0.9.8b.
         if openssl_hexversion < 0x90802F:
             logger.error('This OpenSSL library is too old. PyBitmessage requires OpenSSL 0.9.8b or later with AES, Elliptic Curves (EC), ECDH, and ECDSA enabled.')
             return False
@@ -141,7 +145,9 @@ def check_openssl():
         return True
     return False
 
-#TODO: The minimum versions of pythondialog and dialog need to be determined
+# TODO: The minimum versions of pythondialog and dialog need to be determined
+
+
 def check_curses():
     if sys.hexversion < 0x20600F0:
         logger.error('The curses interface requires the pythondialog package and the dialog utility.')
@@ -159,11 +165,12 @@ def check_curses():
         return False
     logger.info('pythondialog Package Version: ' + dialog.__version__)
     dialog_util_version = dialog.Dialog().cached_backend_version
-    #The pythondialog author does not like Python2 str, so we have to use
-    #unicode for just the version otherwise we get the repr form which includes
-    #the module and class names along with the actual version.
+    # The pythondialog author does not like Python2 str, so we have to use
+    # unicode for just the version otherwise we get the repr form which includes
+    # the module and class names along with the actual version.
     logger.info('dialog Utility Version' + unicode(dialog_util_version))
     return True
+
 
 def check_pyqt():
     try:
@@ -200,6 +207,7 @@ def check_pyqt():
         passed = False
     return passed
 
+
 def check_msgpack():
     try:
         import msgpack
@@ -228,14 +236,15 @@ def check_msgpack():
 
     return True
 
-def check_dependencies(verbose = False, optional = False):
+
+def check_dependencies(verbose=False, optional=False):
     if verbose:
         logger.setLevel(logging.INFO)
 
     has_all_dependencies = True
 
-    #Python 2.7.3 is the required minimum. Python 3+ is not supported, but it is
-    #still useful to provide information about our other requirements.
+    # Python 2.7.3 is the required minimum. Python 3+ is not supported, but it is
+    # still useful to provide information about our other requirements.
     logger.info('Python version: %s', sys.version)
     if sys.hexversion < 0x20703F0:
         logger.error('PyBitmessage requires Python 2.7.3 or greater (but not Python 3+)')
@@ -248,18 +257,18 @@ def check_dependencies(verbose = False, optional = False):
     if optional:
         check_functions.extend([check_pyqt, check_curses])
 
-    #Unexpected exceptions are handled here
+    # Unexpected exceptions are handled here
     for check in check_functions:
         try:
             has_all_dependencies &= check()
         except:
             logger.exception(check.__name__ + ' failed unexpectedly.')
             has_all_dependencies = False
-        
+
     if not has_all_dependencies:
         logger.critical('PyBitmessage cannot start. One or more dependencies are unavailable.')
         sys.exit()
 
+
 if __name__ == '__main__':
     check_dependencies(True, True)
-

@@ -20,7 +20,7 @@ def signal_handler(signal, frame):
 
 
 def _doCPoW(target, initialHash):
-#    global shutdown
+    #    global shutdown
     h = initialHash
     m = target
     out_h = ctypes.pointer(ctypes.create_string_buffer(h, 64))

@@ -13,6 +13,7 @@ from singleton import Singleton
 import storage.sqlite
 import storage.filesystem
 
+
 @Singleton
 class Inventory():
     def __init__(self):
@@ -32,13 +33,13 @@ class Inventory():
                 self.numberOfInventoryLookupsPerformed += 1
             realRet = getattr(self._realInventory, attr)
         except AttributeError:
-            raise AttributeError("%s instance has no attribute '%s'" %(self.__class__.__name__, attr))
+            raise AttributeError("%s instance has no attribute '%s'" % (self.__class__.__name__, attr))
         else:
             return realRet
 
 
 class PendingDownloadQueue(Queue.Queue):
-# keep a track of objects that have been advertised to us but we haven't downloaded them yet
+    # keep a track of objects that have been advertised to us but we haven't downloaded them yet
     maxWait = 300
 
     def __init__(self, maxsize=0):
@@ -94,7 +95,7 @@ class PendingUploadDeadlineException(Exception):
 
 @Singleton
 class PendingUpload(object):
-# keep a track of objects that we have created but haven't distributed yet
+    # keep a track of objects that we have created but haven't distributed yet
     def __init__(self):
         super(self.__class__, self).__init__()
         self.lock = RLock()
@@ -110,7 +111,7 @@ class PendingUpload(object):
         self.clearDelay = 10
         self.lastCleared = time.time()
 
-    def add(self, objectHash = None):
+    def add(self, objectHash=None):
         with self.lock:
             # add a new object into existing thread lists
             if objectHash:
@@ -118,7 +119,7 @@ class PendingUpload(object):
                     self.hashes[objectHash] = {'created': time.time(), 'sendCount': 0, 'peers': []}
                 for thread in threadingEnumerate():
                     if thread.isAlive() and hasattr(thread, 'peer') and \
-                        thread.peer not in self.hashes[objectHash]['peers']:
+                            thread.peer not in self.hashes[objectHash]['peers']:
                         self.hashes[objectHash]['peers'].append(thread.peer)
             # add all objects into the current thread
             else:
@@ -130,14 +131,14 @@ class PendingUpload(object):
         self.clearHashes()
         with self.lock:
             return sum(1
-                for x in self.hashes if (self.hashes[x]['created'] + self.objectWait < time.time() or
-                    self.hashes[x]['sendCount'] == 0))
+                       for x in self.hashes if (self.hashes[x]['created'] + self.objectWait < time.time() or
+                                                self.hashes[x]['sendCount'] == 0))
 
     def _progress(self):
         with self.lock:
             return float(sum(len(self.hashes[x]['peers'])
-                for x in self.hashes if (self.hashes[x]['created'] + self.objectWait < time.time()) or
-                    self.hashes[x]['sendCount'] == 0))
+                             for x in self.hashes if (self.hashes[x]['created'] + self.objectWait < time.time()) or
+                             self.hashes[x]['sendCount'] == 0))
 
     def progress(self, raiseDeadline=True):
         if self.maxLen < self._progress():
@@ -157,18 +158,18 @@ class PendingUpload(object):
                 return
             objects = self.hashes.keys()
         else:
-            objects = objectHash, 
+            objects = objectHash,
         with self.lock:
             for i in objects:
                 try:
                     if self.hashes[i]['sendCount'] > 0 and (
-                        len(self.hashes[i]['peers']) == 0 or 
-                        self.hashes[i]['created'] + self.objectWait < time.time()):
+                            len(self.hashes[i]['peers']) == 0 or
+                            self.hashes[i]['created'] + self.objectWait < time.time()):
                         del self.hashes[i]
                 except KeyError:
                     pass
         self.lastCleared = time.time()
-    
+
     def delete(self, objectHash=None):
         if not hasattr(current_thread(), 'peer'):
             return

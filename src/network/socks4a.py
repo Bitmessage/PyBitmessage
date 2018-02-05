@@ -3,12 +3,13 @@ import struct
 
 from proxy import Proxy, ProxyError, GeneralProxyError
 
+
 class Socks4aError(ProxyError):
     errorCodes = ("Request granted",
-        "Request rejected or failed",
-        "Request rejected because SOCKS server cannot connect to identd on the client",
-        "Request rejected because the client program and identd report different user-ids",
-        "Unknown error")
+                  "Request rejected or failed",
+                  "Request rejected because SOCKS server cannot connect to identd on the client",
+                  "Request rejected because the client program and identd report different user-ids",
+                  "Unknown error")
 
 
 class Socks4a(Proxy):
@@ -47,7 +48,7 @@ class Socks4a(Proxy):
         return True
 
     def proxy_sock_name(self):
-       return socket.inet_ntoa(self.__proxysockname[0])
+        return socket.inet_ntoa(self.__proxysockname[0])
 
 
 class Socks4aConnection(Socks4a):

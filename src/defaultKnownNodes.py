@@ -7,6 +7,7 @@ import sys
 from time import strftime, localtime
 import state
 
+
 def createDefaultKnownNodes(appdata):
     ############## Stream 1 ################
     stream1 = {}
@@ -21,7 +22,7 @@ def createDefaultKnownNodes(appdata):
     stream1[state.Peer('24.188.198.204', 8111)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
     stream1[state.Peer('109.147.204.113', 1195)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
     stream1[state.Peer('178.11.46.221', 8444)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
-    
+
     ############# Stream 2 #################
     stream2 = {}
     # None yet
@@ -35,8 +36,8 @@ def createDefaultKnownNodes(appdata):
     allKnownNodes[2] = stream2
     allKnownNodes[3] = stream3
 
-    #print stream1
-    #print allKnownNodes
+    # print stream1
+    # print allKnownNodes
 
     with open(appdata + 'knownnodes.dat', 'wb') as output:
         # Pickle dictionary using protocol 0.
@@ -44,12 +45,13 @@ def createDefaultKnownNodes(appdata):
 
     return allKnownNodes
 
+
 def readDefaultKnownNodes(appdata):
     pickleFile = open(appdata + 'knownnodes.dat', 'rb')
     knownNodes = pickle.load(pickleFile)
     pickleFile.close()
     for stream, storedValue in knownNodes.items():
-        for host,value in storedValue.items():
+        for host, value in storedValue.items():
             try:
                 # Old knownNodes format.
                 port, storedtime = value
@@ -57,7 +59,8 @@ def readDefaultKnownNodes(appdata):
                 # New knownNodes format.
                 host, port = host
                 storedtime = value
-            print host, '\t', port, '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p',localtime(storedtime)),'utf-8')
+            print host, '\t', port, '\t', unicode(strftime('%a, %d %b %Y  %I:%M %p', localtime(storedtime)), 'utf-8')
+
 
 if __name__ == "__main__":
 
@@ -75,8 +78,5 @@ if __name__ == "__main__":
     else:
         appdata = path.expanduser(path.join("~", "." + APPNAME + "/"))
 
-
     print 'New list of all known nodes:', createDefaultKnownNodes(appdata)
     readDefaultKnownNodes(appdata)
-
-

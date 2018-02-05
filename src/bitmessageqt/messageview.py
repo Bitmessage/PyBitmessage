@@ -5,13 +5,14 @@ import Queue
 from urlparse import urlparse
 from safehtmlparser import *
 
+
 class MessageView(QtGui.QTextBrowser):
     MODE_PLAIN = 0
     MODE_HTML = 1
-    
-    def __init__(self, parent = 0):
+
+    def __init__(self, parent=0):
         super(MessageView, self).__init__(parent)
-        self.mode = MessageView.MODE_PLAIN 
+        self.mode = MessageView.MODE_PLAIN
         self.html = None
         self.setOpenExternalLinks(False)
         self.setOpenLinks(False)
@@ -27,7 +28,7 @@ class MessageView(QtGui.QTextBrowser):
     def resizeEvent(self, event):
         super(MessageView, self).resizeEvent(event)
         self.setWrappingWidth(event.size().width())
-    
+
     def mousePressEvent(self, event):
         #text = textCursor.block().text()
         if event.button() == QtCore.Qt.LeftButton and self.html and self.html.has_html and self.cursorForPosition(event.pos()).block().blockNumber() == 0:
@@ -69,13 +70,13 @@ class MessageView(QtGui.QTextBrowser):
             window.ui.textEditMessage.setFocus()
             return
         reply = QtGui.QMessageBox.warning(self,
-            QtGui.QApplication.translate("MessageView", "Follow external link"),
-            QtGui.QApplication.translate("MessageView", "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you or download malicious data. Are you sure?").arg(str(link.toString())),
-            QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
+                                          QtGui.QApplication.translate("MessageView", "Follow external link"),
+                                          QtGui.QApplication.translate("MessageView", "The link \"%1\" will open in a browser. It may be a security risk, it could de-anonymise you or download malicious data. Are you sure?").arg(str(link.toString())),
+                                          QtGui.QMessageBox.Yes, QtGui.QMessageBox.No)
         if reply == QtGui.QMessageBox.Yes:
             QtGui.QDesktopServices.openUrl(link)
 
-    def loadResource (self, restype, name):
+    def loadResource(self, restype, name):
         if restype == QtGui.QTextDocument.ImageResource and name.scheme() == "bmmsg":
             pass
 #            QImage correctImage;
@@ -108,7 +109,7 @@ class MessageView(QtGui.QTextBrowser):
             cursor.insertHtml(QtCore.QString(self.out[startpos:self.outpos]))
         self.verticalScrollBar().setValue(position)
         self.rendering = False
-    
+
     def showPlain(self):
         self.mode = MessageView.MODE_PLAIN
         out = self.html.raw

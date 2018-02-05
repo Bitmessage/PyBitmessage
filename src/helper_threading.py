@@ -3,6 +3,7 @@ import threading
 
 try:
     import prctl
+
     def set_thread_name(name): prctl.set_name(name)
 
     def _thread_name_hack(self):
@@ -14,17 +15,20 @@ try:
 except ImportError:
     def set_thread_name(name): threading.current_thread().name = name
 
+
 class StoppableThread(object):
     def initStop(self):
         self.stop = threading.Event()
         self._stopped = False
-        
+
     def stopThread(self):
         self._stopped = True
         self.stop.set()
 
+
 class BusyError(threading.ThreadError):
     pass
+
 
 @contextmanager
 def nonBlocking(lock):

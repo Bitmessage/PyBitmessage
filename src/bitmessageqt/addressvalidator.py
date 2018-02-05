@@ -7,6 +7,7 @@ from queues import apiAddressGeneratorReturnQueue, addressGeneratorQueue
 from tr import _translate
 from utils import str_chan
 
+
 class AddressPassPhraseValidatorMixin():
     def setParams(self, passPhraseObject=None, addressObject=None, feedBackObject=None, buttonBox=None, addressMandatory=True):
         self.addressObject = addressObject
@@ -107,7 +108,7 @@ class AddressPassPhraseValidatorMixin():
             if decodeAddress(address)[0] == 'versiontoohigh':
                 self.setError(_translate("AddressValidator", "Address too new. Although that Bitmessage address might be valid, its version number is too new for us to handle. Perhaps you need to upgrade Bitmessage."))
                 return (QtGui.QValidator.Intermediate, pos)
-    
+
             # invalid
             if decodeAddress(address)[0] != 'success':
                 self.setError(_translate("AddressValidator", "The Bitmessage address is not valid."))
@@ -131,6 +132,7 @@ class AddressPassPhraseValidatorMixin():
 
     def checkData(self):
         return self.validate("", 0)
+
 
 class AddressValidator(QtGui.QValidator, AddressPassPhraseValidatorMixin):
     def __init__(self, parent=None, passPhraseObject=None, feedBackObject=None, buttonBox=None, addressMandatory=True):

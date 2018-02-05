@@ -9,6 +9,7 @@ from network.connectionpool import BMConnectionPool
 from network.udp import UDPSocket
 import state
 
+
 class AnnounceThread(threading.Thread, StoppableThread):
     def __init__(self):
         threading.Thread.__init__(self, name="Announcer")

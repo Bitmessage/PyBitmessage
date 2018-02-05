@@ -15,6 +15,7 @@ import state
 
 storeConfigFilesInSameDirectoryAsProgramByDefault = False  # The user may de-select Portable Mode in the settings if they want the config files to stay in the application data folder.
 
+
 def _loadTrustedPeer():
     try:
         trustedPeer = BMConfigParser().get('bitmessagesettings', 'trustedpeer')
@@ -26,10 +27,11 @@ def _loadTrustedPeer():
     host, port = trustedPeer.split(':')
     state.trustedPeer = state.Peer(host, int(port))
 
+
 def loadConfig():
     if state.appdata:
         BMConfigParser().read(state.appdata + 'keys.dat')
-        #state.appdata must have been specified as a startup option.
+        # state.appdata must have been specified as a startup option.
         try:
             BMConfigParser().get('bitmessagesettings', 'settingsversion')
             print 'Loading config files from directory specified on startup: ' + state.appdata
@@ -69,9 +71,9 @@ def loadConfig():
         if 'linux' in sys.platform:
             BMConfigParser().set(
                 'bitmessagesettings', 'minimizetotray', 'false')
-                              # This isn't implimented yet and when True on
-                              # Ubuntu causes Bitmessage to disappear while
-                              # running when minimized.
+            # This isn't implimented yet and when True on
+            # Ubuntu causes Bitmessage to disappear while
+            # running when minimized.
         else:
             BMConfigParser().set(
                 'bitmessagesettings', 'minimizetotray', 'true')
@@ -103,21 +105,21 @@ def loadConfig():
         BMConfigParser().set('bitmessagesettings', 'dontconnect', 'true')
         BMConfigParser().set('bitmessagesettings', 'userlocale', 'system')
         BMConfigParser().set('bitmessagesettings', 'useidenticons', 'True')
-        BMConfigParser().set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12))) # a twelve character pseudo-password to salt the identicons
+        BMConfigParser().set('bitmessagesettings', 'identiconsuffix', ''.join(random.choice("123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz") for x in range(12)))  # a twelve character pseudo-password to salt the identicons
         BMConfigParser().set('bitmessagesettings', 'replybelow', 'False')
         BMConfigParser().set('bitmessagesettings', 'maxdownloadrate', '0')
         BMConfigParser().set('bitmessagesettings', 'maxuploadrate', '0')
         BMConfigParser().set('bitmessagesettings', 'maxoutboundconnections', '8')
         BMConfigParser().set('bitmessagesettings', 'ttl', '367200')
-        
-         #start:UI setting to stop trying to send messages after X days/months
+
+        # start:UI setting to stop trying to send messages after X days/months
         BMConfigParser().set(
             'bitmessagesettings', 'stopresendingafterxdays', '')
         BMConfigParser().set(
             'bitmessagesettings', 'stopresendingafterxmonths', '')
-        #BMConfigParser().set(
+        # BMConfigParser().set(
         #    'bitmessagesettings', 'timeperiod', '-1')
-        #end
+        # end
 
         # Are you hoping to add a new option to the keys.dat file? You're in
         # the right place for adding it to users who install the software for
@@ -142,11 +144,12 @@ def loadConfig():
 
     _loadTrustedPeer()
 
+
 def isOurOperatingSystemLimitedToHavingVeryFewHalfOpenConnections():
     try:
-        if sys.platform[0:3]=="win":
-            VER_THIS=StrictVersion(platform.version())
-            return StrictVersion("5.1.2600")<=VER_THIS and StrictVersion("6.0.6000")>=VER_THIS
+        if sys.platform[0:3] == "win":
+            VER_THIS = StrictVersion(platform.version())
+            return StrictVersion("5.1.2600") <= VER_THIS and StrictVersion("6.0.6000") >= VER_THIS
         return False
     except Exception as err:
         return False

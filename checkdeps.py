@@ -36,9 +36,9 @@ PACKAGES = {
         "Guix": "python2-pyqt@4.11.4",
         "Gentoo": "dev-python/PyQt4",
         'optional': True,
-        'description': "You only need PyQt if you want to use the GUI. " \
-                       "When only running as a daemon, this can be skipped.\n" \
-                       "However, you would have to install it manually " \
+        'description': "You only need PyQt if you want to use the GUI. "
+                       "When only running as a daemon, this can be skipped.\n"
+                       "However, you would have to install it manually "
                        "because setuptools does not support PyQt."
     },
     "msgpack": {
@@ -65,8 +65,8 @@ PACKAGES = {
         "Guix": "",
         "Gentoo": "dev-python/pyopencl",
         "optional": True,
-        'description': "If you install pyopencl, you will be able to use " \
-                       "GPU acceleration for proof of work. \n" \
+        'description': "If you install pyopencl, you will be able to use "
+                       "GPU acceleration for proof of work. \n"
                        "You also need a compatible GPU and drivers."
     },
     "setuptools": {
@@ -90,6 +90,7 @@ COMPILING = {
     "openSUSE": "gcc-c++ libopenssl-devel python-devel",
     "optional": False,
 }
+
 
 def detectOSRelease():
     with open("/etc/os-release", 'r') as osRelease:
@@ -117,6 +118,7 @@ def detectOSRelease():
         if detectOS.result == "Ubuntu" and version < 14:
             detectOS.result = "Ubuntu 12"
 
+
 def detectOS():
     if detectOS.result is not None:
         return detectOS.result
@@ -132,6 +134,7 @@ def detectOS():
         detectOS.result = "Guix"
     return detectOS.result
 
+
 def detectPrereqs(missing=True):
     available = []
     for module in PACKAGES:
@@ -144,6 +147,7 @@ def detectPrereqs(missing=True):
                 available.append(module)
     return available
 
+
 def prereqToPackages():
     if not detectPrereqs():
         return
@@ -151,11 +155,13 @@ def prereqToPackages():
         PACKAGE_MANAGER[detectOS()], " ".join(
             PACKAGES[x][detectOS()] for x in detectPrereqs()))
 
+
 def compilerToPackages():
     if not detectOS() in COMPILING:
         return
     print "%s %s" % (
         PACKAGE_MANAGER[detectOS.result], COMPILING[detectOS.result])
+
 
 def testCompiler():
     if not HAVE_SETUPTOOLS:
@@ -182,6 +188,7 @@ def testCompiler():
         fullPath = os.path.join(cmd.build_lib, cmd.get_ext_filename("bitmsghash"))
         return os.path.isfile(fullPath)
 
+
 detectOS.result = None
 prereqs = detectPrereqs()
 
@@ -189,8 +196,8 @@ compiler = testCompiler()
 
 if (not compiler or prereqs) and detectOS() in PACKAGE_MANAGER:
     print "It looks like you're using %s. " \
-    "It is highly recommended to use the package manager\n" \
-    "to install the missing dependencies." % (detectOS.result)
+        "It is highly recommended to use the package manager\n" \
+        "to install the missing dependencies." % (detectOS.result)
 
 if not compiler:
     print "Building the bitmsghash module failed.\n" \

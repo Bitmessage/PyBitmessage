@@ -2,8 +2,10 @@ from collections import deque
 import Queue
 import random
 
+
 class MultiQueue(Queue.Queue):
     defaultQueueCount = 10
+
     def __init__(self, maxsize=0, count=0):
         if not count:
             self.queueCount = MultiQueue.defaultQueueCount
@@ -23,7 +25,7 @@ class MultiQueue(Queue.Queue):
 
     # Put a new item in the queue
     def _put(self, item):
-        #self.queue.append(item)
+        # self.queue.append(item)
         self.queues[random.randrange(self.queueCount)].append((item))
 
     # Get an item from the queue

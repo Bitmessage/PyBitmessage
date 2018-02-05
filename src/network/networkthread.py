@@ -7,6 +7,7 @@ import network.asyncore_pollchoose as asyncore
 from network.connectionpool import BMConnectionPool
 import state
 
+
 class BMNetworkThread(threading.Thread, StoppableThread):
     def __init__(self):
         threading.Thread.__init__(self, name="Asyncore")
