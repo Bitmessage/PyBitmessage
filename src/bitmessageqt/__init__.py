@@ -686,6 +686,10 @@ class MyForm(settingsmixin.SMainWindow):
             "itemSelectionChanged ()"), self.treeWidgetItemClicked)
         QtCore.QObject.connect(self.ui.treeWidgetChans, QtCore.SIGNAL(
             "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
+        QtCore.QObject.connect(
+            self.ui.tabWidget, QtCore.SIGNAL("currentChanged(int)"),
+            self.tabWidgetCurrentChanged
+        )
 
         # Put the colored icon on the status bar
         # self.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
@@ -4011,6 +4015,12 @@ class MyForm(settingsmixin.SMainWindow):
             if unicode(completerList[i]).endswith(" <" + item.address + ">"):
                 completerList[i] = item.label + " <" + item.address + ">"
         self.ui.lineEditTo.completer().model().setStringList(completerList)
+
+    def tabWidgetCurrentChanged(self, n):
+        if n == self.ui.tabWidget.indexOf(self.ui.networkstatus):
+            self.ui.networkstatus.startUpdate()
+        else:
+            self.ui.networkstatus.stopUpdate()
 
     def writeNewAddressToTable(self, label, address, streamNumber):
         self.rerenderTabTreeMessages()
