@@ -42,7 +42,6 @@ for row in cur.fetchall():
         pass
 
 
-
 print "Item count: %i" % (itemcount)
 print "Raw length: %i" % (rawlen)
 print "Bloom filter 1 length: %i, reduction to: %.2f%%" % \

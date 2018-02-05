@@ -124,7 +124,6 @@ class singleCleaner(threading.Thread, StoppableThread):
                             os._exit(0)
                 shared.needToWriteKnownNodesToDisk = False
 
-
             # inv/object tracking
             for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():
                 connection.clean()

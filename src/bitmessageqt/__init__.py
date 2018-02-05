@@ -4346,7 +4346,6 @@ def run():
         myapp.showConnectDialog()  # ask the user if we may connect
     myapp.ui.updateNetworkSwitchMenuLabel()
 
-
     # only show after wizards and connect dialogs have completed
     if not BMConfigParser().getboolean('bitmessagesettings', 'startintray'):
         myapp.show()

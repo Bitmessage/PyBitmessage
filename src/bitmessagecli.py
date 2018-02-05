@@ -208,7 +208,6 @@ def apiData():
     except:
         apiInit("")  # Initalize the keys.dat file with API information
 
-
     BMConfigParser().read(keysPath)  # read again since changes have been made
     apiPort = int(BMConfigParser().get('bitmessagesettings', 'apiport'))
     apiInterface = BMConfigParser().get('bitmessagesettings', 'apiinterface')

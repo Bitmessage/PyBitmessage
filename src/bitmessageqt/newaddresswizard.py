@@ -108,7 +108,6 @@ class NewAddressWizardRandomPage(QtGui.QWizardPage):
         self.registerField("radioButtonExisting", self.radioButtonExisting)
         self.registerField("comboBoxExisting", self.comboBoxExisting)
 
-
     def nextId(self):
         return 6
 
@@ -165,7 +164,6 @@ class NewAddressWizardEmailProviderPage(QtGui.QWizardPage):
                              "Press Next.")
         label.setWordWrap(True)
 
-
         layout = QtGui.QVBoxLayout()
         layout.addWidget(label)
         self.setLayout(layout)
@@ -211,7 +209,6 @@ class NewAddressWizardWaitPage(QtGui.QWizardPage):
         self.progressBar.setMinimum(0)
         self.progressBar.setMaximum(100)
         self.progressBar.setValue(0)
-
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.label)

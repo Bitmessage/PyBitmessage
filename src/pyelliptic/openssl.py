@@ -223,8 +223,6 @@ class _OpenSSL:
         self.EVP_aes_256_cbc.restype = ctypes.c_void_p
         self.EVP_aes_256_cbc.argtypes = []
 
-
-
         self.EVP_aes_128_ofb = self._lib.EVP_aes_128_ofb
         self.EVP_aes_128_ofb.restype = ctypes.c_void_p
         self.EVP_aes_128_ofb.argtypes = []

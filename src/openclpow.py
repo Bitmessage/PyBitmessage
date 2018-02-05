@@ -103,7 +103,6 @@ def do_opencl_pow(hash, target):
     return output[0][0]
 
 
-
 if __name__ == "__main__":
     target = 54227212183L
     initialHash = "3758f55b5a8d902fd3597e4ce6a2d3f23daff735f65d9698c270987f4e67ad590b93f3ffeba0ef2fd08a8dc2f87b68ae5a0dc819ab57f22ad2c4c9c8618a43b3".decode("hex")

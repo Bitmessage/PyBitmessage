@@ -5,7 +5,6 @@ import paths
 from tls import TLSHandshake
 
 
-
 class HTTPSClient(HTTPClient, TLSHandshake):
     def __init__(self, host, path):
         if not hasattr(self, '_map'):

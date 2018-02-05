@@ -172,7 +172,6 @@ def decodeAddress(address):
     if len(hexdata) % 2 != 0:
         hexdata = '0' + hexdata
 
-
     data = unhexlify(hexdata)
     checksum = data[-4:]
 

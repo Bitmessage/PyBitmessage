@@ -196,7 +196,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # retval (array)
         parserStack = [[1, 1, False, pattern, 0, []]]
 
-
         while True:
             i = parserStack[-1][3][parserStack[-1][4]]
             if i in "0123456789" and (size is None or parserStack[-1][3][parserStack[-1][4]-1] not in "lL"):
