@@ -41,7 +41,6 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'white':
             BMConfigParser().set('bitmessagesettings', 'blackwhitelist', 'black')
             BMConfigParser().save()
-            # self.tableWidgetBlacklist.clearContents()
             self.tableWidgetBlacklist.setRowCount(0)
             self.rerenderBlackWhiteList()
 
@@ -49,7 +48,6 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
         if BMConfigParser().get('bitmessagesettings', 'blackwhitelist') == 'black':
             BMConfigParser().set('bitmessagesettings', 'blackwhitelist', 'white')
             BMConfigParser().save()
-            # self.tableWidgetBlacklist.clearContents()
             self.tableWidgetBlacklist.setRowCount(0)
             self.rerenderBlackWhiteList()
 
@@ -135,7 +133,6 @@ class Blacklist(QtGui.QWidget, RetranslateMixin):
                 'customContextMenuRequested(const QPoint&)'),
                 self.on_context_menuBlacklist)
         self.popMenuBlacklist = QtGui.QMenu(self)
-        # self.popMenuBlacklist.addAction( self.actionBlacklistNew )
         self.popMenuBlacklist.addAction(self.actionBlacklistDelete)
         self.popMenuBlacklist.addSeparator()
         self.popMenuBlacklist.addAction(self.actionBlacklistClipboard)

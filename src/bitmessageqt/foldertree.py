@@ -163,7 +163,6 @@ class Ui_AddressWidget(QtGui.QTreeWidgetItem, AccountMixin, SettingsMixin):
         super(QtGui.QTreeWidgetItem, self).__init__()
         parent.insertTopLevelItem(pos, self)
         # only set default when creating
-        #super(QtGui.QTreeWidgetItem, self).setExpanded(BMConfigParser().getboolean(self.address, 'enabled'))
         self.setAddress(address)
         self.setEnabled(enabled)
         self.setUnreadCount(unreadCount)
@@ -252,7 +251,6 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
         super(QtGui.QTreeWidgetItem, self).__init__()
         parent.insertTopLevelItem(pos, self)
         # only set default when creating
-        #super(QtGui.QTreeWidgetItem, self).setExpanded(BMConfigParser().getboolean(self.address, 'enabled'))
         self.setAddress(address)
         self.setEnabled(enabled)
         self.setType()
@@ -287,9 +285,7 @@ class Ui_SubscriptionWidget(Ui_AddressWidget, AccountMixin):
 class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMixin):
     def __init__(self, parent, address=None, label=None, unread=False):
         super(QtGui.QTableWidgetItem, self).__init__()
-        #parent.insertTopLevelItem(pos, self)
         # only set default when creating
-        #super(QtGui.QTreeWidgetItem, self).setExpanded(BMConfigParser().getboolean(self.address, 'enabled'))
         self.isEnabled = True
         self.setAddress(address)
         self.setLabel(label)
@@ -362,9 +358,7 @@ class MessageList_AddressWidget(QtGui.QTableWidgetItem, AccountMixin, SettingsMi
 class MessageList_SubjectWidget(QtGui.QTableWidgetItem, SettingsMixin):
     def __init__(self, parent, subject=None, label=None, unread=False):
         super(QtGui.QTableWidgetItem, self).__init__()
-        #parent.insertTopLevelItem(pos, self)
         # only set default when creating
-        #super(QtGui.QTreeWidgetItem, self).setExpanded(BMConfigParser().getboolean(self.address, 'enabled'))
         self.setSubject(subject)
         self.setLabel(label)
         self.setUnread(unread)

@@ -66,7 +66,6 @@ class HTTPSRequestHandler(HTTPRequestHandler, TLSHandshake):
     def __init__(self, sock):
         if not hasattr(self, '_map'):
             asyncore.dispatcher.__init__(self, sock)
-#        self.tlsDone = False
         TLSHandshake.__init__(self, sock=sock, certfile='/home/shurdeek/src/PyBitmessage/src/sslkeys/cert.pem', keyfile='/home/shurdeek/src/PyBitmessage/src/sslkeys/key.pem', server_side=True)
         HTTPRequestHandler.__init__(self, sock)
 
@@ -120,10 +119,7 @@ class HTTPServer(asyncore.dispatcher):
         pair = self.accept()
         if pair is not None:
             sock, addr = pair
-#            print 'Incoming connection from %s' % repr(addr)
             self.connections += 1
-#            if self.connections % 1000 == 0:
-#                print "Processed %i connections, active %i" % (self.connections, len(asyncore.socket_map))
             HTTPRequestHandler(sock)
 
 
@@ -138,10 +134,7 @@ class HTTPSServer(HTTPServer):
         pair = self.accept()
         if pair is not None:
             sock, addr = pair
-#            print 'Incoming connection from %s' % repr(addr)
             self.connections += 1
-#            if self.connections % 1000 == 0:
-#                print "Processed %i connections, active %i" % (self.connections, len(asyncore.socket_map))
             HTTPSRequestHandler(sock)
 
 

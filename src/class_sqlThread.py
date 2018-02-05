@@ -558,8 +558,6 @@ class sqlThread(threading.Thread):
             else:
                 parameters = helper_sql.sqlSubmitQueue.get()
                 rowcount = 0
-                # print 'item', item
-                # print 'parameters', parameters
                 try:
                     self.cur.execute(item, parameters)
                     rowcount = self.cur.rowcount
@@ -575,4 +573,3 @@ class sqlThread(threading.Thread):
                     os._exit(0)
 
                 helper_sql.sqlReturnQueue.put((self.cur.fetchall(), rowcount))
-                # helper_sql.sqlSubmitQueue.task_done()

@@ -124,10 +124,6 @@ class singleCleaner(threading.Thread, StoppableThread):
                             os._exit(0)
                 shared.needToWriteKnownNodesToDisk = False
 
-#            # clear download queues
-#            for thread in threading.enumerate():
-#                if thread.isAlive() and hasattr(thread, 'downloadQueue'):
-#                    thread.downloadQueue.clear()
 
             # inv/object tracking
             for connection in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values():

@@ -71,7 +71,6 @@ class TCPConnection(BMProto, TLSDispatcher):
             self.local = True
         else:
             self.local = False
-        #shared.connectedHostsList[self.destination] = 0
         ObjectTracker.__init__(self)
         self.bm_proto_reset()
         self.set_state("bm_header", expectBytes=protocol.Header.size)
@@ -198,7 +197,6 @@ class TCPConnection(BMProto, TLSDispatcher):
         self.nodeid = randomBytes(8)
         self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port,
                                                               network.connectionpool.BMConnectionPool().streams, False, nodeid=self.nodeid))
-        # print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         self.connectedAt = time.time()
         receiveDataQueue.put(self.destination)
 
@@ -317,10 +315,8 @@ if __name__ == "__main__":
 
         proxy = Socks5BMConnection(host)
         while len(asyncore.socket_map) > 0:
-            #            print "loop, state = %s" % (proxy.state)
             asyncore.loop(timeout=10, count=1)
 
         proxy = Socks4aBMConnection(host)
         while len(asyncore.socket_map) > 0:
-            #            print "loop, state = %s" % (proxy.state)
             asyncore.loop(timeout=10, count=1)

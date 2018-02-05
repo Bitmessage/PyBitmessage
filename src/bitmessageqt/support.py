@@ -116,9 +116,7 @@ def createSupportMessage(myapp):
         frozen = paths.frozen
     portablemode = "True" if state.appdata == paths.lookupExeFolder() else "False"
     cpow = "True" if proofofwork.bmpow else "False"
-    #cpow = QtGui.QApplication.translate("Support", cpow)
     openclpow = str(BMConfigParser().safeGet('bitmessagesettings', 'opencl')) if openclEnabled() else "None"
-    #openclpow = QtGui.QApplication.translate("Support", openclpow)
     locale = getTranslationLanguage()
     try:
         socks = BMConfigParser().get('bitmessagesettings', 'socksproxytype')

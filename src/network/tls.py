@@ -62,8 +62,6 @@ class TLSDispatcher(AdvancedDispatcher):
         self.want_read = self.want_write = True
         self.set_state("tls_handshake")
         return False
-#        if hasattr(self.socket, "context"):
-#            self.socket.context.set_ecdh_curve("secp256k1")
 
     def state_tls_handshake(self):
         return False
@@ -80,7 +78,6 @@ class TLSDispatcher(AdvancedDispatcher):
         try:
             # during TLS handshake, and after flushing write buffer, return status of last handshake attempt
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
-                # print "tls readable, %r" % (self.want_read)
                 return self.want_read
             # prior to TLS handshake, receiveDataThread should emulate synchronous behaviour
             elif not self.fullyEstablished and (self.expectBytes == 0 or not self.write_buf_empty()):
@@ -93,10 +90,8 @@ class TLSDispatcher(AdvancedDispatcher):
         try:
             # wait for write buffer flush
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
-                #logger.debug("%s:%i TLS handshaking (read)", self.destination.host, self.destination.port)
                 self.tls_handshake()
             else:
-                #logger.debug("%s:%i Not TLS handshaking (read)", self.destination.host, self.destination.port)
                 return AdvancedDispatcher.handle_read(self)
         except AttributeError:
             return AdvancedDispatcher.handle_read(self)
@@ -114,10 +109,8 @@ class TLSDispatcher(AdvancedDispatcher):
         try:
             # wait for write buffer flush
             if self.tlsStarted and not self.tlsDone and not self.write_buf:
-                #logger.debug("%s:%i TLS handshaking (write)", self.destination.host, self.destination.port)
                 self.tls_handshake()
             else:
-                #logger.debug("%s:%i Not TLS handshaking (write)", self.destination.host, self.destination.port)
                 return AdvancedDispatcher.handle_write(self)
         except AttributeError:
             return AdvancedDispatcher.handle_write(self)
@@ -137,16 +130,12 @@ class TLSDispatcher(AdvancedDispatcher):
             return False
         # Perform the handshake.
         try:
-            # print "handshaking (internal)"
             self.sslSocket.do_handshake()
         except ssl.SSLError as err:
-            # print "%s:%i: handshake fail" % (self.destination.host, self.destination.port)
             self.want_read = self.want_write = False
             if err.args[0] == ssl.SSL_ERROR_WANT_READ:
-                # print "want read"
                 self.want_read = True
             if err.args[0] == ssl.SSL_ERROR_WANT_WRITE:
-                # print "want write"
                 self.want_write = True
             if not (self.want_write or self.want_read):
                 raise

@@ -12,7 +12,6 @@ def createDefaultKnownNodes(appdata):
     ############## Stream 1 ################
     stream1 = {}
 
-    #stream1[state.Peer('2604:2000:1380:9f:82e:148b:2746:d0c7', 8080)] = int(time.time())
     stream1[state.Peer('5.45.99.75', 8444)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
     stream1[state.Peer('75.167.159.54', 8444)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
     stream1[state.Peer('95.165.168.168', 8444)] = {"lastseen": int(time.time()), "rating": 0, "self": False}
@@ -36,8 +35,6 @@ def createDefaultKnownNodes(appdata):
     allKnownNodes[2] = stream2
     allKnownNodes[3] = stream3
 
-    # print stream1
-    # print allKnownNodes
 
     with open(appdata + 'knownnodes.dat', 'wb') as output:
         # Pickle dictionary using protocol 0.
@@ -69,8 +66,6 @@ if __name__ == "__main__":
     if sys.platform == 'darwin':
         from AppKit import NSSearchPathForDirectoriesInDomains  # @UnresolvedImport
         # http://developer.apple.com/DOCUMENTATION/Cocoa/Reference/Foundation/Miscellaneous/Foundation_Functions/Reference/reference.html#//apple_ref/c/func/NSSearchPathForDirectoriesInDomains
-        # NSApplicationSupportDirectory = 14
-        # NSUserDomainMask = 1
         # True for expanding the tilde into a fully qualified path
         appdata = path.join(NSSearchPathForDirectoriesInDomains(14, 1, True)[0], APPNAME) + '/'
     elif 'win' in sys.platform:

@@ -690,11 +690,9 @@ class Ui_MainWindow(object):
         self.label_3.setText(_translate("MainWindow", "Subject:", None))
         self.label_2.setText(_translate("MainWindow", "From:", None))
         self.label.setText(_translate("MainWindow", "To:", None))
-        # self.textEditMessage.setHtml("")
         self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendDirect), _translate("MainWindow", "Send ordinary Message", None))
         self.label_8.setText(_translate("MainWindow", "From:", None))
         self.label_7.setText(_translate("MainWindow", "Subject:", None))
-        # self.textEditMessageBroadcast.setHtml("")
         self.tabWidgetSend.setTabText(self.tabWidgetSend.indexOf(self.sendBroadcast), _translate("MainWindow", "Send Message to your Subscribers", None))
         self.pushButtonTTL.setText(_translate("MainWindow", "TTL:", None))
         hours = 48

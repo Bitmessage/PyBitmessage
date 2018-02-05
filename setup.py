@@ -73,11 +73,8 @@ if __name__ == "__main__":
         long_description=README,
         license='MIT',
         # TODO: add author info
-        # author='',
-        # author_email='',
         url='https://bitmessage.org',
         # TODO: add keywords
-        # keywords='',
         install_requires=installRequires,
         extras_require={
             'gir': ['pygobject'],
@@ -131,9 +128,6 @@ if __name__ == "__main__":
                 'libmessaging ='
                 'pybitmessage.plugins.indicator_libmessaging [gir]'
             ],
-            # 'console_scripts': [
-            #        'pybitmessage = pybitmessage.bitmessagemain:main'
-            # ]
         },
         scripts=['src/pybitmessage'],
         cmdclass={'install': InstallCmd}

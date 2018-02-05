@@ -544,7 +544,6 @@ class dispatcher:
     __str__ = __repr__
 
     def add_channel(self, map=None):
-        #self.log_info('adding channel %s' % self)
         if map is None:
             map = self._map
         map[self._fileno] = self
@@ -556,7 +555,6 @@ class dispatcher:
         if map is None:
             map = self._map
         if fd in map:
-            #self.log_info('closing channel %d:%s' % (fd, self))
             del map[fd]
         if self._fileno:
             try:
@@ -590,7 +588,6 @@ class dispatcher:
 
     def set_socket(self, sock, map=None):
         self.socket = sock
-##        self.__dict__['socket'] = sock
         self._fileno = sock.fileno()
         self.add_channel(map)
 

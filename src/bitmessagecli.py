@@ -8,8 +8,6 @@
 
 import xmlrpclib
 import datetime
-#import hashlib
-#import getopt
 import imghdr
 import ntpath
 import json
@@ -122,7 +120,6 @@ def apiInit(apiEnabled):
 
             apiUsr = userInput("API Username")
             apiPwd = userInput("API Password")
-            #apiInterface = userInput("API Interface. (127.0.0.1)")
             apiPort = userInput("API Port")
             apiEnabled = userInput("API Enabled? (True) or (False)").lower()
             daemon = userInput("Daemon mode Enabled? (True) or (False)").lower()
@@ -211,8 +208,6 @@ def apiData():
     except:
         apiInit("")  # Initalize the keys.dat file with API information
 
-    # keys.dat file was found or appropriately configured, allow information retrieval
-    # apiEnabled = apiInit(BMConfigParser().safeGetBoolean('bitmessagesettings','apienabled')) #if false it will prompt the user, if true it will return true
 
     BMConfigParser().read(keysPath)  # read again since changes have been made
     apiPort = int(BMConfigParser().get('bitmessagesettings', 'apiport'))
@@ -439,8 +434,6 @@ def unsubscribe():
 
 def listSubscriptions():
     global usrPrompt
-    #jsonAddresses = json.loads(api.listSubscriptions())
-    # numAddresses = len(jsonAddresses['addresses']) #Number of addresses
     print '\nLabel, Address, Enabled\n'
     try:
         print api.listSubscriptions()
@@ -527,7 +520,6 @@ def listAdd():  # Lists all of the addresses and their info
         usrPrompt = 0
         main()
 
-    # print '\nAddress Number,Label,Address,Stream,Enabled\n'
     print '\n     --------------------------------------------------------------------------'
     print '     | # |       Label       |               Address               |S#|Enabled|'
     print '     |---|-------------------|-------------------------------------|--|-------|'
@@ -776,8 +768,6 @@ def sendMsg(toAddress, fromAddress, subject, message):  # With no arguments sent
                 for addNum in range(0, numAddresses):  # processes all of the addresses
                     label = jsonAddresses['addresses'][addNum]['label']
                     address = jsonAddresses['addresses'][addNum]['address']
-                    #stream = jsonAddresses['addresses'][addNum]['stream']
-                    #enabled = jsonAddresses['addresses'][addNum]['enabled']
                     if (fromAddress == label):  # address entered was a label and is found
                         fromAddress = address
                         found = True
@@ -789,10 +779,7 @@ def sendMsg(toAddress, fromAddress, subject, message):  # With no arguments sent
 
                     else:
                         for addNum in range(0, numAddresses):  # processes all of the addresses
-                            #label = jsonAddresses['addresses'][addNum]['label']
                             address = jsonAddresses['addresses'][addNum]['address']
-                            #stream = jsonAddresses['addresses'][addNum]['stream']
-                            #enabled = jsonAddresses['addresses'][addNum]['enabled']
                             if (fromAddress == address):  # address entered was a found in our addressbook.
                                 found = True
                                 break
@@ -852,8 +839,6 @@ def sendBrd(fromAddress, subject, message):  # sends a broadcast
                 for addNum in range(0, numAddresses):  # processes all of the addresses
                     label = jsonAddresses['addresses'][addNum]['label']
                     address = jsonAddresses['addresses'][addNum]['address']
-                    #stream = jsonAddresses['addresses'][addNum]['stream']
-                    #enabled = jsonAddresses['addresses'][addNum]['enabled']
                     if (fromAddress == label):  # address entered was a label and is found
                         fromAddress = address
                         found = True
@@ -865,10 +850,7 @@ def sendBrd(fromAddress, subject, message):  # sends a broadcast
 
                     else:
                         for addNum in range(0, numAddresses):  # processes all of the addresses
-                            #label = jsonAddresses['addresses'][addNum]['label']
                             address = jsonAddresses['addresses'][addNum]['address']
-                            #stream = jsonAddresses['addresses'][addNum]['stream']
-                            #enabled = jsonAddresses['addresses'][addNum]['enabled']
                             if (fromAddress == address):  # address entered was a found in our addressbook.
                                 found = True
                                 break
@@ -951,7 +933,6 @@ def outbox():
     for msgNum in range(0, numMessages):  # processes all of the messages in the outbox
         print '\n     -----------------------------------\n'
         print '     Message Number:', msgNum  # Message Number
-        # print '     Message ID:', outboxMessages['sentMessages'][msgNum]['msgid']
         print '     To:', getLabelForAddress(outboxMessages['sentMessages'][msgNum]['toAddress'])  # Get the to address
         print '     From:', getLabelForAddress(outboxMessages['sentMessages'][msgNum]['fromAddress'])  # Get the from address
         print '     Subject:', outboxMessages['sentMessages'][msgNum]['subject'].decode('base64')  # Get the subject
@@ -990,12 +971,10 @@ def readSentMsg(msgNum):  # Opens a sent message for reading
         if (';base64,' in message):  # Found this text in the message, there is probably an attachment.
             attPos = message.index(";base64,")  # Finds the attachment position
             attEndPos = message.index("' />")  # Finds the end of the attachment
-            # attLen = attEndPos - attPos #Finds the length of the message
 
             if ('alt = "' in message):  # We can get the filename too
                 fnPos = message.index('alt = "')  # Finds position of the filename
                 fnEndPos = message.index('" src=')  # Finds the end position
-                # fnLen = fnEndPos - fnPos #Finds the length of the filename
 
                 fileName = message[fnPos+7:fnEndPos]
             else:
@@ -1046,12 +1025,10 @@ def readMsg(msgNum):  # Opens a message for reading
         if (';base64,' in message):  # Found this text in the message, there is probably an attachment.
             attPos = message.index(";base64,")  # Finds the attachment position
             attEndPos = message.index("' />")  # Finds the end of the attachment
-            # attLen = attEndPos - attPos #Finds the length of the message
 
             if ('alt = "' in message):  # We can get the filename too
                 fnPos = message.index('alt = "')  # Finds position of the filename
                 fnEndPos = message.index('" src=')  # Finds the end position
-                # fnLen = fnEndPos - fnPos #Finds the length of the filename
 
                 fileName = message[fnPos+7:fnEndPos]
             else:
@@ -1357,7 +1334,6 @@ def UI(usrInput):  # Main user menu
         print '     |------------------------|----------------------------------------------|'
         print '     | subscribe              | Subscribes to an address                     |'
         print '     | unsubscribe            | Unsubscribes from an address                 |'
-        # print'     | listSubscriptions      | Lists all of the subscriptions.              |'
         print '     |------------------------|----------------------------------------------|'
         print '     | create                 | Creates a channel                            |'
         print '     | join                   | Joins a channel                              |'
@@ -1418,12 +1394,9 @@ def UI(usrInput):  # Main user menu
         if uInput == "d" or uInput == "determinstic":  # Creates a deterministic address
             deterministic = True
 
-            # lbl = raw_input('Label the new address:') #currently not possible via the api
             lbl = ''
             passphrase = userInput('Enter the Passphrase.')  # .encode('base64')
             numOfAdd = int(userInput('How many addresses would you like to generate?'))
-            #addVNum = int(raw_input('Address version number (default "0"):'))
-            #streamNum = int(raw_input('Stream number (default "0"):'))
             addVNum = 3
             streamNum = 1
             isRipe = userInput('Shorten the address, (Y)es or (N)o?').lower()
@@ -1458,8 +1431,6 @@ def UI(usrInput):  # Main user menu
     elif usrInput == "getaddress":  # Gets the address for/from a passphrase
         phrase = userInput("Enter the address passphrase.")
         print '\n     Working...\n'
-        #vNumber = int(raw_input("Enter the address version number:"))
-        #sNumber = int(raw_input("Enter the address stream number:"))
 
         address = getAddress(phrase, 4, 1)  # ,vNumber,sNumber)
         print('\n     Address: ' + address + '\n')
@@ -1796,10 +1767,6 @@ def main():
         usrPrompt = 2
 
         # if (apiTest() == False):#Preform a connection test #taken out until I get the error handler working
-        #    print '*************************************'
-        #    print 'WARNING: No connection to Bitmessage.'
-        #    print '*************************************'
-        #    print ' '
     elif (usrPrompt == 1):
         print '\nType (H)elp for a list of commands.'  # Startup message
         usrPrompt = 2

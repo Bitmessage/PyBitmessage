@@ -20,7 +20,6 @@ from binascii import hexlify
 from addresses import *
 from bmconfigparser import BMConfigParser
 import highlevelcrypto
-#import helper_startup
 from helper_sql import *
 from inventory import Inventory
 from queues import objectProcessorQueue
@@ -112,7 +111,6 @@ def reloadMyAddressHashes():
     myECCryptorObjects.clear()
     myAddressesByHash.clear()
     myAddressesByTag.clear()
-    # myPrivateKeys.clear()
 
     keyfileSecure = checkSensitiveFilePermissions(state.appdata + 'keys.dat')
     hasEnabledKeys = False

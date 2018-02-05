@@ -368,9 +368,6 @@ class MyForm(settingsmixin.SMainWindow):
         self.actionForceSend = self.ui.sentContextMenuToolbar.addAction(
             _translate(
                 "MainWindow", "Force send"), self.on_action_ForceSend)
-        # self.popMenuSent = QtGui.QMenu( self )
-        # self.popMenuSent.addAction( self.actionSentClipboard )
-        # self.popMenuSent.addAction( self.actionTrashSentMessage )
 
     def rerenderTabTreeSubscriptions(self):
         treeWidget = self.ui.treeWidgetSubscriptions
@@ -687,7 +684,6 @@ class MyForm(settingsmixin.SMainWindow):
             "itemChanged (QTreeWidgetItem *, int)"), self.treeWidgetItemChanged)
 
         # Put the colored icon on the status bar
-        # self.pushButtonStatusIcon.setIcon(QIcon(":/newPrefix/images/yellowicon.png"))
         self.setStatusBar(BMStatusBar())
         self.statusbar = self.statusBar()
 
@@ -1519,7 +1515,6 @@ class MyForm(settingsmixin.SMainWindow):
                 # The window state has just been changed to
                 # Normal/Maximised/FullScreen
                 pass
-        # QtGui.QWidget.changeEvent(self, event)
 
     def __icon_activated(self, reason):
         if reason == QtGui.QSystemTrayIcon.Trigger:
@@ -1530,7 +1525,6 @@ class MyForm(settingsmixin.SMainWindow):
     connected = False
 
     def setStatusIcon(self, color):
-        # print 'setting status icon color'
         _notifications_enabled = not BMConfigParser().getboolean(
             'bitmessagesettings', 'hidetrayconnectionnotifications')
         if color == 'red':
@@ -2021,7 +2015,6 @@ class MyForm(settingsmixin.SMainWindow):
                             self.replyFromTab = None
                         self.updateStatusBar(_translate(
                             "MainWindow", "Message queued."))
-                        # self.ui.tableWidgetInbox.setCurrentCell(0, 0)
                 else:
                     self.updateStatusBar(_translate(
                         "MainWindow", "Your \'To\' field is empty."))
@@ -2122,7 +2115,6 @@ class MyForm(settingsmixin.SMainWindow):
                 if label == "":
                     label = addressInKeysFile
                 self.ui.comboBoxSendFrom.addItem(avatarize(addressInKeysFile), label, addressInKeysFile)
-#        self.ui.comboBoxSendFrom.model().sort(1, Qt.AscendingOrder)
         for i in range(self.ui.comboBoxSendFrom.count()):
             address = str(self.ui.comboBoxSendFrom.itemData(
                 i, QtCore.Qt.UserRole).toString())
@@ -2358,8 +2350,6 @@ class MyForm(settingsmixin.SMainWindow):
                     import upnp
                     upnpThread = upnp.uPnPThread()
                     upnpThread.start()
-            # print 'self.settingsDialogInstance.ui.comboBoxProxyType.currentText()', self.settingsDialogInstance.ui.comboBoxProxyType.currentText()
-            # print 'self.settingsDialogInstance.ui.comboBoxProxyType.currentText())[0:5]', self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5]
             if BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'none' and self.settingsDialogInstance.ui.comboBoxProxyType.currentText()[0:5] == 'SOCKS':
                 if shared.statusIconColor != 'red':
                     QtGui.QMessageBox.about(self, _translate("MainWindow", "Restart"), _translate(
@@ -2783,7 +2773,6 @@ class MyForm(settingsmixin.SMainWindow):
         shared.thisapp.cleanup()
         logger.info("Shutdown complete")
         super(MyForm, myapp).close()
-        # return
         os._exit(0)
 
     # window close event
@@ -2868,7 +2857,6 @@ class MyForm(settingsmixin.SMainWindow):
             self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), self.getCurrentFolder())
         else:
             self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), self.getCurrentFolder(), self.getCurrentTreeWidget(), 0)
-        # tableWidget.selectRow(currentRow + 1)
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
         # tableWidget.clearSelection() manages to mark the message as read again.
@@ -2948,7 +2936,6 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.tabWidgetSend.setCurrentIndex(
                 self.ui.tabWidgetSend.indexOf(self.ui.sendDirect)
             )
-#            toAddressAtCurrentInboxRow = fromAddressAtCurrentInboxRow
         elif not BMConfigParser().has_section(toAddressAtCurrentInboxRow):
             QtGui.QMessageBox.information(self, _translate("MainWindow", "Address is gone"), _translate(
                 "MainWindow", "Bitmessage cannot find your address %1. Perhaps you removed it?").arg(toAddressAtCurrentInboxRow), QtGui.QMessageBox.Ok)
@@ -3000,7 +2987,6 @@ class MyForm(settingsmixin.SMainWindow):
         if not tableWidget:
             return
         currentInboxRow = tableWidget.currentRow()
-        # tableWidget.item(currentRow,1).data(Qt.UserRole).toPyObject()
         addressAtCurrentInboxRow = tableWidget.item(
             currentInboxRow, 1).data(QtCore.Qt.UserRole)
         self.ui.tabWidget.setCurrentIndex(
@@ -3014,7 +3000,6 @@ class MyForm(settingsmixin.SMainWindow):
         if not tableWidget:
             return
         currentInboxRow = tableWidget.currentRow()
-        # tableWidget.item(currentRow,1).data(Qt.UserRole).toPyObject()
         addressAtCurrentInboxRow = tableWidget.item(
             currentInboxRow, 1).data(QtCore.Qt.UserRole)
         recipientAddress = tableWidget.item(
@@ -3526,7 +3511,6 @@ class MyForm(settingsmixin.SMainWindow):
     def getCurrentFolder(self, treeWidget=None):
         if treeWidget is None:
             treeWidget = self.getCurrentTreeWidget()
-        #treeWidget = self.ui.treeWidgetYourIdentities
         if treeWidget:
             currentItem = treeWidget.currentItem()
             if currentItem and hasattr(currentItem, 'folderName'):
@@ -3981,10 +3965,6 @@ class MyForm(settingsmixin.SMainWindow):
                     return
                 font = QtGui.QFont()
                 font.setBold(False)
-#                inventoryHashesToMarkRead = []
-#                inventoryHashToMarkRead = str(tableWidget.item(
-#                    currentRow, 3).data(Qt.UserRole).toPyObject())
-#                inventoryHashesToMarkRead.append(inventoryHashToMarkRead)
                 tableWidget.item(currentRow, 0).setUnread(False)
                 tableWidget.item(currentRow, 1).setUnread(False)
                 tableWidget.item(currentRow, 2).setUnread(False)
@@ -4366,11 +4346,6 @@ def run():
         myapp.showConnectDialog()  # ask the user if we may connect
     myapp.ui.updateNetworkSwitchMenuLabel()
 
-#    try:
-#        if BMConfigParser().get('bitmessagesettings', 'mailchuck') < 1:
-#            myapp.showMigrationWizard(BMConfigParser().get('bitmessagesettings', 'mailchuck'))
-#    except:
-#        myapp.showMigrationWizard(0)
 
     # only show after wizards and connect dialogs have completed
     if not BMConfigParser().getboolean('bitmessagesettings', 'startintray'):

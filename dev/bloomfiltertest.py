@@ -41,9 +41,6 @@ for row in cur.fetchall():
     except IndexError:
         pass
 
-#f = open("/home/shurdeek/tmp/bloom.dat", "wb")
-# sb1.tofile(f)
-# f.close()
 
 
 print "Item count: %i" % (itemcount)

@@ -122,7 +122,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             # broken read, ignore
             pass
         else:
-            # print "Skipping command %s due to invalid data" % (self.command)
             logger.debug("Closing due to invalid command %s", self.command)
             self.close_reason = "Invalid command %s" % (self.command)
             self.set_state("close")
@@ -197,12 +196,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # retval (array)
         parserStack = [[1, 1, False, pattern, 0, []]]
 
-        # try:
-        #    sys._getframe(200)
-        #    logger.error("Stack depth warning, pattern: %s", pattern)
-        #    return
-        # except ValueError:
-        #    pass
 
         while True:
             i = parserStack[-1][3][parserStack[-1][4]]
@@ -231,14 +224,10 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
                 size = None
                 continue
             elif i == "s":
-                # if parserStack[-2][2]:
-                #    parserStack[-1][5].append(self.payload[self.payloadOffset:self.payloadOffset + parserStack[-1][0]])
-                # else:
                 parserStack[-1][5] = self.payload[self.payloadOffset:self.payloadOffset + parserStack[-1][0]]
                 self.payloadOffset += parserStack[-1][0]
                 parserStack[-1][1] = 0
                 parserStack[-1][2] = True
-                #del parserStack[-1]
                 size = None
             elif i in "viHIQ":
                 parserStack[-1][5].append(decode_simple(self, parserStack[-1][3][parserStack[-1][4]]))
@@ -438,13 +427,11 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         if not self.peerValidityChecks():
             # TODO ABORT
             return True
-        #shared.connectedHostsList[self.destination] = self.streams[0]
         self.append_write_buf(protocol.CreatePacket('verack'))
         self.verackSent = True
         if not self.isOutbound:
             self.append_write_buf(protocol.assembleVersionMessage(self.destination.host, self.destination.port,
                                                                   network.connectionpool.BMConnectionPool().streams, True, nodeid=self.nodeid))
-            # print "%s:%i: Sending version"  % (self.destination.host, self.destination.port)
         if ((self.services & protocol.NODE_SSL == protocol.NODE_SSL) and
                 protocol.haveSSL(not self.isOutbound)):
             self.isSSL = True

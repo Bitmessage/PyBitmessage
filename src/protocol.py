@@ -587,7 +587,6 @@ def _checkAndShareBroadcastWithPeers(data):
 
 
 def broadcastToSendDataQueues(data):
-    # logger.debug('running broadcastToSendDataQueues')
     for q in state.sendDataQueues:
         q.put(data)
 

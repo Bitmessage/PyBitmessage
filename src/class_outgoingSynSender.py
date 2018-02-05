@@ -87,7 +87,6 @@ class outgoingSynSender(threading.Thread, StoppableThread):
                 break
             peer = self._getPeer()
             while peer in shared.alreadyAttemptedConnectionsList or peer.host in shared.connectedHostsList:
-                # print 'choosing new sample'
                 peer = self._getPeer()
                 self.stop.wait(1)
                 if self._stopped:
@@ -138,7 +137,6 @@ class outgoingSynSender(threading.Thread, StoppableThread):
             if BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'none' and shared.verbose >= 2:
                 logger.debug('Trying an outgoing connection to ' + str(peer))
 
-                # sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
             elif BMConfigParser().get('bitmessagesettings', 'socksproxytype') == 'SOCKS4a':
                 if shared.verbose >= 2:
                     logger.debug('(Using SOCKS4a) Trying an outgoing connection to ' + str(peer))

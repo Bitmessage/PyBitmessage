@@ -110,8 +110,6 @@ class Ui_settingsDialog(object):
         self.groupBox1.setObjectName(_fromUtf8("groupBox1"))
         self.gridLayout_3 = QtGui.QGridLayout(self.groupBox1)
         self.gridLayout_3.setObjectName(_fromUtf8("gridLayout_3"))
-        #spacerItem = QtGui.QSpacerItem(125, 20, QtGui.QSizePolicy.Expanding, QtGui.QSizePolicy.Minimum)
-        #self.gridLayout_3.addItem(spacerItem, 0, 0, 1, 1)
         self.label = QtGui.QLabel(self.groupBox1)
         self.label.setObjectName(_fromUtf8("label"))
         self.gridLayout_3.addWidget(self.label, 0, 0, 1, 1, QtCore.Qt.AlignRight)

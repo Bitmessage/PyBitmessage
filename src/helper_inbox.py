@@ -5,7 +5,6 @@ import queues
 def insert(t):
     sqlExecute('''INSERT INTO inbox VALUES (?,?,?,?,?,?,?,?,?,?)''', *t)
     # shouldn't emit changedInboxUnread and displayNewInboxMessage at the same time
-    #queues.UISignalQueue.put(('changedInboxUnread', None))
 
 
 def trash(msgid):

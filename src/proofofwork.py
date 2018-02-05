@@ -1,6 +1,3 @@
-#import shared
-#import time
-#from multiprocessing import Pool, cpu_count
 import hashlib
 from struct import unpack, pack
 from subprocess import call
@@ -122,7 +119,6 @@ def _doGPUPoW(target, initialHash):
     logger.debug("GPU PoW start")
     nonce = openclpow.do_opencl_pow(initialHash.encode("hex"), target)
     trialValue, = unpack('>Q', hashlib.sha512(hashlib.sha512(pack('>Q', nonce) + initialHash).digest()).digest()[0:8])
-    # print "{} - value {} < {}".format(nonce, trialValue, target)
     if trialValue > target:
         deviceNames = ", ".join(gpu.name for gpu in openclpow.enabledGpus)
         queues.UISignalQueue.put(('updateStatusBar', (tr._translate("MainWindow", 'Your GPU(s) did not calculate correctly, disabling OpenCL. Please report to the developers.'), 1)))
@@ -208,11 +204,6 @@ def run(target, initialHash):
         raise
     target = int(target)
     if openclpow.openclEnabled():
-        #        trialvalue1, nonce1 = _doGPUPoW(target, initialHash)
-        #        trialvalue, nonce = _doFastPoW(target, initialHash)
-        #        print "GPU: %s, %s" % (trialvalue1, nonce1)
-        #        print "Fast: %s, %s" % (trialvalue, nonce)
-        #        return [trialvalue, nonce]
         try:
             return _doGPUPoW(target, initialHash)
         except StopIteration:

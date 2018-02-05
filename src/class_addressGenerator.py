@@ -21,7 +21,6 @@ import state
 class addressGenerator(threading.Thread, StoppableThread):
 
     def __init__(self):
-        # QThread.__init__(self, parent)
         threading.Thread.__init__(self, name="addressGenerator")
         self.initStop()
 

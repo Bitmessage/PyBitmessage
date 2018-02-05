@@ -1015,7 +1015,6 @@ def loadBlackWhiteList():
 
 def runwrapper():
     sys.stdout = printlog
-    #sys.stderr = errlog
 
     # Load messages from database
     loadInbox()

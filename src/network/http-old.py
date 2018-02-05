@@ -24,7 +24,6 @@ class HTTPClient(asyncore.dispatcher):
         self.close()
 
     def handle_read(self):
-        #        print self.recv(8192)
         self.recv(8192)
 
     def writable(self):

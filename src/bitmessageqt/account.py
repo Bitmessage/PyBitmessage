@@ -63,7 +63,6 @@ def accountClass(address):
     try:
         gateway = BMConfigParser().get(address, "gateway")
         for name, cls in inspect.getmembers(sys.modules[__name__], inspect.isclass):
-            #            obj = g(address)
             if issubclass(cls, GatewayAccount) and cls.gatewayName == gateway:
                 return cls(address)
         # general gateway

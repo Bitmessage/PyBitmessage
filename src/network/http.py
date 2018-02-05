@@ -74,15 +74,12 @@ if __name__ == "__main__":
     for host in ("bitmessage.org",):
         direct = HttpConnection(host)
         while len(asyncore.socket_map) > 0:
-            #            print "loop, state = %s" % (direct.state)
             asyncore.loop(timeout=1, count=1)
 
         proxy = Socks5HttpConnection(host)
         while len(asyncore.socket_map) > 0:
-            #            print "loop, state = %s" % (proxy.state)
             asyncore.loop(timeout=1, count=1)
 
         proxy = Socks4aHttpConnection(host)
         while len(asyncore.socket_map) > 0:
-            #            print "loop, state = %s" % (proxy.state)
             asyncore.loop(timeout=1, count=1)

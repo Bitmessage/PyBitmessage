@@ -38,10 +38,6 @@ class UDPSocket(BMProto):
             logger.info("Binding UDP socket to %s:%i", host, UDPSocket.port)
             self.socket.bind((host, UDPSocket.port))
             # BINDTODEVICE is only available on linux and requires root
-            # try:
-            # print "binding to %s" % (host)
-            #self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_BINDTODEVICE, host)
-            # except AttributeError:
         else:
             self.socket = sock
             self.set_socket_reuse()
@@ -72,17 +68,14 @@ class UDPSocket(BMProto):
 
     def bm_command_getdata(self):
         return True
-#        return BMProto.bm_command_getdata(self)
 
     def bm_command_inv(self):
         return True
-#        return BMProto.bm_command_inv(self)
 
     def bm_command_object(self):
         return BMProto.bm_command_object(self)
 
     def bm_command_addr(self):
-        #        BMProto.bm_command_object(self)
         addresses = self._decode_addr()
         # only allow peer discovery from private IPs in order to avoid attacks from random IPs on the internet
         if not self.local:
@@ -168,10 +161,8 @@ if __name__ == "__main__":
 
         proxy = Socks5BMConnection(host)
         while len(asyncore.socket_map) > 0:
-            #            print "loop, state = %s" % (proxy.state)
             asyncore.loop(timeout=10, count=1)
 
         proxy = Socks4aBMConnection(host)
         while len(asyncore.socket_map) > 0:
-            #            print "loop, state = %s" % (proxy.state)
             asyncore.loop(timeout=10, count=1)

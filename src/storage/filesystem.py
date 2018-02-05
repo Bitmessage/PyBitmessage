@@ -112,8 +112,6 @@ class FilesystemInventory(InventoryStorage):
                 print "error loading %s" % (hexlify(hashId))
                 pass
         self._inventory = newInventory
-#        for i, v in self._inventory.items():
-#            print "loaded stream: %s, %i items" % (i, len(v))
 
     def stream_list(self):
         return self._inventory.keys()

@@ -102,7 +102,6 @@ class smtpServerPyBitmessage(smtpd.SMTPServer):
         return ret
 
     def process_message(self, peer, mailfrom, rcpttos, data):
-        #        print 'Receiving message from:', peer
         p = re.compile(".*<([^>]+)>")
         if not hasattr(self.channel, "auth") or not self.channel.auth:
             logger.error("Missing or invalid auth")
@@ -169,7 +168,6 @@ class smtpServer(threading.Thread, StoppableThread):
         self.server.close()
         return
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-#        for ip in ('127.0.0.1', BMConfigParser().get('bitmessagesettings', 'onionbindip')):
         for ip in ('127.0.0.1'):
             try:
                 s.connect((ip, LISTENPORT))

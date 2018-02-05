@@ -57,7 +57,6 @@ class sendDataThread(threading.Thread):
             self.initiatedConnection = False
         else:
             self.initiatedConnection = True
-        #logger.debug('The streamNumber of this sendDataThread (ID: ' + str(id(self)) + ') at setup() is' + str(self.streamNumber))
 
     def sendVersionMessage(self):
         datatosend = protocol.assembleVersionMessage(
@@ -68,7 +67,6 @@ class sendDataThread(threading.Thread):
         try:
             self.sendBytes(datatosend)
         except Exception as err:
-            # if not 'Bad file descriptor' in err:
             logger.error('sock.sendall error: %s\n' % err)
 
         self.versionSent = 1

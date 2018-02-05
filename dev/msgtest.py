@@ -5,8 +5,6 @@ import sys
 import traceback
 
 data = {"": "message", "subject": "subject", "body": "body"}
-#data = {"": "vote", "msgid": "msgid"}
-#data = {"fsck": 1}
 
 import messagetypes
 

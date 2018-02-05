@@ -116,7 +116,6 @@ class NewAddressDialog(QtGui.QDialog, RetranslateMixin):
 
     def accept(self):
         self.hide()
-        # self.buttonBox.enabled = False
         if self.radioButtonRandomAddress.isChecked():
             if self.radioButtonMostAvailable.isChecked():
                 streamNumberForAddress = 1

@@ -106,11 +106,6 @@ if __name__ == '__main__':
     k = RandomTrackingDict()
     d = {}
 
-#    print "populating normal dict"
-#    a.append(time())
-#    for i in range(50000):
-#        d[randString()] = True
-#    a.append(time())
     print "populating random tracking dict"
     a.append(time())
     for i in range(50000):
@@ -121,16 +116,13 @@ if __name__ == '__main__':
         retval = k.randomKeys(1000)
         if not retval:
             print "error getting random keys"
-        # a.append(time())
         try:
             k.randomKeys(100)
             print "bad"
         except KeyError:
             pass
-        # a.append(time())
         for i in retval:
             del k[i]
-        # a.append(time())
     a.append(time())
 
     for x in range(len(a) - 1):

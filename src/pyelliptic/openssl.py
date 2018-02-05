@@ -57,7 +57,6 @@ def get_version(library):
             cflags = library.SSLeay_version(SSLEAY_CFLAGS)
             hexversion = library.SSLeay()
         except AttributeError:
-            #raise NotImplementedError('Cannot determine version of this OpenSSL library.')
             pass
     return (version, hexversion, cflags)
 
@@ -224,13 +223,7 @@ class _OpenSSL:
         self.EVP_aes_256_cbc.restype = ctypes.c_void_p
         self.EVP_aes_256_cbc.argtypes = []
 
-        #self.EVP_aes_128_ctr = self._lib.EVP_aes_128_ctr
-        #self.EVP_aes_128_ctr.restype = ctypes.c_void_p
-        #self.EVP_aes_128_ctr.argtypes = []
 
-        #self.EVP_aes_256_ctr = self._lib.EVP_aes_256_ctr
-        #self.EVP_aes_256_ctr.restype = ctypes.c_void_p
-        #self.EVP_aes_256_ctr.argtypes = []
 
         self.EVP_aes_128_ofb = self._lib.EVP_aes_128_ofb
         self.EVP_aes_128_ofb.restype = ctypes.c_void_p

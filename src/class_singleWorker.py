@@ -41,7 +41,6 @@ def sizeof_fmt(num, suffix='h/s'):
 class singleWorker(threading.Thread, StoppableThread):
 
     def __init__(self):
-        # QThread.__init__(self, parent)
         threading.Thread.__init__(self, name="singleWorker")
         self.initStop()
         proofofwork.init()
@@ -673,7 +672,6 @@ class singleWorker(threading.Thread, StoppableThread):
                         # if the human changes their setting and then sends another message or restarts their client, this one will send at that time.
                         continue
                 readPosition += 4  # to bypass the bitfield of behaviors
-                # pubSigningKeyBase256 = pubkeyPayload[readPosition:readPosition+64] # We don't use this key for anything here.
                 readPosition += 64
                 pubEncryptionKeyBase256 = pubkeyPayload[
                     readPosition:readPosition + 64]
@@ -926,7 +924,6 @@ class singleWorker(threading.Thread, StoppableThread):
             payload += tag
             logger.info('making request for v4 pubkey with tag: %s', hexlify(tag))
 
-        # print 'trial value', trialValue
         statusbar = 'Doing the computations necessary to request the recipient\'s public key.'
         queues.UISignalQueue.put(('updateStatusBar', statusbar))
         queues.UISignalQueue.put(('updateSentItemStatusByToAddress', (

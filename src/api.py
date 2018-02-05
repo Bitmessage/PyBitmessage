@@ -705,7 +705,6 @@ class MySimpleXMLRPCRequestHandler(SimpleXMLRPCRequestHandler):
         if queryreturn != []:
             for row in queryreturn:
                 toLabel, = row
-        # apiSignalQueue.put(('displayNewSentMessage',(toAddress,toLabel,fromAddress,subject,message,ackdata)))
         queues.UISignalQueue.put(('displayNewSentMessage', (
             toAddress, toLabel, fromAddress, subject, message, ackdata)))
 

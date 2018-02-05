@@ -3,7 +3,6 @@ from struct import *
 from pyelliptic import arithmetic
 from binascii import hexlify, unhexlify
 
-#from debug import logger
 
 # There is another copy of this function in Bitmessagemain.py
 
@@ -33,7 +32,6 @@ def encodeBase58(num, alphabet=ALPHABET):
     base = len(alphabet)
     while num:
         rem = num % base
-        # print 'num is:', num
         num = num // base
         arr.append(alphabet[rem])
     arr.reverse()
@@ -174,7 +172,6 @@ def decodeAddress(address):
     if len(hexdata) % 2 != 0:
         hexdata = '0' + hexdata
 
-    # print 'hexdata', hexdata
 
     data = unhexlify(hexdata)
     checksum = data[-4:]
@@ -182,16 +179,12 @@ def decodeAddress(address):
     sha = hashlib.new('sha512')
     sha.update(data[:-4])
     currentHash = sha.digest()
-    # print 'sha after first hashing: ', sha.hexdigest()
     sha = hashlib.new('sha512')
     sha.update(currentHash)
-    # print 'sha after second hashing: ', sha.hexdigest()
 
     if checksum != sha.digest()[0:4]:
         status = 'checksumfailed'
         return status, 0, 0, ""
-    # else:
-    #    print 'checksum PASSED'
 
     try:
         addressVersionNumber, bytesUsedByVersionNumber = decodeVarint(data[:9])
@@ -199,8 +192,6 @@ def decodeAddress(address):
         logger.error(str(e))
         status = 'varintmalformed'
         return status, 0, 0, ""
-    # print 'addressVersionNumber', addressVersionNumber
-    # print 'bytesUsedByVersionNumber', bytesUsedByVersionNumber
 
     if addressVersionNumber > 4:
         logger.error('cannot decode address version numbers this high')
@@ -217,7 +208,6 @@ def decodeAddress(address):
         logger.error(str(e))
         status = 'varintmalformed'
         return status, 0, 0, ""
-    # print streamNumber
     status = 'success'
     if addressVersionNumber == 1:
         return status, addressVersionNumber, streamNumber, data[-24:-4]

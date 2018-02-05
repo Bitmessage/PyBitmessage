@@ -30,7 +30,6 @@ class MessageView(QtGui.QTextBrowser):
         self.setWrappingWidth(event.size().width())
 
     def mousePressEvent(self, event):
-        #text = textCursor.block().text()
         if event.button() == QtCore.Qt.LeftButton and self.html and self.html.has_html and self.cursorForPosition(event.pos()).block().blockNumber() == 0:
             if self.mode == MessageView.MODE_PLAIN:
                 self.showHTML()
@@ -82,14 +81,8 @@ class MessageView(QtGui.QTextBrowser):
 #            QImage correctImage;
 #            lookup the correct QImage from a cache
 #            return QVariant::fromValue(correctImage);
-#        elif restype == QtGui.QTextDocument.HtmlResource:
-#        elif restype == QtGui.QTextDocument.ImageResource:
-#        elif restype == QtGui.QTextDocument.StyleSheetResource:
-#        elif restype == QtGui.QTextDocument.UserResource:
         else:
             pass
-#            by default, this will interpret it as a local file
-#            QtGui.QTextBrowser.loadResource(restype, name)
 
     def lazyRender(self):
         if self.rendering:

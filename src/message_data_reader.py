@@ -107,12 +107,4 @@ def vacuum():
     print 'done'
 
 
-# takeInboxMessagesOutOfTrash()
-# takeSentMessagesOutOfTrash()
-# markAllInboxMessagesAsUnread()
 readInbox()
-# readSent()
-# readPubkeys()
-# readSubscriptions()
-# readInventory()
-# vacuum()  #will defragment and clean empty space from the messages.dat file.

@@ -423,7 +423,6 @@ class objectProcessor(threading.Thread):
             decryptedData[readPosition:readPosition + 10])
         readPosition += messageLengthLength
         message = decryptedData[readPosition:readPosition + messageLength]
-        # print 'First 150 characters of message:', repr(message[:150])
         readPosition += messageLength
         ackLength, ackLengthLength = decodeVarint(
             decryptedData[readPosition:readPosition + 10])
@@ -635,7 +634,6 @@ class objectProcessor(threading.Thread):
                         logger.info('EC decryption successful using key associated with ripe hash: %s' % hexlify(key))
                 except Exception as err:
                     pass
-                    # print 'cryptorObject.decrypt Exception:', err
             if not initialDecryptionSuccessful:
                 # This is not a broadcast I am interested in.
                 logger.debug('Length of time program spent failing to decrypt this v4 broadcast: %s seconds.' % (time.time() - messageProcessingStartTime,))

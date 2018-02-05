@@ -97,14 +97,11 @@ def do_opencl_pow(hash, target):
         queue.finish()
         progress += globamt
         sofar = time.time() - start
-#       logger.debug("Working for %.3fs, %.2f Mh/s", sofar, (progress / sofar) / 1000000)
     if shutdown != 0:
         raise Exception("Interrupted")
     taken = time.time() - start
-#   logger.debug("Took %d tries.", progress)
     return output[0][0]
 
-# initCL()
 
 
 if __name__ == "__main__":

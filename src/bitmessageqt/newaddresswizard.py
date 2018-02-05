@@ -89,7 +89,6 @@ class NewAddressWizardRandomPage(QtGui.QWizardPage):
         for address in addresses:
             self.comboBoxExisting.addItem(address)
 
-#        self.comboBoxExisting.setObjectName(_fromUtf8("comboBoxExisting"))
         self.checkBoxEighteenByteRipe = QtGui.QCheckBox("Spend several minutes of extra computing time to make the address(es) 1 or 2 characters shorter")
 
         layout = QtGui.QGridLayout()
@@ -109,9 +108,6 @@ class NewAddressWizardRandomPage(QtGui.QWizardPage):
         self.registerField("radioButtonExisting", self.radioButtonExisting)
         self.registerField("comboBoxExisting", self.comboBoxExisting)
 
-#        self.emailAsWell = QtGui.QRadioButton("Combined email and bitmessage account")
-#        self.onlyBM = QtGui.QRadioButton("Bitmessage-only account (no email)")
-#        self.emailAsWell.setChecked(True)
 
     def nextId(self):
         return 6
@@ -137,7 +133,6 @@ class NewAddressWizardPassphrasePage(QtGui.QWizardPage):
         self.spinBoxNumberOfAddressesToMake = QtGui.QSpinBox()
         self.spinBoxNumberOfAddressesToMake.setMinimum(1)
         self.spinBoxNumberOfAddressesToMake.setProperty("value", 8)
-#        self.spinBoxNumberOfAddressesToMake.setObjectName(_fromUtf8("spinBoxNumberOfAddressesToMake"))
         label2 = QtGui.QLabel("In addition to your passphrase, you must remember these numbers:")
         label3 = QtGui.QLabel("Address version number: 4")
         label4 = QtGui.QLabel("Stream number: 1")
@@ -170,12 +165,9 @@ class NewAddressWizardEmailProviderPage(QtGui.QWizardPage):
                              "Press Next.")
         label.setWordWrap(True)
 
-#        self.mailchuck = QtGui.QRadioButton("Mailchuck email gateway (@mailchuck.com)")
-#        self.mailchuck.setChecked(True)
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(label)
-#        layout.addWidget(self.mailchuck)
         self.setLayout(layout)
 
     def nextId(self):
@@ -220,15 +212,10 @@ class NewAddressWizardWaitPage(QtGui.QWizardPage):
         self.progressBar.setMaximum(100)
         self.progressBar.setValue(0)
 
-#        self.emailAsWell = QtGui.QRadioButton("Combined email and bitmessage account")
-#        self.onlyBM = QtGui.QRadioButton("Bitmessage-only account (no email)")
-#        self.emailAsWell.setChecked(True)
 
         layout = QtGui.QVBoxLayout()
         layout.addWidget(self.label)
         layout.addWidget(self.progressBar)
-#        layout.addWidget(self.emailAsWell)
-#        layout.addWidget(self.onlyBM)
         self.setLayout(layout)
 
     def update(self, i):
@@ -243,7 +230,6 @@ class NewAddressWizardWaitPage(QtGui.QWizardPage):
             self.emit(QtCore.SIGNAL('completeChanged()'))
 
     def isComplete(self):
-        #        print "val = " + str(self.progressBar.value())
         if self.progressBar.value() >= 50:
             return True
         else:
@@ -260,7 +246,6 @@ class NewAddressWizardWaitPage(QtGui.QWizardPage):
             val += "no"
 
         self.label.setText("Wait! " + val)
-#        self.wizard().button(QtGui.QWizard.NextButton).setEnabled(False)
         self.progressBar.setValue(0)
         self.thread = NewAddressThread()
         self.connect(self.thread, self.thread.signal, self.update)
@@ -341,7 +326,6 @@ class NewAddressThread(QtCore.QThread):
             time.sleep(0.1)  # artificial time delay
             self.emit(self.signal, i)
         self.emit(self.signal, 101)
-#        self.terminate()
 
 
 if __name__ == '__main__':

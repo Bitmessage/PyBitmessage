@@ -18,11 +18,7 @@ from struct import unpack, pack
 import sys
 import traceback
 from binascii import hexlify
-#import string
-# from subprocess import call  # used when the API must execute an outside program
-#from pyelliptic.openssl import OpenSSL
 
-#import highlevelcrypto
 from addresses import *
 from bmconfigparser import BMConfigParser
 from class_objectHashHolder import objectHashHolder
@@ -125,7 +121,6 @@ class receiveDataThread(threading.Thread):
                     continue
                 logger.error('sock.recv error. Closing receiveData thread, %s', str(err))
                 break
-            # print 'Received', repr(self.data)
             if len(self.data) == dataLen:  # If self.sock.recv returned no data:
                 logger.debug('Connection to ' + str(self.peer) + ' closed. Closing receiveData thread')
                 break
@@ -789,9 +784,7 @@ class receiveDataThread(threading.Thread):
         self.timeOffset = timestamp - int(time.time())
 
         self.myExternalIP = socket.inet_ntoa(data[40:44])
-        # print 'myExternalIP', self.myExternalIP
         self.remoteNodeIncomingPort, = unpack('>H', data[70:72])
-        # print 'remoteNodeIncomingPort', self.remoteNodeIncomingPort
         useragentLength, lengthOfUseragentVarint = decodeVarint(
             data[80:84])
         readPosition = 80 + lengthOfUseragentVarint

@@ -340,7 +340,6 @@ class Main:
                 bitmessageqt.run()
             else:
                 if True:
-                    #                if depends.check_curses():
                     print('Running with curses')
                     import bitmessagecurses
                     bitmessagecurses.runwrapper()
@@ -405,7 +404,6 @@ class Main:
     def setSignalHandler(self):
         signal.signal(signal.SIGINT, helper_generic.signal_handler)
         signal.signal(signal.SIGTERM, helper_generic.signal_handler)
-        # signal.signal(signal.SIGINT, signal.SIG_DFL)
 
     def usage(self):
         print 'Usage: ' + sys.argv[0] + ' [OPTIONS]'

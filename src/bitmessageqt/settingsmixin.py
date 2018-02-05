@@ -71,10 +71,8 @@ class SSplitter(QtGui.QSplitter, SettingsMixin):
 class STreeWidget(QtGui.QTreeWidget, SettingsMixin):
     def loadSettings(self):
         # recurse children
-        # self.readState(self)
         pass
 
     def saveSettings(self):
         # recurse children
-        # self.writeState(self)
         pass

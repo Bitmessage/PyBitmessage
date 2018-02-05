@@ -101,7 +101,6 @@ class BMConnectionPool(object):
         if BMConfigParser().safeGetBoolean("bitmessagesettings", "sockslisten") or \
                 BMConfigParser().get("bitmessagesettings", "socksproxytype") == "none":
             # python doesn't like bind + INADDR_ANY?
-            #host = socket.INADDR_ANY
             host = BMConfigParser().get("network", "bind")
         return host
 
@@ -168,12 +167,6 @@ class BMConnectionPool(object):
                     if chosen in state.ownAddresses:
                         continue
 
-                    # for c in self.outboundConnections:
-                    #    if chosen == c.destination:
-                    #        continue
-                    # for c in self.inboundConnections:
-                    #    if chosen.host == c.destination.host:
-                    #        continue
                     try:
                         if chosen.host.endswith(".onion") and Proxy.onionproxy is not None:
                             if BMConfigParser().get("network", "onionsocksproxytype") == "SOCKS5":

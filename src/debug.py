@@ -99,7 +99,6 @@ def configureLogging():
 
 
 # TODO (xj9): Get from a config file.
-#logger = logging.getLogger('console_only')
 if configureLogging():
     if '-c' in sys.argv:
         logger = logging.getLogger('file_only')
