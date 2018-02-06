@@ -46,6 +46,7 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
 
     def startUpdate(self):
+        Inventory().numberOfInventoryLookupsPerformed = 0
         self.runEveryTwoSeconds()
         self.timer.start(2000)  # milliseconds
 
