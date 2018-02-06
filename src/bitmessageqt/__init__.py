@@ -33,6 +33,7 @@ from pyelliptic.openssl import OpenSSL
 import textwrap
 import debug
 import random
+from sqlite3 import register_adapter
 import string
 from datetime import datetime, timedelta
 from helper_ackPayload import genAckPayload
@@ -1327,6 +1328,10 @@ class MyForm(settingsmixin.SMainWindow):
             soundFilename += ext
 
         self._player(soundFilename)
+
+    # Adapters and converters for QT <-> sqlite
+    def sqlInit(self):
+        register_adapter(QtCore.QByteArray, str)
 
     # Try init the distro specific appindicator,
     # for example the Ubuntu MessagingMenu
@@ -4396,6 +4401,7 @@ def run():
     app.setStyleSheet("QStatusBar::item { border: 0px solid black }")
     myapp = MyForm()
 
+    myapp.sqlInit()
     myapp.appIndicatorInit(app)
     myapp.indicatorInit()
     myapp.notifierInit()
