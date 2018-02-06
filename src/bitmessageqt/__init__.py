@@ -911,6 +911,46 @@ class MyForm(settingsmixin.SMainWindow):
             self.ui.tabWidget.indexOf(self.ui.chans)
         )
 
+    def updateUnreadStatus(self, widget, row, msgid, unread=True):
+        """
+        Switch unread for item of msgid and related items in
+        other STableWidgets "All Accounts" and "Chans"
+        """
+        related = [self.ui.tableWidgetInbox, self.ui.tableWidgetInboxChans]
+        try:
+            related.remove(widget)
+            related = related.pop()
+        except ValueError:
+            rrow = None
+            related = []
+        else:
+            # maybe use instead:
+            # rrow = related.row(msgid), msgid should be QTableWidgetItem
+            # related = related.findItems(msgid, QtCore.Qt.MatchExactly),
+            # returns an empty list
+            for rrow in xrange(related.rowCount()):
+                if msgid == str(related.item(rrow, 3).data(
+                        QtCore.Qt.UserRole).toPyObject()):
+                    break
+            else:
+                rrow = None
+
+        status = widget.item(row, 0).unread
+        if status == unread:
+            font = QtGui.QFont()
+            font.setBold(not status)
+            widget.item(row, 3).setFont(font)
+            for col in (0, 1, 2):
+                widget.item(row, col).setUnread(not status)
+
+            try:
+                related.item(rrow, 3).setFont(font)
+            except (TypeError, AttributeError):
+                pass
+            else:
+                for col in (0, 1, 2):
+                    related.item(rrow, col).setUnread(not status)
+
     def propagateUnreadCount(self, address = None, folder = "inbox", widget = None, type = 1):
         widgets = [self.ui.treeWidgetYourIdentities, self.ui.treeWidgetSubscriptions, self.ui.treeWidgetChans]
         queryReturn = sqlQuery("SELECT toaddress, folder, COUNT(msgid) AS cnt FROM inbox WHERE read = 0 GROUP BY toaddress, folder")
@@ -2583,7 +2623,7 @@ class MyForm(settingsmixin.SMainWindow):
                 ), QtGui.QMessageBox.Yes | QtGui.QMessageBox.No
         ) != QtGui.QMessageBox.Yes:
             return
-        addressAtCurrentRow = self.getCurrentAccount()
+        # addressAtCurrentRow = self.getCurrentAccount()
         tableWidget = self.getCurrentMessagelist()
 
         idCount = tableWidget.rowCount()
@@ -2610,8 +2650,8 @@ class MyForm(settingsmixin.SMainWindow):
         )
 
         if markread > 0:
-            self.propagateUnreadCount(
-                addressAtCurrentRow, self.getCurrentFolder(), None, 0)
+            self.propagateUnreadCount()
+                # addressAtCurrentRow, self.getCurrentFolder(), None, 0)
 
     def click_NewAddressDialog(self):
         dialogs.NewAddressDialog(self)
@@ -2844,36 +2884,32 @@ class MyForm(settingsmixin.SMainWindow):
         tableWidget = self.getCurrentMessagelist()
         if not tableWidget:
             return
-        font = QtGui.QFont()
-        font.setBold(True)
-        inventoryHashesToMarkUnread = []
-        modified = 0
+
+        msgids = set()
+        # modified = 0
         for row in tableWidget.selectedIndexes():
             currentRow = row.row()
-            inventoryHashToMarkUnread = str(tableWidget.item(
+            msgid = str(tableWidget.item(
                 currentRow, 3).data(QtCore.Qt.UserRole).toPyObject())
-            if inventoryHashToMarkUnread in inventoryHashesToMarkUnread:
-                # it returns columns as separate items, so we skip dupes
-                continue
-            if not tableWidget.item(currentRow, 0).unread:
-                modified += 1
-            inventoryHashesToMarkUnread.append(inventoryHashToMarkUnread)
-            tableWidget.item(currentRow, 0).setUnread(True)
-            tableWidget.item(currentRow, 1).setUnread(True)
-            tableWidget.item(currentRow, 2).setUnread(True)
-            tableWidget.item(currentRow, 3).setFont(font)
+            msgids.add(msgid)
+            # if not tableWidget.item(currentRow, 0).unread:
+            #     modified += 1
+            self.updateUnreadStatus(tableWidget, currentRow, msgid, False)
+
         # for 1081
-        idCount = len(inventoryHashesToMarkUnread)
-        rowcount = sqlExecuteChunked(
+        idCount = len(msgids)
+        # rowcount =
+        sqlExecuteChunked(
             '''UPDATE inbox SET read=0 WHERE msgid IN ({0}) AND read=1''',
-            idCount, *inventoryHashesToMarkUnread
+            idCount, *msgids
         )
 
-        if rowcount == 1:
-            # performance optimisation
-            self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), self.getCurrentFolder())
-        else:
-            self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), self.getCurrentFolder(), self.getCurrentTreeWidget(), 0)
+        self.propagateUnreadCount()
+        # if rowcount == 1:
+        #     # performance optimisation
+        #     self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), self.getCurrentFolder())
+        # else:
+        #     self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), self.getCurrentFolder(), self.getCurrentTreeWidget(), 0)
         # tableWidget.selectRow(currentRow + 1) 
         # This doesn't de-select the last message if you try to mark it unread, but that doesn't interfere. Might not be necessary.
         # We could also select upwards, but then our problem would be with the topmost message.
@@ -3953,54 +3989,38 @@ class MyForm(settingsmixin.SMainWindow):
         messageTextedit = self.getCurrentMessageTextedit()
         if not messageTextedit:
             return
-        queryreturn = []
-        message = ""
 
-        if folder == 'sent':
-            ackdata = self.getCurrentMessageId()
-            if ackdata and messageTextedit:
-                queryreturn = sqlQuery(
-                    '''select message, 1 from sent where ackdata=?''', ackdata)
+        msgid = self.getCurrentMessageId()
+        if msgid:
+            queryreturn = sqlQuery(
+                '''SELECT message FROM %s WHERE %s=?''' % (
+                    ('sent', 'ackdata') if folder == 'sent'
+                    else ('inbox', 'msgid')
+                ), msgid
+            )
+
+        try:
+            message = queryreturn[-1][0]
+        except NameError:
+            message = ""
+        except IndexError:
+            message = _translate(
+                "MainWindow",
+                "Error occurred: could not load message from disk."
+            )
         else:
-            msgid = self.getCurrentMessageId()
-            if msgid and messageTextedit:
-                queryreturn = sqlQuery(
-                    '''select message, read from inbox where msgid=?''', msgid)
-
-        if queryreturn != []:
-            refresh = False
-            propagate = False
             tableWidget = self.getCurrentMessagelist()
             currentRow = tableWidget.currentRow()
-            for row in queryreturn:
-                message, read = row
-                if tableWidget.item(currentRow, 0).unread == True:
-                    refresh = True
-                if folder != 'sent':
-                    markread = sqlExecute(
-                        '''UPDATE inbox SET read = 1 WHERE msgid = ? AND read=0''', msgid)
-                    if markread > 0:
-                        propagate = True
-            if refresh:
-                if not tableWidget:
-                    return
-                font = QtGui.QFont()
-                font.setBold(False)
-#                inventoryHashesToMarkRead = []
-#                inventoryHashToMarkRead = str(tableWidget.item(
-#                    currentRow, 3).data(Qt.UserRole).toPyObject())
-#                inventoryHashesToMarkRead.append(inventoryHashToMarkRead)
-                tableWidget.item(currentRow, 0).setUnread(False)
-                tableWidget.item(currentRow, 1).setUnread(False)
-                tableWidget.item(currentRow, 2).setUnread(False)
-                tableWidget.item(currentRow, 3).setFont(font)
-            if propagate:
-                self.propagateUnreadCount(tableWidget.item(currentRow, 1 if tableWidget.item(currentRow, 1).type == AccountMixin.SUBSCRIPTION else 0).data(QtCore.Qt.UserRole), folder, self.getCurrentTreeWidget(), -1)
+            # refresh
+            if tableWidget.item(currentRow, 0).unread is True:
+                self.updateUnreadStatus(tableWidget, currentRow, msgid)
+            # propagate
+            if folder != 'sent' and sqlExecute(
+                '''UPDATE inbox SET read=1 WHERE msgid=? AND read=0''',
+                msgid
+            ) > 0:
+                self.propagateUnreadCount()
 
-        else:
-            data = self.getCurrentMessageId()
-            if data != False:
-                message = "Error occurred: could not load message from disk."
         messageTextedit.setCurrentFont(QtGui.QFont())
         messageTextedit.setTextColor(QtGui.QColor())
         messageTextedit.setContent(message)
