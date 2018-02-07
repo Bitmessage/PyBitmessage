@@ -3,10 +3,10 @@ import threading
 import time
 
 import addresses
-#from bmconfigparser import BMConfigParser
+from dandelion import Dandelion
 from debug import logger
 from helper_threading import StoppableThread
-#from inventory import Inventory
+from inventory import Inventory
 from network.connectionpool import BMConnectionPool
 import protocol
 from state import missingObjects
@@ -40,7 +40,7 @@ class DownloadThread(threading.Thread, StoppableThread):
         while not self._stopped:
             requested = 0
             # Choose downloading peers randomly
-            connections = BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values()
+            connections = [x for x in BMConnectionPool().inboundConnections.values() + BMConnectionPool().outboundConnections.values() if x.fullyEstablished]
             random.shuffle(connections)
             try:
                 requestChunk =  max(int(min(DownloadThread.maxRequestChunk, len(missingObjects)) / len(connections)), 1)
@@ -48,37 +48,27 @@ class DownloadThread(threading.Thread, StoppableThread):
                 requestChunk = 1
             for i in connections:
                 now = time.time()
-                timedOut = now - DownloadThread.requestTimeout
-                # this may take a while, but it needs a consistency so I think it's better to lock a bigger chunk
-                with i.objectsNewToMeLock:
-                    try:
-                        downloadPending = len(list((k for k, v in i.objectsNewToMe.iteritems() if k in missingObjects and missingObjects[k] > timedOut and not v)))
-                    except KeyError:
-                        continue
-                    if downloadPending >= DownloadThread.minPending:
-                        continue
-                    # keys with True values in the dict
-                    try:
-                        request = list((k for k, v in i.objectsNewToMe.iteritems() if k not in missingObjects or missingObjects[k] < timedOut))
-                    except KeyError:
-                        continue
-                    random.shuffle(request)
-                    if len(request) > requestChunk - downloadPending:
-                        request = request[:max(1, requestChunk - downloadPending)]
-                    if not request:
-                        continue
-                    # mark them as pending
-                    for k in request:
-                        i.objectsNewToMe[k] = False
-                        missingObjects[k] = now
+                try:
+                    request = i.objectsNewToMe.randomKeys(requestChunk)
+                except KeyError:
+                    continue
                 payload = bytearray()
                 payload.extend(addresses.encodeVarint(len(request)))
                 for chunk in request:
+                    if chunk in Inventory() and not Dandelion().hasHash(chunk):
+                        try:
+                            del i.objectsNewToMe[chunk]
+                        except KeyError:
+                            pass
+                        continue
                     payload.extend(chunk)
+                    missingObjects[chunk] = now
+                if not payload:
+                    continue
                 i.append_write_buf(protocol.CreatePacket('getdata', payload))
                 logger.debug("%s:%i Requesting %i objects", i.destination.host, i.destination.port, len(request))
                 requested += len(request)
             if time.time() >= self.lastCleaned + DownloadThread.cleanInterval:
                 self.cleanPending()
             if not requested:
-                self.stop.wait(5)
+                self.stop.wait(1)

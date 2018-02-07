@@ -66,8 +66,6 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         self.payloadOffset = 0
         self.expectBytes = protocol.Header.size
         self.object = None
-        self.dandelionRoutes = []
-        self.dandelionRefresh = 0
 
     def state_bm_header(self):
         self.magic, self.command, self.payloadLength, self.checksum = protocol.Header.unpack(self.read_buf[:protocol.Header.size])
@@ -282,8 +280,8 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         #TODO make this more asynchronous
         random.shuffle(items)
         for i in map(str, items):
-            if i in Dandelion().hashMap and \
-                    self != Dandelion().hashMap[i]:
+            if Dandelion().hasHash(i) and \
+                    self != Dandelion().objectChildStem(i):
                 self.antiIntersectionDelay()
                 logger.info('%s asked for a stem object we didn\'t offer to it.', self.destination)
                 break
@@ -298,41 +296,36 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         # when using random reordering, as the recipient won't know exactly which objects we refuse to deliver
         return True
 
-    def bm_command_inv(self):
+    def _command_inv(self, dandelion=False):
         items = self.decode_payload_content("l32s")
 
         if len(items) >= BMProto.maxObjectCount:
-            logger.error("Too many items in inv message!")
+            logger.error("Too many items in %sinv message!", "d" if dandelion else "")
             raise BMProtoExcessiveDataError()
         else:
             pass
 
+        # ignore dinv if dandelion turned off
+        if dandelion and not state.dandelion:
+            return True
+
         for i in map(str, items):
+            if i in Inventory() and not Dandelion().hasHash(i):
+                continue
+            if dandelion and not Dandelion().hasHash(i):
+                Dandelion().addHash(i, self)
             self.handleReceivedInventory(i)
 
         return True
+
+    def bm_command_inv(self):
+        return self._command_inv(False)
 
     def bm_command_dinv(self):
         """
         Dandelion stem announce
         """
-        items = self.decode_payload_content("l32s")
-
-        if len(items) >= BMProto.maxObjectCount:
-            logger.error("Too many items in dinv message!")
-            raise BMProtoExcessiveDataError()
-        else:
-            pass
-
-        # ignore command if dandelion turned off
-        if BMConfigParser().safeGetBoolean("network", "dandelion") == 0:
-            return True
-
-        for i in map(str, items):
-            self.handleReceivedInventory(i)
-            Dandelion().addHash(i, self)
-
-        return True
+        return self._command_inv(True)
 
     def bm_command_object(self):
         objectOffset = self.payloadOffset
@@ -368,8 +361,12 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
             except KeyError:
                 pass
 
+        if self.object.inventoryHash in Inventory() and Dandelion().hasHash(self.object.inventoryHash):
+            Dandelion().removeHash(self.object.inventoryHash, "cycle detection")
+
         Inventory()[self.object.inventoryHash] = (
                 self.object.objectType, self.object.streamNumber, buffer(self.payload[objectOffset:]), self.object.expiresTime, buffer(self.object.tag))
+        self.handleReceivedObject(self.object.streamNumber, self.object.inventoryHash)
         invQueue.put((self.object.streamNumber, self.object.inventoryHash, self.destination))
         return True
 
@@ -546,8 +543,7 @@ class BMProto(AdvancedDispatcher, ObjectTracker):
         for connection in network.connectionpool.BMConnectionPool().inboundConnections.values() + \
                 network.connectionpool.BMConnectionPool().outboundConnections.values():
             try:
-                with connection.objectsNewToMeLock:
-                    del connection.objectsNewToMe[hashId]
+                del connection.objectsNewToMe[hashId]
             except KeyError:
                 pass
             if not forwardAnyway:

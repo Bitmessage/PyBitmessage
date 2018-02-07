@@ -39,10 +39,19 @@ class NetworkStatus(QtGui.QWidget, RetranslateMixin):
             "updateNumberOfBroadcastsProcessed()"), self.updateNumberOfBroadcastsProcessed)
         QtCore.QObject.connect(self.UISignalThread, QtCore.SIGNAL(
             "updateNetworkStatusTab(PyQt_PyObject,PyQt_PyObject,PyQt_PyObject)"), self.updateNetworkStatusTab)
-        
+
         self.timer = QtCore.QTimer()
-        self.timer.start(2000) # milliseconds
-        QtCore.QObject.connect(self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
+
+        QtCore.QObject.connect(
+            self.timer, QtCore.SIGNAL("timeout()"), self.runEveryTwoSeconds)
+
+    def startUpdate(self):
+        Inventory().numberOfInventoryLookupsPerformed = 0
+        self.runEveryTwoSeconds()
+        self.timer.start(2000)  # milliseconds
+
+    def stopUpdate(self):
+        self.timer.stop()
 
     def formatBytes(self, num):
         for x in [_translate("networkstatus", "byte(s)", None, QtCore.QCoreApplication.CodecForTr, num), "kB", "MB", "GB"]:

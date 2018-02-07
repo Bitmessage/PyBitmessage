@@ -53,15 +53,20 @@ class MessageView(QtGui.QTextBrowser):
 
     def confirmURL(self, link):
         if link.scheme() == "mailto":
-            QtGui.QApplication.activeWindow().ui.lineEditTo.setText(link.path())
+            window = QtGui.QApplication.activeWindow()
+            window.ui.lineEditTo.setText(link.path())
             if link.hasQueryItem("subject"):
-                QtGui.QApplication.activeWindow().ui.lineEditSubject.setText(link.queryItemValue("subject"))
+                window.ui.lineEditSubject.setText(
+                    link.queryItemValue("subject"))
             if link.hasQueryItem("body"):
-                QtGui.QApplication.activeWindow().ui.textEditMessage.setText(link.queryItemValue("body"))
-            QtGui.QApplication.activeWindow().setSendFromComboBox()
-            QtGui.QApplication.activeWindow().ui.tabWidgetSend.setCurrentIndex(0)
-            QtGui.QApplication.activeWindow().ui.tabWidget.setCurrentIndex(1)
-            QtGui.QApplication.activeWindow().ui.textEditMessage.setFocus()
+                window.ui.textEditMessage.setText(
+                    link.queryItemValue("body"))
+            window.setSendFromComboBox()
+            window.ui.tabWidgetSend.setCurrentIndex(0)
+            window.ui.tabWidget.setCurrentIndex(
+                window.ui.tabWidget.indexOf(window.ui.send)
+            )
+            window.ui.textEditMessage.setFocus()
             return
         reply = QtGui.QMessageBox.warning(self,
             QtGui.QApplication.translate("MessageView", "Follow external link"),

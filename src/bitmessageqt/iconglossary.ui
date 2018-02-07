@@ -76,7 +76,7 @@
       <item row="3" column="1">
        <widget class="QLabel" name="labelPortNumber">
         <property name="text">
-         <string>You are using TCP port ?. (This can be changed in the settings).</string>
+         <string notr="true">You are using TCP port ?. (This can be changed in the settings).</string>
         </property>
        </widget>
       </item>

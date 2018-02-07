@@ -6,117 +6,91 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>360</width>
-    <height>315</height>
+    <width>430</width>
+    <height>340</height>
    </rect>
   </property>
   <property name="windowTitle">
    <string>About</string>
   </property>
-  <widget class="QDialogButtonBox" name="buttonBox">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>280</y>
-     <width>311</width>
-     <height>32</height>
-    </rect>
-   </property>
-   <property name="orientation">
-    <enum>Qt::Horizontal</enum>
-   </property>
-   <property name="standardButtons">
-    <set>QDialogButtonBox::Ok</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label">
-   <property name="geometry">
-    <rect>
-     <x>70</x>
-     <y>126</y>
-     <width>111</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="font">
-    <font>
-     <weight>75</weight>
-     <bold>true</bold>
-    </font>
-   </property>
-   <property name="text">
-    <string>PyBitmessage</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="labelVersion">
-   <property name="geometry">
-    <rect>
-     <x>190</x>
-     <y>126</y>
-     <width>161</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>version ?</string>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_2">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>150</y>
-     <width>341</width>
-     <height>41</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright © 2012-2014 Jonathan Warren&lt;br/&gt;Copyright © 2013-2014 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignCenter</set>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_3">
-   <property name="geometry">
-    <rect>
-     <x>20</x>
-     <y>200</y>
-     <width>331</width>
-     <height>71</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Distributed under the MIT/X11 software license; see &lt;a href=&quot;http://www.opensource.org/licenses/mit-license.php&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;http://www.opensource.org/licenses/mit-license.php&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
-   </property>
-   <property name="wordWrap">
-    <bool>true</bool>
-   </property>
-   <property name="openExternalLinks">
-    <bool>true</bool>
-   </property>
-  </widget>
-  <widget class="QLabel" name="label_5">
-   <property name="geometry">
-    <rect>
-     <x>10</x>
-     <y>190</y>
-     <width>341</width>
-     <height>20</height>
-    </rect>
-   </property>
-   <property name="text">
-    <string>This is Beta software.</string>
-   </property>
-   <property name="alignment">
-    <set>Qt::AlignCenter</set>
-   </property>
-  </widget>
+  <layout class="QVBoxLayout" name="verticalLayout">
+    <item alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="label_4">
+	<property name="text">
+	  <string notr="true"/>
+	</property>
+	<property name="pixmap">
+	  <pixmap resource="bitmessage_icons.qrc">:/newPrefix/images/can-icon-24px.png</pixmap>
+	</property>
+	<property name="alignment">
+	  <set>Qt::AlignCenter</set>
+	</property>
+      </widget>
+    </item>
+    <item alignment="Qt::AlignHCenter">
+      <widget class="QLabel" name="labelVersion">
+	<property name="font">
+	  <font>
+            <weight>75</weight>
+            <bold>true</bold>
+	  </font>
+	</property>
+	<property name="text">
+	  <string notr="true">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;&lt;a href=&quot;https://github.com/Bitmessage/PyBitmessage/tree/:branch:&quot;&gt;&lt;span style=&quot;text-decoration:none; color:#0000ff;&quot;&gt;PyBitmessage :version:&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+	</property>
+	<property name="alignment">
+	  <set>Qt::AlignCenter</set>
+	</property>
+      </widget>
+    </item>
+    <item alignment="Qt::AlignLeft">
+      <widget class="QLabel" name="label_2">
+	<property name="text">
+	  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Copyright © 2012-2016 Jonathan Warren&lt;br/&gt;Copyright © 2013-2017 The Bitmessage Developers&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+	</property>
+	<property name="alignment">
+	  <set>Qt::AlignLeft</set>
+	</property>
+      </widget>
+    </item>
+    <item>
+      <widget class="QLabel" name="label_5">
+	<property name="text">
+	  <string>This is Beta software.</string>
+	</property>
+	<property name="alignment">
+	  <set>Qt::AlignCenter</set>
+	</property>
+      </widget>
+    </item>
+    <item>
+      <widget class="QLabel" name="label_3">
+	<property name="text">
+	  <string>&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;Distributed under the MIT/X11 software license; see &lt;a href=&quot;http://www.opensource.org/licenses/mit-license.php&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;http://www.opensource.org/licenses/mit-license.php&lt;/span&gt;&lt;/a&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
+	</property>
+	<property name="wordWrap">
+	  <bool>true</bool>
+	</property>
+	<property name="openExternalLinks">
+	  <bool>true</bool>
+	</property>
+      </widget>
+    </item>
+    <item>
+      <widget class="QDialogButtonBox" name="buttonBox">
+	<property name="orientation">
+	  <enum>Qt::Horizontal</enum>
+	</property>
+	<property name="standardButtons">
+	  <set>QDialogButtonBox::Ok</set>
+	</property>
+      </widget>
+    </item>
+  </layout>
  </widget>
- <resources/>
+ <resources>
+  <include location="bitmessage_icons.qrc"/>
+ </resources>
  <connections>
   <connection>
    <sender>buttonBox</sender>

@@ -33,9 +33,6 @@ class InventoryStorage(Storage, collections.MutableMapping):
     def by_type_and_tag(self, objectType, tag):
         raise NotImplementedError
 
-    def hashes_by_stream(self, stream):
-        raise NotImplementedError
-
     def unexpired_hashes_by_stream(self, stream):
         raise NotImplementedError
 
